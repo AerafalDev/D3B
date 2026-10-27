@@ -53,9 +53,11 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           $work = Join-Path $env:RUNNER_TEMP 'template-check'
           dotnet pack src/D3B.Core/D3B.Core.csproj --configuration Release --output "$work/feed" -p:MinVerVersionOverride=0.0.0-template
+          dotnet new nugetconfig --output $work
+          dotnet nuget add source "$work/feed" --name template-check --configfile "$work/nuget.config"
           dotnet new install templates/d3b-plugin --debug:custom-hive "$work/hive"
           dotnet new d3b-plugin --name TemplatePlugin --output "$work/TemplatePlugin" --d3b-version 0.0.0-template --plugins-directory "$work/plugins" --debug:custom-hive "$work/hive"
-          dotnet build "$work/TemplatePlugin" --source "$work/feed" --source https://api.nuget.org/v3/index.json
+          dotnet build "$work/TemplatePlugin"
           if (-not (Test-Path "$work/plugins/TemplatePlugin/TemplatePlugin.dll")) { throw 'The plugin built from the template was not deployed.' }
 
       - name: Upload test results
