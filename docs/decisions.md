@@ -713,6 +713,59 @@ where the extraction tool writes it (`--packs`), to the release `client-<version
   - The REST API from the tool: more code, and a second place holding a credential.
   - A GitHub Actions workflow: CI has no client.
 
+## D34: A hosts line brings each client to D3B, which rewrites the game server's address
+
+*2026-10-27, step 3, session 3a, chosen by the owner. Settles Q8.*
+
+The player starts each account's client from the official Ankama launcher, as without D3B. One line of the Windows
+`hosts` file sends the connection host, which the client's configuration names, to a loopback address of D3B's. D3B
+listens there, resolves the real host without the `hosts` file, and connects to it. The game server's address reaches
+the client in a message of that first connection: D3B rewrites it to an address of its own, and connects to the real
+game server when the client arrives. Nothing in the client, its files or its process changes.
+
+- **What the client shows**, measured in [client.md](client.md#connection). The launcher starts `Dofus.exe` with its
+  own local port, an instance id, a hash and the connection port, 5555 or 443. The client reads the connection host
+  from the JSON its `ConfigUrl` names, connects to it, a load balancer, then to a game server whose address the first
+  connection sends. In game, a client keeps one game connection, on port 5555, besides the chat, the launcher and the
+  CDN.
+- **Who starts the client.** The player, from the launcher: the client asks the launcher for its login token, so
+  starting it otherwise means emulating the launcher and handling Haapi, which D23 leaves to the official client.
+- **The line** names the connection host and an address of `127.0.0.0/8` that D3B's configuration sets, not
+  `127.0.0.1`, so that D3B takes no port another program uses there. D3B listens on that address on the configuration's
+  ports, 5555 and 443, so the launcher's port setting does not matter. Writing the line needs elevation, once: a tool of
+  session 3b adds, checks and removes it, through the UAC prompt. The host never runs elevated and never edits the file.
+- **Resolving.** D3B resolves the connection host without the `hosts` file, which would send it back to itself; how is
+  session 3b's choice. The tool reads the host's name from the configuration the client reads, the public JSON of its
+  `ConfigUrl`; that is no game connection (D23).
+- **Every client on the machine goes through D3B** while the line is there. A client without a bot is relayed
+  unchanged. Without D3B running, no client of the machine connects: removing the line restores direct play.
+- **The game server.** D3B decodes the connection server's message holding the game server's address and ports, which
+  needs the protocol mapping, and replaces the address with its own and every port with its game listener's. It keeps
+  the real address for that client and matches the client's next connection to it, by what that connection sends first;
+  how exactly is session 3e's. Until then the game connection goes straight to the server, and D3B sees the connection
+  phase only.
+- **Reading.** The references read port 5555 in the clear, framed by a varint length (D3); the client's TLS transport,
+  Spin, serves its chat, which D3B leaves alone with Haapi and the launcher. Session 3b measures the real bytes before
+  anything relies on them.
+- **Within D2.** D3B hides nothing: connections leave the same machine, from the same address, one per client, as
+  without it. Nothing is injected into the client, patched or emulated.
+- **Risks.**
+  - Should the configuration name another connection host, clients would bypass D3B: the tool compares the line with
+    the configuration each time it runs.
+  - An antivirus may warn about a change to `hosts`.
+  - Whether the client accepts a loopback address for its connection host is measured in session 3b.
+- **Rejected.**
+  - Editing `ConfigUrl` in the client's `version` file and serving the configuration from D3B: no elevation, but the
+    client's installation changes, the launcher restores the file at each update, and whether the client accepts a
+    local `http://` address is not measured.
+  - WinDivert: no rewriting of the game server's address, but a third-party kernel driver loaded with elevation at every
+    start, and address translation on packets.
+  - Hooking the client's `connect`, as BillBot does through Frida, or patching its code, as JondoEmu does through
+    MelonLoader and Harmony: they change the client's process or files (D2, D23).
+  - Emulating the launcher to start the client, as BillBot and JondoEmu do: D3B would get the login token through Haapi
+    (D23).
+  - Playing without a client, as BubbleBot does: ruled out by D23.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -720,9 +773,8 @@ Settled questions leave this table, and the decision that settles one says so.
 | Id | Question | Settled in |
 | --- | --- | --- |
 | Q1 | Does LuaCSharp hold up: sandboxing, async calls, errors, performance? | Step 7 |
-| Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? | Step 3 |
+| Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? | Step 3, session 3e |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
-| Q7 | How are sessions captured and replayed for tests: in which format? | Step 3 |
-| Q8 | How does each account's official client reach D3B: who starts it, and how is its connection to the game server redirected to D3B and read, within D2? | Step 3 |
-| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3 |
+| Q7 | How are sessions captured and replayed for tests: in which format? | Step 3, sessions 3b and 3f |
+| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3, session 3f |

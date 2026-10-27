@@ -1,8 +1,9 @@
 # The official client
 
-What the installed official client holds that D3B uses, measured for the steps that extract it. It holds counts,
-formats and layouts, never content. Measured on 2026-10-27 with `scripts/inspect.cs` (D26) and the extraction tool's
-checks, on client 3.7.12.12, built on 2026-10-19, installed in `%LOCALAPPDATA%\Ankama\Dofus-dofus3`. Dofus Remastered's
+What the installed official client holds that D3B uses, measured for the steps that use it. It holds counts, formats
+and layouts, never content. Measured on 2026-10-27 with `scripts/inspect.cs` (D26) and the extraction tool's checks, on
+client 3.7.12.12, built on 2026-10-19, installed in `%LOCALAPPDATA%\Ankama\Dofus-dofus3`; how it connects was measured
+on running clients ([Connection](#connection)). Dofus Remastered's
 `docs/client.md`, in `vendor/Dofus`, measures much more of the same client for drawing it: maps' graphics, effects,
 shaders, characters.
 
@@ -29,8 +30,10 @@ document says D3B relies on (D27): its checks are the measurements to repeat at 
 
 | Path | Content |
 | --- | --- |
-| `Dofus_Data/StreamingAssets/version` | `Version`, `BuildDate` and `ConfigUrl` lines: the build's identity (D24). |
+| `Dofus_Data/StreamingAssets/version` | `Version`, `BuildDate` and `ConfigUrl` lines: the build's identity (D24), and where the client reads its configuration ([Connection](#connection)). |
 | `manifest.json` | The launcher's manifest: the SHA1 of every file, which a pack's fingerprint uses (D24). |
+| `zaap.yml`, `zaap-windows.yml`, `zaap-start.bat` | How the launcher starts the client: its arguments, settings and log file ([Connection](#connection)). |
+| `GameAssembly.dll`, `Dofus_Data/il2cpp_data/Metadata/global-metadata.dat` | The IL2CPP code, 120.2 MiB, and its metadata, 41.8 MiB: version 39, not encrypted, 37,544 string literals and 348,188 identifier strings. |
 | `Dofus_Data/StreamingAssets/Content/Data/` | 208 bundles, LZMA: one game data table each, 98.9 MiB decompressed. |
 | `Dofus_Data/StreamingAssets/Content/Map/Data/` | 596 bundles, mostly LZ4HC: the maps, 4.0 GiB decompressed. |
 | `Dofus_Data/StreamingAssets/Content/I18n/` | `de.bin`, `en.bin`, `es.bin`, `fr.bin`, `pt.bin`: the texts, 130.4 MiB. |
@@ -304,3 +307,79 @@ about 1 ms each, a language's texts in 6 ms, the other tables in under 0.2 ms.
 1.9 s, saves at best 0.45 MB with 16 KiB (3.27 MB of maps and dictionary instead of 3.72), 0.41 MB with 64 KiB and 0.35
 MB with 256 KiB; decompressing every map then takes 41 ms instead of 63. Trained on every entry but the texts, it gains
 nothing on the others. D30 keeps packs without one.
+
+## Connection
+
+How the client connects, which D34 builds on. Measured on 2026-10-27 from the installation, the client's logs, the
+configuration its `ConfigUrl` names, the names in its IL2CPP metadata, and the connections of four clients of this
+build in game for about 50 minutes, each logged in to its own account. Nothing was captured on the wire.
+
+### Launch
+
+The Ankama launcher starts the client. `zaap.yml` and `zaap-windows.yml` give its arguments and settings, and
+`maxInstances: true` lets several clients run at once. `zaap-start.bat` runs `Dofus.exe -logFile <log>`, the log being
+`dofus.<account id>.log` in the launcher's `gamesLogs\dofus-dofus3` folder, then the arguments:
+
+| Argument | Value, measured in 14 logs |
+| --- | --- |
+| `--port` | The launcher's local port, which the client connects to on `127.0.0.1`; the same in every log. |
+| `--gameName`, `--gameRelease` | `dofus`, `dofus3`. |
+| `--instanceId` | A number counting the launches, from 1. |
+| `--hash` | A UUID, new at each launch. |
+| `--canLogin`, `--langCode` | `true`, the language setting. |
+| `--autoConnectType` | The setting of how far the client logs in by itself: 0 to the server choice, 1 to the character choice, 2 into the game; 1 by default. |
+| `--connectionPort` | The setting "Connection port": 5555, the default, or 443. |
+| `--hdReady`, `--4kReady` | Present when the matching texture pack is set. |
+
+The client logs its command line, hash included, and its connection to the launcher's port, then little else: the log
+names no host it connects to. Through that connection (`Ankama.LauncherConnection`) it asks the launcher for its
+login token, settings and language.
+
+### Configuration
+
+The `ConfigUrl` line of `version` names a JSON file on Ankama's CDN, over HTTPS: 768 bytes and 15 keys on 2026-10-27.
+`connectionHosts` lists the connection hosts as `<name>:<host>:<ports>`: one entry, with ports `5555,443`. The others
+name the chat's host and port (6337), Haapi, the shop, the website and content URLs. The client's configuration class
+has a property for 14 of the keys; `avatarUrlFormat` has none. The settings the client keeps per player include
+`autoConnectType`, `connectionPort` and `lastHostSelected`.
+
+The connection host's name is an alias of an AWS network load balancer with three IPv4 addresses, the same through
+four resolvers.
+
+### Connections
+
+Every client in game held:
+
+| Peer | Port | Connections | Use |
+| --- | ---: | ---: | --- |
+| A game server | 5555 | 1 | The game. Its address is none of the connection host's; the four clients, all on one game server, share it. |
+| The configuration's chat host | 6337 | 1 | The chat. |
+| The launcher, on `127.0.0.1` | `--port` | 1 | The launcher's local service. |
+| `127.0.0.1`, its own process | | 2 | A pair of sockets within the process. |
+| Ankama's CDN, over IPv6 | 443 | 4 or 5 | HTTPS, closing. |
+
+No connection to the connection host remains in game. So the client connects twice: first to the connection host of
+its configuration, on its connection port; then to a game server, whose address the first connection sends. The
+references name the message carrying it, with a ticket, the host and the ports (D3); in this build its type is
+obfuscated. Each client took 2.0 to 2.1 GiB of working set.
+
+### Network code
+
+From the names in the metadata, with no decompilation:
+
+- `Ankama.Dofus.Protocol.Connection` and `Ankama.Dofus.Protocol.Game` hold the protocol, with their types and members
+  named by obfuscated lowercase words of four letters.
+- Google.Protobuf is there with its varint and delimited-message helpers, and a constant `type.ankama.com`, the prefix
+  of the type URLs the references read in `Any` envelopes.
+- `Ankama.SpinConnection` is Ankama's own transport over TCP: a header with a message size and type, authentication
+  by token (`SpinCredentials`), heartbeats, pings, LZ4 compression, and an option to use TLS. The references use it
+  for the chat only.
+
+Not measured: the bytes on port 5555, so whether they are framed by a varint length and in the clear, as the
+references read them; whether the game server's address is a name or an IP address; how the client chooses among the
+ports it is sent. Sessions 3b and 3e measure them.
+
+```powershell
+Get-NetTCPConnection -OwningProcess (Get-Process Dofus).Id | Sort-Object OwningProcess, RemotePort  # connections
+Resolve-DnsName <connection host> -DnsOnly                                                            # addresses
+```
