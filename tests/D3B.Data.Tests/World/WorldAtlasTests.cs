@@ -5,6 +5,8 @@ namespace D3B.Data.Tests.World;
 
 public sealed class WorldAtlasTests : IDisposable
 {
+    private static readonly int[] _harvestables = [289, 303, 400];
+
     private readonly TemporaryDirectory _directory = new();
 
     public void Dispose()
@@ -31,18 +33,38 @@ public sealed class WorldAtlasTests : IDisposable
     }
 
     [Fact]
+    public void ASubAreaListsItsResources()
+    {
+        var atlas = TestWorld.Atlas();
+
+        Assert.True(atlas.TryGetSubArea(10, out var farmed));
+        Assert.True(atlas.TryGetSubArea(11, out var bare));
+        Assert.Equal([289, 303], atlas.HarvestablesOf(farmed).ToArray());
+        Assert.True(atlas.HarvestablesOf(bare).IsEmpty);
+    }
+
+    [Fact]
     public void ATableOutOfOrderIsRejected()
     {
         Assert.Throws<ArgumentException>(() => new WorldAtlas(
             new MapPosition[] { new(200, 0, 0, 1, 1, 1, 0), new(100, 0, 0, 1, 1, 1, 0) },
             ReadOnlyMemory<SubArea>.Empty,
             ReadOnlyMemory<Area>.Empty,
-            ReadOnlyMemory<Waypoint>.Empty));
+            ReadOnlyMemory<Waypoint>.Empty,
+            ReadOnlyMemory<int>.Empty));
         Assert.Throws<ArgumentException>(() => new WorldAtlas(
             ReadOnlyMemory<MapPosition>.Empty,
             ReadOnlyMemory<SubArea>.Empty,
             new Area[] { new(1, 1, 0), new(1, 2, 0) },
-            ReadOnlyMemory<Waypoint>.Empty));
+            ReadOnlyMemory<Waypoint>.Empty,
+            ReadOnlyMemory<int>.Empty));
+    }
+
+    [Fact]
+    public void ResourcesThatDoNotFollowOneAnotherAreRejected()
+    {
+        Assert.Throws<ArgumentException>(() => Atlas(new(10, 1, 1, 1, SubArea.NoZaap, false, 0, 2), new(11, 1, 1, 1, SubArea.NoZaap, false, 1, 1)));
+        Assert.Throws<ArgumentException>(() => Atlas(new(10, 1, 1, 1, SubArea.NoZaap, false, 0, 1), new(11, 1, 1, 1, SubArea.NoZaap, false, 1, 1)));
     }
 
     [Fact]
@@ -58,5 +80,12 @@ public sealed class WorldAtlasTests : IDisposable
         Assert.Equal(atlas.SubAreas.ToArray(), read.SubAreas.ToArray());
         Assert.Equal(atlas.Areas.ToArray(), read.Areas.ToArray());
         Assert.Equal(atlas.Waypoints.ToArray(), read.Waypoints.ToArray());
+        Assert.Equal(atlas.Harvestables.ToArray(), read.Harvestables.ToArray());
+    }
+
+    /// <summary>An atlas of two sub-areas and three resources.</summary>
+    private static WorldAtlas Atlas(SubArea first, SubArea second)
+    {
+        return new WorldAtlas(ReadOnlyMemory<MapPosition>.Empty, new[] { first, second }, ReadOnlyMemory<Area>.Empty, ReadOnlyMemory<Waypoint>.Empty, _harvestables);
     }
 }

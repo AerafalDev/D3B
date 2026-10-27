@@ -1,5 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using D3B.Data.Banks;
+using D3B.Data.Interactives;
+using D3B.Data.Items;
+using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.Packs;
 using D3B.Data.Texts;
@@ -27,9 +31,12 @@ public sealed class PackFormatTests
     private static readonly (int Format, string Layout)[] _formats =
     [
         (2, "44e092e069deeecb28f1afb3f0619ff7921a30003a89974ecd5d5a93923533c8"),
+        (3, "94032ad3554bc9df362222810fcb95534e53d56997b1dc1a839ac598dde39ede"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
+    private static readonly int[] _harvestables = [43];
+    private static readonly int[] _replies = [67];
 
     [Fact]
     public void TheLastRecordedFormatIsTheCurrentOne()
@@ -90,9 +97,14 @@ public sealed class PackFormatTests
             _criteria));
         Append(hash, new WorldAtlas(
             new MapPosition[] { new(25, 26, 27, 28, 29, 30, 31) },
-            new SubArea[] { new(32, 33, 34, 35, 36, true) },
+            new SubArea[] { new(32, 33, 34, 35, 36, true, 0, 1) },
             new Area[] { new(37, 38, 39) },
-            new Waypoint[] { new(40, 41, 42, true) }));
+            new Waypoint[] { new(40, 41, 42, true) },
+            _harvestables));
+        Append(hash, new ItemCatalog(new Item[] { new(44, 45, 46, 47, 48) }, new ItemType[] { new(49, 50, 51, 52) }));
+        Append(hash, new JobCatalog(new Job[] { new(53, 54) }, new Skill[] { new(55, 56, 57, 58, 59, 60, true) }));
+        Append(hash, new InteractiveCatalog(new Interactive[] { new(61, 62) }));
+        Append(hash, new BankCatalog(new Bank[] { new(63, 64) }, new Banker[] { new(65, 66, 0, 1) }, _replies));
 
         return Convert.ToHexStringLower(hash.GetHashAndReset());
     }

@@ -25,60 +25,34 @@ public sealed partial class WorldAtlas
     /// <summary>Gets the zaaps, in ascending order of identifier.</summary>
     public ReadOnlyMemory<Waypoint> Waypoints { get; }
 
+    /// <summary>Gets the resources of every sub-area, by item: each sub-area's together, ascending, in the order of the sub-areas.</summary>
+    /// <remarks>
+    /// The items a profession's skill gathers that the client lists in a sub-area's <c>harvestables</c>, which also lists
+    /// what harvesting may bring besides, such as loot boxes (client.md).
+    /// </remarks>
+    public ReadOnlyMemory<int> Harvestables { get; }
+
     /// <summary>Initializes a new instance of the <see cref="WorldAtlas"/> class.</summary>
     /// <param name="positions">The maps' positions, in strictly ascending order of map.</param>
-    /// <param name="subAreas">The sub-areas, in strictly ascending order of identifier.</param>
+    /// <param name="subAreas">The sub-areas, in strictly ascending order of identifier, each naming its own resources.</param>
     /// <param name="areas">The areas, in strictly ascending order of identifier.</param>
     /// <param name="waypoints">The zaaps, in strictly ascending order of identifier.</param>
-    /// <exception cref="ArgumentException">A table is not in strictly ascending order.</exception>
+    /// <param name="harvestables">The sub-areas' resources, each sub-area's together and in the order of the sub-areas, with nothing between.</param>
+    /// <exception cref="ArgumentException">A table is not in strictly ascending order, or the sub-areas' resources do not follow one another.</exception>
     [MemoryPackConstructor]
-    public WorldAtlas(ReadOnlyMemory<MapPosition> positions, ReadOnlyMemory<SubArea> subAreas, ReadOnlyMemory<Area> areas, ReadOnlyMemory<Waypoint> waypoints)
+    public WorldAtlas(ReadOnlyMemory<MapPosition> positions, ReadOnlyMemory<SubArea> subAreas, ReadOnlyMemory<Area> areas, ReadOnlyMemory<Waypoint> waypoints, ReadOnlyMemory<int> harvestables)
     {
-        CheckAscending(positions.Span, static position => position.MapId, nameof(positions));
-        CheckAscending(subAreas.Span, static subArea => subArea.Id, nameof(subAreas));
-        CheckAscending(areas.Span, static area => area.Id, nameof(areas));
-        CheckAscending(waypoints.Span, static waypoint => waypoint.Id, nameof(waypoints));
+        Tables.CheckAscending(positions.Span, static position => position.MapId, nameof(positions));
+        Tables.CheckAscending(subAreas.Span, static subArea => subArea.Id, nameof(subAreas));
+        Tables.CheckAscending(areas.Span, static area => area.Id, nameof(areas));
+        Tables.CheckAscending(waypoints.Span, static waypoint => waypoint.Id, nameof(waypoints));
+        Tables.CheckSlices(subAreas.Span, static subArea => (subArea.FirstHarvestable, subArea.HarvestableCount), harvestables.Length, nameof(harvestables));
 
         Positions = positions;
         SubAreas = subAreas;
         Areas = areas;
         Waypoints = waypoints;
-    }
-
-    private static void CheckAscending<T>(ReadOnlySpan<T> items, Func<T, long> key, string name)
-    {
-        for (var i = 1; i < items.Length; i++)
-        {
-            if (key(items[i]) <= key(items[i - 1]))
-                throw new ArgumentException($"The {name} are not in strictly ascending order: {key(items[i])} follows {key(items[i - 1])}.", name);
-        }
-    }
-
-    private static bool TryFind<T>(ReadOnlySpan<T> items, long id, Func<T, long> key, out T found)
-    {
-        int low = 0, high = items.Length - 1;
-
-        while (low <= high)
-        {
-            var middle = low + ((high - low) >> 1);
-            var current = key(items[middle]);
-
-            if (current == id)
-            {
-                found = items[middle];
-
-                return true;
-            }
-
-            if (current < id)
-                low = middle + 1;
-            else
-                high = middle - 1;
-        }
-
-        found = default!;
-
-        return false;
+        Harvestables = harvestables;
     }
 
     /// <summary>Finds where a map lies.</summary>
@@ -87,7 +61,7 @@ public sealed partial class WorldAtlas
     /// <returns>Whether the client gives the map a position.</returns>
     public bool TryGetPosition(long mapId, out MapPosition position)
     {
-        return TryFind(Positions.Span, mapId, static position => position.MapId, out position);
+        return Tables.TryFind(Positions.Span, mapId, static position => position.MapId, out position);
     }
 
     /// <summary>Finds a sub-area.</summary>
@@ -96,7 +70,7 @@ public sealed partial class WorldAtlas
     /// <returns>Whether the atlas holds it.</returns>
     public bool TryGetSubArea(int id, out SubArea subArea)
     {
-        return TryFind(SubAreas.Span, id, static subArea => subArea.Id, out subArea);
+        return Tables.TryFind(SubAreas.Span, id, static subArea => subArea.Id, out subArea);
     }
 
     /// <summary>Finds an area.</summary>
@@ -105,7 +79,7 @@ public sealed partial class WorldAtlas
     /// <returns>Whether the atlas holds it.</returns>
     public bool TryGetArea(int id, out Area area)
     {
-        return TryFind(Areas.Span, id, static area => area.Id, out area);
+        return Tables.TryFind(Areas.Span, id, static area => area.Id, out area);
     }
 
     /// <summary>Finds a zaap.</summary>
@@ -114,6 +88,14 @@ public sealed partial class WorldAtlas
     /// <returns>Whether the atlas holds it.</returns>
     public bool TryGetWaypoint(int id, out Waypoint waypoint)
     {
-        return TryFind(Waypoints.Span, id, static waypoint => waypoint.Id, out waypoint);
+        return Tables.TryFind(Waypoints.Span, id, static waypoint => waypoint.Id, out waypoint);
+    }
+
+    /// <summary>Gets the resources of a sub-area.</summary>
+    /// <param name="subArea">A sub-area of the atlas.</param>
+    /// <returns>The items professions gather there, in ascending order.</returns>
+    public ReadOnlySpan<int> HarvestablesOf(SubArea subArea)
+    {
+        return Harvestables.Span.Slice(subArea.FirstHarvestable, subArea.HarvestableCount);
     }
 }
