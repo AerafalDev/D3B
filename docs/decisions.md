@@ -893,6 +893,90 @@ no TLS, every byte in varint-length frames, every frame a protobuf message.
   - Reading a length byte by byte with no bound, as some references do: a misread length would make a reader wait for,
     and buffer, gigabytes.
 
+## D39: The obfuscated schema is a protobuf FileDescriptorSet
+
+*2026-10-27, step 3, session 3c, chosen by the owner*
+
+A client build's obfuscated schema, every message and enum of its protocol under their obfuscated names, is a
+`FileDescriptorSet`, protobuf's own description of `.proto` files, serialized: `schema-<format>.binpb`, format 1.
+
+- **Where.** Beside the build's pack, in `%LOCALAPPDATA%\D3B\data\<version>\`, written by `scripts/schema.cs` (D40).
+  Derived from the client, it is never committed (D11): it ships as an asset of the release `client-<version>`, with its
+  SHA-256 beside it (D24). It is published with the build's mapping in session 3e, since nothing downloads it before;
+  until then the maintainer keeps the schemas of the builds measured.
+- **Why.** Google.Protobuf builds descriptors from it and links every type name to its type, so a schema that does not
+  hold together is never written. Session 3d compares it with the descriptors of the readable `.proto` files, which
+  Grpc.Tools compiles: one model on both sides, the one D15 planned for the translation's tables. protoc reads it too.
+- **Files.** One per protocol assembly, `connection.proto` and `game.proto`, in proto3 and without a package, since the
+  client's types have no namespace; `google/protobuf/any.proto`, which `game.proto` imports, is in the set. A map is
+  the entry message protobuf describes it with, a proto3 `optional` field has the synthetic oneof protoc gives it.
+- **Provenance.** A descriptor set has no place for it: the directory and the release name the build. The schema is
+  deterministic, two runs on one client giving the same bytes, so writing it again checks it. A change in what the tool
+  writes for a client whose schema is published bumps the format, as for packs (D33).
+- **To read it**, `--proto <dir>` also writes it as `.proto` text, which protoc compiles back to a descriptor equal to
+  the schema, field by field (measured); it stays on the machine, never committed.
+- **Rejected.**
+  - A JSON document of our own: readable and diffable, with its provenance inside, but a copy of `descriptor.proto`, and
+    session 3d would convert one side to compare it with the other.
+  - The `.proto` text as the artifact: the most readable, but .NET has no `.proto` parser, so every reader would run
+    protoc.
+  - An entry of a D3B pack, its provenance in `PackInfo`: a model of our own again, and the pack's format is the data's.
+
+## D40: The schema is read from the client's metadata, and its encodings from the machine code
+
+*2026-10-27, step 3, session 3c*
+
+`scripts/schema.cs` opens the client's `GameAssembly.dll` and `global-metadata.dat` with Cpp2IL.Core
+2022.1.0-pre-release.21, in process (D15), and reads `Ankama.Dofus.Protocol.Connection` and
+`Ankama.Dofus.Protocol.Game`, measured in [client.md](client.md#protocol-code).
+
+- **Metadata version 39**, the session's first risk: Cpp2IL reads it, the client opening in about 5 s. Pre-release.21,
+  of 2026-02-22, is still Cpp2IL's latest. JondoEmu's notes record that Il2CppDumper refuses version 39; not measured
+  here.
+- **The structure, from the metadata.** Protobuf's C# generator gives every message the same members, whose shape
+  the obfuscation keeps:
+  - a message is a type implementing `IBufferMessage`;
+  - its `int` constants are its field numbers, declared in field order: the n-th is the number of the n-th field
+    property, a property with a setter, or a `RepeatedField` or `MapField`, whose type gives the field's C# type;
+  - a getter-only `bool` property right after a field's says whether the field is set: a proto3 `optional` field, or a
+    scalar member of a oneof;
+  - a oneof is a getter-only property typed by an enum nested in the message, whose values but zero are its fields'
+    numbers;
+  - the message's own messages and enums are in a static class nested in it, protobuf's `Types`.
+
+  Any other member fails the reading: a member the generator does not write means a message this reading would
+  misread.
+- **The encodings, from the machine code.** A C# `int` may be an `int32`, a `sint32` or a `sfixed32`, which differ on
+  the wire. Cpp2IL lifts each message's `InternalWriteTo` and static constructor to its instruction-set-independent
+  language, and the tool follows the constants loaded into the argument registers: a field of one value is written as
+  `WriteRawTag(tag)` then `Write<Type>`, and a list of scalars through a codec, `FieldCodec.For<Type>(tag)`. The tag
+  holds the field's number and wire type, so an encoding goes to its field by number, never by order. Every field of
+  one value must be written once, by a method fitting its C# type, and every codec must belong to a field, which also
+  checks how numbers pair with properties.
+  - A map's key and value codecs have the same tags in every map, so one is matched by its C# type, and one with an
+    encoding other than that type's default fails the reading: which map is its could not be told.
+  - Codecs of messages and enums are generic, and Cpp2IL leaves their calls unresolved: the metadata types those lists,
+    and a list of enums is taken as packed, proto3's default; a reader accepts either.
+  - Registers are followed only while their value holds on every path: a call forgets those it may change, and an
+    instruction a jump lands on forgets them all.
+- **Measured** on 3.7.12.12: every field read agrees with its code; the protocol uses only `int32`, `int64`, `uint32`,
+  `bool`, `string`, `float`, enums and messages, and packs every list of scalars. The schema, 170,287 bytes, is written
+  in about 6 s, the same bytes on two runs.
+- **Checked against the captures.** `scripts/capture.cs --schema <file>` finds, among the schema's messages, the one
+  typing the most fields of every frame of the captures, both sides, and with `--frames` names every field. On session
+  3b's three captures, one message types all 356 fields of the 8 frames, the next at most 8: the connection's root,
+  whose fields 1 and 2 are the client's and the server's messages, and theirs 3 and 4 the two exchanges
+  ([client.md](client.md#the-connection-phase-read-by-the-schema)).
+- **Rejected.**
+  - Writing the assemblies to disk and reading them with `MetadataLoadContext`, as JondoEmu does: 69 MB written per
+    build, for the metadata Cpp2IL's contexts give in process.
+  - The types of the C# properties alone, as JondoEmu's `.proto` writer reads them: an `int32` and a `sint32` look the
+    same there.
+  - The client's 102 original files: a message's static `Descriptor` getter names its file's class and its index, but
+    enums have no such getter, and 69 top-level enums could not be placed without guessing. One file per assembly.
+  - The client's own serialized descriptors, which would give its schema whole: they are not in clear in the metadata,
+    and finding where they are, perhaps encrypted with the obfuscator's strings, is a study of its own. Not done.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

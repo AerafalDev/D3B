@@ -5,15 +5,16 @@ in [roadmap.md](roadmap.md). Built so far: the solution, the module and plugin m
 builds its modules, starts and stops (step 1); the data pack format in `D3B.Data`, the tools that inspect the client,
 extract its maps, world graph and game tables with the texts they name, and publish a build's pack, and the data module,
 whose pack the host finds or downloads before it starts (step 2); the network module, whose relay takes each client's
-connection phase through D3B, with its framing measured and its captures (step 3, session 3b). Everything else below is
-the target.
+connection phase through D3B, with its framing measured and its captures (step 3, session 3b); the tool writing each
+build's obfuscated protocol schema, read from the client's code (step 3, session 3c). Everything else below is the
+target.
 
 ## Overview
 
 ```text
 Official client (Unity)                 scripts/ (file-based apps, D10)              release artifacts, per client build
 Dofus_Data/StreamingAssets/** ────────► extraction: Unity readers ───────────────►  data pack (MemoryPack + zstd)
-GameAssembly.dll + metadata   ────────► mapping: Cpp2IL, IDA tracer, matching ───►  protocol mapping
+GameAssembly.dll + metadata   ────────► mapping: Cpp2IL schema, IDA, matching ───►  schema, protocol mapping
                                                                                              │ fetched and loaded by
                                                                                              ▼
 D3B.App (Avalonia, ShadUI) ◄── gRPC on a named pipe (D7) ──► D3B.Host (headless: Generic Host, Kestrel)
@@ -106,6 +107,10 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   `SequenceReader<byte>` without copying; a benchmark in `benchmarks/D3B.Network.Benchmarks` measures it. The game
   connection's envelope carries an `Any` whose type URL is the obfuscated message name, prefixed with
   `type.ankama.com`, as the references read it; the connection phase has none.
+- The obfuscated schema, built in session 3c (D39, D40): `scripts/schema.cs` reads the installed build's protocol from
+  its IL2CPP code with Cpp2IL, its structure from the metadata and the encoding of every field from the machine code,
+  and writes it as a `FileDescriptorSet` beside the build's pack, `schema-1.binpb`. `scripts/capture.cs --schema` reads
+  captures with it, field by field. Session 3d matches it with the readable `.proto` files.
 - The per-build translation turns obfuscated names and field numbers into the clean classes and back. An unmapped type
   or field is an error, logged with the raw bytes. Its exact form is Q2.
 - The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).
@@ -141,9 +146,10 @@ Built at step 2 (D24 to D33):
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
   sub-areas listing it.
-- Packs, and from step 3 mappings, are assets of this repository's releases, one release per client build, tagged
-  `client-<version>`, each asset with its SHA-256 beside it, never committed (D10, D11, D24). `ClientRelease` names them;
-  `scripts/release.cs` publishes a build's pack, never replacing one already published (D33).
+- Packs, and from step 3 schemas and mappings, are assets of this repository's releases, one release per client
+  build, tagged `client-<version>`, each asset with its SHA-256 beside it, never committed (D10, D11, D24, D39).
+  `ClientRelease` names them; `scripts/release.cs` publishes a build's pack, never replacing one already published
+  (D33).
 - The data module (`DataModule`, in `D3B.Bot`, D31) registers, as singletons every bot shares, the installed
   `ClientBuild`, the `PackSource` that finds its pack, the `ReleaseDownloader`, the `GamePack`, opened once and closed
   with the host, and the stores reading it: `GameTexts`, `GameMaps`, `GameWorld` and `GameTables`. The configuration
