@@ -3,9 +3,9 @@
 What the installed official client holds that D3B uses, measured for the steps that use it. It holds counts, formats
 and layouts, never content. Measured on 2026-10-27 with `scripts/inspect.cs` (D26) and the extraction tool's checks, on
 client 3.7.12.12, built on 2026-10-19, installed in `%LOCALAPPDATA%\Ankama\Dofus-dofus3`; how it connects was measured
-on running clients, then on its bytes through D3B's relay ([Connection](#connection)). Dofus Remastered's
-`docs/client.md`, in `vendor/Dofus`, measures much more of the same client for drawing it: maps' graphics, effects,
-shaders, characters.
+on running clients, then on its bytes through D3B's relay ([Connection](#connection)), and its protocol's code with
+`scripts/schema.cs` ([Protocol code](#protocol-code)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
+measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
 ## Measuring again
 
@@ -24,10 +24,13 @@ dotnet run --file scripts/extract.cs -- --output <dir> --force        # extracts
 dotnet run --project src/D3B.Host -- --Network:Captures:Enabled true  # relays clients started from the launcher, and records them
 dotnet run --file scripts/client.cs                                   # which configuration the client reads, Ankama's or D3B's
 dotnet run --file scripts/capture.cs -- --frames                      # the captures' reads, frames and protobuf shapes, no value
+dotnet run --file scripts/schema.cs -- --proto <dir>                  # the protocol's obfuscated schema, counted, and as .proto text
+dotnet run --file scripts/capture.cs -- --frames --schema <schema>    # which message of the schema reads the captures, field by field
 ```
 
 `summary` reads headers only and takes seconds. The extraction tool fails when the client contradicts what this
-document says D3B relies on (D27): its checks are the measurements to repeat at each client update.
+document says D3B relies on (D27), and so does the schema tool (D40): their checks are the measurements to repeat at
+each client update.
 
 ## Installation
 
@@ -386,8 +389,8 @@ obfuscated. Each client took 2.0 to 2.1 GiB of working set.
 
 From the names in the metadata, with no decompilation:
 
-- `Ankama.Dofus.Protocol.Connection` and `Ankama.Dofus.Protocol.Game` hold the protocol, with their types and members
-  named by obfuscated lowercase words of four letters.
+- `Ankama.Dofus.Protocol.Connection` and `Ankama.Dofus.Protocol.Game` hold the protocol. They are assemblies, not
+  namespaces: their types have none ([Protocol code](#protocol-code)).
 - Google.Protobuf is there with its varint and delimited-message helpers, and a constant `type.ankama.com`, the prefix
   of the type URLs the references read in `Any` envelopes.
 - `Ankama.SpinConnection` is Ankama's own transport over TCP: a header with a message size and type, authentication
@@ -424,3 +427,70 @@ among the ports it is sent. Session 3e measures them.
 Get-NetTCPConnection -OwningProcess (Get-Process Dofus).Id | Sort-Object OwningProcess, RemotePort  # connections
 Resolve-DnsName <connection host> -DnsOnly                                                            # addresses
 ```
+
+### The connection phase, read by the schema
+
+The same three captures, read with the schema of 3.7.12.12 (`scripts/capture.cs --frames --schema`, D40), by structure
+only. 96 of the schema's 2,213 messages, `google.protobuf.Any` included, read all 8 frames, since a field typed as
+text or bytes reads any length-delimited value; one types all 356 of their fields, as many as their shapes show, and
+the next 8. That one is the connection's root:
+
+- **The root**, a message of the connection assembly: one oneof of three messages, field 1 the client's, field 2 the
+  server's, field 3 one the captures do not hold.
+- **Each side's message**: a string, field 1, the one-byte text of every frame, then a oneof of messages, fields 2 to 8
+  for the client and 2 to 7 for the server. The exchange is the oneof's field, 3 then 4 on both sides, as on the wire.
+
+| Exchange | Client | Server |
+| --- | --- | --- |
+| First, field 3 | Three strings, of 64, 36 and 9 bytes, one in a nested message beside an empty one | One message: an `int64`, strings of 8, 4 and 25 bytes, an empty message, and a message holding two lists of messages, 14 and 6 entries, of enums, `int32` and strings |
+| Second, field 4 | One `int32` | One message: two strings of 32 bytes and a packed list of `int32`, 4 bytes |
+
+The server's second answer has the shape the references give the game server's address, a ticket, a host and its
+ports (D34); session 3e decodes it.
+
+## Protocol code
+
+What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it
+with Cpp2IL.Core 2022.1.0-pre-release.21.
+
+- **Opening.** Cpp2IL reads the metadata, version 39, and finds 151 assemblies: about 5 s, then 1.3 s to read the
+  protocol, its machine code lifted.
+- **Two assemblies** hold the protocol: `Ankama.Dofus.Protocol.Connection`, 115 types, and `Ankama.Dofus.Protocol.Game`,
+  5,610. Their types have no namespace and are named by three lowercase letters; their members, enum values included,
+  by four. Names the obfuscation keeps: the methods implementing an interface, such as `WriteTo`, `MergeFrom`,
+  `CalculateSize`, `Clone` and `Equals`. No top-level message or enum of one assembly has the name of one of the other,
+  so the schema's two files share one empty package.
+
+| | Connection | Game |
+| --- | ---: | ---: |
+| Messages, nested ones among them | 37, 10 | 2,175, 580 |
+| Enums | 9 | 423 |
+| Fields | 92 | 6,302 |
+| Lists | 8 | 770 |
+| Maps | 0 | 201 |
+| Fields in oneofs, oneofs | 29, 10 | 349, 109 |
+| proto3 `optional` fields | 3 | 401 |
+| Classes holding an original file's descriptor | 1 | 101 |
+
+- **Types.** Counting a list's or a map's values and a map's keys: 1,958 `int32`, 1,402 messages, 922 `int64`, 883
+  `string`, 754 `bool`, 644 enums, 22 `float`, 10 `uint32`. No `sint`, `fixed`, `double` or `bytes`, and every list of
+  scalars packed. `google.protobuf.Any` is the only well-known type, in 3 fields of the game assembly. Every enum is an
+  `int`, starts with zero, and has no alias nor negative value.
+- **The generated code.** Every message implements `IMessage<T>`, `IBufferMessage`, `IEquatable<T>` and
+  `IDeepCloneable<T>`. It declares its parser, its unknown fields, then for each field a constant holding its number
+  and, outside a oneof, the field's storage, a list or a map's codec before it. Then come the parser and two descriptor
+  properties, one property per field, a getter-only `bool` after the property of each of the 443 fields that say
+  whether they are set (404 `optional` fields, 39 scalar members of oneofs), and one property per oneof, 119, typed by
+  an enum nested in the message whose values but zero are its fields' numbers. A message's own messages and enums are
+  in a static class nested in it, 632 in all; messages also nest the compiler's `<>c` class. In all 2,212 messages,
+  the number constants and the field properties pair one to one.
+- **The machine code agrees.** Each of the 5,415 fields of one value is written once by `InternalWriteTo`, after a
+  `WriteRawTag` holding its number, with a method fitting its C# type; each list of scalars and map key or scalar value
+  has its `FieldCodec` in the static constructor, with its number in its tag.
+- **The original files.** 102 static classes each hold a `FileDescriptor`, one per `.proto` file the protocol was
+  compiled from. A message's static `Descriptor` getter reads its file's class and its index there; enums have no such
+  getter. The descriptors' bytes are not in clear: the game assembly's `<PrivateImplementationDetails>` holds an array
+  of 242,769 bytes beside a class whose methods are named `a`, `a_` and `b`, which may be the obfuscator's encrypted
+  strings; not studied.
+- **The schema of 3.7.12.12.** 170,287 bytes, written in about 6 s, the same bytes on two runs. protoc compiles its
+  `.proto` text to a descriptor equal to it on all 2,212 messages and 6,394 fields.

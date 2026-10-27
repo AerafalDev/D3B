@@ -1,16 +1,20 @@
 #!/usr/bin/env dotnet
+#:package Google.Protobuf
 #:package System.CommandLine
 #:project ../src/D3B.Network/D3B.Network.csproj
 #:include capture/CaptureCommand.cs
 #:include capture/ProtobufShape.cs
+#:include capture/SchemaMatch.cs
 
 using System.Globalization;
 using D3B.Scripts.Capture;
 
 // Describes the captures the host records of relayed connections (D37) by their structure: reads, frames and their
-// sizes, whether the bytes are TLS, and with --frames the protobuf shape of each frame. Never a value: a capture holds an
-// account's login ticket, and what this tool prints may go into docs/client.md.
-// Usage: dotnet run --file scripts/capture.cs -- [<file or directory>...] [--frames]; --help describes the options.
+// sizes, whether the bytes are TLS, and with --frames the protobuf shape of each frame. With --schema, a schema
+// scripts/schema.cs wrote, it says which of the schema's messages read every frame, and names each field. Never a value:
+// a capture holds an account's login ticket, and what this tool prints may go into docs/client.md.
+// Usage: dotnet run --file scripts/capture.cs -- [<file or directory>...] [--frames] [--schema <file>]; --help describes
+// the options.
 // Exit code: 0 when every capture was read; 1 when one could not be; 2 when there is none.
 
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;

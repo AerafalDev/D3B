@@ -75,6 +75,8 @@ dotnet run --file scripts/extract.cs       # writes the installed client's pack 
 dotnet run --file scripts/release.cs       # dry run of publishing that pack to release client-<version>; --publish does it (D33)
 dotnet run --file scripts/client.cs        # which configuration the client reads, Ankama's or D3B's; restore gives it Ankama's back after a crash
 dotnet run --file scripts/capture.cs       # describes the captures by structure, never content; --frames shows each frame's protobuf shape
+                                           # --schema <file> reads them with a schema, field by field
+dotnet run --file scripts/schema.cs        # writes the installed build's obfuscated protocol schema beside its pack; --proto <dir> as .proto text
 dotnet run -c Release --project benchmarks/D3B.Network.Benchmarks   # BenchmarkDotNet; --filter '*' runs them all
 ```
 
