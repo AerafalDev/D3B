@@ -11,10 +11,12 @@
     <File Path="scripts/extract.cs" />
     <File Path="scripts/inspect.cs" />
     <File Path="scripts/release.cs" />
+    <File Path="scripts/schema.cs" />
   </Folder>
   <Folder Name="/scripts/capture/">
     <File Path="scripts/capture/CaptureCommand.cs" />
     <File Path="scripts/capture/ProtobufShape.cs" />
+    <File Path="scripts/capture/SchemaMatch.cs" />
   </Folder>
   <Folder Name="/scripts/client/">
     <File Path="scripts/client/ClientCommand.cs" />
@@ -63,6 +65,24 @@
   <Folder Name="/scripts/release/">
     <File Path="scripts/release/GitHubCli.cs" />
     <File Path="scripts/release/ReleaseCommand.cs" />
+  </Folder>
+  <Folder Name="/scripts/schema/">
+    <File Path="scripts/schema/ClientCode.cs" />
+    <File Path="scripts/schema/FieldEncoding.cs" />
+    <File Path="scripts/schema/FieldKind.cs" />
+    <File Path="scripts/schema/IsilCall.cs" />
+    <File Path="scripts/schema/IsilCalls.cs" />
+    <File Path="scripts/schema/LayoutField.cs" />
+    <File Path="scripts/schema/LayoutOneof.cs" />
+    <File Path="scripts/schema/MessageLayout.cs" />
+    <File Path="scripts/schema/ProtocolReader.cs" />
+    <File Path="scripts/schema/ProtocolTypes.cs" />
+    <File Path="scripts/schema/ProtoText.cs" />
+    <File Path="scripts/schema/SchemaCommand.cs" />
+    <File Path="scripts/schema/SchemaFile.cs" />
+    <File Path="scripts/schema/SchemaSummary.cs" />
+    <File Path="scripts/schema/SilentLogWriter.cs" />
+    <File Path="scripts/schema/WireEncodings.cs" />
   </Folder>
   <Folder Name="/scripts/unity/">
     <File Path="scripts/unity/ClientInstall.cs" />

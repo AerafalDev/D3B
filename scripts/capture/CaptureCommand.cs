@@ -3,6 +3,8 @@ using System.CommandLine;
 using D3B.Network.Captures;
 using D3B.Network.Framing;
 using D3B.Network.Relay;
+using Google.Protobuf;
+using Google.Protobuf.Reflection;
 
 namespace D3B.Scripts.Capture;
 
@@ -20,18 +22,23 @@ internal static class CaptureCommand
         {
             Description = "Also shows the shape of every frame: protobuf field numbers, wire types and lengths, never values.",
         };
+        var schema = new Option<FileInfo?>("--schema")
+        {
+            Description = @"A schema scripts/schema.cs wrote, such as %LOCALAPPDATA%\D3B\data\<version>\schema-1.binpb: says which of its messages read every frame, and with --frames the type and name of every field there.",
+        };
         var command = new RootCommand("Describes D3B's captures of relayed connections by their structure, never their content (D37).")
         {
             paths,
             frames,
+            schema,
         };
 
-        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(frames)));
+        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(frames), result.GetValue(schema)?.FullName));
 
         return command;
     }
 
-    private static int Run(string[] paths, bool frames)
+    private static int Run(string[] paths, bool frames, string? schemaPath)
     {
         var files = (paths.Length is 0 ? [RelaySettings.DefaultCapturesDirectory] : paths)
             .SelectMany(path => Directory.Exists(path) ? Directory.GetFiles(path, "*" + CaptureWriter.FileExtension).Order(StringComparer.Ordinal).ToArray() : [path])
@@ -44,13 +51,32 @@ internal static class CaptureCommand
             return 2;
         }
 
+        SchemaMatch? schema = null;
+        MessageDescriptor? root = null;
+
+        if (schemaPath is not null)
+        {
+            try
+            {
+                schema = SchemaMatch.Load(schemaPath);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidProtocolBufferException or DescriptorValidationException)
+            {
+                Console.Error.WriteLine($"{schemaPath}: {exception.Message}");
+
+                return 1;
+            }
+
+            root = Root(Console.Out, schema, schemaPath, files);
+        }
+
         var exitCode = 0;
 
         foreach (var file in files)
         {
             try
             {
-                Describe(Console.Out, file, frames);
+                Describe(Console.Out, file, frames, schema, root);
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
@@ -62,7 +88,73 @@ internal static class CaptureCommand
         return exitCode;
     }
 
-    private static void Describe(TextWriter output, string path, bool frames)
+    private static MessageDescriptor? Root(TextWriter output, SchemaMatch schema, string schemaPath, List<string> files)
+    {
+        var frames = new List<byte[]>();
+
+        foreach (var file in files)
+        {
+            try
+            {
+                frames.AddRange(FramesOf(file));
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or FrameFormatException)
+            {
+                // Described with its error below; the frames of the other captures still say what reads them.
+            }
+        }
+
+        var readers = new List<(MessageDescriptor Message, int Typed)>();
+
+        foreach (var message in schema.Messages)
+        {
+            var typed = 0;
+
+            foreach (var frame in frames)
+            {
+                if (SchemaMatch.Typed(message, frame) is not int count)
+                {
+                    typed = -1;
+
+                    break;
+                }
+
+                typed += count;
+            }
+
+            if (typed >= 0)
+                readers.Add((message, typed));
+        }
+
+        readers.Sort((left, right) => right.Typed.CompareTo(left.Typed));
+
+        var shown = frames.Sum(frame => ProtobufShape.CountFields(frame));
+        var best = readers.Count > 0 ? readers[0] : default;
+        var unique = readers.Count is 1 || (readers.Count > 1 && readers[1].Typed < best.Typed);
+
+        output.Write($"{Path.GetFileName(schemaPath)}: {schema.Messages.Count} messages, {readers.Count} of which read all {frames.Count} frames of the captures, both sides");
+        output.WriteLine(readers.Count is 0
+            ? string.Empty
+            : $"; .{best.Message.FullName} types the most fields, {best.Typed}, where their shapes show {shown}"
+                + (readers.Count > 1 ? $"; the next, .{readers[1].Message.FullName}, types {readers[1].Typed}" : string.Empty));
+
+        return unique ? best.Message : null;
+    }
+
+    private static IEnumerable<byte[]> FramesOf(string path)
+    {
+        using var reader = CaptureReader.Open(path);
+
+        var records = reader.ReadAll().ToList();
+
+        foreach (var kind in new[] { CaptureRecordKind.FromClient, CaptureRecordKind.FromServer })
+        {
+            foreach (var frame in Frames([.. records.Where(record => record.Kind == kind).SelectMany(record => record.Data.ToArray())]))
+                yield return frame;
+        }
+    }
+
+    private static void Describe(TextWriter output, string path, bool frames, SchemaMatch? schema, MessageDescriptor? root)
     {
         using var reader = CaptureReader.Open(path);
 
@@ -75,10 +167,10 @@ internal static class CaptureCommand
         output.WriteLine($"  order: {string.Join(", ", records.Take(16).Select(Name))}{(records.Count > 16 ? ", ..." : string.Empty)}");
 
         foreach (var (kind, side) in new[] { (CaptureRecordKind.FromClient, "client"), (CaptureRecordKind.FromServer, "server") })
-            DescribeSide(output, records.Where(record => record.Kind == kind).ToList(), side, frames);
+            DescribeSide(output, records.Where(record => record.Kind == kind).ToList(), side, frames, schema, root);
     }
 
-    private static void DescribeSide(TextWriter output, List<CaptureRecord> reads, string side, bool frames)
+    private static void DescribeSide(TextWriter output, List<CaptureRecord> reads, string side, bool frames, SchemaMatch? schema, MessageDescriptor? root)
     {
         var bytes = reads.SelectMany(read => read.Data.ToArray()).ToArray();
 
@@ -108,8 +200,11 @@ internal static class CaptureCommand
 
                 if (frames)
                 {
-                    shapes.WriteLine($"    frame {sizes.Count}, {frame.Length} bytes:");
-                    ProtobufShape.Write(shapes, frame.ToArray(), 3);
+                    var data = frame.ToArray();
+                    var (frameReader, reading) = schema is null ? (null, string.Empty) : ReaderOf(schema, root, data);
+
+                    shapes.WriteLine($"    frame {sizes.Count}, {frame.Length} bytes{reading}:");
+                    ProtobufShape.Write(shapes, data, 3, frameReader);
                 }
             }
         }
@@ -123,10 +218,23 @@ internal static class CaptureCommand
         var offset = 0L;
         var aligned = reads.Count(read => ends.Contains(offset += read.Data.Length));
         var messages = sizes.Count is 0 ? 0 : Frames(bytes).Count(frame => ProtobufShape.IsMessage(frame));
+        var read = root is null ? string.Empty : $", {Frames(bytes).Count(frame => SchemaMatch.Accepts(root, frame))} read as .{root.FullName}";
 
         output.WriteLine($"; {sizes.Count} varint frames{(sizes.Count > 0 ? $" of {sizes.Min()} to {sizes.Max()} bytes" : string.Empty)}, "
-            + $"{bytes.Length - reader.Consumed} bytes left over, {messages} parse as protobuf, {aligned} of {reads.Count} reads end on a frame");
+            + $"{bytes.Length - reader.Consumed} bytes left over, {messages} parse as protobuf{read}, {aligned} of {reads.Count} reads end on a frame");
         output.Write(shapes.ToString());
+    }
+
+    private static (MessageDescriptor? Reader, string Reading) ReaderOf(SchemaMatch schema, MessageDescriptor? root, byte[] frame)
+    {
+        if (root is not null && SchemaMatch.Accepts(root, frame))
+            return (root, $", read as .{root.FullName}");
+
+        var readers = schema.Accepting(frame);
+
+        return readers.Count is 1
+            ? (readers[0], $", read as .{readers[0].FullName}, the only message of the schema that reads it")
+            : (null, $", read by {readers.Count} messages of the schema");
     }
 
     private static List<byte[]> Frames(byte[] bytes)
