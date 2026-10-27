@@ -23,6 +23,12 @@ internal sealed class DataSettings
 
     public string? Token { get; init; }
 
+    /// <summary>Gets the installed client's directory the configuration names, or where the launcher installs it.</summary>
+    public static string ClientDirectoryIn(IConfiguration configuration)
+    {
+        return PathOr(configuration[ClientDirectoryKey], DefaultClientDirectory);
+    }
+
     public static DataSettings Read(IConfiguration configuration)
     {
         var repository = configuration[RepositoryKey] ?? ClientRelease.DefaultRepository;
@@ -33,7 +39,7 @@ internal sealed class DataSettings
 
         return new DataSettings
         {
-            ClientDirectory = PathOr(configuration[ClientDirectoryKey], DefaultClientDirectory),
+            ClientDirectory = ClientDirectoryIn(configuration),
             PacksDirectory = PathOr(configuration[PacksDirectoryKey], PackLocations.DefaultRoot),
             Repository = repository,
             Token = string.IsNullOrWhiteSpace(token) ? null : token.Trim(),

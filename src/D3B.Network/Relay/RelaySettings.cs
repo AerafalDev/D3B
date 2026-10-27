@@ -1,0 +1,112 @@
+using System.Globalization;
+using System.Net;
+using Microsoft.Extensions.Configuration;
+
+namespace D3B.Network.Relay;
+
+/// <summary>Where the relay listens, where it keeps the client's configuration, and whether it records captures (D35 to D37).</summary>
+public sealed class RelaySettings
+{
+    /// <summary>The setting naming D3B's loopback address.</summary>
+    public const string AddressKey = "Network:Address";
+
+    /// <summary>The setting listing the ports D3B listens on there.</summary>
+    public const string PortsKey = "Network:Ports";
+
+    /// <summary>The setting naming the directory where D3B keeps the configuration it gives the client.</summary>
+    public const string RedirectDirectoryKey = "Network:Redirect:Directory";
+
+    /// <summary>The setting that turns the recording of captures on.</summary>
+    public const string CapturesEnabledKey = "Network:Captures:Enabled";
+
+    /// <summary>The setting naming the directory captures are written to.</summary>
+    public const string CapturesDirectoryKey = "Network:Captures:Directory";
+
+    /// <summary>Gets D3B's default loopback address, 127.0.13.59, whose last two bytes read <c>0x0D3B</c>.</summary>
+    /// <remarks>Not 127.0.0.1, so that D3B takes no port another program listens on there (D34).</remarks>
+    public static IPAddress DefaultAddress { get; } = new([127, 0, 13, 59]);
+
+    /// <summary>Gets the ports the client's configuration lists for its connection host, which the launcher chooses among.</summary>
+    public static IReadOnlyList<int> DefaultPorts { get; } = [5555, 443];
+
+    /// <summary>Gets where captures are written by default: <c>%LOCALAPPDATA%\D3B\captures</c>.</summary>
+    public static string DefaultCapturesDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "D3B", "captures");
+
+    /// <summary>Gets where D3B keeps the client's configuration by default: <c>%LOCALAPPDATA%\D3B\client</c>.</summary>
+    public static string DefaultRedirectDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "D3B", "client");
+
+    /// <summary>Gets the loopback address D3B listens on, which the configuration it gives the client names.</summary>
+    public required IPAddress Address { get; init; }
+
+    /// <summary>Gets the ports D3B listens on; the relay connects to the server on the port the client chose.</summary>
+    public required IReadOnlyList<int> Ports { get; init; }
+
+    /// <summary>Gets the installed client's directory, whose version file names the client's configuration.</summary>
+    public required string ClientDirectory { get; init; }
+
+    /// <summary>Gets where D3B keeps the configuration it gives the client, with Ankama's URL and configuration.</summary>
+    public required string RedirectDirectory { get; init; }
+
+    /// <summary>Gets the directory captures are written to, or null when none is recorded.</summary>
+    public string? CapturesDirectory { get; init; }
+
+    /// <summary>Gets how long the relay tries each address of the server.</summary>
+    public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>Gets how long a side may stay open once the other has closed, before both are cut.</summary>
+    public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Tells whether an address can be D3B's: in 127.0.0.0/8, and not 127.0.0.1 (D34).</summary>
+    /// <param name="address">The address.</param>
+    /// <returns><see langword="true"/> when it can.</returns>
+    public static bool IsRelayAddress(IPAddress address)
+    {
+        ArgumentNullException.ThrowIfNull(address);
+
+        return address.AddressFamily is System.Net.Sockets.AddressFamily.InterNetwork
+            && IPAddress.IsLoopback(address)
+            && !address.Equals(IPAddress.Loopback);
+    }
+
+    /// <summary>Reads the settings from a configuration, with the defaults for what it does not set.</summary>
+    /// <param name="configuration">The configuration.</param>
+    /// <param name="clientDirectory">The installed client's directory, as the data module finds it.</param>
+    /// <returns>The settings.</returns>
+    /// <exception cref="InvalidOperationException">A setting is not a value the relay accepts.</exception>
+    public static RelaySettings Read(IConfiguration configuration, string clientDirectory)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentException.ThrowIfNullOrWhiteSpace(clientDirectory);
+
+        var address = DefaultAddress;
+
+        if (configuration[AddressKey] is { Length: > 0 } configured && (!IPAddress.TryParse(configured, out address!) || !IsRelayAddress(address)))
+            throw new InvalidOperationException($"{AddressKey} is '{configured}', which is not an address of 127.0.0.0/8 other than 127.0.0.1.");
+
+        var ports = configuration.GetSection(PortsKey).GetChildren().Select(port => Port(port.Value)).ToList();
+        var capturesEnabled = configuration[CapturesEnabledKey] is { } enabled && bool.TryParse(enabled, out var value) && value;
+
+        return new RelaySettings
+        {
+            Address = address,
+            Ports = ports.Count is 0 ? DefaultPorts : ports,
+            ClientDirectory = clientDirectory,
+            RedirectDirectory = PathOr(configuration[RedirectDirectoryKey], DefaultRedirectDirectory),
+            CapturesDirectory = capturesEnabled ? PathOr(configuration[CapturesDirectoryKey], DefaultCapturesDirectory) : null,
+        };
+    }
+
+    private static int Port(string? value)
+    {
+        if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var port) || port > IPEndPoint.MaxPort)
+            throw new InvalidOperationException($"{PortsKey} lists '{value}', which is not a port.");
+
+        return port;
+    }
+
+    private static string PathOr(string? configured, string fallback)
+    {
+        // As for the data module, a relative path starts from the host, never from the directory it was started in.
+        return string.IsNullOrWhiteSpace(configured) ? fallback : Path.GetFullPath(configured, AppContext.BaseDirectory);
+    }
+}

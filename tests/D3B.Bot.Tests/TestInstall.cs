@@ -25,17 +25,24 @@ internal sealed class TestInstall : IDisposable
 
     public string PackPath => PackLocations.PathOf(PacksDirectory, new ClientBuild(Version, null));
 
+    public string RedirectDirectory => Path.Combine(Root, "redirect");
+
+    public string VersionFile => Path.Combine(ClientDirectory, "Dofus_Data", "StreamingAssets", "version");
+
+    /// <summary>Gets the URL of the client's configuration, a local file the version file names, as Ankama's would.</summary>
+    public string ConfigUrl => new Uri(Path.Combine(Root, "ankama-config.json")).AbsoluteUri;
+
     /// <summary>Gets the settings that point a host at them, as command-line arguments.</summary>
-    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Releases:Token", Token];
+    /// <remarks>The relay listens on a port of its own, so that tests never take 5555 or 443 from a host running beside them.</remarks>
+    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Releases:Token", Token, "--Network:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory];
 
     public TestInstall()
     {
         Root = Path.Combine(Path.GetTempPath(), "D3B.Tests", Guid.NewGuid().ToString("N"));
 
-        var streamingAssets = Path.Combine(ClientDirectory, "Dofus_Data", "StreamingAssets");
-
-        Directory.CreateDirectory(streamingAssets);
-        File.WriteAllText(Path.Combine(streamingAssets, "version"), $"Version={Version}\nBuildDate=2026-10-19T15:11:45+00:00\n");
+        Directory.CreateDirectory(Path.GetDirectoryName(VersionFile)!);
+        File.WriteAllText(VersionFile, $"Version={Version}\nBuildDate=2026-10-19T15:11:45+00:00\nConfigUrl={ConfigUrl}\n");
+        File.WriteAllText(Path.Combine(Root, "ankama-config.json"), """{"connectionHosts":["Test:localhost:5555,443"]}""");
     }
 
     /// <summary>A pack holding a text, a map, a world of one vertex and the interactives, extracted from a client version.</summary>

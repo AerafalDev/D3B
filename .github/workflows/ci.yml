@@ -50,6 +50,12 @@ jobs:
       - name: Build the release tool
         run: dotnet build scripts/release.cs
 
+      - name: Build the client tool
+        run: dotnet build scripts/client.cs
+
+      - name: Build the capture tool
+        run: dotnet build scripts/capture.cs
+
       - name: Check formatting
         run: dotnet format --verify-no-changes --no-restore
 

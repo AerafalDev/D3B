@@ -1,11 +1,23 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/D3B.Network.Benchmarks/D3B.Network.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/D3B.Samples.Hello/D3B.Samples.Hello.csproj" />
   </Folder>
   <Folder Name="/scripts/">
+    <File Path="scripts/capture.cs" />
+    <File Path="scripts/client.cs" />
     <File Path="scripts/extract.cs" />
     <File Path="scripts/inspect.cs" />
     <File Path="scripts/release.cs" />
+  </Folder>
+  <Folder Name="/scripts/capture/">
+    <File Path="scripts/capture/CaptureCommand.cs" />
+    <File Path="scripts/capture/ProtobufShape.cs" />
+  </Folder>
+  <Folder Name="/scripts/client/">
+    <File Path="scripts/client/ClientCommand.cs" />
   </Folder>
   <Folder Name="/scripts/extract/">
     <File Path="scripts/extract/BanksExtractor.cs" />
@@ -90,5 +102,6 @@
     <Project Path="tests/D3B.Core.Tests/D3B.Core.Tests.csproj" />
     <Project Path="tests/D3B.Data.Tests/D3B.Data.Tests.csproj" />
     <Project Path="tests/D3B.Host.Tests/D3B.Host.Tests.csproj" />
+    <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
   </Folder>
 </Solution>
