@@ -3,7 +3,8 @@
 Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is
 in [roadmap.md](roadmap.md). Built so far: the solution, the module and plugin model in `D3B.Core`, and a host that
 builds its modules, starts and stops (step 1); the data pack format in `D3B.Data`, and the tools that inspect the client
-and extract its texts, maps and world graph (step 2, sessions 2a and 2b). Everything else below is the target.
+and extract its maps, world graph and game tables with the texts they name (step 2, sessions 2a to 2c). Everything else
+below is the target.
 
 ## Overview
 
@@ -92,7 +93,7 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 ## Game data
 
-Built in sessions 2a and 2b (D24 to D28); sessions 2c and 2d complete it:
+Built in sessions 2a to 2c (D24 to D30); session 2d completes it:
 
 - `scripts/inspect.cs` describes the installed client, and `scripts/extract.cs` writes the pack of its build. Both read
   the client with the Unity readers copied from Dofus Remastered into `scripts/unity/` (AssetsTools.NET), the
@@ -105,14 +106,18 @@ Built in sessions 2a and 2b (D24 to D28); sessions 2c and 2d complete it:
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 2 holds (D27):
-  - the numbered texts in French and English (`GameTexts`);
+- A pack of format 3 holds (D27, D29):
   - every map as its own entry, its neighbours, cells and interactive elements (`MapData`), read through a
     `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
-    of map positions, sub-areas, areas and zaaps (`WorldAtlas`), both read once by `GameWorld`.
-- Session 2c adds interactives, harvestable resources, items, professions and banks, and keeps only the texts they
-  name.
+    of map positions, sub-areas with their resources, areas and zaaps (`WorldAtlas`), both read once by `GameWorld`;
+  - the game tables a harvesting and banking bot uses: items and their types (`ItemCatalog`), jobs and skills
+    (`JobCatalog`), interactives (`InteractiveCatalog`), banks and bankers with the replies that open the bank
+    (`BankCatalog`), each read once by `GameTables`;
+  - in French and English, the texts these name (`GameTexts`).
+- Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
+  does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
+  sub-areas listing it.
 - Packs and mappings are assets of this repository's releases, one release per client build, never committed (D10,
   D11, D24). The host will use a local pack first, else download the release's and check its SHA-256, and will not
   start without one (session 2d).

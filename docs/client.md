@@ -16,9 +16,10 @@ dotnet run --file scripts/inspect.cs -- texts                         # the text
 dotnet run --file scripts/inspect.cs -- types Map/Data --references   # the map layouts and their reference classes
 dotnet run --file scripts/inspect.cs -- objects skillsdataroot        # the objects of the matching bundles
 dotnet run --file scripts/inspect.cs -- dump skillsdataroot SkillsDataRoot --depth 5 --items 2
+dotnet run --file scripts/inspect.cs -- layout itemsdataroot ItemsDataRoot --references  # record classes
 dotnet run --file scripts/inspect.cs -- layout worldassets_assets_all PathFindingData
 dotnet run --file scripts/inspect.cs -- layout Map/Data MapMetadata --references
-dotnet run --file scripts/extract.cs -- --output <dir> --force        # extracts, counting maps and graph, and checks them
+dotnet run --file scripts/extract.cs -- --output <dir> --force        # extracts, counting maps, graph and tables, and checks them
 ```
 
 `summary` reads headers only and takes seconds. The extraction tool fails when the client contradicts what this
@@ -102,6 +103,9 @@ In `ClientMapData` the identifier is `<interactiveId>k__BackingField`, a propert
 element, whatever its class, and names fields by their property, so a layout serializing `interactiveId` as a plain
 field reads the same. 65% of interactive elements stand on cells that cannot be walked on.
 
+An element names its graphic, `gfxId`, but not its kind: which interactive of `InteractivesDataRoot` it is, and which
+skills it offers, the server tells for each element of the map a character enters ([Jobs and skills](#jobs-and-skills)).
+
 ## World graph
 
 `worldassets_assets_all.bundle` holds a `Core.PathFinding.WorldPathfinding.PathFindingData` named `world-graph`,
@@ -160,14 +164,21 @@ Tables the first milestone needs, with the fields of their records:
 | `World.SubAreasDataRoot` | 567 | `id`, `nameId`, `areaId`, `mapIds`, `bounds`, `shape`, `customWorldMapId`, `packId`, `level`, `isConquestVillage`, `basicAccountAllowed`, `displayOnWorldMap`, `mountAutoTripAllowed`, `psiAllowed`, `monsters`, `entranceMapIds`, `exitMapIds`, `capturable`, `achievements`, `exploreAchievementId`, `harvestables`, `associatedZaapMapId`, `neighbors`, `dungeonId` |
 | `World.AreasDataRoot` | 69 | `id`, `nameId`, `superAreaId`, `containHouses`, `containPaddocks`, `bounds`, `worldmapId`, `subareaIds`, `hasWorldMap`, `hasSuggestion` |
 | `World.SuperAreasDataRoot` | 10 | `id`, `nameId`, `worldmapId`, `hasWorldMap` |
+| `World.HintsDataRoot` | 834 | `id`, `categoryId`, `gfx`, `nameId`, `mapId`, `realMapId`, `x`, `y`, `outdoor`, `subareaId`, `worldMapId`, `level`: the world map's hints |
+| `World.HintCategoriesDataRoot` | 12 | `id`, `nameId` |
+| `Item.ItemsDataRoot` | 21,554 | `m_flags`, `id`, `nameId`, `typeId`, `descriptionId`, `iconId`, `level`, `realWeight`, `price`, `itemSetId`, `criterions`, `criterionsTarget`, `appearanceId`, `isColorable`, `recipeSlots`, `recipeIds`, `dropMonsterIds`, `dropTemporisMonsterIds`, `possibleEffects`, `evolutiveEffectIds`, `favoriteSubAreas`, `favoriteSubAreasBonus`, `craftXpRatio`, `craftVisibleCriterion`, `craftConditionalCriterion`, `craftFeasibleCriterion`, `visibilityCriterion`, `recyclingNuggets`, `favoriteRecyclingSubareas`, `resourcesBySubarea`, `importantNoticeId`; weapons add `criticalHitBonus`, `minRange`, `criticalHitProbability`, `range`, `castInLine`, `apCost`, `castInDiagonal`, `castTestLos`, `maxCastPerTurn` |
+| `Item.ItemTypesDataRoot` | 236 | `id`, `nameId`, `superTypeId`, `categoryId`, `isInEncyclopedia`, `rawZone`, `craftXpRatio`, `evolutiveTypeId` |
+| `Item.ItemSuperTypesDataRoot` | 25 | `id`, `possiblePositions` |
 | `Interactive.InteractivesDataRoot` | 446 | `id`, `nameId` |
+| `Interactive.SkillNamesDataRoot` | 364 | `id`, `nameId` |
 | `Job.JobsDataRoot` | 23 | `id`, `nameId`, `iconId`, `hasLegendaryCraft` |
 | `Job.SkillsDataRoot` | 373 | `id`, `nameId`, `parentJobId`, `isForgemagus`, `modifiableItemTypeIds`, `gatheredRessourceItem`, `craftableItemIds`, `range`, `useRangeInClient`, `useAnimation`, `cursor`, `elementActionId`, `availableInHouse`, `clientDisplay`, `levelMin`, `allowMarking` |
+| `Npc.NpcsDataRoot` | 6,472 | `id`, `nameId`, `dialogMessages`, `dialogReplies`, `actions`, `gender`, `look`, `animFunList`, `fastAnimsFun`, `tooltipVisible`, `dialogData`, `defaultSkinId` |
+| `Npc.NpcActionsDataRoot` | 16 | `id`, `realId`, `nameId` |
 
-`SkillData` has no interactive identifier in this build: which skills an interactive offers comes from the network.
-Items, item types, recipes, NPCs and their actions are measured in session 2c.
+Recipes, in `Job.RecipesDataRoot`, wait for crafting (step 11).
 
-What the world tables hold, as the pack keeps them (D27):
+What the world tables hold, as the pack keeps them (D27, D29):
 
 - **Positions.** `MapsInformationDataRoot` covers 15,409 maps, every one a `ClientMapData` map; 2,313 maps have no
   position: the 1,739 `MapMetadata` maps and 574 `ClientMapData` maps with ids from 239,994,113 up, none in the world
@@ -177,13 +188,83 @@ What the world tables hold, as the pack keeps them (D27):
   and the pack keeps the value as it is. BillBot reads it as Dofus 2's map capabilities, which no measurement here
   confirms.
 - **Sub-areas.** 34 of the 567 allow accounts without a subscription (`basicAccountAllowed`). `associatedZaapMapId`
-  names a zaap's map on 329 and is 0 on the other 238. `level` from 0 to 200. `harvestables` holds numbers from 289 to
-  30,646 on 190 sub-areas, which session 2c measures. Every map a sub-area lists names that sub-area back.
+  names a zaap's map on 329 and is 0 on the other 238. `level` from 0 to 200. `harvestables` lists items on 190
+  sub-areas ([Harvestables](#harvestables)). Every map a sub-area lists names that sub-area back.
 - **Zaaps.** 62, 47 `activated`; every one stands on a map of the world graph, in the sub-area of its map. The graph has
   no zaap transitions, so a path through zaaps adds them from this table.
 - **Areas and super-areas.** 69 areas and 10 super-areas; the pack keeps the areas' `superAreaId`, not the super-areas.
 - `MapScrollActionsDataRoot` and `MapReferencesDataRoot` are not extracted: the graph's scroll actions already lead
   where the server sends, and no step needs map references yet.
+
+### Items
+
+21,554 items, 769 of them weapons (`WeaponData`, which adds the fight fields), ids from 44 to 34,840; every `nameId` has
+a text in French and English. `typeId`, a `UInt16`, names 229 of the 236 types; one test item names type 264, which the
+client lacks. `level`, a `UInt8`, from 0 to 200. `realWeight`, a `UInt16`, is the weight of one item in pods: 26
+values from 0 to 20,000, 0 or 1 on 77% of items. `m_flags`, a `UInt16`, sets bits 0 to 11, bit 10 on 96% of items;
+which bit means what is not measured. The pack keeps the id, name, type, level and weight, 13 bytes an item; effects,
+recipes, drops, criteria and `m_flags` are left out (D29).
+
+Item types: `superTypeId` takes 25 values, the ids of `ItemSuperTypesDataRoot`, which names none of them; `categoryId`
+from 0 to 5, 2 on 78 types. The pack keeps both as they are.
+
+### Jobs and skills
+
+23 jobs, among them `Base`, id 1, the job of 248 of the 373 skills: using a zaap or a door, a workshop, a quest
+object. Every skill's `parentJobId` is a job of the table.
+
+`gatheredRessourceItem` makes a skill a harvest. 90 skills of five professions gather 85 items, the resources:
+lumberjack (2) 21 skills, miner (24) 17, alchemist (26) 14, farmer (28) 14, fisherman (36) 24. Five of them, 296 and
+298 to 301, repeat a level-1 skill with `clientDisplay` off. Every resource is an item with a known type. Of the skills
+of `Base`, 34 gather 33 items, such as potatoes or event resources, 8 name 0, and skill 260 names item 3,656, which
+the client lacks; the others name −1. The pack keeps 0 and the missing item as gathering nothing.
+
+`levelMin` runs from 1 to 200 on harvests. `range` is 1 on 342 skills and 10 on 28, the fisherman's 24 among them,
+and 2, 40 and 63 once each; `useRangeInClient` is set on 29 skills, none of the fisherman's. How the client uses either
+is not measured.
+`elementActionId` is 1 on every harvest. `craftableItemIds` is set on 99 skills, the crafts of step 11.
+
+**What links them.** `SkillData` has no interactive identifier in this build, and a map's interactive element names only
+its graphic (Interactive elements, above): which interactive an element is, and which skills it offers, the server
+tells for each element of the map a character enters. The client's data links a profession's skill to its resource,
+and the resource to the sub-areas that list it: a bot looking for ash wood finds the skill gathering item 303, the
+sub-areas listing 303, then, on a map, the elements the server says offer that skill.
+
+`SkillNamesDataRoot` names 364 things such as rooms ("Salle A II"); 270 of its ids are also skill ids, but none of its
+texts is a skill's name. It is not extracted.
+
+### Interactives
+
+446 interactives, ids from 1 to 475, every one named: resources such as Frêne (1) or Blé (38), workshops, the zaap
+(16), doors (70). The ids are those the server gives an element of the map; scripts of the Snowbot family name the
+resources to harvest by them.
+
+### Harvestables
+
+A sub-area's `harvestables` lists items: 4,078 in 190 sub-areas, 254 distinct, every one an item of the client, none
+twice in a sub-area, unsorted in 189. 1,318 of them are the 85 resources professions gather, every resource in at least
+one sub-area. The rest is what harvesting may bring besides, mostly loot boxes (Boîte de Rékloot); no item a skill of
+`Base` gathers is listed. The pack keeps the resources, sorted, as a slice of `WorldAtlas.Harvestables` per sub-area.
+
+### Banks
+
+The client marks no bank and no banker as such:
+
+- **Banks.** 10 of the 834 hints are drawn with graphic 401, all named Banque, in category 4, Divers. Each stands on
+  an outdoor map (`worldMap` 1) with a position and a vertex in the world graph, and the hint's coordinates and
+  sub-area are its map's. From each, an interactive transition with skill 184 leads to 1 to 3 maps at the same
+  coordinates on no world map (−1): the bank's inside, and for some other buildings. Which of them holds the banker,
+  the server tells: the NPCs of a map come with it. Only Astrub's bank lies in a sub-area open to accounts without a
+  subscription.
+- **Bankers.** A reply of `dialogReplies` is a pair, its id and its text, on every one of the 64,346 replies; 60 reply
+  ids are listed by several NPCs. 8 NPCs have a reply reading `Consulter son coffre personnel`, with or without a final
+  full stop: 100 (Banquier), 520, 522, 3,516, 3,597, 5,653, 6,374 (Banquier brâkmarien) and 6,394 (Banquier
+  bontarien), with 2 to 8 such replies each, 29 in all; 100, 520 and 522 share reply 259. Each offers only action 3.
+- **Actions.** `NpcActionsDataRoot` holds 16 actions; 3, Parler, talks, and its `realId` is 3. 5,922 NPCs offer it;
+  17, Examiner, also has `realId` 3.
+
+The extractor finds banks by graphic 401 and bankers by the French text, and fails when it finds none, or a bank off
+the graph, or a banker who cannot be talked to (D29).
 
 ## Texts
 
@@ -195,19 +276,30 @@ The five files share one Ankama format, little-endian throughout:
 4. The texts, UTF-8 strings with a 7-bit encoded length, which the offsets point to from the start of the file.
 
 Every file has 339,912 numbered texts, identifiers 1 to 1,200,860, and 7,501 keyed ones, 347,413 distinct texts; every
-offset starts a text. The texts take 24.0 MiB in French and 21.7 MiB in English. Packs keep the numbered texts in
-French and English (D25).
+offset starts a text. The texts take 24.0 MiB in French and 21.7 MiB in English.
+
+Packs keep, in French and English, the numbered texts the extracted tables name (D25, D29): 26,411 per language,
+21,554 of them items' names. The 15,409 map positions name 3,135 distinct texts, and 12,274 positions name text 0,
+which no file holds: those maps have no name.
 
 ## The pack of 3.7.12.12
 
-Format 2 (D27, D28): 15,600,148 bytes, 17,726 entries, extracted in about 25 s on 16 threads, 10 s of which read the
-client.
+Format 3 (D29, D30): 4,670,325 bytes, 17,730 entries, extracted in about 14 s on 16 threads, 9 s of which read the
+client. Two extractions give the same SHA-256.
 
 | Entries | Serialized | Compressed, zstd 19 |
 | --- | ---: | ---: |
-| `texts/fr`, `texts/en` | 54.2 MB | 11.4 MB |
-| 17,722 `maps/<id>` | 90.5 MB, about 5.1 KB a map | 3.7 MB |
-| `world/graph` | 1.4 MB | 0.25 MB |
-| `world/atlas` | 0.4 MB | 0.06 MB |
+| `texts/fr`, `texts/en` | 1.73 MB | 0.41 MB |
+| 17,722 `maps/<id>` | 90.5 MB, about 5.1 KB a map | 3.72 MB |
+| `world/graph` | 1.42 MB | 0.25 MB |
+| `world/atlas` | 0.41 MB | 0.06 MB |
+| `items/catalog` | 0.28 MB | 0.10 MB |
+| `jobs/catalog`, `interactives/catalog`, `banks/catalog` | 13 KB | 4 KB |
 
-Opening it reads the index in about 7 ms; a map reads in about 7 µs, the graph in 4 ms, the atlas in 1 ms.
+Opening it reads the index in about 8 ms. A map reads in about 7 µs, the graph in 4 ms, the atlas and the items in
+about 1 ms each, a language's texts in 6 ms, the other tables in under 0.2 ms.
+
+**Dictionary, measured again.** Maps are now 80% of the pack. A zstd dictionary trained on them, deterministic and in
+1.9 s, saves at best 0.45 MB with 16 KiB (3.27 MB of maps and dictionary instead of 3.72), 0.41 MB with 64 KiB and 0.35
+MB with 256 KiB; decompressing every map then takes 41 ms instead of 63. Trained on every entry but the texts, it gains
+nothing on the others. D30 keeps packs without one.

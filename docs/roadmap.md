@@ -8,7 +8,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | --- | --- | --- |
 | 0 | Foundation: brief, decisions, architecture, roadmap | Done |
 | 1 | Scaffold and modules | Done |
-| 2 | Game data | In progress: 2a and 2b done, 2c next |
+| 2 | Game data | In progress: 2a to 2c done, 2d next |
 | 3 | Protocol and connection | To do |
 | 4 | Bot run time and navigation | To do |
 | 5 | Desktop app, first version | To do |
@@ -54,8 +54,8 @@ Four sessions:
 | --- | --- | --- |
 | 2a | Foundations: `scripts/unity/`, `inspect.cs`, the pack format in `D3B.Data` with its tests, `extract.cs` writing the texts, Q4 (D24 to D26). | Done on 2026-10-27 |
 | 2b | Maps and the world graph: Dofus Remastered's typed readers, cells, interactive elements placed on maps, coordinates and sub-areas, the client's `world-graph`, zaaps, maps read one by one through `PackCache`, pack format 2 and its layout test, compression measured (D27, D28). | Done on 2026-10-27 |
-| 2c | Game tables: items and their types, professions, skills and harvestable resources, interactives, banks, and only the texts they name. | Next |
-| 2d | Q4 in code: the host finds or downloads the pack of the installed build and checks it, a data module in `DefaultModules`, publishing a release; step 2 closes. | To do |
+| 2c | Game tables: items and their types, jobs and skills, interactives, sub-areas' resources, banks and bankers, only the texts they name, pack format 3 at 4.7 MB, the zstd dictionary measured again (D29, D30). | Done on 2026-10-27 |
+| 2d | Q4 in code: the host finds or downloads the pack of the installed build and checks it, a data module in `DefaultModules`, publishing a release; step 2 closes. | Next |
 
 ## 3. Protocol and connection
 

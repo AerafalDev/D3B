@@ -560,6 +560,66 @@ Measured on the pack of 3.7.12.12 (client.md):
   - zstd's own multithreading inside a frame: the gain is on the two text entries only, and its output would need its
     own proof of determinism.
 
+## D29: Game tables in the pack, format 3
+
+*2026-10-27, step 2, session 2c; what the pack keeps chosen by the owner*
+
+A pack now holds, besides maps, the world graph and the atlas, what the first milestone needs of the client's tables,
+measured in [client.md](client.md), and only the texts they name. `GamePack.FormatVersion` is 3.
+
+- **What it keeps.** Only what a harvesting and banking bot uses:
+  - `items/catalog` (`ItemCatalog`): every item's id, name, type, level and weight in pods, and every type's name,
+    `superTypeId` and `categoryId`, kept raw since the client names neither.
+  - `jobs/catalog` (`JobCatalog`): the jobs, and every skill's name, job, gathered item, minimum level, `range` and
+    `useRangeInClient`.
+  - `interactives/catalog` (`InteractiveCatalog`): every interactive's name.
+  - `banks/catalog` (`BankCatalog`): the 10 banks, as the map in front of each, and the 8 bankers with the replies that
+    open the bank.
+  - `world/atlas`: each sub-area gains its resources, the items professions gather that its `harvestables` lists.
+  - `texts/<language>`: 26,411 texts per language instead of 339,912; the pack shrinks from 15.6 MB to 4.7 MB.
+- **What links them.** The client's data says neither which interactive offers which skill nor which interactive an
+  element of a map is: the server tells, element by element. It links a profession's skill to its resource, and the
+  resource to the sub-areas listing it. A bot looks for a resource by item, through these links, then uses the elements
+  the server says offer the skill.
+- **Banks.** The client marks neither banks nor bankers. The extractor takes a bank for a hint drawn with graphic 401,
+  and a banker for an NPC with a reply reading `Consulter son coffre personnel` in French; it keeps the replies, so a
+  bot needs no text at run time, in any language. Talking is NPC action 3, `Banker.TalkAction`.
+- **Layout.** Tables are packed unmanaged structs sorted by id, and a row's list, such as a sub-area's resources or a
+  banker's replies, is a slice of one array of the catalog, as transitions are of the graph's; `Tables` holds what the
+  catalogs and the atlas share. `Item` keeps the client's widths, 13 bytes for 21,554 items; the small tables keep
+  `int`. `GameTables` reads each catalog once, when first asked for.
+- **Checks.** The extractor fails when a table contradicts what D3B relies on: a record keyed under another id, a skill
+  of a job the client lacks, a profession's skill gathering an item the client lacks or an item of no known type, a
+  harvestable that is no item, a reply that is not a pair, no bank, a bank off the graph, no banker, a banker who
+  cannot be talked to, a named text missing in a language. What a bot does not rely on is counted and kept: one test
+  item of a type the client lacks, skills of `Base` naming item 0 or a missing item, kept as gathering nothing.
+- **Rejected.**
+  - Every NPC's name and actions, 6,472, for the live map of step 5: the first milestone needs only the bankers. A step
+    that needs NPCs adds them.
+  - Every hint, 834, workshops and marketplaces among them: steps 11 and 12 add what they need.
+  - Items' `m_flags`, kept raw as maps' are: no bit is measured, and nothing would read it.
+  - Every harvestable: the loot boxes a sub-area lists are no resource to look for.
+  - The bank's inside, found at extraction: from 5 of the 10 banks a door leads to 2 or 3 maps at the bank's
+    coordinates, and which holds the banker only the server says.
+  - Bankers and replies written in the extractor by id: a client adding a banker would go unnoticed; the text finds
+    him, and the extraction fails if it finds none.
+  - Choosing the chest reply by its text at run time, as BillBot does: a bot would depend on the client's language.
+  - One entry for every table: a catalog per domain keeps each type small, at no cost, since all are read once.
+
+## D30: Still no zstd dictionary
+
+*2026-10-27, step 2, session 2c, chosen by the owner*
+
+D28 left the dictionary to be measured again once the texts shrank. On the pack of format 3, 4.67 MB with maps 80% of
+it, a 16 KiB dictionary trained on the maps, deterministic, saves 0.45 MB, 9.6% of the pack, and makes every map
+decompress in 2.3 µs instead of 3.5; the other entries gain nothing (client.md). Packs stay without one.
+
+- **Why.** 0.45 MB a download does not pay for an entry every map depends on, so that a damaged dictionary loses them
+  all, a field per entry in the index, and a training whose output must stay deterministic across zstd's versions. A map
+  is read once, so faster decompression shows nowhere.
+- **Rejected.**
+  - A 16 KiB dictionary trained on the maps, which the lead session measured and did not recommend.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
