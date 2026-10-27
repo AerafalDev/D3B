@@ -715,7 +715,8 @@ where the extraction tool writes it (`--packs`), to the release `client-<version
 
 ## D34: A hosts line brings each client to D3B, which rewrites the game server's address
 
-*2026-10-27, step 3, session 3a, chosen by the owner. Settles Q8.*
+*2026-10-27, step 3, session 3a, chosen by the owner. Settles Q8. Superseded in part by D35: no `hosts` line, the
+client's own configuration brings it to D3B; the game server's address is still rewritten.*
 
 The player starts each account's client from the official Ankama launcher, as without D3B. One line of the Windows
 `hosts` file sends the connection host, which the client's configuration names, to a loopback address of D3B's. D3B
@@ -766,6 +767,132 @@ game server when the client arrives. Nothing in the client, its files or its pro
     (D23).
   - Playing without a client, as BubbleBot does: ruled out by D23.
 
+## D35: The client's configuration brings it to D3B, rewritten by the host while it runs
+
+*2026-10-27, step 3, session 3b, chosen by the owner. Supersedes D34's `hosts` line.*
+
+The client reads its connection host from the JSON its version file's `ConfigUrl` names (client.md). While D3B's host
+runs, that URL names a copy D3B writes, Ankama's configuration with every connection host replaced by D3B's address:
+the client connects to D3B, and D3B knows the real host from Ankama's configuration. No `hosts` line, no elevation.
+
+- **Measured**, on client 3.7.12.12 started from the launcher ([client.md](client.md#configuration)). The client loads
+  the URL with `UnityWebRequest` at start; it refuses `http:`, even on loopback ("Insecure connection not allowed"), and
+  reads a `file:` URL. The launcher started it with the changed file, without repairing it. The client then connected
+  through D3B to the server choice and into the game.
+- **Flow.** `ClientRedirect`, a hosted service of the network module, starts after the relay listens:
+  1. It reads `ConfigUrl` from `Dofus_Data/StreamingAssets/version`. When the URL is already D3B's, as after a crash,
+     Ankama's is the one kept from before.
+  2. It downloads Ankama's configuration, or uses the last one read when it cannot, and fails the host's start when it
+     has neither.
+  3. It writes, in `Network:Redirect:Directory` (`%LOCALAPPDATA%\D3B\client` by default), `config.json` (the copy),
+     `config-url` (Ankama's URL) and `ankama-config.json` (Ankama's configuration).
+  4. It points `ConfigUrl` at `config.json` as a `file:` URL, changing that line and no other byte of the file.
+
+  While the host runs, it watches the file: the launcher rewrites it when it updates the client, and the client is
+  pointed at D3B again, a check failing on a file still being written trying again a few times. At stop, Ankama's URL
+  goes back, so a client started without D3B plays directly; so it does when the host is disposed without being
+  stopped, as when a later service fails to start. After a crash, the next start, or
+  `dotnet run --file scripts/client.cs -- restore`, puts things right.
+- **One connection host.** A connection carries no name the relay could tell hosts apart by: a configuration listing
+  several fails the start. Each would need an address of its own. A connection host that is a D3B address, as another
+  D3B's copy would name, fails the start too: the relay would connect to itself.
+- **Resolving.** With no `hosts` line, the relay resolves the real host with .NET's own DNS, at each connection: it is a
+  load balancer. For D34's line the owner had chosen `DnsQuery_W` with `DNS_QUERY_NO_HOSTS_FILE` and
+  `DNS_QUERY_BYPASS_CACHE`, over the DnsClient package and a DNS client of our own; with no line to get around, it was
+  removed.
+- **Within D2.** One line of a configuration file of the client's installation changes while D3B runs, and the launcher
+  rewrites it at each update. The client's code and process stay untouched, and nothing is hidden: every client of the
+  machine started while D3B runs goes through it, from the same machine, as D34 said.
+- **Risks.**
+  - Ankama could make the client check its version file, or refuse `file:` URLs. Each client update measures it again:
+    a client that does not reach D3B shows it at once.
+  - A path holding spaces or letters outside ASCII is percent-encoded in the URL; whether Unity reads it back is not
+    measured.
+  - After a crash, clients cannot connect until the host starts again or the tool restores the URL; the tool's `check`
+    says so.
+  - Two hosts on one machine would share the file, and the first to stop would give clients Ankama's configuration
+    back; nothing prevents it yet.
+- **Rejected.**
+  - D34's `hosts` line: elevation, and a change to the whole machine, which the owner refused once it was built. Its
+    tool, writing the line through the UAC prompt, was removed before it was committed.
+  - Serving the configuration from D3B over `http:`: the client refuses it, measured.
+  - Over `https:` with a certificate of our own: a root certificate in the user's store, worse than a `hosts` line.
+  - BillBot's way: it starts `Dofus.exe` under Frida, hooks `ws2_32!connect` to send port 5555 to itself, stands in for
+    the launcher's local service and gets the login token from Haapi (D2, D23).
+  - The URL rewritten by a tool run by hand, which the lead session laid out as the other option: the configuration goes
+    stale, and clients cannot connect while D3B is stopped.
+
+## D36: D3B.Network relays the connection phase
+
+*2026-10-27, step 3, session 3b*
+
+- **Kestrel without a web host.** `BotBuilder` wraps the Generic Host's builder (D20), which has no web host, so
+  `RelayServer`, a hosted service, runs Kestrel's own `KestrelServer` on its socket transport. Each endpoint ends in a
+  connection handler and serves no HTTP; `KestrelServer.StartAsync` still takes an HTTP application, which nothing
+  calls. Kestrel brings what the relay needs: connection ids in the logs, limits, and a graceful stop.
+- **Where.** `Network:Address`, 127.0.13.59 by default, whose last two bytes read `0x0D3B`: in 127.0.0.0/8 and not
+  127.0.0.1, so that D3B takes no port another program holds there (D34). `Network:Ports`, 5555 and 443, the
+  configuration's ports. A port D3B cannot listen on, held by another program or reserved by Windows, stops the host,
+  with a message naming the address and the setting to change, and exit code 1.
+- **Each connection.** `RelayConnectionHandler` finds the real server through `ClientRedirect` (D35), connects to its
+  addresses in turn, 10 s each, on the port the client chose, through `SocketConnectionContextFactory` (D8), and copies
+  each direction as it reads: bytes as they are, flushed at once, whatever the framing. It holds no state between
+  connections, so any number of clients are relayed at once; a test relays eight.
+- **Closing.** A side closing completes the other's output, which Kestrel's socket transport sends, then shuts down both
+  ways: the relay keeps no half-open connection. A side still open 5 s later is cut. When the host stops, every
+  connection is cut, and one still looking for its server stops looking.
+- **The network module**, in `D3B.Bot` after the data module, registers the relay and the redirect; captures record the
+  installed build from `ClientBuild` when the data module is there.
+- **Rejected.**
+  - An accept loop of our own over `IConnectionListenerFactory`: Kestrel's server already manages connections and their
+    stop.
+  - `WebApplication`'s builder: `BotBuilder` and plugins build on the Generic Host's (D20).
+  - Half-closed connections: Kestrel's socket transport shuts down both ways once an output completes.
+
+## D37: Captures record raw reads, in a format of our own
+
+*2026-10-27, step 3, session 3b, chosen by the owner. Settles the format of Q7; replays with injection are session 3f's.*
+
+- **What.** The bytes each side sent, read by read, both ways, and each side closing, timed in microseconds from the
+  start. Never decoded messages: they follow from the raw bytes and the build's mapping, so an old capture decodes again
+  with a newer one.
+- **Format.** One file per connection, `.d3bcap`. A header: the magic `D3B-CAPT`, the format version, the start, the
+  installed client's version, the listener, the server's host and address. Then records, appended as they come: a kind,
+  the offset as a varint, and for bytes their length as a varint and the bytes. Each record is flushed: a capture whose
+  host was killed reads up to its last whole record, and a record cut short is reported as such. A write that fails ends
+  the capture, never the relay.
+- **Where.** Off by default; `Network:Captures:Enabled` records every connection in `Network:Captures:Directory`,
+  `%LOCALAPPDATA%\D3B\captures` by default. A capture holds the account's login ticket: it stays on the machine, is never
+  committed, never shared.
+- **Replay.** `CaptureReplay` writes each record into a `Pipe` as its own write and flush, so a reader gets the bytes cut
+  where the network cut them (D8). Tests build their own captures with `CaptureWriter`.
+- `scripts/capture.cs` describes captures by their structure: reads, frames, sizes, TLS or not, and with `--frames` the
+  protobuf shape of each frame, field numbers, wire types and lengths, never a value.
+- **Rejected.**
+  - pcapng: IP and TCP headers to make up, for Wireshark, which does not decode Dofus.
+  - JSON lines with Base64: 1.4 times larger and slower, readable for protobuf no one reads by eye.
+  - MemoryPack and zstd, as packs: a whole object written at once, where a capture grows as the connection goes, and
+    would be lost in a crash.
+  - Frames instead of reads: it would depend on the framing being measured, and lose the cuts a reader must handle.
+
+## D38: The connection is varint-framed protobuf, in the clear
+
+*2026-10-27, step 3, session 3b*
+
+Measured on the connection phase of two clients through the relay ([client.md](client.md#the-connection-phase-on-the-wire)):
+no TLS, every byte in varint-length frames, every frame a protobuf message.
+
+- `FrameReader.TryReadFrame` reads a frame from a `SequenceReader<byte>`: a length of at most five bytes, 32 bits, then
+  the frame, sliced from the sequence without a copy. It consumes nothing until a frame is whole, so the caller reads
+  more and tries again, and a length that cannot be one, or above 16 MiB by default, throws: no telling where the next
+  frame starts. `FrameWriter` writes them.
+- **Benchmark.** 10,000 frames of the measured sizes and of 4,000 bytes: about 16 ns a frame on one segment, 23 ns on
+  segments of 4 KiB and 36 ns on segments of 512 bytes, with no allocation (BenchmarkDotNet, short run,
+  `benchmarks/D3B.Network.Benchmarks`).
+- **Rejected.**
+  - Reading a length byte by byte with no bound, as some references do: a misread length would make a reader wait for,
+    and buffer, gigabytes.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -776,5 +903,5 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? | Step 3, session 3e |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
-| Q7 | How are sessions captured and replayed for tests: in which format? | Step 3, sessions 3b and 3f |
+| Q7 | How are sessions captured and replayed for tests: in which format? The format is D37's; replays with injection remain. | Step 3, session 3f |
 | Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3, session 3f |

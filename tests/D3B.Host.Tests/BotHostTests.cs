@@ -1,7 +1,11 @@
+using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
 using D3B.Bot.Tests;
 using D3B.Core.Modules;
 using D3B.Data.Releases;
 using D3B.Data.Tests.Releases;
+using D3B.Network.Relay;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -40,6 +44,8 @@ public sealed class BotHostTests : IDisposable
         Assert.Equal(0, exitCode);
         Assert.Contains(_log.GetSnapshot(), record => record.Message == $"Opened the pack of client {TestInstall.Version}, format 3: {_install.PackPath}");
         Assert.Contains(_log.GetSnapshot(), IsStarted);
+        Assert.Contains(_log.GetSnapshot(), record => record.Message.StartsWith("Clients reach D3B: their configuration sends localhost to 127.0.13.59", StringComparison.Ordinal));
+        Assert.EndsWith($"ConfigUrl={_install.ConfigUrl}\n", File.ReadAllText(_install.VersionFile), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -62,6 +68,29 @@ public sealed class BotHostTests : IDisposable
     }
 
     [Fact]
+    public async Task TheHostDoesNotStartWhenItsRelayCannotListen()
+    {
+        _install.WritePack();
+
+        // Another program holding the port on D3B's address, as one might hold 443.
+        using var holder = new TcpListener(RelaySettings.DefaultAddress, 0);
+
+        holder.Start();
+
+        var port = ((IPEndPoint)holder.LocalEndpoint).Port;
+        var bot = CreateBuilder("--Network:Ports:0", port.ToString(CultureInfo.InvariantCulture));
+
+        bot.Services.AddHostedService<StopOnceStarted>();
+
+        var exitCode = await BotHost.RunAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        var failure = Assert.Single(_log.GetSnapshot(), record => record.Level is LogLevel.Critical);
+
+        Assert.Equal(1, exitCode);
+        Assert.DoesNotContain(_log.GetSnapshot(), IsStarted);
+        Assert.Contains($"D3B cannot listen on {RelaySettings.DefaultAddress} on ports {port}", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void PluginsLiveNextToTheHostByDefault()
     {
         var configuration = new ConfigurationBuilder().Build();
@@ -79,9 +108,9 @@ public sealed class BotHostTests : IDisposable
         Assert.Equal(Path.Combine(AppContext.BaseDirectory, "extra"), BotHost.PluginsDirectory(configuration));
     }
 
-    private BotBuilder CreateBuilder()
+    private BotBuilder CreateBuilder(params string[] arguments)
     {
-        var bot = BotHost.CreateBuilder([.. _install.Arguments, "--Plugins:Directory", Path.Combine(AppContext.BaseDirectory, "no-plugins")]);
+        var bot = BotHost.CreateBuilder([.. _install.Arguments, "--Plugins:Directory", Path.Combine(AppContext.BaseDirectory, "no-plugins"), .. arguments]);
 
         bot.Logging.AddProvider(new FakeLoggerProvider(_log));
 

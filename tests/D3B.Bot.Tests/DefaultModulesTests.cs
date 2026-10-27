@@ -1,4 +1,5 @@
 using D3B.Bot.Data;
+using D3B.Bot.Network;
 using D3B.Core.Modules;
 using Microsoft.Extensions.Hosting;
 
@@ -12,6 +13,14 @@ public sealed class DefaultModulesTests
         var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules());
 
         Assert.IsType<DataModule>(bot.Modules[0]);
+    }
+
+    [Fact]
+    public void TheNetworkModuleBuildsAfterTheDataModule()
+    {
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules());
+
+        Assert.IsType<NetworkModule>(bot.Modules[1]);
     }
 
     [Fact]

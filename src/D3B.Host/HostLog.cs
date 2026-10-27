@@ -18,5 +18,5 @@ internal static partial class HostLog
     public static partial void PackOpened(ILogger logger, string version, int format, string path);
 
     [LoggerMessage(Level = LogLevel.Critical, Message = "The host does not start. {Reason}")]
-    public static partial void DataUnavailable(ILogger logger, string reason);
+    public static partial void DoesNotStart(ILogger logger, string reason);
 }

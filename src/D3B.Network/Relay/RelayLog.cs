@@ -1,0 +1,32 @@
+using System.Net;
+using Microsoft.Extensions.Logging;
+
+namespace D3B.Network.Relay;
+
+/// <summary>The relay's log messages.</summary>
+internal static partial class RelayLog
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Relaying the connection host on {EndPoint}")]
+    public static partial void Listening(ILogger logger, IPEndPoint endPoint);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Recording captures in {Directory}; they hold accounts' login tickets: never share them")]
+    public static partial void Recording(ILogger logger, string directory);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Connection {ConnectionId} from {Client} closed: no server to relay it to. {Reason}")]
+    public static partial void NoUpstream(ILogger logger, string connectionId, EndPoint? client, string reason);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Connection {ConnectionId}: {Server} of {Host} did not answer. {Reason}")]
+    public static partial void ConnectFailed(ILogger logger, string connectionId, IPEndPoint server, string host, string reason);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Connection {ConnectionId} from {Client} relayed to {Host} at {Server}")]
+    public static partial void Relaying(ILogger logger, string connectionId, EndPoint? client, string host, IPEndPoint server);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Connection {ConnectionId}: recording {Path}")]
+    public static partial void Capturing(ILogger logger, string connectionId, string path);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Connection {ConnectionId} is relayed without its capture. {Reason}")]
+    public static partial void CaptureFailed(ILogger logger, string connectionId, string reason);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Connection {ConnectionId} closed after {Duration}: {FromClient} bytes from the client, {FromServer} from the server")]
+    public static partial void Closed(ILogger logger, string connectionId, TimeSpan duration, long fromClient, long fromServer);
+}

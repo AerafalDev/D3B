@@ -3,7 +3,7 @@
 What the installed official client holds that D3B uses, measured for the steps that use it. It holds counts, formats
 and layouts, never content. Measured on 2026-10-27 with `scripts/inspect.cs` (D26) and the extraction tool's checks, on
 client 3.7.12.12, built on 2026-10-19, installed in `%LOCALAPPDATA%\Ankama\Dofus-dofus3`; how it connects was measured
-on running clients ([Connection](#connection)). Dofus Remastered's
+on running clients, then on its bytes through D3B's relay ([Connection](#connection)). Dofus Remastered's
 `docs/client.md`, in `vendor/Dofus`, measures much more of the same client for drawing it: maps' graphics, effects,
 shaders, characters.
 
@@ -21,6 +21,9 @@ dotnet run --file scripts/inspect.cs -- layout itemsdataroot ItemsDataRoot --ref
 dotnet run --file scripts/inspect.cs -- layout worldassets_assets_all PathFindingData
 dotnet run --file scripts/inspect.cs -- layout Map/Data MapMetadata --references
 dotnet run --file scripts/extract.cs -- --output <dir> --force        # extracts, counting maps, graph and tables, and checks them
+dotnet run --project src/D3B.Host -- --Network:Captures:Enabled true  # relays clients started from the launcher, and records them
+dotnet run --file scripts/client.cs                                   # which configuration the client reads, Ankama's or D3B's
+dotnet run --file scripts/capture.cs -- --frames                      # the captures' reads, frames and protobuf shapes, no value
 ```
 
 `summary` reads headers only and takes seconds. The extraction tool fails when the client contradicts what this
@@ -30,7 +33,7 @@ document says D3B relies on (D27): its checks are the measurements to repeat at 
 
 | Path | Content |
 | --- | --- |
-| `Dofus_Data/StreamingAssets/version` | `Version`, `BuildDate` and `ConfigUrl` lines: the build's identity (D24), and where the client reads its configuration ([Connection](#connection)). |
+| `Dofus_Data/StreamingAssets/version` | `Version`, `BuildDate` and `ConfigUrl` lines: the build's identity (D24), and where the client reads its configuration ([Connection](#connection)). While D3B's host runs, `ConfigUrl` names D3B's copy (D35). |
 | `manifest.json` | The launcher's manifest: the SHA1 of every file, which a pack's fingerprint uses (D24). |
 | `zaap.yml`, `zaap-windows.yml`, `zaap-start.bat` | How the launcher starts the client: its arguments, settings and log file ([Connection](#connection)). |
 | `GameAssembly.dll`, `Dofus_Data/il2cpp_data/Metadata/global-metadata.dat` | The IL2CPP code, 120.2 MiB, and its metadata, 41.8 MiB: version 39, not encrypted, 37,544 string literals and 348,188 identifier strings. |
@@ -310,9 +313,10 @@ nothing on the others. D30 keeps packs without one.
 
 ## Connection
 
-How the client connects, which D34 builds on. Measured on 2026-10-27 from the installation, the client's logs, the
-configuration its `ConfigUrl` names, the names in its IL2CPP metadata, and the connections of four clients of this
-build in game for about 50 minutes, each logged in to its own account. Nothing was captured on the wire.
+How the client connects, which D34 and then D35 build on. Measured on 2026-10-27 from the installation, the client's
+logs, the configuration its `ConfigUrl` names, the names in its IL2CPP metadata, and the connections of four clients of
+this build in game for about 50 minutes, each logged in to its own account. Session 3b then changed `ConfigUrl` and
+recorded the connection phase of two clients through D3B's relay ([on the wire](#the-connection-phase-on-the-wire)).
 
 ### Launch
 
@@ -346,6 +350,21 @@ has a property for 14 of the keys; `avatarUrlFormat` has none. The settings the 
 The connection host's name is an alias of an AWS network load balancer with three IPv4 addresses, the same through
 four resolvers.
 
+**How the client loads it**, measured by changing `ConfigUrl`:
+
+- The client reads `ConfigUrl` from its version file at start and loads the URL with `UnityWebRequest`, in a method its
+  log names `LoadExternalConfiguration`, before it shows anything.
+- An `http:` URL fails before any request: "Non-secure network connections disabled in Player Settings", then
+  `InvalidOperationException: Insecure connection not allowed`. The client stays on that error; a loopback address
+  makes no difference.
+- A `file:` URL to a local JSON file is read: the client connects to the connection host it names, an IPv4 address
+  included. D35 builds on it.
+- The launcher started the client with the changed file, without repairing it; it rewrites the file when it updates the
+  client.
+- Neither `ConfigUrl` nor `config.json` appears in clear in the IL2CPP metadata; the only `ConfigUrl` of the
+  installation is Unity Analytics', in `UnityPlayer.dll`. The URL comes from the version file nonetheless, as the change
+  shows.
+
 ### Connections
 
 Every client in game held:
@@ -373,11 +392,33 @@ From the names in the metadata, with no decompilation:
   of the type URLs the references read in `Any` envelopes.
 - `Ankama.SpinConnection` is Ankama's own transport over TCP: a header with a message size and type, authentication
   by token (`SpinCredentials`), heartbeats, pings, LZ4 compression, and an option to use TLS. The references use it
-  for the chat only.
+  for the chat only; the connection phase does not use it ([on the wire](#the-connection-phase-on-the-wire)).
 
-Not measured: the bytes on port 5555, so whether they are framed by a varint length and in the clear, as the
-references read them; whether the game server's address is a name or an IP address; how the client chooses among the
-ports it is sent. Sessions 3b and 3e measure them.
+### The connection phase on the wire
+
+Three connections of two clients of 3.7.12.12, on port 5555, recorded by D3B's relay and described by
+`scripts/capture.cs` (D37). By structure only: a capture holds the account's login ticket.
+
+- **No TLS.** No connection opens with a TLS record, and every byte falls in a frame.
+- **Framing.** Every byte is in frames of a varint length, then that many bytes, as the references read it (D38); each
+  read of the relay ended on a frame.
+- **Protobuf.** Every frame parses whole as a protobuf message. A client frame is field 1 at its root, a server frame
+  field 2; inside, a field 1 of one byte, then one field whose number says the exchange: 3 for the first, 4 for the
+  second. No `Any` with a `type.ankama.com` URL appears in this phase.
+
+| Exchange | Client | Server |
+| --- | --- | --- |
+| First, on connecting | 126 bytes: nested fields, among them texts of 64, 36 and 9 bytes | 455 bytes, 275 ms later: nested fields, among them two repeated fields of 14 and 6 entries |
+| Second, on choosing a server and playing | 10 bytes | 83 bytes, 29 ms later |
+
+- **Closing.** The server closed the connection as soon as it had answered the second exchange, then the client did: the
+  game connection goes on alone. Between the two exchanges, the connection stayed open and silent for the two minutes
+  the player spent choosing. Another connection was closed by its client 40 s after the first exchange, for a reason not
+  measured.
+
+Not measured: the bytes of the game connection, which still goes straight to the game server; whether the game
+server's address is a name or an IP address; port 443, every client measured having used 5555; how the client chooses
+among the ports it is sent. Session 3e measures them.
 
 ```powershell
 Get-NetTCPConnection -OwningProcess (Get-Process Dofus).Id | Sort-Object OwningProcess, RemotePort  # connections

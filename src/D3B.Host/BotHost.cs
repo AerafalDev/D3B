@@ -3,6 +3,7 @@ using D3B.Bot.Data;
 using D3B.Core.Modules;
 using D3B.Core.Plugins;
 using D3B.Data.Packs;
+using D3B.Network.Relay;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,7 +33,10 @@ internal static class BotHost
     }
 
     /// <summary>Builds the host, gets the game data ready, then runs until the host is stopped.</summary>
-    /// <returns>The process's exit code: 0 once stopped, 1 when the host did not start for lack of game data.</returns>
+    /// <returns>
+    /// The process's exit code: 0 once stopped, 1 when the host did not start for lack of game data or of the address its
+    /// relay listens on.
+    /// </returns>
     public static async Task<int> RunAsync(BotBuilder bot, CancellationToken cancellationToken)
     {
         using var host = bot.Build();
@@ -42,7 +46,20 @@ internal static class BotHost
         if (!await PrepareDataAsync(host, cancellationToken))
             return 1;
 
-        await host.RunAsync(cancellationToken);
+        try
+        {
+            await host.StartAsync(cancellationToken);
+        }
+        catch (RelayUnavailableException exception)
+        {
+            var log = Logger(host);
+
+            HostLog.DoesNotStart(log, exception.Message);
+
+            return 1;
+        }
+
+        await host.WaitForShutdownAsync(cancellationToken);
 
         return 0;
     }
@@ -82,7 +99,7 @@ internal static class BotHost
         }
         catch (DataUnavailableException exception)
         {
-            HostLog.DataUnavailable(log, exception.Message);
+            HostLog.DoesNotStart(log, exception.Message);
 
             return false;
         }
