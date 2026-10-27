@@ -131,7 +131,7 @@ The bots run in a headless host. The Avalonia app connects to it over gRPC on a 
 
 ## D8: The network goes through Kestrel's socket layer, socket mode first
 
-*2026-10-27*
+*2026-10-27. Superseded in part by D23: there is no socket mode, only MITM.*
 
 Outgoing connections use `SocketConnectionContextFactory.Create(Socket)`, Kestrel's public API since .NET 7, on a
 socket connected by the bot. The MITM mode listens with Kestrel and a connection handler. Both give a
@@ -239,7 +239,8 @@ version: accounts and profiles, the live map with the bot's state, and logs with
 
 ## D15: The rest of the stack
 
-*2026-10-27*
+*2026-10-27. Superseded in part by D23: D3B does not call Haapi, so the "HTTP (Haapi authentication)" row no longer
+applies.*
 
 Versions are the latest stable on NuGet on 2026-10-27, unless the line says otherwise.
 
@@ -268,7 +269,8 @@ No Native AOT: EF Core and the Lua engine do not suit it, and a bot does not nee
 
 ## D16: The first milestone is harvesting and banking
 
-*2026-10-27*
+*2026-10-27. Superseded in part by D23: the account plays through its official client and D3B's MITM, not in socket
+mode.*
 
 The first milestone: one account, in socket mode, harvests and banks its resources, controlled from the desktop app's
 first pages (D14). The repository may go public once it is reached (D4).
@@ -380,6 +382,28 @@ compile against as a required parameter, and can deploy every build to a host's 
   - Referencing `D3B.Core.dll` from an installed host: no feed to run, but compiling a plugin, in CI too, would need
     an installed host, and nothing would state which version a plugin targets.
 
+## D23: MITM only, no socket mode
+
+*2026-10-27, during step 1, chosen by the owner*
+
+D3B never connects to Ankama's servers on its own. Every bot plays through an official client: D3B sits between the
+client and the game server, with a Kestrel listener and a connection handler on the client's side, its own
+connection to the server on the other, and the same codec over `IDuplexPipe` on both. This supersedes D8's socket mode
+and the "in socket mode" of D16. The rest of D8 stands: Kestrel's transport, `ConnectionContext`, and an in-memory
+`Pipe` in tests and replays. Roadmap step 8, the MITM mode, merges into step 3.
+
+- **Consequences.**
+  - The official client logs in, through Haapi and the login handshake. D3B handles neither, which settles Q3, and
+    the Haapi row of D15 no longer applies.
+  - D3B never imitates the client, so nothing it does has to get past the client's integrity checks (D2).
+  - Every account needs its own running client. The memory and CPU of one client per account bound how many accounts
+    a machine runs (step 10).
+  - The bot acts through the client's connection, and the client must stay consistent with what the bot does: Q9.
+  - How each client's connection reaches D3B is Q8.
+- **Rejected.**
+  - Socket mode first, MITM later (D8): a bot without a client is lighter, but it must reimplement the login, which
+    may touch the client's integrity checks (Q3).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -388,8 +412,9 @@ Settled questions leave this table, and the decision that settles one says so.
 | --- | --- | --- |
 | Q1 | Does LuaCSharp hold up: sandboxing, async calls, errors, performance? | Step 7 |
 | Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? | Step 3 |
-| Q3 | What does socket mode need to log in? If any part of the handshake would defeat an integrity check of the client, that part is out of scope (D2) and logging in goes through MITM mode instead. | Step 3 |
 | Q4 | Where are data packs hosted, and how does the host fetch the pack matching the installed client's build? | Step 2 |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
-| Q7 | How are sessions captured and replayed for tests: format, and from which mode? | Step 3 |
+| Q7 | How are sessions captured and replayed for tests: in which format? | Step 3 |
+| Q8 | How does each account's official client reach D3B: who starts it, and how is its connection to the game server redirected to D3B and read, within D2? | Step 3 |
+| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3 |

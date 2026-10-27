@@ -16,9 +16,9 @@ D3B.App (Avalonia, ShadUI) ◄── gRPC on a named pipe (D7) ──► D3B.Hos
                                                                   │ BotBuilder: default modules + plugins/ (D5, D6)
                                                                   ▼
                                                              one async actor per bot (D9)
-                                                                  │ D3B.Network: Kestrel sockets (D8)
+                                                                  │ D3B.Network: Kestrel, between client and server (D8, D23)
                                                                   ▼
-                                                             Ankama's servers (socket mode), or the client (MITM mode)
+                                                             official client, one per account ◄──► Ankama's servers
 ```
 
 The host refuses to start when the protocol mapping it loaded does not match the installed client's build (D11).
@@ -74,17 +74,19 @@ Built at step 1, in `D3B.Core` (D20, D21):
 - Behaviors are async methods taking a `CancellationToken`. An interruption (a fight, a disconnection, full pods)
   cancels the current behavior. A recovery step runs, then the behavior resumes or the activity picks the next one.
 - Every delay goes through `TimeProvider`.
-- Reconnection backs off and resumes the activity where its state allows.
+- When the client reconnects, the activity resumes where its state allows.
 
 ## Network and protocol
 
-- Socket mode: the bot connects a `Socket`, and `SocketConnectionContextFactory` wraps it in a `ConnectionContext`.
-  MITM mode, later: a Kestrel listener with a connection handler, between the client and the server (D8).
+- MITM only (D23): a Kestrel listener with a connection handler takes each official client's connection, and D3B
+  opens the matching connection to the game server. Both sides are a `ConnectionContext` (D8). How a client's
+  connection reaches D3B is Q8.
+- The bot acts through that connection, and the client is kept consistent with what it does: Q9.
 - Framing is a varint length prefix, parsed with `SequenceReader<byte>`. The envelope carries an `Any` whose type URL
   is the obfuscated message name.
 - The per-build translation turns obfuscated names and field numbers into the clean classes and back. An unmapped type
   or field is an error, logged with the raw bytes. Its exact form is Q2.
-- Authentication goes through Haapi over `HttpClient`. What socket mode needs to log in is Q3.
+- The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).
 - Every session can be recorded, raw bytes and decoded messages, for the protocol inspector and for replay tests (Q7).
 
 ## Game data

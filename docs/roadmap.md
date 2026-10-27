@@ -14,7 +14,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 5 | Desktop app, first version | To do |
 | 6 | Harvesting and banking: first milestone | To do |
 | 7 | Lua scripting | To do |
-| 8 | MITM mode | To do |
+| 8 | MITM mode | Dropped: merged into step 3 (D23) |
 | 9 | Fights | To do |
 | 10 | Several accounts and groups | To do |
 | 11 | Marketplace and crafting | To do |
@@ -50,13 +50,15 @@ Settles Q4.
 
 ## 3. Protocol and connection
 
-Settles Q2, Q3 and Q7.
+Settles Q2, Q7, Q8 and Q9.
 
 - The mapping pipeline: Cpp2IL dump, IDA tracer, scored matching, pinned pairs, contract audit that fails the build
   (D11). Ideas from BillBot and JondoEmu.
 - The readable `.proto` files, the generated classes, the per-build translation, the version gate.
-- `D3B.Network`: Kestrel sockets, varint framing, codec over `IDuplexPipe` (D8).
-- Logging in through Haapi, the connection server and the game server, in socket mode, within D2.
+- `D3B.Network`: a Kestrel listener between the official client and the game server, varint framing, codec over
+  `IDuplexPipe` (D8, D23).
+- Bringing each client's connection to D3B, within D2 (Q8). The client logs in by itself.
+- Sending the bot's requests through the client's connection and keeping the client consistent (Q9).
 - Recording and replaying sessions.
 
 ## 4. Bot run time and navigation
@@ -76,8 +78,8 @@ Settles Q6.
 
 ## 6. Harvesting and banking: first milestone
 
-One account, in socket mode, harvests a profile's resources across maps and banks them when its pods are full,
-controlled from the app (D16). The repository may go public once it is reached (D4).
+One account, through its official client and D3B's MITM (D23), harvests a profile's resources across maps and banks
+them when its pods are full, controlled from the app (D16). The repository may go public once it is reached (D4).
 
 ## 7. Lua scripting
 
@@ -88,7 +90,7 @@ Settles Q1.
 
 ## 8. MITM mode
 
-- A Kestrel listener between the official client and the server (D8), with the same codec and the same recorder.
+Dropped: MITM is D3B's only mode (D23), built at step 3. The number stays, so that later steps keep theirs.
 
 ## 9. Fights
 
@@ -99,7 +101,7 @@ Settles Q5.
 
 ## 10. Several accounts and groups
 
-- Many accounts in one host, a group with a leader and followers.
+- Many accounts in one host, each through its own official client (D23), a group with a leader and followers.
 
 ## 11. Marketplace and crafting
 
