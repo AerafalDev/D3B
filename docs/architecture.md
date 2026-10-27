@@ -18,9 +18,11 @@ D3B.App (Avalonia, ShadUI) ◄── gRPC on a named pipe (D7) ──► D3B.Hos
                                                                   │ BotBuilder: default modules + plugins/ (D5, D6)
                                                                   ▼
                                                              one async actor per bot (D9)
-                                                                  │ D3B.Network: Kestrel, between client and server (D8, D23)
+                                                                  │ acts through
                                                                   ▼
-                                                             official client, one per account ◄──► Ankama's servers
+official client, one per account ──── hosts line, then ────► D3B.Network: Kestrel   ────►  Ankama's connection
+started by the official launcher      rewritten address      on a loopback address         server, then game server
+                                      (D34)                  (D8, D23, D34)
 ```
 
 The host refuses to start when the protocol mapping it loaded does not match the installed client's build (D11).
@@ -82,11 +84,16 @@ Built at step 1, in `D3B.Core` (D20, D21):
 ## Network and protocol
 
 - MITM only (D23): a Kestrel listener with a connection handler takes each official client's connection, and D3B
-  opens the matching connection to the game server. Both sides are a `ConnectionContext` (D8). How a client's
-  connection reaches D3B is Q8.
+  opens the matching connection to the server. Both sides are a `ConnectionContext` (D8).
+- How a client reaches D3B (D34): the player starts it from the official launcher. A line of the `hosts` file, written
+  once by an elevated tool, sends the connection host of the client's configuration to D3B's own loopback address, where
+  it listens on ports 5555 and 443. D3B resolves the real host without the `hosts` file. The connection server then
+  sends the game server's address: D3B rewrites it to its game listener, and connects to the real game server when the
+  client arrives there. A client without a bot is relayed unchanged.
+- The client's other connections, to the launcher, Haapi, the chat and the CDN, do not go through D3B.
 - The bot acts through that connection, and the client is kept consistent with what it does: Q9.
-- Framing is a varint length prefix, parsed with `SequenceReader<byte>`. The envelope carries an `Any` whose type URL
-  is the obfuscated message name.
+- Framing is a varint length prefix, parsed with `SequenceReader<byte>`, as the references read it; session 3b measures
+  it. The envelope carries an `Any` whose type URL is the obfuscated message name, prefixed with `type.ankama.com`.
 - The per-build translation turns obfuscated names and field numbers into the clean classes and back. An unmapped type
   or field is an error, logged with the raw bytes. Its exact form is Q2.
 - The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).

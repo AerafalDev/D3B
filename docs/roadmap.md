@@ -9,7 +9,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 0 | Foundation: brief, decisions, architecture, roadmap | Done |
 | 1 | Scaffold and modules | Done |
 | 2 | Game data | Done |
-| 3 | Protocol and connection | Next |
+| 3 | Protocol and connection | In progress |
 | 4 | Bot run time and navigation | To do |
 | 5 | Desktop app, first version | To do |
 | 6 | Harvesting and banking: first milestone | To do |
@@ -59,7 +59,7 @@ Four sessions:
 
 ## 3. Protocol and connection
 
-Settles Q2, Q7, Q8 and Q9.
+Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34, in session 3a.
 
 - The mapping pipeline: Cpp2IL dump, IDA tracer, scored matching, pinned pairs, contract audit that fails the build
   (D11). Ideas from BillBot and JondoEmu.
@@ -68,7 +68,20 @@ Settles Q2, Q7, Q8 and Q9.
   `IDuplexPipe` (D8, D23).
 - Bringing each client's connection to D3B, within D2 (Q8). The client logs in by itself.
 - Sending the bot's requests through the client's connection and keeping the client consistent (Q9).
-- Recording and replaying sessions.
+- Recording and replaying sessions. Captures hold an account's session and are never committed: tests replay sessions
+  they build themselves.
+
+Six sessions, the order chosen by the owner. The relay comes before the mapping, so that the client is seen going
+through D3B early, the framing is measured on real bytes, and the matching has real captures for its anchors.
+
+| Session | Content | Status |
+| --- | --- | --- |
+| 3a | Q8: how each client's connection reaches D3B, measured on running clients, and decided: a `hosts` line, and the game server's address rewritten (D34). | Done on 2026-10-27 |
+| 3b | `D3B.Network` as a relay: Kestrel on D3B's loopback address, the connection to the server, the varint framing measured on real bytes, raw recording and replay in the format of Q7, the tool writing and checking the `hosts` line. Connection phase only: the game connection still goes straight to the server. | To do |
+| 3c | Mapping, part 1: a tool in `scripts/` dumps the installed build with Cpp2IL and writes its obfuscated schema (messages, fields, numbers, types, oneofs), a release artifact. Its first risk: whether Cpp2IL reads metadata version 39. | To do |
+| 3d | Mapping, part 2: the readable `.proto` files of the connection phase and of the first milestone's messages, the generated classes, scored matching, pinned pairs, the contract audit failing the build, the IDA tracer and anchors from 3b's captures. | To do |
+| 3e | The per-build translation (Q2) and the version gate, the mapping published in the build's release, the game server's address rewritten, so that D3B holds both connections, messages decoded and recorded. | To do |
+| 3f | Q9: the bot's requests sent through the client's connection, request ids and the client kept consistent; replay tests with injection, which complete Q7. | To do |
 
 ## 4. Bot run time and navigation
 
