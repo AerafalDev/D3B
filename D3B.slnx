@@ -5,6 +5,7 @@
   <Folder Name="/scripts/">
     <File Path="scripts/extract.cs" />
     <File Path="scripts/inspect.cs" />
+    <File Path="scripts/release.cs" />
   </Folder>
   <Folder Name="/scripts/extract/">
     <File Path="scripts/extract/BanksExtractor.cs" />
@@ -47,6 +48,10 @@
     <File Path="scripts/inspect/TypesCommand.cs" />
     <File Path="scripts/inspect/ValueWriter.cs" />
   </Folder>
+  <Folder Name="/scripts/release/">
+    <File Path="scripts/release/GitHubCli.cs" />
+    <File Path="scripts/release/ReleaseCommand.cs" />
+  </Folder>
   <Folder Name="/scripts/unity/">
     <File Path="scripts/unity/ClientInstall.cs" />
     <File Path="scripts/unity/I18nFile.cs" />
@@ -81,6 +86,7 @@
     <File Path="templates/d3b-plugin/.template.config/template.json" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/D3B.Bot.Tests/D3B.Bot.Tests.csproj" />
     <Project Path="tests/D3B.Core.Tests/D3B.Core.Tests.csproj" />
     <Project Path="tests/D3B.Data.Tests/D3B.Data.Tests.csproj" />
     <Project Path="tests/D3B.Host.Tests/D3B.Host.Tests.csproj" />

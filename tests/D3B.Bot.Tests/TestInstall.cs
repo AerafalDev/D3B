@@ -1,0 +1,77 @@
+using D3B.Core.Modules;
+using D3B.Data;
+using D3B.Data.Interactives;
+using D3B.Data.Maps;
+using D3B.Data.Packs;
+using D3B.Data.Texts;
+using D3B.Data.World;
+using Microsoft.Extensions.Hosting;
+
+namespace D3B.Bot.Tests;
+
+/// <summary>An installed client and a packs directory of a test's own, deleted with everything in them once it ends.</summary>
+internal sealed class TestInstall : IDisposable
+{
+    public const string Version = "3.7.12.12";
+    public const string Token = "test-token";
+    public const long MapId = 191_104_002;
+    public const int AshNameId = 10;
+
+    public string Root { get; }
+
+    public string ClientDirectory => Path.Combine(Root, "client");
+
+    public string PacksDirectory => Path.Combine(Root, "data");
+
+    public string PackPath => PackLocations.PathOf(PacksDirectory, new ClientBuild(Version, null));
+
+    /// <summary>Gets the settings that point a host at them, as command-line arguments.</summary>
+    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Releases:Token", Token];
+
+    public TestInstall()
+    {
+        Root = Path.Combine(Path.GetTempPath(), "D3B.Tests", Guid.NewGuid().ToString("N"));
+
+        var streamingAssets = Path.Combine(ClientDirectory, "Dofus_Data", "StreamingAssets");
+
+        Directory.CreateDirectory(streamingAssets);
+        File.WriteAllText(Path.Combine(streamingAssets, "version"), $"Version={Version}\nBuildDate=2026-10-19T15:11:45+00:00\n");
+    }
+
+    /// <summary>A pack holding a text, a map, a world of one vertex and the interactives, extracted from a client version.</summary>
+    public static byte[] Pack(string clientVersion = Version)
+    {
+        var info = new PackInfo { ClientVersion = clientVersion, Fingerprint = "0123456789abcdef", ExtractorVersion = "0.0.0-test" };
+
+        using var stream = new MemoryStream();
+
+        // A low level keeps the tests fast; the format does not depend on it.
+        using (var writer = new PackWriter(stream, info, 3))
+        {
+            writer.Add(TextTable.EntryName(TextLanguages.French), new TextTable(TextLanguages.French, [AshNameId], ["Frêne"]));
+            writer.Add(MapData.EntryName(MapId), new MapData(MapId, 0, 0, 0, 0, new MapCell[MapData.CellCount], Array.Empty<MapInteractive>()));
+            writer.Add(WorldGraph.EntryName, new WorldGraph(new WorldVertex[] { new(MapId, 1) }, Array.Empty<WorldEdge>(), Array.Empty<WorldTransition>(), Array.Empty<string>()));
+            writer.Add(InteractiveCatalog.EntryName, new InteractiveCatalog(new Interactive[] { new(1, AshNameId) }));
+            writer.Complete();
+        }
+
+        return stream.ToArray();
+    }
+
+    /// <summary>A bot pointed at them, which reads neither the machine's environment nor its configuration files.</summary>
+    public BotBuilder Bot(params string[] arguments)
+    {
+        return new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true, Args = [.. Arguments, .. arguments] });
+    }
+
+    public void WritePack(string clientVersion = Version)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(PackPath)!);
+        File.WriteAllBytes(PackPath, Pack(clientVersion));
+    }
+
+    public void Dispose()
+    {
+        Directory.Delete(Root, true);
+    }
+}

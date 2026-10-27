@@ -1,7 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\D3B.Host\D3B.Host.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\D3B.Bot.Tests\TestInstall.cs" Link="TestInstall.cs" />
+    <Compile Include="..\D3B.Data.Tests\Releases\FakeGitHub.cs" Link="Releases\FakeGitHub.cs" />
+    <Compile Include="..\D3B.Data.Tests\Releases\StallingStream.cs" Link="Releases\StallingStream.cs" />
   </ItemGroup>
 
 </Project>
