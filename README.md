@@ -8,8 +8,22 @@ Ankama's terms of service and can get the account banned. No game asset or data 
 
 ## Status
 
-Foundation only: the brief, the decisions, the target architecture and the roadmap. No code yet. The first milestone is
-harvesting and banking on one account, controlled from the desktop app. See the [roadmap](docs/roadmap.md).
+The solution and the module system: a headless host that builds its modules, loads external plugins from `plugins/`,
+starts and stops. No game logic yet. The first milestone is harvesting and banking on one account, controlled from the
+desktop app. See the [roadmap](docs/roadmap.md).
+
+## Building
+
+Requires the .NET 10 SDK pinned in `global.json`, on Windows.
+
+```sh
+dotnet build
+dotnet test
+dotnet run --project src/D3B.Host
+```
+
+A plugin is a .NET assembly that compiles against the `D3B.Core` package. `templates/d3b-plugin` creates one with
+`dotnet new d3b-plugin`; `samples/D3B.Samples.Hello` is a working example.
 
 ## Documents
 

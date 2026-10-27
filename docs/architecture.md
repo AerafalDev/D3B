@@ -1,7 +1,8 @@
 # Architecture
 
 Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is
-in [roadmap.md](roadmap.md). Nothing below is built yet.
+in [roadmap.md](roadmap.md). Built so far (step 1): the solution, the module and plugin model in `D3B.Core`, and a
+host that builds its modules, starts and stops. Everything else below is the target.
 
 ## Overview
 
@@ -24,7 +25,8 @@ The host refuses to start when the protocol mapping it loaded does not match the
 
 ## Projects
 
-Provisional: step 1 confirms them.
+Confirmed at step 1 (D19). Every project exists in `D3B.slnx`; those with no code yet are empty class libraries, and
+each step adds the references it needs.
 
 | Path | Role |
 | --- | --- |
@@ -39,17 +41,29 @@ Provisional: step 1 confirms them.
 | `src/D3B.Contracts` | The gRPC contracts shared by the host and the app. |
 | `src/D3B.App` | The Avalonia desktop app. |
 | `scripts/` | Inspection, extraction and mapping tools, as file-based apps. |
-| `templates/` | The `dotnet new` template for a plugin. |
+| `templates/` | The `dotnet new d3b-plugin` template, compiling against the `D3B.Core` package (D22). |
+| `samples/` | Example plugins, built with the solution and loaded by the tests. |
 | `tests/`, `benchmarks/` | One test project per `src/` project that has logic; benchmarks for the codec and pathfinding. |
 
 ## Modules and plugins
 
-- A module implements `Build(BotBuilder)`. It registers services, message handlers, activities, fight strategies, Lua
-  API namespaces, settings and UI pages. It may require other modules. Adding a module type twice builds it once.
-- The default group gathers the standard modules: network, protocol, data, world, movement, harvesting, bank. D3B's
-  own features are modules like any other, so a plugin can replace one.
-- A plugin is a folder under `plugins/` holding an assembly with modules and an identity attribute. It loads once into
-  its own `AssemblyLoadContext`, which shares the host's assemblies and is not collectible (D6).
+Built at step 1, in `D3B.Core` (D20, D21):
+
+- A module implements `IModule.Build(BotBuilder)`. It registers services, message handlers, activities, fight
+  strategies, Lua API namespaces, settings and UI pages. `BotBuilder` wraps the Generic Host's builder and is an
+  `IHostApplicationBuilder`: a module registers through `Services`, `Configuration` and `Logging`, and `Build()` returns
+  the `IHost`.
+- A module is built as soon as it is added. It requires another by calling `bot.AddModule<T>()` first in its `Build`.
+  Adding a module type twice builds it once.
+- A group (`IModuleGroup`) lists modules in order; whoever adds it may disable some. `DefaultModules`, in `D3B.Bot`,
+  will gather the standard modules: network, protocol, data, world, movement, harvesting, bank. D3B's own features are
+  modules like any other, so they can be disabled, and later replaced (D20).
+- A plugin is a folder under `plugins/` holding an assembly named after it, whose one public class marked
+  `[Plugin("id")]` is its root module. It loads once into its own `AssemblyLoadContext`, which asks the host's context
+  first and is not collectible (D6). An invalid plugin stops the host from starting.
+- `D3B.Host` adds `DefaultModules`, then the plugins next to its executable (or under `Plugins:Directory`), logs what
+  it built, and runs until it is stopped.
+- A plugin compiles against the `D3B.Core` package; `dotnet new d3b-plugin` creates one (D22).
 - A plugin's UI part, loaded by the app, is Q6.
 
 ## Bot run time

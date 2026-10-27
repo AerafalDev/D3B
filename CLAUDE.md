@@ -61,4 +61,14 @@ These rules apply to `src/`, `tests/`, `benchmarks/` and `scripts/`.
 
 ## Commands
 
-None yet: the solution is created at roadmap step 1.
+```sh
+dotnet build                               # warnings are errors; copies the sample plugin into the Core tests' plugins/
+dotnet test                                # every test project, on Microsoft.Testing.Platform
+dotnet format --verify-no-changes          # CI checks it
+dotnet run --project src/D3B.Host          # runs until Ctrl+C; --Plugins:Directory <dir> loads plugins from elsewhere
+dotnet pack src/D3B.Core -o <feed>         # the package plugins compile against (D22)
+dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>
+```
+
+CI also creates a plugin from the template and builds it against a freshly packed D3B.Core: see the "Check the plugin
+template" step of `.github/workflows/ci.yml` to run it by hand.

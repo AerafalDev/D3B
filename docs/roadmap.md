@@ -7,8 +7,8 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | # | Step | Status |
 | --- | --- | --- |
 | 0 | Foundation: brief, decisions, architecture, roadmap | Done |
-| 1 | Scaffold and modules | To do: next |
-| 2 | Game data | To do |
+| 1 | Scaffold and modules | Done |
+| 2 | Game data | To do: next |
 | 3 | Protocol and connection | To do |
 | 4 | Bot run time and navigation | To do |
 | 5 | Desktop app, first version | To do |
@@ -28,7 +28,7 @@ were taken one by one with the owner. No code.
 
 ## 1. Scaffold and modules
 
-The solution and the module system, with no game logic.
+The solution and the module system, with no game logic. Done on 2026-10-27, with decisions D19 to D22.
 
 - `global.json`, `Directory.Build.props`, `Directory.Packages.props` (central package management), `.editorconfig`
   enforcing the C# style of `CLAUDE.md`, warnings as errors, MinVer.

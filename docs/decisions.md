@@ -5,7 +5,8 @@ entry is never rewritten: a later entry supersedes it, and the old one is marked
 are listed at the end, with the [roadmap](roadmap.md) step that settles them.
 
 Decisions D1 to D18 were taken on 2026-10-27, one by one, after studying the references in `vendor/` and the bots
-sold for Dofus 3.
+sold for Dofus 3. From D19 on, each entry names the roadmap step that took it; an entry the owner chose says so, the
+others are local choices of the lead session.
 
 ## Brief
 
@@ -292,6 +293,92 @@ for the next one. Documents are Markdown files in `docs/`.
 *2026-10-27*
 
 The project, its solution and its namespaces are named D3B (`D3B.*`).
+
+## D19: The solution's layout and build
+
+*2026-10-27, step 1*
+
+The projects of the [architecture](architecture.md#projects) are confirmed, in `D3B.slnx`. They target `net10.0`, not
+`net10.0-windows`: nothing needs a Windows API yet, and D1 keeps a Linux host possible. The build follows Dofus
+Remastered: SDK pinned in `global.json`, central package management with transitive pinning, MinVer on every project,
+output under `artifacts/`, warnings as errors, `AnalysisMode` Recommended, code style enforced in the build, XML
+documentation on public APIs.
+
+- Projects with no code yet are empty class libraries. `D3B.App` stays one until step 5 makes it the Avalonia app.
+  Project references are added by the step that needs them; for now only `D3B.Bot` and `D3B.Host` reference
+  `D3B.Core`.
+- `DefaultModules` lives in `D3B.Bot`, which will reference the projects holding the standard modules. It is empty
+  until those modules exist.
+- `samples/` holds example plugins, built with the solution and loaded by the tests.
+- `.editorconfig` makes the C# style of `CLAUDE.md` fail the build: block bodies (IDE0021 to IDE0024, IDE0061) and
+  test names without underscores (CA1707). The member order and the ban on primary constructors have no analyzer and
+  stay a review rule.
+- Added to D15: Microsoft.Extensions.Hosting 10.0.14 for `D3B.Core`, and Microsoft.Extensions.Diagnostics.Testing
+  10.11.0, whose fake logger lets a test see what a plugin logs.
+- **Rejected.**
+  - `net10.0-windows` everywhere, as Palforge: it would tie the host to Windows for nothing.
+  - An empty Avalonia app now: its packages and entry point belong to step 5.
+
+## D20: How modules compose
+
+*2026-10-27, step 1*
+
+`BotBuilder` wraps the Generic Host's `HostApplicationBuilder` and is itself an `IHostApplicationBuilder`, so modules
+register into the host's services, configuration and logging, and the host's extension methods apply. A module is
+built as soon as it is added, as in Bevy and Dofus Remastered's `AppBuilder`:
+
+- A module requires another by calling `bot.AddModule<T>()` at the start of its `Build`. The required module is then
+  built first. `BotBuilder.Modules` lists modules in the order they finished building, so each comes after the modules
+  it requires.
+- Adding a module type twice builds it once. A module counts as added before its `Build` runs, so a requirement that
+  leads back to a module being built does nothing, instead of failing: a module may add companions that require it.
+- A group (`IModuleGroup`) lists modules in order. Whoever adds it may disable some of them first; disabling a module
+  the group does not hold fails. A disabled module is still built when another module requires it.
+- Nothing is registered after `Build`.
+- **Rejected.**
+  - Declared requirements (`[Requires(typeof(T))]`) with a topological sort before building: order independence and a
+    readable graph, but more code and a departure from D5's model, for no need yet.
+  - Failing on a requirement cycle: it would reject a module adding companions that require it.
+  - Replacing a default module by another type: no plugin needs it yet. When one does, the replacement should claim
+    the replaced module's type, so that requirements on it are satisfied.
+
+## D21: The plugin contract
+
+*2026-10-27, step 1*
+
+`bot.AddPlugins(directory)` loads the plugins under a directory. The host passes `plugins/` next to its executable,
+or the `Plugins:Directory` setting, resolved from the executable's directory.
+
+- A plugin is a folder holding an assembly named after the folder, with its dependencies and `.deps.json`. Folders
+  load in the order of their names.
+- The assembly holds exactly one public, concrete module class with a public parameterless constructor, marked
+  `[Plugin("id")]`, with an optional name and author. That root module is added to the builder and adds the rest of
+  the plugin. The plugin's version is its assembly's informational version.
+- Each plugin loads once into its own `AssemblyLoadContext`, not collectible, which asks the host's context first and
+  the plugin's `.deps.json` second: a plugin and the host share one D3B.Core and one framework.
+- A `PluginInfo` per plugin is registered in the services, for the host's log and later the app.
+- Any invalid folder, or two plugins with the same id, throws `PluginLoadException` and the host does not start. A bot
+  missing a feature it was given could misbehave; a clear error at start is cheaper.
+- **Rejected.**
+  - An assembly-level identity attribute, or adding every module of the assembly: the root module says what the plugin
+    brings, in code.
+  - Skipping an invalid plugin with a warning, as Palforge does.
+
+## D22: Plugins compile against the D3B.Core package
+
+*2026-10-27, step 1, chosen by the owner*
+
+`D3B.Core` is the only packable project, versioned by MinVer. A plugin references the `D3B.Core` package with
+`ExcludeAssets="runtime"`: it compiles against it, and the host provides it at run time, so a plugin's folder holds
+only its own files. The `dotnet new d3b-plugin` template in `templates/d3b-plugin` does this, takes the version to
+compile against as a required parameter, and can deploy every build to a host's plugins folder.
+
+- Until the repository goes public (D4), the package is packed into a local folder. Publishing it, and the template as
+  a package, comes with the first milestone.
+- CI packs D3B.Core, installs the template, creates a plugin from it and builds it against the packed package.
+- **Rejected.**
+  - Referencing `D3B.Core.dll` from an installed host: no feed to run, but compiling a plugin, in CI too, would need
+    an installed host, and nothing would state which version a plugin targets.
 
 ## Open questions
 
