@@ -3,7 +3,9 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
 using D3B.Data;
+using D3B.Data.Maps;
 using D3B.Data.Packs;
+using D3B.Data.World;
 using D3B.Scripts.Unity;
 
 namespace D3B.Scripts.Extract;
@@ -79,7 +81,8 @@ internal static class ExtractCommand
         var stopwatch = Stopwatch.StartNew();
         var build = ClientBuild.Read(client.Root);
         var manifest = LauncherManifest.Load(client);
-        var fingerprint = InputFingerprint.Compute(client, manifest, TextsExtractor.Inputs(client));
+        var inputs = TextsExtractor.Inputs(client).Concat(MapsExtractor.Inputs(client)).Concat(WorldExtractor.Inputs(client));
+        var fingerprint = InputFingerprint.Compute(client, manifest, inputs);
         var extractor = typeof(GamePack).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
         var path = PackLocations.PathOf(root, build);
 
@@ -92,6 +95,15 @@ internal static class ExtractCommand
             return 0;
         }
 
+        // Everything is read and checked before the pack is opened, so that a client the extractor misreads leaves no file.
+        var reading = Stopwatch.StartNew();
+        var maps = MapsExtractor.Read(client);
+        var graph = WorldExtractor.ReadGraph(client);
+        var atlas = WorldExtractor.ReadAtlas(client);
+
+        WorldExtractor.Check(graph, atlas, maps);
+        Console.WriteLine($"Read in {reading.Elapsed.TotalSeconds:F1} s");
+
         var info = new PackInfo
         {
             ClientVersion = build.Version,
@@ -103,19 +115,29 @@ internal static class ExtractCommand
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
+        var writing = Stopwatch.StartNew();
+
         // Written aside, then moved: the host never sees a pack half written under the name it looks for.
         using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
         using (var writer = new PackWriter(stream, info, level))
         {
             TextsExtractor.Extract(client, writer);
+            writer.Add(WorldAtlas.EntryName, atlas);
+            writer.Add(WorldGraph.EntryName, graph);
+
+            foreach (var map in maps)
+                writer.Add(MapData.EntryName(map.Id), map);
+
             writer.Complete();
         }
+
+        Console.WriteLine($"Written in {writing.Elapsed.TotalSeconds:F1} s");
 
         File.Move(temporary, path, true);
 
         using var written = File.OpenRead(path);
 
-        Console.WriteLine($"Pack: {path}, {written.Length:N0} bytes, format {GamePack.FormatVersion}, written in {stopwatch.Elapsed.TotalSeconds:F1} s");
+        Console.WriteLine($"Pack: {path}, {written.Length:N0} bytes, format {GamePack.FormatVersion}, extracted in {stopwatch.Elapsed.TotalSeconds:F1} s");
         Console.WriteLine($"Fingerprint: {fingerprint}");
         Console.WriteLine($"SHA-256: {Convert.ToHexStringLower(SHA256.HashData(written))}");
 

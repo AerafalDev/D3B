@@ -45,21 +45,18 @@ public sealed class GamePackTests : IDisposable
     [Fact]
     public void AnEntryIsReadOnlyWhenAskedFor()
     {
-        using var stream = new MemoryStream();
-        long secondStart, secondEnd;
-
-        using (var writer = new PackWriter(stream, TestPacks.Info, TestPacks.Level))
+        var bytes = TestPacks.Write(writer =>
         {
             writer.Add("records/1", TestPacks.Record(1));
-            secondStart = stream.Length;
             writer.Add("records/2", TestPacks.Record(2));
-            secondEnd = stream.Length;
-            writer.Complete();
+        });
+
+        using (var intact = TestPacks.Open(_directory, bytes))
+        {
+            var second = intact.Entry("records/2");
+
+            bytes[second.Offset + (second.CompressedLength / 2)] ^= 0xFF;
         }
-
-        var bytes = stream.ToArray();
-
-        bytes[(secondStart + secondEnd) / 2] ^= 0xFF;
 
         using var pack = TestPacks.Open(_directory, bytes);
 
@@ -85,6 +82,34 @@ public sealed class GamePackTests : IDisposable
         }
 
         Assert.Equal(TestPacks.Write(Add), TestPacks.Write(Add));
+    }
+
+    [Fact]
+    public void TheBytesDoNotDependOnHowManyEntriesAreCompressedAtOnce()
+    {
+        static byte[] Write(int parallelism)
+        {
+            using var stream = new MemoryStream();
+
+            using (var writer = new PackWriter(stream, TestPacks.Info, TestPacks.Level, parallelism))
+            {
+                for (var id = 1; id <= 100; id++)
+                    writer.Add($"records/{id}", TestPacks.Record(id));
+
+                writer.Complete();
+            }
+
+            return stream.ToArray();
+        }
+
+        var one = Write(1);
+
+        Assert.Equal(one, Write(8));
+
+        using var pack = TestPacks.Open(_directory, one);
+
+        Assert.Equal(Enumerable.Range(1, 100).Select(id => $"records/{id}"), pack.EntryNames);
+        Assert.All(Enumerable.Range(1, 100), id => Assert.Equal(id, pack.Read<SampleRecord>($"records/{id}").Id));
     }
 
     [Fact]
@@ -122,8 +147,14 @@ public sealed class GamePackTests : IDisposable
     {
         using var stream = new MemoryStream();
 
-        using (var writer = new PackWriter(stream, TestPacks.Info, TestPacks.Level))
-            writer.Add("records/1", TestPacks.Record(1));
+        // Entries are written once compressed, a few behind the last added: enough of them for some to be on disk.
+        using (var writer = new PackWriter(stream, TestPacks.Info, TestPacks.Level, 1))
+        {
+            for (var id = 1; id <= 10; id++)
+                writer.Add($"records/{id}", TestPacks.Record(id));
+        }
+
+        Assert.True(stream.Length > PackLayout.HeaderLength + PackLayout.TrailerLength);
 
         var exception = Assert.Throws<PackFormatException>(() => TestPacks.Open(_directory, stream.ToArray()));
 
