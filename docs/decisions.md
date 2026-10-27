@@ -977,6 +977,154 @@ A client build's obfuscated schema, every message and enum of its protocol under
   - The client's own serialized descriptors, which would give its schema whole: they are not in clear in the metadata,
     and finding where they are, perhaps encrypted with the obfuscator's strings, is a study of its own. Not done.
 
+## D41: Step 3 after session 3c: the connection's mapping first, the game's after its captures
+
+*2026-10-27, step 3, session 3d, chosen by the owner*
+
+The roadmap's session 3d held the readable `.proto` files of the connection phase and of the first milestone's
+messages, the generated classes, the scored matching, the pinned pairs, the contract audit, the IDA tracer and the
+anchors: too much for one session. It is split, and the sessions after it renumbered:
+
+- **3d**: the connection phase's mapping, end to end: its readable `.proto` files and classes, the matching, the pins,
+  the audit, the anchors from session 3b's captures, the mapping's format, and the tool writing a build's mapping
+  (D42 to D45).
+- **3e**: Q2 and the version gate for the connection phase, the mapping and the schema published in the build's release,
+  the game server's address rewritten, so that D3B holds both connections and captures the game connection.
+- **3f**: mapping, part 3: the first milestone's game messages, with anchors from 3e's captures of the game connection.
+- **3g**: Q9 and replays with injection, the former 3f.
+- **Why this order.** The game messages' anchors need captures of the game connection, which goes straight to the game
+  server until 3e rewrites its address; and 3e needs the connection phase's mapping to decode the message holding it.
+- **The IDA tracer** waits for a measured need, in 3f at the earliest. It traces which fields the client's code reads,
+  which BillBot uses to tell fields of one shape apart; D40 already reads every field's encoding from the machine code,
+  and on the connection phase the structure alone pairs every type (D43).
+- **Rejected.**
+  - The roadmap's 3d as written: the game messages would have no anchor, their connection not going through D3B yet.
+  - The tracer now: the connection phase leaves nothing for it to settle.
+
+## D42: The readable protocol of the connection phase
+
+*2026-10-27, step 3, session 3d*
+
+Bot code reads the connection phase through classes Grpc.Tools 2.85.0 generates at build, with Google.Protobuf (D11,
+D15), from five `.proto` files of our own in `src/D3B.Protocol/Connection/`: `connection`, `identification`, `servers`,
+`accounts` and `friends`, package `d3b.connection`, C# namespace `D3B.Protocol.Connection`, no gRPC service. They hold
+37 messages, 9 enums and 92 fields, one for each of the build's connection file (D39).
+
+- **Numbers are the wire's.** The obfuscation renames messages, fields, enums and values and keeps numbers: 3.7.12.12's
+  connection file has the messages and field numbers of `dofus-unity-proto`, an older build's, but where this build
+  changed or added a field ([client.md](client.md#the-connection-phase-mapped)). So a readable class reads the
+  connection's frames as they are; whether the translation then decodes once or twice stays Q2's, in 3e.
+- **Names** come from the references where this build's shape is theirs, same number and type and, for an enum, as many
+  values, written in our own words (D3). Elsewhere they are neutral, and the comment says what is not measured: the
+  four rights flags, where the references have five or six; the values of the identification's failure reason, 15
+  where they have 14, of the server selection's error, 5 where they have 4, and of the server type, new, 7. A field or
+  value is renamed once its meaning is measured: their names are in neither the wire nor a mapping's contract (D45).
+- **What is not on the wire is ours.** Files, nesting and declaration order are chosen to read well; Ankama's classes
+  come from one file. A message field carries no `optional`: the generated C# gives such a field no `Has` property, so
+  the schema cannot show its presence (D40).
+- `ReadableProtocol` lists the files, the connection's anchor plan (D43), the schema file each package is matched in,
+  and the digest of the protocol's contract (D45).
+- **Rejected.**
+  - The references' files (D3; `dofus-unity-proto` has no license), or Ankama's single file.
+  - Numbers of our own: every field would need translating, for nothing.
+  - Names guessed from the references where the build changed: a wrong name misleads more than a neutral one.
+
+## D43: Matching: pins, anchors from captures, fields, then scores
+
+*2026-10-27, step 3, session 3d*
+
+`ProtocolMatcher`, in `D3B.Protocol.Mapping`, pairs every readable message and enum with its counterpart in a build's
+schema; `scripts/mapping.cs` runs it on the installed build. Ideas from BillBot (scores, pins) and JondoEmu (anchors
+from real captures), the code our own (D3).
+
+- **Evidence, strongest first.** The build's pins; the anchors its captures give; the fields of every pair, a field
+  being its counterpart's field of the same number when it has its shape (label, map or not, kind of type), which pairs
+  their types; then structural scores for what is left, followed through fields again. Pairs are one to one both ways,
+  and the first pair a type gets stays: later evidence that disagrees is a conflict, which fails the mapping. Nothing is
+  settled by a guess.
+- **Scores**, from 0 to 1: the share of fields, on both sides, with the same number and shape, a field of a paired
+  type counting only if the types are each other's. A pair is accepted at 0.8 or more, the best of its row and of its
+  column by 0.1 or more. Two empty messages score 1, so only where they are used tells them apart.
+- **Scope.** A readable package is matched within one file of the schema, `d3b.connection` within `connection.proto`:
+  the client keeps the connection phase and the game in two assemblies (D40). Packages matched in one file compete for
+  its types together.
+- **Anchors**, measured in the build's captures by the structure of their frames only (D37, D38): the root is the
+  message of the connection file that reads every frame and types the most of their fields, alone; each frame holds one
+  of its fields, the client's `request` and the server's `response`, the field a side's first frame holds, other
+  fields, such as the server's events, being passed over; in a side's first frame holding it, the member of a oneof
+  the frame holds is `identification`, in its second `server_selection`. A frame contradicting another leaves the
+  anchors it touches out, and the tool fails until the plan or the readable protocol is fixed.
+- **Pins** are committed, one file per build, `src/D3B.Protocol/Pins/<client version>.json`, protobuf's JSON form of
+  `PinnedPairs` (`pins.proto`): a readable message or enum and its obfuscated name, and the fields whose numbers differ.
+  A build's pins stay when the next build comes, so that its mapping can be made again. 3.7.12.12 needs none: its file
+  is empty. A pin of a field the readable message lacks is a conflict, the tool fails without the directory of pins,
+  and a test checks that every pin names its build, a readable type and its fields.
+- **Measured on 3.7.12.12**: with the anchors, 37 messages paired, 7 by the captures and 30 by fields, and 9 enums by
+  fields; from pins and structure alone, the same pairs, 29 messages and 4 enums by scores
+  ([client.md](client.md#the-connection-phase-mapped)).
+- **Risks.**
+  - Fields pair by number, which the obfuscation keeps. Should a build shuffle the numbers of fields of one type, the
+    structure could not tell them apart: values in captures, the IDA tracer or pins would.
+  - The tool reads every capture of the build. Once 3e captures the game connection, no message of the connection file
+    reads its frames: 3e must keep the connection phase's captures apart.
+- **Rejected.**
+  - BillBot's signals and weights, runtime confidence, IDA accesses and capture order among them: built for 2,000
+    messages, and the connection phase needs none.
+  - JondoEmu's matching from one build's dump to the next: structure settles each build on its own, so far.
+  - Matching every readable type against the whole schema: 2,213 candidates where the right file has 37.
+
+## D44: The contract audit
+
+*2026-10-27, step 3, session 3d*
+
+`ContractAudit` checks a mapping against the readable protocol and the build's schema. It fails when a readable
+message or enum has no counterpart, or one shared with another; when a readable field has none, or one that does not
+fit: another number than the mapping's, another type (through the mapping for messages and enums), label or presence,
+or another oneof, the members of a readable oneof having to be those of one oneof of the counterpart, and of no other
+readable oneof; when a readable enum value has none; when the mapping pairs a field or a value twice, or one the
+readable type lacks; and when the mapping names another format, schema or readable protocol. What the build has beyond the readable protocol is noted, not failed: a reader meets it as unknown fields,
+which fail loudly when they carry a value (D11).
+
+- **Where it fails the build.** The mapping tool runs it and, on any failure or conflict (D43), exits with code 1 and
+  writes nothing. In 3e, the host runs it on the mapping it loads and does not start on a failure, D11's version gate.
+  CI has no client and no schema: it runs the audit's tests, on schemas made by renaming the readable protocol and on a
+  fixture of our own, checks every pin, and `MappingFormatTests` fails when the readable protocol's contract changes
+  without a new mapping format (D45).
+- **Measured on 3.7.12.12**: 37 messages, 92 fields, 9 enums and 60 values checked, no failure and no note: the readable
+  protocol reads every field and value of the connection phase.
+- **Rejected.**
+  - An audit in `dotnet build` or `dotnet test` against the installed client: CI has none, and a test reading the
+    machine's client is not reproducible.
+  - BillBot's contract, a list of required messages with score thresholds: the readable protocol is the contract,
+    whole.
+
+## D45: The mapping is a protobuf message of our own
+
+*2026-10-27, step 3, session 3d, chosen by the owner*
+
+A build's mapping is `mapping-<format>.binpb`, a serialized `ProtocolMapping`, which `mapping.proto` defines in
+`src/D3B.Protocol/Mapping/`: its format, the client version, the schema's SHA-256 (D39), the readable protocol's digest
+and the tool's version; then every readable message by full name with its obfuscated full name, the evidence that paired them
+(D43) and its fields as pairs of numbers; and every readable enum with its values likewise.
+
+- **Where.** Beside the build's pack and schema, in `%LOCALAPPDATA%\D3B\data\<version>\`, written by
+  `scripts/mapping.cs` aside then moved. Derived from the client, it is never committed (D11): it ships as an asset of
+  the release `client-<version>` with its SHA-256 (D24), published with the schema in 3e.
+- **Format.** `MappingFile.FormatVersion`, 1, changes whenever `mapping.proto` or the readable protocol's contract does,
+  so that each version of D3B reads its own mappings, side by side, and a published one is never replaced (D33). The
+  contract is `ProtocolDigest`: every message and enum by full name, every field's number, type, label, presence and
+  oneof, every value's number; names of fields, values and oneofs, and comments, are not part of it.
+  `MappingFormatTests` records it per format, as `PackFormatTests` does for packs.
+- **Measured.** The mapping of 3.7.12.12 is 3,305 bytes, the same bytes on two runs of one build of the tool, whose
+  version it records, as a pack records its extractor's (D33); the tool takes 0.2 s once built.
+  `--json` prints it to be read, never to be committed.
+- **Why.** One model with the schema (D39), with Google.Protobuf already there; generated code reads and writes it,
+  deterministically; it pairs numbers both ways, so it serves either answer to Q2.
+- **Rejected.**
+  - JSON of our own, which the lead session laid out: readable as it is, but a second model beside the descriptors.
+  - The schema annotated with custom options naming the readable counterparts: one artifact, but the schema's format
+    and the mapping's tied together.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -984,8 +1132,8 @@ Settled questions leave this table, and the decision that settles one says so.
 | Id | Question | Settled in |
 | --- | --- | --- |
 | Q1 | Does LuaCSharp hold up: sandboxing, async calls, errors, performance? | Step 7 |
-| Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? | Step 3, session 3e |
+| Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? The connection phase keeps its numbers (D42). | Step 3, session 3e |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
-| Q7 | How are sessions captured and replayed for tests: in which format? The format is D37's; replays with injection remain. | Step 3, session 3f |
-| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3, session 3f |
+| Q7 | How are sessions captured and replayed for tests: in which format? The format is D37's; replays with injection remain. | Step 3, session 3g |
+| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3, session 3g |

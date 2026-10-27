@@ -6,15 +6,16 @@ builds its modules, starts and stops (step 1); the data pack format in `D3B.Data
 extract its maps, world graph and game tables with the texts they name, and publish a build's pack, and the data module,
 whose pack the host finds or downloads before it starts (step 2); the network module, whose relay takes each client's
 connection phase through D3B, with its framing measured and its captures (step 3, session 3b); the tool writing each
-build's obfuscated protocol schema, read from the client's code (step 3, session 3c). Everything else below is the
-target.
+build's obfuscated protocol schema, read from the client's code (step 3, session 3c); the readable protocol of the
+connection phase, and the tool matching it with a build's schema into the build's mapping, audited (step 3, session
+3d). Everything else below is the target.
 
 ## Overview
 
 ```text
 Official client (Unity)                 scripts/ (file-based apps, D10)              release artifacts, per client build
 Dofus_Data/StreamingAssets/** ────────► extraction: Unity readers ───────────────►  data pack (MemoryPack + zstd)
-GameAssembly.dll + metadata   ────────► mapping: Cpp2IL schema, IDA, matching ───►  schema, protocol mapping
+GameAssembly.dll + metadata   ────────► mapping: schema, captures, matching ─────►  schema, protocol mapping
                                                                                              │ fetched and loaded by
                                                                                              ▼
 D3B.App (Avalonia, ShadUI) ◄── gRPC on a named pipe (D7) ──► D3B.Host (headless: Generic Host, Kestrel)
@@ -39,7 +40,7 @@ each step adds the references it needs.
 | --- | --- |
 | `src/D3B.Core` | Modules and `BotBuilder`, plugin loading, shared abstractions. What a plugin references. |
 | `src/D3B.Network` | Kestrel transport, framing, codec over `IDuplexPipe`. The only project referencing `Microsoft.AspNetCore.App`, with the host. |
-| `src/D3B.Protocol` | Classes generated from the readable `.proto` files, and the per-build translation. |
+| `src/D3B.Protocol` | Classes generated from the readable `.proto` files, a build's mapping, its matching and audit, and the per-build translation. |
 | `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, items, spells, monsters, interactives, texts. |
 | `src/D3B.Engine` | Pure logic with no I/O: cell and world pathfinding, line of sight, fight simulation. |
 | `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, and the default modules. |
@@ -110,9 +111,19 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
 - The obfuscated schema, built in session 3c (D39, D40): `scripts/schema.cs` reads the installed build's protocol from
   its IL2CPP code with Cpp2IL, its structure from the metadata and the encoding of every field from the machine code,
   and writes it as a `FileDescriptorSet` beside the build's pack, `schema-1.binpb`. `scripts/capture.cs --schema` reads
-  captures with it, field by field. Session 3d matches it with the readable `.proto` files.
-- The per-build translation turns obfuscated names and field numbers into the clean classes and back. An unmapped type
-  or field is an error, logged with the raw bytes. Its exact form is Q2.
+  captures with it, field by field.
+- The readable protocol, built in session 3d for the connection phase (D42): `.proto` files of our own in
+  `src/D3B.Protocol/Connection/`, which Grpc.Tools compiles into Google.Protobuf classes at build. Their numbers are the
+  wire's, which the obfuscation keeps; `ReadableProtocol` lists them. The game's messages come in session 3f.
+- The mapping, built in session 3d (D43 to D45), in `D3B.Protocol.Mapping`. `scripts/mapping.cs` loads the build's
+  schema (`ProtocolSchema`) and pins (`src/D3B.Protocol/Pins/<version>.json`), measures anchors in the build's captures
+  (`CaptureAnchors`, by structure only), pairs every readable message and enum with its counterpart (`ProtocolMatcher`:
+  pins, anchors, fields, then structural scores), audits the result (`ContractAudit`), and writes it beside the pack,
+  `mapping-1.binpb` (`MappingFile`), only when it holds. The mapping records the schema's SHA-256 and the readable
+  protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that digest.
+- The per-build translation turns obfuscated names and field numbers into the clean classes and back, through the
+  mapping, which the host audits before it starts. An unmapped type or field is an error, logged with the raw bytes.
+  Its exact form is Q2, session 3e.
 - The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).
 - Captures (D37): with `Network:Captures:Enabled`, each connection's raw reads go to a `.d3bcap` file in
   `%LOCALAPPDATA%\D3B\captures`, never committed. `CaptureReplay` plays one into pipes; tests build their own, and
