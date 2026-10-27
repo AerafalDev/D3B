@@ -4,12 +4,15 @@ An open-source bot for Dofus 3 (Unity), in .NET 10 on Windows. Every feature is 
 external .NET plugins add their own. A headless host runs the bots; an Avalonia desktop app controls them.
 
 This project is not affiliated with Ankama. Dofus is a trademark of Ankama. Using a bot on the official servers breaches
-Ankama's terms of service and can get the account banned. No game asset or data is part of this repository.
+Ankama's terms of service and can get the account banned. No game asset or data is committed to this repository: the
+data packs extracted from the official client ship as release assets, and `scripts/extract.cs` makes them from a local
+client.
 
 ## Status
 
 The solution and the module system: a headless host that builds its modules, loads external plugins from `plugins/`,
-starts and stops. No game logic yet. The first milestone is harvesting and banking on one account, controlled from the
+starts and stops. The game data pack format, and tools that inspect the official client and extract its texts. No game
+logic yet. The first milestone is harvesting and banking on one account, controlled from the
 desktop app. See the [roadmap](docs/roadmap.md).
 
 ## Building
@@ -32,6 +35,7 @@ A plugin is a .NET assembly that compiles against the `D3B.Core` package. `templ
 | [docs/decisions.md](docs/decisions.md) | The brief, every decision with its reasons, the open questions. |
 | [docs/architecture.md](docs/architecture.md) | Where the bot is going: projects, modules, runtime, protocol, data, UI. |
 | [docs/roadmap.md](docs/roadmap.md) | The steps in order, and the next one. |
+| [docs/client.md](docs/client.md) | What the official client holds that D3B uses, measured. |
 
 ## License
 

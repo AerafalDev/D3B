@@ -9,7 +9,8 @@ The repository is the only memory between sessions: never assume an earlier sess
 2. [docs/decisions.md](docs/decisions.md): the brief, every decision and the open questions.
 3. [docs/architecture.md](docs/architecture.md): the target architecture and what exists.
 4. [docs/roadmap.md](docs/roadmap.md): the steps and the next one.
-5. The actual state of the repository (`git log`, `git status`, the code).
+5. [docs/client.md](docs/client.md), when the task touches the official client's content: what it holds, measured.
+6. The actual state of the repository (`git log`, `git status`, the code).
 
 ## Working agreement
 
@@ -37,7 +38,7 @@ The repository is the only memory between sessions: never assume an earlier sess
 - The references in `vendor/` are read for ideas, never copied (D3). The only exception is code the owner wrote
   in BillBot.
 - Nothing extracted from the official client is ever committed: no assets, data, dumps, per-build mappings or packs.
-  Packs and mappings ship as release artifacts (D10, D11). The readable `.proto` files and the pinned pairs are ours
+  Packs and mappings ship as release artifacts (D10, D11, D24). The readable `.proto` files and the pinned pairs are ours
   and are committed.
 - Build and configuration files (`.csproj`, `.props`, `.targets`, `global.json`) carry no comments. Their rationale
   goes in the docs.
@@ -68,6 +69,8 @@ dotnet format --verify-no-changes          # CI checks it
 dotnet run --project src/D3B.Host          # runs until Ctrl+C; --Plugins:Directory <dir> loads plugins from elsewhere
 dotnet pack src/D3B.Core -o <feed>         # the package plugins compile against (D22)
 dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>
+dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
+dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options
 ```
 
 CI also creates a plugin from the template and builds it against a freshly packed D3B.Core: see the "Check the plugin

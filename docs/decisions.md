@@ -404,6 +404,88 @@ and the "in socket mode" of D16. The rest of D8 stands: Kestrel's transport, `Co
   - Socket mode first, MITM later (D8): a bot without a client is lighter, but it must reimplement the login, which
     may touch the client's integrity checks (Q3).
 
+## D24: Packs ship as releases of the D3B repository, one release per client build
+
+*2026-10-27, step 2, chosen by the owner. Settles Q4.*
+
+Data packs, and from step 3 the protocol mappings (D11), are assets of the D3B repository's GitHub releases.
+
+- **Identity.** A client build is named by the `Version` line of `Dofus_Data/StreamingAssets/version`, such as
+  `3.7.12.12`: every build measured so far has its own. `ClientBuild`, in `D3B.Data`, reads it and accepts only numbers
+  separated by dots, since the version ends up in paths and URLs.
+- **Releases.** One release per client build, tagged `client-<version>`. Its assets: the pack `data-<format>.pack`, the
+  protocol mapping from step 3, and their SHA-256. The pack format is in the file name, so that a D3B reading a newer
+  format adds its pack to the same release while older hosts keep theirs. MinVer only reads tags starting with `v`, so
+  these tags leave D3B's versions alone.
+- **Fingerprint.** A pack records the SHA-256 of the client files it was read from, through their SHA1 in the
+  launcher's `manifest.json`. A published pack is never replaced by one with another fingerprint under the same
+  version: should Ankama change content without changing the version, the difference shows, and the identity then
+  grows to include the fingerprint.
+- **Fetching**, built in session 2d. The host reads the installed client's version and looks for the pack under
+  `%LOCALAPPDATA%\D3B\data\<version>\`, where the extraction tool writes by default, so a pack extracted locally is
+  used first and works offline. Otherwise it downloads the release asset, checks its SHA-256, then moves it into place.
+  With no pack for the installed build, the host does not start, and says which build is missing and how to extract
+  it. While the repository is private (D4), a download needs a GitHub token; only the owner runs D3B until then.
+- **Publishing.** The maintainer extracts with `scripts/extract.cs` and creates the release. CI cannot: it has no
+  client.
+- **Risk, accepted by the owner.** Ankama has filed DMCA notices on GitHub before (2018, against forks of TouchEmu). A
+  notice against the packs would target this repository, its code included. The scripts keep working to extract
+  locally, whatever happens to the releases.
+- **Rejected.**
+  - A separate repository for the packs, which the lead session recommended: a notice would reach only the data. The
+    owner prefers one repository.
+  - Object storage (S3, R2): an account, keys and costs to manage, for the same risk elsewhere.
+  - Falling back to the pack of another build: the mapping must match its build exactly (D11), and data that differs
+    could make a bot misbehave.
+
+## D25: The pack format
+
+*2026-10-27, step 2*
+
+A pack is one file, written by `PackWriter` and read by `GamePack`, both in `D3B.Data`: the extraction tool references
+`D3B.Data` through `#:project`, so the format has one definition.
+
+- **Layout.** A header (the magic `D3B-PACK` and the format version), the entries, an index, then a trailer (the
+  index's offset and lengths, and the magic again). The index comes last, so the writer streams entries; a pack whose
+  writing was cut short has no trailer and is rejected. The format version comes first, so a pack of another format is
+  reported as such rather than as damaged.
+- **Entries.** Each has a name, such as `texts/fr`, and is one MemoryPack payload compressed as its own zstd frame with
+  zstd's checksum: a damaged entry fails when it is read, alone. The index records the type each entry was written as,
+  and a read must ask for that type. MemoryPack's default layout is not version tolerant: `GamePack.FormatVersion`
+  changes whenever an entry type does, and a host reads only its own format.
+- **Lazy reading.** Opening a pack reads its index only: about 60 ms for the 11 MB pack of session 2a. `GamePack.Read`
+  reads one entry with positional reads, safe from any number of threads, and keeps nothing. `PackCache` keeps the
+  entries last read within a budget in bytes, weighed by their decompressed length, and drops the least recently used:
+  maps go through it from session 2b. A whole table, such as a language's texts, is read once and kept by its store.
+- **Determinism.** zstd on one thread at level 19, and MemoryPack in declaration order: one client and one extractor
+  give the same bytes, checked on client 3.7.12.12. A pack can be compared with another by its hash.
+- **Texts.** One `TextTable` per language, French and English: identifiers sorted in one array and found by binary
+  search, texts in another. For now every numbered text, 339,912 per language and 11.4 MB for both; session 2c keeps
+  only those the extracted tables name. The keyed texts, the client's interface, are left out.
+- **Rejected.**
+  - A directory of files per pack: more downloads and hashes, where one file is one release asset and one SHA-256.
+  - MemoryPack's version-tolerant mode: packs are per build and per format, so tolerance would only slow reading.
+  - SQLite: queries D3B does not need, for a format that is read whole or by key.
+  - A zstd dictionary trained on the entries: it may pay for many small maps; session 2b measures it.
+
+## D26: The data tools
+
+*2026-10-27, step 2*
+
+- `scripts/unity/` holds what several tools share, copied from Dofus Remastered and now evolving on their own:
+  `ClientInstall`, `UnityBundle`, `I18nFile` and `LauncherManifest`, which now hashes the files its manifest lacks,
+  since a fingerprint must follow content. Dofus Remastered's typed readers (`UnityReader`, `UnityTypeTree`,
+  `UnityTypeNode`, `UnityFields`) come with the map reader in session 2b, their first user, so that no copied file sits
+  unbuilt.
+- `scripts/inspect.cs` is Dofus Remastered's inspection tool without its texture and shader commands, which a bot does
+  not need: `summary`, `bundles`, `types`, `objects`, `dump`, `layout` and `texts`.
+- `scripts/extract.cs` writes the pack of the installed client's build to `<output>/<version>/data-<format>.pack`, by
+  default where the host looks first (D24). It does nothing when the pack there has the same fingerprint and the same
+  extractor version, and writes beside the pack then moves it, so a pack is never half written under its name.
+- CI builds both tools, as Dofus Remastered's does, so that they keep compiling.
+- Added to D15: System.CommandLine 2.0.14, the latest stable, for the tools' command lines.
+- `docs/client.md` records what the client holds that D3B uses: layouts and counts, measured, never content.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -412,7 +494,6 @@ Settled questions leave this table, and the decision that settles one says so.
 | --- | --- | --- |
 | Q1 | Does LuaCSharp hold up: sandboxing, async calls, errors, performance? | Step 7 |
 | Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? | Step 3 |
-| Q4 | Where are data packs hosted, and how does the host fetch the pack matching the installed client's build? | Step 2 |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
 | Q7 | How are sessions captured and replayed for tests: in which format? | Step 3 |
