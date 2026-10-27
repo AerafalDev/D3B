@@ -7,9 +7,14 @@
     <File Path="scripts/inspect.cs" />
   </Folder>
   <Folder Name="/scripts/extract/">
+    <File Path="scripts/extract/ClientMapLayout.cs" />
     <File Path="scripts/extract/ExtractCommand.cs" />
     <File Path="scripts/extract/InputFingerprint.cs" />
+    <File Path="scripts/extract/MapReader.cs" />
+    <File Path="scripts/extract/MapsExtractor.cs" />
     <File Path="scripts/extract/TextsExtractor.cs" />
+    <File Path="scripts/extract/WorldExtractor.cs" />
+    <File Path="scripts/extract/WorldGraphReader.cs" />
   </Folder>
   <Folder Name="/scripts/inspect/">
     <File Path="scripts/inspect/BundleBlock.cs" />
@@ -43,6 +48,13 @@
     <File Path="scripts/unity/I18nFile.cs" />
     <File Path="scripts/unity/LauncherManifest.cs" />
     <File Path="scripts/unity/UnityBundle.cs" />
+    <File Path="scripts/unity/UnityDataTable.cs" />
+    <File Path="scripts/unity/UnityFields.cs" />
+    <File Path="scripts/unity/UnityReader.cs" />
+    <File Path="scripts/unity/UnityReferences.cs" />
+    <File Path="scripts/unity/UnityReferenceVisitor.cs" />
+    <File Path="scripts/unity/UnityTypeNode.cs" />
+    <File Path="scripts/unity/UnityTypeTree.cs" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/D3B.App/D3B.App.csproj" />

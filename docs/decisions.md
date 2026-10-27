@@ -440,7 +440,8 @@ Data packs, and from step 3 the protocol mappings (D11), are assets of the D3B r
 
 ## D25: The pack format
 
-*2026-10-27, step 2*
+*2026-10-27, step 2. Superseded in part by D28: entries are compressed several at once, still deterministically, and
+there is no zstd dictionary.*
 
 A pack is one file, written by `PackWriter` and read by `GamePack`, both in `D3B.Data`: the extraction tool references
 `D3B.Data` through `#:project`, so the format has one definition.
@@ -485,6 +486,79 @@ A pack is one file, written by `PackWriter` and read by `GamePack`, both in `D3B
 - CI builds both tools, as Dofus Remastered's does, so that they keep compiling.
 - Added to D15: System.CommandLine 2.0.14, the latest stable, for the tools' command lines.
 - `docs/client.md` records what the client holds that D3B uses: layouts and counts, measured, never content.
+
+## D27: Maps and the world in the pack, format 2
+
+*2026-10-27, step 2, session 2b*
+
+A pack now holds, besides the texts, every map, the client's world graph, and an atlas of map positions, sub-areas,
+areas and zaaps, measured in [client.md](client.md). `GamePack.FormatVersion` is 2.
+
+- **Maps.** One entry per map, `maps/<id>`: a `MapData` with its four neighbours, its 560 cells and its interactive
+  elements, each an identifier and a cell. Both of the client's layouts are read, `ClientMapData` and `MapMetadata`,
+  17,722 maps; graphics, materials, effects and sounds are left out. `GameMaps` reads a map when first asked for, through
+  a `PackCache` of 16 MB by default.
+- **Cells** are a packed unmanaged struct of 9 bytes, `MapCell`: the client's booleans as `MapCellProperties`, and its
+  numbers sized after the ranges measured. MemoryPack copies an array of them as raw bytes, so a map is about 5 KB and
+  reads in microseconds. The constructor rejects a value that does not fit, so a client widening a field fails the
+  extraction instead of being misread. Fields whose meaning is not measured, such as `moveZone` and `arrow`, are kept
+  as they are.
+- **Zones.** A cell's zone is the high four bits of its `linkedZone` (`MapCell.Zone`), the hypothesis of BillBot and
+  BubbleBot, confirmed: every vertex's zone is that of walkable cells of its map, and on 10,795 of the 10,981 maps the
+  two sets of zones are equal; on the others, cells hold zones with no way out, which the graph leaves out.
+- **Interactive elements** are keyed by map and identifier: an identifier is unique within a map only. An element's
+  cell is its own, or that of the middleground group listing it; the few drawn without a cell keep
+  `MapInteractive.NoCell`.
+- **World graph.** One entry, `world/graph`, read once by `GameWorld`: vertices sorted by map and zone, edges by source
+  and destination, transitions contiguous per edge, criteria in one table, all packed unmanaged structs except the
+  criteria. Transition types are the four measured, `Scroll`, `ScrollAction`, `MapAction` and `Interactive`; the
+  extractor fails on another type, or on a skill or element where one was never measured, rather than guess. Criteria
+  stay text until step 4 parses them.
+- **Atlas.** One entry, `world/atlas`, read once: positions, sub-areas (what travel needs: area, level, associated zaap,
+  access without a subscription), areas and zaaps, each table sorted by identifier. `m_flags` is kept raw: its bits are
+  not measured.
+- **Checks.** The extractor reads and checks everything before it writes: every vertex's zone on a walkable cell of
+  its map, every interactive transition's element on its map, every position's map held, every zaap on the graph.
+- **Format test.** `PackFormatTests` hashes what defines the format: the header and trailer, and, for every entry type,
+  its name and the bytes MemoryPack writes for a sample whose every field has its own value. It fails when that hash is
+  not the one recorded for `GamePack.FormatVersion`; a format's line is never edited once a pack of it is published.
+- `scripts/unity/` gains Dofus Remastered's typed readers, as D26 planned, with what maps and tables need: 8, 16 and
+  64-bit integers, integer arrays, counts checked against the bytes left, fields named by their property when the client
+  serializes a backing field (`<interactiveId>k__BackingField`), a shared reader of managed reference registries, and
+  `UnityDataTable` for `DataRoot` tables.
+- **Rejected.**
+  - One entry for all maps: a host would read 90 MB to use a few maps.
+  - Cells as a struct of arrays: 1.4% smaller compressed, for a clumsier API.
+  - Transitions as classes holding their criterion: 31,329 objects to build, where a struct array is copied.
+  - Leaving out the `MapMetadata` maps, on no map of the graph: they cost 1,739 small entries, and a bot may still
+    stand on one.
+  - Keeping `MapScrollActionsDataRoot` and the arrow cell lists: the graph's scroll actions already lead where the
+    server sends, and nothing reads the lists.
+
+## D28: Packs compressed at zstd 19, several entries at once, without a dictionary
+
+*2026-10-27, step 2, session 2b; the dictionary chosen by the owner. Supersedes in part D25.*
+
+Measured on the pack of 3.7.12.12 (client.md):
+
+| zstd level | Entries compressed | One thread | 16 threads |
+| ---: | ---: | ---: | ---: |
+| 15 | 17.7 MB | 23.8 s | 6.2 s |
+| 19 | 15.5 MB | 45.4 s | 10.3 s |
+| 22 | 15.2 MB | 56.4 s | 14.5 s |
+
+- **Level.** 19 stays the default: 22 saves 2% for a quarter more time, 15 costs 14%.
+- **Parallel compression.** `PackWriter` serializes each entry as it is added, compresses several at once on the thread
+  pool, each as its own frame on one thread, and writes them in the order they were added. The bytes do not change: the
+  parallel pack equals the sequential one but for its format number, and two extractions give the same SHA-256.
+  Extraction takes about 25 s instead of 68 s.
+- **No dictionary.** A 64 KiB zstd dictionary trained on the maps shrinks them from 3.72 MB to 3.29 MB with the
+  dictionary, 2.8% of the pack, and decompression of every map from 62 to 34 ms. Not worth a dictionary entry, a field
+  per entry and a training kept deterministic. The texts are three quarters of the pack; once session 2c keeps only the
+  texts tables name, the maps weigh more, and the question can be measured again.
+- **Rejected.**
+  - zstd's own multithreading inside a frame: the gain is on the two text entries only, and its output would need its
+    own proof of determinism.
 
 ## Open questions
 

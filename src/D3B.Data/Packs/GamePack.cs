@@ -16,7 +16,7 @@ public sealed class GamePack : IDisposable
 {
     /// <summary>The format this version of D3B writes and reads. A pack of any other format is rejected.</summary>
     /// <remarks>It changes whenever a pack written before would be misread: a new layout, or a changed entry type.</remarks>
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
 
     private readonly SafeFileHandle _file;
     private readonly string _path;
@@ -229,7 +229,8 @@ public sealed class GamePack : IDisposable
         return Entry(name).Length;
     }
 
-    private PackEntry Entry(string name)
+    /// <summary>Gets where an entry lies in the pack.</summary>
+    internal PackEntry Entry(string name)
     {
         return _entries.TryGetValue(name, out var entry)
             ? entry

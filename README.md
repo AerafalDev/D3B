@@ -11,8 +11,8 @@ client.
 ## Status
 
 The solution and the module system: a headless host that builds its modules, loads external plugins from `plugins/`,
-starts and stops. The game data pack format, and tools that inspect the official client and extract its texts. No game
-logic yet. The first milestone is harvesting and banking on one account, controlled from the
+starts and stops. The game data pack format, and tools that inspect the official client and extract its texts, maps
+and world graph. No game logic yet. The first milestone is harvesting and banking on one account, controlled from the
 desktop app. See the [roadmap](docs/roadmap.md).
 
 ## Building
