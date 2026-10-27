@@ -1,11 +1,13 @@
 using AssetsTools.NET.Extra;
+using D3B.Data.Items;
+using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.World;
 using D3B.Scripts.Unity;
 
 namespace D3B.Scripts.Extract;
 
-/// <summary>Reads the world: the client's world graph, and the tables of the atlas (positions, sub-areas, areas, zaaps).</summary>
+/// <summary>Reads the world: the client's world graph, and the tables of the atlas (positions, sub-areas and their resources, areas, zaaps).</summary>
 /// <remarks>
 /// <see cref="Check"/> then holds the graph and the atlas against the maps, so that a client changing what the fields
 /// mean, such as which bits of a cell's <c>linkedZone</c> name its zone, fails the extraction (client.md).
@@ -62,7 +64,7 @@ internal static class WorldExtractor
         throw new InvalidDataException($"{path} holds no world graph.");
     }
 
-    public static WorldAtlas ReadAtlas(ClientInstall client)
+    public static WorldAtlas ReadAtlas(ClientInstall client, ItemCatalog items, JobCatalog jobs)
     {
         try
         {
@@ -83,13 +85,7 @@ internal static class WorldExtractor
                     throw new InvalidDataException($"The maps' information keys map {position.MapId} as {key}.");
             }
 
-            var subAreas = UnityDataTable.Read(client, "subareas").Select(row => new SubArea(
-                row.Record.Int32("id"),
-                row.Record.Int32("nameId"),
-                row.Record.Int32("areaId"),
-                checked((int)row.Record.UInt32("level")),
-                ZaapOf(row.Record.Int32("id"), row.Record.Int32("associatedZaapMapId")),
-                row.Record.Boolean("basicAccountAllowed")));
+            var (subAreas, harvestables) = ReadSubAreas(client, items, jobs);
             var areas = UnityDataTable.Read(client, "areas").Select(row => new Area(
                 row.Record.Int32("id"),
                 row.Record.Int32("nameId"),
@@ -101,9 +97,10 @@ internal static class WorldExtractor
                 row.Record.Boolean("activated")));
             var atlas = new WorldAtlas(
                 positions.Select(row => row.Position).OrderBy(position => position.MapId).ToArray(),
-                subAreas.OrderBy(subArea => subArea.Id).ToArray(),
+                subAreas,
                 areas.OrderBy(area => area.Id).ToArray(),
-                waypoints.OrderBy(waypoint => waypoint.Id).ToArray());
+                waypoints.OrderBy(waypoint => waypoint.Id).ToArray(),
+                harvestables);
 
             Console.WriteLine($"Atlas: {atlas.Positions.Length:N0} map positions, {atlas.SubAreas.Length:N0} sub-areas, {atlas.Areas.Length:N0} areas, {atlas.Waypoints.Length:N0} zaaps");
 
@@ -113,6 +110,58 @@ internal static class WorldExtractor
         {
             throw new InvalidDataException($"The world's tables do not fit what the extractor measured: {exception.Message}", exception);
         }
+    }
+
+    /// <summary>Reads the sub-areas, in ascending order, each with the resources professions gather there.</summary>
+    /// <remarks>
+    /// A sub-area's <c>harvestables</c> lists items: those a profession's skill gathers, and what harvesting may bring
+    /// besides, such as loot boxes, which are no resource to look for there and are left out.
+    /// </remarks>
+    private static (SubArea[] SubAreas, int[] Harvestables) ReadSubAreas(ClientInstall client, ItemCatalog items, JobCatalog jobs)
+    {
+        var resources = new HashSet<int>();
+
+        foreach (var skill in jobs.Skills.Span)
+        {
+            if (skill.JobId is not Job.Base && skill.GatheredItemId is not Skill.NoItem)
+                resources.Add(skill.GatheredItemId);
+        }
+
+        var records = UnityDataTable.ReadById(client, "subareas").OrderBy(record => record.Int32("id")).ToList();
+        var subAreas = new SubArea[records.Count];
+        var harvestables = new List<int>();
+        var listed = 0;
+
+        for (var i = 0; i < records.Count; i++)
+        {
+            var record = records[i];
+            var id = record.Int32("id");
+            var harvestable = record.Int32Array("harvestables");
+
+            foreach (var item in harvestable)
+            {
+                if (!items.TryGetItem(item, out _))
+                    throw new InvalidDataException($"Sub-area {id} lists harvestable {item}, which is no item of the client.");
+            }
+
+            var kept = harvestable.Where(resources.Contains).Distinct().Order().ToArray();
+
+            listed += harvestable.Length;
+            subAreas[i] = new SubArea(
+                id,
+                record.Int32("nameId"),
+                record.Int32("areaId"),
+                checked((int)record.UInt32("level")),
+                ZaapOf(id, record.Int32("associatedZaapMapId")),
+                record.Boolean("basicAccountAllowed"),
+                harvestables.Count,
+                kept.Length);
+            harvestables.AddRange(kept);
+        }
+
+        Console.WriteLine($"Harvestables: {listed:N0} listed, {harvestables.Count:N0} of them resources of a profession");
+
+        return (subAreas, [.. harvestables]);
     }
 
     private static long ZaapOf(int subAreaId, int mapId)

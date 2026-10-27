@@ -50,6 +50,28 @@ internal static class UnityDataTable
         throw new InvalidDataException($"{path} holds no data table.");
     }
 
+    /// <summary>Reads every record of a table whose records hold their own key in an <c>id</c>, in the order of its keys.</summary>
+    /// <param name="client">The client.</param>
+    /// <param name="name">The table's name in the bundle's file name, such as <c>items</c>.</param>
+    /// <exception cref="InvalidDataException">The bundle holds no table, or a key names a record the table lacks or of another id.</exception>
+    public static IReadOnlyList<UnityFields> ReadById(ClientInstall client, string name)
+    {
+        var table = Read(client, name);
+        var records = new List<UnityFields>(table.Count);
+
+        foreach (var (key, record) in table)
+        {
+            var id = record.Int32("id");
+
+            if (key != id)
+                throw new InvalidDataException($"The {name} table keys record {id} as {key}.");
+
+            records.Add(record);
+        }
+
+        return records;
+    }
+
     private static List<(long Key, UnityFields Record)> ReadTable(byte[] data, UnityTypeTree tree, Dictionary<string, UnityTypeTree> references)
     {
         var reader = new UnityReader(data, tree);

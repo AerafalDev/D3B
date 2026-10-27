@@ -1,13 +1,17 @@
-using D3B.Data.Packs;
+using D3B.Data.Banks;
+using D3B.Data.Interactives;
+using D3B.Data.Items;
+using D3B.Data.Jobs;
 using D3B.Data.Texts;
+using D3B.Data.World;
 using D3B.Scripts.Unity;
 
 namespace D3B.Scripts.Extract;
 
-/// <summary>Extracts the numbered texts of each language of <see cref="TextLanguages.All"/> from <c>Content/I18n</c>.</summary>
+/// <summary>Reads, in each language of <see cref="TextLanguages.All"/>, the numbered texts the pack's tables name.</summary>
 /// <remarks>
-/// Game data names texts by number. The keyed texts, found by a hash of a key the client builds at run time, belong to
-/// its interface and are left out.
+/// Game data names texts by number; of the client's third of a million, the pack keeps those its tables name (D25). The
+/// keyed texts, found by a hash of a key the client builds at run time, belong to its interface and are left out.
 /// </remarks>
 internal static class TextsExtractor
 {
@@ -16,32 +20,88 @@ internal static class TextsExtractor
         return [.. TextLanguages.All.Select(language => PathOf(client, language))];
     }
 
-    public static void Extract(ClientInstall client, PackWriter writer)
+    /// <summary>Reads a language's text file.</summary>
+    /// <exception cref="FileNotFoundException">The client has no texts in that language.</exception>
+    public static I18nFile Open(ClientInstall client, string language)
     {
+        var path = PathOf(client, language);
+
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"The client has no {language} texts: {path} does not exist.", path);
+
+        return I18nFile.Read(path);
+    }
+
+    /// <summary>Gets the texts the tables name.</summary>
+    public static IReadOnlySet<int> Named(WorldAtlas atlas, ItemCatalog items, JobCatalog jobs, InteractiveCatalog interactives, BankCatalog banks)
+    {
+        var named = new HashSet<int>();
+
+        foreach (var position in atlas.Positions.Span)
+            named.Add(position.NameId);
+
+        foreach (var subArea in atlas.SubAreas.Span)
+            named.Add(subArea.NameId);
+
+        foreach (var area in atlas.Areas.Span)
+            named.Add(area.NameId);
+
+        foreach (var item in items.Items.Span)
+            named.Add(item.NameId);
+
+        foreach (var type in items.Types.Span)
+            named.Add(type.NameId);
+
+        foreach (var job in jobs.Jobs.Span)
+            named.Add(job.NameId);
+
+        foreach (var skill in jobs.Skills.Span)
+            named.Add(skill.NameId);
+
+        foreach (var interactive in interactives.Interactives.Span)
+            named.Add(interactive.NameId);
+
+        foreach (var banker in banks.Bankers.Span)
+            named.Add(banker.NameId);
+
+        // 12,274 maps of client 3.7.12.12 name text 0, which no text file holds: they have no name.
+        named.Remove(0);
+
+        return named;
+    }
+
+    /// <summary>Reads the named texts of every language, failing when one lacks a text the tables name.</summary>
+    public static IReadOnlyList<TextTable> Read(ClientInstall client, IReadOnlySet<int> named)
+    {
+        var ids = named.Order().ToArray();
+        var tables = new List<TextTable>(TextLanguages.All.Count);
+
         foreach (var language in TextLanguages.All)
         {
-            var path = PathOf(client, language);
+            var file = Open(client, language);
+            var offsets = new Dictionary<int, int>(file.Texts.Count);
 
-            if (!File.Exists(path))
-                throw new FileNotFoundException($"The client has no {language} texts: {path} does not exist.", path);
-
-            var file = I18nFile.Read(path);
-            var entries = file.Texts.OrderBy(text => text.Id).ToList();
-            var ids = new int[entries.Count];
-            var texts = new string[entries.Count];
-
-            for (var i = 0; i < entries.Count; i++)
+            foreach (var (id, offset) in file.Texts)
             {
-                if (i > 0 && entries[i].Id == entries[i - 1].Id)
-                    throw new InvalidDataException($"{path} holds text {entries[i].Id} twice.");
-
-                ids[i] = entries[i].Id;
-                texts[i] = file.TextAt(entries[i].Offset);
+                if (!offsets.TryAdd(id, offset))
+                    throw new InvalidDataException($"The {language} texts hold text {id} twice.");
             }
 
-            writer.Add(TextTable.EntryName(language), new TextTable(language, ids, texts));
-            Console.WriteLine($"Texts ({language}): {ids.Length:N0}");
+            var texts = new string[ids.Length];
+
+            for (var i = 0; i < ids.Length; i++)
+            {
+                if (!offsets.TryGetValue(ids[i], out var offset))
+                    throw new InvalidDataException($"The {language} texts lack text {ids[i]}, which the extracted tables name.");
+
+                texts[i] = file.TextAt(offset);
+            }
+
+            tables.Add(new TextTable(language, ids, texts));
+            Console.WriteLine($"Texts ({language}): {ids.Length:N0} of {offsets.Count:N0}");
         }
+
+        return tables;
     }
 
     private static string PathOf(ClientInstall client, string language)

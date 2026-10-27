@@ -3,8 +3,13 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
 using D3B.Data;
+using D3B.Data.Banks;
+using D3B.Data.Interactives;
+using D3B.Data.Items;
+using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.Packs;
+using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Scripts.Unity;
 
@@ -81,7 +86,13 @@ internal static class ExtractCommand
         var stopwatch = Stopwatch.StartNew();
         var build = ClientBuild.Read(client.Root);
         var manifest = LauncherManifest.Load(client);
-        var inputs = TextsExtractor.Inputs(client).Concat(MapsExtractor.Inputs(client)).Concat(WorldExtractor.Inputs(client));
+        var inputs = TextsExtractor.Inputs(client)
+            .Concat(MapsExtractor.Inputs(client))
+            .Concat(WorldExtractor.Inputs(client))
+            .Concat(ItemsExtractor.Inputs(client))
+            .Concat(JobsExtractor.Inputs(client))
+            .Concat(InteractivesExtractor.Inputs(client))
+            .Concat(BanksExtractor.Inputs(client));
         var fingerprint = InputFingerprint.Compute(client, manifest, inputs);
         var extractor = typeof(GamePack).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
         var path = PackLocations.PathOf(root, build);
@@ -99,9 +110,16 @@ internal static class ExtractCommand
         var reading = Stopwatch.StartNew();
         var maps = MapsExtractor.Read(client);
         var graph = WorldExtractor.ReadGraph(client);
-        var atlas = WorldExtractor.ReadAtlas(client);
+        var items = ItemsExtractor.Read(client);
+        var jobs = JobsExtractor.Read(client, items);
+        var atlas = WorldExtractor.ReadAtlas(client, items, jobs);
+        var interactives = InteractivesExtractor.Read(client);
+        var banks = BanksExtractor.Read(client, atlas, graph);
 
         WorldExtractor.Check(graph, atlas, maps);
+
+        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks));
+
         Console.WriteLine($"Read in {reading.Elapsed.TotalSeconds:F1} s");
 
         var info = new PackInfo
@@ -121,9 +139,15 @@ internal static class ExtractCommand
         using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
         using (var writer = new PackWriter(stream, info, level))
         {
-            TextsExtractor.Extract(client, writer);
+            foreach (var table in texts)
+                writer.Add(TextTable.EntryName(table.Language), table);
+
             writer.Add(WorldAtlas.EntryName, atlas);
             writer.Add(WorldGraph.EntryName, graph);
+            writer.Add(ItemCatalog.EntryName, items);
+            writer.Add(JobCatalog.EntryName, jobs);
+            writer.Add(InteractiveCatalog.EntryName, interactives);
+            writer.Add(BankCatalog.EntryName, banks);
 
             foreach (var map in maps)
                 writer.Add(MapData.EntryName(map.Id), map);

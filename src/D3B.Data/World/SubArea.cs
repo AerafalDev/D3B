@@ -2,8 +2,8 @@ using System.Runtime.InteropServices;
 
 namespace D3B.Data.World;
 
-/// <summary>A sub-area of the world, from the client's <c>SubAreasDataRoot</c>: what a bot needs to travel to it.</summary>
-/// <remarks>Unmanaged and packed, as <see cref="WorldVertex"/>. Session 2c adds what harvesting needs.</remarks>
+/// <summary>A sub-area of the world, from the client's <c>SubAreasDataRoot</c>: what a bot needs to travel to it and harvest there.</summary>
+/// <remarks>Unmanaged and packed, as <see cref="WorldVertex"/>. Its resources are a slice of <see cref="WorldAtlas.Harvestables"/>.</remarks>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly struct SubArea
 {
@@ -28,6 +28,12 @@ public readonly struct SubArea
     /// <summary>Gets whether an account without a subscription may enter it.</summary>
     public bool BasicAccountAllowed { get; }
 
+    /// <summary>Gets the index of its first resource in <see cref="WorldAtlas.Harvestables"/>.</summary>
+    public int FirstHarvestable { get; }
+
+    /// <summary>Gets how many resources it has, 0 for most sub-areas.</summary>
+    public int HarvestableCount { get; }
+
     /// <summary>Initializes a new instance of the <see cref="SubArea"/> struct.</summary>
     /// <param name="id">Its identifier.</param>
     /// <param name="nameId">The text naming it.</param>
@@ -35,13 +41,21 @@ public readonly struct SubArea
     /// <param name="level">Its level.</param>
     /// <param name="associatedZaapMapId">The map of its zaap, or <see cref="NoZaap"/>.</param>
     /// <param name="basicAccountAllowed">Whether an account without a subscription may enter it.</param>
-    public SubArea(int id, int nameId, int areaId, int level, long associatedZaapMapId, bool basicAccountAllowed)
+    /// <param name="firstHarvestable">The index of its first resource.</param>
+    /// <param name="harvestableCount">How many resources it has.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The index or the count of its resources is negative.</exception>
+    public SubArea(int id, int nameId, int areaId, int level, long associatedZaapMapId, bool basicAccountAllowed, int firstHarvestable, int harvestableCount)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(firstHarvestable);
+        ArgumentOutOfRangeException.ThrowIfNegative(harvestableCount);
+
         Id = id;
         NameId = nameId;
         AreaId = areaId;
         Level = level;
         AssociatedZaapMapId = associatedZaapMapId;
         BasicAccountAllowed = basicAccountAllowed;
+        FirstHarvestable = firstHarvestable;
+        HarvestableCount = harvestableCount;
     }
 }
