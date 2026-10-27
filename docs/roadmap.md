@@ -62,8 +62,8 @@ Four sessions:
 Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34 in session 3a, whose `hosts` line D35 replaces in session 3b; Q7's
 format by D37, in session 3b.
 
-- The mapping pipeline: Cpp2IL dump, IDA tracer, scored matching, pinned pairs, contract audit that fails the build
-  (D11). Ideas from BillBot and JondoEmu.
+- The mapping pipeline: Cpp2IL dump, scored matching, pinned pairs, anchors from captures, contract audit that fails the
+  build (D11), and the IDA tracer if a build needs it (D41). Ideas from BillBot and JondoEmu.
 - The readable `.proto` files, the generated classes, the per-build translation, the version gate.
 - `D3B.Network`: a Kestrel listener between the official client and the game server, varint framing, codec over
   `IDuplexPipe` (D8, D23).
@@ -72,17 +72,19 @@ format by D37, in session 3b.
 - Recording and replaying sessions. Captures hold an account's session and are never committed: tests replay sessions
   they build themselves.
 
-Six sessions, the order chosen by the owner. The relay comes before the mapping, so that the client is seen going
-through D3B early, the framing is measured on real bytes, and the matching has real captures for its anchors.
+Seven sessions, the order chosen by the owner. The relay comes before the mapping, so that the client is seen going
+through D3B early, the framing is measured on real bytes, and the matching has real captures for its anchors. The
+connection phase is mapped before the game, whose anchors need captures of the game connection (D41).
 
 | Session | Content | Status |
 | --- | --- | --- |
 | 3a | Q8: how each client's connection reaches D3B, measured on running clients, and decided: a `hosts` line, and the game server's address rewritten (D34). | Done on 2026-10-27 |
 | 3b | `D3B.Network` as a relay: Kestrel on D3B's loopback address and the connection to the server; the client brought to D3B by its own configuration, rewritten by the host while it runs, instead of a `hosts` line; the framing measured on real bytes, varint protobuf in the clear, and `FrameReader` with its benchmark; raw captures, their replay through a `Pipe`, and the tools checking the client and describing captures (D35 to D38). Connection phase only: the game connection still goes straight to the server. | Done on 2026-10-27 |
 | 3c | Mapping, part 1: Cpp2IL reads metadata version 39; `scripts/schema.cs` writes each build's obfuscated schema, a `FileDescriptorSet` beside its pack, the structure read from the metadata and every field's encoding from the machine code; `scripts/capture.cs --schema` finds the connection's root message in 3b's captures, all their fields typed (D39, D40). | Done on 2026-10-27 |
-| 3d | Mapping, part 2: the readable `.proto` files of the connection phase and of the first milestone's messages, the generated classes, scored matching, pinned pairs, the contract audit failing the build, the IDA tracer and anchors from 3b's captures. | To do |
-| 3e | The per-build translation (Q2) and the version gate, the mapping and the schema published in the build's release, the game server's address rewritten, so that D3B holds both connections, messages decoded and recorded. | To do |
-| 3f | Q9: the bot's requests sent through the client's connection, request ids and the client kept consistent; replay tests with injection, which complete Q7. | To do |
+| 3d | Mapping, part 2, the connection phase end to end: its readable `.proto` files in `D3B.Protocol` and their generated classes; the matching from pins, anchors measured in 3b's captures, fields and structural scores; the pins of 3.7.12.12, none needed; the contract audit; the mapping, a protobuf message of our own, and `scripts/mapping.cs` writing it beside the build's pack; every readable message, field and value of the connection paired (D41 to D45). | Done on 2026-10-27 |
+| 3e | The per-build translation (Q2) and the version gate for the connection phase, the mapping and the schema published in the build's release, the game server's address rewritten, so that D3B holds both connections, captures the game connection, and decodes and records the connection phase. | To do |
+| 3f | Mapping, part 3: the readable `.proto` files of the first milestone's game messages, the `Any` envelope and its type URLs, anchors from 3e's captures of the game connection, the matching at the game's scale, and the IDA tracer if structure and captures leave fields open (D41). | To do |
+| 3g | Q9: the bot's requests sent through the client's connection, request ids and the client kept consistent; replay tests with injection, which complete Q7. | To do |
 
 ## 4. Bot run time and navigation
 

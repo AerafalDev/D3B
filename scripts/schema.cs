@@ -16,11 +16,11 @@
 #:include schema/ProtocolTypes.cs
 #:include schema/ProtoText.cs
 #:include schema/SchemaCommand.cs
-#:include schema/SchemaFile.cs
 #:include schema/SchemaSummary.cs
 #:include schema/SilentLogWriter.cs
 #:include schema/WireEncodings.cs
 #:include unity/ClientInstall.cs
+#:include unity/SchemaFile.cs
 
 using System.Globalization;
 using D3B.Scripts.Schema;

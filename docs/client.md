@@ -3,8 +3,9 @@
 What the installed official client holds that D3B uses, measured for the steps that use it. It holds counts, formats
 and layouts, never content. Measured on 2026-10-27 with `scripts/inspect.cs` (D26) and the extraction tool's checks, on
 client 3.7.12.12, built on 2026-10-19, installed in `%LOCALAPPDATA%\Ankama\Dofus-dofus3`; how it connects was measured
-on running clients, then on its bytes through D3B's relay ([Connection](#connection)), and its protocol's code with
-`scripts/schema.cs` ([Protocol code](#protocol-code)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
+on running clients, then on its bytes through D3B's relay ([Connection](#connection)), its protocol's code with
+`scripts/schema.cs` ([Protocol code](#protocol-code)), and its connection phase against D3B's readable protocol with
+`scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
 ## Measuring again
@@ -26,11 +27,13 @@ dotnet run --file scripts/client.cs                                   # which co
 dotnet run --file scripts/capture.cs -- --frames                      # the captures' reads, frames and protobuf shapes, no value
 dotnet run --file scripts/schema.cs -- --proto <dir>                  # the protocol's obfuscated schema, counted, and as .proto text
 dotnet run --file scripts/capture.cs -- --frames --schema <schema>    # which message of the schema reads the captures, field by field
+dotnet run --file scripts/mapping.cs                                  # pairs D3B's readable protocol with the schema, audits it, writes the mapping
+dotnet run --file scripts/mapping.cs -- --without-captures            # the same from pins and structure alone, without anchors
 ```
 
 `summary` reads headers only and takes seconds. The extraction tool fails when the client contradicts what this
-document says D3B relies on (D27), and so does the schema tool (D40): their checks are the measurements to repeat at
-each client update.
+document says D3B relies on (D27), and so do the schema tool (D40) and the mapping tool (D44): their checks are the
+measurements to repeat at each client update.
 
 ## Installation
 
@@ -447,6 +450,44 @@ the next 8. That one is the connection's root:
 
 The server's second answer has the shape the references give the game server's address, a ticket, a host and its
 ports (D34); session 3e decodes it.
+
+### The connection phase, mapped
+
+The connection file of 3.7.12.12's schema against D3B's readable protocol (D42 to D45), with `scripts/mapping.cs`, by
+structure only.
+
+**Against the references.** The file holds the messages of `dofus-unity-proto`, an older build's, their fields at the
+same numbers and of the same types, but for what this build changed or added; BillBot's copy, newer, already has the
+success's field 8 and the server list's `bool`, and six rights flags:
+
+| Where | `dofus-unity-proto` | 3.7.12.12 |
+| --- | --- | --- |
+| The connection's event | Two members, a server and a server update | One, at number 1, shaped as their server update |
+| The identification's success | 7 fields | 9: at 8 the status forcing an account answers with, at 9 a message shaped as a friend's entry |
+| Its rights | 5 flags | 4 |
+| The identification's failure reason | 14 values | 15 |
+| The server selection's error | 4 values | 5 |
+| The server list | A slot limit at 2, an `int32` | At 2 a list of pairs of a server type and an `int32`, at 3 a `bool` |
+| A server | A `bool` at 3 | At 3 an enum of 7 values, the server type the server list's pairs use too |
+
+**Shapes.** 5 of the 37 messages are empty: the ping, the pong, the error forcing an account, and the requests releasing
+an account and asking for the friend list. Three more share one shape, two strings and a list of `int32`: a friend's
+entry, the field 9 above, and the server selection's success. 4 of the 9 enums have a count of values no other has: 19,
+15, 7 and 5. The structure alone cannot tell these messages apart; where they are used does.
+
+**Matching.**
+
+- From the anchors of session 3b's three captures, 8 frames: the root types 356 fields, the next best message 8. They
+  anchor 7 messages and 6 fields: the root, each side's message, and each side's message of the two exchanges. Fields
+  then pair the other 30 messages and all 9 enums.
+- From pins and structure alone, without captures: the same pairs. Scores pair 29 messages and the 4 enums of their own
+  count of values, and fields the rest, the empty and alike messages among them.
+- 3.7.12.12 needs no pin.
+
+**Audit.** 37 messages, 92 fields, 9 enums and 60 values checked: each has its counterpart, and the build has no field
+or value the readable protocol lacks.
+
+**The mapping** is 3,305 bytes, the same bytes on two runs, written in 0.2 s once the tool is built.
 
 ## Protocol code
 

@@ -1,6 +1,6 @@
 using D3B.Data;
 
-namespace D3B.Scripts.Schema;
+namespace D3B.Scripts.Unity;
 
 /// <summary>Where a client build's obfuscated schema is kept: beside the build's pack, one file per schema format.</summary>
 /// <remarks>
@@ -9,7 +9,7 @@ namespace D3B.Scripts.Schema;
 /// </remarks>
 internal static class SchemaFile
 {
-    /// <summary>The format this tool writes. It changes whenever the tool would describe a client published before otherwise.</summary>
+    /// <summary>The format <c>scripts/schema.cs</c> writes. It changes whenever the tool would describe a client published before otherwise.</summary>
     public const int FormatVersion = 1;
 
     /// <summary>Gets the file name of a schema of <see cref="FormatVersion"/>.</summary>

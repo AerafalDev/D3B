@@ -10,6 +10,7 @@
     <File Path="scripts/client.cs" />
     <File Path="scripts/extract.cs" />
     <File Path="scripts/inspect.cs" />
+    <File Path="scripts/mapping.cs" />
     <File Path="scripts/release.cs" />
     <File Path="scripts/schema.cs" />
   </Folder>
@@ -62,6 +63,10 @@
     <File Path="scripts/inspect/TypesCommand.cs" />
     <File Path="scripts/inspect/ValueWriter.cs" />
   </Folder>
+  <Folder Name="/scripts/mapping/">
+    <File Path="scripts/mapping/CaptureFrames.cs" />
+    <File Path="scripts/mapping/MappingCommand.cs" />
+  </Folder>
   <Folder Name="/scripts/release/">
     <File Path="scripts/release/GitHubCli.cs" />
     <File Path="scripts/release/ReleaseCommand.cs" />
@@ -79,7 +84,6 @@
     <File Path="scripts/schema/ProtocolTypes.cs" />
     <File Path="scripts/schema/ProtoText.cs" />
     <File Path="scripts/schema/SchemaCommand.cs" />
-    <File Path="scripts/schema/SchemaFile.cs" />
     <File Path="scripts/schema/SchemaSummary.cs" />
     <File Path="scripts/schema/SilentLogWriter.cs" />
     <File Path="scripts/schema/WireEncodings.cs" />
@@ -88,6 +92,7 @@
     <File Path="scripts/unity/ClientInstall.cs" />
     <File Path="scripts/unity/I18nFile.cs" />
     <File Path="scripts/unity/LauncherManifest.cs" />
+    <File Path="scripts/unity/SchemaFile.cs" />
     <File Path="scripts/unity/UnityBundle.cs" />
     <File Path="scripts/unity/UnityDataTable.cs" />
     <File Path="scripts/unity/UnityFields.cs" />
@@ -123,5 +128,6 @@
     <Project Path="tests/D3B.Data.Tests/D3B.Data.Tests.csproj" />
     <Project Path="tests/D3B.Host.Tests/D3B.Host.Tests.csproj" />
     <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
+    <Project Path="tests/D3B.Protocol.Tests/D3B.Protocol.Tests.csproj" />
   </Folder>
 </Solution>
