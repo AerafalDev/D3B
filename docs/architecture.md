@@ -3,7 +3,7 @@
 Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is
 in [roadmap.md](roadmap.md). Built so far: the solution, the module and plugin model in `D3B.Core`, and a host that
 builds its modules, starts and stops (step 1); the data pack format in `D3B.Data`, and the tools that inspect the client
-and extract its texts (step 2, first session). Everything else below is the target.
+and extract its texts, maps and world graph (step 2, sessions 2a and 2b). Everything else below is the target.
 
 ## Overview
 
@@ -92,19 +92,27 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 ## Game data
 
-Built in session 2a (D24 to D26); sessions 2b to 2d complete it:
+Built in sessions 2a and 2b (D24 to D28); sessions 2c and 2d complete it:
 
 - `scripts/inspect.cs` describes the installed client, and `scripts/extract.cs` writes the pack of its build. Both read
-  the client with the Unity readers copied from Dofus Remastered into `scripts/unity/` (AssetsTools.NET).
-  [client.md](client.md) records what the client holds, measured.
+  the client with the Unity readers copied from Dofus Remastered into `scripts/unity/` (AssetsTools.NET), the
+  extraction through their typed readers, which walk an object's bytes by its type tree. The extractor checks the
+  client against what D3B relies on before it writes anything. [client.md](client.md) records what the client holds,
+  measured.
 - A client build is named by its version (`ClientBuild`). A pack is one file per build and format, kept in
   `%LOCALAPPDATA%\D3B\data\<version>\data-<format>.pack` (`PackLocations`).
 - A pack holds named entries, each a MemoryPack payload compressed with zstd, and an index at the end (D25).
-  `PackWriter` writes it. `GamePack` opens it by reading the index, then reads each entry when asked, from any thread.
-  `PackCache` keeps the entries last read within a budget, for maps.
-- So far a pack holds the numbered texts in French and English (`GameTexts`). Session 2b adds maps and cells, and the
-  world graph with zaaps and transitions, read from the client's own `world-graph`. Session 2c adds interactives,
-  harvestable resources, items, professions and banks, and keeps only the texts they name.
+  `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
+  reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
+  a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
+- A pack of format 2 holds (D27):
+  - the numbered texts in French and English (`GameTexts`);
+  - every map as its own entry, its neighbours, cells and interactive elements (`MapData`), read through a
+    `PackCache` by `GameMaps`;
+  - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
+    of map positions, sub-areas, areas and zaaps (`WorldAtlas`), both read once by `GameWorld`.
+- Session 2c adds interactives, harvestable resources, items, professions and banks, and keeps only the texts they
+  name.
 - Packs and mappings are assets of this repository's releases, one release per client build, never committed (D10,
   D11, D24). The host will use a local pack first, else download the release's and check its SHA-256, and will not
   start without one (session 2d).
