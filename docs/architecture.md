@@ -1,8 +1,9 @@
 # Architecture
 
 Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is
-in [roadmap.md](roadmap.md). Built so far (step 1): the solution, the module and plugin model in `D3B.Core`, and a
-host that builds its modules, starts and stops. Everything else below is the target.
+in [roadmap.md](roadmap.md). Built so far: the solution, the module and plugin model in `D3B.Core`, and a host that
+builds its modules, starts and stops (step 1); the data pack format in `D3B.Data`, and the tools that inspect the client
+and extract its texts (step 2, first session). Everything else below is the target.
 
 ## Overview
 
@@ -91,10 +92,22 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 ## Game data
 
-- `scripts/` reads the installed client with the Unity readers copied from Dofus Remastered (AssetsTools.NET), and
-  writes one pack per client build: data tables, maps and cells, world graph, texts in French and English.
-- `D3B.Data` loads a pack lazily, map by map, with a cache.
-- Packs and mappings are release artifacts, never committed (D10, D11). How the host fetches the right one is Q4.
+Built in session 2a (D24 to D26); sessions 2b to 2d complete it:
+
+- `scripts/inspect.cs` describes the installed client, and `scripts/extract.cs` writes the pack of its build. Both read
+  the client with the Unity readers copied from Dofus Remastered into `scripts/unity/` (AssetsTools.NET).
+  [client.md](client.md) records what the client holds, measured.
+- A client build is named by its version (`ClientBuild`). A pack is one file per build and format, kept in
+  `%LOCALAPPDATA%\D3B\data\<version>\data-<format>.pack` (`PackLocations`).
+- A pack holds named entries, each a MemoryPack payload compressed with zstd, and an index at the end (D25).
+  `PackWriter` writes it. `GamePack` opens it by reading the index, then reads each entry when asked, from any thread.
+  `PackCache` keeps the entries last read within a budget, for maps.
+- So far a pack holds the numbered texts in French and English (`GameTexts`). Session 2b adds maps and cells, and the
+  world graph with zaaps and transitions, read from the client's own `world-graph`. Session 2c adds interactives,
+  harvestable resources, items, professions and banks, and keeps only the texts they name.
+- Packs and mappings are assets of this repository's releases, one release per client build, never committed (D10,
+  D11, D24). The host will use a local pack first, else download the release's and check its SHA-256, and will not
+  start without one (session 2d).
 
 ## Desktop app
 
