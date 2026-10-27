@@ -67,11 +67,15 @@ dotnet build                               # warnings are errors; copies the sam
 dotnet test                                # every test project, on Microsoft.Testing.Platform
 dotnet format --verify-no-changes          # CI checks it
 dotnet run --project src/D3B.Host          # runs until Ctrl+C; needs the installed build's pack, local or downloaded (D31, D32); --Plugins:Directory <dir> loads plugins from elsewhere
+                                           # while it runs, clients started from the launcher go through its relay (D35); --Network:Captures:Enabled true records them
 dotnet pack src/D3B.Core -o <feed>         # the package plugins compile against (D22)
 dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
 dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options
 dotnet run --file scripts/release.cs       # dry run of publishing that pack to release client-<version>; --publish does it (D33)
+dotnet run --file scripts/client.cs        # which configuration the client reads, Ankama's or D3B's; restore gives it Ankama's back after a crash
+dotnet run --file scripts/capture.cs       # describes the captures by structure, never content; --frames shows each frame's protobuf shape
+dotnet run -c Release --project benchmarks/D3B.Network.Benchmarks   # BenchmarkDotNet; --filter '*' runs them all
 ```
 
 CI also creates a plugin from the template and builds it against a freshly packed D3B.Core: see the "Check the plugin

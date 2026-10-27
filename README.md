@@ -13,8 +13,9 @@ client.
 The solution and the module system: a headless host that builds its modules, loads external plugins from `plugins/`,
 starts and stops. The game data: tools that inspect the official client and extract its maps, world graph, items, jobs,
 interactives and banks, with the texts they name, into a pack per client build; a tool that publishes it as a release
-asset; and a data module, whose pack the host finds on the machine or downloads, and without which it does not start. No
-game logic yet. The first milestone is harvesting and banking on one account, controlled from the desktop app. See the
+asset; and a data module, whose pack the host finds on the machine or downloads, and without which it does not start.
+The network: while the host runs, official clients started from the launcher connect through its relay, which can record
+their connection phase. No game logic yet. The first milestone is harvesting and banking on one account, controlled from the desktop app. See the
 [roadmap](docs/roadmap.md).
 
 ## Building
@@ -31,6 +32,10 @@ The host needs the data pack of the installed client's build. It looks for it in
 `dotnet run --file scripts/extract.cs` writes it, and otherwise downloads it from this repository's release
 `client-<version>`. While the repository is private, the download needs a GitHub token: `Releases:Token` in the host's
 configuration, or the GitHub CLI logged in with `gh auth login`.
+
+While the host runs, the `ConfigUrl` line of the installed client's `version` file names a copy of the client's
+configuration that sends it to the host's relay, and the host gives it Ankama's back when it stops. After a crash,
+`dotnet run --file scripts/client.cs -- restore` does it, so that the client plays without D3B.
 
 A plugin is a .NET assembly that compiles against the `D3B.Core` package. `templates/d3b-plugin` creates one with
 `dotnet new d3b-plugin`; `samples/D3B.Samples.Hello` is a working example.

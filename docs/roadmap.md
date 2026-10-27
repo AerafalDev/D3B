@@ -59,7 +59,8 @@ Four sessions:
 
 ## 3. Protocol and connection
 
-Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34, in session 3a.
+Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34 in session 3a, whose `hosts` line D35 replaces in session 3b; Q7's
+format by D37, in session 3b.
 
 - The mapping pipeline: Cpp2IL dump, IDA tracer, scored matching, pinned pairs, contract audit that fails the build
   (D11). Ideas from BillBot and JondoEmu.
@@ -77,7 +78,7 @@ through D3B early, the framing is measured on real bytes, and the matching has r
 | Session | Content | Status |
 | --- | --- | --- |
 | 3a | Q8: how each client's connection reaches D3B, measured on running clients, and decided: a `hosts` line, and the game server's address rewritten (D34). | Done on 2026-10-27 |
-| 3b | `D3B.Network` as a relay: Kestrel on D3B's loopback address, the connection to the server, the varint framing measured on real bytes, raw recording and replay in the format of Q7, the tool writing and checking the `hosts` line. Connection phase only: the game connection still goes straight to the server. | To do |
+| 3b | `D3B.Network` as a relay: Kestrel on D3B's loopback address and the connection to the server; the client brought to D3B by its own configuration, rewritten by the host while it runs, instead of a `hosts` line; the framing measured on real bytes, varint protobuf in the clear, and `FrameReader` with its benchmark; raw captures, their replay through a `Pipe`, and the tools checking the client and describing captures (D35 to D38). Connection phase only: the game connection still goes straight to the server. | Done on 2026-10-27 |
 | 3c | Mapping, part 1: a tool in `scripts/` dumps the installed build with Cpp2IL and writes its obfuscated schema (messages, fields, numbers, types, oneofs), a release artifact. Its first risk: whether Cpp2IL reads metadata version 39. | To do |
 | 3d | Mapping, part 2: the readable `.proto` files of the connection phase and of the first milestone's messages, the generated classes, scored matching, pinned pairs, the contract audit failing the build, the IDA tracer and anchors from 3b's captures. | To do |
 | 3e | The per-build translation (Q2) and the version gate, the mapping published in the build's release, the game server's address rewritten, so that D3B holds both connections, messages decoded and recorded. | To do |

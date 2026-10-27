@@ -4,7 +4,9 @@ Where the bot is going. The reasons behind each choice are in [decisions.md](dec
 in [roadmap.md](roadmap.md). Built so far: the solution, the module and plugin model in `D3B.Core`, and a host that
 builds its modules, starts and stops (step 1); the data pack format in `D3B.Data`, the tools that inspect the client,
 extract its maps, world graph and game tables with the texts they name, and publish a build's pack, and the data module,
-whose pack the host finds or downloads before it starts (step 2). Everything else below is the target.
+whose pack the host finds or downloads before it starts (step 2); the network module, whose relay takes each client's
+connection phase through D3B, with its framing measured and its captures (step 3, session 3b). Everything else below is
+the target.
 
 ## Overview
 
@@ -20,9 +22,9 @@ D3B.App (Avalonia, ShadUI) ◄── gRPC on a named pipe (D7) ──► D3B.Hos
                                                              one async actor per bot (D9)
                                                                   │ acts through
                                                                   ▼
-official client, one per account ──── hosts line, then ────► D3B.Network: Kestrel   ────►  Ankama's connection
-started by the official launcher      rewritten address      on a loopback address         server, then game server
-                                      (D34)                  (D8, D23, D34)
+official client, one per account ──── its configuration, ──► D3B.Network: Kestrel   ────►  Ankama's connection
+started by the official launcher      then a rewritten       on a loopback address         server, then game server
+                                      address (D34, D35)     (D8, D23, D36)
 ```
 
 The host refuses to start when the protocol mapping it loaded does not match the installed client's build (D11).
@@ -83,21 +85,34 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 ## Network and protocol
 
-- MITM only (D23): a Kestrel listener with a connection handler takes each official client's connection, and D3B
-  opens the matching connection to the server. Both sides are a `ConnectionContext` (D8).
-- How a client reaches D3B (D34): the player starts it from the official launcher. A line of the `hosts` file, written
-  once by an elevated tool, sends the connection host of the client's configuration to D3B's own loopback address, where
-  it listens on ports 5555 and 443. D3B resolves the real host without the `hosts` file. The connection server then
-  sends the game server's address: D3B rewrites it to its game listener, and connects to the real game server when the
-  client arrives there. A client without a bot is relayed unchanged.
+Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Network`, registered by the network module
+(`NetworkModule`, in `D3B.Bot`, after the data module).
+
+- MITM only (D23): Kestrel takes each official client's connection, and D3B opens the matching connection to the server.
+  Both sides are a `ConnectionContext` (D8). `RelayServer` runs Kestrel's server as a hosted service, with no web host,
+  on `Network:Address` (127.0.13.59) and `Network:Ports` (5555 and 443); a port it cannot take stops the host (D36).
+- How a client reaches D3B (D35): the player starts it from the official launcher. While the host runs, `ClientRedirect`
+  points the client's `ConfigUrl` at a copy of Ankama's configuration whose connection host is D3B's address, a `file:`
+  URL, and gives the client Ankama's back when the host stops; it follows the launcher rewriting the file.
+  `scripts/client.cs` checks it and restores it after a crash. No `hosts` line, no elevation.
+- `RelayConnectionHandler` resolves the connection host Ankama's configuration names, connects on the port the client
+  chose, and copies the bytes as they are, both ways, any number of clients at once. A side closing closes the other.
+- For now only the connection phase comes through D3B. The connection server then sends the game server's address: D3B
+  rewrites it to its game listener, and connects to the real game server when the client arrives there (D34, session
+  3e).
 - The client's other connections, to the launcher, Haapi, the chat and the CDN, do not go through D3B.
 - The bot acts through that connection, and the client is kept consistent with what it does: Q9.
-- Framing is a varint length prefix, parsed with `SequenceReader<byte>`, as the references read it; session 3b measures
-  it. The envelope carries an `Any` whose type URL is the obfuscated message name, prefixed with `type.ankama.com`.
+- Framing, measured (D38): a varint length, then a protobuf message, in the clear. `FrameReader` reads frames from a
+  `SequenceReader<byte>` without copying; a benchmark in `benchmarks/D3B.Network.Benchmarks` measures it. The game
+  connection's envelope carries an `Any` whose type URL is the obfuscated message name, prefixed with
+  `type.ankama.com`, as the references read it; the connection phase has none.
 - The per-build translation turns obfuscated names and field numbers into the clean classes and back. An unmapped type
   or field is an error, logged with the raw bytes. Its exact form is Q2.
 - The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).
-- Every session can be recorded, raw bytes and decoded messages, for the protocol inspector and for replay tests (Q7).
+- Captures (D37): with `Network:Captures:Enabled`, each connection's raw reads go to a `.d3bcap` file in
+  `%LOCALAPPDATA%\D3B\captures`, never committed. `CaptureReplay` plays one into pipes; tests build their own, and
+  `scripts/capture.cs` describes them by structure. Decoded messages come from replaying them, for the protocol
+  inspector and the replay tests (Q7).
 
 ## Game data
 
@@ -165,6 +180,6 @@ Built at step 2 (D24 to D33):
 
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests for pathfinding and line of
   sight.
-- Recorded sessions replay through an in-memory `Pipe`, and their decoded messages and states are compared with
-  snapshots.
+- Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay. From
+  step 3e, their decoded messages and states are compared with snapshots.
 - Time is controlled through `FakeTimeProvider`.
