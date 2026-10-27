@@ -5,7 +5,8 @@ entry is never rewritten: a later entry supersedes it, and the old one is marked
 are listed at the end, with the [roadmap](roadmap.md) step that settles them.
 
 Decisions D1 to D18 were taken on 2026-10-27, one by one, after studying the references in `vendor/` and the bots
-sold for Dofus 3.
+sold for Dofus 3. From D19 on, each entry names the roadmap step that took it; an entry the owner chose says so, the
+others are local choices of the lead session.
 
 ## Brief
 
@@ -130,7 +131,7 @@ The bots run in a headless host. The Avalonia app connects to it over gRPC on a 
 
 ## D8: The network goes through Kestrel's socket layer, socket mode first
 
-*2026-10-27*
+*2026-10-27. Superseded in part by D23: there is no socket mode, only MITM.*
 
 Outgoing connections use `SocketConnectionContextFactory.Create(Socket)`, Kestrel's public API since .NET 7, on a
 socket connected by the bot. The MITM mode listens with Kestrel and a connection handler. Both give a
@@ -238,7 +239,8 @@ version: accounts and profiles, the live map with the bot's state, and logs with
 
 ## D15: The rest of the stack
 
-*2026-10-27*
+*2026-10-27. Superseded in part by D23: D3B does not call Haapi, so the "HTTP (Haapi authentication)" row no longer
+applies.*
 
 Versions are the latest stable on NuGet on 2026-10-27, unless the line says otherwise.
 
@@ -267,7 +269,8 @@ No Native AOT: EF Core and the Lua engine do not suit it, and a bot does not nee
 
 ## D16: The first milestone is harvesting and banking
 
-*2026-10-27*
+*2026-10-27. Superseded in part by D23: the account plays through its official client and D3B's MITM, not in socket
+mode.*
 
 The first milestone: one account, in socket mode, harvests and banks its resources, controlled from the desktop app's
 first pages (D14). The repository may go public once it is reached (D4).
@@ -293,6 +296,114 @@ for the next one. Documents are Markdown files in `docs/`.
 
 The project, its solution and its namespaces are named D3B (`D3B.*`).
 
+## D19: The solution's layout and build
+
+*2026-10-27, step 1*
+
+The projects of the [architecture](architecture.md#projects) are confirmed, in `D3B.slnx`. They target `net10.0`, not
+`net10.0-windows`: nothing needs a Windows API yet, and D1 keeps a Linux host possible. The build follows Dofus
+Remastered: SDK pinned in `global.json`, central package management with transitive pinning, MinVer on every project,
+output under `artifacts/`, warnings as errors, `AnalysisMode` Recommended, code style enforced in the build, XML
+documentation on public APIs.
+
+- Projects with no code yet are empty class libraries. `D3B.App` stays one until step 5 makes it the Avalonia app.
+  Project references are added by the step that needs them; for now only `D3B.Bot` and `D3B.Host` reference
+  `D3B.Core`.
+- `DefaultModules` lives in `D3B.Bot`, which will reference the projects holding the standard modules. It is empty
+  until those modules exist.
+- `samples/` holds example plugins, built with the solution and loaded by the tests.
+- `.editorconfig` makes the C# style of `CLAUDE.md` fail the build: block bodies (IDE0021 to IDE0024, IDE0061) and
+  test names without underscores (CA1707). The member order and the ban on primary constructors have no analyzer and
+  stay a review rule.
+- Added to D15: Microsoft.Extensions.Hosting 10.0.14 for `D3B.Core`, and Microsoft.Extensions.Diagnostics.Testing
+  10.11.0, whose fake logger lets a test see what a plugin logs.
+- **Rejected.**
+  - `net10.0-windows` everywhere, as Palforge: it would tie the host to Windows for nothing.
+  - An empty Avalonia app now: its packages and entry point belong to step 5.
+
+## D20: How modules compose
+
+*2026-10-27, step 1*
+
+`BotBuilder` wraps the Generic Host's `HostApplicationBuilder` and is itself an `IHostApplicationBuilder`, so modules
+register into the host's services, configuration and logging, and the host's extension methods apply. A module is
+built as soon as it is added, as in Bevy and Dofus Remastered's `AppBuilder`:
+
+- A module requires another by calling `bot.AddModule<T>()` at the start of its `Build`. The required module is then
+  built first. `BotBuilder.Modules` lists modules in the order they finished building, so each comes after the modules
+  it requires.
+- Adding a module type twice builds it once. A module counts as added before its `Build` runs, so a requirement that
+  leads back to a module being built does nothing, instead of failing: a module may add companions that require it.
+- A group (`IModuleGroup`) lists modules in order. Whoever adds it may disable some of them first; disabling a module
+  the group does not hold fails. A disabled module is still built when another module requires it.
+- Nothing is registered after `Build`.
+- **Rejected.**
+  - Declared requirements (`[Requires(typeof(T))]`) with a topological sort before building: order independence and a
+    readable graph, but more code and a departure from D5's model, for no need yet.
+  - Failing on a requirement cycle: it would reject a module adding companions that require it.
+  - Replacing a default module by another type: no plugin needs it yet. When one does, the replacement should claim
+    the replaced module's type, so that requirements on it are satisfied.
+
+## D21: The plugin contract
+
+*2026-10-27, step 1*
+
+`bot.AddPlugins(directory)` loads the plugins under a directory. The host passes `plugins/` next to its executable,
+or the `Plugins:Directory` setting, resolved from the executable's directory.
+
+- A plugin is a folder holding an assembly named after the folder, with its dependencies and `.deps.json`. Folders
+  load in the order of their names.
+- The assembly holds exactly one public, concrete module class with a public parameterless constructor, marked
+  `[Plugin("id")]`, with an optional name and author. That root module is added to the builder and adds the rest of
+  the plugin. The plugin's version is its assembly's informational version.
+- Each plugin loads once into its own `AssemblyLoadContext`, not collectible, which asks the host's context first and
+  the plugin's `.deps.json` second: a plugin and the host share one D3B.Core and one framework.
+- A `PluginInfo` per plugin is registered in the services, for the host's log and later the app.
+- Any invalid folder, or two plugins with the same id, throws `PluginLoadException` and the host does not start. A bot
+  missing a feature it was given could misbehave; a clear error at start is cheaper.
+- **Rejected.**
+  - An assembly-level identity attribute, or adding every module of the assembly: the root module says what the plugin
+    brings, in code.
+  - Skipping an invalid plugin with a warning, as Palforge does.
+
+## D22: Plugins compile against the D3B.Core package
+
+*2026-10-27, step 1, chosen by the owner*
+
+`D3B.Core` is the only packable project, versioned by MinVer. A plugin references the `D3B.Core` package with
+`ExcludeAssets="runtime"`: it compiles against it, and the host provides it at run time, so a plugin's folder holds
+only its own files. The `dotnet new d3b-plugin` template in `templates/d3b-plugin` does this, takes the version to
+compile against as a required parameter, and can deploy every build to a host's plugins folder.
+
+- Until the repository goes public (D4), the package is packed into a local folder. Publishing it, and the template as
+  a package, comes with the first milestone.
+- CI packs D3B.Core, installs the template, creates a plugin from it and builds it against the packed package.
+- **Rejected.**
+  - Referencing `D3B.Core.dll` from an installed host: no feed to run, but compiling a plugin, in CI too, would need
+    an installed host, and nothing would state which version a plugin targets.
+
+## D23: MITM only, no socket mode
+
+*2026-10-27, during step 1, chosen by the owner*
+
+D3B never connects to Ankama's servers on its own. Every bot plays through an official client: D3B sits between the
+client and the game server, with a Kestrel listener and a connection handler on the client's side, its own
+connection to the server on the other, and the same codec over `IDuplexPipe` on both. This supersedes D8's socket mode
+and the "in socket mode" of D16. The rest of D8 stands: Kestrel's transport, `ConnectionContext`, and an in-memory
+`Pipe` in tests and replays. Roadmap step 8, the MITM mode, merges into step 3.
+
+- **Consequences.**
+  - The official client logs in, through Haapi and the login handshake. D3B handles neither, which settles Q3, and
+    the Haapi row of D15 no longer applies.
+  - D3B never imitates the client, so nothing it does has to get past the client's integrity checks (D2).
+  - Every account needs its own running client. The memory and CPU of one client per account bound how many accounts
+    a machine runs (step 10).
+  - The bot acts through the client's connection, and the client must stay consistent with what the bot does: Q9.
+  - How each client's connection reaches D3B is Q8.
+- **Rejected.**
+  - Socket mode first, MITM later (D8): a bot without a client is lighter, but it must reimplement the login, which
+    may touch the client's integrity checks (Q3).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -301,8 +412,9 @@ Settled questions leave this table, and the decision that settles one says so.
 | --- | --- | --- |
 | Q1 | Does LuaCSharp hold up: sandboxing, async calls, errors, performance? | Step 7 |
 | Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? | Step 3 |
-| Q3 | What does socket mode need to log in? If any part of the handshake would defeat an integrity check of the client, that part is out of scope (D2) and logging in goes through MITM mode instead. | Step 3 |
 | Q4 | Where are data packs hosted, and how does the host fetch the pack matching the installed client's build? | Step 2 |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
-| Q7 | How are sessions captured and replayed for tests: format, and from which mode? | Step 3 |
+| Q7 | How are sessions captured and replayed for tests: in which format? | Step 3 |
+| Q8 | How does each account's official client reach D3B: who starts it, and how is its connection to the game server redirected to D3B and read, within D2? | Step 3 |
+| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3 |
