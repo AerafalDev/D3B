@@ -8,8 +8,8 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | --- | --- | --- |
 | 0 | Foundation: brief, decisions, architecture, roadmap | Done |
 | 1 | Scaffold and modules | Done |
-| 2 | Game data | In progress: 2a to 2c done, 2d next |
-| 3 | Protocol and connection | To do |
+| 2 | Game data | Done |
+| 3 | Protocol and connection | Next |
 | 4 | Bot run time and navigation | To do |
 | 5 | Desktop app, first version | To do |
 | 6 | Harvesting and banking: first milestone | To do |
@@ -41,7 +41,7 @@ The solution and the module system, with no game logic. Done on 2026-10-27, with
 
 ## 2. Game data
 
-Settles Q4, settled by D24 in session 2a.
+Done on 2026-10-27, with decisions D24 to D33. Settles Q4, settled by D24 in session 2a.
 
 - The inspection and extraction tools in `scripts/`, on the Unity readers copied from Dofus Remastered (D10).
 - The pack format, MemoryPack and zstd, written by the extraction tool and read by `D3B.Data`.
@@ -55,7 +55,7 @@ Four sessions:
 | 2a | Foundations: `scripts/unity/`, `inspect.cs`, the pack format in `D3B.Data` with its tests, `extract.cs` writing the texts, Q4 (D24 to D26). | Done on 2026-10-27 |
 | 2b | Maps and the world graph: Dofus Remastered's typed readers, cells, interactive elements placed on maps, coordinates and sub-areas, the client's `world-graph`, zaaps, maps read one by one through `PackCache`, pack format 2 and its layout test, compression measured (D27, D28). | Done on 2026-10-27 |
 | 2c | Game tables: items and their types, jobs and skills, interactives, sub-areas' resources, banks and bankers, only the texts they name, pack format 3 at 4.7 MB, the zstd dictionary measured again (D29, D30). | Done on 2026-10-27 |
-| 2d | Q4 in code: the host finds or downloads the pack of the installed build and checks it, a data module in `DefaultModules`, publishing a release; step 2 closes. | Next |
+| 2d | Q4 in code: the host finds the pack of the installed build or downloads it from its release, checks it and does not start without it, the data module in `DefaultModules`, the token from the configuration or the GitHub CLI, `scripts/release.cs` publishing a build's release (D31 to D33). | Done on 2026-10-27 |
 
 ## 3. Protocol and connection
 

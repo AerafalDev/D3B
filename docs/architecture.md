@@ -2,9 +2,9 @@
 
 Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is
 in [roadmap.md](roadmap.md). Built so far: the solution, the module and plugin model in `D3B.Core`, and a host that
-builds its modules, starts and stops (step 1); the data pack format in `D3B.Data`, and the tools that inspect the client
-and extract its maps, world graph and game tables with the texts they name (step 2, sessions 2a to 2c). Everything else
-below is the target.
+builds its modules, starts and stops (step 1); the data pack format in `D3B.Data`, the tools that inspect the client,
+extract its maps, world graph and game tables with the texts they name, and publish a build's pack, and the data module,
+whose pack the host finds or downloads before it starts (step 2). Everything else below is the target.
 
 ## Overview
 
@@ -42,7 +42,7 @@ each step adds the references it needs.
 | `src/D3B.Host` | The headless host: Generic Host, gRPC server on a named pipe, storage, logs. |
 | `src/D3B.Contracts` | The gRPC contracts shared by the host and the app. |
 | `src/D3B.App` | The Avalonia desktop app. |
-| `scripts/` | Inspection, extraction and mapping tools, as file-based apps. |
+| `scripts/` | Inspection, extraction, release and mapping tools, as file-based apps. |
 | `templates/` | The `dotnet new d3b-plugin` template, compiling against the `D3B.Core` package (D22). |
 | `samples/` | Example plugins, built with the solution and loaded by the tests. |
 | `tests/`, `benchmarks/` | One test project per `src/` project that has logic; benchmarks for the codec and pathfinding. |
@@ -58,13 +58,14 @@ Built at step 1, in `D3B.Core` (D20, D21):
 - A module is built as soon as it is added. It requires another by calling `bot.AddModule<T>()` first in its `Build`.
   Adding a module type twice builds it once.
 - A group (`IModuleGroup`) lists modules in order; whoever adds it may disable some. `DefaultModules`, in `D3B.Bot`,
-  will gather the standard modules: network, protocol, data, world, movement, harvesting, bank. D3B's own features are
-  modules like any other, so they can be disabled, and later replaced (D20).
+  gathers the standard modules: so far the data module (D31), then, as the steps write them, network, protocol, world,
+  movement, harvesting, bank. D3B's own features are modules like any other, so they can be disabled, and later replaced
+  (D20).
 - A plugin is a folder under `plugins/` holding an assembly named after it, whose one public class marked
   `[Plugin("id")]` is its root module. It loads once into its own `AssemblyLoadContext`, which asks the host's context
   first and is not collectible (D6). An invalid plugin stops the host from starting.
 - `D3B.Host` adds `DefaultModules`, then the plugins next to its executable (or under `Plugins:Directory`), logs what
-  it built, and runs until it is stopped.
+  it built, gets the pack of the installed client's build ready (Game data, below), and runs until it is stopped.
 - A plugin compiles against the `D3B.Core` package; `dotnet new d3b-plugin` creates one (D22).
 - A plugin's UI part, loaded by the app, is Q6.
 
@@ -93,7 +94,7 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 ## Game data
 
-Built in sessions 2a to 2c (D24 to D30); session 2d completes it:
+Built at step 2 (D24 to D33):
 
 - `scripts/inspect.cs` describes the installed client, and `scripts/extract.cs` writes the pack of its build. Both read
   the client with the Unity readers copied from Dofus Remastered into `scripts/unity/` (AssetsTools.NET), the
@@ -118,9 +119,19 @@ Built in sessions 2a to 2c (D24 to D30); session 2d completes it:
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
   sub-areas listing it.
-- Packs and mappings are assets of this repository's releases, one release per client build, never committed (D10,
-  D11, D24). The host will use a local pack first, else download the release's and check its SHA-256, and will not
-  start without one (session 2d).
+- Packs, and from step 3 mappings, are assets of this repository's releases, one release per client build, tagged
+  `client-<version>`, each asset with its SHA-256 beside it, never committed (D10, D11, D24). `ClientRelease` names them;
+  `scripts/release.cs` publishes a build's pack, never replacing one already published (D33).
+- The data module (`DataModule`, in `D3B.Bot`, D31) registers, as singletons every bot shares, the installed
+  `ClientBuild`, the `PackSource` that finds its pack, the `ReleaseDownloader`, the `GamePack`, opened once and closed
+  with the host, and the stores reading it: `GameTexts`, `GameMaps`, `GameWorld` and `GameTables`. The configuration
+  names the client (`Client:Directory`), the packs' directory (`Data:Directory`) and the releases' repository
+  (`Releases:Repository`).
+- Before the host starts, `PackSource` looks for the pack of the installed build on this machine, else downloads the
+  release's, checks it against its SHA-256 and that it was extracted from this build, and moves it into place; then the
+  host opens it. While the repository is private, the download sends `Releases:Token`, else the GitHub CLI's token
+  (D32). With no pack for the installed build, the host does not start: it says which build lacks one and how to
+  extract it, and exits with code 1. The pack of another build is never used.
 
 ## Desktop app
 
