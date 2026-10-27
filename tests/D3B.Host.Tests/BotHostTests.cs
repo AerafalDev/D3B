@@ -1,32 +1,64 @@
+using D3B.Bot.Tests;
+using D3B.Core.Modules;
+using D3B.Data.Releases;
+using D3B.Data.Tests.Releases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 
 namespace D3B.Host.Tests;
 
-public sealed class BotHostTests
+public sealed class BotHostTests : IDisposable
 {
     private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
 
-    [Fact]
-    public async Task TheHostStartsAndStopsCleanly()
+    private readonly TestInstall _install = new();
+    private readonly FakeLogCollector _log = new();
+
+    private static bool IsStarted(FakeLogRecord record)
     {
-        var bot = BotHost.CreateBuilder(["--Plugins:Directory", Path.Combine(AppContext.BaseDirectory, "no-plugins")]);
+        return record.Category == "Microsoft.Hosting.Lifetime" && record.Message.StartsWith("Application started", StringComparison.Ordinal);
+    }
 
-        using var host = bot.Build();
+    public void Dispose()
+    {
+        _install.Dispose();
+    }
 
-        var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
-        var started = new TaskCompletionSource();
+    [Fact]
+    public async Task TheHostStartsOnThePackOfTheInstalledBuildAndStopsCleanly()
+    {
+        _install.WritePack();
 
-        using var registration = lifetime.ApplicationStarted.Register(started.SetResult);
+        var bot = CreateBuilder();
 
-        var run = host.RunAsync(TestContext.Current.CancellationToken);
+        bot.Services.AddHostedService<StopOnceStarted>();
 
-        await started.Task.WaitAsync(_timeout, TestContext.Current.CancellationToken);
-        lifetime.StopApplication();
-        await run.WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        var exitCode = await BotHost.RunAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
 
-        Assert.True(lifetime.ApplicationStopped.IsCancellationRequested);
+        Assert.Equal(0, exitCode);
+        Assert.Contains(_log.GetSnapshot(), record => record.Message == $"Opened the pack of client {TestInstall.Version}, format 3: {_install.PackPath}");
+        Assert.Contains(_log.GetSnapshot(), IsStarted);
+    }
+
+    [Fact]
+    public async Task TheHostDoesNotStartWithoutAPack()
+    {
+        var bot = CreateBuilder();
+
+        // Nothing is published: the download fails as it would for a client build without a release.
+        bot.Services.AddSingleton(_ => new ReleaseDownloader(ClientRelease.DefaultRepository, new FakeGitHub()));
+        bot.Services.AddHostedService<StopOnceStarted>();
+
+        var exitCode = await BotHost.RunAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        var failure = Assert.Single(_log.GetSnapshot(), record => record.Level is LogLevel.Critical);
+
+        Assert.Equal(1, exitCode);
+        Assert.DoesNotContain(_log.GetSnapshot(), IsStarted);
+        Assert.Contains($"No pack for client {TestInstall.Version}", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("dotnet run --file scripts/extract.cs", failure.Message, StringComparison.Ordinal);
+        Assert.False(File.Exists(_install.PackPath));
     }
 
     [Fact]
@@ -45,5 +77,14 @@ public sealed class BotHostTests
             .Build();
 
         Assert.Equal(Path.Combine(AppContext.BaseDirectory, "extra"), BotHost.PluginsDirectory(configuration));
+    }
+
+    private BotBuilder CreateBuilder()
+    {
+        var bot = BotHost.CreateBuilder([.. _install.Arguments, "--Plugins:Directory", Path.Combine(AppContext.BaseDirectory, "no-plugins")]);
+
+        bot.Logging.AddProvider(new FakeLoggerProvider(_log));
+
+        return bot;
     }
 }

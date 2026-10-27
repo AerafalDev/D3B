@@ -285,7 +285,8 @@ which no file holds: those maps have no name.
 ## The pack of 3.7.12.12
 
 Format 3 (D29, D30): 4,670,325 bytes, 17,730 entries, extracted in about 14 s on 16 threads, 9 s of which read the
-client. Two extractions give the same SHA-256.
+client. Two extractions give the same SHA-256. The pack records the extractor's version, so another build of the
+extractor writes other bytes: 4,670,336 from session 2d's (D33).
 
 | Entries | Serialized | Compressed, zstd 19 |
 | --- | ---: | ---: |

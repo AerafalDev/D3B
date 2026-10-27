@@ -2,6 +2,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\D3B.Core\D3B.Core.csproj" />
+    <ProjectReference Include="..\D3B.Data\D3B.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D3B.Bot.Tests" />
   </ItemGroup>
 
 </Project>

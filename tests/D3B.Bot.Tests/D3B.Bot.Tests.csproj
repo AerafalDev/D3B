@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\D3B.Bot\D3B.Bot.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\D3B.Data.Tests\Releases\FakeGitHub.cs" Link="Releases\FakeGitHub.cs" />
+    <Compile Include="..\D3B.Data.Tests\Releases\StallingStream.cs" Link="Releases\StallingStream.cs" />
+  </ItemGroup>
+
+</Project>

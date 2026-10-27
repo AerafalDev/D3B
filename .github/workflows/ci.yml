@@ -47,6 +47,9 @@ jobs:
       - name: Build the extraction tool
         run: dotnet build scripts/extract.cs
 
+      - name: Build the release tool
+        run: dotnet build scripts/release.cs
+
       - name: Check formatting
         run: dotnet format --verify-no-changes --no-restore
 

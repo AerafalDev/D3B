@@ -620,6 +620,99 @@ decompress in 2.3 µs instead of 3.5; the other entries gain nothing (client.md)
 - **Rejected.**
   - A 16 KiB dictionary trained on the maps, which the lead session measured and did not recommend.
 
+## D31: The host gets the pack of the installed build before it starts
+
+*2026-10-27, step 2, session 2d. Builds D24's fetching.*
+
+- **Flow.** `BotHost.RunAsync` builds the host, then, before starting it, calls `PackSource.EnsureAsync`: it reads the
+  installed client's build (`ClientBuild`, from `Client:Directory`, by default where the launcher installs it), looks
+  for its pack under `Data:Directory` (by default `%LOCALAPPDATA%\D3B\data`, D24), and otherwise downloads it from the
+  release `client-<version>` of `Releases:Repository` (by default `AerafalDev/D3B`). The host then opens the pack, so that
+  an unreadable one stops it before any service reads it. Without a pack for the installed build, or with the pack of
+  another build under its name, the host logs a critical message that names the build and the command extracting its
+  pack, does not start, and exits with code 1.
+- **Download.** `ReleaseDownloader`, in `D3B.Data.Releases`, goes through GitHub's REST API, which serves private
+  repositories: the release by its tag, then each asset by its identifier with `Accept: application/octet-stream`. The
+  asset's URL is built from its identifier, never taken from the answer, and the token is set on each request to the
+  API; `HttpClient` clears it when it follows GitHub's redirect to the bytes. The SHA-256 asset is read first. The pack
+  is streamed into `<pack>.download` and hashed as it comes. It must match the SHA-256, then open as a pack of this
+  format extracted from this build, before it is moved into place; a file that appeared there meanwhile, such as one
+  the extraction tool wrote, is kept. Only a whole, checked pack is ever under the name the host looks for (D24).
+- **Failures.** Every one ends as the host's message and exit code 1, never as a crash. A read waiting 30 s for its bytes
+  fails the download, since `HttpClient`'s own timeout ends with the headers. A lock beside the pack, `<pack>.lock`,
+  deleted when closed, keeps two hosts from downloading it at once: the second stops and says so. Ctrl+C during the
+  download ends the process before the host has started: only `<pack>.download` is left, and the next start downloads
+  again.
+- **The data module.** `DataModule`, first of `DefaultModules`, registers singletons that every bot shares:
+  `ReleaseDownloader`, `PackSource`, `ClientBuild`, `GamePack`, `GameTexts`, `GameMaps`, `GameWorld` and `GameTables`.
+  The pack is opened once, by a factory, so that the container owns it and closes it with the host; the stores are safe
+  for any number of threads. Nothing is read or downloaded while the module builds: composition stays synchronous and
+  offline (D20), and the host downloads asynchronously, with its logs, before it starts.
+- **Where it lives.** The module is in `D3B.Bot`, with the default modules (architecture), so that `D3B.Data`, which the
+  tools reference, stays free of the Generic Host. `ClientRelease`, in `D3B.Data`, names a build's release, its assets
+  and their checksum for the host and for the release tool (D33): `<asset>.sha256` holds one line as `sha256sum` writes
+  it, and `sha256sum -c` checks it.
+- **Rejected.**
+  - Downloading while the module builds: network access in composition, synchronous, before the host has a logger.
+  - Downloading in a hosted service: the Generic Host creates every hosted service before starting any, so a service
+    taking a store in its constructor would open the pack before it is downloaded.
+  - `IHttpClientFactory`, with Microsoft.Extensions.Http: a package for one download per client update.
+  - Checking GitHub's own digest of the asset instead of the `.sha256` asset: it proves the download matches the upload,
+    not that the upload matches what the maintainer extracted. The release tool compares it (D33).
+
+## D32: The download's token comes from the configuration, else from the GitHub CLI
+
+*2026-10-27, step 2, session 2d, chosen by the owner*
+
+While the repository is private (D4), a download needs a GitHub token. `ReleaseToken` takes `Releases:Token` when the
+host's configuration sets it, such as the user environment variable `Releases__Token`, and otherwise asks the GitHub CLI
+for its logged-in account's token, `gh auth token --hostname github.com`: the owner is already logged in, so there is
+nothing to configure.
+
+- The token is asked for only when a pack must be downloaded, is never logged, and goes to GitHub's API only (D31).
+  Without either source, the download goes without one: a public repository accepts it, and for a private one the host's
+  message says where a token comes from.
+- **Risk.** The CLI's token has the `repo` scope, wider than reading releases; it leaves the machine for GitHub's API
+  only. The host starts `gh` as Windows finds a program by its name: beside the host, in the current directory, then on
+  `PATH`, a program of the user's own environment. It gets 10 s, and none of `GH_TOKEN` and `GITHUB_TOKEN`, which it
+  would print instead of its account's token.
+- Once the repository is public, no token is needed; one still raises GitHub's rate limit.
+- **Rejected.**
+  - The configuration alone, which the lead session recommended: one place and no process started, but a token to set by
+    hand.
+  - Windows' credential manager: native code for Windows only, while D15 plans Data Protection for secrets at step 5.
+  - `GH_TOKEN` and `GITHUB_TOKEN`: shared with other tools, and possibly holding another context's token.
+
+## D33: Publishing a client build's release
+
+*2026-10-27, step 2, session 2d*
+
+`scripts/release.cs` publishes the pack of a build, the installed client's by default or `--client-version`'s, from
+where the extraction tool writes it (`--packs`), to the release `client-<version>` (D24).
+
+- **Checks.** It opens the pack, which checks its format and that it is whole, checks it was extracted from that build,
+  and writes its SHA-256 beside it, in `data-<format>.pack.sha256`. Then, by the release's state:
+  - no release: `gh release create` with both assets, titled `Client <version>`, with notes naming the build, the
+    format, the fingerprint and the extractor, and `--latest=false`, so that D3B's own releases stay the latest;
+  - a release without this pack, such as one made for an older format (D24): `gh release upload` of both assets;
+  - a release holding this pack, by GitHub's digest of the asset: nothing to do;
+  - a release holding another pack under that name: refused.
+- **Never replaced.** A host keeps the pack it has and never downloads it again, so a published pack is fixed for its
+  build and format: replacing it would leave hosts with two packs under one name. An extraction fix that changes the
+  content of a published pack ships under a new format. The extractor's version is in the pack (D26), so another build of
+  the extractor gives other bytes, which the tool refuses for a published pack.
+- **Dry run by default.** Nothing changes on GitHub without `--publish`, which then compares GitHub's digest of the
+  uploaded pack with its own SHA-256.
+- **Through the GitHub CLI.** The maintainer's credentials stay in `gh`; the tool handles no token. CI builds the tool and
+  cannot run it: it has no client (D24).
+- **Immutable releases stay off** for the repository: a release gains assets after it is published, a newer format's
+  pack, then step 3's mapping. The tool enforces what immutability would, by never replacing an asset.
+- **Rejected.**
+  - Steps in the docs only: the checksum must be in the format the host reads, which `ClientRelease` defines once for
+    both.
+  - The REST API from the tool: more code, and a second place holding a credential.
+  - A GitHub Actions workflow: CI has no client.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

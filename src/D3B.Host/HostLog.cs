@@ -13,4 +13,10 @@ internal static partial class HostLog
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Plugin {Name} {Version} [{Id}] by {Author}")]
     public static partial void PluginLoaded(ILogger logger, string name, string version, string id, string author);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Opened the pack of client {Version}, format {Format}: {Path}")]
+    public static partial void PackOpened(ILogger logger, string version, int format, string path);
+
+    [LoggerMessage(Level = LogLevel.Critical, Message = "The host does not start. {Reason}")]
+    public static partial void DataUnavailable(ILogger logger, string reason);
 }
