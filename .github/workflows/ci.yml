@@ -41,6 +41,12 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
+      - name: Build the inspection tool
+        run: dotnet build scripts/inspect.cs
+
+      - name: Build the extraction tool
+        run: dotnet build scripts/extract.cs
+
       - name: Check formatting
         run: dotnet format --verify-no-changes --no-restore
 
