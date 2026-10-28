@@ -1570,6 +1570,192 @@ progress, in order, withdrawn, refused.
   - Snapshots of decoded messages: what they would hold, the tests compare with what they built (D49); bot states are
     compared at step 4.
 
+## D64: Step 4 in six sessions
+
+*2026-10-28, step 4, session 4a, chosen by the owner*
+
+The roadmap's step 4 holds the actor, the state, behaviors, interruption, recovery and reconnection, the sharing of the
+character with the player, the server's answers and refusals, cell and world pathfinding, moving between maps, using
+interactives and the bank: too much for one session. It is split:
+
+- **4a**: the actor and walking on a map: one inbox per bot fed by an `IGameObserver`, a game connection tied to its
+  account and its character, the character's state and its snapshots, how the bot and the player share the character,
+  cell paths in `D3B.Engine` measured on the captures, the walk with the server's answer to the client's confirmation,
+  and its refusal named in the readable protocol (D65 to D70).
+- **4b**: between maps: world pathfinding over the graph's vertices by zone, scrolls, scrolls with an action and map
+  actions, with the criteria the state answers; changing maps, what the bot waits for, and its refusals named.
+- **4c**: interactives: using an element from the nearest cell the character reaches, harvesting, the use's refusals
+  named, doors as transitions of the world path; line of sight here only if measuring shows using depends on it, else
+  at step 9.
+- **4d**: the bank: the banker's dialog, the exchange with the storage, stacks and kamas, leaving, the way to the
+  nearest bank.
+- **4e**: zaaps and havens: their messages, which the readable protocol lacks, from captures of the player using them
+  and pins, then in the world path.
+- **4f**: activities, interruption, recovery and reconnection: behaviors chained, a fight starting, a disconnection,
+  full pods and the player as interruptions, the recovery step, the client's new connection taking the bot back.
+- Until step 5's app, no command comes from outside: tests drive the bots, and the measurements on the host go through a
+  measuring plugin never committed, as in session 3h.
+- **Rejected.**
+  - Interruption, recovery and reconnection right after 4b: they need the behaviors of 4c and 4d to chain.
+  - The bank with zaaps and havens in one session: two sets of messages to measure and map.
+
+## D65: One bot per character, its account known by the ticket
+
+*2026-10-28, step 4, session 4a, chosen by the owner*
+
+A bot plays one character of one account (`CharacterKey`: the account's id and the character's). It is made when a game
+connection's server confirms the character the client chose, and outlives its connections: when the client connects
+again and chooses the character, the new connection takes the old one's place, and the state starts over from what the
+server sends.
+
+- **The account, by the ticket.** The connection phase's identification names the account (`account_id`, its nickname and
+  tag), then the server selection gives the client a ticket, which the game connection's first request presents (D52).
+  The connection phase's session remembers the account by that ticket in `GameAccounts`, and the game session takes it
+  from the ticket of its `AuthenticationRequest` (`GameSession.Account`). An account waits as its selection does, 60 s,
+  and is taken once. The ticket stays in memory, never logged.
+- **A connection whose account D3B does not know**, such as one whose identification was not understood, gets no bot:
+  it is only watched, with a warning.
+- **Why.** The state is a character's; step 5's profiles depend on the character's professions and level; and step 4f's
+  reconnection resumes where a character's state allows, which a bot per connection could not.
+- **Rejected.**
+  - One bot per account: its state would start over at each change of character.
+  - One bot per game connection: no continuity after a reconnection, which 4f would have to rebuild under another key.
+  - The account carried by the relay, as a tag of `GameServerSelections`: `D3B.Network` stays free of the protocol, and
+    the game session reads the ticket anyway.
+
+## D66: The player wins, and the bot pauses until it is resumed
+
+*2026-10-28, step 4, session 4a, chosen by the owner*
+
+D3B neither holds nor drops a frame of the client (D60), so the player can always act. A request the player sends that
+acts on the character interrupts the bot's behavior (D9), and the bot pauses: it starts no behavior until it is resumed,
+by step 5's app, by tests until then.
+
+- **What is the player's** (`PlayerActions`): an observer never sees D3B's requests (D62), so every request it sees is the
+  client's. The requests that start an action are the player's: the eight kinds D3B sends (D60), and the stop of a walk,
+  which the client sends when the player gives a new path during one, measured 24 times, each followed at once by the new
+  path (client.md).
+- **What is not**: what the client sends by itself after an action, its own or D3B's: the confirmation of a walk, the
+  request for a map's information, the two requests to leave once the server closed an exchange (D60). Leaving a dialog
+  is not counted yet: telling the player's from the client's needs the dialog's state, which session 4d adds.
+- **Only while the bot acts.** The player acting while no behavior runs pauses nothing: the next behavior is an explicit
+  command anyway.
+- **Busy.** A behavior starts nothing while the character walks: the walk answers `Busy` (D69).
+- **Measured** on a client in game through the host: the player gave a new path 300 ms into a walk D3B sent, the stop
+  and the new path came, and the bot was interrupted and paused.
+- **Rejected.**
+  - Resuming by itself after some time without the player's requests: the bot would start again while the player reads,
+    thinks, or is in a menu, which sends nothing.
+  - The bot ignoring the player and planning again from the new state: the two would fight over the character.
+
+## D67: The bot's run time
+
+*2026-10-28, step 4, session 4a. Builds D9.*
+
+- **The actor**, `BotActor` in `D3B.Bot.Runtime`: one unbounded `Channel<T>` read by one loop, so its state needs no lock.
+  Its inbox gets the messages of its character's game connection, both sides, posted by `Bots` from the relay's read
+  loops, and its loop turns each into the next state (`CharacterEvents`), then tries it on the behaviors' expectations.
+  The class is not named `Bot`: inside every `D3B.*` namespace the name would be the `D3B.Bot` namespace.
+- **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable record, replaced whole by the loop and read by
+  anyone, holding what the server said: the character's name and level, its map, sub-area and cell, the path it walks,
+  its inventory by stack, kamas, weight and most weight, and its professions with their levels and skills.
+  `CharacterEvents.Apply` is a pure function from a state and a message to the next state: the state handlers, tested on
+  their own.
+- **Behaviors** are async methods given a `BotContext`: the state's snapshot, the pack's maps, the clock, the log,
+  `Expect` and `SendAsync`. `BotActor.RunAsync` runs one at a time, only while a game connection plays the character and
+  the player has not taken it over. An interruption cancels it, its token cancelled off the loop so that no behavior code
+  runs on it, and it ends with `BotInterruptedException` and its reason: the player, the connection closing, the host
+  stopping. The caller cancelling its own token is no interruption.
+- **Expectations.** A behavior expects an answer before it sends the request: both go through the inbox in order, so no
+  answer can come before the loop looks for it. The loop tries each message on the expectations once the state took it
+  in, and an expectation ends with its behavior. A wait's delay goes through the bot's `TimeProvider`.
+- **The registry**, `Bots`, an `IGameObserver`: it ties a game connection to its character's bot once the server confirms
+  the choice (D65), raises `Added` for a character's first bot, and stops every bot with the host. The bots module
+  (`BotsModule`) registers it, after the data and network modules, which it requires; `DefaultModules` holds it.
+- **Tests** drive game connections as the relay shows them, on a pack of one map, with `FakeTimeProvider`, and wait for
+  the loop through an internal `ProcessedAsync`.
+- **Rejected.**
+  - Behaviors run on the bot's loop, through a synchronization context of its own: a behavior awaiting on the loop it
+    needs to go on would hang it, and D9 asks only that the state have one writer.
+  - A bounded inbox: the relay's read loops must never wait for a bot.
+
+## D68: Cells and paths in D3B.Engine
+
+*2026-10-28, step 4, session 4a*
+
+Measured on the eight captures of the game connection, 797 cells of the character's paths, and checked against the pack
+(client.md):
+
+- **Geometry** (`MapGeometry`, in `D3B.Engine.Maps`): a cell is its row times 14 plus its column, odd rows lie half a cell
+  east of even ones, and directions run from 0, east, clockwise to 7. Every cell of the character's paths is walkable and
+  the neighbour of the one before it, and the 310 turning points of the requests leave in the direction this gives.
+- **Coordinates** (`MapPoint`): the server names a cell by two coordinates, x the column plus half the row rounded up, y
+  the column less half the row rounded down, measured on its three refusals of a path (D69).
+- **Paths** (`CellPathfinder`): A* over the eight neighbours a character may walk on, the destination walkable and the
+  start anywhere. A step across, east, south, west or north, passes between two cells, one of which at least must be
+  walkable: the client's paths never pass between two that are not, though the server walked one of D3B's that did.
+  Steps are weighed by the time measured on the client's paths, running, 170 ms east or west, 110 north or south and 113
+  along a diagonal: 3, 2 and 2. The estimate is the cost of the quickest path with nothing in the way. On the 67 paths the
+  client asked for, these paths are as quick by these weights on 61 and quicker on 6, never slower, and the same cells on
+  20. Nothing is kept between calls (D9's rejection of a shared pathfinder).
+- **Turning points** (`CellPath.TurningPoints`): the first cell and each where the direction changes, with the direction
+  leaving it, then the last with the direction arriving on it, as the client's requests name them.
+- `D3B.Engine` references `D3B.Data` for the cells; its tests check the geometry, and with CsCheck (D15), on 100 random
+  maps, that every path found is valid and as quick as an exhaustive search finds.
+- **Rejected.**
+  - Steps weighed alike: a path of fewer steps across the map is slower when its steps go east or west.
+  - Passing between two cells that cannot be walked on, which the server allowed once: the client never does.
+  - A benchmark of cell paths: 560 cells take microseconds; world pathfinding, at 4b, is where one pays.
+
+## D69: The first behavior, walking on a map, and its refusal named
+
+*2026-10-28, step 4, session 4a. Supersedes in part D60: the server's refusal of a path is an event of 40 bytes naming
+the character's cell, not of 25.*
+
+- **The walk** (`MapWalk`, in `D3B.Bot.Movement`): from the cell the state gives, a path in the pack's cells (D68), sent
+  as the client sends its own, each turning point the direction times 4096 plus the cell (D60); then the server's answer,
+  the client's confirmation once arrived, and the server's response to it, after which the character stands on the
+  path's last cell. D3B never confirms: the client does (D60).
+- **Outcomes** (`WalkOutcome`): arrived, on the response to the confirmation or already there; busy, while the character
+  walks or its cell is not known, nothing sent; no path in the pack, nothing sent; refused; no answer from the server
+  within 3 s; not confirmed within 1 s and 500 ms a step. Measured: the server answers within 150 ms, the client confirms
+  0.38 to 2.9 s after the request, a step taking at most 186 ms running and 491 ms walking, and the server answers the
+  confirmation within 100 ms.
+- **The refusal**, named `MapMovementRefusedEvent`: a path that does not start where the character stands. One event,
+  carrying the character's cell as coordinates (D68), 29 ms after the request, nothing else: measured three times, each
+  naming the cell the character stood on. During a walk, the server places the character on the walk's first cell; a
+  refusal then stops the client's walk there. The state takes that cell.
+- **The stop**, named `MapMovementCancelRequest`: the client names the cell where the character stopped, then sends the
+  player's new path from it, in the same read; the server does not answer. The state takes that cell (D66).
+- **Pins and mapping.** The structure cannot tell either from the build's messages of its shape, 83 and 84 of them: the
+  mapping tool proposed each among the 6 and 9 of these the captures carry, and they are pinned for 3.7.12.12 (D54). The readable protocol
+  holds 108 messages and 220 fields: `MappingFile.FormatVersion` is 3, `mapping-3.binpb`, audited without failure.
+- **Measured** on a client of 3.7.12.12 in game through the host, the player's hands off: the bot walked eight times
+  through the walk behavior, 1 to 16 steps, each arrived in 0.41 to 1.84 s, the server walking every path exactly as
+  sent; the path D3B sent from another cell was refused, naming the character's cell.
+- **Rejected.**
+  - A duration computed per step to end the walk, as BillBot does: the client's confirmation and the server's response say
+    when it is over (D60); the delays only bound a wait that went wrong.
+  - Waiting for the confirmation the client sends: the server's response to it is what makes the walk over for the
+    server.
+
+## D70: Bot states compared with snapshots written in the tests, not Verify
+
+*2026-10-28, step 4, session 4a. Supersedes in part D15: the "Verify.XunitV3" part of the tests row.*
+
+D15 chose Verify for snapshots, and the architecture planned to compare bot states with snapshots from step 4. Verify
+33.3.4, the version D15 named, now fails the build without a SponsorCheck license property: a maintenance fee, or an
+exemption its publisher defines and the consumer claims. Choosing one is the owner's call, not a test's.
+
+- **So** a test serializes the state with `System.Text.Json`, indented, and compares it with the snapshot it holds as a
+  raw string: the expected state reads in the test, and a change shows as a diff of text. Tests of the other handlers
+  compare the fields they change.
+- CsCheck 5.0.0, D15's property tests, and Microsoft.Extensions.TimeProvider.Testing join the tests' packages.
+- Should the owner claim an exemption or sponsor, Verify can come back: the snapshots are text already.
+- **Rejected.**
+  - Claiming Verify's open-source exemption on the owner's behalf: a license decision.
+  - `Verify_SponsorshipLicenseIgnored`: the build would knowingly breach the package's license.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -1580,3 +1766,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
+| Q11 | What does a plugin see of the bots' run time: `D3B.Bot` packed beside `D3B.Core`, or the bot's contracts (state, behaviors, observers) moved into `D3B.Core`, which plugins compile against (D22, D67)? | Before the first milestone publishes the package (step 6) |

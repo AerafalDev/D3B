@@ -7,7 +7,8 @@ on running clients, then on its bytes through D3B's relay ([Connection](#connect
 `scripts/schema.cs` ([Protocol code](#protocol-code)), its connection phase against D3B's readable protocol with
 `scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)), then decoded through it on 2026-10-28
 ([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)), then
-acted on through it ([the game, acted on](#the-game-acted-on)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
+acted on through it ([the game, acted on](#the-game-acted-on)), and walked by a bot ([the game, walked](#the-game-walked)).
+Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
 ## Measuring again
@@ -665,12 +666,56 @@ minutes, at 8 and 9. Nothing else sets the id.
   from there. D3B did the same, at 3 and 4 cells, and once from 6 cells, all accepted.
 - **The bank.** The NPC's question offered two replies, one of which the pack lists among its banker's: that one opened
   the bank.
-- **Refused.** A path that does not start where the character stands: one event of the server, 25 bytes, and no walk,
-  so no confirmation. A use right after it: two events. A use of an element whose cell in the pack is not the one the
-  server's state gives it, an element listed on two neighbouring maps: no answer at all.
+- **Refused.** A path that does not start where the character stands: one event of the server, and no walk, so no
+  confirmation; measured again in session 4a, the event is 40 bytes and names the character's cell
+  ([the game, walked](#the-game-walked)), not 25. A use right after it: two events. A use of an element whose cell in
+  the pack is not the one the server's state gives it, an element listed on two neighbouring maps: no answer at all.
 
 `scripts/capture.cs` describes D3B's frames apart from the client's, in captures of format 2 (D61): on this session's,
 105 reads of the client, all ending on a frame, and 18 frames of D3B's.
+
+### The game, walked
+
+Measured on 2026-10-28 for session 4a (D66 to D69): the six captures of the game connection, then two more of a client
+of 3.7.12.12 in game through the host, the bot walking through its walk behavior, one with the player playing and one
+with the player's hands off. By structure, timing, and values compared on the machine with the build's pack, never
+written down. The eight connections hold 67 walks the client asked for, 16 paths D3B sent, 3 of them refused, and 24
+stops.
+
+- **Cells.** Every one of the 797 cells of the character's paths the server showed is walkable in the pack, and the
+  neighbour of the one before it, in a grid of 14 columns and 40 rows whose odd rows lie half a cell east of the even
+  ones: from an even row, the diagonals are 13, 14, -14 and -15 cells away, from an odd one 14, 15, -13 and -14; east and
+  west 1, south and north 28. Each of the 310 turning points of the requests, the client's and D3B's, leaves its cell in
+  the direction this geometry gives, from 0, east, clockwise to 7. The floor never differs between two cells of a path,
+  any actor's, 2,723 steps. The movements of NPCs and monsters skip cells, and six of other players' steps do.
+- **Between two cells.** A step east, south, west or north passes between two cells. Over the character's 372 such
+  steps, one or both of the cells beside it were walkable, but once, on a path D3B sent in session 3h, which the server
+  walked: the client's paths never pass between two cells that cannot be walked on.
+- **How long.** On every path of three steps or more the character runs: a step east or west takes about 170 ms, north
+  or south 110 and along a diagonal 113, within 66 ms over a whole walk, at most 186 ms a step. A single step is walked,
+  400 to 491 ms; no path of two steps was measured. The client
+  confirms 0.38 to 2.9 s after its request, and the server answers the confirmation 28 to 30 ms later, once 100 ms.
+- **The client's paths against D3B's.** Found again in the pack's cells with these weights, 3, 2 and 2, D3B's path from
+  the start to the end of each of the client's 67 walks is as quick on 61 and quicker on 6, never slower; it is the same
+  path on 20.
+- **The refusal.** A path that does not start where the character stands: one event, 40 bytes, 29 ms after the request,
+  and nothing else. It carries two numbers, the coordinates of the cell the character stands on, x the column plus half
+  the row rounded up and y the column less half the row rounded down; all three refusals named that cell. One came
+  while the player's own walk went on: the server named the walk's first cell, so it places a walking character there
+  until the walk is over, and the client stopped its walk on that cell. The readable protocol names it
+  `MapMovementRefusedEvent`, pinned among the 6 messages of its shape the captures carry.
+- **The player's stop.** When the player gives a new path during a walk, the client sends a request naming the cell
+  where the character stopped on its path, then the new path from that cell, in the same read, within 1 ms; the server
+  shows the new path and answers the stop with nothing. All 24 stops were followed by the new path. The readable protocol
+  names it `MapMovementCancelRequest`, pinned among the 9 messages of its shape the captures carry.
+- **A map changed by a walk.** A walk ending on a cell that changes maps gets the new map before the response to the
+  confirmation: the server names the map, then answers.
+- **The bot walking.** With the player's hands off, the walk behavior sent 7 paths, 1 to 16 steps; the server walked each
+  exactly as sent, 28 to 147 ms after the request, the client confirmed each 0.38 to 1.81 s after it, and the server
+  answered every confirmation, the walk over 0.41 to 1.84 s after the request with the character on the path's last
+  cell in the bot's state. A path sent from another cell was refused, naming the character's. With the player playing,
+  the bot answered `Busy` to each walk asked while the character walked, and a walk it sent was interrupted when the
+  player gave a new path 300 ms in: the stop and the new path came, and the bot paused.
 
 ## Protocol code
 
