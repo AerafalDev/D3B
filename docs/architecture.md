@@ -20,8 +20,10 @@ in `D3B.Engine` (step 4, session 4a); paths through the world in `D3B.Engine`, t
 the account's subscription, and the behaviors changing maps and travelling from map to map (step 4, session 4b); the
 map's elements in the state, using them until the use is over, doors in the path through the world, and requests held
 until the client drew the map (step 4, session 4c); the map's NPCs, dialogs and the bank's exchange in the state, the
-journey to a banker, banking, and the player's leaving told from the client's (step 4, session 4d). Everything else
-below is the target.
+journey to a banker, banking, and the player's leaving told from the client's (step 4, session 4d); the zaaps the
+character knows and the haven bag in the state, teleporting from where the character stands in the path through the
+world, leaving the haven bag, and a walk the client does not follow settled where the server has the character (step 4,
+session 4e). Everything else below is the target.
 
 ## Overview
 
@@ -94,8 +96,8 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharing with the player and the first
 behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
-map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank. Zaaps and havens are
-session 4e's; activities, recovery and reconnection are 4f's (D64).
+map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank; in session 4e (D83,
+D85), teleports and the haven bag. Activities, recovery and reconnection are 4f's (D64).
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -106,9 +108,9 @@ session 4e's; activities, recovery and reconnection are 4f's (D64).
   state and tries it on the behaviors' expectations. Commands from the app come at step 5.
 - **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable snapshot of what the server said of the
   character, its name and level, map, sub-area, cell and the path it walks, the map's own interactive elements and the
-  use the character is in (D75), the map's NPCs, the dialog with one and the exchange with the storage (D80), inventory,
-  kamas, weight and professions, and when its account's subscription ends, which the connection phase's identification
-  said (D72).
+  use the character is in (D75), the map's NPCs, the dialog with one and the exchange with the storage (D80), the zaaps
+  it knows, a zaap's dialog with its costs and the haven bag it is in (D83), inventory, kamas, weight and professions,
+  and when its account's subscription ends, which the connection phase's identification said (D72).
   `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
 - **Behaviors** are async methods given a `BotContext`, the state, the pack's maps, world paths and banks, the clock and
   the game connection to send through, and run one at a time by `BotActor.RunAsync`. A request waits until the client
@@ -120,7 +122,8 @@ session 4e's; activities, recovery and reconnection are 4f's (D64).
   a request to leave is the player's only while the character is in a dialog or an exchange (D81).
 - **Walking on a map** (D69): `MapWalk`, in `D3B.Bot.Movement`, finds the path in the pack's cells, sends its turning
   points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
-  ends it too, and the character walking already makes it busy.
+  ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character
+  on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85).
 - **Using an element** (D75): `ElementUse`, in `D3B.Bot.Interactives`, walks to the nearest cell the client uses the
   element from, asks for the skill by the id the server gave it on the element, and waits for the start or the refusal,
   then for the end of a use that lasts, such as a harvest. Nothing is sent for an element the map does not offer the
@@ -128,10 +131,14 @@ session 4e's; activities, recovery and reconnection are 4f's (D64).
 - **Changing maps** (D73, D76): `MapChange` follows one step of a path through the world. It walks to the nearest cell
   the map is left from, then asks for the neighbour, walks onto a map action's cell, or uses a door, and waits for the
   new map, then for what is on it, which the client asks for. The server answers nothing to a change it refuses, which
-  ends after its delay, and refuses a door's use with an event.
+  ends after its delay, and refuses a door's use with an event. A teleport (D83) is one request from where the character
+  stands, refused with an error text (D84); `MapChange.LeaveHavenBagAsync` leaves the character's haven bag, back to the
+  map it was entered from.
 - **Travelling** (D74): `WorldTravel` finds the path to the maps sought, follows its first step, and finds it again from
   where the character stands, until it arrives. A change that fails leaves its transition out of the journey, which
-  fails after three, or when it goes on too long. The criteria are answered on the state (`WorldTravel.FactsOf`).
+  fails after three, or when it goes on too long; a teleport that fails leaves every teleport out. A journey from the
+  character's haven bag leaves it first. The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
+  on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83).
 - **Banking** (D79, D80): `Banking`, in `D3B.Bot.Banks`, goes where a banker stands, the nearest bank's inside still
   sought, talks to him, gives the reply of his the question offers, puts the stacks asked for in by one request and the
   kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
@@ -183,9 +190,10 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
 - The bot acts through that connection (D60): `GameSession.SendAsync` sends the server a readable request, encoded
   whole by `ProtocolTranslation.EncodeGameRequest` with the id -1 that every request of the first milestone carries,
   between the client's frames. D3B sends only the requests that start an action: walking, changing maps, using an
-  element, acting on an NPC, replying, moving a stack or kamas into the storage, leaving a dialog. The client follows
-  the server's answers as after its own actions, confirming a walk once arrived and asking what is on a new map, so
-  D3B never sends those; the bot learns that an action is over from what the server answers.
+  element, acting on an NPC, replying, moving a stack or kamas into the storage, leaving a dialog, teleporting, leaving
+  the haven bag. The client follows the server's answers as after its own actions, confirming a walk once arrived and
+  asking what is on a new map, so D3B never sends those; the bot learns that an action is over from what the server
+  answers.
 - Framing, measured (D38): a varint length, then a protobuf message, in the clear. `FrameReader` reads frames from a
   `SequenceReader<byte>` without copying; a benchmark in `benchmarks/D3B.Network.Benchmarks` measures it. The game
   connection's envelope carries an `Any` whose type URL is `type.ankama.com/` and the obfuscated message's name,
@@ -205,7 +213,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-5.binpb` (`MappingFile`, D82), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-6.binpb` (`MappingFile`, D84), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -290,7 +298,7 @@ Built at step 2 (D24 to D33):
 ## Engine
 
 Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cells and the world. Built in session 4a
-(D68), 4b (D71, D73), 4c (D75, D76) and 4d (D79):
+(D68), 4b (D71, D73), 4c (D75, D76), 4d (D79) and 4e (D83):
 
 - `MapGeometry`, in `D3B.Engine.Maps`: 14 columns of 40 staggered rows, the eight directions between neighbours, the
   coordinates the server names a cell by (`MapPoint`), measured on the captures, and the distance between two cells, the
@@ -307,11 +315,11 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - `WorldPathfinder`, in `D3B.Engine.World`: Dijkstra's over the world graph's vertices, a zone of a map each, through
   scrolls, scrolls with an action, map actions and doors whose criteria are met (`WorldPathRules`), each change costing
   the same, to the nearest of several maps; sub-areas closed to accounts without a subscription are entered by
-  subscribed ones only. It gives the cells each map is left from (`ExitCells`), a door's around its element. Built once
-  per pack and shared; a search keeps its state in its own arrays, and takes under 0.4 ms
-  (`benchmarks/D3B.Engine.Benchmarks`).
-- Later: zaaps and havens (4e) in the world path; line of sight and the fight simulator at step 9, using an element not
-  depending on line of sight (D75).
+  subscribed ones only. A subscribed character also teleports, from every map the server lets it teleport from, to the
+  zaap of every map it knows one on whose cost it carries (`TeleportCost`), one change like the others (D83). It gives
+  the cells each map is left from (`ExitCells`), a door's around its element. Built once per pack and shared; a search
+  keeps its state in its own arrays, and takes under 0.7 ms (`benchmarks/D3B.Engine.Benchmarks`).
+- Later: line of sight and the fight simulator at step 9, using an element not depending on line of sight (D75).
 
 ## Fights
 

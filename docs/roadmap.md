@@ -10,7 +10,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 1 | Scaffold and modules | Done |
 | 2 | Game data | Done |
 | 3 | Protocol and connection | Done; Q10 at the next client update |
-| 4 | Bot run time and navigation | In progress: 4a to 4d done, 4e next |
+| 4 | Bot run time and navigation | In progress: 4a to 4e done, 4f next |
 | 5 | Desktop app, first version | To do |
 | 6 | Harvesting and banking: first milestone | To do |
 | 7 | Lua scripting | To do |
@@ -105,7 +105,11 @@ Six sessions, the split chosen by the owner (D64). A client update before the ne
 
 Noted by the owner for later, on 2026-10-28: a large effort on criteria, so that what quests, breeds and the server's
 codes gate opens to the bot (Q12); what an account without a subscription may do, told apart from what a subscribed one
-may, beyond the sub-areas the world path already leaves out (D72).
+may, beyond the sub-areas the world path already leaves out (D72), teleporting among it (D83). Then, in session 4e: a
+plugin that records in SQLite, as the character enters each map, its NPCs with their ids, questions and replies, and in
+a fight the fight's map with its red and blue cells, which the owner believes only the server's fight messages tell
+apart; it needs what a plugin sees of the bots (Q11), step 5's storage and step 9's fight messages, the pack's cells
+marked red and blue not being measured yet (client.md).
 
 | Session | Content | Status |
 | --- | --- | --- |
@@ -113,7 +117,7 @@ may, beyond the sub-areas the world path already leaves out (D72).
 | 4b | Between maps: paths through the world in `D3B.Engine`, Dijkstra's over the graph's vertices through scrolls, scrolls with an action and map actions, each change costing the same, their criteria read and answered on three values, strictly, and its benchmark (D71); the account's subscription from its identification, prudently, closing subscribers' sub-areas (D72); changing maps from the cells the client marks, the bot waiting for the new map, what is on it, then half a second for the client to draw it, the server's refusals measured silent so none named, mapping format 3 kept (D73); travelling, the path found again after every change, a failed change left out (D74); measured on a client through the host. | Done on 2026-10-28 |
 | 4c | Interactives: the map's own elements in the state, those of the neighbouring maps it also lists left out, and the use the character is in; using an element from the cell the client would, until the use is over, a harvest's end measured; the server's range, line of sight measured not to count, so left at step 9; the refusals named and pinned, mapping format 4 (D75, D78); doors of skill 184 in the path through the world, their criteria strict, what each unknown code would open measured for Q12, no new fact, the owner's choice (D76); every request held until the client drew the map, a use sent too soon measured to stop it confirming walks (D77); measured on a client through the host. | Done on 2026-10-28 |
 | 4d | The bank: the map's NPCs, the dialog and the bank's exchange in the state; the banks' insides from the world graph, the nearest one sought, an inside the server shows holding no banker remembered by the host for its bots, the owner's choice (D79); talking to the banker from where the character stands, his reply, the stacks in one request and the kamas in another, leaving, the refusals measured, one named and pinned, mapping format 5, and walking busy during a dialog (D80, D82); the player's leaving told from the client's by the dialog it is sent in (D81); measured on a client through the host. | Done on 2026-10-28 |
-| 4e | Zaaps and havens: their messages from captures of the player using them, pinned, then in the world path. | To do |
+| 4e | Zaaps and havens: the player using zaaps, the haven bag and the map measured, and the bot's requests; the zaaps known, the destinations and their costs, teleporting and the haven bag named and pinned, the refusals texts of the error kind, mapping format 6 (D84); the path through the world teleporting from every map that allows it to every zaap known, the cost carried, subscribed accounts only, the haven bag only left, the owner's choice; the zaaps known, a zaap's dialog and the haven bag in the state (D83); the walk the client did not follow measured again, and the state taking the server's cell, the owner's choice (D85); measured on a client through the host. | Done on 2026-10-28 |
 | 4f | Activities, interruption, recovery and reconnection: behaviors chained, a fight starting, a disconnection, full pods and the player as interruptions, the client's new connection taking the bot back. | To do |
 
 ## 5. Desktop app, first version

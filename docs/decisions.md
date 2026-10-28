@@ -2075,6 +2075,109 @@ measured on the bank: 110 messages and 224 fields. `MappingFile.FormatVersion` i
 same bytes on two runs, audited without failure; the 15 game connections captured decode through it, 8,851 frames, none
 misread. The release of 3.7.12.12 needs it, which the release tool publishes (D50).
 
+## D83: The path through the world teleports from where the character stands
+
+*2026-10-28, step 4, session 4e, chosen by the owner. Extends D71, D73 and D74.*
+
+Measured on a game connection of the player using zaaps, the haven bag and the map, then on a client of 3.7.12.12 in
+game through the host, the player's hands off, a measuring plugin, never committed, sending the requests one by one
+([client.md](client.md#the-game-teleported)):
+
+- **Three ways to one request.** Using a zaap, skill 114, lists the zaaps the character knows with their costs; using
+  the haven bag's zaap lists them too; and the client, when the player chooses a zaap on its map, teleports with no list
+  open, the teleporter's type 5. Each teleport is one request, answered 28 to 33 ms later, once 96, with the new map,
+  the kamas paid and the dialog over; the client asks what is on the map 0.66 to 1.36 s later, after D3B's teleports as
+  after the player's.
+- **From where.** Teleporting from the map was taken from 6 maps whose flags carry bit 3, a bank's inside and maps
+  without a zaap among them, and refused from one without it and from the haven bag; 10,587 of the graph's 11,327
+  vertices carry it, every zaap's map among them. The haven bag opens where bit 2 is set, 3 maps measured, refused on 2
+  without it; 136 vertices carry bit 2 and not bit 3.
+- **What it costs.** Ten kamas a whole coordinate of the straight line between the map the character stands on and the
+  zaap's, and a thousand more towards Incarnam's world map: the 120 costs of four lists and the 13 teleports paid. The
+  haven bag's list costs from the map the bag was entered from, so it saves nothing. Bubble's formula, ten kamas a tenth
+  of a coordinate, gives costs that are not tens, and the server's are.
+- **Known.** The server lists the zaaps the character knows on entering the game, and again, whole, when it enters the
+  map of one it did not know; a teleport to any other map is refused.
+
+So:
+
+- **The path** (`WorldPathfinder`, owner's choice): from every vertex whose map carries bit 3
+  (`MapPosition.AllowsTeleport`), a teleport to the zaap of every map the character knows one on
+  (`WorldPathRules.KnownZaaps`) whose cost it carries (`WorldPathfinder.TeleportCost`, `WorldPathRules.Kamas`), one map
+  change like any other (D71); a step that teleports has no transition (`WorldStep.IsTeleport`). It lands on the zaap's
+  map's only vertex: the one zaap's map with two zones, the Craqueleurs mountain's, is left out, where the character
+  lands there not measured. Only a subscribed account teleports, prudently: no account without a subscription was
+  measured (D72). The kamas towards other world maps than Incarnam's are not measured, and counted as Incarnam's.
+- **The behavior** (`MapChange`): `TeleportRequest` from the map, then the new map and what is on it, as after a scroll,
+  every request waiting for the client to draw the map (D73, D77); an error text refuses it (D84), and a refused or
+  unanswered teleport leaves every teleport out of the rest of the journey (`WorldTravel`, D74).
+- **The state** keeps the zaaps the character knows (`CharacterState.KnownZaaps`), the zaap's dialog with its costs
+  (`ZaapDialog`), which leaving ends and during which walking, using, changing maps and travelling answer `Busy`, and
+  the haven bag the character is in, by its owner (`HavenBagOwnerId`). A teleport or the haven bag's request the player
+  sends is the player's (D66).
+- **The haven bag**: a journey from the character's own leaves it first, back to where it was entered, free
+  (`MapChange.LeaveHavenBagAsync`); from another's, which is not measured, it finds no path. The path does not travel
+  through it.
+- **Measured through the host**, the player's hands off: from an inside of Amakna's castle, which no one teleports from,
+  to Astrub, out by its door, a teleport to Astrub's zaap and a scroll, 3 changes in 6.1 s; from the haven bag to
+  Sufokia's zaap, the bag left and a teleport, in 2.9 s; from there to the nearest banker, a teleport to the Cœur
+  immaculé's zaap, a scroll and a door, in 6.6 s, every walk confirmed and every cost the one the rule gives.
+- **Benchmark** (D71's, `benchmarks/D3B.Engine.Benchmarks`): every zaap known and the kamas carried, the farthest map in
+  591 µs and a map the search cannot reach in 638 µs, about 190 KB a search, against 266 and 281 µs on foot, as
+  teleports open more of the graph. A zaap the search reached once leaves its list: every teleport costing the same, no
+  later vertex brings it nearer; looking at every zaap from every vertex took 1.45 ms. A journey still finds its path
+  again after every change (D74).
+- **Rejected.**
+  - Walking to a zaap and using it: two to three steps more for the same destinations and costs.
+  - The haven bag and its zaap: two steps a teleport, for 136 vertices more.
+  - All three: much more code and tests, for 1.2% of the graph.
+  - Weighing kamas against map changes: nothing measured sets the rate; step 6's profiles may.
+  - Asking the server what a teleport costs first, as the client does before the player's: a request that starts no
+    action (D60), whose answer the measured rule gives.
+
+## D84: The teleports' messages named, their refusals texts: mapping format 6
+
+*2026-10-28, step 4, session 4e*
+
+- **Named and pinned** for 3.7.12.12 (D54), each among the messages its side carried once the player teleported:
+  `ZaapKnownListEvent`, `TeleportDestinationsEvent`, partial, `TeleportRequest`, `HavenBagEnterRequest` and
+  `TextInformationEvent`, partial; with them, the teleporter's type (`TeleporterType`: a map's zaap 0, the haven bag's
+  3, from the map 5), the haven bag in the map's information (`HavenBagInformation`, a oneof's member the other maps
+  leave unset), and the dialog's type 10, a zaap's (`DIALOG_TYPE_TELEPORT`).
+- **Refusals.** The server refuses a teleport with a text of the error kind, 28 ms after the request, and nothing else:
+  474 during a dialog or a walk the client did not confirm, 1759 to a map the character knows no zaap on, 416 from a map
+  no one teleports from or from the haven bag; 471 the haven bag where it does not open. A teleport of type 0 with no
+  list open gets no answer. The bot reads the kind, not the text.
+- **Not named**: the client's question of what a teleport costs, before the player's from the map, and its answer: the
+  bot does not ask (D83).
+- **Mapping.** The readable protocol holds 117 messages, 241 fields, 19 enums and 147 values.
+  `MappingFile.FormatVersion` is 6, `mapping-6.binpb`, 8,304 bytes, the same bytes on two runs, audited without failure;
+  the 18 game connections captured decode through it, 11,504 frames, none misread. The release of 3.7.12.12 needs it,
+  which the release tool publishes (D50).
+
+## D85: A walk the client does not follow leaves the character where the server has it
+
+*2026-10-28, step 4, session 4e, chosen by the owner. Supersedes in part D69: a walk not confirmed now ends with the
+character on its last cell.*
+
+- **Measured** ([client.md](client.md#the-game-teleported)): of the 104 walks D3B sent in the 18 captures, the client
+  confirmed 97, the player stopped one, and the client never confirmed 6, which the server walked: two shown 30 and 90
+  ms after a map's information (D73), one after a door used too soon (D77), two in the bank of Astrub 81 and 301 s after
+  its information (4d), and one in 4e, 0.53 s after the information of a map the client had never drawn, along 14 plain
+  cells. The server then answered a teleport and the haven bag as busy, 9 and 11 s later, and in 4d refused the player's
+  path, naming the walk's last cell. A walk sent from that cell 5 minutes later was walked, and the client first walked
+  its character there from where it had kept it, then confirmed. The cause is not found: of the walks sent 0.5 to 0.6 s
+  after a map's information, the client confirmed 36 of 37.
+- **So** `MapWalk`, once the client did not confirm in time, has the bot's loop take the walk's last cell
+  (`BotContext.SettleWalkAsync`, `CharacterEvents.NotConfirmed`); the outcome stays `NotConfirmed`, and a change or a
+  journey goes on from there, leaving out what failed (D74), instead of answering `Busy` until the server's next
+  refusal.
+- **Risk.** The server may still hold the character walking, and refuse the next request once.
+- **Rejected.**
+  - A longer delay before the first request on a map: nothing measured says it prevents this, and two came minutes
+    after.
+  - Leaving it to session 4f: a journey stopped at each one, the owner's choice.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
