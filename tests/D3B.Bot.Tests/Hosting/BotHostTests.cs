@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
-using D3B.Bot.Tests;
+using D3B.Bot.Hosting;
 using D3B.Core.Modules;
 using D3B.Data.Releases;
 using D3B.Data.Tests.Releases;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 
-namespace D3B.Host.Tests;
+namespace D3B.Bot.Tests.Hosting;
 
 public sealed class BotHostTests : IDisposable
 {
@@ -69,6 +69,22 @@ public sealed class BotHostTests : IDisposable
         Assert.Contains($"No pack for client {TestInstall.Version}", failure.Message, StringComparison.Ordinal);
         Assert.Contains("dotnet run --file scripts/extract.cs", failure.Message, StringComparison.Ordinal);
         Assert.False(File.Exists(_install.PackPath));
+    }
+
+    [Fact]
+    public async Task StartingTheHostSaysWhyItDidNotStart()
+    {
+        var bot = CreateBuilder();
+
+        bot.Services.AddSingleton(_ => new ReleaseDownloader(ClientRelease.DefaultRepository, new FakeGitHub()));
+
+        var start = await BotHost.StartAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        var failure = Assert.Single(_log.GetSnapshot(), record => record.Level is LogLevel.Critical);
+
+        Assert.Null(start.Host);
+        Assert.NotNull(start.Failure);
+        Assert.Contains($"No pack for client {TestInstall.Version}", start.Failure, StringComparison.Ordinal);
+        Assert.EndsWith(start.Failure, failure.Message, StringComparison.Ordinal);
     }
 
     [Fact]

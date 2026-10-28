@@ -66,7 +66,8 @@ These rules apply to `src/`, `tests/`, `benchmarks/` and `scripts/`.
 dotnet build                               # warnings are errors; copies the sample plugin into the Core tests' plugins/
 dotnet test                                # every test project, on Microsoft.Testing.Platform
 dotnet format --verify-no-changes          # CI checks it
-dotnet run --project src/D3B.Host          # runs until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48); --Plugins:Directory <dir> loads plugins from elsewhere
+dotnet run --project src/D3B.App           # the desktop app, which runs the bots' host in its process (D91); closing it disconnects the clients
+dotnet run --project src/D3B.Host          # the same host without the app, until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48); --Plugins:Directory <dir> loads plugins from elsewhere
                                            # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
                                            # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53)
 dotnet pack src/D3B.Core -o <feed>         # the package plugins compile against (D22)

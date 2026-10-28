@@ -24,8 +24,9 @@ journey to a banker, banking, and the player's leaving told from the client's (s
 character knows and the haven bag in the state, teleporting from where the character stands in the path through the
 world, leaving the haven bag, and a walk the client does not follow settled where the server has the character (step 4,
 session 4e); floors in cell paths, and activities chaining behaviors, interrupted by the player, a disconnection or a
-fight, the character recovered and taken back by the client's new connection (step 4, session 4f). Everything else below
-is the target.
+fight, the character recovered and taken back by the client's new connection (step 4, session 4f); the desktop app,
+which runs the bots' host in its process, with its bots page in French and English, dark by default, and the catalogue
+of the activities it starts (step 5, session 5a). Everything else below is the target.
 
 ## Overview
 
@@ -35,8 +36,8 @@ Dofus_Data/StreamingAssets/** ────────► extraction: Unity read
 GameAssembly.dll + metadata   ────────► mapping: schema, captures, matching ─────►  schema, protocol mapping
                                                                                              │ fetched and loaded by
                                                                                              ▼
-D3B.App (Avalonia, ShadUI) ◄── gRPC on a named pipe (D7) ──► D3B.Host (headless: Generic Host, Kestrel)
-                                                                  │ BotBuilder: default modules + plugins/ (D5, D6)
+D3B.App (Avalonia, ShadUI) ── runs in its own process (D91) ──► the bots' host: Generic Host, Kestrel
+D3B.Host: the same host, without the app                          │ BotBuilder: default modules + plugins/ (D5, D6)
                                                                   ▼
                                                              one async actor per bot (D9)
                                                                   │ acts through
@@ -61,10 +62,9 @@ each step adds the references it needs.
 | `src/D3B.Protocol` | Classes generated from the readable `.proto` files, a build's mapping, its matching and audit, and the per-build translation. |
 | `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, items, spells, monsters, interactives, texts. |
 | `src/D3B.Engine` | Pure logic with no I/O: cell and world pathfinding, line of sight, fight simulation. |
-| `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, and the default modules. |
-| `src/D3B.Host` | The headless host: Generic Host, gRPC server on a named pipe, storage, logs. |
-| `src/D3B.Contracts` | The gRPC contracts shared by the host and the app. |
-| `src/D3B.App` | The Avalonia desktop app. |
+| `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, the default modules, and the host's composition the app and `D3B.Host` share. |
+| `src/D3B.Host` | The bots' host without the app, for measurements: its entry point alone (D91). |
+| `src/D3B.App` | The Avalonia desktop app, which runs the bots' host in its process (D91). |
 | `scripts/` | Inspection, extraction, release and mapping tools, as file-based apps. |
 | `templates/` | The `dotnet new d3b-plugin` template, compiling against the `D3B.Core` package (D22). |
 | `samples/` | Example plugins, built with the solution and loaded by the tests. |
@@ -87,11 +87,13 @@ Built at step 1, in `D3B.Core` (D20, D21):
 - A plugin is a folder under `plugins/` holding an assembly named after it, whose one public class marked
   `[Plugin("id")]` is its root module. It loads once into its own `AssemblyLoadContext`, which asks the host's context
   first and is not collectible (D6). An invalid plugin stops the host from starting.
-- `D3B.Host` adds `DefaultModules`, then the plugins next to its executable (or under `Plugins:Directory`), logs what
-  it built, gets the pack of the installed client's build ready (Game data, below), then its protocol (Network and
-  protocol, below), and runs until it is stopped.
+- The host's composition, `BotHost` in `D3B.Bot.Hosting`, which the app and `D3B.Host` share (D91), adds
+  `DefaultModules`, then the plugins next to the executable (or under `Plugins:Directory`), logs what it built, gets the
+  pack of the installed client's build ready (Game data, below), then its protocol (Network and protocol, below), and
+  starts the host, or says why it did not (`BotHostStart`). `D3B.Host` then runs until it is stopped; the app, until
+  its window is gone.
 - A plugin compiles against the `D3B.Core` package; `dotnet new d3b-plugin` creates one (D22).
-- A plugin's UI part, loaded by the app, is Q6.
+- A plugin's UI part loads in the app's process (D91); what its page registers, and how, is Q6, session 5b.
 
 ## Bot run time
 
@@ -159,6 +161,9 @@ client's new connection taking the bot back.
   out of a fight and not paused, so the run waits, with no delay, for the player to resume the bot, the client's new
   connection to take it back (D65) or the fight to end (D88). A full character is unloaded before the next step.
   Nothing of the activity's position is kept: the next step starts from the state.
+- **The activities the app starts** (D93): a module registers each one, by an id unique in the host and a name, with
+  `AddActivity<T>`, and the bots module lists them in the `ActivityCatalog`; one is made, with the host's services, for
+  each start.
 - **Recovery** (D89): before going on after an interruption, `Recovery.SettleAsync` lets a use and a walk end, leaves a
   dialog or exchange still open, and lets go of a walk the server holds, each wait bounded.
 - Every delay goes through `TimeProvider`.
@@ -296,11 +301,25 @@ Built at step 2 (D24 to D33):
 
 ## Desktop app
 
-- The app is a client of the host: it lists the bots, starts and stops them, edits accounts and profiles, and streams
-  state, map and logs over gRPC.
-- Pages of the first version: accounts and profiles, the live map with the bot's state, logs and the protocol
-  inspector (D14).
-- Views are thin, over CommunityToolkit.Mvvm view models. Texts are translated from the start, in French and English.
+Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm.
+
+- **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
+  the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
+  the clients and gives them their configuration back. The window shows the host getting ready, running for the
+  installed client's build, or why it did not start.
+- **The window**: dark by default, light on a click; where the host stands, the language and the theme in the title
+  bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by `StatusPill`, in the tone each says
+  (`Tone`).
+- **The bots page**: a card per bot, in as many columns as the width holds (`CardGrid`), each whole: who, its
+  connection and the player's pause, resumed from the card; where, the coordinates large and the sub-area named from the
+  pack's texts; pods and kamas; what it is in the middle of; its activity, started from the catalogue (D93), stopped,
+  with its status, steps and last interruption.
+- **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9): the bots'
+  loops never wait for the app. Views are thin, and bind compiled.
+- **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
+  French; the language starts as the system's and changes live, the views binding through `{l:Tr Key}`.
+- Pages to come: Q11 and Q6, a plugin's activity and page (5b); accounts and profiles in SQLite (5c); the live map
+  (5d); logs and the protocol inspector (5e) (D92).
 
 ## Scripting
 
@@ -353,4 +372,6 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   (D87).
 - Replays with injection (D63): a game session a test built is replayed through the relay, read by a game session whose
   observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
+- The app's view models are tested against bots played as the bots' tests play them, and its window drawn without a
+  screen by Avalonia.Headless with Skia, its texts read in both languages (D94).
 - Time is controlled through `FakeTimeProvider`.

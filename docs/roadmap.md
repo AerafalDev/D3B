@@ -11,7 +11,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 2 | Game data | Done |
 | 3 | Protocol and connection | Done; Q10 at the next client update |
 | 4 | Bot run time and navigation | Done |
-| 5 | Desktop app, first version | To do |
+| 5 | Desktop app, first version | In progress: 5a done |
 | 6 | Harvesting and banking: first milestone | To do |
 | 7 | Lua scripting | Dropped: routes and routines are plugins (D90) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
@@ -129,12 +129,23 @@ and one an aggression begins during a step, not measured (D88).
 
 ## 5. Desktop app, first version
 
-Settles Q6.
+Settles Q6 and Q11, in session 5b.
 
-- The host's gRPC API on a named pipe, and `D3B.Contracts` (D7).
-- The Avalonia app with ShadUI: accounts and profiles, the live map with the bot's state and its activity, started,
-  stopped and resumed from it (D87), logs and the protocol inspector, in French and English (D14).
-- Accounts and profiles stored in SQLite, secrets protected by Data Protection.
+- The Avalonia app with ShadUI, which runs the bots in its process (D91): accounts and profiles, the live map with the
+  bot's state and its activity, started, stopped and resumed from it (D87), logs and the protocol inspector, in French
+  and English (D14).
+- Accounts and profiles stored in SQLite; Data Protection once a secret is stored (D92).
+
+Five sessions, the split chosen by the owner (D92), after the owner chose the app over the host's gRPC API (D91). A
+client update before the next session gets Q10's session first (D54).
+
+| Session | Content | Status |
+| --- | --- | --- |
+| 5a | The app with the bots in it: the bots' host in the app's process, its composition shared with `D3B.Host`, which keeps its entry point alone, and no gRPC nor `D3B.Contracts`, the owner's choice (D91); the split of step 5 (D92); the catalogue of the activities modules register, which the app starts (D93); Avalonia 12, ShadUI and Inter, dark by default, the owner's choice, the host's state and why it did not start, the bots page as a card per bot, whole, with its position, pods, kamas, pause and activity, started, stopped and resumed, after the owner turned down three panes, French and English switched live, the window read every 250 ms, and the window drawn in tests (D94); measured on a client through the app. | Done on 2026-10-29 |
+| 5b | What a plugin sees and declares: Q11, and Q6, a plugin's page in the app's process; the sample plugin writes an activity and a page. | To do |
+| 5c | Accounts and profiles in SQLite, EF Core and migrations, and their pages; whether Data Protection has a secret to protect. | To do |
+| 5d | The live map, read from the pack by the app: cells, the character, its path, elements and NPCs. | To do |
+| 5e | Logs kept in memory and their page; the protocol inspector, a bot's game frames decoded live, the ticket hidden, or replayed from a capture. | To do |
 
 ## 6. Harvesting and banking: first milestone
 

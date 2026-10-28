@@ -1,7 +1,8 @@
 # D3B
 
 An open-source bot for Dofus 3 (Unity), in .NET 10 on Windows. Every feature is a module, assembled as in Bevy, and
-external .NET plugins add their own. A headless host runs the bots; an Avalonia desktop app controls them.
+external .NET plugins add their own. An Avalonia desktop app runs the bots and controls them; a headless host runs them
+without it.
 
 This project is not affiliated with Ankama. Dofus is a trademark of Ankama. Using a bot on the official servers breaches
 Ankama's terms of service and can get the account banned. No game asset or data is committed to this repository: the
@@ -25,8 +26,10 @@ Requires the .NET 10 SDK pinned in `global.json`, on Windows.
 ```sh
 dotnet build
 dotnet test
-dotnet run --project src/D3B.Host
+dotnet run --project src/D3B.App
 ```
+
+`src/D3B.Host` runs the same bots without the app.
 
 The host needs the data pack of the installed client's build. It looks for it in `%LOCALAPPDATA%\D3B\data`, where
 `dotnet run --file scripts/extract.cs` writes it, and otherwise downloads it from this repository's release

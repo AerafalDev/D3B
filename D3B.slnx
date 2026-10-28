@@ -107,7 +107,6 @@
   <Folder Name="/src/">
     <Project Path="src/D3B.App/D3B.App.csproj" />
     <Project Path="src/D3B.Bot/D3B.Bot.csproj" />
-    <Project Path="src/D3B.Contracts/D3B.Contracts.csproj" />
     <Project Path="src/D3B.Core/D3B.Core.csproj" />
     <Project Path="src/D3B.Data/D3B.Data.csproj" />
     <Project Path="src/D3B.Engine/D3B.Engine.csproj" />
@@ -115,6 +114,7 @@
     <Project Path="src/D3B.Network/D3B.Network.csproj" />
     <Project Path="src/D3B.Protocol/D3B.Protocol.csproj" />
   </Folder>
+  <Folder Name="/templates/" />
   <Folder Name="/templates/d3b-plugin/">
     <File Path="templates/d3b-plugin/MyPlugin.csproj" />
     <File Path="templates/d3b-plugin/MyPluginModule.cs" />
@@ -124,11 +124,11 @@
     <File Path="templates/d3b-plugin/.template.config/template.json" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/D3B.App.Tests/D3B.App.Tests.csproj" />
     <Project Path="tests/D3B.Bot.Tests/D3B.Bot.Tests.csproj" />
     <Project Path="tests/D3B.Core.Tests/D3B.Core.Tests.csproj" />
     <Project Path="tests/D3B.Data.Tests/D3B.Data.Tests.csproj" />
     <Project Path="tests/D3B.Engine.Tests/D3B.Engine.Tests.csproj" />
-    <Project Path="tests/D3B.Host.Tests/D3B.Host.Tests.csproj" />
     <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
     <Project Path="tests/D3B.Protocol.Tests/D3B.Protocol.Tests.csproj" />
   </Folder>

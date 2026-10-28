@@ -6,11 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\D3B.Bot\D3B.Bot.csproj" />
-    <ProjectReference Include="..\D3B.Core\D3B.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="D3B.Host.Tests" />
   </ItemGroup>
 
 </Project>

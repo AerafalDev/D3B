@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace D3B.Host;
+namespace D3B.Bot.Hosting;
 
 /// <summary>The host's log messages.</summary>
 internal static partial class HostLog

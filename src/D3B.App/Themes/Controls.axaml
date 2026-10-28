@@ -1,0 +1,57 @@
+<ResourceDictionary
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ControlTheme TargetType="c:StatusPill" x:Key="{x:Type c:StatusPill}">
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        <Setter Property="Background" Value="{DynamicResource GhostColor}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border
+                    Background="{TemplateBinding Background}"
+                    CornerRadius="999"
+                    Name="PART_Border"
+                    Padding="9,3,10,3">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Ellipse
+                            Fill="{TemplateBinding Foreground}"
+                            Height="7"
+                            VerticalAlignment="Center"
+                            Width="7" />
+                        <TextBlock
+                            FontWeight="Medium"
+                            Foreground="{TemplateBinding Foreground}"
+                            Name="PART_Text"
+                            Text="{TemplateBinding Text}"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^.Dot /template/ Border#PART_Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="^.Dot /template/ TextBlock#PART_Text">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="^[Tone=Success]">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessColor}" />
+            <Setter Property="Background" Value="{DynamicResource SuccessColor10}" />
+        </Style>
+        <Style Selector="^[Tone=Warning]">
+            <Setter Property="Foreground" Value="{DynamicResource WarningColor}" />
+            <Setter Property="Background" Value="{DynamicResource WarningColor10}" />
+        </Style>
+        <Style Selector="^[Tone=Info]">
+            <Setter Property="Foreground" Value="{DynamicResource InfoColor}" />
+            <Setter Property="Background" Value="{DynamicResource InfoColor10}" />
+        </Style>
+        <Style Selector="^[Tone=Danger]">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorColor}" />
+            <Setter Property="Background" Value="{DynamicResource ErrorColor10}" />
+        </Style>
+    </ControlTheme>
+</ResourceDictionary>

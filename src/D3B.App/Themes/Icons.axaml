@@ -1,0 +1,18 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StreamGeometry x:Key="IconBot">M12 8 V4.5 M9.5 4.5 H14.5 M6 8 H18 A2 2 0 0 1 20 10 V18 A2 2 0 0 1 18 20 H6 A2 2 0 0 1 4 18 V10 A2 2 0 0 1 6 8 Z M2 14 H4 M20 14 H22 M9.5 13 V15 M14.5 13 V15</StreamGeometry>
+    <StreamGeometry x:Key="IconPlay">M7 4.5 L19 12 L7 19.5 Z</StreamGeometry>
+    <StreamGeometry x:Key="IconStop">M7.5 6 H16.5 A1.5 1.5 0 0 1 18 7.5 V16.5 A1.5 1.5 0 0 1 16.5 18 H7.5 A1.5 1.5 0 0 1 6 16.5 V7.5 A1.5 1.5 0 0 1 7.5 6 Z</StreamGeometry>
+    <StreamGeometry x:Key="IconResume">M21 12 A9 9 0 1 1 12 3 C14.5 3 16.9 4 18.7 5.7 L21 8 M21 3 V8 H16</StreamGeometry>
+    <StreamGeometry x:Key="IconPause">M9 5 V19 M15 5 V19</StreamGeometry>
+    <StreamGeometry x:Key="IconSun">M12 8 A4 4 0 1 1 12 16 A4 4 0 1 1 12 8 Z M12 2 V4 M12 20 V22 M4.9 4.9 L6.3 6.3 M17.7 17.7 L19.1 19.1 M2 12 H4 M20 12 H22 M6.3 17.7 L4.9 19.1 M19.1 4.9 L17.7 6.3</StreamGeometry>
+    <StreamGeometry x:Key="IconMoon">M20.5 14.5 A8.5 8.5 0 1 1 9.5 3.5 A6.5 6.5 0 0 0 20.5 14.5 Z</StreamGeometry>
+    <StreamGeometry x:Key="IconLanguage">M12 2 A10 10 0 1 1 12 22 A10 10 0 1 1 12 2 Z M2 12 H22 M12 2 C9.2 5 8 8.5 8 12 C8 15.5 9.2 19 12 22 M12 2 C14.8 5 16 8.5 16 12 C16 15.5 14.8 19 12 22</StreamGeometry>
+    <StreamGeometry x:Key="IconPin">M12 21.5 C12 21.5 4.5 15 4.5 9.5 A7.5 7.5 0 0 1 19.5 9.5 C19.5 15 12 21.5 12 21.5 Z M12 7 A2.5 2.5 0 1 1 12 12 A2.5 2.5 0 1 1 12 7 Z</StreamGeometry>
+    <StreamGeometry x:Key="IconBag">M5.5 8 H18.5 L20.4 19.9 A1 1 0 0 1 19.4 21 H4.6 A1 1 0 0 1 3.6 19.9 Z M9 8 V6.5 A3 3 0 0 1 15 6.5 V8</StreamGeometry>
+    <StreamGeometry x:Key="IconCoins">M9 3 A6 6 0 1 1 9 15 A6 6 0 1 1 9 3 Z M15.6 9.3 A6 6 0 1 1 9.3 15.6 M7.5 7.5 H9.5 V11.5</StreamGeometry>
+    <StreamGeometry x:Key="IconPulse">M3 12 H7 L10 5 L14 19 L17 12 H21</StreamGeometry>
+    <StreamGeometry x:Key="IconCopy">M9.5 9 H19 A1 1 0 0 1 20 10 V19.5 A1 1 0 0 1 19 20.5 H9.5 A1 1 0 0 1 8.5 19.5 V10 A1 1 0 0 1 9.5 9 Z M5 15 A1 1 0 0 1 4 14 V5 A1 1 0 0 1 5 4 H14 A1 1 0 0 1 15 5</StreamGeometry>
+    <StreamGeometry x:Key="IconAlert">M10.3 4.2 A2 2 0 0 1 13.7 4.2 L21.2 17.5 A2 2 0 0 1 19.5 20.5 H4.5 A2 2 0 0 1 2.8 17.5 Z M12 9.5 V13.5 M12 17 V17.01</StreamGeometry>
+    <StreamGeometry x:Key="IconLaunch">M5 5 H11 M5 5 V19 H19 V13 M14 4 H20 V10 M20 4 L11 13</StreamGeometry>
+    <StreamGeometry x:Key="IconUser">M12 4 A4 4 0 1 1 12 12 A4 4 0 1 1 12 4 Z M4.5 20.5 A7.5 7.5 0 0 1 19.5 20.5</StreamGeometry>
+</ResourceDictionary>

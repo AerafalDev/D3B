@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="LanguageCode" xml:space="preserve">
+    <value>EN</value>
+  </data>
+  <data name="SwitchLanguage" xml:space="preserve">
+    <value>Passer en français</value>
+  </data>
+  <data name="SwitchTheme" xml:space="preserve">
+    <value>Light or dark theme</value>
+  </data>
+  <data name="Bots" xml:space="preserve">
+    <value>Bots</value>
+  </data>
+  <data name="HostStatusStarting" xml:space="preserve">
+    <value>Starting</value>
+  </data>
+  <data name="HostStatusRunning" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="HostStatusFailed" xml:space="preserve">
+    <value>Not started</value>
+  </data>
+  <data name="HostStatusStopping" xml:space="preserve">
+    <value>Stopping</value>
+  </data>
+  <data name="HostStatusStopped" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="HostClient" xml:space="preserve">
+    <value>Client {0}</value>
+  </data>
+  <data name="HostPreparing" xml:space="preserve">
+    <value>Getting the pack, the mapping and the relay ready</value>
+  </data>
+  <data name="HostFailedDetail" xml:space="preserve">
+    <value>Nothing runs until it is fixed</value>
+  </data>
+  <data name="HostStartingTitle" xml:space="preserve">
+    <value>Getting D3B ready</value>
+  </data>
+  <data name="HostStartingDetail" xml:space="preserve">
+    <value>Plugins, game data and protocol of the installed client. A first start may download them.</value>
+  </data>
+  <data name="HostStoppingTitle" xml:space="preserve">
+    <value>Stopping the bots</value>
+  </data>
+  <data name="HostFailedTitle" xml:space="preserve">
+    <value>D3B did not start</value>
+  </data>
+  <data name="HostFailedHint" xml:space="preserve">
+    <value>Fix what is said above, then start D3B again.</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="NoBotTitle" xml:space="preserve">
+    <value>No bot yet</value>
+  </data>
+  <data name="NoBotDetail" xml:space="preserve">
+    <value>A bot appears for each character a client plays through D3B.</value>
+  </data>
+  <data name="NoBotStep1" xml:space="preserve">
+    <value>Start a client from the Ankama launcher.</value>
+  </data>
+  <data name="NoBotStep2" xml:space="preserve">
+    <value>Log in and choose a character.</value>
+  </data>
+  <data name="NoBotStep3" xml:space="preserve">
+    <value>Its bot shows here, ready for an activity.</value>
+  </data>
+  <data name="BotsOne" xml:space="preserve">
+    <value>{0} bot</value>
+  </data>
+  <data name="BotsOther" xml:space="preserve">
+    <value>{0} bots</value>
+  </data>
+  <data name="ConnectedOne" xml:space="preserve">
+    <value>{0} connected</value>
+  </data>
+  <data name="ConnectedOther" xml:space="preserve">
+    <value>{0} connected</value>
+  </data>
+  <data name="BotsSummary" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="CharacterNamed" xml:space="preserve">
+    <value>Character {0}</value>
+  </data>
+  <data name="Level" xml:space="preserve">
+    <value>Level {0}</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>Disconnected</value>
+  </data>
+  <data name="Paused" xml:space="preserve">
+    <value>Paused</value>
+  </data>
+  <data name="PausedTitle" xml:space="preserve">
+    <value>The player took over</value>
+  </data>
+  <data name="PausedDetail" xml:space="preserve">
+    <value>The bot waits until you resume it.</value>
+  </data>
+  <data name="Coordinates" xml:space="preserve">
+    <value>{0},{1}</value>
+  </data>
+  <data name="SubArea" xml:space="preserve">
+    <value>Sub-area {0}</value>
+  </data>
+  <data name="NotPlaced" xml:space="preserve">
+    <value>Not on a map yet</value>
+  </data>
+  <data name="OffAtlas" xml:space="preserve">
+    <value>Off the world map</value>
+  </data>
+  <data name="InHavenBag" xml:space="preserve">
+    <value>In a haven bag</value>
+  </data>
+  <data name="AreaCell" xml:space="preserve">
+    <value>{0}, cell {1}</value>
+  </data>
+  <data name="MapCell" xml:space="preserve">
+    <value>Map {0}, cell {1}</value>
+  </data>
+  <data name="LoadOf" xml:space="preserve">
+    <value>{0:N0} / {1:N0} pods</value>
+  </data>
+  <data name="LoadPercent" xml:space="preserve">
+    <value>{0:P0}</value>
+  </data>
+  <data name="KamasOf" xml:space="preserve">
+    <value>{0:N0} kamas</value>
+  </data>
+  <data name="Walking" xml:space="preserve">
+    <value>Walking</value>
+  </data>
+  <data name="Using" xml:space="preserve">
+    <value>Using an element</value>
+  </data>
+  <data name="InDialog" xml:space="preserve">
+    <value>In a dialog</value>
+  </data>
+  <data name="Fighting" xml:space="preserve">
+    <value>Fighting</value>
+  </data>
+  <data name="Idle" xml:space="preserve">
+    <value>Standing still</value>
+  </data>
+  <data name="ActivityWaiting" xml:space="preserve">
+    <value>Waiting</value>
+  </data>
+  <data name="ActivityStepping" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="ActivityUnloading" xml:space="preserve">
+    <value>Unloading</value>
+  </data>
+  <data name="ActivityRecovering" xml:space="preserve">
+    <value>Recovering</value>
+  </data>
+  <data name="ActivityEnding" xml:space="preserve">
+    <value>Ending</value>
+  </data>
+  <data name="ActivityDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="ActivityFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="ActivityStopped" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="StepsOne" xml:space="preserve">
+    <value>{0:N0} step</value>
+  </data>
+  <data name="StepsOther" xml:space="preserve">
+    <value>{0:N0} steps</value>
+  </data>
+  <data name="StepsInterrupted" xml:space="preserve">
+    <value>{0}, last interrupted by {1}</value>
+  </data>
+  <data name="InterruptedByPlayer" xml:space="preserve">
+    <value>the player</value>
+  </data>
+  <data name="InterruptedByDisconnection" xml:space="preserve">
+    <value>a disconnection</value>
+  </data>
+  <data name="InterruptedByFight" xml:space="preserve">
+    <value>a fight</value>
+  </data>
+  <data name="InterruptedByStop" xml:space="preserve">
+    <value>the app stopping</value>
+  </data>
+  <data name="ChooseActivity" xml:space="preserve">
+    <value>Choose an activity</value>
+  </data>
+  <data name="NoActivityAvailable" xml:space="preserve">
+    <value>No activity to start yet: modules and plugins add them.</value>
+  </data>
+  <data name="Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Resume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="StartFailed" xml:space="preserve">
+    <value>Could not start: {0}</value>
+  </data>
+</root>
