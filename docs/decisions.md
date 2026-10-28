@@ -2395,21 +2395,25 @@ session, which began with the host's gRPC API, before D91.*
 
 ## D94: The app's first version
 
-*2026-10-29, step 5, session 5a; dark by default, chosen by the owner, who asked for a real effort on the interface.
-Builds D14.*
+*2026-10-29, step 5, session 5a; dark by default, chosen by the owner, who asked for a real effort on the interface,
+then for a page more practical and pleasant than three panes, its design left to the lead. Builds D14.*
 
 - **The stack** (D15): Avalonia 12.1.4, ShadUI 0.2.4, CommunityToolkit.Mvvm 8.4.2, and Avalonia.Fonts.Inter 12.1.4,
   Inter being the typeface ShadUI's design comes from, the same on every machine. Avalonia's packages ShadUI brings are
   pinned at 12.1.4, ShadUI asking for 12.1.0. `D3B.App` targets `net10.0` (D19).
-- **The window**: dark, light on a click, which nothing remembers before 5c's storage. A sidebar with the pages, one so
-  far, and where the host stands at its foot; while the host gets ready, a spinner; when it did not start, why, in a
-  block the owner can copy, since it often names a command to run; then the bots page.
-- **The bots page**: the bots in the order they came, a dot of each one's status on its avatar; the bot chosen, in full:
-  its connection, the player's pause in a banner with the button that resumes it, its position (coordinates, the
-  sub-area named in the app's language from the pack's texts, map and cell), its pods with a bar, its kamas, what it is
-  in the middle of, and its activity: what it does or how it ended, its steps and last interruption, started from a
-  list and stopped. Every status has a tone (`Tone`): success, warning, info, danger or neutral. The icons are the app's
-  own line drawings (`Icon`).
+- **The window**: dark, light on a click, which nothing remembers before 5c's storage. No sidebar while there is one
+  page: where the host stands is in the title bar, beside the language and the theme. While the host gets ready, a
+  spinner; when it did not start, why, in a block the owner can copy, since it often names a command to run; then the
+  bots page.
+- **The bots page**: a card per bot, in the order they came, in as many equal columns as the window's width holds
+  (`CardGrid`), so that every bot shows whole, its actions on it, nothing to select. A card says who: initials with a
+  dot of the bot's status, name, level, connection; where, the coordinates in large figures, as players give a place,
+  the sub-area named in the app's language from the pack's texts and the cell, the map's id in a tooltip; what it
+  carries, pods with a bar that turns to the warning tone past 90 %, a hint only, each activity deciding when it
+  unloads, and kamas; what it is in the middle of. At its foot, the activity: the player's pause with the button that
+  resumes it, what the activity does or how it ended, its steps and last interruption, the button that stops it, or the
+  list to choose one from and the button that starts it. Figures are tabular. Every status has a tone (`Tone`):
+  success, warning, info, danger or neutral. The icons are the app's own line drawings (`Icon`).
 - **Reading the bots**: the window reads every bot's snapshot each 250 ms, on the UI's thread (D9). The bots' loops
   never wait for the app, and raise nothing to it.
 - **Translation**: resources in English (`Strings.resx`) and French (`Strings.fr.resx`), the same keys, which a test
@@ -2425,6 +2429,10 @@ Builds D14.*
   character was chosen; started from the app, 12 journeys arrived; the player's walk paused it twice, resumed from the
   app it went on; stopped from the app; closed, the app gave the client its configuration back.
 - **Rejected.**
+  - Three panes, a sidebar of pages, the list of bots and the one chosen in full, the first layout shown: the owner
+    found it neither practical nor pleasant.
+  - A table, a row per bot: denser, but a row cannot hold the pause and the activity's controls without crowding.
+  - A tab per bot, as the bots sold do: one bot at a time, when the owner runs several.
   - The window told of each change of a bot: a handler on the bots' loops and a dispatch per message, for a page read
     four times a second.
   - Changing the language through a restart: the bots live in the app now (D91), and a restart disconnects them.

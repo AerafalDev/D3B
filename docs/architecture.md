@@ -307,12 +307,13 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
   the clients and gives them their configuration back. The window shows the host getting ready, running for the
   installed client's build, or why it did not start.
-- **The window**: dark by default, light on a click; a sidebar with the pages and where the host stands; the language
-  and theme in the title bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by
-  `StatusPill`, in the tone each says (`Tone`).
-- **The bots page**: the bots in the order they came, and the one chosen in full: its connection and the player's pause,
-  resumed from a banner; its position, sub-area named from the pack's texts, pods, kamas and what it is in the middle
-  of; its activity, started from the catalogue (D93), stopped, with its status, steps and last interruption.
+- **The window**: dark by default, light on a click; where the host stands, the language and the theme in the title
+  bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by `StatusPill`, in the tone each says
+  (`Tone`).
+- **The bots page**: a card per bot, in as many columns as the width holds (`CardGrid`), each whole: who, its
+  connection and the player's pause, resumed from the card; where, the coordinates large and the sub-area named from the
+  pack's texts; pods and kamas; what it is in the middle of; its activity, started from the catalogue (D93), stopped,
+  with its status, steps and last interruption.
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9): the bots'
   loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
