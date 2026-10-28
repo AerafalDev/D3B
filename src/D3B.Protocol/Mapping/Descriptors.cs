@@ -1,3 +1,4 @@
+using D3B.Protocol.Readable;
 using Google.Protobuf.Reflection;
 
 namespace D3B.Protocol.Mapping;
@@ -21,6 +22,22 @@ internal static class Descriptors
     public static IEnumerable<EnumDescriptor> Enums(FileDescriptor file)
     {
         return file.EnumTypes.Concat(Messages(file.MessageTypes).SelectMany(message => message.EnumTypes));
+    }
+
+    /// <summary>Tells whether a message is one of protobuf's own, such as <c>google.protobuf.Any</c>.</summary>
+    /// <remarks>
+    /// The obfuscation leaves protobuf's own types as they are (D39), so such a type is its own counterpart, by its full
+    /// name, and no mapping pairs it.
+    /// </remarks>
+    public static bool IsWellKnown(MessageDescriptor message)
+    {
+        return message.File.Package == "google.protobuf";
+    }
+
+    /// <summary>Tells whether a readable message reads only some of its counterpart's fields, on purpose.</summary>
+    public static bool IsPartial(MessageDescriptor message)
+    {
+        return message.GetOptions()?.GetExtension(OptionsExtensions.Partial) is true;
     }
 
     /// <summary>Tells whether a message is the entry protobuf describes a map with, which no <c>.proto</c> declares.</summary>

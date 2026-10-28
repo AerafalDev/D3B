@@ -1,4 +1,5 @@
 using D3B.Protocol.Connection;
+using D3B.Protocol.Game;
 using D3B.Protocol.Mapping;
 using D3B.Protocol.Tests.Fixtures;
 using Google.Protobuf;
@@ -8,12 +9,18 @@ namespace D3B.Protocol.Tests.Mapping;
 
 public sealed class ContractAuditTests
 {
+    // The readable protocol's size, which the audit checks whole: messages, fields, enums and enum values.
+    private const int ReadableMessages = 106;
+    private const int ReadableFields = 217;
+    private const int ReadableEnums = 17;
+    private const int ReadableValues = 128;
+
     /// <summary>Maps the readable protocol against its obfuscation, then audits the mapping against the schema as a test changed it.</summary>
     private static AuditReport Audit(Action<Obfuscation>? change = null, Action<ProtocolMapping>? edit = null)
     {
         var obfuscation = new Obfuscation(ReadableProtocol.Files);
         var schema = obfuscation.Schema();
-        var mapping = new ProtocolMatcher(ReadableProtocol.Files, schema, ReadableProtocol.Scopes).Match(null, [])
+        var mapping = new ProtocolMatcher(ReadableProtocol.Files, schema, ReadableProtocol.Scopes).Match(obfuscation.Pins(Obfuscation.GamePayloads()), [])
             .ToMapping("3.7.12.12", schema.Sha256, ReadableProtocol.Digest, "test");
 
         edit?.Invoke(mapping);
@@ -42,7 +49,42 @@ public sealed class ContractAuditTests
 
         Assert.True(report.Passed, string.Join('\n', report.Failures));
         Assert.Empty(report.Notes);
-        Assert.Equal((37, 92, 9, 60), (report.Messages, report.Fields, report.Enums, report.Values));
+        Assert.Empty(report.Unread);
+        Assert.Equal((ReadableMessages, ReadableFields, ReadableEnums, ReadableValues), (report.Messages, report.Fields, report.Enums, report.Values));
+    }
+
+    [Fact]
+    public void WhatAPartialMessageLeavesOutIsCountedApartFromWhatTheBuildAdds()
+    {
+        var report = Audit(obfuscation =>
+        {
+            obfuscation.Message(MapInformationEvent.Descriptor.FullName).Field.Add(new FieldDescriptorProto
+            {
+                Name = "left",
+                Number = 20,
+                Type = FieldDescriptorProto.Types.Type.Bool,
+                Label = FieldDescriptorProto.Types.Label.Optional,
+            });
+            obfuscation.Message(MapCurrentEvent.Descriptor.FullName).Field.Add(new FieldDescriptorProto
+            {
+                Name = "added",
+                Number = 2,
+                Type = FieldDescriptorProto.Types.Type.Bool,
+                Label = FieldDescriptorProto.Types.Label.Optional,
+            });
+        });
+
+        Assert.True(report.Passed, string.Join('\n', report.Failures));
+        Assert.StartsWith("d3b.game.MapInformationEvent: 1 of the 6 fields", Assert.Single(report.Unread), StringComparison.Ordinal);
+        Assert.StartsWith("d3b.game.MapCurrentEvent: 1 of the 2 fields", Assert.Single(report.Notes), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnAnyFieldFacingAnotherTypeFails()
+    {
+        var report = Audit(obfuscation => Field(obfuscation, GameEvent.Descriptor, GameEvent.ContentFieldNumber).TypeName = "." + obfuscation.Of(GameRequest.Descriptor.FullName));
+
+        Assert.Contains(report.Failures, failure => failure.StartsWith("Field 1 of d3b.game.GameEvent", StringComparison.Ordinal) && failure.Contains("does not have the type", StringComparison.Ordinal));
     }
 
     [Fact]

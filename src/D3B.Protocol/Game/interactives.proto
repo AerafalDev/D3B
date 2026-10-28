@@ -1,0 +1,52 @@
+// How a character uses an interactive element of its map, such as a resource to harvest or a door: it asks, every actor
+// on the map sees the use start, and the use ends after its duration.
+syntax = "proto3";
+
+package d3b.game;
+
+import "Game/maps.proto";
+import "Readable/options.proto";
+
+option csharp_namespace = "D3B.Protocol.Game";
+
+// Asks to use a skill of an element of the map, once the character stands next to it.
+message InteractiveUseRequest {
+  // The skill's instance id, as the element's skills give it.
+  int32 skill_instance_id = 1;
+
+  // No capture sets it.
+  optional int32 number_2 = 2;
+
+  int32 element_id = 3;
+}
+
+// An actor started using an element: the character itself after its request, or anyone else.
+message InteractiveUsedEvent {
+  option (d3b.readable.partial) = true;
+
+  int32 element_id = 1;
+
+  // How long the use lasts, in tenths of a second: the end came that long after, in the captures.
+  int32 duration = 3;
+
+  int64 actor_id = 4;
+
+  // The skill's id in the client's tables (D29).
+  int32 skill_id = 5;
+}
+
+// An actor's use of an element is over.
+message InteractiveUseEndedEvent {
+  int32 element_id = 1;
+  int32 skill_id = 2;
+}
+
+// An element's skills changed, as when a use starts and when a resource is harvested.
+message InteractiveElementUpdatedEvent {
+  InteractiveElement element = 1;
+}
+
+// An element's state changed, as when a resource is being harvested and when it is harvested.
+message StatedElementUpdatedEvent {
+  StatedElement element = 1;
+}

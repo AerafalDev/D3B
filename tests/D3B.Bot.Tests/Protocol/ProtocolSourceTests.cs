@@ -4,6 +4,7 @@ using D3B.Data;
 using D3B.Data.Releases;
 using D3B.Data.Tests.Releases;
 using D3B.Protocol.Connection;
+using D3B.Protocol.Mapping;
 using D3B.Protocol.Translation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -34,7 +35,7 @@ public sealed class ProtocolSourceTests : IDisposable
     {
         var (schema, mapping) = TestInstall.Protocol();
 
-        _github.Publish(ClientRelease.DefaultRepository, Tag, ("schema-1.binpb", schema), ("mapping-1.binpb", mapping));
+        _github.Publish(ClientRelease.DefaultRepository, Tag, (SchemaFile.FileName, schema), (MappingFile.FileName, mapping));
 
         var source = Source(TestInstall.Token);
 
@@ -64,7 +65,7 @@ public sealed class ProtocolSourceTests : IDisposable
     {
         var (schema, mapping) = TestInstall.Protocol("3.7.11.1");
 
-        _github.Publish(ClientRelease.DefaultRepository, Tag, ("schema-1.binpb", schema), ("mapping-1.binpb", mapping));
+        _github.Publish(ClientRelease.DefaultRepository, Tag, (SchemaFile.FileName, schema), (MappingFile.FileName, mapping));
 
         var exception = await Assert.ThrowsAsync<ProtocolUnavailableException>(() => Source(TestInstall.Token).EnsureAsync(TestContext.Current.CancellationToken));
 

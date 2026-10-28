@@ -1,0 +1,64 @@
+// How a character moves: on its map along a path, then to the next map. The client asks, the server shows every actor's
+// movement, and the client confirms once its character arrived.
+syntax = "proto3";
+
+package d3b.game;
+
+import "Readable/options.proto";
+
+option csharp_namespace = "D3B.Protocol.Game";
+
+// Asks to walk a path on the character's map.
+message MapMovementRequest {
+  // The path's turning points, each a cell and the direction the character leaves it in, as the references encode it:
+  // the direction times 4096, plus the cell.
+  repeated int32 key_movements = 1;
+
+  int64 map_id = 2;
+
+  // No capture sets it.
+  bool flag_3 = 3;
+}
+
+// An actor walks a path on the map: the character itself after its request, or anyone else.
+message MapMovementEvent {
+  option (d3b.readable.partial) = true;
+
+  // The path's turning points, encoded as the request's.
+  repeated int32 key_movements = 1;
+
+  int64 actor_id = 4;
+}
+
+// The character arrived where its path led: the client sends it once the walk is over, before anything else it asks.
+message MapMovementConfirmRequest {
+  // Nine values in this build; no capture sets this field, nor the next.
+  Value value_1 = 1;
+
+  int32 number_2 = 2;
+
+  enum Value {
+    VALUE_VALUE_0 = 0;
+    VALUE_VALUE_1 = 1;
+    VALUE_VALUE_2 = 2;
+    VALUE_VALUE_3 = 3;
+    VALUE_VALUE_4 = 4;
+    VALUE_VALUE_5 = 5;
+    VALUE_VALUE_6 = 6;
+    VALUE_VALUE_7 = 7;
+    VALUE_VALUE_8 = 8;
+  }
+}
+
+// The server's answer to the confirmation: a response, where almost everything the server sends is an event.
+message MapMovementConfirmResponse {
+}
+
+// Asks to go to a neighbouring map, from the cell the last movement led to.
+message MapChangeRequest {
+  // No capture sets it.
+  bool flag_1 = 1;
+
+  // The map to go to.
+  int32 map_id = 2;
+}

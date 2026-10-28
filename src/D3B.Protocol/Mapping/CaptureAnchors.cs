@@ -7,8 +7,9 @@ namespace D3B.Protocol.Mapping;
 /// The schema's root is the one message of its file that reads every frame and types the most of their fields. Each
 /// frame holds one field of the root: the field a side's first frame holds pairs the plan's field for that side, and
 /// frames holding another, such as events, are passed over. In the n-th frame holding it, one member of that message's
-/// oneofs pairs the plan's n-th exchange. Every pair is checked against every frame: one contradicting another is
-/// reported, and left out.
+/// oneofs pairs the plan's n-th exchange, and the message its <c>Any</c> carries, which its type URL names, pairs the
+/// plan's payload of that frame. Every pair is checked against every frame: one contradicting another is reported, and
+/// left out. Every <c>Any</c> of every frame must name a message of the file that reads its value whole.
 /// </remarks>
 public static class CaptureAnchors
 {
@@ -26,7 +27,7 @@ public static class CaptureAnchors
         var problems = new List<string>();
 
         if (frames.Count is 0)
-            return new AnchorMeasurement(0, null, 0, -1, [], ["No frame to read."]);
+            return new AnchorMeasurement(0, null, 0, -1, [], [], ["No frame to read."]);
 
         var readers = new List<(MessageDescriptor Message, int Typed)>();
 
@@ -62,11 +63,11 @@ public static class CaptureAnchors
                 ? $"No message of {file.Name} reads every frame."
                 : $"{readers.Count(reader => reader.Typed == readers[0].Typed)} messages of {file.Name} read every frame and type as many of their fields: none is the root alone.");
 
-            return new AnchorMeasurement(frames.Count, null, readers.Count is 0 ? 0 : readers[0].Typed, next, [], problems);
+            return new AnchorMeasurement(frames.Count, null, readers.Count is 0 ? 0 : readers[0].Typed, next, [], [], problems);
         }
 
         var root = readers[0].Message;
-        var reading = new AnchorReading(plan, root, problems);
+        var reading = new AnchorReading(plan, file, root, problems);
 
         foreach (var connection in connections)
         {
@@ -74,6 +75,6 @@ public static class CaptureAnchors
             reading.ReadSide(connection.ServerFrames, plan.ServerField, false);
         }
 
-        return new AnchorMeasurement(frames.Count, root, readers[0].Typed, next, reading.Anchors(), problems);
+        return new AnchorMeasurement(frames.Count, root, readers[0].Typed, next, reading.Anchors(), reading.Payloads(), problems);
     }
 }

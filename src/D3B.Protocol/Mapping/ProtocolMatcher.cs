@@ -201,20 +201,23 @@ public sealed class ProtocolMatcher
     {
         var accepted = false;
 
-        // Packages matched in one file compete for its types together: each must clear every other's candidates too.
-        foreach (var scope in _scopes.GroupBy(scope => scope.Value, StringComparer.Ordinal))
+        // Packages matched in one file compete for its types together: each must clear every other's candidates too. A
+        // scope naming a package none of the readable files is in has nothing to match.
+        var packages = _readable.Select(file => file.Package).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var scope in _scopes.Where(scope => packages.Contains(scope.Key)).GroupBy(scope => scope.Value, StringComparer.Ordinal))
         {
             var file = _schema.FindFile(scope.Key);
-            var packages = scope.Select(pair => pair.Key).ToHashSet(StringComparer.Ordinal);
+            var scoped = scope.Select(pair => pair.Key).ToHashSet(StringComparer.Ordinal);
 
             if (file is null)
             {
-                state.Conflict($"The schema has no file {scope.Key}, which {string.Join(" and ", packages.Order(StringComparer.Ordinal))} are matched in.");
+                state.Conflict($"The schema has no file {scope.Key}, which {string.Join(" and ", scoped.Order(StringComparer.Ordinal))} are matched in.");
 
                 continue;
             }
 
-            var readableMessages = messages.Where(message => packages.Contains(message.File.Package) && state.CounterpartOf(message) is null && !Descriptors.IsMapEntry(message)).ToList();
+            var readableMessages = messages.Where(message => scoped.Contains(message.File.Package) && state.CounterpartOf(message) is null && !Descriptors.IsMapEntry(message)).ToList();
             var obfuscatedMessages = Descriptors.Messages(file.MessageTypes).Where(message => state.ReadableOf(message) is null && !Descriptors.IsMapEntry(message)).ToList();
 
             accepted |= Accept(
@@ -223,7 +226,7 @@ public sealed class ProtocolMatcher
                 (readable, obfuscated) => StructuralScore.Message(readable, obfuscated, state),
                 (readable, obfuscated, score) => state.Pair(readable, obfuscated, MatchEvidence.Score, score));
 
-            var readableEnums = enums.Where(type => packages.Contains(type.File.Package) && state.CounterpartOf(type) is null).ToList();
+            var readableEnums = enums.Where(type => scoped.Contains(type.File.Package) && state.CounterpartOf(type) is null).ToList();
             var obfuscatedEnums = Descriptors.Enums(file).Where(type => state.ReadableOf(type) is null).ToList();
 
             accepted |= Accept(

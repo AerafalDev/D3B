@@ -1,8 +1,11 @@
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using D3B.Protocol.Connection;
+using D3B.Protocol.Game;
 using D3B.Protocol.Mapping;
 using Google.Protobuf;
+using Google.Protobuf.Reflection;
+using Google.Protobuf.WellKnownTypes;
 
 namespace D3B.Protocol.Translation;
 
@@ -20,10 +23,18 @@ namespace D3B.Protocol.Translation;
 /// on as it is, and never rewrites it. An enum value the readable enum lacks keeps its number and encodes back as it
 /// came, so nothing of it is lost; the audit notes the values a build adds.
 /// </para>
+/// <para>
+/// A game frame's envelope carries its message in an <c>Any</c>, whose type URL names the build's obfuscated message: the
+/// mapping turns it into the readable one, which then reads the <c>Any</c>'s value the same way. A partial message, which
+/// reads only some of its counterpart's fields on purpose, is read without being understood whole.
+/// </para>
 /// </remarks>
 public sealed class ProtocolTranslation
 {
     private static readonly MessageParser<ConnectionMessage> _connection = ConnectionMessage.Parser.WithDiscardUnknownFields(true);
+    private static readonly MessageParser<GameMessage> _game = GameMessage.Parser.WithDiscardUnknownFields(true);
+
+    private readonly Dictionary<string, (MessageDescriptor Message, MessageParser Parser)> _readableOf;
 
     /// <summary>Gets the client build it translates, as its version file names it.</summary>
     public string ClientVersion { get; }
@@ -31,10 +42,11 @@ public sealed class ProtocolTranslation
     /// <summary>Gets what auditing the build's mapping checked.</summary>
     public AuditReport Audit { get; }
 
-    private ProtocolTranslation(string clientVersion, AuditReport audit)
+    private ProtocolTranslation(string clientVersion, AuditReport audit, Dictionary<string, (MessageDescriptor Message, MessageParser Parser)> readableOf)
     {
         ClientVersion = clientVersion;
         Audit = audit;
+        _readableOf = readableOf;
     }
 
     /// <summary>Makes the translation of a build from its schema and its mapping, once they hold.</summary>
@@ -53,7 +65,13 @@ public sealed class ProtocolTranslation
         if (failures.Count > 0)
             throw new ProtocolMismatchException(mapping.ClientVersion, failures);
 
-        return new ProtocolTranslation(mapping.ClientVersion, audit);
+        var readable = ReadableProtocol.Files.SelectMany(file => Descriptors.Messages(file.MessageTypes)).ToDictionary(message => message.FullName, StringComparer.Ordinal);
+        var readableOf = mapping.Messages.ToDictionary(
+            pair => pair.Obfuscated,
+            pair => (readable[pair.Readable], readable[pair.Readable].Parser.WithDiscardUnknownFields(true)),
+            StringComparer.Ordinal);
+
+        return new ProtocolTranslation(mapping.ClientVersion, audit, readableOf);
     }
 
     /// <summary>Lists the readable fields and enum values a mapping pairs with another number, which no translation reads.</summary>
@@ -102,5 +120,60 @@ public sealed class ProtocolTranslation
         return length == frame.Length
             ? new DecodedFrame<ConnectionMessage>(message, null)
             : new DecodedFrame<ConnectionMessage>(message, $"its message encodes back to {length} of its {frame.Length} bytes: it holds what the readable protocol lacks, or is encoded otherwise.");
+    }
+
+    /// <summary>Decodes a frame of the game connection, its varint length already read (D38), and the message its envelope carries.</summary>
+    /// <param name="frame">The frame's bytes.</param>
+    /// <returns>The frame's envelope and content, and whether both were understood whole.</returns>
+    public DecodedGameFrame DecodeGame(ReadOnlySequence<byte> frame)
+    {
+        GameMessage envelope;
+
+        try
+        {
+            envelope = _game.ParseFrom(frame);
+        }
+        catch (InvalidProtocolBufferException exception)
+        {
+            return new DecodedGameFrame(null, null, null, null, false, $"it is no game message: {exception.Message}");
+        }
+
+        var length = envelope.CalculateSize();
+
+        if (length != frame.Length)
+            return new DecodedGameFrame(envelope, null, null, null, false, $"its envelope encodes back to {length} of its {frame.Length} bytes: it holds what the readable protocol lacks, or is encoded otherwise.");
+
+        var any = envelope.ContentCase switch
+        {
+            GameMessage.ContentOneofCase.Request => envelope.Request.Content,
+            GameMessage.ContentOneofCase.Response => envelope.Response.Content,
+            GameMessage.ContentOneofCase.Event => envelope.Event.Content,
+            _ => null,
+        };
+
+        if (any is null)
+            return new DecodedGameFrame(envelope, null, null, null, false, null);
+
+        var carried = Any.GetTypeName(any.TypeUrl);
+
+        if (!_readableOf.TryGetValue(carried, out var readable))
+            return new DecodedGameFrame(envelope, carried, null, null, false, $"it carries .{carried}, which the readable protocol lacks.");
+
+        IMessage content;
+
+        try
+        {
+            content = readable.Parser.ParseFrom(any.Value);
+        }
+        catch (InvalidProtocolBufferException exception)
+        {
+            return new DecodedGameFrame(envelope, carried, readable.Message, null, false, $"it carries no {readable.Message.FullName}: {exception.Message}");
+        }
+
+        var contentLength = content.CalculateSize();
+
+        return contentLength == any.Value.Length
+            ? new DecodedGameFrame(envelope, carried, readable.Message, content, true, null)
+            : new DecodedGameFrame(envelope, carried, readable.Message, content, true, $"its {readable.Message.FullName} encodes back to {contentLength} of its {any.Value.Length} bytes: it holds what the readable protocol lacks, or is encoded otherwise.");
     }
 }

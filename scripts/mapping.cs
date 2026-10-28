@@ -6,6 +6,7 @@
 #:project ../src/D3B.Protocol/D3B.Protocol.csproj
 #:include mapping/CaptureFrames.cs
 #:include mapping/MappingCommand.cs
+#:include mapping/PinProposals.cs
 #:include unity/ClientInstall.cs
 
 using System.Globalization;

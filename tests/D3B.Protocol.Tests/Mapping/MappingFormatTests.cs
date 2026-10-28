@@ -18,6 +18,7 @@ public sealed class MappingFormatTests
     private static readonly (int Format, string Contract)[] _formats =
     [
         (1, "7ff4eda625c85f7c873a13e1a399934d4e83273f4faa67f902b4cde344fa32cd"),
+        (2, "3fbef5dd21d2e3ec2affad1b747c1577fee40660f35e65be4c618eb1ae7a25f2"),
     ];
 
     private static string Contract()
