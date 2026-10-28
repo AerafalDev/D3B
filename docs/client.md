@@ -1025,6 +1025,21 @@ after the server named the map, with no command.
 The 22 game connections decoded through mapping 6: of 14,750 frames, 2,178 understood whole, 2,618 more read, and
 9,954 carrying one of 185 messages the readable protocol lacks; none misread.
 
+### The game, from the app
+
+Measured on 2026-10-29 for session 5a (D91 to D94): two game connections of a client of 3.7.12.12 through the app, 43
+and 47 s, the bots' host in the app's process, a measuring plugin, never committed, whose patrol goes between the
+character's map and a neighbour by a scroll, started, stopped and resumed from the app's bots page.
+
+- **The host in the app.** Built, its pack opened, its mapping loaded and its relay listening: 17 s on the first start
+  after a build, 16 of them loading the mapping, while the window showed the host getting ready; 0.4 s on the next.
+- **The bot** showed on the page once the server confirmed the character the client chose.
+- **The patrol**, started from the page: 12 journeys arrived, 1.4 to 2.7 s each. The player's walk during a journey
+  paused the bot twice, the banner shown; resumed from the page 14 and 5 s later, it recovered and went on, the next
+  journey arriving 2.5 s after. Stopped from the page, it ended at once.
+- **Closing the app** gave the client its configuration back, closed the game connection, and the app exited with 0;
+  the client lost its connection to the game, as D91 says.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

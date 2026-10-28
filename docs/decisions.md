@@ -119,7 +119,7 @@ attribute. A `dotnet new` template creates one.
 
 ## D7: A headless host runs the bots, the desktop app is its client
 
-*2026-10-27*
+*2026-10-27. Superseded by D91: the bots run in the app's process, and `D3B.Host` runs them without the app.*
 
 The bots run in a headless host. The Avalonia app connects to it over gRPC on a named pipe, served by Kestrel.
 
@@ -2333,6 +2333,103 @@ their activities `BotActivity` (D87).
 - **Rejected.**
   - Lua beside plugins, as D12 had it: a second API to keep, which the owner does not want.
 
+## D91: The bots run in the app's process
+
+*2026-10-29, step 5, session 5a, chosen by the owner. Supersedes D7.*
+
+The owner asked why the app should not run the bots itself. The lead recommended keeping D7: with D3B in the middle of
+every connection (D23), the process that holds the relay holds every client's game connection, so a fault of the app,
+or closing its window, would disconnect them all, and the sessions writing the app restart it often. The owner chose
+the app.
+
+- **So** the Avalonia app runs the bots' host in its own process (`HostRunner`, in `D3B.App.Hosting`): it starts it
+  with the app, off the UI's thread, shows where it stands and why it did not start, and stops it once the window is
+  gone, the clients getting their configuration back (D35). There is no gRPC API: `D3B.Contracts`, an empty project, is
+  removed, as `D3B.Scripting` was (D90).
+- **The host's composition is shared** (`BotHost`, moved from `D3B.Host` to `D3B.Bot.Hosting`): the default modules then
+  the plugins, the pack and the mapping got ready, the relay started, or why not (`BotHostStart`). `D3B.Host` keeps its
+  entry point alone, the bots without the app, for measurements; its tests move to `D3B.Bot.Tests`, and
+  `D3B.Host.Tests` goes.
+- **Risk, accepted by the owner.** Closing the app, or the app failing, disconnects every client; after a crash,
+  `scripts/client.cs restore` gives the client its configuration back. A remote front, which D14 kept possible, would
+  need an API again.
+- **Measured**: closing the app gave the client its configuration back and closed its game connection, as stopping
+  `D3B.Host` does (D94).
+- **Rejected.**
+  - Keeping D7, the lead's recommendation: its cost was an API, about one session, then a few calls per page.
+  - The app starting `D3B.Host` as a process of its own: the same separation, which the owner did not want.
+
+## D92: Step 5 in five sessions
+
+*2026-10-29, step 5, session 5a, chosen by the owner. Replaces the six sessions the owner chose earlier in the same
+session, which began with the host's gRPC API, before D91.*
+
+- **5a**: the app with the bots in it: Avalonia, ShadUI and CommunityToolkit.Mvvm, the host in the app's process (D91),
+  French and English from the start, the bots page, and the catalogue it starts activities from (D93, D94).
+- **5b**: what a plugin sees and declares: Q11, and Q6, which D91 makes simple: a plugin's page loads in the app's
+  process, registered by its module as D5 planned. The sample plugin writes an activity and a page.
+- **5c**: accounts and profiles in SQLite, EF Core and its migrations, and their pages. D3B sees no password since D23:
+  whether Data Protection has a secret to protect is decided there.
+- **5d**: the live map, read from the pack by the app.
+- **5e**: logs and the protocol inspector: the logs kept in memory, and a bot's game frames decoded, live with the
+  ticket hidden (D65), or replayed from a capture (D63).
+- **Rejected.**
+  - Q11 at the start of step 6: 5c's profiles depend on how a plugin's activity declares its settings.
+
+## D93: Activities the app starts, from a catalogue the modules fill
+
+*2026-10-29, step 5, session 5a. Builds D87.*
+
+- A module registers an activity with `services.AddActivity<T>(id, name)` (`ActivityServiceCollectionExtensions`, in
+  `D3B.Bot.Activities`): an `ActivityDefinition`, its id unique in the host, its name as the app shows it, and how one
+  is made: a new one for each start, its constructor given the host's services, since an activity runs once.
+- The bots module registers the `ActivityCatalog` of them, in the order they were registered. An id registered twice
+  fails while the modules build, so a plugin reusing one stops the host, as an invalid plugin does (D21).
+- The app starts the activity chosen on a bot (`BotActor.StartActivity`), stops it (`ActivityRun.Stop`), and resumes
+  the bot the player took over (`BotActor.Resume`, D66). An activity started by other code shows by its own name.
+- Plugins cannot reach `D3B.Bot` yet (D22): until Q11, in session 5b, D3B's modules and a measuring plugin compiled
+  against the projects register activities. D3B writes its own from step 6.
+- **Rejected.**
+  - Activities found by reflection over the loaded assemblies: a module says what it brings, in code (D21).
+  - An activity's settings now: they come with what a plugin declares (5b) and with profiles (5c).
+
+## D94: The app's first version
+
+*2026-10-29, step 5, session 5a; dark by default, chosen by the owner, who asked for a real effort on the interface.
+Builds D14.*
+
+- **The stack** (D15): Avalonia 12.1.4, ShadUI 0.2.4, CommunityToolkit.Mvvm 8.4.2, and Avalonia.Fonts.Inter 12.1.4,
+  Inter being the typeface ShadUI's design comes from, the same on every machine. Avalonia's packages ShadUI brings are
+  pinned at 12.1.4, ShadUI asking for 12.1.0. `D3B.App` targets `net10.0` (D19).
+- **The window**: dark, light on a click, which nothing remembers before 5c's storage. A sidebar with the pages, one so
+  far, and where the host stands at its foot; while the host gets ready, a spinner; when it did not start, why, in a
+  block the owner can copy, since it often names a command to run; then the bots page.
+- **The bots page**: the bots in the order they came, a dot of each one's status on its avatar; the bot chosen, in full:
+  its connection, the player's pause in a banner with the button that resumes it, its position (coordinates, the
+  sub-area named in the app's language from the pack's texts, map and cell), its pods with a bar, its kamas, what it is
+  in the middle of, and its activity: what it does or how it ended, its steps and last interruption, started from a
+  list and stopped. Every status has a tone (`Tone`): success, warning, info, danger or neutral. The icons are the app's
+  own line drawings (`Icon`).
+- **Reading the bots**: the window reads every bot's snapshot each 250 ms, on the UI's thread (D9). The bots' loops
+  never wait for the app, and raise nothing to it.
+- **Translation**: resources in English (`Strings.resx`) and French (`Strings.fr.resx`), the same keys, which a test
+  checks. The language starts as the system's and changes live: views bind through `{l:Tr Key}`, which follows it
+  because `Localizer` raises the indexer's own name, `Item`, the only one Avalonia 12.1.4's bindings to an indexer
+  listen for, not WPF's `Item[]`: the test drawing the window found it. A text that counts takes the singular or the
+  plural as its language has it, French's 0 singular. The host's own messages, such as why it did not start, stay in
+  English.
+- **Tests**: the view models against bots played as `D3B.Bot.Tests` plays them (D67), the runner against a test
+  install, and the window drawn by Avalonia.Headless with Skia, its texts read in both languages.
+- **Measured** on a client of 3.7.12.12 through the app, with a measuring plugin, never committed, whose patrol goes
+  between the character's map and a neighbour ([client.md](client.md#the-game-from-the-app)): the bot showed once the
+  character was chosen; started from the app, 12 journeys arrived; the player's walk paused it twice, resumed from the
+  app it went on; stopped from the app; closed, the app gave the client its configuration back.
+- **Rejected.**
+  - The window told of each change of a bot: a handler on the bots' loops and a dispatch per message, for a page read
+    four times a second.
+  - Changing the language through a restart: the bots live in the app now (D91), and a restart disconnects them.
+  - An icon font, as ShadUI's demo uses Lucide's: a binary asset and its notice, for a dozen icons.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -2340,7 +2437,7 @@ Settled questions leave this table, and the decision that settles one says so.
 | Id | Question | Settled in |
 | --- | --- | --- |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
-| Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
+| Q6 | What is a plugin's UI part, now that it loads in the app's process (D91): a page its module registers, with which contract? | Step 5, session 5b (D92) |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
-| Q11 | What does a plugin see of the bots' run time, now that activities are written as plugins: `D3B.Bot` packed beside `D3B.Core`, or the bot's contracts (state, behaviors, activities, observers) moved into `D3B.Core`, which plugins compile against (D22, D67, D87, D90)? | Before the first milestone publishes the package (step 6) |
+| Q11 | What does a plugin see of the bots' run time, now that activities are written as plugins: `D3B.Bot` packed beside `D3B.Core`, or the bot's contracts (state, behaviors, activities, observers) moved into `D3B.Core`, which plugins compile against (D22, D67, D87, D90, D93)? | Step 5, session 5b (D92), before the first milestone publishes the package |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
