@@ -22,6 +22,12 @@ internal sealed class TestRelay : IAsyncDisposable
 
     public IPEndPoint EndPoint => _server.EndPoints[0];
 
+    public IPEndPoint GameEndPoint => _server.GameEndPoints[0];
+
+    public int UpstreamPort => ((IPEndPoint)_upstream.LocalEndpoint).Port;
+
+    public GameServerSelections Selections => _services.GetRequiredService<GameServerSelections>();
+
     private TestRelay(ServiceProvider services, TcpListener upstream, FakeLogCollector log)
     {
         _services = services;
@@ -30,8 +36,13 @@ internal sealed class TestRelay : IAsyncDisposable
         _upstream = upstream;
     }
 
-    /// <summary>Starts the relay, which sends every client to the test's server, or to none when it has none, and shows an observer its frames.</summary>
-    public static async Task<TestRelay> StartAsync(bool withServer = true, string? capturesDirectory = null, IRelayObserver? observer = null)
+    /// <summary>Starts the relay, which sends every client to the test's server, or to none when it has none, and shows an interceptor its connections.</summary>
+    /// <param name="withServer">Whether the relay has a server to send clients to.</param>
+    /// <param name="capturesDirectory">Where captures go, or null when none is recorded.</param>
+    /// <param name="interceptor">What watches the connections.</param>
+    /// <param name="findingGameServers">Whether game connections find their server through the selections, as the host's do, rather than the test's server always.</param>
+    /// <param name="holdTimeout">How long a frame is held, half a second by default.</param>
+    public static async Task<TestRelay> StartAsync(bool withServer = true, string? capturesDirectory = null, IRelayInterceptor? interceptor = null, bool findingGameServers = false, TimeSpan? holdTimeout = null)
     {
         var upstream = new TcpListener(IPAddress.Loopback, 0);
 
@@ -41,19 +52,23 @@ internal sealed class TestRelay : IAsyncDisposable
         {
             Address = RelaySettings.DefaultAddress,
             Ports = [0],
+            GamePorts = [0],
             ClientDirectory = Path.Combine(AppContext.BaseDirectory, "no-client"),
             RedirectDirectory = Path.Combine(AppContext.BaseDirectory, "no-redirect"),
             CapturesDirectory = capturesDirectory,
             CloseTimeout = TimeSpan.FromSeconds(2),
+            HoldTimeout = holdTimeout ?? TimeSpan.FromMilliseconds(500),
         };
         var log = new FakeLogCollector();
         var collection = new ServiceCollection()
             .AddLogging(logging => logging.AddProvider(new FakeLoggerProvider(log)))
-            .AddRelay(settings, _ => "3.7.12.12")
-            .AddSingleton<IUpstreamLocator>(new FixedUpstreamLocator(withServer ? new Upstream(Host, [(IPEndPoint)upstream.LocalEndpoint]) : null));
+            .AddRelay(settings, _ => "3.7.12.12");
 
-        if (observer is not null)
-            collection.AddSingleton(observer);
+        if (!findingGameServers)
+            collection.AddSingleton<IUpstreamLocator>(new FixedUpstreamLocator(withServer ? new Upstream(Host, [(IPEndPoint)upstream.LocalEndpoint]) : null));
+
+        if (interceptor is not null)
+            collection.AddSingleton(interceptor);
 
         var services = collection.BuildServiceProvider();
         var relay = new TestRelay(services, upstream, log);
@@ -100,13 +115,26 @@ internal sealed class TestRelay : IAsyncDisposable
     /// <summary>Connects a client to the relay, and returns it with the server's side of its connection.</summary>
     public async Task<(Socket Client, Socket Server)> ConnectAsync()
     {
-        var client = new Socket(SocketType.Stream, ProtocolType.Tcp);
-
-        await client.ConnectAsync(EndPoint, TestContext.Current.CancellationToken);
-
-        var server = await _upstream.AcceptSocketAsync(TestContext.Current.CancellationToken).AsTask().WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        var client = await ConnectToAsync(EndPoint);
+        var server = await AcceptAsync();
 
         return (client, server);
+    }
+
+    /// <summary>Connects a client to the relay's endpoint.</summary>
+    public static async Task<Socket> ConnectToAsync(IPEndPoint endPoint)
+    {
+        var client = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+        await client.ConnectAsync(endPoint, TestContext.Current.CancellationToken);
+
+        return client;
+    }
+
+    /// <summary>Accepts the relay's connection to the test's server.</summary>
+    public async Task<Socket> AcceptAsync()
+    {
+        return await _upstream.AcceptSocketAsync(TestContext.Current.CancellationToken).AsTask().WaitAsync(_timeout, TestContext.Current.CancellationToken);
     }
 
     /// <summary>Waits until the relay has logged a message.</summary>

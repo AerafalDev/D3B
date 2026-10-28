@@ -48,6 +48,19 @@ public static class FrameReader
         return true;
     }
 
+    /// <summary>Reads the length of the next frame without consuming it, if the length is whole.</summary>
+    /// <param name="reader">The bytes, read from its position, which does not move.</param>
+    /// <param name="length">The frame's length, without its own.</param>
+    /// <param name="maxLength">The longest frame accepted.</param>
+    /// <returns><see langword="true"/> when the length is whole; <see langword="false"/> when more bytes are needed.</returns>
+    /// <exception cref="FrameFormatException">The bytes are no length, or one above <paramref name="maxLength"/>.</exception>
+    public static bool TryPeekLength(ref SequenceReader<byte> reader, out int length, int maxLength = DefaultMaxLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(maxLength);
+
+        return TryPeekLength(ref reader, maxLength, out length, out _);
+    }
+
     private static bool TryPeekLength(ref SequenceReader<byte> reader, int maxLength, out int length, out int size)
     {
         var available = (int)Math.Min(reader.Remaining, MaxLengthSize);

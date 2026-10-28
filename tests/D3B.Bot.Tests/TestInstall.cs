@@ -42,7 +42,7 @@ internal sealed class TestInstall : IDisposable
 
     /// <summary>Gets the settings that point a host at them, as command-line arguments.</summary>
     /// <remarks>The relay listens on a port of its own, so that tests never take 5555 or 443 from a host running beside them.</remarks>
-    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Releases:Token", Token, "--Network:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory];
+    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Releases:Token", Token, "--Network:Ports:0", "0", "--Network:Game:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory];
 
     public TestInstall()
     {

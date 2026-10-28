@@ -18,7 +18,7 @@ public sealed class NetworkModuleTests : IDisposable
     [Fact]
     public void TheRelayListensWhereTheConfigurationSays()
     {
-        // The relay's observer decodes through the build's translation, which the relay asks for once it is made.
+        // The relay's interceptor decodes through the build's translation, which the relay asks for once it is made.
         _install.WriteProtocol();
 
         using var host = _install.Bot("--Network:Address", "127.0.13.60", "--Network:Captures:Enabled", "true").AddModule<NetworkModule>().Build();
@@ -27,6 +27,7 @@ public sealed class NetworkModuleTests : IDisposable
 
         Assert.Equal(IPAddress.Parse("127.0.13.60"), settings.Address);
         Assert.Equal([0], settings.Ports);
+        Assert.Equal([0], settings.GamePorts);
         Assert.Equal(RelaySettings.DefaultCapturesDirectory, settings.CapturesDirectory);
         Assert.Equal(_install.ClientDirectory, settings.ClientDirectory);
         Assert.Equal(_install.RedirectDirectory, settings.RedirectDirectory);

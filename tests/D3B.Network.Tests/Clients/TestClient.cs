@@ -47,15 +47,25 @@ internal sealed class TestClient : IDisposable
 
     public ClientRedirect Redirect()
     {
-        var settings = new RelaySettings
+        return new ClientRedirect(Settings(), new FakeLogger<ClientRedirect>(Log));
+    }
+
+    /// <summary>The relay's way to its servers, through a redirect.</summary>
+    public UpstreamLocator Locator(ClientRedirect redirect)
+    {
+        return new UpstreamLocator(redirect, new GameServerSelections(Settings(), TimeProvider.System));
+    }
+
+    private RelaySettings Settings()
+    {
+        return new RelaySettings
         {
             Address = RelaySettings.DefaultAddress,
             Ports = RelaySettings.DefaultPorts,
+            GamePorts = RelaySettings.DefaultGamePorts,
             ClientDirectory = ClientDirectory,
             RedirectDirectory = RedirectDirectory,
         };
-
-        return new ClientRedirect(settings, new FakeLogger<ClientRedirect>(Log));
     }
 
     public void Dispose()

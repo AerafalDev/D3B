@@ -22,6 +22,7 @@ public sealed class RelaySettingsTests
 
         Assert.Equal(IPAddress.Parse("127.0.13.59"), settings.Address);
         Assert.Equal([5555, 443], settings.Ports);
+        Assert.Equal([5556], settings.GamePorts);
         Assert.Equal(ClientDirectory, settings.ClientDirectory);
         Assert.Equal(RelaySettings.DefaultRedirectDirectory, settings.RedirectDirectory);
         Assert.Null(settings.CapturesDirectory);
@@ -33,13 +34,17 @@ public sealed class RelaySettingsTests
         var settings = RelaySettings.Read(Configuration(
             (RelaySettings.AddressKey, "127.1.2.3"),
             ($"{RelaySettings.PortsKey}:0", "0"),
+            ($"{RelaySettings.GamePortsKey}:0", "6000"),
+            ($"{RelaySettings.GamePortsKey}:1", "6001"),
             (RelaySettings.CapturesEnabledKey, "true"),
             (RelaySettings.CapturesDirectoryKey, "captures"),
             (RelaySettings.RedirectDirectoryKey, "client")), ClientDirectory);
 
         Assert.Equal(IPAddress.Parse("127.1.2.3"), settings.Address);
         Assert.Equal([0], settings.Ports);
+        Assert.Equal([6000, 6001], settings.GamePorts);
         Assert.Equal(Path.Combine(AppContext.BaseDirectory, "captures"), settings.CapturesDirectory);
+        Assert.Equal(Path.Combine(AppContext.BaseDirectory, "captures", "game"), settings.GameCapturesDirectory);
         Assert.Equal(Path.Combine(AppContext.BaseDirectory, "client"), settings.RedirectDirectory);
     }
 
@@ -70,5 +75,6 @@ public sealed class RelaySettingsTests
     public void APortThatIsNoneIsRefused(string port)
     {
         Assert.Throws<InvalidOperationException>(() => RelaySettings.Read(Configuration(($"{RelaySettings.PortsKey}:0", port)), ClientDirectory));
+        Assert.Throws<InvalidOperationException>(() => RelaySettings.Read(Configuration(($"{RelaySettings.GamePortsKey}:0", port)), ClientDirectory));
     }
 }
