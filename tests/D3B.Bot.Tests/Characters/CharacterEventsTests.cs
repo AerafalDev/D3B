@@ -50,6 +50,8 @@ public sealed class CharacterEventsTests
             }),
             Server(new ZaapKnownListEvent { MapIds = { 191_105_026, 120_062_979 } }),
             Client(new ContextCreationRequest()),
+            Server(new ContextDestroyEvent()),
+            Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay }),
             Server(new MapCurrentEvent { MapId = TestPlay.MapId }),
             Client(new MapInformationRequest { MapId = TestPlay.MapId }),
             Server(TestPlay.Information(300)),
@@ -73,6 +75,7 @@ public sealed class CharacterEventsTests
               "Cell": 300,
               "Path": [],
               "IsWalking": false,
+              "IsWalkHeld": false,
               "Elements": {
                 "514662": {
                   "ElementId": 514662,
@@ -114,6 +117,8 @@ public sealed class CharacterEventsTests
               ],
               "HavenBagOwnerId": null,
               "IsInHavenBag": false,
+              "IsFighting": false,
+              "IsBusy": false,
               "Inventory": {
                 "12": {
                   "Uid": 12,
@@ -133,6 +138,7 @@ public sealed class CharacterEventsTests
               "Kamas": 12500,
               "Weight": 770,
               "MaxWeight": 7590,
+              "Load": 0.10144927536231885,
               "Jobs": {
                 "2": {
                   "JobId": 2,
@@ -442,5 +448,55 @@ public sealed class CharacterEventsTests
         Assert.False(settled.IsWalking);
         Assert.Equal(302, settled.Cell);
         Assert.Same(settled, CharacterEvents.NotConfirmed(settled));
+    }
+
+    [Fact]
+    public void TheServerHoldsAWalkTheClientDidNotConfirmUntilTheNextWalkRefusalOrMap()
+    {
+        var walking = Apply(_chosen, [.. EnteringTheGame(), Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 300, 301, 302 } })]);
+        var held = CharacterEvents.NotConfirmed(walking);
+
+        Assert.True(held.IsWalkHeld);
+        Assert.False(held.IsBusy);
+        Assert.False(Apply(held, Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 302, 303 } })).IsWalkHeld);
+        Assert.False(Apply(held, Server(new MapMovementRefusedEvent { X = 18, Y = -3 })).IsWalkHeld);
+        Assert.False(Apply(held, Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId })).IsWalkHeld);
+        Assert.False(Apply(held, Server(new MapMovementConfirmResponse())).IsWalkHeld);
+        Assert.True(Apply(held, Server(new MapMovementEvent { ActorId = 9, Cells = { 100, 101 } })).IsWalkHeld);
+    }
+
+    [Fact]
+    public void AFightLastsFromItsContextToTheRoleplaysAndPlacesTheCharacterNowhere()
+    {
+        var entered = Apply(_chosen, EnteringTheGame());
+        var fighting = Apply(
+            entered,
+            Server(new ContextDestroyEvent()),
+            Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight }),
+            Server(new MapCurrentEvent { MapId = 191_104_008 }),
+            Client(new MapInformationRequest { MapId = 191_104_008 }));
+
+        Assert.True(fighting.IsFighting);
+        Assert.True(fighting.IsBusy);
+        Assert.Equal(191_104_008, fighting.MapId);
+        Assert.Null(fighting.Cell);
+
+        var over = Apply(
+            fighting,
+            Server(new ContextDestroyEvent()),
+            Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay }),
+            Server(new MapCurrentEvent { MapId = TestPlay.MapId }),
+            Server(TestPlay.Information(358)));
+
+        Assert.False(over.IsFighting);
+        Assert.False(over.IsBusy);
+        Assert.Equal(358, over.Cell);
+    }
+
+    [Fact]
+    public void TheLoadIsTheWeightOverTheMostTheCharacterCarries()
+    {
+        Assert.Equal(0, _chosen.Load);
+        Assert.Equal(0.5, Apply(_chosen, Server(new InventoryWeightEvent { Weight = 3_795, MaxWeight = 7_590 })).Load);
     }
 }

@@ -1,6 +1,6 @@
 namespace D3B.Bot.Runtime;
 
-/// <summary>Thrown when a bot's behavior is interrupted: the player acted, the game connection closed, or the host is stopping.</summary>
+/// <summary>Thrown when a bot's behavior is interrupted: the player acted, the game connection closed, a fight began, or the host is stopping.</summary>
 public sealed class BotInterruptedException : OperationCanceledException
 {
     /// <summary>Gets why the behavior stopped.</summary>
@@ -44,6 +44,7 @@ public sealed class BotInterruptedException : OperationCanceledException
         {
             Interruption.Player => "The player acted on the character: the bot pauses until it is resumed.",
             Interruption.Disconnected => "The game connection closed.",
+            Interruption.Fight => "A fight began.",
             _ => "The host is stopping.",
         };
     }

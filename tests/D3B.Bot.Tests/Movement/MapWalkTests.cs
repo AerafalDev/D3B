@@ -144,6 +144,43 @@ public sealed class MapWalkTests
     }
 
     [Fact]
+    public void APathWithNoStepIsNoRequest()
+    {
+        // Measured once: the server refused a request naming no cell, then closed the game connection.
+        Assert.Throws<ArgumentException>(() => MapWalk.Request(TestPlay.MapId, new CellPath([433])));
+    }
+
+    [Fact]
+    public async Task AWalkTheServerStillHoldsIsLetGoByAStepAsideAndBack()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+        var path = PathOn(play, 433, 388);
+        var walk = bot.WalkAsync(388, TestContext.Current.CancellationToken);
+
+        await connection.SentAsync(1);
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
+        await bot.ProcessedAsync();
+
+        Assert.Equal(WalkOutcome.NotConfirmed, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.True(bot.State.IsWalkHeld);
+
+        // Already on the cell, the bot still walks: from it to a neighbour, which the server takes, then back.
+        var again = bot.WalkAsync(388, TestContext.Current.CancellationToken);
+        var aside = Assert.IsType<MapMovementRequest>(await connection.SentAsync(2));
+
+        Assert.Equal(388, aside.KeyMovements[0] & 0xFFF);
+        Assert.NotEqual(-1, MapGeometry.Direction(388, aside.KeyMovements[^1] & 0xFFF));
+
+        await TestWalks.WalkedAsync(play, connection, 2);
+
+        Assert.Equal(388, await TestWalks.WalkedAsync(play, connection, 3));
+        Assert.Equal(WalkOutcome.Arrived, await again);
+        Assert.False(bot.State.IsWalkHeld);
+        Assert.Equal(388, bot.State.Cell);
+    }
+
+    [Fact]
     public async Task ACellTheCharacterCannotReachSendsNothing()
     {
         await using var play = new TestPlay(388);

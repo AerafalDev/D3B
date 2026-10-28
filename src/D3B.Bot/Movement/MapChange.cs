@@ -68,10 +68,13 @@ public static class MapChange
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(rules);
 
+        // The server refuses a map change or a teleport while it holds a walk the client did not follow (D89).
+        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+
         var state = context.State;
         var world = context.World;
 
-        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking || state.IsUsing || state.IsInDialog)
+        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsBusy)
             return MapChangeOutcome.Busy;
 
         if (!context.Maps.TryGet(mapId, out var map) || !world.TryGetVertex(map, cell, out var vertex) || vertex != step.From
@@ -121,10 +124,12 @@ public static class MapChange
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+
         var state = context.State;
         var self = state.Key.CharacterId;
 
-        if (state.MapId is not { } mapId || state.Cell is null || state.IsWalking || state.IsUsing || state.IsInDialog)
+        if (state.MapId is not { } mapId || state.Cell is null || state.IsBusy)
             return MapChangeOutcome.Busy;
 
         if (state.HavenBagOwnerId != self)

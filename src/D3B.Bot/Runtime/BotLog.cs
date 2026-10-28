@@ -1,3 +1,4 @@
+using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Interactives;
 using D3B.Bot.Movement;
@@ -74,4 +75,25 @@ internal static partial class BotLog
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: banking over on map {Map}, {Outcome}")]
     public static partial void Banked(ILogger logger, long character, long map, BankOutcome outcome);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: a fight began, which interrupts its behavior")]
+    public static partial void FightBegan(ILogger logger, long character);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: activity {Activity} starts")]
+    public static partial void ActivityStarted(ILogger logger, long character, string activity);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: activity {Activity} interrupted, {Reason}; it will {Response}")]
+    public static partial void ActivityInterrupted(ILogger logger, long character, string activity, Interruption reason, InterruptionResponse response);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: activity {Activity} unloads the character, {Weight} of {MaxWeight} pods")]
+    public static partial void ActivityUnloading(ILogger logger, long character, string activity, int weight, int maxWeight);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: activity {Activity} left the character full after unloading it")]
+    public static partial void ActivityStillFull(ILogger logger, long character, string activity);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Bot {Character}: activity {Activity} failed")]
+    public static partial void ActivityFailed(ILogger logger, long character, string activity, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: activity {Activity} over after {Steps} steps, {Outcome}")]
+    public static partial void ActivityOver(ILogger logger, long character, string activity, int steps, ActivityOutcome outcome);
 }

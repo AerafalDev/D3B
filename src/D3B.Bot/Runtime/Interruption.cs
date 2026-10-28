@@ -9,6 +9,9 @@ public enum Interruption
     /// <summary>The game connection closed.</summary>
     Disconnected,
 
+    /// <summary>A fight began: the server created a fight's context (D88).</summary>
+    Fight,
+
     /// <summary>The host is stopping.</summary>
     Stopped,
 }

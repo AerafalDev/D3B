@@ -43,6 +43,13 @@ public sealed record CharacterState
     /// <summary>Gets whether the character walks: the server showed it a path, and has not answered the client's confirmation yet.</summary>
     public bool IsWalking => !Path.IsDefaultOrEmpty;
 
+    /// <summary>Gets whether the server may still hold the character walking a path the client never confirmed, which the state settled on its last cell (D85).</summary>
+    /// <remarks>
+    /// Measured (client.md): the server then refuses what is not a walk from the path's last cell, such as a map change or a
+    /// teleport, and walks one from there, which the client follows. The next walk, refusal or map lets it go.
+    /// </remarks>
+    public bool IsWalkHeld { get; init; }
+
     /// <summary>Gets the interactive elements of the map, by id, as the server described them; empty until the map's information is sent.</summary>
     /// <remarks>Only the map's own: the information also lists the neighbouring maps' elements, which cannot be used from it.</remarks>
     public ImmutableSortedDictionary<int, MapElement> Elements { get; init; } = ImmutableSortedDictionary<int, MapElement>.Empty;
@@ -78,6 +85,13 @@ public sealed record CharacterState
     /// <summary>Gets whether the character is in a haven bag, which the world graph does not hold: it leaves it to travel (D83).</summary>
     public bool IsInHavenBag => HavenBagOwnerId is not null;
 
+    /// <summary>Gets whether the character fights: from the server's creating a fight's context to its creating the roleplay's again (D88).</summary>
+    /// <remarks>During a fight the client walks the character with the same requests, on the fight's own map: the bot sends none.</remarks>
+    public bool IsFighting { get; init; }
+
+    /// <summary>Gets whether the character is in the middle of something a behavior must not start over: a walk, a use, a dialog or exchange, or a fight.</summary>
+    public bool IsBusy => IsWalking || IsUsing || IsInDialog || IsFighting;
+
     /// <summary>Gets the stacks the character carries, by their own id.</summary>
     public ImmutableSortedDictionary<int, InventoryItem> Inventory { get; init; } = ImmutableSortedDictionary<int, InventoryItem>.Empty;
 
@@ -89,6 +103,9 @@ public sealed record CharacterState
 
     /// <summary>Gets the most the character can carry, in pods.</summary>
     public int MaxWeight { get; init; }
+
+    /// <summary>Gets how full the character is: the weight it carries over the most it can, 0 until the server said.</summary>
+    public double Load => MaxWeight > 0 ? (double)Weight / MaxWeight : 0;
 
     /// <summary>Gets the character's professions, by id.</summary>
     public ImmutableSortedDictionary<int, CharacterJob> Jobs { get; init; } = ImmutableSortedDictionary<int, CharacterJob>.Empty;

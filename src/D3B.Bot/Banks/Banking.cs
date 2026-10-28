@@ -101,7 +101,7 @@ public static class Banking
         {
             var state = context.State;
 
-            if (state.MapId is not { } mapId || state.Cell is null || state.IsWalking || state.IsUsing || state.IsInDialog)
+            if (state.MapId is not { } mapId || state.Cell is null || state.IsBusy)
                 return journeys is 0 ? BankOutcome.Busy : BankOutcome.NotTravelled;
 
             var banker = banks.TryFindBanker(state, out _, out _);
@@ -145,9 +145,12 @@ public static class Banking
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        // The banker is talked to from where the character stands, which the server may refuse while it holds a walk (D89).
+        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+
         var state = context.State;
 
-        if (state.MapId is not { } mapId || state.Cell is null || state.IsWalking || state.IsUsing || state.IsInDialog)
+        if (state.MapId is not { } mapId || state.Cell is null || state.IsBusy)
             return BankOutcome.Busy;
 
         if (!context.Banks.TryFindBanker(state, out var npc, out var banker))

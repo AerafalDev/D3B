@@ -55,6 +55,30 @@ public sealed class BotContext
         return _bot.Expect(_behavior, match);
     }
 
+    /// <summary>Waits until the character's state holds a condition, tried now and after every message the bot sees, at most a delay by the bot's clock.</summary>
+    /// <param name="condition">Tells the state. It must be quick, and must not wait.</param>
+    /// <param name="timeout">How long to wait.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>Whether the condition held before the delay passed.</returns>
+    public async Task<bool> WaitUntilAsync(Func<CharacterState, bool> condition, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(condition);
+
+        using var delay = new CancellationTokenSource(timeout, _bot.Time);
+        using var either = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, delay.Token);
+
+        try
+        {
+            await _bot.WaitUntilAsync(bot => condition(bot.State), either.Token).ConfigureAwait(false);
+
+            return true;
+        }
+        catch (OperationCanceledException) when (delay.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Has the state take the last cell of the walk the character is in, once the client did not confirm it: the server has the character there (D85).</summary>
     /// <returns>A task that completes once the state took it, so that the behavior reads it.</returns>
     public Task SettleWalkAsync()

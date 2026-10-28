@@ -63,7 +63,7 @@ public static class WorldTravel
         {
             var state = context.State;
 
-            if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking || state.IsUsing || state.IsInDialog)
+            if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsBusy)
                 return changes is 0 && failures is 0 ? TravelOutcome.Busy : TravelOutcome.Failed;
 
             if (maps.Contains(mapId))
