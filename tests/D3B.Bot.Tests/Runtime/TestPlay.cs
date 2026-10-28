@@ -2,6 +2,8 @@ using D3B.Bot.Characters;
 using D3B.Bot.Network;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Network;
+using D3B.Data;
+using D3B.Data.Banks;
 using D3B.Data.Maps;
 using D3B.Data.Packs;
 using D3B.Data.Tests;
@@ -19,15 +21,19 @@ using Microsoft.Extensions.Time.Testing;
 namespace D3B.Bot.Tests.Runtime;
 
 /// <summary>
-/// A host's bots as a test plays them: a pack holding three maps and the world between them, every cell walkable but those
-/// a test blocks on the first, the bots observing the game connections a test drives, and a clock the test moves.
+/// A host's bots as a test plays them: a pack holding five maps, the world between them and a bank, every cell walkable
+/// but those a test blocks on the first, the bots observing the game connections a test drives, and a clock the test moves.
 /// </summary>
 /// <remarks>
 /// The world: <see cref="NorthMapId"/> is north of <see cref="MapId"/>, by a scroll each way, and by a map action from
 /// <see cref="NorthActionCell"/>; a map action from <see cref="ActionCell"/> leads to <see cref="EastMapId"/>, whose west
-/// edge scrolls back; the door <see cref="DoorElementId"/> leads to <see cref="InsideMapId"/>. Every cell of a map's edge
+/// edge scrolls back; the door <see cref="DoorElementId"/> leads to <see cref="InsideMapId"/> and to
+/// <see cref="OtherInsideMapId"/>, both at <see cref="MapId"/>'s coordinates, as the bank of Astrub's leads to its inside
+/// and to another; a map action from <see cref="OtherActionCell"/> leads out of the other. Every cell of a map's edge
 /// leaves it straight across. On <see cref="MapId"/>, the server lists the door and a tree, <see cref="TreeElementId"/>,
-/// as the bank of Astrub's map and a map near it list them in the captures.
+/// as the bank of Astrub's map and a map near it list them in the captures. The pack's bank stands in front of
+/// <see cref="MapId"/>; its banker, <see cref="BankerNpcId"/>, stands in <see cref="InsideMapId"/> beside an NPC who is
+/// none, and the other inside holds no NPC.
 /// </remarks>
 internal sealed class TestPlay : IAsyncDisposable
 {
@@ -35,6 +41,12 @@ internal sealed class TestPlay : IAsyncDisposable
     public const long NorthMapId = 191_104_000;
     public const long EastMapId = 191_105_026;
     public const long InsideMapId = 192_415_750;
+    public const long OtherInsideMapId = 192_677_890;
+    public const int OtherActionCell = 400;
+    public const int BankerNpcId = 520;
+    public const int BankerActorId = -20_001;
+    public const int ChestReplyId = 64_361;
+    public const int OtherReplyId = 64_362;
     public const int ActionCell = 409;
     public const int NorthActionCell = 200;
     public const int TreeElementId = 514_662;
@@ -79,6 +91,8 @@ internal sealed class TestPlay : IAsyncDisposable
 
     public GameWorld World { get; }
 
+    public GameTables Tables { get; }
+
     public Bots Bots { get; }
 
     public TestPlay(params int[] blocked)
@@ -89,8 +103,9 @@ internal sealed class TestPlay : IAsyncDisposable
         _pack = GamePack.Open(path);
         Maps = new GameMaps(_pack);
         World = new GameWorld(_pack);
+        Tables = new GameTables(_pack);
         _logs = LoggerFactory.Create(logging => logging.AddProvider(new FakeLoggerProvider(Log)).SetMinimumLevel(LogLevel.Debug));
-        Bots = new Bots(Maps, World, Time, _logs);
+        Bots = new Bots(Maps, World, Tables, Time, _logs);
         _accounts = new GameAccounts(_settings.SelectionLifetime, Time);
         _decoder = new RelayDecoder(Translation, new GameServerSelections(_settings, Time), _accounts, [Bots], _logs);
     }
@@ -107,7 +122,7 @@ internal sealed class TestPlay : IAsyncDisposable
         };
     }
 
-    /// <summary>What is on the map, the character on a cell; on <see cref="MapId"/>, the tree and the door.</summary>
+    /// <summary>What is on the map, the character on a cell; on <see cref="MapId"/>, the tree and the door; in <see cref="InsideMapId"/>, the banker and another NPC.</summary>
     public static MapInformationEvent Information(int cell, long mapId = MapId)
     {
         var information = new MapInformationEvent
@@ -120,6 +135,12 @@ internal sealed class TestPlay : IAsyncDisposable
                 new Actor { Id = CharacterId, Disposition = new ActorDisposition { CellId = cell } },
             },
         };
+
+        if (mapId is InsideMapId)
+        {
+            information.Actors.Add(Npc(-20_000, 1_088, 302));
+            information.Actors.Add(Npc(BankerActorId, BankerNpcId, 259));
+        }
 
         if (mapId is MapId)
         {
@@ -157,6 +178,16 @@ internal sealed class TestPlay : IAsyncDisposable
         return tree;
     }
 
+    private static Actor Npc(long actorId, int npcId, int cell)
+    {
+        return new Actor
+        {
+            Id = actorId,
+            Disposition = new ActorDisposition { CellId = cell },
+            Information = new ActorInformation { Roleplay = new RoleplayActor { Npc = new NpcActor { NpcId = npcId } } },
+        };
+    }
+
     private static byte[] Pack(int[] blocked)
     {
         var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell)).ToArray();
@@ -171,8 +202,10 @@ internal sealed class TestPlay : IAsyncDisposable
             writer.Add(MapData.EntryName(NorthMapId), new MapData(NorthMapId, 0, MapId, 0, 0, open, Array.Empty<MapInteractive>()));
             writer.Add(MapData.EntryName(EastMapId), new MapData(EastMapId, 0, 0, MapId, 0, open, Array.Empty<MapInteractive>()));
             writer.Add(MapData.EntryName(InsideMapId), new MapData(InsideMapId, 0, 0, 0, 0, open, Array.Empty<MapInteractive>()));
+            writer.Add(MapData.EntryName(OtherInsideMapId), new MapData(OtherInsideMapId, 0, 0, 0, 0, open, Array.Empty<MapInteractive>()));
             writer.Add(WorldGraph.EntryName, Graph());
             writer.Add(WorldAtlas.EntryName, Atlas());
+            writer.Add(BankCatalog.EntryName, new BankCatalog(new[] { new Bank(2_756, MapId) }, new[] { new Banker(BankerNpcId, 0, 0, 2) }, new[] { 64_360, ChestReplyId }));
             writer.Complete();
         }
 
@@ -193,8 +226,8 @@ internal sealed class TestPlay : IAsyncDisposable
 
     private static WorldGraph Graph()
     {
-        // Vertices in ascending order of map: north, the first, east, inside.
-        WorldVertex[] vertices = [new(NorthMapId, 1), new(MapId, 1), new(EastMapId, 1), new(InsideMapId, 1)];
+        // Vertices in ascending order of map: north, the first, east, inside, the other inside.
+        WorldVertex[] vertices = [new(NorthMapId, 1), new(MapId, 1), new(EastMapId, 1), new(InsideMapId, 1), new(OtherInsideMapId, 1)];
         WorldTransition[] transitions =
         [
             Transition(WorldTransitionType.Scroll, 2, 539, MapId),
@@ -202,9 +235,11 @@ internal sealed class TestPlay : IAsyncDisposable
             Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, NorthActionCell, NorthMapId),
             Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, ActionCell, EastMapId),
             new(WorldTransitionType.Interactive, WorldTransition.NoDirection, DoorCell, WorldPathfinder.DoorSkillId, InsideMapId, DoorElementId, WorldTransition.None),
+            new(WorldTransitionType.Interactive, WorldTransition.NoDirection, DoorCell, WorldPathfinder.DoorSkillId, OtherInsideMapId, DoorElementId, WorldTransition.None),
             Transition(WorldTransitionType.Scroll, 4, 252, MapId),
+            Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, OtherActionCell, MapId),
         ];
-        WorldEdge[] edges = [new(0, 1, 0, 1), new(1, 0, 1, 2), new(1, 2, 3, 1), new(1, 3, 4, 1), new(2, 1, 5, 1)];
+        WorldEdge[] edges = [new(0, 1, 0, 1), new(1, 0, 1, 2), new(1, 2, 3, 1), new(1, 3, 4, 1), new(1, 4, 5, 1), new(2, 1, 6, 1), new(4, 1, 7, 1)];
 
         return new WorldGraph(vertices, edges, transitions, Array.Empty<string>());
     }
@@ -222,6 +257,7 @@ internal sealed class TestPlay : IAsyncDisposable
             new(MapId, 4, -18, SubAreaId, 1, 0, 0),
             new(EastMapId, 5, -18, SubAreaId, 1, 0, 0),
             new(InsideMapId, 4, -18, SubAreaId, -1, 0, 0),
+            new(OtherInsideMapId, 4, -18, SubAreaId, -1, 0, 0),
         ];
         SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 0)];
 

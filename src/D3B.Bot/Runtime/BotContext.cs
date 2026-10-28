@@ -1,3 +1,4 @@
+using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Data.Maps;
 using D3B.Engine.World;
@@ -26,6 +27,10 @@ public sealed class BotContext
     /// <summary>Gets the paths through the world of the installed build's pack, and the cells each map is left from.</summary>
     /// <exception cref="KeyNotFoundException">The pack holds no world graph or atlas.</exception>
     public WorldPathfinder World => _bot.World;
+
+    /// <summary>Gets the banks of the installed build's pack, their insides, and what the host's bots saw of them (D79).</summary>
+    /// <exception cref="KeyNotFoundException">The pack holds no bank catalog, world graph or atlas.</exception>
+    public BankDirectory Banks => _bot.Banks;
 
     /// <summary>Gets the clock every delay goes through.</summary>
     public TimeProvider Time => _bot.Time;

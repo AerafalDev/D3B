@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
@@ -35,6 +36,7 @@ public sealed class BotActor : IAsyncDisposable
     private readonly List<GameExpectation> _expectations = [];
     private readonly ILogger _log;
     private readonly Lazy<WorldPathfinder> _world;
+    private readonly Lazy<BankDirectory> _banks;
     private readonly Task _loop;
 
     // Only the loop reads and writes these.
@@ -67,6 +69,8 @@ public sealed class BotActor : IAsyncDisposable
 
     internal WorldPathfinder World => _world.Value;
 
+    internal BankDirectory Banks => _banks.Value;
+
     internal TimeProvider Time { get; }
 
     internal ILogger Log => _log;
@@ -74,12 +78,13 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>Gets when the client has drawn the map the server last placed the character on.</summary>
     internal DateTimeOffset DrawnAt => new(Volatile.Read(ref _drawnAt), TimeSpan.Zero);
 
-    internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, TimeProvider time, ILogger log)
+    internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, Lazy<BankDirectory> banks, TimeProvider time, ILogger log)
     {
         Key = state.Key;
         _state = state;
         Maps = maps;
         _world = world;
+        _banks = banks;
         Time = time;
         _log = log;
         _loop = Task.Run(ReadInboxAsync);
@@ -241,7 +246,8 @@ public sealed class BotActor : IAsyncDisposable
         if (side is RelayDirection.FromServer && message is MapInformationEvent information && information.MapId == state.MapId && state.Cell is not null)
             Volatile.Write(ref _drawnAt, (Time.GetUtcNow() + DrawDelay).UtcTicks);
 
-        if (side is RelayDirection.FromClient && _behavior is { } behavior && PlayerActions.Starts(message))
+        // A request to leave changes nothing of the state, so this is the dialog the client sent it in.
+        if (side is RelayDirection.FromClient && _behavior is { } behavior && PlayerActions.Starts(state, message))
         {
             _paused = true;
             Interrupt(behavior, Interruption.Player);

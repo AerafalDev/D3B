@@ -35,6 +35,7 @@
     { "readable": "d3b.game.JobDescriptionEvent", "obfuscated": "ipg" },
     { "readable": "d3b.game.JobExperiencesEvent", "obfuscated": "ipz" },
     { "readable": "d3b.game.NpcActionRequest", "obfuscated": "ilt" },
+    { "readable": "d3b.game.NpcActionErrorEvent", "obfuscated": "ilm" },
     { "readable": "d3b.game.NpcDialogCreationEvent", "obfuscated": "ilx" },
     { "readable": "d3b.game.NpcDialogQuestionEvent", "obfuscated": "ilf" },
     { "readable": "d3b.game.NpcDialogReplyRequest", "obfuscated": "iky" },

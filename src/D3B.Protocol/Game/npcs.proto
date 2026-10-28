@@ -19,6 +19,12 @@ message NpcActionRequest {
   int32 npc_actor_id = 3;
 }
 
+// The server refuses an action on an NPC, 28 ms after the request, and sends nothing else: for an NPC the map does not
+// hold, or while the character is in a dialog or an exchange already. It answers nothing to a request naming another map
+// than the character's.
+message NpcActionErrorEvent {
+}
+
 // A dialog with an NPC opened.
 message NpcDialogCreationEvent {
   option (d3b.readable.partial) = true;
@@ -27,7 +33,8 @@ message NpcDialogCreationEvent {
   int32 npc_actor_id = 5;
 }
 
-// What the NPC says, and the replies the character may give.
+// What the NPC says, and the replies the character may give: the server sends the question again for a reply it did not
+// offer, and a question may offer none.
 message NpcDialogQuestionEvent {
   option (d3b.readable.partial) = true;
 
@@ -45,7 +52,7 @@ message NpcReply {
   int32 reply_id = 1;
 }
 
-// Answers the NPC with one of the replies it offered.
+// Answers the NPC with one of the replies it offered. The server answers nothing to it outside a dialog.
 message NpcDialogReplyRequest {
   int32 reply_id = 1;
 }
@@ -61,7 +68,7 @@ message DialogLeaveEvent {
 // the captures; the others are not measured.
 enum DialogType {
   DIALOG_TYPE_VALUE_0 = 0;
-  DIALOG_TYPE_VALUE_1 = 1;
+  DIALOG_TYPE_NPC = 1;
   DIALOG_TYPE_VALUE_2 = 2;
   DIALOG_TYPE_VALUE_3 = 3;
   DIALOG_TYPE_VALUE_4 = 4;
@@ -71,7 +78,7 @@ enum DialogType {
   DIALOG_TYPE_VALUE_8 = 8;
   DIALOG_TYPE_VALUE_9 = 9;
   DIALOG_TYPE_VALUE_10 = 10;
-  DIALOG_TYPE_VALUE_11 = 11;
+  DIALOG_TYPE_STORAGE = 11;
   DIALOG_TYPE_VALUE_12 = 12;
   DIALOG_TYPE_VALUE_13 = 13;
   DIALOG_TYPE_VALUE_14 = 14;

@@ -1,3 +1,4 @@
+using D3B.Bot.Banks;
 using D3B.Bot.Interactives;
 using D3B.Bot.Movement;
 using D3B.Data.World;
@@ -52,4 +53,19 @@ internal static partial class BotLog
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: journey over on map {Map} after {Changes} map changes, {Outcome}")]
     public static partial void Travelled(ILogger logger, long character, long map, int changes, TravelOutcome outcome);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: no banker stands in the bank's inside {Map}, which the host's bots no longer seek")]
+    public static partial void NoBanker(ILogger logger, long character, long map);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: talks to banker {Npc} on map {Map}")]
+    public static partial void OpeningBank(ILogger logger, long character, long map, int npc);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: opening the bank on map {Map} over, {Outcome}")]
+    public static partial void OpenedBank(ILogger logger, long character, long map, BankOutcome outcome);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: {Taken} of {Stacks} stacks and {Kamas} kamas put in the bank, {Outcome}")]
+    public static partial void Deposited(ILogger logger, long character, int stacks, int taken, long kamas, BankOutcome outcome);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: banking over on map {Map}, {Outcome}")]
+    public static partial void Banked(ILogger logger, long character, long map, BankOutcome outcome);
 }

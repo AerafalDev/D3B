@@ -12,7 +12,7 @@ namespace D3B.Bot.Characters;
 /// </para>
 /// <para>
 /// What the server has not said yet is <see langword="null"/> or empty: the map and cell until the map is named and its
-/// information sent, with the map's elements, the inventory until its content is sent.
+/// information sent, with the map's elements and NPCs, the inventory until its content is sent.
 /// </para>
 /// </remarks>
 public sealed record CharacterState
@@ -52,6 +52,18 @@ public sealed record CharacterState
 
     /// <summary>Gets whether the character uses an element: the server started a use that lasts, and has not ended it yet.</summary>
     public bool IsUsing => Use is not null;
+
+    /// <summary>Gets the non-player characters of the map, by actor id, as the map's information placed them; empty until it is sent.</summary>
+    public ImmutableSortedDictionary<int, MapNpc> Npcs { get; init; } = ImmutableSortedDictionary<int, MapNpc>.Empty;
+
+    /// <summary>Gets the dialog with an NPC the character is in, such as a banker's, from the server's opening it to its end.</summary>
+    public NpcDialog? Dialog { get; init; }
+
+    /// <summary>Gets the exchange with a storage the character is in, such as its bank's, from the server's opening it to its end.</summary>
+    public OpenStorage? Storage { get; init; }
+
+    /// <summary>Gets whether the character is in a dialog with an NPC or an exchange with a storage, which a request to leave ends.</summary>
+    public bool IsInDialog => Dialog is not null || Storage is not null;
 
     /// <summary>Gets the stacks the character carries, by their own id.</summary>
     public ImmutableSortedDictionary<int, InventoryItem> Inventory { get; init; } = ImmutableSortedDictionary<int, InventoryItem>.Empty;
