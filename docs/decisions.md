@@ -1625,7 +1625,8 @@ server sends.
 
 ## D66: The player wins, and the bot pauses until it is resumed
 
-*2026-10-28, step 4, session 4a, chosen by the owner*
+*2026-10-28, step 4, session 4a, chosen by the owner. Superseded in part by D81: leaving a dialog is the player's while
+the character is in one.*
 
 D3B neither holds nor drops a frame of the client (D60), so the player can always act. A request the player sends that
 acts on the character interrupts the bot's behavior (D9), and the bot pauses: it starts no behavior until it is resumed,
@@ -1981,6 +1982,98 @@ So:
 The readable protocol gains `InteractiveUseErrorEvent`, pinned for 3.7.12.12 (D54), and `on_current_map` on the map's
 elements (D75): 109 messages and 224 fields. `MappingFile.FormatVersion` is 4, `mapping-4.binpb`, 7,704 bytes, audited
 without failure; the 13 game connections captured decode through it, 6,483 frames, none misread.
+
+## D79: A bank's inside is found in play, and remembered by the host
+
+*2026-10-28, step 4, session 4d, chosen by the owner*
+
+Measured on the world graph of 3.7.12.12 ([client.md](client.md#banks)): from the map in front of each of the 10 banks,
+doors lead to 1 to 5 maps; 16 lie at the bank's coordinates on no world map, its insides. 7 banks have one a door
+without criterion leads into, 3 have two, of which only the server says which holds the banker, by the NPCs it places
+there (D29). At Astrub, one door element leads to the bank and to another inside a quest closes.
+
+- **The insides** (`WorldInsides`, in `D3B.Engine.World`): the maps a map's doors, skill 184, lead into at its
+  coordinates on no world map, whatever their criteria, which the path answers strictly (D76).
+- **The banks** (`BankDirectory`, in `D3B.Bot.Banks`): one per host, which every bot shares, built when a bot first
+  banks from the pack's banks and bankers (D29) and the world. A bot that enters an inside tells whether a banker stands
+  there; one where none stands is sought by no bot of the host, until one is seen there. Nothing is kept from one run of
+  the host to the next.
+- **The journey** (`Banking.GoToBankerAsync`): done where a banker stands; else to the nearest inside still sought
+  (D74), then again from there, at most four journeys.
+- **Rejected.**
+  - Each build's insides pinned in a committed file, measured by visiting them: 10 banks to visit at every update, 3 the
+    bot does not reach yet.
+  - What the bot learns kept on disk: storage comes at step 5, and one more visit per ambiguous bank and per run costs a
+    door and a map action.
+  - The insides in the pack: the server still says which holds the banker, and the graph gives them at run time.
+
+## D80: Banking
+
+*2026-10-28, step 4, session 4d*
+
+Measured on the captures of sessions 3g and 3h, then on a client of 3.7.12.12 in game through the host, the player's
+hands off, a measuring plugin, never committed, sending the requests one by one, then the final behavior
+([client.md](client.md#the-game-banked)):
+
+- **Talking.** NPC action 3 on the banker, naming the map and his actor id, from 10 cells away: the dialog and its
+  question in the same millisecond, 28 ms later, with two replies, one of which the pack lists among his. The bank of
+  Astrub holds two bankers, NPCs 520 and 522.
+- **Opening.** That reply ends the dialog and opens the exchange with the storage, its content and the character's kamas
+  in the same millisecond, the opening paid with as many kamas as the storage holds stacks.
+- **Putting in.** One request lists the stacks: the server takes those it may, answering with the inventory's stacks
+  deleted, the storage's and the weight, and leaves the others, such as a quest's tickets, answering nothing when it
+  takes none. Kamas by another request: the storage's, then the character's.
+- **Refused**: an action on an NPC the map lacks, or during a dialog or an exchange, with an empty event, named
+  `NpcActionErrorEvent` and pinned (D54); a reply not offered, with the question again and a text; nothing at all for a
+  request naming another map, a reply, a stack or kamas outside the exchange, no kamas, more than the side holds, or a
+  stack the inventory lacks. An action the banker does not offer opens an exchange that fails, with an event the bot
+  never meets, not named.
+- **Busy.** The server refuses a walk during the dialog and during the exchange, naming the character's cell, and the
+  dialog or exchange goes on.
+
+So:
+
+- **The state** keeps the map's NPCs (`CharacterState.Npcs`), the dialog with one (`Dialog`, its question and replies)
+  and the exchange with the storage (`Storage`, its kamas), from the server's events. The storage's objects are not
+  kept: what the server sends as stacks are taken out is not measured. Walking, using, changing maps and travelling
+  answer `Busy` during a dialog or an exchange.
+- **The behavior** (`Banking`, in `D3B.Bot.Banks`): to a banker (D79); the action, then the question, 3 s; the banker's
+  reply the question offers, then the storage's content, 3 s, a dialog it could not take to the bank left; the stacks
+  asked for that the character carries and does not wear in one request, then the kamas, at most those carried, each 3
+  s; then leaving, 3 s, the bank left whatever the deposit gave. Every request waits until the client drew the map
+  (D77). Outcomes (`BankOutcome`): done, busy, no bank, not travelled, refused, no answer.
+- **Measured through the host**: from inside the bank, two stacks and one kama put in and the bank left in 161 ms; from
+  two maps away, the journey through the door, the bank opened 529 ms after the inside's information, a kama put in and
+  the bank left, in 3.9 s.
+- **Rejected.**
+  - One request per stack, as the player drags them: the server takes a list, measured.
+  - Choosing what to put in, such as the kamas kept for the next opening: the caller's, as step 6's profiles will be.
+  - Walking next to the banker first: the server took the action from 10 cells away.
+
+## D81: The player's leaving is told from the client's by the dialog
+
+*2026-10-28, step 4, session 4d. Supersedes in part D66: leaving a dialog is now the player's while the character is in
+one.*
+
+- **Measured.** The player closing the banker's dialog or the bank: the client's request to leave, while the dialog or
+  the exchange is open, then the server's end 28 to 60 ms later. D3B leaving the bank: the server's end, then the
+  client's two requests by itself, 1 to 178 ms later, six times; none once, after a bank D3B opened and left in 161 ms.
+  The relay shows each frame of the server to the observers before the client gets it, so a bot's loop sees the end
+  before the client's requests.
+- **So** `PlayerActions.Starts` takes the state: a request to leave is the player's while the character is in a dialog
+  or an exchange, and the client's own once the server ended it. Measured through the host: the player closing the bank
+  the bot had opened interrupted the bot, which paused.
+- **Rejected.**
+  - A delay after the server's end within which a request to leave is the client's: the state already says it.
+
+## D82: Mapping format 5
+
+*2026-10-28, step 4, session 4d*
+
+The readable protocol gains `NpcActionErrorEvent`, pinned for 3.7.12.12 (D54), and names the dialog and exchange values
+measured on the bank: 110 messages and 224 fields. `MappingFile.FormatVersion` is 5, `mapping-5.binpb`, 7,743 bytes, the
+same bytes on two runs, audited without failure; the 15 game connections captured decode through it, 8,851 frames, none
+misread. The release of 3.7.12.12 needs it, which the release tool publishes (D50).
 
 ## Open questions
 
