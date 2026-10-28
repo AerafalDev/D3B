@@ -67,6 +67,11 @@ public sealed class WorldPathfinderTests
         })];
     }
 
+    private static MapData MapOf(MapCell[] cells, params MapInteractive[] interactives)
+    {
+        return new MapData(1, 0, 0, 0, 0, cells, interactives);
+    }
+
     private static WorldStep StepOf(WorldPathfinder pathfinder, long from, long to)
     {
         Assert.True(pathfinder.TryFind(Vertex(pathfinder, from), new HashSet<long> { to }, _subscribed, out var path));
@@ -150,9 +155,19 @@ public sealed class WorldPathfinderTests
     }
 
     [Fact]
-    public void DoorsAreNotFollowedYet()
+    public void ADoorIsFollowedButNoOtherInteractive()
     {
-        var pathfinder = new TestWorld().Interactive(1, 2, 288).Pathfinder();
+        var pathfinder = new TestWorld().Interactive(1, 2, 288).Interactive(1, 3, 300, skill: 459).Pathfinder();
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 2 }, _subscribed, out var path));
+        Assert.Equal(WorldTransitionType.Interactive, Assert.Single(path.Steps).Transition.Type);
+        Assert.False(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 3 }, _subscribed, out _));
+    }
+
+    [Fact]
+    public void ADoorWhoseCriterionIsNotKnownIsNotFollowed()
+    {
+        var pathfinder = new TestWorld().Interactive(1, 2, 288, criterion: "Qf=1201").Pathfinder();
 
         Assert.False(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 2 }, _subscribed, out _));
     }
@@ -289,7 +304,7 @@ public sealed class WorldPathfinderTests
     public void AScrollIsLeftFromTheCellsOfItsEdge()
     {
         var pathfinder = new TestWorld().Scroll(1, 2, East, 13).Pathfinder();
-        var exits = pathfinder.ExitCells(EdgeCells(), StepOf(pathfinder, 1, 2), _subscribed);
+        var exits = pathfinder.ExitCells(MapOf(EdgeCells()), StepOf(pathfinder, 1, 2), _subscribed);
 
         Assert.Equal(MapGeometry.Rows, exits.Count);
         Assert.All(exits, cell => Assert.Equal(MapGeometry.Columns - 1, cell % MapGeometry.Columns));
@@ -307,7 +322,7 @@ public sealed class WorldPathfinderTests
         cells[300] = Cell(1, 1 << East);
 
         var pathfinder = new TestWorld().Scroll(1, 2, East, 41).Pathfinder();
-        var exits = pathfinder.ExitCells(cells, StepOf(pathfinder, 1, 2), _subscribed);
+        var exits = pathfinder.ExitCells(MapOf(cells), StepOf(pathfinder, 1, 2), _subscribed);
 
         // Cell 41, the transition's own, leaves though unmarked; 300 is marked but not on the edge.
         Assert.Equal([41, 447, 475], exits);
@@ -325,8 +340,8 @@ public sealed class WorldPathfinderTests
 
         var pathfinder = new TestWorld().Scroll(1, 2, West, 322).Scroll(1, 3, South, 538).Pathfinder();
 
-        Assert.Equal([322, 504, 518], pathfinder.ExitCells(cells, StepOf(pathfinder, 1, 2), _subscribed));
-        Assert.Equal([538, 546], pathfinder.ExitCells(cells, StepOf(pathfinder, 1, 3), _subscribed));
+        Assert.Equal([322, 504, 518], pathfinder.ExitCells(MapOf(cells), StepOf(pathfinder, 1, 2), _subscribed));
+        Assert.Equal([538, 546], pathfinder.ExitCells(MapOf(cells), StepOf(pathfinder, 1, 3), _subscribed));
     }
 
     [Fact]
@@ -340,7 +355,7 @@ public sealed class WorldPathfinderTests
             cells[cell] = Cell(2, cells[cell].MapChangeData);
 
         var pathfinder = new TestWorld().Scroll(1, 2, East, 27).Pathfinder();
-        var exits = pathfinder.ExitCells(cells, StepOf(pathfinder, 1, 2), _subscribed);
+        var exits = pathfinder.ExitCells(MapOf(cells), StepOf(pathfinder, 1, 2), _subscribed);
 
         Assert.DoesNotContain(13, exits);
         Assert.All(exits, cell => Assert.True(cell < 279));
@@ -351,7 +366,7 @@ public sealed class WorldPathfinderTests
     public void ACriterionOnTheCellNamesTheCellsAScrollWithAnActionIsLeftFrom()
     {
         var pathfinder = new TestWorld().ScrollAction(1, 2, 5, East, 27, "#(PC=27|PC=55|PC=83)").Pathfinder();
-        var exits = pathfinder.ExitCells(EdgeCells(), StepOf(pathfinder, 1, 5), _subscribed);
+        var exits = pathfinder.ExitCells(MapOf(EdgeCells()), StepOf(pathfinder, 1, 5), _subscribed);
 
         Assert.Equal([27, 55, 83], exits);
     }
@@ -361,8 +376,8 @@ public sealed class WorldPathfinderTests
     {
         // Two scrolls east, to two zones of map 2: the north half of the edge leads to the first, the south half to the second.
         var pathfinder = new TestWorld().Scroll(1, 2, East, 27, toZone: 1).Scroll(1, 2, East, 531, toZone: 2).Pathfinder();
-        var north = pathfinder.ExitCells(EdgeCells(), StepFrom(pathfinder, 1, 27), _subscribed);
-        var south = pathfinder.ExitCells(EdgeCells(), StepFrom(pathfinder, 1, 531), _subscribed);
+        var north = pathfinder.ExitCells(MapOf(EdgeCells()), StepFrom(pathfinder, 1, 27), _subscribed);
+        var south = pathfinder.ExitCells(MapOf(EdgeCells()), StepFrom(pathfinder, 1, 531), _subscribed);
 
         Assert.Contains(27, north);
         Assert.Contains(531, south);
@@ -372,10 +387,38 @@ public sealed class WorldPathfinderTests
     }
 
     [Fact]
+    public void ADoorIsUsedFromTheWalkableNeighboursOfItsElement()
+    {
+        // The door of the bank of Astrub: element 515308 on cell 288, of which 273, 260, 274 and 289 cannot be walked on.
+        var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => Cell(1, walkable: cell is not (273 or 260 or 274 or 289))).ToArray();
+        var pathfinder = new TestWorld().Interactive(1, 2, 288).Pathfinder();
+
+        Assert.Equal([302, 316, 301, 287], pathfinder.ExitCells(MapOf(cells, new MapInteractive(515308, 288)), StepOf(pathfinder, 1, 2), _subscribed));
+    }
+
+    [Fact]
+    public void ADoorIsUsedAroundItsElementWhereverTheTransitionPutsIt()
+    {
+        var pathfinder = new TestWorld().Interactive(1, 2, 288).Pathfinder();
+        var exits = pathfinder.ExitCells(MapOf(EdgeCells(), new MapInteractive(515308, 300)), StepOf(pathfinder, 1, 2), _subscribed);
+
+        Assert.Equal(8, exits.Count);
+        Assert.All(exits, cell => Assert.NotEqual(-1, MapGeometry.Direction(300, cell)));
+    }
+
+    [Fact]
+    public void ADoorsCriterionOnTheCellKeepsTheCellsThatMeetIt()
+    {
+        var pathfinder = new TestWorld().Interactive(1, 2, 288, criterion: "PC=287|PC=301").Pathfinder();
+
+        Assert.Equal([301, 287], pathfinder.ExitCells(MapOf(EdgeCells(), new MapInteractive(515308, 288)), StepOf(pathfinder, 1, 2), _subscribed));
+    }
+
+    [Fact]
     public void AMapActionIsLeftFromItsCell()
     {
         var pathfinder = new TestWorld().MapAction(1, 2, 409).Pathfinder();
 
-        Assert.Equal([409], pathfinder.ExitCells(EdgeCells(), StepOf(pathfinder, 1, 2), _subscribed));
+        Assert.Equal([409], pathfinder.ExitCells(MapOf(EdgeCells()), StepOf(pathfinder, 1, 2), _subscribed));
     }
 }

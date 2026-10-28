@@ -29,6 +29,20 @@ public sealed class WorldTravelTests
     }
 
     [Fact]
+    public async Task AJourneyGoesThroughADoor()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(287);
+        var journey = bot.TravelAsync(TestPlay.InsideMapId, TestContext.Current.CancellationToken);
+
+        Assert.IsType<InteractiveUseRequest>(await connection.SentAsync(1));
+        TestWalks.Arrive(connection, TestPlay.InsideMapId, 396);
+
+        Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.Single(connection.Sent);
+    }
+
+    [Fact]
     public async Task ACharacterOnTheMapSoughtHasArrived()
     {
         await using var play = new TestPlay();

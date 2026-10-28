@@ -1866,6 +1866,122 @@ hands off, the bot asking for 30 map changes and travelling ([client.md](client.
   - Following the first path to its end: where a change leads is the server's to say.
   - Ending the journey at the first failure.
 
+## D75: Using an element of the map
+
+*2026-10-28, step 4, session 4c*
+
+Measured on the captures of sessions 3g and 3h, then on a client of 3.7.12.12 in game through the host, the player's
+hands off, a measuring plugin, never committed, sending uses from chosen cells ([client.md](client.md#the-game-used)):
+
+- **Where the client stands.** On a walkable neighbour of the element's cell, one of the eight, the first its walk
+  reaches, never on the element's cell even when it can be walked on; where no neighbour can be walked on, as by water,
+  on one of the walkable cells nearest the element. It asks 1 to 5 ms after the server answered its confirmation.
+- **What the server takes.** A use from no further than the skill's `range` (D29), counting the sum of the coordinates'
+  differences (`MapGeometry.Distance`), or from a neighbour of the element's cell or the cell itself: fishing, range 10,
+  was taken at 10 cells and refused at 11, three times, one of them only 6 cells off along either coordinate; the door,
+  range 1, was taken from its own cell and from its west neighbour, 2 away, and refused from 2 and 3 away off its
+  neighbours.
+- **Line of sight does not count**: a fishing use 4 cells away, through a cell that lets no sight through on the
+  straight line between them, was taken. It stays at step 9.
+- **The map's elements are the map's own.** The map's information also lists the neighbouring maps' elements, marked by
+  a field the references name `on_current_map`: in the maps' information of the 11 captures before this session, 104 of
+  343 interactive elements and 92 of 232 stated ones, each of the 92 on another cell than the pack's, every other on the
+  pack's. The server answered nothing to a use of one, three times, from next to either cell; nor to one of an element
+  the map lacks. This was D60's unexplained silence.
+- **Refusals**, named `InteractiveUseErrorEvent` and pinned (D54): 28 ms after the request, nothing else; two for a use
+  from too far, the first naming the skill's id where the second names the instance's, five times; one for a skill the
+  element does not offer now, as a resource harvested, or an instance it does not know.
+- **A harvest** ends its duration later, in tenths of a second, to the millisecond, with the objects, the weight, the
+  profession's experience and the element's new state within 2 ms, in no set order; the client sends nothing, and walked
+  on 5 to 6 ms after. A walk sent during a harvest is refused, naming the character's cell, and the harvest goes on. A
+  door's use has no duration: the new map comes in the same millisecond (D76).
+
+So:
+
+- **The state** keeps the map's own elements (`CharacterState.Elements`, `MapElement`): which interactive each is, its
+  skills offered now and not, its cell and state, from the map's information and each update of an element it holds;
+  and the use the character is in (`Use`), from the server's start of a use that lasts to its end. Walking, changing
+  maps and using answer `Busy` during one.
+- **Where to stand** (`ElementCells`, in `D3B.Engine.Maps`): the client's cells, the walkable neighbours of the
+  element's cell in the character's zone, else the zone's walkable cells nearest it; the quickest of them is walked to.
+- **The behavior** (`ElementUse`, in `D3B.Bot.Interactives`): from the state, the element's skill and the id the server
+  gave it there, nothing sent when the map does not offer it; the walk (D69); the skill checked again, since another
+  actor may have started harvesting; then `InteractiveUseRequest`, the start or the refusal within 3 s, and the end
+  within the duration and 2 s. Outcomes (`UseOutcome`): used, busy, unavailable, no path, not walked, refused, no
+  answer, not ended. The objects come as the state takes them in, which may be just after the end.
+- **Rejected.**
+  - Standing as far as the skill's range allows: fishing from 10 cells is no more use than the client's cell, and it
+    would need the game's tables in the bots for the range, for nothing measured.
+  - Keeping the neighbouring maps' elements in the state, marked: nothing can be done with them from here, and their
+    stated cells are another map's.
+  - Waiting for the element's new state to end a harvest, so that the objects are in: the end, the objects and the state
+    come in no set order.
+  - Checking the line of sight before a use: measured not to count.
+
+## D76: Doors in the path through the world, their criteria answered strictly
+
+*2026-10-28, step 4, session 4c; the criteria chosen by the owner. Extends D71 and D73.*
+
+Measured on the world graph of 3.7.12.12 and the host's session of D75:
+
+- **Doors.** 5,237 of the graph's 5,506 interactive transitions use skill 184, "Utiliser"; the 269 others use 49 skills,
+  teleporters and the like, and open 42 more vertices. Every door's element stands on a cell of its map in the pack,
+  with 1 to 8 walkable neighbours in the transition's zone; 50 transitions name another cell than the element's, mostly
+  one that cannot be walked on. The server starts a door's use with no duration and names the new map in the same
+  millisecond; the client asks what is on it 545 to 627 ms later.
+- **Reached.** From the bank of Astrub, a subscribed character of level 200 holding nothing reaches 4,021 vertices
+  without doors and 5,607 with them, strictly; 533 without a subscription. 7 of the 10 banks are reached, each with a
+  door into it whose criterion the bot answers; quests close the doors of three other buildings at the same coordinates.
+- **What the unknown codes hold back**, each family counted as met: achievements, `OA`, 1,266 more vertices; `Sc` and
+  `SC`, whose meaning is not known, 550; quests, `Qa`, `Qf` and `Qo`, 248; others 41 or fewer; kamas, `PK`, and the
+  breed, `PG`, none. Every unknown code met: 8,283.
+
+So:
+
+- **The path** follows doors, the interactive transitions of skill 184 (`WorldPathfinder.DoorSkillId`), criteria
+  answered strictly as before (D71); the other interactive transitions stay out.
+- **Leaving by a door** (`WorldPathfinder.ExitCells`, `MapChange`): from the cells the element is used from (D75),
+  around its cell in the pack, a criterion on the cell answered for each; the walk, then the use of the skill the server
+  offers on the element, then the new map as after a map action (D73). Nothing is sent when the server offers no
+  door's skill on it; the refusal is `Refused`, which leaves the transition out of the journey (D74).
+- **No new fact in 4c.** The bot answers the codes it answered (D71). Q12 keeps the measurements, for the large effort
+  on criteria the owner noted.
+- **Measured through the host**: a journey of four changes into the bank of Astrub, its door among them, in 11 s, and
+  out by its map action.
+- **Benchmark** (D71's): with doors, a path 3 changes long in 2.9 µs, the farthest map in 370 µs, a map the search
+  cannot reach in 369 µs, 100 to 135 KB a search: twice D71's for the farthest, as the search explores more. A journey
+  still finds its path again after every change (D74).
+- **Rejected.**
+  - Quests or achievements read in 4c: new messages to measure and pin, and the meaning of each code, for vertices the
+    first milestone does not need. The owner chose to keep the doors strict.
+  - Every interactive transition: teleporters and the like, not measured, for 42 vertices.
+
+## D77: The bot sends nothing until the client drew the map
+
+*2026-10-28, step 4, session 4c. Supersedes in part D73: a map change is over once the character is placed.*
+
+- **Measured.** A door used as soon as the server named the new map, before the client asked what is on it: the server
+  took it, and the client asked for both maps' information in turn, the server answering the second only. The bot's next
+  walk, 55 s later, was never confirmed, though the server walked it; the player's next path was refused, naming that
+  walk's end, and the client walked again from there. With D73's walks shown 1 and 50 ms after a map's
+  information, never confirmed, a request the client must follow goes only once it has drawn the map.
+- **So** `BotContext.SendAsync` holds any request until half a second after the server last placed the character
+  (`BotActor.DrawDelay`), and `MapChange` no longer waits itself: the next request does. Behaviors send nothing before
+  the character is placed: where it stands is not known until then.
+- **Measured through the host**: the journey's walks went 533 to 549 ms after each new map's information, every one
+  confirmed.
+- **Rejected.**
+  - The delay in each behavior after a map change, as D73 had it: a behavior started after the player's own map change
+    would not wait.
+
+## D78: Mapping format 4
+
+*2026-10-28, step 4, session 4c*
+
+The readable protocol gains `InteractiveUseErrorEvent`, pinned for 3.7.12.12 (D54), and `on_current_map` on the map's
+elements (D75): 109 messages and 224 fields. `MappingFile.FormatVersion` is 4, `mapping-4.binpb`, 7,704 bytes, audited
+without failure; the 13 game connections captured decode through it, 6,483 frames, none misread.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -1877,4 +1993,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q11 | What does a plugin see of the bots' run time: `D3B.Bot` packed beside `D3B.Core`, or the bot's contracts (state, behaviors, observers) moved into `D3B.Core`, which plugins compile against (D22, D67)? | Before the first milestone publishes the package (step 6) |
-| Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? | Step 4c for the doors' criteria, then as each step needs them |
+| Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |

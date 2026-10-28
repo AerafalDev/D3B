@@ -9,16 +9,16 @@ public enum MapChangeOutcome
     /// <summary>The character is on another map than the step's destination, placed: the server sent it elsewhere.</summary>
     Elsewhere,
 
-    /// <summary>The character walks already, or where it stands is not known yet: nothing was sent.</summary>
+    /// <summary>The character walks already or uses an element, or where it stands is not known yet: nothing was sent.</summary>
     Busy,
 
-    /// <summary>The step does not leave where the character stands, or no cell it leaves from can be reached: nothing was sent.</summary>
+    /// <summary>The step does not leave where the character stands, no cell it leaves from can be reached, or the server offers no door's skill on its element: nothing was sent.</summary>
     NoPath,
 
     /// <summary>The walk to the cell the map is left from did not arrive (<see cref="WalkOutcome"/>).</summary>
     NotWalked,
 
-    /// <summary>The server refused the map change, and the character stays where it is.</summary>
+    /// <summary>The server refused the use of the door, and the character stays where it is.</summary>
     Refused,
 
     /// <summary>The server named no new map in time.</summary>

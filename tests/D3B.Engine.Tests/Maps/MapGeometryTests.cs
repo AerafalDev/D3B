@@ -91,6 +91,19 @@ public sealed class MapGeometryTests
     }
 
     [Fact]
+    public void TheDistanceCountsADiagonalAsOneStepAndTheOthersAsTwo()
+    {
+        const int cell = 20 * MapGeometry.Columns + 6;
+
+        Assert.Equal([2, 1, 2, 1, 2, 1, 2, 1], Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Distance(cell, MapGeometry.Neighbour(cell, direction))));
+        Assert.Equal(0, MapGeometry.Distance(cell, cell));
+
+        // The client's fishing measured in session 4c: from cell 388 to the element on 231, 11; from 243, 3.
+        Assert.Equal(11, MapGeometry.Distance(388, 231));
+        Assert.Equal(3, MapGeometry.Distance(243, 231));
+    }
+
+    [Fact]
     public void OnlyEastSouthWestAndNorthCrossBetweenTwoCells()
     {
         Assert.Equal([0, 2, 4, 6], Enumerable.Range(0, 8).Where(MapGeometry.IsAcross));

@@ -10,9 +10,10 @@ namespace D3B.Engine.World;
 /// <remarks>
 /// <para>
 /// A vertex is a zone of a map, the cells of which reach one another (D27). The search follows scrolls, scrolls with an
-/// action and map actions; interactive transitions, such as doors, are session 4c's, and zaaps 4e's (D64). A transition is
-/// followed only when its criterion is met (D71): what the character cannot be sure of closes it. A sub-area the client
-/// closes to accounts without a subscription is entered only by a subscribed account.
+/// action, map actions and doors, the interactive transitions used with <see cref="DoorSkillId"/>; the other interactive
+/// transitions are left out, and zaaps are session 4e's (D64). A transition is followed only when its criterion is met
+/// (D71): what the character cannot be sure of closes it. A sub-area the client closes to accounts without a subscription
+/// is entered only by a subscribed account.
 /// </para>
 /// <para>
 /// Every map change costs the same: the character walks across a map, then the client loads the next, a few seconds
@@ -26,6 +27,9 @@ namespace D3B.Engine.World;
 /// </remarks>
 public sealed class WorldPathfinder
 {
+    /// <summary>The skill a door is used with, "Utiliser": 5,237 of the graph's 5,506 interactive transitions name it.</summary>
+    public const int DoorSkillId = 184;
+
     private const int ChangeCost = 1;
 
     private readonly Criterion?[] _criteria;
@@ -84,17 +88,10 @@ public sealed class WorldPathfinder
             && (mapCell.LeavesMapTowards((direction + 1) % MapCell.DirectionCount) || mapCell.LeavesMapTowards((direction + MapCell.DirectionCount - 1) % MapCell.DirectionCount));
     }
 
-    private static int Distance(int from, int to)
+    private static bool IsFollowed(WorldTransition transition)
     {
-        var a = MapGeometry.PointOf(from);
-        var b = MapGeometry.PointOf(to);
-
-        return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
-    }
-
-    private static bool IsFollowedType(WorldTransitionType type)
-    {
-        return type is WorldTransitionType.Scroll or WorldTransitionType.ScrollAction or WorldTransitionType.MapAction;
+        return transition.Type is WorldTransitionType.Scroll or WorldTransitionType.ScrollAction or WorldTransitionType.MapAction
+            || (transition.Type is WorldTransitionType.Interactive && transition.SkillId == DoorSkillId);
     }
 
     private static int SourceOf(ReadOnlySpan<WorldEdge> edges, int transition)
@@ -188,18 +185,20 @@ public sealed class WorldPathfinder
         return path is not null;
     }
 
-    /// <summary>Finds the cells a step's map is left from: where to walk before asking for the next map, or the cell to step on.</summary>
-    /// <param name="cells">The cells of the step's map.</param>
+    /// <summary>Finds the cells a step's map is left from: where to walk before asking for the next map or using a door, or the cell to step on.</summary>
+    /// <param name="map">The step's map.</param>
     /// <param name="step">The step.</param>
     /// <param name="rules">What the character may follow: a criterion on the cell is answered for each.</param>
     /// <returns>The cells, none when no cell meets the transition's criterion.</returns>
     /// <remarks>
     /// <para>
-    /// A map action is left from its own cell. A scroll is left from any walkable cell of the zone on the map's edge in its
-    /// direction that the client marks as leaving it in that direction, or along a diagonal next to it but on a corner,
-    /// and from the transition's own cell, which lies on that edge. The client left from such cells, one marked only along
-    /// a diagonal among them; the server took a cell of the edge marked nowhere, and ignored a corner marked as leaving
-    /// by the other edge (client.md).
+    /// A map action is left from its own cell. A door is used from the cells the client uses an element from
+    /// (<see cref="ElementCells"/>), around the element's cell in the map's data; the transition names another cell for 50
+    /// of the graph's interactive transitions, mostly one that cannot be walked on. A scroll is left from any walkable cell
+    /// of the zone on the map's edge in its direction that the client marks as leaving it in that direction, or along a
+    /// diagonal next to it but on a corner, and from the transition's own cell, which lies on that edge. The client left
+    /// from such cells, one marked only along a diagonal among them; the server took a cell of the edge marked nowhere, and
+    /// ignored a corner marked as leaving by the other edge (client.md).
     /// </para>
     /// <para>
     /// Where several scrolls leave the zone in one direction, to several zones or maps, a cell leads where the nearest of
@@ -207,18 +206,27 @@ public sealed class WorldPathfinder
     /// scroll with an action is left from.
     /// </para>
     /// </remarks>
-    public IReadOnlyList<int> ExitCells(ReadOnlySpan<MapCell> cells, WorldStep step, WorldPathRules rules)
+    public IReadOnlyList<int> ExitCells(MapData map, WorldStep step, WorldPathRules rules)
     {
+        ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(rules);
 
-        if (cells.Length != MapData.CellCount)
-            throw new ArgumentException($"A map has {MapData.CellCount} cells, not {cells.Length}.", nameof(cells));
-
+        var cells = map.Cells.Span;
         var transition = step.Transition;
         var facts = PlaceOf(step.From, rules.Facts);
 
-        if (transition.Type is WorldTransitionType.MapAction or WorldTransitionType.Interactive)
+        if (transition.Type is WorldTransitionType.MapAction)
             return Answer(transition, facts with { Cell = transition.CellId }) is CriterionAnswer.True ? [transition.CellId] : [];
+
+        if (transition.Type is WorldTransitionType.Interactive)
+        {
+            var element = map.TryGetInteractive(transition.ElementId, out var interactive) && interactive.CellId != MapInteractive.NoCell
+                ? interactive.CellId
+                : transition.CellId;
+
+            return [.. ElementCells.UsedFrom(cells, element, Graph.Vertices.Span[step.From].Zone)
+                .Where(cell => Answer(transition, facts with { Cell = cell }) is CriterionAnswer.True)];
+        }
 
         var zone = Graph.Vertices.Span[step.From].Zone;
         var direction = transition.Direction;
@@ -258,7 +266,7 @@ public sealed class WorldPathfinder
             var index = edge.FirstTransition + i;
             var transition = transitions[i];
 
-            if (IsFollowedType(transition.Type) && !rules.Banned.Contains(index)
+            if (IsFollowed(transition) && !rules.Banned.Contains(index)
                 && (transition.CriterionId is WorldTransition.None || Answer(transition, PlaceOf(vertex, rules.Facts)) is CriterionAnswer.True))
             {
                 return index;
@@ -310,7 +318,7 @@ public sealed class WorldPathfinder
 
     private bool Leads(WorldStep step, List<(int Index, WorldTransition Transition)> rivals, int cell, CriterionFacts at)
     {
-        var distance = Distance(cell, step.Transition.CellId);
+        var distance = MapGeometry.Distance(cell, step.Transition.CellId);
 
         foreach (var (index, rival) in rivals)
         {
@@ -318,7 +326,7 @@ public sealed class WorldPathfinder
             if (Answer(rival, at) is CriterionAnswer.False)
                 continue;
 
-            var rivalDistance = Distance(cell, rival.CellId);
+            var rivalDistance = MapGeometry.Distance(cell, rival.CellId);
 
             if (rivalDistance < distance || (rivalDistance == distance && index < step.TransitionIndex))
                 return false;

@@ -65,6 +65,26 @@ public sealed class MapWalkTests
     }
 
     [Fact]
+    public async Task AWalkOnANewMapWaitsUntilTheClientDrewIt()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+
+        TestWalks.Arrive(connection, TestPlay.NorthMapId, 552);
+        await bot.ProcessedAsync();
+
+        var walk = bot.WalkAsync(300, TestContext.Current.CancellationToken);
+
+        play.Time.Advance(BotActor.DrawDelay - TimeSpan.FromMilliseconds(1));
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        Assert.Empty(connection.Sent);
+
+        play.Time.Advance(TimeSpan.FromMilliseconds(1));
+        Assert.IsType<MapMovementRequest>(await connection.SentAsync(1));
+        Assert.False(walk.IsCompleted);
+    }
+
+    [Fact]
     public async Task AnotherActorsWalkIsNoAnswer()
     {
         await using var play = new TestPlay();

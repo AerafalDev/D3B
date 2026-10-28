@@ -40,10 +40,10 @@ internal sealed class TestWorld
         return Add(from, 1, to, 1, new WorldTransition(WorldTransitionType.MapAction, WorldTransition.NoDirection, cell, WorldTransition.None, to, WorldTransition.None, Criterion(criterion)));
     }
 
-    /// <summary>A door: using an element of the map.</summary>
-    public TestWorld Interactive(long from, long to, int cell)
+    /// <summary>An interactive transition: using an element of the map, a door with skill 184.</summary>
+    public TestWorld Interactive(long from, long to, int cell, int skill = WorldPathfinder.DoorSkillId, string? criterion = null, int element = 515308)
     {
-        return Add(from, 1, to, 1, new WorldTransition(WorldTransitionType.Interactive, WorldTransition.NoDirection, cell, 184, to, 515308, WorldTransition.None));
+        return Add(from, 1, to, 1, new WorldTransition(WorldTransitionType.Interactive, WorldTransition.NoDirection, cell, skill, to, element, Criterion(criterion)));
     }
 
     public WorldGraph Graph()

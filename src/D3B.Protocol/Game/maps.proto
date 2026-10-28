@@ -84,6 +84,10 @@ message NpcActor {
 message InteractiveElement {
   option (d3b.readable.partial) = true;
 
+  // Whether the element is on this map. The map's information also lists elements of the neighbouring maps, whose cells
+  // are those of their own map: the server answers nothing to a use of one (D75).
+  bool on_current_map = 2;
+
   // The skills not offered now: a resource's, from the start of its harvest until it grows back.
   repeated InteractiveSkill disabled_skills = 3;
 
@@ -112,11 +116,14 @@ message InteractiveSkill {
 message StatedElement {
   option (d3b.readable.partial) = true;
 
+  // Whether the element is on this map, as InteractiveElement's, in the map's information; the server leaves it unset in
+  // the update of an element's state.
+  bool on_current_map = 2;
+
   // The element's id on its map, as the map's data holds it (D27).
   int32 element_id = 3;
 
-  // The element's cell: the one the map's data gives it, for the resources harvested in the captures; not for two other
-  // elements, which is not explained.
+  // The element's cell: the one the map's data gives it for every element on the map, its own map's for the others.
   int32 cell_id = 4;
 
   // In the captures: 0 in the map's information, 2 while a resource is being harvested, 1 once it is harvested.

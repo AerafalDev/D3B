@@ -1,3 +1,4 @@
+using D3B.Bot.Interactives;
 using D3B.Bot.Movement;
 using D3B.Data.World;
 using Microsoft.Extensions.Logging;
@@ -39,6 +40,12 @@ internal static partial class BotLog
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: map change over on map {Map}, {Outcome}")]
     public static partial void ChangedMap(ILogger logger, long character, long map, MapChangeOutcome outcome);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: uses element {Element} with skill {Skill}, from cell {Cell}")]
+    public static partial void Using(ILogger logger, long character, int element, int skill, int cell);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: use of element {Element} with skill {Skill} over, {Outcome}")]
+    public static partial void Used(ILogger logger, long character, int element, int skill, UseOutcome outcome);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: travels from map {From}, {Changes} map changes away")]
     public static partial void Travelling(ILogger logger, long character, long from, int changes);

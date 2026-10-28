@@ -9,10 +9,10 @@ import "Readable/options.proto";
 
 option csharp_namespace = "D3B.Protocol.Game";
 
-// Asks to use a skill of an element of the map, once the character stands near it: the client walks to the walkable
-// cell nearest the element that it can reach, 3 cells away in the captures, and the server accepted D3B's uses from 3
-// to 6 cells away (D60). It answers a use it refuses with events the readable protocol lacks, and one of an element the
-// map's data places elsewhere than its stated element does with nothing.
+// Asks to use a skill of an element of the map, from close enough: the server takes a use from no further than the
+// skill's range (D29) by the sum of the coordinates' differences, or from a neighbour of the element's cell, whatever
+// lies between (D75). It refuses one from too far, of a skill the element does not offer now, or of an instance id it
+// does not know, with InteractiveUseErrorEvent, and answers nothing to one of an element that is not on the map.
 message InteractiveUseRequest {
   // The skill's instance id, as the element's skills give it.
   int32 skill_instance_id = 1;
@@ -36,6 +36,18 @@ message InteractiveUsedEvent {
 
   // The skill's id in the client's tables (D29).
   int32 skill_id = 5;
+}
+
+// The server refuses a use, 28 ms after the request, and sends nothing else: one of these for a skill the element does
+// not offer now or an instance id it does not know; two for a use from too far, the first naming the skill's id in place
+// of the instance's (D75).
+message InteractiveUseErrorEvent {
+  option (d3b.readable.partial) = true;
+
+  int32 element_id = 2;
+
+  // The skill instance asked for.
+  int32 skill_instance_id = 3;
 }
 
 // An actor's use of an element is over.

@@ -1,3 +1,4 @@
+using D3B.Bot.Interactives;
 using D3B.Bot.Runtime;
 using D3B.Data.Maps;
 using D3B.Data.World;
@@ -16,24 +17,24 @@ namespace D3B.Bot.Movement;
 /// A map action is left by walking onto its cell, or one next to it: once the walk is confirmed, the server names the new
 /// map, then answers the confirmation. Either way, the client then asks what is on the new map, 0.6 to 1.3 s later, and
 /// the server answers within 101 ms, placing the character. D3B sends the walk and the request for the neighbour, never
-/// the request for the map's information, which the client sends itself (D60).
+/// the request for the map's information, which the client sends itself (D60). A door is used from a cell next to its
+/// element (<see cref="ElementUse"/>): the server starts the use, with no duration, and names the new map in the same
+/// millisecond; the client then asks what is on it, as after a scroll.
 /// </para>
 /// <para>
-/// The server answers nothing to a request it refuses: for the neighbour from a cell off its edge, for another map, or
+/// The server answers nothing to a request for the neighbour it refuses: from a cell off its edge, for another map, or
 /// once the character is on another map. The change then ends after its delay, 3 s for the new map; 10 s bound the wait
-/// for what is on it.
+/// for what is on it. It refuses a door's use from too far with an <see cref="InteractiveUseErrorEvent"/>.
 /// </para>
 /// <para>
-/// The change is over 500 ms after the character is placed: the client draws the new map then, and a walk the server
-/// shows it 1 or 50 ms after the map's information is never confirmed, though the server walks it; 100 ms and more after,
-/// every one was (client.md).
+/// The change is over once the character is placed. The client then draws the new map, which the bot's next request waits
+/// for (<see cref="BotContext.SendAsync"/>, D77).
 /// </para>
 /// </remarks>
 public static class MapChange
 {
     private static readonly TimeSpan _answerDelay = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan _placedDelay = TimeSpan.FromSeconds(10);
-    private static readonly TimeSpan _drawDelay = TimeSpan.FromMilliseconds(500);
 
     /// <summary>Follows one step of a path through the world, as the bot's behavior.</summary>
     /// <param name="bot">The bot.</param>
@@ -63,7 +64,7 @@ public static class MapChange
         var state = context.State;
         var world = context.World;
 
-        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking)
+        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking || state.IsUsing)
             return MapChangeOutcome.Busy;
 
         if (!context.Maps.TryGet(mapId, out var map) || !world.TryGetVertex(map, cell, out var vertex) || vertex != step.From
@@ -72,7 +73,7 @@ public static class MapChange
             return MapChangeOutcome.NoPath;
         }
 
-        var exits = world.ExitCells(map.Cells.Span, step, rules);
+        var exits = world.ExitCells(map, step, rules);
 
         if (!CellPathfinder.TryFindNearest(map.Cells.Span, cell, [.. exits], out var path))
             return MapChangeOutcome.NoPath;
@@ -81,9 +82,12 @@ public static class MapChange
 
         BotLog.ChangingMap(context.Log, state.Key.CharacterId, mapId, destination, step.Transition.Type, path.End);
 
-        var outcome = step.Transition.Type is WorldTransitionType.MapAction
-            ? await StepOnAsync(context, map, path, cancellationToken).ConfigureAwait(false)
-            : await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, cancellationToken).ConfigureAwait(false);
+        var outcome = step.Transition.Type switch
+        {
+            WorldTransitionType.MapAction => await StepOnAsync(context, map, path, cancellationToken).ConfigureAwait(false),
+            WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition, cancellationToken).ConfigureAwait(false),
+            _ => await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, cancellationToken).ConfigureAwait(false),
+        };
 
         if (outcome is MapChangeOutcome.Changed && context.State.MapId != destination)
             outcome = MapChangeOutcome.Elsewhere;
@@ -143,16 +147,36 @@ public static class MapChange
         return await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
     }
 
+    private static async Task<MapChangeOutcome> UseDoorAsync(BotContext context, long mapId, CellPath path, WorldTransition door, CancellationToken cancellationToken)
+    {
+        // The server names the door's skill on its element in the map's information: without it, nothing can be asked.
+        if (!context.State.Elements.TryGetValue(door.ElementId, out var element) || !element.TryGetEnabled(door.SkillId, out var skill))
+            return MapChangeOutcome.NoPath;
+
+        var (current, placed) = ExpectNewMap(context, mapId);
+
+        if (path.Steps > 0 && await context.WalkAsync(path.End, cancellationToken).ConfigureAwait(false) is not WalkOutcome.Arrived && context.State.MapId == mapId)
+            return MapChangeOutcome.NotWalked;
+
+        if (context.State.MapId == mapId)
+        {
+            var answer = context.Expect((side, message, _) => side is RelayDirection.FromServer
+                && (message is MapCurrentEvent || message is InteractiveUseErrorEvent error && error.ElementId == door.ElementId));
+
+            await context.SendAsync(ElementUse.Request(door.ElementId, skill), cancellationToken).ConfigureAwait(false);
+
+            if (await answer.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) is InteractiveUseErrorEvent)
+                return MapChangeOutcome.Refused;
+        }
+
+        return await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
+    }
+
     private static async Task<MapChangeOutcome> NewMapAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)
     {
         if (await current.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) is null)
             return MapChangeOutcome.NoAnswer;
 
-        if (await placed.WaitAsync(_placedDelay, cancellationToken).ConfigureAwait(false) is null)
-            return MapChangeOutcome.NotPlaced;
-
-        await Task.Delay(_drawDelay, context.Time, cancellationToken).ConfigureAwait(false);
-
-        return MapChangeOutcome.Changed;
+        return await placed.WaitAsync(_placedDelay, cancellationToken).ConfigureAwait(false) is null ? MapChangeOutcome.NotPlaced : MapChangeOutcome.Changed;
     }
 }

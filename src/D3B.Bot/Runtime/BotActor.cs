@@ -4,6 +4,7 @@ using D3B.Bot.Network;
 using D3B.Data.Maps;
 using D3B.Engine.World;
 using D3B.Network.Relay;
+using D3B.Protocol.Game;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 
@@ -27,6 +28,9 @@ namespace D3B.Bot.Runtime;
 /// </remarks>
 public sealed class BotActor : IAsyncDisposable
 {
+    /// <summary>How long the client takes to draw a map once the server placed the character on it (D77).</summary>
+    internal static readonly TimeSpan DrawDelay = TimeSpan.FromMilliseconds(500);
+
     private readonly Channel<Input> _inbox = Channel.CreateUnbounded<Input>(new UnboundedChannelOptions { SingleReader = true });
     private readonly List<GameExpectation> _expectations = [];
     private readonly ILogger _log;
@@ -42,6 +46,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile bool _connected;
     private volatile bool _paused;
     private volatile bool _acting;
+    private long _drawnAt;
 
     /// <summary>Gets who the bot plays.</summary>
     public CharacterKey Key { get; }
@@ -65,6 +70,9 @@ public sealed class BotActor : IAsyncDisposable
     internal TimeProvider Time { get; }
 
     internal ILogger Log => _log;
+
+    /// <summary>Gets when the client has drawn the map the server last placed the character on.</summary>
+    internal DateTimeOffset DrawnAt => new(Volatile.Read(ref _drawnAt), TimeSpan.Zero);
 
     internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, TimeProvider time, ILogger log)
     {
@@ -229,6 +237,9 @@ public sealed class BotActor : IAsyncDisposable
         var state = CharacterEvents.Apply(_state, side, message);
 
         _state = state;
+
+        if (side is RelayDirection.FromServer && message is MapInformationEvent information && information.MapId == state.MapId && state.Cell is not null)
+            Volatile.Write(ref _drawnAt, (Time.GetUtcNow() + DrawDelay).UtcTicks);
 
         if (side is RelayDirection.FromClient && _behavior is { } behavior && PlayerActions.Starts(message))
         {
