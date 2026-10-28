@@ -8,8 +8,9 @@ namespace D3B.Protocol.Mapping;
 /// the number the mapping gives, the same type, through the mapping for messages and enums, the same label and
 /// presence, and the same oneof: the members of a readable oneof are the members of one oneof of the counterpart, and
 /// no other readable oneof's. Every readable enum value must be a value of the counterpart. What the build has beyond
-/// the readable protocol is noted, not failed: a reader meets it as unknown fields. The mapping must also name the
-/// format, the schema and the readable protocol it is checked with.
+/// the readable protocol is noted, not failed: a reader meets it as unknown fields. A partial message leaves some of its
+/// counterpart's fields out on purpose, which is counted apart from the notes, so that a note is what a build added. The
+/// mapping must also name the format, the schema and the readable protocol it is checked with.
 /// </remarks>
 public static class ContractAudit
 {
@@ -25,6 +26,7 @@ public static class ContractAudit
 
         var failures = new List<string>();
         var notes = new List<string>();
+        var unread = new List<string>();
 
         if (mapping.FormatVersion != MappingFile.FormatVersion)
             failures.Add($"The mapping is of format {mapping.FormatVersion}, where this reader reads format {MappingFile.FormatVersion}.");
@@ -61,7 +63,7 @@ public static class ContractAudit
             }
 
             fields += message.Fields.InDeclarationOrder().Count;
-            AuditFields(message, counterpart, pair, messagePairs, enumPairs, failures, notes);
+            AuditFields(message, counterpart, pair, messagePairs, enumPairs, failures, Descriptors.IsPartial(message) ? unread : notes);
         }
 
         foreach (var type in enums)
@@ -110,7 +112,7 @@ public static class ContractAudit
         foreach (var pair in mapping.Enums.Where(pair => enums.All(type => type.FullName != pair.Readable)))
             failures.Add($"The mapping pairs {pair.Readable}, which the readable protocol lacks.");
 
-        return new AuditReport(failures, notes, messages.Count, fields, enums.Count, values);
+        return new AuditReport(failures, notes, unread, messages.Count, fields, enums.Count, values);
     }
 
     private static Dictionary<string, T> Index<T>(IEnumerable<(string Readable, string Obfuscated, T Pair)> pairs, string kind, List<string> failures)
@@ -208,7 +210,7 @@ public static class ContractAudit
         var extra = counterpart.Fields.InDeclarationOrder().Count(field => !paired.ContainsKey(field.FieldNumber));
 
         if (extra > 0)
-            notes.Add($"{message.FullName}: {extra} fields of {counterpart.FullName} have no readable counterpart.");
+            notes.Add($"{message.FullName}: {extra} of the {counterpart.Fields.InDeclarationOrder().Count} fields of {counterpart.FullName} have no readable counterpart.");
     }
 
     private static void AuditOneof(
@@ -253,6 +255,8 @@ public static class ContractAudit
     {
         return field.FieldType switch
         {
+            FieldType.Message or FieldType.Group when Descriptors.IsWellKnown(field.MessageType) => other.FieldType is FieldType.Message or FieldType.Group
+                && other.MessageType.FullName == field.MessageType.FullName,
             FieldType.Message or FieldType.Group => other.FieldType is FieldType.Message or FieldType.Group
                 && messagePairs.TryGetValue(field.MessageType.FullName, out var message)
                 && message.Obfuscated == other.MessageType.FullName,

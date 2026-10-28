@@ -8,7 +8,6 @@ using D3B.Data.World;
 using D3B.Protocol.Mapping;
 using D3B.Protocol.Tests.Mapping;
 using Google.Protobuf;
-using Google.Protobuf.Reflection;
 using Microsoft.Extensions.Hosting;
 
 namespace D3B.Bot.Tests;
@@ -73,14 +72,15 @@ internal sealed class TestInstall : IDisposable
         return stream.ToArray();
     }
 
-    /// <summary>The schema and mapping of a build: the readable protocol obfuscated as a client's is, then matched from its structure.</summary>
+    /// <summary>The schema and mapping of a build: the readable protocol obfuscated as a client's is, then matched from its structure and the pins of the game.</summary>
     /// <param name="clientVersion">The build the mapping names.</param>
     /// <param name="edit">Changes the mapping before it is serialized, such as to break it.</param>
     public static (byte[] Schema, byte[] Mapping) Protocol(string clientVersion = Version, Action<ProtocolMapping>? edit = null)
     {
-        var bytes = new FileDescriptorSet { File = { new Obfuscation(ReadableProtocol.Files).File } }.ToByteArray();
+        var obfuscation = new Obfuscation(ReadableProtocol.Files);
+        var bytes = obfuscation.SchemaBytes();
         var schema = ProtocolSchema.Load(bytes);
-        var mapping = new ProtocolMatcher(ReadableProtocol.Files, schema, ReadableProtocol.Scopes).Match(null, [])
+        var mapping = new ProtocolMatcher(ReadableProtocol.Files, schema, ReadableProtocol.Scopes).Match(obfuscation.Pins(Obfuscation.GamePayloads()), [])
             .ToMapping(clientVersion, schema.Sha256, ReadableProtocol.Digest, "0.0.0-test");
 
         edit?.Invoke(mapping);

@@ -66,6 +66,7 @@
   <Folder Name="/scripts/mapping/">
     <File Path="scripts/mapping/CaptureFrames.cs" />
     <File Path="scripts/mapping/MappingCommand.cs" />
+    <File Path="scripts/mapping/PinProposals.cs" />
   </Folder>
   <Folder Name="/scripts/release/">
     <File Path="scripts/release/GitHubCli.cs" />

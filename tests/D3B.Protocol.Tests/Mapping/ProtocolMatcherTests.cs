@@ -1,4 +1,5 @@
 using D3B.Protocol.Connection;
+using D3B.Protocol.Game;
 using D3B.Protocol.Mapping;
 using D3B.Protocol.Tests.Fixtures;
 using Google.Protobuf.Reflection;
@@ -12,9 +13,16 @@ public sealed class ProtocolMatcherTests
         ["d3b.fixture"] = ReadableProtocol.ConnectionSchemaFile,
     };
 
-    private static MatchResult MatchReadable(Obfuscation obfuscation, PinnedPairs? pins = null, IReadOnlyList<Anchor>? anchors = null)
+    private static readonly IReadOnlyList<FileDescriptor> _connection = [.. ReadableProtocol.Files.Where(file => file.Package == ReadableProtocol.ConnectionPackage)];
+
+    private static MatchResult MatchConnection(Obfuscation obfuscation)
     {
-        return new ProtocolMatcher(ReadableProtocol.Files, obfuscation.Schema(), ReadableProtocol.Scopes).Match(pins, anchors ?? []);
+        return new ProtocolMatcher(_connection, obfuscation.Schema(), ReadableProtocol.Scopes).Match(null, []);
+    }
+
+    private static MatchResult MatchReadable(Obfuscation obfuscation, PinnedPairs? pins = null)
+    {
+        return new ProtocolMatcher(ReadableProtocol.Files, obfuscation.Schema(), ReadableProtocol.Scopes).Match(pins, []);
     }
 
     private static MatchResult MatchFixture(Obfuscation obfuscation, PinnedPairs? pins = null)
@@ -28,10 +36,10 @@ public sealed class ProtocolMatcherTests
     }
 
     [Fact]
-    public void TheReadableProtocolMatchesItsObfuscationFromTheStructureAlone()
+    public void TheConnectionPhaseMatchesItsObfuscationFromTheStructureAlone()
     {
-        var obfuscation = new Obfuscation(ReadableProtocol.Files);
-        var result = MatchReadable(obfuscation);
+        var obfuscation = new Obfuscation(_connection);
+        var result = MatchConnection(obfuscation);
 
         Assert.Empty(result.Conflicts);
         Assert.Empty(result.Unpaired);
@@ -43,9 +51,55 @@ public sealed class ProtocolMatcherTests
     }
 
     [Fact]
-    public void EmptyMessagesArePairedOnlyThroughTheFieldsUsingThem()
+    public void TheGameMatchesItsObfuscationOnceTheMessagesItCarriesArePinned()
+    {
+        var obfuscation = new Obfuscation(ReadableProtocol.Files);
+        var result = MatchReadable(obfuscation, obfuscation.Pins(Obfuscation.GamePayloads()));
+
+        Assert.Empty(result.Conflicts);
+        Assert.Empty(result.Unpaired);
+        Assert.All(result.Messages, match => Assert.Equal(obfuscation.Of(match.Readable.FullName), match.Obfuscated.FullName));
+        Assert.Equal(MatchEvidence.Pin, Find(result, MapInformationEvent.Descriptor).Evidence);
+        Assert.Equal(MatchEvidence.Field, Find(result, Actor.Descriptor).Evidence);
+    }
+
+    [Fact]
+    public void TheGameLeavesTheMessagesItCarriesOpenWithoutPins()
     {
         var result = MatchReadable(new Obfuscation(ReadableProtocol.Files));
+
+        Assert.Empty(result.Conflicts);
+        Assert.Contains(ContextDestroyEvent.Descriptor.FullName, result.Unpaired);
+        Assert.Contains(CharacterListRequest.Descriptor.FullName, result.Unpaired);
+    }
+
+    [Fact]
+    public void AWellKnownTypeIsItsOwnCounterpartAndNoPair()
+    {
+        var obfuscation = new Obfuscation(ReadableProtocol.Files);
+        var result = MatchReadable(obfuscation, obfuscation.Pins(Obfuscation.GamePayloads()));
+
+        Assert.Equal([(1, 1), (2, 2)], Find(result, GameRequest.Descriptor).Fields);
+        Assert.DoesNotContain(result.Messages, match => match.Readable.File.Package == "google.protobuf");
+    }
+
+    [Fact]
+    public void AWellKnownTypeFacingAnotherTypeIsAConflict()
+    {
+        var obfuscation = new Obfuscation(ReadableProtocol.Files);
+        var content = obfuscation.Message(GameRequest.Descriptor.FullName).Field.Single(field => field.Number == GameRequest.ContentFieldNumber);
+
+        content.TypeName = "." + obfuscation.Of(GameEvent.Descriptor.FullName);
+
+        var result = MatchReadable(obfuscation, obfuscation.Pins(Obfuscation.GamePayloads()));
+
+        Assert.Contains(result.Conflicts, conflict => conflict.Contains("google.protobuf.Any", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void EmptyMessagesArePairedOnlyThroughTheFieldsUsingThem()
+    {
+        var result = MatchConnection(new Obfuscation(_connection));
 
         Assert.Equal(MatchEvidence.Field, Find(result, Ping.Descriptor).Evidence);
         Assert.Equal(MatchEvidence.Field, Find(result, Pong.Descriptor).Evidence);
@@ -55,11 +109,11 @@ public sealed class ProtocolMatcherTests
     [Fact]
     public void AnchorsComeBeforeFieldsAndScores()
     {
-        var obfuscation = new Obfuscation(ReadableProtocol.Files);
+        var obfuscation = new Obfuscation(_connection);
         var schema = obfuscation.Schema();
         var root = schema.FindMessage(obfuscation.Of(ConnectionMessage.Descriptor.FullName))!;
         var anchors = new[] { new Anchor(ConnectionMessage.Descriptor, root, [(1, 1), (2, 2)]) };
-        var result = new ProtocolMatcher(ReadableProtocol.Files, schema, ReadableProtocol.Scopes).Match(null, anchors);
+        var result = new ProtocolMatcher(_connection, schema, ReadableProtocol.Scopes).Match(null, anchors);
 
         Assert.Empty(result.Unpaired);
         Assert.Equal(MatchEvidence.Capture, Find(result, ConnectionMessage.Descriptor).Evidence);

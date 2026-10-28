@@ -6,7 +6,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Connection/*.proto;Mapping/*.proto" ProtoRoot="." GrpcServices="None" />
+    <Protobuf Include="Connection/*.proto;Game/*.proto;Mapping/*.proto;Readable/*.proto" ProtoRoot="." GrpcServices="None" />
   </ItemGroup>
 
   <ItemGroup>

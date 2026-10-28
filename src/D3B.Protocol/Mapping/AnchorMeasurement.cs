@@ -20,12 +20,16 @@ public sealed class AnchorMeasurement
     /// <summary>Gets the anchors, one per readable message the frames paired.</summary>
     public IReadOnlyList<Anchor> Anchors { get; }
 
+    /// <summary>Gets the messages the frames carry in an <c>Any</c>, by the type URLs naming them, in the schema's order.</summary>
+    public IReadOnlyList<CapturedPayload> Payloads { get; }
+
     /// <summary>Gets what contradicts the plan the captures were read with; an anchor it touches is left out.</summary>
     public IReadOnlyList<string> Problems { get; }
 
-    internal AnchorMeasurement(int frames, MessageDescriptor? root, int rootTyped, int nextTyped, IReadOnlyList<Anchor> anchors, IReadOnlyList<string> problems)
+    internal AnchorMeasurement(int frames, MessageDescriptor? root, int rootTyped, int nextTyped, IReadOnlyList<Anchor> anchors, IReadOnlyList<CapturedPayload> payloads, IReadOnlyList<string> problems)
     {
         ArgumentNullException.ThrowIfNull(anchors);
+        ArgumentNullException.ThrowIfNull(payloads);
         ArgumentNullException.ThrowIfNull(problems);
 
         Frames = frames;
@@ -33,6 +37,7 @@ public sealed class AnchorMeasurement
         RootTyped = rootTyped;
         NextTyped = nextTyped;
         Anchors = anchors;
+        Payloads = payloads;
         Problems = problems;
     }
 }

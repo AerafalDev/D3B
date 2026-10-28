@@ -1,0 +1,99 @@
+// The character's inventory: its objects and kamas, which the server sends on entering the game, then each change, and
+// its weight.
+syntax = "proto3";
+
+package d3b.game;
+
+import "Readable/options.proto";
+
+option csharp_namespace = "D3B.Protocol.Game";
+
+// Every object the character carries, and its kamas, sent on entering the game.
+message InventoryContentEvent {
+  option (d3b.readable.partial) = true;
+
+  repeated InventoryObject objects = 2;
+  int64 kamas = 4;
+}
+
+// A stack of objects, where it is.
+message InventoryObject {
+  option (d3b.readable.partial) = true;
+
+  ObjectItem item = 1;
+
+  // Where the stack is: 63 for every object not worn in the captures; the inventory lists the worn ones first, at other
+  // positions, one of each.
+  int32 position = 4;
+}
+
+// A stack of objects, as the inventory and the bank hold it.
+message ObjectItem {
+  option (d3b.readable.partial) = true;
+
+  int32 quantity = 3;
+
+  // The item's id in the client's tables (D29).
+  int32 item_id = 4;
+
+  // The stack's own id, which the requests moving it name.
+  int32 uid = 5;
+}
+
+// A new stack in the inventory, as a harvest gives one.
+message ObjectAddedEvent {
+  option (d3b.readable.partial) = true;
+
+  InventoryObject object = 2;
+}
+
+// A stack of the inventory has a new quantity, as a harvest adding to it gives.
+message ObjectQuantityEvent {
+  option (d3b.readable.partial) = true;
+
+  ObjectQuantity object = 3;
+}
+
+// A stack's new quantity.
+message ObjectQuantity {
+  option (d3b.readable.partial) = true;
+
+  int32 quantity = 1;
+  int32 uid = 3;
+}
+
+// Stacks gone from the inventory, as when they are put in the bank.
+message ObjectsDeletedEvent {
+  repeated int32 uids = 1;
+}
+
+// What the character obtained, as a harvest's resources: sent with the inventory's change.
+message ObjectObtainedEvent {
+  // Four values in this build; no capture sets it.
+  Origin origin = 1;
+
+  int32 quantity = 2;
+
+  // The item's id in the client's tables (D29).
+  int32 item_id = 3;
+
+  enum Origin {
+    ORIGIN_VALUE_0 = 0;
+    ORIGIN_VALUE_1 = 1;
+    ORIGIN_VALUE_2 = 2;
+    ORIGIN_VALUE_3 = 3;
+  }
+}
+
+// The kamas the character carries now.
+message KamasUpdateEvent {
+  option (d3b.readable.partial) = true;
+
+  int64 kamas = 2;
+}
+
+// The weight the character carries, in pods, and the most it can.
+message InventoryWeightEvent {
+  int32 weight = 1;
+  int32 max_weight = 2;
+}

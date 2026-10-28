@@ -1,10 +1,12 @@
 using System.Buffers;
 using D3B.Network.Tests;
 using D3B.Protocol.Connection;
+using D3B.Protocol.Game;
 using D3B.Protocol.Mapping;
 using D3B.Protocol.Tests.Mapping;
 using D3B.Protocol.Translation;
 using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 
 namespace D3B.Protocol.Tests.Translation;
 
@@ -16,7 +18,7 @@ public sealed class ProtocolTranslationTests
     private static ProtocolTranslation Translate(Action<Obfuscation>? change = null, Action<Obfuscation, ProtocolMapping>? edit = null)
     {
         var obfuscation = new Obfuscation(ReadableProtocol.Files);
-        var mapping = new ProtocolMatcher(ReadableProtocol.Files, obfuscation.Schema(), ReadableProtocol.Scopes).Match(null, [])
+        var mapping = new ProtocolMatcher(ReadableProtocol.Files, obfuscation.Schema(), ReadableProtocol.Scopes).Match(obfuscation.Pins(Obfuscation.GamePayloads()), [])
             .ToMapping(Version, obfuscation.Schema().Sha256, ReadableProtocol.Digest, "test");
 
         change?.Invoke(obfuscation);
@@ -27,6 +29,24 @@ public sealed class ProtocolTranslationTests
         mapping.SchemaSha256 = ByteString.CopyFrom([.. schema.Sha256]);
 
         return ProtocolTranslation.Create(schema, mapping);
+    }
+
+    private static int Count(Google.Protobuf.Reflection.MessageDescriptor message)
+    {
+        return 1 + message.NestedTypes.Sum(Count);
+    }
+
+    /// <summary>A game frame carrying a message as the build's do: its type URL names the obfuscated message, its value is extra bytes appended.</summary>
+    private static ReadOnlySequence<byte> GameEventFrame(IMessage content, string? typeName = null, byte[]? extra = null)
+    {
+        var obfuscation = new Obfuscation(ReadableProtocol.Files);
+        var any = new Any
+        {
+            TypeUrl = "type.ankama.com/" + (typeName ?? obfuscation.Of(content.Descriptor.FullName)),
+            Value = ByteString.CopyFrom([.. content.ToByteArray(), .. extra ?? []]),
+        };
+
+        return new ReadOnlySequence<byte>(new GameMessage { Event = new GameEvent { Content = any } }.ToByteArray());
     }
 
     private static ConnectionMessage ServerSelection()
@@ -51,7 +71,7 @@ public sealed class ProtocolTranslationTests
 
         Assert.Equal(Version, translation.ClientVersion);
         Assert.True(translation.Audit.Passed);
-        Assert.Equal(37, translation.Audit.Messages);
+        Assert.Equal(ReadableProtocol.Files.Sum(file => file.MessageTypes.Sum(Count)), translation.Audit.Messages);
     }
 
     [Fact]
@@ -122,5 +142,64 @@ public sealed class ProtocolTranslationTests
         Assert.False(decoded.IsUnderstood);
         Assert.Null(decoded.Message);
         Assert.StartsWith("it is no connection message: ", decoded.Problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AGameFrameIsReadThroughTheMessageItsTypeUrlNames()
+    {
+        var current = new MapCurrentEvent { MapId = 188 };
+        var decoded = Translate().DecodeGame(GameEventFrame(current));
+
+        Assert.True(decoded.IsUnderstood, decoded.Problem);
+        Assert.True(decoded.IsRead);
+        Assert.Equal(MapCurrentEvent.Descriptor, decoded.ReadableType);
+        Assert.Equal(current, decoded.Content);
+    }
+
+    [Fact]
+    public void AFrameOfAPartialMessageHoldingWhatItLeavesOutIsReadNotUnderstood()
+    {
+        // Field 20 of the map's information, a varint of 1, its tag in two bytes: the readable message leaves it out on purpose.
+        var information = new MapInformationEvent { MapId = 188, SubAreaId = 5 };
+        var decoded = Translate().DecodeGame(GameEventFrame(information, extra: [0xA0, 0x01, 0x01]));
+
+        Assert.True(decoded.IsRead);
+        Assert.False(decoded.IsUnderstood);
+        Assert.Equal(information, decoded.Content);
+        Assert.Contains("encodes back to", decoded.Problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AGameFrameCarryingAMessageTheReadableProtocolLacksIsNotRead()
+    {
+        var decoded = Translate().DecodeGame(GameEventFrame(new MapCurrentEvent { MapId = 1 }, "unknown"));
+
+        Assert.False(decoded.IsRead);
+        Assert.False(decoded.IsUnderstood);
+        Assert.NotNull(decoded.Envelope);
+        Assert.Equal("unknown", decoded.CarriedType);
+        Assert.Null(decoded.ReadableType);
+        Assert.Equal("it carries .unknown, which the readable protocol lacks.", decoded.Problem);
+    }
+
+    [Fact]
+    public void AGameRequestCarryingNothingIsUnderstood()
+    {
+        var bytes = new GameMessage { Request = new GameRequest { Id = -1 } }.ToByteArray();
+        var decoded = Translate().DecodeGame(new ReadOnlySequence<byte>(bytes));
+
+        Assert.True(decoded.IsUnderstood, decoded.Problem);
+        Assert.False(decoded.IsRead);
+        Assert.Null(decoded.CarriedType);
+    }
+
+    [Fact]
+    public void BytesThatAreNoGameMessageHaveNoEnvelope()
+    {
+        var decoded = Translate().DecodeGame(new ReadOnlySequence<byte>([0x12, 0x7F, 0x01]));
+
+        Assert.False(decoded.IsRead);
+        Assert.Null(decoded.Envelope);
+        Assert.StartsWith("it is no game message: ", decoded.Problem, StringComparison.Ordinal);
     }
 }

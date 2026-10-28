@@ -1,0 +1,124 @@
+// The map a character is on: which map, what stands on it, and its interactive elements. The server names the map on
+// entering the game, the client asks for what is on it, and the server answers.
+syntax = "proto3";
+
+package d3b.game;
+
+import "Readable/options.proto";
+
+option csharp_namespace = "D3B.Protocol.Game";
+
+// The map the character is now on: the server sends it on entering the game, before the client asks what is on it.
+message MapCurrentEvent {
+  int64 map_id = 1;
+}
+
+// Asks what is on a map: the client sends it for the map the server named.
+message MapInformationRequest {
+  int64 map_id = 1;
+}
+
+// What is on a map, the answer to the request: who stands where, and the map's elements.
+message MapInformationEvent {
+  option (d3b.readable.partial) = true;
+
+  repeated StatedElement stated_elements = 2;
+  repeated Actor actors = 3;
+  repeated InteractiveElement interactive_elements = 7;
+  int64 map_id = 10;
+  int32 sub_area_id = 12;
+}
+
+// Someone on the map: the character itself, another player, an NPC or a group of monsters.
+message Actor {
+  // The character's own id, as the character choice gave it, for the character itself; negative for an NPC.
+  int64 id = 1;
+
+  ActorDisposition disposition = 2;
+  ActorInformation information = 3;
+}
+
+// Where an actor stands.
+message ActorDisposition {
+  option (d3b.readable.partial) = true;
+
+  optional int32 cell_id = 3;
+}
+
+// What an actor is.
+message ActorInformation {
+  option (d3b.readable.partial) = true;
+
+  oneof kind {
+    RoleplayActor roleplay = 1;
+  }
+}
+
+// An actor out of a fight.
+message RoleplayActor {
+  option (d3b.readable.partial) = true;
+
+  oneof kind {
+    NamedActor named = 3;
+    NpcActor npc = 4;
+  }
+}
+
+// A player's character, or another actor with a name.
+message NamedActor {
+  option (d3b.readable.partial) = true;
+
+  string name = 5;
+}
+
+// A non-player character.
+message NpcActor {
+  option (d3b.readable.partial) = true;
+
+  // The NPC's id in the client's tables, as the references read it: the one number every NPC captured sets.
+  int32 npc_id = 7;
+}
+
+// An interactive element of the map, and the skills it offers: which interactive it is, the server says, not the
+// client's data (D29).
+message InteractiveElement {
+  option (d3b.readable.partial) = true;
+
+  // The skills not offered now: a resource's, from the start of its harvest until it grows back.
+  repeated InteractiveSkill disabled_skills = 3;
+
+  // The interactive's id in the client's table, or -1, which the table lacks.
+  int32 interactive_id = 4;
+
+  // The skills offered now.
+  repeated InteractiveSkill enabled_skills = 5;
+
+  // The element's id on its map, as the map's data holds it (D27).
+  int32 element_id = 6;
+}
+
+// A skill an interactive element offers.
+message InteractiveSkill {
+  option (d3b.readable.partial) = true;
+
+  // The id the client uses to ask for the skill on this element.
+  int32 instance_id = 1;
+
+  // The skill's id in the client's table (D29).
+  int32 skill_id = 3;
+}
+
+// An element of the map with a state, such as a resource harvested or not.
+message StatedElement {
+  option (d3b.readable.partial) = true;
+
+  // The element's id on its map, as the map's data holds it (D27).
+  int32 element_id = 3;
+
+  // The element's cell: the one the map's data gives it, for the resources harvested in the captures; not for two other
+  // elements, which is not explained.
+  int32 cell_id = 4;
+
+  // In the captures: 0 in the map's information, 2 while a resource is being harvested, 1 once it is harvested.
+  int32 state = 5;
+}

@@ -219,10 +219,17 @@ internal sealed class MatchState
             if (!SameShape(field, counterpart))
                 continue;
 
-            if (field.FieldType is FieldType.Message or FieldType.Group)
-                Pair(field.MessageType, counterpart.MessageType, MatchEvidence.Field);
-            else if (field.FieldType is FieldType.Enum)
+            if (field.FieldType is FieldType.Enum)
+            {
                 Pair(field.EnumType, counterpart.EnumType, MatchEvidence.Field);
+            }
+            else if (field.FieldType is FieldType.Message or FieldType.Group)
+            {
+                if (!Descriptors.IsWellKnown(field.MessageType) && !Descriptors.IsWellKnown(counterpart.MessageType))
+                    Pair(field.MessageType, counterpart.MessageType, MatchEvidence.Field);
+                else if (field.MessageType.FullName != counterpart.MessageType.FullName)
+                    Conflict($"Field {field.FieldNumber} of {readable.FullName} is {field.MessageType.FullName}, and its counterpart, field {counterpart.FieldNumber} of {obfuscated.FullName}, {counterpart.MessageType.FullName}.");
+            }
         }
     }
 }

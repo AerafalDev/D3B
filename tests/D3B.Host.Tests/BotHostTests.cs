@@ -6,6 +6,7 @@ using D3B.Core.Modules;
 using D3B.Data.Releases;
 using D3B.Data.Tests.Releases;
 using D3B.Network.Relay;
+using D3B.Protocol.Mapping;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -44,7 +45,8 @@ public sealed class BotHostTests : IDisposable
 
         Assert.Equal(0, exitCode);
         Assert.Contains(_log.GetSnapshot(), record => record.Message == $"Opened the pack of client {TestInstall.Version}, format 3: {_install.PackPath}");
-        Assert.Contains(_log.GetSnapshot(), record => record.Message == $"Loaded the mapping of client {TestInstall.Version}, format 1: 37 messages, 92 fields, 9 enums and 60 values audited, {_install.MappingPath}");
+        Assert.Contains(_log.GetSnapshot(), record => record.Message.StartsWith($"Loaded the mapping of client {TestInstall.Version}, format {MappingFile.FormatVersion}: ", StringComparison.Ordinal)
+            && record.Message.EndsWith($" values audited, {_install.MappingPath}", StringComparison.Ordinal));
         Assert.Contains(_log.GetSnapshot(), IsStarted);
         Assert.Contains(_log.GetSnapshot(), record => record.Message.StartsWith("Clients reach D3B: their configuration sends localhost to 127.0.13.59", StringComparison.Ordinal));
         Assert.EndsWith($"ConfigUrl={_install.ConfigUrl}\n", File.ReadAllText(_install.VersionFile), StringComparison.Ordinal);

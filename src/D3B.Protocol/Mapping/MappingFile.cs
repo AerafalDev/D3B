@@ -12,7 +12,7 @@ namespace D3B.Protocol.Mapping;
 public static class MappingFile
 {
     /// <summary>The format the mapping tool writes and the host reads.</summary>
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
 
     /// <summary>Gets the file name of a mapping of <see cref="FormatVersion"/>.</summary>
     public static string FileName => $"mapping-{FormatVersion}.binpb";

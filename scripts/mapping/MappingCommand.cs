@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.CommandLine;
 using System.Diagnostics;
 using System.Globalization;
@@ -7,6 +8,7 @@ using D3B.Data;
 using D3B.Data.Packs;
 using D3B.Network.Relay;
 using D3B.Protocol.Mapping;
+using D3B.Protocol.Readable;
 using D3B.Protocol.Translation;
 using D3B.Scripts.Unity;
 using Google.Protobuf;
@@ -37,7 +39,7 @@ internal static class MappingCommand
         };
         var captures = new Option<string[]>("--captures")
         {
-            Description = @"Captures of the build, files or directories, which the anchors are measured in. Defaults to %LOCALAPPDATA%\D3B\captures.",
+            Description = @"Captures of the build, which the anchors are measured in: directories as the host writes them, the game's in their game directory, or files. Defaults to %LOCALAPPDATA%\D3B\captures.",
             AllowMultipleArgumentsPerToken = true,
         };
         var withoutCaptures = new Option<bool>("--without-captures")
@@ -135,6 +137,8 @@ internal static class MappingCommand
             : $"Pins: {pinsPath}, {pins.Messages.Count} messages and {pins.Enums.Count} enums");
 
         var anchors = new List<Anchor>();
+        var payloads = new List<CapturedPayload>();
+        var game = new List<CapturedConnection>();
 
         if (capturePaths.Length is 0)
         {
@@ -142,26 +146,12 @@ internal static class MappingCommand
         }
         else
         {
-            var connections = CaptureFrames.Read(capturePaths, build.Version, out var skipped);
-            var file = schema.FindFile(ReadableProtocol.ConnectionSchemaFile)
-                ?? throw new InvalidDataException($"The schema has no {ReadableProtocol.ConnectionSchemaFile}.");
-            var measurement = CaptureAnchors.Measure(connections, file, ReadableProtocol.ConnectionAnchors);
+            var (connection, captured) = CaptureFrames.Read(capturePaths, build.Version, out var skipped);
 
-            Console.WriteLine($"Captures: {connections.Count} of client {build.Version}, {skipped} skipped, {measurement.Frames} frames");
-
-            if (measurement.Root is not null)
-            {
-                Console.WriteLine($"  root: .{measurement.Root.FullName} reads every frame and types {measurement.RootTyped} fields, the next {(measurement.NextTyped < 0 ? "none" : measurement.NextTyped.ToString(CultureInfo.InvariantCulture))}");
-                Console.WriteLine($"  anchors: {measurement.Anchors.Count} messages, {measurement.Anchors.Sum(anchor => anchor.Fields.Count)} fields: {string.Join(", ", measurement.Anchors.Select(anchor => anchor.Readable.Name))}");
-            }
-
-            foreach (var problem in measurement.Problems)
-                Console.WriteLine($"  problem: {problem}");
-
-            // No frame means no anchor, which matching does without; a frame contradicting the plan means the plan or the
-            // client changed, and must be looked at before a mapping is trusted.
-            failed |= measurement.Frames > 0 && measurement.Problems.Count > 0;
-            anchors.AddRange(measurement.Anchors);
+            Console.WriteLine($"Captures: {connection.Count} of the connection phase and {captured.Count} of the game, of client {build.Version}; {skipped} skipped");
+            failed |= !Measure("Connection phase", connection, schema, ReadableProtocol.ConnectionSchemaFile, ReadableProtocol.ConnectionAnchors, anchors, payloads);
+            failed |= !Measure("Game", captured, schema, ReadableProtocol.GameSchemaFile, ReadableProtocol.GameAnchors, anchors, payloads);
+            game = captured;
         }
 
         var matcher = new ProtocolMatcher(ReadableProtocol.Files, schema, ReadableProtocol.Scopes);
@@ -175,8 +165,8 @@ internal static class MappingCommand
         foreach (var match in result.Enums.Where(match => match.Score is not null))
             Console.WriteLine($"  scored: {match.Readable.FullName} is .{match.Obfuscated.FullName}, {match.Score:F2}");
 
-        foreach (var unpaired in result.Unpaired)
-            Console.WriteLine($"  unpaired: {unpaired}");
+        foreach (var proposal in PinProposals.For(result, schema, payloads))
+            Console.WriteLine($"  unpaired: {proposal}");
 
         foreach (var conflict in result.Conflicts)
             Console.WriteLine($"  conflict: {conflict}");
@@ -187,13 +177,25 @@ internal static class MappingCommand
         var mapping = result.ToMapping(build.Version, schema.Sha256, ReadableProtocol.Digest, tool);
         var audit = ContractAudit.Audit(ReadableProtocol.Files, schema, mapping);
 
-        Console.WriteLine($"Audit: {audit.Messages} messages, {audit.Fields} fields, {audit.Enums} enums and {audit.Values} values checked; {audit.Failures.Count} failures, {audit.Notes.Count} notes");
+        Console.WriteLine($"Audit: {audit.Messages} messages, {audit.Fields} fields, {audit.Enums} enums and {audit.Values} values checked; {audit.Failures.Count} failures, {audit.Notes.Count} notes, {audit.Unread.Count} partial messages");
 
         foreach (var failure in audit.Failures)
             Console.WriteLine($"  failure: {failure}");
 
         foreach (var note in audit.Notes)
             Console.WriteLine($"  note: {note}");
+
+        foreach (var line in audit.Unread)
+            Console.WriteLine($"  partial: {line}");
+
+        // The bot builds what the client sends, whole: a message the captures show the client sending cannot be partial.
+        var carriedByClient = payloads.Where(payload => payload.FromClient > 0).Select(payload => payload.Message).ToHashSet();
+
+        foreach (var match in result.Messages.Where(match => carriedByClient.Contains(match.Obfuscated) && match.Readable.GetOptions()?.GetExtension(OptionsExtensions.Partial) is true))
+        {
+            Console.WriteLine($"  failure: {match.Readable.FullName} is partial, and the captures show the client sending it.");
+            failed = true;
+        }
 
         // The host refuses these too (D47): a mapping it would not start on is not written.
         var renumbered = ProtocolTranslation.Renumbered(mapping);
@@ -221,7 +223,54 @@ internal static class MappingCommand
         Console.WriteLine($"Mapping: {path}, {bytes.Length:N0} bytes, format {MappingFile.FormatVersion}, in {stopwatch.Elapsed.TotalSeconds:F1} s");
         Console.WriteLine($"SHA-256: {Convert.ToHexStringLower(SHA256.HashData(bytes))}");
 
+        if (game.Count > 0)
+            Translate(ProtocolTranslation.Create(schema, mapping), game);
+
         return 0;
+    }
+
+    /// <summary>Measures the anchors of one connection's captures, and says whether nothing contradicts the plan.</summary>
+    private static bool Measure(string title, List<CapturedConnection> connections, ProtocolSchema schema, string fileName, AnchorPlan plan, List<Anchor> anchors, List<CapturedPayload> payloads)
+    {
+        var file = schema.FindFile(fileName) ?? throw new InvalidDataException($"The schema has no {fileName}.");
+        var measurement = CaptureAnchors.Measure(connections, file, plan);
+
+        Console.WriteLine($"  {title}: {connections.Count} captures, {measurement.Frames} frames");
+
+        if (measurement.Root is not null)
+        {
+            Console.WriteLine($"    root: .{measurement.Root.FullName} reads every frame and types {measurement.RootTyped} fields, the next {(measurement.NextTyped < 0 ? "none" : measurement.NextTyped.ToString(CultureInfo.InvariantCulture))}");
+            Console.WriteLine($"    anchors: {measurement.Anchors.Count} messages, {measurement.Anchors.Sum(anchor => anchor.Fields.Count)} fields: {string.Join(", ", measurement.Anchors.Select(anchor => anchor.Readable.Name))}");
+        }
+
+        if (measurement.Payloads.Count > 0)
+            Console.WriteLine($"    carried: {measurement.Payloads.Count} messages in an Any, {measurement.Payloads.Count(payload => payload.FromClient > 0)} by the client and {measurement.Payloads.Count(payload => payload.FromServer > 0)} by the server, each read whole as its type URL names it");
+
+        foreach (var problem in measurement.Problems)
+            Console.WriteLine($"    problem: {problem}");
+
+        anchors.AddRange(measurement.Anchors);
+        payloads.AddRange(measurement.Payloads);
+
+        // No frame means no anchor, which matching does without; a frame contradicting the plan means the plan or the
+        // client changed, and must be looked at before a mapping is trusted.
+        return measurement.Frames is 0 || measurement.Problems.Count is 0;
+    }
+
+    /// <summary>Decodes every frame of the game's captures through the mapping just written, as the host would (D47).</summary>
+    private static void Translate(ProtocolTranslation translation, List<CapturedConnection> game)
+    {
+        var frames = game.SelectMany(connection => connection.ClientFrames.Concat(connection.ServerFrames)).ToList();
+        var decoded = frames.Select(frame => translation.DecodeGame(new ReadOnlySequence<byte>(frame))).ToList();
+        var understood = decoded.Count(frame => frame.IsUnderstood);
+        var read = decoded.Count(frame => frame.IsRead && !frame.IsUnderstood);
+        var lacking = decoded.Where(frame => frame.CarriedType is not null && frame.ReadableType is null).Select(frame => frame.CarriedType).ToList();
+        var misread = decoded.Where(frame => !frame.IsUnderstood && !frame.IsRead && (frame.CarriedType is null || frame.ReadableType is not null)).ToList();
+
+        Console.WriteLine($"Translation: {frames.Count} game frames, {understood} understood whole, {read} more read, {lacking.Count} carrying one of {lacking.Distinct().Count()} messages the readable protocol lacks, {misread.Count} not understood");
+
+        foreach (var problem in misread.Select(frame => frame.Problem).Distinct().Take(10))
+            Console.WriteLine($"  not understood: {problem}");
     }
 
     private static string Evidence(IEnumerable<MatchEvidence> evidence)

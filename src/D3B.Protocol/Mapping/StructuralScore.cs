@@ -53,6 +53,9 @@ internal static class StructuralScore
 
         if (readable.FieldType is FieldType.Message or FieldType.Group)
         {
+            if (Descriptors.IsWellKnown(readable.MessageType) || Descriptors.IsWellKnown(obfuscated.MessageType))
+                return readable.MessageType.FullName == obfuscated.MessageType.FullName ? 1 : 0;
+
             var paired = state.CounterpartOf(readable.MessageType);
 
             if (paired is not null)

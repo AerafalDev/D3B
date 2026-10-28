@@ -1338,6 +1338,129 @@ held.*
     are.
   - A second address for the game listener: the ports already tell the routes apart.
 
+## D54: The game is paired by pins where its structure is silent, then from build to build
+
+*2026-10-28, step 3, session 3g, chosen by the owner. Supersedes in part D43: at the game's scale, one build's structure
+no longer settles it alone.*
+
+Measured on 3.7.12.12's schema and session 3f's four captures of the game connection
+([client.md](client.md#the-game-read-by-the-schema)):
+
+- The game file holds 2,175 messages, 1,372 of which no field is typed by: the messages frames carry. 758 of these have
+  a shape no other has; 117 are empty, 73 hold one `int32`, 48 one `bool`. Of the 63 messages the first milestone needs,
+  as the references name them, 2 have a shape the build holds once, 24 one it no longer holds, and 37 one shared with 2
+  to 175 of its messages.
+- Neither the client's code nor its metadata names them: the classes handling the game's messages are obfuscated too,
+  and the 510 original names the metadata holds are bare strings, tied to no type.
+
+So:
+
+- **Pins** pair what the structure and the captures leave open, committed per build (D43): for 3.7.12.12, the 43
+  messages the frames carry that the readable protocol reads, but the ticket's request, which the captures anchor.
+  Every message they hold is then paired by its fields.
+- **Proposed by the tool.** `scripts/mapping.cs` lists, for each readable message left unpaired, the build's messages it
+  fits, those the captures carry first, with the side carrying them. The maintainer pins from what the player did; the
+  tool pins nothing.
+- **Scores** still run, within the game's file, accepted only clear of every rival (D43): without pins they paired 9 of
+  3.7.12.12's messages, each as pinned.
+- **From build to build**, later: a build's schema and mapping pair the next build's, by the order and shape of their
+  messages, once a second build is installed to measure it on (Q10). Until then, a client update stops the host until
+  the game is pinned again (D48).
+- **Rejected.**
+  - Anchors from scripted captures, the order of the player's actions: every update replays them, and the client sends
+    many other requests between.
+  - A study of the client's code first: the classes using the messages are obfuscated, measured.
+  - Build to build now: no second build to measure it on.
+
+## D55: The game's events read only what bot code uses; its requests are whole
+
+*2026-10-28, step 3, session 3g, chosen by the owner. Amends D47 for the game.*
+
+- **Measured.** The map's information holds, through its fields, 142 messages, 36 enums and 679 fields; the ten largest
+  events on entering the game, 171 messages and 779 fields.
+- **Partial.** A readable message marked `option (d3b.readable.partial) = true` (`src/D3B.Protocol/Readable/options.proto`)
+  declares only the fields bot code reads, their meaning measured, and leaves its counterpart's others out on purpose. A
+  message the client sends is never partial, so that the bot builds it whole: the mapping tool fails when the captures
+  show the client sending one.
+- **The audit** fails as before on what a readable message declares (D44). It counts what a partial message leaves out
+  apart from its notes (`AuditReport.Unread`), so that a note stays what a build added.
+- **The translation.** A game frame is read when its envelope is understood whole and its message's declared fields
+  read; understood whole when its message also encodes back to its length (D47). Bot code may use a frame read; D3B
+  rewrites only a frame understood whole, and passes the others on as they came.
+- **The gate** fails only when what bot code reads no longer fits: a field a build adds or changes elsewhere is counted.
+- **Rejected.**
+  - Every message whole, through all it holds: hundreds of messages to name for the milestone, and every change Ankama
+    makes to a field the bot never reads would stop the host.
+
+## D56: The readable protocol of the game
+
+*2026-10-28, step 3, session 3g*
+
+Files of our own in `src/D3B.Protocol/Game/`, package `d3b.game`, C# namespace `D3B.Protocol.Game`, matched within the
+schema's `game.proto` (D43): `game`, the envelope, then one file per domain of the first milestone, `authentication`,
+`characters`, `context`, `maps`, `movement`, `interactives`, `inventory`, `jobs`, `npcs` and `exchanges`. With the
+connection phase's, the readable protocol holds 106 messages, 217 fields, 17 enums and 128 values; the game's carried
+messages are 44, 33 messages of the game are partial (D55).
+
+- **The envelope**, measured: every frame is a `GameMessage`, whose oneof holds a `GameResponse` at 1, a `GameEvent` at 3
+  and a `GameRequest` at 4; its field 2, of the event's type and outside the oneof, is never set. A request and a
+  response carry an `int32` and a `google.protobuf.Any`, an event an `Any` and a list of `int32` never set. The client
+  sends requests only; the server events, and one response per connection.
+- **The Any.** Its type URL is `type.ankama.com/` and the build's name of the message. The obfuscation leaves protobuf's
+  own types as they are (D39), so `google.protobuf.Any` is its own counterpart, by its full name, for the matcher, the
+  scores and the audit, and no mapping pairs it.
+- **Numbers are 3.7.12.12's.** In the game file, 980 of the 982 messages of three fields or more number them 1 to n.
+  Against the references' older build, 15 of the 18 messages that pair alone by the kinds of their fields number them
+  otherwise, where the connection's keep theirs (D42). 110 of the game's messages hold two fields of one message type,
+  of which the captures set one, and the metadata names types `decoy`. So the game's fields are likely shuffled and
+  renumbered, with decoys, at each build. The readable numbers stay this build's: a mapping holds both numbers (D45), and
+  the translation will rewrite them once a build renumbers, as D47 provides, measured on that build (Q10).
+- **Names** as D42: from the references where the meaning is measured, in our own words, neutral elsewhere. A meaning is
+  measured in captures, by structure and timing, and by values compared on the machine with the build's pack, such as an
+  element's id with its map's elements; no value is written down.
+- **Rejected.**
+  - Numbers of our own and a rewriter now: fields could no longer be paired by number, which is the next build's work,
+    with no second build to measure it on.
+
+## D57: The game's anchors, and the messages its frames carry
+
+*2026-10-28, step 3, session 3g. Extends D43.*
+
+- **The plan.** `ReadableProtocol.GameAnchors`: every frame is the root, the client's frames are its requests, the
+  server's its events, and a connection's first request carries the ticket's `AuthenticationRequest`, as every game
+  connection did (D52). Nothing else is anchored: what follows depends on the player. An `AnchorPayload` names the
+  message a side's n-th frame carries in an `Any`.
+- **Type URLs.** The anchors read them, since they name the schema's types, and no other value. Every `Any` of every frame
+  must name a message of the schema's file that reads its value whole, or the measurement reports it and the tool fails.
+- **What the frames carry** is counted by side (`AnchorMeasurement.Payloads`), for the tool's proposals (D54).
+- **Where.** The tool reads a captures directory's own files as the connection phase's, and its `game` directory as the
+  game's (D53).
+- **Measured** on 3f's four captures and one of this session's: 1,069 frames, whose root types 4,280 fields, the next
+  1,912; anchored, the envelope, the request, the event and the ticket's request; 150 messages carried, 37 by the client
+  and 113 by the server, each read whole as its type URL names it.
+
+## D58: The translation reads a game frame through its type URL
+
+*2026-10-28, step 3, session 3g. Builds what D47 planned for the game.*
+
+- `ProtocolTranslation.DecodeGame` parses the envelope once, then the message its `Any` carries: the type URL's name is,
+  through the mapping, a readable message, whose parser reads the value. `DecodedGameFrame` gives the envelope, the
+  build's name, the readable type, the message, and whether the frame is understood whole or read (D55).
+- A frame carrying a message the readable protocol lacks is named and not read; bytes no envelope reads have none.
+- The relay does not read the game connection yet: bot state needs it at step 4, and nothing rewrites a game frame
+  before Q9.
+- **Measured** by the mapping tool, which decodes the game's captures with the mapping it just wrote: of 1,069 frames,
+  178 understood whole, 69 more read, 822 carrying one of 106 messages the readable protocol lacks, none misread
+  ([client.md](client.md#the-game-mapped)).
+
+## D59: Mapping format 2
+
+*2026-10-28, step 3, session 3g*
+
+The readable protocol's contract changed with the game: `MappingFile.FormatVersion` is 2, written to `mapping-2.binpb`
+(D45); `mapping.proto` is unchanged. A host of this version looks for `mapping-2.binpb` beside the pack, else in the
+build's release (D48), which the release tool publishes (D50).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -1349,3 +1472,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
 | Q7 | How are sessions captured and replayed for tests: in which format? The format is D37's; replays with injection remain. | Step 3, session 3h |
 | Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3, session 3h |
+| Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |

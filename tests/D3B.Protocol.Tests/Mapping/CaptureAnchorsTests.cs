@@ -1,6 +1,8 @@
 using D3B.Protocol.Connection;
+using D3B.Protocol.Game;
 using D3B.Protocol.Mapping;
 using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 
 namespace D3B.Protocol.Tests.Mapping;
 
@@ -69,6 +71,42 @@ public sealed class CaptureAnchorsTests
     private static AnchorMeasurement Measure(params CapturedConnection[] connections)
     {
         return CaptureAnchors.Measure(connections, _schema.FindFile(ReadableProtocol.ConnectionSchemaFile)!, ReadableProtocol.ConnectionAnchors);
+    }
+
+    private static AnchorMeasurement MeasureGame(params CapturedConnection[] connections)
+    {
+        return CaptureAnchors.Measure(connections, _schema.FindFile(ReadableProtocol.GameSchemaFile)!, ReadableProtocol.GameAnchors);
+    }
+
+    /// <summary>Carries a readable message as the build's frames do: its type URL names the obfuscated message.</summary>
+    private static Any Carry(IMessage content, string? typeName = null)
+    {
+        return new Any { TypeUrl = "type.ankama.com/" + (typeName ?? _obfuscation.Of(content.Descriptor.FullName)), Value = content.ToByteString() };
+    }
+
+    private static ReadOnlyMemory<byte> GameRequestFrame(Any? content)
+    {
+        return new GameMessage { Request = new GameRequest { Id = -1, Content = content } }.ToByteArray();
+    }
+
+    private static ReadOnlyMemory<byte> GameEventFrame(Any content)
+    {
+        return new GameMessage { Event = new GameEvent { Content = content } }.ToByteArray();
+    }
+
+    private static CapturedConnection GameConnection(Any? first = null)
+    {
+        return new CapturedConnection(
+            [
+                GameRequestFrame(first ?? Carry(new AuthenticationRequest { Ticket = new string('t', 32), Language = "fr" })),
+                GameRequestFrame(Carry(new CharacterListRequest())),
+                GameRequestFrame(Carry(new CharacterSelectionRequest { CharacterId = 7 })),
+            ],
+            [
+                GameEventFrame(Carry(new AuthenticationAcceptedEvent())),
+                GameEventFrame(Carry(new CharacterListEvent { Characters = { new Character { Id = 7, Basics = new CharacterBasics { Level = 3, Name = "name" } } } })),
+                GameEventFrame(Carry(new MapCurrentEvent { MapId = 8 })),
+            ]);
     }
 
     [Fact]
@@ -146,5 +184,49 @@ public sealed class CaptureAnchorsTests
         var measurement = Measure(new CapturedConnection([both], []));
 
         Assert.Contains(measurement.Problems, problem => problem.Contains("holds 2 fields", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void TheGameRootItsSidesAndTheTicketAreAnchored()
+    {
+        var measurement = MeasureGame(GameConnection(), GameConnection());
+        var expected = new[] { GameMessage.Descriptor, GameRequest.Descriptor, GameEvent.Descriptor, AuthenticationRequest.Descriptor };
+
+        Assert.Empty(measurement.Problems);
+        Assert.Equal(_obfuscation.Of(GameMessage.Descriptor.FullName), measurement.Root?.FullName);
+        Assert.Equal(expected.Select(message => message.FullName).Order(), measurement.Anchors.Select(anchor => anchor.Readable.FullName).Order());
+        Assert.All(measurement.Anchors, anchor => Assert.Equal(_obfuscation.Of(anchor.Readable.FullName), anchor.Obfuscated.FullName));
+        Assert.Equal([(GameRequest.ContentFieldNumber, GameRequest.ContentFieldNumber)], measurement.Anchors.Single(anchor => anchor.Readable == GameRequest.Descriptor).Fields);
+    }
+
+    [Fact]
+    public void EveryMessageTheFramesCarryIsCountedBySide()
+    {
+        var measurement = MeasureGame(GameConnection(), GameConnection());
+        var counts = measurement.Payloads.ToDictionary(payload => payload.Message.FullName, payload => (payload.FromClient, payload.FromServer));
+
+        Assert.Equal(6, counts.Count);
+        Assert.Equal((2, 0), counts[_obfuscation.Of(CharacterListRequest.Descriptor.FullName)]);
+        Assert.Equal((0, 2), counts[_obfuscation.Of(MapCurrentEvent.Descriptor.FullName)]);
+    }
+
+    [Fact]
+    public void ATypeUrlNamingNoMessageOfTheFileIsAProblem()
+    {
+        var measurement = MeasureGame(GameConnection(Carry(new AuthenticationRequest(), "nothing")));
+
+        Assert.Contains(measurement.Problems, problem => problem.Contains("naming nothing, which is no message", StringComparison.Ordinal));
+        Assert.Contains(measurement.Problems, problem => problem.Contains("carries no message in an Any", StringComparison.Ordinal));
+        Assert.DoesNotContain(measurement.Anchors, anchor => anchor.Readable == AuthenticationRequest.Descriptor);
+    }
+
+    [Fact]
+    public void AValueThatDoesNotReadAsItsTypeIsAProblem()
+    {
+        // Field 9 of the ticket's request, a varint: the obfuscated message has no field 9.
+        var carried = new Any { TypeUrl = "type.ankama.com/" + _obfuscation.Of(AuthenticationRequest.Descriptor.FullName), Value = ByteString.CopyFrom(9 << 3, 1) };
+        var measurement = MeasureGame(GameConnection(carried));
+
+        Assert.Contains(measurement.Problems, problem => problem.Contains("does not read as", StringComparison.Ordinal));
     }
 }

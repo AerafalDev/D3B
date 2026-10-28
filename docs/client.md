@@ -6,7 +6,7 @@ client 3.7.12.12, built on 2026-10-19, installed in `%LOCALAPPDATA%\Ankama\Dofus
 on running clients, then on its bytes through D3B's relay ([Connection](#connection)), its protocol's code with
 `scripts/schema.cs` ([Protocol code](#protocol-code)), its connection phase against D3B's readable protocol with
 `scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)), then decoded through it on 2026-10-28
-([decoded](#the-connection-phase-decoded)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
+([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
 ## Measuring again
@@ -30,6 +30,7 @@ dotnet run --file scripts/schema.cs -- --proto <dir>                  # the prot
 dotnet run --file scripts/capture.cs -- --frames --schema <schema>    # which message of the schema reads the captures, field by field
 dotnet run --file scripts/mapping.cs                                  # pairs D3B's readable protocol with the schema, audits it, writes the mapping
 dotnet run --file scripts/mapping.cs -- --without-captures            # the same from pins and structure alone, without anchors
+dotnet run --file scripts/mapping.cs -- --pins <empty dir>            # without pins: lists, for what is left open, the messages that fit
 ```
 
 `summary` reads headers only and takes seconds. The extraction tool fails when the client contradicts what this
@@ -555,6 +556,77 @@ Client frames are 36 to 267 bytes, server frames 25 to 80,966. The third and fou
 matched by its ticket. Every connection phase ended 2.8 to 4.1 s after it began, the server closing once it had
 answered, and its game connection opened about as it closed.
 
+### The game, read by the schema
+
+Session 3f's four game connections, 694 frames, read with the schema of 3.7.12.12 by `scripts/mapping.cs` (D57), by
+structure and type URLs only:
+
+- **The root**, a message of the game assembly, reads every frame and types 2,745 of their fields; the next best, 1,263.
+  Its oneof holds a response at 1, an `int32` then an `Any`; an event at 3, an `Any` then a list of `int32`; a request at
+  4, an `int32` then an `Any`. Its field 2, of the event's type and outside the oneof, is never set, nor is the event's
+  list. The client sends requests only, the server events, and one response per connection.
+- **The Any.** Every one's type URL is `type.ankama.com/` and a message of the game file, and its value reads whole as
+  that message: 121 messages in all, 27 the client sends and 94 the server. None is a field's type in the file.
+- **The structure.** The file holds 2,175 messages, 1,372 of which are no field's type: those frames carry. 758 of these
+  have a shape, through all they hold, no other has; the largest sets of one shape are 117 empty messages, 73 holding one
+  `int32`, 48 one `bool`, 37 one `int64` and 28 two `int32`. Of the 121 carried, 65 have a shape of their own.
+- **The references' names.** Of the 63 messages the first milestone needs, as the references name them, 2 have their
+  shape once in the build, 24 have a shape it no longer holds, and 37 share theirs with 2 to 175 of its messages.
+- **Field numbers.** 980 of the file's 982 messages of three fields or more number them 1 to n, 920 in the order they
+  declare them, and so do the connection file's. Against the references' older build, 15 of the 18 messages that pair
+  alone by the kinds of their fields number them otherwise; the connection file's keep theirs (D42). 110 of the game's
+  2,376 messages, map entries included, hold two fields of one message type, where the references hold few: in three
+  measured, the envelope, the inventory and the character's selection, the captures set one of the two. The game's fields
+  look shuffled and renumbered, with decoys, at each build; a second build will tell (D56, Q10).
+- **Sizes.** The map's information holds, through its fields, 142 messages, 36 enums and 679 fields; the character list
+  37 messages and 203 fields; the ten largest events on entering the game, 171 messages and 779 fields (D55).
+
+What a game connection holds, in order, the same in all four: the ticket, then the server accepting it; the character
+list asked for and given; the character chosen, then its characteristics, inventory, professions and quests; the game
+context asked for, replaced, and the current map named; then the map's information asked for and given. Then other
+actors walking. None of the four holds a movement of the character, a harvest or the bank; a fifth does
+([the game, mapped](#the-game-mapped)).
+
+### The game, mapped
+
+The game file against D3B's readable protocol (D54 to D58), with `scripts/mapping.cs` and the pins of 3.7.12.12, on
+session 3f's four game connections and a fifth recorded on 2026-10-28 for this: one account, 58 s, that walked on its
+map, changed maps four times, harvested four resources, went into a bank through its door, talked to the banker, opened the
+bank, put six stacks in it, took its kamas out and left.
+
+- **What each message is** was measured by structure, by timing, and by values compared on the machine with the
+  build's pack, never written down. The list's character ids include the one the selection names; the map the server
+  names is the one the client asks about; the map's information gives its elements' ids as the map in the pack holds
+  them, each element's interactive among the pack's and each skill among its skills; the professions, skills and items
+  are the pack's; the NPC talked to is a banker of the pack, the action 3 its talking (D29), and the reply chosen one of
+  its replies.
+- **The actions, in order.** Walking: the client's path, the server showing it, then the client's confirmation once
+  arrived, which the server answers with a response, not an event. Changing maps: a request naming the next map, then
+  the current map and its information as on entering the game. Harvesting: a request naming a skill instance and an
+  element, then the use starting for every actor, the element's state at 2 and its skill disabled; three seconds later,
+  the use over, the objects obtained, the inventory's stack added or its quantity changed, the weight, the profession's
+  experience, the state at 1. The bank: the action on the banker, the dialog and its question, the reply, then the
+  dialog over, the exchange with the storage open, its objects and kamas; each stack moved, as a list of one id, then
+  the inventory's stack deleted, the storage's updated and the weight; the kamas moved as a negative quantity, then the
+  inventory's and the storage's kamas; leaving, then the exchange over.
+- **What a stack is.** An object's quantity and position are the reverse of what the first captures suggested: every
+  stack obtained or in the bank is at position 63, its quantity varying, and the inventory lists the worn objects
+  first, one of each, at other positions.
+- **What does not match.** The cell a stated element gives is the pack's for the two resources harvested, not for two
+  elements of another map.
+
+**Matching.** 106 messages paired, 43 by pin, 11 by the captures and 52 by fields, and 17 enums by fields. Without pins,
+scores pair 9 messages, each as pinned, and the captures 11; fields follow from them.
+
+**Audit.** 106 messages, 217 fields, 17 enums and 128 values checked: no failure and no note; 33 partial messages leave
+fields out on purpose (D55). No message the client sends is partial.
+
+**The mapping** is 7,531 bytes, format 2, the same bytes on two runs.
+
+**Translation.** The five game connections decoded through the mapping (D58): of 1,069 frames, 178 understood whole,
+69 more read, and 822 carrying one of 106 messages the readable protocol lacks, quests, chat and other players' among
+them; none misread.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it
@@ -599,5 +671,9 @@ with Cpp2IL.Core 2022.1.0-pre-release.21.
   getter. The descriptors' bytes are not in clear: the game assembly's `<PrivateImplementationDetails>` holds an array
   of 242,769 bytes beside a class whose methods are named `a`, `a_` and `b`, which may be the obfuscator's encrypted
   strings; not studied.
+- **Original names.** The metadata's string literals hold 1,222 names of the form `<original type>|<nested type>`, of
+  510 game messages that nest types, and nested types named `decoy`; no type is tied to them without reading the code
+  that uses them, which session 3g did not (D54). The client's classes handling game messages, in its `Core` assembly,
+  are obfuscated too: 1,003 game types appear in their methods' signatures.
 - **The schema of 3.7.12.12.** 170,287 bytes, written in about 6 s, the same bytes on two runs. protoc compiles its
   `.proto` text to a descriptor equal to it on all 2,212 messages and 6,394 fields.

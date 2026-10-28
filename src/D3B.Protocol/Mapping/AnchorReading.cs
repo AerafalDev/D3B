@@ -1,4 +1,6 @@
+using System.Text;
 using Google.Protobuf.Reflection;
+using Google.Protobuf.WellKnownTypes;
 
 namespace D3B.Protocol.Mapping;
 
@@ -8,15 +10,18 @@ internal sealed class AnchorReading
     private readonly AnchorPlan _plan;
     private readonly MessageDescriptor _root;
     private readonly List<string> _problems;
+    private readonly Dictionary<string, MessageDescriptor> _schemaMessages;
     private readonly Dictionary<MessageDescriptor, MessageDescriptor> _messages = [];
     private readonly Dictionary<MessageDescriptor, SortedDictionary<int, int>> _fields = [];
     private readonly HashSet<MessageDescriptor> _contradicted = [];
+    private readonly Dictionary<MessageDescriptor, (int Client, int Server)> _payloads = [];
 
-    public AnchorReading(AnchorPlan plan, MessageDescriptor root, List<string> problems)
+    public AnchorReading(AnchorPlan plan, FileDescriptor file, MessageDescriptor root, List<string> problems)
     {
         _plan = plan;
         _root = root;
         _problems = problems;
+        _schemaMessages = Descriptors.Messages(file.MessageTypes).ToDictionary(message => message.FullName, StringComparer.Ordinal);
         Pair(plan.Root, root);
     }
 
@@ -51,6 +56,9 @@ internal sealed class AnchorReading
                 continue;
             }
 
+            var value = frame.Slice(sideWire.Start, sideWire.Length);
+            var payload = ReadPayload(obfuscatedSide.MessageType, value, $"Frame {index + 1} of a {side} side", client);
+
             // A side's first frame is its plan field: a connection opens on the identification. A later frame holding another
             // field of the root, such as an event the server sends unasked, is no exchange, and leaves their count alone.
             sideNumber ??= sideWire.Number;
@@ -60,14 +68,25 @@ internal sealed class AnchorReading
 
             PairField(_plan.Root, sideField.FieldNumber, sideWire.Number);
             Pair(sideField.MessageType, obfuscatedSide.MessageType);
+            exchanges++;
 
-            if (exchanges >= _plan.Exchanges.Count)
+            foreach (var planned in _plan.Payloads.Where(planned => planned.Content.ContainingType == sideField.MessageType && planned.Frame == exchanges))
+            {
+                if (payload is null)
+                {
+                    _problems.Add($"Frame {index + 1} of a {side} side carries no message in an Any, where the plan expects {planned.Message.Name}.");
+
+                    continue;
+                }
+
+                PairField(sideField.MessageType, planned.Content.FieldNumber, payload.Value.Field.FieldNumber);
+                Pair(planned.Message, payload.Value.Message);
+            }
+
+            if (exchanges > _plan.Exchanges.Count)
                 continue;
 
-            var exchange = client ? _plan.Exchanges[exchanges].Request : _plan.Exchanges[exchanges].Response;
-            var value = frame.Slice(sideWire.Start, sideWire.Length);
-
-            exchanges++;
+            var exchange = client ? _plan.Exchanges[exchanges - 1].Request : _plan.Exchanges[exchanges - 1].Response;
 
             if (!WireReading.TryFields(value, out var inner))
                 continue;
@@ -98,6 +117,75 @@ internal sealed class AnchorReading
                 pair.Value,
                 _fields.TryGetValue(pair.Key, out var fields) ? [.. fields.Select(field => (field.Key, field.Value))] : [])),
         ];
+    }
+
+    /// <summary>The messages the frames carried in an <c>Any</c>, in the schema's order.</summary>
+    public IReadOnlyList<CapturedPayload> Payloads()
+    {
+        var order = _schemaMessages.Values.Select((message, index) => (message, index)).ToDictionary(pair => pair.message, pair => pair.index);
+
+        return [.. _payloads.OrderBy(pair => order[pair.Key]).Select(pair => new CapturedPayload(pair.Key, pair.Value.Client, pair.Value.Server))];
+    }
+
+    /// <summary>Reads the message a side's message carries in its one <c>Any</c>, as its type URL names it.</summary>
+    /// <returns>The <c>Any</c> field and the message, or <see langword="null"/> when the side's message carries none.</returns>
+    private (FieldDescriptor Field, MessageDescriptor Message)? ReadPayload(MessageDescriptor sideMessage, ReadOnlySpan<byte> value, string frame, bool client)
+    {
+        if (!WireReading.TryFields(value, out var fields))
+            return null;
+
+        var anys = fields.Select(wire => (Wire: wire, Field: sideMessage.FindFieldByNumber(wire.Number)))
+            .Where(pair => pair.Field is { FieldType: FieldType.Message } field && field.MessageType.FullName == Any.Descriptor.FullName)
+            .ToList();
+
+        if (anys.Count is 0)
+            return null;
+
+        if (anys.Count > 1)
+        {
+            _problems.Add($"{frame} carries {anys.Count} messages in an Any, where one is read.");
+
+            return null;
+        }
+
+        var (wire, field) = anys[0];
+        var any = value.Slice(wire.Start, wire.Length);
+
+        if (!WireReading.TryFields(any, out var anyFields))
+            return null;
+
+        var url = anyFields.LastOrDefault(anyField => anyField.Number is Any.TypeUrlFieldNumber && anyField.WireType is 2);
+        var content = anyFields.LastOrDefault(anyField => anyField.Number is Any.ValueFieldNumber && anyField.WireType is 2);
+
+        if (url.Number is 0)
+        {
+            _problems.Add($"{frame} carries an Any without a type URL.");
+
+            return null;
+        }
+
+        var typeUrl = Encoding.UTF8.GetString(any.Slice(url.Start, url.Length));
+        var name = Any.GetTypeName(typeUrl);
+
+        if (!_schemaMessages.TryGetValue(name, out var message))
+        {
+            _problems.Add($"{frame} carries a type URL naming {name}, which is no message of the schema's file.");
+
+            return null;
+        }
+
+        if (WireReading.Typed(message, any.Slice(content.Start, content.Length)) < 0)
+        {
+            _problems.Add($"{frame} carries a value that does not read as {name}, which its type URL names.");
+
+            return null;
+        }
+
+        var (fromClient, fromServer) = _payloads.GetValueOrDefault(message);
+
+        _payloads[message] = client ? (fromClient + 1, fromServer) : (fromClient, fromServer + 1);
+
+        return (field!, message);
     }
 
     private void Pair(MessageDescriptor readable, MessageDescriptor obfuscated)
