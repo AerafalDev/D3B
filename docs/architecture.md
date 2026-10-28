@@ -12,7 +12,9 @@ connection phase, and the tool matching it with a build's schema into the build'
 decoding the connection phase (step 3, session 3e); the server selection's answer rewritten, and the game connection
 matched with its server by its ticket, relayed and captured apart (step 3, session 3f); the readable protocol of the
 game's first messages, its matching with pins the tool proposes, and the translation of game frames through their type
-URL (step 3, session 3g). Everything else below is the target.
+URL (step 3, session 3g); the game connection read through the translation for the modules that observe it, and D3B's
+requests sent to the game server between the client's frames, recorded in the captures and replayed in tests (step 3,
+session 3h). Everything else below is the target.
 
 ## Overview
 
@@ -95,7 +97,7 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Network`, registered by the network module
 (`NetworkModule`, in `D3B.Bot`, after the data and protocol modules, and requiring the protocol module, D48); in session
-3f, the game connection (D51 to D53).
+3f, the game connection (D51 to D53); in session 3h, the game read and acted on (D60 to D62).
 
 - MITM only (D23): Kestrel takes each official client's connection, and D3B opens the matching connection to the server.
   Both sides are a `ConnectionContext` (D8). `RelayServer` runs Kestrel's server as a hosted service, with no web host,
@@ -109,20 +111,31 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
 - `RelayConnectionHandler` finds the connection's server through `UpstreamLocator`: for the connection phase, the
   connection host Ankama's configuration names, on the port the client chose; for the game, the server whose ticket the
   client presents. It relays the bytes as they are, both ways, any number of clients at once. A side closing closes the
-  other. With an `IRelayInterceptor` in the services, it asks it for each connection's `IConnectionInterceptor`, reads
-  each side as frames, shows it each whole one, and holds the frames it asks for until whole, forwarding what it gives
-  in their place; a frame not whole within 5 s, or longer than 64 KiB, goes on as it came, and a side that is no frames
-  is watched no more (D49, D51).
+  other. With an `IRelayInterceptor` in the services, it asks it for each connection's `IConnectionInterceptor`, showing
+  it the connection (`IRelayConnection`), reads each side as frames, shows it each whole one, and holds the frames it
+  asks for until whole, forwarding what it gives in their place; a frame not whole within 5 s, or longer than 64 KiB,
+  goes on as it came, and a side that is no frames is watched no more (D49, D51). Through the connection, D3B sends the
+  server frames of its own: each goes between two of the client's frames, at once or once the client's frame in
+  progress has gone whole, and fails when the connection closes or its client's bytes are no frames (D61). Nothing is
+  ever sent to the client.
 - The game connection (D51 to D53): the connection phase's interceptor has the server's frames held from the client's
   server selection to its answer, and rewrites a success understood whole, its host to D3B's address and its ports to
   the game listener's, keeping the real game server and the ticket in `GameServerSelections`. The client speaks first on
   the game connection, its first frame presenting the ticket: the game listener reads that frame before connecting
   anywhere, finds the selection waiting for its ticket among the frame's values by the wire format alone
-  (`ProtobufValues`), and connects to that selection's server. A connection presenting no ticket waiting is closed. The
-  game connection is relayed unread: the translation reads its frames (session 3g), and the relay will use it once bot
-  state needs it, at step 4.
+  (`ProtobufValues`), and connects to that selection's server. A connection presenting no ticket waiting is closed.
+- The game, read (D62): `RelayDecoder`, the relay's interceptor, gives each game connection a `GameSession`, which
+  decodes every frame through the translation (`DecodeGame`, D58), shows it to every `IGameObserver` in the services,
+  and logs it at the debug level by what it carries, never by what it holds. It holds and rewrites no frame of the
+  game. An observer sees each session start, then each frame of both sides, from the relay's read loops: step 4's bots
+  post what they see to their inboxes (D9).
 - The client's other connections, to the launcher, Haapi, the chat and the CDN, do not go through D3B.
-- The bot acts through that connection, and the client is kept consistent with what it does: Q9.
+- The bot acts through that connection (D60): `GameSession.SendAsync` sends the server a readable request, encoded
+  whole by `ProtocolTranslation.EncodeGameRequest` with the id -1 that every request of the first milestone carries,
+  between the client's frames. D3B sends only the requests that start an action: walking, changing maps, using an
+  element, acting on an NPC, replying, moving a stack or kamas into the storage, leaving a dialog. The client follows
+  the server's answers as after its own actions, confirming a walk once arrived and asking what is on a new map, so
+  D3B never sends those; the bot learns that an action is over from what the server answers.
 - Framing, measured (D38): a varint length, then a protobuf message, in the clear. `FrameReader` reads frames from a
   `SequenceReader<byte>` without copying; a benchmark in `benchmarks/D3B.Network.Benchmarks` measures it. The game
   connection's envelope carries an `Any` whose type URL is `type.ankama.com/` and the obfuscated message's name,
@@ -155,16 +168,16 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   the build's schema and mapping beside its pack, else downloads them from its release, and the translation, which the
   host asks for before it starts. Without a mapping that holds, the host logs what fails and the commands mapping the
   build, `scripts/schema.cs` then `scripts/mapping.cs`, which need no capture, and exits with code 1.
-- The connection phase, decoded (D49, D51): `ConnectionPhaseDecoder`, the relay's interceptor, gives each connection
-  phase a `ConnectionPhaseSession`, which decodes every frame through the translation and logs it by the readable fields
+- The connection phase, decoded (D49, D51): `RelayDecoder` gives each connection phase a `ConnectionPhaseSession`, which decodes every frame through the translation and logs it by the readable fields
   its oneofs hold and its length, never a value, a frame not understood being a warning, and rewrites the server
   selection's answer.
 - The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).
 - Captures (D37): with `Network:Captures:Enabled`, each connection's raw reads go to a `.d3bcap` file in
   `%LOCALAPPDATA%\D3B\captures`, the game connection's in its `game` directory, apart from the connection phase's that
-  the mapping tool reads (D53), never committed. `CaptureReplay` plays one into pipes; tests build their own, and
-  `scripts/capture.cs` describes them by structure. Decoded messages come from replaying them, for the protocol
-  inspector and the replay tests (Q7).
+  the mapping tool reads (D53), never committed. From format 2, the frames D3B sends the server are records of their
+  own (D61). `CaptureReplay` plays one into pipes, D3B's frames into a pipe of their own when asked; tests build their
+  own, and `scripts/capture.cs` describes them by structure. Decoded messages come from replaying them, for the
+  protocol inspector and the replay tests (D63).
 
 ## Game data
 
@@ -236,4 +249,6 @@ Built at step 2 (D24 to D33):
 - Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay.
   Decoded frames are compared with the messages a test built (D49); from step 4, bot states are compared with
   snapshots.
+- Replays with injection (D63): a game session a test built is replayed through the relay, read by a game session whose
+  observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
 - Time is controlled through `FakeTimeProvider`.

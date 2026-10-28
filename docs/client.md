@@ -6,7 +6,8 @@ client 3.7.12.12, built on 2026-10-19, installed in `%LOCALAPPDATA%\Ankama\Dofus
 on running clients, then on its bytes through D3B's relay ([Connection](#connection)), its protocol's code with
 `scripts/schema.cs` ([Protocol code](#protocol-code)), its connection phase against D3B's readable protocol with
 `scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)), then decoded through it on 2026-10-28
-([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
+([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)), then
+acted on through it ([the game, acted on](#the-game-acted-on)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
 ## Measuring again
@@ -25,7 +26,7 @@ dotnet run --file scripts/inspect.cs -- layout Map/Data MapMetadata --references
 dotnet run --file scripts/extract.cs -- --output <dir> --force        # extracts, counting maps, graph and tables, and checks them
 dotnet run --project src/D3B.Host -- --Network:Captures:Enabled true  # relays clients started from the launcher, logs each frame of their connection phase, and records them
 dotnet run --file scripts/client.cs                                   # which configuration the client reads, Ankama's or D3B's
-dotnet run --file scripts/capture.cs -- --frames                      # the captures' reads, frames and protobuf shapes, no value
+dotnet run --file scripts/capture.cs -- --frames                      # the captures' reads, frames and protobuf shapes, D3B's own frames apart, no value
 dotnet run --file scripts/schema.cs -- --proto <dir>                  # the protocol's obfuscated schema, counted, and as .proto text
 dotnet run --file scripts/capture.cs -- --frames --schema <schema>    # which message of the schema reads the captures, field by field
 dotnet run --file scripts/mapping.cs                                  # pairs D3B's readable protocol with the schema, audits it, writes the mapping
@@ -626,6 +627,50 @@ fields out on purpose (D55). No message the client sends is partial.
 **Translation.** The five game connections decoded through the mapping (D58): of 1,069 frames, 178 understood whole,
 69 more read, and 822 carrying one of 106 messages the readable protocol lacks, quests, chat and other players' among
 them; none misread.
+
+### The game, acted on
+
+Measured on 2026-10-28 (D60 to D62): the request ids on the six game connections captured, then a client of 3.7.12.12
+in game through the host for 26 minutes, one account, the player playing while D3B sent the server requests of its own
+through a measuring plugin, never committed. By structure, timing, and values compared on the machine with what the
+client sent before and with the build's pack, never written down.
+
+**Request ids.** Every request of the first milestone carries the id -1, in every capture, and so does every response;
+of this session's 141 requests, D3B's 18 among them, 9 carry another id, and 1 of session 3g's 90. The client counts
+requests of four kinds, which the readable protocol lacks, numbered in turn from 2: one of 264 to 267 bytes right after
+the character list, at 2 in every capture; one of 31 or 32 bytes about every four minutes, right after two events of 25
+bytes and a request of its own at -1, six times in this session; and two of 265 and 267 bytes together, once, after 24
+minutes, at 8 and 9. Nothing else sets the id.
+
+**What D3B sent**, 18 requests, each whole between the client's frames, with the id -1:
+
+| Request | Sent | The server's answer | What the client then sent itself |
+| --- | ---: | --- | --- |
+| Walk on the map | 6 | 5 walked: the character's movement, 28 to 29 ms later; 1 refused | The confirmation once arrived, 0.46 to 1.77 s after D3B's request, for each walk; the server's response |
+| Change maps | 2 | The new map, 28 to 29 ms later | The map's information and its twin, 0.72 to 0.86 s later; then the server's answer |
+| Use an element | 5 | 3 harvests: the use started, over 3 s later, the objects, weight and experience; 1 refused; 1 ignored | Nothing |
+| Act on an NPC | 1 | The dialog and its question, with two replies | Nothing |
+| Reply | 1 | The dialog over, the kamas, the exchange with the storage, its content | Nothing |
+| Move a stack into the storage | 1 | The stack gone, the storage's stacks, the weight | Nothing |
+| Move kamas | 1 | The storage's kamas and the character's | Nothing |
+| Leave the dialog | 1 | The exchange over | Two requests to leave, 9 and 37 ms after the server's answer, which it did not answer |
+
+- **On the screen**, the player saw each: the character walked, changed maps and harvested; the banker's dialog opened
+  with no click, then the bank's window; the stack and the kama moved into the bank; the window closed. Between D3B's
+  requests, the player walked and harvested by hand, the client answering as usual.
+- **A walk.** The request names the path's turning points, each a cell and the direction leaving it, as the client's
+  do; the server's movement event lists every cell of the path, without directions. D3B's paths, found in the pack's
+  cells, walked as the client's.
+- **A use.** The client walked to the walkable cell nearest the element it could reach, 3 cells away, and harvested
+  from there. D3B did the same, at 3 and 4 cells, and once from 6 cells, all accepted.
+- **The bank.** The NPC's question offered two replies, one of which the pack lists among its banker's: that one opened
+  the bank.
+- **Refused.** A path that does not start where the character stands: one event of the server, 25 bytes, and no walk,
+  so no confirmation. A use right after it: two events. A use of an element whose cell in the pack is not the one the
+  server's state gives it, an element listed on two neighbouring maps: no answer at all.
+
+`scripts/capture.cs` describes D3B's frames apart from the client's, in captures of format 2 (D61): on this session's,
+105 reads of the client, all ending on a frame, and 18 frames of D3B's.
 
 ## Protocol code
 

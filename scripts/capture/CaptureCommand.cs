@@ -147,7 +147,7 @@ internal static class CaptureCommand
 
         var records = reader.ReadAll().ToList();
 
-        foreach (var kind in new[] { CaptureRecordKind.FromClient, CaptureRecordKind.FromServer })
+        foreach (var kind in new[] { CaptureRecordKind.FromClient, CaptureRecordKind.FromServer, CaptureRecordKind.Injected })
         {
             foreach (var frame in Frames([.. records.Where(record => record.Kind == kind).SelectMany(record => record.Data.ToArray())]))
                 yield return frame;
@@ -168,6 +168,12 @@ internal static class CaptureCommand
 
         foreach (var (kind, side) in new[] { (CaptureRecordKind.FromClient, "client"), (CaptureRecordKind.FromServer, "server") })
             DescribeSide(output, records.Where(record => record.Kind == kind).ToList(), side, frames, schema, root);
+
+        // Format 2 on: the frames D3B sent the server itself, each a record of its own (D61).
+        var injected = records.Where(record => record.Kind is CaptureRecordKind.Injected).ToList();
+
+        if (injected.Count > 0)
+            DescribeSide(output, injected, "relay itself, to the server", frames, schema, root);
     }
 
     private static void DescribeSide(TextWriter output, List<CaptureRecord> reads, string side, bool frames, SchemaMatch? schema, MessageDescriptor? root)
@@ -254,6 +260,7 @@ internal static class CaptureCommand
         {
             CaptureRecordKind.FromClient => $"client {record.Data.Length}",
             CaptureRecordKind.FromServer => $"server {record.Data.Length}",
+            CaptureRecordKind.Injected => $"D3B {record.Data.Length}",
             CaptureRecordKind.ClientClosed => "client closed",
             _ => "server closed",
         };

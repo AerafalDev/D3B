@@ -120,7 +120,7 @@ internal sealed class ConnectionPhaseSession : IConnectionInterceptor
             return;
 
         var side = SideOf(direction);
-        var message = decoded.Message is null ? "no message" : ConnectionPhaseDecoder.Describe(decoded.Message);
+        var message = decoded.Message is null ? "no message" : RelayDecoder.Describe(decoded.Message);
 
         if (decoded.IsUnderstood)
             NetworkLog.Decoded(_log, _connectionId, side, message, length);

@@ -9,7 +9,10 @@ import "Readable/options.proto";
 
 option csharp_namespace = "D3B.Protocol.Game";
 
-// Asks to use a skill of an element of the map, once the character stands next to it.
+// Asks to use a skill of an element of the map, once the character stands near it: the client walks to the walkable
+// cell nearest the element that it can reach, 3 cells away in the captures, and the server accepted D3B's uses from 3
+// to 6 cells away (D60). It answers a use it refuses with events the readable protocol lacks, and one of an element the
+// map's data places elsewhere than its stated element does with nothing.
 message InteractiveUseRequest {
   // The skill's instance id, as the element's skills give it.
   int32 skill_instance_id = 1;

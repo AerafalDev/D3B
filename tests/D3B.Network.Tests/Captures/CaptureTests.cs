@@ -124,11 +124,56 @@ public sealed class CaptureTests
     {
         var capture = Session(new FakeTimeProvider());
 
-        capture[8] = 2;
+        capture[8] = 3;
 
         var exception = Assert.Throws<CaptureFormatException>(() => new CaptureReader(new MemoryStream(capture)));
 
-        Assert.Contains("format 2", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("format 3", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ACaptureOfFormat1StillReads()
+    {
+        var capture = Session(new FakeTimeProvider());
+
+        capture[8] = 1;
+
+        using var reader = new CaptureReader(new MemoryStream(capture));
+
+        Assert.Equal(1, reader.FormatVersion);
+        Assert.Equal(5, reader.ReadAll().Count());
+    }
+
+    [Fact]
+    public void WhatD3BSentReadsBackAsItWasWritten()
+    {
+        using var stream = new MemoryStream();
+
+        using (var writer = new CaptureWriter(stream, _header, new FakeTimeProvider()))
+        {
+            writer.Write(CaptureRecordKind.FromClient, new ReadOnlySequence<byte>([2, 9, 9]));
+            writer.Write(CaptureRecordKind.Injected, new ReadOnlySequence<byte>([1, 7]));
+        }
+
+        using var reader = new CaptureReader(new MemoryStream(stream.ToArray()));
+        var records = reader.ReadAll().ToList();
+
+        Assert.Equal(2, reader.FormatVersion);
+        Assert.Equal([CaptureRecordKind.FromClient, CaptureRecordKind.Injected], records.Select(record => record.Kind));
+        Assert.Equal([1, 7], records[1].Data.ToArray());
+    }
+
+    [Fact]
+    public void WhatD3BSentIsNoRecordOfFormat1()
+    {
+        var capture = Session(new FakeTimeProvider());
+
+        capture[8] = 1;
+        capture[HeaderLength()] = (byte)CaptureRecordKind.Injected;
+
+        using var reader = new CaptureReader(new MemoryStream(capture));
+
+        Assert.Throws<CaptureFormatException>(() => reader.ReadAll().ToList());
     }
 
     [Fact]

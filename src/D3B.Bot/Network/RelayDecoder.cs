@@ -6,25 +6,30 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Network;
 
-/// <summary>Watches every connection phase the relay takes, through the installed build's translation (D49, 3f).</summary>
+/// <summary>Watches every connection the relay takes, through the installed build's translation (D49, D51, D62).</summary>
 /// <remarks>
 /// Each connection phase gets its own <see cref="ConnectionPhaseSession"/>, which logs its frames by what they are and
-/// rewrites the server selection's answer, so that the client's game connection comes to D3B. The game connection is not
-/// the connection phase's protocol, and is not read here.
+/// rewrites the server selection's answer, so that the client's game connection comes to D3B. Each game connection gets
+/// its own <see cref="GameSession"/>, which reads its frames for the <see cref="IGameObserver"/> instances and sends the
+/// server D3B's requests.
 /// </remarks>
-internal sealed class ConnectionPhaseDecoder : IRelayInterceptor
+internal sealed class RelayDecoder : IRelayInterceptor
 {
     private const int MaxDepth = 3;
 
     private readonly ProtocolTranslation _translation;
     private readonly GameServerSelections _selections;
+    private readonly IReadOnlyList<IGameObserver> _observers;
+    private readonly ILoggerFactory _logs;
     private readonly ILogger _log;
 
-    public ConnectionPhaseDecoder(ProtocolTranslation translation, GameServerSelections selections, ILogger<ConnectionPhaseDecoder> log)
+    public RelayDecoder(ProtocolTranslation translation, GameServerSelections selections, IEnumerable<IGameObserver> observers, ILoggerFactory logs)
     {
         _translation = translation;
         _selections = selections;
-        _log = log;
+        _observers = [.. observers];
+        _logs = logs;
+        _log = logs.CreateLogger<ConnectionPhaseSession>();
     }
 
     /// <summary>Names a message by the fields its oneofs hold, down from the root: what it is, without what it says.</summary>
@@ -50,8 +55,10 @@ internal sealed class ConnectionPhaseDecoder : IRelayInterceptor
         return path.Count is 0 ? message.Descriptor.Name : string.Join('.', path);
     }
 
-    public IConnectionInterceptor? Intercept(string connectionId, RelayRoute route)
+    public IConnectionInterceptor? Intercept(IRelayConnection connection)
     {
-        return route is RelayRoute.Connection ? new ConnectionPhaseSession(connectionId, _translation, _selections, _log) : null;
+        return connection.Route is RelayRoute.Connection
+            ? new ConnectionPhaseSession(connection.Id, _translation, _selections, _log)
+            : GameSession.Start(connection, _translation, _observers, _logs.CreateLogger<GameSession>());
     }
 }

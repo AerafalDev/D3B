@@ -8,10 +8,12 @@ import "Readable/options.proto";
 
 option csharp_namespace = "D3B.Protocol.Game";
 
-// Asks to walk a path on the character's map.
+// Asks to walk a path on the character's map. The server refuses a path that does not start where the character
+// stands, with an event the readable protocol lacks (D60).
 message MapMovementRequest {
-  // The path's turning points, each a cell and the direction the character leaves it in, as the references encode it:
-  // the direction times 4096, plus the cell.
+  // The path's turning points: its first and last cells, and every cell where it turns, each with the direction the
+  // character leaves it in, the last with the one it arrives in: the direction times 4096, plus the cell. Directions run
+  // from 0, east, clockwise to 7 (D27). Measured on paths D3B sent, which the server walked (D60).
   repeated int32 key_movements = 1;
 
   int64 map_id = 2;
@@ -24,8 +26,9 @@ message MapMovementRequest {
 message MapMovementEvent {
   option (d3b.readable.partial) = true;
 
-  // The path's turning points, encoded as the request's.
-  repeated int32 key_movements = 1;
+  // Every cell of the path, from the first, without directions: measured on paths D3B sent, whose turning points the
+  // server filled in (D60).
+  repeated int32 cells = 1;
 
   int64 actor_id = 4;
 }

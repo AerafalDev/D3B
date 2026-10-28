@@ -85,6 +85,44 @@ public sealed class CaptureReplayTests
     }
 
     [Fact]
+    public async Task WhatD3BSentIsReplayedOnlyWhereItIsAskedFor()
+    {
+        var capture = new MemoryStream();
+        var header = new CaptureHeader { StartedAt = DateTimeOffset.UnixEpoch, ClientVersion = "3.7.12.12", Listener = string.Empty, ServerHost = string.Empty, Server = string.Empty };
+
+        using (var writer = new CaptureWriter(capture, header, new FakeTimeProvider()))
+        {
+            writer.Write(CaptureRecordKind.FromClient, new ReadOnlySequence<byte>([1, 2]));
+            writer.Write(CaptureRecordKind.Injected, new ReadOnlySequence<byte>([1, 9]));
+            writer.Write(CaptureRecordKind.FromServer, new ReadOnlySequence<byte>([1, 3]));
+        }
+
+        using var reader = new CaptureReader(new MemoryStream(capture.ToArray()));
+        var records = reader.ReadAll().ToList();
+        var fromClient = new Pipe();
+        var fromServer = new Pipe();
+        var injected = new Pipe();
+
+        var replay = CaptureReplay.PlayAsync(records, fromClient.Writer, fromServer.Writer, injected.Writer, TestContext.Current.CancellationToken);
+        var client = ReadToEndAsync(fromClient.Reader);
+        var server = ReadToEndAsync(fromServer.Reader);
+        var d3b = ReadToEndAsync(injected.Reader);
+
+        await replay.WaitAsync(_timeout, TestContext.Current.CancellationToken);
+
+        Assert.Equal([1, 2], await client);
+        Assert.Equal([1, 3], await server);
+        Assert.Equal([1, 9], await d3b);
+
+        // Replayed through the relay, which sends its own, they are left out.
+        var withoutInjected = new Pipe();
+
+        await CaptureReplay.PlayAsync(records, withoutInjected.Writer, new Pipe().Writer, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+
+        Assert.Equal([1, 2], await ReadToEndAsync(withoutInjected.Reader));
+    }
+
+    [Fact]
     public async Task ASessionBuiltByATestReplaysAsTheFramesItWasMadeOf()
     {
         var random = new Random(59);

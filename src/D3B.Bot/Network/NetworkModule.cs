@@ -22,7 +22,9 @@ namespace D3B.Bot.Network;
 /// </para>
 /// <para>
 /// Requires the protocol module: each frame of the connection phase is decoded through the installed build's translation
-/// and logged by what it is, never by what it holds (D49). The game connection is relayed unread.
+/// and logged by what it is, never by what it holds (D49). Each game connection is a <see cref="GameSession"/>: its
+/// frames are read through the translation, shown to every <see cref="IGameObserver"/> in the services, and logged at
+/// the debug level; D3B sends the server its requests through it, between the client's frames (D60 to D62).
 /// </para>
 /// <para>
 /// With <c>Network:Captures:Enabled</c>, each connection is recorded in <c>Network:Captures:Directory</c>
@@ -41,10 +43,11 @@ public sealed class NetworkModule : IModule
 
         var settings = RelaySettings.Read(bot.Configuration, DataSettings.ClientDirectoryIn(bot.Configuration));
 
-        bot.Services.AddSingleton<IRelayInterceptor>(services => new ConnectionPhaseDecoder(
+        bot.Services.AddSingleton<IRelayInterceptor>(services => new RelayDecoder(
             services.GetRequiredService<ProtocolTranslation>(),
             services.GetRequiredService<GameServerSelections>(),
-            services.GetRequiredService<ILogger<ConnectionPhaseDecoder>>()));
+            services.GetServices<IGameObserver>(),
+            services.GetRequiredService<ILoggerFactory>()));
         bot.Services.AddRelay(settings, services => services.GetService<ClientBuild>()?.Version);
     }
 }

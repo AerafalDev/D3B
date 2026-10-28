@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="D3B.Network.Tests" />
+    <InternalsVisibleTo Include="D3B.Bot.Tests" />
   </ItemGroup>
 
 </Project>

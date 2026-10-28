@@ -9,7 +9,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 0 | Foundation: brief, decisions, architecture, roadmap | Done |
 | 1 | Scaffold and modules | Done |
 | 2 | Game data | Done |
-| 3 | Protocol and connection | In progress |
+| 3 | Protocol and connection | Done; Q10 at the next client update |
 | 4 | Bot run time and navigation | To do |
 | 5 | Desktop app, first version | To do |
 | 6 | Harvesting and banking: first milestone | To do |
@@ -59,10 +59,11 @@ Four sessions:
 
 ## 3. Protocol and connection
 
-Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34 in session 3a, whose `hosts` line D35 replaces in session 3b, and
-whose game connection D52 matches in session 3f; Q7's format by D37, in session 3b; Q2 by D47, in session 3e. Q10, how a
-build's game is mapped from the previous build's, waits for the next client update, which gets a session of its own
-before anything else (D54, D56).
+Done on 2026-10-28, with decisions D34 to D63. Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34 in session 3a, whose
+`hosts` line D35 replaces in session 3b, and whose game connection D52 matches in session 3f; Q7's format by D37, in
+session 3b, and its replays with injection by D63, in session 3h; Q2 by D47, in session 3e; Q9 by D60, in session 3h.
+Q10, how a build's game is mapped from the previous build's, waits for the next client update, which gets a session of
+its own before anything else (D54, D56), and measures again that the client follows the actions D3B sends (D60).
 
 - The mapping pipeline: Cpp2IL dump, scored matching, pinned pairs, anchors from captures, contract audit that fails the
   build (D11), and the IDA tracer if a build needs it (D41). Ideas from BillBot and JondoEmu.
@@ -88,13 +89,15 @@ and gated before the game connection is taken, whose server address must be deco
 | 3e | Q2 settled: the readable classes decode the wire once, a build translated only when its mapping holds and keeps the wire's numbers, a frame understood only when it encodes back to its length; the version gate: the protocol module finds the build's schema and mapping beside its pack, else downloads them from its release, audits them, and the host does not start without a mapping that holds; `SchemaFile` shared in `D3B.Protocol`; the release tool publishing the pack, schema and mapping together; the relay reading frames for an observer, which decodes the connection phase and logs it by structure (D46 to D50). | Done on 2026-10-28 |
 | 3f | The game connection, measured on running clients: the client takes an address for the game server's host, connects to the first port it is sent whatever its connection port, 443 included, and speaks first, its first frame presenting its ticket; the relay holding the server selection's answer alone until whole, with a way out, and rewriting it once understood whole to D3B's game listener; the game connection matched with its server by its ticket, read by the wire format alone, relayed unread and captured apart from the connection phase; two accounts at once in game through D3B (D51 to D53). | Done on 2026-10-28 |
 | 3g | Mapping, part 3: the game's structure measured, most of the first milestone's messages left open by it; pins for what it leaves open, which the mapping tool proposes from captures of the player's actions, build to build left for the next client update (Q10); the readable `.proto` files of the first milestone's game messages, requests whole and events partial, with the `Any` envelope and its type URLs: the game connection, the character choice, the context, the map and its actors and elements, movements, harvesting, the inventory, professions, NPC dialogs and the bank; the game's anchors and the messages its frames carry; mapping format 2; the translation reading game frames through their type URL; no IDA tracer, every field read being measured (D54 to D59). | Done on 2026-10-28 |
-| 3h | Q9: the bot's requests sent through the client's connection, request ids and the client kept consistent; replay tests with injection, which complete Q7. | To do |
+| 3h | Q9, measured on the captures then on a client in game through the host: every request of the first milestone carries the id -1, the client counting others alone; D3B sends only the requests that start an action, and the client follows the server's answers as after its own, confirming walks and asking for new maps' information, the player seeing each action; the relay sending the server D3B's frames between the client's, recorded in captures of format 2; the game connection read through the translation by a game session per connection, for the modules observing it; replays with injection, which complete Q7 (D60 to D63). | Done on 2026-10-28 |
 
 ## 4. Bot run time and navigation
 
-- The actor, the state and its snapshots, behaviors, interruption and recovery, reconnection (D9).
+- The actor, the state and its snapshots, behaviors, interruption and recovery, reconnection (D9), fed by game
+  observers and acting through game sessions (D60, D62); how the bot and the player share the character.
+- What the server answers D3B's requests, its refusals named first in the readable protocol (D55, D60).
 - Cell pathfinding and line of sight, world pathfinding over the world graph with zaaps and havens, in `D3B.Engine`.
-- Movement between maps, interactives, the bank.
+- Movement between maps, interactives from the nearest cell the character reaches, the bank (D60).
 
 ## 5. Desktop app, first version
 
