@@ -127,7 +127,7 @@ public sealed class MapWalkTests
     }
 
     [Fact]
-    public async Task AWalkNotConfirmedIsOverAfterItsDelay()
+    public async Task AWalkNotConfirmedIsOverAfterItsDelayWithTheCharacterWhereTheServerHasIt()
     {
         await using var play = new TestPlay();
         var (connection, bot) = await play.EnterAsync(433);
@@ -139,6 +139,8 @@ public sealed class MapWalkTests
         await bot.ProcessedAsync();
 
         Assert.Equal(WalkOutcome.NotConfirmed, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.False(bot.State.IsWalking);
+        Assert.Equal(388, bot.State.Cell);
     }
 
     [Fact]

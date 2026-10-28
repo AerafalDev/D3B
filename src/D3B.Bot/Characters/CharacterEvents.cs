@@ -31,6 +31,11 @@ namespace D3B.Bot.Characters;
 /// The banker's reply ends the dialog and opens the exchange with the character's storage, with its kamas, in the same
 /// millisecond; leaving ends the exchange. A dialog and an exchange end with the map too.
 /// </para>
+/// <para>
+/// Zaaps, measured (client.md): the server lists the zaaps the character knows on entering the game, and again, whole,
+/// when it enters the map of a zaap it did not know. A zaap used lists its destinations with their costs, a dialog that
+/// leaving or travelling ends. The map's information says when the map is a haven bag, and whose.
+/// </para>
 /// </remarks>
 public static class CharacterEvents
 {
@@ -45,6 +50,20 @@ public static class CharacterEvents
         ArgumentNullException.ThrowIfNull(message);
 
         return side is RelayDirection.FromClient ? FromClient(state, message) : FromServer(state, message);
+    }
+
+    /// <summary>Gives the character's state once the client did not confirm a walk the server showed it.</summary>
+    /// <param name="state">The state, the character walking.</param>
+    /// <returns>The state with the character on the walk's last cell, where the server has it, or the same state when it no longer walks.</returns>
+    /// <remarks>
+    /// Measured (client.md): the server walked the path, and its next refusal names the path's last cell; a walk sent from
+    /// that cell is followed by the client, which first brings its character there (D85).
+    /// </remarks>
+    public static CharacterState NotConfirmed(CharacterState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        return state.IsWalking ? state with { Cell = state.Path[^1], Path = [] } : state;
     }
 
     private static CharacterState FromClient(CharacterState state, IMessage message)
@@ -73,6 +92,8 @@ public static class CharacterEvents
                 Npcs = ImmutableSortedDictionary<int, MapNpc>.Empty,
                 Dialog = null,
                 Storage = null,
+                ZaapDialog = null,
+                HavenBagOwnerId = null,
             },
             MapInformationEvent information when information.MapId == state.MapId => Placed(state, information),
             InteractiveElementUpdatedEvent { Element: { } element } when state.Elements.ContainsKey(element.ElementId) => state with
@@ -93,7 +114,9 @@ public static class CharacterEvents
             {
                 Dialog = dialog with { MessageId = question.MessageId, Replies = [.. question.Replies.Select(reply => reply.ReplyId)] },
             },
-            DialogLeaveEvent => state with { Dialog = null },
+            DialogLeaveEvent => state with { Dialog = null, ZaapDialog = null },
+            ZaapKnownListEvent known => state with { KnownZaaps = [.. known.MapIds] },
+            TeleportDestinationsEvent destinations => state with { ZaapDialog = new ZaapDialog(destinations.Type, Costs(destinations)) },
             ExchangeStartedWithStorageEvent { Type: ExchangeType.Storage } => state with { Dialog = null, Storage = new OpenStorage(0) },
             StorageContentEvent content when state.Storage is { } storage => state with { Storage = storage with { Kamas = content.Kamas } },
             StorageKamasUpdateEvent kamas when state.Storage is { } storage => state with { Storage = storage with { Kamas = kamas.Kamas } },
@@ -131,7 +154,16 @@ public static class CharacterEvents
             .Select(actor => new MapNpc((int)actor.Id, actor.Information.Roleplay.Npc.NpcId, actor.Disposition is { HasCellId: true } at && IsCell(at.CellId) ? at.CellId : null))
             .ToImmutableSortedDictionary(npc => npc.ActorId, npc => npc);
 
-        return state with { SubAreaId = information.SubAreaId, Cell = cell, Elements = elements, Npcs = npcs };
+        var owner = information.PlaceCase is MapInformationEvent.PlaceOneofCase.HavenBag ? information.HavenBag.Owner?.Id : null;
+
+        return state with { SubAreaId = information.SubAreaId, Cell = cell, Elements = elements, Npcs = npcs, HavenBagOwnerId = owner };
+    }
+
+    private static ImmutableSortedDictionary<long, int> Costs(TeleportDestinationsEvent destinations)
+    {
+        // The list also holds destinations of other types, on maps a zaap stands on too.
+        return destinations.Destinations.Where(destination => destination.Type is TeleporterType.Zaap)
+            .Aggregate(ImmutableSortedDictionary<long, int>.Empty, (costs, destination) => costs.SetItem(destination.MapId, destination.Cost));
     }
 
     private static MapElement Updated(ImmutableSortedDictionary<int, MapElement> elements, InteractiveElement element)

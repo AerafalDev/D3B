@@ -168,6 +168,17 @@ public sealed class BotActor : IAsyncDisposable
         return processed.Task;
     }
 
+    /// <summary>Has the loop take the walk's last cell as where the character stands, once the client did not confirm it (D85).</summary>
+    internal Task SettleWalkAsync()
+    {
+        var settled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        if (!_inbox.Writer.TryWrite(new Settling(settled)))
+            settled.TrySetResult();
+
+        return settled.Task;
+    }
+
     internal GameExpectation Expect(RunningBehavior owner, Func<RelayDirection, IMessage, CharacterState, bool> match)
     {
         var expectation = new GameExpectation(match, owner, Time);
@@ -227,6 +238,10 @@ public sealed class BotActor : IAsyncDisposable
                 break;
             case Stopping:
                 OnStopping();
+                break;
+            case Settling settling:
+                _state = CharacterEvents.NotConfirmed(_state);
+                settling.Settled.TrySetResult();
                 break;
             case Processing processing:
                 processing.Processed.TrySetResult();
@@ -375,6 +390,8 @@ public sealed class BotActor : IAsyncDisposable
     private sealed record Detached(GameSession Session) : Input;
 
     private sealed record Stopping : Input;
+
+    private sealed record Settling(TaskCompletionSource Settled) : Input;
 
     private sealed record Processing(TaskCompletionSource Processed) : Input;
 }

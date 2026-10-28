@@ -11,7 +11,11 @@ namespace D3B.Bot.Movement;
 /// <para>
 /// After each change, the path is found again from where the character stands: a scroll with an action may send it
 /// elsewhere, two zones of a map may share an edge, and a search costs under a millisecond (D71). A change that fails
-/// leaves its transition out of the rest of the journey, as its criterion may not be met for reasons the bot cannot know.
+/// leaves its transition out of the rest of the journey, as its criterion may not be met for reasons the bot cannot know;
+/// a teleport that fails leaves every teleport out (D83).
+/// </para>
+/// <para>
+/// A character in its haven bag, which the world graph does not hold, leaves it first, back to where it entered it (D83).
 /// </para>
 /// <para>
 /// A journey fails after 3 failed changes, or after twice the first path's changes and 10 more, so that a character sent
@@ -50,6 +54,7 @@ public static class WorldTravel
         ArgumentNullException.ThrowIfNull(maps);
 
         var banned = new HashSet<int>();
+        var teleports = true;
         var failures = 0;
         var changes = 0;
         int? mostChanges = null;
@@ -64,7 +69,20 @@ public static class WorldTravel
             if (maps.Contains(mapId))
                 return Over(context, state, TravelOutcome.Arrived, changes);
 
+            if (state.IsInHavenBag)
+            {
+                if (await context.LeaveHavenBagAsync(cancellationToken).ConfigureAwait(false) is not MapChangeOutcome.Changed)
+                    return Over(context, context.State, TravelOutcome.Failed, changes);
+
+                changes++;
+
+                continue;
+            }
+
             var rules = RulesOf(context) with { Banned = banned };
+
+            if (!teleports)
+                rules = rules with { KnownZaaps = FrozenSet<long>.Empty };
 
             if (!context.Maps.TryGet(mapId, out var map) || !context.World.TryGetVertex(map, cell, out var vertex)
                 || !context.World.TryFind(vertex, maps, rules, out var path))
@@ -90,7 +108,10 @@ public static class WorldTravel
                 case MapChangeOutcome.Busy or MapChangeOutcome.NotPlaced:
                     return Over(context, context.State, TravelOutcome.Failed, changes);
                 default:
-                    banned.Add(step.TransitionIndex);
+                    if (step.IsTeleport)
+                        teleports = false;
+                    else
+                        banned.Add(step.TransitionIndex);
 
                     if (++failures >= MostFailures)
                         return Over(context, context.State, TravelOutcome.Failed, changes);
@@ -102,12 +123,14 @@ public static class WorldTravel
 
     /// <summary>Gets what a character may follow through the world, from its state now.</summary>
     /// <param name="context">The behavior's context.</param>
-    /// <returns>The rules, with what the character's criteria are answered on (<see cref="FactsOf"/>).</returns>
+    /// <returns>The rules, with what the character's criteria are answered on (<see cref="FactsOf"/>), the zaaps it knows and the kamas it carries.</returns>
     public static WorldPathRules RulesOf(BotContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        return new WorldPathRules { Facts = FactsOf(context.State, context.Time.GetUtcNow()) };
+        var state = context.State;
+
+        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = state.KnownZaaps, Kamas = state.Kamas };
     }
 
     /// <summary>Gets what a character's criteria are answered on, from its state.</summary>

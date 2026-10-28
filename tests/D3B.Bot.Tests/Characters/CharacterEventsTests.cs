@@ -48,6 +48,7 @@ public sealed class CharacterEventsTests
             {
                 Jobs = { new JobExperience { JobId = 2, Level = 111, Experience = 123_518, LevelFloor = 122_100, NextLevelFloor = 124_320 } },
             }),
+            Server(new ZaapKnownListEvent { MapIds = { 191_105_026, 120_062_979 } }),
             Client(new ContextCreationRequest()),
             Server(new MapCurrentEvent { MapId = TestPlay.MapId }),
             Client(new MapInformationRequest { MapId = TestPlay.MapId }),
@@ -105,7 +106,14 @@ public sealed class CharacterEventsTests
               "Npcs": {},
               "Dialog": null,
               "Storage": null,
+              "ZaapDialog": null,
               "IsInDialog": false,
+              "KnownZaaps": [
+                120062979,
+                191105026
+              ],
+              "HavenBagOwnerId": null,
+              "IsInHavenBag": false,
               "Inventory": {
                 "12": {
                   "Uid": 12,
@@ -379,5 +387,60 @@ public sealed class CharacterEventsTests
 
         Assert.Same(standing, Apply(standing, Client(new MapMovementCancelRequest { CellId = 560 })));
         Assert.Same(standing, Apply(standing, Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 300, 900 } })));
+    }
+
+    [Fact]
+    public void TheZaapsTheCharacterKnowsAreTheServersLastList()
+    {
+        var state = Apply(_chosen, [Server(new ZaapKnownListEvent { MapIds = { 1, 2 } }), Server(new ZaapKnownListEvent { MapIds = { 3, 2 } })]);
+
+        Assert.Equal([2, 3], state.KnownZaaps);
+    }
+
+    [Fact]
+    public void AZaapsDialogListsWhatEachZaapCostsUntilItEnds()
+    {
+        var standing = Apply(_chosen, EnteringTheGame());
+        var listed = Apply(standing, Server(new TeleportDestinationsEvent
+        {
+            Destinations =
+            {
+                new TeleportDestination { MapId = 120_062_979, Cost = 140, SubAreaId = 30 },
+                new TeleportDestination { MapId = 191_105_026, SubAreaId = 95 },
+                new TeleportDestination { Type = TeleporterType.Value4, MapId = 120_062_979, Cost = 180 },
+            },
+        }));
+
+        Assert.True(listed.IsInDialog);
+        Assert.Equal(TeleporterType.Zaap, listed.ZaapDialog!.Type);
+        Assert.Equal(new KeyValuePair<long, int>[] { new(120_062_979, 140), new(191_105_026, 0) }, listed.ZaapDialog.Costs);
+        Assert.False(Apply(listed, Server(new DialogLeaveEvent { Type = DialogType.Teleport })).IsInDialog);
+        Assert.False(Apply(listed, Server(new MapCurrentEvent { MapId = 120_062_979 })).IsInDialog);
+    }
+
+    [Fact]
+    public void TheMapsInformationSaysWhoseHavenBagTheCharacterIsIn()
+    {
+        var standing = Apply(_chosen, EnteringTheGame());
+        var information = TestPlay.Information(324, TestPlay.HavenBagMapId);
+
+        information.HavenBag = new HavenBagInformation { Owner = new Character { Id = TestPlay.CharacterId } };
+
+        var inside = Apply(standing, [Server(new MapCurrentEvent { MapId = TestPlay.HavenBagMapId }), Server(information)]);
+
+        Assert.False(standing.IsInHavenBag);
+        Assert.Equal(TestPlay.CharacterId, inside.HavenBagOwnerId);
+        Assert.False(Apply(inside, Server(new MapCurrentEvent { MapId = TestPlay.MapId })).IsInHavenBag);
+    }
+
+    [Fact]
+    public void AWalkTheClientDidNotConfirmLeavesTheCharacterOnItsLastCell()
+    {
+        var walking = Apply(_chosen, [.. EnteringTheGame(), Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 300, 301, 302 } })]);
+        var settled = CharacterEvents.NotConfirmed(walking);
+
+        Assert.False(settled.IsWalking);
+        Assert.Equal(302, settled.Cell);
+        Assert.Same(settled, CharacterEvents.NotConfirmed(settled));
     }
 }

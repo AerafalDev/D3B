@@ -30,6 +30,13 @@ namespace D3B.Bot.Movement;
 /// The change is over once the character is placed. The client then draws the new map, which the bot's next request waits
 /// for (<see cref="BotContext.SendAsync"/>, D77).
 /// </para>
+/// <para>
+/// A teleport goes from where the character stands to the zaap of a map it knows (D83): the server names the new map 28
+/// ms after the request, with the kamas paid and the dialog over, and the client asks what is on it, 0.7 to 1.4 s later,
+/// as after a scroll. It refuses one with an error text, 28 ms after, such as from a map no one teleports from, during a
+/// walk or a dialog, or to a map the character knows no zaap on; one it cannot pay is not measured. Leaving the haven bag
+/// is the request entering it, which takes the character back to the map it entered it from (D83).
+/// </para>
 /// </remarks>
 public static class MapChange
 {
@@ -73,26 +80,65 @@ public static class MapChange
             return MapChangeOutcome.NoPath;
         }
 
-        var exits = world.ExitCells(map, step, rules);
-
-        if (!CellPathfinder.TryFindNearest(map.Cells.Span, cell, [.. exits], out var path))
-            return MapChangeOutcome.NoPath;
-
         var destination = world.Graph.Vertices.Span[step.To].MapId;
+        MapChangeOutcome outcome;
 
-        BotLog.ChangingMap(context.Log, state.Key.CharacterId, mapId, destination, step.Transition.Type, path.End);
-
-        var outcome = step.Transition.Type switch
+        if (step.IsTeleport)
         {
-            WorldTransitionType.MapAction => await StepOnAsync(context, map, path, cancellationToken).ConfigureAwait(false),
-            WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition, cancellationToken).ConfigureAwait(false),
-            _ => await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, cancellationToken).ConfigureAwait(false),
-        };
+            BotLog.Teleporting(context.Log, state.Key.CharacterId, mapId, destination);
+            outcome = await TeleportAsync(context, mapId, destination, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            var exits = world.ExitCells(map, step, rules);
+
+            if (!CellPathfinder.TryFindNearest(map.Cells.Span, cell, [.. exits], out var path))
+                return MapChangeOutcome.NoPath;
+
+            BotLog.ChangingMap(context.Log, state.Key.CharacterId, mapId, destination, step.Transition.Type, path.End);
+
+            outcome = step.Transition.Type switch
+            {
+                WorldTransitionType.MapAction => await StepOnAsync(context, map, path, cancellationToken).ConfigureAwait(false),
+                WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition, cancellationToken).ConfigureAwait(false),
+                _ => await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, cancellationToken).ConfigureAwait(false),
+            };
+        }
 
         if (outcome is MapChangeOutcome.Changed && context.State.MapId != destination)
             outcome = MapChangeOutcome.Elsewhere;
 
         BotLog.ChangedMap(context.Log, state.Key.CharacterId, context.State.MapId ?? mapId, outcome);
+
+        return outcome;
+    }
+
+    /// <summary>Leaves the haven bag the character is in, back to the map it entered it from, within a behavior.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the change ended: <see cref="MapChangeOutcome.NoPath"/> when the character is in no haven bag, or in another's, whose leaving is not measured.</returns>
+    public static async Task<MapChangeOutcome> LeaveHavenBagAsync(this BotContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var state = context.State;
+        var self = state.Key.CharacterId;
+
+        if (state.MapId is not { } mapId || state.Cell is null || state.IsWalking || state.IsUsing || state.IsInDialog)
+            return MapChangeOutcome.Busy;
+
+        if (state.HavenBagOwnerId != self)
+            return MapChangeOutcome.NoPath;
+
+        BotLog.LeavingHavenBag(context.Log, self, self);
+
+        var (current, placed) = ExpectNewMap(context, mapId);
+
+        await context.SendAsync(new HavenBagEnterRequest { OwnerId = self }, cancellationToken).ConfigureAwait(false);
+
+        var outcome = await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
+
+        BotLog.ChangedMap(context.Log, self, context.State.MapId ?? mapId, outcome);
 
         return outcome;
     }
@@ -170,6 +216,22 @@ public static class MapChange
         }
 
         return await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<MapChangeOutcome> TeleportAsync(BotContext context, long mapId, long zaap, CancellationToken cancellationToken)
+    {
+        var (current, placed) = ExpectNewMap(context, mapId);
+        var answer = context.Expect((side, message, _) => side is RelayDirection.FromServer
+            && (message is MapCurrentEvent || message is TextInformationEvent { Type: TextInformationType.Error }));
+
+        await context.SendAsync(new TeleportRequest { MapId = zaap, Source = TeleporterType.Map }, cancellationToken).ConfigureAwait(false);
+
+        return await answer.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) switch
+        {
+            null => MapChangeOutcome.NoAnswer,
+            TextInformationEvent => MapChangeOutcome.Refused,
+            _ => await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false),
+        };
     }
 
     private static async Task<MapChangeOutcome> NewMapAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)

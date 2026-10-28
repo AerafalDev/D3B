@@ -10,10 +10,10 @@ namespace D3B.Protocol.Tests.Mapping;
 public sealed class ContractAuditTests
 {
     // The readable protocol's size, which the audit checks whole: messages, fields, enums and enum values.
-    private const int ReadableMessages = 110;
-    private const int ReadableFields = 224;
-    private const int ReadableEnums = 17;
-    private const int ReadableValues = 128;
+    private const int ReadableMessages = 117;
+    private const int ReadableFields = 241;
+    private const int ReadableEnums = 19;
+    private const int ReadableValues = 147;
 
     /// <summary>Maps the readable protocol against its obfuscation, then audits the mapping against the schema as a test changed it.</summary>
     private static AuditReport Audit(Action<Obfuscation>? change = null, Action<ProtocolMapping>? edit = null)
@@ -75,7 +75,7 @@ public sealed class ContractAuditTests
         });
 
         Assert.True(report.Passed, string.Join('\n', report.Failures));
-        Assert.StartsWith("d3b.game.MapInformationEvent: 1 of the 6 fields", Assert.Single(report.Unread), StringComparison.Ordinal);
+        Assert.StartsWith("d3b.game.MapInformationEvent: 1 of the 7 fields", Assert.Single(report.Unread), StringComparison.Ordinal);
         Assert.StartsWith("d3b.game.MapCurrentEvent: 1 of the 2 fields", Assert.Single(report.Notes), StringComparison.Ordinal);
     }
 

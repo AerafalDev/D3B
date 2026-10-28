@@ -33,7 +33,8 @@ namespace D3B.Bot.Tests.Runtime;
 /// leaves it straight across. On <see cref="MapId"/>, the server lists the door and a tree, <see cref="TreeElementId"/>,
 /// as the bank of Astrub's map and a map near it list them in the captures. The pack's bank stands in front of
 /// <see cref="MapId"/>; its banker, <see cref="BankerNpcId"/>, stands in <see cref="InsideMapId"/> beside an NPC who is
-/// none, and the other inside holds no NPC.
+/// none, and the other inside holds no NPC. A character teleports from the three maps outside; <see cref="EastMapId"/>
+/// holds a zaap, as Astrub's does, and <see cref="HavenBagMapId"/>, which the pack lacks, is a haven bag.
 /// </remarks>
 internal sealed class TestPlay : IAsyncDisposable
 {
@@ -42,6 +43,7 @@ internal sealed class TestPlay : IAsyncDisposable
     public const long EastMapId = 191_105_026;
     public const long InsideMapId = 192_415_750;
     public const long OtherInsideMapId = 192_677_890;
+    public const long HavenBagMapId = 162_791_424;
     public const int OtherActionCell = 400;
     public const int BankerNpcId = 520;
     public const int BankerActorId = -20_001;
@@ -59,6 +61,7 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int NeighboursElementId = 514_594;
     public const int SubAreaId = 440;
     public const long AccountId = 7;
+    public const uint TeleportFlag = 1 << 3;
     public const long CharacterId = 70_001;
 
     private static readonly RelaySettings _settings = new()
@@ -80,6 +83,8 @@ internal sealed class TestPlay : IAsyncDisposable
     public static GameAccount Account { get; } = new(AccountId, "nickname", "tag");
 
     public static CharacterKey Key { get; } = new(AccountId, CharacterId);
+
+    public static GameAccount SubscribedAccount { get; } = Account with { SubscriptionEnd = DateTimeOffset.MaxValue };
 
     public FakeTimeProvider Time { get; } = new();
 
@@ -253,9 +258,9 @@ internal sealed class TestPlay : IAsyncDisposable
     {
         MapPosition[] positions =
         [
-            new(NorthMapId, 4, -19, SubAreaId, 1, 0, 0),
-            new(MapId, 4, -18, SubAreaId, 1, 0, 0),
-            new(EastMapId, 5, -18, SubAreaId, 1, 0, 0),
+            new(NorthMapId, 4, -19, SubAreaId, 1, 0, TeleportFlag),
+            new(MapId, 4, -18, SubAreaId, 1, 0, TeleportFlag),
+            new(EastMapId, 5, -18, SubAreaId, 1, 0, TeleportFlag),
             new(InsideMapId, 4, -18, SubAreaId, -1, 0, 0),
             new(OtherInsideMapId, 4, -18, SubAreaId, -1, 0, 0),
         ];
@@ -282,9 +287,9 @@ internal sealed class TestPlay : IAsyncDisposable
     }
 
     /// <summary>A connection of the account that chose the character, on a map, standing on a cell, the map drawn: the bot playing it.</summary>
-    public async Task<(TestConnection Connection, BotActor Bot)> EnterAsync(int cell, long mapId = MapId)
+    public async Task<(TestConnection Connection, BotActor Bot)> EnterAsync(int cell, long mapId = MapId, GameAccount? account = null)
     {
-        var connection = Connect(Account);
+        var connection = Connect(account ?? Account);
 
         connection.Server(Chosen());
         Assert.True(Bots.TryGet(Key, out var bot));

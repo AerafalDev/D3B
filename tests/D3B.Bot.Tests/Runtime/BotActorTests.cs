@@ -126,6 +126,24 @@ public sealed class BotActorTests : IAsyncDisposable
     }
 
     [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ThePlayerTeleportingOrOpeningTheHavenBagInterruptsTheBot(bool teleporting)
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+        var wait = new KamasWait();
+        var behavior = bot.RunAsync(wait.RunAsync, TestContext.Current.CancellationToken);
+
+        await wait.ExpectingAsync(bot);
+        connection.Client(teleporting
+            ? new TeleportRequest { MapId = TestPlay.EastMapId, Source = TeleporterType.Map }
+            : new HavenBagEnterRequest { OwnerId = TestPlay.CharacterId });
+
+        Assert.Equal(Interruption.Player, (await Assert.ThrowsAsync<BotInterruptedException>(() => behavior)).Reason);
+        Assert.True(bot.IsPaused);
+    }
+
+    [Theory]
     [MemberData(nameof(WhatTheClientSendsByItself))]
     public async Task WhatTheClientSendsByItselfDoesNotInterruptTheBot(string request)
     {

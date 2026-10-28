@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package d3b.game;
 
+import "Game/havenbags.proto";
 import "Readable/options.proto";
 
 option csharp_namespace = "D3B.Protocol.Game";
@@ -27,6 +28,11 @@ message MapInformationEvent {
   repeated InteractiveElement interactive_elements = 7;
   int64 map_id = 10;
   int32 sub_area_id = 12;
+
+  // What kind of place the map is, when it is one: a haven bag.
+  oneof place {
+    HavenBagInformation haven_bag = 6;
+  }
 }
 
 // Someone on the map: the character itself, another player, an NPC or a group of monsters.
