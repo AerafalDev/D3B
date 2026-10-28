@@ -12,7 +12,8 @@ namespace D3B.Bot.Characters;
 /// </para>
 /// <para>
 /// What the server has not said yet is <see langword="null"/> or empty: the map and cell until the map is named and its
-/// information sent, with the map's elements and NPCs, the inventory until its content is sent.
+/// information sent, with the map's elements and NPCs, the inventory until its content is sent, and the zaaps the
+/// character knows until the server lists them.
 /// </para>
 /// </remarks>
 public sealed record CharacterState
@@ -62,8 +63,20 @@ public sealed record CharacterState
     /// <summary>Gets the exchange with a storage the character is in, such as its bank's, from the server's opening it to its end.</summary>
     public OpenStorage? Storage { get; init; }
 
-    /// <summary>Gets whether the character is in a dialog with an NPC or an exchange with a storage, which a request to leave ends.</summary>
-    public bool IsInDialog => Dialog is not null || Storage is not null;
+    /// <summary>Gets the dialog of a zaap the character used, with its destinations, from the server's listing them to the dialog's end (D83).</summary>
+    public ZaapDialog? ZaapDialog { get; init; }
+
+    /// <summary>Gets whether the character is in a dialog with an NPC or a zaap, or an exchange with a storage, which a request to leave ends.</summary>
+    public bool IsInDialog => Dialog is not null || Storage is not null || ZaapDialog is not null;
+
+    /// <summary>Gets the maps of the zaaps the character knows, as the server listed them on entering the game and each time it learnt one.</summary>
+    public ImmutableSortedSet<long> KnownZaaps { get; init; } = [];
+
+    /// <summary>Gets the owner of the haven bag the character is in, once the map's information said so: the character itself in its own.</summary>
+    public long? HavenBagOwnerId { get; init; }
+
+    /// <summary>Gets whether the character is in a haven bag, which the world graph does not hold: it leaves it to travel (D83).</summary>
+    public bool IsInHavenBag => HavenBagOwnerId is not null;
 
     /// <summary>Gets the stacks the character carries, by their own id.</summary>
     public ImmutableSortedDictionary<int, InventoryItem> Inventory { get; init; } = ImmutableSortedDictionary<int, InventoryItem>.Empty;

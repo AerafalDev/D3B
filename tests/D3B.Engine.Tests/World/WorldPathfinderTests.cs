@@ -79,6 +79,11 @@ public sealed class WorldPathfinderTests
         return Assert.Single(path.Steps);
     }
 
+    private static WorldPathRules Teleporting(long kamas, params long[] zaaps)
+    {
+        return _subscribed with { KnownZaaps = zaaps.ToHashSet(), Kamas = kamas };
+    }
+
     private static WorldStep StepFrom(WorldPathfinder pathfinder, long from, int cell)
     {
         var vertex = Vertex(pathfinder, from);
@@ -420,5 +425,104 @@ public sealed class WorldPathfinderTests
         var pathfinder = new TestWorld().MapAction(1, 2, 409).Pathfinder();
 
         Assert.Equal([409], pathfinder.ExitCells(MapOf(EdgeCells()), StepOf(pathfinder, 1, 2), _subscribed));
+    }
+
+    [Theory]
+    [InlineData(5, -18, 1, 1, -32, 1, 140)]
+    [InlineData(1, -31, 1, 5, -18, 1, 130)]
+    [InlineData(4, -18, -1, 1, -32, 1, 140)]
+    [InlineData(35, 12, 1, 13, 26, 1, 260)]
+    [InlineData(5, -18, 1, 2, -5, 2, 1_130)]
+    public void ATeleportCostsTenKamasAWholeCoordinateAndAThousandMoreTowardsAnotherWorldMap(int x, int y, int worldMap, int toX, int toY, int toWorldMap, long kamas)
+    {
+        // Measured: Astrub's zaap, a map beside Tainéla's, the bank of Astrub's inside, the Turtle beach's, to the zaaps of
+        // Tainéla, Astrub, Sufokia and Incarnam's pastures.
+        var from = new MapPosition(1, (short)x, (short)y, 0, (sbyte)worldMap, 0, 0);
+        var to = new MapPosition(2, (short)toX, (short)toY, 0, (sbyte)toWorldMap, 0, 0);
+
+        Assert.Equal(kamas, WorldPathfinder.TeleportCost(from, to));
+    }
+
+    [Fact]
+    public void ASubscribedCharacterTeleportsToAZaapItKnowsWhenItSavesMapChanges()
+    {
+        var pathfinder = Grid().Pathfinder();
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(0, 9), out var path));
+
+        var step = Assert.Single(path.Steps);
+
+        Assert.True(step.IsTeleport);
+        Assert.Equal(Vertex(pathfinder, 1), step.From);
+        Assert.Equal(Vertex(pathfinder, 9), step.To);
+        Assert.Empty(pathfinder.ExitCells(MapOf(EdgeCells()), step, _subscribed));
+    }
+
+    [Fact]
+    public void AZaapNearTheMapSoughtIsTeleportedToThenWalkedFrom()
+    {
+        var pathfinder = Grid().Pathfinder();
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(0, 8), out var path));
+
+        Assert.Equal([1, 8, 9], Maps(pathfinder, path));
+        Assert.True(path.Steps[0].IsTeleport);
+        Assert.False(path.Steps[1].IsTeleport);
+    }
+
+    [Fact]
+    public void ACharacterWalksWhenTeleportingSavesNothing()
+    {
+        var pathfinder = Grid().Pathfinder();
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 2 }, Teleporting(0, 2), out var path));
+
+        Assert.False(Assert.Single(path.Steps).IsTeleport);
+    }
+
+    [Fact]
+    public void AnAccountWithoutASubscriptionDoesNotTeleport()
+    {
+        var pathfinder = Grid().Pathfinder();
+        var rules = Teleporting(0, 9) with { Facts = new CriterionFacts { Level = 50, Subscribed = false } };
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, rules, out var path));
+
+        Assert.Equal(4, path.Steps.Count);
+        Assert.DoesNotContain(path.Steps, step => step.IsTeleport);
+    }
+
+    [Fact]
+    public void ATeleportTheCharacterCannotPayIsLeftOut()
+    {
+        var pathfinder = Grid().Place(9, 30, 0).Pathfinder();
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(299, 9), out var walked));
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(300, 9), out var teleported));
+
+        Assert.Equal(4, walked.Steps.Count);
+        Assert.True(Assert.Single(teleported.Steps).IsTeleport);
+    }
+
+    [Fact]
+    public void NoOneTeleportsFromAMapThatForbidsIt()
+    {
+        var pathfinder = Grid().Place(1, 0, 0, teleport: false).Pathfinder();
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(0, 9), out var path));
+
+        Assert.Equal([1, 2, 9], Maps(pathfinder, path));
+        Assert.True(path.Steps[1].IsTeleport);
+    }
+
+    [Fact]
+    public void AZaapsMapWithSeveralZonesIsNotTeleportedTo()
+    {
+        // Where the character lands on such a map is not measured.
+        var pathfinder = Grid().Scroll(6, 9, South, toZone: 2).Pathfinder();
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(0, 9), out var path));
+
+        Assert.DoesNotContain(path.Steps, step => step.IsTeleport);
     }
 }

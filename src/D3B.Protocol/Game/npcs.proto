@@ -64,8 +64,8 @@ message DialogLeaveEvent {
   DialogType type = 1;
 }
 
-// What kind of dialog is over. Sixteen values in this build: 1 ended the banker's dialog, and 11 the bank's exchange, in
-// the captures; the others are not measured.
+// What kind of dialog is over. Sixteen values in this build: 1 ended the banker's dialog, 10 a zaap's, and 11 the bank's
+// exchange, in the captures; the others are not measured.
 enum DialogType {
   DIALOG_TYPE_VALUE_0 = 0;
   DIALOG_TYPE_NPC = 1;
@@ -77,7 +77,7 @@ enum DialogType {
   DIALOG_TYPE_VALUE_7 = 7;
   DIALOG_TYPE_VALUE_8 = 8;
   DIALOG_TYPE_VALUE_9 = 9;
-  DIALOG_TYPE_VALUE_10 = 10;
+  DIALOG_TYPE_TELEPORT = 10;
   DIALOG_TYPE_STORAGE = 11;
   DIALOG_TYPE_VALUE_12 = 12;
   DIALOG_TYPE_VALUE_13 = 13;

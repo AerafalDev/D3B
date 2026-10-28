@@ -39,6 +39,12 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: leaves map {From} for map {To} by a {Transition}, from cell {Cell}")]
     public static partial void ChangingMap(ILogger logger, long character, long from, long to, WorldTransitionType transition, int cell);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: teleports from map {From} to the zaap of map {To}")]
+    public static partial void Teleporting(ILogger logger, long character, long from, long to);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: leaves the haven bag of {Owner}")]
+    public static partial void LeavingHavenBag(ILogger logger, long character, long owner);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: map change over on map {Map}, {Outcome}")]
     public static partial void ChangedMap(ILogger logger, long character, long map, MapChangeOutcome outcome);
 

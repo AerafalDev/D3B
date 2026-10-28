@@ -11,14 +11,22 @@ namespace D3B.Engine.World;
 /// <para>
 /// A vertex is a zone of a map, the cells of which reach one another (D27). The search follows scrolls, scrolls with an
 /// action, map actions and doors, the interactive transitions used with <see cref="DoorSkillId"/>; the other interactive
-/// transitions are left out, and zaaps are session 4e's (D64). A transition is followed only when its criterion is met
-/// (D71): what the character cannot be sure of closes it. A sub-area the client closes to accounts without a subscription
-/// is entered only by a subscribed account.
+/// transitions are left out. A transition is followed only when its criterion is met (D71): what the character cannot be
+/// sure of closes it. A sub-area the client closes to accounts without a subscription is entered only by a subscribed
+/// account.
 /// </para>
 /// <para>
-/// Every map change costs the same: the character walks across a map, then the client loads the next, a few seconds
-/// either way (client.md), so the quickest path is the one with the fewest. Dijkstra's search, with no estimate: map
-/// actions lead anywhere, so no distance between maps bounds what is left.
+/// A subscribed character also teleports, from any map the server lets it teleport from
+/// (<see cref="MapPosition.AllowsTeleport"/>), to the zaap of every map it knows one on
+/// (<see cref="WorldPathRules.KnownZaaps"/>) whose cost it carries (<see cref="TeleportCost"/>), which the graph does not
+/// hold (D83). It lands on the zaap's map, on its only vertex: a zaap's map with several zones is left out, where the
+/// character lands there not being measured.
+/// </para>
+/// <para>
+/// Every map change costs the same, a teleport too: the character walks across a map or the server moves it, then the
+/// client loads the next, a few seconds either way (client.md), so the quickest path is the one with the fewest.
+/// Dijkstra's search, with no estimate: map actions and teleports lead anywhere, so no distance between maps bounds what
+/// is left.
 /// </para>
 /// <para>
 /// Built once per pack and shared: the criteria are read once and the vertices' sub-areas found once, and nothing changes
@@ -31,11 +39,16 @@ public sealed class WorldPathfinder
     public const int DoorSkillId = 184;
 
     private const int ChangeCost = 1;
+    private const int KamasPerCoordinate = 10;
+    private const int OtherWorldMapCost = 1000;
+    private const int NoVertex = -1;
 
     private readonly Criterion?[] _criteria;
     private readonly int[] _subAreas;
     private readonly int[] _areas;
     private readonly bool[] _basic;
+    private readonly MapPosition?[] _positions;
+    private readonly Dictionary<long, int> _onlyVertices;
 
     /// <summary>Gets the world graph the paths go through.</summary>
     public WorldGraph Graph { get; }
@@ -55,6 +68,8 @@ public sealed class WorldPathfinder
         _subAreas = new int[vertices.Length];
         _areas = new int[vertices.Length];
         _basic = new bool[vertices.Length];
+        _positions = new MapPosition?[vertices.Length];
+        _onlyVertices = [];
 
         for (var i = 0; i < _criteria.Length; i++)
             _criteria[i] = Criterion.Parse(graph.Criteria.Span[i]);
@@ -67,7 +82,29 @@ public sealed class WorldPathfinder
             _subAreas[i] = placed ? position.SubAreaId : -1;
             _areas[i] = known ? subArea.AreaId : -1;
             _basic[i] = known && subArea.BasicAccountAllowed;
+            _positions[i] = placed ? position : null;
+
+            // A second vertex of the map leaves it with no only vertex.
+            _onlyVertices[vertices[i].MapId] = _onlyVertices.ContainsKey(vertices[i].MapId) ? NoVertex : i;
         }
+    }
+
+    /// <summary>Gets what teleporting from a map to a zaap's costs, in kamas.</summary>
+    /// <param name="from">Where the character teleports from.</param>
+    /// <param name="to">The zaap's map.</param>
+    /// <returns>Ten kamas a whole coordinate of the straight line between the two maps, and a thousand more towards another world map.</returns>
+    /// <remarks>
+    /// Measured on the 120 costs four lists of zaaps gave, from four maps, and on thirteen teleports (client.md): every one, the
+    /// thousand towards Incarnam's world map. A map on no world map, such as a bank's inside, costs from its own
+    /// coordinates; world maps other than these two are not measured, and count the thousand as Incarnam's does.
+    /// </remarks>
+    public static long TeleportCost(MapPosition from, MapPosition to)
+    {
+        var dx = (double)(to.X - from.X);
+        var dy = (double)(to.Y - from.Y);
+        var cost = KamasPerCoordinate * (long)Math.Floor(Math.Sqrt((dx * dx) + (dy * dy)));
+
+        return from.WorldMap >= 0 && to.WorldMap >= 0 && from.WorldMap != to.WorldMap ? cost + OtherWorldMapCost : cost;
     }
 
     private static bool LeavesTowards(MapCell mapCell, int cell, int direction)
@@ -143,6 +180,8 @@ public sealed class WorldPathfinder
         var through = new int[vertices.Length];
         var closed = new bool[vertices.Length];
         var open = new PriorityQueue<int, int>();
+        var zaaps = ZaapsOf(rules);
+        var teleportedFrom = zaaps.Count > 0 ? new int[vertices.Length] : null;
         var reached = -1;
 
         Array.Fill(costs, int.MaxValue);
@@ -178,9 +217,36 @@ public sealed class WorldPathfinder
                 through[edge.To] = transition;
                 open.Enqueue(edge.To, cost);
             }
+
+            if (teleportedFrom is not null && zaaps.Count > 0 && _positions[vertex] is { AllowsTeleport: true } place)
+            {
+                var cost = costs[vertex] + ChangeCost;
+
+                // Vertices come in order of cost, and every teleport costs the same: a zaap this one reaches, or one
+                // already as near, no later vertex brings nearer, so it leaves the list. One the character cannot pay
+                // from here stays, for a vertex nearer it.
+                for (var i = zaaps.Count - 1; i >= 0; i--)
+                {
+                    var zaap = zaaps[i];
+
+                    if (!closed[zaap] && cost < costs[zaap])
+                    {
+                        if (TeleportCost(place, _positions[zaap]!.Value) > rules.Kamas)
+                            continue;
+
+                        costs[zaap] = cost;
+                        through[zaap] = WorldStep.Teleport;
+                        teleportedFrom[zaap] = vertex;
+                        open.Enqueue(zaap, cost);
+                    }
+
+                    zaaps[i] = zaaps[^1];
+                    zaaps.RemoveAt(zaaps.Count - 1);
+                }
+            }
         }
 
-        path = reached < 0 ? null : PathTo(from, reached, through);
+        path = reached < 0 ? null : PathTo(from, reached, through, teleportedFrom);
 
         return path is not null;
     }
@@ -189,7 +255,7 @@ public sealed class WorldPathfinder
     /// <param name="map">The step's map.</param>
     /// <param name="step">The step.</param>
     /// <param name="rules">What the character may follow: a criterion on the cell is answered for each.</param>
-    /// <returns>The cells, none when no cell meets the transition's criterion.</returns>
+    /// <returns>The cells, none when no cell meets the transition's criterion, nor for a teleport, which leaves from where the character stands.</returns>
     /// <remarks>
     /// <para>
     /// A map action is left from its own cell. A door is used from the cells the client uses an element from
@@ -210,6 +276,9 @@ public sealed class WorldPathfinder
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(rules);
+
+        if (step.IsTeleport)
+            return [];
 
         var cells = map.Cells.Span;
         var transition = step.Transition;
@@ -255,6 +324,23 @@ public sealed class WorldPathfinder
     private bool MayEnter(int vertex, CriterionFacts facts)
     {
         return facts.Subscribed is true || _basic[vertex];
+    }
+
+    private List<int> ZaapsOf(WorldPathRules rules)
+    {
+        var zaaps = new List<int>();
+
+        // A subscriber's only, prudently: no account without a subscription was measured teleporting (D72, D83).
+        if (rules.Facts.Subscribed is not true)
+            return zaaps;
+
+        foreach (var map in rules.KnownZaaps)
+        {
+            if (_onlyVertices.TryGetValue(map, out var vertex) && vertex is not NoVertex && _positions[vertex] is not null)
+                zaaps.Add(vertex);
+        }
+
+        return zaaps;
     }
 
     private int Followed(int vertex, WorldEdge edge, WorldPathRules rules)
@@ -335,7 +421,7 @@ public sealed class WorldPathfinder
         return true;
     }
 
-    private WorldPath PathTo(int from, int to, int[] through)
+    private WorldPath PathTo(int from, int to, int[] through, int[]? teleportedFrom)
     {
         var steps = new List<WorldStep>();
         var transitions = Graph.Transitions.Span;
@@ -344,6 +430,17 @@ public sealed class WorldPathfinder
         for (var vertex = to; vertex != from;)
         {
             var index = through[vertex];
+
+            if (index is WorldStep.Teleport)
+            {
+                var origin = teleportedFrom![vertex];
+
+                steps.Add(new WorldStep(origin, vertex, WorldStep.Teleport, default));
+                vertex = origin;
+
+                continue;
+            }
+
             var source = SourceOf(edges, index);
 
             steps.Add(new WorldStep(source, vertex, index, transitions[index]));

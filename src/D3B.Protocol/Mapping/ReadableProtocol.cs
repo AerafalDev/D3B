@@ -38,6 +38,9 @@ public static class ReadableProtocol
         JobsReflection.Descriptor,
         NpcsReflection.Descriptor,
         ExchangesReflection.Descriptor,
+        TeleportationReflection.Descriptor,
+        HavenbagsReflection.Descriptor,
+        TextsReflection.Descriptor,
     ];
 
     /// <summary>Gets, for each readable package, the file of a build's schema its messages are looked for in.</summary>

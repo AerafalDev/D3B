@@ -4,6 +4,7 @@ using D3B.Engine.World;
 namespace D3B.Engine.Tests.World;
 
 /// <summary>A world graph and its atlas as a test draws them: maps, each one zone unless told, and the transitions between them.</summary>
+/// <remarks>Every map lets a character teleport from it unless told otherwise.</remarks>
 internal sealed class TestWorld
 {
     public const int SubAreaId = 95;
@@ -13,7 +14,7 @@ internal sealed class TestWorld
     private readonly List<(long Map, int Zone, long ToMap, int ToZone, WorldTransition Transition)> _transitions = [];
     private readonly List<string> _criteria = [];
     private readonly SortedDictionary<long, int> _subAreas = [];
-    private readonly Dictionary<long, (short X, short Y, sbyte WorldMap)> _places = [];
+    private readonly Dictionary<long, (short X, short Y, sbyte WorldMap, bool Teleport)> _places = [];
 
     /// <summary>Adds a map, in a sub-area accounts without a subscription enter unless told otherwise.</summary>
     public TestWorld Map(long map, int subAreaId = SubAreaId)
@@ -23,11 +24,11 @@ internal sealed class TestWorld
         return this;
     }
 
-    /// <summary>Places a map at coordinates, on a world map or on none, -1, as an inside; maps are at 0,0 on world map 1 unless told.</summary>
-    public TestWorld Place(long map, short x, short y, sbyte worldMap = 1)
+    /// <summary>Places a map at coordinates, on a world map or on none, -1, as an inside, a character teleporting from it or not; maps are at 0,0 on world map 1 unless told.</summary>
+    public TestWorld Place(long map, short x, short y, sbyte worldMap = 1, bool teleport = true)
     {
         _subAreas.TryAdd(map, SubAreaId);
-        _places[map] = (x, y, worldMap);
+        _places[map] = (x, y, worldMap, teleport);
 
         return this;
     }
@@ -96,9 +97,10 @@ internal sealed class TestWorld
 
     private MapPosition Position(long map)
     {
-        var (x, y, worldMap) = _places.TryGetValue(map, out var place) ? place : ((short)0, (short)0, (sbyte)1);
+        var (x, y, worldMap, teleport) = _places.TryGetValue(map, out var place) ? place : ((short)0, (short)0, (sbyte)1, true);
 
-        return new MapPosition(map, x, y, _subAreas.GetValueOrDefault(map, SubAreaId), worldMap, 0, 0);
+        // Bit 3 of the client's flags lets a character teleport from the map (client.md).
+        return new MapPosition(map, x, y, _subAreas.GetValueOrDefault(map, SubAreaId), worldMap, 0, teleport ? 1u << 3 : 0);
     }
 
     private int Criterion(string? criterion)

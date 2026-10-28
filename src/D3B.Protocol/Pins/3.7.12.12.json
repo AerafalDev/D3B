@@ -47,7 +47,12 @@
     { "readable": "d3b.game.StorageObjectsUpdateEvent", "obfuscated": "itn" },
     { "readable": "d3b.game.StorageKamasUpdateEvent", "obfuscated": "ita" },
     { "readable": "d3b.game.DialogLeaveRequest", "obfuscated": "kiq" },
-    { "readable": "d3b.game.ExchangeLeaveEvent", "obfuscated": "kbr" }
+    { "readable": "d3b.game.ExchangeLeaveEvent", "obfuscated": "kbr" },
+    { "readable": "d3b.game.ZaapKnownListEvent", "obfuscated": "hgw" },
+    { "readable": "d3b.game.TeleportDestinationsEvent", "obfuscated": "hgq" },
+    { "readable": "d3b.game.TeleportRequest", "obfuscated": "hgz" },
+    { "readable": "d3b.game.HavenBagEnterRequest", "obfuscated": "izg" },
+    { "readable": "d3b.game.TextInformationEvent", "obfuscated": "lof" }
   ],
   "enums": []
 }

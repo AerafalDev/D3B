@@ -19,6 +19,10 @@ namespace D3B.Bot.Movement;
 /// 2.9 s later, a step taking at most 186 ms running and 491 ms walking, and the server answered within 100 ms, so 1 s
 /// and 500 ms a step. They only bound a wait that went wrong: the server's answers end the walk.
 /// </para>
+/// <para>
+/// The client, at times, does not follow a walk the server shows it, for no cause found: the server has the character
+/// on the path's last cell, which the state then takes, and the client follows the next walk from there (D85).
+/// </para>
 /// </remarks>
 public static class MapWalk
 {
@@ -73,7 +77,7 @@ public static class MapWalk
         BotLog.Walking(context.Log, self, from, cell, path.Steps);
         await context.SendAsync(Request(mapId, path), cancellationToken).ConfigureAwait(false);
 
-        var outcome = await AnswerAsync(answer, arrival, path, cancellationToken).ConfigureAwait(false);
+        var outcome = await AnswerAsync(context, answer, arrival, path, cancellationToken).ConfigureAwait(false);
 
         BotLog.Walked(context.Log, self, cell, outcome);
 
@@ -95,7 +99,7 @@ public static class MapWalk
         return request;
     }
 
-    private static async Task<WalkOutcome> AnswerAsync(GameExpectation answer, GameExpectation arrival, CellPath path, CancellationToken cancellationToken)
+    private static async Task<WalkOutcome> AnswerAsync(BotContext context, GameExpectation answer, GameExpectation arrival, CellPath path, CancellationToken cancellationToken)
     {
         var answered = await answer.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false);
 
@@ -107,7 +111,12 @@ public static class MapWalk
 
         var arrived = await arrival.WaitAsync(_arrivalDelay + path.Steps * _stepDelay, cancellationToken).ConfigureAwait(false);
 
-        return arrived is null ? WalkOutcome.NotConfirmed : WalkOutcome.Arrived;
+        if (arrived is not null)
+            return WalkOutcome.Arrived;
+
+        await context.SettleWalkAsync().ConfigureAwait(false);
+
+        return WalkOutcome.NotConfirmed;
     }
 
     private static void CheckCell(int cell)

@@ -9,7 +9,8 @@ on running clients, then on its bytes through D3B's relay ([Connection](#connect
 ([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)), then
 acted on through it ([the game, acted on](#the-game-acted-on)), walked by a bot ([the game, walked](#the-game-walked)),
 travelled from map to map ([the game, between maps](#the-game-between-maps)), its elements used
-([the game, used](#the-game-used)), and its bank used ([the game, banked](#the-game-banked)).
+([the game, used](#the-game-used)), its bank used ([the game, banked](#the-game-banked)), and its zaaps and haven bag
+used ([the game, teleported](#the-game-teleported)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -177,7 +178,8 @@ their cells carry as a mark.
 
 **Reached.** From the bank of Astrub, the scrolls, scrolls with an action and map actions whose criteria the bot can
 answer reach 4,021 of the 11,327 vertices, 4,088 ignoring criteria; with doors 5,551 strictly and 8,738 counting what
-is not known as met; with every transition, 9,024. Zaaps and the like are not in the graph. Measured again for doors,
+is not known as met; with every transition, 9,024. Zaaps and the like are not in the graph: the path teleports apart
+from it (D83). Measured again for doors,
 for a subscribed character of level 200 holding nothing: 5,607 with the doors of skill 184 (D76), 5,649 with every
 interactive transition ([the game, used](#the-game-used)).
 
@@ -222,14 +224,15 @@ What the world tables hold, as the pack keeps them (D27, D29):
   position: the 1,739 `MapMetadata` maps and 574 `ClientMapData` maps with ids from 239,994,113 up, none in the world
   graph. `posX` from −88 to 66 and `posY` from −94 to 54, `int16`; `subAreaId` a `UInt16`, of which 9 maps name a
   sub-area the table lacks; `worldMap` an `SInt8`, 1 on 55% of maps and −1 on 24%; `tacticalModeTemplateId` 0
-  everywhere, not kept. `m_flags` sets 27 of its 32 bits, bit 26 on every map; which bit means what is not measured,
-  and the pack keeps the value as it is. BillBot reads it as Dofus 2's map capabilities, which no measurement here
-  confirms.
+  everywhere, not kept. `m_flags` sets 27 of its 32 bits, bit 26 on every map, and the pack keeps the value as it is.
+  Bit 3 lets a character teleport from the map, and bit 2 opens the haven bag, measured
+  ([the game, teleported](#the-game-teleported)); the other bits are not. BillBot reads it as Dofus 2's map
+  capabilities, bit 2 letting one teleport to the map and bit 3 from it.
 - **Sub-areas.** 34 of the 567 allow accounts without a subscription (`basicAccountAllowed`). `associatedZaapMapId`
   names a zaap's map on 329 and is 0 on the other 238. `level` from 0 to 200. `harvestables` lists items on 190
   sub-areas ([Harvestables](#harvestables)). Every map a sub-area lists names that sub-area back.
 - **Zaaps.** 62, 47 `activated`; every one stands on a map of the world graph, in the sub-area of its map. The graph has
-  no zaap transitions, so a path through zaaps adds them from this table.
+  no zaap transitions: the path teleports to the zaaps the server says the character knows (D83).
 - **Areas and super-areas.** 69 areas and 10 super-areas; the pack keeps the areas' `superAreaId`, not the super-areas.
 - `MapScrollActionsDataRoot` and `MapReferencesDataRoot` are not extracted: the graph's scroll actions already lead
   where the server sends, and no step needs map references yet.
@@ -883,11 +886,85 @@ action's cell, 81 s after the inside's information, was walked by the server and
 client; the player's next path was refused, naming the walk's end, and the client then walked from there. The next such
 walk, after the player's, was not followed either; a walk to another cell of the inside was, and three minutes later the
 same walk out of the bank was. D3B's walks out of the bank were followed five times in session 4c, but once after a door
-used too soon (D77). The cause is not found: the journey fails, and the state keeps the walk until the server's next
-refusal.
+used too soon (D77). The cause is not found; it came back in session 4e, and the state now takes the walk's last cell,
+where the server has the character ([the game, teleported](#the-game-teleported), D85).
 
 The 15 game connections decoded through mapping 5: of 8,851 frames, 1,226 understood whole, 1,615 more read, and 6,010
 carrying one of 175 messages the readable protocol lacks; none misread.
+
+### The game, teleported
+
+Measured on 2026-10-28 for session 4e (D83 to D85): a game connection of the player using zaaps, the haven bag and the
+map, 9 minutes, then two of a client of 3.7.12.12 in game through the host, the player's hands off, 23 and 2 minutes, a
+measuring plugin, never committed, sending the requests one by one, then the final behaviors. By structure, timing, and
+values compared on the machine with the build's pack, never written down. The character rode a mount.
+
+**Zaaps known.** On entering the game, among the events that describe the character, the server lists the maps of the
+zaaps it knows, 30; it lists them again, whole, 31, as the character entered the map of a zaap it did not know, with a
+text of the information kind. Using a zaap teaches nothing more.
+
+**A zaap.** Its element, interactive 16, "Zaap", offers skill 114, "Utiliser". The server starts the use with no
+duration and, in the same millisecond, lists the destinations: each zaap the character knows with its map, sub-area and
+cost, the one it stands at with no cost, and four of another type, on zaaps' maps, carrying more. The list opens a
+dialog: leaving it, the player or D3B, ends it with a dialog's end of type 10, 28 ms later, the client sending nothing
+more; travelling ends it too. A walk during it is refused, naming the character's cell.
+
+**Travelling.** One request naming the zaap's map and what the character travels by: 0 a map's zaap, 3 the haven bag's,
+5 the map. The server answers 28 to 33 ms later, once 96, in one millisecond, with the new map, the kamas less what it
+cost, a text of the information kind telling it, and the dialog over; the client asks what is on the map 0.66 to 1.36 s
+later, after D3B's teleports as after the player's. With a list open, the type the request names does not count: the
+haven bag's list took one of type 0. With none open, type 0 gets no answer, and type 5 travels: the client sends it when
+the player chooses a zaap on its map, after asking what it costs, which the server answers; D3B's, sent without asking,
+were taken.
+
+**From where.** Type 5 was taken from 6 maps, a zaap's, the bank of Astrub's inside, and maps with no zaap, each of
+whose flags carries bit 3; it was refused from an inside of Amakna's castle, without it, and from the haven bag, with
+it. Of the graph's 11,327 vertices, 10,587 carry bit 3, every zaap's map among them; 136 carry bit 2 alone and 604
+neither. One zaap's map, the Craqueleurs mountain's, has two zones.
+
+**What it costs.** Ten kamas a whole coordinate of the straight line between the map the character stands on and the
+zaap's: the 120 costs of four lists, from four maps, and the 13 teleports paid, but towards Incarnam's three zaaps, on
+another world map, a thousand more. A bank's inside, on no world map, costs from its own coordinates. The haven bag's
+list costs from the map the bag was entered from. Bubble's formula, ten kamas a tenth of a coordinate, gives costs that
+are not tens, where every cost the server gave is.
+
+**The haven bag.** The client enters it with a request naming the character, its owner, and the server answers 33 ms
+later with the bag's map, which the pack holds at 0,0, in a sub-area of its own and off the world graph; the map's
+information holds the bag's owner, in a oneof the other maps leave unset. The same request leaves it, back to the map it
+was entered from. Its zaap lists the zaaps the character knows; teleporting from the map is refused there. The bag
+opened on 3 maps whose flags carry bit 2, and was refused on 2 without it.
+
+**Refusals**, 28 ms after the request, one text of the error kind, then nothing:
+
+| Request | When | Text |
+| --- | --- | --- |
+| Teleport | During a dialog, such as a zaap's list, or a walk the client did not confirm | 474 |
+| Teleport | To a map the character knows no zaap on | 1759 |
+| Teleport from the map | From a map without bit 3, or from the haven bag | 416 |
+| Haven bag | From a map without bit 2 | 471 |
+| Teleport of type 0 | With no list open | Nothing at all |
+
+**A walk the client did not follow.** A journey's walk shown 0.53 s after the information of a map the client had never
+drawn, 14 steps along a row of plain cells, was walked by the server and never confirmed; the server then answered a
+teleport and the haven bag as busy, 9 and 11 s later. A walk sent 5 minutes later from the walk's last cell was walked,
+and the client first walked its character there from where it had kept it, 11 steps in 1.9 s, then confirmed. Of the 104
+walks D3B sent in the 18 captures, the client confirmed 97, the player stopped one, and the client did not follow 6: two
+shown 30 and 90 ms after a map's information (D73), one after a door used too soon (D77), two in the bank of Astrub 81
+and 301 s after its information ([the game, banked](#the-game-banked)), and this one (D85). Of those sent 0.5 to 0.6 s
+after a map's information, it confirmed 36 of 37.
+
+**A path down a stair.** A walk D3B sent across Sufokia's zaap's map, 29 cells whose floors went 130, 100, 70, then 0,
+was refused at once, naming the cell it started from, where the character stood. The paths of session 4a never changed
+floor between two cells, 2,723 steps (D68), and D3B's cell paths do not weigh floors: which changes the server takes is
+not measured. The journey left that change out and went another way.
+
+**The bot teleporting.** Through the host, the player's hands off: from an inside of Amakna's castle, out by its door, a
+teleport to Astrub's zaap, then a scroll, 3 changes in 6.1 s; from the haven bag to Sufokia's zaap, the bag left then a
+teleport, in 2.9 s; from there to the nearest banker, a teleport to the Cœur immaculé's zaap, a scroll and a door, in
+6.6 s. Every walk was confirmed, and every cost was the one the rule gives.
+
+The 18 game connections decoded through mapping 6: of 11,504 frames, 1,570 understood whole, 2,120 more read, and 7,814
+carrying one of 181 messages the readable protocol lacks; none misread.
 
 ## Protocol code
 

@@ -10,8 +10,9 @@ namespace D3B.Bot.Runtime;
 
 /// <summary>What a behavior sees of its bot: the character's state, the game's data, the clock, and the game connection to act through (D9).</summary>
 /// <remarks>
-/// A behavior reads snapshots of the state and never changes it: the server's answers change it, through the bot's loop.
-/// It sends the requests that start an action (D60), expecting their answers first (<see cref="Expect"/>).
+/// A behavior reads snapshots of the state and never changes it: the server's answers change it, through the bot's loop,
+/// but for a walk the client did not confirm (<see cref="SettleWalkAsync"/>). It sends the requests that start an action
+/// (D60), expecting their answers first (<see cref="Expect"/>).
 /// </remarks>
 public sealed class BotContext
 {
@@ -52,6 +53,13 @@ public sealed class BotContext
         ArgumentNullException.ThrowIfNull(match);
 
         return _bot.Expect(_behavior, match);
+    }
+
+    /// <summary>Has the state take the last cell of the walk the character is in, once the client did not confirm it: the server has the character there (D85).</summary>
+    /// <returns>A task that completes once the state took it, so that the behavior reads it.</returns>
+    public Task SettleWalkAsync()
+    {
+        return _bot.SettleWalkAsync();
     }
 
     /// <summary>Sends the game server a request through the game connection the behavior started on (D60), once the client drew the map.</summary>
