@@ -9,7 +9,9 @@ connection phase through D3B, with its framing measured and its captures (step 3
 build's obfuscated protocol schema, read from the client's code (step 3, session 3c); the readable protocol of the
 connection phase, and the tool matching it with a build's schema into the build's mapping, audited (step 3, session
 3d); the translation of the connection phase, the version gate, the release of schemas and mappings, and the relay
-decoding the connection phase (step 3, session 3e). Everything else below is the target.
+decoding the connection phase (step 3, session 3e); the server selection's answer rewritten, and the game connection
+matched with its server by its ticket, relayed and captured apart (step 3, session 3f). Everything else below is the
+target.
 
 ## Overview
 
@@ -27,7 +29,7 @@ D3B.App (Avalonia, ShadUI) ◄── gRPC on a named pipe (D7) ──► D3B.Hos
                                                                   ▼
 official client, one per account ──── its configuration, ──► D3B.Network: Kestrel   ────►  Ankama's connection
 started by the official launcher      then a rewritten       on a loopback address         server, then game server
-                                      address (D34, D35)     (D8, D23, D36)
+                                      address (D35, D51)     (D8, D23, D36, D52)
 ```
 
 The host refuses to start when the protocol mapping it loaded does not match the installed client's build (D11), built in
@@ -91,22 +93,32 @@ Built at step 1, in `D3B.Core` (D20, D21):
 ## Network and protocol
 
 Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Network`, registered by the network module
-(`NetworkModule`, in `D3B.Bot`, after the data and protocol modules, and requiring the protocol module, D48).
+(`NetworkModule`, in `D3B.Bot`, after the data and protocol modules, and requiring the protocol module, D48); in session
+3f, the game connection (D51 to D53).
 
 - MITM only (D23): Kestrel takes each official client's connection, and D3B opens the matching connection to the server.
   Both sides are a `ConnectionContext` (D8). `RelayServer` runs Kestrel's server as a hosted service, with no web host,
-  on `Network:Address` (127.0.13.59) and `Network:Ports` (5555 and 443); a port it cannot take stops the host (D36).
+  on `Network:Address` (127.0.13.59): `Network:Ports` (5555 and 443) for the connection phase, `Network:Game:Ports`
+  (5556) for the game, each endpoint giving the relay its route (`RelayRoute`). A port it cannot take stops the host
+  (D36, D53).
 - How a client reaches D3B (D35): the player starts it from the official launcher. While the host runs, `ClientRedirect`
   points the client's `ConfigUrl` at a copy of Ankama's configuration whose connection host is D3B's address, a `file:`
   URL, and gives the client Ankama's back when the host stops; it follows the launcher rewriting the file.
   `scripts/client.cs` checks it and restores it after a crash. No `hosts` line, no elevation.
-- `RelayConnectionHandler` resolves the connection host Ankama's configuration names, connects on the port the client
-  chose, and relays the bytes as they are, both ways, any number of clients at once. A side closing closes the other.
-  With an `IRelayObserver` in the services, it also reads each side as frames and shows the observer each whole one; a
-  side that is no frames is observed no more (D49).
-- For now only the connection phase comes through D3B. The connection server then sends the game server's address: D3B
-  rewrites it to its game listener, and connects to the real game server when the client arrives there (D34, session
-  3f).
+- `RelayConnectionHandler` finds the connection's server through `UpstreamLocator`: for the connection phase, the
+  connection host Ankama's configuration names, on the port the client chose; for the game, the server whose ticket the
+  client presents. It relays the bytes as they are, both ways, any number of clients at once. A side closing closes the
+  other. With an `IRelayInterceptor` in the services, it asks it for each connection's `IConnectionInterceptor`, reads
+  each side as frames, shows it each whole one, and holds the frames it asks for until whole, forwarding what it gives
+  in their place; a frame not whole within 5 s, or longer than 64 KiB, goes on as it came, and a side that is no frames
+  is watched no more (D49, D51).
+- The game connection (D51 to D53): the connection phase's interceptor has the server's frames held from the client's
+  server selection to its answer, and rewrites a success understood whole, its host to D3B's address and its ports to
+  the game listener's, keeping the real game server and the ticket in `GameServerSelections`. The client speaks first on
+  the game connection, its first frame presenting the ticket: the game listener reads that frame before connecting
+  anywhere, finds the selection waiting for its ticket among the frame's values by the wire format alone
+  (`ProtobufValues`), and connects to that selection's server. A connection presenting no ticket waiting is closed. The
+  game connection is relayed unread until 3g.
 - The client's other connections, to the launcher, Haapi, the chat and the CDN, do not go through D3B.
 - The bot acts through that connection, and the client is kept consistent with what it does: Q9.
 - Framing, measured (D38): a varint length, then a protobuf message, in the clear. `FrameReader` reads frames from a
@@ -119,7 +131,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   captures with it, field by field.
 - The readable protocol, built in session 3d for the connection phase (D42): `.proto` files of our own in
   `src/D3B.Protocol/Connection/`, which Grpc.Tools compiles into Google.Protobuf classes at build. Their numbers are the
-  wire's, which the obfuscation keeps; `ReadableProtocol` lists them. The game's messages come in session 3f.
+  wire's, which the obfuscation keeps; `ReadableProtocol` lists them. The game's messages come in session 3g.
 - The mapping, built in session 3d (D43 to D45), in `D3B.Protocol.Mapping`. `scripts/mapping.cs` loads the build's
   schema (`ProtocolSchema`) and pins (`src/D3B.Protocol/Pins/<version>.json`), measures anchors in the build's captures
   (`CaptureAnchors`, by structure only), pairs every readable message and enum with its counterpart (`ProtocolMatcher`:
@@ -135,12 +147,14 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   the build's schema and mapping beside its pack, else downloads them from its release, and the translation, which the
   host asks for before it starts. Without a mapping that holds, the host logs what fails and the commands mapping the
   build, `scripts/schema.cs` then `scripts/mapping.cs`, which need no capture, and exits with code 1.
-- The connection phase, decoded (D49): `ConnectionPhaseDecoder`, the relay's observer, decodes every frame through the
-  translation and logs it by the readable fields its oneofs hold and its length, never a value; a frame not understood is
-  a warning.
+- The connection phase, decoded (D49, D51): `ConnectionPhaseDecoder`, the relay's interceptor, gives each connection
+  phase a `ConnectionPhaseSession`, which decodes every frame through the translation and logs it by the readable fields
+  its oneofs hold and its length, never a value, a frame not understood being a warning, and rewrites the server
+  selection's answer.
 - The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).
 - Captures (D37): with `Network:Captures:Enabled`, each connection's raw reads go to a `.d3bcap` file in
-  `%LOCALAPPDATA%\D3B\captures`, never committed. `CaptureReplay` plays one into pipes; tests build their own, and
+  `%LOCALAPPDATA%\D3B\captures`, the game connection's in its `game` directory, apart from the connection phase's that
+  the mapping tool reads (D53), never committed. `CaptureReplay` plays one into pipes; tests build their own, and
   `scripts/capture.cs` describes them by structure. Decoded messages come from replaying them, for the protocol
   inspector and the replay tests (Q7).
 

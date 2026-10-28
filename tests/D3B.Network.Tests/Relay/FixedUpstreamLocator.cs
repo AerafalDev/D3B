@@ -13,7 +13,7 @@ internal sealed class FixedUpstreamLocator : IUpstreamLocator
         _upstream = upstream;
     }
 
-    public Task<Upstream> LocateAsync(IPEndPoint listener, CancellationToken cancellationToken)
+    public Task<Upstream> LocateAsync(RelayRoute route, IPEndPoint listener, ReadOnlyMemory<byte> clientFrame, CancellationToken cancellationToken)
     {
         return _upstream is { } upstream
             ? Task.FromResult(upstream)

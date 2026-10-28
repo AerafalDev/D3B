@@ -162,7 +162,7 @@ public sealed class ClientRedirectTests : IDisposable
 
         await redirect.StartAsync(TestContext.Current.CancellationToken);
 
-        var upstream = await new RedirectUpstreamLocator(redirect).LocateAsync(new IPEndPoint(RelaySettings.DefaultAddress, 443), TestContext.Current.CancellationToken);
+        var upstream = await _client.Locator(redirect).LocateAsync(RelayRoute.Connection, new IPEndPoint(RelaySettings.DefaultAddress, 443), ReadOnlyMemory<byte>.Empty, TestContext.Current.CancellationToken);
 
         Assert.Equal("localhost", upstream.Host);
         Assert.NotEmpty(upstream.EndPoints);
@@ -174,6 +174,6 @@ public sealed class ClientRedirectTests : IDisposable
     {
         using var redirect = _client.Redirect();
 
-        await Assert.ThrowsAsync<UpstreamUnavailableException>(() => new RedirectUpstreamLocator(redirect).LocateAsync(new IPEndPoint(RelaySettings.DefaultAddress, 443), TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<UpstreamUnavailableException>(() => _client.Locator(redirect).LocateAsync(RelayRoute.Connection, new IPEndPoint(RelaySettings.DefaultAddress, 443), ReadOnlyMemory<byte>.Empty, TestContext.Current.CancellationToken));
     }
 }

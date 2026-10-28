@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Globalization;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
@@ -14,25 +15,27 @@ namespace D3B.Network.Relay;
 /// <summary>Relays each client's connection to the real server, bytes as they are, both ways (D36).</summary>
 /// <remarks>
 /// <para>
-/// Kestrel calls it once per accepted connection, from any number of clients at once; it keeps no state between them.
-/// The server's connection is a <see cref="ConnectionContext"/> too, made by Kestrel's socket layer (D8), so both sides
-/// are pipes.
+/// Kestrel calls it once per accepted connection, from any number of clients at once, with the route its listener serves:
+/// the connection phase, or the game (3f). It keeps no state between connections. The server's connection is a
+/// <see cref="ConnectionContext"/> too, made by Kestrel's socket layer (D8), so both sides are pipes.
 /// </para>
 /// <para>
-/// Each direction forwards what it reads as soon as it reads it, and records it when captures are on. With an
-/// <see cref="IRelayObserver"/>, it also reads the bytes as frames, each shown to the observer once whole (D49). When a
-/// side closes, the other's output is completed, which closes it once its last bytes are sent. A side still open after
-/// <see cref="RelaySettings.CloseTimeout"/> is cut: the relay keeps no half-open connection.
+/// Each direction forwards what it reads as soon as it reads it, and records it when captures are on, the game's apart
+/// from the connection phase's. With an <see cref="IRelayInterceptor"/>, it also reads the bytes as frames, each shown to
+/// the connection's interceptor once whole, and holds the frames it asks for (D49). A frame held for longer than
+/// <see cref="RelaySettings.HoldTimeout"/> goes on as it came. When a side closes, the other's output is completed, which
+/// closes it once its last bytes are sent. A side still open after <see cref="RelaySettings.CloseTimeout"/> is cut: the
+/// relay keeps no half-open connection.
 /// </para>
 /// </remarks>
-internal sealed class RelayConnectionHandler : ConnectionHandler
+internal sealed class RelayConnectionHandler
 {
     private readonly RelaySettings _settings;
     private readonly IUpstreamLocator _locator;
     private readonly SocketConnectionContextFactory _connections;
     private readonly TimeProvider _time;
     private readonly Func<string?> _clientVersion;
-    private readonly IRelayObserver? _observer;
+    private readonly IRelayInterceptor? _interceptor;
     private readonly ILogger _log;
 
     public RelayConnectionHandler(
@@ -41,7 +44,7 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         SocketConnectionContextFactory connections,
         TimeProvider time,
         Func<string?> clientVersion,
-        IRelayObserver? observer,
+        IRelayInterceptor? interceptor,
         ILogger<RelayConnectionHandler> log)
     {
         _settings = settings;
@@ -49,16 +52,21 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         _connections = connections;
         _time = time;
         _clientVersion = clientVersion;
-        _observer = observer;
+        _interceptor = interceptor;
         _log = log;
     }
 
-    private static string SideOf(RelayDirection direction)
+    private static void Forward(PipeWriter output, ReadOnlySequence<byte> bytes)
     {
-        return direction is RelayDirection.FromClient ? "client" : "server";
+        foreach (var segment in bytes)
+            output.Write(segment.Span);
     }
 
-    public override async Task OnConnectedAsync(ConnectionContext connection)
+    /// <summary>Relays a connection a listener of the relay accepted.</summary>
+    /// <param name="connection">The client's connection.</param>
+    /// <param name="route">Which of the client's connections the listener serves.</param>
+    /// <returns>A task that completes once both sides are closed.</returns>
+    public async Task RelayAsync(ConnectionContext connection, RelayRoute route)
     {
         var started = _time.GetTimestamp();
         var listener = (IPEndPoint)connection.LocalEndPoint!;
@@ -73,7 +81,10 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         {
             try
             {
-                upstream = await _locator.LocateAsync(listener, reaching.Token);
+                // The game's server is the one whose ticket the client presents first: the client speaks first there.
+                var clientFrame = route is RelayRoute.Game ? await ReadFirstFrameAsync(connection.Transport.Input, reaching.Token) : ReadOnlyMemory<byte>.Empty;
+
+                upstream = await _locator.LocateAsync(route, listener, clientFrame, reaching.Token);
                 (server, endPoint) = await ConnectAsync(connection.ConnectionId, upstream, reaching.Token);
             }
             catch (UpstreamUnavailableException exception)
@@ -98,9 +109,10 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
 
         await using (server)
         {
-            RelayLog.Relaying(_log, connection.ConnectionId, connection.RemoteEndPoint, upstream.Host, endPoint!);
+            RelayLog.Relaying(_log, connection.ConnectionId, connection.RemoteEndPoint, upstream.Host, endPoint!, route is RelayRoute.Game ? "game" : "connection phase");
 
-            using var capture = StartCapture(connection, upstream, endPoint!);
+            using var capture = StartCapture(connection, route, upstream, endPoint!);
+            var interceptor = Intercept(connection.ConnectionId, route);
 
             // The host stopping asks every connection to close: both sides are cut, as when the process ends.
             using var stopping = stopRequested.Register(() =>
@@ -109,8 +121,8 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
                 server.Abort();
             });
 
-            var fromClient = PumpAsync(connection.ConnectionId, connection.Transport.Input, server.Transport.Output, capture, RelayDirection.FromClient);
-            var fromServer = PumpAsync(connection.ConnectionId, server.Transport.Input, connection.Transport.Output, capture, RelayDirection.FromServer);
+            var fromClient = PumpAsync(connection.ConnectionId, connection.Transport.Input, server.Transport.Output, capture, RelayDirection.FromClient, interceptor);
+            var fromServer = PumpAsync(connection.ConnectionId, server.Transport.Input, connection.Transport.Output, capture, RelayDirection.FromServer, interceptor);
             var first = await Task.WhenAny(fromClient, fromServer);
             var second = first == fromClient ? fromServer : fromClient;
 
@@ -131,13 +143,83 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         }
     }
 
-    private async Task<long> PumpAsync(string connectionId, PipeReader input, PipeWriter output, CaptureWriter? capture, RelayDirection direction)
+    /// <summary>Reads the client's first frame, leaving it in the pipe so that it is relayed and recorded first.</summary>
+    /// <param name="input">The client's side.</param>
+    /// <param name="cancellationToken">Stops the reading, such as when the client leaves.</param>
+    /// <returns>A copy of the frame, its length already read.</returns>
+    /// <exception cref="UpstreamUnavailableException">No whole frame came in time, or what came is none.</exception>
+    private async Task<ReadOnlyMemory<byte>> ReadFirstFrameAsync(PipeReader input, CancellationToken cancellationToken)
+    {
+        // The way out, as for a frame an interceptor holds: what does not come whole in time ends the connection.
+        using var expiry = new CancellationTokenSource(_settings.HoldTimeout, _time);
+        using var reading = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, expiry.Token);
+
+        while (true)
+        {
+            ReadResult result;
+
+            try
+            {
+                result = await input.ReadAsync(reading.Token);
+            }
+            catch (OperationCanceledException) when (expiry.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                throw new UpstreamUnavailableException(string.Create(CultureInfo.InvariantCulture, $"The client sent no whole frame within {_settings.HoldTimeout.TotalSeconds:0.#} s, where its ticket is looked for."));
+            }
+
+            var buffer = result.Buffer;
+            var reader = new SequenceReader<byte>(buffer);
+
+            try
+            {
+                if (FrameReader.TryReadFrame(ref reader, out var frame, _settings.MaxHeldLength))
+                {
+                    var copy = frame.ToArray();
+
+                    // Nothing consumed, nothing examined: the relay's first read gets the frame again at once.
+                    input.AdvanceTo(buffer.Start);
+
+                    return copy;
+                }
+            }
+            catch (FrameFormatException exception)
+            {
+                throw new UpstreamUnavailableException($"The client's first bytes are no frame D3B reads a ticket in: {exception.Message}", exception);
+            }
+
+            if (result.IsCompleted)
+                throw new UpstreamUnavailableException("The client closed before sending a whole frame, where its ticket is looked for.");
+
+            input.AdvanceTo(buffer.Start, buffer.End);
+        }
+    }
+
+    private IConnectionInterceptor? Intercept(string connectionId, RelayRoute route)
+    {
+        try
+        {
+            return _interceptor?.Intercept(connectionId, route);
+        }
+        catch (Exception exception)
+        {
+            // The interceptor only watches: its failure must not cut the player off.
+            RelayLog.InterceptorFailed(_log, connectionId, "connection", exception);
+
+            return null;
+        }
+    }
+
+    private async Task<long> PumpAsync(string connectionId, PipeReader input, PipeWriter output, CaptureWriter? capture, RelayDirection direction, IConnectionInterceptor? interceptor)
     {
         var kind = direction is RelayDirection.FromClient ? CaptureRecordKind.FromClient : CaptureRecordKind.FromServer;
+        var side = interceptor is null ? null : new InterceptedSide(connectionId, direction, interceptor, _settings.MaxHeldLength, _log);
         var bytes = 0L;
 
-        // The start of a frame not yet whole, already forwarded, kept to show the observer the frame once the rest comes.
-        var pending = _observer is null ? null : new ArrayBufferWriter<byte>();
+        // The way out of a frame held that does not come whole: the timer ends the read waiting for the rest.
+        ITimer? hold = null;
+        var timedHold = -1;
+        var holdStarted = 0L;
+        var timed = false;
 
         try
         {
@@ -150,18 +232,51 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
                 {
                     capture?.Write(kind, buffer);
 
-                    foreach (var segment in buffer)
-                        output.Write(segment.Span);
+                    if (side is null)
+                        Forward(output, buffer);
+                    else
+                        side.Read(buffer, output);
 
                     bytes += buffer.Length;
-
-                    if (pending is not null && !Observe(connectionId, direction, pending, buffer))
-                        pending = null;
                 }
 
                 input.AdvanceTo(buffer.End);
 
-                if (result.IsCompleted || result.IsCanceled)
+                if (side is not null)
+                {
+                    var held = _time.GetElapsedTime(holdStarted);
+
+                    if (result.IsCompleted)
+                        side.Release(output, "its side closed before it was whole");
+                    else if (side.IsHolding && side.HoldNumber == timedHold && held >= _settings.HoldTimeout)
+                        side.Release(output, string.Create(CultureInfo.InvariantCulture, $"it was not whole after {_settings.HoldTimeout.TotalSeconds:0.#} s"));
+
+                    if (!side.IsHolding)
+                    {
+                        if (hold is not null)
+                            await hold.DisposeAsync();
+
+                        hold = null;
+                    }
+                    else if (side.HoldNumber != timedHold)
+                    {
+                        if (hold is not null)
+                            await hold.DisposeAsync();
+
+                        timedHold = side.HoldNumber;
+                        holdStarted = _time.GetTimestamp();
+                        hold = _time.CreateTimer(_ => input.CancelPendingRead(), null, _settings.HoldTimeout, Timeout.InfiniteTimeSpan);
+                        timed = true;
+                    }
+                    else if (result.IsCanceled)
+                    {
+                        // A timer ending the read a little early, or an earlier frame's: the frame gets the rest of its time.
+                        hold?.Change(_settings.HoldTimeout - held, Timeout.InfiniteTimeSpan);
+                    }
+                }
+
+                // A read the hold's timer ended is no end of the side: anything else cancelling it is.
+                if (result.IsCompleted || (result.IsCanceled && !timed))
                     break;
 
                 // Completed when the other side is gone: nothing more can reach it.
@@ -177,6 +292,9 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         }
         finally
         {
+            if (hold is not null)
+                await hold.DisposeAsync();
+
             capture?.WriteClosed(kind is CaptureRecordKind.FromClient ? CaptureRecordKind.ClientClosed : CaptureRecordKind.ServerClosed);
 
             await input.CompleteAsync();
@@ -184,54 +302,6 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         }
 
         return bytes;
-    }
-
-    /// <summary>Shows the observer each whole frame of what a side has sent, the start of a frame kept for the next read.</summary>
-    /// <param name="connectionId">The connection's id.</param>
-    /// <param name="direction">The side that sent the bytes.</param>
-    /// <param name="pending">The start of a frame earlier reads left, which keeps the start this read leaves.</param>
-    /// <param name="read">The bytes this read brought, already forwarded.</param>
-    /// <returns>Whether to go on observing the side: not once its bytes are no frames, or the observer has failed.</returns>
-    private bool Observe(string connectionId, RelayDirection direction, ArrayBufferWriter<byte> pending, ReadOnlySequence<byte> read)
-    {
-        var bytes = read;
-
-        if (pending.WrittenCount > 0)
-        {
-            foreach (var segment in read)
-                pending.Write(segment.Span);
-
-            bytes = new ReadOnlySequence<byte>(pending.WrittenMemory);
-        }
-
-        var reader = new SequenceReader<byte>(bytes);
-
-        try
-        {
-            while (FrameReader.TryReadFrame(ref reader, out var frame))
-                _observer!.OnFrame(connectionId, direction, frame);
-        }
-        catch (FrameFormatException exception)
-        {
-            RelayLog.Unframed(_log, connectionId, SideOf(direction), exception.Message);
-
-            return false;
-        }
-        catch (Exception exception)
-        {
-            // The observer only watches: its failure must not cut the player off.
-            RelayLog.ObserverFailed(_log, connectionId, SideOf(direction), exception);
-
-            return false;
-        }
-
-        // Copied out first: the rest may lie in the very buffer it is written back to.
-        var rest = bytes.Slice(reader.Position).ToArray();
-
-        pending.ResetWrittenCount();
-        pending.Write(rest);
-
-        return true;
     }
 
     private async Task<(ConnectionContext? Server, IPEndPoint? EndPoint)> ConnectAsync(string connectionId, Upstream upstream, CancellationToken cancellationToken)
@@ -265,9 +335,10 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         return (null, null);
     }
 
-    private CaptureWriter? StartCapture(ConnectionContext connection, Upstream upstream, IPEndPoint server)
+    private CaptureWriter? StartCapture(ConnectionContext connection, RelayRoute route, Upstream upstream, IPEndPoint server)
     {
-        if (_settings.CapturesDirectory is not { } directory)
+        // Apart, so that the mapping tool, reading the connection phase's captures, never meets the game's (D43).
+        if ((route is RelayRoute.Game ? _settings.GameCapturesDirectory : _settings.CapturesDirectory) is not { } directory)
             return null;
 
         var startedAt = _time.GetUtcNow();

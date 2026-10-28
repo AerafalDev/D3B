@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace D3B.Network.Relay;
 
-/// <summary>Where the relay listens, where it keeps the client's configuration, and whether it records captures (D35 to D37).</summary>
+/// <summary>Where the relay listens, where it keeps the client's configuration, and whether it records captures (D35 to D37, 3f).</summary>
 public sealed class RelaySettings
 {
     /// <summary>The setting naming D3B's loopback address.</summary>
@@ -12,6 +12,9 @@ public sealed class RelaySettings
 
     /// <summary>The setting listing the ports D3B listens on there.</summary>
     public const string PortsKey = "Network:Ports";
+
+    /// <summary>The setting listing the ports D3B's game listener takes there, which the server selection's answer is rewritten to.</summary>
+    public const string GamePortsKey = "Network:Game:Ports";
 
     /// <summary>The setting naming the directory where D3B keeps the configuration it gives the client.</summary>
     public const string RedirectDirectoryKey = "Network:Redirect:Directory";
@@ -29,6 +32,9 @@ public sealed class RelaySettings
     /// <summary>Gets the ports the client's configuration lists for its connection host, which the launcher chooses among.</summary>
     public static IReadOnlyList<int> DefaultPorts { get; } = [5555, 443];
 
+    /// <summary>Gets the port of D3B's game listener by default: one, since the client connects to the first port it is sent.</summary>
+    public static IReadOnlyList<int> DefaultGamePorts { get; } = [5556];
+
     /// <summary>Gets where captures are written by default: <c>%LOCALAPPDATA%\D3B\captures</c>.</summary>
     public static string DefaultCapturesDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "D3B", "captures");
 
@@ -41,6 +47,9 @@ public sealed class RelaySettings
     /// <summary>Gets the ports D3B listens on; the relay connects to the server on the port the client chose.</summary>
     public required IReadOnlyList<int> Ports { get; init; }
 
+    /// <summary>Gets the ports D3B's game listener takes on <see cref="Address"/>; the client's game connection comes there.</summary>
+    public required IReadOnlyList<int> GamePorts { get; init; }
+
     /// <summary>Gets the installed client's directory, whose version file names the client's configuration.</summary>
     public required string ClientDirectory { get; init; }
 
@@ -48,13 +57,29 @@ public sealed class RelaySettings
     public required string RedirectDirectory { get; init; }
 
     /// <summary>Gets the directory captures are written to, or null when none is recorded.</summary>
+    /// <remarks>
+    /// The game connection's captures go to its <see cref="GameCapturesDirectory"/>, apart from the connection phase's,
+    /// which the mapping tool reads (D43).
+    /// </remarks>
     public string? CapturesDirectory { get; init; }
+
+    /// <summary>Gets the directory the game connection's captures are written to, or null when none is recorded.</summary>
+    public string? GameCapturesDirectory => CapturesDirectory is { } directory ? Path.Combine(directory, "game") : null;
 
     /// <summary>Gets how long the relay tries each address of the server.</summary>
     public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
 
     /// <summary>Gets how long a side may stay open once the other has closed, before both are cut.</summary>
     public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Gets how long the relay holds a frame an interceptor asked for, before forwarding what came as it came.</summary>
+    public TimeSpan HoldTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Gets the longest frame the relay holds for an interceptor; a longer one is forwarded as it comes.</summary>
+    public int MaxHeldLength { get; init; } = 64 * 1024;
+
+    /// <summary>Gets how long a server selection waits for the client's game connection before it is forgotten.</summary>
+    public TimeSpan SelectionLifetime { get; init; } = TimeSpan.FromSeconds(60);
 
     /// <summary>Tells whether an address can be D3B's: in 127.0.0.0/8, and not 127.0.0.1 (D34).</summary>
     /// <param name="address">The address.</param>
@@ -83,25 +108,34 @@ public sealed class RelaySettings
         if (configuration[AddressKey] is { Length: > 0 } configured && (!IPAddress.TryParse(configured, out address!) || !IsRelayAddress(address)))
             throw new InvalidOperationException($"{AddressKey} is '{configured}', which is not an address of 127.0.0.0/8 other than 127.0.0.1.");
 
-        var ports = configuration.GetSection(PortsKey).GetChildren().Select(port => Port(port.Value)).ToList();
+        var ports = ReadPorts(configuration, PortsKey);
+        var gamePorts = ReadPorts(configuration, GamePortsKey);
         var capturesEnabled = configuration[CapturesEnabledKey] is { } enabled && bool.TryParse(enabled, out var value) && value;
 
         return new RelaySettings
         {
             Address = address,
             Ports = ports.Count is 0 ? DefaultPorts : ports,
+            GamePorts = gamePorts.Count is 0 ? DefaultGamePorts : gamePorts,
             ClientDirectory = clientDirectory,
             RedirectDirectory = PathOr(configuration[RedirectDirectoryKey], DefaultRedirectDirectory),
             CapturesDirectory = capturesEnabled ? PathOr(configuration[CapturesDirectoryKey], DefaultCapturesDirectory) : null,
         };
     }
 
-    private static int Port(string? value)
+    private static List<int> ReadPorts(IConfiguration configuration, string key)
     {
-        if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var port) || port > IPEndPoint.MaxPort)
-            throw new InvalidOperationException($"{PortsKey} lists '{value}', which is not a port.");
+        var ports = new List<int>();
 
-        return port;
+        foreach (var value in configuration.GetSection(key).GetChildren().Select(port => port.Value))
+        {
+            if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var port) || port > IPEndPoint.MaxPort)
+                throw new InvalidOperationException($"{key} lists '{value}', which is not a port.");
+
+            ports.Add(port);
+        }
+
+        return ports;
     }
 
     private static string PathOr(string? configured, string fallback)

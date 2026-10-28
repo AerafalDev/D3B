@@ -67,7 +67,8 @@ dotnet build                               # warnings are errors; copies the sam
 dotnet test                                # every test project, on Microsoft.Testing.Platform
 dotnet format --verify-no-changes          # CI checks it
 dotnet run --project src/D3B.Host          # runs until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48); --Plugins:Directory <dir> loads plugins from elsewhere
-                                           # while it runs, clients started from the launcher go through its relay (D35); --Network:Captures:Enabled true records them
+                                           # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
+                                           # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53)
 dotnet pack src/D3B.Core -o <feed>         # the package plugins compile against (D22)
 dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
