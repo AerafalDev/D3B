@@ -7,8 +7,9 @@ on running clients, then on its bytes through D3B's relay ([Connection](#connect
 `scripts/schema.cs` ([Protocol code](#protocol-code)), its connection phase against D3B's readable protocol with
 `scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)), then decoded through it on 2026-10-28
 ([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)), then
-acted on through it ([the game, acted on](#the-game-acted-on)), walked by a bot ([the game, walked](#the-game-walked)), and
-travelled from map to map ([the game, between maps](#the-game-between-maps)).
+acted on through it ([the game, acted on](#the-game-acted-on)), walked by a bot ([the game, walked](#the-game-walked)),
+travelled from map to map ([the game, between maps](#the-game-between-maps)), and its elements used
+([the game, used](#the-game-used)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -122,6 +123,8 @@ field reads the same. 65% of interactive elements stand on cells that cannot be 
 
 An element names its graphic, `gfxId`, but not its kind: which interactive of `InteractivesDataRoot` it is, and which
 skills it offers, the server tells for each element of the map a character enters ([Jobs and skills](#jobs-and-skills)).
+The server also lists there the elements of the neighbouring maps, marked so, with their own map's cells
+([the game, used](#the-game-used)).
 
 ## World graph
 
@@ -174,7 +177,9 @@ their cells carry as a mark.
 
 **Reached.** From the bank of Astrub, the scrolls, scrolls with an action and map actions whose criteria the bot can
 answer reach 4,021 of the 11,327 vertices, 4,088 ignoring criteria; with doors 5,551 strictly and 8,738 counting what
-is not known as met; with every transition, 9,024. Zaaps and the like are not in the graph.
+is not known as met; with every transition, 9,024. Zaaps and the like are not in the graph. Measured again for doors,
+for a subscribed character of level 200 holding nothing: 5,607 with the doors of skill 184 (D76), 5,649 with every
+interactive transition ([the game, used](#the-game-used)).
 
 **Coverage.** 10,981 of the 17,722 maps have a vertex, all `ClientMapData`. Every map with a vertex has a position in
 `MapsInformationDataRoot`, and every zaap stands on one.
@@ -632,7 +637,8 @@ bank, put six stacks in it, took its kamas out and left.
   stack obtained or in the bank is at position 63, its quantity varying, and the inventory lists the worn objects
   first, one of each, at other positions.
 - **What does not match.** The cell a stated element gives is the pack's for the two resources harvested, not for two
-  elements of another map.
+  elements of another map: elements of the neighbouring map, which the information lists too, measured in session 4c
+  ([the game, used](#the-game-used)).
 
 **Matching.** 106 messages paired, 43 by pin, 11 by the captures and 52 by fields, and 17 enums by fields. Without pins,
 scores pair 9 messages, each as pinned, and the captures 11; fields follow from them.
@@ -686,7 +692,8 @@ minutes, at 8 and 9. Nothing else sets the id.
 - **Refused.** A path that does not start where the character stands: one event of the server, and no walk, so no
   confirmation; measured again in session 4a, the event is 40 bytes and names the character's cell
   ([the game, walked](#the-game-walked)), not 25. A use right after it: two events. A use of an element whose cell in
-  the pack is not the one the server's state gives it, an element listed on two neighbouring maps: no answer at all.
+  the pack is not the one the server's state gives it, an element listed on two neighbouring maps: no answer at all, an
+  element of the neighbouring map ([the game, used](#the-game-used)).
 
 `scripts/capture.cs` describes D3B's frames apart from the client's, in captures of format 2 (D61): on this session's,
 105 reads of the client, all ending on a frame, and 18 frames of D3B's.
@@ -767,6 +774,61 @@ mounted character's, and D69's delays still bound a walking one.
   again through another map. Seven: 21.7 s, every change answered. 65 frames of D3B's, each whole between the client's.
 
 The eleven game connections decoded through the mapping: of 5,040 frames, 737 understood whole, 988 more read, and 3,315
+carrying one of 123 messages the readable protocol lacks; none misread.
+
+### The game, used
+
+Measured on 2026-10-28 for session 4c (D75 to D77): the captures of sessions 3g and 3h, then two game connections of a
+client of 3.7.12.12 in game through the host, the player's hands off, 15 and 2 minutes, a measuring plugin, never
+committed, sending uses from chosen cells, then the final behaviors. By structure, timing, and values compared on the
+machine with the build's pack, never written down. The character rode a mount.
+
+**The client's uses**, in the captures: four of skills of range 1, a tree on a walkable cell among them, each from a
+walkable neighbour of the element's cell, the first its walk reached; two fishing uses, no neighbour walkable, from one
+of the walkable cells nearest the water, 2 and 3 away; the bank's door from its west neighbour, 2 away, its own cell
+walkable. It asks 1 to 5 ms after the server answered its confirmation; the server starts the use 28 ms later.
+
+**What the server takes**, by the distance that sums the coordinates' differences:
+
+| Skill | Range | Taken | Refused |
+| --- | ---: | --- | --- |
+| Fishing, 124 to 126 | 10 | 2, 3, 4, 6 and 10 away; 4 away with a cell that blocks sight on the straight line between | 11 away, three times, one only 6 along either coordinate |
+| The door, 184 | 1 | From its west neighbour, 2 away, and from its own cell | 2 away off its neighbours, 3 away |
+
+**Refusals.** An event the readable protocol names `InteractiveUseErrorEvent`, 28 ms after, then nothing: two for a use
+from too far, the first carrying the skill's id where the second carries the instance's, five times; one carrying the
+instance for a skill the element does not offer now, a resource harvested, twice, and for an instance it does not know.
+Nothing at all for an element the map does not list, and for one of a neighbouring map.
+
+**The neighbouring maps' elements.** The map's information lists, with the map's own, elements of the maps next to it,
+a field set apart, which the references name `on_current_map`. In the 11 captures before this session, 104 of 343
+interactive elements and 92 of 232 stated ones are marked another map's; each of those 92 stands on another cell than
+the pack's, every other on the pack's. Every element listed has its id on the current map in the pack too, mostly on
+another cell. The server answered nothing to a use of such an element, from next to either cell, three times. Their
+updates come too: an element's skills with the field set as in the information, 109 of 110 times; an element's state
+without it, 110 times.
+
+**A harvest.** The element's skill disabled, the use started for every actor with its duration in tenths of a second,
+15 or 30, the element's state at 2; the end that long later, to the millisecond, then, within 2 ms and in no set order,
+the objects, the weight, the objects obtained, the profession's experience, the state at 1 and the skill still disabled.
+The client sends nothing and walked on 5 to 6 ms after. A walk sent during a harvest: refused, naming the character's
+cell, and the harvest went on to its end.
+
+**A door.** The use, with no duration and its one boolean set, `can_move` in the references, the new map and an event of
+36 bytes the readable protocol lacks, in the same millisecond; the client asks what is on the new map 545 to 627 ms
+later. The bank of Astrub's door offers three skills, 184 among them. Out of the bank, a map action leads onto the
+door's cell.
+
+**The client draws the map first.** A door used as soon as the server named the new map, before the client asked what is
+on it: the server took it, and the client asked for both maps' information in turn, the server answering the second
+only. 55 s later the bot's next walk was shown and never confirmed, the player's next path refused, naming that walk's
+end, and the player's path after that walked and confirmed from there (D77).
+
+**The bot using.** Two harvests by the final behavior, the walk then the use, 3.5 and 3.6 s each; a journey of four map
+changes into the bank by its door, 11 s, every walk 533 to 549 ms after a new map's information and confirmed; out by
+the map action.
+
+The 13 game connections decoded through mapping 4: of 6,483 frames, 1,012 understood whole, 1,284 more read, and 4,187
 carrying one of 123 messages the readable protocol lacks; none misread.
 
 ## Protocol code

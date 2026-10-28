@@ -18,7 +18,8 @@ session 3h); the bots' run time, one actor per character a game connection chose
 character's state and its snapshots, the player taking the character over, and the first behavior, walking on a map
 along cell paths found in `D3B.Engine` (step 4, session 4a); paths through the world in `D3B.Engine`, their criteria
 answered on three values, the account's subscription, and the behaviors changing maps and travelling from map to map
-(step 4, session 4b). Everything else below is the target.
+(step 4, session 4b); the map's elements in the state, using them until the use is over, doors in the path through the
+world, and requests held until the client drew the map (step 4, session 4c). Everything else below is the target.
 
 ## Overview
 
@@ -90,8 +91,9 @@ Built at step 1, in `D3B.Core` (D20, D21):
 ## Bot run time
 
 Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharing with the player and the first
-behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps. Activities, recovery and
-reconnection are session 4f's (D64).
+behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
+map's elements, using them, doors and the drawing of the map. The bank is session 4d's; activities, recovery and
+reconnection are 4f's (D64).
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -101,22 +103,28 @@ reconnection are session 4f's (D64).
   message of its character's game connection, both sides, from the relay's read loops; the loop turns each into the next
   state and tries it on the behaviors' expectations. Commands from the app come at step 5.
 - **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable snapshot of what the server said of the
-  character, its name and level, map, sub-area, cell and the path it walks, inventory, kamas, weight and professions, and
-  when its account's subscription ends, which the connection phase's identification said (D72).
+  character, its name and level, map, sub-area, cell and the path it walks, the map's own interactive elements and the
+  use the character is in (D75), inventory, kamas, weight and professions, and when its account's subscription ends,
+  which the connection phase's identification said (D72).
   `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
 - **Behaviors** are async methods given a `BotContext`, the state, the pack's maps and world paths, the clock and the
-  game connection to send through, and run one at a time by `BotActor.RunAsync`. A behavior expects its answer before it sends its request
-  (`Expect`), so the loop sees the expectation before any answer. An interruption cancels it, off the loop: the player
-  acting, the connection closing, the host stopping (`BotInterruptedException`).
+  game connection to send through, and run one at a time by `BotActor.RunAsync`. A request waits until the client drew
+  the map, half a second after the server placed the character (D77). A behavior expects its answer before it sends its
+  request (`Expect`), so the loop sees the expectation before any answer. An interruption cancels it, off the loop: the
+  player acting, the connection closing, the host stopping (`BotInterruptedException`).
 - **The player wins** (D66): a request the player sends that acts on the character (`PlayerActions`) interrupts the bot's
   behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's.
 - **Walking on a map** (D69): `MapWalk`, in `D3B.Bot.Movement`, finds the path in the pack's cells, sends its turning
   points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
   ends it too, and the character walking already makes it busy.
-- **Changing maps** (D73): `MapChange` follows one step of a path through the world. It walks to the nearest cell the
-  map is left from, then asks for the neighbour, or walks onto a map action's cell, and waits for the new map, then for
-  what is on it, which the client asks for, then half a second for the client to draw it. The server answers nothing to
-  a change it refuses: the change ends after its delay.
+- **Using an element** (D75): `ElementUse`, in `D3B.Bot.Interactives`, walks to the nearest cell the client uses the
+  element from, asks for the skill by the id the server gave it on the element, and waits for the start or the refusal,
+  then for the end of a use that lasts, such as a harvest. Nothing is sent for an element the map does not offer the
+  skill on; the character walking or using answers `Busy`.
+- **Changing maps** (D73, D76): `MapChange` follows one step of a path through the world. It walks to the nearest cell
+  the map is left from, then asks for the neighbour, walks onto a map action's cell, or uses a door, and waits for the
+  new map, then for what is on it, which the client asks for. The server answers nothing to a change it refuses, which
+  ends after its delay, and refuses a door's use with an event.
 - **Travelling** (D74): `WorldTravel` finds the path to the maps sought, follows its first step, and finds it again from
   where the character stands, until it arrives. A change that fails leaves its transition out of the journey, which
   fails after three, or when it goes on too long. The criteria are answered on the state (`WorldTravel.FactsOf`).
@@ -272,21 +280,26 @@ Built at step 2 (D24 to D33):
 ## Engine
 
 Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cells and the world. Built in session 4a
-(D68) and 4b (D71, D73):
+(D68), 4b (D71, D73) and 4c (D75, D76):
 
-- `MapGeometry`, in `D3B.Engine.Maps`: 14 columns of 40 staggered rows, the eight directions between neighbours, and
-  the coordinates the server names a cell by (`MapPoint`), measured on the captures.
+- `MapGeometry`, in `D3B.Engine.Maps`: 14 columns of 40 staggered rows, the eight directions between neighbours, the
+  coordinates the server names a cell by (`MapPoint`), measured on the captures, and the distance between two cells, the
+  sum of their coordinates' differences, by which the server measures a skill's range.
+- `ElementCells`: the cells a character uses an element from, as the client chooses them, the walkable neighbours of the
+  element's cell in the character's zone, else the zone's walkable cells nearest it.
 - `CellPathfinder`: A* over the cells a character may walk on, a step across passing beside at least one walkable cell,
   steps weighed by the time the character takes, to one cell or the nearest of several; `CellPath` gives the turning
   points a request names. Nothing is kept between calls.
 - `Criterion`, in `D3B.Engine.Criteria`: a criterion of the client's, read once into a tree and answered on three values
   from `CriterionFacts`, what the bot knows; a code it does not know is unknown.
 - `WorldPathfinder`, in `D3B.Engine.World`: Dijkstra's over the world graph's vertices, a zone of a map each, through
-  scrolls, scrolls with an action and map actions whose criteria are met (`WorldPathRules`), each change costing the
-  same, to the nearest of several maps; sub-areas closed to accounts without a subscription are entered by subscribed
-  ones only. It gives the cells each map is left from (`ExitCells`). Built once per pack and shared; a search keeps its
-  state in its own arrays, and takes under 0.2 ms (`benchmarks/D3B.Engine.Benchmarks`).
-- Later: line of sight, doors (4c), zaaps and havens (4e) in the world path, and the fight simulator.
+  scrolls, scrolls with an action, map actions and doors whose criteria are met (`WorldPathRules`), each change costing
+  the same, to the nearest of several maps; sub-areas closed to accounts without a subscription are entered by
+  subscribed ones only. It gives the cells each map is left from (`ExitCells`), a door's around its element. Built once
+  per pack and shared; a search keeps its state in its own arrays, and takes under 0.4 ms
+  (`benchmarks/D3B.Engine.Benchmarks`).
+- Later: zaaps and havens (4e) in the world path; line of sight and the fight simulator at step 9, using an element not
+  depending on line of sight (D75).
 
 ## Fights
 
@@ -301,8 +314,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay.
   Decoded frames are compared with the messages a test built (D49); bot states with snapshots the test holds, serialized
   as indented JSON (D70).
-- Bots are tested through game connections driven as the relay shows them, on a pack of three maps and the world
-  between them, with the bots' loop waited for and the clock moved (D67).
+- Bots are tested through game connections driven as the relay shows them, on a pack of four maps, the world between
+  them, a door and a tree, with the bots' loop waited for and the clock moved (D67).
 - Replays with injection (D63): a game session a test built is replayed through the relay, read by a game session whose
   observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
 - Time is controlled through `FakeTimeProvider`.

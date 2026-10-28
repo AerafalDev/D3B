@@ -10,7 +10,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 1 | Scaffold and modules | Done |
 | 2 | Game data | Done |
 | 3 | Protocol and connection | Done; Q10 at the next client update |
-| 4 | Bot run time and navigation | In progress: 4a and 4b done, 4c next |
+| 4 | Bot run time and navigation | In progress: 4a to 4c done, 4d next |
 | 5 | Desktop app, first version | To do |
 | 6 | Harvesting and banking: first milestone | To do |
 | 7 | Lua scripting | To do |
@@ -96,7 +96,8 @@ and gated before the game connection is taken, whose server address must be deco
 - The actor, the state and its snapshots, behaviors, interruption and recovery, reconnection (D9), fed by game
   observers and acting through game sessions (D60, D62); how the bot and the player share the character.
 - What the server answers D3B's requests, its refusals named first in the readable protocol (D55, D60).
-- Cell pathfinding and line of sight, world pathfinding over the world graph with zaaps and havens, in `D3B.Engine`.
+- Cell pathfinding, world pathfinding over the world graph with doors, zaaps and havens, in `D3B.Engine`; line of sight
+  at step 9, since using an element does not depend on it (D75).
 - Movement between maps, interactives from the nearest cell the character reaches, the bank (D60).
 
 Six sessions, the split chosen by the owner (D64). A client update before the next session gets Q10's session first
@@ -110,7 +111,7 @@ may, beyond the sub-areas the world path already leaves out (D72).
 | --- | --- | --- |
 | 4a | The actor and walking on a map: one bot per character of an account, its account known by the ticket the connection phase gave (D65); its inbox fed by an `IGameObserver`, the character's state and its snapshots, behaviors and their expectations (D67); the player winning, the bot pausing until resumed (D66); cell geometry and paths in `D3B.Engine`, measured on the captures (D68); the walk, over once the server answers the client's confirmation, its refusal and the player's stop named, mapping format 3, measured on a client through the host (D69); states compared with snapshots written in the tests (D70). | Done on 2026-10-28 |
 | 4b | Between maps: paths through the world in `D3B.Engine`, Dijkstra's over the graph's vertices through scrolls, scrolls with an action and map actions, each change costing the same, their criteria read and answered on three values, strictly, and its benchmark (D71); the account's subscription from its identification, prudently, closing subscribers' sub-areas (D72); changing maps from the cells the client marks, the bot waiting for the new map, what is on it, then half a second for the client to draw it, the server's refusals measured silent so none named, mapping format 3 kept (D73); travelling, the path found again after every change, a failed change left out (D74); measured on a client through the host. | Done on 2026-10-28 |
-| 4c | Interactives: using an element from the nearest cell the character reaches, harvesting, the use's refusals named, doors in the world path and the criteria they need (Q12); line of sight if using depends on it. | To do |
+| 4c | Interactives: the map's own elements in the state, those of the neighbouring maps it also lists left out, and the use the character is in; using an element from the cell the client would, until the use is over, a harvest's end measured; the server's range, line of sight measured not to count, so left at step 9; the refusals named and pinned, mapping format 4 (D75, D78); doors of skill 184 in the path through the world, their criteria strict, what each unknown code would open measured for Q12, no new fact, the owner's choice (D76); every request held until the client drew the map, a use sent too soon measured to stop it confirming walks (D77); measured on a client through the host. | Done on 2026-10-28 |
 | 4d | The bank: the banker's dialog, the exchange with the storage, stacks and kamas, leaving, the way to the nearest bank; the player's leaving told from the client's. | To do |
 | 4e | Zaaps and havens: their messages from captures of the player using them, pinned, then in the world path. | To do |
 | 4f | Activities, interruption, recovery and reconnection: behaviors chained, a fight starting, a disconnection, full pods and the player as interruptions, the client's new connection taking the bot back. | To do |
@@ -148,8 +149,8 @@ Dropped: MITM is D3B's only mode (D23), built at step 3. The number stays, so th
 Settles Q5.
 
 - The fight simulator in `D3B.Engine`, from spell effects in the game data, and strategies as modules (D13).
-- Strategies for every breed, a large effort the owner noted: the references in `vendor/` give ideas for each, to be done
-  better and thought through, never copied (D3).
+- Strategies for every breed, a large effort the owner noted: the references in `vendor/` give ideas for each, to be
+  done better and thought through, never copied (D3).
 - Placement, turns, line of sight, spell choice, end of fight, and fights as interruptions of other activities.
 
 ## 10. Several accounts and groups
