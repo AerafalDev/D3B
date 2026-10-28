@@ -323,7 +323,8 @@ nothing on the others. D30 keeps packs without one.
 How the client connects, which D34 and then D35 build on. Measured on 2026-10-27 from the installation, the client's
 logs, the configuration its `ConfigUrl` names, the names in its IL2CPP metadata, and the connections of four clients of
 this build in game for about 50 minutes, each logged in to its own account. Session 3b then changed `ConfigUrl` and
-recorded the connection phase of two clients through D3B's relay ([on the wire](#the-connection-phase-on-the-wire)).
+recorded the connection phase of two clients through D3B's relay ([on the wire](#the-connection-phase-on-the-wire)), and
+session 3f took their game connection through it too ([the game connection](#the-game-connection)).
 
 ### Launch
 
@@ -432,9 +433,9 @@ four clients of this build in game:
 - **In game**, each of the four clients held one connection to a game server, all four on port 5555; one of them to an
   address of the host above.
 
-Not measured: the bytes of the game connection, which still goes straight to the game server, and which side speaks
-first on it; whether the client takes an address in place of the game server's name; port 443, every client measured
-having used 5555; how the client chooses among the ports it is sent. Session 3f measures them.
+Session 3f measured what this left open: the bytes of the game connection, which side speaks first on it, whether the
+client takes an address for the game server's host, port 443 and how the client chooses among the ports it is sent
+([the game connection](#the-game-connection)).
 
 ```powershell
 Get-NetTCPConnection -OwningProcess (Get-Process Dofus).Id | Sort-Object OwningProcess, RemotePort  # connections
@@ -516,6 +517,43 @@ The connection phase through D3B's readable classes, decoded once (D47), by stru
 | `response.identification.success` | Server | 455 |
 | `request.server_selection` | Client | 10 |
 | `response.server_selection.success` | Server | 83 |
+
+### The game connection
+
+Measured on 2026-10-28 on clients of 3.7.12.12 started from the launcher, through the host, whose relay rewrote the
+server selection's answer to its game listener (D51): four connection phases and their four game connections, the last
+two from two accounts at once. By structure only: `scripts/capture.cs`, and where in a frame the ticket lies, never its
+value.
+
+- **An address for the host.** Sent D3B's address, 127.0.13.59, in place of the game server's name, the client connected
+  there: it takes an address.
+- **The ports.** The answer lists 5555 then 443, with the connection port set at 5555 as at 443. Sent the game
+  listener's 5556 then 5557 in their place, the client connected to the first, with either setting; sent 5556 alone, to
+  it. The setting chooses the connection phase's port only. Whether the client tries the next port when the first
+  refuses it is not measured.
+- **Port 443.** With the setting at 443, the connection phase goes to the connection host on 443, in the clear and framed
+  as on 5555, its four frames of the same sizes. The game connection then goes to the first port the answer lists.
+- **Who speaks first: the client.** Its first frame, 76 bytes, goes as soon as it is connected, unprompted; the server's
+  first bytes come one round trip later, 35 ms, in each of the four connections.
+- **The ticket.** That first frame holds the ticket the answer gave, 32 characters, as a string four fields down, field
+  4.2.2.1 from the root, in each of the four; the client's next two frames do not hold it. D52 matches the connection
+  with its server by it.
+- **On the wire.** No TLS: every byte, both sides, in varint frames, each a protobuf message of the game assembly that
+  the schema reads whole as its root. Each client frame is the root's field 4, an `int32` then a `google.protobuf.Any`,
+  whose type URL is 19 bytes, `type.ankama.com/` and a type's three letters; the ticket is a field of the message in the
+  first one's `Any`. Each server frame is the root's field 3, an `Any`, but one per connection, the root's field 1, shaped
+  as a client frame.
+
+| Game connection | Connection port | Game ports sent | Duration | Frames, client and server | Bytes, client and server |
+| --- | ---: | --- | ---: | ---: | ---: |
+| First | 5555 | 5556, 5557 | 32 s | 28, 157 | 1,368, 131,603 |
+| Second | 443 | 5556, 5557 | 23 s | 28, 142 | 1,371, 130,238 |
+| Third, with the fourth | 5555 | 5556 | 31 s | 28, 147 | 1,371, 132,100 |
+| Fourth, another account | 5555 | 5556 | 25 s | 37, 127 | 1,754, 95,643 |
+
+Client frames are 36 to 267 bytes, server frames 25 to 80,966. The third and fourth went to two game servers, each
+matched by its ticket. Every connection phase ended 2.8 to 4.1 s after it began, the server closing once it had
+answered, and its game connection opened about as it closed.
 
 ## Protocol code
 

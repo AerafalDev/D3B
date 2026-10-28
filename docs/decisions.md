@@ -1206,7 +1206,8 @@ whose mapping holds, and decodes through it.
 
 ## D49: The relay reads frames, and logs the connection phase by what it is
 
-*2026-10-28, step 3, session 3e*
+*2026-10-28, step 3, session 3e. Superseded in part by D51: the observer becomes an interceptor, which may have a frame
+held.*
 
 - **The seam.** `IRelayObserver`, in `D3B.Network.Relay`, sees every whole frame of every relayed connection, with the
   connection's id and the side that sent it. `D3B.Network` stays free of the protocol; the network module registers the
@@ -1251,6 +1252,91 @@ whose mapping holds, and decodes through it.
   not exist yet, and would be created with the three files, which hold.
 - **Rejected.**
   - Publishing whichever files are there: a release holding a pack without its mapping, which no host can start on.
+
+## D51: The relay holds the server selection's answer alone, and rewrites it once understood whole
+
+*2026-10-28, step 3, session 3f. Supersedes in part D49: the observer becomes an interceptor, which may have a frame
+held.*
+
+- **The seam.** `IRelayInterceptor`, in `D3B.Network.Relay`, replaces D49's `IRelayObserver`. The relay asks it for an
+  `IConnectionInterceptor` per connection, with the route of the listener that took it (`RelayRoute`: the connection
+  phase or the game); none leaves the connection unwatched. The connection's interceptor sees every whole frame, both
+  sides, and says whether a side's next frame is held. `D3B.Network` stays free of the protocol.
+- **Holding.** A frame is held only when the interceptor asks for it before any of its bytes has gone, and its length is
+  within `RelaySettings.MaxHeldLength`, 64 KiB: its bytes wait until it is whole, then what the interceptor returns goes
+  in its place, its new length before it. Every other byte goes as it is read, as in D49.
+- **The way out.** A frame held goes on as it came, and its side holds nothing more, when it is not whole after
+  `RelaySettings.HoldTimeout`, 5 s, or when its side closes; bytes that are no frames, or an interceptor that throws,
+  end the watching of the side, as in D49. A stream that is no frames but reads as a plausible length costs that delay
+  once: the hang D49 feared is bounded.
+- **What is held.** `ConnectionPhaseSession`, each connection phase's interceptor, has the server's frames held from the
+  client's `request.server_selection` until the server's `response.server_selection`. The relay shows a frame to the
+  interceptor before flushing it to the other side, so the hold is asked for before the server can answer. Events in
+  between are held too, each going on once whole.
+- **The rewrite.** Only an answer understood whole (D47), and a success: its host becomes D3B's address and its ports
+  the game listener's (D53), the real host, ports and ticket going to `GameServerSelections` (D52); the message is
+  encoded again through the readable classes, the rest as it was. Any other answer, one not understood, or one the relay
+  could not hold whole goes on as it came, with a warning: the client then goes straight to the game server, as before
+  this session. Captures keep what each side sent, the answer as the server sent it.
+- **Measured** on clients of 3.7.12.12 started from the launcher: the answer, 83 bytes, came in one read, was rewritten,
+  and the client went to D3B's address (client.md).
+- **Rejected.**
+  - Telling the answer by the first bytes of a frame not yet whole: a reader of partial protobuf, where the client's
+    request already says which answer comes next.
+  - Holding every frame of the connection phase: D49's risk, for nothing.
+
+## D52: The game connection is matched by the ticket it presents
+
+*2026-10-28, step 3, session 3f, chosen by the owner. Settles what D34 and D46 left to this session.*
+
+- **Measured** (client.md): on the game connection the client speaks first, as soon as it is connected and unprompted,
+  and the server one round trip later. That first frame, 76 bytes, holds the ticket the selection's answer gave, 32
+  characters, as a string four fields down: so did every game connection measured, four.
+- **How.** The game listener reads the client's first frame before connecting to any server, leaving it in the pipe,
+  within the hold's bounds (D51): whole within 5 s, 64 KiB at most. `GameServerSelections` looks for the ticket of a
+  selection waiting among the frame's length-delimited values, which `ProtobufValues` finds by the wire format alone, so
+  no mapping of the game is needed. The selection found is taken, and the relay connects to its host, resolved then, on
+  the real port behind the game port the client chose; the frame is then relayed and recorded first.
+- **Failing closed.** A first frame presenting no ticket waiting, none whole in time, or bytes that are no frame: the
+  connection is closed with a warning, and nothing reaches a server. A selection waits 60 s
+  (`RelaySettings.SelectionLifetime`), is taken once, and its ticket is kept in memory only, never logged.
+- **Several clients at once.** Two clients of two accounts, started together, went into the game through D3B, on two
+  game servers, each matched by its ticket.
+- **Risk.** A build whose server spoke first would have every game connection closed after 5 s: it would show at once,
+  and the measurement is made again at each client update. A listening endpoint per selection would then be the way.
+- **Rejected.**
+  - A listening endpoint per selection, an ephemeral port listed alone, which the lead session laid out: no reading, and
+    whoever speaks first, but a listener per selection outside Kestrel's fixed endpoints, and a port any local program
+    could connect to first.
+  - The oldest selection waiting, which the measurements used: two clients selecting at once could be crossed, which
+    step 10 cannot have.
+  - The ticket's bytes searched anywhere in the frame: the wire says where each string starts and ends, a search does
+    not.
+
+## D53: The game connection is relayed on a port of its own, unread, and captured apart
+
+*2026-10-28, step 3, session 3f*
+
+- **The listener.** `RelayServer` also listens on `Network:Game:Ports`, on D3B's address, each endpoint handing its
+  connections to the relay with its route. One port by default, 5556: the client connects to the first port it is sent,
+  whatever its connection port setting (client.md). The answer lists a game port for each real port, as far as the game
+  listener has them, each standing for the real port at its position: one. A port the relay cannot take stops the host,
+  as in D36.
+- **Unread.** The connection phase's decoder gives no interceptor for the game connection, whose protocol is the game's,
+  read from session 3g: its bytes go as they are, both ways.
+- **Captures apart.** The game connection's captures go to `game`, in the captures' directory
+  (`RelaySettings.GameCapturesDirectory`). The mapping tool and `scripts/capture.cs` read the files of the directory
+  they are given, not of its subdirectories, so the connection phase's anchors never meet the game's frames (D43);
+  `scripts/capture.cs <captures>\game` describes the game's.
+- **Measured**: four game connections of 23 to 32 s, every byte in varint frames of protobuf in the clear, both sides.
+  The mapping tool, run again with seven captures of the connection phase beside four of the game in `game`, read the
+  seven and paired the same types.
+- **Rejected.**
+  - One listener for both connections, told apart by their first frame: the connection phase's server is reached
+    before its client speaks.
+  - A field of the capture's header naming the route: a new capture format, where a directory leaves the tools as they
+    are.
+  - A second address for the game listener: the ports already tell the routes apart.
 
 ## Open questions
 

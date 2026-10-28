@@ -59,8 +59,8 @@ Four sessions:
 
 ## 3. Protocol and connection
 
-Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34 in session 3a, whose `hosts` line D35 replaces in session 3b; Q7's
-format by D37, in session 3b; Q2 by D47, in session 3e.
+Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34 in session 3a, whose `hosts` line D35 replaces in session 3b, and
+whose game connection D52 matches in session 3f; Q7's format by D37, in session 3b; Q2 by D47, in session 3e.
 
 - The mapping pipeline: Cpp2IL dump, scored matching, pinned pairs, anchors from captures, contract audit that fails the
   build (D11), and the IDA tracer if a build needs it (D41). Ideas from BillBot and JondoEmu.
@@ -84,8 +84,8 @@ and gated before the game connection is taken, whose server address must be deco
 | 3c | Mapping, part 1: Cpp2IL reads metadata version 39; `scripts/schema.cs` writes each build's obfuscated schema, a `FileDescriptorSet` beside its pack, the structure read from the metadata and every field's encoding from the machine code; `scripts/capture.cs --schema` finds the connection's root message in 3b's captures, all their fields typed (D39, D40). | Done on 2026-10-27 |
 | 3d | Mapping, part 2, the connection phase end to end: its readable `.proto` files in `D3B.Protocol` and their generated classes; the matching from pins, anchors measured in 3b's captures, fields and structural scores; the pins of 3.7.12.12, none needed; the contract audit; the mapping, a protobuf message of our own, and `scripts/mapping.cs` writing it beside the build's pack; every readable message, field and value of the connection paired (D41 to D45). | Done on 2026-10-27 |
 | 3e | Q2 settled: the readable classes decode the wire once, a build translated only when its mapping holds and keeps the wire's numbers, a frame understood only when it encodes back to its length; the version gate: the protocol module finds the build's schema and mapping beside its pack, else downloads them from its release, audits them, and the host does not start without a mapping that holds; `SchemaFile` shared in `D3B.Protocol`; the release tool publishing the pack, schema and mapping together; the relay reading frames for an observer, which decodes the connection phase and logs it by structure (D46 to D50). | Done on 2026-10-28 |
-| 3f | The game connection: the server selection's answer rewritten to a game listener of D3B, the client's next connection matched with the real game server, relayed and captured apart from the connection phase; measured on running clients: port 443, whether the client takes an address for the game server's host, how it chooses among the ports, and which side speaks first, which decides how a connection is matched (D46). | To do |
-| 3g | Mapping, part 3: the readable `.proto` files of the first milestone's game messages, the `Any` envelope and its type URLs, anchors from 3f's captures of the game connection, the matching at the game's scale, and the IDA tracer if structure and captures leave fields open (D41). | To do |
+| 3f | The game connection, measured on running clients: the client takes an address for the game server's host, connects to the first port it is sent whatever its connection port, 443 included, and speaks first, its first frame presenting its ticket; the relay holding the server selection's answer alone until whole, with a way out, and rewriting it once understood whole to D3B's game listener; the game connection matched with its server by its ticket, read by the wire format alone, relayed unread and captured apart from the connection phase; two accounts at once in game through D3B (D51 to D53). | Done on 2026-10-28 |
+| 3g | Mapping, part 3: the readable `.proto` files of the first milestone's game messages, the `Any` envelope and its type URLs, anchors from 3f's captures of the game connection, in the captures' `game` directory, the matching at the game's scale, and the IDA tracer if structure and captures leave fields open (D41). | To do |
 | 3h | Q9: the bot's requests sent through the client's connection, request ids and the client kept consistent; replay tests with injection, which complete Q7. | To do |
 
 ## 4. Bot run time and navigation
