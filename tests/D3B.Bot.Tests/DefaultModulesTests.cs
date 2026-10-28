@@ -1,6 +1,7 @@
 using D3B.Bot.Data;
 using D3B.Bot.Network;
 using D3B.Bot.Protocol;
+using D3B.Bot.Runtime;
 using D3B.Core.Modules;
 using Microsoft.Extensions.Hosting;
 
@@ -33,10 +34,18 @@ public sealed class DefaultModulesTests
     }
 
     [Fact]
+    public void TheBotsModuleBuildsAfterTheNetworkModule()
+    {
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules());
+
+        Assert.IsType<BotsModule>(bot.Modules[3]);
+    }
+
+    [Fact]
     public void TheDataModuleCanBeDisabledWithTheModulesRequiringIt()
     {
         var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true })
-            .AddModules(new DefaultModules(), group => group.Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
+            .AddModules(new DefaultModules(), group => group.Disable<BotsModule>().Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
 
         Assert.False(bot.HasModule<DataModule>());
     }

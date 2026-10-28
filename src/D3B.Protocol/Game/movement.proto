@@ -9,7 +9,7 @@ import "Readable/options.proto";
 option csharp_namespace = "D3B.Protocol.Game";
 
 // Asks to walk a path on the character's map. The server refuses a path that does not start where the character
-// stands, with an event the readable protocol lacks (D60).
+// stands, with a MapMovementRefusedEvent (D60).
 message MapMovementRequest {
   // The path's turning points: its first and last cells, and every cell where it turns, each with the direction the
   // character leaves it in, the last with the one it arrives in: the direction times 4096, plus the cell. Directions run
@@ -20,6 +20,24 @@ message MapMovementRequest {
 
   // No capture sets it.
   bool flag_3 = 3;
+}
+
+// The server does not walk the path asked for: measured on three paths D3B sent that did not start where the character
+// stood. It sends nothing else, the character stays where it is, and a walk of the client's in progress stops there.
+message MapMovementRefusedEvent {
+  option (d3b.readable.partial) = true;
+
+  // The cell the character stands on, as map coordinates, the first cell of a walk in progress: measured as the cell
+  // the character stood on, each time.
+  int32 x = 2;
+  int32 y = 3;
+}
+
+// The character stops walking before its path's end: the client sends it when the player gives a new path during a
+// walk, then the new path, which starts on that cell, in the same read. The server does not answer it.
+message MapMovementCancelRequest {
+  // The cell where the character stopped, on its path.
+  int32 cell_id = 1;
 }
 
 // An actor walks a path on the map: the character itself after its request, or anyone else.

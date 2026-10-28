@@ -24,16 +24,17 @@ public sealed class RelayDecoderTests
     };
 
     private readonly FakeLogCollector _log = new();
+    private readonly GameAccounts _accounts = new(_settings.SelectionLifetime, TimeProvider.System);
     private readonly ILoggerFactory _logs;
+    private readonly ProtocolTranslation _translation;
     private readonly RelayDecoder _decoder;
 
     public RelayDecoderTests()
     {
         var (schema, mapping) = TestInstall.Protocol();
-        var translation = ProtocolTranslation.Create(ProtocolSchema.Load(schema), ProtocolMapping.Parser.ParseFrom(mapping));
-
+        _translation = ProtocolTranslation.Create(ProtocolSchema.Load(schema), ProtocolMapping.Parser.ParseFrom(mapping));
         _logs = LoggerFactory.Create(logging => logging.AddProvider(new FakeLoggerProvider(_log)));
-        _decoder = new RelayDecoder(translation, new GameServerSelections(_settings, TimeProvider.System), [], _logs);
+        _decoder = new RelayDecoder(_translation, new GameServerSelections(_settings, TimeProvider.System), _accounts, [], _logs);
     }
 
     private IConnectionInterceptor Intercept(RelayRoute route)
@@ -229,5 +230,50 @@ public sealed class RelayDecoderTests
     public void TheGameConnectionIsReadByAGameSession()
     {
         Assert.IsType<GameSession>(Intercept(RelayRoute.Game));
+    }
+
+    [Fact]
+    public void AGameSessionKnowsTheAccountTheConnectionPhaseIdentifiedByTheTicketItPresents()
+    {
+        var phase = Intercept(RelayRoute.Connection);
+
+        foreach (var (direction, message) in ConnectionPhase())
+            phase.OnFrame(direction, new ReadOnlySequence<byte>(message.ToByteArray()), phase.Holds(direction));
+
+        var game = (GameSession)Intercept(RelayRoute.Game);
+        var other = (GameSession)Intercept(RelayRoute.Game);
+
+        Assert.Null(game.Account);
+
+        Present(other, "another-ticket");
+        Present(game, Secret);
+
+        Assert.Equal(new GameAccount(1, Secret, ""), game.Account);
+        Assert.Null(other.Account);
+    }
+
+    [Fact]
+    public void AnAccountIsTakenByOneGameSessionOnly()
+    {
+        var phase = Intercept(RelayRoute.Connection);
+
+        foreach (var (direction, message) in ConnectionPhase())
+            phase.OnFrame(direction, new ReadOnlySequence<byte>(message.ToByteArray()), phase.Holds(direction));
+
+        var first = (GameSession)Intercept(RelayRoute.Game);
+        var second = (GameSession)Intercept(RelayRoute.Game);
+
+        Present(first, Secret);
+        Present(second, Secret);
+
+        Assert.NotNull(first.Account);
+        Assert.Null(second.Account);
+    }
+
+    private static void Present(IConnectionInterceptor session, string ticket)
+    {
+        var request = TestGame.Request(new D3B.Protocol.Game.AuthenticationRequest { Ticket = ticket, Language = "fr" });
+
+        session.OnFrame(RelayDirection.FromClient, new ReadOnlySequence<byte>(request), held: false);
     }
 }

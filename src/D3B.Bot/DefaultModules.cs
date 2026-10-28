@@ -1,6 +1,7 @@
 using D3B.Bot.Data;
 using D3B.Bot.Network;
 using D3B.Bot.Protocol;
+using D3B.Bot.Runtime;
 using D3B.Core.Modules;
 
 namespace D3B.Bot;
@@ -20,5 +21,6 @@ public sealed class DefaultModules : IModuleGroup
         group.Add<DataModule>();
         group.Add<ProtocolModule>();
         group.Add<NetworkModule>();
+        group.Add<BotsModule>();
     }
 }

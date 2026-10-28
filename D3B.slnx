@@ -127,6 +127,7 @@
     <Project Path="tests/D3B.Bot.Tests/D3B.Bot.Tests.csproj" />
     <Project Path="tests/D3B.Core.Tests/D3B.Core.Tests.csproj" />
     <Project Path="tests/D3B.Data.Tests/D3B.Data.Tests.csproj" />
+    <Project Path="tests/D3B.Engine.Tests/D3B.Engine.Tests.csproj" />
     <Project Path="tests/D3B.Host.Tests/D3B.Host.Tests.csproj" />
     <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
     <Project Path="tests/D3B.Protocol.Tests/D3B.Protocol.Tests.csproj" />

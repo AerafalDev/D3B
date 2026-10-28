@@ -19,14 +19,16 @@ internal sealed class RelayDecoder : IRelayInterceptor
 
     private readonly ProtocolTranslation _translation;
     private readonly GameServerSelections _selections;
+    private readonly GameAccounts _accounts;
     private readonly IReadOnlyList<IGameObserver> _observers;
     private readonly ILoggerFactory _logs;
     private readonly ILogger _log;
 
-    public RelayDecoder(ProtocolTranslation translation, GameServerSelections selections, IEnumerable<IGameObserver> observers, ILoggerFactory logs)
+    public RelayDecoder(ProtocolTranslation translation, GameServerSelections selections, GameAccounts accounts, IEnumerable<IGameObserver> observers, ILoggerFactory logs)
     {
         _translation = translation;
         _selections = selections;
+        _accounts = accounts;
         _observers = [.. observers];
         _logs = logs;
         _log = logs.CreateLogger<ConnectionPhaseSession>();
@@ -58,7 +60,7 @@ internal sealed class RelayDecoder : IRelayInterceptor
     public IConnectionInterceptor? Intercept(IRelayConnection connection)
     {
         return connection.Route is RelayRoute.Connection
-            ? new ConnectionPhaseSession(connection.Id, _translation, _selections, _log)
-            : GameSession.Start(connection, _translation, _observers, _logs.CreateLogger<GameSession>());
+            ? new ConnectionPhaseSession(connection.Id, _translation, _selections, _accounts, _log)
+            : GameSession.Start(connection, _translation, _accounts, _observers, _logs.CreateLogger<GameSession>());
     }
 }
