@@ -1,5 +1,6 @@
 using D3B.Bot.Characters;
 using D3B.Data.Maps;
+using D3B.Engine.World;
 using D3B.Network.Relay;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,10 @@ public sealed class BotContext
 
     /// <summary>Gets the maps of the installed build's pack.</summary>
     public GameMaps Maps => _bot.Maps;
+
+    /// <summary>Gets the paths through the world of the installed build's pack, and the cells each map is left from.</summary>
+    /// <exception cref="KeyNotFoundException">The pack holds no world graph or atlas.</exception>
+    public WorldPathfinder World => _bot.World;
 
     /// <summary>Gets the clock every delay goes through.</summary>
     public TimeProvider Time => _bot.Time;

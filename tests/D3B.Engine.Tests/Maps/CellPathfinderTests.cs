@@ -105,6 +105,44 @@ public sealed class CellPathfinderTests
         }, iter: 100);
     }
 
+    [Fact]
+    public void TheNearestOfSeveralCellsIsTheOneReachedQuickest()
+    {
+        // Two rows north costs 2, two cells east 6.
+        const int from = 10 * 14 + 5;
+
+        Assert.True(CellPathfinder.TryFindNearest(TestCells.OpenBut(), from, [from + 2, from - 28], out var path));
+        Assert.Equal(from - 28, path.End);
+    }
+
+    [Fact]
+    public void CellsThatCannotBeWalkedOnAreNoDestinationsButTheStart()
+    {
+        Assert.False(CellPathfinder.TryFindNearest(TestCells.OpenBut(300, 301), 100, [300, 301], out _));
+        Assert.False(CellPathfinder.TryFindNearest(TestCells.OpenBut(), 100, [], out _));
+
+        Assert.True(CellPathfinder.TryFindNearest(TestCells.OpenBut(100), 100, [300, 100], out var path));
+        Assert.Equal(0, path.Steps);
+    }
+
+    [Fact]
+    public void EveryPathToTheNearestCellIsAsQuickAsTheQuickestOfThem()
+    {
+        var walkable = Gen.Int[0, 9].Select(roll => roll < 7).Array[MapData.CellCount];
+        var cell = Gen.Int[0, MapData.CellCount - 1];
+
+        Gen.Select(walkable, cell, cell.Array[1, 6]).Sample((map, from, destinations) =>
+        {
+            var cells = TestCells.Of(map);
+            var quickest = destinations.Select(to => Exhaustive(cells, from, to)).Where(cost => cost is not null).Min();
+
+            if (!CellPathfinder.TryFindNearest(cells, from, destinations, out var path))
+                return quickest is null;
+
+            return quickest == Cost(path) && path.Start == from && destinations.Contains(path.End);
+        }, iter: 100);
+    }
+
     private static int Cost(CellPath path)
     {
         var steps = path.Cells.ToArray();

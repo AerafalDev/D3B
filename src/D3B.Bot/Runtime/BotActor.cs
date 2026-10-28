@@ -2,6 +2,7 @@ using System.Threading.Channels;
 using D3B.Bot.Characters;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
+using D3B.Engine.World;
 using D3B.Network.Relay;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
@@ -29,6 +30,7 @@ public sealed class BotActor : IAsyncDisposable
     private readonly Channel<Input> _inbox = Channel.CreateUnbounded<Input>(new UnboundedChannelOptions { SingleReader = true });
     private readonly List<GameExpectation> _expectations = [];
     private readonly ILogger _log;
+    private readonly Lazy<WorldPathfinder> _world;
     private readonly Task _loop;
 
     // Only the loop reads and writes these.
@@ -58,15 +60,18 @@ public sealed class BotActor : IAsyncDisposable
 
     internal GameMaps Maps { get; }
 
+    internal WorldPathfinder World => _world.Value;
+
     internal TimeProvider Time { get; }
 
     internal ILogger Log => _log;
 
-    internal BotActor(CharacterState state, GameMaps maps, TimeProvider time, ILogger log)
+    internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, TimeProvider time, ILogger log)
     {
         Key = state.Key;
         _state = state;
         Maps = maps;
+        _world = world;
         Time = time;
         _log = log;
         _loop = Task.Run(ReadInboxAsync);

@@ -57,6 +57,9 @@ public sealed record CharacterState
     /// <summary>Gets the character's professions, by id.</summary>
     public ImmutableSortedDictionary<int, CharacterJob> Jobs { get; init; } = ImmutableSortedDictionary<int, CharacterJob>.Empty;
 
+    /// <summary>Gets when the account's subscription ends, as the connection phase's identification said, or <see langword="null"/> when it gave no date (D72).</summary>
+    public DateTimeOffset? SubscriptionEnd { get; init; }
+
     /// <summary>Gets the state of a character the client just chose, as the server's confirmation describes it.</summary>
     /// <param name="key">Who the bot plays.</param>
     /// <param name="character">The character, as the server's confirmation gives it.</param>
@@ -73,5 +76,13 @@ public sealed record CharacterState
             Name = basics?.Name ?? "",
             Level = basics is { HasLevel: true } ? basics.Level : null,
         };
+    }
+
+    /// <summary>Tells whether the account is subscribed at a moment.</summary>
+    /// <param name="now">The moment, by the bot's clock.</param>
+    /// <returns>Whether its subscription ends after it: an account whose end is not known counts as not subscribed (D72).</returns>
+    public bool IsSubscribedAt(DateTimeOffset now)
+    {
+        return SubscriptionEnd is { } end && end > now;
     }
 }

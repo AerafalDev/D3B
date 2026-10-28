@@ -33,40 +33,68 @@ public static class CellPathfinder
     /// <exception cref="ArgumentOutOfRangeException">A cell does not exist.</exception>
     public static bool TryFind(ReadOnlySpan<MapCell> cells, int from, int to, [NotNullWhen(true)] out CellPath? path)
     {
+        return TryFindNearest(cells, from, [to], out path);
+    }
+
+    /// <summary>Finds the quickest path from a cell to the nearest of several, such as the cells a map may be left from.</summary>
+    /// <param name="cells">The map's cells, by identifier.</param>
+    /// <param name="from">The cell the walk starts on: where the character stands, walkable or not.</param>
+    /// <param name="destinations">The cells to walk to any of; those that cannot be walked on are no destination, but the start.</param>
+    /// <param name="path">The path to the one reached quickest, when there is one: a single cell when the start is one of them.</param>
+    /// <returns>Whether the character can walk to any of them.</returns>
+    /// <exception cref="ArgumentException">The map does not have <see cref="MapData.CellCount"/> cells.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A cell does not exist.</exception>
+    public static bool TryFindNearest(ReadOnlySpan<MapCell> cells, int from, ReadOnlySpan<int> destinations, [NotNullWhen(true)] out CellPath? path)
+    {
         if (cells.Length != MapData.CellCount)
             throw new ArgumentException($"A map has {MapData.CellCount} cells, not {cells.Length}.", nameof(cells));
 
-        ArgumentOutOfRangeException.ThrowIfNegative(from);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(from, MapData.CellCount);
-        ArgumentOutOfRangeException.ThrowIfNegative(to);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(to, MapData.CellCount);
+        CheckCell(from, nameof(from));
+
+        Span<bool> goal = stackalloc bool[MapData.CellCount];
+        var goals = new List<MapPoint>(destinations.Length);
 
         path = null;
 
-        if (from == to)
+        foreach (var destination in destinations)
         {
-            path = new CellPath([from]);
+            CheckCell(destination, nameof(destinations));
 
-            return true;
+            if (destination == from)
+            {
+                path = new CellPath([from]);
+
+                return true;
+            }
+
+            if (cells[destination].IsWalkable && !goal[destination])
+            {
+                goal[destination] = true;
+                goals.Add(MapGeometry.PointOf(destination));
+            }
         }
 
-        if (!cells[to].IsWalkable)
+        if (goals.Count is 0)
             return false;
 
         Span<int> costs = stackalloc int[MapData.CellCount];
         Span<short> previous = stackalloc short[MapData.CellCount];
         Span<bool> closed = stackalloc bool[MapData.CellCount];
         var open = new PriorityQueue<int, int>();
-        var goal = MapGeometry.PointOf(to);
+        var reached = -1;
 
         costs.Fill(int.MaxValue);
         costs[from] = 0;
-        open.Enqueue(from, Estimate(MapGeometry.PointOf(from), goal));
+        open.Enqueue(from, Estimate(MapGeometry.PointOf(from), goals));
 
         while (open.TryDequeue(out var cell, out _))
         {
-            if (cell == to)
+            if (goal[cell])
+            {
+                reached = cell;
+
                 break;
+            }
 
             if (closed[cell])
                 continue;
@@ -87,16 +115,16 @@ public static class CellPathfinder
 
                 costs[next] = cost;
                 previous[next] = (short)cell;
-                open.Enqueue(next, cost + Estimate(MapGeometry.PointOf(next), goal));
+                open.Enqueue(next, cost + Estimate(MapGeometry.PointOf(next), goals));
             }
         }
 
-        if (costs[to] is int.MaxValue)
+        if (reached < 0)
             return false;
 
         var cellsOfPath = new List<int>();
 
-        for (var cell = to; cell != from; cell = previous[cell])
+        for (var cell = reached; cell != from; cell = previous[cell])
             cellsOfPath.Add(cell);
 
         cellsOfPath.Add(from);
@@ -104,6 +132,12 @@ public static class CellPathfinder
         path = new CellPath(cellsOfPath);
 
         return true;
+    }
+
+    private static void CheckCell(int cell, string name)
+    {
+        if (cell is < 0 or >= MapData.CellCount)
+            throw new ArgumentOutOfRangeException(name, cell, $"A cell lies between 0 and {MapData.CellCount - 1}.");
     }
 
     private static bool CanCross(ReadOnlySpan<MapCell> cells, int cell, int direction)
@@ -125,6 +159,17 @@ public static class CellPathfinder
             2 or 6 => NorthSouthCost,
             _ => DiagonalCost,
         };
+    }
+
+    private static int Estimate(MapPoint from, List<MapPoint> goals)
+    {
+        // The nearest destination's estimate: still never more than the quickest path to any of them.
+        var estimate = int.MaxValue;
+
+        foreach (var goal in goals)
+            estimate = Math.Min(estimate, Estimate(from, goal));
+
+        return estimate;
     }
 
     private static int Estimate(MapPoint from, MapPoint to)
