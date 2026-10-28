@@ -14,7 +14,9 @@ matched with its server by its ticket, relayed and captured apart (step 3, sessi
 game's first messages, its matching with pins the tool proposes, and the translation of game frames through their type
 URL (step 3, session 3g); the game connection read through the translation for the modules that observe it, and D3B's
 requests sent to the game server between the client's frames, recorded in the captures and replayed in tests (step 3,
-session 3h). Everything else below is the target.
+session 3h); the bots' run time, one actor per character a game connection chose, fed by the game it observes, with the
+character's state and its snapshots, the player taking the character over, and the first behavior, walking on a map
+along cell paths found in `D3B.Engine` (step 4, session 4a). Everything else below is the target.
 
 ## Overview
 
@@ -71,8 +73,8 @@ Built at step 1, in `D3B.Core` (D20, D21):
 - A module is built as soon as it is added. It requires another by calling `bot.AddModule<T>()` first in its `Build`.
   Adding a module type twice builds it once.
 - A group (`IModuleGroup`) lists modules in order; whoever adds it may disable some. `DefaultModules`, in `D3B.Bot`,
-  gathers the standard modules: so far the data module (D31), the protocol module (D48) and the network module (D36),
-  then, as the steps write them, world, movement, harvesting, bank. D3B's own features are modules like any other, so they can be disabled, and later replaced
+  gathers the standard modules: so far the data module (D31), the protocol module (D48), the network module (D36) and
+  the bots module (D67), then, as the steps write them, world, movement, harvesting, bank. D3B's own features are modules like any other, so they can be disabled, and later replaced
   (D20).
 - A plugin is a folder under `plugins/` holding an assembly named after it, whose one public class marked
   `[Plugin("id")]` is its root module. It loads once into its own `AssemblyLoadContext`, which asks the host's context
@@ -85,13 +87,32 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 ## Bot run time
 
-- Each bot is an actor: one `Channel<T>` inbox, one logical thread, no locks on its state (D9).
-- The inbox receives decoded messages, timer expiries and commands from the app. Handlers update the state. Logic code
-  reads immutable snapshots of it.
-- Behaviors are async methods taking a `CancellationToken`. An interruption (a fight, a disconnection, full pods)
-  cancels the current behavior. A recovery step runs, then the behavior resumes or the activity picks the next one.
+Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharing with the player and the first
+behavior. Activities, recovery and reconnection are session 4f's (D64).
+
+- **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
+  (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
+  client chose, its account the one the connection phase identified by the ticket (`GameSession.Account`, D65). A bot
+  outlives its connections: a new one takes the old one's place, the state starting over from what the server sends.
+- **The actor**, `BotActor`: one `Channel<T>` inbox read by one loop, no lock on its state (D9). The inbox gets every
+  message of its character's game connection, both sides, from the relay's read loops; the loop turns each into the next
+  state and tries it on the behaviors' expectations. Commands from the app come at step 5.
+- **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable snapshot of what the server said of the
+  character, its name and level, map, sub-area, cell and the path it walks, inventory, kamas, weight and professions.
+  `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
+- **Behaviors** are async methods given a `BotContext`, the state, the pack's maps, the clock and the game connection to
+  send through, and run one at a time by `BotActor.RunAsync`. A behavior expects its answer before it sends its request
+  (`Expect`), so the loop sees the expectation before any answer. An interruption cancels it, off the loop: the player
+  acting, the connection closing, the host stopping (`BotInterruptedException`).
+- **The player wins** (D66): a request the player sends that acts on the character (`PlayerActions`) interrupts the bot's
+  behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's.
+- **Walking on a map** (D69): `MapWalk`, in `D3B.Bot.Movement`, finds the path in the pack's cells, sends its turning
+  points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
+  ends it too, and the character walking already makes it busy.
 - Every delay goes through `TimeProvider`.
-- When the client reconnects, the activity resumes where its state allows.
+- Later in step 4: an interruption (a fight, a disconnection, full pods) cancels the current behavior, a recovery step
+  runs, then the activity resumes or picks the next one; when the client reconnects, the activity resumes where its state
+  allows.
 
 ## Network and protocol
 
@@ -127,8 +148,9 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
 - The game, read (D62): `RelayDecoder`, the relay's interceptor, gives each game connection a `GameSession`, which
   decodes every frame through the translation (`DecodeGame`, D58), shows it to every `IGameObserver` in the services,
   and logs it at the debug level by what it carries, never by what it holds. It holds and rewrites no frame of the
-  game. An observer sees each session start, then each frame of both sides, from the relay's read loops: step 4's bots
-  post what they see to their inboxes (D9).
+  game. An observer sees each session start, then each frame of both sides, from the relay's read loops: the bots post
+  what they see to their inboxes (D9, D67). A game session knows its account once the client's first request presented
+  the ticket the connection phase gave it (`GameAccounts`, D65).
 - The client's other connections, to the launcher, Haapi, the chat and the CDN, do not go through D3B.
 - The bot acts through that connection (D60): `GameSession.SendAsync` sends the server a readable request, encoded
   whole by `ProtocolTranslation.EncodeGameRequest` with the id -1 that every request of the first milestone carries,
@@ -236,6 +258,17 @@ Built at step 2 (D24 to D33):
   `exchange`, `character`), and the script's `move()` and `bank()`, which the bot calls.
 - Modules add namespaces. The owner's profession scripts in `vendor/metiers` are the acceptance test.
 
+## Engine
+
+Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cells. Built in session 4a (D68):
+
+- `MapGeometry`, in `D3B.Engine.Maps`: 14 columns of 40 staggered rows, the eight directions between neighbours, and
+  the coordinates the server names a cell by (`MapPoint`), measured on the captures.
+- `CellPathfinder`: A* over the cells a character may walk on, a step across passing beside at least one walkable cell,
+  steps weighed by the time the character takes; `CellPath` gives the turning points a request names. Nothing is kept
+  between calls.
+- Later: line of sight, world pathfinding over the world graph with zaaps and havens, and the fight simulator.
+
 ## Fights
 
 - A fight is decided by simulating candidate actions and scoring them (D13). The simulator applies spell effects read
@@ -244,11 +277,13 @@ Built at step 2 (D24 to D33):
 
 ## Tests
 
-- Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests for pathfinding and line of
-  sight.
+- Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for pathfinding
+  (D68), and later line of sight.
 - Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay.
-  Decoded frames are compared with the messages a test built (D49); from step 4, bot states are compared with
-  snapshots.
+  Decoded frames are compared with the messages a test built (D49); bot states with snapshots the test holds, serialized
+  as indented JSON (D70).
+- Bots are tested through game connections driven as the relay shows them, on a pack of one map, with the bots' loop
+  waited for (D67).
 - Replays with injection (D63): a game session a test built is replayed through the relay, read by a game session whose
   observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
 - Time is controlled through `FakeTimeProvider`.

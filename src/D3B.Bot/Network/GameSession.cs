@@ -1,5 +1,6 @@
 using System.Buffers;
 using D3B.Network.Relay;
+using D3B.Protocol.Game;
 using D3B.Protocol.Translation;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
@@ -24,8 +25,12 @@ public sealed class GameSession : IConnectionInterceptor
 {
     private readonly IRelayConnection _connection;
     private readonly ProtocolTranslation _translation;
+    private readonly GameAccounts _accounts;
     private readonly IReadOnlyList<IGameObserver> _observers;
     private readonly ILogger _log;
+
+    // Set from the client's read loop on its first request, read from the server's once the character is chosen.
+    private volatile GameAccount? _account;
 
     /// <summary>Gets the game connection's id, as the relay's log names it.</summary>
     public string Id => _connection.Id;
@@ -33,18 +38,27 @@ public sealed class GameSession : IConnectionInterceptor
     /// <summary>Gets a token cancelled once the connection is closed, both sides.</summary>
     public CancellationToken Closed => _connection.Closed;
 
-    private GameSession(IRelayConnection connection, ProtocolTranslation translation, IReadOnlyList<IGameObserver> observers, ILogger log)
+    /// <summary>Gets the account the client logged in with, known once its first request presented the ticket the connection phase gave it.</summary>
+    /// <remarks>
+    /// <see langword="null"/> before that request, or when D3B did not see the connection phase identify the account
+    /// (<see cref="GameAccounts"/>). Observers see that request before the server answers it, so they know the account
+    /// before any event of the server.
+    /// </remarks>
+    public GameAccount? Account => _account;
+
+    private GameSession(IRelayConnection connection, ProtocolTranslation translation, GameAccounts accounts, IReadOnlyList<IGameObserver> observers, ILogger log)
     {
         _connection = connection;
         _translation = translation;
+        _accounts = accounts;
         _observers = observers;
         _log = log;
     }
 
     /// <summary>Starts reading a game connection, and shows it to the observers before any of its frames.</summary>
-    internal static GameSession Start(IRelayConnection connection, ProtocolTranslation translation, IReadOnlyList<IGameObserver> observers, ILogger log)
+    internal static GameSession Start(IRelayConnection connection, ProtocolTranslation translation, GameAccounts accounts, IReadOnlyList<IGameObserver> observers, ILogger log)
     {
-        var session = new GameSession(connection, translation, observers, log);
+        var session = new GameSession(connection, translation, accounts, observers, log);
 
         foreach (var observer in observers)
         {
@@ -107,6 +121,9 @@ public sealed class GameSession : IConnectionInterceptor
 
             GameLog.Decoded(_log, Id, side, message, frame.Length, state);
         }
+
+        if (direction is RelayDirection.FromClient && _account is null && decoded.Content is AuthenticationRequest authentication)
+            _account = _accounts.Take(authentication.Ticket);
 
         foreach (var observer in _observers)
         {

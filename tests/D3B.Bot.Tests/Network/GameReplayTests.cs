@@ -153,7 +153,7 @@ public sealed class GameReplayTests : IDisposable
                 }
             },
         };
-        var decoder = new RelayDecoder(_translation, new GameServerSelections(_settings, TimeProvider.System), [observer], _logs);
+        var decoder = new RelayDecoder(_translation, new GameServerSelections(_settings, TimeProvider.System), new GameAccounts(_settings.SelectionLifetime, TimeProvider.System), [observer], _logs);
         var injected = Framed(_translation.EncodeGameRequest(_walk)).Length;
 
         await using var relay = await TestRelay.StartAsync(capturesDirectory: _captures.Path, interceptor: decoder);

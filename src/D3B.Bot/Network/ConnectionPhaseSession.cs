@@ -17,7 +17,8 @@ namespace D3B.Bot.Network;
 /// <para>
 /// Once the client has asked for a server, the relay holds the server's frames whole, until its answer. A success
 /// understood whole (D47) is rewritten: its host becomes D3B's address, and its ports the game listener's, the real game
-/// server being kept in <see cref="GameServerSelections"/>. Any other answer, or one the relay could not hold whole, goes on
+/// server being kept in <see cref="GameServerSelections"/> and the account the identification named in
+/// <see cref="GameAccounts"/>, both by the answer's ticket. Any other answer, or one the relay could not hold whole, goes on
 /// as it came: the game connection then goes straight to the game server, as before D3B took it.
 /// </para>
 /// </remarks>
@@ -26,16 +27,21 @@ internal sealed class ConnectionPhaseSession : IConnectionInterceptor
     private readonly string _connectionId;
     private readonly ProtocolTranslation _translation;
     private readonly GameServerSelections _selections;
+    private readonly GameAccounts _accounts;
     private readonly ILogger _log;
 
     // Set from the client's read loop, read from the server's: the relay shows the request before sending it on.
     private volatile bool _selecting;
 
-    public ConnectionPhaseSession(string connectionId, ProtocolTranslation translation, GameServerSelections selections, ILogger log)
+    // Read and written from the server's read loop only: the identification's answer comes before the selection's.
+    private GameAccount? _account;
+
+    public ConnectionPhaseSession(string connectionId, ProtocolTranslation translation, GameServerSelections selections, GameAccounts accounts, ILogger log)
     {
         _connectionId = connectionId;
         _translation = translation;
         _selections = selections;
+        _accounts = accounts;
         _log = log;
     }
 
@@ -67,6 +73,9 @@ internal sealed class ConnectionPhaseSession : IConnectionInterceptor
             return null;
         }
 
+        if (decoded.Message.Response?.Identification?.Success is { } identified)
+            _account = new GameAccount(identified.AccountId, identified.AccountNickname, identified.AccountTag);
+
         if (decoded.Message.Response?.ServerSelection is not { } answer)
             return null;
 
@@ -97,6 +106,9 @@ internal sealed class ConnectionPhaseSession : IConnectionInterceptor
 
             return null;
         }
+
+        if (_account is not null)
+            _accounts.Remember(success.Ticket, _account);
 
         var listened = string.Join(", ", ports);
 

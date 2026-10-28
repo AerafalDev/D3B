@@ -16,6 +16,8 @@
     { "readable": "d3b.game.MapMovementEvent", "obfuscated": "jnz" },
     { "readable": "d3b.game.MapMovementConfirmRequest", "obfuscated": "jny" },
     { "readable": "d3b.game.MapMovementConfirmResponse", "obfuscated": "jpk" },
+    { "readable": "d3b.game.MapMovementRefusedEvent", "obfuscated": "jpc" },
+    { "readable": "d3b.game.MapMovementCancelRequest", "obfuscated": "jpj" },
     { "readable": "d3b.game.MapChangeRequest", "obfuscated": "joc" },
     { "readable": "d3b.game.InteractiveUseRequest", "obfuscated": "itz" },
     { "readable": "d3b.game.InteractiveUsedEvent", "obfuscated": "itv" },

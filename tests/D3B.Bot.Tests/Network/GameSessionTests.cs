@@ -40,7 +40,7 @@ public sealed class GameSessionTests : IDisposable
 
     private IConnectionInterceptor Start(params IGameObserver[] observers)
     {
-        return new RelayDecoder(_translation, new GameServerSelections(_settings, TimeProvider.System), observers, _logs).Intercept(_connection)!;
+        return new RelayDecoder(_translation, new GameServerSelections(_settings, TimeProvider.System), new GameAccounts(_settings.SelectionLifetime, TimeProvider.System), observers, _logs).Intercept(_connection)!;
     }
 
     private static void Show(IConnectionInterceptor session, RelayDirection direction, byte[] frame)

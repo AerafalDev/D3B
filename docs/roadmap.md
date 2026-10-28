@@ -10,7 +10,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 1 | Scaffold and modules | Done |
 | 2 | Game data | Done |
 | 3 | Protocol and connection | Done; Q10 at the next client update |
-| 4 | Bot run time and navigation | To do |
+| 4 | Bot run time and navigation | In progress: 4a done, 4b next |
 | 5 | Desktop app, first version | To do |
 | 6 | Harvesting and banking: first milestone | To do |
 | 7 | Lua scripting | To do |
@@ -98,6 +98,18 @@ and gated before the game connection is taken, whose server address must be deco
 - What the server answers D3B's requests, its refusals named first in the readable protocol (D55, D60).
 - Cell pathfinding and line of sight, world pathfinding over the world graph with zaaps and havens, in `D3B.Engine`.
 - Movement between maps, interactives from the nearest cell the character reaches, the bank (D60).
+
+Six sessions, the split chosen by the owner (D64). A client update before the next session gets Q10's session first
+(D54).
+
+| Session | Content | Status |
+| --- | --- | --- |
+| 4a | The actor and walking on a map: one bot per character of an account, its account known by the ticket the connection phase gave (D65); its inbox fed by an `IGameObserver`, the character's state and its snapshots, behaviors and their expectations (D67); the player winning, the bot pausing until resumed (D66); cell geometry and paths in `D3B.Engine`, measured on the captures (D68); the walk, over once the server answers the client's confirmation, its refusal and the player's stop named, mapping format 3, measured on a client through the host (D69); states compared with snapshots written in the tests (D70). | Done on 2026-10-28 |
+| 4b | Between maps: world pathfinding over the graph's vertices by zone, scrolls, scrolls with an action and map actions, the criteria the state answers; changing maps, what the bot waits for, its refusals named. | To do |
+| 4c | Interactives: using an element from the nearest cell the character reaches, harvesting, the use's refusals named, doors in the world path; line of sight if using depends on it. | To do |
+| 4d | The bank: the banker's dialog, the exchange with the storage, stacks and kamas, leaving, the way to the nearest bank; the player's leaving told from the client's. | To do |
+| 4e | Zaaps and havens: their messages from captures of the player using them, pinned, then in the world path. | To do |
+| 4f | Activities, interruption, recovery and reconnection: behaviors chained, a fight starting, a disconnection, full pods and the player as interruptions, the client's new connection taking the bot back. | To do |
 
 ## 5. Desktop app, first version
 

@@ -18,7 +18,8 @@ namespace D3B.Bot.Network;
 /// whose connection host is D3B's address, kept in <c>Network:Redirect:Directory</c> (<c>%LOCALAPPDATA%\D3B\client</c> by
 /// default); the client gets its own back when the host stops. Each connection phase goes to Ankama's connection host,
 /// bytes as they are, both ways, but for the server selection's answer, which sends the client's game connection to D3B;
-/// that connection goes to the game server whose ticket it presents (D51 to D53).
+/// that connection goes to the game server whose ticket it presents (D51 to D53), and its game session knows the account
+/// the connection phase identified, by that ticket (<see cref="GameAccounts"/>).
 /// </para>
 /// <para>
 /// Requires the protocol module: each frame of the connection phase is decoded through the installed build's translation
@@ -43,9 +44,11 @@ public sealed class NetworkModule : IModule
 
         var settings = RelaySettings.Read(bot.Configuration, DataSettings.ClientDirectoryIn(bot.Configuration));
 
+        bot.Services.AddSingleton(services => new GameAccounts(settings.SelectionLifetime, services.GetRequiredService<TimeProvider>()));
         bot.Services.AddSingleton<IRelayInterceptor>(services => new RelayDecoder(
             services.GetRequiredService<ProtocolTranslation>(),
             services.GetRequiredService<GameServerSelections>(),
+            services.GetRequiredService<GameAccounts>(),
             services.GetServices<IGameObserver>(),
             services.GetRequiredService<ILoggerFactory>()));
         bot.Services.AddRelay(settings, services => services.GetService<ClientBuild>()?.Version);
