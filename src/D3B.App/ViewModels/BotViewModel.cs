@@ -20,6 +20,9 @@ internal sealed partial class BotViewModel : ObservableObject
 {
     private const string NoValue = "—";
 
+    /// <summary>How full a character shows as nearly full, a hint only: each activity says when it unloads (D87).</summary>
+    private const double NearlyFull = 0.9;
+
     private readonly IServiceProvider _services;
     private readonly Localizer _localizer;
     private readonly GameWorld? _world;
@@ -65,11 +68,7 @@ internal sealed partial class BotViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ResumeCommand))]
     public partial bool IsPaused { get; private set; }
 
-    /// <summary>Gets what the bot is up to, in a few words, for the list of bots.</summary>
-    [ObservableProperty]
-    public partial string Summary { get; private set; } = "";
-
-    /// <summary>Gets the tone of what the bot is up to, for the list of bots.</summary>
+    /// <summary>Gets the tone of what the bot is up to, for the dot on its avatar.</summary>
     [ObservableProperty]
     public partial Tone Tone { get; private set; }
 
@@ -77,19 +76,19 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     public partial string Coordinates { get; private set; } = NoValue;
 
-    /// <summary>Gets the sub-area of the character's map, or where it is when no coordinates say it.</summary>
+    /// <summary>Gets the sub-area of the character's map and its cell, or where it is when no coordinates say it.</summary>
     [ObservableProperty]
-    public partial string Area { get; private set; } = "";
+    public partial string Place { get; private set; } = "";
 
-    /// <summary>Gets the character's map and cell.</summary>
+    /// <summary>Gets the character's map and cell, by their ids.</summary>
     [ObservableProperty]
-    public partial string MapDetail { get; private set; } = "";
+    public partial string? MapDetail { get; private set; }
 
     /// <summary>Gets what the character is in the middle of.</summary>
     [ObservableProperty]
     public partial string Doing { get; private set; } = "";
 
-    /// <summary>Gets the weight the character carries.</summary>
+    /// <summary>Gets the weight the character carries, of the most it can.</summary>
     [ObservableProperty]
     public partial string Load { get; private set; } = NoValue;
 
@@ -97,9 +96,13 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     public partial double LoadPercent { get; private set; }
 
-    /// <summary>Gets the most the character carries, and how full it is.</summary>
+    /// <summary>Gets how full the character is, said.</summary>
     [ObservableProperty]
-    public partial string LoadDetail { get; private set; } = "";
+    public partial string LoadPercentText { get; private set; } = "";
+
+    /// <summary>Gets whether the character is nearly full.</summary>
+    [ObservableProperty]
+    public partial bool IsNearlyFull { get; private set; }
 
     /// <summary>Gets the kamas the character carries.</summary>
     [ObservableProperty]
@@ -233,12 +236,12 @@ internal sealed partial class BotViewModel : ObservableObject
         Connection = _localizer[IsConnected ? "Connected" : "Disconnected"];
         ConnectionTone = IsConnected ? Tone.Success : Tone.Neutral;
         IsPaused = Bot.IsPaused;
-        Doing = _localizer[DoingOf(state)];
-        Kamas = _localizer.Format("Number", state.Kamas);
+        Doing = IsConnected ? _localizer[DoingOf(state)] : "";
+        Kamas = _localizer.Format("KamasOf", state.Kamas);
         RefreshPlace(state);
         RefreshLoad(state);
         RefreshActivity();
-        RefreshSummary();
+        RefreshTone();
     }
 
     [RelayCommand(CanExecute = nameof(CanStart))]
@@ -284,25 +287,29 @@ internal sealed partial class BotViewModel : ObservableObject
         if (state.MapId is not { } mapId)
         {
             Coordinates = NoValue;
-            Area = _localizer["NotPlaced"];
-            MapDetail = "";
+            Place = _localizer["NotPlaced"];
+            MapDetail = null;
 
             return;
         }
 
-        MapDetail = _localizer.Format("MapCell", mapId, state.Cell?.ToString(_localizer.Culture) ?? NoValue);
+        var cell = state.Cell?.ToString(_localizer.Culture);
+
+        MapDetail = _localizer.Format("MapCell", mapId, cell ?? NoValue);
 
         // A haven bag and a fight's map are off the atlas (D83, D88).
         if (state.IsInHavenBag || _world is null || !_world.Atlas.TryGetPosition(mapId, out var position))
         {
             Coordinates = NoValue;
-            Area = _localizer[state.IsInHavenBag ? "InHavenBag" : "OffAtlas"];
+            Place = _localizer[state.IsInHavenBag ? "InHavenBag" : "OffAtlas"];
 
             return;
         }
 
+        var area = SubAreaName(position.SubAreaId);
+
         Coordinates = _localizer.Format("Coordinates", position.X, position.Y);
-        Area = SubAreaName(position.SubAreaId);
+        Place = cell is null ? area : _localizer.Format("AreaCell", area, cell);
     }
 
     private void RefreshLoad(CharacterState state)
@@ -311,14 +318,16 @@ internal sealed partial class BotViewModel : ObservableObject
         {
             Load = NoValue;
             LoadPercent = 0;
-            LoadDetail = "";
+            LoadPercentText = "";
+            IsNearlyFull = false;
 
             return;
         }
 
-        Load = _localizer.Format("Number", state.Weight);
+        Load = _localizer.Format("LoadOf", state.Weight, state.MaxWeight);
         LoadPercent = Math.Clamp(state.Load * 100, 0, 100);
-        LoadDetail = _localizer.Format("LoadDetail", state.MaxWeight, state.Load);
+        LoadPercentText = _localizer.Format("LoadPercent", state.Load);
+        IsNearlyFull = state.Load >= NearlyFull;
     }
 
     private void RefreshActivity()
@@ -332,10 +341,10 @@ internal sealed partial class BotViewModel : ObservableObject
 
         if (run is null)
         {
-            ActivityName = _localizer["NoActivity"];
+            ActivityName = "";
             ActivityText = "";
             ActivityTone = Tone.Neutral;
-            ActivityDetail = _localizer["NoActivityDetail"];
+            ActivityDetail = "";
 
             return;
         }
@@ -352,28 +361,14 @@ internal sealed partial class BotViewModel : ObservableObject
             : steps;
     }
 
-    private void RefreshSummary()
+    private void RefreshTone()
     {
         if (IsPaused)
-        {
-            Summary = _localizer["Paused"];
             Tone = Tone.Warning;
-        }
         else if (!IsConnected)
-        {
-            Summary = Connection;
             Tone = Tone.Neutral;
-        }
-        else if (IsActivityRunning)
-        {
-            Summary = _localizer.Format("Doing", ActivityName, ActivityText);
-            Tone = ActivityTone;
-        }
         else
-        {
-            Summary = _localizer["NoActivity"];
-            Tone = Tone.Info;
-        }
+            Tone = IsActivityRunning ? ActivityTone : Tone.Info;
     }
 
     private string SubAreaName(int subAreaId)

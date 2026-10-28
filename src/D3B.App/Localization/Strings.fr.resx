@@ -41,9 +41,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AppTagline" xml:space="preserve">
-    <value>Bot pour Dofus 3</value>
-  </data>
   <data name="LanguageCode" xml:space="preserve">
     <value>FR</value>
   </data>
@@ -75,7 +72,7 @@
     <value>Client {0}</value>
   </data>
   <data name="HostPreparing" xml:space="preserve">
-    <value>Pack, mapping et relais</value>
+    <value>Préparation du pack, du mapping et du relais</value>
   </data>
   <data name="HostFailedDetail" xml:space="preserve">
     <value>Rien ne tourne avant correction</value>
@@ -125,6 +122,9 @@
   <data name="ConnectedOther" xml:space="preserve">
     <value>{0} connectés</value>
   </data>
+  <data name="BotsSummary" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
   <data name="CharacterNamed" xml:space="preserve">
     <value>Personnage {0}</value>
   </data>
@@ -144,22 +144,7 @@
     <value>Le joueur a repris la main</value>
   </data>
   <data name="PausedDetail" xml:space="preserve">
-    <value>Le bot attend que tu le reprennes : il ne dispute jamais le personnage au joueur.</value>
-  </data>
-  <data name="Position" xml:space="preserve">
-    <value>Position</value>
-  </data>
-  <data name="Pods" xml:space="preserve">
-    <value>Pods</value>
-  </data>
-  <data name="Kamas" xml:space="preserve">
-    <value>Kamas</value>
-  </data>
-  <data name="State" xml:space="preserve">
-    <value>État</value>
-  </data>
-  <data name="Number" xml:space="preserve">
-    <value>{0:N0}</value>
+    <value>Le bot attend que tu le reprennes.</value>
   </data>
   <data name="Coordinates" xml:space="preserve">
     <value>{0},{1}</value>
@@ -176,11 +161,20 @@
   <data name="InHavenBag" xml:space="preserve">
     <value>Dans un havre-sac</value>
   </data>
-  <data name="MapCell" xml:space="preserve">
-    <value>Carte {0} · cellule {1}</value>
+  <data name="AreaCell" xml:space="preserve">
+    <value>{0}, cellule {1}</value>
   </data>
-  <data name="LoadDetail" xml:space="preserve">
-    <value>sur {0:N0} · {1:P0}</value>
+  <data name="MapCell" xml:space="preserve">
+    <value>Carte {0}, cellule {1}</value>
+  </data>
+  <data name="LoadOf" xml:space="preserve">
+    <value>{0:N0} / {1:N0} pods</value>
+  </data>
+  <data name="LoadPercent" xml:space="preserve">
+    <value>{0:P0}</value>
+  </data>
+  <data name="KamasOf" xml:space="preserve">
+    <value>{0:N0} kamas</value>
   </data>
   <data name="Walking" xml:space="preserve">
     <value>Marche</value>
@@ -196,15 +190,6 @@
   </data>
   <data name="Idle" xml:space="preserve">
     <value>Immobile</value>
-  </data>
-  <data name="Activity" xml:space="preserve">
-    <value>Activité</value>
-  </data>
-  <data name="NoActivity" xml:space="preserve">
-    <value>Aucune activité</value>
-  </data>
-  <data name="NoActivityDetail" xml:space="preserve">
-    <value>Choisis-en une et démarre-la : le bot enchaîne ses étapes.</value>
   </data>
   <data name="ActivityWaiting" xml:space="preserve">
     <value>En attente</value>
@@ -230,9 +215,6 @@
   <data name="ActivityStopped" xml:space="preserve">
     <value>Arrêtée</value>
   </data>
-  <data name="Doing" xml:space="preserve">
-    <value>{0} · {1}</value>
-  </data>
   <data name="StepsOne" xml:space="preserve">
     <value>{0:N0} étape</value>
   </data>
@@ -240,7 +222,7 @@
     <value>{0:N0} étapes</value>
   </data>
   <data name="StepsInterrupted" xml:space="preserve">
-    <value>{0} · dernière interruption : {1}</value>
+    <value>{0}, dernière interruption : {1}</value>
   </data>
   <data name="InterruptedByPlayer" xml:space="preserve">
     <value>le joueur</value>
@@ -258,7 +240,7 @@
     <value>Choisir une activité</value>
   </data>
   <data name="NoActivityAvailable" xml:space="preserve">
-    <value>Aucune activité disponible : les modules et les plugins en ajoutent.</value>
+    <value>Aucune activité à démarrer : les modules et les plugins en ajoutent.</value>
   </data>
   <data name="Start" xml:space="preserve">
     <value>Démarrer</value>

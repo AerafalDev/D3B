@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The bots page: every bot of the host, in the order they came, and the one shown in full (D87).</summary>
+/// <summary>The bots page: every bot of the host, in the order they came, each shown whole (D87).</summary>
 internal sealed partial class BotsViewModel : ObservableObject
 {
     private readonly Dictionary<CharacterKey, BotViewModel> _byKey = [];
@@ -15,10 +15,6 @@ internal sealed partial class BotsViewModel : ObservableObject
 
     /// <summary>Gets the bots, in the order the host made them.</summary>
     public ObservableCollection<BotViewModel> Items { get; } = [];
-
-    /// <summary>Gets or sets the bot shown in full: the first one, until another is chosen.</summary>
-    [ObservableProperty]
-    public partial BotViewModel? Selected { get; set; }
 
     /// <summary>Gets whether no bot has been made yet.</summary>
     [ObservableProperty]
@@ -57,8 +53,7 @@ internal sealed partial class BotsViewModel : ObservableObject
                 item.Refresh();
         }
 
-        Selected ??= Items.FirstOrDefault();
         IsEmpty = Items.Count == 0;
-        Summary = $"{_localizer.Plural("Bots", Items.Count)} · {_localizer.Plural("Connected", Items.Count(item => item.IsConnected))}";
+        Summary = _localizer.Format("BotsSummary", _localizer.Plural("Bots", Items.Count), _localizer.Plural("Connected", Items.Count(item => item.IsConnected)));
     }
 }

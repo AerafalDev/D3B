@@ -76,7 +76,7 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Niveau 200", french);
         Assert.Contains("Connecté", french);
         Assert.Contains("Démarrer", french);
-        Assert.Contains("Activité", french);
+        Assert.Contains("En marche", french);
         Assert.Contains("FR", french);
         Assert.DoesNotContain("Start", french);
     }

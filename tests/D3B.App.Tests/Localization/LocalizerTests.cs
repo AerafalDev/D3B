@@ -61,11 +61,11 @@ public sealed class LocalizerTests
         var localizer = new Localizer(Localizer.French);
         var separator = Localizer.French.NumberFormat.NumberGroupSeparator;
 
-        Assert.Equal($"1{separator}234", localizer.Format("Number", 1_234));
+        Assert.Equal($"1{separator}234 kamas", localizer.Format("KamasOf", 1_234));
 
         localizer.Use(Localizer.English);
 
-        Assert.Equal("1,234", localizer.Format("Number", 1_234));
+        Assert.Equal("1,234 kamas", localizer.Format("KamasOf", 1_234));
     }
 
     [Theory]

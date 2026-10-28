@@ -30,7 +30,7 @@ public sealed class MainViewModelTests : IAsyncDisposable
         Assert.False(main.IsFailed);
         Assert.False(main.IsStopping);
         Assert.Equal("Starting", main.HostTitle);
-        Assert.Equal("Pack, mapping and relay", main.HostDetail);
+        Assert.Equal("Getting the pack, the mapping and the relay ready", main.HostDetail);
         Assert.Equal(Tone.Info, main.HostTone);
         Assert.Null(main.HostFailure);
     }

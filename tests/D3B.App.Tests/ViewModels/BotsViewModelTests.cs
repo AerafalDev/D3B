@@ -35,8 +35,7 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         var item = Assert.Single(page.Items);
 
         Assert.False(page.IsEmpty);
-        Assert.Same(item, page.Selected);
-        Assert.Equal("1 bot · 1 connected", page.Summary);
+        Assert.Equal("1 bot, 1 connected", page.Summary);
         Assert.Same(bot, item.Bot);
         Assert.Equal("Character", item.Name);
         Assert.Equal("CH", item.Initials);
@@ -45,16 +44,15 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         Assert.Equal("Connected", item.Connection);
         Assert.Equal(Tone.Success, item.ConnectionTone);
         Assert.False(item.IsPaused);
-        Assert.Equal("No activity", item.Summary);
         Assert.Equal(Tone.Info, item.Tone);
         Assert.Equal("4,-18", item.Coordinates);
-        Assert.Equal($"Sub-area {TestPlay.SubAreaId}", item.Area);
-        Assert.Equal($"Map {TestPlay.MapId} · cell 300", item.MapDetail);
+        Assert.Equal($"Sub-area {TestPlay.SubAreaId}, cell 300", item.Place);
+        Assert.Equal($"Map {TestPlay.MapId}, cell 300", item.MapDetail);
         Assert.Equal("Standing still", item.Doing);
         Assert.Equal("—", item.Load);
-        Assert.Equal("0", item.Kamas);
+        Assert.Equal("", item.LoadPercentText);
+        Assert.Equal("0 kamas", item.Kamas);
         Assert.False(item.HasRun);
-        Assert.Equal("No activity", item.ActivityName);
         Assert.False(item.HasActivities);
         Assert.False(item.IsChoosing);
         Assert.True(item.HasNothingToChoose);
@@ -77,20 +75,20 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         var item = Assert.Single(page.Items);
         var separator = Localizer.French.NumberFormat.NumberGroupSeparator;
 
-        Assert.Equal("1 bot · 0 connecté", page.Summary);
+        Assert.Equal("1 bot, 0 connecté", page.Summary);
         Assert.Equal("Niveau 200", item.Level);
         Assert.False(item.IsConnected);
         Assert.Equal("Déconnecté", item.Connection);
+        Assert.Equal("", item.Doing);
+        Assert.False(item.IsNearlyFull);
         Assert.Equal(Tone.Neutral, item.ConnectionTone);
-        Assert.Equal("Déconnecté", item.Summary);
         Assert.Equal(Tone.Neutral, item.Tone);
-        Assert.Equal($"Sous-zone {TestPlay.SubAreaId}", item.Area);
-        Assert.Equal($"Carte {TestPlay.MapId} · cellule 300", item.MapDetail);
-        Assert.Equal($"1{separator}234", item.Load);
+        Assert.Equal($"Sous-zone {TestPlay.SubAreaId}, cellule 300", item.Place);
+        Assert.Equal($"Carte {TestPlay.MapId}, cellule 300", item.MapDetail);
+        Assert.Equal($"1{separator}234 / 7{separator}590 pods", item.Load);
         Assert.Equal(1_234 * 100.0 / 7_590, item.LoadPercent, 6);
-        Assert.Equal(string.Format(Localizer.French, "sur 7{0}590 · {1:P0}", separator, 1_234.0 / 7_590), item.LoadDetail);
-        Assert.Equal($"25{separator}000", item.Kamas);
-        Assert.Equal("Aucune activité", item.ActivityName);
+        Assert.Equal(string.Format(Localizer.French, "{0:P0}", 1_234.0 / 7_590), item.LoadPercentText);
+        Assert.Equal($"25{separator}000 kamas", item.Kamas);
     }
 
     [Fact]
@@ -125,7 +123,6 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         Assert.Equal("Running", item.ActivityText);
         Assert.Equal(Tone.Success, item.ActivityTone);
         Assert.Equal("0 steps", item.ActivityDetail);
-        Assert.Equal("Patrol · Running", item.Summary);
         Assert.Equal(Tone.Success, item.Tone);
         Assert.False(item.StartCommand.CanExecute(null));
         Assert.True(item.StopCommand.CanExecute(null));
@@ -165,11 +162,10 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         page.Refresh(host.Services);
 
         Assert.True(item.IsPaused);
-        Assert.Equal("Paused", item.Summary);
         Assert.Equal(Tone.Warning, item.Tone);
         Assert.Equal("Waiting", item.ActivityText);
         Assert.Equal(Tone.Warning, item.ActivityTone);
-        Assert.Equal("0 steps · last interrupted by the player", item.ActivityDetail);
+        Assert.Equal("0 steps, last interrupted by the player", item.ActivityDetail);
         Assert.True(item.ResumeCommand.CanExecute(null));
 
         item.ResumeCommand.Execute(null);

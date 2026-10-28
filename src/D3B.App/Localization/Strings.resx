@@ -41,9 +41,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AppTagline" xml:space="preserve">
-    <value>Dofus 3 bot</value>
-  </data>
   <data name="LanguageCode" xml:space="preserve">
     <value>EN</value>
   </data>
@@ -75,7 +72,7 @@
     <value>Client {0}</value>
   </data>
   <data name="HostPreparing" xml:space="preserve">
-    <value>Pack, mapping and relay</value>
+    <value>Getting the pack, the mapping and the relay ready</value>
   </data>
   <data name="HostFailedDetail" xml:space="preserve">
     <value>Nothing runs until it is fixed</value>
@@ -125,6 +122,9 @@
   <data name="ConnectedOther" xml:space="preserve">
     <value>{0} connected</value>
   </data>
+  <data name="BotsSummary" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
   <data name="CharacterNamed" xml:space="preserve">
     <value>Character {0}</value>
   </data>
@@ -144,22 +144,7 @@
     <value>The player took over</value>
   </data>
   <data name="PausedDetail" xml:space="preserve">
-    <value>The bot waits until you resume it: it never fights the player for the character.</value>
-  </data>
-  <data name="Position" xml:space="preserve">
-    <value>Position</value>
-  </data>
-  <data name="Pods" xml:space="preserve">
-    <value>Pods</value>
-  </data>
-  <data name="Kamas" xml:space="preserve">
-    <value>Kamas</value>
-  </data>
-  <data name="State" xml:space="preserve">
-    <value>State</value>
-  </data>
-  <data name="Number" xml:space="preserve">
-    <value>{0:N0}</value>
+    <value>The bot waits until you resume it.</value>
   </data>
   <data name="Coordinates" xml:space="preserve">
     <value>{0},{1}</value>
@@ -176,11 +161,20 @@
   <data name="InHavenBag" xml:space="preserve">
     <value>In a haven bag</value>
   </data>
-  <data name="MapCell" xml:space="preserve">
-    <value>Map {0} · cell {1}</value>
+  <data name="AreaCell" xml:space="preserve">
+    <value>{0}, cell {1}</value>
   </data>
-  <data name="LoadDetail" xml:space="preserve">
-    <value>of {0:N0} · {1:P0}</value>
+  <data name="MapCell" xml:space="preserve">
+    <value>Map {0}, cell {1}</value>
+  </data>
+  <data name="LoadOf" xml:space="preserve">
+    <value>{0:N0} / {1:N0} pods</value>
+  </data>
+  <data name="LoadPercent" xml:space="preserve">
+    <value>{0:P0}</value>
+  </data>
+  <data name="KamasOf" xml:space="preserve">
+    <value>{0:N0} kamas</value>
   </data>
   <data name="Walking" xml:space="preserve">
     <value>Walking</value>
@@ -196,15 +190,6 @@
   </data>
   <data name="Idle" xml:space="preserve">
     <value>Standing still</value>
-  </data>
-  <data name="Activity" xml:space="preserve">
-    <value>Activity</value>
-  </data>
-  <data name="NoActivity" xml:space="preserve">
-    <value>No activity</value>
-  </data>
-  <data name="NoActivityDetail" xml:space="preserve">
-    <value>Choose one and start it: the bot runs its steps one after another.</value>
   </data>
   <data name="ActivityWaiting" xml:space="preserve">
     <value>Waiting</value>
@@ -230,9 +215,6 @@
   <data name="ActivityStopped" xml:space="preserve">
     <value>Stopped</value>
   </data>
-  <data name="Doing" xml:space="preserve">
-    <value>{0} · {1}</value>
-  </data>
   <data name="StepsOne" xml:space="preserve">
     <value>{0:N0} step</value>
   </data>
@@ -240,7 +222,7 @@
     <value>{0:N0} steps</value>
   </data>
   <data name="StepsInterrupted" xml:space="preserve">
-    <value>{0} · last interrupted by {1}</value>
+    <value>{0}, last interrupted by {1}</value>
   </data>
   <data name="InterruptedByPlayer" xml:space="preserve">
     <value>the player</value>
@@ -258,7 +240,7 @@
     <value>Choose an activity</value>
   </data>
   <data name="NoActivityAvailable" xml:space="preserve">
-    <value>No activity available yet: modules and plugins add them.</value>
+    <value>No activity to start yet: modules and plugins add them.</value>
   </data>
   <data name="Start" xml:space="preserve">
     <value>Start</value>

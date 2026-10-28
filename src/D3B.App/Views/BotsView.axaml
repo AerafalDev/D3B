@@ -27,6 +27,12 @@
             <Setter Property="MinHeight" Value="6" />
             <Setter Property="Maximum" Value="100" />
         </Style>
+        <Style Selector="ProgressBar.Load.Full">
+            <Setter Property="Foreground" Value="{DynamicResource WarningColor}" />
+        </Style>
+        <Style Selector="Grid.Offline">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
     </UserControl.Styles>
     <Panel>
         <StackPanel
@@ -102,308 +108,230 @@
                 </StackPanel>
             </Border>
         </StackPanel>
-        <Grid ColumnDefinitions="300,*" IsVisible="{Binding !IsEmpty}">
-            <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
-                <DockPanel>
-                    <StackPanel
-                        DockPanel.Dock="Top"
-                        Margin="22,22,22,14"
-                        Spacing="2">
-                        <TextBlock Classes="h4" Text="{l:Tr Bots}" />
-                        <TextBlock Classes="Caption Muted" Text="{Binding Summary}" />
-                    </StackPanel>
-                    <ListBox
-                        Background="Transparent"
-                        BorderThickness="0"
-                        ItemsSource="{Binding Items}"
-                        Margin="10,0,10,10"
-                        Padding="0"
-                        SelectedItem="{Binding Selected}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:BotViewModel">
-                                <Grid ColumnDefinitions="Auto,*" Margin="2,5">
-                                    <Panel Height="38" Width="38">
-                                        <shadui:Avatar
-                                            Fallback="{Binding Initials}"
-                                            Height="36"
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="Top"
-                                            Width="36" />
-                                        <Border
-                                            Background="{DynamicResource WindowBackgroundColor}"
-                                            CornerRadius="7"
-                                            Height="14"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Bottom"
-                                            Width="14">
-                                            <c:StatusPill
-                                                Classes="Dot"
-                                                HorizontalAlignment="Center"
-                                                Tone="{Binding Tone}" />
-                                        </Border>
-                                    </Panel>
-                                    <StackPanel
-                                        Grid.Column="1"
-                                        Margin="12,0,6,0"
-                                        Spacing="2"
-                                        VerticalAlignment="Center">
-                                        <TextBlock
-                                            Classes="Small"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding Name}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            Classes="Caption Muted"
-                                            Text="{Binding Summary}"
-                                            TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
-            </Border>
-            <ScrollViewer Grid.Column="1">
-                <ContentControl Content="{Binding Selected}" Margin="32,26,32,32">
-                    <ContentControl.ContentTemplate>
+        <DockPanel IsVisible="{Binding !IsEmpty}">
+            <StackPanel
+                DockPanel.Dock="Top"
+                Margin="32,26,32,20"
+                Spacing="4">
+                <TextBlock
+                    FontSize="26"
+                    FontWeight="SemiBold"
+                    Text="{l:Tr Bots}" />
+                <TextBlock Classes="Small Muted" Text="{Binding Summary}" />
+            </StackPanel>
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Items}" Margin="32,0,32,32">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <c:CardGrid />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:BotViewModel">
-                            <StackPanel MaxWidth="900" Spacing="18">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <shadui:Avatar
-                                        Fallback="{Binding Initials}"
-                                        FontSize="18"
-                                        Height="56"
-                                        Width="56" />
-                                    <StackPanel
-                                        Grid.Column="1"
-                                        Margin="16,0,0,0"
-                                        Spacing="8"
-                                        VerticalAlignment="Center">
-                                        <TextBlock Classes="h3" Text="{Binding Name}" />
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <c:StatusPill Text="{Binding Connection}" Tone="{Binding ConnectionTone}" />
-                                            <c:StatusPill
-                                                IsVisible="{Binding IsPaused}"
-                                                Text="{l:Tr Paused}"
-                                                Tone="Warning" />
-                                            <TextBlock
-                                                Classes="Small Muted"
-                                                Text="{Binding Level}"
-                                                VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Grid>
-                                <Border Classes="Banner Warning" IsVisible="{Binding IsPaused}">
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <c:Icon
-                                            Data="{StaticResource IconPause}"
-                                            Foreground="{DynamicResource WarningColor}"
-                                            Height="20"
-                                            Margin="0,1,0,0"
-                                            VerticalAlignment="Top"
-                                            Width="20" />
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            Margin="12,0,16,0"
-                                            Spacing="3">
-                                            <TextBlock
-                                                Classes="Small"
-                                                FontWeight="SemiBold"
-                                                Text="{l:Tr PausedTitle}" />
+                            <Border Classes="Plate" Classes.Paused="{Binding IsPaused}">
+                                <DockPanel>
+                                    <Border
+                                        Classes="PlateFooter"
+                                        Classes.Paused="{Binding IsPaused}"
+                                        DockPanel.Dock="Bottom">
+                                        <StackPanel Spacing="12">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding IsPaused}">
+                                                <c:Icon
+                                                    Data="{StaticResource IconPause}"
+                                                    Foreground="{DynamicResource WarningColor}"
+                                                    Height="16"
+                                                    VerticalAlignment="Center"
+                                                    Width="16" />
+                                                <StackPanel
+                                                    Grid.Column="1"
+                                                    Margin="10,0,12,0"
+                                                    Spacing="1"
+                                                    VerticalAlignment="Center">
+                                                    <TextBlock
+                                                        Classes="Small"
+                                                        FontWeight="SemiBold"
+                                                        Text="{l:Tr PausedTitle}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Classes="Caption Muted"
+                                                        Text="{l:Tr PausedDetail}"
+                                                        TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <Button
+                                                    Classes="Primary"
+                                                    Command="{Binding ResumeCommand}"
+                                                    Grid.Column="2"
+                                                    VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <c:Icon
+                                                            Data="{StaticResource IconResume}"
+                                                            Height="14"
+                                                            Width="14" />
+                                                        <TextBlock Text="{l:Tr Resume}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                            <Grid ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding HasRun}">
+                                                <StackPanel Spacing="1" VerticalAlignment="Center">
+                                                    <TextBlock
+                                                        Classes="Small"
+                                                        FontWeight="SemiBold"
+                                                        Text="{Binding ActivityName}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Classes="Caption Muted Figures"
+                                                        Text="{Binding ActivityDetail}"
+                                                        TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <c:StatusPill
+                                                    Grid.Column="1"
+                                                    Margin="12,0,0,0"
+                                                    Text="{Binding ActivityText}"
+                                                    Tone="{Binding ActivityTone}" />
+                                                <Button
+                                                    Classes="Outline"
+                                                    Command="{Binding StopCommand}"
+                                                    Grid.Column="2"
+                                                    IsVisible="{Binding IsActivityRunning}"
+                                                    Margin="10,0,0,0">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <c:Icon
+                                                            Data="{StaticResource IconStop}"
+                                                            Height="13"
+                                                            Width="13" />
+                                                        <TextBlock Text="{l:Tr Stop}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsChoosing}">
+                                                <ComboBox
+                                                    HorizontalAlignment="Stretch"
+                                                    ItemsSource="{Binding Activities}"
+                                                    PlaceholderText="{l:Tr ChooseActivity}"
+                                                    SelectedItem="{Binding SelectedActivity}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="activities:ActivityDefinition">
+                                                            <TextBlock Text="{Binding Name}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                                <Button
+                                                    Classes="Primary"
+                                                    Command="{Binding StartCommand}"
+                                                    Grid.Column="1"
+                                                    Margin="10,0,0,0">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <c:Icon
+                                                            Data="{StaticResource IconPlay}"
+                                                            Height="13"
+                                                            Width="13" />
+                                                        <TextBlock Text="{l:Tr Start}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
                                             <TextBlock
                                                 Classes="Caption Muted"
-                                                Text="{l:Tr PausedDetail}"
+                                                IsVisible="{Binding HasNothingToChoose}"
+                                                Text="{l:Tr NoActivityAvailable}"
+                                                TextWrapping="Wrap" />
+                                            <TextBlock
+                                                Classes="Caption"
+                                                Foreground="{DynamicResource ErrorColor}"
+                                                IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                Text="{Binding Error}"
                                                 TextWrapping="Wrap" />
                                         </StackPanel>
-                                        <Button
-                                            Classes="Primary"
-                                            Command="{Binding ResumeCommand}"
-                                            Grid.Column="2"
-                                            VerticalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <c:Icon
-                                                    Data="{StaticResource IconResume}"
+                                    </Border>
+                                    <StackPanel>
+                                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="20,18,20,0">
+                                            <Panel Height="42" Width="42">
+                                                <shadui:Avatar
+                                                    Fallback="{Binding Initials}"
+                                                    Height="40"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Top"
+                                                    Width="40" />
+                                                <Border
+                                                    Background="{DynamicResource CardBackgroundColor}"
+                                                    CornerRadius="7"
                                                     Height="14"
-                                                    Width="14" />
-                                                <TextBlock Text="{l:Tr Resume}" />
-                                            </StackPanel>
-                                        </Button>
-                                    </Grid>
-                                </Border>
-                                <Grid ColumnDefinitions="*,14,*" RowDefinitions="Auto,14,Auto">
-                                    <Border Classes="Tile">
-                                        <StackPanel Spacing="10">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <c:Icon
-                                                    Classes="Muted"
-                                                    Data="{StaticResource IconPin}"
-                                                    Height="15"
-                                                    Width="15" />
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Bottom"
+                                                    Width="14">
+                                                    <c:StatusPill
+                                                        Classes="Dot"
+                                                        HorizontalAlignment="Center"
+                                                        Tone="{Binding Tone}" />
+                                                </Border>
+                                            </Panel>
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                Margin="12,0"
+                                                Spacing="1"
+                                                VerticalAlignment="Center">
                                                 <TextBlock
-                                                    Classes="Label"
-                                                    Text="{l:Tr Position}"
-                                                    VerticalAlignment="Center" />
-                                            </StackPanel>
-                                            <StackPanel Spacing="3">
-                                                <TextBlock Classes="Value" Text="{Binding Coordinates}" />
-                                                <TextBlock
-                                                    Classes="Small"
-                                                    Text="{Binding Area}"
+                                                    FontSize="16"
+                                                    FontWeight="SemiBold"
+                                                    Text="{Binding Name}"
                                                     TextTrimming="CharacterEllipsis" />
-                                                <TextBlock
-                                                    Classes="Caption Muted"
-                                                    Text="{Binding MapDetail}"
-                                                    TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Classes="Tile" Grid.Column="2">
-                                        <StackPanel Spacing="10">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <c:Icon
-                                                    Classes="Muted"
-                                                    Data="{StaticResource IconBag}"
-                                                    Height="15"
-                                                    Width="15" />
-                                                <TextBlock
-                                                    Classes="Label"
-                                                    Text="{l:Tr Pods}"
-                                                    VerticalAlignment="Center" />
-                                            </StackPanel>
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Classes="Value" Text="{Binding Load}" />
-                                                <ProgressBar Classes="Load" Value="{Binding LoadPercent}" />
-                                                <TextBlock Classes="Caption Muted" Text="{Binding LoadDetail}" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Classes="Tile" Grid.Row="2">
-                                        <StackPanel Spacing="10">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <c:Icon
-                                                    Classes="Muted"
-                                                    Data="{StaticResource IconCoins}"
-                                                    Height="15"
-                                                    Width="15" />
-                                                <TextBlock
-                                                    Classes="Label"
-                                                    Text="{l:Tr Kamas}"
-                                                    VerticalAlignment="Center" />
-                                            </StackPanel>
-                                            <TextBlock Classes="Value" Text="{Binding Kamas}" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border
-                                        Classes="Tile"
-                                        Grid.Column="2"
-                                        Grid.Row="2">
-                                        <StackPanel Spacing="10">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <c:Icon
-                                                    Classes="Muted"
-                                                    Data="{StaticResource IconUser}"
-                                                    Height="15"
-                                                    Width="15" />
-                                                <TextBlock
-                                                    Classes="Label"
-                                                    Text="{l:Tr State}"
-                                                    VerticalAlignment="Center" />
-                                            </StackPanel>
-                                            <TextBlock
-                                                Classes="Value"
-                                                Text="{Binding Doing}"
-                                                TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                                <Border Classes="Tile" Padding="20,18">
-                                    <StackPanel Spacing="16">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <c:Icon
-                                                    Classes="Muted"
-                                                    Data="{StaticResource IconPulse}"
-                                                    Height="15"
-                                                    Width="15" />
-                                                <TextBlock
-                                                    Classes="Label"
-                                                    Text="{l:Tr Activity}"
-                                                    VerticalAlignment="Center" />
+                                                <TextBlock Classes="Caption Muted" Text="{Binding Level}" />
                                             </StackPanel>
                                             <c:StatusPill
-                                                Grid.Column="1"
-                                                IsVisible="{Binding HasRun}"
-                                                Text="{Binding ActivityText}"
-                                                Tone="{Binding ActivityTone}" />
+                                                Grid.Column="2"
+                                                Text="{Binding Connection}"
+                                                Tone="{Binding ConnectionTone}"
+                                                VerticalAlignment="Top" />
                                         </Grid>
-                                        <StackPanel Spacing="4">
-                                            <TextBlock
-                                                FontSize="18"
-                                                FontWeight="SemiBold"
-                                                Text="{Binding ActivityName}" />
-                                            <TextBlock
-                                                Classes="Small Muted"
-                                                Text="{Binding ActivityDetail}"
-                                                TextWrapping="Wrap" />
-                                        </StackPanel>
-                                        <Border Background="{DynamicResource BorderColor}" Height="1" />
-                                        <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsChoosing}">
-                                            <ComboBox
-                                                HorizontalAlignment="Stretch"
-                                                ItemsSource="{Binding Activities}"
-                                                PlaceholderText="{l:Tr ChooseActivity}"
-                                                SelectedItem="{Binding SelectedActivity}">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate x:DataType="activities:ActivityDefinition">
-                                                        <TextBlock Text="{Binding Name}" />
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                            <Button
-                                                Classes="Primary"
-                                                Command="{Binding StartCommand}"
-                                                Grid.Column="1"
-                                                Margin="10,0,0,0">
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <c:Icon
-                                                        Data="{StaticResource IconPlay}"
-                                                        Height="13"
-                                                        Width="13" />
-                                                    <TextBlock Text="{l:Tr Start}" />
-                                                </StackPanel>
-                                            </Button>
-                                        </Grid>
-                                        <Button
-                                            Classes="Outline"
-                                            Command="{Binding StopCommand}"
-                                            HorizontalAlignment="Left"
-                                            IsVisible="{Binding IsActivityRunning}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <c:Icon
-                                                    Data="{StaticResource IconStop}"
-                                                    Height="13"
-                                                    Width="13" />
-                                                <TextBlock Text="{l:Tr Stop}" />
+                                        <Grid
+                                            Classes.Offline="{Binding !IsConnected}"
+                                            ColumnDefinitions="*,28,*"
+                                            Margin="20,16,20,20">
+                                            <StackPanel Spacing="2" ToolTip.Tip="{Binding MapDetail}">
+                                                <TextBlock Classes="Coordinates" Text="{Binding Coordinates}" />
+                                                <TextBlock
+                                                    Classes="Small"
+                                                    Text="{Binding Place}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Classes="Caption Muted" Text="{Binding Doing}" />
                                             </StackPanel>
-                                        </Button>
-                                        <TextBlock
-                                            Classes="Small Muted"
-                                            IsVisible="{Binding HasNothingToChoose}"
-                                            Text="{l:Tr NoActivityAvailable}"
-                                            TextWrapping="Wrap" />
-                                        <TextBlock
-                                            Classes="Small"
-                                            Foreground="{DynamicResource ErrorColor}"
-                                            IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                            Text="{Binding Error}"
-                                            TextWrapping="Wrap" />
+                                            <StackPanel
+                                                Grid.Column="2"
+                                                Spacing="8"
+                                                VerticalAlignment="Bottom">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock
+                                                        Classes="Small Figures"
+                                                        Text="{Binding Load}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Classes="Caption Muted Figures"
+                                                        Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        Text="{Binding LoadPercentText}"
+                                                        VerticalAlignment="Center" />
+                                                </Grid>
+                                                <ProgressBar
+                                                    Classes="Load"
+                                                    Classes.Full="{Binding IsNearlyFull}"
+                                                    Value="{Binding LoadPercent}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                                    <c:Icon
+                                                        Classes="Muted"
+                                                        Data="{StaticResource IconCoins}"
+                                                        Height="14"
+                                                        VerticalAlignment="Center"
+                                                        Width="14" />
+                                                    <TextBlock Classes="Small Figures" Text="{Binding Kamas}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
                                     </StackPanel>
-                                </Border>
-                            </StackPanel>
+                                </DockPanel>
+                            </Border>
                         </DataTemplate>
-                    </ContentControl.ContentTemplate>
-                </ContentControl>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </ScrollViewer>
-        </Grid>
+        </DockPanel>
     </Panel>
 </UserControl>

@@ -14,10 +14,6 @@
         <Setter Property="CornerRadius" Value="{DynamicResource XlCornerRadius}" />
         <Setter Property="Padding" Value="18,16" />
     </Style>
-    <Style Selector="Border.Banner.Warning">
-        <Setter Property="Background" Value="{DynamicResource WarningColor5}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}" />
-    </Style>
     <Style Selector="Border.Banner.Danger">
         <Setter Property="Background" Value="{DynamicResource ErrorColor5}" />
         <Setter Property="BorderBrush" Value="{DynamicResource ErrorColor60}" />
@@ -29,19 +25,38 @@
         <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}" />
         <Setter Property="Padding" Value="14,12" />
     </Style>
-    <Style Selector="TextBlock.Label">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-    </Style>
-    <Style Selector="TextBlock.Value">
-        <Setter Property="FontSize" Value="22" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
     <Style Selector="SelectableTextBlock.Mono">
         <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="LineHeight" Value="19" />
+    </Style>
+    <Style Selector="Border.Plate">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+    </Style>
+    <Style Selector="Border.Plate.Paused">
+        <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}" />
+    </Style>
+    <Style Selector="Border.PlateFooter">
+        <Setter Property="Background" Value="{DynamicResource PlateFooterColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="CornerRadius" Value="0,0,13,13" />
+        <Setter Property="Padding" Value="20,14" />
+    </Style>
+    <Style Selector="Border.PlateFooter.Paused">
+        <Setter Property="Background" Value="{DynamicResource WarningColor5}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}" />
+    </Style>
+    <Style Selector="TextBlock.Coordinates">
+        <Setter Property="FontSize" Value="30" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontFeatures" Value="+tnum" />
+    </Style>
+    <Style Selector="TextBlock.Figures">
+        <Setter Property="FontFeatures" Value="+tnum" />
     </Style>
     <Style Selector="c|Icon.Muted">
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
