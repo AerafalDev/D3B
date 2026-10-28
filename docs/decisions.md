@@ -1461,6 +1461,115 @@ The readable protocol's contract changed with the game: `MappingFile.FormatVersi
 (D45); `mapping.proto` is unchanged. A host of this version looks for `mapping-2.binpb` beside the pack, else in the
 build's release (D48), which the release tool publishes (D50).
 
+## D60: The bot sends the requests that start an action, and the client does what follows
+
+*2026-10-28, step 3, session 3h, chosen by the owner. Settles Q9.*
+
+Measured on the six captures of the game connection, then on a client of 3.7.12.12 in game through the host, D3B
+sending 18 requests of the first milestone's eight kinds itself ([client.md](client.md#the-game-acted-on)):
+
+- **Request ids.** Every request of the first milestone, the client's and D3B's, carries the id -1; so does every
+  response. The client counts other requests, which the readable protocol lacks: in a session of 26 minutes, nine of
+  four kinds, numbered 2 to 10 in turn: one sent once after the character list, one about every four minutes after two
+  events of the server, and two together after 24 minutes. D3B's requests left that count as it was.
+- **What the client does.** The server answered each request D3B sent as it answers the client's own, and the client
+  showed it: the character walked, changed maps and harvested; the banker's dialog opened, then the bank, the stack and
+  the kama moved into it, and the window closed. The client also sent what follows an action of its own: after each of
+  five walks, the confirmation once arrived, 0.46 to 1.77 s later, which the server answered; after each of two map
+  changes, the request for what is on the map, with its twin, 0.72 to 0.86 s later; once the server closed the bank D3B
+  left, two requests to leave, within 40 ms, which the server did not answer. The player kept playing between D3B's
+  requests.
+- **What the server refuses.** A path that does not start where the character stands: one event, and no walk. A use it
+  refuses: two events. A use of an element that the map's data places elsewhere than the server's state does: nothing.
+  The readable protocol lacks these events.
+
+So:
+
+- **What D3B sends**: the requests that start an action, `MapMovementRequest`, `MapChangeRequest`,
+  `InteractiveUseRequest`, `NpcActionRequest`, `NpcDialogReplyRequest`, `ExchangeTransferFromInventoryRequest`,
+  `ExchangeKamasRequest` and `DialogLeaveRequest`, each whole (D55) and with the id -1, through the game session (D62).
+  Never what the client sends after an action, the confirmation of a walk or the request for a map's information, and
+  never a counted request.
+- **Staying consistent.** The server's answers reach the client as they came, and the client follows them as after its
+  own actions: no frame of the game is held, dropped or rewritten, and nothing is sent to the client. The bot learns
+  that an action is over from what the server answers, such as the response to the client's confirmation, the map's
+  information, or the end of a use; a refusal, or nothing, ends it after a delay. Bot code reads them at step 4, which
+  names the refusals it needs in the readable protocol (D55).
+- **The player** keeps the client: its own requests go on as before. How the bot and the player share the character is
+  step 4's.
+- **Within D2.** D3B sends the client's own requests, built whole, through the client's own connection; it hides
+  nothing and imitates no timing.
+- **Risk.** A client update could stop the client from following an action it did not ask for: the bot would then wait
+  for a confirmation that never comes. The measurement is made again at each update, with the session of Q10.
+- **Rejected.**
+  - The bot driving every step, as BillBot does: its own confirmation after a walk's duration it computes, the client's
+    then dropped by the relay. A duration formula, frames dropped, and every request the client sends after an action
+    to know and to imitate, where the client sends them itself.
+  - Counting D3B's requests: no request of the first milestone is counted.
+
+## D61: D3B's frames go to the server between the client's, and captures record them
+
+*2026-10-28, step 3, session 3h. Extends D37, D49 and D51.*
+
+- **The seam.** `IRelayInterceptor.Intercept` takes the connection, `IRelayConnection`: its id, its route, a token
+  cancelled once it closes, and `SendToServerAsync`, which sends the server a frame of D3B's own. Only towards the
+  server: nothing D3B does sends the client a frame.
+- **Where a frame goes.** The client's read loop and a sender take a gate in turn, the loop from a read's bytes to their
+  flush. A frame goes at once when what went to the server ends on one of the client's frames, else as soon as the
+  client's frame in progress has gone whole, so that the server reads every frame whole. Frames sent one after another
+  go in that order; a sender that stops waiting withdraws a frame not gone. A connection closed, unwatched, or whose
+  client's bytes are no frames, fails the frame with `RelayInjectionException`: where a frame could go is not known.
+- **Captures, format 2.** A record of a new kind, `Injected`, holds each frame D3B sent, with its length, as it went:
+  the server got the client's records and these, in their order. A format 1 capture reads as before.
+  `CaptureReplay` gives them to a pipe of their own when asked, and leaves them out otherwise, as a replay through the
+  relay, which sends its own, needs. `scripts/capture.cs` describes them apart; the mapping tool reads the client's own
+  frames only, so its anchors are the client's (D57).
+- **Measured.** The 18 frames D3B sent went whole between the client's, each a record of its own, and the server read
+  every one: it answered all but the use it ignored (D60).
+- **Rejected.**
+  - Waking the client's read loop to write a frame, as the hold's timer does (D51): a cancelled read meaning one more
+    thing, where a gate needs none.
+  - Recording D3B's frames as the client's: a capture would say the client sent what it did not, and a replay through
+    the relay would send them twice.
+
+## D62: The game connection is read through the translation, for the modules that observe it
+
+*2026-10-28, step 3, session 3h. Builds what D58 left to Q9.*
+
+- **The relay's interceptor**, `RelayDecoder`, gives each connection phase its `ConnectionPhaseSession` (D49, D51) and
+  each game connection a `GameSession`. It replaces `ConnectionPhaseDecoder`.
+- **A game session** decodes every frame once through `DecodeGame` (D58), shows it to every `IGameObserver` in the
+  services, and logs it at the debug level by the readable message it carries, or the build's name, its length and
+  whether it was understood or read, never what it holds. It holds and rewrites nothing. An observer sees the session
+  start, then each frame of each side, from the relay's read loops, so it must be quick and safe across threads, as
+  posting to a bot's inbox is (D9); what it throws is logged and goes no further.
+- **Sending.** `GameSession.SendAsync` encodes a readable request with `ProtocolTranslation.EncodeGameRequest`, then
+  sends it through the relay (D61) and logs what it sent. The translation encodes only a message of the game that the
+  frames carry, paired by the build's mapping and not partial: the envelope with the id -1, and an `Any` whose type URL
+  names the build's message.
+- **Measured.** The plugin that measured D60, never committed, was such an observer: it sent its requests through the
+  sessions it was shown.
+- **Rejected.**
+  - A registry of sessions: an observer is shown each one as it starts.
+  - A queue of frames per session: frames would pile up where no bot reads them.
+
+## D63: Replays with injection
+
+*2026-10-28, step 3, session 3h. Settles Q7, with D37.*
+
+Tests build a game session as a capture, read by read, some frames cut across reads, and replay it through the relay,
+read by a game session whose observer sends a request once the server said what is on the map. Each side's record goes
+once the other side has all that was sent before it, D3B's request included, so every run is the same. They check that
+the server gets the client's frames with D3B's request whole between them, that the client gets the server's bytes as
+they came, that the observers see every frame both sides sent and none of D3B's, and that the relay's capture of the
+replay gives each side what it got. The relay's own tests cover where a frame goes: between frames, after one in
+progress, in order, withdrawn, refused.
+
+- **Rejected.**
+  - Replaying the captures of a real account: they hold its ticket and are never committed (D37).
+  - Snapshots of decoded messages: what they would hold, the tests compare with what they built (D49); bot states are
+    compared at step 4.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -1470,6 +1579,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q1 | Does LuaCSharp hold up: sandboxing, async calls, errors, performance? | Step 7 |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
-| Q7 | How are sessions captured and replayed for tests: in which format? The format is D37's; replays with injection remain. | Step 3, session 3h |
-| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3, session 3h |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
