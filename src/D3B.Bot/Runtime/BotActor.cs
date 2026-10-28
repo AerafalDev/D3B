@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Network;
@@ -22,9 +23,14 @@ namespace D3B.Bot.Runtime;
 /// </para>
 /// <para>
 /// A behavior is an async method that reads snapshots and sends requests (<see cref="RunAsync"/>), one at a time. An
-/// interruption cancels it: the game connection closing, the host stopping, or the player acting on the character. The
-/// player wins: a request the player sends that acts on the character (<see cref="PlayerActions"/>) interrupts the bot's
-/// behavior, and the bot then pauses, starting nothing until it is resumed (D66).
+/// interruption cancels it: the game connection closing, the host stopping, a fight beginning (D88), or the player acting
+/// on the character. The player wins: a request the player sends that acts on the character (<see cref="PlayerActions"/>)
+/// interrupts the bot's behavior, and the bot then pauses, starting nothing until it is resumed (D66).
+/// </para>
+/// <para>
+/// An activity chains behaviors, one step after another, and takes the character back after each interruption
+/// (<see cref="StartActivity"/>, D87). Anyone may wait for what a bot's state becomes (<see cref="WaitUntilAsync"/>), as
+/// another bot following it will.
 /// </para>
 /// </remarks>
 public sealed class BotActor : IAsyncDisposable
@@ -34,6 +40,9 @@ public sealed class BotActor : IAsyncDisposable
 
     private readonly Channel<Input> _inbox = Channel.CreateUnbounded<Input>(new UnboundedChannelOptions { SingleReader = true });
     private readonly List<GameExpectation> _expectations = [];
+    private readonly List<Waiter> _waiters = [];
+    private readonly List<Starting> _parked = [];
+    private readonly Lock _activityLock = new();
     private readonly ILogger _log;
     private readonly Lazy<WorldPathfinder> _world;
     private readonly Lazy<BankDirectory> _banks;
@@ -48,6 +57,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile bool _connected;
     private volatile bool _paused;
     private volatile bool _acting;
+    private volatile ActivityRun? _activity;
     private long _drawnAt;
 
     /// <summary>Gets who the bot plays.</summary>
@@ -64,6 +74,9 @@ public sealed class BotActor : IAsyncDisposable
 
     /// <summary>Gets whether a behavior runs.</summary>
     public bool IsActing => _acting;
+
+    /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
+    public ActivityRun? Activity => _activity;
 
     internal GameMaps Maps { get; }
 
@@ -96,41 +109,62 @@ public sealed class BotActor : IAsyncDisposable
     /// <param name="cancellationToken">Stops the behavior.</param>
     /// <returns>What the behavior gave.</returns>
     /// <exception cref="InvalidOperationException">No game connection plays the character, the player took it over, or a behavior runs.</exception>
-    /// <exception cref="BotInterruptedException">The player acted, the game connection closed, or the host is stopping.</exception>
+    /// <exception cref="BotInterruptedException">The player acted, the game connection closed, a fight began, or the host is stopping.</exception>
     /// <exception cref="ObjectDisposedException">The bot was stopped.</exception>
-    public async Task<T> RunAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, CancellationToken cancellationToken = default)
+    public Task<T> RunAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(behavior);
 
-        var started = new TaskCompletionSource<RunningBehavior>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        var posted = _inbox.Writer.TryWrite(new Starting(started, cancellationToken));
-
-        ObjectDisposedException.ThrowIf(!posted, this);
-
-        var running = await started.Task.ConfigureAwait(false);
-
-        try
-        {
-            return await behavior(new BotContext(this, running), running.Token).ConfigureAwait(false);
-        }
-        catch (Exception exception) when (running.Reason is { } reason && exception is not BotInterruptedException)
-        {
-            // Whatever the behavior met once interrupted, such as a request that could not go, follows from the interruption.
-            BotLog.Interrupted(_log, Key.CharacterId, reason);
-
-            throw new BotInterruptedException(reason, exception);
-        }
-        finally
-        {
-            Post(new Finished(running));
-        }
+        return RunBehaviorAsync(behavior, waits: false, cancellationToken);
     }
 
     /// <summary>Lets the bot act again after the player took the character over.</summary>
     public void Resume()
     {
         Post(new Resuming());
+    }
+
+    /// <summary>Starts an activity: its steps, one after another, until it is done, fails or is stopped (D87).</summary>
+    /// <param name="activity">The activity.</param>
+    /// <returns>The activity's run, which says how it goes and stops it.</returns>
+    /// <exception cref="InvalidOperationException">The bot already runs an activity.</exception>
+    /// <exception cref="ObjectDisposedException">The bot was stopped.</exception>
+    public ActivityRun StartActivity(BotActivity activity)
+    {
+        ArgumentNullException.ThrowIfNull(activity);
+
+        lock (_activityLock)
+        {
+            ObjectDisposedException.ThrowIf(_inbox.Reader.Completion.IsCompleted, this);
+
+            if (_activity is { IsOver: false })
+                throw new InvalidOperationException("The bot already runs an activity.");
+
+            var run = new ActivityRun(this, activity);
+
+            _activity = run;
+            run.Start();
+
+            return run;
+        }
+    }
+
+    /// <summary>Waits until a condition holds of the bot, tried by its loop now and after everything it handles.</summary>
+    /// <param name="condition">Tells the bot as it is: its state, connection and pause. It must be quick, and must not wait.</param>
+    /// <param name="cancellationToken">Stops waiting.</param>
+    /// <returns>A task that completes once the condition held.</returns>
+    /// <exception cref="ObjectDisposedException">The bot was stopped.</exception>
+    /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+    public Task WaitUntilAsync(Func<BotActor, bool> condition, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(condition);
+
+        var waiter = new Waiter(condition, cancellationToken);
+
+        if (!_inbox.Writer.TryWrite(new Waiting(waiter)))
+            waiter.Fail(new ObjectDisposedException(nameof(BotActor), "The bot was stopped."));
+
+        return waiter.Task;
     }
 
     /// <summary>Stops the bot: its behavior is interrupted, and its inbox read to the end.</summary>
@@ -140,6 +174,13 @@ public sealed class BotActor : IAsyncDisposable
         Post(new Stopping());
         _inbox.Writer.TryComplete();
         await _loop.ConfigureAwait(false);
+    }
+
+    /// <summary>Runs a behavior once the bot can act: a game connection plays the character, placed on a map and out of a fight, the player has not taken it over, and no behavior runs.</summary>
+    /// <remarks>An activity's steps go this way, so that one waits, without a delay, for the client to come back, the player to resume the bot, or a fight to end.</remarks>
+    internal Task<T> RunWhenReadyAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, CancellationToken cancellationToken)
+    {
+        return RunBehaviorAsync(behavior, waits: true, cancellationToken);
     }
 
     internal void Attach(GameSession session, CharacterState state)
@@ -189,6 +230,36 @@ public sealed class BotActor : IAsyncDisposable
         return expectation;
     }
 
+    private async Task<T> RunBehaviorAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, bool waits, CancellationToken cancellationToken)
+    {
+        var started = new TaskCompletionSource<RunningBehavior>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        // A start that waits may be cancelled before the bot can act; the loop then never starts it (OnStarting).
+        using var registration = waits ? cancellationToken.Register(() => started.TrySetCanceled(cancellationToken)) : default;
+
+        var posted = _inbox.Writer.TryWrite(new Starting(started, waits, cancellationToken));
+
+        ObjectDisposedException.ThrowIf(!posted, this);
+
+        var running = await started.Task.ConfigureAwait(false);
+
+        try
+        {
+            return await behavior(new BotContext(this, running), running.Token).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (running.Reason is { } reason && exception is not BotInterruptedException)
+        {
+            // Whatever the behavior met once interrupted, such as a request that could not go, follows from the interruption.
+            BotLog.Interrupted(_log, Key.CharacterId, reason);
+
+            throw new BotInterruptedException(reason, exception);
+        }
+        finally
+        {
+            Post(new Finished(running));
+        }
+    }
+
     private void Post(Input input)
     {
         // Once the bot is stopped, what comes is dropped: no behavior runs any more to need it.
@@ -202,6 +273,7 @@ public sealed class BotActor : IAsyncDisposable
             try
             {
                 Handle(input);
+                Wake();
             }
             catch (Exception exception)
             {
@@ -222,7 +294,10 @@ public sealed class BotActor : IAsyncDisposable
                 OnExpecting(expecting.Expectation);
                 break;
             case Starting starting:
-                OnStarting(starting.Started, starting.CancellationToken);
+                OnStarting(starting);
+                break;
+            case Waiting waiting:
+                _waiters.Add(waiting.Waiter);
                 break;
             case Finished finished:
                 OnFinished(finished.Behavior);
@@ -269,6 +344,13 @@ public sealed class BotActor : IAsyncDisposable
             BotLog.PausedByPlayer(_log, Key.CharacterId, message.Descriptor.Name);
         }
 
+        // The client walks the character in a fight with the requests a behavior sends out of one: none may go on (D88).
+        if (side is RelayDirection.FromServer && message is ContextCreationEvent { Context: ContextCreationEvent.Types.GameContext.Fight } && _behavior is { } fighting)
+        {
+            Interrupt(fighting, Interruption.Fight);
+            BotLog.FightBegan(_log, Key.CharacterId);
+        }
+
         foreach (var expectation in _expectations)
             expectation.TryMatch(side, message, state);
 
@@ -283,9 +365,18 @@ public sealed class BotActor : IAsyncDisposable
             expectation.Cancel();
     }
 
-    private void OnStarting(TaskCompletionSource<RunningBehavior> started, CancellationToken cancellationToken)
+    private void OnStarting(Starting starting)
     {
-        if (_session is not { } session)
+        var started = starting.Started;
+
+        if (starting.Waits)
+        {
+            if (CanAct())
+                Start(starting);
+            else if (!started.Task.IsCompleted)
+                _parked.Add(starting);
+        }
+        else if (_session is null)
         {
             started.TrySetException(new InvalidOperationException("No game connection plays the bot's character."));
         }
@@ -299,9 +390,47 @@ public sealed class BotActor : IAsyncDisposable
         }
         else
         {
-            _behavior = new RunningBehavior(session, cancellationToken);
-            _acting = true;
-            started.TrySetResult(_behavior);
+            Start(starting);
+        }
+    }
+
+    private void Start(Starting starting)
+    {
+        var behavior = new RunningBehavior(_session!, starting.CancellationToken);
+
+        // A start that waited may have been cancelled meanwhile: then no behavior runs.
+        if (!starting.Started.TrySetResult(behavior))
+        {
+            behavior.Release();
+
+            return;
+        }
+
+        _behavior = behavior;
+        _acting = true;
+    }
+
+    private bool CanAct()
+    {
+        return _session is not null && !_paused && _behavior is null && _state is { MapId: not null, Cell: not null, IsFighting: false };
+    }
+
+    private void Wake()
+    {
+        // Every waiter is tried, so that one whose condition throws fails alone.
+        foreach (var waiter in _waiters)
+            waiter.Try(this);
+
+        _waiters.RemoveAll(waiter => waiter.IsDone);
+        _parked.RemoveAll(starting => starting.Started.Task.IsCompleted);
+
+        // The first parked start takes the bot once it can act; the others wait for the behavior it starts to finish.
+        if (_parked.Count > 0 && CanAct())
+        {
+            var first = _parked[0];
+
+            _parked.RemoveAt(0);
+            Start(first);
         }
     }
 
@@ -355,6 +484,14 @@ public sealed class BotActor : IAsyncDisposable
         if (_behavior is { } behavior)
             Interrupt(behavior, Interruption.Stopped);
 
+        foreach (var starting in _parked)
+            starting.Started.TrySetException(new BotInterruptedException(Interruption.Stopped));
+
+        foreach (var waiter in _waiters)
+            waiter.Fail(new ObjectDisposedException(nameof(BotActor), "The bot was stopped."));
+
+        _parked.Clear();
+        _waiters.Clear();
         _session = null;
         _connected = false;
     }
@@ -379,7 +516,9 @@ public sealed class BotActor : IAsyncDisposable
 
     private sealed record Expecting(GameExpectation Expectation) : Input;
 
-    private sealed record Starting(TaskCompletionSource<RunningBehavior> Started, CancellationToken CancellationToken) : Input;
+    private sealed record Starting(TaskCompletionSource<RunningBehavior> Started, bool Waits, CancellationToken CancellationToken) : Input;
+
+    private sealed record Waiting(Waiter Waiter) : Input;
 
     private sealed record Finished(RunningBehavior Behavior) : Input;
 
@@ -394,4 +533,50 @@ public sealed class BotActor : IAsyncDisposable
     private sealed record Settling(TaskCompletionSource Settled) : Input;
 
     private sealed record Processing(TaskCompletionSource Processed) : Input;
+
+    /// <summary>A condition someone waits for, tried by the bot's loop.</summary>
+    private sealed class Waiter
+    {
+        private readonly Func<BotActor, bool> _condition;
+        private readonly TaskCompletionSource _held = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly CancellationTokenRegistration _registration;
+
+        public Task Task => _held.Task;
+
+        public bool IsDone => _held.Task.IsCompleted;
+
+        public Waiter(Func<BotActor, bool> condition, CancellationToken cancellationToken)
+        {
+            _condition = condition;
+            _registration = cancellationToken.Register(() => _held.TrySetCanceled(cancellationToken));
+        }
+
+        public void Try(BotActor bot)
+        {
+            if (IsDone)
+                return;
+
+            bool held;
+
+            try
+            {
+                held = _condition(bot);
+            }
+            catch (Exception exception)
+            {
+                Fail(exception);
+
+                return;
+            }
+
+            if (held && _held.TrySetResult())
+                _registration.Dispose();
+        }
+
+        public void Fail(Exception exception)
+        {
+            if (_held.TrySetException(exception))
+                _registration.Dispose();
+        }
+    }
 }

@@ -11,6 +11,12 @@ namespace D3B.Engine.Maps;
 /// paths never passed between two that are not, although the server walked one that did (client.md).
 /// </para>
 /// <para>
+/// Floors count only on a map whose cells hold both moveZones, a stair's cells being of moveZone 1: there, a step between
+/// two cells of a stair may change floor as much as it does, and any other at most 10. Measured on the server (D86): steps
+/// of 30 and 130 along a stair were walked; steps of 20 to 130 into or off one, or between two cells of moveZone 0, were
+/// refused, and every step of 10 walked. On a map of one moveZone, a step of 170 was walked.
+/// </para>
+/// <para>
 /// Steps are weighed by how long the character takes, measured on the client's paths: running, about 170 ms a step east
 /// or west, 110 north or south and 113 along a diagonal, so 3, 2 and 2. A* searches with the cost of the quickest path on
 /// a map with nothing in the way, which never overestimates. Nothing is kept between calls: any number of bots find
@@ -22,6 +28,7 @@ public static class CellPathfinder
     private const int EastWestCost = 3;
     private const int NorthSouthCost = 2;
     private const int DiagonalCost = 2;
+    private const int MostFloorChange = 10;
 
     /// <summary>Finds the quickest path between two cells.</summary>
     /// <param name="cells">The map's cells, by identifier.</param>
@@ -81,6 +88,7 @@ public static class CellPathfinder
         Span<short> previous = stackalloc short[MapData.CellCount];
         Span<bool> closed = stackalloc bool[MapData.CellCount];
         var open = new PriorityQueue<int, int>();
+        var floors = HasStairs(cells);
         var reached = -1;
 
         costs.Fill(int.MaxValue);
@@ -105,7 +113,7 @@ public static class CellPathfinder
             {
                 var next = MapGeometry.Neighbour(cell, direction);
 
-                if (next < 0 || closed[next] || !cells[next].IsWalkable || !CanCross(cells, cell, direction))
+                if (next < 0 || closed[next] || !cells[next].IsWalkable || !CanCross(cells, cell, direction) || (floors && !CanClimb(cells[cell], cells[next])))
                     continue;
 
                 var cost = costs[cell] + CostOf(direction);
@@ -149,6 +157,23 @@ public static class CellPathfinder
         var right = MapGeometry.Neighbour(cell, (direction + 1) % MapCell.DirectionCount);
 
         return (left >= 0 && cells[left].IsWalkable) || (right >= 0 && cells[right].IsWalkable);
+    }
+
+    private static bool HasStairs(ReadOnlySpan<MapCell> cells)
+    {
+        // Client 3.7.12.12 holds moveZones 0 and 1 only: a map of one of them has no stair, and its floors never count.
+        foreach (var cell in cells)
+        {
+            if (cell.MoveZone != cells[0].MoveZone)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool CanClimb(MapCell from, MapCell to)
+    {
+        return (from.MoveZone == to.MoveZone && from.MoveZone is not 0) || Math.Abs(from.Floor - to.Floor) <= MostFloorChange;
     }
 
     private static int CostOf(int direction)

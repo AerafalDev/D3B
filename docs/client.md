@@ -9,8 +9,9 @@ on running clients, then on its bytes through D3B's relay ([Connection](#connect
 ([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)), then
 acted on through it ([the game, acted on](#the-game-acted-on)), walked by a bot ([the game, walked](#the-game-walked)),
 travelled from map to map ([the game, between maps](#the-game-between-maps)), its elements used
-([the game, used](#the-game-used)), its bank used ([the game, banked](#the-game-banked)), and its zaaps and haven bag
-used ([the game, teleported](#the-game-teleported)).
+([the game, used](#the-game-used)), its bank used ([the game, banked](#the-game-banked)), its zaaps and haven bag
+used ([the game, teleported](#the-game-teleported)), and its floors, fights and disconnections met by an activity
+([the game, interrupted](#the-game-interrupted)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -955,8 +956,9 @@ after a map's information, it confirmed 36 of 37.
 
 **A path down a stair.** A walk D3B sent across Sufokia's zaap's map, 29 cells whose floors went 130, 100, 70, then 0,
 was refused at once, naming the cell it started from, where the character stood. The paths of session 4a never changed
-floor between two cells, 2,723 steps (D68), and D3B's cell paths do not weigh floors: which changes the server takes is
-not measured. The journey left that change out and went another way.
+floor between two cells, 2,723 steps (D68), and D3B's cell paths did not weigh floors: which changes the server takes
+was measured in session 4f, this step from 70 on a stair to 0 off it refused
+([the game, interrupted](#the-game-interrupted), D86). The journey left that change out and went another way.
 
 **The bot teleporting.** Through the host, the player's hands off: from an inside of Amakna's castle, out by its door, a
 teleport to Astrub's zaap, then a scroll, 3 changes in 6.1 s; from the haven bag to Sufokia's zaap, the bag left then a
@@ -965,6 +967,63 @@ teleport, in 2.9 s; from there to the nearest banker, a teleport to the Cœur im
 
 The 18 game connections decoded through mapping 6: of 11,504 frames, 1,570 understood whole, 2,120 more read, and 7,814
 carrying one of 181 messages the readable protocol lacks; none misread.
+
+### The game, interrupted
+
+Measured on 2026-10-28 for session 4f (D86 to D89): the pack, the 18 captures of the game connection before this
+session, then four game connections of a client of 3.7.12.12 in game through the host, 16, 2, 7 and 1 minutes, the
+player's hands off but where told, a measuring plugin, never committed, sending chosen paths, then running an activity.
+By structure, timing, and values compared on the machine with the build's pack, never written down. The character rode
+a mount.
+
+**Floors.** A cell's moveZone is 0 or 1, 1 on 9,800 cells; 633 maps hold both, 469 of them in the world graph, and
+their cells of moveZone 1 are stairs: on Sufokia's zaap's map, the floors 130, 100, 70, 40, 10 and 0 of two stairs
+between a level of floor 130 and one of floor 0. Every walkable cell's floor is a multiple of 10. In the captures, the
+player walked steps of 10 to 60 on maps of one moveZone; on maps of both, the player's client and others' walked steps
+of 30 along a stair and of 10 between a stair and a cell off it. Paths D3B sent, each ending on the step tried, each
+refused one sent again without it and walked:
+
+| Map | Step | Walked | Refused |
+| --- | --- | --- | --- |
+| Both moveZones | Along a stair, both cells of moveZone 1 | 130 up and down, 30, 20 | Nothing |
+| Both moveZones | Between moveZones 0 and 1 | 10 | 20, 30, 40 up and down, 70, 130 |
+| Both moveZones | Between two cells of moveZone 0 | 10 | 20, 40, 130 |
+| One moveZone | Any | 170 | Nothing |
+
+Every refusal named the path's first cell, 28 to 136 ms after the request, and the client confirmed every path walked,
+0.5 to 2.4 s after. On the pack, the difference of floors and that of their absolute values agree on every pair of
+walkable neighbours of the 633 maps; the rule leaves out 5,655 of them. With D3B's paths not weighing floors, a journey
+off the upper level of Sufokia's zaap's map got three refusals and failed; with the rule, it arrived in 5.3 s.
+
+**A fight.** Two, the player attacking monsters: the client walked to the group, then sent its confirmation and a
+request of 49 bytes the readable protocol lacks in one read. The server answered the confirmation, then, in 2 ms,
+destroyed the context and created the one of value 1, named the fight's own map, of the pack, off the world graph and
+at 0,0, as the haven bag is, and sent events of a fight. The client asked for that map's information and got the
+fight's, no map information. In the fight, the client moved the character with the walk's request, on the fight's map.
+The end, 24 and 45 s later: the loot, the weight, the context destroyed and created of value 0, the map the fight began
+on, then its information, placing the character where the fight began.
+
+**A disconnection.** The client closed 1.71 s into a walk of 15 steps, before confirming it: the server closed too. On
+its new connection, 22 s later, the character stood on the walk's first cell, and the next path, sent from there, was
+walked and confirmed. A request to walk naming no cell, D3B's, was refused by naming the character's cell, then the
+server closed the game connection, 83 ms after the request.
+
+**A walk the server cuts.** On the map below Sufokia's zaap's stairs, the path to the south edge passes a map action's
+cell, 469, next to where the character arrives: the server showed the walk only to that cell. Of 43 such walks, the
+client confirmed 24 at once, 0.43 to 0.44 s later, and the server answered with a refusal naming that cell, the new map
+and the response, in one millisecond, as after a map action; the 18 others went unconfirmed until D3B sent another walk
+3 s later, which the server refused by naming the first cell of the cut walk; the next walk from there was shown, the
+client confirmed 0.5 s later, and the server answered with a refusal, the new map of the map action and the response.
+Both kinds were sent 0.50 to 0.51 s after the map's information, and alternated, mostly, from one journey to the next.
+
+**An activity.** A patrol between that map and Sufokia's zaap's, through the stairs, one journey a step: 85 journeys,
+every one arrived, 1.5 to 6.7 s each. Full, it went to the nearest bank in two map changes, put a kama in and left,
+6.6 s, then went on. The player's walk interrupted its journey; resumed 22 s later, it recovered in 2 ms and went on.
+The client closed during a journey: the new connection 20 s later took the bot back, and the activity went on 2.2 s
+after the server named the map, with no command.
+
+The 22 game connections decoded through mapping 6: of 14,750 frames, 2,178 understood whole, 2,618 more read, and
+9,954 carrying one of 185 messages the readable protocol lacks; none misread.
 
 ## Protocol code
 

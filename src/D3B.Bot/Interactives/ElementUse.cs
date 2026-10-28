@@ -55,9 +55,12 @@ public static class ElementUse
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        // The use may be asked from where the character stands, which the server refuses while it holds a walk (D89).
+        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+
         var state = context.State;
 
-        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking || state.IsUsing || state.IsInDialog)
+        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsBusy)
             return UseOutcome.Busy;
 
         if (!state.Elements.TryGetValue(elementId, out var element) || !element.TryGetEnabled(skillId, out _))

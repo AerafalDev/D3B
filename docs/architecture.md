@@ -23,7 +23,9 @@ until the client drew the map (step 4, session 4c); the map's NPCs, dialogs and 
 journey to a banker, banking, and the player's leaving told from the client's (step 4, session 4d); the zaaps the
 character knows and the haven bag in the state, teleporting from where the character stands in the path through the
 world, leaving the haven bag, and a walk the client does not follow settled where the server has the character (step 4,
-session 4e). Everything else below is the target.
+session 4e); floors in cell paths, and activities chaining behaviors, interrupted by the player, a disconnection or a
+fight, the character recovered and taken back by the client's new connection (step 4, session 4f). Everything else below
+is the target.
 
 ## Overview
 
@@ -60,7 +62,6 @@ each step adds the references it needs.
 | `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, items, spells, monsters, interactives, texts. |
 | `src/D3B.Engine` | Pure logic with no I/O: cell and world pathfinding, line of sight, fight simulation. |
 | `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, and the default modules. |
-| `src/D3B.Scripting` | The Lua host and its API namespaces (D12). |
 | `src/D3B.Host` | The headless host: Generic Host, gRPC server on a named pipe, storage, logs. |
 | `src/D3B.Contracts` | The gRPC contracts shared by the host and the app. |
 | `src/D3B.App` | The Avalonia desktop app. |
@@ -74,9 +75,9 @@ each step adds the references it needs.
 Built at step 1, in `D3B.Core` (D20, D21):
 
 - A module implements `IModule.Build(BotBuilder)`. It registers services, message handlers, activities, fight
-  strategies, Lua API namespaces, settings and UI pages. `BotBuilder` wraps the Generic Host's builder and is an
-  `IHostApplicationBuilder`: a module registers through `Services`, `Configuration` and `Logging`, and `Build()` returns
-  the `IHost`.
+  strategies, settings and UI pages. Routes and routines are modules too, D3B's or plugins: there is no Lua (D90).
+  `BotBuilder` wraps the Generic Host's builder and is an `IHostApplicationBuilder`: a module registers through
+  `Services`, `Configuration` and `Logging`, and `Build()` returns the `IHost`.
 - A module is built as soon as it is added. It requires another by calling `bot.AddModule<T>()` first in its `Build`.
   Adding a module type twice builds it once.
 - A group (`IModuleGroup`) lists modules in order; whoever adds it may disable some. `DefaultModules`, in `D3B.Bot`,
@@ -97,7 +98,8 @@ Built at step 1, in `D3B.Core` (D20, D21):
 Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharing with the player and the first
 behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
 map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank; in session 4e (D83,
-D85), teleports and the haven bag. Activities, recovery and reconnection are 4f's (D64).
+D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
+client's new connection taking the bot back.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -109,21 +111,27 @@ D85), teleports and the haven bag. Activities, recovery and reconnection are 4f'
 - **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable snapshot of what the server said of the
   character, its name and level, map, sub-area, cell and the path it walks, the map's own interactive elements and the
   use the character is in (D75), the map's NPCs, the dialog with one and the exchange with the storage (D80), the zaaps
-  it knows, a zaap's dialog with its costs and the haven bag it is in (D83), inventory, kamas, weight and professions,
-  and when its account's subscription ends, which the connection phase's identification said (D72).
+  it knows, a zaap's dialog with its costs and the haven bag it is in (D83), whether it fights (D88), whether the server
+  may still hold a walk the client did not follow (D89), inventory, kamas, weight, how full it is, and professions, and
+  when its account's subscription ends, which the connection phase's identification said (D72). `IsBusy` gathers what
+  makes every behavior answer `Busy`: a walk, a use, a dialog or exchange, a fight.
   `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
 - **Behaviors** are async methods given a `BotContext`, the state, the pack's maps, world paths and banks, the clock and
   the game connection to send through, and run one at a time by `BotActor.RunAsync`. A request waits until the client
   drew the map, half a second after the server placed the character (D77). A behavior expects its answer before it sends
   its request (`Expect`), so the loop sees the expectation before any answer. An interruption cancels it, off the loop:
-  the player acting, the connection closing, the host stopping (`BotInterruptedException`).
+  the player acting, the connection closing, a fight beginning (D88), the host stopping (`BotInterruptedException`).
+  Anyone may wait for what a bot's state becomes (`BotActor.WaitUntilAsync`), as a follower will at step 10, and a
+  behavior for its own state, with a delay (`BotContext.WaitUntilAsync`).
 - **The player wins** (D66): a request the player sends that acts on the character (`PlayerActions`) interrupts the bot's
   behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's:
   a request to leave is the player's only while the character is in a dialog or an exchange (D81).
 - **Walking on a map** (D69): `MapWalk`, in `D3B.Bot.Movement`, finds the path in the pack's cells, sends its turning
   points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
   ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character
-  on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85).
+  on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85); the server may still hold it, and
+  refuses what is not a walk from there, so a step aside comes first (`MapWalk.ReleaseHeldWalkAsync`, D89). A walk of no
+  step is never sent: the server closes the connection of one.
 - **Using an element** (D75): `ElementUse`, in `D3B.Bot.Interactives`, walks to the nearest cell the client uses the
   element from, asks for the skill by the id the server gave it on the element, and waits for the start or the refusal,
   then for the end of a use that lasts, such as a harvest. Nothing is sent for an element the map does not offer the
@@ -144,10 +152,16 @@ D85), teleports and the haven bag. Activities, recovery and reconnection are 4f'
   kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
   (`WorldInsides`), the bankers and their replies, and the insides the server showed holding no banker. Walking, using,
   changing maps and travelling answer `Busy` during a dialog or an exchange, which the server refuses a walk during.
+- **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module or a plugin, chooses each step
+  from the state, a behavior's worth of work; its other hooks have defaults: when the character is full and how it is
+  unloaded, what each interruption leads to, how the character is recovered. `BotActor.StartActivity` runs one at a
+  time (`ActivityRun`): each step, unloading and recovery a behavior started once the bot can act, connected, placed,
+  out of a fight and not paused, so the run waits, with no delay, for the player to resume the bot, the client's new
+  connection to take it back (D65) or the fight to end (D88). A full character is unloaded before the next step.
+  Nothing of the activity's position is kept: the next step starts from the state.
+- **Recovery** (D89): before going on after an interruption, `Recovery.SettleAsync` lets a use and a walk end, leaves a
+  dialog or exchange still open, and lets go of a walk the server holds, each wait bounded.
 - Every delay goes through `TimeProvider`.
-- Later in step 4: an interruption (a fight, a disconnection, full pods) cancels the current behavior, a recovery step
-  runs, then the activity resumes or picks the next one; when the client reconnects, the activity resumes where its state
-  allows.
 
 ## Network and protocol
 
@@ -290,15 +304,13 @@ Built at step 2 (D24 to D33):
 
 ## Scripting
 
-- Lua scripts run in LuaCSharp, one script state per bot, with async calls into the bot (D12).
-- The API follows the Snowbot family: namespaces called with `:` (`global`, `map`, `inventory`, `npc`, `job`,
-  `exchange`, `character`), and the script's `move()` and `bank()`, which the bot calls.
-- Modules add namespaces. The owner's profession scripts in `vendor/metiers` are the acceptance test.
+Dropped (D90): routes and routines are plugins, their activities `BotActivity`s (D87), and the owner's profession
+scripts in `vendor/metiers` become plugins at step 13. What a plugin sees of the bots is Q11.
 
 ## Engine
 
 Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cells and the world. Built in session 4a
-(D68), 4b (D71, D73), 4c (D75, D76), 4d (D79) and 4e (D83):
+(D68), 4b (D71, D73), 4c (D75, D76), 4d (D79), 4e (D83) and 4f (D86):
 
 - `MapGeometry`, in `D3B.Engine.Maps`: 14 columns of 40 staggered rows, the eight directions between neighbours, the
   coordinates the server names a cell by (`MapPoint`), measured on the captures, and the distance between two cells, the
@@ -306,8 +318,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - `ElementCells`: the cells a character uses an element from, as the client chooses them, the walkable neighbours of the
   element's cell in the character's zone, else the zone's walkable cells nearest it.
 - `CellPathfinder`: A* over the cells a character may walk on, a step across passing beside at least one walkable cell,
-  steps weighed by the time the character takes, to one cell or the nearest of several; `CellPath` gives the turning
-  points a request names. Nothing is kept between calls.
+  steps weighed by the time the character takes, to one cell or the nearest of several; on a map with stairs, cells of
+  moveZone 1, a step changes floor by 10 at most but along a stair (D86). `CellPath` gives the turning points a request
+  names. Nothing is kept between calls.
 - `Criterion`, in `D3B.Engine.Criteria`: a criterion of the client's, read once into a tree and answered on three values
   from `CriterionFacts`, what the bot knows; a code it does not know is unknown.
 - `WorldInsides`, in `D3B.Engine.World`: the maps a map's doors lead into at its coordinates on no world map, such as a
@@ -335,7 +348,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   Decoded frames are compared with the messages a test built (D49); bot states with snapshots the test holds, serialized
   as indented JSON (D70).
 - Bots are tested through game connections driven as the relay shows them, on a pack of five maps, the world between
-  them, a door leading into two insides, a tree and a bank, with the bots' loop waited for and the clock moved (D67).
+  them, a door leading into two insides, a tree and a bank, with the bots' loop waited for and the clock moved (D67);
+  activities through one whose steps wait for the server, interrupted by the player, a closed connection and a fight
+  (D87).
 - Replays with injection (D63): a game session a test built is replayed through the relay, read by a game session whose
   observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
 - Time is controlled through `FakeTimeProvider`.

@@ -114,7 +114,6 @@
     <Project Path="src/D3B.Host/D3B.Host.csproj" />
     <Project Path="src/D3B.Network/D3B.Network.csproj" />
     <Project Path="src/D3B.Protocol/D3B.Protocol.csproj" />
-    <Project Path="src/D3B.Scripting/D3B.Scripting.csproj" />
   </Folder>
   <Folder Name="/templates/d3b-plugin/">
     <File Path="templates/d3b-plugin/MyPlugin.csproj" />

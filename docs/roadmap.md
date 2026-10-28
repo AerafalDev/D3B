@@ -10,10 +10,10 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 1 | Scaffold and modules | Done |
 | 2 | Game data | Done |
 | 3 | Protocol and connection | Done; Q10 at the next client update |
-| 4 | Bot run time and navigation | In progress: 4a to 4e done, 4f next |
+| 4 | Bot run time and navigation | Done |
 | 5 | Desktop app, first version | To do |
 | 6 | Harvesting and banking: first milestone | To do |
-| 7 | Lua scripting | To do |
+| 7 | Lua scripting | Dropped: routes and routines are plugins (D90) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
 | 9 | Fights | To do |
 | 10 | Several accounts and groups | To do |
@@ -93,6 +93,8 @@ and gated before the game connection is taken, whose server address must be deco
 
 ## 4. Bot run time and navigation
 
+Done on 2026-10-28, with decisions D64 to D89; D90, taken in session 4f, drops step 7.
+
 - The actor, the state and its snapshots, behaviors, interruption and recovery, reconnection (D9), fed by game
   observers and acting through game sessions (D60, D62); how the bot and the player share the character.
 - What the server answers D3B's requests, its refusals named first in the readable protocol (D55, D60).
@@ -109,7 +111,12 @@ may, beyond the sub-areas the world path already leaves out (D72), teleporting a
 plugin that records in SQLite, as the character enters each map, its NPCs with their ids, questions and replies, and in
 a fight the fight's map with its red and blue cells, which the owner believes only the server's fight messages tell
 apart; it needs what a plugin sees of the bots (Q11), step 5's storage and step 9's fight messages, the pack's cells
-marked red and blue not being measured yet (client.md).
+marked red and blue not being measured yet (client.md). A fight has a map of its own, of the pack and off the world
+graph (D88).
+
+Left by step 4 for later: why the client at times does not follow a walk, reproduced in session 4f on a map action's
+cell that cuts a scroll's walk, about one walk in two there, each costing a journey 3.5 s (D85, D89); a fight lost,
+and one an aggression begins during a step, not measured (D88).
 
 | Session | Content | Status |
 | --- | --- | --- |
@@ -118,15 +125,15 @@ marked red and blue not being measured yet (client.md).
 | 4c | Interactives: the map's own elements in the state, those of the neighbouring maps it also lists left out, and the use the character is in; using an element from the cell the client would, until the use is over, a harvest's end measured; the server's range, line of sight measured not to count, so left at step 9; the refusals named and pinned, mapping format 4 (D75, D78); doors of skill 184 in the path through the world, their criteria strict, what each unknown code would open measured for Q12, no new fact, the owner's choice (D76); every request held until the client drew the map, a use sent too soon measured to stop it confirming walks (D77); measured on a client through the host. | Done on 2026-10-28 |
 | 4d | The bank: the map's NPCs, the dialog and the bank's exchange in the state; the banks' insides from the world graph, the nearest one sought, an inside the server shows holding no banker remembered by the host for its bots, the owner's choice (D79); talking to the banker from where the character stands, his reply, the stacks in one request and the kamas in another, leaving, the refusals measured, one named and pinned, mapping format 5, and walking busy during a dialog (D80, D82); the player's leaving told from the client's by the dialog it is sent in (D81); measured on a client through the host. | Done on 2026-10-28 |
 | 4e | Zaaps and havens: the player using zaaps, the haven bag and the map measured, and the bot's requests; the zaaps known, the destinations and their costs, teleporting and the haven bag named and pinned, the refusals texts of the error kind, mapping format 6 (D84); the path through the world teleporting from every map that allows it to every zaap known, the cost carried, subscribed accounts only, the haven bag only left, the owner's choice; the zaaps known, a zaap's dialog and the haven bag in the state (D83); the walk the client did not follow measured again, and the state taking the server's cell, the owner's choice (D85); measured on a client through the host. | Done on 2026-10-28 |
-| 4f | Activities, interruption, recovery and reconnection: behaviors chained, a fight starting, a disconnection, full pods and the player as interruptions, the client's new connection taking the bot back. | To do |
+| 4f | Activities, interruption, recovery and reconnection: the floors cell paths ignored, measured on the server and counted on maps with stairs (D86); activities of steps chosen from the state, written by modules or plugins, with full pods unloaded before a step, the owner's choice, and a bot's state waited for by others, for step 10's groups (D87); a fight as an interruption, its context named, until step 9 fights it (D88); the recovery, the client's new connection taking the bot back, a walk the server holds let go of, and no walk of no step, which the server closes the connection of (D89); plugins rather than Lua, the owner's choice (D90); measured on a client through the host. | Done on 2026-10-28 |
 
 ## 5. Desktop app, first version
 
 Settles Q6.
 
 - The host's gRPC API on a named pipe, and `D3B.Contracts` (D7).
-- The Avalonia app with ShadUI: accounts and profiles, the live map with the bot's state, logs and the protocol
-  inspector, in French and English (D14).
+- The Avalonia app with ShadUI: accounts and profiles, the live map with the bot's state and its activity, started,
+  stopped and resumed from it (D87), logs and the protocol inspector, in French and English (D14).
 - Accounts and profiles stored in SQLite, secrets protected by Data Protection.
 
 ## 6. Harvesting and banking: first milestone
@@ -139,10 +146,8 @@ them when its pods are full, controlled from the app (D16). The repository may g
 
 ## 7. Lua scripting
 
-Settles Q1.
-
-- A LuaCSharp prototype first: sandboxing, async calls, errors, performance (D12).
-- The API namespaces of the Snowbot family, and the `move()` and `bank()` entry points.
+Dropped: the owner wants no Lua, and routes and routines are plugins, their activities `BotActivity`s (D87, D90). The
+number stays, so that later steps keep theirs. Q1 went with it.
 
 ## 8. MITM mode
 
@@ -171,5 +176,5 @@ Settles Q5.
 
 ## 13. The owner's profession scripts
 
-- The scripts in `vendor/metiers` adapted to D3B's Lua API and modules, and tested end to end: the acceptance test of
-  D12.
+- The scripts in `vendor/metiers` turned into plugins, their routes, harvests and banking as activities (D87, D90), and
+  tested end to end.

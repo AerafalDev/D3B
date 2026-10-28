@@ -21,7 +21,9 @@ namespace D3B.Bot.Movement;
 /// </para>
 /// <para>
 /// The client, at times, does not follow a walk the server shows it, for no cause found: the server has the character
-/// on the path's last cell, which the state then takes, and the client follows the next walk from there (D85).
+/// on the path's last cell, which the state then takes, and the client follows the next walk from there (D85). The
+/// server may still hold the character walking it, refusing what is not a walk from there: a step aside lets it go
+/// (<see cref="ReleaseHeldWalkAsync"/>, D89).
 /// </para>
 /// </remarks>
 public static class MapWalk
@@ -58,45 +60,101 @@ public static class MapWalk
         CheckCell(cell);
 
         var state = context.State;
-        var self = state.Key.CharacterId;
 
-        if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsWalking || state.IsUsing || state.IsInDialog)
+        if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsBusy)
             return WalkOutcome.Busy;
 
         if (from == cell)
-            return WalkOutcome.Arrived;
+        {
+            if (!state.IsWalkHeld)
+                return WalkOutcome.Arrived;
+
+            var aside = await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+
+            if (aside is not WalkOutcome.Arrived || context.State.Cell is not { } stepped || context.State.MapId != mapId)
+                return aside;
+
+            from = stepped;
+        }
 
         if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFind(map.Cells.Span, from, cell, out var path))
             return WalkOutcome.NoPath;
 
-        // Both are expected before the request goes, so that no answer can come before the bot looks for it.
-        var answer = context.Expect((side, message, _) => side is RelayDirection.FromServer
-            && (message is MapMovementEvent movement && movement.ActorId == self || message is MapMovementRefusedEvent));
-        var arrival = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is MapMovementConfirmResponse);
+        return await WalkAlongAsync(context, mapId, path, cancellationToken).ConfigureAwait(false);
+    }
 
-        BotLog.Walking(context.Log, self, from, cell, path.Steps);
-        await context.SendAsync(Request(mapId, path), cancellationToken).ConfigureAwait(false);
+    /// <summary>Lets go of a walk the server still holds, which the client did not follow: a step to a neighbour, within a behavior.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the step ended: <see cref="WalkOutcome.Arrived"/> at once when the server holds no walk.</returns>
+    /// <remarks>
+    /// Measured (client.md, D85): after a walk the client did not confirm, the server refused a map change, the haven bag
+    /// and teleports, 9 and 11 s later, and walked a path from the walk's last cell, which the client followed, first
+    /// bringing its character there. A behavior whose first request is not such a walk calls this first (D89).
+    /// </remarks>
+    public static async Task<WalkOutcome> ReleaseHeldWalkAsync(this BotContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
 
-        var outcome = await AnswerAsync(context, answer, arrival, path, cancellationToken).ConfigureAwait(false);
+        var state = context.State;
 
-        BotLog.Walked(context.Log, self, cell, outcome);
+        if (!state.IsWalkHeld)
+            return WalkOutcome.Arrived;
 
-        return outcome;
+        if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsBusy)
+            return WalkOutcome.Busy;
+
+        var neighbours = Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(from, direction)).Where(neighbour => neighbour >= 0).ToArray();
+
+        if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFindNearest(map.Cells.Span, from, neighbours, out var aside))
+            return WalkOutcome.NoPath;
+
+        return await WalkAlongAsync(context, mapId, aside, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Gets the request to walk a path, as the client words its own.</summary>
     /// <param name="mapId">The character's map.</param>
     /// <param name="path">The path, from the cell the character stands on.</param>
     /// <returns>The request.</returns>
+    /// <exception cref="ArgumentException">The path has no step.</exception>
     public static MapMovementRequest Request(long mapId, CellPath path)
     {
         ArgumentNullException.ThrowIfNull(path);
+
+        // A request naming no cell, measured once, was refused, and the server closed the game connection (D89).
+        if (path.Steps is 0)
+            throw new ArgumentException("A walk has at least one step: the server closes the connection of a request naming no cell.", nameof(path));
 
         var request = new MapMovementRequest { MapId = mapId };
 
         request.KeyMovements.AddRange(path.TurningPoints().Select(turn => (turn.Direction << DirectionShift) | turn.Cell));
 
         return request;
+    }
+
+    /// <summary>Gets how long the client takes at most to confirm a walk the server showed, once shown.</summary>
+    internal static TimeSpan ConfirmationDelay(int steps)
+    {
+        return _arrivalDelay + steps * _stepDelay;
+    }
+
+    private static async Task<WalkOutcome> WalkAlongAsync(BotContext context, long mapId, CellPath path, CancellationToken cancellationToken)
+    {
+        var self = context.State.Key.CharacterId;
+
+        // Both are expected before the request goes, so that no answer can come before the bot looks for it.
+        var answer = context.Expect((side, message, _) => side is RelayDirection.FromServer
+            && (message is MapMovementEvent movement && movement.ActorId == self || message is MapMovementRefusedEvent));
+        var arrival = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is MapMovementConfirmResponse);
+
+        BotLog.Walking(context.Log, self, path.Start, path.End, path.Steps);
+        await context.SendAsync(Request(mapId, path), cancellationToken).ConfigureAwait(false);
+
+        var outcome = await AnswerAsync(context, answer, arrival, path, cancellationToken).ConfigureAwait(false);
+
+        BotLog.Walked(context.Log, self, path.End, outcome);
+
+        return outcome;
     }
 
     private static async Task<WalkOutcome> AnswerAsync(BotContext context, GameExpectation answer, GameExpectation arrival, CellPath path, CancellationToken cancellationToken)
@@ -109,7 +167,7 @@ public static class MapWalk
         if (answered is MapMovementRefusedEvent)
             return WalkOutcome.Refused;
 
-        var arrived = await arrival.WaitAsync(_arrivalDelay + path.Steps * _stepDelay, cancellationToken).ConfigureAwait(false);
+        var arrived = await arrival.WaitAsync(ConfirmationDelay(path.Steps), cancellationToken).ConfigureAwait(false);
 
         if (arrived is not null)
             return WalkOutcome.Arrived;

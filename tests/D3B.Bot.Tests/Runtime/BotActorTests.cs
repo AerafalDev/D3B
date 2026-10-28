@@ -226,6 +226,61 @@ public sealed class BotActorTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AFightBeginningInterruptsTheBehaviorWithoutPausingTheBot()
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+        var wait = new KamasWait();
+        var behavior = bot.RunAsync(wait.RunAsync, TestContext.Current.CancellationToken);
+
+        await wait.ExpectingAsync(bot);
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+
+        Assert.Equal(Interruption.Fight, (await Assert.ThrowsAsync<BotInterruptedException>(() => behavior)).Reason);
+        Assert.False(bot.IsPaused);
+        Assert.True(bot.State.IsFighting);
+    }
+
+    [Fact]
+    public async Task AWaitEndsOnceItsConditionHoldsAndAtOnceWhenItHoldsAlready()
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+
+        await bot.WaitUntilAsync(b => b.State.Cell is 300, TestContext.Current.CancellationToken);
+
+        var waiting = bot.WaitUntilAsync(b => b.State.Kamas == 5, TestContext.Current.CancellationToken);
+
+        await bot.ProcessedAsync();
+        connection.Server(new KamasUpdateEvent { Kamas = 4 });
+        await bot.ProcessedAsync();
+
+        Assert.False(waiting.IsCompleted);
+
+        connection.Server(new KamasUpdateEvent { Kamas = 5 });
+
+        await waiting;
+    }
+
+    [Fact]
+    public async Task AWaitEndsWithItsTokenOrTheBot()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+
+        using var stop = new CancellationTokenSource();
+
+        var cancelled = bot.WaitUntilAsync(_ => false, stop.Token);
+        var stopped = bot.WaitUntilAsync(_ => false, TestContext.Current.CancellationToken);
+
+        await stop.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelled);
+
+        await bot.DisposeAsync();
+
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => stopped);
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => bot.WaitUntilAsync(_ => true, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task StoppingTheBotInterruptsItsBehavior()
     {
         var (_, bot) = await _play.EnterAsync(300);

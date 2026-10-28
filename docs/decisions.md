@@ -198,7 +198,7 @@ real captures, structural matching across builds).
 
 ## D12: Lua for routes and routines, .NET plugins for features
 
-*2026-10-27*
+*2026-10-27. Superseded by D90: routes and routines are .NET plugins too, and there is no Lua.*
 
 Users write routes and routines in Lua. The API is in the family of the Dofus Retro bots and Snowbot: namespaces
 called with `:` (`global`, `map`, `inventory`, `npc`, `job`, `exchange`, `character`), and a script defines `move()`
@@ -1682,7 +1682,8 @@ by step 5's app, by tests until then.
 
 ## D68: Cells and paths in D3B.Engine
 
-*2026-10-28, step 4, session 4a*
+*2026-10-28, step 4, session 4a. Superseded in part by D86: on a map with stairs, a step changes floor by 10 at most but
+along a stair.*
 
 Measured on the eight captures of the game connection, 797 cells of the character's paths, and checked against the pack
 (client.md):
@@ -2158,7 +2159,7 @@ So:
 ## D85: A walk the client does not follow leaves the character where the server has it
 
 *2026-10-28, step 4, session 4e, chosen by the owner. Supersedes in part D69: a walk not confirmed now ends with the
-character on its last cell.*
+character on its last cell. Extended by D89: the server may still hold that walk, which a step aside lets go.*
 
 - **Measured** ([client.md](client.md#the-game-teleported)): of the 104 walks D3B sent in the 18 captures, the client
   confirmed 97, the player stopped one, and the client never confirmed 6, which the server walked: two shown 30 and 90
@@ -2178,15 +2179,168 @@ character on its last cell.*
     after.
   - Leaving it to session 4f: a journey stopped at each one, the owner's choice.
 
+## D86: Floors count on a map with stairs
+
+*2026-10-28, step 4, session 4f. Supersedes in part D68: a step's floors may forbid it.*
+
+Measured on the pack of 3.7.12.12, the 18 game connections captured before this session, then on a client of
+3.7.12.12 in game through the host, the player's hands off, a measuring plugin, never committed, sending chosen paths
+([client.md](client.md#the-game-interrupted)):
+
+- **The pack.** A cell's `moveZone` is 0 or 1, 1 on 9,800 cells; 633 maps hold both, 469 of them in the world graph, and
+  their cells of moveZone 1 are stairs. Every walkable cell's floor is a multiple of 10.
+- **The captures.** On maps of one moveZone, the player walked steps of 10 to 60. On maps of both, the player's client
+  and others' walked steps of 30 along a stair, and of 10 between a stair and a cell of moveZone 0. The path refused in
+  session 4e stepped from 70 on a stair to 0 off it.
+- **The server**, 14 paths each ending on the step tried, every refused one walked again without that step: on a map of
+  both moveZones, along a stair, 130 both ways walked; between moveZones 0 and 1, 10 walked, 20, 30, 40 both ways, 70
+  and 130 refused; between two cells of moveZone 0, 10 walked, 20, 40 and 130 refused. On a map of one moveZone, 170
+  walked. The client confirmed every path the server walked.
+
+So:
+
+- **The rule** (`CellPathfinder`): on a map whose cells hold both moveZones, a step between two cells that are not both
+  of a stair, moveZone 1, changes floor by 10 at most; elsewhere floors do not count. The difference is the floors'
+  own: Dofus 2's, of their absolute values, gives the same on every pair of the pack. It leaves out 5,655 pairs of
+  walkable neighbours, on those 633 maps.
+- **Tests**: the steps of each kind, and the property tests on random maps of floors 0 to 30, half with stairs, against
+  an exhaustive search applying the rule.
+- **Measured through the host**: the journey off the upper level of Sufokia's zaap's map, which the old paths failed
+  after three refusals, in 5.3 s, no refusal; then 85 journeys of an activity between that map and the one below its
+  stairs, every one arrived.
+- **Rejected.**
+  - BillBot's rule, Dofus 2's: no change of floor at all between moveZones. The client and the server take 10.
+  - Weighing a change of floor in a step's cost: nothing measured says it takes longer.
+
+## D87: Activities, steps chosen from the state
+
+*2026-10-28, step 4, session 4f, chosen by the owner, who asked for a model both permissive and practical, that holds
+for a master and its followers. Builds D9.*
+
+The owner's profession scripts in `vendor/metiers` ask the bot for the same: their `move()` is called on every map and
+chooses there, harvesting, changing maps, or `bank()` once `inventory:podsP()` passes their `PODS_THRESHOLD`; they
+know mules. BillBot's behaviors, read for ideas (D3), resume by deciding again from the game's state with steps that
+can run twice, check their stop conditions at safe points, and pass a gate before acting; they also give up a wait and
+carry on as if it had worked, treat a reconnection as the fix for any desync, and share global state between bots, which
+D3B does not take. BillBot has no master and followers.
+
+- **An activity** (`BotActivity`, in `D3B.Bot.Activities`), written by a module or a plugin (D90): `StepAsync`, a
+  behavior's worth of work chosen from the state when the step starts, saying whether the activity goes on. Every other
+  hook has a default, so that an activity overrides what it needs: `IsFull`, never, and `UnloadAsync`, unable to;
+  `OnInterrupted`, resume; `RecoverAsync`, the default recovery (D89).
+- **Its run** (`ActivityRun`, `BotActor.StartActivity`), one per bot: each step, and each unloading and recovery, a
+  behavior the bot starts once it can act, a game connection playing the character, placed on a map and out of a fight,
+  the player not having taken it over (`RunWhenReadyAsync`). Until then it waits, with no delay. Before each step, a
+  full character is unloaded instead, and a character still full once unloaded fails the activity. An interruption
+  cancels the step (D9); the activity resumes, or stops, as `OnInterrupted` says; the host stopping ends it, as
+  `Stop` does. It says what it does (`ActivityStatus`: waiting, stepping, unloading, recovering, over), its steps, its
+  last interruption, and how it ended (`ActivityOutcome`: done, failed, stopped).
+- **No position kept.** The next step starts from the state, so the activity resumes where the state allows: after a
+  pause, a new connection or a fight, as after a journey that went elsewhere.
+- **For groups**, at step 10: anyone may wait for what a bot's state becomes (`BotActor.WaitUntilAsync`), tried by its
+  loop now and after everything it handles, as a follower's step will wait for its master's map; a behavior waits on
+  its own state with a delay (`BotContext.WaitUntilAsync`).
+- **The name**: `BotActivity`, not `Activity`, which `System.Diagnostics` holds, as D67 named the actor.
+- **Measured through the host**: a patrol between two maps, 85 journeys; the player's walk interrupted it and paused the
+  bot, resumed 22 s later it recovered and went on; full, it went to the nearest bank, put a kama in and left, in
+  6.6 s, then went on; the client closed during a journey, the new connection 20 s later took it back, and it went on
+  2.2 s after the server named the map, with no command.
+- **Rejected.**
+  - An activity as one long behavior, started again after each interruption: the run time would see nothing between
+    steps, full pods left to every activity, and no step for step 5's app to show.
+  - A state machine or a tree of behaviors, with flags: what D9 left out.
+  - A position the activity saves to resume from: the server's state is what holds.
+  - A delay after which a waiting activity gives up: the client or the player may come back much later.
+
+## D88: A fight is an interruption, until step 9 fights it
+
+*2026-10-28, step 4, session 4f*
+
+Measured on a fight in a capture of session 4d and one through the host, the player attacking monsters
+([client.md](client.md#the-game-interrupted)):
+
+- **The start.** The client walks to the group, then sends its confirmation and a request the readable protocol lacks,
+  the attack, in one read. The server answers the confirmation, replaces the roleplay's context with the context of
+  value 1, and names the fight's own map, a map of the pack off the world graph, at 0,0. It sends no map information:
+  the client's request for one gets the fight's.
+- **During it**, the client moves the character with `MapMovementRequest`, on the fight's map.
+- **The end**: the loot, the context of value 0 again, the map the fight began on, then its information, placing the
+  character.
+
+So:
+
+- The value is named `GAME_CONTEXT_FIGHT`. Value names stay out of the readable protocol's digest (D45): mapping 6's
+  pairs are the same, only the tool's version differing on a new run, so the format stays 6 and the release keeps its
+  mapping.
+- **The state** says the character fights (`CharacterState.IsFighting`), and `IsBusy` gathers what makes every behavior
+  answer `Busy`: a walk, a use, a dialog or exchange, a fight.
+- **The bot** interrupts its behavior once the server creates a fight's context (`Interruption.Fight`), and pauses
+  nothing; an activity waits for the fight's end and its map's information, then recovers and goes on.
+- The player attacking a group walks first, which pauses the bot (D66) before the fight.
+- **Not measured**: a fight lost, and a fight beginning during a step, as an aggression would: the tests cover the
+  second. Step 9 fights; its strategies will be what an activity runs on this interruption.
+- **Rejected.**
+  - Pausing the bot on a fight, as on the player: the owner's model resumes once the fight is over.
+
+## D89: Recovery, the client's new connection, and a walk the server holds
+
+*2026-10-28, step 4, session 4f. Extends D85.*
+
+Measured through the host ([client.md](client.md#the-game-interrupted)):
+
+- **A disconnection.** The client closed 1.7 s into a walk it had not confirmed: on its new connection, 22 s later, the
+  server placed the character on the walk's first cell, and walked the next path at once. During an activity's journey,
+  the new connection came 20 s later, and the activity went on as above (D87).
+- **A walk the server cuts.** On one map, a scroll's walk to the edge passes a map action's cell, where the server stops
+  it: of 43 such walks, the client followed 24 at once, confirming them 0.43 to 0.44 s later, and 18 only once D3B had
+  sent another walk, the server then refusing that one by the first cell of the cut walk, not its last, and the
+  client's confirmation setting off the map action. Both kinds were sent 0.50 to 0.51 s after the map's information.
+  The journey arrived every time, each such walk costing about 3.5 s. This is likely D85's walk the client does not
+  follow; its cause is not found.
+- **A request naming no cell**, measured once: refused, then the server closed the game connection, 83 ms after.
+
+So:
+
+- **The recovery** (`Recovery.SettleAsync`, every activity's default): a use goes on to its end, 30 s at most; a walk
+  to its confirmation, else it settles where the server has the character (D85); a dialog or an exchange still open is
+  left; a walk the server holds is let go of. Each wait is bounded, and the next step finds the state as it is.
+- **A walk the server holds** (`CharacterState.IsWalkHeld`): set once a walk the client did not confirm settled (D85),
+  cleared by the next walk, refusal or map. The server refuses what is not a walk from that cell, measured in 4b, 4d and
+  4e, and walks one from there. So `MapWalk.ReleaseHeldWalkAsync` steps to a neighbour first, before a map change, a
+  teleport, leaving the haven bag, using an element or talking to the banker, and a walk to the cell the character
+  stands on steps aside and back.
+- **No walk of no step**: `MapWalk.Request` refuses a path that does not move, which the server answers by closing the
+  connection.
+- **Risk.** A walk the client does not follow is still not understood: the state may take the wrong cell until the next
+  refusal, as on the map action's cell, and a journey loses seconds. The step aside rests on one measured fact, a walk
+  from the held walk's cell walked; no held walk was provoked to test it.
+- **Rejected.**
+  - D3B reconnecting the client: the client logs in by itself (D23).
+  - A longer delay before the first walk on a map: the walks followed and those not were sent within the same 10 ms.
+
+## D90: Plugins, not Lua
+
+*2026-10-28, step 4, session 4f, chosen by the owner. Supersedes D12; drops Q1 and step 7.*
+
+The owner does not want Lua scripts: routes and routines are written as .NET plugins, like every feature (D5, D6, D21),
+their activities `BotActivity` (D87).
+
+- **So** there is no Lua host and no script API: `src/D3B.Scripting`, an empty project, is removed. Q1, whether
+  LuaCSharp holds up, has no object. Step 7 is dropped and keeps its number, as step 8 did. Step 13 turns the owner's
+  profession scripts in `vendor/metiers` into plugins.
+- **What a plugin sees of the bots** becomes what writing an activity needs: Q11, still settled before step 6
+  publishes the package.
+- **Rejected.**
+  - Lua beside plugins, as D12 had it: a second API to keep, which the owner does not want.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
 
 | Id | Question | Settled in |
 | --- | --- | --- |
-| Q1 | Does LuaCSharp hold up: sandboxing, async calls, errors, performance? | Step 7 |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
-| Q11 | What does a plugin see of the bots' run time: `D3B.Bot` packed beside `D3B.Core`, or the bot's contracts (state, behaviors, observers) moved into `D3B.Core`, which plugins compile against (D22, D67)? | Before the first milestone publishes the package (step 6) |
+| Q11 | What does a plugin see of the bots' run time, now that activities are written as plugins: `D3B.Bot` packed beside `D3B.Core`, or the bot's contracts (state, behaviors, activities, observers) moved into `D3B.Core`, which plugins compile against (D22, D67, D87, D90)? | Before the first milestone publishes the package (step 6) |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |

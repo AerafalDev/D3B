@@ -36,6 +36,10 @@ namespace D3B.Bot.Characters;
 /// when it enters the map of a zaap it did not know. A zaap used lists its destinations with their costs, a dialog that
 /// leaving or travelling ends. The map's information says when the map is a haven bag, and whose.
 /// </para>
+/// <para>
+/// A fight, measured (client.md): the server replaces the roleplay's context with a fight's, then names the fight's own
+/// map; once the fight is over, it creates the roleplay's context again and names the map the fight began on (D88).
+/// </para>
 /// </remarks>
 public static class CharacterEvents
 {
@@ -54,7 +58,7 @@ public static class CharacterEvents
 
     /// <summary>Gives the character's state once the client did not confirm a walk the server showed it.</summary>
     /// <param name="state">The state, the character walking.</param>
-    /// <returns>The state with the character on the walk's last cell, where the server has it, or the same state when it no longer walks.</returns>
+    /// <returns>The state with the character on the walk's last cell, where the server has it and may still hold it walking, or the same state when it no longer walks.</returns>
     /// <remarks>
     /// Measured (client.md): the server walked the path, and its next refusal names the path's last cell; a walk sent from
     /// that cell is followed by the client, which first brings its character there (D85).
@@ -63,7 +67,7 @@ public static class CharacterEvents
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        return state.IsWalking ? state with { Cell = state.Path[^1], Path = [] } : state;
+        return state.IsWalking ? state with { Cell = state.Path[^1], Path = [], IsWalkHeld = true } : state;
     }
 
     private static CharacterState FromClient(CharacterState state, IMessage message)
@@ -94,7 +98,9 @@ public static class CharacterEvents
                 Storage = null,
                 ZaapDialog = null,
                 HavenBagOwnerId = null,
+                IsWalkHeld = false,
             },
+            ContextCreationEvent created => state with { IsFighting = created.Context is ContextCreationEvent.Types.GameContext.Fight },
             MapInformationEvent information when information.MapId == state.MapId => Placed(state, information),
             InteractiveElementUpdatedEvent { Element: { } element } when state.Elements.ContainsKey(element.ElementId) => state with
             {
@@ -106,9 +112,15 @@ public static class CharacterEvents
             },
             InteractiveUsedEvent used when used.ActorId == self && used.Duration > 0 => state with { Use = new CurrentUse(used.ElementId, used.SkillId) },
             InteractiveUseEndedEvent ended when state.Use == new CurrentUse(ended.ElementId, ended.SkillId) => state with { Use = null },
-            MapMovementEvent movement when movement.ActorId == self && movement.Cells.Count > 0 && movement.Cells.All(IsCell) => state with { Path = [.. movement.Cells] },
+            MapMovementEvent movement when movement.ActorId == self && movement.Cells.Count > 0 && movement.Cells.All(IsCell) => state with { Path = [.. movement.Cells], IsWalkHeld = false },
             MapMovementConfirmResponse when state.IsWalking => state with { Cell = state.Path[^1], Path = [] },
-            MapMovementRefusedEvent refused => state with { Cell = MapGeometry.TryGetCell(new MapPoint(refused.X, refused.Y), out var cell) ? cell : state.Cell, Path = [] },
+            MapMovementConfirmResponse => state with { IsWalkHeld = false },
+            MapMovementRefusedEvent refused => state with
+            {
+                Cell = MapGeometry.TryGetCell(new MapPoint(refused.X, refused.Y), out var cell) ? cell : state.Cell,
+                Path = [],
+                IsWalkHeld = false,
+            },
             NpcDialogCreationEvent creation when creation.MapId == state.MapId => state with { Dialog = new NpcDialog(creation.NpcActorId) },
             NpcDialogQuestionEvent question when state.Dialog is { } dialog => state with
             {

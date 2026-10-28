@@ -76,6 +76,43 @@ public sealed class MapChangeTests
     }
 
     [Fact]
+    public async Task ACharacterOnACellOfTheEdgeTheServerStillHoldsWalkingStepsAsideFirst()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(48);
+
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 48, 20, out var path));
+
+        var walk = bot.WalkAsync(20, TestContext.Current.CancellationToken);
+
+        await connection.SentAsync(1);
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
+        Assert.Equal(WalkOutcome.NotConfirmed, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
+
+        var change = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.NorthMapId), TestContext.Current.CancellationToken);
+        var aside = Assert.IsType<MapMovementRequest>(await connection.SentAsync(2));
+
+        Assert.Equal(20, aside.KeyMovements[0] & 0xFFF);
+
+        await TestWalks.WalkedAsync(play, connection, 2);
+
+        // From the cell it stepped to, the nearest of the edge's, walked to unless it is one.
+        var request = await TestWalks.SentAsync(play, connection, 3);
+
+        if (request is MapMovementRequest)
+        {
+            await TestWalks.WalkedAsync(play, connection, 3);
+            request = await TestWalks.SentAsync(play, connection, 4);
+        }
+
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.NorthMapId }, request);
+
+        TestWalks.Arrive(connection, TestPlay.NorthMapId, 552);
+
+        Assert.Equal(MapChangeOutcome.Changed, await TestWalks.AdvanceUntilDoneAsync(play.Time, change));
+    }
+
+    [Fact]
     public async Task AMapActionWalksOntoItsCellAndTheServerNamesTheNewMapBeforeAnsweringTheConfirmation()
     {
         await using var play = new TestPlay();

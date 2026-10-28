@@ -6,6 +6,14 @@ namespace D3B.Engine.Tests.Maps;
 
 public sealed class CellPathfinderTests
 {
+    // Seven cells in ten walkable, on floors 0 to 30; on half the maps, a cell in ten of a stair, so that floors count.
+    private static readonly Gen<MapCell[]> _maps = Gen.Select(
+        Gen.Int[0, 9].Select(roll => roll < 7).Array[MapData.CellCount],
+        Gen.Int[0, 3].Select(floor => floor * 10).Array[MapData.CellCount],
+        Gen.Int[0, 9].Array[MapData.CellCount],
+        Gen.Bool,
+        (walkable, floors, rolls, stairs) => TestCells.Of(walkable, floors, [.. rolls.Select(roll => stairs && roll is 0 ? 1 : 0)]));
+
     [Fact]
     public void APathLeadsFromCellToCellOverWalkableNeighbours()
     {
@@ -76,6 +84,58 @@ public sealed class CellPathfinderTests
         Assert.Equal([from, from - 28], north.Cells.ToArray());
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void OnAMapWithStairsAStepOffOneChangesFloorByTenAtMost(int moveZone)
+    {
+        // West of column 7 lies floor 0; from it, a plateau of floor 20 east, of moveZone 0 or a stair's, is reached only
+        // through cells of floor 10. A stair elsewhere makes floors count.
+        const int from = 10 * 14 + 2;
+        const int to = 10 * 14 + 10;
+
+        Assert.False(CellPathfinder.TryFind(Terraced(column => column < 7 ? (0, 0) : (20, moveZone)), from, to, out _));
+
+        var cells = Terraced(column => column switch
+        {
+            < 7 => (0, 0),
+            7 => (10, moveZone),
+            _ => (20, moveZone),
+        });
+
+        Assert.True(CellPathfinder.TryFind(cells, from, to, out var path));
+        Assert.All(path.Cells.ToArray().Zip(path.Cells.ToArray().Skip(1)), step => Assert.True(Math.Abs(cells[step.First].Floor - cells[step.Second].Floor) <= 10));
+    }
+
+    [Fact]
+    public void AlongAStairAStepChangesFloorAsMuchAsItDoes()
+    {
+        // Columns 6 and 7 of rows 9 to 11 are a stair from floor 0 to floor 130, the only way up.
+        const int from = 10 * 14 + 2;
+        const int to = 10 * 14 + 10;
+        var cells = Terraced(column => column < 7 ? (0, 0) : (130, 0));
+
+        foreach (var row in (int[])[9, 10, 11])
+        {
+            cells[row * 14 + 6] = TestCells.At(0, 1);
+            cells[row * 14 + 7] = TestCells.At(130, 1);
+        }
+
+        Assert.True(CellPathfinder.TryFind(cells, from, to, out var path));
+        Assert.Contains(path.Cells.ToArray().Zip(path.Cells.ToArray().Skip(1)), step => cells[step.First].Floor != cells[step.Second].Floor);
+    }
+
+    [Fact]
+    public void OnAMapWithoutStairsFloorsDoNotCount()
+    {
+        var cells = TestCells.OpenBut();
+
+        cells[10 * 14 + 6] = TestCells.At(170, 0);
+
+        Assert.True(CellPathfinder.TryFind(cells, 10 * 14 + 5, 10 * 14 + 6, out var path));
+        Assert.Equal(1, path.Steps);
+    }
+
     [Fact]
     public void AMapWithoutEveryCellIsRejected()
     {
@@ -86,22 +146,21 @@ public sealed class CellPathfinderTests
     [Fact]
     public void EveryPathFoundIsValidAndAsQuickAsAnExhaustiveSearchFinds()
     {
-        var walkable = Gen.Int[0, 9].Select(roll => roll < 7).Array[MapData.CellCount];
         var cell = Gen.Int[0, MapData.CellCount - 1];
 
-        Gen.Select(walkable, cell, cell).Sample((map, from, to) =>
+        Gen.Select(_maps, cell, cell).Sample((cells, from, to) =>
         {
-            var cells = TestCells.Of(map);
             var quickest = Exhaustive(cells, from, to);
 
             if (!CellPathfinder.TryFind(cells, from, to, out var path))
                 return quickest is null;
 
             var steps = path.Cells.ToArray();
+            var stairs = HasStairs(cells);
 
             return quickest == Cost(path) && steps[0] == from && steps[^1] == to
                 && steps.Skip(1).All(step => cells[step].IsWalkable)
-                && steps.Zip(steps.Skip(1)).All(step => MayStep(cells, step.First, MapGeometry.Direction(step.First, step.Second)));
+                && steps.Zip(steps.Skip(1)).All(step => MayStep(cells, stairs, step.First, MapGeometry.Direction(step.First, step.Second)));
         }, iter: 100);
     }
 
@@ -128,12 +187,10 @@ public sealed class CellPathfinderTests
     [Fact]
     public void EveryPathToTheNearestCellIsAsQuickAsTheQuickestOfThem()
     {
-        var walkable = Gen.Int[0, 9].Select(roll => roll < 7).Array[MapData.CellCount];
         var cell = Gen.Int[0, MapData.CellCount - 1];
 
-        Gen.Select(walkable, cell, cell.Array[1, 6]).Sample((map, from, destinations) =>
+        Gen.Select(_maps, cell, cell.Array[1, 6]).Sample((cells, from, destinations) =>
         {
-            var cells = TestCells.Of(map);
             var quickest = destinations.Select(to => Exhaustive(cells, from, to)).Where(cost => cost is not null).Min();
 
             if (!CellPathfinder.TryFindNearest(cells, from, destinations, out var path))
@@ -141,6 +198,17 @@ public sealed class CellPathfinderTests
 
             return quickest == Cost(path) && path.Start == from && destinations.Contains(path.End);
         }, iter: 100);
+    }
+
+    private static MapCell[] Terraced(Func<int, (int Floor, int MoveZone)> byColumn)
+    {
+        // Cell 0, in column 0 and of a stair, keeps floors counting on the map whatever the columns hold.
+        return [.. Enumerable.Range(0, MapData.CellCount).Select(cell =>
+        {
+            var (floor, moveZone) = byColumn(cell % MapGeometry.Columns);
+
+            return TestCells.At(floor, cell is 0 ? 1 : moveZone);
+        })];
     }
 
     private static int Cost(CellPath path)
@@ -159,11 +227,20 @@ public sealed class CellPathfinderTests
         };
     }
 
-    private static bool MayStep(MapCell[] cells, int from, int direction)
+    private static bool HasStairs(MapCell[] cells)
+    {
+        return cells.Select(cell => cell.MoveZone).Distinct().Count() > 1;
+    }
+
+    private static bool MayStep(MapCell[] cells, bool stairs, int from, int direction)
     {
         var to = MapGeometry.Neighbour(from, direction);
 
         if (to < 0 || !cells[to].IsWalkable)
+            return false;
+
+        // Floors count where the map has stairs, but along one, whose cells are of moveZone 1.
+        if (stairs && !(cells[from].MoveZone is 1 && cells[to].MoveZone is 1) && Math.Abs(cells[from].Floor - cells[to].Floor) > 10)
             return false;
 
         if (!MapGeometry.IsAcross(direction))
@@ -180,6 +257,7 @@ public sealed class CellPathfinderTests
     {
         var costs = Enumerable.Repeat(int.MaxValue, MapData.CellCount).ToArray();
         var done = new bool[MapData.CellCount];
+        var stairs = HasStairs(cells);
 
         costs[from] = 0;
 
@@ -200,7 +278,7 @@ public sealed class CellPathfinderTests
 
             for (var direction = 0; direction < MapCell.DirectionCount; direction++)
             {
-                if (!MayStep(cells, cell, direction))
+                if (!MayStep(cells, stairs, cell, direction))
                     continue;
 
                 var next = MapGeometry.Neighbour(cell, direction);
