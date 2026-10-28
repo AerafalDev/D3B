@@ -4,8 +4,9 @@ What the installed official client holds that D3B uses, measured for the steps t
 and layouts, never content. Measured on 2026-10-27 with `scripts/inspect.cs` (D26) and the extraction tool's checks, on
 client 3.7.12.12, built on 2026-10-19, installed in `%LOCALAPPDATA%\Ankama\Dofus-dofus3`; how it connects was measured
 on running clients, then on its bytes through D3B's relay ([Connection](#connection)), its protocol's code with
-`scripts/schema.cs` ([Protocol code](#protocol-code)), and its connection phase against D3B's readable protocol with
-`scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
+`scripts/schema.cs` ([Protocol code](#protocol-code)), its connection phase against D3B's readable protocol with
+`scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)), then decoded through it on 2026-10-28
+([decoded](#the-connection-phase-decoded)). Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
 ## Measuring again
@@ -22,7 +23,7 @@ dotnet run --file scripts/inspect.cs -- layout itemsdataroot ItemsDataRoot --ref
 dotnet run --file scripts/inspect.cs -- layout worldassets_assets_all PathFindingData
 dotnet run --file scripts/inspect.cs -- layout Map/Data MapMetadata --references
 dotnet run --file scripts/extract.cs -- --output <dir> --force        # extracts, counting maps, graph and tables, and checks them
-dotnet run --project src/D3B.Host -- --Network:Captures:Enabled true  # relays clients started from the launcher, and records them
+dotnet run --project src/D3B.Host -- --Network:Captures:Enabled true  # relays clients started from the launcher, logs each frame of their connection phase, and records them
 dotnet run --file scripts/client.cs                                   # which configuration the client reads, Ankama's or D3B's
 dotnet run --file scripts/capture.cs -- --frames                      # the captures' reads, frames and protobuf shapes, no value
 dotnet run --file scripts/schema.cs -- --proto <dir>                  # the protocol's obfuscated schema, counted, and as .proto text
@@ -422,9 +423,18 @@ Three connections of two clients of 3.7.12.12, on port 5555, recorded by D3B's r
   the player spent choosing. Another connection was closed by its client 40 s after the first exchange, for a reason not
   measured.
 
-Not measured: the bytes of the game connection, which still goes straight to the game server; whether the game
-server's address is a name or an IP address; port 443, every client measured having used 5555; how the client chooses
-among the ports it is sent. Session 3e measures them.
+Measured on 2026-10-28 by decoding that server selection's answer ([decoded](#the-connection-phase-decoded)), and on
+four clients of this build in game:
+
+- **The game server's host** is a DNS name of three labels, 32 characters, not an address. It resolves to three IPv4
+  addresses, as the connection host does: a load balancer too.
+- **The ports** sent are two, 5555 then 443, the connection host's two ports.
+- **In game**, each of the four clients held one connection to a game server, all four on port 5555; one of them to an
+  address of the host above.
+
+Not measured: the bytes of the game connection, which still goes straight to the game server, and which side speaks
+first on it; whether the client takes an address in place of the game server's name; port 443, every client measured
+having used 5555; how the client chooses among the ports it is sent. Session 3f measures them.
 
 ```powershell
 Get-NetTCPConnection -OwningProcess (Get-Process Dofus).Id | Sort-Object OwningProcess, RemotePort  # connections
@@ -488,6 +498,24 @@ entry, the field 9 above, and the server selection's success. 4 of the 9 enums h
 or value the readable protocol lacks.
 
 **The mapping** is 3,305 bytes, the same bytes on two runs, written in 0.2 s once the tool is built.
+
+### The connection phase, decoded
+
+The connection phase through D3B's readable classes, decoded once (D47), by structure only:
+
+- **Session 3b's captures.** Their 8 frames decode as connection messages, none holds a field the readable protocol
+  lacks, and each encodes back to the very bytes it came as.
+- **Through the host.** A client of 3.7.12.12 started from the launcher logged in and chose a server through the host,
+  which had audited the build's mapping (D48). The host logged its connection phase (D49), below: every frame
+  understood whole, in a connection of 4.7 s, 138 bytes from the client and 541 from the server. The game connection
+  that follows does not go through D3B yet.
+
+| Frame | Side | Bytes |
+| --- | --- | ---: |
+| `request.identification.token` | Client | 126 |
+| `response.identification.success` | Server | 455 |
+| `request.server_selection` | Client | 10 |
+| `response.server_selection.success` | Server | 83 |
 
 ## Protocol code
 

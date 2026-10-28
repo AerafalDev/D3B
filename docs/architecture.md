@@ -8,7 +8,8 @@ whose pack the host finds or downloads before it starts (step 2); the network mo
 connection phase through D3B, with its framing measured and its captures (step 3, session 3b); the tool writing each
 build's obfuscated protocol schema, read from the client's code (step 3, session 3c); the readable protocol of the
 connection phase, and the tool matching it with a build's schema into the build's mapping, audited (step 3, session
-3d). Everything else below is the target.
+3d); the translation of the connection phase, the version gate, the release of schemas and mappings, and the relay
+decoding the connection phase (step 3, session 3e). Everything else below is the target.
 
 ## Overview
 
@@ -29,7 +30,8 @@ started by the official launcher      then a rewritten       on a loopback addre
                                       address (D34, D35)     (D8, D23, D36)
 ```
 
-The host refuses to start when the protocol mapping it loaded does not match the installed client's build (D11).
+The host refuses to start when the protocol mapping it loaded does not match the installed client's build (D11), built in
+session 3e (D48).
 
 ## Projects
 
@@ -64,14 +66,15 @@ Built at step 1, in `D3B.Core` (D20, D21):
 - A module is built as soon as it is added. It requires another by calling `bot.AddModule<T>()` first in its `Build`.
   Adding a module type twice builds it once.
 - A group (`IModuleGroup`) lists modules in order; whoever adds it may disable some. `DefaultModules`, in `D3B.Bot`,
-  gathers the standard modules: so far the data module (D31), then, as the steps write them, network, protocol, world,
-  movement, harvesting, bank. D3B's own features are modules like any other, so they can be disabled, and later replaced
+  gathers the standard modules: so far the data module (D31), the protocol module (D48) and the network module (D36),
+  then, as the steps write them, world, movement, harvesting, bank. D3B's own features are modules like any other, so they can be disabled, and later replaced
   (D20).
 - A plugin is a folder under `plugins/` holding an assembly named after it, whose one public class marked
   `[Plugin("id")]` is its root module. It loads once into its own `AssemblyLoadContext`, which asks the host's context
   first and is not collectible (D6). An invalid plugin stops the host from starting.
 - `D3B.Host` adds `DefaultModules`, then the plugins next to its executable (or under `Plugins:Directory`), logs what
-  it built, gets the pack of the installed client's build ready (Game data, below), and runs until it is stopped.
+  it built, gets the pack of the installed client's build ready (Game data, below), then its protocol (Network and
+  protocol, below), and runs until it is stopped.
 - A plugin compiles against the `D3B.Core` package; `dotnet new d3b-plugin` creates one (D22).
 - A plugin's UI part, loaded by the app, is Q6.
 
@@ -88,7 +91,7 @@ Built at step 1, in `D3B.Core` (D20, D21):
 ## Network and protocol
 
 Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Network`, registered by the network module
-(`NetworkModule`, in `D3B.Bot`, after the data module).
+(`NetworkModule`, in `D3B.Bot`, after the data and protocol modules, and requiring the protocol module, D48).
 
 - MITM only (D23): Kestrel takes each official client's connection, and D3B opens the matching connection to the server.
   Both sides are a `ConnectionContext` (D8). `RelayServer` runs Kestrel's server as a hosted service, with no web host,
@@ -98,10 +101,12 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   URL, and gives the client Ankama's back when the host stops; it follows the launcher rewriting the file.
   `scripts/client.cs` checks it and restores it after a crash. No `hosts` line, no elevation.
 - `RelayConnectionHandler` resolves the connection host Ankama's configuration names, connects on the port the client
-  chose, and copies the bytes as they are, both ways, any number of clients at once. A side closing closes the other.
+  chose, and relays the bytes as they are, both ways, any number of clients at once. A side closing closes the other.
+  With an `IRelayObserver` in the services, it also reads each side as frames and shows the observer each whole one; a
+  side that is no frames is observed no more (D49).
 - For now only the connection phase comes through D3B. The connection server then sends the game server's address: D3B
   rewrites it to its game listener, and connects to the real game server when the client arrives there (D34, session
-  3e).
+  3f).
 - The client's other connections, to the launcher, Haapi, the chat and the CDN, do not go through D3B.
 - The bot acts through that connection, and the client is kept consistent with what it does: Q9.
 - Framing, measured (D38): a varint length, then a protobuf message, in the clear. `FrameReader` reads frames from a
@@ -121,9 +126,18 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   pins, anchors, fields, then structural scores), audits the result (`ContractAudit`), and writes it beside the pack,
   `mapping-1.binpb` (`MappingFile`), only when it holds. The mapping records the schema's SHA-256 and the readable
   protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that digest.
-- The per-build translation turns obfuscated names and field numbers into the clean classes and back, through the
-  mapping, which the host audits before it starts. An unmapped type or field is an error, logged with the raw bytes.
-  Its exact form is Q2, session 3e.
+- The per-build translation, built in session 3e for the connection phase (D47): `ProtocolTranslation`, in
+  `D3B.Protocol.Translation`, exists only for a build whose mapping holds the contract and pairs every readable field and
+  value with its own number, since the readable classes read the wire as it is. A frame is decoded once and understood
+  only when its message encodes back to its length; one that is not is passed on as it is, and never rewritten. From
+  3g, the mapping turns the type URLs of the game's `Any` envelopes into readable messages.
+- The version gate (D48): the protocol module (`ProtocolModule`, in `D3B.Bot`) registers `ProtocolSource`, which finds
+  the build's schema and mapping beside its pack, else downloads them from its release, and the translation, which the
+  host asks for before it starts. Without a mapping that holds, the host logs what fails and the commands mapping the
+  build, `scripts/schema.cs` then `scripts/mapping.cs`, which need no capture, and exits with code 1.
+- The connection phase, decoded (D49): `ConnectionPhaseDecoder`, the relay's observer, decodes every frame through the
+  translation and logs it by the readable fields its oneofs hold and its length, never a value; a frame not understood is
+  a warning.
 - The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).
 - Captures (D37): with `Network:Captures:Enabled`, each connection's raw reads go to a `.d3bcap` file in
   `%LOCALAPPDATA%\D3B\captures`, never committed. `CaptureReplay` plays one into pipes; tests build their own, and
@@ -157,10 +171,10 @@ Built at step 2 (D24 to D33):
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
   sub-areas listing it.
-- Packs, and from step 3 schemas and mappings, are assets of this repository's releases, one release per client
-  build, tagged `client-<version>`, each asset with its SHA-256 beside it, never committed (D10, D11, D24, D39).
-  `ClientRelease` names them; `scripts/release.cs` publishes a build's pack, never replacing one already published
-  (D33).
+- Packs, schemas and mappings are assets of this repository's releases, one release per client build, tagged
+  `client-<version>`, each asset with its SHA-256 beside it, never committed (D10, D11, D24, D39). `ClientRelease`
+  names them; `scripts/release.cs` publishes a build's pack, schema and mapping together, once the mapping holds, never
+  replacing an asset already published (D33, D50).
 - The data module (`DataModule`, in `D3B.Bot`, D31) registers, as singletons every bot shares, the installed
   `ClientBuild`, the `PackSource` that finds its pack, the `ReleaseDownloader`, the `GamePack`, opened once and closed
   with the host, and the stores reading it: `GameTexts`, `GameMaps`, `GameWorld` and `GameTables`. The configuration
@@ -197,6 +211,7 @@ Built at step 2 (D24 to D33):
 
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests for pathfinding and line of
   sight.
-- Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay. From
-  step 3e, their decoded messages and states are compared with snapshots.
+- Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay.
+  Decoded frames are compared with the messages a test built (D49); from step 4, bot states are compared with
+  snapshots.
 - Time is controlled through `FakeTimeProvider`.
