@@ -36,6 +36,9 @@ internal static partial class RelayLog
     [LoggerMessage(Level = LogLevel.Error, Message = "Connection {ConnectionId}: the {Side}'s frames are relayed unwatched from here on, the interceptor having failed")]
     public static partial void InterceptorFailed(ILogger logger, string connectionId, string side, Exception exception);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Connection {ConnectionId} closed after {Duration}: {FromClient} bytes from the client, {FromServer} from the server")]
-    public static partial void Closed(ILogger logger, string connectionId, TimeSpan duration, long fromClient, long fromServer);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Connection {ConnectionId} closed after {Duration}: {FromClient} bytes from the client, {FromServer} from the server, {Injected} frames from D3B")]
+    public static partial void Closed(ILogger logger, string connectionId, TimeSpan duration, long fromClient, long fromServer, int injected);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Connection {ConnectionId}: D3B sent the server a frame of its own, {Length} bytes with its length")]
+    public static partial void Injected(ILogger logger, string connectionId, int length);
 }

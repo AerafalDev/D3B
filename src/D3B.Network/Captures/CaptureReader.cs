@@ -10,6 +10,9 @@ public sealed class CaptureReader : IDisposable
     /// <summary>Gets what the capture says of its connection.</summary>
     public CaptureHeader Header { get; }
 
+    /// <summary>Gets the capture's format: 1, or 2 once captures record the frames D3B sends the server itself.</summary>
+    public int FormatVersion { get; }
+
     /// <summary>Gets a value indicating whether the last record was cut short, as when the host writing it was killed.</summary>
     /// <remarks>Known once <see cref="TryRead"/> has returned <see langword="false"/>.</remarks>
     public bool IsTruncated { get; private set; }
@@ -25,7 +28,7 @@ public sealed class CaptureReader : IDisposable
 
         try
         {
-            Header = ReadHeader(_reader);
+            (Header, FormatVersion) = ReadHeader(_reader);
         }
         catch (Exception exception) when (exception is IOException or FormatException or ArgumentOutOfRangeException)
         {
@@ -60,15 +63,15 @@ public sealed class CaptureReader : IDisposable
 
         var kind = (CaptureRecordKind)first;
 
-        if (!Enum.IsDefined(kind))
-            throw new CaptureFormatException($"A record is of kind {first}, which this format does not have.");
+        if (!Enum.IsDefined(kind) || (kind is CaptureRecordKind.Injected && FormatVersion < 2))
+            throw new CaptureFormatException($"A record is of kind {first}, which format {FormatVersion} does not have.");
 
         try
         {
             var offset = TimeSpan.FromMicroseconds(_reader.Read7BitEncodedInt64());
             var data = ReadOnlyMemory<byte>.Empty;
 
-            if (kind is CaptureRecordKind.FromClient or CaptureRecordKind.FromServer)
+            if (kind is CaptureRecordKind.FromClient or CaptureRecordKind.FromServer or CaptureRecordKind.Injected)
             {
                 var length = _reader.Read7BitEncodedInt();
 
@@ -114,7 +117,7 @@ public sealed class CaptureReader : IDisposable
         _reader.Dispose();
     }
 
-    private static CaptureHeader ReadHeader(BinaryReader reader)
+    private static (CaptureHeader Header, int FormatVersion) ReadHeader(BinaryReader reader)
     {
         Span<byte> magic = stackalloc byte[CaptureLayout.Magic.Length];
 
@@ -125,10 +128,10 @@ public sealed class CaptureReader : IDisposable
 
         var version = reader.ReadInt32();
 
-        if (version != CaptureLayout.FormatVersion)
-            throw new CaptureFormatException($"The capture is of format {version}; this version of D3B reads format {CaptureLayout.FormatVersion}.");
+        if (version is < CaptureLayout.OldestFormatVersion or > CaptureLayout.FormatVersion)
+            throw new CaptureFormatException($"The capture is of format {version}; this version of D3B reads formats {CaptureLayout.OldestFormatVersion} to {CaptureLayout.FormatVersion}.");
 
-        return new CaptureHeader
+        var header = new CaptureHeader
         {
             StartedAt = DateTimeOffset.FromUnixTimeMilliseconds(reader.ReadInt64()),
             ClientVersion = reader.ReadString(),
@@ -136,5 +139,7 @@ public sealed class CaptureReader : IDisposable
             ServerHost = reader.ReadString(),
             Server = reader.ReadString(),
         };
+
+        return (header, version);
     }
 }

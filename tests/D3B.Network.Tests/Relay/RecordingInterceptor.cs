@@ -9,6 +9,7 @@ internal sealed class RecordingInterceptor : IRelayInterceptor, IConnectionInter
 {
     private readonly ConcurrentQueue<(RelayDirection Direction, byte[] Frame, bool Held)> _frames = new();
     private readonly ConcurrentQueue<string> _abandoned = new();
+    private readonly ConcurrentQueue<IRelayConnection> _connections = new();
 
     public bool Fails { get; init; }
 
@@ -24,8 +25,16 @@ internal sealed class RecordingInterceptor : IRelayInterceptor, IConnectionInter
 
     public IReadOnlyList<string> Abandoned => [.. _abandoned];
 
-    public IConnectionInterceptor? Intercept(string connectionId, RelayRoute route)
+    /// <summary>Gets the connections it was shown, in order.</summary>
+    public IReadOnlyList<IRelayConnection> Connections => [.. _connections];
+
+    /// <summary>Gets what it does with each frame it is shown, after keeping it, such as sending the server a frame of its own.</summary>
+    public Action<IRelayConnection, RelayDirection, byte[]>? OnEachFrame { get; init; }
+
+    public IConnectionInterceptor? Intercept(IRelayConnection connection)
     {
+        _connections.Enqueue(connection);
+
         return this;
     }
 
@@ -42,6 +51,7 @@ internal sealed class RecordingInterceptor : IRelayInterceptor, IConnectionInter
         var bytes = frame.ToArray();
 
         _frames.Enqueue((direction, bytes, held));
+        OnEachFrame?.Invoke(_connections.Last(), direction, bytes);
 
         return held ? Rewrite?.Invoke(bytes) : null;
     }

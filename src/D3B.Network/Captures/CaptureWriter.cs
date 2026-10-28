@@ -3,7 +3,7 @@ using System.Text;
 
 namespace D3B.Network.Captures;
 
-/// <summary>Records the raw bytes of a relayed connection, both ways, read by read, into a capture (D37).</summary>
+/// <summary>Records the raw bytes of a relayed connection, both ways, read by read, and the frames D3B sends the server itself, into a capture (D37).</summary>
 /// <remarks>
 /// <para>
 /// Each record is flushed as it is written, so a capture whose host was killed still reads up to its last record. The two
@@ -82,12 +82,12 @@ public sealed class CaptureWriter : IDisposable
         }
     }
 
-    /// <summary>Records bytes one side sent.</summary>
-    /// <param name="kind"><see cref="CaptureRecordKind.FromClient"/> or <see cref="CaptureRecordKind.FromServer"/>.</param>
-    /// <param name="data">The bytes, as one read gave them.</param>
+    /// <summary>Records bytes one side sent, or a frame D3B sent the server itself.</summary>
+    /// <param name="kind"><see cref="CaptureRecordKind.FromClient"/>, <see cref="CaptureRecordKind.FromServer"/> or <see cref="CaptureRecordKind.Injected"/>.</param>
+    /// <param name="data">The bytes, as one read gave them, or the frame D3B sent with its length.</param>
     public void Write(CaptureRecordKind kind, ReadOnlySequence<byte> data)
     {
-        if (kind is not (CaptureRecordKind.FromClient or CaptureRecordKind.FromServer))
+        if (kind is not (CaptureRecordKind.FromClient or CaptureRecordKind.FromServer or CaptureRecordKind.Injected))
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "Only bytes a side sent have data.");
 
         if (data.Length > CaptureLayout.MaxRecordLength)

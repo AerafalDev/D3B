@@ -28,13 +28,24 @@ namespace D3B.Protocol.Translation;
 /// mapping turns it into the readable one, which then reads the <c>Any</c>'s value the same way. A partial message, which
 /// reads only some of its counterpart's fields on purpose, is read without being understood whole.
 /// </para>
+/// <para>
+/// A request D3B sends the game server is encoded the other way: the readable message's bytes are the wire's, and the
+/// <c>Any</c> carrying them names the build's message (D60).
+/// </para>
 /// </remarks>
 public sealed class ProtocolTranslation
 {
+    /// <summary>The start of every type URL of the game's <c>Any</c>, before the build's name of the message (D56).</summary>
+    public const string TypeUrlPrefix = "type.ankama.com/";
+
+    /// <summary>The id every request of the first milestone carries, in every capture: the client counts only some others (D60).</summary>
+    public const int UncountedRequestId = -1;
+
     private static readonly MessageParser<ConnectionMessage> _connection = ConnectionMessage.Parser.WithDiscardUnknownFields(true);
     private static readonly MessageParser<GameMessage> _game = GameMessage.Parser.WithDiscardUnknownFields(true);
 
     private readonly Dictionary<string, (MessageDescriptor Message, MessageParser Parser)> _readableOf;
+    private readonly Dictionary<string, string> _obfuscatedOf;
 
     /// <summary>Gets the client build it translates, as its version file names it.</summary>
     public string ClientVersion { get; }
@@ -42,11 +53,12 @@ public sealed class ProtocolTranslation
     /// <summary>Gets what auditing the build's mapping checked.</summary>
     public AuditReport Audit { get; }
 
-    private ProtocolTranslation(string clientVersion, AuditReport audit, Dictionary<string, (MessageDescriptor Message, MessageParser Parser)> readableOf)
+    private ProtocolTranslation(string clientVersion, AuditReport audit, Dictionary<string, (MessageDescriptor Message, MessageParser Parser)> readableOf, Dictionary<string, string> obfuscatedOf)
     {
         ClientVersion = clientVersion;
         Audit = audit;
         _readableOf = readableOf;
+        _obfuscatedOf = obfuscatedOf;
     }
 
     /// <summary>Makes the translation of a build from its schema and its mapping, once they hold.</summary>
@@ -71,7 +83,9 @@ public sealed class ProtocolTranslation
             pair => (readable[pair.Readable], readable[pair.Readable].Parser.WithDiscardUnknownFields(true)),
             StringComparer.Ordinal);
 
-        return new ProtocolTranslation(mapping.ClientVersion, audit, readableOf);
+        var obfuscatedOf = mapping.Messages.ToDictionary(pair => pair.Readable, pair => pair.Obfuscated, StringComparer.Ordinal);
+
+        return new ProtocolTranslation(mapping.ClientVersion, audit, readableOf, obfuscatedOf);
     }
 
     /// <summary>Lists the readable fields and enum values a mapping pairs with another number, which no translation reads.</summary>
@@ -120,6 +134,42 @@ public sealed class ProtocolTranslation
         return length == frame.Length
             ? new DecodedFrame<ConnectionMessage>(message, null)
             : new DecodedFrame<ConnectionMessage>(message, $"its message encodes back to {length} of its {frame.Length} bytes: it holds what the readable protocol lacks, or is encoded otherwise.");
+    }
+
+    /// <summary>Encodes a request of the game for the build's server: a frame, without its length, as the client sends one (D60).</summary>
+    /// <remarks>
+    /// The envelope carries the request with <see cref="UncountedRequestId"/>, as every request of the first milestone in
+    /// every capture, and an <c>Any</c> whose type URL names the build's message. Only a message the frames carry may be
+    /// sent, and only one read whole: a partial message would leave out what the server expects (D55).
+    /// </remarks>
+    /// <param name="request">The readable request.</param>
+    /// <returns>The frame's bytes.</returns>
+    /// <exception cref="ArgumentException">The message is no game message the frames carry, the mapping lacks it, or it is partial.</exception>
+    public byte[] EncodeGameRequest(IMessage request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var descriptor = request.Descriptor;
+
+        if (descriptor.File.Package != ReadableProtocol.GamePackage || descriptor.ContainingType is not null || descriptor.File == GameMessage.Descriptor.File)
+            throw new ArgumentException($"{descriptor.FullName} is no message the game's frames carry.", nameof(request));
+
+        if (Descriptors.IsPartial(descriptor))
+            throw new ArgumentException($"{descriptor.FullName} is partial: it leaves out fields its counterpart has, which a request must hold (D55).", nameof(request));
+
+        if (!_obfuscatedOf.TryGetValue(descriptor.FullName, out var obfuscated))
+            throw new ArgumentException($"The mapping of {ClientVersion} has no counterpart for {descriptor.FullName}.", nameof(request));
+
+        var envelope = new GameMessage
+        {
+            Request = new GameRequest
+            {
+                Id = UncountedRequestId,
+                Content = new Any { TypeUrl = TypeUrlPrefix + obfuscated, Value = request.ToByteString() },
+            },
+        };
+
+        return envelope.ToByteArray();
     }
 
     /// <summary>Decodes a frame of the game connection, its varint length already read (D38), and the message its envelope carries.</summary>

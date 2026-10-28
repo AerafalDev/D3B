@@ -202,4 +202,37 @@ public sealed class ProtocolTranslationTests
         Assert.Null(decoded.Envelope);
         Assert.StartsWith("it is no game message: ", decoded.Problem, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void ARequestIsEncodedAsTheClientSendsOne()
+    {
+        var request = new MapMovementRequest { KeyMovements = { 398, 4495, 457, 461 }, MapId = 188744706 };
+        var translation = Translate();
+        var frame = translation.EncodeGameRequest(request);
+        var envelope = GameMessage.Parser.ParseFrom(frame);
+        var decoded = translation.DecodeGame(new ReadOnlySequence<byte>(frame));
+
+        Assert.Equal(-1, envelope.Request.Id);
+        Assert.Equal("type.ankama.com/" + new Obfuscation(ReadableProtocol.Files).Of(MapMovementRequest.Descriptor.FullName), envelope.Request.Content.TypeUrl);
+        Assert.True(decoded.IsUnderstood, decoded.Problem);
+        Assert.Equal(request, decoded.Content);
+    }
+
+    [Fact]
+    public void APartialMessageIsNeverEncodedAsARequest()
+    {
+        var exception = Assert.Throws<ArgumentException>(() => Translate().EncodeGameRequest(new MapInformationEvent()));
+
+        Assert.Contains("partial", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OnlyAMessageTheGamesFramesCarryIsEncoded()
+    {
+        var translation = Translate();
+
+        Assert.Throws<ArgumentException>(() => translation.EncodeGameRequest(new GameRequest()));
+        Assert.Throws<ArgumentException>(() => translation.EncodeGameRequest(new Ping()));
+        Assert.Throws<ArgumentException>(() => translation.EncodeGameRequest(new ExchangeKamasRequest.Types.Unmeasured()));
+    }
 }

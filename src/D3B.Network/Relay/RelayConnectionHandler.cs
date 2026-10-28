@@ -22,7 +22,8 @@ namespace D3B.Network.Relay;
 /// <para>
 /// Each direction forwards what it reads as soon as it reads it, and records it when captures are on, the game's apart
 /// from the connection phase's. With an <see cref="IRelayInterceptor"/>, it also reads the bytes as frames, each shown to
-/// the connection's interceptor once whole, and holds the frames it asks for (D49). A frame held for longer than
+/// the connection's interceptor once whole, holds the frames it asks for (D49), and puts the frames D3B sends the server
+/// between the client's (D61). A frame held for longer than
 /// <see cref="RelaySettings.HoldTimeout"/> goes on as it came. When a side closes, the other's output is completed, which
 /// closes it once its last bytes are sent. A side still open after <see cref="RelaySettings.CloseTimeout"/> is cut: the
 /// relay keeps no half-open connection.
@@ -112,7 +113,13 @@ internal sealed class RelayConnectionHandler
             RelayLog.Relaying(_log, connection.ConnectionId, connection.RemoteEndPoint, upstream.Host, endPoint!, route is RelayRoute.Game ? "game" : "connection phase");
 
             using var capture = StartCapture(connection, route, upstream, endPoint!);
-            var interceptor = Intercept(connection.ConnectionId, route);
+            using var closed = new CancellationTokenSource();
+            var injected = new InjectedFrames(connection.ConnectionId, server.Transport.Output, capture, _log);
+            var interceptor = Intercept(new RelayConnection(connection.ConnectionId, route, injected, closed.Token));
+            var clientSide = interceptor is null ? null : new InterceptedSide(connection.ConnectionId, RelayDirection.FromClient, interceptor, _settings.MaxHeldLength, _log);
+            var serverSide = interceptor is null ? null : new InterceptedSide(connection.ConnectionId, RelayDirection.FromServer, interceptor, _settings.MaxHeldLength, _log);
+
+            await injected.WatchAsync(clientSide);
 
             // The host stopping asks every connection to close: both sides are cut, as when the process ends.
             using var stopping = stopRequested.Register(() =>
@@ -121,8 +128,8 @@ internal sealed class RelayConnectionHandler
                 server.Abort();
             });
 
-            var fromClient = PumpAsync(connection.ConnectionId, connection.Transport.Input, server.Transport.Output, capture, RelayDirection.FromClient, interceptor);
-            var fromServer = PumpAsync(connection.ConnectionId, server.Transport.Input, connection.Transport.Output, capture, RelayDirection.FromServer, interceptor);
+            var fromClient = PumpAsync(connection.Transport.Input, server.Transport.Output, capture, RelayDirection.FromClient, clientSide, injected);
+            var fromServer = PumpAsync(server.Transport.Input, connection.Transport.Output, capture, RelayDirection.FromServer, serverSide, null);
             var first = await Task.WhenAny(fromClient, fromServer);
             var second = first == fromClient ? fromServer : fromClient;
 
@@ -136,7 +143,8 @@ internal sealed class RelayConnectionHandler
             var bytesFromServer = await fromServer;
             var duration = _time.GetElapsedTime(started);
 
-            RelayLog.Closed(_log, connection.ConnectionId, duration, bytesFromClient, bytesFromServer);
+            await closed.CancelAsync();
+            RelayLog.Closed(_log, connection.ConnectionId, duration, bytesFromClient, bytesFromServer, injected.Sent);
 
             if (capture?.Failure is { } failure)
                 RelayLog.CaptureFailed(_log, connection.ConnectionId, failure.Message);
@@ -194,25 +202,24 @@ internal sealed class RelayConnectionHandler
         }
     }
 
-    private IConnectionInterceptor? Intercept(string connectionId, RelayRoute route)
+    private IConnectionInterceptor? Intercept(RelayConnection connection)
     {
         try
         {
-            return _interceptor?.Intercept(connectionId, route);
+            return _interceptor?.Intercept(connection);
         }
         catch (Exception exception)
         {
             // The interceptor only watches: its failure must not cut the player off.
-            RelayLog.InterceptorFailed(_log, connectionId, "connection", exception);
+            RelayLog.InterceptorFailed(_log, connection.Id, "connection", exception);
 
             return null;
         }
     }
 
-    private async Task<long> PumpAsync(string connectionId, PipeReader input, PipeWriter output, CaptureWriter? capture, RelayDirection direction, IConnectionInterceptor? interceptor)
+    private async Task<long> PumpAsync(PipeReader input, PipeWriter output, CaptureWriter? capture, RelayDirection direction, InterceptedSide? side, InjectedFrames? injected)
     {
         var kind = direction is RelayDirection.FromClient ? CaptureRecordKind.FromClient : CaptureRecordKind.FromServer;
-        var side = interceptor is null ? null : new InterceptedSide(connectionId, direction, interceptor, _settings.MaxHeldLength, _log);
         var bytes = 0L;
 
         // The way out of a frame held that does not come whole: the timer ends the read waiting for the rest.
@@ -228,63 +235,97 @@ internal sealed class RelayConnectionHandler
                 var result = await input.ReadAsync();
                 var buffer = result.Buffer;
 
-                if (!buffer.IsEmpty)
+                // D3B's own frames go between the client's: none while this read's bytes are being written.
+                if (injected is not null)
+                    await injected.EnterAsync();
+
+                try
                 {
-                    capture?.Write(kind, buffer);
+                    if (!buffer.IsEmpty)
+                    {
+                        capture?.Write(kind, buffer);
 
-                    if (side is null)
-                        Forward(output, buffer);
-                    else
-                        side.Read(buffer, output);
+                        if (side is null)
+                            Forward(output, buffer);
+                        else
+                            side.Read(buffer, output);
 
-                    bytes += buffer.Length;
+                        bytes += buffer.Length;
+                    }
+
+                    input.AdvanceTo(buffer.End);
+
+                    if (side is not null)
+                    {
+                        var held = _time.GetElapsedTime(holdStarted);
+
+                        if (result.IsCompleted)
+                            side.Release(output, "its side closed before it was whole");
+                        else if (side.IsHolding && side.HoldNumber == timedHold && held >= _settings.HoldTimeout)
+                            side.Release(output, string.Create(CultureInfo.InvariantCulture, $"it was not whole after {_settings.HoldTimeout.TotalSeconds:0.#} s"));
+
+                        if (!side.IsHolding)
+                        {
+                            if (hold is not null)
+                                await hold.DisposeAsync();
+
+                            hold = null;
+                        }
+                        else if (side.HoldNumber != timedHold)
+                        {
+                            if (hold is not null)
+                                await hold.DisposeAsync();
+
+                            timedHold = side.HoldNumber;
+                            holdStarted = _time.GetTimestamp();
+                            hold = _time.CreateTimer(_ => input.CancelPendingRead(), null, _settings.HoldTimeout, Timeout.InfiniteTimeSpan);
+                            timed = true;
+                        }
+                        else if (result.IsCanceled)
+                        {
+                            // A timer ending the read a little early, or an earlier frame's: the frame gets the rest of its time.
+                            hold?.Change(_settings.HoldTimeout - held, Timeout.InfiniteTimeSpan);
+                        }
+                    }
+
+                    injected?.Drain();
+
+                    // A read the hold's timer ended is no end of the side: anything else cancelling it is.
+                    if (result.IsCompleted || (result.IsCanceled && !timed))
+                        break;
+
+                    var flushed = await output.FlushAsync();
+
+                    injected?.Flushed(flushed);
+
+                    // Completed when the other side is gone: nothing more can reach it.
+                    if (flushed.IsCompleted)
+                        break;
                 }
-
-                input.AdvanceTo(buffer.End);
-
-                if (side is not null)
+                finally
                 {
-                    var held = _time.GetElapsedTime(holdStarted);
-
-                    if (result.IsCompleted)
-                        side.Release(output, "its side closed before it was whole");
-                    else if (side.IsHolding && side.HoldNumber == timedHold && held >= _settings.HoldTimeout)
-                        side.Release(output, string.Create(CultureInfo.InvariantCulture, $"it was not whole after {_settings.HoldTimeout.TotalSeconds:0.#} s"));
-
-                    if (!side.IsHolding)
-                    {
-                        if (hold is not null)
-                            await hold.DisposeAsync();
-
-                        hold = null;
-                    }
-                    else if (side.HoldNumber != timedHold)
-                    {
-                        if (hold is not null)
-                            await hold.DisposeAsync();
-
-                        timedHold = side.HoldNumber;
-                        holdStarted = _time.GetTimestamp();
-                        hold = _time.CreateTimer(_ => input.CancelPendingRead(), null, _settings.HoldTimeout, Timeout.InfiniteTimeSpan);
-                        timed = true;
-                    }
-                    else if (result.IsCanceled)
-                    {
-                        // A timer ending the read a little early, or an earlier frame's: the frame gets the rest of its time.
-                        hold?.Change(_settings.HoldTimeout - held, Timeout.InfiniteTimeSpan);
-                    }
+                    injected?.Exit();
                 }
-
-                // A read the hold's timer ended is no end of the side: anything else cancelling it is.
-                if (result.IsCompleted || (result.IsCanceled && !timed))
-                    break;
-
-                // Completed when the other side is gone: nothing more can reach it.
-                if ((await output.FlushAsync()).IsCompleted)
-                    break;
             }
 
-            await output.FlushAsync();
+            if (injected is null)
+            {
+                await output.FlushAsync();
+            }
+            else
+            {
+                await injected.EnterAsync();
+
+                try
+                {
+                    injected.Drain();
+                    injected.Flushed(await output.FlushAsync());
+                }
+                finally
+                {
+                    injected.Exit();
+                }
+            }
         }
         catch (Exception exception) when (exception is IOException or ConnectionAbortedException or ConnectionResetException or SocketException or ObjectDisposedException)
         {
@@ -292,6 +333,9 @@ internal sealed class RelayConnectionHandler
         }
         finally
         {
+            if (injected is not null)
+                await injected.CloseAsync("the connection closed");
+
             if (hold is not null)
                 await hold.DisposeAsync();
 

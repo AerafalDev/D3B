@@ -35,6 +35,10 @@ internal sealed class InterceptedSide
     /// <summary>Gets whether bytes are held, waiting for the rest of their frame.</summary>
     public bool IsHolding => _pendingHeld;
 
+    /// <summary>Gets whether what has gone to the other side ends on a frame's end, so that a frame of D3B's own may follow it (D61).</summary>
+    /// <remarks>A frame held has none of its bytes gone yet; a side no longer watched has no known frames.</remarks>
+    public bool IsBetweenFrames => IsWatched && (_pending.WrittenCount is 0 || _pendingHeld);
+
     /// <summary>Gets a number that changes whenever another frame starts being held, so that each is timed on its own.</summary>
     public int HoldNumber { get; private set; }
 
