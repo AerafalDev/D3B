@@ -43,7 +43,7 @@ public sealed class RelayDecoderTests
     }
 
     /// <summary>A connection phase as session 3b captured one, every text holding what must never reach a log.</summary>
-    private static IEnumerable<(RelayDirection Direction, ConnectionMessage Message)> ConnectionPhase()
+    private static IEnumerable<(RelayDirection Direction, ConnectionMessage Message)> ConnectionPhase(string subscriptionEnd = "2026-11-02T08:00:00+01:00")
     {
         yield return (RelayDirection.FromClient, new ConnectionMessage
         {
@@ -58,7 +58,10 @@ public sealed class RelayDecoderTests
             Response = new ConnectionResponse
             {
                 Id = "a",
-                Identification = new IdentificationResponse { Success = new IdentificationResponse.Types.Success { AccountId = 1, AccountNickname = Secret } },
+                Identification = new IdentificationResponse
+                {
+                    Success = new IdentificationResponse.Types.Success { AccountId = 1, AccountNickname = Secret, SubscriptionEnd = subscriptionEnd },
+                },
             },
         });
         yield return (RelayDirection.FromClient, new ConnectionMessage { Request = new ConnectionRequest { Id = "b", ServerSelection = new ServerSelectionRequest { ServerId = 401 } } });
@@ -248,8 +251,26 @@ public sealed class RelayDecoderTests
         Present(other, "another-ticket");
         Present(game, Secret);
 
-        Assert.Equal(new GameAccount(1, Secret, ""), game.Account);
+        Assert.Equal(new GameAccount(1, Secret, "", new DateTimeOffset(2026, 11, 2, 8, 0, 0, TimeSpan.FromHours(1))), game.Account);
         Assert.Null(other.Account);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("never")]
+    public void AnAccountWhoseSubscriptionEndIsNoDateHasNone(string subscriptionEnd)
+    {
+        var phase = Intercept(RelayRoute.Connection);
+
+        foreach (var (direction, message) in ConnectionPhase(subscriptionEnd))
+            phase.OnFrame(direction, new ReadOnlySequence<byte>(message.ToByteArray()), phase.Holds(direction));
+
+        var game = (GameSession)Intercept(RelayRoute.Game);
+
+        Present(game, Secret);
+
+        Assert.Null(game.Account?.SubscriptionEnd);
+        Assert.Equal(1, game.Account?.Id);
     }
 
     [Fact]

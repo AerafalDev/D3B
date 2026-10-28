@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Globalization;
 using D3B.Network.Relay;
 using D3B.Protocol.Connection;
 using D3B.Protocol.Translation;
@@ -50,6 +51,13 @@ internal sealed class ConnectionPhaseSession : IConnectionInterceptor
         return direction is RelayDirection.FromClient ? "client" : "server";
     }
 
+    private static DateTimeOffset? SubscriptionEnd(string text)
+    {
+        // An ISO 8601 date with its offset on every identification captured, of two subscribed accounts (D72): any other
+        // text is no date, and the account counts as not subscribed.
+        return DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var end) ? end : null;
+    }
+
     public bool Holds(RelayDirection direction)
     {
         return direction is RelayDirection.FromServer && _selecting;
@@ -74,7 +82,7 @@ internal sealed class ConnectionPhaseSession : IConnectionInterceptor
         }
 
         if (decoded.Message.Response?.Identification?.Success is { } identified)
-            _account = new GameAccount(identified.AccountId, identified.AccountNickname, identified.AccountTag);
+            _account = new GameAccount(identified.AccountId, identified.AccountNickname, identified.AccountTag, SubscriptionEnd(identified.SubscriptionEnd));
 
         if (decoded.Message.Response?.ServerSelection is not { } answer)
             return null;

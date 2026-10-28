@@ -24,6 +24,8 @@ message MapMovementRequest {
 
 // The server does not walk the path asked for: measured on three paths D3B sent that did not start where the character
 // stood. It sends nothing else, the character stays where it is, and a walk of the client's in progress stops there.
+// After a walk the server showed but the client never confirmed, it answered so both the next path and a map change,
+// naming the walk's last cell (D73).
 message MapMovementRefusedEvent {
   option (d3b.readable.partial) = true;
 
@@ -75,7 +77,10 @@ message MapMovementConfirmRequest {
 message MapMovementConfirmResponse {
 }
 
-// Asks to go to a neighbouring map, from the cell the last movement led to.
+// Asks to go to a neighbouring map, from a cell of the edge it lies beyond, once the walk there is over. The server
+// names the new map 27 to 29 ms later. It answers nothing to one it refuses: from a cell off that edge, for another map,
+// or once the character is on another map; once, after a walk the client never confirmed, a MapMovementRefusedEvent
+// (D73).
 message MapChangeRequest {
   // No capture sets it.
   bool flag_1 = 1;

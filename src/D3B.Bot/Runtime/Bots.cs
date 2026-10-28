@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using D3B.Bot.Characters;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
+using D3B.Data.World;
+using D3B.Engine.World;
 using D3B.Network.Relay;
 using D3B.Protocol.Game;
 using D3B.Protocol.Translation;
@@ -26,6 +28,7 @@ namespace D3B.Bot.Runtime;
 public sealed class Bots : IGameObserver, IAsyncDisposable
 {
     private readonly GameMaps _maps;
+    private readonly Lazy<WorldPathfinder> _world;
     private readonly TimeProvider _time;
     private readonly ILoggerFactory _logs;
     private readonly ILogger _log;
@@ -41,15 +44,18 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
 
     /// <summary>Initializes a new instance of the <see cref="Bots"/> class.</summary>
     /// <param name="maps">The maps of the installed build's pack, which behaviors walk.</param>
+    /// <param name="world">The world of that pack, which behaviors travel: its graph is read when a bot first travels.</param>
     /// <param name="time">The clock every bot's delays go through.</param>
     /// <param name="logs">The host's logs.</param>
-    public Bots(GameMaps maps, TimeProvider time, ILoggerFactory logs)
+    public Bots(GameMaps maps, GameWorld world, TimeProvider time, ILoggerFactory logs)
     {
         ArgumentNullException.ThrowIfNull(maps);
+        ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(time);
         ArgumentNullException.ThrowIfNull(logs);
 
         _maps = maps;
+        _world = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas), LazyThreadSafetyMode.PublicationOnly);
         _time = time;
         _logs = logs;
         _log = logs.CreateLogger<Bots>();
@@ -103,6 +109,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         }
 
         var key = new CharacterKey(account.Id, character.Id);
+        var state = CharacterState.Chosen(key, character) with { SubscriptionEnd = account.SubscriptionEnd };
         BotActor? bot;
         var made = false;
 
@@ -111,13 +118,13 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         {
             if (!_bots.TryGetValue(key, out bot))
             {
-                bot = new BotActor(CharacterState.Chosen(key, character), _maps, _time, _logs.CreateLogger<BotActor>());
+                bot = new BotActor(state, _maps, _world, _time, _logs.CreateLogger<BotActor>());
                 _bots[key] = bot;
                 made = true;
             }
         }
 
-        bot.Attach(session, CharacterState.Chosen(key, character));
+        bot.Attach(session, state);
         binding.Bot = bot;
 
         // The connection may have closed while it was bound, after Close found no bot to tell.

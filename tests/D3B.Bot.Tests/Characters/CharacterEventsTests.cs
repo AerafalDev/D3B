@@ -101,7 +101,8 @@ public sealed class CharacterEventsTests
                     39
                   ]
                 }
-              }
+              },
+              "SubscriptionEnd": null
             }
             """,
             JsonSerializer.Serialize(Apply(_chosen, EnteringTheGame()), _snapshot),

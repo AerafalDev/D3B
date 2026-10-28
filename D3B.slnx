@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/D3B.Engine.Benchmarks/D3B.Engine.Benchmarks.csproj" />
     <Project Path="benchmarks/D3B.Network.Benchmarks/D3B.Network.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/samples/">

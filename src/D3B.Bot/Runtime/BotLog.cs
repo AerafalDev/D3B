@@ -1,4 +1,5 @@
 using D3B.Bot.Movement;
+using D3B.Data.World;
 using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Runtime;
@@ -32,4 +33,16 @@ internal static partial class BotLog
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: walk to cell {To} over, {Outcome}")]
     public static partial void Walked(ILogger logger, long character, int to, WalkOutcome outcome);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: leaves map {From} for map {To} by a {Transition}, from cell {Cell}")]
+    public static partial void ChangingMap(ILogger logger, long character, long from, long to, WorldTransitionType transition, int cell);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: map change over on map {Map}, {Outcome}")]
+    public static partial void ChangedMap(ILogger logger, long character, long map, MapChangeOutcome outcome);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: travels from map {From}, {Changes} map changes away")]
+    public static partial void Travelling(ILogger logger, long character, long from, int changes);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: journey over on map {Map} after {Changes} map changes, {Outcome}")]
+    public static partial void Travelled(ILogger logger, long character, long map, int changes, TravelOutcome outcome);
 }

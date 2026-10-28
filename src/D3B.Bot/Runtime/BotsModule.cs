@@ -2,6 +2,7 @@ using D3B.Bot.Data;
 using D3B.Bot.Network;
 using D3B.Core.Modules;
 using D3B.Data.Maps;
+using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -24,6 +25,7 @@ public sealed class BotsModule : IModule
 
         bot.Services.AddSingleton(services => new Bots(
             services.GetRequiredService<GameMaps>(),
+            services.GetRequiredService<GameWorld>(),
             services.GetRequiredService<TimeProvider>(),
             services.GetRequiredService<ILoggerFactory>()));
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
