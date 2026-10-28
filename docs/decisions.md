@@ -1756,6 +1756,116 @@ exemption its publisher defines and the consumer claims. Choosing one is the own
   - Claiming Verify's open-source exemption on the owner's behalf: a license decision.
   - `Verify_SponsorshipLicenseIgnored`: the build would knowingly breach the package's license.
 
+## D71: Paths through the world in D3B.Engine, their criteria answered strictly
+
+*2026-10-28, step 4, session 4b; the criteria rule chosen by the owner*
+
+Measured on the world graph of 3.7.12.12 ([client.md](client.md#world-graph)):
+
+- **The search** (`WorldPathfinder`, in `D3B.Engine.World`): Dijkstra's over the graph's vertices, each map change
+  costing the same, to the nearest of the maps sought (`WorldPath`, its `WorldStep`s naming each transition by index).
+  No estimate: map actions lead anywhere, so no distance between maps bounds what is left. Built once per pack, which
+  reads the 619 criteria once and finds every vertex's sub-area and area; each search keeps its state in its own arrays
+  (D9). The bots share one, built when one first travels.
+- **What it follows**: scrolls, scrolls with an action and map actions. Doors are session 4c's, zaaps 4e's (D64). From
+  the bank of Astrub this reaches 4,021 of the 11,327 vertices; with doors whose criteria are met it would be 5,551, and
+  9,024 with every transition.
+- **Criteria** (`Criterion`, `CriterionFacts`, in `D3B.Engine.Criteria`): each read once into a tree and answered on
+  three values (`CriterionAnswer`): a group of `&` fails as soon as one condition fails, a group of `|` is met as soon as
+  one is, and what is left is unknown. The syntax is measured: two-letter codes, an operator and a value, at times a
+  context in brackets or a `#` before a group, and no group mixing `&` and `|`. The bot answers the codes its state holds
+  (`CriterionCodes`): the level, the objects held, the professions, the subscription (D72), the map, sub-area and area,
+  and the cell. Their meaning is the references' and the client's class names as they read them, not measured on the
+  server; every other code, 40 of the 47 the graph names, is unknown.
+- **Strict.** A transition is followed only when its criterion is met: unknown closes it, as false does. From Astrub it
+  costs 67 vertices against ignoring criteria, 4,021 against 4,088.
+- **The place.** A criterion is answered on the map its transition leaves. A condition on the cell counts as met while the
+  path is planned, then names the cells the map is left from (D73).
+- **Benchmark** (`benchmarks/D3B.Engine.Benchmarks`, on the installed build's pack, or `D3B_PACK`): a path 3 changes
+  long in 2.2 µs, the farthest map in 154 µs, a map the search cannot reach, which explores everything reachable, in
+  176 µs; about 100 KB a search. A journey can find its path again after every map change (D74).
+- **Rejected.**
+  - Following a transition whose criterion is unknown, then leaving it out once it fails: the bot would try passages a
+    quest closes. The owner chose strict.
+  - Ignoring criteria.
+  - A* with a distance between the maps' coordinates: map actions jump across the world, so it would overestimate.
+  - Weights by transition type or by the walk across each map: nothing measured says one change costs more than another.
+  - A table of every pair of vertices: memory for nothing, at under a millisecond a search.
+
+## D72: The account's subscription, read from its identification, prudently
+
+*2026-10-28, step 4, session 4b, chosen by the owner*
+
+- **Measured.** The connection phase's identification already holds `subscription_end` (D42): on the 11 captured, of
+  two accounts, an ISO 8601 date with its offset, both accounts subscribed. No account without a subscription was measured.
+- **Kept.** `GameAccount.SubscriptionEnd` holds the date, or nothing when the text is no date, and the state takes it
+  (`CharacterState.SubscriptionEnd`). `IsSubscribedAt` answers by the bot's clock: subscribed while the end is ahead. An end
+  not known counts as not subscribed.
+- **Where it counts.** A path enters a sub-area the client closes to accounts without a subscription (`basicAccountAllowed`
+  false: 533 of 567 sub-areas, 10,675 of 11,327 vertices) only when the account is subscribed, and `PZ` answers it (D71).
+  What else an account without a subscription may not do is for later steps (roadmap).
+- **Rejected.**
+  - An end not known counting as subscribed: the bot would aim at zones the server closes to it.
+  - Leaving the subscription for later: a path would cross subscribers' zones for every account.
+
+## D73: Changing maps
+
+*2026-10-28, step 4, session 4b*
+
+Measured on the eight captures of session 4a and three of a client of 3.7.12.12 in game through the host, the player's
+hands off, the bot asking for 30 map changes and travelling ([client.md](client.md#the-game-between-maps)):
+
+- **Where a map is left from** (`WorldPathfinder.ExitCells`): a map action from its cell; a scroll from the walkable cells
+  of its zone on the edge in its direction that the client marks as leaving it straight, or along a diagonal next to it
+  but on a corner, and from the transition's own cell, which lies on that edge. Scrolls leaving one zone in one direction,
+  to several zones or maps, share the edge by the nearest of their cells; a condition on the cell names a scroll with an
+  action's own cells. The client left from such cells, the transition's own once in 12; the server took an edge cell
+  marked nowhere, and ignored a request from a corner marked for the other edge and from a cell off the edge. Every
+  scroll keeps at least its own cell, 18.4 on average.
+- **The behavior** (`MapChange`, in `D3B.Bot.Movement`): the walk of D69 to the nearest of those cells, then, for a
+  scroll, `MapChangeRequest` naming the transition's map, the neighbour even where the server sends the character
+  elsewhere; for a map action, the walk onto its cell, stepping off first when the character stands on it. The bot then
+  waits for the new map, 3 s, and for what is on it, 10 s, which the client asks for itself (D60). The new map is
+  expected before the walk: the server's map actions cover cells next to the graph's, 424 for 409 and 154 for 140, so a
+  walk to an edge may change maps by itself, and a request then goes unanswered.
+- **No refusal to name.** The server answers nothing to a map change it refuses: 6 of the 30, from a cell off the edge,
+  for the neighbour in another direction, for a map that is no neighbour, once the character was already elsewhere, and
+  from a corner. Once, after a walk the client never confirmed, it answered with the refusal of D69, naming the walk's
+  last cell. The readable protocol gains no message, its mapping stays format 3, and the change ends after its delay
+  (`NoAnswer`).
+- **The client draws the map first.** A walk the server showed 1 or 50 ms after a new map's information was never
+  confirmed, though the server walked it: the server then has the character at its end, while the bot's state keeps it
+  walking. Every walk sent 100 ms (twice), 200, 500 or 1,000 ms after was confirmed, and the player's own came 207 ms
+  after at the soonest. The change is over 500 ms after the character is placed. This is no timing shaped to look human
+  (D2): the client must have drawn the map to follow what the server shows it.
+- **Outcomes** (`MapChangeOutcome`): changed, or elsewhere, once placed; busy and no path, nothing sent; not walked;
+  refused, kept for a refusal a later measure finds; no answer; not placed.
+- **Rejected.**
+  - Every walkable cell of the edge, which the server took once: the client's marks are where its own player leaves, and
+    a corner showed the server reads them there.
+  - Waiting for a sign from the client that it drew the map: it sends none, measured.
+  - A pause before every walk: only a new map needs one.
+
+## D74: Travelling from map to map
+
+*2026-10-28, step 4, session 4b*
+
+- **The behavior** (`WorldTravel`, in `D3B.Bot.Movement`): the path from the vertex the character stands in to the maps
+  sought, its first step (D73), then the path again from where the character stands, until it is on one of them. A scroll
+  with an action may send it elsewhere, two zones may share an edge, and a search costs under a millisecond (D71).
+- **Failures.** A change that fails leaves its transition out of the rest of the journey: its criterion may not be met
+  for a reason the bot cannot know, or the server may refuse it silently (D73). The journey fails after 3 failed changes,
+  after twice the first path's changes and 10 more, or when where the character stands is no longer known.
+- **What the criteria are answered on** (`WorldTravel.FactsOf`): the state's level, objects by item, professions'
+  levels and subscription at the bot's clock (D72).
+- **Measured.** Through the host, with the player's hands off: journeys of one change; one of 6 changes in 27 s, one
+  of them refused from a corner, left out, and the path found again through another map; one of 7 in 21.7 s, none
+  failing. The first journeys, before D73's two fixes, failed on a request left unanswered after a walk to the edge had
+  set off a map action, and on a walk the client did not confirm 1 ms after a map's information.
+- **Rejected.**
+  - Following the first path to its end: where a change leads is the server's to say.
+  - Ending the journey at the first failure.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -1767,3 +1877,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q11 | What does a plugin see of the bots' run time: `D3B.Bot` packed beside `D3B.Core`, or the bot's contracts (state, behaviors, observers) moved into `D3B.Core`, which plugins compile against (D22, D67)? | Before the first milestone publishes the package (step 6) |
+| Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? | Step 4c for the doors' criteria, then as each step needs them |

@@ -7,7 +7,8 @@ on running clients, then on its bytes through D3B's relay ([Connection](#connect
 `scripts/schema.cs` ([Protocol code](#protocol-code)), its connection phase against D3B's readable protocol with
 `scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)), then decoded through it on 2026-10-28
 ([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)), then
-acted on through it ([the game, acted on](#the-game-acted-on)), and walked by a bot ([the game, walked](#the-game-walked)).
+acted on through it ([the game, acted on](#the-game-acted-on)), walked by a bot ([the game, walked](#the-game-walked)), and
+travelled from map to map ([the game, between maps](#the-game-between-maps)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -157,7 +158,23 @@ Only interactive transitions name a skill and an element; the others have −1 i
 **Criteria.** 991 transitions carry one of 619 distinct criteria: 85 scrolls with an action, 67 map actions and 839
 interactive transitions, no plain scroll. They are in the client's condition syntax: two-letter codes, 47 of them,
 led by `Ad`, `Qo`, `Qa`, `PO` and `Qf`, each with an operator among `=`, `>`, `<` and `!`, and a value; 493 combine
-several with `&` and `|`, 383 with parentheses. D3B keeps them as text; their meaning is for step 4.
+several with `&` and `|`, 383 with parentheses. The pack keeps them as text, and `D3B.Engine` reads them (D71): no group
+mixes `&` and `|`; a condition is a code, an operator and a value whose arguments are separated by commas, 2,261 of them
+`XX=n`, a few `XX=true` or naming an event such as `RV=5,monsterKilled,60`; 7 carry a context in brackets, `[413]MC=0`;
+22 groups are led by `#`, all but one a list of cells, `#(PC=4|PC=5|PC=18|PC=19)`. Those lists name the cells of the
+edge a scroll with an action is left from, its own cell among them on 13 of 23; two lists share an edge 8 times, each
+leading to a map or zone of its own. `PZ` appears 9 times, always `PZ=1`, subscribed, all on doors.
+
+**What the transitions' cells say.** Every scroll's cell lies on the edge of its direction. The client marks 18,746 of
+these cells as leaving in that direction, 1,040 more only along a diagonal next to it, and 719 not at all; the cells of
+the edges carry the marks of the edges they lie on, a corner those of both. By D3B's rule (D73), 74 scrolls are left
+from their own cell alone, and a scroll from 18.4 cells on average. Of the map actions, 1,111 of the
+1,356 without a direction have an interactive element on their cell; the other 408 have a direction, which only 16 of
+their cells carry as a mark.
+
+**Reached.** From the bank of Astrub, the scrolls, scrolls with an action and map actions whose criteria the bot can
+answer reach 4,021 of the 11,327 vertices, 4,088 ignoring criteria; with doors 5,551 strictly and 8,738 counting what
+is not known as met; with every transition, 9,024. Zaaps and the like are not in the graph.
 
 **Coverage.** 10,981 of the 17,722 maps have a vertex, all `ClientMapData`. Every map with a vertex has a position in
 `MapsInformationDataRoot`, and every zaap stands on one.
@@ -716,6 +733,41 @@ stops.
   cell in the bot's state. A path sent from another cell was refused, naming the character's. With the player playing,
   the bot answered `Busy` to each walk asked while the character walked, and a walk it sent was interrupted when the
   player gave a new path 300 ms in: the stop and the new path came, and the bot paused.
+
+### The game, between maps
+
+Measured on 2026-10-28 for session 4b (D71 to D74): the eight captures of the game connection, then three more of a
+client of 3.7.12.12 in game through the host, the player's hands off, a measuring plugin, never committed, asking the
+bot to change maps, to ask for refused ones, and to travel. By structure, timing, and values compared on the machine with
+the build's pack, never written down. The character rode a mount in this session's; the walks' durations are a
+mounted character's, and D69's delays still bound a walking one.
+
+- **A scroll, by the client.** 12 of the client's changes: it walks to a cell of the edge, and 4 to 6 ms after the
+  server answered its confirmation asks for the neighbour; the server names the map 28 to 29 ms later, then the client
+  asks what is on it, 0.6 to 1.3 s after, with its twin, and the server answers 29 to 101 ms later. Each cell it left from
+  lies on the edge and carries a mark of that direction or of a diagonal next to it, one only the south-east for the
+  east; the transition's own cell once. Scrolls with an action asked for the neighbour and landed on it, those of the
+  captures.
+- **A map action.** A walk ending on its cell gets, once confirmed, the new map, then the response to the confirmation,
+  in the same millisecond, and no request from the client. The server's actions cover cells next to the graph's: the
+  client walked onto 424 for an action on 409, three times, and the bot onto 154 for one on 140, twice; the graph's own
+  cells moved it too, two of them, one with a direction.
+- **D3B's changes.** 30 requests for a map: 23 answered with the new map 27 to 29 ms later, always with an event of 36
+  bytes the readable protocol lacks, and on some maps another; 6 answered with nothing, from a cell off the edge, for the
+  neighbour in another direction, for a map that is no neighbour, twice once a map action had already moved the
+  character, and from a south-west corner marked for the south; 1 answered with the walk's refusal of D69, right after a
+  walk the client never confirmed. A cell of the east edge marked nowhere was accepted; a south-west corner marked only
+  south-east, on another map, was accepted for the west, and the server sent the character elsewhere than the neighbour.
+- **What the client follows.** The bot's walk sent 1 ms after a new map's information, then one 50 ms after: the server
+  walked each, the client never confirmed either. The server then had the character at the walk's end: the next path,
+  from its start, was refused naming its last cell, which also placed the bot's state there. Walks sent 100 ms after,
+  twice, 200, 500 and 1,000 were each confirmed. The client sends nothing when it has drawn a map. The player's own first
+  walk on a new map came 207 ms after its information at the soonest.
+- **Journeys.** One change: 0.7 s from a cell of the edge. Six changes: 27 s, one refused from a corner and the path found
+  again through another map. Seven: 21.7 s, every change answered. 65 frames of D3B's, each whole between the client's.
+
+The eleven game connections decoded through the mapping: of 5,040 frames, 737 understood whole, 988 more read, and 3,315
+carrying one of 123 messages the readable protocol lacks; none misread.
 
 ## Protocol code
 
