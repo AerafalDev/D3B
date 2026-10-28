@@ -7,6 +7,7 @@ using D3B.Data;
 using D3B.Data.Packs;
 using D3B.Network.Relay;
 using D3B.Protocol.Mapping;
+using D3B.Protocol.Translation;
 using D3B.Scripts.Unity;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
@@ -91,7 +92,7 @@ internal static class MappingCommand
             return 2;
         }
 
-        var schemaPath = SchemaFile.PathOf(root, build);
+        var schemaPath = SchemaFile.PathOf(root, build.Version);
 
         if (!File.Exists(schemaPath))
         {
@@ -112,7 +113,7 @@ internal static class MappingCommand
         {
             return Map(build, root, schemaPath, pinsDirectory, capturePaths, json);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or InvalidProtocolBufferException or DescriptorValidationException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or InvalidProtocolBufferException or DescriptorValidationException or ArgumentException)
         {
             Console.Error.WriteLine($"The mapping could not be made: {exception.Message}");
 
@@ -193,6 +194,16 @@ internal static class MappingCommand
 
         foreach (var note in audit.Notes)
             Console.WriteLine($"  note: {note}");
+
+        // The host refuses these too (D47): a mapping it would not start on is not written.
+        var renumbered = ProtocolTranslation.Renumbered(mapping);
+
+        Console.WriteLine($"Numbers: {(renumbered.Count is 0 ? "every readable field and value has its own number on the wire" : $"{renumbered.Count} renumbered, which D3B does not translate")}");
+
+        foreach (var line in renumbered)
+            Console.WriteLine($"  renumbered: {line}");
+
+        failed |= renumbered.Count > 0;
 
         if (json)
             Console.WriteLine(new JsonFormatter(JsonFormatter.Settings.Default.WithIndentation()).Format(mapping));

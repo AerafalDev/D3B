@@ -1,8 +1,11 @@
 using D3B.Bot.Data;
+using D3B.Bot.Protocol;
 using D3B.Core.Modules;
 using D3B.Data;
 using D3B.Network.Relay;
+using D3B.Protocol.Translation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Network;
 
@@ -17,6 +20,10 @@ namespace D3B.Bot.Network;
 /// game connection still goes straight to the game server.
 /// </para>
 /// <para>
+/// Requires the protocol module: each frame of the connection phase is decoded through the installed build's translation
+/// and logged by what it is, never by what it holds (D49).
+/// </para>
+/// <para>
 /// With <c>Network:Captures:Enabled</c>, each connection is recorded in <c>Network:Captures:Directory</c>
 /// (<c>%LOCALAPPDATA%\D3B\captures</c> by default), with the installed client's version when the data module knows it.
 /// </para>
@@ -28,8 +35,13 @@ public sealed class NetworkModule : IModule
     {
         ArgumentNullException.ThrowIfNull(bot);
 
+        bot.AddModule<ProtocolModule>();
+
         var settings = RelaySettings.Read(bot.Configuration, DataSettings.ClientDirectoryIn(bot.Configuration));
 
+        bot.Services.AddSingleton<IRelayObserver>(services => new ConnectionPhaseDecoder(
+            services.GetRequiredService<ProtocolTranslation>(),
+            services.GetRequiredService<ILogger<ConnectionPhaseDecoder>>()));
         bot.Services.AddRelay(settings, services => services.GetService<ClientBuild>()?.Version);
     }
 }

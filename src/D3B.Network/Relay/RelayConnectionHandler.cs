@@ -3,6 +3,7 @@ using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
 using D3B.Network.Captures;
+using D3B.Network.Framing;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets;
@@ -18,8 +19,9 @@ namespace D3B.Network.Relay;
 /// are pipes.
 /// </para>
 /// <para>
-/// Each direction copies what it reads as soon as it reads it, and records it when captures are on. When a side closes,
-/// the other's output is completed, which closes it once its last bytes are sent. A side still open after
+/// Each direction forwards what it reads as soon as it reads it, and records it when captures are on. With an
+/// <see cref="IRelayObserver"/>, it also reads the bytes as frames, each shown to the observer once whole (D49). When a
+/// side closes, the other's output is completed, which closes it once its last bytes are sent. A side still open after
 /// <see cref="RelaySettings.CloseTimeout"/> is cut: the relay keeps no half-open connection.
 /// </para>
 /// </remarks>
@@ -30,6 +32,7 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
     private readonly SocketConnectionContextFactory _connections;
     private readonly TimeProvider _time;
     private readonly Func<string?> _clientVersion;
+    private readonly IRelayObserver? _observer;
     private readonly ILogger _log;
 
     public RelayConnectionHandler(
@@ -38,6 +41,7 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         SocketConnectionContextFactory connections,
         TimeProvider time,
         Func<string?> clientVersion,
+        IRelayObserver? observer,
         ILogger<RelayConnectionHandler> log)
     {
         _settings = settings;
@@ -45,7 +49,13 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         _connections = connections;
         _time = time;
         _clientVersion = clientVersion;
+        _observer = observer;
         _log = log;
+    }
+
+    private static string SideOf(RelayDirection direction)
+    {
+        return direction is RelayDirection.FromClient ? "client" : "server";
     }
 
     public override async Task OnConnectedAsync(ConnectionContext connection)
@@ -99,8 +109,8 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
                 server.Abort();
             });
 
-            var fromClient = PumpAsync(connection.Transport.Input, server.Transport.Output, capture, CaptureRecordKind.FromClient);
-            var fromServer = PumpAsync(server.Transport.Input, connection.Transport.Output, capture, CaptureRecordKind.FromServer);
+            var fromClient = PumpAsync(connection.ConnectionId, connection.Transport.Input, server.Transport.Output, capture, RelayDirection.FromClient);
+            var fromServer = PumpAsync(connection.ConnectionId, server.Transport.Input, connection.Transport.Output, capture, RelayDirection.FromServer);
             var first = await Task.WhenAny(fromClient, fromServer);
             var second = first == fromClient ? fromServer : fromClient;
 
@@ -121,9 +131,13 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         }
     }
 
-    private static async Task<long> PumpAsync(PipeReader input, PipeWriter output, CaptureWriter? capture, CaptureRecordKind kind)
+    private async Task<long> PumpAsync(string connectionId, PipeReader input, PipeWriter output, CaptureWriter? capture, RelayDirection direction)
     {
+        var kind = direction is RelayDirection.FromClient ? CaptureRecordKind.FromClient : CaptureRecordKind.FromServer;
         var bytes = 0L;
+
+        // The start of a frame not yet whole, already forwarded, kept to show the observer the frame once the rest comes.
+        var pending = _observer is null ? null : new ArrayBufferWriter<byte>();
 
         try
         {
@@ -140,6 +154,9 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
                         output.Write(segment.Span);
 
                     bytes += buffer.Length;
+
+                    if (pending is not null && !Observe(connectionId, direction, pending, buffer))
+                        pending = null;
                 }
 
                 input.AdvanceTo(buffer.End);
@@ -167,6 +184,54 @@ internal sealed class RelayConnectionHandler : ConnectionHandler
         }
 
         return bytes;
+    }
+
+    /// <summary>Shows the observer each whole frame of what a side has sent, the start of a frame kept for the next read.</summary>
+    /// <param name="connectionId">The connection's id.</param>
+    /// <param name="direction">The side that sent the bytes.</param>
+    /// <param name="pending">The start of a frame earlier reads left, which keeps the start this read leaves.</param>
+    /// <param name="read">The bytes this read brought, already forwarded.</param>
+    /// <returns>Whether to go on observing the side: not once its bytes are no frames, or the observer has failed.</returns>
+    private bool Observe(string connectionId, RelayDirection direction, ArrayBufferWriter<byte> pending, ReadOnlySequence<byte> read)
+    {
+        var bytes = read;
+
+        if (pending.WrittenCount > 0)
+        {
+            foreach (var segment in read)
+                pending.Write(segment.Span);
+
+            bytes = new ReadOnlySequence<byte>(pending.WrittenMemory);
+        }
+
+        var reader = new SequenceReader<byte>(bytes);
+
+        try
+        {
+            while (FrameReader.TryReadFrame(ref reader, out var frame))
+                _observer!.OnFrame(connectionId, direction, frame);
+        }
+        catch (FrameFormatException exception)
+        {
+            RelayLog.Unframed(_log, connectionId, SideOf(direction), exception.Message);
+
+            return false;
+        }
+        catch (Exception exception)
+        {
+            // The observer only watches: its failure must not cut the player off.
+            RelayLog.ObserverFailed(_log, connectionId, SideOf(direction), exception);
+
+            return false;
+        }
+
+        // Copied out first: the rest may lie in the very buffer it is written back to.
+        var rest = bytes.Slice(reader.Position).ToArray();
+
+        pending.ResetWrittenCount();
+        pending.Write(rest);
+
+        return true;
     }
 
     private async Task<(ConnectionContext? Server, IPEndPoint? EndPoint)> ConnectAsync(string connectionId, Upstream upstream, CancellationToken cancellationToken)

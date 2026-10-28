@@ -1125,6 +1125,133 @@ and the tool's version; then every readable message by full name with its obfusc
   - The schema annotated with custom options naming the readable counterparts: one artifact, but the schema's format
     and the mapping's tied together.
 
+## D46: Session 3e split: the translation and the gate, then the game connection
+
+*2026-10-28, step 3, session 3e, chosen by the owner*
+
+D41's session 3e held Q2, the version gate, the schema and mapping published, the game server's address rewritten, the
+game connection relayed and captured, the connection phase decoded and recorded, and measurements on running clients:
+two decisions, and work both with and without clients. It is split, and the sessions after it renumbered:
+
+- **3e**: Q2 decided and built for the connection phase, the version gate, the schema and mapping published by the
+  release tool, and the relay decoding the connection phase and logging it (D47 to D50). Everything is checked without a
+  client, so in CI.
+- **3f**: the game connection: the server selection's answer rewritten to a game listener of D3B, the client's next
+  connection matched with the real game server, relayed and captured apart from the connection phase, which
+  `scripts/mapping.cs` reads (D43), and what client.md leaves open measured on running clients: port 443, whether the
+  client takes an address for the game server's host, how it chooses among the ports, and which side speaks first on
+  the game connection. That last measurement decides how a connection is matched: by the ticket it presents, or by a
+  listening endpoint of its own per server selection. It is decided once measured, not before.
+- **3g**: mapping, part 3, the first milestone's game messages, D41's 3f.
+- **3h**: Q9 and replays with injection, D41's 3g.
+- **Why.** 3f decodes the server selection's answer, which needs the mapping the gate loads and a relay that reads
+  frames: both are 3e's. 3e ends reviewable without a client; 3f needs running clients and a decision of its own.
+- **Rejected.**
+  - Everything in one session, as D41 planned.
+  - The gate and publication alone in 3e, the translation with the game connection in 3f: the translation is what the
+    gate checks a mapping for.
+
+## D47: The translation decodes once, through the readable classes
+
+*2026-10-28, step 3, session 3e, chosen by the owner. Settles Q2.*
+
+The readable classes read a build's wire as it is: the obfuscation keeps every field's and value's number (D42), and
+the connection phase carries no type name. `ProtocolTranslation`, in `D3B.Protocol.Translation`, exists only for a build
+whose mapping holds, and decodes through it.
+
+- **At the gate.** `ProtocolTranslation.Create` audits the mapping (D44), then requires every readable field and enum
+  value to have its own number on the wire. A build renumbering one is refused, each such field named: its mapping holds
+  both numbers (D45), so rewriting them can be added for the messages that change, once one does and is measured.
+- **At run time.** A frame is parsed once, its unknown fields dropped, and is understood only when its message encodes
+  back to the frame's length: one that does not holds a field or a value the readable protocol lacks, or was encoded
+  otherwise. D3B passes it on as it is, and never rewrites it, so that 3f rewrites only frames understood whole, and
+  loses nothing doing so. An enum value the readable enum lacks keeps its number and encodes back as it came, so it goes
+  undetected and nothing of it is lost; the audit notes the values a build adds (D44), none in 3.7.12.12.
+- **The game**, from 3g: the `Any` envelope's type URL names the obfuscated message, which the mapping turns into the
+  readable one, then parsed the same way.
+- **Measured.** The 8 frames of session 3b's captures decode through the readable classes, hold no unknown field, and
+  encode back to the same bytes; so do the 4 frames of a client logged in through the host in this session (client.md).
+- **Rejected.**
+  - Rewriting field numbers on the wire, both ways: an encoder of our own and a second pass and copy of every frame, a
+    changed tag size changing every enclosing length, for renumbering no build has shown.
+  - Decoding twice, through the obfuscated descriptors then into the readable classes: Google.Protobuf's C# has no
+    dynamic message, so a decoder and a copier of our own, and two trees per message.
+
+## D48: The version gate
+
+*2026-10-28, step 3, session 3e. Builds D11's gate.*
+
+- **The protocol module.** `ProtocolModule`, in `D3B.Bot.Protocol`, requires the data module and registers
+  `ProtocolSource` and the build's `ProtocolTranslation`, a singleton every bot shares. `DefaultModules` holds the data,
+  protocol and network modules, in that order, and the network module requires the protocol module: a relay never runs
+  without the gate, and disabling the protocol module has no effect while the network module is there (D20).
+- **Flow.** After the pack (D31) and before the host starts, `BotHost` calls `ProtocolSource.EnsureAsync`, then asks for
+  the translation. The schema and the mapping are looked for beside the build's pack, `schema-1.binpb` and
+  `mapping-1.binpb`; one missing is downloaded from the release `client-<version>`, checked against its SHA-256 and that
+  it is a schema, or a mapping naming this build, before it is moved into place. The translation then loads both, checks
+  that the mapping names the installed build, audits it and checks its numbers (D47). Any failure logs a critical message
+  naming what is missing or what fails first, and the commands that map the build, and the host exits with code 1.
+- **Mapping a new build.** The gate never needs a running host: a new build's connection phase is mapped from its
+  structure alone (D43), so `scripts/schema.cs`, then `scripts/mapping.cs`, both without a capture, map it, and the host
+  starts. The mapping tool refuses what the host would, renumbered fields included, so that it never writes a mapping
+  the host does not start on. Captures of the game connection, from 3f, need the connection phase's mapping only, which this gives.
+- **Shared names.** `SchemaFile` moves from `scripts/unity/` to `D3B.Protocol.Mapping`, beside `MappingFile`, so that the
+  schema tool, the mapping tool, the release tool and the host name the schema one way. The data module registers its
+  `ReleaseToken` for both downloads.
+- **Rejected.**
+  - The relay running without the protocol module, raw, as in 3b: it would bypass D11's gate, and 3f cannot rewrite the
+    game server's address without decoding.
+  - Failing on the build's version alone, without the audit: a mapping from another version of D3B's readable protocol,
+    or matched with another schema, would pass.
+
+## D49: The relay reads frames, and logs the connection phase by what it is
+
+*2026-10-28, step 3, session 3e*
+
+- **The seam.** `IRelayObserver`, in `D3B.Network.Relay`, sees every whole frame of every relayed connection, with the
+  connection's id and the side that sent it. `D3B.Network` stays free of the protocol; the network module registers the
+  observer.
+- **Forwarding** is D36's: bytes as they are read, at once. With an observer, each side's bytes are also read with
+  `FrameReader` (D38): each whole frame is shown, the start of one not yet whole kept until the rest comes. A side whose
+  bytes are no varint frames is observed no more, with a warning; so is a side once the observer has thrown, which is
+  logged as an error and never reaches the connection.
+- **The connection phase.** `ConnectionPhaseDecoder`, in `D3B.Bot.Network`, decodes each frame through the translation
+  (D47) and logs it by the readable fields its oneofs hold and its length, such as `request.identification.token, 126
+  bytes`, at the information level; a frame not understood is a warning naming why. Never a value: the phase carries the
+  account's login token and ticket. That supersedes the architecture's "logged with the raw bytes": the bytes are in the
+  captures, when they are on, which stay on the machine (D37).
+- **Measured** on a client logged in through the host: the 4 frames of its connection phase decoded and understood
+  (client.md).
+- **Rejected.**
+  - Forwarding frame by frame, each frame held until whole, which the lead session built first: bytes that are no frames
+    but read as a plausible length, such as a TLS stream on port 443, which is not measured, would be held until that
+    many came, and the connection would hang. 3f holds the one frame it rewrites, the server selection's answer, with a
+    way out of its own.
+  - Snapshots of decoded messages with Verify, which the architecture planned from 3e: the tests compare what is logged
+    with what they built, and snapshots wait for bot states, at step 4.
+
+## D50: The release tool publishes the schema and the mapping
+
+*2026-10-28, step 3, session 3e. Extends D33; publishes what D39 and D45 planned for this session.*
+
+`scripts/release.cs` publishes a build's pack, schema and mapping, `data-3.pack`, `schema-1.binpb` and
+`mapping-1.binpb`, each with its SHA-256 beside it, to the release `client-<version>`.
+
+- **All three or nothing.** A host needs all three (D31, D48): a missing one stops the tool with the command that writes
+  it, exit code 2.
+- **Checks** before anything is published: the pack as D33 checks it; the schema loads; the mapping names the build and
+  holds, as `ProtocolTranslation` requires (D47).
+- **By the release's state**, each asset on its own: absent, it is uploaded; present with the same GitHub digest,
+  nothing to do; present otherwise, or with its checksum missing, or a checksum without its asset, the tool refuses,
+  before uploading any. A new release is created with all six files, its notes naming each asset's SHA-256 and where it
+  comes from.
+- **Never replaced** (D33): the mapping records its tool's version (D45), so a mapping made again by another build of
+  the tool has other bytes, and the published one is kept. A change in what a tool writes ships under a new format.
+- **Dry run by default**, as D33: nothing changes on GitHub without `--publish`. Measured on 3.7.12.12: the release does
+  not exist yet, and would be created with the three files, which hold.
+- **Rejected.**
+  - Publishing whichever files are there: a release holding a pack without its mapping, which no host can start on.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -1132,8 +1259,7 @@ Settled questions leave this table, and the decision that settles one says so.
 | Id | Question | Settled in |
 | --- | --- | --- |
 | Q1 | Does LuaCSharp hold up: sandboxing, async calls, errors, performance? | Step 7 |
-| Q2 | How does the per-build translation work: rewriting field numbers on the wire, or decoding twice? The connection phase keeps its numbers (D42). | Step 3, session 3e |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q6 | What is a plugin's UI part: an assembly loaded by the desktop app, with which contract? | Step 5 |
-| Q7 | How are sessions captured and replayed for tests: in which format? The format is D37's; replays with injection remain. | Step 3, session 3g |
-| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3, session 3g |
+| Q7 | How are sessions captured and replayed for tests: in which format? The format is D37's; replays with injection remain. | Step 3, session 3h |
+| Q9 | How does a bot act through its client's connection: which requests does D3B send, and how do the client and the bot stay consistent with what the server answers? | Step 3, session 3h |

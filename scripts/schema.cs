@@ -4,6 +4,7 @@
 #:package System.CommandLine
 #:property PublishAot=false
 #:project ../src/D3B.Data/D3B.Data.csproj
+#:project ../src/D3B.Protocol/D3B.Protocol.csproj
 #:include schema/ClientCode.cs
 #:include schema/FieldEncoding.cs
 #:include schema/FieldKind.cs
@@ -20,7 +21,6 @@
 #:include schema/SilentLogWriter.cs
 #:include schema/WireEncodings.cs
 #:include unity/ClientInstall.cs
-#:include unity/SchemaFile.cs
 
 using System.Globalization;
 using D3B.Scripts.Schema;

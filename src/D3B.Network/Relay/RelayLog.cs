@@ -27,6 +27,12 @@ internal static partial class RelayLog
     [LoggerMessage(Level = LogLevel.Warning, Message = "Connection {ConnectionId} is relayed without its capture. {Reason}")]
     public static partial void CaptureFailed(ILogger logger, string connectionId, string reason);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Connection {ConnectionId}: the {Side}'s bytes are no varint frames, and are relayed unobserved from here on. {Reason}")]
+    public static partial void Unframed(ILogger logger, string connectionId, string side, string reason);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Connection {ConnectionId}: the {Side}'s frames are relayed unobserved from here on, the observer having failed")]
+    public static partial void ObserverFailed(ILogger logger, string connectionId, string side, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Connection {ConnectionId} closed after {Duration}: {FromClient} bytes from the client, {FromServer} from the server")]
     public static partial void Closed(ILogger logger, string connectionId, TimeSpan duration, long fromClient, long fromServer);
 }

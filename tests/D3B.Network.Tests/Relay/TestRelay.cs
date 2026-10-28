@@ -30,8 +30,8 @@ internal sealed class TestRelay : IAsyncDisposable
         _upstream = upstream;
     }
 
-    /// <summary>Starts the relay, which sends every client to the test's server, or to none when it has none.</summary>
-    public static async Task<TestRelay> StartAsync(bool withServer = true, string? capturesDirectory = null)
+    /// <summary>Starts the relay, which sends every client to the test's server, or to none when it has none, and shows an observer its frames.</summary>
+    public static async Task<TestRelay> StartAsync(bool withServer = true, string? capturesDirectory = null, IRelayObserver? observer = null)
     {
         var upstream = new TcpListener(IPAddress.Loopback, 0);
 
@@ -47,11 +47,15 @@ internal sealed class TestRelay : IAsyncDisposable
             CloseTimeout = TimeSpan.FromSeconds(2),
         };
         var log = new FakeLogCollector();
-        var services = new ServiceCollection()
+        var collection = new ServiceCollection()
             .AddLogging(logging => logging.AddProvider(new FakeLoggerProvider(log)))
             .AddRelay(settings, _ => "3.7.12.12")
-            .AddSingleton<IUpstreamLocator>(new FixedUpstreamLocator(withServer ? new Upstream(Host, [(IPEndPoint)upstream.LocalEndpoint]) : null))
-            .BuildServiceProvider();
+            .AddSingleton<IUpstreamLocator>(new FixedUpstreamLocator(withServer ? new Upstream(Host, [(IPEndPoint)upstream.LocalEndpoint]) : null));
+
+        if (observer is not null)
+            collection.AddSingleton(observer);
+
+        var services = collection.BuildServiceProvider();
         var relay = new TestRelay(services, upstream, log);
 
         await relay._server.StartAsync(TestContext.Current.CancellationToken);

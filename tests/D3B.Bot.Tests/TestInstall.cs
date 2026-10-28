@@ -5,6 +5,10 @@ using D3B.Data.Maps;
 using D3B.Data.Packs;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Protocol.Mapping;
+using D3B.Protocol.Tests.Mapping;
+using Google.Protobuf;
+using Google.Protobuf.Reflection;
 using Microsoft.Extensions.Hosting;
 
 namespace D3B.Bot.Tests;
@@ -24,6 +28,10 @@ internal sealed class TestInstall : IDisposable
     public string PacksDirectory => Path.Combine(Root, "data");
 
     public string PackPath => PackLocations.PathOf(PacksDirectory, new ClientBuild(Version, null));
+
+    public string SchemaPath => SchemaFile.PathOf(PacksDirectory, Version);
+
+    public string MappingPath => MappingFile.PathOf(PacksDirectory, Version);
 
     public string RedirectDirectory => Path.Combine(Root, "redirect");
 
@@ -65,6 +73,21 @@ internal sealed class TestInstall : IDisposable
         return stream.ToArray();
     }
 
+    /// <summary>The schema and mapping of a build: the readable protocol obfuscated as a client's is, then matched from its structure.</summary>
+    /// <param name="clientVersion">The build the mapping names.</param>
+    /// <param name="edit">Changes the mapping before it is serialized, such as to break it.</param>
+    public static (byte[] Schema, byte[] Mapping) Protocol(string clientVersion = Version, Action<ProtocolMapping>? edit = null)
+    {
+        var bytes = new FileDescriptorSet { File = { new Obfuscation(ReadableProtocol.Files).File } }.ToByteArray();
+        var schema = ProtocolSchema.Load(bytes);
+        var mapping = new ProtocolMatcher(ReadableProtocol.Files, schema, ReadableProtocol.Scopes).Match(null, [])
+            .ToMapping(clientVersion, schema.Sha256, ReadableProtocol.Digest, "0.0.0-test");
+
+        edit?.Invoke(mapping);
+
+        return (bytes, mapping.ToByteArray());
+    }
+
     /// <summary>A bot pointed at them, which reads neither the machine's environment nor its configuration files.</summary>
     public BotBuilder Bot(params string[] arguments)
     {
@@ -75,6 +98,15 @@ internal sealed class TestInstall : IDisposable
     {
         Directory.CreateDirectory(Path.GetDirectoryName(PackPath)!);
         File.WriteAllBytes(PackPath, Pack(clientVersion));
+    }
+
+    public void WriteProtocol(string clientVersion = Version, Action<ProtocolMapping>? edit = null)
+    {
+        var (schema, mapping) = Protocol(clientVersion, edit);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(SchemaPath)!);
+        File.WriteAllBytes(SchemaPath, schema);
+        File.WriteAllBytes(MappingPath, mapping);
     }
 
     public void Dispose()

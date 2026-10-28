@@ -66,13 +66,13 @@ These rules apply to `src/`, `tests/`, `benchmarks/` and `scripts/`.
 dotnet build                               # warnings are errors; copies the sample plugin into the Core tests' plugins/
 dotnet test                                # every test project, on Microsoft.Testing.Platform
 dotnet format --verify-no-changes          # CI checks it
-dotnet run --project src/D3B.Host          # runs until Ctrl+C; needs the installed build's pack, local or downloaded (D31, D32); --Plugins:Directory <dir> loads plugins from elsewhere
+dotnet run --project src/D3B.Host          # runs until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48); --Plugins:Directory <dir> loads plugins from elsewhere
                                            # while it runs, clients started from the launcher go through its relay (D35); --Network:Captures:Enabled true records them
 dotnet pack src/D3B.Core -o <feed>         # the package plugins compile against (D22)
 dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
 dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options
-dotnet run --file scripts/release.cs       # dry run of publishing that pack to release client-<version>; --publish does it (D33)
+dotnet run --file scripts/release.cs       # dry run of publishing that build's pack, schema and mapping to release client-<version>; --publish does it (D33, D50)
 dotnet run --file scripts/client.cs        # which configuration the client reads, Ankama's or D3B's; restore gives it Ankama's back after a crash
 dotnet run --file scripts/capture.cs       # describes the captures by structure, never content; --frames shows each frame's protobuf shape
                                            # --schema <file> reads them with a schema, field by field

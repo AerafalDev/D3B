@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Compile Include="..\D3B.Data.Tests\TemporaryDirectory.cs" Link="TemporaryDirectory.cs" />
+    <Compile Include="..\D3B.Network.Tests\TestSequences.cs" Link="TestSequences.cs" />
   </ItemGroup>
 
 </Project>

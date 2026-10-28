@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using D3B.Data;
 using D3B.Data.Packs;
+using D3B.Protocol.Mapping;
 using D3B.Scripts.Unity;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
@@ -115,7 +116,7 @@ internal static class SchemaCommand
 
         Console.WriteLine($"Field types: {string.Join(", ", types.OrderByDescending(pair => pair.Value).Select(pair => $"{pair.Key} {pair.Value}"))}");
 
-        var path = SchemaFile.PathOf(root, build);
+        var path = SchemaFile.PathOf(root, build.Version);
         var bytes = set.ToByteArray();
         var temporary = path + ".tmp";
 
