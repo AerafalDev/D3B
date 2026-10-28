@@ -10,8 +10,9 @@ build's obfuscated protocol schema, read from the client's code (step 3, session
 connection phase, and the tool matching it with a build's schema into the build's mapping, audited (step 3, session
 3d); the translation of the connection phase, the version gate, the release of schemas and mappings, and the relay
 decoding the connection phase (step 3, session 3e); the server selection's answer rewritten, and the game connection
-matched with its server by its ticket, relayed and captured apart (step 3, session 3f). Everything else below is the
-target.
+matched with its server by its ticket, relayed and captured apart (step 3, session 3f); the readable protocol of the
+game's first messages, its matching with pins the tool proposes, and the translation of game frames through their type
+URL (step 3, session 3g). Everything else below is the target.
 
 ## Overview
 
@@ -118,31 +119,38 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   the game connection, its first frame presenting the ticket: the game listener reads that frame before connecting
   anywhere, finds the selection waiting for its ticket among the frame's values by the wire format alone
   (`ProtobufValues`), and connects to that selection's server. A connection presenting no ticket waiting is closed. The
-  game connection is relayed unread until 3g.
+  game connection is relayed unread: the translation reads its frames (session 3g), and the relay will use it once bot
+  state needs it, at step 4.
 - The client's other connections, to the launcher, Haapi, the chat and the CDN, do not go through D3B.
 - The bot acts through that connection, and the client is kept consistent with what it does: Q9.
 - Framing, measured (D38): a varint length, then a protobuf message, in the clear. `FrameReader` reads frames from a
   `SequenceReader<byte>` without copying; a benchmark in `benchmarks/D3B.Network.Benchmarks` measures it. The game
-  connection's envelope carries an `Any` whose type URL is the obfuscated message name, prefixed with
-  `type.ankama.com`, as the references read it; the connection phase has none.
+  connection's envelope carries an `Any` whose type URL is `type.ankama.com/` and the obfuscated message's name,
+  measured (D56); the connection phase has none.
 - The obfuscated schema, built in session 3c (D39, D40): `scripts/schema.cs` reads the installed build's protocol from
   its IL2CPP code with Cpp2IL, its structure from the metadata and the encoding of every field from the machine code,
   and writes it as a `FileDescriptorSet` beside the build's pack, `schema-1.binpb`. `scripts/capture.cs --schema` reads
   captures with it, field by field.
-- The readable protocol, built in session 3d for the connection phase (D42): `.proto` files of our own in
-  `src/D3B.Protocol/Connection/`, which Grpc.Tools compiles into Google.Protobuf classes at build. Their numbers are the
-  wire's, which the obfuscation keeps; `ReadableProtocol` lists them. The game's messages come in session 3g.
+- The readable protocol, built in session 3d for the connection phase (D42) and in session 3g for the game's first
+  messages (D55, D56): `.proto` files of our own in `src/D3B.Protocol/Connection/` and `src/D3B.Protocol/Game/`, which
+  Grpc.Tools compiles into Google.Protobuf classes at build. Their numbers are 3.7.12.12's wire's; the game's are likely
+  shuffled at each build, which the next build measures (Q10). `ReadableProtocol` lists them. A game event marked
+  `(d3b.readable.partial)` declares only the fields bot code reads; a request is whole.
 - The mapping, built in session 3d (D43 to D45), in `D3B.Protocol.Mapping`. `scripts/mapping.cs` loads the build's
   schema (`ProtocolSchema`) and pins (`src/D3B.Protocol/Pins/<version>.json`), measures anchors in the build's captures
-  (`CaptureAnchors`, by structure only), pairs every readable message and enum with its counterpart (`ProtocolMatcher`:
-  pins, anchors, fields, then structural scores), audits the result (`ContractAudit`), and writes it beside the pack,
-  `mapping-1.binpb` (`MappingFile`), only when it holds. The mapping records the schema's SHA-256 and the readable
-  protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that digest.
+  (`CaptureAnchors`, by structure and type URLs only, the connection phase's in the captures' directory and the game's in
+  its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
+  counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
+  counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
+  and writes it beside the pack, `mapping-2.binpb` (`MappingFile`), only when it holds. For what is left open it lists
+  the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
+  readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that digest.
 - The per-build translation, built in session 3e for the connection phase (D47): `ProtocolTranslation`, in
   `D3B.Protocol.Translation`, exists only for a build whose mapping holds the contract and pairs every readable field and
   value with its own number, since the readable classes read the wire as it is. A frame is decoded once and understood
-  only when its message encodes back to its length; one that is not is passed on as it is, and never rewritten. From
-  3g, the mapping turns the type URLs of the game's `Any` envelopes into readable messages.
+  only when its message encodes back to its length; one that is not is passed on as it is, and never rewritten. A game
+  frame's type URL names the build's message, which the mapping turns into the readable one (`DecodeGame`, D58); a frame
+  of a partial message is read without being understood whole (D55).
 - The version gate (D48): the protocol module (`ProtocolModule`, in `D3B.Bot`) registers `ProtocolSource`, which finds
   the build's schema and mapping beside its pack, else downloads them from its release, and the translation, which the
   host asks for before it starts. Without a mapping that holds, the host logs what fails and the commands mapping the
