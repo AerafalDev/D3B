@@ -12,7 +12,8 @@ public static class RelayServiceCollectionExtensions
     /// <summary>Registers the relay: Kestrel on D3B's loopback address, and the client sent there, with the host (D35, D36).</summary>
     /// <remarks>
     /// The relay listens before the client is sent to it, and the client is given its own configuration back before the
-    /// relay stops: the Generic Host stops its services in the reverse order it started them.
+    /// relay stops: the Generic Host stops its services in the reverse order it started them. An
+    /// <see cref="IRelayObserver"/> registered in the services sees every frame relayed (D49).
     /// </remarks>
     /// <param name="services">The host's services.</param>
     /// <param name="settings">Where the relay listens, where it keeps the client's configuration, and whether it records captures.</param>
@@ -38,6 +39,7 @@ public static class RelayServiceCollectionExtensions
             provider.GetRequiredService<SocketConnectionContextFactory>(),
             provider.GetRequiredService<TimeProvider>(),
             () => clientVersion?.Invoke(provider),
+            provider.GetService<IRelayObserver>(),
             provider.GetRequiredService<ILogger<RelayConnectionHandler>>()));
         services.AddSingleton<RelayServer>();
         services.AddHostedService(provider => provider.GetRequiredService<RelayServer>());

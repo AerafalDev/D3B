@@ -7,7 +7,6 @@
 #:include mapping/CaptureFrames.cs
 #:include mapping/MappingCommand.cs
 #:include unity/ClientInstall.cs
-#:include unity/SchemaFile.cs
 
 using System.Globalization;
 using D3B.Scripts.Mapping;

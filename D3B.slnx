@@ -69,6 +69,7 @@
   </Folder>
   <Folder Name="/scripts/release/">
     <File Path="scripts/release/GitHubCli.cs" />
+    <File Path="scripts/release/ReleaseAsset.cs" />
     <File Path="scripts/release/ReleaseCommand.cs" />
   </Folder>
   <Folder Name="/scripts/schema/">
@@ -92,7 +93,6 @@
     <File Path="scripts/unity/ClientInstall.cs" />
     <File Path="scripts/unity/I18nFile.cs" />
     <File Path="scripts/unity/LauncherManifest.cs" />
-    <File Path="scripts/unity/SchemaFile.cs" />
     <File Path="scripts/unity/UnityBundle.cs" />
     <File Path="scripts/unity/UnityDataTable.cs" />
     <File Path="scripts/unity/UnityFields.cs" />

@@ -1,39 +1,42 @@
 using System.CommandLine;
-using System.Security.Cryptography;
 using D3B.Data;
 using D3B.Data.Packs;
 using D3B.Data.Releases;
+using D3B.Protocol.Mapping;
+using D3B.Protocol.Translation;
 using D3B.Scripts.Unity;
+using Google.Protobuf;
+using Google.Protobuf.Reflection;
 
 namespace D3B.Scripts.Release;
 
-/// <summary>The command that publishes the pack of a client build to the release of that build.</summary>
+/// <summary>The command that publishes the pack, schema and mapping of a client build to the release of that build.</summary>
 internal static class ReleaseCommand
 {
     public static RootCommand Create()
     {
         var client = new Option<DirectoryInfo?>("--client")
         {
-            Description = @"The client whose build's pack to publish. Defaults to %LOCALAPPDATA%\Ankama\Dofus-dofus3 on Windows.",
+            Description = @"The client whose build's files to publish. Defaults to %LOCALAPPDATA%\Ankama\Dofus-dofus3 on Windows.",
         };
         var version = new Option<string?>("--client-version")
         {
-            Description = "The client version whose pack to publish, instead of the installed client's.",
+            Description = "The client version whose files to publish, instead of the installed client's.",
         };
         var packs = new Option<DirectoryInfo?>("--packs")
         {
-            Description = @"The directory packs are kept in, one directory per client version. Defaults to %LOCALAPPDATA%\D3B\data, where the extraction tool writes.",
+            Description = @"The directory packs, schemas and mappings are kept in, one directory per client version. Defaults to %LOCALAPPDATA%\D3B\data, where the tools write.",
         };
         var repository = new Option<string>("--repository")
         {
-            Description = "The repository whose releases ship the packs, as owner/name.",
+            Description = "The repository whose releases ship the files, as owner/name.",
             DefaultValueFactory = _ => ClientRelease.DefaultRepository,
         };
         var publish = new Option<bool>("--publish")
         {
             Description = "Creates the release, or uploads the assets it lacks. Without it, nothing changes on GitHub.",
         };
-        var command = new RootCommand("Publishes the pack of a Dofus 3 client build to the GitHub release of that build.")
+        var command = new RootCommand("Publishes the pack, schema and mapping of a Dofus 3 client build to the GitHub release of that build.")
         {
             client,
             version,
@@ -74,20 +77,27 @@ internal static class ReleaseCommand
             return 2;
         }
 
-        var path = PackLocations.PathOf(root, build);
+        (string What, string Path, string Tool)[] files =
+        [
+            ("pack", PackLocations.PathOf(root, build), "extract.cs"),
+            ("schema", SchemaFile.PathOf(root, build.Version), "schema.cs"),
+            ("mapping", MappingFile.PathOf(root, build.Version), "mapping.cs"),
+        ];
 
-        if (!File.Exists(path))
+        // A host needs all three to start (D31, D48): a release is published with all of them, or not at all.
+        foreach (var (what, path, tool) in files.Where(file => !File.Exists(file.Path)))
         {
-            Console.Error.WriteLine($"No pack for client {build.Version} at {path}. Extract it first: dotnet run --file scripts/extract.cs");
+            Console.Error.WriteLine($"No {what} for client {build.Version} at {path}. Write it first: dotnet run --file scripts/{tool}");
 
             return 2;
         }
 
         try
         {
-            return Release(build, path, repository, publish);
+            return Release(build, root, repository, publish);
         }
-        catch (Exception exception) when (exception is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException
+            or InvalidProtocolBufferException or DescriptorValidationException or ArgumentException or ProtocolMismatchException)
         {
             Console.Error.WriteLine($"The release failed: {exception.Message}");
 
@@ -95,71 +105,67 @@ internal static class ReleaseCommand
         }
     }
 
-    private static int Release(ClientBuild build, string path, string repository, bool publish)
+    private static int Release(ClientBuild build, string root, string repository, bool publish)
     {
+        var packPath = PackLocations.PathOf(root, build);
+        var schemaPath = SchemaFile.PathOf(root, build.Version);
+        var mappingPath = MappingFile.PathOf(root, build.Version);
         PackInfo info;
 
         // Opening checks the format and that the pack is whole; the version check catches a pack filed under another build.
-        using (var pack = GamePack.Open(path))
+        using (var pack = GamePack.Open(packPath))
             info = pack.Info;
 
         if (info.ClientVersion != build.Version)
-            throw new InvalidDataException($"{path} was extracted from client {info.ClientVersion}, not {build.Version}.");
+            throw new InvalidDataException($"{packPath} was extracted from client {info.ClientVersion}, not {build.Version}.");
 
-        var asset = PackLocations.FileName;
-        var checksumName = ClientRelease.ChecksumNameOf(asset);
-        var checksumPath = Path.Combine(Path.GetDirectoryName(path)!, checksumName);
+        var schema = ProtocolSchema.Load(schemaPath);
+        var mapping = MappingFile.Read(mappingPath);
+
+        if (mapping.ClientVersion != build.Version)
+            throw new InvalidDataException($"{mappingPath} maps client {mapping.ClientVersion}, not {build.Version}.");
+
+        // The host refuses a mapping that does not hold (D48): so does the release, before anything is published.
+        var audit = ProtocolTranslation.Create(schema, mapping).Audit;
+
+        ReleaseAsset[] assets =
+        [
+            ReleaseAsset.Hash(packPath, $"game data, pack format {GamePack.FormatVersion}, extracted by D3B.Data {info.ExtractorVersion} from client files of fingerprint `{info.Fingerprint}`"),
+            ReleaseAsset.Hash(schemaPath, $"the protocol's obfuscated schema, format {SchemaFile.FormatVersion}, read from the client's code by `scripts/schema.cs`"),
+            ReleaseAsset.Hash(mappingPath, $"the protocol mapping, format {MappingFile.FormatVersion}, matched with that schema by D3B.Protocol {mapping.ToolVersion}"),
+        ];
+
+        Console.WriteLine($"Pack: format {GamePack.FormatVersion}, client {info.ClientVersion}, extractor {info.ExtractorVersion}, fingerprint {info.Fingerprint}");
+        Console.WriteLine($"Mapping: format {MappingFile.FormatVersion}, tool {mapping.ToolVersion}; {audit.Messages} messages, {audit.Fields} fields, {audit.Enums} enums and {audit.Values} values audited against the schema");
+
+        foreach (var asset in assets)
+            Console.WriteLine($"{asset.Name}: {asset.Path}, {asset.Length:N0} bytes, SHA-256 {asset.Sha256}, written to {asset.ChecksumPath}");
+
         var tag = ClientRelease.TagOf(build);
-        byte[] hash;
-        long length;
-
-        using (var stream = File.OpenRead(path))
-        {
-            hash = SHA256.HashData(stream);
-            length = stream.Length;
-        }
-
-        var sha256 = Convert.ToHexStringLower(hash);
-
-        // Beside the pack, outside the repository: it is uploaded as the pack's checksum asset, never committed.
-        File.WriteAllText(checksumPath, ClientRelease.FormatChecksum(hash, asset));
-
-        Console.WriteLine($"Pack: {path}, {length:N0} bytes, format {GamePack.FormatVersion}, client {info.ClientVersion}, extractor {info.ExtractorVersion}");
-        Console.WriteLine($"Fingerprint: {info.Fingerprint}");
-        Console.WriteLine($"SHA-256: {sha256}, written to {checksumPath}");
-
-        var assets = GitHubCli.Assets(repository, tag);
+        var published = GitHubCli.Assets(repository, tag);
+        List<ReleaseAsset> uploads;
         List<string> arguments;
 
-        if (assets is null)
+        if (published is null)
         {
-            arguments = ["release", "create", tag, path, checksumPath, "--repo", repository, "--title", $"Client {build.Version}", "--notes", Notes(build, info, sha256), "--latest=false"];
-            Console.WriteLine($"Release {tag} of {repository} does not exist: it is to be created with {asset} and {checksumName}.");
+            uploads = [.. assets];
+            arguments = ["release", "create", tag, .. Files(uploads), "--repo", repository, "--title", $"Client {build.Version}", "--notes", Notes(build, info, assets), "--latest=false"];
+            Console.WriteLine($"Release {tag} of {repository} does not exist: it is to be created with {Names(uploads)}.");
         }
-        else if (assets.TryGetValue(asset, out var digest))
+        else
         {
-            if (!assets.ContainsKey(checksumName))
-                throw new InvalidOperationException($"Release {tag} holds {asset} without {checksumName}: hosts cannot check it. Fix the release by hand.");
+            // Every asset is checked before anything is uploaded: one that conflicts stops them all.
+            uploads = [.. assets.Where(asset => IsMissing(asset, published, tag))];
 
-            if (digest == $"sha256:{sha256}")
+            if (uploads.Count is 0)
             {
-                Console.WriteLine($"Up to date: release {tag} of {repository} already holds this {asset}.");
+                Console.WriteLine($"Up to date: release {tag} of {repository} already holds {Names(assets)}.");
 
                 return 0;
             }
 
-            // D24: hosts that downloaded the published pack keep it, so a replacement would leave two packs under one name.
-            throw new InvalidOperationException(
-                $"Release {tag} already holds another {asset} ({digest ?? "no digest"}). A published pack is never replaced (D24): "
-                + "if the client changed without changing its version, a build's identity must first include its fingerprint.");
-        }
-        else
-        {
-            if (assets.ContainsKey(checksumName))
-                throw new InvalidOperationException($"Release {tag} holds {checksumName} without {asset}. Fix the release by hand.");
-
-            arguments = ["release", "upload", tag, path, checksumPath, "--repo", repository];
-            Console.WriteLine($"Release {tag} of {repository} exists without {asset}: {asset} and {checksumName} are to be uploaded to it.");
+            arguments = ["release", "upload", tag, .. Files(uploads), "--repo", repository];
+            Console.WriteLine($"Release {tag} of {repository} exists without {Names(uploads)}: they are to be uploaded to it.");
         }
 
         if (!publish)
@@ -176,26 +182,64 @@ internal static class ReleaseCommand
         if (exitCode is not 0)
             throw new InvalidOperationException($"gh {arguments[0]} {arguments[1]} failed: {error.Trim()}");
 
-        var published = GitHubCli.Assets(repository, tag);
+        var now = GitHubCli.Assets(repository, tag);
 
-        if (published is null || !published.TryGetValue(asset, out var uploaded) || uploaded != $"sha256:{sha256}" || !published.ContainsKey(checksumName))
-            throw new InvalidOperationException($"Release {tag} does not hold the {asset} just uploaded, by GitHub's digest: check it by hand.");
+        foreach (var asset in uploads)
+        {
+            if (now is null || !now.TryGetValue(asset.Name, out var uploaded) || uploaded != $"sha256:{asset.Sha256}" || !now.ContainsKey(asset.ChecksumName))
+                throw new InvalidOperationException($"Release {tag} does not hold the {asset.Name} just uploaded, by GitHub's digest: check it by hand.");
+        }
 
-        Console.WriteLine($"Published {asset} and {checksumName} to release {tag} of {repository}, SHA-256 {sha256}.");
+        Console.WriteLine($"Published {Names(uploads)} to release {tag} of {repository}.");
 
         return 0;
     }
 
-    private static string Notes(ClientBuild build, PackInfo info, string sha256)
+    /// <summary>Tells whether a release lacks an asset, and refuses one it holds otherwise.</summary>
+    /// <exception cref="InvalidOperationException">The release holds another file under the asset's name, or one of the asset and its checksum without the other.</exception>
+    private static bool IsMissing(ReleaseAsset asset, Dictionary<string, string?> published, string tag)
+    {
+        if (!published.TryGetValue(asset.Name, out var digest))
+        {
+            if (published.ContainsKey(asset.ChecksumName))
+                throw new InvalidOperationException($"Release {tag} holds {asset.ChecksumName} without {asset.Name}. Fix the release by hand.");
+
+            return true;
+        }
+
+        if (!published.ContainsKey(asset.ChecksumName))
+            throw new InvalidOperationException($"Release {tag} holds {asset.Name} without {asset.ChecksumName}: hosts cannot check it. Fix the release by hand.");
+
+        if (digest == $"sha256:{asset.Sha256}")
+            return false;
+
+        // D33: hosts that downloaded the published file keep it, so a replacement would leave two files under one name.
+        throw new InvalidOperationException(
+            $"Release {tag} already holds another {asset.Name} ({digest ?? "no digest"}). A published asset is never replaced (D33): "
+            + "a change in what a tool writes ships under a new format, and a client changed under its version needs its fingerprint in the build's identity first.");
+    }
+
+    private static IEnumerable<string> Files(List<ReleaseAsset> assets)
+    {
+        return assets.SelectMany(asset => new[] { asset.Path, asset.ChecksumPath });
+    }
+
+    private static string Names(IEnumerable<ReleaseAsset> assets)
+    {
+        return string.Join(", ", assets.Select(asset => $"{asset.Name} and {asset.ChecksumName}"));
+    }
+
+    private static string Notes(ClientBuild build, PackInfo info, ReleaseAsset[] assets)
     {
         var built = info.ClientBuildDate is { } date ? $", built on {date:yyyy-MM-dd}" : string.Empty;
+        var lines = string.Join('\n', assets.Select(asset => $"- `{asset.Name}`: SHA-256 `{asset.Sha256}`, {asset.Provenance}."));
 
         return $"""
-            Game data of the Dofus 3 client {build.Version}{built}, for D3B. A host reading pack format N downloads `data-N.pack`; each asset's SHA-256 is in the asset of the same name ending in `.sha256`.
+            Files made from the Dofus 3 client {build.Version}{built}, for D3B: its game data, its protocol's obfuscated schema, and the mapping of D3B's readable protocol to it. A host reading format N of a file downloads the asset of that format; each asset's SHA-256 is in the asset of the same name ending in `.sha256`.
 
-            `{PackLocations.FileName}`: SHA-256 `{sha256}`, extracted by D3B.Data {info.ExtractorVersion} from client files of fingerprint `{info.Fingerprint}`.
+            {lines}
 
-            Derived from the official client by `scripts/extract.cs`. D3B is not affiliated with Ankama.
+            Derived from the official client by the tools in `scripts/`. D3B is not affiliated with Ankama.
             """;
     }
 

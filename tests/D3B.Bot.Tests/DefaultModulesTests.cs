@@ -1,5 +1,6 @@
 using D3B.Bot.Data;
 using D3B.Bot.Network;
+using D3B.Bot.Protocol;
 using D3B.Core.Modules;
 using Microsoft.Extensions.Hosting;
 
@@ -16,18 +17,35 @@ public sealed class DefaultModulesTests
     }
 
     [Fact]
-    public void TheNetworkModuleBuildsAfterTheDataModule()
+    public void TheProtocolModuleBuildsAfterTheDataModule()
     {
         var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules());
 
-        Assert.IsType<NetworkModule>(bot.Modules[1]);
+        Assert.IsType<ProtocolModule>(bot.Modules[1]);
     }
 
     [Fact]
-    public void TheDataModuleCanBeDisabled()
+    public void TheNetworkModuleBuildsAfterTheProtocolModule()
+    {
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules());
+
+        Assert.IsType<NetworkModule>(bot.Modules[2]);
+    }
+
+    [Fact]
+    public void TheDataModuleCanBeDisabledWithTheModulesRequiringIt()
+    {
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true })
+            .AddModules(new DefaultModules(), group => group.Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
+
+        Assert.False(bot.HasModule<DataModule>());
+    }
+
+    [Fact]
+    public void AModuleRequiringTheDataModuleBuildsItEvenDisabled()
     {
         var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules(), group => group.Disable<DataModule>());
 
-        Assert.False(bot.HasModule<DataModule>());
+        Assert.True(bot.HasModule<DataModule>());
     }
 }

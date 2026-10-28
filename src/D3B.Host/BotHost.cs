@@ -1,9 +1,12 @@
 using D3B.Bot;
 using D3B.Bot.Data;
+using D3B.Bot.Protocol;
 using D3B.Core.Modules;
 using D3B.Core.Plugins;
 using D3B.Data.Packs;
 using D3B.Network.Relay;
+using D3B.Protocol.Mapping;
+using D3B.Protocol.Translation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,10 +35,10 @@ internal static class BotHost
         return Path.GetFullPath(configuration[PluginsDirectoryKey] ?? "plugins", AppContext.BaseDirectory);
     }
 
-    /// <summary>Builds the host, gets the game data ready, then runs until the host is stopped.</summary>
+    /// <summary>Builds the host, gets the game data and the protocol ready, then runs until the host is stopped.</summary>
     /// <returns>
-    /// The process's exit code: 0 once stopped, 1 when the host did not start for lack of game data or of the address its
-    /// relay listens on.
+    /// The process's exit code: 0 once stopped, 1 when the host did not start for lack of game data, of a mapping that
+    /// holds, or of the address its relay listens on.
     /// </returns>
     public static async Task<int> RunAsync(BotBuilder bot, CancellationToken cancellationToken)
     {
@@ -43,7 +46,7 @@ internal static class BotHost
 
         LogComposition(host, bot.Modules);
 
-        if (!await PrepareDataAsync(host, cancellationToken))
+        if (!await PrepareDataAsync(host, cancellationToken) || !await PrepareProtocolAsync(host, cancellationToken))
             return 1;
 
         try
@@ -98,6 +101,34 @@ internal static class BotHost
             return true;
         }
         catch (DataUnavailableException exception)
+        {
+            HostLog.DoesNotStart(log, exception.Message);
+
+            return false;
+        }
+    }
+
+    private static async Task<bool> PrepareProtocolAsync(IHost host, CancellationToken cancellationToken)
+    {
+        // A host whose protocol module was disabled, and that no module requires, reads no client's wire.
+        if (host.Services.GetService<ProtocolSource>() is not { } source)
+            return true;
+
+        var log = Logger(host);
+
+        try
+        {
+            // The version gate (D11): before the host starts, so that no connection is relayed without a mapping that holds.
+            await source.EnsureAsync(cancellationToken);
+
+            var translation = host.Services.GetRequiredService<ProtocolTranslation>();
+            var audit = translation.Audit;
+
+            HostLog.MappingLoaded(log, translation.ClientVersion, MappingFile.FormatVersion, audit.Messages, audit.Fields, audit.Enums, audit.Values, source.MappingPath);
+
+            return true;
+        }
+        catch (ProtocolUnavailableException exception)
         {
             HostLog.DoesNotStart(log, exception.Message);
 

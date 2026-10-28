@@ -39,10 +39,11 @@ public sealed class DataModule : IModule
         var settings = DataSettings.Read(bot.Configuration);
 
         bot.Services.AddSingleton(_ => new ReleaseDownloader(settings.Repository));
+        bot.Services.AddSingleton(new ReleaseToken(settings.Token));
         bot.Services.AddSingleton(services => new PackSource(
             settings,
             services.GetRequiredService<ReleaseDownloader>(),
-            new ReleaseToken(settings.Token),
+            services.GetRequiredService<ReleaseToken>(),
             services.GetRequiredService<ILogger<PackSource>>()));
         bot.Services.AddSingleton(services => services.GetRequiredService<PackSource>().Build);
 

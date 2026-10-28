@@ -18,6 +18,9 @@ public sealed class NetworkModuleTests : IDisposable
     [Fact]
     public void TheRelayListensWhereTheConfigurationSays()
     {
+        // The relay's observer decodes through the build's translation, which the relay asks for once it is made.
+        _install.WriteProtocol();
+
         using var host = _install.Bot("--Network:Address", "127.0.13.60", "--Network:Captures:Enabled", "true").AddModule<NetworkModule>().Build();
 
         var settings = host.Services.GetRequiredService<RelaySettings>();
