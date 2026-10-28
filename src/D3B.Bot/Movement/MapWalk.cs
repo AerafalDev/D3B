@@ -56,7 +56,7 @@ public static class MapWalk
         var state = context.State;
         var self = state.Key.CharacterId;
 
-        if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsWalking)
+        if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsWalking || state.IsUsing)
             return WalkOutcome.Busy;
 
         if (from == cell)

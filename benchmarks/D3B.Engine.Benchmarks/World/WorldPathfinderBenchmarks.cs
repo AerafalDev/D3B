@@ -133,7 +133,7 @@ public class WorldPathfinderBenchmarks
     [Benchmark]
     public int ExitCells()
     {
-        return _pathfinder.ExitCells(_map.Cells.Span, _step, _rules).Count;
+        return _pathfinder.ExitCells(_map, _step, _rules).Count;
     }
 
     private int Find(HashSet<long> maps)

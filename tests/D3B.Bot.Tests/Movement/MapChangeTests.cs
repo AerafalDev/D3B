@@ -1,4 +1,5 @@
 using D3B.Bot.Movement;
+using D3B.Engine.Maps;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.World;
 using D3B.Engine.World;
@@ -48,7 +49,7 @@ public sealed class MapChangeTests
     }
 
     [Fact]
-    public async Task AMapChangeIsOverHalfASecondAfterTheCharacterIsPlaced()
+    public async Task AMapChangeIsOverOnceTheCharacterIsPlaced()
     {
         await using var play = new TestPlay();
         var (connection, bot) = await play.EnterAsync(20);
@@ -56,14 +57,7 @@ public sealed class MapChangeTests
 
         await connection.SentAsync(1);
         TestWalks.Arrive(connection, TestPlay.NorthMapId, 552);
-        await bot.ProcessedAsync();
-        await Task.Delay(20, TestContext.Current.CancellationToken);
 
-        play.Time.Advance(TimeSpan.FromMilliseconds(499));
-        await Task.Delay(20, TestContext.Current.CancellationToken);
-        Assert.False(change.IsCompleted);
-
-        play.Time.Advance(TimeSpan.FromMilliseconds(1));
         Assert.Equal(MapChangeOutcome.Changed, await change);
     }
 
@@ -210,6 +204,54 @@ public sealed class MapChangeTests
         await bot.ProcessedAsync();
 
         Assert.Equal(MapChangeOutcome.Busy, await bot.ChangeMapAsync(step, TestContext.Current.CancellationToken));
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
+    public async Task ADoorIsUsedFromNextToItsElementThenTheServerNamesTheNewMap()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+        var change = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.InsideMapId), TestContext.Current.CancellationToken);
+
+        var cell = await TestWalks.WalkedAsync(play, connection, 1);
+
+        Assert.NotEqual(-1, MapGeometry.Direction(cell, TestPlay.DoorCell));
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.DoorInstanceId, ElementId = TestPlay.DoorElementId }, await connection.SentAsync(2));
+
+        connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.DoorElementId, SkillId = 184 });
+        TestWalks.Arrive(connection, TestPlay.InsideMapId, 396);
+
+        Assert.Equal(MapChangeOutcome.Changed, await TestWalks.AdvanceUntilDoneAsync(play.Time, change));
+        Assert.Equal(TestPlay.InsideMapId, bot.State.MapId);
+        Assert.Equal(2, connection.Sent.Count);
+    }
+
+    [Fact]
+    public async Task ADoorTheServerRefusesIsRefused()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(287);
+        var change = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.InsideMapId), TestContext.Current.CancellationToken);
+
+        Assert.IsType<InteractiveUseRequest>(await connection.SentAsync(1));
+        connection.Server(new InteractiveUseErrorEvent { ElementId = TestPlay.DoorElementId, SkillInstanceId = 184 });
+
+        Assert.Equal(MapChangeOutcome.Refused, await change);
+        Assert.Equal(TestPlay.MapId, bot.State.MapId);
+    }
+
+    [Fact]
+    public async Task ADoorWhoseSkillTheServerDoesNotOfferSendsNothing()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+        var step = play.StepTo(bot, TestPlay.InsideMapId);
+
+        connection.Server(new InteractiveElementUpdatedEvent { Element = new InteractiveElement { ElementId = TestPlay.DoorElementId, InteractiveId = 316 } });
+        await bot.ProcessedAsync();
+
+        Assert.Equal(MapChangeOutcome.NoPath, await bot.ChangeMapAsync(step, TestContext.Current.CancellationToken));
         Assert.Empty(connection.Sent);
     }
 }

@@ -96,6 +96,19 @@ public static class MapGeometry
         return new MapPoint(column + (row + 1) / 2, column - row / 2);
     }
 
+    /// <summary>Gets the distance between two cells: the sum of the differences of their coordinates.</summary>
+    /// <param name="from">A cell of the map.</param>
+    /// <param name="to">Another cell of the map.</param>
+    /// <returns>The distance: 1 to a neighbour along a diagonal, 2 to one east, south, west or north.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">A cell does not exist.</exception>
+    public static int Distance(int from, int to)
+    {
+        var a = PointOf(from);
+        var b = PointOf(to);
+
+        return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
+    }
+
     /// <summary>Gets the cell at coordinates.</summary>
     /// <param name="point">The coordinates.</param>
     /// <param name="cell">The cell, when the map has one there.</param>

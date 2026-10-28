@@ -25,15 +25,26 @@ namespace D3B.Bot.Tests.Runtime;
 /// <remarks>
 /// The world: <see cref="NorthMapId"/> is north of <see cref="MapId"/>, by a scroll each way, and by a map action from
 /// <see cref="NorthActionCell"/>; a map action from <see cref="ActionCell"/> leads to <see cref="EastMapId"/>, whose west
-/// edge scrolls back. Every cell of a map's edge leaves it straight across.
+/// edge scrolls back; the door <see cref="DoorElementId"/> leads to <see cref="InsideMapId"/>. Every cell of a map's edge
+/// leaves it straight across. On <see cref="MapId"/>, the server lists the door and a tree, <see cref="TreeElementId"/>,
+/// as the bank of Astrub's map and a map near it list them in the captures.
 /// </remarks>
 internal sealed class TestPlay : IAsyncDisposable
 {
     public const long MapId = 191_104_002;
     public const long NorthMapId = 191_104_000;
     public const long EastMapId = 191_105_026;
+    public const long InsideMapId = 192_415_750;
     public const int ActionCell = 409;
     public const int NorthActionCell = 200;
+    public const int TreeElementId = 514_662;
+    public const int TreeCell = 176;
+    public const int TreeSkillId = 40;
+    public const int TreeInstanceId = 19_146;
+    public const int DoorElementId = 515_308;
+    public const int DoorCell = 288;
+    public const int DoorInstanceId = 23_074;
+    public const int NeighboursElementId = 514_594;
     public const int SubAreaId = 440;
     public const long AccountId = 7;
     public const long CharacterId = 70_001;
@@ -96,10 +107,10 @@ internal sealed class TestPlay : IAsyncDisposable
         };
     }
 
-    /// <summary>What is on the map, the character on a cell.</summary>
+    /// <summary>What is on the map, the character on a cell; on <see cref="MapId"/>, the tree and the door.</summary>
     public static MapInformationEvent Information(int cell, long mapId = MapId)
     {
-        return new MapInformationEvent
+        var information = new MapInformationEvent
         {
             MapId = mapId,
             SubAreaId = SubAreaId,
@@ -109,6 +120,41 @@ internal sealed class TestPlay : IAsyncDisposable
                 new Actor { Id = CharacterId, Disposition = new ActorDisposition { CellId = cell } },
             },
         };
+
+        if (mapId is MapId)
+        {
+            information.InteractiveElements.Add(Tree(enabled: true));
+            information.InteractiveElements.Add(new InteractiveElement
+            {
+                ElementId = DoorElementId,
+                InteractiveId = 316,
+                OnCurrentMap = true,
+                EnabledSkills = { new InteractiveSkill { SkillId = WorldPathfinder.DoorSkillId, InstanceId = DoorInstanceId } },
+            });
+            information.StatedElements.Add(new StatedElement { ElementId = TreeElementId, CellId = TreeCell, State = 0, OnCurrentMap = true });
+
+            // A tree of the map north, as the information lists the neighbouring maps' elements.
+            information.InteractiveElements.Add(new InteractiveElement
+            {
+                ElementId = NeighboursElementId,
+                InteractiveId = 34,
+                EnabledSkills = { new InteractiveSkill { SkillId = TreeSkillId, InstanceId = 4_478 } },
+            });
+            information.StatedElements.Add(new StatedElement { ElementId = NeighboursElementId, CellId = 435, State = 0 });
+        }
+
+        return information;
+    }
+
+    /// <summary>The tree, its skill offered or not, as the server describes it.</summary>
+    public static InteractiveElement Tree(bool enabled)
+    {
+        var skill = new InteractiveSkill { SkillId = TreeSkillId, InstanceId = TreeInstanceId };
+        var tree = new InteractiveElement { ElementId = TreeElementId, InteractiveId = 34, OnCurrentMap = true };
+
+        (enabled ? tree.EnabledSkills : tree.DisabledSkills).Add(skill);
+
+        return tree;
     }
 
     private static byte[] Pack(int[] blocked)
@@ -121,9 +167,10 @@ internal sealed class TestPlay : IAsyncDisposable
 
         using (var writer = new PackWriter(stream, info, 3))
         {
-            writer.Add(MapData.EntryName(MapId), new MapData(MapId, NorthMapId, 0, 0, 0, cells, Array.Empty<MapInteractive>()));
+            writer.Add(MapData.EntryName(MapId), new MapData(MapId, NorthMapId, 0, 0, 0, cells, new[] { new MapInteractive(TreeElementId, TreeCell), new MapInteractive(DoorElementId, DoorCell) }));
             writer.Add(MapData.EntryName(NorthMapId), new MapData(NorthMapId, 0, MapId, 0, 0, open, Array.Empty<MapInteractive>()));
             writer.Add(MapData.EntryName(EastMapId), new MapData(EastMapId, 0, 0, MapId, 0, open, Array.Empty<MapInteractive>()));
+            writer.Add(MapData.EntryName(InsideMapId), new MapData(InsideMapId, 0, 0, 0, 0, open, Array.Empty<MapInteractive>()));
             writer.Add(WorldGraph.EntryName, Graph());
             writer.Add(WorldAtlas.EntryName, Atlas());
             writer.Complete();
@@ -146,17 +193,18 @@ internal sealed class TestPlay : IAsyncDisposable
 
     private static WorldGraph Graph()
     {
-        // Vertices in ascending order of map: north, the first, east.
-        WorldVertex[] vertices = [new(NorthMapId, 1), new(MapId, 1), new(EastMapId, 1)];
+        // Vertices in ascending order of map: north, the first, east, inside.
+        WorldVertex[] vertices = [new(NorthMapId, 1), new(MapId, 1), new(EastMapId, 1), new(InsideMapId, 1)];
         WorldTransition[] transitions =
         [
             Transition(WorldTransitionType.Scroll, 2, 539, MapId),
             Transition(WorldTransitionType.Scroll, 6, 6, NorthMapId),
             Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, NorthActionCell, NorthMapId),
             Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, ActionCell, EastMapId),
+            new(WorldTransitionType.Interactive, WorldTransition.NoDirection, DoorCell, WorldPathfinder.DoorSkillId, InsideMapId, DoorElementId, WorldTransition.None),
             Transition(WorldTransitionType.Scroll, 4, 252, MapId),
         ];
-        WorldEdge[] edges = [new(0, 1, 0, 1), new(1, 0, 1, 2), new(1, 2, 3, 1), new(2, 1, 4, 1)];
+        WorldEdge[] edges = [new(0, 1, 0, 1), new(1, 0, 1, 2), new(1, 2, 3, 1), new(1, 3, 4, 1), new(2, 1, 5, 1)];
 
         return new WorldGraph(vertices, edges, transitions, Array.Empty<string>());
     }
@@ -168,7 +216,13 @@ internal sealed class TestPlay : IAsyncDisposable
 
     private static WorldAtlas Atlas()
     {
-        MapPosition[] positions = [new(NorthMapId, 4, -19, SubAreaId, 1, 0, 0), new(MapId, 4, -18, SubAreaId, 1, 0, 0), new(EastMapId, 5, -18, SubAreaId, 1, 0, 0)];
+        MapPosition[] positions =
+        [
+            new(NorthMapId, 4, -19, SubAreaId, 1, 0, 0),
+            new(MapId, 4, -18, SubAreaId, 1, 0, 0),
+            new(EastMapId, 5, -18, SubAreaId, 1, 0, 0),
+            new(InsideMapId, 4, -18, SubAreaId, -1, 0, 0),
+        ];
         SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 0)];
 
         return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, Array.Empty<Waypoint>(), Array.Empty<int>());
@@ -191,7 +245,7 @@ internal sealed class TestPlay : IAsyncDisposable
         return connection;
     }
 
-    /// <summary>A connection of the account that chose the character, on a map, standing on a cell: the bot playing it.</summary>
+    /// <summary>A connection of the account that chose the character, on a map, standing on a cell, the map drawn: the bot playing it.</summary>
     public async Task<(TestConnection Connection, BotActor Bot)> EnterAsync(int cell, long mapId = MapId)
     {
         var connection = Connect(Account);
@@ -201,6 +255,9 @@ internal sealed class TestPlay : IAsyncDisposable
         connection.Server(new MapCurrentEvent { MapId = mapId });
         connection.Server(Information(cell, mapId));
         await bot.ProcessedAsync();
+
+        // The client has drawn the map: the bot's requests go at once.
+        Time.Advance(BotActor.DrawDelay);
 
         return (connection, bot);
     }

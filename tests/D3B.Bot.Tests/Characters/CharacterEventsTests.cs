@@ -72,6 +72,36 @@ public sealed class CharacterEventsTests
               "Cell": 300,
               "Path": [],
               "IsWalking": false,
+              "Elements": {
+                "514662": {
+                  "ElementId": 514662,
+                  "InteractiveId": 34,
+                  "EnabledSkills": [
+                    {
+                      "SkillId": 40,
+                      "InstanceId": 19146
+                    }
+                  ],
+                  "DisabledSkills": [],
+                  "Cell": 176,
+                  "State": 0
+                },
+                "515308": {
+                  "ElementId": 515308,
+                  "InteractiveId": 316,
+                  "EnabledSkills": [
+                    {
+                      "SkillId": 184,
+                      "InstanceId": 23074
+                    }
+                  ],
+                  "DisabledSkills": [],
+                  "Cell": null,
+                  "State": null
+                }
+              },
+              "Use": null,
+              "IsUsing": false,
               "Inventory": {
                 "12": {
                   "Uid": 12,
@@ -211,6 +241,70 @@ public sealed class CharacterEventsTests
 
         Assert.Equal(112, job.Level);
         Assert.Equal([6, 39], job.Skills);
+    }
+
+    [Fact]
+    public void TheMapsElementsFollowTheServerUntilANewMap()
+    {
+        var standing = Apply(_chosen, EnteringTheGame());
+
+        Assert.True(standing.Elements[TestPlay.TreeElementId].TryGetEnabled(TestPlay.TreeSkillId, out var skill));
+        Assert.Equal(new ElementSkill(TestPlay.TreeSkillId, TestPlay.TreeInstanceId), skill);
+
+        // Another actor harvests the tree: its skill is disabled, its state 2, then 1.
+        var harvested = Apply(
+            standing,
+            Server(new InteractiveElementUpdatedEvent { Element = TestPlay.Tree(enabled: false) }),
+            Server(new StatedElementUpdatedEvent { Element = new StatedElement { ElementId = TestPlay.TreeElementId, CellId = TestPlay.TreeCell, State = 2 } }),
+            Server(new StatedElementUpdatedEvent { Element = new StatedElement { ElementId = TestPlay.TreeElementId, CellId = TestPlay.TreeCell, State = 1 } }));
+        var tree = harvested.Elements[TestPlay.TreeElementId];
+
+        Assert.False(tree.TryGetEnabled(TestPlay.TreeSkillId, out _));
+        Assert.Equal([new ElementSkill(TestPlay.TreeSkillId, TestPlay.TreeInstanceId)], tree.DisabledSkills);
+        Assert.Equal(1, tree.State);
+        Assert.Equal(TestPlay.TreeCell, tree.Cell);
+        Assert.False(harvested.IsUsing);
+
+        Assert.Empty(Apply(harvested, Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId })).Elements);
+    }
+
+    [Fact]
+    public void TheNeighbouringMapsElementsAreLeftOut()
+    {
+        var standing = Apply(_chosen, EnteringTheGame());
+
+        Assert.DoesNotContain(TestPlay.NeighboursElementId, standing.Elements.Keys);
+
+        var updated = Apply(
+            standing,
+            Server(new InteractiveElementUpdatedEvent { Element = new InteractiveElement { ElementId = TestPlay.NeighboursElementId, InteractiveId = 34 } }),
+            Server(new StatedElementUpdatedEvent { Element = new StatedElement { ElementId = TestPlay.NeighboursElementId, CellId = 435, State = 2 } }));
+
+        Assert.Same(standing, updated);
+    }
+
+    [Fact]
+    public void TheCharacterUsesAnElementFromTheServersStartToItsEnd()
+    {
+        var standing = Apply(_chosen, EnteringTheGame());
+        var used = new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 };
+        var harvesting = Apply(standing, Server(used));
+
+        Assert.Equal(new CurrentUse(TestPlay.TreeElementId, TestPlay.TreeSkillId), harvesting.Use);
+        Assert.True(harvesting.IsUsing);
+
+        // Another element's end, then the use's own.
+        Assert.True(Apply(harvesting, Server(new InteractiveUseEndedEvent { ElementId = 1, SkillId = TestPlay.TreeSkillId })).IsUsing);
+        Assert.False(Apply(harvesting, Server(new InteractiveUseEndedEvent { ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId })).IsUsing);
+    }
+
+    [Fact]
+    public void AnotherActorsUseOrADoorsLeavesTheCharacterFree()
+    {
+        var standing = Apply(_chosen, EnteringTheGame());
+
+        Assert.False(Apply(standing, Server(new InteractiveUsedEvent { ActorId = 42, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 })).IsUsing);
+        Assert.False(Apply(standing, Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.DoorElementId, SkillId = 184 })).IsUsing);
     }
 
     [Fact]

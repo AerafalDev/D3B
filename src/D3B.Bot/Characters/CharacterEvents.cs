@@ -19,6 +19,13 @@ namespace D3B.Bot.Characters;
 /// the character stands, naming its cell. The client stops a walk when the player gives a new path, naming the cell it
 /// stopped on.
 /// </para>
+/// <para>
+/// A use, measured (client.md): the server starts it for every actor on the map, disabling the element's skill and
+/// stating the element harvested; a harvest ends its duration later, with the objects, the weight and the experience
+/// within 2 ms, in no set order. A door's use has no duration: the server names the new map at once. The map's
+/// information also lists the elements of the neighbouring maps, marked so, whose updates follow: the state keeps the
+/// map's own.
+/// </para>
 /// </remarks>
 public static class CharacterEvents
 {
@@ -50,8 +57,18 @@ public static class CharacterEvents
 
         return message switch
         {
-            MapCurrentEvent current => state with { MapId = current.MapId, SubAreaId = null, Cell = null, Path = [] },
+            MapCurrentEvent current => state with { MapId = current.MapId, SubAreaId = null, Cell = null, Path = [], Elements = ImmutableSortedDictionary<int, MapElement>.Empty, Use = null },
             MapInformationEvent information when information.MapId == state.MapId => Placed(state, information),
+            InteractiveElementUpdatedEvent { Element: { } element } when state.Elements.ContainsKey(element.ElementId) => state with
+            {
+                Elements = state.Elements.SetItem(element.ElementId, Updated(state.Elements, element)),
+            },
+            StatedElementUpdatedEvent { Element: { } stated } when state.Elements.ContainsKey(stated.ElementId) => state with
+            {
+                Elements = state.Elements.SetItem(stated.ElementId, Stated(state.Elements, stated)),
+            },
+            InteractiveUsedEvent used when used.ActorId == self && used.Duration > 0 => state with { Use = new CurrentUse(used.ElementId, used.SkillId) },
+            InteractiveUseEndedEvent ended when state.Use == new CurrentUse(ended.ElementId, ended.SkillId) => state with { Use = null },
             MapMovementEvent movement when movement.ActorId == self && movement.Cells.Count > 0 && movement.Cells.All(IsCell) => state with { Path = [.. movement.Cells] },
             MapMovementConfirmResponse when state.IsWalking => state with { Cell = state.Path[^1], Path = [] },
             MapMovementRefusedEvent refused => state with { Cell = MapGeometry.TryGetCell(new MapPoint(refused.X, refused.Y), out var cell) ? cell : state.Cell, Path = [] },
@@ -75,7 +92,38 @@ public static class CharacterEvents
         var self = information.Actors.FirstOrDefault(actor => actor.Id == state.Key.CharacterId);
         var cell = self?.Disposition is { HasCellId: true } disposition && IsCell(disposition.CellId) ? disposition.CellId : state.Cell;
 
-        return state with { SubAreaId = information.SubAreaId, Cell = cell };
+        // The information also lists the neighbouring maps' elements, which cannot be used from here; their updates follow,
+        // which only a known element takes.
+        var elements = information.InteractiveElements.Where(element => element.OnCurrentMap).Aggregate(
+            ImmutableSortedDictionary<int, MapElement>.Empty,
+            (elements, element) => elements.SetItem(element.ElementId, Updated(elements, element)));
+
+        elements = information.StatedElements.Where(stated => stated.OnCurrentMap)
+            .Aggregate(elements, (elements, stated) => elements.SetItem(stated.ElementId, Stated(elements, stated)));
+
+        return state with { SubAreaId = information.SubAreaId, Cell = cell, Elements = elements };
+    }
+
+    private static MapElement Updated(ImmutableSortedDictionary<int, MapElement> elements, InteractiveElement element)
+    {
+        var enabled = element.EnabledSkills.Select(Skill).ToImmutableArray();
+        var disabled = element.DisabledSkills.Select(Skill).ToImmutableArray();
+
+        return elements.TryGetValue(element.ElementId, out var known)
+            ? known with { InteractiveId = element.InteractiveId, EnabledSkills = enabled, DisabledSkills = disabled }
+            : new MapElement(element.ElementId, element.InteractiveId, enabled, disabled);
+    }
+
+    private static MapElement Stated(ImmutableSortedDictionary<int, MapElement> elements, StatedElement stated)
+    {
+        var known = elements.TryGetValue(stated.ElementId, out var element) ? element : new MapElement(stated.ElementId, -1, [], []);
+
+        return known with { Cell = IsCell(stated.CellId) ? stated.CellId : null, State = stated.State };
+    }
+
+    private static ElementSkill Skill(InteractiveSkill skill)
+    {
+        return new ElementSkill(skill.SkillId, skill.InstanceId);
     }
 
     private static ImmutableSortedDictionary<int, InventoryItem> Stacks(IEnumerable<InventoryObject> objects)

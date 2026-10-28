@@ -12,7 +12,7 @@ namespace D3B.Bot.Characters;
 /// </para>
 /// <para>
 /// What the server has not said yet is <see langword="null"/> or empty: the map and cell until the map is named and its
-/// information sent, the inventory until its content is sent.
+/// information sent, with the map's elements, the inventory until its content is sent.
 /// </para>
 /// </remarks>
 public sealed record CharacterState
@@ -41,6 +41,17 @@ public sealed record CharacterState
 
     /// <summary>Gets whether the character walks: the server showed it a path, and has not answered the client's confirmation yet.</summary>
     public bool IsWalking => !Path.IsDefaultOrEmpty;
+
+    /// <summary>Gets the interactive elements of the map, by id, as the server described them; empty until the map's information is sent.</summary>
+    /// <remarks>Only the map's own: the information also lists the neighbouring maps' elements, which cannot be used from it.</remarks>
+    public ImmutableSortedDictionary<int, MapElement> Elements { get; init; } = ImmutableSortedDictionary<int, MapElement>.Empty;
+
+    /// <summary>Gets the use of an element the character is in, such as a harvest, from the server's start to its end.</summary>
+    /// <remarks>A use with no duration, such as a door's, is over as it starts: the character is never in it.</remarks>
+    public CurrentUse? Use { get; init; }
+
+    /// <summary>Gets whether the character uses an element: the server started a use that lasts, and has not ended it yet.</summary>
+    public bool IsUsing => Use is not null;
 
     /// <summary>Gets the stacks the character carries, by their own id.</summary>
     public ImmutableSortedDictionary<int, InventoryItem> Inventory { get; init; } = ImmutableSortedDictionary<int, InventoryItem>.Empty;

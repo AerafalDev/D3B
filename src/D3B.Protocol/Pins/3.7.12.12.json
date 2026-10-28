@@ -21,6 +21,7 @@
     { "readable": "d3b.game.MapChangeRequest", "obfuscated": "joc" },
     { "readable": "d3b.game.InteractiveUseRequest", "obfuscated": "itz" },
     { "readable": "d3b.game.InteractiveUsedEvent", "obfuscated": "itv" },
+    { "readable": "d3b.game.InteractiveUseErrorEvent", "obfuscated": "ity" },
     { "readable": "d3b.game.InteractiveUseEndedEvent", "obfuscated": "itt" },
     { "readable": "d3b.game.InteractiveElementUpdatedEvent", "obfuscated": "itx" },
     { "readable": "d3b.game.StatedElementUpdatedEvent", "obfuscated": "itw" },

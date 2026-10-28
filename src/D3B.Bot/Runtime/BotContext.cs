@@ -49,12 +49,22 @@ public sealed class BotContext
         return _bot.Expect(_behavior, match);
     }
 
-    /// <summary>Sends the game server a request through the game connection the behavior started on (D60).</summary>
+    /// <summary>Sends the game server a request through the game connection the behavior started on (D60), once the client drew the map.</summary>
     /// <param name="request">The readable request, whole.</param>
     /// <param name="cancellationToken">Stops waiting; a request not gone yet then never goes.</param>
     /// <returns>A task that completes once the request went.</returns>
-    public Task SendAsync(IMessage request, CancellationToken cancellationToken)
+    /// <remarks>
+    /// The client follows what the server shows it only once it has drawn the map, half a second after the server placed
+    /// the character on it: a walk shown 1 or 50 ms after was never confirmed, and a door used before the client asked
+    /// what is on the new map left it no longer confirming walks (D73, D77). A request sent sooner waits until then.
+    /// </remarks>
+    public async Task SendAsync(IMessage request, CancellationToken cancellationToken)
     {
-        return _behavior.Session.SendAsync(request, cancellationToken);
+        var wait = _bot.DrawnAt - _bot.Time.GetUtcNow();
+
+        if (wait > TimeSpan.Zero)
+            await Task.Delay(wait, _bot.Time, cancellationToken).ConfigureAwait(false);
+
+        await _behavior.Session.SendAsync(request, cancellationToken).ConfigureAwait(false);
     }
 }
