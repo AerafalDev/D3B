@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 
-namespace D3B.Host.Tests;
+namespace D3B.Bot.Tests.Hosting;
 
 /// <summary>Stops the host as soon as it has started, so that a test can run it to its end.</summary>
 internal sealed class StopOnceStarted : IHostedService
