@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Network;
+using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Data.World;
 using D3B.Engine.World;
@@ -29,6 +31,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
 {
     private readonly GameMaps _maps;
     private readonly Lazy<WorldPathfinder> _world;
+    private readonly Lazy<BankDirectory> _banks;
     private readonly TimeProvider _time;
     private readonly ILoggerFactory _logs;
     private readonly ILogger _log;
@@ -45,17 +48,22 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     /// <summary>Initializes a new instance of the <see cref="Bots"/> class.</summary>
     /// <param name="maps">The maps of the installed build's pack, which behaviors walk.</param>
     /// <param name="world">The world of that pack, which behaviors travel: its graph is read when a bot first travels.</param>
+    /// <param name="tables">The game tables of that pack: its banks are read when a bot first banks.</param>
     /// <param name="time">The clock every bot's delays go through.</param>
     /// <param name="logs">The host's logs.</param>
-    public Bots(GameMaps maps, GameWorld world, TimeProvider time, ILoggerFactory logs)
+    public Bots(GameMaps maps, GameWorld world, GameTables tables, TimeProvider time, ILoggerFactory logs)
     {
         ArgumentNullException.ThrowIfNull(maps);
         ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(tables);
         ArgumentNullException.ThrowIfNull(time);
         ArgumentNullException.ThrowIfNull(logs);
 
         _maps = maps;
         _world = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas), LazyThreadSafetyMode.PublicationOnly);
+
+        // One per host, so that what a bot learns of the insides serves every other (D79).
+        _banks = new Lazy<BankDirectory>(() => new BankDirectory(tables.Banks, world.Graph, world.Atlas), LazyThreadSafetyMode.ExecutionAndPublication);
         _time = time;
         _logs = logs;
         _log = logs.CreateLogger<Bots>();
@@ -118,7 +126,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         {
             if (!_bots.TryGetValue(key, out bot))
             {
-                bot = new BotActor(state, _maps, _world, _time, _logs.CreateLogger<BotActor>());
+                bot = new BotActor(state, _maps, _world, _banks, _time, _logs.CreateLogger<BotActor>());
                 _bots[key] = bot;
                 made = true;
             }

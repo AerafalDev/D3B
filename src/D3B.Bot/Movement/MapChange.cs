@@ -64,7 +64,7 @@ public static class MapChange
         var state = context.State;
         var world = context.World;
 
-        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking || state.IsUsing)
+        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking || state.IsUsing || state.IsInDialog)
             return MapChangeOutcome.Busy;
 
         if (!context.Maps.TryGet(mapId, out var map) || !world.TryGetVertex(map, cell, out var vertex) || vertex != step.From

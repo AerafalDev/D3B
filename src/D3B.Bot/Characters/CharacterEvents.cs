@@ -26,6 +26,11 @@ namespace D3B.Bot.Characters;
 /// information also lists the elements of the neighbouring maps, marked so, whose updates follow: the state keeps the
 /// map's own.
 /// </para>
+/// <para>
+/// The bank, measured (client.md): the server opens the NPC's dialog, then sends its question and the replies it offers.
+/// The banker's reply ends the dialog and opens the exchange with the character's storage, with its kamas, in the same
+/// millisecond; leaving ends the exchange. A dialog and an exchange end with the map too.
+/// </para>
 /// </remarks>
 public static class CharacterEvents
 {
@@ -57,7 +62,18 @@ public static class CharacterEvents
 
         return message switch
         {
-            MapCurrentEvent current => state with { MapId = current.MapId, SubAreaId = null, Cell = null, Path = [], Elements = ImmutableSortedDictionary<int, MapElement>.Empty, Use = null },
+            MapCurrentEvent current => state with
+            {
+                MapId = current.MapId,
+                SubAreaId = null,
+                Cell = null,
+                Path = [],
+                Elements = ImmutableSortedDictionary<int, MapElement>.Empty,
+                Use = null,
+                Npcs = ImmutableSortedDictionary<int, MapNpc>.Empty,
+                Dialog = null,
+                Storage = null,
+            },
             MapInformationEvent information when information.MapId == state.MapId => Placed(state, information),
             InteractiveElementUpdatedEvent { Element: { } element } when state.Elements.ContainsKey(element.ElementId) => state with
             {
@@ -72,6 +88,16 @@ public static class CharacterEvents
             MapMovementEvent movement when movement.ActorId == self && movement.Cells.Count > 0 && movement.Cells.All(IsCell) => state with { Path = [.. movement.Cells] },
             MapMovementConfirmResponse when state.IsWalking => state with { Cell = state.Path[^1], Path = [] },
             MapMovementRefusedEvent refused => state with { Cell = MapGeometry.TryGetCell(new MapPoint(refused.X, refused.Y), out var cell) ? cell : state.Cell, Path = [] },
+            NpcDialogCreationEvent creation when creation.MapId == state.MapId => state with { Dialog = new NpcDialog(creation.NpcActorId) },
+            NpcDialogQuestionEvent question when state.Dialog is { } dialog => state with
+            {
+                Dialog = dialog with { MessageId = question.MessageId, Replies = [.. question.Replies.Select(reply => reply.ReplyId)] },
+            },
+            DialogLeaveEvent => state with { Dialog = null },
+            ExchangeStartedWithStorageEvent { Type: ExchangeType.Storage } => state with { Dialog = null, Storage = new OpenStorage(0) },
+            StorageContentEvent content when state.Storage is { } storage => state with { Storage = storage with { Kamas = content.Kamas } },
+            StorageKamasUpdateEvent kamas when state.Storage is { } storage => state with { Storage = storage with { Kamas = kamas.Kamas } },
+            ExchangeLeaveEvent => state with { Storage = null },
             InventoryContentEvent content => state with { Inventory = Stacks(content.Objects), Kamas = content.Kamas },
             ObjectAddedEvent { Object: { Item: not null } added } => state with { Inventory = state.Inventory.SetItem(added.Item.Uid, Stack(added)) },
             ObjectQuantityEvent { Object: { } changed } when state.Inventory.TryGetValue(changed.Uid, out var stack) => state with
@@ -101,7 +127,11 @@ public static class CharacterEvents
         elements = information.StatedElements.Where(stated => stated.OnCurrentMap)
             .Aggregate(elements, (elements, stated) => elements.SetItem(stated.ElementId, Stated(elements, stated)));
 
-        return state with { SubAreaId = information.SubAreaId, Cell = cell, Elements = elements };
+        var npcs = information.Actors.Where(actor => actor.Id is < 0 and >= int.MinValue && actor.Information?.Roleplay?.Npc is not null)
+            .Select(actor => new MapNpc((int)actor.Id, actor.Information.Roleplay.Npc.NpcId, actor.Disposition is { HasCellId: true } at && IsCell(at.CellId) ? at.CellId : null))
+            .ToImmutableSortedDictionary(npc => npc.ActorId, npc => npc);
+
+        return state with { SubAreaId = information.SubAreaId, Cell = cell, Elements = elements, Npcs = npcs };
     }
 
     private static MapElement Updated(ImmutableSortedDictionary<int, MapElement> elements, InteractiveElement element)

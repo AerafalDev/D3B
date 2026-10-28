@@ -8,8 +8,8 @@ on running clients, then on its bytes through D3B's relay ([Connection](#connect
 `scripts/mapping.cs` ([mapped](#the-connection-phase-mapped)), then decoded through it on 2026-10-28
 ([decoded](#the-connection-phase-decoded)), and its game the same day ([the game, mapped](#the-game-mapped)), then
 acted on through it ([the game, acted on](#the-game-acted-on)), walked by a bot ([the game, walked](#the-game-walked)),
-travelled from map to map ([the game, between maps](#the-game-between-maps)), and its elements used
-([the game, used](#the-game-used)).
+travelled from map to map ([the game, between maps](#the-game-between-maps)), its elements used
+([the game, used](#the-game-used)), and its bank used ([the game, banked](#the-game-banked)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -303,6 +303,12 @@ The client marks no bank and no banker as such:
 
 The extractor finds banks by graphic 401 and bankers by the French text, and fails when it finds none, or a bank off
 the graph, or a banker who cannot be talked to (D29).
+
+**Insides**, measured on the world graph for session 4d (D79): from the map in front of each bank, doors of skill 184
+lead to 1 to 5 maps, 16 in all at the bank's coordinates on no world map, and 2 to other maps of the world, both from
+one bank. 7 banks have one inside a door without criterion leads into, 3 have two; quests close the doors of 3 more: at
+Astrub, one door element leads to the bank and to such an inside, the criterion choosing. The bank of Astrub's inside
+holds two bankers, NPCs 520 and 522; the server places them, with no NPC in the client's data for that map.
 
 ## Texts
 
@@ -830,6 +836,58 @@ the map action.
 
 The 13 game connections decoded through mapping 4: of 6,483 frames, 1,012 understood whole, 1,284 more read, and 4,187
 carrying one of 123 messages the readable protocol lacks; none misread.
+
+### The game, banked
+
+Measured on 2026-10-28 for session 4d (D79 to D82): the captures of sessions 3g and 3h, then two game connections of a
+client of 3.7.12.12 in game through the host, the player's hands off but where told, 24 and 10 minutes, a measuring
+plugin, never committed, sending the requests one by one, then the final behavior. By structure, timing, and values
+compared on the machine with the build's pack, never written down. The character rode a mount.
+
+**Opening.** The action on the banker, NPC action 3, naming the map and the NPC's actor id: the dialog, then its
+question with two replies, in the same millisecond, 28 ms later, the character 10 cells from the banker, every time. One
+reply is the banker's in the pack; the other asks a question offering none, the dialog going on. The banker's reply: the
+dialog over, a text, the character's kamas less as many as the storage holds stacks, the exchange with the storage, of
+the type 15 and as many stacks as an `int32` holds, and its content, all within 2 ms.
+
+**Putting in.** A request listing stacks: the inventory's stacks deleted, those of the storage they joined, and the
+weight, in one millisecond, 28 ms later. Of a list of two stacks, both; of a resource and a quest's ticket, the resource
+alone; of the ticket alone, nothing. Kamas: the storage's kamas then the character's when put in, the reverse when taken
+out. The stacks' own ids change from one game connection to the next.
+
+**Refusals**, each 28 ms after its request when there is one:
+
+| Request | When | The server's answer |
+| --- | --- | --- |
+| Action on an NPC | The map lacks it, or a dialog or the bank is open | One empty event, named `NpcActionErrorEvent` |
+| Action on an NPC | Naming another map than the character's | Nothing |
+| Action 1 on the banker | | An exchange's error, not named |
+| Reply | Not offered | The question again, and a text of the error kind |
+| Reply, stacks, kamas | Outside the dialog or the exchange | Nothing |
+| Stacks | None the server takes, or none the inventory holds | Nothing |
+| Kamas | None, more than the character or the storage holds | Nothing |
+| Walk | During the dialog or the exchange | The refusal of a walk, naming the character's cell; the dialog or exchange goes on |
+| Leaving | Outside a dialog | Nothing |
+
+**Leaving.** D3B's request to leave: the exchange over, 28 ms later, then the client's two requests to leave by itself,
+1 to 178 ms after, six times, the server answering neither; none once, after a bank D3B opened and left in 161 ms. The
+player closing the banker's dialog or the bank: the client's request while it is open, then the end, 28 to 60 ms later,
+and nothing more.
+
+**The bot banking.** From inside the bank: two stacks and one kama put in and the bank left in 161 ms. From two maps
+away: the journey through the door, the action on the banker 529 ms after the inside's information, one kama put in, and
+the bank left, in 3.9 s. The player closing the bank the bot had opened and kept open interrupted the bot, which paused.
+
+**A walk the client did not follow.** On the second connection, the bot's walk from the bank's inside onto its map
+action's cell, 81 s after the inside's information, was walked by the server and never shown nor confirmed by the
+client; the player's next path was refused, naming the walk's end, and the client then walked from there. The next such
+walk, after the player's, was not followed either; a walk to another cell of the inside was, and three minutes later the
+same walk out of the bank was. D3B's walks out of the bank were followed five times in session 4c, but once after a door
+used too soon (D77). The cause is not found: the journey fails, and the state keeps the walk until the server's next
+refusal.
+
+The 15 game connections decoded through mapping 5: of 8,851 frames, 1,226 understood whole, 1,615 more read, and 6,010
+carrying one of 175 messages the readable protocol lacks; none misread.
 
 ## Protocol code
 

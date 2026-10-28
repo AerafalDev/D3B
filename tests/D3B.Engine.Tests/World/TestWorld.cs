@@ -13,11 +13,21 @@ internal sealed class TestWorld
     private readonly List<(long Map, int Zone, long ToMap, int ToZone, WorldTransition Transition)> _transitions = [];
     private readonly List<string> _criteria = [];
     private readonly SortedDictionary<long, int> _subAreas = [];
+    private readonly Dictionary<long, (short X, short Y, sbyte WorldMap)> _places = [];
 
     /// <summary>Adds a map, in a sub-area accounts without a subscription enter unless told otherwise.</summary>
     public TestWorld Map(long map, int subAreaId = SubAreaId)
     {
         _subAreas[map] = subAreaId;
+
+        return this;
+    }
+
+    /// <summary>Places a map at coordinates, on a world map or on none, -1, as an inside; maps are at 0,0 on world map 1 unless told.</summary>
+    public TestWorld Place(long map, short x, short y, sbyte worldMap = 1)
+    {
+        _subAreas.TryAdd(map, SubAreaId);
+        _places[map] = (x, y, worldMap);
 
         return this;
     }
@@ -69,7 +79,7 @@ internal sealed class TestWorld
     public WorldAtlas Atlas()
     {
         var maps = Graph().Vertices.ToArray().Select(vertex => vertex.MapId).Distinct().Order();
-        var positions = maps.Select(map => new MapPosition(map, 0, 0, _subAreas.GetValueOrDefault(map, SubAreaId), 1, 0, 0)).ToArray();
+        var positions = maps.Select(Position).ToArray();
         SubArea[] subAreas =
         [
             new(SubAreaId, 0, AreaId, 10, SubArea.NoZaap, true, 0, 0),
@@ -82,6 +92,13 @@ internal sealed class TestWorld
     public WorldPathfinder Pathfinder()
     {
         return new WorldPathfinder(Graph(), Atlas());
+    }
+
+    private MapPosition Position(long map)
+    {
+        var (x, y, worldMap) = _places.TryGetValue(map, out var place) ? place : ((short)0, (short)0, (sbyte)1);
+
+        return new MapPosition(map, x, y, _subAreas.GetValueOrDefault(map, SubAreaId), worldMap, 0, 0);
     }
 
     private int Criterion(string? criterion)

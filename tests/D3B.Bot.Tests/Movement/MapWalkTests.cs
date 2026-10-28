@@ -183,6 +183,26 @@ public sealed class MapWalkTests
     }
 
     [Fact]
+    public async Task ACharacterInADialogIsBusy()
+    {
+        // The server refuses a walk during the banker's dialog and during the bank's exchange, measured.
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(396, TestPlay.InsideMapId);
+
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId });
+        await bot.ProcessedAsync();
+
+        Assert.Equal(WalkOutcome.Busy, await bot.WalkAsync(368, TestContext.Current.CancellationToken));
+
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage });
+        await bot.ProcessedAsync();
+
+        Assert.Equal(WalkOutcome.Busy, await bot.WalkAsync(368, TestContext.Current.CancellationToken));
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
     public async Task ThePlayerGivingANewPathInterruptsTheWalkAndPausesTheBot()
     {
         await using var play = new TestPlay();

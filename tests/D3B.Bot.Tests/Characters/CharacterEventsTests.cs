@@ -102,18 +102,24 @@ public sealed class CharacterEventsTests
               },
               "Use": null,
               "IsUsing": false,
+              "Npcs": {},
+              "Dialog": null,
+              "Storage": null,
+              "IsInDialog": false,
               "Inventory": {
                 "12": {
                   "Uid": 12,
                   "ItemId": 303,
                   "Quantity": 40,
-                  "Position": 63
+                  "Position": 63,
+                  "IsWorn": false
                 },
                 "30": {
                   "Uid": 30,
                   "ItemId": 2400,
                   "Quantity": 1,
-                  "Position": 1
+                  "Position": 1,
+                  "IsWorn": true
                 }
               },
               "Kamas": 12500,
@@ -305,6 +311,56 @@ public sealed class CharacterEventsTests
 
         Assert.False(Apply(standing, Server(new InteractiveUsedEvent { ActorId = 42, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 })).IsUsing);
         Assert.False(Apply(standing, Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.DoorElementId, SkillId = 184 })).IsUsing);
+    }
+
+    [Fact]
+    public void TheMapsNpcsAreItsNonPlayerActors()
+    {
+        var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(TestPlay.Information(396, TestPlay.InsideMapId)));
+
+        Assert.Equal([new MapNpc(TestPlay.BankerActorId, TestPlay.BankerNpcId, 259), new MapNpc(-20_000, 1_088, 302)], inside.Npcs.Values);
+        Assert.Empty(Apply(inside, Server(new MapCurrentEvent { MapId = TestPlay.MapId })).Npcs);
+    }
+
+    [Fact]
+    public void TheBankersDialogThenTheBanksExchangeFollowTheServerUntilLeft()
+    {
+        var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(TestPlay.Information(396, TestPlay.InsideMapId)));
+        var asked = Apply(
+            inside,
+            Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId }),
+            Server(new NpcDialogQuestionEvent { MessageId = 48_366, Replies = { new NpcReply { ReplyId = TestPlay.ChestReplyId }, new NpcReply { ReplyId = TestPlay.OtherReplyId } } }));
+
+        Assert.Equal(TestPlay.BankerActorId, asked.Dialog?.NpcActorId);
+        Assert.Equal(48_366, asked.Dialog?.MessageId);
+        Assert.Equal([TestPlay.ChestReplyId, TestPlay.OtherReplyId], asked.Dialog?.Replies);
+        Assert.True(asked.IsInDialog);
+
+        // The reply ends the dialog and opens the bank in the same millisecond.
+        var open = Apply(
+            asked,
+            Server(new DialogLeaveEvent { Type = DialogType.Npc }),
+            Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage, MaxSlots = int.MaxValue }),
+            Server(new StorageContentEvent { Kamas = 5 }));
+
+        Assert.Null(open.Dialog);
+        Assert.Equal(new OpenStorage(5), open.Storage);
+        Assert.Equal(new OpenStorage(6), Apply(open, Server(new StorageKamasUpdateEvent { Kamas = 6 })).Storage);
+
+        // The client's request to leave changes nothing: the server's end does.
+        Assert.Same(open, Apply(open, Client(new DialogLeaveRequest())));
+        Assert.False(Apply(open, Server(new ExchangeLeaveEvent { Type = DialogType.Storage })).IsInDialog);
+        Assert.False(Apply(asked, Server(new MapCurrentEvent { MapId = TestPlay.MapId })).IsInDialog);
+    }
+
+    [Fact]
+    public void AnotherExchangeOrAnotherMapsDialogIsNotTheBanks()
+    {
+        var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(TestPlay.Information(396, TestPlay.InsideMapId)));
+
+        Assert.False(Apply(inside, Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Value1 })).IsInDialog);
+        Assert.False(Apply(inside, Server(new NpcDialogCreationEvent { MapId = TestPlay.MapId, NpcActorId = -1 })).IsInDialog);
+        Assert.Null(Apply(inside, Server(new NpcDialogQuestionEvent { MessageId = 1 })).Dialog);
     }
 
     [Fact]

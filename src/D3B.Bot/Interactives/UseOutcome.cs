@@ -6,7 +6,7 @@ public enum UseOutcome
     /// <summary>The use is over: the server ended it after its duration, or started one with none, such as a door's.</summary>
     Used,
 
-    /// <summary>The character walks or uses an element already, or where it stands is not known yet: nothing was sent.</summary>
+    /// <summary>The character walks or uses an element already, is in a dialog or an exchange, or where it stands is not known yet: nothing was sent.</summary>
     Busy,
 
     /// <summary>The server lists no such element on the map, or the element does not offer the skill now, as a resource being harvested or harvested: nothing was sent.</summary>

@@ -57,7 +57,7 @@ public static class ElementUse
 
         var state = context.State;
 
-        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking || state.IsUsing)
+        if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsWalking || state.IsUsing || state.IsInDialog)
             return UseOutcome.Busy;
 
         if (!state.Elements.TryGetValue(elementId, out var element) || !element.TryGetEnabled(skillId, out _))

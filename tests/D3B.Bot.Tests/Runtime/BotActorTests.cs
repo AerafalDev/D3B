@@ -142,6 +142,45 @@ public sealed class BotActorTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ThePlayerLeavingTheBankInterruptsTheBot()
+    {
+        var (connection, bot) = await _play.EnterAsync(396, TestPlay.InsideMapId);
+
+        connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage });
+
+        var wait = new KamasWait();
+        var behavior = bot.RunAsync(wait.RunAsync, TestContext.Current.CancellationToken);
+
+        await wait.ExpectingAsync(bot);
+        connection.Client(new DialogLeaveRequest());
+
+        Assert.Equal(Interruption.Player, (await Assert.ThrowsAsync<BotInterruptedException>(() => behavior)).Reason);
+        Assert.True(bot.IsPaused);
+    }
+
+    [Fact]
+    public async Task TheClientLeavingByItselfOnceTheServerEndedTheBankDoesNotInterruptTheBot()
+    {
+        var (connection, bot) = await _play.EnterAsync(396, TestPlay.InsideMapId);
+
+        connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage });
+
+        var wait = new KamasWait();
+        var behavior = bot.RunAsync(wait.RunAsync, TestContext.Current.CancellationToken);
+
+        await wait.ExpectingAsync(bot);
+
+        // The relay shows the server's end before the client gets it, so the bot's loop sees it before the client's requests.
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+        connection.Client(new DialogLeaveRequest());
+        connection.Client(new DialogLeaveRequest());
+        connection.Server(new KamasUpdateEvent { Kamas = 4 });
+
+        Assert.Equal(4, await behavior);
+        Assert.False(bot.IsPaused);
+    }
+
+    [Fact]
     public async Task ThePlayerActingWhileTheBotIdlesDoesNotPauseIt()
     {
         var (connection, bot) = await _play.EnterAsync(300);

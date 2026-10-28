@@ -1,25 +1,27 @@
 # Architecture
 
-Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is
-in [roadmap.md](roadmap.md). Built so far: the solution, the module and plugin model in `D3B.Core`, and a host that
-builds its modules, starts and stops (step 1); the data pack format in `D3B.Data`, the tools that inspect the client,
-extract its maps, world graph and game tables with the texts they name, and publish a build's pack, and the data module,
-whose pack the host finds or downloads before it starts (step 2); the network module, whose relay takes each client's
+Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is in
+[roadmap.md](roadmap.md). Built so far: the solution, the module and plugin model in `D3B.Core`, and a host that builds
+its modules, starts and stops (step 1); the data pack format in `D3B.Data`, the tools that inspect the client, extract
+its maps, world graph and game tables with the texts they name, and publish a build's pack, and the data module, whose
+pack the host finds or downloads before it starts (step 2); the network module, whose relay takes each client's
 connection phase through D3B, with its framing measured and its captures (step 3, session 3b); the tool writing each
 build's obfuscated protocol schema, read from the client's code (step 3, session 3c); the readable protocol of the
-connection phase, and the tool matching it with a build's schema into the build's mapping, audited (step 3, session
-3d); the translation of the connection phase, the version gate, the release of schemas and mappings, and the relay
-decoding the connection phase (step 3, session 3e); the server selection's answer rewritten, and the game connection
-matched with its server by its ticket, relayed and captured apart (step 3, session 3f); the readable protocol of the
-game's first messages, its matching with pins the tool proposes, and the translation of game frames through their type
-URL (step 3, session 3g); the game connection read through the translation for the modules that observe it, and D3B's
-requests sent to the game server between the client's frames, recorded in the captures and replayed in tests (step 3,
-session 3h); the bots' run time, one actor per character a game connection chose, fed by the game it observes, with the
-character's state and its snapshots, the player taking the character over, and the first behavior, walking on a map
-along cell paths found in `D3B.Engine` (step 4, session 4a); paths through the world in `D3B.Engine`, their criteria
-answered on three values, the account's subscription, and the behaviors changing maps and travelling from map to map
-(step 4, session 4b); the map's elements in the state, using them until the use is over, doors in the path through the
-world, and requests held until the client drew the map (step 4, session 4c). Everything else below is the target.
+connection phase, and the tool matching it with a build's schema into the build's mapping, audited (step 3, session 3d);
+the translation of the connection phase, the version gate, the release of schemas and mappings, and the relay decoding
+the connection phase (step 3, session 3e); the server selection's answer rewritten, and the game connection matched with
+its server by its ticket, relayed and captured apart (step 3, session 3f); the readable protocol of the game's first
+messages, its matching with pins the tool proposes, and the translation of game frames through their type URL (step 3,
+session 3g); the game connection read through the translation for the modules that observe it, and D3B's requests sent
+to the game server between the client's frames, recorded in the captures and replayed in tests (step 3, session 3h); the
+bots' run time, one actor per character a game connection chose, fed by the game it observes, with the character's state
+and its snapshots, the player taking the character over, and the first behavior, walking on a map along cell paths found
+in `D3B.Engine` (step 4, session 4a); paths through the world in `D3B.Engine`, their criteria answered on three values,
+the account's subscription, and the behaviors changing maps and travelling from map to map (step 4, session 4b); the
+map's elements in the state, using them until the use is over, doors in the path through the world, and requests held
+until the client drew the map (step 4, session 4c); the map's NPCs, dialogs and the bank's exchange in the state, the
+journey to a banker, banking, and the player's leaving told from the client's (step 4, session 4d). Everything else
+below is the target.
 
 ## Overview
 
@@ -92,8 +94,8 @@ Built at step 1, in `D3B.Core` (D20, D21):
 
 Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharing with the player and the first
 behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
-map's elements, using them, doors and the drawing of the map. The bank is session 4d's; activities, recovery and
-reconnection are 4f's (D64).
+map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank. Zaaps and havens are
+session 4e's; activities, recovery and reconnection are 4f's (D64).
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -104,16 +106,18 @@ reconnection are 4f's (D64).
   state and tries it on the behaviors' expectations. Commands from the app come at step 5.
 - **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable snapshot of what the server said of the
   character, its name and level, map, sub-area, cell and the path it walks, the map's own interactive elements and the
-  use the character is in (D75), inventory, kamas, weight and professions, and when its account's subscription ends,
-  which the connection phase's identification said (D72).
+  use the character is in (D75), the map's NPCs, the dialog with one and the exchange with the storage (D80), inventory,
+  kamas, weight and professions, and when its account's subscription ends, which the connection phase's identification
+  said (D72).
   `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
-- **Behaviors** are async methods given a `BotContext`, the state, the pack's maps and world paths, the clock and the
-  game connection to send through, and run one at a time by `BotActor.RunAsync`. A request waits until the client drew
-  the map, half a second after the server placed the character (D77). A behavior expects its answer before it sends its
-  request (`Expect`), so the loop sees the expectation before any answer. An interruption cancels it, off the loop: the
-  player acting, the connection closing, the host stopping (`BotInterruptedException`).
+- **Behaviors** are async methods given a `BotContext`, the state, the pack's maps, world paths and banks, the clock and
+  the game connection to send through, and run one at a time by `BotActor.RunAsync`. A request waits until the client
+  drew the map, half a second after the server placed the character (D77). A behavior expects its answer before it sends
+  its request (`Expect`), so the loop sees the expectation before any answer. An interruption cancels it, off the loop:
+  the player acting, the connection closing, the host stopping (`BotInterruptedException`).
 - **The player wins** (D66): a request the player sends that acts on the character (`PlayerActions`) interrupts the bot's
-  behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's.
+  behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's:
+  a request to leave is the player's only while the character is in a dialog or an exchange (D81).
 - **Walking on a map** (D69): `MapWalk`, in `D3B.Bot.Movement`, finds the path in the pack's cells, sends its turning
   points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
   ends it too, and the character walking already makes it busy.
@@ -128,6 +132,11 @@ reconnection are 4f's (D64).
 - **Travelling** (D74): `WorldTravel` finds the path to the maps sought, follows its first step, and finds it again from
   where the character stands, until it arrives. A change that fails leaves its transition out of the journey, which
   fails after three, or when it goes on too long. The criteria are answered on the state (`WorldTravel.FactsOf`).
+- **Banking** (D79, D80): `Banking`, in `D3B.Bot.Banks`, goes where a banker stands, the nearest bank's inside still
+  sought, talks to him, gives the reply of his the question offers, puts the stacks asked for in by one request and the
+  kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
+  (`WorldInsides`), the bankers and their replies, and the insides the server showed holding no banker. Walking, using,
+  changing maps and travelling answer `Busy` during a dialog or an exchange, which the server refuses a walk during.
 - Every delay goes through `TimeProvider`.
 - Later in step 4: an interruption (a fight, a disconnection, full pods) cancels the current behavior, a recovery step
   runs, then the activity resumes or picks the next one; when the client reconnects, the activity resumes where its state
@@ -192,13 +201,14 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   `(d3b.readable.partial)` declares only the fields bot code reads; a request is whole.
 - The mapping, built in session 3d (D43 to D45), in `D3B.Protocol.Mapping`. `scripts/mapping.cs` loads the build's
   schema (`ProtocolSchema`) and pins (`src/D3B.Protocol/Pins/<version>.json`), measures anchors in the build's captures
-  (`CaptureAnchors`, by structure and type URLs only, the connection phase's in the captures' directory and the game's in
-  its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
+  (`CaptureAnchors`, by structure and type URLs only, the connection phase's in the captures' directory and the game's
+  in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-2.binpb` (`MappingFile`), only when it holds. For what is left open it lists
-  the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
-  readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that digest.
+  and writes it beside the pack, `mapping-5.binpb` (`MappingFile`, D82), only when it holds. For what is left open it
+  lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
+  readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
+  digest.
 - The per-build translation, built in session 3e for the connection phase (D47): `ProtocolTranslation`, in
   `D3B.Protocol.Translation`, exists only for a build whose mapping holds the contract and pairs every readable field and
   value with its own number, since the readable classes read the wire as it is. A frame is decoded once and understood
@@ -280,7 +290,7 @@ Built at step 2 (D24 to D33):
 ## Engine
 
 Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cells and the world. Built in session 4a
-(D68), 4b (D71, D73) and 4c (D75, D76):
+(D68), 4b (D71, D73), 4c (D75, D76) and 4d (D79):
 
 - `MapGeometry`, in `D3B.Engine.Maps`: 14 columns of 40 staggered rows, the eight directions between neighbours, the
   coordinates the server names a cell by (`MapPoint`), measured on the captures, and the distance between two cells, the
@@ -292,6 +302,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   points a request names. Nothing is kept between calls.
 - `Criterion`, in `D3B.Engine.Criteria`: a criterion of the client's, read once into a tree and answered on three values
   from `CriterionFacts`, what the bot knows; a code it does not know is unknown.
+- `WorldInsides`, in `D3B.Engine.World`: the maps a map's doors lead into at its coordinates on no world map, such as a
+  bank's insides (D79).
 - `WorldPathfinder`, in `D3B.Engine.World`: Dijkstra's over the world graph's vertices, a zone of a map each, through
   scrolls, scrolls with an action, map actions and doors whose criteria are met (`WorldPathRules`), each change costing
   the same, to the nearest of several maps; sub-areas closed to accounts without a subscription are entered by
@@ -314,8 +326,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay.
   Decoded frames are compared with the messages a test built (D49); bot states with snapshots the test holds, serialized
   as indented JSON (D70).
-- Bots are tested through game connections driven as the relay shows them, on a pack of four maps, the world between
-  them, a door and a tree, with the bots' loop waited for and the clock moved (D67).
+- Bots are tested through game connections driven as the relay shows them, on a pack of five maps, the world between
+  them, a door leading into two insides, a tree and a bank, with the bots' loop waited for and the clock moved (D67).
 - Replays with injection (D63): a game session a test built is replayed through the relay, read by a game session whose
   observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
 - Time is controlled through `FakeTimeProvider`.
