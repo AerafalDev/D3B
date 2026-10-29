@@ -3500,7 +3500,7 @@ Builds D128.*
   maps it describes, some drawn with a resource's graphic elsewhere.
 - **Where it is kept**: D3B's database, a table `Graphics`, its skills as JSON (`GraphicRecorder`), read before the host
   starts, written as the bots learn; from one run to the next, and from one client build to the next, a graphic being an
-  asset of the client; a contradiction only adds a skill.
+  asset of the client; a contradiction only adds a skill. Whether a client update renumbers graphics is Q14's.
 - **What a tour does with it** (`HarvestZone.Foresee`, `HarvestTour`): a map never seen is probable when one of its
   graphics offers a skill the zone uses, without a resource when every one is known and none does, a map without elements
   included, and unknown otherwise; what a bot saw of a map wins. A tour goes first to the probable maps, the nearest
@@ -3586,3 +3586,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
+| Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
