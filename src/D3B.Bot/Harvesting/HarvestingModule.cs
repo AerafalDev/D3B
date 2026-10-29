@@ -1,7 +1,9 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Interactives;
+using D3B.Bot.Network;
 using D3B.Bot.Runtime;
 using D3B.Core.Modules;
+using D3B.Data;
 using D3B.Data.Packs;
 using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,10 @@ public sealed class HarvestingModule : IModule
         services.TryAddSingleton<GraphicSkills>();
         services.TryAddSingleton(services => new GraphicPlaces(services.GetRequiredService<GamePack>(), services.GetRequiredService<GameWorld>()));
         services.AddSingleton<HarvestSightings>();
+
+        // Whatever the bots do, every map they are on teaches how long its resources take to grow back (D145).
+        services.TryAddSingleton<Regrowths>();
+        services.AddSingleton<IGameObserver>(services => new RegrowthLearner(services.GetRequiredService<Regrowths>(), services.GetRequiredService<GameTables>(), services.GetRequiredService<TimeProvider>()));
         services.AddSingleton<HarvestPreviews>();
         services.AddActivity<HarvestActivity, HarvestSettings>(ActivityId, HarvestTexts.Text("Name"), settings =>
         {

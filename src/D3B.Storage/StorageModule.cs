@@ -1,3 +1,4 @@
+using D3B.Bot.Harvesting;
 using D3B.Bot.Hosting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Network;
@@ -5,6 +6,7 @@ using D3B.Bot.Runtime;
 using D3B.Core.Modules;
 using D3B.Storage.Accounts;
 using D3B.Storage.Graphics;
+using D3B.Storage.Harvests;
 using D3B.Storage.Profiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +25,8 @@ namespace D3B.Storage;
 /// It registers the <see cref="AccountBook"/>, fed by the game connections it observes, the <see cref="ProfileBook"/>,
 /// the <see cref="ProfileStarter"/> that starts a profile on a bot, and starts a character's profile on its connection,
 /// when asked. Activities do not see it: profiles are D3B's, and only name the activities modules and scripts register.
-/// The <see cref="GraphicRecorder"/> keeps what the bots learn of the graphics, which they share as <see cref="GraphicSkills"/>.
+/// The <see cref="GraphicRecorder"/> keeps what the bots learn of the graphics, which they share as <see cref="GraphicSkills"/>,
+/// and the <see cref="RegrowthRecorder"/> how long the resources take to grow back, as <see cref="Regrowths"/> (D145).
 /// </para>
 /// </remarks>
 public sealed class StorageModule : IModule
@@ -38,6 +41,9 @@ public sealed class StorageModule : IModule
         services.TryAddSingleton<GraphicSkills>();
         services.AddSingleton<GraphicRecorder>();
         services.AddHostedService(provider => provider.GetRequiredService<GraphicRecorder>());
+        services.TryAddSingleton<Regrowths>();
+        services.AddSingleton<RegrowthRecorder>();
+        services.AddHostedService(provider => provider.GetRequiredService<RegrowthRecorder>());
         services.AddSingleton<AccountRecorder>();
         services.AddSingleton<IGameObserver>(provider => provider.GetRequiredService<AccountRecorder>());
         services.AddHostedService(provider => provider.GetRequiredService<AccountRecorder>());

@@ -37,6 +37,6 @@ public sealed class GraphicRecorderTests : IDisposable
         Assert.Equal([124, 125], fishing.Order());
         Assert.True(known.TryGet(3_518, out var door));
         Assert.Empty(door);
-        Assert.Contains(next.Log.GetSnapshot(), record => record.Message.EndsWith(", 2 graphics learned", StringComparison.Ordinal));
+        Assert.Contains(next.Log.GetSnapshot(), record => record.Message.Contains(", 2 graphics learned,", StringComparison.Ordinal));
     }
 }

@@ -26,7 +26,18 @@ public sealed class HarvestSightings
     {
         ArgumentNullException.ThrowIfNull(resources);
 
-        _maps[mapId] = new MapSighting(resources.ToFrozenSet(), at);
+        _maps[mapId] = new MapSighting(resources.ToFrozenSet(), at, []);
+    }
+
+    /// <summary>Remembers what a map holds, each of its elements as it was, which says what still grows back there (D145).</summary>
+    /// <param name="mapId">The map.</param>
+    /// <param name="elements">Its elements that gather a resource.</param>
+    /// <param name="at">When, by the bot's clock.</param>
+    public void SeenElements(long mapId, IReadOnlyCollection<SightedElement> elements, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(elements);
+
+        _maps[mapId] = new MapSighting(elements.Select(element => element.ItemId).ToFrozenSet(), at, [.. elements]);
     }
 
     /// <summary>Finds what a map was seen holding.</summary>

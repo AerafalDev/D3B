@@ -254,4 +254,10 @@
   <data name="CountFightsMany" xml:space="preserve">
     <value>{0} fights, protectors {1}</value>
   </data>
+  <data name="DoingWaitGrowFor" xml:space="preserve">
+    <value>Waiting for the resources to grow back, the next in {0} s</value>
+  </data>
+  <data name="ProgressGrowing" xml:space="preserve">
+    <value>Tour {0}, map {1} of {2}, {3} growing back</value>
+  </data>
 </root>

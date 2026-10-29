@@ -1,5 +1,6 @@
 using D3B.Storage.Accounts;
 using D3B.Storage.Graphics;
+using D3B.Storage.Harvests;
 using D3B.Storage.Profiles;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,9 @@ public sealed class StorageContext : DbContext
 
     /// <summary>Gets the graphics the bots learned.</summary>
     public DbSet<LearnedGraphic> Graphics => Set<LearnedGraphic>();
+
+    /// <summary>Gets how long the resources take to grow back, by the skill that gathers each (D145).</summary>
+    public DbSet<LearnedRegrowth> Regrowths => Set<LearnedRegrowth>();
 
     /// <summary>Initializes a new instance of the <see cref="StorageContext"/> class.</summary>
     /// <param name="options">The context's options: SQLite, on the database's file.</param>
@@ -52,6 +56,13 @@ public sealed class StorageContext : DbContext
             graphic.ToTable("Graphics");
             graphic.HasKey(learned => learned.GfxId);
             graphic.Property(learned => learned.GfxId).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<LearnedRegrowth>(regrowth =>
+        {
+            regrowth.ToTable("Regrowths");
+            regrowth.HasKey(learned => learned.SkillId);
+            regrowth.Property(learned => learned.SkillId).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<KnownCharacter>(character =>

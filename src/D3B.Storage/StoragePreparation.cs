@@ -1,6 +1,7 @@
 using D3B.Bot.Hosting;
 using D3B.Storage.Accounts;
 using D3B.Storage.Graphics;
+using D3B.Storage.Harvests;
 using D3B.Storage.Profiles;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage;
 
-/// <summary>Opens the database before the host starts: creates it, applies its migrations, and reads the accounts, the profiles and the graphics learned (D100, D138).</summary>
+/// <summary>Opens the database before the host starts: creates it, applies its migrations, and reads the accounts, the profiles, the graphics learned and the resources' growing back (D100, D138, D145).</summary>
 internal sealed class StoragePreparation : IHostPreparation
 {
     private readonly StorageSettings _settings;
@@ -16,15 +17,17 @@ internal sealed class StoragePreparation : IHostPreparation
     private readonly AccountBook _accounts;
     private readonly ProfileBook _profiles;
     private readonly GraphicRecorder _graphics;
+    private readonly RegrowthRecorder _regrowths;
     private readonly ILogger<StoragePreparation> _log;
 
-    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, ProfileBook profiles, GraphicRecorder graphics, ILogger<StoragePreparation> log)
+    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, ProfileBook profiles, GraphicRecorder graphics, RegrowthRecorder regrowths, ILogger<StoragePreparation> log)
     {
         _settings = settings;
         _contexts = contexts;
         _accounts = accounts;
         _profiles = profiles;
         _graphics = graphics;
+        _regrowths = regrowths;
         _log = log;
     }
 
@@ -43,8 +46,9 @@ internal sealed class StoragePreparation : IHostPreparation
             await _profiles.LoadAsync(cancellationToken).ConfigureAwait(false);
 
             var graphics = await _graphics.LoadAsync(cancellationToken).ConfigureAwait(false);
+            var regrowths = await _regrowths.LoadAsync(cancellationToken).ConfigureAwait(false);
 
-            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, _profiles.Profiles.Count, graphics);
+            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, _profiles.Profiles.Count, graphics, regrowths);
 
             return null;
         }

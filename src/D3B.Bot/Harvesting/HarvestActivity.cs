@@ -79,7 +79,9 @@ public sealed class HarvestActivity : BotActivity
     /// <param name="sightings">What the host's bots saw of the maps.</param>
     /// <param name="graphics">What the host learned of the maps' graphics.</param>
     /// <param name="places">Where each graphic is drawn, which places the resources of <c>Base</c> (D150).</param>
-    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places)
+    /// <param name="regrowths">What the host learned of the resources' growing back (D145).</param>
+    /// <param name="time">The bots' clock.</param>
+    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places, Regrowths regrowths, TimeProvider time)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(world);
@@ -88,6 +90,8 @@ public sealed class HarvestActivity : BotActivity
         ArgumentNullException.ThrowIfNull(sightings);
         ArgumentNullException.ThrowIfNull(graphics);
         ArgumentNullException.ThrowIfNull(places);
+        ArgumentNullException.ThrowIfNull(regrowths);
+        ArgumentNullException.ThrowIfNull(time);
 
         _settings = settings;
         _atlas = world.Atlas;
@@ -97,7 +101,7 @@ public sealed class HarvestActivity : BotActivity
         _sightings = sightings;
         _places = places;
         _graphics = graphics;
-        _tour = new HarvestTour(sightings, graphics);
+        _tour = new HarvestTour(sightings, graphics, regrowths, time);
         _report = new ActivityReport { Doing = GameText.Of(HarvestTexts.Text("DoingStart")) };
     }
 
@@ -280,18 +284,24 @@ public sealed class HarvestActivity : BotActivity
 
     private void See(CharacterState state, long mapId, HarvestZone zone, DateTimeOffset now)
     {
-        var resources = new HashSet<int>();
+        var elements = new List<SightedElement>();
 
         foreach (var element in state.Elements.Values)
         {
-            foreach (var skill in element.EnabledSkills.Concat(element.DisabledSkills))
+            foreach (var skill in element.EnabledSkills)
             {
                 if (zone.Harvests.TryGetValue(skill.SkillId, out var item))
-                    resources.Add(item);
+                    elements.Add(new SightedElement(element.ElementId, skill.SkillId, item, true));
+            }
+
+            foreach (var skill in element.DisabledSkills)
+            {
+                if (zone.Harvests.TryGetValue(skill.SkillId, out var item))
+                    elements.Add(new SightedElement(element.ElementId, skill.SkillId, item, false));
             }
         }
 
-        _sightings.Seen(mapId, resources, now);
+        _sightings.SeenElements(mapId, elements, now);
     }
 
     private async Task<bool> HarvestAsync(BotContext context, HarvestZone zone, CancellationToken cancellationToken)
@@ -387,6 +397,14 @@ public sealed class HarvestActivity : BotActivity
     {
         var remaining = _tour.Remaining(zone);
 
+        // Every map left to go through still grows back: the first should have soon, waited for here (D145).
+        if (remaining.Count is 0 && _tour.NextReady(zone) is { } ready)
+        {
+            await WaitGrowAsync(context, zone, ready, cancellationToken).ConfigureAwait(false);
+
+            return;
+        }
+
         if (remaining.Count is 0)
         {
             var harvested = _tour.HasHarvested;
@@ -394,11 +412,19 @@ public sealed class HarvestActivity : BotActivity
             if (!_tour.Next(zone))
                 throw Failure("No map of the zone holds a resource to harvest.", "FailNothing");
 
-            // A tour that harvested nothing leaves the zone to grow back before the next sweeps it again.
+            // A tour that harvested nothing leaves the zone to grow back before the next sweeps it again: a minute, or until the
+            // first map should have grown back, when the host knows (D128, D145).
             if (!harvested && context.State.MapId is { } here && zone.Maps.ContainsKey(here))
             {
-                Publish(context.State, GameText.Of(HarvestTexts.Text("DoingWaitGrow")));
-                await context.WaitUntilAsync(state => HasWanted(zone, state), _regrowthDelay, cancellationToken).ConfigureAwait(false);
+                if (_tour.NextReady(zone) is { } first)
+                {
+                    await WaitGrowAsync(context, zone, first, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    Publish(context.State, GameText.Of(HarvestTexts.Text("DoingWaitGrow")));
+                    await context.WaitUntilAsync(state => HasWanted(zone, state), _regrowthDelay, cancellationToken).ConfigureAwait(false);
+                }
             }
 
             return;
@@ -454,6 +480,17 @@ public sealed class HarvestActivity : BotActivity
         return vertices[path.To].MapId;
     }
 
+    private async Task WaitGrowAsync(BotContext context, HarvestZone zone, DateTimeOffset ready, CancellationToken cancellationToken)
+    {
+        var wait = ready - context.Time.GetUtcNow();
+
+        if (wait <= TimeSpan.Zero)
+            return;
+
+        Publish(context.State, GameText.Of(HarvestTexts.Text("DoingWaitGrowFor"), GameTextValue.Number((long)Math.Ceiling(wait.TotalSeconds))));
+        await context.WaitUntilAsync(state => HasWanted(zone, state), wait, cancellationToken).ConfigureAwait(false);
+    }
+
     private void Publish(CharacterState state, GameText doing, int? target = null, long? next = null)
     {
         var zone = _zone;
@@ -466,8 +503,11 @@ public sealed class HarvestActivity : BotActivity
         }
 
         var total = _tour.Total(zone);
+        var growing = _tour.Growing(zone);
         var progress = new ActivityProgress(
-            GameText.Of(HarvestTexts.Text("Progress"), GameTextValue.Number(_tour.Round), GameTextValue.Number(Math.Min(_tour.Visited + 1, total)), GameTextValue.Number(total)),
+            growing > 0
+                ? GameText.Of(HarvestTexts.Text("ProgressGrowing"), GameTextValue.Number(_tour.Round), GameTextValue.Number(Math.Min(_tour.Visited + 1, total)), GameTextValue.Number(total), GameTextValue.Number(growing))
+                : GameText.Of(HarvestTexts.Text("Progress"), GameTextValue.Number(_tour.Round), GameTextValue.Number(Math.Min(_tour.Visited + 1, total)), GameTextValue.Number(total)),
             _tour.Visited,
             total);
 

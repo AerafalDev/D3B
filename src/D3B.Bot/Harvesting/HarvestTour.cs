@@ -16,6 +16,10 @@ namespace D3B.Bot.Harvesting;
 /// the others of the world map, then to the insides. The activity goes to the nearest map still to go through, so a tour
 /// sweeps the probable maps first, and the maps gone through longest ago come first in the next.
 /// </para>
+/// <para>
+/// A map whose wanted elements all still grow back, by what the host learned of their resources, waits until the first
+/// should have (<see cref="Regrowths"/>, D145); a resource whose growing back is not known yet never holds a map back.
+/// </para>
 /// </remarks>
 internal sealed class HarvestTour
 {
@@ -23,6 +27,8 @@ internal sealed class HarvestTour
     private readonly HashSet<long> _unreachable = [];
     private readonly HarvestSightings _sightings;
     private readonly GraphicSkills _graphics;
+    private readonly Regrowths? _regrowths;
+    private readonly TimeProvider _time;
 
     /// <summary>Gets the tour's number, from 1.</summary>
     public int Round { get; private set; } = 1;
@@ -36,10 +42,14 @@ internal sealed class HarvestTour
     /// <summary>Initializes a new instance of the <see cref="HarvestTour"/> class.</summary>
     /// <param name="sightings">What the host's bots saw of the maps.</param>
     /// <param name="graphics">What the host learned of the maps' graphics.</param>
-    public HarvestTour(HarvestSightings sightings, GraphicSkills graphics)
+    /// <param name="regrowths">What the host learned of the resources' growing back, if it learns.</param>
+    /// <param name="time">The bots' clock.</param>
+    public HarvestTour(HarvestSightings sightings, GraphicSkills graphics, Regrowths? regrowths = null, TimeProvider? time = null)
     {
         _sightings = sightings;
         _graphics = graphics;
+        _regrowths = regrowths;
+        _time = time ?? TimeProvider.System;
     }
 
     /// <summary>Gets how many maps a tour goes through: those not left out.</summary>
@@ -68,7 +78,8 @@ internal sealed class HarvestTour
     /// </remarks>
     public HashSet<long> Remaining(HarvestZone zone)
     {
-        HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !IsLeftOut(map, zone))];
+        var now = _time.GetUtcNow();
+        HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !IsLeftOut(map, zone) && !(ReadyAt(map, zone) > now))];
 
         // The isolated maps a tour goes through come last, whatever they hold: the way there is long (D149).
         HashSet<long> near = [.. remaining.Where(map => !zone.Isolated.Contains(map))];
@@ -84,6 +95,35 @@ internal sealed class HarvestTour
         return near.Any(map => !zone.Insides.Contains(map)) ? [.. near.Where(map => !zone.Insides.Contains(map))] : near;
     }
 
+    /// <summary>Gets how many maps of the zone still grow back.</summary>
+    /// <param name="zone">The zone.</param>
+    /// <returns>How many.</returns>
+    public int Growing(HarvestZone zone)
+    {
+        var now = _time.GetUtcNow();
+
+        return zone.Maps.Keys.Count(map => !IsLeftOut(map, zone) && ReadyAt(map, zone) > now);
+    }
+
+    /// <summary>Gets when the first map this tour still goes through should have grown back, while every one still grows back.</summary>
+    /// <param name="zone">The zone.</param>
+    /// <returns>When, or <see langword="null"/> when none grows back.</returns>
+    public DateTimeOffset? NextReady(HarvestZone zone)
+    {
+        var now = _time.GetUtcNow();
+        DateTimeOffset? first = null;
+
+        foreach (var map in zone.Maps.Keys)
+        {
+            if (_visited.Contains(map) || _unreachable.Contains(map) || IsLeftOut(map, zone) || ReadyAt(map, zone) is not { } ready || ready <= now)
+                continue;
+
+            if (first is null || ready < first)
+                first = ready;
+        }
+
+        return first;
+    }
     /// <summary>Gets how many maps of the zone are isolated, and left out unless the settings take them.</summary>
     /// <param name="zone">The zone.</param>
     /// <returns>How many.</returns>
@@ -140,11 +180,14 @@ internal sealed class HarvestTour
 
     private ZoneMapState StateOf(long mapId, HarvestZone zone)
     {
-        if (_visited.Contains(mapId))
-            return ZoneMapState.Visited;
-
         if (zone.Isolated.Contains(mapId) && !zone.IncludesIsolated)
             return ZoneMapState.Isolated;
+
+        if (!IsLeftOut(mapId, zone) && ReadyAt(mapId, zone) > _time.GetUtcNow())
+            return ZoneMapState.Growing;
+
+        if (_visited.Contains(mapId))
+            return ZoneMapState.Visited;
 
         if (IsLeftOut(mapId, zone))
             return ZoneMapState.Empty;
@@ -155,6 +198,32 @@ internal sealed class HarvestTour
         return IsProbable(mapId, zone) ? ZoneMapState.Probable : ZoneMapState.ToVisit;
     }
 
+    // A map whose wanted elements were all seen harvested is held back until the first should have grown back. Measured:
+    // the server never says when; one harvested before it was seen grew back no later than the sighting's time reckons.
+    private DateTimeOffset? ReadyAt(long mapId, HarvestZone zone)
+    {
+        if (_regrowths is null || !_sightings.TryGet(mapId, out var sighting) || sighting.Elements.IsDefaultOrEmpty)
+            return null;
+
+        DateTimeOffset? first = null;
+
+        foreach (var element in sighting.Elements)
+        {
+            if (!zone.Targets.ContainsKey(element.SkillId))
+                continue;
+
+            if (element.IsEnabled || _regrowths.Reckoned(element.SkillId) is not { } takes)
+                return null;
+
+            var harvested = _regrowths.TryGetHarvest(mapId, element.ElementId, out var at) ? at : sighting.At;
+            var ready = harvested + takes;
+
+            if (first is null || ready < first)
+                first = ready;
+        }
+
+        return first;
+    }
     // What a bot saw of a map wins over what its graphics foretell: it is the server's word for that map.
     private bool IsLeftOut(long mapId, HarvestZone zone)
     {
