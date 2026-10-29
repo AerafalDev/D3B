@@ -1,3 +1,4 @@
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Data.Maps;
 using D3B.Engine.Maps;
@@ -59,28 +60,15 @@ public static class MapWalk
         ArgumentNullException.ThrowIfNull(context);
         CheckCell(cell);
 
-        var state = context.State;
+        using var action = context.BeginAction();
+        var mapId = context.State.MapId ?? 0;
+        var outcome = await WalkToAsync(context, cell, cancellationToken).ConfigureAwait(false);
 
-        if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsBusy)
-            return WalkOutcome.Busy;
+        // A walk made for another action, to a map's exit or an element, is part of it: only one asked for itself has its entry.
+        if (action.IsOutermost)
+            context.Record(action, (at, took) => new WalkEntry(at, 0, mapId, cell, outcome, took));
 
-        if (from == cell)
-        {
-            if (!state.IsWalkHeld)
-                return WalkOutcome.Arrived;
-
-            var aside = await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
-
-            if (aside is not WalkOutcome.Arrived || context.State.Cell is not { } stepped || context.State.MapId != mapId)
-                return aside;
-
-            from = stepped;
-        }
-
-        if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFind(map.Cells.Span, from, cell, out var path))
-            return WalkOutcome.NoPath;
-
-        return await WalkAlongAsync(context, mapId, path, cancellationToken).ConfigureAwait(false);
+        return outcome;
     }
 
     /// <summary>Lets go of a walk the server still holds, which the client did not follow: a step to a neighbour, within a behavior.</summary>
@@ -136,6 +124,32 @@ public static class MapWalk
     internal static TimeSpan ConfirmationDelay(int steps)
     {
         return _arrivalDelay + steps * _stepDelay;
+    }
+
+    private static async Task<WalkOutcome> WalkToAsync(BotContext context, int cell, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+
+        if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsBusy)
+            return WalkOutcome.Busy;
+
+        if (from == cell)
+        {
+            if (!state.IsWalkHeld)
+                return WalkOutcome.Arrived;
+
+            var aside = await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+
+            if (aside is not WalkOutcome.Arrived || context.State.Cell is not { } stepped || context.State.MapId != mapId)
+                return aside;
+
+            from = stepped;
+        }
+
+        if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFind(map.Cells.Span, from, cell, out var path))
+            return WalkOutcome.NoPath;
+
+        return await WalkAlongAsync(context, mapId, path, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<WalkOutcome> WalkAlongAsync(BotContext context, long mapId, CellPath path, CancellationToken cancellationToken)

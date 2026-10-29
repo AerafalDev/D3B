@@ -4,13 +4,16 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
+using D3B.App.ViewModels.Inspector;
+using D3B.App.ViewModels.Logs;
+using D3B.Bot.Characters;
 using D3B.Bot.Pages;
 using D3B.Data;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The app's window: where the bots' host stands, its pages in the rail, and the language (D14, D91, D96, D101).</summary>
+/// <summary>The app's window: where the bots' host stands, its pages in the rail, and the language (D14, D91, D96, D101, D111).</summary>
 internal sealed partial class MainViewModel : ObservableObject
 {
     private readonly HostRunner _host;
@@ -27,6 +30,12 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the profiles page.</summary>
     public ProfilesViewModel Profiles { get; }
 
+    /// <summary>Gets the logs page.</summary>
+    public LogsViewModel Logs { get; }
+
+    /// <summary>Gets the protocol inspector.</summary>
+    public InspectorViewModel Inspector { get; }
+
     /// <summary>Gets the pages the host's modules registered, in the rail after the app's own, once the host runs.</summary>
     public ObservableCollection<ModulePageViewModel> Pages { get; } = [];
 
@@ -41,6 +50,14 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets whether the profiles page is the one the window shows.</summary>
     [ObservableProperty]
     public partial bool IsProfilesPage { get; private set; }
+
+    /// <summary>Gets whether the logs page is the one the window shows.</summary>
+    [ObservableProperty]
+    public partial bool IsLogsPage { get; private set; }
+
+    /// <summary>Gets whether the protocol inspector is the page the window shows.</summary>
+    [ObservableProperty]
+    public partial bool IsInspectorPage { get; private set; }
 
     /// <summary>Gets the module's page the window shows, if it shows one.</summary>
     [ObservableProperty]
@@ -99,9 +116,14 @@ internal sealed partial class MainViewModel : ObservableObject
         _host = host;
         _localizer = localizer;
         _preferences = preferences;
-        Bots = new BotsViewModel(localizer);
+
+        var choice = new BotChoice();
+
+        Bots = new BotsViewModel(localizer, ShowJournalOf);
         Accounts = new AccountsViewModel(localizer);
         Profiles = new ProfilesViewModel(localizer);
+        Logs = new LogsViewModel(localizer, choice);
+        Inspector = new InspectorViewModel(localizer, choice);
     }
 
     /// <summary>Reads the host and its bots again, in the language chosen.</summary>
@@ -136,6 +158,14 @@ internal sealed partial class MainViewModel : ObservableObject
         Profiles.Refresh(services);
         Accounts.Refresh(services);
         Bots.Refresh(services);
+
+        // Only the page shown reads what came since: the other reads it all once shown again.
+        if (IsLogsPage)
+            Logs.Refresh(services);
+
+        if (IsInspectorPage)
+            Inspector.Refresh(services);
+
         RefreshPages(services);
     }
 
@@ -192,6 +222,30 @@ internal sealed partial class MainViewModel : ObservableObject
         IsProfilesPage = true;
     }
 
+    [RelayCommand]
+    private void ShowLogs()
+    {
+        Select(null);
+        IsBotsPage = false;
+        IsLogsPage = true;
+        Logs.Refresh(_host.Services);
+    }
+
+    [RelayCommand]
+    private void ShowInspector()
+    {
+        Select(null);
+        IsBotsPage = false;
+        IsInspectorPage = true;
+        Inspector.Refresh(_host.Services);
+    }
+
+    private void ShowJournalOf(CharacterKey key)
+    {
+        ShowLogs();
+        Logs.Show(key);
+    }
+
     private void Select(ModulePageViewModel? page)
     {
         foreach (var other in Pages)
@@ -201,6 +255,8 @@ internal sealed partial class MainViewModel : ObservableObject
         IsBotsPage = page is null;
         IsAccountsPage = false;
         IsProfilesPage = false;
+        IsLogsPage = false;
+        IsInspectorPage = false;
         page?.Refresh();
     }
 

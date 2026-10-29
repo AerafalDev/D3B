@@ -99,4 +99,45 @@
     <Style Selector="c|Icon.Muted">
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
     </Style>
+    <Style Selector="c|Icon[Tone=Success]">
+        <Setter Property="Foreground" Value="{DynamicResource SuccessColor}" />
+    </Style>
+    <Style Selector="c|Icon[Tone=Warning]">
+        <Setter Property="Foreground" Value="{DynamicResource WarningColor}" />
+    </Style>
+    <Style Selector="c|Icon[Tone=Info]">
+        <Setter Property="Foreground" Value="{DynamicResource InfoColor}" />
+    </Style>
+    <Style Selector="c|Icon[Tone=Danger]">
+        <Setter Property="Foreground" Value="{DynamicResource ErrorColor}" />
+    </Style>
+    <Style Selector="Button.Chip">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="11,0" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.Chip.Selected">
+        <Setter Property="Background" Value="{DynamicResource GhostHoverColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ForegroundColor}" />
+    </Style>
+    <Style Selector="Button.Segment">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="11,0" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+    </Style>
+    <Style Selector="Button.Segment.Selected">
+        <Setter Property="Background" Value="{DynamicResource GhostHoverColor}" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+    </Style>
+    <Style Selector="ToggleButton.Toggle">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.Mono">
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
 </Styles>

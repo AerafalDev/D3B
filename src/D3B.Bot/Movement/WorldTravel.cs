@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using D3B.Bot.Characters;
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Engine.Criteria;
 using D3B.Engine.World;
@@ -53,6 +54,51 @@ public static class WorldTravel
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(maps);
 
+        using var action = context.BeginAction();
+        var depth = action.Depth;
+        var from = context.State.MapId;
+        long? sought = maps.Count is 1 ? maps.First() : null;
+        var (outcome, changes) = await JourneyAsync(context, maps, cancellationToken).ConfigureAwait(false);
+
+        context.Record(action, (at, took) => new TravelEntry(at, depth, from, sought, context.State.MapId, changes, outcome, took));
+
+        return outcome;
+    }
+
+    /// <summary>Gets what a character may follow through the world, from its state now.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <returns>The rules, with what the character's criteria are answered on (<see cref="FactsOf"/>), the zaaps it knows and the kamas it carries.</returns>
+    public static WorldPathRules RulesOf(BotContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var state = context.State;
+
+        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = state.KnownZaaps, Kamas = state.Kamas };
+    }
+
+    /// <summary>Gets what a character's criteria are answered on, from its state.</summary>
+    /// <param name="state">The character's state.</param>
+    /// <param name="now">The moment, by the bot's clock, which says whether the account is still subscribed.</param>
+    /// <returns>Its level, the objects it holds by item, its professions' levels, its subscription and its map.</returns>
+    public static CriterionFacts FactsOf(CharacterState state, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        return new CriterionFacts
+        {
+            Level = state.Level,
+            Items = state.Inventory.Values.GroupBy(stack => stack.ItemId).ToDictionary(stacks => stacks.Key, stacks => stacks.Sum(stack => stack.Quantity)),
+            JobLevels = state.Jobs.Values.ToDictionary(job => job.JobId, job => job.Level),
+            Subscribed = state.IsSubscribedAt(now),
+            MapId = state.MapId,
+            SubAreaId = state.SubAreaId,
+            Cell = state.Cell,
+        };
+    }
+
+    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, CancellationToken cancellationToken)
+    {
         var banned = new HashSet<int>();
         var teleports = true;
         var failures = 0;
@@ -64,7 +110,7 @@ public static class WorldTravel
             var state = context.State;
 
             if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsBusy)
-                return changes is 0 && failures is 0 ? TravelOutcome.Busy : TravelOutcome.Failed;
+                return (changes is 0 && failures is 0 ? TravelOutcome.Busy : TravelOutcome.Failed, changes);
 
             if (maps.Contains(mapId))
                 return Over(context, state, TravelOutcome.Arrived, changes);
@@ -121,42 +167,10 @@ public static class WorldTravel
         }
     }
 
-    /// <summary>Gets what a character may follow through the world, from its state now.</summary>
-    /// <param name="context">The behavior's context.</param>
-    /// <returns>The rules, with what the character's criteria are answered on (<see cref="FactsOf"/>), the zaaps it knows and the kamas it carries.</returns>
-    public static WorldPathRules RulesOf(BotContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        var state = context.State;
-
-        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = state.KnownZaaps, Kamas = state.Kamas };
-    }
-
-    /// <summary>Gets what a character's criteria are answered on, from its state.</summary>
-    /// <param name="state">The character's state.</param>
-    /// <param name="now">The moment, by the bot's clock, which says whether the account is still subscribed.</param>
-    /// <returns>Its level, the objects it holds by item, its professions' levels, its subscription and its map.</returns>
-    public static CriterionFacts FactsOf(CharacterState state, DateTimeOffset now)
-    {
-        ArgumentNullException.ThrowIfNull(state);
-
-        return new CriterionFacts
-        {
-            Level = state.Level,
-            Items = state.Inventory.Values.GroupBy(stack => stack.ItemId).ToDictionary(stacks => stacks.Key, stacks => stacks.Sum(stack => stack.Quantity)),
-            JobLevels = state.Jobs.Values.ToDictionary(job => job.JobId, job => job.Level),
-            Subscribed = state.IsSubscribedAt(now),
-            MapId = state.MapId,
-            SubAreaId = state.SubAreaId,
-            Cell = state.Cell,
-        };
-    }
-
-    private static TravelOutcome Over(BotContext context, CharacterState state, TravelOutcome outcome, int changes)
+    private static (TravelOutcome Outcome, int Changes) Over(BotContext context, CharacterState state, TravelOutcome outcome, int changes)
     {
         BotLog.Travelled(context.Log, state.Key.CharacterId, state.MapId ?? 0, changes, outcome);
 
-        return outcome;
+        return (outcome, changes);
     }
 }

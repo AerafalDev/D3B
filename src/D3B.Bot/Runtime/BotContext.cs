@@ -1,5 +1,6 @@
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
+using D3B.Bot.Journal;
 using D3B.Data.Maps;
 using D3B.Engine.World;
 using D3B.Network.Relay;
@@ -18,6 +19,9 @@ public sealed class BotContext
 {
     private readonly BotActor _bot;
     private readonly RunningBehavior _behavior;
+
+    // Only the behavior's own sequence of calls begins and ends actions.
+    private int _actions;
 
     /// <summary>Gets the character's state now: a snapshot, which the next message the bot sees replaces.</summary>
     public CharacterState State => _bot.State;
@@ -103,5 +107,24 @@ public sealed class BotContext
             await Task.Delay(wait, _bot.Time, cancellationToken).ConfigureAwait(false);
 
         await _behavior.Session.SendAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Begins an action the journal writes once over, within the actions begun before it and not over (D112).</summary>
+    internal JournalAction BeginAction()
+    {
+        return new JournalAction(this, _actions++, _bot.Time.GetUtcNow());
+    }
+
+    internal void EndAction()
+    {
+        _actions--;
+    }
+
+    /// <summary>Writes an action once over to the bot's journal, timed by the bot's clock.</summary>
+    internal void Record(JournalAction action, Func<DateTimeOffset, TimeSpan, JournalEntry> entry)
+    {
+        var now = _bot.Time.GetUtcNow();
+
+        _bot.Journal.Add(entry(now, now - action.Started));
     }
 }

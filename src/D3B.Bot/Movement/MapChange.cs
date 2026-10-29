@@ -1,4 +1,5 @@
 using D3B.Bot.Interactives;
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Data.Maps;
 using D3B.Data.World;
@@ -68,6 +69,44 @@ public static class MapChange
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(rules);
 
+        using var action = context.BeginAction();
+        var depth = action.Depth;
+        var from = context.State.MapId ?? 0;
+        var destination = context.World.Graph.Vertices.Span[step.To].MapId;
+        var kind = step.IsTeleport ? MapChangeKind.Zaap
+            : step.Transition.Type switch
+            {
+                WorldTransitionType.MapAction => MapChangeKind.MapAction,
+                WorldTransitionType.Interactive => MapChangeKind.Door,
+                _ => MapChangeKind.Scroll,
+            };
+        var outcome = await ChangeAsync(context, step, rules, destination, cancellationToken).ConfigureAwait(false);
+
+        context.Record(action, (at, took) => new MapChangeEntry(at, depth, from, destination, context.State.MapId, kind, outcome, took));
+
+        return outcome;
+    }
+
+    /// <summary>Leaves the haven bag the character is in, back to the map it entered it from, within a behavior.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the change ended: <see cref="MapChangeOutcome.NoPath"/> when the character is in no haven bag, or in another's, whose leaving is not measured.</returns>
+    public static async Task<MapChangeOutcome> LeaveHavenBagAsync(this BotContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        using var action = context.BeginAction();
+        var depth = action.Depth;
+        var from = context.State.MapId ?? 0;
+        var outcome = await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
+
+        context.Record(action, (at, took) => new MapChangeEntry(at, depth, from, null, context.State.MapId, MapChangeKind.HavenBag, outcome, took));
+
+        return outcome;
+    }
+
+    private static async Task<MapChangeOutcome> ChangeAsync(BotContext context, WorldStep step, WorldPathRules rules, long destination, CancellationToken cancellationToken)
+    {
         // The server refuses a map change or a teleport while it holds a walk the client did not follow (D89).
         await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
 
@@ -83,7 +122,6 @@ public static class MapChange
             return MapChangeOutcome.NoPath;
         }
 
-        var destination = world.Graph.Vertices.Span[step.To].MapId;
         MapChangeOutcome outcome;
 
         if (step.IsTeleport)
@@ -116,14 +154,8 @@ public static class MapChange
         return outcome;
     }
 
-    /// <summary>Leaves the haven bag the character is in, back to the map it entered it from, within a behavior.</summary>
-    /// <param name="context">The behavior's context.</param>
-    /// <param name="cancellationToken">The behavior's token.</param>
-    /// <returns>How the change ended: <see cref="MapChangeOutcome.NoPath"/> when the character is in no haven bag, or in another's, whose leaving is not measured.</returns>
-    public static async Task<MapChangeOutcome> LeaveHavenBagAsync(this BotContext context, CancellationToken cancellationToken)
+    private static async Task<MapChangeOutcome> LeaveAsync(BotContext context, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(context);
-
         await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
 
         var state = context.State;

@@ -185,13 +185,13 @@ public sealed class ProtocolTranslation
         }
         catch (InvalidProtocolBufferException exception)
         {
-            return new DecodedGameFrame(null, null, null, null, false, $"it is no game message: {exception.Message}");
+            return new DecodedGameFrame((int)frame.Length, null, null, null, null, false, $"it is no game message: {exception.Message}");
         }
 
         var length = envelope.CalculateSize();
 
         if (length != frame.Length)
-            return new DecodedGameFrame(envelope, null, null, null, false, $"its envelope encodes back to {length} of its {frame.Length} bytes: it holds what the readable protocol lacks, or is encoded otherwise.");
+            return new DecodedGameFrame((int)frame.Length, envelope, null, null, null, false, $"its envelope encodes back to {length} of its {frame.Length} bytes: it holds what the readable protocol lacks, or is encoded otherwise.");
 
         var any = envelope.ContentCase switch
         {
@@ -202,12 +202,12 @@ public sealed class ProtocolTranslation
         };
 
         if (any is null)
-            return new DecodedGameFrame(envelope, null, null, null, false, null);
+            return new DecodedGameFrame((int)frame.Length, envelope, null, null, null, false, null);
 
         var carried = Any.GetTypeName(any.TypeUrl);
 
         if (!_readableOf.TryGetValue(carried, out var readable))
-            return new DecodedGameFrame(envelope, carried, null, null, false, $"it carries .{carried}, which the readable protocol lacks.");
+            return new DecodedGameFrame((int)frame.Length, envelope, carried, null, null, false, $"it carries .{carried}, which the readable protocol lacks.");
 
         IMessage content;
 
@@ -217,13 +217,13 @@ public sealed class ProtocolTranslation
         }
         catch (InvalidProtocolBufferException exception)
         {
-            return new DecodedGameFrame(envelope, carried, readable.Message, null, false, $"it carries no {readable.Message.FullName}: {exception.Message}");
+            return new DecodedGameFrame((int)frame.Length, envelope, carried, readable.Message, null, false, $"it carries no {readable.Message.FullName}: {exception.Message}");
         }
 
         var contentLength = content.CalculateSize();
 
         return contentLength == any.Value.Length
-            ? new DecodedGameFrame(envelope, carried, readable.Message, content, true, null)
-            : new DecodedGameFrame(envelope, carried, readable.Message, content, true, $"its {readable.Message.FullName} encodes back to {contentLength} of its {any.Value.Length} bytes: it holds what the readable protocol lacks, or is encoded otherwise.");
+            ? new DecodedGameFrame((int)frame.Length, envelope, carried, readable.Message, content, true, null)
+            : new DecodedGameFrame((int)frame.Length, envelope, carried, readable.Message, content, true, $"its {readable.Message.FullName} encodes back to {contentLength} of its {any.Value.Length} bytes: it holds what the readable protocol lacks, or is encoded otherwise.");
     }
 }

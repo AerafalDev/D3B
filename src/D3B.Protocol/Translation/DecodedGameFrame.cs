@@ -8,6 +8,9 @@ namespace D3B.Protocol.Translation;
 /// <summary>A frame of the game connection decoded through a build's translation: its envelope, and the message its <c>Any</c> carries.</summary>
 public sealed class DecodedGameFrame
 {
+    /// <summary>Gets the frame's length in bytes, its varint length left out.</summary>
+    public int Length { get; }
+
     /// <summary>Gets the frame's envelope, or <see langword="null"/> when the frame is no game message.</summary>
     public GameMessage? Envelope { get; }
 
@@ -36,8 +39,9 @@ public sealed class DecodedGameFrame
     [MemberNotNullWhen(true, nameof(Envelope), nameof(Content))]
     public bool IsRead { get; }
 
-    internal DecodedGameFrame(GameMessage? envelope, string? carriedType, MessageDescriptor? readableType, IMessage? content, bool read, string? problem)
+    internal DecodedGameFrame(int length, GameMessage? envelope, string? carriedType, MessageDescriptor? readableType, IMessage? content, bool read, string? problem)
     {
+        Length = length;
         Envelope = envelope;
         CarriedType = carriedType;
         ReadableType = readableType;

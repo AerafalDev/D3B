@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Activities;
@@ -30,8 +31,9 @@ public sealed class ActivityRun
     private int _steps;
     private Exception? _failure;
 
-    // Only the run's own sequence of behaviors reads and writes it.
+    // Only the run's own sequence of behaviors reads and writes them.
     private bool _unloaded;
+    private bool _stillFull;
 
     /// <summary>Gets the activity.</summary>
     public BotActivity Activity { get; }
@@ -78,10 +80,12 @@ public sealed class ActivityRun
     private async Task RunAsync()
     {
         BotLog.ActivityStarted(_bot.Log, _bot.Key.CharacterId, Activity.Name);
+        _bot.Journal.Add(new ActivityStartedEntry(_bot.Time.GetUtcNow(), Activity.Name));
 
         var outcome = await LoopAsync().ConfigureAwait(false);
 
         BotLog.ActivityOver(_bot.Log, _bot.Key.CharacterId, Activity.Name, Steps, outcome);
+        _bot.Journal.Add(new ActivityOverEntry(_bot.Time.GetUtcNow(), Activity.Name, Steps, outcome, Failure?.Message, _stillFull));
 
         // An activity holding what must be let go of, such as a script's Lua state, is done with once over.
         if (Activity is IDisposable disposable)
@@ -125,6 +129,7 @@ public sealed class ActivityRun
                         return ActivityOutcome.Done;
                     case Next.StillFull:
                         BotLog.ActivityStillFull(_bot.Log, _bot.Key.CharacterId, Activity.Name);
+                        _stillFull = true;
 
                         return ActivityOutcome.Failed;
                 }
@@ -176,6 +181,7 @@ public sealed class ActivityRun
             }
 
             BotLog.ActivityInterrupted(_bot.Log, _bot.Key.CharacterId, Activity.Name, cut, response);
+            _bot.Journal.Add(new ActivityInterruptedEntry(_bot.Time.GetUtcNow(), Activity.Name, cut, response));
 
             if (response is InterruptionResponse.Stop)
                 return ActivityOutcome.Stopped;
@@ -201,6 +207,7 @@ public sealed class ActivityRun
 
             SetStatus(ActivityStatus.Unloading);
             BotLog.ActivityUnloading(_bot.Log, _bot.Key.CharacterId, Activity.Name, state.Weight, state.MaxWeight);
+            _bot.Journal.Add(new ActivityUnloadingEntry(_bot.Time.GetUtcNow(), Activity.Name, state.Weight, state.MaxWeight));
             _unloaded = true;
 
             return await Activity.UnloadAsync(context, cancellationToken).ConfigureAwait(false) ? Next.Step : Next.StillFull;

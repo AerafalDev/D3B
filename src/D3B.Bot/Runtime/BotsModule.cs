@@ -1,5 +1,7 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Data;
+using D3B.Bot.Hosting;
+using D3B.Bot.Inspection;
 using D3B.Bot.Localization;
 using D3B.Bot.Network;
 using D3B.Bot.Pages;
@@ -38,6 +40,14 @@ public sealed class BotsModule : IModule
             services.GetRequiredService<TimeProvider>(),
             services.GetRequiredService<ILoggerFactory>()));
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
+
+        // Recording always, after the bots, so that the protocol inspector shows what came before it was opened (D115).
+        bot.Services.AddSingleton(services => new FrameRecorder(services.GetRequiredService<TimeProvider>()));
+        bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<FrameRecorder>());
+
+        // Beside the host's other logs: the app's logs page reads what the host says of itself (D114).
+        bot.Services.AddSingleton(services => new HostProblems(services.GetRequiredService<TimeProvider>()));
+        bot.Services.AddSingleton<ILoggerProvider>(services => services.GetRequiredService<HostProblems>());
         bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>(), services.GetServices<IActivitySource>()));
         bot.Services.AddSingleton(services => new PageCatalog(services.GetServices<PageDefinition>()));
 
