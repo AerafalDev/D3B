@@ -125,24 +125,24 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
         var run = bot.StartActivity(activity);
 
-        Assert.IsType<NpcActionRequest>(await connection.SentAsync(1));
+        Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(_play, connection, 1));
         Assert.Equal("Going to the bank", Say(activity.Report!.Doing));
 
         connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId });
         connection.Server(new NpcDialogQuestionEvent { MessageId = 48_366, Replies = { new NpcReply { ReplyId = TestPlay.ChestReplyId } } });
 
-        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.ChestReplyId }, await connection.SentAsync(2));
+        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.ChestReplyId }, await TestWalks.SentAsync(_play, connection, 2));
 
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
         connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage, MaxSlots = int.MaxValue });
         connection.Server(new StorageContentEvent { Kamas = 5 });
 
-        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 12 } }, await connection.SentAsync(3));
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 12 } }, await TestWalks.SentAsync(_play, connection, 3));
 
         connection.Server(new ObjectsDeletedEvent { Uids = { 12 } });
         connection.Server(new InventoryWeightEvent { Weight = 700, MaxWeight = 7_590 });
 
-        Assert.Equal(new DialogLeaveRequest(), await connection.SentAsync(4));
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 4));
 
         connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
 
@@ -173,19 +173,19 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
         var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }));
 
-        await connection.SentAsync(1);
+        await TestWalks.SentAsync(_play, connection, 1);
         connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId });
         connection.Server(new NpcDialogQuestionEvent { MessageId = 48_366, Replies = { new NpcReply { ReplyId = TestPlay.ChestReplyId } } });
-        await connection.SentAsync(2);
+        await TestWalks.SentAsync(_play, connection, 2);
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
         connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage, MaxSlots = int.MaxValue });
         connection.Server(new StorageContentEvent());
-        await connection.SentAsync(3);
+        await TestWalks.SentAsync(_play, connection, 3);
 
         // The ash goes; what is left still weighs more than the share the character banks at.
         connection.Server(new ObjectsDeletedEvent { Uids = { 12 } });
         connection.Server(new InventoryWeightEvent { Weight = 6_900, MaxWeight = 7_590 });
-        await connection.SentAsync(4);
+        await TestWalks.SentAsync(_play, connection, 4);
         connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
 
         Assert.Equal(ActivityOutcome.Failed, await run.Completion.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));

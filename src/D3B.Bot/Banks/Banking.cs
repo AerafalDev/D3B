@@ -34,6 +34,14 @@ public static class Banking
     private static readonly TimeSpan _answerDelay = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan _followDelay = TimeSpan.FromSeconds(1);
 
+    /// <summary>How long the client takes to show a dialog or the bank once the server opened it, before D3B goes on (D130).</summary>
+    /// <remarks>
+    /// Measured through the app: D3B replying 1 ms after the banker's question, and leaving the bank 39 ms after it opened,
+    /// left both windows on the client's screen, though the server had closed them and the client asked to leave each. As
+    /// the client draws a map before it follows a walk (D77), it shows a window before it can close it.
+    /// </remarks>
+    internal static readonly TimeSpan ShowDelay = TimeSpan.FromMilliseconds(500);
+
     /// <summary>Goes to the nearest bank, puts stacks and kamas in it, and leaves it, as the bot's behavior.</summary>
     /// <param name="bot">The bot.</param>
     /// <param name="stacks">Tells the stacks to put in, among those the character carries and does not wear.</param>
@@ -169,7 +177,11 @@ public static class Banking
         var outcome = await TalkAsync(context, mapId, npc, banker, cancellationToken).ConfigureAwait(false);
 
         if (outcome is not BankOutcome.Done && context.State.Dialog is not null)
+        {
+            // A dialog left as soon as it opened would stay on the client's screen, as a reply sent too soon does.
+            await Task.Delay(ShowDelay, context.Time, cancellationToken).ConfigureAwait(false);
             await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
+        }
 
         BotLog.OpenedBank(context.Log, state.Key.CharacterId, mapId, outcome);
 
@@ -267,18 +279,27 @@ public static class Banking
         if (context.State.Dialog is not { } dialog || !context.Banks.TryFindReply(banker, dialog, out var reply))
             return BankOutcome.Refused;
 
+        // The client shows the dialog before the reply closes it.
+        await Task.Delay(ShowDelay, context.Time, cancellationToken).ConfigureAwait(false);
+
         // The storage's content comes last of what opens the bank; a question again refuses the reply.
         var opened = context.Expect((side, message, state) => side is RelayDirection.FromServer
             && (message is StorageContentEvent && state.Storage is not null || message is NpcDialogQuestionEvent));
 
         await context.SendAsync(new NpcDialogReplyRequest { ReplyId = reply }, cancellationToken).ConfigureAwait(false);
 
-        return await opened.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) switch
+        var outcome = await opened.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) switch
         {
             null => BankOutcome.NoAnswer,
             NpcDialogQuestionEvent => BankOutcome.Refused,
             _ => BankOutcome.Done,
         };
+
+        // Then the bank, before anything goes in and the leaving closes it.
+        if (outcome is BankOutcome.Done)
+            await Task.Delay(ShowDelay, context.Time, cancellationToken).ConfigureAwait(false);
+
+        return outcome;
     }
 
     private static async Task<BankOutcome> LeaveAsync(BotContext context, CancellationToken cancellationToken)
