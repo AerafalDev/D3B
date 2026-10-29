@@ -15,9 +15,9 @@ namespace D3B.App.ViewModels;
 /// <summary>The settings page: the client's display time, D3B's delays, the captures, the language and theme, and where D3B keeps its data (D151).</summary>
 /// <remarks>
 /// <para>
-/// The settings are the machine's, not a profile's, kept in the app's own file (<see cref="AppPreferences"/>) as the host's
-/// configuration names them, which the app gives the host as it starts. The bots' delays apply at once, to every bot's
-/// next wait; the relay's and the captures from the host's next start, the relay being built once.
+/// The settings are the machine's, not a profile's, kept in the app's own file (<see cref="AppPreferences"/>) as the
+/// host's configuration names them, which the app gives the host as it starts. The bots' delays apply at once, to every
+/// bot's next wait; the relay's and the captures from the host's next start, the relay being built once.
 /// </para>
 /// <para>
 /// The page shows the delays the bots wait once the host runs, which the host's command line may have raised; changed
@@ -161,7 +161,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
         }
         catch (InvalidOperationException)
         {
-            // A file edited by hand to a delay out of its bounds: the host says so as it starts, and the page offers D3B's.
+            // A file edited by hand to a delay out of its bounds: the host says so as it starts; the page offers D3B's.
             return fallback;
         }
     }
@@ -178,7 +178,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     private void Attach(Bots bots)
     {
-        // Changed while the host got ready, the page's delays win; else the bots', which the command line may have raised.
+        // Changed while the host got ready, the page's delays win; else the bots', which its command line may raise.
         if (_changed)
             bots.Delays = _delays;
         else

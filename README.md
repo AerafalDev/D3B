@@ -22,8 +22,9 @@ the map; every map a bot enters teaches which graphics are which resource, kept 
 goes first to the maps likely holding its resources. Mods will be made as blueprints after it. The app's map page draws a
 bot's map from the pack as its character moves, with its path, elements, NPCs and exits, and says what a cell holds;
 its logs page shows each bot's journal of its actions and the host's problems; its protocol inspector shows a bot's game
-frames decoded as they go, the login ticket hidden, or replays a capture. Next: what the first milestone leaves, then a pass on
-the app's interface. See the [roadmap](docs/roadmap.md).
+frames decoded as they go, the login ticket hidden, or replays a capture; its settings page holds the client's display
+time and D3B's other delays, which a slow machine raises, the captures, the language and the theme. Next: what the first
+milestone leaves, then a pass on the app's interface. See the [roadmap](docs/roadmap.md).
 
 ## Building
 
@@ -47,8 +48,14 @@ While the host runs, the `ConfigUrl` line of the installed client's `version` fi
 configuration that sends it to the host's relay, and the host gives it Ankama's back when it stops. After a crash,
 `dotnet run --file scripts/client.cs -- restore` does it, so that the client plays without D3B.
 
-With `--Network:Captures:Enabled true`, the relay records each connection in `%LOCALAPPDATA%\D3B\captures`, which the
-protocol inspector replays. A capture holds the account's login ticket: never share it.
+With `--Network:Captures:Enabled true`, or the switch on the app's settings page, the relay records each connection in
+`%LOCALAPPDATA%\D3B\captures`, which the protocol inspector replays. A capture holds the account's login ticket: never
+share it.
+
+On a slow machine, the client may not have drawn a map or shown a window when a bot acts: raise the client's display
+time on the settings page, 0.5 s by default, up to 3 s. Every other delay is there too, each measured by default and
+only raised. The app keeps them in `%LOCALAPPDATA%\D3B\app.json`; `src/D3B.Host` reads the same values from its
+configuration, in seconds, such as `--Delays:Display 1.5`.
 
 ## Documents
 

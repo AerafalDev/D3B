@@ -25,8 +25,8 @@ namespace D3B.Bot.Runtime;
 /// <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity}(IServiceCollection, string, LocalizedText)"/>, which the app starts, and the
 /// <see cref="PageCatalog"/> of the pages they register with <see cref="PageServiceCollectionExtensions.AddPage"/>, which
 /// the app shows, the <see cref="GameReferences"/> the activities' settings name, and the <see cref="GraphicSkills"/> every map
-/// a bot enters teaches. The bots wait the <see cref="BotDelays"/> the configuration names, in seconds under <c>Delays</c>.
-/// Requires the data module, whose maps behaviors walk, and the network module.
+/// a bot enters teaches. The bots wait the <see cref="BotDelays"/> the configuration names, in seconds under
+/// <c>Delays</c>. Requires the data module, whose maps behaviors walk, and the network module.
 /// </remarks>
 public sealed class BotsModule : IModule
 {

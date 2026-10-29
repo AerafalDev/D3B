@@ -25,11 +25,11 @@ namespace D3B.Bot.Banks;
 /// </para>
 /// <para>
 /// Every request waits until the client drew the map (<see cref="BotContext.SendAsync"/>, D77). Banking also waits the
-/// client's display time after the banker's question, after the bank opens, and before leaving a dialog it could not take
-/// to the bank (<see cref="BotDelays.Display"/>, D132): measured through the app, D3B replying 1 ms after the question, and
-/// leaving the bank 39 ms after it opened, left both windows on the client's screen, though the server had closed them and
-/// the client asked to leave each. As the client draws a map before it follows a walk, it shows a window before it can
-/// close it.
+/// client's display time after the banker's question, after the bank opens, and before leaving a dialog it could not
+/// take to the bank (<see cref="BotDelays.Display"/>, D132): measured through the app, D3B replying 1 ms after the
+/// question, and leaving the bank 39 ms after it opened, left both windows on the client's screen, though the server had
+/// closed them and the client asked to leave each. As the client draws a map before it follows a walk, it shows a window
+/// before it can close it.
 /// </para>
 /// </remarks>
 public static class Banking

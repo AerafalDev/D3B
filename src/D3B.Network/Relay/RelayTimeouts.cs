@@ -5,8 +5,8 @@ namespace D3B.Network.Relay;
 
 /// <summary>How long the relay waits for a server, a side or a frame: each a fixed value, D3B's by default, which a user may raise (D151).</summary>
 /// <remarks>
-/// Read once, when the relay is built: a change takes effect from the host's next start. In the host's configuration, in
-/// seconds (<c>Network:Timeouts:Connect</c> and the others).
+/// Read once, when the relay is built: a change takes effect from the host's next start. In the host's configuration,
+/// in seconds (<c>Network:Timeouts:Connect</c> and the others).
 /// </remarks>
 public sealed record RelayTimeouts
 {

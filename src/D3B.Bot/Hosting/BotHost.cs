@@ -31,8 +31,8 @@ public static class BotHost
     /// <summary>Creates the builder of the bots' host, with the default modules and settings of the caller's own.</summary>
     /// <param name="args">The command-line arguments, read as configuration.</param>
     /// <param name="settings">
-    /// Settings such as the app's (D151), read before every other source: the host's own configuration and its command line
-    /// win over them. One with no value is not set.
+    /// Settings such as the app's (D151), read before every other source: the host's own configuration and its command
+    /// line win over them. One with no value is not set.
     /// </param>
     /// <returns>The builder, to which a caller may add modules before it starts the host.</returns>
     public static BotBuilder CreateBuilder(string[] args, IReadOnlyDictionary<string, string?> settings)

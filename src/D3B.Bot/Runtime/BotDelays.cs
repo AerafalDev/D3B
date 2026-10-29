@@ -12,8 +12,8 @@ namespace D3B.Bot.Runtime;
 /// seconds (<c>Delays:Display</c> and the others). No delay is ever drawn at random (D152).
 /// </para>
 /// <para>
-/// The others bound a wait for the server, or for the client to follow it: past one, the behavior goes on from the state,
-/// as when the answer never came. A delay ends early whenever the answer comes.
+/// The others bound a wait for the server, or for the client to follow it: past one, the behavior goes on from the
+/// state, as when the answer never came. A delay ends early whenever the answer comes.
 /// </para>
 /// </remarks>
 public sealed record BotDelays

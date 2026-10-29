@@ -101,10 +101,10 @@ public sealed class BotContext
     /// <param name="cancellationToken">Stops waiting; a request not gone yet then never goes.</param>
     /// <returns>A task that completes once the request went.</returns>
     /// <remarks>
-    /// The client follows what the server shows it only once it has drawn the map, its display time after the server placed
-    /// the character on it, half a second measured (<see cref="BotDelays.Display"/>): a walk shown 1 or 50 ms after was
-    /// never confirmed, and a door used before the client asked what is on the new map left it no longer confirming walks
-    /// (D73, D77). A request sent sooner waits until then.
+    /// The client follows what the server shows it only once it has drawn the map, its display time after the server
+    /// placed the character on it, half a second measured (<see cref="BotDelays.Display"/>): a walk shown 1 or 50 ms after
+    /// was never confirmed, and a door used before the client asked what is on the new map left it no longer confirming
+    /// walks (D73, D77). A request sent sooner waits until then.
     /// </remarks>
     public async Task SendAsync(IMessage request, CancellationToken cancellationToken)
     {

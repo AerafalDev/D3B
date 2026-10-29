@@ -25,7 +25,8 @@ namespace D3B.Bot.Movement;
 /// <para>
 /// The server answers nothing to a request for the neighbour it refuses: from a cell off its edge, for another map, or
 /// once the character is on another map. The change then ends after its delay, 3 s for the new map; 10 s bound the wait
-/// for what is on it (<see cref="BotDelays.Answer"/>, <see cref="BotDelays.Placed"/>). It refuses a door's use from too far with an <see cref="InteractiveUseErrorEvent"/>.
+/// for what is on it (<see cref="BotDelays.Answer"/>, <see cref="BotDelays.Placed"/>). It refuses a door's use from too
+/// far with an <see cref="InteractiveUseErrorEvent"/>.
 /// </para>
 /// <para>
 /// The change is over once the character is placed. The client then draws the new map, which the bot's next request waits

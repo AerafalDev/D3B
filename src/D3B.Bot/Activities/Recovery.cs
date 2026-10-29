@@ -15,7 +15,8 @@ namespace D3B.Bot.Activities;
 /// <para>
 /// So the recovery lets a use end, then a walk, settling one the client does not confirm where the server has the
 /// character, leaves a dialog or exchange still open, and lets go of a walk the server holds. Each wait is bounded
-/// (<see cref="BotDelays.Recovery"/>, <see cref="BotDelays.Confirmation"/>): past it, the next step finds the state as it is.
+/// (<see cref="BotDelays.Recovery"/>, <see cref="BotDelays.Confirmation"/>): past it, the next step finds the state as it
+/// is.
 /// </para>
 /// </remarks>
 public static class Recovery
