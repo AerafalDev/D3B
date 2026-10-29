@@ -2,6 +2,7 @@ using D3B.App.Hosting;
 using D3B.Bot.Hosting;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests;
+using D3B.Network.Relay;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.Hosting;
@@ -24,7 +25,7 @@ public sealed class HostRunnerTests : IDisposable
         _install.WriteProtocol();
 
         // The host the app runs adds the storage, whose database goes to the test's own folder, never the user's.
-        var runner = new HostRunner([.. _install.Arguments, "--Storage:Path", Path.Combine(_install.Root, "d3b.db")]);
+        var runner = new HostRunner([.. _install.Arguments, "--Storage:Path", Path.Combine(_install.Root, "d3b.db")], new Dictionary<string, string?>());
 
         Assert.Equal(HostStatus.Starting, runner.Status);
 
@@ -40,6 +41,51 @@ public sealed class HostRunnerTests : IDisposable
         Assert.Equal(HostStatus.Stopped, runner.Status);
         Assert.Null(runner.Services);
         Assert.EndsWith($"ConfigUrl={_install.ConfigUrl}\n", File.ReadAllText(_install.VersionFile), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheHostStartsWithTheSettingsTheAppChangedWhichItsCommandLineWinsOver()
+    {
+        _install.WritePack();
+        _install.WriteProtocol();
+
+        var settings = new Dictionary<string, string?>
+        {
+            [BotDelays.DisplayKey] = "1.5",
+            [BotDelays.AnswerKey] = "6",
+            [BotDelays.PlacedKey] = null,
+            [RelayTimeouts.HoldKey] = "10",
+        };
+        var runner = new HostRunner([.. _install.Arguments, "--Storage:Path", Path.Combine(_install.Root, "d3b.db"), $"--{BotDelays.AnswerKey}", "9"], settings);
+
+        runner.Start();
+        await Waiting.UntilAsync(() => runner.Status is not HostStatus.Starting, _timeout);
+
+        try
+        {
+            Assert.Equal(HostStatus.Running, runner.Status);
+
+            var delays = runner.Services?.GetService<Bots>()?.Delays;
+
+            Assert.Equal(BotDelays.Measured with { Display = TimeSpan.FromSeconds(1.5), Answer = TimeSpan.FromSeconds(9) }, delays);
+            Assert.Equal(TimeSpan.FromSeconds(10), runner.Services?.GetService<RelaySettings>()?.HoldTimeout);
+        }
+        finally
+        {
+            await runner.StopAsync().WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        }
+    }
+
+    [Fact]
+    public async Task ADelayBelowItsMeasuredValueStopsTheHostAndSaysWhich()
+    {
+        var runner = new HostRunner([.. _install.Arguments, "--Storage:Path", Path.Combine(_install.Root, "d3b.db")], new Dictionary<string, string?> { [BotDelays.DisplayKey] = "0.2" });
+
+        runner.Start();
+        await Waiting.UntilAsync(() => runner.Status is not HostStatus.Starting, _timeout);
+
+        Assert.Equal(HostStatus.Failed, runner.Status);
+        Assert.Contains(BotDelays.DisplayKey, runner.Failure, StringComparison.Ordinal);
     }
 
     [Fact]

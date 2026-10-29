@@ -56,7 +56,7 @@
             </Button>
             <Button
                 Classes="Ghost"
-                Click="OnThemeClick"
+                Command="{Binding Settings.SwitchThemeCommand}"
                 CornerRadius="{DynamicResource MdCornerRadius}"
                 Height="30"
                 Padding="0"
@@ -142,7 +142,19 @@
                 </ItemsControl>
             </StackPanel>
         </Border>
-        <Panel Grid.Column="1">
+        <Button
+            Classes="Ghost RailItem"
+            Classes.Selected="{Binding IsSettingsPage}"
+            Command="{Binding ShowSettingsCommand}"
+            Margin="0,0,0,14"
+            ToolTip.Tip="{l:Tr Settings}"
+            VerticalAlignment="Bottom">
+            <c:Icon Data="{StaticResource IconGear}" />
+        </Button>
+        <Panel Grid.Column="1" IsVisible="{Binding IsSettingsPage}">
+            <views:SettingsView DataContext="{Binding Settings}" />
+        </Panel>
+        <Panel Grid.Column="1" IsVisible="{Binding !IsSettingsPage}">
             <StackPanel
                 HorizontalAlignment="Center"
                 IsVisible="{Binding IsStarting}"

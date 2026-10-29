@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
@@ -15,7 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The app's window: where the bots' host stands, its pages in the rail, and the language (D14, D91, D96, D101, D111, D120).</summary>
+/// <summary>The app's window: where the bots' host stands, its pages in the rail, the language and the theme (D14, D91, D96, D101, D111, D120, D151).</summary>
 internal sealed partial class MainViewModel : ObservableObject
 {
     private readonly HostRunner _host;
@@ -43,6 +44,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets the protocol inspector.</summary>
     public InspectorViewModel Inspector { get; }
+
+    /// <summary>Gets the settings page, at the rail's foot, whose theme the window follows.</summary>
+    public SettingsViewModel Settings { get; }
 
     /// <summary>Gets the pages the host's modules registered, in the rail after the app's own, once the host runs.</summary>
     public ObservableCollection<ModulePageViewModel> Pages { get; } = [];
@@ -74,6 +78,10 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets whether the protocol inspector is the page the window shows.</summary>
     [ObservableProperty]
     public partial bool IsInspectorPage { get; private set; }
+
+    /// <summary>Gets whether the settings page is the one the window shows, whether the host runs or not.</summary>
+    [ObservableProperty]
+    public partial bool IsSettingsPage { get; private set; }
 
     /// <summary>Gets the module's page the window shows, if it shows one.</summary>
     [ObservableProperty]
@@ -126,7 +134,7 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Initializes a new instance of the <see cref="MainViewModel"/> class.</summary>
     /// <param name="host">The bots' host in the app's process.</param>
     /// <param name="localizer">The app's texts.</param>
-    /// <param name="preferences">What the app remembers of its own, its language and theme, or <see langword="null"/> to remember nothing.</param>
+    /// <param name="preferences">What the app remembers of its own, its language, theme and the host's settings, or <see langword="null"/> to remember nothing.</param>
     public MainViewModel(HostRunner host, Localizer localizer, AppPreferences? preferences = null)
     {
         _host = host;
@@ -142,6 +150,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Statistics = new StatisticsViewModel(localizer);
         Logs = new LogsViewModel(localizer, choice);
         Inspector = new InspectorViewModel(localizer, choice);
+        Settings = new SettingsViewModel(localizer, preferences, UseLanguage);
     }
 
     /// <summary>Reads the host and its bots again, in the language chosen.</summary>
@@ -190,6 +199,8 @@ internal sealed partial class MainViewModel : ObservableObject
         if (IsInspectorPage)
             Inspector.Refresh(services);
 
+        // Always: the bots' delays the page shows are read once the host runs, whichever page shows.
+        Settings.Refresh(services);
         RefreshPages(services);
     }
 
@@ -199,13 +210,6 @@ internal sealed partial class MainViewModel : ObservableObject
     public bool FailPageThatThrew(Exception exception)
     {
         return Pages.Any(page => page.TryFailWith(exception));
-    }
-
-    /// <summary>Remembers the theme the window switched to.</summary>
-    /// <param name="dark">Whether it is dark.</param>
-    public void RememberTheme(bool dark)
-    {
-        _preferences?.RememberTheme(dark ? AppPreferences.Dark : AppPreferences.Light);
     }
 
     private void RefreshPages(IServiceProvider? services)
@@ -282,6 +286,15 @@ internal sealed partial class MainViewModel : ObservableObject
         Inspector.Refresh(_host.Services);
     }
 
+    [RelayCommand]
+    private void ShowSettings()
+    {
+        Select(null);
+        IsBotsPage = false;
+        IsSettingsPage = true;
+        Settings.Refresh(_host.Services);
+    }
+
     private void ShowJournalOf(CharacterKey key)
     {
         ShowLogs();
@@ -307,14 +320,20 @@ internal sealed partial class MainViewModel : ObservableObject
         IsStatisticsPage = false;
         IsLogsPage = false;
         IsInspectorPage = false;
+        IsSettingsPage = false;
         page?.Refresh();
+    }
+
+    private void UseLanguage(CultureInfo culture)
+    {
+        _localizer.Use(culture);
+        _preferences?.RememberLanguage(_localizer.Culture.TwoLetterISOLanguageName);
+        Refresh();
     }
 
     [RelayCommand]
     private void SwitchLanguage()
     {
-        _localizer.Use(_localizer.Culture.Equals(Localizer.French) ? Localizer.English : Localizer.French);
-        _preferences?.RememberLanguage(_localizer.Culture.TwoLetterISOLanguageName);
-        Refresh();
+        UseLanguage(_localizer.Culture.Equals(Localizer.French) ? Localizer.English : Localizer.French);
     }
 }
