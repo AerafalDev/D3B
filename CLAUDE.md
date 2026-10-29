@@ -70,8 +70,8 @@ dotnet run --project src/D3B.App           # the desktop app, which runs the bot
 dotnet run --project src/D3B.Host          # the same host without the app, until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48); --Plugins:Directory <dir> loads plugins from elsewhere
                                            # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
                                            # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53)
-dotnet pack src/D3B.Core -o <feed>         # the package plugins compile against (D22)
-dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>
+dotnet pack -o <feed>                      # the packages plugins compile against: D3B.Bot and the five it names (D95)
+dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>; --page false for no page
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
 dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options
 dotnet run --file scripts/release.cs       # dry run of publishing that build's pack, schema and mapping to release client-<version>; --publish does it (D33, D50)
@@ -84,5 +84,5 @@ dotnet run -c Release --project benchmarks/D3B.Network.Benchmarks   # BenchmarkD
 dotnet run -c Release --project benchmarks/D3B.Engine.Benchmarks    # world paths on the installed build's pack; D3B_PACK names another
 ```
 
-CI also creates a plugin from the template and builds it against a freshly packed D3B.Core: see the "Check the plugin
-template" step of `.github/workflows/ci.yml` to run it by hand.
+CI also creates plugins from the template, with a page and without, and builds them against freshly packed packages:
+see the "Check the plugin template" step of `.github/workflows/ci.yml` to run it by hand.

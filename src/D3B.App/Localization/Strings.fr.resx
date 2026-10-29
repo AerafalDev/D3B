@@ -254,4 +254,10 @@
   <data name="StartFailed" xml:space="preserve">
     <value>Impossible de démarrer : {0}</value>
   </data>
+  <data name="PageFailedTitle" xml:space="preserve">
+    <value>Cette page n'a pas pu s'afficher</value>
+  </data>
+  <data name="PageFailedDetail" xml:space="preserve">
+    <value>Son plugin a levé l'erreur ci-dessous. Les bots et les autres pages continuent.</value>
+  </data>
 </root>

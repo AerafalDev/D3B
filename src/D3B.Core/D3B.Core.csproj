@@ -3,7 +3,7 @@
   <PropertyGroup>
     <IsPackable>true</IsPackable>
     <PackageId>D3B.Core</PackageId>
-    <Description>The module and plugin model of D3B, a bot for Dofus 3: what a plugin references.</Description>
+    <Description>The module and plugin model of D3B, a bot for Dofus 3: modules, the bot builder, and plugin loading.</Description>
     <PackageTags>d3b;dofus;bot;plugin</PackageTags>
   </PropertyGroup>
 

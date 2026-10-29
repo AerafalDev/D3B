@@ -1,21 +1,39 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
+using D3B.Bot.Pages;
 using D3B.Data;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The app's window: where the bots' host stands, its bots, and the language (D14, D91).</summary>
+/// <summary>The app's window: where the bots' host stands, its pages in the rail, and the language (D14, D91, D96).</summary>
 internal sealed partial class MainViewModel : ObservableObject
 {
     private readonly HostRunner _host;
     private readonly Localizer _localizer;
+    private bool _pagesRead;
 
     /// <summary>Gets the bots page.</summary>
     public BotsViewModel Bots { get; }
+
+    /// <summary>Gets the pages the host's modules registered, in the rail after the app's own, once the host runs.</summary>
+    public ObservableCollection<PluginPageViewModel> Pages { get; } = [];
+
+    /// <summary>Gets whether the bots page is the one the window shows.</summary>
+    [ObservableProperty]
+    public partial bool IsBotsPage { get; private set; } = true;
+
+    /// <summary>Gets the module's page the window shows, if it shows one.</summary>
+    [ObservableProperty]
+    public partial PluginPageViewModel? SelectedPage { get; private set; }
+
+    /// <summary>Gets whether any module registered a page.</summary>
+    [ObservableProperty]
+    public partial bool HasPages { get; private set; }
 
     /// <summary>Gets where the host stands, in a word.</summary>
     [ObservableProperty]
@@ -91,6 +109,47 @@ internal sealed partial class MainViewModel : ObservableObject
             _ => "",
         };
         Bots.Refresh(services);
+        RefreshPages(services);
+    }
+
+    private void RefreshPages(IServiceProvider? services)
+    {
+        // The catalogue is the host's: read once the host runs, and kept after it stops, as the bots shown are.
+        if (!_pagesRead && IsRunning && services is not null)
+        {
+            foreach (var definition in services.GetService<PageCatalog>()?.All ?? [])
+                Pages.Add(new PluginPageViewModel(definition, services, _localizer, Select));
+
+            _pagesRead = true;
+            HasPages = Pages.Count > 0;
+        }
+
+        foreach (var page in Pages)
+            page.Refresh();
+    }
+
+    /// <summary>Replaces the module's page whose own code threw what nothing else caught on the UI's thread.</summary>
+    /// <param name="exception">What was thrown.</param>
+    /// <returns>Whether a page's code threw it, and the page now shows it instead: else the app's own fault, not handled.</returns>
+    public bool FailPageThatThrew(Exception exception)
+    {
+        return Pages.Any(page => page.TryFailWith(exception));
+    }
+
+    [RelayCommand]
+    private void ShowBots()
+    {
+        Select(null);
+    }
+
+    private void Select(PluginPageViewModel? page)
+    {
+        foreach (var other in Pages)
+            other.IsSelected = other == page;
+
+        SelectedPage = page;
+        IsBotsPage = page is null;
+        page?.Refresh();
     }
 
     [RelayCommand]

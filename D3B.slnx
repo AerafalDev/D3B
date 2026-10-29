@@ -117,7 +117,14 @@
   <Folder Name="/templates/" />
   <Folder Name="/templates/d3b-plugin/">
     <File Path="templates/d3b-plugin/MyPlugin.csproj" />
+    <File Path="templates/d3b-plugin/MyPluginActivity.cs" />
     <File Path="templates/d3b-plugin/MyPluginModule.cs" />
+    <File Path="templates/d3b-plugin/MyPluginPage.axaml" />
+    <File Path="templates/d3b-plugin/MyPluginPage.axaml.cs" />
+    <File Path="templates/d3b-plugin/MyPluginPageModel.cs" />
+    <File Path="templates/d3b-plugin/MyPluginTexts.cs" />
+    <File Path="templates/d3b-plugin/Strings.fr.resx" />
+    <File Path="templates/d3b-plugin/Strings.resx" />
   </Folder>
   <Folder Name="/templates/d3b-plugin/.template.config/">
     <File Path="templates/d3b-plugin/.template.config/dotnetcli.host.json" />

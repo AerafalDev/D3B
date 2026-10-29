@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="StrollName" xml:space="preserve">
+    <value>Promenade</value>
+  </data>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Bonjour</value>
+  </data>
+  <data name="PageSummary" xml:space="preserve">
+    <value>Un plugin d'exemple : l'activité Promenade, qu'un bot démarre depuis sa fiche dans la page Bots, et cette page.</value>
+  </data>
+  <data name="NoBotTitle" xml:space="preserve">
+    <value>Aucun bot pour l'instant</value>
+  </data>
+  <data name="NoBotDetail" xml:space="preserve">
+    <value>Une fiche s'affiche ici pour chaque bot, dès qu'un client a choisi son personnage.</value>
+  </data>
+  <data name="CharacterNamed" xml:space="preserve">
+    <value>Personnage {0}</value>
+  </data>
+  <data name="Level" xml:space="preserve">
+    <value>Niveau {0}</value>
+  </data>
+  <data name="Strolling" xml:space="preserve">
+    <value>En promenade</value>
+  </data>
+  <data name="StrollOver" xml:space="preserve">
+    <value>Promenade finie</value>
+  </data>
+  <data name="NotStrolling" xml:space="preserve">
+    <value>Pas en promenade</value>
+  </data>
+  <data name="WalksArrivedOne" xml:space="preserve">
+    <value>marche arrivée</value>
+  </data>
+  <data name="WalksArrivedOther" xml:space="preserve">
+    <value>marches arrivées</value>
+  </data>
+  <data name="NoWalkYet" xml:space="preserve">
+    <value>Aucune encore</value>
+  </data>
+  <data name="LastWalkTitle" xml:space="preserve">
+    <value>Dernière marche</value>
+  </data>
+  <data name="LastWalk" xml:space="preserve">
+    <value>Cellule {0}, {1}</value>
+  </data>
+  <data name="OutcomeArrived" xml:space="preserve">
+    <value>arrivée</value>
+  </data>
+  <data name="OutcomeRefused" xml:space="preserve">
+    <value>refusée</value>
+  </data>
+  <data name="OutcomeNoPath" xml:space="preserve">
+    <value>sans chemin</value>
+  </data>
+  <data name="OutcomeNotConfirmed" xml:space="preserve">
+    <value>non suivie par le client</value>
+  </data>
+  <data name="OutcomeNotSent" xml:space="preserve">
+    <value>non envoyée</value>
+  </data>
+  <data name="ThisStroll" xml:space="preserve">
+    <value>Cette promenade</value>
+  </data>
+  <data name="ProgressOf" xml:space="preserve">
+    <value>{0} sur {1}</value>
+  </data>
+  <data name="StartHint" xml:space="preserve">
+    <value>Démarrez la Promenade depuis la fiche de ce bot, dans la page Bots.</value>
+  </data>
+</root>

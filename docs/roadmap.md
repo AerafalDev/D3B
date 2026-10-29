@@ -11,7 +11,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 2 | Game data | Done |
 | 3 | Protocol and connection | Done; Q10 at the next client update |
 | 4 | Bot run time and navigation | Done |
-| 5 | Desktop app, first version | In progress: 5a done |
+| 5 | Desktop app, first version | In progress: 5a and 5b done |
 | 6 | Harvesting and banking: first milestone | To do |
 | 7 | Lua scripting | Dropped: routes and routines are plugins (D90) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
@@ -129,7 +129,7 @@ and one an aggression begins during a step, not measured (D88).
 
 ## 5. Desktop app, first version
 
-Settles Q6 and Q11, in session 5b.
+Settles Q6 and Q11: both settled in session 5b, by D96 and D95.
 
 - The Avalonia app with ShadUI, which runs the bots in its process (D91): accounts and profiles, the live map with the
   bot's state and its activity, started, stopped and resumed from it (D87), logs and the protocol inspector, in French
@@ -142,7 +142,7 @@ client update before the next session gets Q10's session first (D54).
 | Session | Content | Status |
 | --- | --- | --- |
 | 5a | The app with the bots in it: the bots' host in the app's process, its composition shared with `D3B.Host`, which keeps its entry point alone, and no gRPC nor `D3B.Contracts`, the owner's choice (D91); the split of step 5 (D92); the catalogue of the activities modules register, which the app starts (D93); Avalonia 12, ShadUI and Inter, dark by default, the owner's choice, the host's state and why it did not start, the bots page as a card per bot, whole, with its position, pods, kamas, pause and activity, started, stopped and resumed, after the owner turned down three panes, French and English switched live, the window read every 250 ms, and the window drawn in tests (D94); measured on a client through the app. | Done on 2026-10-29 |
-| 5b | What a plugin sees and declares: Q11, and Q6, a plugin's page in the app's process; the sample plugin writes an activity and a page. | To do |
+| 5b | What a plugin sees and declares: Q11 settled, `D3B.Bot` packed with the libraries it names, which a plugin references, the owner's choice (D95); Q6 settled, a module's page registered with `AddPage`, made by the app from a factory naming no UI type, given the host's services, the app's language, the plugin's own texts and the window's refresh, in a rail on the left, the owner's choice among three mockups, a failing page replaced by its error, and activities and pages named in the app's language (D96); the plugin's root module read from its metadata, so that a plugin with a page loads in a host without the app (D97); the sample plugin's stroll and page, drawn in both languages and themes; the template with an activity and a page, `--page false` without; CI packing the six packages and building both. | Done on 2026-10-29 |
 | 5c | Accounts and profiles in SQLite, EF Core and migrations, and their pages; whether Data Protection has a secret to protect. | To do |
 | 5d | The live map, read from the pack by the app: cells, the character, its path, elements and NPCs. | To do |
 | 5e | Logs kept in memory and their page; the protocol inspector, a bot's game frames decoded live, the ticket hidden, or replayed from a capture. | To do |

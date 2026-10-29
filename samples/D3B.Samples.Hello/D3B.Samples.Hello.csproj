@@ -2,10 +2,22 @@
 
   <PropertyGroup>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
+  <ItemDefinitionGroup>
+    <ProjectReference>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\..\src\D3B.Core\D3B.Core.csproj" Private="false" ExcludeAssets="runtime" />
+    <PackageReference Include="Avalonia" ExcludeAssets="runtime" />
+    <PackageReference Include="CommunityToolkit.Mvvm" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\D3B.Bot\D3B.Bot.csproj" ExcludeAssets="runtime" />
   </ItemGroup>
 
 </Project>

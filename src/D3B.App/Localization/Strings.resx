@@ -254,4 +254,10 @@
   <data name="StartFailed" xml:space="preserve">
     <value>Could not start: {0}</value>
   </data>
+  <data name="PageFailedTitle" xml:space="preserve">
+    <value>This page could not be shown</value>
+  </data>
+  <data name="PageFailedDetail" xml:space="preserve">
+    <value>Its plugin raised the error below. The bots and the other pages go on.</value>
+  </data>
 </root>

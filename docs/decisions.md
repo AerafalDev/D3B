@@ -368,7 +368,8 @@ or the `Plugins:Directory` setting, resolved from the executable's directory.
 
 ## D22: Plugins compile against the D3B.Core package
 
-*2026-10-27, step 1, chosen by the owner*
+*2026-10-27, step 1, chosen by the owner. Superseded in part by D95: `D3B.Bot` and the libraries it names are packed
+beside `D3B.Core`, and a plugin references `D3B.Bot`.*
 
 `D3B.Core` is the only packable project, versioned by MinVer. A plugin references the `D3B.Core` package with
 `ExcludeAssets="runtime"`: it compiles against it, and the host provides it at run time, so a plugin's folder holds
@@ -2378,7 +2379,8 @@ session, which began with the host's gRPC API, before D91.*
 
 ## D93: Activities the app starts, from a catalogue the modules fill
 
-*2026-10-29, step 5, session 5a. Builds D87.*
+*2026-10-29, step 5, session 5a. Builds D87. Its point on plugins is superseded by D95: they reach `D3B.Bot`, and
+register activities.*
 
 - A module registers an activity with `services.AddActivity<T>(id, name)` (`ActivityServiceCollectionExtensions`, in
   `D3B.Bot.Activities`): an `ActivityDefinition`, its id unique in the host, its name as the app shows it, and how one
@@ -2438,6 +2440,118 @@ then for a page more practical and pleasant than three panes, its design left to
   - Changing the language through a restart: the bots live in the app now (D91), and a restart disconnects them.
   - An icon font, as ShadUI's demo uses Lucide's: a binary asset and its notice, for a dozen icons.
 
+## D95: Plugins compile against the D3B.Bot package
+
+*2026-10-29, step 5, session 5b, chosen by the owner. Settles Q11. Supersedes D22 in part: D3B.Core is no longer the
+only package, nor what a plugin references.*
+
+What a plugin needs to write an activity is the bots' run time itself: `BotContext` names the pack's maps
+(`D3B.Data`), the paths through the world (`D3B.Engine`), the side a message came from (`D3B.Network`) and the readable
+requests (`D3B.Protocol`); the state is built from the protocol's messages; and the behaviors an activity is made of,
+walking, travelling, using an element, banking, live beside the actor.
+
+- **So** `D3B.Bot` and the four libraries its API names are packable beside `D3B.Core`, at the same MinVer version:
+  `dotnet pack -o <feed>` at the repository's root packs the six, and nothing else. A plugin references `D3B.Bot` with
+  `ExcludeAssets="runtime"`, which brings the five others and their packages, runtime excluded too. Measured: a plugin
+  built from the template holds only its own files and its French satellite assembly; `D3B.Network`'s framework
+  reference to ASP.NET Core reaches its `runtimeconfig.json`, harmless, the host running it.
+- **What a plugin sees** is the public API of those six projects: the state (`CharacterState`), activities
+  (`BotActivity`) and their context, the behaviors (`WalkAsync`, `TravelAsync`, `UseAsync`, `BankAsync`, ...), the
+  catalogue of D93, the bots (`Bots`, `BotActor`) and the game's observers, the pack's data, and the pages of D96. A
+  plugin's activity gets the host's services through its constructor (D93).
+- **In the repository**, the sample references the project `D3B.Bot` the same way, with every project reference
+  `Private` false, so that the projects `D3B.Bot` references do not land in its folder either.
+- **The template** references `D3B.Bot`; CI packs the six, then builds a plugin from it with a page, whose folder must
+  hold its own files alone, and one without.
+- **Risk.** Everything public in the six projects is what a plugin sees, about 170 types written by hand and the
+  protocol's generated classes, and it changes every session. Before the first milestone publishes the packages (D4,
+  D22), what serves only the host is to be made internal, and the API kept stable from then on.
+- **Rejected.**
+  - The bot's contracts moved into `D3B.Core`: they cannot be told apart from the run time; `D3B.Core` would take most
+    of `D3B.Bot` and its four libraries, or hide them behind interfaces, and stop being the module model (D22).
+  - A facade of interfaces, `D3B.Sdk`, implemented by `D3B.Bot`: a stable contract, but a second API kept in step with
+    the first, every behavior written twice, while the API still changes every session. It stays possible once the API
+    settles.
+
+## D96: A plugin's page, in the app's rail
+
+*2026-10-29, step 5, session 5b; the rail chosen by the owner among three mockups. Settles Q6. Builds D5, D91, D93 and
+D94.*
+
+- **Registered by its module**, as D5 planned: `services.AddPage(id, title, icon, create)`
+  (`PageServiceCollectionExtensions`, in `D3B.Bot.Pages`), a `PageDefinition`, its id unique in the host, which a
+  second registration refuses while the modules build, as for activities (D93). The bots module lists them in the
+  `PageCatalog`, in the order they were registered. `create` returns the page, an Avalonia control, as an `object`: the
+  contract names no type of the UI's framework, so that a host without the app loads a plugin with a page (D97).
+- **What a page receives**, `PageContext`: the host's services, the bots, the catalogues, the pack's data and the
+  plugin's own services; the app's language, French or English, and its change; the language of the pack's texts that
+  goes with it; and the window's refresh, every 250 ms while the page shows, on the UI's thread, as the app's own pages
+  read the bots' snapshots (D9, D94). `Texts(resources)` gives the plugin's own texts in the app's language, which
+  follow it as it changes, for the page to bind to, `{Binding Texts[Key]}` (`PageTexts`), with `Format` and `Plural`.
+- **Translated names.** A text the app shows, a page's title or an activity's name, is a `LocalizedText`
+  (`D3B.Bot.Localization`): the same in every language, or one of a module's resources in the language asked for. A
+  plugin's resources are its own `.resx`, in English and French; the French build into a satellite assembly in the
+  plugin's folder, which its load context finds through its `.deps.json` (D21), measured by the app's tests.
+  `AddActivity` takes a `LocalizedText` too, and still a plain name, the same in every language.
+- **In the app**: a rail on the left, 60 px wide, the bots page first, then a line, then the modules' pages in the
+  catalogue's order, each an icon with its title as a tooltip, the page shown in the rest of the window. It shows once a
+  module registered a page: while there is one page, there is no rail (D94). An icon is a path in the syntax of SVG on
+  a grid of 24 units, drawn as the app's own icons, round lines in the colour of the text; one the app cannot read, for
+  which Avalonia throws `InvalidDataException`, or none, gets the app's own.
+- **A page fits the design** by what it inherits: the theme, dark or light, Inter and ShadUI's styles; and by the app's
+  classes it may use, `PageHeader` and `PageTitle`, which the bots page uses too, `Plate` and `PlateFooter`, its cards',
+  and the typography's.
+- **A page is made the first time it shows**, with its context, and kept. One that throws as it is made, as it
+  refreshes or as the language changes, or that is no control, is replaced by what it threw, each exception's type and
+  message with the inner ones, in a danger block, and logged; its context raises nothing more, and the first fault stays
+  shown. So is a page whose own code throws on the UI's thread what nothing caught, in a click or a layout: the app tells
+  it by the page's factory's assembly in the exception's stack (`PageDefinition.Owner`), and what no page's code threw is
+  still the app's fault, which ends it. The bots and the other pages go on: the app holds every client's connection
+  (D91), and its fall would disconnect them all.
+- **Nothing a module registered throws in the app.** A text whose resources cannot be found, such as a `.resx` moved to
+  a folder, which `GetString` throws for, shows its key between brackets, as a missing one does. The catalogues are read
+  before the host starts, so that two activities or two pages of one id, however registered, stop the host, which says
+  so, rather than the app later. A page asking for its texts on every refresh gets the same ones each time.
+- **The sample** (`samples/D3B.Samples.Hello`) writes an activity and a page: the stroll walks the character ten times
+  to a cell within 4 of where it stands, of its zone, away from the cells of the map actions the world graph names,
+  chosen from the state at each step (D87), and waits while the character is too busy for a walk, which would come back
+  at once; a journal the activity writes and the page reads; and its page, a card per bot, whether it strolls, how many
+  walks arrived, the last one, and the stroll's progress. Its texts are in English and French. Drawn without a screen,
+  in both languages and both themes, and at 760 px wide.
+- **The template** writes an activity and a page; `--page false` writes the activity alone, with no reference to
+  Avalonia. It compiles pages against the Avalonia and CommunityToolkit.Mvvm the app runs, which CI checks.
+- **Not measured**: the stroll on a client through the app; the tests play it through the sample loaded as a plugin.
+- **Rejected.**
+  - The pages as tabs in the title bar, the lead's recommendation: the full width left to the cards, but the owner
+    chose the rail.
+  - A section a plugin adds to each bot's card, alone or with the pages: the cards grow with every plugin, for no need
+    a plugin has yet.
+  - A contract typed with Avalonia, in a package of its own: `D3B.Host` would need Avalonia to build a plugin's modules.
+  - The app's `{l:Tr Key}` for plugins' views: it reads the app's resources, inside `D3B.App`, which no plugin
+    references.
+
+## D97: The loader reads a plugin's root module from its metadata
+
+*2026-10-29, step 5, session 5b. Builds D21.*
+
+- `PluginLoader` finds the public class marked `[Plugin]` by reading the assembly's metadata
+  (`System.Reflection.Metadata`), then loads that type alone. Looking for the attribute by reflection over every public
+  type, as it did, loads every assembly their declarations name: a public page, deriving from Avalonia's `UserControl`,
+  would stop a host without the app, `D3B.Host` or a test's, from loading the plugin. Measured by `D3B.Core`'s tests
+  and `D3B.Host`'s composition in `D3B.Bot`'s, whose hosts hold no Avalonia: the sample, whose page is public, loads,
+  its modules build, and its activity and page reach the catalogues, Avalonia never loaded.
+- What the rest of a plugin needs then loads as its modules build: an assembly neither the host nor the plugin holds,
+  told by the display name the runtime gives it rather than a file's path, is a `PluginLoadException` naming the plugin,
+  and the host does not start (D21). So is a type of the plugin's own that bears the attribute's name.
+- The root module is a top-level public class: a nested one, which reflection over public types found too, is not.
+- **So** a plugin names its page's types in the page's factory alone, never in its module's own code, which a host
+  without the app runs.
+- `D3B.Core`'s tests reference `D3B.Bot`, which the sample compiles against, as a host provides it.
+- **Rejected.**
+  - A plugin's page types required to be internal: what a template's author writes by default breaks the host.
+  - `System.Reflection.MetadataLoadContext`: a package, for a search the metadata reader in the framework does.
+  - `D3B.Host` shipping Avalonia: a UI framework in the host without the app, for types it never makes.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -2445,7 +2559,5 @@ Settled questions leave this table, and the decision that settles one says so.
 | Id | Question | Settled in |
 | --- | --- | --- |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
-| Q6 | What is a plugin's UI part, now that it loads in the app's process (D91): a page its module registers, with which contract? | Step 5, session 5b (D92) |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
-| Q11 | What does a plugin see of the bots' run time, now that activities are written as plugins: `D3B.Bot` packed beside `D3B.Core`, or the bot's contracts (state, behaviors, activities, observers) moved into `D3B.Core`, which plugins compile against (D22, D67, D87, D90, D93)? | Step 5, session 5b (D92), before the first milestone publishes the package |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |

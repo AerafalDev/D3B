@@ -1,5 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>D3B.Protocol</PackageId>
+    <Description>The readable protocol of D3B, a bot for Dofus 3: the game's messages, and their translation for each client build.</Description>
+    <PackageTags>d3b;dofus;bot;plugin;protocol</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="all" />

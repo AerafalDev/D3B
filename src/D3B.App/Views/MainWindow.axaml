@@ -69,93 +69,167 @@
             </Button>
         </StackPanel>
     </shadui:Window.RightWindowTitleBarContent>
-    <Panel>
-        <StackPanel
-            HorizontalAlignment="Center"
-            IsVisible="{Binding IsStarting}"
-            MaxWidth="420"
-            Spacing="14"
-            VerticalAlignment="Center">
-            <shadui:Loading
-                Height="28"
+    <Grid ColumnDefinitions="Auto,*">
+        <Border Classes="Rail" IsVisible="{Binding HasPages}">
+            <StackPanel Margin="0,14" Spacing="6">
+                <Button
+                    Classes="Ghost RailItem"
+                    Classes.Selected="{Binding IsBotsPage}"
+                    Command="{Binding ShowBotsCommand}"
+                    ToolTip.Tip="{l:Tr Bots}">
+                    <c:Icon Data="{StaticResource IconCards}" />
+                </Button>
+                <Border Classes="RailSeparator" />
+                <ItemsControl ItemsSource="{Binding Pages}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="6" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PluginPageViewModel">
+                            <Button
+                                Classes="Ghost RailItem"
+                                Classes.Selected="{Binding IsSelected}"
+                                Command="{Binding ShowCommand}"
+                                ToolTip.Tip="{Binding Title}">
+                                <c:Icon Data="{Binding Icon, TargetNullValue={StaticResource IconPlugin}}" />
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+        <Panel Grid.Column="1">
+            <StackPanel
                 HorizontalAlignment="Center"
-                Width="28" />
-            <TextBlock
-                Classes="h4"
-                HorizontalAlignment="Center"
-                Text="{l:Tr HostStartingTitle}" />
-            <TextBlock
-                Classes="Small Muted"
-                Text="{l:Tr HostStartingDetail}"
-                TextAlignment="Center"
-                TextWrapping="Wrap" />
-        </StackPanel>
-        <StackPanel
-            HorizontalAlignment="Center"
-            IsVisible="{Binding IsStopping}"
-            Spacing="14"
-            VerticalAlignment="Center">
-            <shadui:Loading
-                Height="28"
-                HorizontalAlignment="Center"
-                Width="28" />
-            <TextBlock
-                Classes="h4"
-                HorizontalAlignment="Center"
-                Text="{l:Tr HostStoppingTitle}" />
-        </StackPanel>
-        <ScrollViewer IsVisible="{Binding IsFailed}">
-            <Border
-                Classes="Banner Danger"
-                HorizontalAlignment="Center"
-                Margin="40"
-                MaxWidth="720"
-                Padding="24,22"
+                IsVisible="{Binding IsStarting}"
+                MaxWidth="420"
+                Spacing="14"
                 VerticalAlignment="Center">
-                <StackPanel Spacing="16">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <c:Icon
-                            Data="{StaticResource IconAlert}"
-                            Foreground="{DynamicResource ErrorColor}"
-                            Height="20"
-                            VerticalAlignment="Center"
-                            Width="20" />
-                        <TextBlock
-                            Classes="h4"
-                            Text="{l:Tr HostFailedTitle}"
-                            VerticalAlignment="Center" />
+                <shadui:Loading
+                    Height="28"
+                    HorizontalAlignment="Center"
+                    Width="28" />
+                <TextBlock
+                    Classes="h4"
+                    HorizontalAlignment="Center"
+                    Text="{l:Tr HostStartingTitle}" />
+                <TextBlock
+                    Classes="Small Muted"
+                    Text="{l:Tr HostStartingDetail}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel
+                HorizontalAlignment="Center"
+                IsVisible="{Binding IsStopping}"
+                Spacing="14"
+                VerticalAlignment="Center">
+                <shadui:Loading
+                    Height="28"
+                    HorizontalAlignment="Center"
+                    Width="28" />
+                <TextBlock
+                    Classes="h4"
+                    HorizontalAlignment="Center"
+                    Text="{l:Tr HostStoppingTitle}" />
+            </StackPanel>
+            <ScrollViewer IsVisible="{Binding IsFailed}">
+                <Border
+                    Classes="Banner Danger"
+                    HorizontalAlignment="Center"
+                    Margin="40"
+                    MaxWidth="720"
+                    Padding="24,22"
+                    VerticalAlignment="Center">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <c:Icon
+                                Data="{StaticResource IconAlert}"
+                                Foreground="{DynamicResource ErrorColor}"
+                                Height="20"
+                                VerticalAlignment="Center"
+                                Width="20" />
+                            <TextBlock
+                                Classes="h4"
+                                Text="{l:Tr HostFailedTitle}"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Border Classes="Code">
+                            <SelectableTextBlock
+                                Classes="Mono"
+                                Text="{Binding HostFailure}"
+                                TextWrapping="Wrap" />
+                        </Border>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock
+                                Classes="Small Muted"
+                                Text="{l:Tr HostFailedHint}"
+                                TextWrapping="Wrap"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Classes="Outline"
+                                Click="OnCopyFailureClick"
+                                Grid.Column="1"
+                                Margin="16,0,0,0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <c:Icon
+                                        Data="{StaticResource IconCopy}"
+                                        Height="14"
+                                        Width="14" />
+                                    <TextBlock Text="{l:Tr Copy}" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
                     </StackPanel>
-                    <Border Classes="Code">
-                        <SelectableTextBlock
-                            Classes="Mono"
-                            Text="{Binding HostFailure}"
-                            TextWrapping="Wrap" />
-                    </Border>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock
-                            Classes="Small Muted"
-                            Text="{l:Tr HostFailedHint}"
-                            TextWrapping="Wrap"
-                            VerticalAlignment="Center" />
-                        <Button
-                            Classes="Outline"
-                            Click="OnCopyFailureClick"
-                            Grid.Column="1"
-                            Margin="16,0,0,0">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <c:Icon
-                                    Data="{StaticResource IconCopy}"
-                                    Height="14"
-                                    Width="14" />
-                                <TextBlock Text="{l:Tr Copy}" />
-                            </StackPanel>
-                        </Button>
-                    </Grid>
-                </StackPanel>
-            </Border>
-        </ScrollViewer>
-        <Panel IsVisible="{Binding IsRunning}">
-            <views:BotsView DataContext="{Binding Bots}" />
+                </Border>
+            </ScrollViewer>
+            <Panel IsVisible="{Binding IsRunning}">
+                <Panel IsVisible="{Binding IsBotsPage}">
+                    <views:BotsView DataContext="{Binding Bots}" />
+                </Panel>
+                <ContentControl Content="{Binding SelectedPage.Content}" IsVisible="{Binding !IsBotsPage}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate x:DataType="vm:PageFailureViewModel">
+                            <ScrollViewer>
+                                <Border
+                                    Classes="Banner Danger"
+                                    HorizontalAlignment="Center"
+                                    Margin="40"
+                                    MaxWidth="720"
+                                    Padding="24,22"
+                                    VerticalAlignment="Center">
+                                    <StackPanel Spacing="16">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <c:Icon
+                                                Data="{StaticResource IconAlert}"
+                                                Foreground="{DynamicResource ErrorColor}"
+                                                Height="20"
+                                                VerticalAlignment="Center"
+                                                Width="20" />
+                                            <TextBlock
+                                                Classes="h4"
+                                                Text="{l:Tr PageFailedTitle}"
+                                                VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock
+                                            Classes="Small Muted"
+                                            Text="{l:Tr PageFailedDetail}"
+                                            TextWrapping="Wrap" />
+                                        <Border Classes="Code">
+                                            <SelectableTextBlock
+                                                Classes="Mono"
+                                                Text="{Binding Message}"
+                                                TextWrapping="Wrap" />
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </ScrollViewer>
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+            </Panel>
         </Panel>
-    </Panel>
+    </Grid>
 </shadui:Window>

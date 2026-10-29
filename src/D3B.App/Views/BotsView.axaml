@@ -3,7 +3,6 @@
     x:ClassModifier="internal"
     x:DataType="vm:BotsViewModel"
     xmlns="https://github.com/avaloniaui"
-    xmlns:activities="clr-namespace:D3B.Bot.Activities;assembly=D3B.Bot"
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
     xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
@@ -109,14 +108,8 @@
             </Border>
         </StackPanel>
         <DockPanel IsVisible="{Binding !IsEmpty}">
-            <StackPanel
-                DockPanel.Dock="Top"
-                Margin="32,26,32,20"
-                Spacing="4">
-                <TextBlock
-                    FontSize="26"
-                    FontWeight="SemiBold"
-                    Text="{l:Tr Bots}" />
+            <StackPanel Classes="PageHeader" DockPanel.Dock="Top">
+                <TextBlock Classes="PageTitle" Text="{l:Tr Bots}" />
                 <TextBlock Classes="Small Muted" Text="{Binding Summary}" />
             </StackPanel>
             <ScrollViewer>
@@ -210,7 +203,7 @@
                                                     PlaceholderText="{l:Tr ChooseActivity}"
                                                     SelectedItem="{Binding SelectedActivity}">
                                                     <ComboBox.ItemTemplate>
-                                                        <DataTemplate x:DataType="activities:ActivityDefinition">
+                                                        <DataTemplate x:DataType="vm:ActivityChoiceViewModel">
                                                             <TextBlock Text="{Binding Name}" />
                                                         </DataTemplate>
                                                     </ComboBox.ItemTemplate>

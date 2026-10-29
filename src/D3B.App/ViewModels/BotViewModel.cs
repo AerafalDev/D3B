@@ -28,13 +28,13 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly GameWorld? _world;
     private readonly GameTexts? _texts;
     private ActivityRun? _startedRun;
-    private string? _startedName;
+    private ActivityDefinition? _startedDefinition;
 
     /// <summary>Gets the bot.</summary>
     public BotActor Bot { get; }
 
     /// <summary>Gets the activities the bot can be given, as the modules registered them.</summary>
-    public IReadOnlyList<ActivityDefinition> Activities { get; }
+    public IReadOnlyList<ActivityChoiceViewModel> Activities { get; }
 
     /// <summary>Gets whether any activity can be given.</summary>
     public bool HasActivities => Activities.Count > 0;
@@ -144,7 +144,7 @@ internal sealed partial class BotViewModel : ObservableObject
     /// <summary>Gets or sets the activity to start.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(StartCommand))]
-    public partial ActivityDefinition? SelectedActivity { get; set; }
+    public partial ActivityChoiceViewModel? SelectedActivity { get; set; }
 
     /// <summary>Gets why the last start failed, if it did.</summary>
     [ObservableProperty]
@@ -161,7 +161,7 @@ internal sealed partial class BotViewModel : ObservableObject
         _localizer = localizer;
         _world = services.GetService<GameWorld>();
         _texts = services.GetService<GameTexts>();
-        Activities = services.GetService<ActivityCatalog>()?.All ?? [];
+        Activities = [.. (services.GetService<ActivityCatalog>()?.All ?? []).Select(definition => new ActivityChoiceViewModel(definition, localizer.Culture))];
         SelectedActivity = Activities.Count == 1 ? Activities[0] : null;
     }
 
@@ -238,6 +238,10 @@ internal sealed partial class BotViewModel : ObservableObject
         IsPaused = Bot.IsPaused;
         Doing = IsConnected ? _localizer[DoingOf(state)] : "";
         Kamas = _localizer.Format("KamasOf", state.Kamas);
+
+        foreach (var activity in Activities)
+            activity.Refresh(_localizer.Culture);
+
         RefreshPlace(state);
         RefreshLoad(state);
         RefreshActivity();
@@ -247,13 +251,13 @@ internal sealed partial class BotViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanStart))]
     private void Start()
     {
-        if (SelectedActivity is not { } definition)
+        if (SelectedActivity?.Definition is not { } definition)
             return;
 
         try
         {
             _startedRun = Bot.StartActivity(definition.Create(_services));
-            _startedName = definition.Name;
+            _startedDefinition = definition;
             Error = null;
         }
         catch (Exception exception)
@@ -353,7 +357,9 @@ internal sealed partial class BotViewModel : ObservableObject
         var steps = _localizer.Plural("Steps", run.Steps);
 
         // The name the app started it under; an activity started by other code goes by its own.
-        ActivityName = run == _startedRun && _startedName is { } name ? name : run.Activity.Name;
+        ActivityName = run == _startedRun && _startedDefinition is { } definition
+            ? definition.Name.In(_localizer.Culture)
+            : run.Activity.Name;
         ActivityText = _localizer[key];
         ActivityTone = tone;
         ActivityDetail = run.LastInterruption is { } interruption

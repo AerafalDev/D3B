@@ -58,6 +58,44 @@
     <Style Selector="TextBlock.Figures">
         <Setter Property="FontFeatures" Value="+tnum" />
     </Style>
+    <Style Selector="StackPanel.PageHeader">
+        <Setter Property="Margin" Value="32,26,32,20" />
+        <Setter Property="Spacing" Value="4" />
+    </Style>
+    <Style Selector="TextBlock.PageTitle">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.Rail">
+        <Setter Property="Width" Value="60" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        <Setter Property="BorderThickness" Value="0,0,1,0" />
+    </Style>
+    <Style Selector="Border.RailSeparator">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Margin" Value="0,4" />
+        <Setter Property="Background" Value="{DynamicResource BorderColor}" />
+    </Style>
+    <Style Selector="Button.RailItem">
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        <Setter Property="ToolTip.Placement" Value="Right" />
+    </Style>
+    <Style Selector="Button.RailItem.Selected">
+        <Setter Property="Background" Value="{DynamicResource GhostHoverColor}" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+    </Style>
+    <Style Selector="Button.RailItem c|Icon">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+    </Style>
     <Style Selector="c|Icon.Muted">
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
     </Style>

@@ -1,5 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>D3B.Engine</PackageId>
+    <Description>The pure logic of D3B, a bot for Dofus 3: cell and world paths, and criteria.</Description>
+    <PackageTags>d3b;dofus;bot;plugin;pathfinding</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\D3B.Data\D3B.Data.csproj" />
   </ItemGroup>

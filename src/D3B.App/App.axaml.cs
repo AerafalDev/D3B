@@ -55,6 +55,10 @@ internal sealed partial class App : Application
             main.Refresh();
             desktop.MainWindow = new MainWindow { DataContext = main };
 
+            // A module's page runs in the process that holds every client's connection (D91): its own code throwing, in a
+            // click or a layout, takes the page down, not the app. What no page threw is the app's, and ends it.
+            Dispatcher.UIThread.UnhandledException += (_, e) => e.Handled = main.FailPageThatThrew(e.Exception);
+
             DispatcherTimer.Run(() => Refreshed(main), _refreshInterval);
         }
 
