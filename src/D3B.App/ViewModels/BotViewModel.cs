@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
@@ -6,6 +7,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
+using D3B.Data;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Storage.Accounts;
@@ -35,9 +37,13 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly ProfileStarter? _starter;
     private readonly Action<CharacterKey>? _showJournal;
     private readonly Action<CharacterKey>? _showMap;
+    private readonly GameTextFormatter _says;
+    private readonly TimeProvider _time;
     private int _profilesVersion = -1;
     private ActivityRun? _startedRun;
     private ActivityChoiceViewModel? _startedChoice;
+    private ActivityReport? _shownReport;
+    private CultureInfo? _shownCulture;
 
     /// <summary>Gets the bot.</summary>
     public BotActor Bot { get; }
@@ -145,9 +151,49 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     public partial string ActivityDetail { get; private set; } = "";
 
-    /// <summary>Gets the error that made the activity fail, as it threw it; empty otherwise.</summary>
+    /// <summary>Gets the error that made the activity fail, as it threw it, or why it says it could not go on; empty otherwise.</summary>
     [ObservableProperty]
     public partial string ActivityProblem { get; private set; } = "";
+
+    /// <summary>Gets what the activity says it does, if it reports it (D131).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDoing))]
+    public partial string ActivityDoing { get; private set; } = "";
+
+    /// <summary>Gets how far the activity says it is, such as its tour's map.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasProgress))]
+    public partial string ProgressText { get; private set; } = "";
+
+    /// <summary>Gets how far the activity says it is, from 0 to 100.</summary>
+    [ObservableProperty]
+    public partial double ProgressPercent { get; private set; }
+
+    /// <summary>Gets how long the activity has run.</summary>
+    [ObservableProperty]
+    public partial string Elapsed { get; private set; } = "";
+
+    /// <summary>Gets what the activity counts, such as each resource harvested.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial IReadOnlyList<ActivityCountViewModel> Counts { get; private set; } = [];
+
+    /// <summary>Gets what the activity warns of, a line each.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasWarnings))]
+    public partial IReadOnlyList<string> Warnings { get; private set; } = [];
+
+    /// <summary>Gets whether the activity says what it does.</summary>
+    public bool HasDoing => ActivityDoing.Length > 0;
+
+    /// <summary>Gets whether the activity says how far it is.</summary>
+    public bool HasProgress => ProgressText.Length > 0;
+
+    /// <summary>Gets whether the activity counts something.</summary>
+    public bool HasCounts => Counts.Count > 0;
+
+    /// <summary>Gets whether the activity warns of something.</summary>
+    public bool HasWarnings => Warnings.Count > 0;
 
     /// <summary>Gets whether the bot runs an activity that is not over.</summary>
     [ObservableProperty]
@@ -189,6 +235,8 @@ internal sealed partial class BotViewModel : ObservableObject
         _profiles = services.GetService<ProfileBook>();
         _accounts = services.GetService<AccountBook>();
         _starter = services.GetService<ProfileStarter>();
+        _says = new GameTextFormatter(localizer, _world, _texts, services.GetService<GameTables>());
+        _time = services.GetService<TimeProvider>() ?? TimeProvider.System;
         RefreshChoices();
     }
 
@@ -457,6 +505,7 @@ internal sealed partial class BotViewModel : ObservableObject
             ActivityTone = Tone.Neutral;
             ActivityDetail = "";
             ActivityProblem = "";
+            RefreshReport(null, null);
 
             return;
         }
@@ -464,15 +513,51 @@ internal sealed partial class BotViewModel : ObservableObject
         var (key, tone) = run.IsOver ? OutcomeOf(run.Completion.GetAwaiter().GetResult()) : StatusOf(run.Status);
         var steps = _localizer.Plural("Steps", run.Steps);
 
-        // The name the app started it under, a profile's or an activity's; an activity started by other code goes by its own.
-        ActivityName = run == _startedRun && _startedChoice is { } choice ? choice.Name : run.Activity.Name;
+        // The name the app started it under, a profile's or an activity's; one started by other code, such as a profile on
+        // connection, by the name it was given, else by its own.
+        ActivityName = run == _startedRun && _startedChoice is { } choice ? choice.Name : run.Title ?? run.Activity.Name;
         ActivityText = _localizer[key];
         ActivityTone = tone;
         ActivityDetail = run.LastInterruption is { } interruption
             ? _localizer.Format("StepsInterrupted", steps, _localizer[InterruptionOf(interruption)])
             : steps;
 
-        ActivityProblem = run.IsOver ? run.Failure?.Message ?? "" : "";
+        ActivityProblem = !run.IsOver ? ""
+            : run.Failure is ActivityException { Reason: { } reason } ? _says.Say(reason)
+            : run.IsStillFull ? _localizer["ActivityLeftFull"]
+            : run.Failure?.Message ?? "";
+        RefreshReport(run, run.Activity.Report);
+    }
+
+    private void RefreshReport(ActivityRun? run, ActivityReport? report)
+    {
+        Elapsed = run is null ? "" : ElapsedOf((run.EndedAt ?? _time.GetUtcNow()) - run.StartedAt);
+
+        if (ReferenceEquals(report, _shownReport) && _localizer.Culture.Equals(_shownCulture))
+            return;
+
+        _shownReport = report;
+        _shownCulture = _localizer.Culture;
+
+        // An activity over says how it ended: what it said it did is no longer true.
+        ActivityDoing = report is null || run is { IsOver: true } ? "" : _says.Say(report.Doing);
+        ProgressText = report?.Progress is { } progress && run is { IsOver: false } ? _says.Say(progress.Text) : "";
+        ProgressPercent = report?.Progress is { Total: > 0 } shown ? Math.Clamp(100.0 * shown.Done / shown.Total, 0, 100) : 0;
+        Counts = report is null ? [] : [.. report.Counts.Select(count => new ActivityCountViewModel(_says.Say(count.Text), count.ItemId is not null))];
+        Warnings = report is null || run is { IsOver: true } ? [] : [.. report.Warnings.Select(_says.Say)];
+    }
+
+    private string ElapsedOf(TimeSpan elapsed)
+    {
+        if (elapsed < TimeSpan.Zero)
+            elapsed = TimeSpan.Zero;
+
+        if (elapsed < TimeSpan.FromMinutes(1))
+            return _localizer.Format("ElapsedSeconds", (int)elapsed.TotalSeconds);
+
+        return elapsed < TimeSpan.FromHours(1)
+            ? _localizer.Format("ElapsedMinutes", (int)elapsed.TotalMinutes)
+            : _localizer.Format("ElapsedHours", (int)elapsed.TotalHours, elapsed.Minutes);
     }
 
     private void RefreshTone()

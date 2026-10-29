@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Récolte</value>
+  </data>
+  <data name="SectionWhat" xml:space="preserve">
+    <value>Ce qu'il récolte</value>
+  </data>
+  <data name="SectionWhere" xml:space="preserve">
+    <value>Où</value>
+  </data>
+  <data name="SectionBank" xml:space="preserve">
+    <value>Quand il va en banque</value>
+  </data>
+  <data name="Resources" xml:space="preserve">
+    <value>Ressources, par priorité</value>
+  </data>
+  <data name="ResourcesHelp" xml:space="preserve">
+    <value>Récoltées dans cet ordre sur chaque carte, de n'importe quel métier.</value>
+  </data>
+  <data name="EverythingKnown" xml:space="preserve">
+    <value>Tout ce que chaque perso sait récolter à son niveau</value>
+  </data>
+  <data name="Area" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="AreaHelp" xml:space="preserve">
+    <value>Seule : ses sous-zones où poussent les ressources.</value>
+  </data>
+  <data name="SubAreas" xml:space="preserve">
+    <value>Sous-zones</value>
+  </data>
+  <data name="SubAreasHelp" xml:space="preserve">
+    <value>Sans zone : de n'importe quelle zone.</value>
+  </data>
+  <data name="FullAt" xml:space="preserve">
+    <value>Pods pleins à</value>
+  </data>
+  <data name="Deposit" xml:space="preserve">
+    <value>Ce qui part en banque</value>
+  </data>
+  <data name="DepositHarvest" xml:space="preserve">
+    <value>Ce que la récolte rapporte</value>
+  </data>
+  <data name="DepositAll" xml:space="preserve">
+    <value>Tout sauf l'équipement porté</value>
+  </data>
+  <data name="RuleWhat" xml:space="preserve">
+    <value>Choisis des ressources, ou tout ce que le perso sait récolter.</value>
+  </data>
+  <data name="RuleWhere" xml:space="preserve">
+    <value>Choisis une zone ou des sous-zones.</value>
+  </data>
+  <data name="FigureNumber" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="FigureOutOf" xml:space="preserve">
+    <value>{0} sur {1}</value>
+  </data>
+  <data name="FigureNone" xml:space="preserve">
+    <value>Aucune</value>
+  </data>
+  <data name="FigureMapsOne" xml:space="preserve">
+    <value>carte à parcourir</value>
+  </data>
+  <data name="FigureMapsMany" xml:space="preserve">
+    <value>cartes à parcourir</value>
+  </data>
+  <data name="FigureResourcesPresent" xml:space="preserve">
+    <value>ressources présentes</value>
+  </data>
+  <data name="FigureResourcesOne" xml:space="preserve">
+    <value>ressource dans la zone</value>
+  </data>
+  <data name="FigureResourcesMany" xml:space="preserve">
+    <value>ressources dans la zone</value>
+  </data>
+  <data name="FigureBankOne" xml:space="preserve">
+    <value>{0} carte</value>
+  </data>
+  <data name="FigureBankMany" xml:space="preserve">
+    <value>{0} cartes</value>
+  </data>
+  <data name="FigureBank" xml:space="preserve">
+    <value>jusqu'à la banque la plus proche</value>
+  </data>
+  <data name="FigureNoBank" xml:space="preserve">
+    <value>banque à portée à pied</value>
+  </data>
+  <data name="DoingStart" xml:space="preserve">
+    <value>Se prépare</value>
+  </data>
+  <data name="DoingHarvestOne" xml:space="preserve">
+    <value>Récolte : {1}, encore {0} sur la carte</value>
+  </data>
+  <data name="DoingHarvestMany" xml:space="preserve">
+    <value>Récolte : {1}, encore {0} sur la carte</value>
+  </data>
+  <data name="DoingHarvestLast" xml:space="preserve">
+    <value>Récolte : {0}</value>
+  </data>
+  <data name="DoingTravel" xml:space="preserve">
+    <value>Vers la carte suivante</value>
+  </data>
+  <data name="DoingReturn" xml:space="preserve">
+    <value>Retour vers la zone</value>
+  </data>
+  <data name="DoingBank" xml:space="preserve">
+    <value>Va à la banque</value>
+  </data>
+  <data name="DoingWaitGrow" xml:space="preserve">
+    <value>Attend que les ressources repoussent</value>
+  </data>
+  <data name="DoingFight" xml:space="preserve">
+    <value>Attend la fin du combat</value>
+  </data>
+  <data name="DoingPlayer" xml:space="preserve">
+    <value>En pause, à ta main</value>
+  </data>
+  <data name="DoingDisconnected" xml:space="preserve">
+    <value>Attend la reconnexion du client</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Tournée {0}, carte {1} sur {2}</value>
+  </data>
+  <data name="CountItem" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="CountBanksOne" xml:space="preserve">
+    <value>{0} banque</value>
+  </data>
+  <data name="CountBanksMany" xml:space="preserve">
+    <value>{0} banques</value>
+  </data>
+  <data name="WarningLevel" xml:space="preserve">
+    <value>{0} demande {1} {2}, le perso est {3}</value>
+  </data>
+  <data name="FailNoZone" xml:space="preserve">
+    <value>La zone ne contient aucune carte à récolter.</value>
+  </data>
+  <data name="FailNothing" xml:space="preserve">
+    <value>Aucune carte de la zone ne porte de ressource à récolter.</value>
+  </data>
+  <data name="FailUnreachable" xml:space="preserve">
+    <value>Aucune carte de la zone n'est joignable.</value>
+  </data>
+  <data name="FailLost" xml:space="preserve">
+    <value>Le chemin dans la zone a échoué trois fois de suite.</value>
+  </data>
+  <data name="FailStillFullHarvest" xml:space="preserve">
+    <value>Encore plein après la banque, {0} sur {1} pods : ce qui reste n'est pas de la récolte. Dépose tout sauf l'équipement porté, ou monte le seuil de {2} %.</value>
+  </data>
+  <data name="FailStillFullAll" xml:space="preserve">
+    <value>Encore plein après la banque, {0} sur {1} pods : ce que le perso porte pèse plus que le seuil de {2} %. Monte-le.</value>
+  </data>
+</root>

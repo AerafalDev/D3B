@@ -1099,6 +1099,34 @@ following in every case.
   8,402 maps on a world map elsewhere than 0,0, 643. In the same millisecond as the fight's context and map, the server
   sent 16 frames the readable protocol lacks. The client sent no walk in the fight.
 
+### The game, harvested
+
+Measured on 2026-10-29 for session 6a (D127 to D134): game connections of a client of 3.7.12.12 through the app, over
+four runs of the app, captures on, the owner's character harvesting nettles with its profile "Ortie", started from the
+card, then on connection. By structure, counts and timing, the maps' ids compared on the machine with the build's pack,
+never written down.
+
+- **A tour.** Harvests of skill 68 on one map after another, each element walked to from the cell the client uses it from
+  (D75), the tour going on to the nearest map still to go through, one scroll each in the measured part of the zone. A first
+  tour went through the zone's houses first, through doors and floors and a journey of 12 changes by a zaap, before its
+  first harvest; the tours since go through the maps of the world map first (D128). A journey of 12 changes led to maps of
+  the zone's sub-area reachable only far round. Walks the client did not confirm (D85) came back on one map of the zone, the
+  journey going another way.
+- **Interruptions.** A fight began during the activity, which waited and went on once it was over. The player's click
+  during a journey, `MapMovementCancelRequest`, paused the bot; resumed from the card, it went on. The client closed during
+  the activity: its new connection took the bot back, and it went on with no command. Stopped from the card, it ended at
+  once.
+- **On connection.** Three times, the profile started once the client chose the character, its journal saying so (D99).
+- **The bank.** Full, the character went to the bank of Bonta: a teleport to its zaap, a scroll, the door into the inside,
+  then NPC action 3 on the banker 6394, the Bontarian banker. The player, earlier in a capture, replied 771 ms after the
+  question. D3B replied 1 ms after it, the bank opened 29 ms later, the stacks went 6 ms after that, the leaving 39 ms after
+  the opening, the whole in 130 ms, and the client sent its two requests to leave 1 and 142 ms after the server's end
+  (D81): both windows stayed on the client's screen, the owner reported. Waiting half a second after the question and after the bank opened, the
+  reply went at 547 ms, the stacks at 1,085 ms, the leaving at 1,118 ms, the client's requests at 1,152 and 1,179 ms, and the
+  windows closed (D132). Then a teleport back to the zone's zaap.
+- **Still full.** Once the harvest was put in, 3 stacks, the character still carried 4,958 of 7,590 pods, other things,
+  above the share it banks at (D129).
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

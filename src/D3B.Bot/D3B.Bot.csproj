@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\D3B.Core\D3B.Core.csproj" />
     <ProjectReference Include="..\D3B.Data\D3B.Data.csproj" />

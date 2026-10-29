@@ -51,7 +51,7 @@ public sealed class ProfileStarter
 
         try
         {
-            return new ProfileStart(bot.StartActivity(definition.Create(_services, reading.Settings)), null, [], null);
+            return new ProfileStart(bot.StartActivity(definition.Create(_services, reading.Settings), profile.Name), null, [], null);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {

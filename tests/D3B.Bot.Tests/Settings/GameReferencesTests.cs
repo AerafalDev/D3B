@@ -38,6 +38,26 @@ public sealed class GameReferencesTests
     }
 
     [Fact]
+    public void TheSubAreasWhereResourcesGrowComeTheMostFirstThenTheLowest()
+    {
+        var holding = _game.SubAreasHolding([TestReferences.Chestnut, TestReferences.Ash]);
+
+        Assert.Equal([TestReferences.Forest, TestReferences.Hills], holding.Select(subArea => subArea.SubArea.Id));
+        Assert.Equal([TestReferences.Chestnut, TestReferences.Ash], holding[0].Resources);
+        Assert.Equal([2, 1], holding.Select(subArea => subArea.Maps));
+        Assert.Empty(_game.SubAreasHolding([TestReferences.Ash], TestReferences.Astrub));
+        Assert.Equal([1_001L, 1_002L], _game.MapsOf(TestReferences.Forest));
+    }
+
+    [Fact]
+    public void AResourcesSourceIsTheProfessionThatGathersItAtItsLowestLevel()
+    {
+        Assert.True(_game.TryGetSource(TestReferences.Chestnut, out var source));
+        Assert.Equal(new ResourceSource(TestReferences.Lumberjack, 10), source);
+        Assert.False(_game.TryGetSource(9_999, out _));
+    }
+
+    [Fact]
     public void OnlyTheGamesKindsHaveOptions()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => _game.Options(SettingKind.Number));

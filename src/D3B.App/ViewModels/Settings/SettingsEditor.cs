@@ -2,6 +2,10 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Localization;
 using D3B.Bot.Settings;
+using D3B.Data;
+using D3B.Data.Texts;
+using D3B.Data.World;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Settings;
 
@@ -45,7 +49,21 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets whether a rule of the activity's does not hold.</summary>
     public bool HasRuleProblems => Rules.Length > 0;
 
+    /// <summary>Gets what the settings lead to, as the activity reckons it from the pack, if it says (D127).</summary>
+    public SettingsPreview? Preview { get; private set; }
+
+    /// <summary>Gets the characters that play the profile, with their professions' levels, as their bots last saw them.</summary>
+    public IReadOnlyList<PlayerLevels> Players { get; }
+
+    /// <summary>Gets what says the activity's texts in the app's language, if the host runs.</summary>
+    public GameTextFormatter? Says { get; }
+
+    /// <summary>Gets the pack's atlas, which places the zone's maps, if the host runs.</summary>
+    public WorldAtlas? Atlas { get; }
+
     private GameNames Names { get; }
+
+    private IServiceProvider? Services { get; }
 
     /// <summary>Initializes a new instance of the <see cref="SettingsEditor"/> class.</summary>
     /// <param name="settings">The settings the activity declares.</param>
@@ -53,13 +71,19 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <param name="game">The game's values the settings name, or <see langword="null"/>.</param>
     /// <param name="names">Names those values.</param>
     /// <param name="localizer">The app's texts.</param>
-    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer)
+    /// <param name="services">The host's services, which the activity reckons what its settings lead to from, if it runs.</param>
+    /// <param name="players">The characters that play the profile, with their professions' levels.</param>
+    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PlayerLevels>? players = null)
     {
         Settings = settings;
         Draft = draft;
         Game = game;
         Names = names;
         Localizer = localizer;
+        Services = services;
+        Players = players ?? [];
+        Atlas = services?.GetService<GameWorld>()?.Atlas;
+        Says = services is null ? null : new GameTextFormatter(localizer, services.GetService<GameWorld>(), services.GetService<GameTexts>(), services.GetService<GameTables>());
 
         var sections = new List<SettingSectionViewModel>();
         var fields = new List<SettingFieldViewModel>();
@@ -96,6 +120,9 @@ internal sealed partial class SettingsEditor : ObservableObject
 
         var problems = Settings.Check(Draft, Game);
         var culture = Localizer.Culture;
+
+        // Before the fields, which show what it says.
+        Preview = Services is null ? null : Settings.Preview(Draft, Services);
 
         foreach (var field in _fields)
             field.Update(problems.FirstOrDefault(problem => problem.Setting == field.Definition));
@@ -151,6 +178,60 @@ internal sealed partial class SettingsEditor : ObservableObject
         return Draft is not null && setting.Within?.GetValue(Draft) is int within ? within : null;
     }
 
+    /// <summary>Gets the value of a setting another's suggestions follow, such as the resources whose sub-areas a sub-area setting offers first.</summary>
+    /// <param name="setting">The setting suggested by another.</param>
+    /// <returns>The other's values, those it shows; every resource the game has when it is hidden, as when the activity harvests everything; none when the setting is suggested by nothing.</returns>
+    public IReadOnlyList<int> SuggestionsOf(SettingDefinition setting)
+    {
+        if (Draft is null || setting.SuggestedBy is not { } by)
+            return [];
+
+        if (!Settings.IsVisible(by, Draft))
+            return Game is null ? [] : [.. Game.Options(SettingKind.Resource).Select(resource => resource.Id)];
+
+        return [.. by.GetValues(Draft).Cast<int>()];
+    }
+
+    /// <summary>Says who gathers a resource, beside its name: its profession and level.</summary>
+    /// <param name="resource">The resource's item.</param>
+    /// <returns>Its profession and level, or <see langword="null"/> when no profession gathers it.</returns>
+    public string? SourceOf(int resource)
+    {
+        if (Game is null || !Game.TryGetSource(resource, out var source))
+            return null;
+
+        return Localizer.Format("ResourceSource", Names.Name(SettingKind.Job, JobOf(source.JobId)), source.Level);
+    }
+
+    /// <summary>Says which character playing the profile lacks a profession's level for a resource, if one does.</summary>
+    /// <param name="resource">The resource's item.</param>
+    /// <returns>The first such character, the level asked and its own; <see langword="null"/> when every one has it, or none was seen.</returns>
+    public string? MissingLevelOf(int resource)
+    {
+        if (Game is null || !Game.TryGetSource(resource, out var source))
+            return null;
+
+        foreach (var player in Players)
+        {
+            // A profession a bot has not seen counts as the first level, as the activity counts it.
+            var level = player.JobLevels.TryGetValue(source.JobId, out var known) && known > 0 ? known : 1;
+
+            if (player.JobLevels.Count > 0 && level < source.Level)
+                return Localizer.Format("ResourceMissingLevel", Names.Name(SettingKind.Job, JobOf(source.JobId)), source.Level, player.Name, level);
+        }
+
+        return null;
+    }
+
+    /// <summary>Names a value of the game, in the app's language.</summary>
+    /// <param name="kind">Its kind.</param>
+    /// <param name="reference">The value.</param>
+    /// <returns>Its name.</returns>
+    public string NameOf(SettingKind kind, GameReference reference)
+    {
+        return Names.Name(kind, reference);
+    }
+
     /// <summary>Gets the values of the game a setting offers, named in the app's language.</summary>
     /// <param name="setting">A setting of the game's values.</param>
     /// <param name="within">The value of the setting it is sought within, if any.</param>
@@ -160,7 +241,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         if (Game is null)
             return [];
 
-        var options = Game.Options(setting.Kind, within).Select(reference => new OptionViewModel(reference.Id, Names.Name(setting.Kind, reference), Names.Detail(reference)));
+        var options = Game.Options(setting.Kind, within).Select(reference => new OptionViewModel(reference.Id, Names.Name(setting.Kind, reference), DetailOf(setting.Kind, reference)));
 
         if (setting.Kind is SettingKind.Resource && within is not null)
             return [.. options];
@@ -178,7 +259,18 @@ internal sealed partial class SettingsEditor : ObservableObject
     {
         var reference = Game?.Options(setting.Kind).FirstOrDefault(option => option.Id == id) ?? new GameReference(id, 0, null);
 
-        return new OptionViewModel(id, Names.Name(setting.Kind, reference), Names.Detail(reference));
+        return new OptionViewModel(id, Names.Name(setting.Kind, reference), DetailOf(setting.Kind, reference));
+    }
+
+    private GameReference JobOf(int jobId)
+    {
+        return Game?.Options(SettingKind.Job).FirstOrDefault(job => job.Id == jobId) ?? new GameReference(jobId, 0, null);
+    }
+
+    private string? DetailOf(SettingKind kind, GameReference reference)
+    {
+        // A resource of any profession says whose it is, its level beside.
+        return kind is SettingKind.Resource ? SourceOf(reference.Id) ?? Names.Detail(reference) : Names.Detail(reference);
     }
 
     private SettingFieldViewModel Create(SettingDefinition setting)
@@ -190,6 +282,8 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),
             (SettingKind.Choice, false) => new ChoiceFieldViewModel(setting, this),
             (SettingKind.Choice, true) => new ChoicesFieldViewModel(setting, this),
+            (SettingKind.Resource, true) => new ResourcesFieldViewModel(setting, this),
+            (SettingKind.SubArea, true) when setting.SuggestedBy is not null => new SubAreasFieldViewModel(setting, this),
             (_, false) => new GameFieldViewModel(setting, this),
             _ => new GamesFieldViewModel(setting, this),
         };

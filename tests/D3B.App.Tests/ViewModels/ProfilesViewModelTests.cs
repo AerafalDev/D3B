@@ -79,9 +79,16 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.True(item.IsNew && item.IsEditing);
         Assert.Equal("Harvest", item.EditActivity?.Name);
         Assert.Equal("Give the profile a name", item.NameProblem);
+        Assert.Equal("New profile", item.Title);
         Assert.False(item.SaveCommand.CanExecute(null));
 
+        var heard = new List<string?>();
+
+        item.PropertyChanged += (_, e) => heard.Add(e.PropertyName);
         item.EditName = "Lumberjack";
+
+        // Its header says the name as it is typed.
+        Assert.Equal("Lumberjack", item.Title);
 
         // The profession has no default: the user must choose one.
         Assert.Equal("Required", Field<GameFieldViewModel>(item, "Job").Problem);
@@ -100,6 +107,11 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.False(item.IsEditing);
         Assert.Equal(("Lumberjack", TestStore.HarvestId), (saved.Name, saved.ActivityId));
         Assert.Contains($"\"Job\":{TestReferences.Lumberjack}", saved.Settings, StringComparison.Ordinal);
+
+        // Saved, it is new no more, and the view hears it: its header keeps its name.
+        Assert.False(item.IsNew);
+        Assert.Contains(nameof(ProfileViewModel.IsNew), heard);
+        Assert.Equal("Lumberjack", item.Title);
 
         page.Refresh(_store.Host.Services);
 
@@ -151,11 +163,11 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.Equal(["What", "Where", "How"], editor.Sections.Select(section => section.Title));
         Assert.True(item.CanSave);
 
-        // Resources are offered within the profession chosen, by the level it gathers them from.
+        // Resources are offered within the profession chosen, by the level it gathers them from, each saying whose it is.
         var resources = Field<GamesFieldViewModel>(item, "Resources");
 
         Assert.Equal(["Ash", "Chestnut"], resources.Available.Select(option => option.Name));
-        Assert.Equal(["Level 1", "Level 10"], resources.Available.Select(option => option.Detail));
+        Assert.Equal(["Lumberjack, level 1", "Lumberjack, level 10"], resources.Available.Select(option => option.Detail));
 
         resources.ToAdd = resources.Available[1];
         resources.ToAdd = resources.Available[0];

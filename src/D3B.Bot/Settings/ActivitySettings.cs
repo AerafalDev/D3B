@@ -21,6 +21,7 @@ public sealed class ActivitySettings
 {
     private readonly Func<object>? _create;
     private readonly IReadOnlyList<SettingRule> _rules;
+    private readonly Func<object, IServiceProvider, SettingsPreview?>? _preview;
 
     /// <summary>Gets the settings of an activity that declares none.</summary>
     public static ActivitySettings None { get; } = new(null, null, [], []);
@@ -34,12 +35,16 @@ public sealed class ActivitySettings
     /// <summary>Gets whether the activity declares no setting.</summary>
     public bool IsEmpty => All.Count == 0;
 
-    internal ActivitySettings(Type? type, Func<object>? create, IReadOnlyList<SettingDefinition> all, IReadOnlyList<SettingRule> rules)
+    /// <summary>Gets whether the activity says what its settings lead to (<see cref="Preview"/>).</summary>
+    public bool HasPreview => _preview is not null;
+
+    internal ActivitySettings(Type? type, Func<object>? create, IReadOnlyList<SettingDefinition> all, IReadOnlyList<SettingRule> rules, Func<object, IServiceProvider, SettingsPreview?>? preview = null)
     {
         Type = type;
         _create = create;
         All = all;
         _rules = rules;
+        _preview = preview;
     }
 
     private static bool Holds(SettingRule rule, object settings)
@@ -171,6 +176,29 @@ public sealed class ActivitySettings
         }
 
         return problems;
+    }
+
+    /// <summary>Reckons what settings lead to, as the activity says it (D127).</summary>
+    /// <param name="settings">The settings.</param>
+    /// <param name="services">The host's services, whose pack the activity reckons from.</param>
+    /// <returns>What they lead to; nothing when the activity says nothing, the settings say too little, or the reckoning throws.</returns>
+    public SettingsPreview? Preview(object? settings, IServiceProvider services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        CheckType(settings);
+
+        if (settings is null || _preview is null)
+            return null;
+
+        try
+        {
+            return _preview(settings, services);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // An activity's reckoning runs in the app, which holds every client's connection (D91): it must not throw there.
+            return null;
+        }
     }
 
     private void CheckType(object? settings)

@@ -67,22 +67,22 @@ public sealed class BankingTests
         var (connection, bot) = await InTheBankAsync(play);
         var banking = bot.BankAsync(stack => stack.ItemId != 30_449, 100, TestContext.Current.CancellationToken);
 
-        Assert.Equal(_talk, await connection.SentAsync(1));
+        Assert.Equal(_talk, await TestWalks.SentAsync(play, connection, 1));
         Asked(connection, TestPlay.ChestReplyId, TestPlay.OtherReplyId);
 
-        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.ChestReplyId }, await connection.SentAsync(2));
+        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.ChestReplyId }, await TestWalks.SentAsync(play, connection, 2));
         Opened(connection);
 
-        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 12, 13 } }, await connection.SentAsync(3));
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 12, 13 } }, await TestWalks.SentAsync(play, connection, 3));
         connection.Server(new ObjectsDeletedEvent { Uids = { 12, 13 } });
         connection.Server(new StorageObjectsUpdateEvent());
         connection.Server(new InventoryWeightEvent { Weight = 700, MaxWeight = 7_590 });
 
-        Assert.Equal(new ExchangeKamasRequest { Quantity = 100 }, await connection.SentAsync(4));
+        Assert.Equal(new ExchangeKamasRequest { Quantity = 100 }, await TestWalks.SentAsync(play, connection, 4));
         connection.Server(new StorageKamasUpdateEvent { Kamas = 105 });
         connection.Server(new KamasUpdateEvent { Kamas = Carried - Fee - 100 });
 
-        Assert.Equal(new DialogLeaveRequest(), await connection.SentAsync(5));
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(play, connection, 5));
         connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
 
         // What the client sends by itself once the server ended the exchange.
@@ -106,11 +106,11 @@ public sealed class BankingTests
         var (connection, bot) = await InTheBankAsync(play);
         var banking = bot.BankAsync(_ => true, 0, TestContext.Current.CancellationToken);
 
-        await connection.SentAsync(1);
+        await TestWalks.SentAsync(play, connection, 1);
         Asked(connection, TestPlay.ChestReplyId);
-        await connection.SentAsync(2);
+        await TestWalks.SentAsync(play, connection, 2);
         Opened(connection);
-        await connection.SentAsync(3);
+        await TestWalks.SentAsync(play, connection, 3);
 
         connection.Client(new DialogLeaveRequest());
 
@@ -127,7 +127,7 @@ public sealed class BankingTests
         var (connection, bot) = await InTheBankAsync(play);
         var opening = bot.RunAsync((context, token) => context.OpenBankAsync(token), TestContext.Current.CancellationToken);
 
-        await connection.SentAsync(1);
+        await TestWalks.SentAsync(play, connection, 1);
         connection.Server(new NpcActionErrorEvent());
 
         Assert.Equal(BankOutcome.Refused, await opening);
@@ -141,12 +141,12 @@ public sealed class BankingTests
         var (connection, bot) = await InTheBankAsync(play);
         var opening = bot.RunAsync((context, token) => context.OpenBankAsync(token), TestContext.Current.CancellationToken);
 
-        await connection.SentAsync(1);
+        await TestWalks.SentAsync(play, connection, 1);
         Asked(connection, TestPlay.ChestReplyId, TestPlay.OtherReplyId);
-        await connection.SentAsync(2);
+        await TestWalks.SentAsync(play, connection, 2);
         Question(connection, TestPlay.ChestReplyId, TestPlay.OtherReplyId);
 
-        Assert.Equal(new DialogLeaveRequest(), await connection.SentAsync(3));
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(play, connection, 3));
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
 
         Assert.Equal(BankOutcome.Refused, await opening);
@@ -161,10 +161,10 @@ public sealed class BankingTests
         var (connection, bot) = await InTheBankAsync(play);
         var opening = bot.RunAsync((context, token) => context.OpenBankAsync(token), TestContext.Current.CancellationToken);
 
-        await connection.SentAsync(1);
+        await TestWalks.SentAsync(play, connection, 1);
         Asked(connection, TestPlay.OtherReplyId);
 
-        Assert.Equal(new DialogLeaveRequest(), await connection.SentAsync(2));
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(play, connection, 2));
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
 
         Assert.Equal(BankOutcome.Refused, await opening);
@@ -191,7 +191,7 @@ public sealed class BankingTests
 
         var deposit = bot.RunAsync((context, token) => context.DepositAsync([], 1_000_000, token), TestContext.Current.CancellationToken);
 
-        Assert.Equal(new ExchangeKamasRequest { Quantity = Carried - Fee }, await connection.SentAsync(1));
+        Assert.Equal(new ExchangeKamasRequest { Quantity = Carried - Fee }, await TestWalks.SentAsync(play, connection, 1));
         connection.Server(new StorageKamasUpdateEvent { Kamas = 5 + Carried - Fee });
         connection.Server(new KamasUpdateEvent());
 
@@ -211,7 +211,7 @@ public sealed class BankingTests
         var deposit = bot.RunAsync((context, token) => context.DepositAsync([14, 30, 99], 0, token), TestContext.Current.CancellationToken);
 
         // The worn stack and one the inventory lacks are left out.
-        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 14 } }, await connection.SentAsync(1));
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 14 } }, await TestWalks.SentAsync(play, connection, 1));
 
         Assert.Equal(BankOutcome.Refused, await TestWalks.AdvanceUntilDoneAsync(play.Time, deposit));
         Assert.Contains(14, bot.State.Inventory.Keys);

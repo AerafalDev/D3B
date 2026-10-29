@@ -4,6 +4,8 @@ using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Network;
 using D3B.Data;
 using D3B.Data.Banks;
+using D3B.Data.Items;
+using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.Packs;
 using D3B.Data.Tests;
@@ -34,7 +36,9 @@ namespace D3B.Bot.Tests.Runtime;
 /// as the bank of Astrub's map and a map near it list them in the captures. The pack's bank stands in front of
 /// <see cref="MapId"/>; its banker, <see cref="BankerNpcId"/>, stands in <see cref="InsideMapId"/> beside an NPC who is
 /// none, and the other inside holds no NPC. A character teleports from the three maps outside; <see cref="EastMapId"/>
-/// holds a zaap, as Astrub's does, and <see cref="HavenBagMapId"/>, which the pack lacks, is a haven bag.
+/// holds a zaap, as Astrub's does, and <see cref="HavenBagMapId"/>, which the pack lacks, is a haven bag. Every map is of
+/// <see cref="SubAreaId"/>, which lists <see cref="Ash"/>, which the tree's skill gathers, and <see cref="Chestnut"/>,
+/// which a lumberjack gathers from level 20.
 /// </remarks>
 internal sealed class TestPlay : IAsyncDisposable
 {
@@ -55,6 +59,10 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int TreeCell = 176;
     public const int TreeSkillId = 40;
     public const int TreeInstanceId = 19_146;
+    public const int Lumberjack = 2;
+    public const int Ash = 303;
+    public const int Chestnut = 473;
+    public const int ChestnutSkillId = 39;
     public const int DoorElementId = 515_308;
     public const int DoorCell = 288;
     public const int DoorInstanceId = 23_074;
@@ -217,6 +225,10 @@ internal sealed class TestPlay : IAsyncDisposable
             writer.Add(WorldGraph.EntryName, Graph());
             writer.Add(WorldAtlas.EntryName, Atlas());
             writer.Add(BankCatalog.EntryName, new BankCatalog(new[] { new Bank(2_756, MapId) }, new[] { new Banker(BankerNpcId, 0, 0, 2) }, new[] { 64_360, ChestReplyId }));
+            writer.Add(ItemCatalog.EntryName, new ItemCatalog(new[] { new Item(Ash, 403, 38, 1, 5), new Item(Chestnut, 404, 38, 20, 5) }, Array.Empty<ItemType>()));
+            writer.Add(JobCatalog.EntryName, new JobCatalog(
+                new[] { new Job(Job.Base, 0), new Job(Lumberjack, 202) },
+                new[] { new Skill(ChestnutSkillId, 0, Lumberjack, Chestnut, 20, 1, false), new Skill(TreeSkillId, 0, Lumberjack, Ash, 1, 1, false), new Skill(WorldPathfinder.DoorSkillId, 0, Job.Base, Skill.NoItem, 0, 1, false) }));
             writer.Complete();
         }
 
@@ -270,9 +282,9 @@ internal sealed class TestPlay : IAsyncDisposable
             new(InsideMapId, 4, -18, SubAreaId, -1, 0, 0),
             new(OtherInsideMapId, 4, -18, SubAreaId, -1, 0, 0),
         ];
-        SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 0)];
+        SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 2)];
 
-        return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, Array.Empty<Waypoint>(), Array.Empty<int>());
+        return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, Array.Empty<Waypoint>(), new[] { Ash, Chestnut });
     }
 
     /// <summary>A game connection, its first request presenting a ticket the connection phase gave an account, or none.</summary>

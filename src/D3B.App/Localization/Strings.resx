@@ -959,4 +959,52 @@
   <data name="MapInside" xml:space="preserve">
     <value>an inside at {0}</value>
   </data>
+  <data name="ElapsedSeconds" xml:space="preserve">
+    <value>{0} s</value>
+  </data>
+  <data name="ElapsedMinutes" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="ElapsedHours" xml:space="preserve">
+    <value>{0} h {1:00}</value>
+  </data>
+  <data name="LayerActivity" xml:space="preserve">
+    <value>Activity</value>
+  </data>
+  <data name="MapTour" xml:space="preserve">
+    <value>The tour</value>
+  </data>
+  <data name="TourVisited" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="TourToVisit" xml:space="preserve">
+    <value>To do</value>
+  </data>
+  <data name="TourEmpty" xml:space="preserve">
+    <value>No resource</value>
+  </data>
+  <data name="ResourceSource" xml:space="preserve">
+    <value>{0}, level {1}</value>
+  </data>
+  <data name="ResourceMissingLevel" xml:space="preserve">
+    <value>{0} {1}, {2} is {3}</value>
+  </data>
+  <data name="PercentValue" xml:space="preserve">
+    <value>{0}%</value>
+  </data>
+  <data name="AddResource" xml:space="preserve">
+    <value>Add a resource</value>
+  </data>
+  <data name="ZoneNothingYet" xml:space="preserve">
+    <value>Choose resources and a place: the zone shows here.</value>
+  </data>
+  <data name="ZoneSuggested" xml:space="preserve">
+    <value>Where your resources grow</value>
+  </data>
+  <data name="ZoneSearch" xml:space="preserve">
+    <value>Search another sub-area</value>
+  </data>
+  <data name="ActivityLeftFull" xml:space="preserve">
+    <value>Still full once unloaded: what is left is more than the activity unloads.</value>
+  </data>
 </root>

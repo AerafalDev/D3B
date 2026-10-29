@@ -133,6 +133,21 @@ internal sealed class MapCanvas : Control
             MapMarks.Draw(context, palette, MapMark.Character, layout.Center(cell), layout.CellHeight);
     }
 
+    private static void DrawActivity(DrawingContext context, MapPalette palette, MapActivity activity, MapLayout layout)
+    {
+        var height = layout.CellHeight;
+
+        if (!activity.NextExit.IsDefaultOrEmpty)
+            context.DrawGeometry(palette.ExitFill, new Pen(palette.Exit, 2), Cells(layout, activity.NextExit));
+
+        // A ring around each element the activity wants, a brighter one around the one it goes for.
+        foreach (var wanted in activity.Wanted)
+            context.DrawEllipse(null, new Pen(palette.Resource, 1.5), layout.Center(wanted), height * 0.62, height * 0.62);
+
+        if (activity.Target is { } target)
+            context.DrawEllipse(null, new Pen(palette.Hover, 2), layout.Center(target), height * 0.8, height * 0.8);
+    }
+
     /// <inheritdoc/>
     public override void Render(DrawingContext context)
     {
@@ -179,6 +194,9 @@ internal sealed class MapCanvas : Control
             if (shown)
                 MapMarks.Draw(context, palette, element.Mark, layout.Center(element.Cell), height);
         }
+
+        if (layers.HasFlag(MapLayers.Activity) && scene.Activity is { } activity)
+            DrawActivity(context, palette, activity, layout);
 
         if (layers.HasFlag(MapLayers.Npcs))
         {

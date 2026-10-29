@@ -20,18 +20,28 @@ public sealed class GameReferences
     private readonly Lazy<IReadOnlyList<GameReference>> _subAreas;
     private readonly Lazy<IReadOnlyList<GameReference>> _resources;
     private readonly Lazy<ILookup<int, GameReference>> _resourcesByJob;
+    private readonly Lazy<Dictionary<int, ResourceSource>> _sources;
+    private readonly Lazy<ILookup<int, long>> _maps;
 
     /// <summary>Initializes a new instance of the <see cref="GameReferences"/> class.</summary>
     /// <param name="atlas">The world's areas and sub-areas.</param>
     /// <param name="jobs">The professions and their skills.</param>
     /// <param name="items">The items, which name the resources.</param>
-    public GameReferences(WorldAtlas atlas, JobCatalog jobs, ItemCatalog items)
+    /// <param name="graph">The world graph, which says the maps a character may travel to; without it, every map of the atlas counts.</param>
+    public GameReferences(WorldAtlas atlas, JobCatalog jobs, ItemCatalog items, WorldGraph? graph = null)
     {
         ArgumentNullException.ThrowIfNull(atlas);
         ArgumentNullException.ThrowIfNull(jobs);
         ArgumentNullException.ThrowIfNull(items);
 
         _atlas = atlas;
+        _maps = new Lazy<ILookup<int, long>>(() => atlas.Positions.ToArray()
+            .Where(position => graph?.Contains(position.MapId) ?? true)
+            .ToLookup(position => position.SubAreaId, position => position.MapId));
+        _sources = new Lazy<Dictionary<int, ResourceSource>>(() => jobs.Skills.ToArray()
+            .Where(skill => skill.GatheredItemId != Skill.NoItem && skill.JobId != Job.Base)
+            .GroupBy(skill => skill.GatheredItemId)
+            .ToDictionary(skills => skills.Key, skills => skills.MinBy(skill => skill.MinLevel) is var lowest ? new ResourceSource(lowest.JobId, lowest.MinLevel) : default));
         _jobs = new Lazy<IReadOnlyList<GameReference>>(() => JobsOf(jobs));
         _areas = new Lazy<IReadOnlyList<GameReference>>(() => [.. atlas.Areas.ToArray().Select(area => new GameReference(area.Id, area.NameId, null))]);
         _subAreas = new Lazy<IReadOnlyList<GameReference>>(() => [.. atlas.SubAreas.ToArray().Select(subArea => new GameReference(subArea.Id, subArea.NameId, subArea.Level))]);
@@ -99,6 +109,54 @@ public sealed class GameReferences
             SettingKind.Resource => _resources.Value.Any(resource => resource.Id == id),
             _ => false,
         };
+    }
+
+    /// <summary>Finds who gathers a resource.</summary>
+    /// <param name="resource">The resource's item.</param>
+    /// <param name="source">The profession that gathers it, at its lowest level.</param>
+    /// <returns>Whether a profession gathers it.</returns>
+    public bool TryGetSource(int resource, out ResourceSource source)
+    {
+        return _sources.Value.TryGetValue(resource, out source);
+    }
+
+    /// <summary>Gets the maps of a sub-area a character may travel to.</summary>
+    /// <param name="subArea">The sub-area.</param>
+    /// <returns>Its maps, in the atlas's order; none for a sub-area the atlas lacks.</returns>
+    public IEnumerable<long> MapsOf(int subArea)
+    {
+        return _maps.Value[subArea];
+    }
+
+    /// <summary>Gets the sub-areas where resources grow, the most of them first, then the lowest (D127).</summary>
+    /// <param name="resources">The resources asked for, in order.</param>
+    /// <param name="within">The area to seek them in alone, if any.</param>
+    /// <returns>Each sub-area listing at least one of them, with its maps and those it lists.</returns>
+    public IReadOnlyList<SubAreaResources> SubAreasHolding(IReadOnlyList<int> resources, int? within = null)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+
+        var found = new List<SubAreaResources>();
+
+        foreach (var subArea in _atlas.SubAreas.Span)
+        {
+            if (within is { } area && subArea.AreaId != area)
+                continue;
+
+            var listed = _atlas.HarvestablesOf(subArea);
+            var held = new List<int>();
+
+            foreach (var resource in resources)
+            {
+                if (listed.Contains(resource))
+                    held.Add(resource);
+            }
+
+            if (held.Count > 0)
+                found.Add(new SubAreaResources(new GameReference(subArea.Id, subArea.NameId, subArea.Level), _maps.Value[subArea.Id].Count(), held));
+        }
+
+        return [.. found.OrderByDescending(subArea => subArea.Resources.Count).ThenBy(subArea => subArea.SubArea.Level).ThenBy(subArea => subArea.SubArea.Id)];
     }
 
     /// <summary>Tells whether a value of the game is within another: a sub-area within an area, a resource within a profession.</summary>

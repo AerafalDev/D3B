@@ -25,12 +25,22 @@ internal sealed partial class ListItemViewModel
     /// <summary>Gets whether it may move down.</summary>
     public bool CanMoveDown { get; }
 
+    /// <summary>Gets what the list warns of it, such as a resource above a character's profession, if anything.</summary>
+    public string? Warning { get; }
+
+    /// <summary>Gets whether the list warns of it.</summary>
+    public bool HasWarning => Warning is not null;
+
+    /// <summary>Gets whether no warning goes with it, so that its detail shows.</summary>
+    public bool HasDetailShown => Warning is null && Option.HasDetail;
+
     /// <summary>Initializes a new instance of the <see cref="ListItemViewModel"/> class.</summary>
     /// <param name="list">The list it belongs to.</param>
     /// <param name="option">The value.</param>
     /// <param name="index">Its place.</param>
     /// <param name="count">How many values the list holds.</param>
-    public ListItemViewModel(ListFieldViewModel list, OptionViewModel option, int index, int count)
+    /// <param name="warning">What the list warns of it, if anything.</param>
+    public ListItemViewModel(ListFieldViewModel list, OptionViewModel option, int index, int count, string? warning = null)
     {
         _list = list;
         Option = option;
@@ -39,6 +49,7 @@ internal sealed partial class ListItemViewModel
         IsOrdered = list.Definition.IsOrdered;
         CanMoveUp = IsOrdered && index > 0;
         CanMoveDown = IsOrdered && index < count - 1;
+        Warning = warning;
     }
 
     [RelayCommand]

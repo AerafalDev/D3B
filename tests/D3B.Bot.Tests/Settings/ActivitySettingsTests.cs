@@ -399,4 +399,51 @@ public sealed class ActivitySettingsTests
         Assert.Empty(read.Resources);
         Assert.Equal([TestReferences.Forest, TestReferences.Hills], read.SubAreas);
     }
+
+    [Fact]
+    public void SubAreasMayBeSuggestedByResourcesAndANumberMayBeAPercentage()
+    {
+        var declared = Register(settings =>
+        {
+            settings.Resources(s => s.Resources, Text("Resources"));
+            settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).SuggestedBy(s => s.Resources);
+            settings.Number(s => s.Walks, Text("Walks"), 0, 100).Percent();
+        }).Settings;
+
+        Assert.Same(declared.All[0], declared.All[1].SuggestedBy);
+        Assert.True(declared.All[2].IsPercent);
+        Assert.False(declared.All[0].IsPercent);
+        Assert.Throws<InvalidOperationException>(() => Register(settings => settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).SuggestedBy(s => s.Resources)));
+        Assert.Throws<InvalidOperationException>(() => Register(settings =>
+        {
+            settings.Resources(s => s.Resources, Text("Resources"));
+            settings.Resources(s => s.SubAreas, Text("Other")).SuggestedBy(s => s.Resources);
+        }));
+        Assert.Throws<InvalidOperationException>(() => Register(settings => settings.Number(s => s.Walks, Text("Walks"), 1, 1_000).Percent()));
+        Assert.Throws<InvalidOperationException>(() => Register(settings => settings.Flag(s => s.UseBank, Text("Bank")).Percent()));
+    }
+
+    [Fact]
+    public void AnActivitySaysWhatItsSettingsLeadToAndAReckoningThatThrowsGivesNothing()
+    {
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var preview = new SettingsPreview { LandmarkMapId = 7 };
+        var declared = Register(settings =>
+        {
+            settings.Number(s => s.Walks, Text("Walks"), 1, 100);
+            settings.Preview((s, _) => s.Walks > 5 ? preview : null);
+        }).Settings;
+        var failing = Register(settings =>
+        {
+            settings.Number(s => s.Walks, Text("Walks"), 1, 100);
+            settings.Preview((_, _) => throw new InvalidOperationException("broken"));
+        }).Settings;
+
+        Assert.True(declared.HasPreview);
+        Assert.Same(preview, declared.Preview(new TestSettings { Walks = 6 }, services));
+        Assert.Null(declared.Preview(new TestSettings { Walks = 3 }, services));
+        Assert.Null(failing.Preview(new TestSettings(), services));
+        Assert.False(Every().HasPreview);
+        Assert.Null(Every().Preview(new TestSettings(), services));
+    }
 }

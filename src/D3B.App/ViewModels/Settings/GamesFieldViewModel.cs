@@ -4,7 +4,7 @@ using D3B.Bot.Settings;
 namespace D3B.App.ViewModels.Settings;
 
 /// <summary>Several of the game's values, each once, added from a box that searches them by name, within the setting they are sought within.</summary>
-internal sealed partial class GamesFieldViewModel : ListFieldViewModel
+internal partial class GamesFieldViewModel : ListFieldViewModel
 {
     private int? _within;
     private IReadOnlyList<OptionViewModel> _options = [];
@@ -23,6 +23,9 @@ internal sealed partial class GamesFieldViewModel : ListFieldViewModel
 
     /// <summary>Gets whether the host has the game's values to offer.</summary>
     public bool HasGame => Editor.Game is not null;
+
+    /// <summary>Gets the values the setting offers now, within the setting it is sought within.</summary>
+    protected IReadOnlyList<OptionViewModel> Offered => _options;
 
     /// <summary>Initializes a new instance of the <see cref="GamesFieldViewModel"/> class.</summary>
     /// <param name="definition">The setting.</param>
@@ -72,6 +75,19 @@ internal sealed partial class GamesFieldViewModel : ListFieldViewModel
         _within = within;
         _options = Editor.OptionsOf(Definition, within);
         ReadItems();
+    }
+
+    /// <summary>Adds a value at the end, or removes it when the list holds it.</summary>
+    /// <param name="id">The value's id.</param>
+    protected void Toggle(int id)
+    {
+        var values = Definition.GetValues(Draft);
+        var index = values.ToList().FindIndex(value => (int)value == id);
+
+        if (index >= 0)
+            Remove(index);
+        else
+            Add(OptionOf(id));
     }
 
     partial void OnToAddChanged(OptionViewModel? value)

@@ -24,6 +24,10 @@ public abstract class BotActivity
     /// <summary>Gets the activity's name, for the logs.</summary>
     public virtual string Name => GetType().Name;
 
+    /// <summary>Gets what the activity says of itself now, for the app (D131): none by default.</summary>
+    /// <remarks>Read from any thread, while the activity runs: an activity replaces its report whole, and never changes one.</remarks>
+    public virtual ActivityReport? Report => null;
+
     /// <summary>Runs the next step, chosen from the character's state now.</summary>
     /// <param name="context">The step's behavior context.</param>
     /// <param name="cancellationToken">The step's token: an interruption or the activity's stop cancels it.</param>

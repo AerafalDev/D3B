@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 
 namespace D3B.App.Controls;
 
@@ -18,6 +19,9 @@ internal sealed class CardGrid : Panel
 
     /// <summary>Defines the <see cref="Spacing"/> property.</summary>
     public static readonly StyledProperty<double> SpacingProperty = AvaloniaProperty.Register<CardGrid, double>(nameof(Spacing), 16);
+
+    /// <summary>Defines the attached property that makes a child take a whole row, such as a field that lays out wide (D127).</summary>
+    public static readonly AttachedProperty<bool> IsWideProperty = AvaloniaProperty.RegisterAttached<CardGrid, Control, bool>("IsWide");
 
     /// <summary>Gets or sets the narrowest a column may be.</summary>
     public double MinColumnWidth
@@ -43,6 +47,27 @@ internal sealed class CardGrid : Panel
     static CardGrid()
     {
         AffectsMeasure<CardGrid>(MinColumnWidthProperty, MaxColumnsProperty, SpacingProperty);
+        IsWideProperty.Changed.AddClassHandler<Control>((control, _) => (control.GetVisualParent() as CardGrid)?.InvalidateMeasure());
+    }
+
+    /// <summary>Gets whether a child takes a whole row.</summary>
+    /// <param name="control">The child.</param>
+    /// <returns>Whether it does.</returns>
+    public static bool GetIsWide(Control control)
+    {
+        ArgumentNullException.ThrowIfNull(control);
+
+        return control.GetValue(IsWideProperty);
+    }
+
+    /// <summary>Makes a child take a whole row, or not.</summary>
+    /// <param name="control">The child.</param>
+    /// <param name="value">Whether it does.</param>
+    public static void SetIsWide(Control control, bool value)
+    {
+        ArgumentNullException.ThrowIfNull(control);
+
+        control.SetValue(IsWideProperty, value);
     }
 
     /// <inheritdoc/>
@@ -58,7 +83,7 @@ internal sealed class CardGrid : Panel
 
             foreach (var child in row)
             {
-                child.Measure(new Size(columnWidth, double.PositiveInfinity));
+                child.Measure(new Size(GetIsWide(child) ? width : columnWidth, double.PositiveInfinity));
                 tallest = Math.Max(tallest, child.DesiredSize.Height);
             }
 
@@ -79,7 +104,7 @@ internal sealed class CardGrid : Panel
             var tallest = row.Max(child => child.DesiredSize.Height);
 
             for (var column = 0; column < row.Count; column++)
-                row[column].Arrange(new Rect(column * (columnWidth + Spacing), top, columnWidth, tallest));
+                row[column].Arrange(new Rect(column * (columnWidth + Spacing), top, GetIsWide(row[column]) ? finalSize.Width : columnWidth, tallest));
 
             top += tallest + Spacing;
         }
@@ -96,6 +121,29 @@ internal sealed class CardGrid : Panel
 
     private IEnumerable<List<Control>> Rows(int columns)
     {
-        return Children.Where(child => child.IsVisible).Chunk(columns).Select(row => row.ToList());
+        var row = new List<Control>();
+
+        foreach (var child in Children.Where(child => child.IsVisible))
+        {
+            // A wide child ends the row before it, and takes one of its own.
+            if (GetIsWide(child) || row.Count == columns)
+            {
+                if (row.Count > 0)
+                    yield return row;
+
+                row = [];
+            }
+
+            row.Add(child);
+
+            if (GetIsWide(child))
+            {
+                yield return row;
+                row = [];
+            }
+        }
+
+        if (row.Count > 0)
+            yield return row;
     }
 }

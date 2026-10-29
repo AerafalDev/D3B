@@ -55,8 +55,9 @@ public sealed class BotsModule : IModule
         bot.Services.AddSingleton(services =>
         {
             var tables = services.GetRequiredService<GameTables>();
+            var world = services.GetRequiredService<GameWorld>();
 
-            return new GameReferences(services.GetRequiredService<GameWorld>().Atlas, tables.Jobs, tables.Items);
+            return new GameReferences(world.Atlas, tables.Jobs, tables.Items, world.Graph);
         });
     }
 }
