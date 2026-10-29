@@ -112,6 +112,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
             BotDelay("DelayUseEnd", delays => delays.UseEnd, (delays, delay) => delays with { UseEnd = delay }),
             BotDelay("DelayBankFollow", delays => delays.BankFollow, (delays, delay) => delays with { BankFollow = delay }),
             BotDelay("DelayRecovery", delays => delays.Recovery, (delays, delay) => delays with { Recovery = delay }),
+            BotDelay("DelayBetweenSteps", delays => delays.BetweenSteps, (delays, delay) => delays with { BetweenSteps = delay }),
         ];
         RelayWaits =
         [

@@ -10,6 +10,7 @@ using D3B.App.ViewModels;
 using D3B.App.Views;
 using D3B.Bot.Activities;
 using D3B.Bot.Pages;
+using D3B.Bot.Runtime;
 using D3B.Bot.Tests;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data;
@@ -23,7 +24,7 @@ namespace D3B.App.Tests.Views;
 
 public sealed class SettingsViewTests : IAsyncDisposable
 {
-    private readonly TestPlay _play = new();
+    private readonly TestPlay _play = new() { Bots = { Delays = BotDelays.Measured } };
     private readonly TemporaryDirectory _directory = new();
 
     private static List<string> Texts(Visual root)
@@ -153,7 +154,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Equal(2, raised);
 
         // In the app's language, not the system's.
-        Assert.Equal(["3.0", "1.0", "0.5", "10.0", "2.0", "1.0", "30.0", "20.0", "5.0", "5.0", "60.0"], boxes[0]);
+        Assert.Equal(["3.0", "1.0", "0.5", "10.0", "2.0", "1.0", "30.0", "0.5", "20.0", "5.0", "5.0", "60.0"], boxes[0]);
         Assert.Equal("3,0", boxes[1][0]);
     }
 }

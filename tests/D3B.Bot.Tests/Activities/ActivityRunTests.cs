@@ -38,6 +38,30 @@ public sealed class ActivityRunTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheNextStepWaitsTheTimeBetweenTwoActions()
+    {
+        _play.Bots.Delays = BotDelays.Measured;
+
+        var (connection, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity();
+        var run = bot.StartActivity(activity);
+
+        await activity.SteppingAsync(bot);
+        connection.Server(new KamasUpdateEvent { Kamas = 1 });
+        await WaitForAsync(() => run.Steps is 1);
+
+        // The client's display time at least, measured: the next step starts once it passed.
+        _play.Time.Advance(BotDelays.Measured.BetweenSteps - TimeSpan.FromMilliseconds(1));
+        await Task.Delay(20, TestContext.Current.CancellationToken);
+        Assert.Equal(1, activity.Started);
+
+        _play.Time.Advance(TimeSpan.FromMilliseconds(1));
+
+        Assert.Equal(2, await activity.SteppingAsync(bot));
+        run.Stop();
+        await run.Completion;
+    }
+    [Fact]
     public async Task OneActivityRunsAtATime()
     {
         var (connection, bot) = await _play.EnterAsync(300);

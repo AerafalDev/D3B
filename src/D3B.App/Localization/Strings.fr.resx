@@ -1268,4 +1268,10 @@
   <data name="LifeOf" xml:space="preserve">
     <value>{0:N0} / {1:N0}</value>
   </data>
+  <data name="DelayBetweenSteps" xml:space="preserve">
+    <value>Entre deux actions</value>
+  </data>
+  <data name="DelayBetweenStepsHelp" xml:space="preserve">
+    <value>Ce qu'une activité laisse passer après chaque action, récolte, trajet ou dépôt, pour que le client l'affiche.</value>
+  </data>
 </root>

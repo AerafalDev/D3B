@@ -159,6 +159,10 @@ public sealed class ActivityRun
                         return ActivityOutcome.Failed;
                 }
 
+                // Measured through the app: steps sent one after another went faster than the client showed them. The
+                // client's display time at least, fixed and the owner's to raise, is let pass after each (D154).
+                await Task.Delay(_bot.Delays.BetweenSteps, _bot.Time, _stop.Token).ConfigureAwait(false);
+
                 continue;
             }
             catch (BotInterruptedException exception) when (exception.Reason is not Interruption.Stopped)

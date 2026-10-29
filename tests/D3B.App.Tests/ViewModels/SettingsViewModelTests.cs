@@ -12,7 +12,8 @@ namespace D3B.App.Tests.ViewModels;
 
 public sealed class SettingsViewModelTests : IAsyncDisposable
 {
-    private readonly TestPlay _play = new();
+    // The page is tested on the bots' delays as measured, the wait between two steps included.
+    private readonly TestPlay _play = new() { Bots = { Delays = BotDelays.Measured } };
     private readonly TemporaryDirectory _directory = new();
     private readonly Localizer _localizer = new(Localizer.English);
     private readonly List<IHost> _hosts = [];

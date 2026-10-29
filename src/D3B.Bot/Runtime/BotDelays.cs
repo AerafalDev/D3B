@@ -42,6 +42,9 @@ public sealed record BotDelays
     /// <summary>The setting naming how long recovery lets a use go on before the activity goes on.</summary>
     public const string RecoveryKey = "Delays:Recovery";
 
+    /// <summary>The setting naming how long an activity lets pass between two of its steps.</summary>
+    public const string BetweenStepsKey = "Delays:BetweenSteps";
+
     /// <summary>Gets the delays measured, D3B's own, which are each the least.</summary>
     public static BotDelays Measured { get; } = new();
 
@@ -57,6 +60,7 @@ public sealed record BotDelays
         UseEnd = TimeSpan.FromSeconds(30),
         BankFollow = TimeSpan.FromSeconds(10),
         Recovery = TimeSpan.FromMinutes(5),
+        BetweenSteps = TimeSpan.FromSeconds(3),
     };
 
     /// <summary>Gets the client's display time: how long it takes to draw a map once the server placed the character on it, and to show a window once the server opened it (D77, D132).</summary>
@@ -90,6 +94,10 @@ public sealed record BotDelays
     /// <summary>Gets how long recovery lets a use the interruption left go on, before the activity goes on (D89).</summary>
     public TimeSpan Recovery { get; init; } = TimeSpan.FromSeconds(30);
 
+    /// <summary>Gets how long an activity lets pass between two of its steps, each an action such as a harvest, a journey or a deposit (D154).</summary>
+    /// <remarks>Measured through the app: steps sent one after another went faster than the client showed them; the client's display time, half a second, is the least.</remarks>
+    public TimeSpan BetweenSteps { get; init; } = TimeSpan.FromMilliseconds(500);
+
     /// <summary>Reads the delays from a configuration, in seconds, the measured ones for what it does not set.</summary>
     /// <param name="configuration">The configuration.</param>
     /// <returns>The delays.</returns>
@@ -108,6 +116,7 @@ public sealed record BotDelays
             UseEnd = ReadDelay(configuration, UseEndKey, Measured.UseEnd, Most.UseEnd),
             BankFollow = ReadDelay(configuration, BankFollowKey, Measured.BankFollow, Most.BankFollow),
             Recovery = ReadDelay(configuration, RecoveryKey, Measured.Recovery, Most.Recovery),
+            BetweenSteps = ReadDelay(configuration, BetweenStepsKey, Measured.BetweenSteps, Most.BetweenSteps),
         };
     }
 
@@ -125,6 +134,7 @@ public sealed record BotDelays
             [UseEndKey] = Seconds(UseEnd, Measured.UseEnd),
             [BankFollowKey] = Seconds(BankFollow, Measured.BankFollow),
             [RecoveryKey] = Seconds(Recovery, Measured.Recovery),
+            [BetweenStepsKey] = Seconds(BetweenSteps, Measured.BetweenSteps),
         };
     }
 
