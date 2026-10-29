@@ -1053,9 +1053,18 @@ Measured on 2026-10-29 for session 5e (D110): two game connections of a client o
   chunk is named without `.lua`.
 - **Closing the app** gave the client its configuration back, then the game connection closed.
 
-The same day, for the logs and the inspector (D111 to D115), the client went through the connection phase, its
-identification answered, and never opened its game connection: the owner saw a client update that changed the protocol,
-whose files were not installed yet, the client on disk still 3.7.12.12. The pages wait for Q10's session to be measured.
+Measured the same day for the logs and the inspector (D111 to D115): a game connection of 1 min 26 s, the bot's journal
+opened from its card, the stroll run whole, then again, paused by the player's click during its third walk and resumed
+from the card, 21 frames from D3B. No warning or error in the host's log. The owner went through the pages, journal,
+filters, inspector live and a capture replayed, and reported no problem.
+
+- **The capture replayed** through the inspector's reader, by structure and counts only: 298 frames, none cut. The
+  client's 59, 32 understood and 27 not read; the server's 218, 36 understood, 33 read and 149 not read; D3B's 21, all
+  understood. Every frame not read showed its shape. `AuthenticationRequest` came first, its ticket hidden, its language
+  shown; the server confirmed the character chosen, which ties a connection's frames to its bot.
+- **An earlier attempt** that morning: the client closed its connection phase 16 s after its identification was
+  answered, without choosing a server, and never came back through D3B; the cause was not found. The launcher had
+  updated itself, the client on disk still 3.7.12.12's, its files of 2026-10-20.
 
 ## Protocol code
 

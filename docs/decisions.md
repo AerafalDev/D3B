@@ -2945,6 +2945,9 @@ them, chosen by the owner. Builds D92, D101.*
   read. A frame unfolds in place, which stops following, so that it stays in view (D115).
 - **Drawn without a screen** in both languages and both themes, and looked at; the window's test reads both pages in
   French and English and opens a bot's journal from its card.
+- **Used on a client** of 3.7.12.12 through the app by the owner: the journal opened from the card, a stroll paused by
+  the player and resumed, the filters, the inspector live and a capture replayed, no problem reported
+  ([client.md](client.md#the-game-from-the-app)).
 - **Rejected.**
   - One page of tabs, journal, script console and frames, the bot chosen at its top: one tab at a time, when the journal
     and the frames are read together.
@@ -3026,9 +3029,11 @@ protocol's messages.*
   another build is refused, saying which, since its frames name messages only its own mapping reads; a capture cut short
   says so.
 - **A frame's length**: `DecodedGameFrame.Length`, without its varint, which a row shows.
-- **Not measured on a client**: the client updated during the session, the measurement waits for Q10's session (D116).
+- **Measured** on a client of 3.7.12.12 through the app ([client.md](client.md#the-game-from-the-app)): its capture of
+  298 frames replayed whole, the client's, the server's and D3B's 21; each frame not read showed its shape; the
+  `AuthenticationRequest` came first, its ticket hidden; the character chosen, which ties the frames to their bot.
 
-## D116: Lua scripts go, in a session of their own, after Q10's
+## D116: Lua scripts go, in a session of their own
 
 *2026-10-29, step 5, session 5e, chosen by the owner, against the lead's recommendation. Supersedes D102 and D105 to
 D108; D103 stays as what was measured. Changes the brief.*
@@ -3042,8 +3047,7 @@ freezing them as they are, no more work on their API, and deciding again after s
   `Scripting:Directory`, `d3b.lua` and `.luarc.json`, `samples/scripts/` and its stroll, and LuaCSharp. Profiles naming
   a script then name an activity that no longer exists, which the profiles page shows (D101).
 - **In 5e**: no script console tab on the logs page; the chunk's name D110 found is not fixed.
-- **The order**: the client updated during 5e, its protocol changing as the owner saw, so Q10's session comes first
-  (D54); the client measurement of 5e's pages comes with it, then the removal, then 5d.
+- **The order**: the removal next, then 5d; a client update before a session still gets Q10's first (D54).
 - **Rejected.**
   - Freezing them, the lead's recommendation: an API and its definitions kept, unused.
   - Removing them within 5e: one large task per session (D17).
