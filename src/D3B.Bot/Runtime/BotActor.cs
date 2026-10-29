@@ -64,6 +64,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile ActivityRun? _activity;
     private long _placedAt;
     private long _useEndedAt = NeverEnded;
+    private long _regeneratingSince = NeverEnded;
 
     /// <summary>Gets who the bot plays.</summary>
     public CharacterKey Key { get; }
@@ -138,6 +139,30 @@ public sealed class BotActor : IAsyncDisposable
     public void Resume()
     {
         Post(new Resuming());
+    }
+
+    /// <summary>Reckons the character's life at a time: the life the server last said, and a point each interval it regenerates since (D153).</summary>
+    /// <param name="at">The time, by the bot's clock.</param>
+    /// <returns>The life, at most the most; <see langword="null"/> while the server has not said it.</returns>
+    /// <remarks>
+    /// Measured on client 3.7.12.12: out of fights the life regenerates a point every interval the server gives, 5 tenths of
+    /// a second in all captures, from the life the characteristics hold as the regeneration starts, up to the most.
+    /// </remarks>
+    public int? LifeAt(DateTimeOffset at)
+    {
+        var state = _state;
+
+        if (state.Life is not { } life || state.MaxLife is not { } most)
+            return state.Life;
+
+        var since = Volatile.Read(ref _regeneratingSince);
+
+        if (state.LifeRegenInterval is not { } interval || since == NeverEnded)
+            return Math.Min(life, most);
+
+        var points = (at - new DateTimeOffset(since, TimeSpan.Zero)).Ticks / (interval * TimeSpan.TicksPerMillisecond * 100);
+
+        return (int)Math.Clamp(life + Math.Max(0, points), 0, most);
     }
 
     /// <summary>Pauses the bot as the player's hand does, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
@@ -362,6 +387,9 @@ public sealed class BotActor : IAsyncDisposable
 
         if (before.Use is not null && state.Use is null && message is InteractiveUseEndedEvent)
             Volatile.Write(ref _useEndedAt, Time.GetUtcNow().UtcTicks);
+
+        if (side is RelayDirection.FromServer && message is LifeRegenStartEvent)
+            Volatile.Write(ref _regeneratingSince, Time.GetUtcNow().UtcTicks);
 
         if (side is RelayDirection.FromServer && message is MapInformationEvent information && information.MapId == state.MapId && state.Cell is not null)
             Volatile.Write(ref _placedAt, Time.GetUtcNow().UtcTicks);

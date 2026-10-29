@@ -93,4 +93,17 @@ public sealed class GameReferencesTests
         Assert.Equal([TestPlay.SubAreaId], game.SubAreasHolding([water]).Select(subArea => subArea.SubArea.Id));
         Assert.Equal([water], game.SubAreasHolding([water]).Single().Resources);
     }
+
+    [Fact]
+    public void ItemsAreOfferedWholeOrOfSomeTypes()
+    {
+        var iron = new HashSet<int> { 39 };
+
+        Assert.Equal([TestReferences.Ash, TestReferences.Chestnut, TestReferences.Iron], _game.Options(SettingKind.Item).Select(item => item.Id));
+        Assert.Equal([new GameReference(TestReferences.Iron, 412, 1)], _game.ItemsOf(iron));
+        Assert.True(_game.Exists(SettingKind.Item, TestReferences.Ash));
+        Assert.False(_game.Exists(SettingKind.Item, 9_999));
+        Assert.True(_game.IsItemOf(TestReferences.Iron, iron));
+        Assert.False(_game.IsItemOf(TestReferences.Ash, iron));
+    }
 }

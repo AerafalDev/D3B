@@ -24,6 +24,21 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets what goes to the bank.</summary>
     public HarvestDeposit Deposit { get; set; } = HarvestDeposit.Harvest;
 
+    /// <summary>Gets or sets where what goes to the bank is deposited (D147).</summary>
+    public HarvestDepositPlace DepositTo { get; set; } = HarvestDepositPlace.OwnChest;
+
     /// <summary>Gets or sets what the activity does once a fight cut one of its steps (D144).</summary>
     public HarvestAfterFight AfterFight { get; set; } = HarvestAfterFight.Resume;
+
+    /// <summary>Gets or sets whether to open each resource bag as soon as a harvest gives one, so that what it holds is banked with the rest (D148).</summary>
+    public bool OpenBags { get; set; }
+
+    /// <summary>Gets or sets whether to heal under a share of life (D148).</summary>
+    public bool Heal { get; set; }
+
+    /// <summary>Gets or sets the share of its life under which the character heals, in percent, until its life is whole.</summary>
+    public int HealBelow { get; set; } = 50;
+
+    /// <summary>Gets or sets the food to eat, by item, the first carried eaten first; with none left the life regenerates by itself.</summary>
+    public IReadOnlyList<int> Food { get; set; } = [];
 }

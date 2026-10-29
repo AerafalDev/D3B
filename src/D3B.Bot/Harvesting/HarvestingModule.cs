@@ -57,6 +57,21 @@ public sealed class HarvestingModule : IModule
             settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent();
             settings.Choice(s => s.Deposit, HarvestTexts.Text("Deposit"), deposit => HarvestTexts.Text(deposit is HarvestDeposit.Harvest ? "DepositHarvest" : "DepositAll"));
 
+            settings.Choice(s => s.DepositTo, HarvestTexts.Text("DepositTo"), place => HarvestTexts.Text($"DepositTo{place}"))
+                .Help(HarvestTexts.Text("DepositToHelp"));
+
+            settings.Section(HarvestTexts.Text("SectionUpkeep"));
+            settings.Flag(s => s.OpenBags, HarvestTexts.Text("OpenBags")).Help(HarvestTexts.Text("OpenBagsHelp"));
+            settings.Flag(s => s.Heal, HarvestTexts.Text("Heal"));
+            settings.Number(s => s.HealBelow, HarvestTexts.Text("HealBelow"), 10, 95)
+                .Percent()
+                .VisibleWhen(s => s.Heal);
+            settings.Items(s => s.Food, HarvestTexts.Text("Food"))
+                .Ordered()
+                .OfItemTypes([.. HarvestActivity.FoodTypes])
+                .Help(HarvestTexts.Text("FoodHelp"))
+                .VisibleWhen(s => s.Heal);
+
             settings.Section(HarvestTexts.Text("SectionFight"));
             settings.Choice(s => s.AfterFight, HarvestTexts.Text("AfterFight"), after => HarvestTexts.Text($"AfterFight{after}"))
                 .Help(HarvestTexts.Text("AfterFightHelp"));

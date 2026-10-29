@@ -55,6 +55,14 @@ public sealed class GraphicPlaces
         return index.ToFrozenDictionary(pair => pair.Key, pair => pair.Value.ToArray());
     }
 
+    /// <summary>Finds the maps drawing a graphic, such as the guild's chest's (D147).</summary>
+    /// <param name="gfxId">The graphic.</param>
+    /// <returns>The maps of the world graph drawing it, each once; none when no map does.</returns>
+    public IReadOnlySet<long> MapsDrawing(int gfxId)
+    {
+        return _maps.Value.TryGetValue(gfxId, out var maps) ? maps.ToHashSet() : new HashSet<long>();
+    }
+
     /// <summary>Finds the maps drawing an element whose graphic the host learned to offer one of some skills.</summary>
     /// <param name="skills">The skills, by id.</param>
     /// <param name="graphics">What the host learned of the graphics.</param>

@@ -26,6 +26,12 @@
             <Setter Property="MinHeight" Value="6" />
             <Setter Property="Maximum" Value="100" />
         </Style>
+        <Style Selector="ProgressBar.Life">
+            <Setter Property="Height" Value="6" />
+            <Setter Property="MinHeight" Value="6" />
+            <Setter Property="Maximum" Value="100" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorColor}" />
+        </Style>
         <Style Selector="ProgressBar.Load.Full">
             <Setter Property="Foreground" Value="{DynamicResource WarningColor}" />
         </Style>
@@ -408,6 +414,19 @@
                                                 Grid.Column="2"
                                                 Spacing="8"
                                                 VerticalAlignment="Bottom">
+                                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasLife}">
+                                                    <TextBlock Classes="Small Figures" Text="{Binding Life}" />
+                                                    <TextBlock
+                                                        Classes="Caption Muted"
+                                                        Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        Text="{l:Tr Life}"
+                                                        VerticalAlignment="Center" />
+                                                </Grid>
+                                                <ProgressBar
+                                                    Classes="Life"
+                                                    IsVisible="{Binding HasLife}"
+                                                    Value="{Binding LifePercent}" />
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock
                                                         Classes="Small Figures"

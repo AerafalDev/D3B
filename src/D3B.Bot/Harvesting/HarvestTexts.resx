@@ -266,4 +266,64 @@
   <data name="CountExperience" xml:space="preserve">
     <value>{0} +{1} XP</value>
   </data>
+  <data name="DepositTo" xml:space="preserve">
+    <value>Where it deposits</value>
+  </data>
+  <data name="DepositToOwnChest" xml:space="preserve">
+    <value>Its own chest in the bank</value>
+  </data>
+  <data name="DepositToGuildChest" xml:space="preserve">
+    <value>The guild's chest</value>
+  </data>
+  <data name="DepositToHelp" xml:space="preserve">
+    <value>At the nearest bank that has one, in the tab it opens on. What it refuses, or everything when none is reached: its own chest, and the card says so.</value>
+  </data>
+  <data name="SectionUpkeep" xml:space="preserve">
+    <value>Upkeep</value>
+  </data>
+  <data name="OpenBags" xml:space="preserve">
+    <value>Open the resource bags</value>
+  </data>
+  <data name="OpenBagsHelp" xml:space="preserve">
+    <value>As soon as a harvest gives one: what it holds is banked with the rest.</value>
+  </data>
+  <data name="Heal" xml:space="preserve">
+    <value>Heal under a share of life</value>
+  </data>
+  <data name="HealBelow" xml:space="preserve">
+    <value>Heal under</value>
+  </data>
+  <data name="Food" xml:space="preserve">
+    <value>Food, in this order</value>
+  </data>
+  <data name="FoodHelp" xml:space="preserve">
+    <value>One at a time, until the life is whole. With nothing left to eat, it waits for its life to regenerate.</value>
+  </data>
+  <data name="DoingOpenBag" xml:space="preserve">
+    <value>Opening {0}</value>
+  </data>
+  <data name="DoingEat" xml:space="preserve">
+    <value>Healing: eating {0}</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Waiting for its life to regenerate, {0} s</value>
+  </data>
+  <data name="CountBagsOne" xml:space="preserve">
+    <value>{0} bag opened</value>
+  </data>
+  <data name="CountBagsMany" xml:space="preserve">
+    <value>{0} bags opened</value>
+  </data>
+  <data name="CountEatenOne" xml:space="preserve">
+    <value>{0} food eaten</value>
+  </data>
+  <data name="CountEatenMany" xml:space="preserve">
+    <value>{0} food eaten</value>
+  </data>
+  <data name="WarningChestRefused" xml:space="preserve">
+    <value>The guild's chest refused some stacks: they went to the character's own chest</value>
+  </data>
+  <data name="WarningChestNone" xml:space="preserve">
+    <value>No guild's chest reached: the harvest went to the character's own chest</value>
+  </data>
 </root>

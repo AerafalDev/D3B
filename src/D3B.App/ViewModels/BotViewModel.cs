@@ -112,6 +112,15 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     public partial string Doing { get; private set; } = "";
 
+    /// <summary>Gets the character's life, of its most, its regeneration reckoned, once the server said it (D148, D153).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLife))]
+    public partial string? Life { get; private set; }
+
+    /// <summary>Gets the character's life, from 0 to 100 of its most.</summary>
+    [ObservableProperty]
+    public partial double LifePercent { get; private set; }
+
     /// <summary>Gets the weight the character carries, of the most it can.</summary>
     [ObservableProperty]
     public partial string Load { get; private set; } = NoValue;
@@ -123,6 +132,9 @@ internal sealed partial class BotViewModel : ObservableObject
     /// <summary>Gets how full the character is, said.</summary>
     [ObservableProperty]
     public partial string LoadPercentText { get; private set; } = "";
+
+    /// <summary>Gets whether the server said the character's life.</summary>
+    public bool HasLife => Life is not null;
 
     /// <summary>Gets whether the character is nearly full.</summary>
     [ObservableProperty]
@@ -319,6 +331,7 @@ internal sealed partial class BotViewModel : ObservableObject
             activity.Refresh(_localizer.Culture);
 
         RefreshPlace(state);
+        RefreshLife(state);
         RefreshLoad(state);
         RefreshActivity();
         RefreshTone();
@@ -471,6 +484,20 @@ internal sealed partial class BotViewModel : ObservableObject
 
         Coordinates = _localizer.Format("Coordinates", position.X, position.Y);
         Place = cell is null ? area : _localizer.Format("AreaCell", area, cell);
+    }
+
+    private void RefreshLife(CharacterState state)
+    {
+        if (Bot.LifeAt(_time.GetUtcNow()) is not { } life || state.MaxLife is not { } most || most <= 0)
+        {
+            Life = null;
+            LifePercent = 0;
+
+            return;
+        }
+
+        Life = _localizer.Format("LifeOf", life, most);
+        LifePercent = Math.Clamp(life * 100.0 / most, 0, 100);
     }
 
     private void RefreshLoad(CharacterState state)

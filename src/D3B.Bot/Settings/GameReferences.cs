@@ -24,6 +24,8 @@ public sealed class GameReferences
     private readonly Lazy<IReadOnlyList<GameReference>> _areas;
     private readonly Lazy<IReadOnlyList<GameReference>> _subAreas;
     private readonly Lazy<IReadOnlyList<GameReference>> _resources;
+    private readonly Lazy<IReadOnlyList<GameReference>> _items;
+    private readonly Lazy<Dictionary<int, int>> _itemTypes;
     private readonly Lazy<ILookup<int, GameReference>> _resourcesByJob;
     private readonly Lazy<Dictionary<int, ResourceSource>> _sources;
     private readonly Lazy<FrozenDictionary<int, FrozenSet<int>>> _baseSkills;
@@ -62,6 +64,8 @@ public sealed class GameReferences
         _areas = new Lazy<IReadOnlyList<GameReference>>(() => [.. atlas.Areas.ToArray().Select(area => new GameReference(area.Id, area.NameId, null))]);
         _subAreas = new Lazy<IReadOnlyList<GameReference>>(() => [.. atlas.SubAreas.ToArray().Select(subArea => new GameReference(subArea.Id, subArea.NameId, subArea.Level))]);
         _resourcesByJob = new Lazy<ILookup<int, GameReference>>(() => ResourcesByJob(jobs, items));
+        _items = new Lazy<IReadOnlyList<GameReference>>(() => [.. items.Items.ToArray().Select(item => new GameReference(item.Id, item.NameId, item.Level))]);
+        _itemTypes = new Lazy<Dictionary<int, int>>(() => items.Items.ToArray().ToDictionary(item => item.Id, item => (int)item.TypeId));
 
         // Base's own resources have no profession, so no level (D150).
         _resources = new Lazy<IReadOnlyList<GameReference>>(() => [.. _resourcesByJob.Value
@@ -110,6 +114,7 @@ public sealed class GameReferences
             (SettingKind.SubArea, { } area) => [.. _subAreas.Value.Where(subArea => IsWithin(kind, subArea.Id, area))],
             (SettingKind.Resource, null) => _resources.Value,
             (SettingKind.Resource, { } job) => [.. _resourcesByJob.Value[job]],
+            (SettingKind.Item, _) => _items.Value,
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "The kind names nothing of the game's."),
         };
     }
@@ -126,6 +131,7 @@ public sealed class GameReferences
             SettingKind.Area => _atlas.TryGetArea(id, out _),
             SettingKind.SubArea => _atlas.TryGetSubArea(id, out _),
             SettingKind.Resource => _resources.Value.Any(resource => resource.Id == id),
+            SettingKind.Item => _itemTypes.Value.ContainsKey(id),
             _ => false,
         };
     }
@@ -137,6 +143,27 @@ public sealed class GameReferences
     public bool TryGetSource(int resource, out ResourceSource source)
     {
         return _sources.Value.TryGetValue(resource, out source);
+    }
+
+    /// <summary>Gets the items of some types, such as food's, by their id (D148).</summary>
+    /// <param name="types">The item types.</param>
+    /// <returns>The items, with their levels.</returns>
+    public IReadOnlyList<GameReference> ItemsOf(IReadOnlySet<int> types)
+    {
+        ArgumentNullException.ThrowIfNull(types);
+
+        return [.. _items.Value.Where(item => _itemTypes.Value.TryGetValue(item.Id, out var type) && types.Contains(type))];
+    }
+
+    /// <summary>Tells whether an item is of some types.</summary>
+    /// <param name="item">The item.</param>
+    /// <param name="types">The item types.</param>
+    /// <returns>Whether it is.</returns>
+    public bool IsItemOf(int item, IReadOnlySet<int> types)
+    {
+        ArgumentNullException.ThrowIfNull(types);
+
+        return _itemTypes.Value.TryGetValue(item, out var type) && types.Contains(type);
     }
 
     /// <summary>Tells whether a resource is one only skills of <c>Base</c> gather, which no profession needs and no sub-area lists (D150).</summary>

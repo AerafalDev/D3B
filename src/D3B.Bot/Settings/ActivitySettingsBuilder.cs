@@ -185,6 +185,15 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return Add(property, SettingKind.Resource, true, name);
     }
 
+    /// <summary>Declares a setting of several items of the game, such as food (D148).</summary>
+    /// <param name="property">The settings' property.</param>
+    /// <param name="name">The setting's name.</param>
+    /// <returns>The setting, to say more of it, such as the item types it offers alone.</returns>
+    public SettingBuilder<TSettings> Items(Expression<Func<TSettings, IReadOnlyList<int>>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.Item, true, name);
+    }
+
     /// <summary>Declares a rule the settings hold together, such as a minimum below a maximum.</summary>
     /// <param name="holds">Tells whether the settings hold it; it must be quick.</param>
     /// <param name="message">What the app says when they do not.</param>

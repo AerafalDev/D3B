@@ -266,4 +266,64 @@
   <data name="CountExperience" xml:space="preserve">
     <value>{0} +{1} XP</value>
   </data>
+  <data name="DepositTo" xml:space="preserve">
+    <value>Où il dépose</value>
+  </data>
+  <data name="DepositToOwnChest" xml:space="preserve">
+    <value>Son coffre en banque</value>
+  </data>
+  <data name="DepositToGuildChest" xml:space="preserve">
+    <value>Le coffre de guilde</value>
+  </data>
+  <data name="DepositToHelp" xml:space="preserve">
+    <value>À la banque la plus proche qui en a un, dans l'onglet où il s'ouvre. Ce qu'il refuse, ou tout si aucun n'est atteint : son coffre à lui, et la carte du bot le dit.</value>
+  </data>
+  <data name="SectionUpkeep" xml:space="preserve">
+    <value>Entretien</value>
+  </data>
+  <data name="OpenBags" xml:space="preserve">
+    <value>Ouvrir les sacs de ressources</value>
+  </data>
+  <data name="OpenBagsHelp" xml:space="preserve">
+    <value>Dès qu'une récolte en donne un : son contenu part en banque avec le reste.</value>
+  </data>
+  <data name="Heal" xml:space="preserve">
+    <value>Se soigner sous une part de vie</value>
+  </data>
+  <data name="HealBelow" xml:space="preserve">
+    <value>Se soigner sous</value>
+  </data>
+  <data name="Food" xml:space="preserve">
+    <value>En mangeant, dans cet ordre</value>
+  </data>
+  <data name="FoodHelp" xml:space="preserve">
+    <value>Un à la fois, jusqu'à la vie pleine. Sans rien à manger, il attend que sa vie se régénère.</value>
+  </data>
+  <data name="DoingOpenBag" xml:space="preserve">
+    <value>Ouvre : {0}</value>
+  </data>
+  <data name="DoingEat" xml:space="preserve">
+    <value>Se soigne : mange {0}</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Attend que sa vie se régénère, {0} s</value>
+  </data>
+  <data name="CountBagsOne" xml:space="preserve">
+    <value>{0} sac ouvert</value>
+  </data>
+  <data name="CountBagsMany" xml:space="preserve">
+    <value>{0} sacs ouverts</value>
+  </data>
+  <data name="CountEatenOne" xml:space="preserve">
+    <value>{0} aliment mangé</value>
+  </data>
+  <data name="CountEatenMany" xml:space="preserve">
+    <value>{0} aliments mangés</value>
+  </data>
+  <data name="WarningChestRefused" xml:space="preserve">
+    <value>Le coffre de guilde a refusé des piles : elles sont parties dans son coffre à lui</value>
+  </data>
+  <data name="WarningChestNone" xml:space="preserve">
+    <value>Aucun coffre de guilde atteint : la récolte est partie dans son coffre à lui</value>
+  </data>
 </root>

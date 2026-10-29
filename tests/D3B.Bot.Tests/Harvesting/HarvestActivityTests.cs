@@ -301,4 +301,51 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         Assert.Equal("an aggression", Say(bot.Journal.All().OfType<ActivityInterruptedEntry>().Single().Note!));
         Assert.False(bot.IsPaused);
     }
+
+    [Fact]
+    public async Task UnderTheShareOfLifeTheCharacterEatsBeforeItHarvestsAndABagIsOpenedFirst()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new InventoryContentEvent
+        {
+            Objects =
+            {
+                new InventoryObject { Item = new ObjectItem { Uid = 50, ItemId = TestPlay.Bread, Quantity = 3 }, Position = InventoryItem.NotWorn },
+                new InventoryObject { Item = new ObjectItem { Uid = 51, ItemId = TestPlay.WheatBag, Quantity = 1 }, Position = InventoryItem.NotWorn },
+            },
+        });
+        connection.Server(new LifeRegenEndEvent { Life = 300, MaxLife = 1_000 });
+        await bot.ProcessedAsync();
+
+        var activity = Activity(new HarvestSettings
+        {
+            Resources = [TestPlay.Ash],
+            SubAreas = [TestPlay.SubAreaId],
+            OpenBags = true,
+            Heal = true,
+            HealBelow = 50,
+            Food = [TestPlay.Bread],
+        });
+        var run = bot.StartActivity(activity);
+
+        Assert.Equal(new ObjectUseRequest { Uid = 51 }, await connection.SentAsync(1));
+        connection.Server(new ObjectDeletedEvent { Uid = 51 });
+        connection.Server(new InventoryWeightEvent { Weight = 100, MaxWeight = 1_000 });
+
+        Assert.Equal(new ObjectUseRequest { Uid = 50 }, await connection.SentAsync(2));
+        connection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 50, Quantity = 2 } });
+        connection.Server(new LifeRegenEndEvent { Life = 1_000, MaxLife = 1_000 });
+        connection.Server(new InventoryWeightEvent { Weight = 99, MaxWeight = 1_000 });
+
+        // Whole again, the character goes on harvesting.
+        await TestWalks.WalkedAsync(_play, connection, 3);
+
+        var report = await ReportedAsync(activity, report => report.Counts.Any(count => Say(count.Text) == "1 food eaten"));
+
+        Assert.Contains("1 bag opened", report.Counts.Select(count => Say(count.Text)));
+
+        run.Stop();
+        await run.Completion;
+    }
 }

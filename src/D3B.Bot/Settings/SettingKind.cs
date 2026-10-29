@@ -30,4 +30,7 @@ public enum SettingKind
 
     /// <summary>A resource a profession gathers, by its item's id, which may be sought within a profession.</summary>
     Resource,
+
+    /// <summary>An item of the game, by its id, which the setting may restrict to some types, such as food (D148).</summary>
+    Item,
 }

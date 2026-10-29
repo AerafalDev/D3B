@@ -4,6 +4,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Interactives;
+using D3B.Bot.Inventory;
 using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
@@ -35,7 +36,11 @@ public sealed class HarvestActivity : BotActivity
     private const int MostFailedJourneys = 3;
     private const int MostBankings = 3;
 
+    // Item type 100, "Sac de ressources": 73 items of the pack, opened by the same request as food (D148, D153).
+    private const int BagType = 100;
+
     private static readonly TimeSpan _busyDelay = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan _longestRegeneration = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan _regrowthDelay = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan _objectsDelay = TimeSpan.FromSeconds(1);
 
@@ -54,6 +59,7 @@ public sealed class HarvestActivity : BotActivity
     private readonly Dictionary<int, long> _harvested = [];
     private readonly HashSet<int> _skipped = [];
     private readonly Dictionary<FightKind, int> _fights = [];
+    private readonly HashSet<int> _unusable = [];
     private HarvestZone? _zone;
     private FrozenSet<int>? _deposited;
     private long? _skippedOn;
@@ -65,8 +71,15 @@ public sealed class HarvestActivity : BotActivity
     private ImmutableSortedDictionary<int, CharacterJob>? _startJobs;
     private BotContext? _context;
     private int? _lastTarget;
+    private bool _healing;
+    private int _bags;
+    private int _eaten;
+    private string? _chestWarning;
     private FightKind? _fight;
     private int? _fightItem;
+
+    /// <summary>Gets the item types offered as food: breads, measured to heal, and drinks, fish, meat, sweets and potions (D148, D153).</summary>
+    public static IReadOnlyList<int> FoodTypes { get; } = [12, 33, 37, 42, 49, 69, 79, 339];
 
     /// <inheritdoc/>
     public override string Name => "Harvesting";
@@ -151,6 +164,9 @@ public sealed class HarvestActivity : BotActivity
             return true;
         }
 
+        if (await UpkeepAsync(context, cancellationToken).ConfigureAwait(false))
+            return true;
+
         if (zone.Maps.ContainsKey(mapId))
         {
             See(state, mapId, zone, context.Time.GetUtcNow());
@@ -182,6 +198,9 @@ public sealed class HarvestActivity : BotActivity
         var deposited = DepositedItems();
 
         Publish(context.State, GameText.Of(HarvestTexts.Text("DoingBank")));
+
+        if (_settings.DepositTo is HarvestDepositPlace.GuildChest && await GuildChestAsync(context, deposited, cancellationToken).ConfigureAwait(false))
+            return true;
 
         for (var attempt = 0; attempt < MostBankings; attempt++)
         {
@@ -272,6 +291,99 @@ public sealed class HarvestActivity : BotActivity
         var reason = GameText.Of(HarvestTexts.Text(key), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight), GameTextValue.Number(_settings.FullAt));
 
         return new ActivityException($"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.", reason);
+    }
+
+    private async Task<bool> UpkeepAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+
+        if (_settings.OpenBags && StackOf(state, stack => _tables.Items.TryGetItem(stack.ItemId, out var item) && item.TypeId == BagType) is { } bag)
+        {
+            Publish(state, GameText.Of(HarvestTexts.Text("DoingOpenBag"), GameTextValue.Item(bag.ItemId)));
+
+            if (await context.UseObjectAsync(bag.Uid, cancellationToken).ConfigureAwait(false) is ObjectUseOutcome.Used)
+                _bags++;
+            else
+                _unusable.Add(bag.Uid);
+
+            return true;
+        }
+
+        if (!_settings.Heal || context.Life is not { } life || state.MaxLife is not { } most || most <= 0)
+            return false;
+
+        // Once under the share, the character heals until its life is whole (D148).
+        if (life >= most || (!_healing && life * 100L >= (long)_settings.HealBelow * most))
+        {
+            _healing = false;
+
+            return false;
+        }
+
+        _healing = true;
+
+        var food = _settings.Food.Select(item => StackOf(state, stack => stack.ItemId == item)).FirstOrDefault(stack => stack is not null);
+
+        if (food is not null)
+        {
+            Publish(state, GameText.Of(HarvestTexts.Text("DoingEat"), GameTextValue.Item(food.ItemId)));
+
+            switch (await context.UseObjectAsync(food.Uid, cancellationToken).ConfigureAwait(false))
+            {
+                case ObjectUseOutcome.Used:
+                    _eaten++;
+                    break;
+                case ObjectUseOutcome.Refused:
+                    // Measured: the server refuses food at full life, which it knows better than the reckoning.
+                    _healing = false;
+                    break;
+                default:
+                    _unusable.Add(food.Uid);
+                    break;
+            }
+
+            return true;
+        }
+
+        // Nothing left to eat: measured, the life regenerates by itself a point each interval the server gave (D153).
+        var wait = state.LifeRegenInterval is { } interval ? TimeSpan.FromMilliseconds((most - life) * interval * 100L) : _longestRegeneration;
+
+        if (wait > _longestRegeneration)
+            wait = _longestRegeneration;
+
+        Publish(state, GameText.Of(HarvestTexts.Text("DoingRegenerate"), GameTextValue.Number((long)Math.Ceiling(wait.TotalSeconds))));
+        await context.WaitUntilAsync(_ => false, wait, cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
+    private InventoryItem? StackOf(CharacterState state, Func<InventoryItem, bool> which)
+    {
+        return state.Inventory.Values.FirstOrDefault(stack => !stack.IsWorn && !_unusable.Contains(stack.Uid) && which(stack));
+    }
+
+    private async Task<bool> GuildChestAsync(BotContext context, FrozenSet<int> deposited, CancellationToken cancellationToken)
+    {
+        var chests = _places.MapsDrawing(GuildChest.GfxId);
+        var outcome = await context.GuildChestAsync(chests, stack => _settings.Deposit is HarvestDeposit.AllButWorn || deposited.Contains(stack.ItemId), cancellationToken).ConfigureAwait(false);
+
+        if (outcome is BankOutcome.Done)
+        {
+            _banks++;
+            _chestWarning = null;
+
+            if (IsFull(context.State))
+                throw StillFull(context.State);
+
+            Publish(context.State, GameText.Of(HarvestTexts.Text("DoingReturn")));
+
+            return true;
+        }
+
+        // What the chest refused, or all when none was reached, goes to the character's own chest, and the card says so (D147).
+        _chestWarning = outcome is BankOutcome.Refused ? "WarningChestRefused" : "WarningChestNone";
+
+        return false;
     }
 
     private HarvestZone ZoneOf()
@@ -578,6 +690,12 @@ public sealed class HarvestActivity : BotActivity
         if (_banks > 0)
             counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountBanksOne"), HarvestTexts.Text("CountBanksMany"), _banks)));
 
+        if (_bags > 0)
+            counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountBagsOne"), HarvestTexts.Text("CountBagsMany"), _bags)));
+
+        if (_eaten > 0)
+            counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountEatenOne"), HarvestTexts.Text("CountEatenMany"), _eaten)));
+
         var fights = _fights.Values.Sum();
 
         if (fights > 0)
@@ -588,10 +706,13 @@ public sealed class HarvestActivity : BotActivity
 
     private ImmutableArray<GameText> WarningsOf(HarvestZone zone, CharacterState state)
     {
-        if (_settings.EverythingKnown)
-            return [];
-
         var warnings = new List<GameText>();
+
+        if (_chestWarning is { } chest)
+            warnings.Add(GameText.Of(HarvestTexts.Text(chest)));
+
+        if (_settings.EverythingKnown)
+            return [.. warnings];
 
         foreach (var item in _settings.Resources)
         {

@@ -67,6 +67,9 @@ public sealed class SettingDefinition
     /// <summary>Gets whether a number is a percentage, which the app shows as a bar (D127).</summary>
     public bool IsPercent { get; private set; }
 
+    /// <summary>Gets the item types an item setting offers alone, such as food's (D148); every item when none.</summary>
+    public IReadOnlySet<int>? ItemTypes { get; private set; }
+
     private Type ElementType => Kind switch
     {
         SettingKind.Choice => _enum!,
@@ -247,6 +250,16 @@ public sealed class SettingDefinition
         IsPercent = true;
     }
 
+    internal void SetItemTypes(IReadOnlyCollection<int> types)
+    {
+        ThrowIfFrozen();
+
+        if (Kind is not SettingKind.Item)
+            throw new InvalidOperationException($"The setting {Key} holds no item: only an item setting is restricted to types.");
+
+        ItemTypes = types.ToHashSet();
+    }
+
     internal void Freeze()
     {
         _frozen = true;
@@ -334,7 +347,7 @@ public sealed class SettingDefinition
         if (game is null)
             return null;
 
-        if (ids.Any(item => !game.Exists(Kind, (int)item)))
+        if (ids.Any(item => !game.Exists(Kind, (int)item) || (ItemTypes is { } types && !game.IsItemOf((int)item, types))))
             return Problem(SettingProblemKind.Unknown);
 
         if (Within?.GetValue(settings) is int within && ids.Any(item => !game.IsWithin(Kind, (int)item, within)))
@@ -376,7 +389,7 @@ public sealed class SettingDefinition
             (SettingKind.Text, null) => "",
             (SettingKind.Text, string) => value,
             (SettingKind.Choice, not null) when _enum!.IsInstanceOfType(value) => value,
-            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource, null or int) => value,
+            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item, null or int) => value,
             _ => throw new ArgumentException($"The setting {Key} does not hold {value ?? "nothing"}.", nameof(value)),
         };
     }
@@ -402,10 +415,10 @@ public sealed class SettingDefinition
             case SettingKind.Choice when ChoiceOf(node) is { } choice:
                 return (new(choice), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource when node is null:
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item when node is null:
                 return (new(null), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource when node is JsonValue id && id.TryGetValue<int>(out var game):
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item when node is JsonValue id && id.TryGetValue<int>(out var game):
                 return (new(game), true);
 
             default:

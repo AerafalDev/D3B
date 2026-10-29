@@ -33,6 +33,7 @@ internal sealed class GameNames
             SettingKind.Job => "JobNamed",
             SettingKind.Area => "AreaNamed",
             SettingKind.SubArea => "SubArea",
+            SettingKind.Item => "ItemNamed",
             _ => "ResourceNamed",
         };
 

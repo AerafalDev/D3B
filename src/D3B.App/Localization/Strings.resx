@@ -1259,4 +1259,13 @@
   <data name="StatisticsLevelsOne" xml:space="preserve">
     <value>+{0} level</value>
   </data>
+  <data name="ItemNamed" xml:space="preserve">
+    <value>Item {0}</value>
+  </data>
+  <data name="Life" xml:space="preserve">
+    <value>Life</value>
+  </data>
+  <data name="LifeOf" xml:space="preserve">
+    <value>{0:N0} / {1:N0}</value>
+  </data>
 </root>

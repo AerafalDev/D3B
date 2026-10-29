@@ -43,6 +43,9 @@ public sealed class BotContext
     /// <summary>Gets when the server last ended a use of the character's own, such as a harvest, by the bot's clock, if it ever did: a fight beginning right after is a resource's protector's (D144).</summary>
     public DateTimeOffset? UseEndedAt => _bot.UseEndedAt;
 
+    /// <summary>Gets the character's life now, its regeneration since the server said it reckoned (D153); <see langword="null"/> while the server has not said it.</summary>
+    public int? Life => _bot.LifeAt(Time.GetUtcNow());
+
     /// <summary>Gets how long behaviors wait now: the client's display time, the server's answers and the rest, which the user may raise (D151).</summary>
     public BotDelays Delays => _bot.Delays;
 

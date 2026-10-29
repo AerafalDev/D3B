@@ -100,7 +100,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     {
         using var host = await HostAsync();
         var definition = host.Services.GetRequiredService<ActivityCatalog>().All.Single();
-        var settings = new HarvestSettings { Resources = [TestPlay.Ash, TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId] };
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash, TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId], Heal = true, Food = [TestPlay.Bread] };
 
         await host.Services.GetRequiredService<ProfileBook>().SaveAsync(0, "Ash and chestnut", HarvestingModule.ActivityId, definition.Settings.Write(settings), TestContext.Current.CancellationToken);
 
@@ -115,7 +115,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             localizer.Use(Localizer.English);
 
             var main = new MainViewModel(runner, localizer);
-            var window = new MainWindow { DataContext = main, Width = 1280, Height = 1400 };
+            var window = new MainWindow { DataContext = main, Width = 1280, Height = 2000 };
 
             main.Refresh();
             window.Show();

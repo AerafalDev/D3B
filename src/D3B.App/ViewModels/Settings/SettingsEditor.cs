@@ -250,7 +250,9 @@ internal sealed partial class SettingsEditor : ObservableObject
         if (Game is null)
             return [];
 
-        var options = Game.Options(setting.Kind, within).Select(reference => Option(setting.Kind, reference));
+        // An item setting may offer some types alone, such as food's (D148).
+        var references = setting.Kind is SettingKind.Item && setting.ItemTypes is { } types ? Game.ItemsOf(types) : Game.Options(setting.Kind, within);
+        var options = references.Select(reference => Option(setting.Kind, reference));
 
         if (setting.Kind is SettingKind.Resource && within is not null)
             return [.. options];
@@ -278,6 +280,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         {
             SettingKind.Resource => (Icons?.Item(reference.Id), Game is not null && Game.TryGetSource(reference.Id, out var source) ? Icons?.Job(source.JobId) : null),
             SettingKind.Job => (Icons?.Job(reference.Id), null),
+            SettingKind.Item => (Icons?.Item(reference.Id), null),
             _ => (null, null),
         };
 
