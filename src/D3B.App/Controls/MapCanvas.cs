@@ -136,9 +136,9 @@ internal sealed class MapCanvas : Control
 
     private static void DrawIcon(DrawingContext context, IImage icon, bool harvested, Point center, double height)
     {
-        // An icon stands over its cell, its foot on the cell's centre, as the client draws a resource; harvested, faded.
-        var size = height * 1.5;
-        var bounds = new Rect(center.X - (size / 2), center.Y - (size * 0.75), size, size);
+        // Centred on its cell, its drawing within the ring the Activity layer draws around a wanted element; harvested, faded.
+        var size = height * 1.3;
+        var bounds = new Rect(center.X - (size / 2), center.Y - (size / 2), size, size);
 
         using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
         using (context.PushOpacity(harvested ? 0.35 : 1))
