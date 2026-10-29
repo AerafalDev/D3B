@@ -26,7 +26,9 @@ world, leaving the haven bag, and a walk the client does not follow settled wher
 session 4e); floors in cell paths, and activities chaining behaviors, interrupted by the player, a disconnection or a
 fight, the character recovered and taken back by the client's new connection (step 4, session 4f); the desktop app,
 which runs the bots' host in its process, with its bots page in French and English, dark by default, and the catalogue
-of the activities it starts (step 5, session 5a). Everything else below is the target.
+of the activities it starts (step 5, session 5a); what a plugin sees and declares: the `D3B.Bot` package, activities and
+pages named in the app's language, the pages in the app's rail, the root module read from a plugin's metadata, and the
+sample plugin's activity and page (step 5, session 5b). Everything else below is the target.
 
 ## Overview
 
@@ -57,17 +59,17 @@ each step adds the references it needs.
 
 | Path | Role |
 | --- | --- |
-| `src/D3B.Core` | Modules and `BotBuilder`, plugin loading, shared abstractions. What a plugin references. |
+| `src/D3B.Core` | Modules and `BotBuilder`, plugin loading, shared abstractions. Packed (D22, D95). |
 | `src/D3B.Network` | Kestrel transport, framing, codec over `IDuplexPipe`. The only project referencing `Microsoft.AspNetCore.App`, with the host. |
 | `src/D3B.Protocol` | Classes generated from the readable `.proto` files, a build's mapping, its matching and audit, and the per-build translation. |
 | `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, items, spells, monsters, interactives, texts. |
 | `src/D3B.Engine` | Pure logic with no I/O: cell and world pathfinding, line of sight, fight simulation. |
-| `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, the default modules, and the host's composition the app and `D3B.Host` share. |
+| `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, activities and pages, the default modules, and the host's composition the app and `D3B.Host` share. What a plugin references, packed with `D3B.Core`, `D3B.Data`, `D3B.Engine`, `D3B.Network` and `D3B.Protocol`, which its API names (D95). |
 | `src/D3B.Host` | The bots' host without the app, for measurements: its entry point alone (D91). |
 | `src/D3B.App` | The Avalonia desktop app, which runs the bots' host in its process (D91). |
 | `scripts/` | Inspection, extraction, release and mapping tools, as file-based apps. |
-| `templates/` | The `dotnet new d3b-plugin` template, compiling against the `D3B.Core` package (D22). |
-| `samples/` | Example plugins, built with the solution and loaded by the tests. |
+| `templates/` | The `dotnet new d3b-plugin` template, compiling against the `D3B.Bot` package: an activity and, unless `--page false`, a page (D95, D96). |
+| `samples/` | Example plugins, built with the solution and loaded by the tests: `D3B.Samples.Hello` writes an activity and a page (D96). |
 | `tests/`, `benchmarks/` | One test project per `src/` project that has logic; benchmarks for the codec and pathfinding. |
 
 ## Modules and plugins
@@ -86,14 +88,23 @@ Built at step 1, in `D3B.Core` (D20, D21):
   (D20).
 - A plugin is a folder under `plugins/` holding an assembly named after it, whose one public class marked
   `[Plugin("id")]` is its root module. It loads once into its own `AssemblyLoadContext`, which asks the host's context
-  first and is not collectible (D6). An invalid plugin stops the host from starting.
+  first and is not collectible (D6). The loader finds the root module in the assembly's metadata and loads that type
+  alone, so that a plugin whose page needs Avalonia loads in a host without the app (D97). An invalid plugin, or one
+  whose modules need an assembly neither the host nor the plugin holds, stops the host from starting.
 - The host's composition, `BotHost` in `D3B.Bot.Hosting`, which the app and `D3B.Host` share (D91), adds
   `DefaultModules`, then the plugins next to the executable (or under `Plugins:Directory`), logs what it built, gets the
   pack of the installed client's build ready (Game data, below), then its protocol (Network and protocol, below), and
   starts the host, or says why it did not (`BotHostStart`). `D3B.Host` then runs until it is stopped; the app, until
   its window is gone.
-- A plugin compiles against the `D3B.Core` package; `dotnet new d3b-plugin` creates one (D22).
-- A plugin's UI part loads in the app's process (D91); what its page registers, and how, is Q6, session 5b.
+- A plugin compiles against the `D3B.Bot` package, which brings `D3B.Core` and the libraries its API names, with
+  `ExcludeAssets="runtime"`: its folder holds only its own files, the host providing the rest (D95). `dotnet new
+  d3b-plugin` creates one, with an activity and a page.
+- A module's page (D96), registered with `AddPage` (`D3B.Bot.Pages`) and listed by the bots module in the
+  `PageCatalog`, is an Avalonia control the app makes, in its process (D91), from a factory: the contract names no type
+  of the UI's framework, and a host without the app never makes a page. The page gets a `PageContext`: the host's
+  services, the app's language and the plugin's texts in it (`PageTexts`), and the window's refresh.
+- Texts the app shows for a module, a page's title or an activity's name, are `LocalizedText`s (`D3B.Bot.Localization`):
+  the same in every language, or the module's own resources, in English and French (D96).
 
 ## Bot run time
 
@@ -161,9 +172,9 @@ client's new connection taking the bot back.
   out of a fight and not paused, so the run waits, with no delay, for the player to resume the bot, the client's new
   connection to take it back (D65) or the fight to end (D88). A full character is unloaded before the next step.
   Nothing of the activity's position is kept: the next step starts from the state.
-- **The activities the app starts** (D93): a module registers each one, by an id unique in the host and a name, with
-  `AddActivity<T>`, and the bots module lists them in the `ActivityCatalog`; one is made, with the host's services, for
-  each start.
+- **The activities the app starts** (D93): a module registers each one, by an id unique in the host and a name in the
+  app's language (D96), with `AddActivity<T>`, and the bots module lists them in the `ActivityCatalog`; one is made, with
+  the host's services, for each start.
 - **Recovery** (D89): before going on after an interruption, `Recovery.SettleAsync` lets a use and a walk end, leaves a
   dialog or exchange still open, and lets go of a walk the server holds, each wait bounded.
 - Every delay goes through `TimeProvider`.
@@ -310,6 +321,13 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
 - **The window**: dark by default, light on a click; where the host stands, the language and the theme in the title
   bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by `StatusPill`, in the tone each says
   (`Tone`).
+- **The rail** (D96), once a module registered a page: the bots page, a line, then the modules' pages in the
+  catalogue's order, an icon each with its title as a tooltip. A module's page (`PluginPageViewModel`) is made the first
+  time it shows and kept, refreshed every 250 ms while it shows through its context (`AppPageContext`, in
+  `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead (`PageFailureViewModel`), logged, and
+  the bots and the other pages go on. What a page's own code throws on the UI's thread, which nothing caught, is told by
+  the page's assembly in its stack and fails that page alone; the app's own faults still end it. A page looks like the app's through the theme, Inter and ShadUI's styles it inherits, and
+  the app's classes it may use: `PageHeader`, `PageTitle`, `Plate`, `PlateFooter` and the typography's.
 - **The bots page**: a card per bot, in as many columns as the width holds (`CardGrid`), each whole: who, its
   connection and the player's pause, resumed from the card; where, the coordinates large and the sub-area named from the
   pack's texts; pods and kamas; what it is in the middle of; its activity, started from the catalogue (D93), stopped,
@@ -318,13 +336,12 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
   French; the language starts as the system's and changes live, the views binding through `{l:Tr Key}`.
-- Pages to come: Q11 and Q6, a plugin's activity and page (5b); accounts and profiles in SQLite (5c); the live map
-  (5d); logs and the protocol inspector (5e) (D92).
+- Pages to come: accounts and profiles in SQLite (5c); the live map (5d); logs and the protocol inspector (5e) (D92).
 
 ## Scripting
 
 Dropped (D90): routes and routines are plugins, their activities `BotActivity`s (D87), and the owner's profession
-scripts in `vendor/metiers` become plugins at step 13. What a plugin sees of the bots is Q11.
+scripts in `vendor/metiers` become plugins at step 13. What a plugin sees of the bots is `D3B.Bot`'s API (D95).
 
 ## Engine
 
@@ -374,4 +391,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
 - The app's view models are tested against bots played as the bots' tests play them, and its window drawn without a
   screen by Avalonia.Headless with Skia, its texts read in both languages (D94).
+- The sample plugin is loaded from its folder, as a host loads it: by `D3B.Core`'s tests and by the host's composition
+  in `D3B.Bot`'s, whose hosts hold no Avalonia, and by the app's, which draw its page in both languages and play its
+  stroll through it (D96, D97); the build copies it into those tests' `plugins/` (`tests/Directory.Build.targets`).
 - Time is controlled through `FakeTimeProvider`.

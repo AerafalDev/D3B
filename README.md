@@ -40,8 +40,9 @@ While the host runs, the `ConfigUrl` line of the installed client's `version` fi
 configuration that sends it to the host's relay, and the host gives it Ankama's back when it stops. After a crash,
 `dotnet run --file scripts/client.cs -- restore` does it, so that the client plays without D3B.
 
-A plugin is a .NET assembly that compiles against the `D3B.Core` package. `templates/d3b-plugin` creates one with
-`dotnet new d3b-plugin`; `samples/D3B.Samples.Hello` is a working example.
+A plugin is a .NET assembly that compiles against the `D3B.Bot` package: activities the app starts on a bot, and pages
+in the app's rail. `templates/d3b-plugin` creates one with `dotnet new d3b-plugin`; `samples/D3B.Samples.Hello` is a
+working example.
 
 ## Documents
 
