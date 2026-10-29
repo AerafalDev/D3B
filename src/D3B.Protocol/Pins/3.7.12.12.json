@@ -54,6 +54,7 @@
     { "readable": "d3b.game.HavenBagEnterRequest", "obfuscated": "izg" },
     { "readable": "d3b.game.TextInformationEvent", "obfuscated": "lof" },
     { "readable": "d3b.game.ObjectUseRequest", "obfuscated": "iql" },
+    { "readable": "d3b.game.ObjectUseMultipleRequest", "obfuscated": "isj" },
     { "readable": "d3b.game.ObjectDeletedEvent", "obfuscated": "iqm" },
     { "readable": "d3b.game.CharacterStatsEvent", "obfuscated": "krg" },
     { "readable": "d3b.game.LifeRegenEndEvent", "obfuscated": "kqo" },

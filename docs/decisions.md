@@ -3776,7 +3776,7 @@ lead recommended it. Builds D151, amends D147 and D148.*
   its own, `BotDelays.BetweenSteps`, the display time's half second at least, raised in the settings page. Fixed, never
   drawn at random: the owner asked again for a least and a most drawn at random, as BillBot's, which D152 keeps out.
 - **The multiple use**, which D153 measured and left unnamed: the owner asked for it, food then eaten in one request, the
-  server using what the life lacks. Named in the protocol by the session that mapped D153.
+  server using what the life lacks. Named in the protocol by the session that mapped D153 (D156).
 - **The guild's chest** took 4 stacks whole and part of a fifth, 9 of 52 left in the inventory; then the character, carrying
   other things, was still above its share of 50 % at 77 %, and the activity ended still full. So a part taken counts as
   refused, and what the guild's chest leaves goes to the character's own chest before the activity says it is still full.
@@ -3791,6 +3791,24 @@ lead recommended it. Builds D151, amends D147 and D148.*
   gone, one scale of spacing and sizes, ShadUI's components where they fit.
 - **Rejected.**
   - The redesign in 6c: 6c ends with its check on the client and the call on the repository (D4).
+
+## D156: Using several objects at once named: mapping format 8
+
+*2026-10-29, step 6, session 6c, in a session of its own, as the lead asked: healing ate 19 breads one by one on the
+client, and the owner asked for one request. Supersedes D153's "not named" ([client.md](client.md#the-game-kept-up)).*
+
+- **Named and pinned** for 3.7.12.12 (D54): `ObjectUseMultipleRequest`, the stack's uid, the quantity to use, and a message
+  no capture sets, holding a `map<bool, string>` and a list of `int64`, named neutrally (D42). Asked for the whole stack
+  below full life, the server used only as many as the life lacked, the last in part, in one answer; at full life, a text
+  alone, and nothing is used. The bot heals in one request.
+- **A map in the readable protocol**, the first. Its entry is a message protobuf makes, which the matcher pairs through the
+  map's field and the audit checks as any message, its key and value by number and type. The translation gives it no
+  parser: it has no class, and no frame carries it alone. The tests' obfuscation renames it as any nested message and keeps
+  its option, so that the audit's tests cover a map read as a list, or of another value's type.
+- **Mapping.** The readable protocol holds 132 messages, 270 fields, 19 enums and 147 values. `MappingFile.FormatVersion` is
+  8, `mapping-8.binpb`, 9,150 bytes, the same bytes on two runs, audited without failure; the 37 game connections captured
+  decode through it, 26,090 frames, none misread. `mapping-7.binpb`, published, is left as it is (D50). The release of
+  3.7.12.12 needs format 8, which the release tool publishes once the owner says so.
 
 ## Open questions
 
