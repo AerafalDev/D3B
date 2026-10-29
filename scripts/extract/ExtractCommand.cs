@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using D3B.Data;
 using D3B.Data.Banks;
+using D3B.Data.Icons;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
@@ -92,7 +93,9 @@ internal static class ExtractCommand
             .Concat(ItemsExtractor.Inputs(client))
             .Concat(JobsExtractor.Inputs(client))
             .Concat(InteractivesExtractor.Inputs(client))
-            .Concat(BanksExtractor.Inputs(client));
+            .Concat(BanksExtractor.Inputs(client))
+            .Concat(IconsExtractor.Inputs(client))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
         var fingerprint = InputFingerprint.Compute(client, manifest, inputs);
         var extractor = typeof(GamePack).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
         var path = PackLocations.PathOf(root, build);
@@ -115,6 +118,7 @@ internal static class ExtractCommand
         var atlas = WorldExtractor.ReadAtlas(client, items, jobs);
         var interactives = InteractivesExtractor.Read(client);
         var banks = BanksExtractor.Read(client, atlas, graph);
+        var icons = IconsExtractor.Read(client, items, jobs);
 
         WorldExtractor.Check(graph, atlas, maps);
 
@@ -148,6 +152,7 @@ internal static class ExtractCommand
             writer.Add(JobCatalog.EntryName, jobs);
             writer.Add(InteractiveCatalog.EntryName, interactives);
             writer.Add(BankCatalog.EntryName, banks);
+            writer.Add(IconCatalog.EntryName, icons);
 
             foreach (var map in maps)
                 writer.Add(MapData.EntryName(map.Id), map);

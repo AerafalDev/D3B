@@ -5,7 +5,7 @@ namespace D3B.Scripts.Extract;
 
 /// <summary>Reads the items and their types.</summary>
 /// <remarks>
-/// An item keeps what a bot names, sorts and weighs it by. Its effects, recipes, criteria and <c>m_flags</c>, whose bits
+/// An item keeps what a bot names, sorts and weighs it by, and its icon, which the pack holds for some items only. Its effects, recipes, criteria and <c>m_flags</c>, whose bits
 /// are not measured, are left out (client.md).
 /// </remarks>
 internal static class ItemsExtractor
@@ -26,7 +26,8 @@ internal static class ItemsExtractor
                 checked((int)record.UInt32("nameId")),
                 record.UInt16("typeId"),
                 record.Byte("level"),
-                record.UInt16("realWeight")));
+                record.UInt16("realWeight"),
+                record.Int32("iconId")));
             var types = UnityDataTable.ReadById(client, "itemtypes").Select(record => new ItemType(
                 record.Int32("id"),
                 record.Int32("nameId"),

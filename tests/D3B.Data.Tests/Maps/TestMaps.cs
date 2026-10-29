@@ -27,6 +27,6 @@ internal static class TestMaps
 
     public static MapData Map(long id)
     {
-        return new MapData(id, id + 1, id + 2, id + 3, id + 4, Cells(), new MapInteractive[] { new(470_001, 101), new(470_007, 254), new(470_012, MapInteractive.NoCell) });
+        return new MapData(id, id + 1, id + 2, id + 3, id + 4, Cells(), new MapInteractive[] { new(470_001, 101, 650), new(470_007, 254, 3212), new(470_012, MapInteractive.NoCell, 1018) });
     }
 }

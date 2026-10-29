@@ -1,5 +1,6 @@
 using D3B.Bot.Hosting;
 using D3B.Storage.Accounts;
+using D3B.Storage.Graphics;
 using D3B.Storage.Profiles;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -7,21 +8,23 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage;
 
-/// <summary>Opens the database before the host starts: creates it, applies its migrations, and reads the accounts and profiles (D100).</summary>
+/// <summary>Opens the database before the host starts: creates it, applies its migrations, and reads the accounts, the profiles and the graphics learned (D100, D138).</summary>
 internal sealed class StoragePreparation : IHostPreparation
 {
     private readonly StorageSettings _settings;
     private readonly IDbContextFactory<StorageContext> _contexts;
     private readonly AccountBook _accounts;
     private readonly ProfileBook _profiles;
+    private readonly GraphicRecorder _graphics;
     private readonly ILogger<StoragePreparation> _log;
 
-    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, ProfileBook profiles, ILogger<StoragePreparation> log)
+    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, ProfileBook profiles, GraphicRecorder graphics, ILogger<StoragePreparation> log)
     {
         _settings = settings;
         _contexts = contexts;
         _accounts = accounts;
         _profiles = profiles;
+        _graphics = graphics;
         _log = log;
     }
 
@@ -38,7 +41,10 @@ internal sealed class StoragePreparation : IHostPreparation
 
             await _accounts.LoadAsync(cancellationToken).ConfigureAwait(false);
             await _profiles.LoadAsync(cancellationToken).ConfigureAwait(false);
-            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, _profiles.Profiles.Count);
+
+            var graphics = await _graphics.LoadAsync(cancellationToken).ConfigureAwait(false);
+
+            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, _profiles.Profiles.Count, graphics);
 
             return null;
         }

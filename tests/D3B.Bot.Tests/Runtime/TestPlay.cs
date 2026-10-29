@@ -4,6 +4,7 @@ using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Network;
 using D3B.Data;
 using D3B.Data.Banks;
+using D3B.Data.Icons;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.Maps;
@@ -57,16 +58,26 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int NorthActionCell = 200;
     public const int TreeElementId = 514_662;
     public const int TreeCell = 176;
+    public const int TreeGfxId = 650;
     public const int TreeSkillId = 40;
     public const int TreeInstanceId = 19_146;
     public const int Lumberjack = 2;
     public const int Ash = 303;
     public const int Chestnut = 473;
+    public const int AshIconId = 38_017;
+    public const int ChestnutIconId = 38_086;
+    public const int LumberjackIconId = 1;
     public const int ChestnutSkillId = 39;
     public const int DoorElementId = 515_308;
     public const int DoorCell = 288;
+    public const int DoorGfxId = 3_518;
     public const int DoorInstanceId = 23_074;
     public const int NeighboursElementId = 514_594;
+    public const int NeighboursElementCell = 435;
+    public const int BushElementId = 514_701;
+    public const int BushGfxId = 7_001;
+    public const int ChestElementId = 514_702;
+    public const int ChestGfxId = 7_002;
     public const int SubAreaId = 440;
     public const long AccountId = 7;
     public const uint TeleportFlag = 1 << 3;
@@ -180,7 +191,7 @@ internal sealed class TestPlay : IAsyncDisposable
                 InteractiveId = 34,
                 EnabledSkills = { new InteractiveSkill { SkillId = TreeSkillId, InstanceId = 4_478 } },
             });
-            information.StatedElements.Add(new StatedElement { ElementId = NeighboursElementId, CellId = 435, State = 0 });
+            information.StatedElements.Add(new StatedElement { ElementId = NeighboursElementId, CellId = NeighboursElementCell, State = 0 });
         }
 
         return information;
@@ -207,6 +218,28 @@ internal sealed class TestPlay : IAsyncDisposable
         };
     }
 
+    /// <summary>An icon of the test's own, nothing of the client's: a disc of one colour on a transparent square.</summary>
+    private static byte[] Disc(byte red, byte green, byte blue)
+    {
+        var pixels = new byte[IconTable.IconLength];
+        var center = (IconTable.Size - 1) / 2.0;
+
+        for (var y = 0; y < IconTable.Size; y++)
+        {
+            for (var x = 0; x < IconTable.Size; x++)
+            {
+                if (Math.Pow(x - center, 2) + Math.Pow(y - center, 2) > Math.Pow(IconTable.Size * 0.42, 2))
+                    continue;
+
+                var at = ((y * IconTable.Size) + x) * 4;
+
+                (pixels[at], pixels[at + 1], pixels[at + 2], pixels[at + 3]) = (red, green, blue, 255);
+            }
+        }
+
+        return pixels;
+    }
+
     private static byte[] Pack(int[] blocked)
     {
         var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell)).ToArray();
@@ -217,17 +250,20 @@ internal sealed class TestPlay : IAsyncDisposable
 
         using (var writer = new PackWriter(stream, info, 3))
         {
-            writer.Add(MapData.EntryName(MapId), new MapData(MapId, NorthMapId, 0, 0, 0, cells, new[] { new MapInteractive(TreeElementId, TreeCell), new MapInteractive(DoorElementId, DoorCell) }));
-            writer.Add(MapData.EntryName(NorthMapId), new MapData(NorthMapId, 0, MapId, 0, 0, open, Array.Empty<MapInteractive>()));
-            writer.Add(MapData.EntryName(EastMapId), new MapData(EastMapId, 0, 0, MapId, 0, open, Array.Empty<MapInteractive>()));
-            writer.Add(MapData.EntryName(InsideMapId), new MapData(InsideMapId, 0, 0, 0, 0, open, Array.Empty<MapInteractive>()));
+            writer.Add(MapData.EntryName(MapId), new MapData(MapId, NorthMapId, 0, 0, 0, cells, new[] { new MapInteractive(TreeElementId, TreeCell, TreeGfxId), new MapInteractive(DoorElementId, DoorCell, DoorGfxId) }));
+            writer.Add(MapData.EntryName(NorthMapId), new MapData(NorthMapId, 0, MapId, 0, 0, open, new[] { new MapInteractive(NeighboursElementId, NeighboursElementCell, TreeGfxId) }));
+            writer.Add(MapData.EntryName(EastMapId), new MapData(EastMapId, 0, 0, MapId, 0, open, new[] { new MapInteractive(BushElementId, 300, BushGfxId) }));
+            writer.Add(MapData.EntryName(InsideMapId), new MapData(InsideMapId, 0, 0, 0, 0, open, new[] { new MapInteractive(ChestElementId, 300, ChestGfxId) }));
             writer.Add(MapData.EntryName(OtherInsideMapId), new MapData(OtherInsideMapId, 0, 0, 0, 0, open, Array.Empty<MapInteractive>()));
             writer.Add(WorldGraph.EntryName, Graph());
             writer.Add(WorldAtlas.EntryName, Atlas());
             writer.Add(BankCatalog.EntryName, new BankCatalog(new[] { new Bank(2_756, MapId) }, new[] { new Banker(BankerNpcId, 0, 0, 2) }, new[] { 64_360, ChestReplyId }));
-            writer.Add(ItemCatalog.EntryName, new ItemCatalog(new[] { new Item(Ash, 403, 38, 1, 5), new Item(Chestnut, 404, 38, 20, 5) }, Array.Empty<ItemType>()));
+            writer.Add(ItemCatalog.EntryName, new ItemCatalog(new[] { new Item(Ash, 403, 38, 1, 5, AshIconId), new Item(Chestnut, 404, 38, 20, 5, ChestnutIconId) }, Array.Empty<ItemType>()));
+            writer.Add(IconCatalog.EntryName, new IconCatalog(
+                new IconTable(new[] { AshIconId, ChestnutIconId }, Disc(0x8B, 0xC3, 0x4A).Concat(Disc(0x9C, 0x5B, 0x2E)).ToArray()),
+                new IconTable(new[] { LumberjackIconId }, Disc(0x3B, 0x82, 0xF6))));
             writer.Add(JobCatalog.EntryName, new JobCatalog(
-                new[] { new Job(Job.Base, 0), new Job(Lumberjack, 202) },
+                new[] { new Job(Job.Base, 0, Job.NoIcon), new Job(Lumberjack, 202, LumberjackIconId) },
                 new[] { new Skill(ChestnutSkillId, 0, Lumberjack, Chestnut, 20, 1, false), new Skill(TreeSkillId, 0, Lumberjack, Ash, 1, 1, false), new Skill(WorldPathfinder.DoorSkillId, 0, Job.Base, Skill.NoItem, 0, 1, false) }));
             writer.Complete();
         }

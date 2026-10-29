@@ -24,6 +24,7 @@ internal static class ZoneScenes
         ArgumentNullException.ThrowIfNull(atlas);
 
         var squares = new Dictionary<(int X, int Y), ZoneSquareKind>();
+        var probable = new HashSet<(int X, int Y)>();
         sbyte? worldMap = null;
 
         foreach (var map in zone)
@@ -35,7 +36,13 @@ internal static class ZoneScenes
             if (position.WorldMap >= 0)
                 worldMap ??= position.WorldMap;
 
-            var kind = tour ? KindOf(map.State) : map.Group % 2 is 0 ? ZoneSquareKind.GroupA : ZoneSquareKind.GroupB;
+            // Coloured by their parts, the maps left out show as such, and the probable ones are marked over their part's colour.
+            var kind = tour ? KindOf(map.State)
+                : map.State is ZoneMapState.Empty ? ZoneSquareKind.Empty
+                : map.Group % 2 is 0 ? ZoneSquareKind.GroupA : ZoneSquareKind.GroupB;
+
+            if (!tour && map.State is ZoneMapState.Probable)
+                probable.Add((position.X, position.Y));
 
             if (!squares.TryGetValue((position.X, position.Y), out var known) || Rank(kind) > Rank(known))
                 squares[(position.X, position.Y)] = kind;
@@ -72,7 +79,7 @@ internal static class ZoneScenes
                 squares.TryAdd((position.X, position.Y), ZoneSquareKind.Context);
         }
 
-        return new ZoneScene([.. squares.OrderBy(square => square.Key.Y).ThenBy(square => square.Key.X).Select(square => new ZoneSquare(square.Key.X, square.Key.Y, square.Value))])
+        return new ZoneScene([.. squares.OrderBy(square => square.Key.Y).ThenBy(square => square.Key.X).Select(square => new ZoneSquare(square.Key.X, square.Key.Y, square.Value, probable.Contains(square.Key)))])
         {
             Landmark = marked,
             Character = standing,
@@ -86,15 +93,17 @@ internal static class ZoneScenes
             ZoneMapState.Visited => ZoneSquareKind.Visited,
             ZoneMapState.Empty => ZoneSquareKind.Empty,
             ZoneMapState.Unreachable => ZoneSquareKind.Unreachable,
+            ZoneMapState.Probable => ZoneSquareKind.Probable,
             _ => ZoneSquareKind.ToVisit,
         };
     }
 
     private static int Rank(ZoneSquareKind kind)
     {
-        // Of maps sharing coordinates, the one a tour still goes through shows over those gone through or empty.
+        // Of maps sharing coordinates, the one a tour still goes through shows over those gone through or empty, a probable one first.
         return kind switch
         {
+            ZoneSquareKind.Probable => 5,
             ZoneSquareKind.ToVisit => 4,
             ZoneSquareKind.Unreachable => 3,
             ZoneSquareKind.Visited or ZoneSquareKind.GroupA or ZoneSquareKind.GroupB => 2,

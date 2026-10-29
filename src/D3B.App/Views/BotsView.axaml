@@ -231,7 +231,12 @@
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate x:DataType="vm:ActivityCountViewModel">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                                            <Border Classes="ItemIcon" IsVisible="{Binding IsItem}" />
+                                                            <Border
+                                                                Classes="ItemIcon"
+                                                                Classes.HasIcon="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                                IsVisible="{Binding IsItem}">
+                                                                <Image RenderOptions.BitmapInterpolationMode="HighQuality" Source="{Binding Icon}" />
+                                                            </Border>
                                                             <TextBlock
                                                                 Classes="Caption Figures"
                                                                 Text="{Binding Text}"

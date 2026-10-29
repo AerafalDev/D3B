@@ -23,15 +23,15 @@ public sealed class MapDataTests : IDisposable
     [Fact]
     public void ElementsMustBeInStrictlyAscendingOrder()
     {
-        Assert.Throws<ArgumentException>(() => new MapData(1, 0, 0, 0, 0, TestMaps.Cells(), new MapInteractive[] { new(7, 10), new(7, 11) }));
-        Assert.Throws<ArgumentException>(() => new MapData(1, 0, 0, 0, 0, TestMaps.Cells(), new MapInteractive[] { new(8, 10), new(7, 11) }));
+        Assert.Throws<ArgumentException>(() => new MapData(1, 0, 0, 0, 0, TestMaps.Cells(), new MapInteractive[] { new(7, 10, 0), new(7, 11, 0) }));
+        Assert.Throws<ArgumentException>(() => new MapData(1, 0, 0, 0, 0, TestMaps.Cells(), new MapInteractive[] { new(8, 10, 0), new(7, 11, 0) }));
     }
 
     [Fact]
     public void AnElementOffTheMapIsRejected()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new MapInteractive(1, MapData.CellCount));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new MapInteractive(-1, 10));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new MapInteractive(1, MapData.CellCount, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new MapInteractive(-1, 10, 0));
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public sealed class MapDataTests : IDisposable
         var map = TestMaps.Map(191104002);
 
         Assert.True(map.TryGetInteractive(470_007, out var element));
-        Assert.Equal(254, element.CellId);
+        Assert.Equal((254, 3212), (element.CellId, element.GfxId));
         Assert.True(map.TryGetInteractive(470_012, out var unplaced));
         Assert.Equal(MapInteractive.NoCell, unplaced.CellId);
         Assert.False(map.TryGetInteractive(470_002, out _));

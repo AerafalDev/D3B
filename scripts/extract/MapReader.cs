@@ -11,6 +11,7 @@ namespace D3B.Scripts.Extract;
 /// stands on the cell of the middleground group that lists it, or, when animated, on a cell of its own. A few drawn in
 /// the background or foreground have no cell. The interactive identifier is a property's backing field,
 /// <c>&lt;interactiveId&gt;k__BackingField</c>, which <see cref="UnityTypeNode.Field"/> names <c>interactiveId</c>.
+/// Every element names the graphic it is drawn with, <c>gfxId</c>, in both layouts.
 /// </para>
 /// <para>
 /// <c>MapMetadata</c> nests a map in its <c>mapData</c>, without an id: the object's name, <c>map_&lt;id&gt;</c>, gives
@@ -18,7 +19,7 @@ namespace D3B.Scripts.Extract;
 /// its interactive elements name their own cell and an <c>m_interactionId</c>, and so do its bounding boxes.
 /// </para>
 /// <para>
-/// Everything else, the graphics, materials, effects and sounds, is skipped. A field the client adds changes nothing,
+/// Everything else, the maps' own graphics, materials, effects and sounds, is skipped. A field the client adds changes nothing,
 /// and one it removes or retypes fails the extraction (client.md).
 /// </para>
 /// </remarks>
@@ -29,8 +30,11 @@ internal sealed class MapReader
     private readonly IReadOnlyDictionary<string, UnityTypeTree> _references;
     private readonly HashSet<string> _interactiveClasses;
     private readonly Dictionary<long, int> _groupCells = [];
-    private readonly Dictionary<long, (int ElementId, int CellId)> _elements = [];
-    private readonly List<(int ElementId, int CellId)> _interactives = [];
+    private readonly Dictionary<long, (int ElementId, int CellId, int GfxId)> _elements = [];
+    private readonly List<(int ElementId, int CellId, int GfxId)> _interactives = [];
+
+    /// <summary>How many elements the maps read so far draw twice on one cell with two graphics, each kept with the lowest.</summary>
+    public int TwoGraphics { get; private set; }
 
     /// <param name="references">The type trees of the serialized file's managed reference classes.</param>
     public MapReader(IReadOnlyDictionary<string, UnityTypeTree> references)
@@ -176,11 +180,12 @@ internal sealed class MapReader
         return cells;
     }
 
-    /// <summary>Reads an element's interactive identifier and its own cell, if it has one, skipping its other fields.</summary>
-    private static (int? ElementId, int CellId) ReadInteractive(ref UnityReader reader, int node)
+    /// <summary>Reads an element's interactive identifier, its graphic and its own cell, if it has one, skipping its other fields.</summary>
+    private static (int? ElementId, int CellId, int GfxId) ReadInteractive(ref UnityReader reader, int node)
     {
         var tree = reader.Tree;
         int? elementId = null;
+        int? gfxId = null;
         var cell = MapInteractive.NoCell;
 
         foreach (var child in tree[node].Children)
@@ -191,11 +196,18 @@ internal sealed class MapReader
                 elementId = checked((int)reader.ReadUInt32(child));
             else if (field is "cellId")
                 cell = reader.ReadInt32(child);
+            else if (field is "gfxId")
+                gfxId = reader.ReadInt32(child);
             else
                 reader.Skip(child);
         }
 
-        return (elementId, cell);
+        // A tour tells a map's resources by its elements' graphics (D138): an element drawn with none is a layout the
+        // extractor does not know.
+        if (elementId is { } id && gfxId is null)
+            throw new InvalidDataException($"{tree.Name}: interactive element {id} names no graphic: the client changed this type, so the extractor needs updating.");
+
+        return (elementId, cell, gfxId ?? 0);
     }
 
     public MapData Read(byte[] data, UnityTypeTree tree, ClientMapLayout layout)
@@ -316,12 +328,12 @@ internal sealed class MapReader
 
         for (var i = 0; i < count; i++)
         {
-            var (elementId, cell) = ReadInteractive(ref reader, item);
+            var (elementId, cell, gfxId) = ReadInteractive(ref reader, item);
 
             reader.AlignAfter(item);
 
             if (elementId is { } id)
-                _interactives.Add((id, cell));
+                _interactives.Add((id, cell, gfxId));
         }
 
         reader.EndArray(node);
@@ -332,10 +344,10 @@ internal sealed class MapReader
         if (!_interactiveClasses.Contains(className))
             return false;
 
-        var (elementId, cell) = ReadInteractive(ref reader, 0);
+        var (elementId, cell, gfxId) = ReadInteractive(ref reader, 0);
 
         if (elementId is { } element)
-            _elements[id] = (element, cell);
+            _elements[id] = (element, cell, gfxId);
 
         return true;
     }
@@ -367,7 +379,7 @@ internal sealed class MapReader
                 if (element.CellId is not MapInteractive.NoCell && hasGroup && groupCell != element.CellId)
                     throw new InvalidDataException($"Map {id}: interactive element {element.ElementId} names cell {element.CellId}, its group cell {groupCell}.");
 
-                _interactives.Add((element.ElementId, element.CellId is not MapInteractive.NoCell ? element.CellId : hasGroup ? groupCell : MapInteractive.NoCell));
+                _interactives.Add((element.ElementId, element.CellId is not MapInteractive.NoCell ? element.CellId : hasGroup ? groupCell : MapInteractive.NoCell, element.GfxId));
             }
         }
 
@@ -386,7 +398,7 @@ internal sealed class MapReader
 
         for (var i = 0; i < _interactives.Count; i++)
         {
-            var (elementId, cell) = _interactives[i];
+            var (elementId, cell, gfxId) = _interactives[i];
 
             if (i > 0 && _interactives[i - 1].ElementId == elementId)
             {
@@ -394,10 +406,13 @@ internal sealed class MapReader
                 if (_interactives[i - 1].CellId != cell)
                     throw new InvalidDataException($"Map {mapId} places interactive element {elementId} on cells {_interactives[i - 1].CellId} and {cell}.");
 
+                if (_interactives[i - 1].GfxId != gfxId)
+                    TwoGraphics++;
+
                 continue;
             }
 
-            result.Add(new MapInteractive(elementId, cell));
+            result.Add(new MapInteractive(elementId, cell, gfxId));
         }
 
         return [.. result];

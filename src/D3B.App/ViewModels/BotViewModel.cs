@@ -38,6 +38,7 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly Action<CharacterKey>? _showJournal;
     private readonly Action<CharacterKey>? _showMap;
     private readonly GameTextFormatter _says;
+    private readonly GameIcons? _icons;
     private readonly TimeProvider _time;
     private int _profilesVersion = -1;
     private ActivityRun? _startedRun;
@@ -236,6 +237,7 @@ internal sealed partial class BotViewModel : ObservableObject
         _accounts = services.GetService<AccountBook>();
         _starter = services.GetService<ProfileStarter>();
         _says = new GameTextFormatter(localizer, _world, _texts, services.GetService<GameTables>());
+        _icons = GameIcons.Of(services.GetService<GameTables>());
         _time = services.GetService<TimeProvider>() ?? TimeProvider.System;
         RefreshChoices();
     }
@@ -543,7 +545,7 @@ internal sealed partial class BotViewModel : ObservableObject
         ActivityDoing = report is null || run is { IsOver: true } ? "" : _says.Say(report.Doing);
         ProgressText = report?.Progress is { } progress && run is { IsOver: false } ? _says.Say(progress.Text) : "";
         ProgressPercent = report?.Progress is { Total: > 0 } shown ? Math.Clamp(100.0 * shown.Done / shown.Total, 0, 100) : 0;
-        Counts = report is null ? [] : [.. report.Counts.Select(count => new ActivityCountViewModel(_says.Say(count.Text), count.ItemId is not null))];
+        Counts = report is null ? [] : [.. report.Counts.Select(count => new ActivityCountViewModel(_says.Say(count.Text), count.ItemId is not null, count.ItemId is { } item ? _icons?.Item(item) : null))];
         Warnings = report is null || run is { IsOver: true } ? [] : [.. report.Warnings.Select(_says.Say)];
     }
 

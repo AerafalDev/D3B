@@ -5,6 +5,7 @@ using D3B.Bot.Hosting;
 using D3B.Bot.Localization;
 using D3B.Bot.Pages;
 using D3B.Core.Modules;
+using D3B.Data.Packs;
 using D3B.Data.Releases;
 using D3B.Data.Tests.Releases;
 using D3B.Network.Relay;
@@ -45,7 +46,7 @@ public sealed class BotHostTests : IDisposable
         var exitCode = await BotHost.RunAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
 
         Assert.Equal(0, exitCode);
-        Assert.Contains(_log.GetSnapshot(), record => record.Message == $"Opened the pack of client {TestInstall.Version}, format 3: {_install.PackPath}");
+        Assert.Contains(_log.GetSnapshot(), record => record.Message == $"Opened the pack of client {TestInstall.Version}, format {GamePack.FormatVersion}: {_install.PackPath}");
         Assert.Contains(_log.GetSnapshot(), record => record.Message.StartsWith($"Loaded the mapping of client {TestInstall.Version}, format {MappingFile.FormatVersion}: ", StringComparison.Ordinal)
             && record.Message.EndsWith($" values audited, {_install.MappingPath}", StringComparison.Ordinal));
         Assert.Contains(_log.GetSnapshot(), IsStarted);

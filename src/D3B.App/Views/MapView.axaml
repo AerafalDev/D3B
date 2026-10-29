@@ -235,7 +235,13 @@
                         <TextBlock Text="{l:Tr TourVisited}" />
                     </StackPanel>
                     <StackPanel>
-                        <Border BorderBrush="{DynamicResource SuccessColor}" BorderThickness="1" />
+                        <Border BorderBrush="{DynamicResource SuccessColor}" BorderThickness="1">
+                            <Border Background="{DynamicResource SuccessColor}" Opacity="0.4" />
+                        </Border>
+                        <TextBlock Text="{l:Tr TourProbable}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <Border BorderBrush="{DynamicResource MutedColor}" BorderThickness="1" />
                         <TextBlock Text="{l:Tr TourToVisit}" />
                     </StackPanel>
                     <StackPanel>

@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Controls;
+using Avalonia.Media;
 
 namespace D3B.App.ViewModels.Settings;
 
@@ -23,15 +24,25 @@ internal sealed class OptionViewModel
     /// <summary>Gets whether it has a detail.</summary>
     public bool HasDetail => Detail is not null;
 
+    /// <summary>Gets its icon, such as a resource's or a profession's, when the pack keeps one (D135).</summary>
+    public IImage? Icon { get; }
+
+    /// <summary>Gets the icon of what its detail names, such as a resource's profession.</summary>
+    public IImage? DetailIcon { get; }
+
     /// <summary>Initializes a new instance of the <see cref="OptionViewModel"/> class.</summary>
     /// <param name="value">The value the setting stores.</param>
     /// <param name="name">Its name.</param>
     /// <param name="detail">What the app says beside its name.</param>
-    public OptionViewModel(object value, string name, string? detail = null)
+    /// <param name="icon">Its icon.</param>
+    /// <param name="detailIcon">The icon of what its detail names.</param>
+    public OptionViewModel(object value, string name, string? detail = null, IImage? icon = null, IImage? detailIcon = null)
     {
         Value = value;
         Name = name;
         Detail = detail;
+        Icon = icon;
+        DetailIcon = detailIcon;
     }
 
     /// <inheritdoc/>

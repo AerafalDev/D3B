@@ -1,4 +1,5 @@
 using D3B.Bot.Data;
+using D3B.Data.Packs;
 using D3B.Data.Releases;
 using D3B.Data.Tests.Releases;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +29,7 @@ public sealed class PackSourceTests : IDisposable
     [Fact]
     public async Task AMissingPackIsDownloadedFromTheReleaseOfItsBuild()
     {
-        _github.Publish(ClientRelease.DefaultRepository, Tag, ("data-3.pack", TestInstall.Pack()));
+        _github.Publish(ClientRelease.DefaultRepository, Tag, ($"data-{GamePack.FormatVersion}.pack", TestInstall.Pack()));
 
         var source = Source(TestInstall.Token);
 
@@ -52,7 +53,7 @@ public sealed class PackSourceTests : IDisposable
     [Fact]
     public async Task AReleasedPackOfAnotherBuildIsRefused()
     {
-        _github.Publish(ClientRelease.DefaultRepository, Tag, ("data-3.pack", TestInstall.Pack("3.7.11.1")));
+        _github.Publish(ClientRelease.DefaultRepository, Tag, ($"data-{GamePack.FormatVersion}.pack", TestInstall.Pack("3.7.11.1")));
 
         var exception = await Assert.ThrowsAsync<DataUnavailableException>(() => Source(TestInstall.Token).EnsureAsync(TestContext.Current.CancellationToken));
 
@@ -74,7 +75,7 @@ public sealed class PackSourceTests : IDisposable
     public async Task WithoutATokenTheMessageSaysWhereOneComesFrom()
     {
         _github.RequiredToken = TestInstall.Token;
-        _github.Publish(ClientRelease.DefaultRepository, Tag, ("data-3.pack", TestInstall.Pack()));
+        _github.Publish(ClientRelease.DefaultRepository, Tag, ($"data-{GamePack.FormatVersion}.pack", TestInstall.Pack()));
 
         var exception = await Assert.ThrowsAsync<DataUnavailableException>(() => Source(null).EnsureAsync(TestContext.Current.CancellationToken));
 

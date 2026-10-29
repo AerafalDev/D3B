@@ -1,7 +1,9 @@
 using D3B.Bot.Activities;
+using D3B.Bot.Interactives;
 using D3B.Bot.Runtime;
 using D3B.Core.Modules;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace D3B.Bot.Harvesting;
 
@@ -21,6 +23,8 @@ public sealed class HarvestingModule : IModule
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        // The bots module teaches it; a test's host without one gets it empty.
+        services.TryAddSingleton<GraphicSkills>();
         services.AddSingleton<HarvestSightings>();
         services.AddSingleton<HarvestPreviews>();
         services.AddActivity<HarvestActivity, HarvestSettings>(ActivityId, HarvestTexts.Text("Name"), settings =>

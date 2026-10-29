@@ -8,6 +8,7 @@ using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data;
+using D3B.Data.Maps;
 using D3B.Data.World;
 using D3B.Engine.Maps;
 
@@ -19,8 +20,8 @@ namespace D3B.Bot.Harvesting;
 /// Each step is chosen from the state (D87). On a map of the zone, the step harvests the element the server offers a
 /// wanted resource's skill on, at the character's level, the resource asked for first, then the nearest; an element taken
 /// by another, refused or out of reach is left for the rest of the visit. A map with nothing left is gone through, and the
-/// step travels to the nearest map of the tour still to go through (<see cref="HarvestTour"/>), stopping on the first such
-/// map of the way. Off the zone, after banking or a fight, it travels back the same way.
+/// step travels to the nearest map of the tour still to go through (<see cref="HarvestTour"/>), the probable ones first,
+/// stopping on the first such map of the way. Off the zone, after banking or a fight, it travels back the same way.
 /// </para>
 /// <para>
 /// Full at the settings' share of its pods, the character banks at the nearest bank (D79, D80), what harvesting brings or
@@ -43,7 +44,8 @@ public sealed class HarvestActivity : BotActivity
     private readonly WorldGraph _graph;
     private readonly GameTables _tables;
     private readonly HarvestSightings _sightings;
-    private readonly HarvestTour _tour = new();
+    private readonly GameMaps _maps;
+    private readonly HarvestTour _tour;
     private readonly Dictionary<int, long> _harvested = [];
     private readonly HashSet<int> _skipped = [];
     private HarvestZone? _zone;
@@ -63,19 +65,25 @@ public sealed class HarvestActivity : BotActivity
     /// <param name="settings">What to harvest, where, and when to bank.</param>
     /// <param name="world">The installed build's world: the zone's maps.</param>
     /// <param name="tables">The installed build's tables: the professions' skills.</param>
+    /// <param name="maps">The installed build's maps: the graphics of the zone's elements.</param>
     /// <param name="sightings">What the host's bots saw of the maps.</param>
-    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, HarvestSightings sightings)
+    /// <param name="graphics">What the host learned of the maps' graphics.</param>
+    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tables);
+        ArgumentNullException.ThrowIfNull(maps);
         ArgumentNullException.ThrowIfNull(sightings);
+        ArgumentNullException.ThrowIfNull(graphics);
 
         _settings = settings;
         _atlas = world.Atlas;
         _graph = world.Graph;
         _tables = tables;
+        _maps = maps;
         _sightings = sightings;
+        _tour = new HarvestTour(sightings, graphics);
         _report = new ActivityReport { Doing = GameText.Of(HarvestTexts.Text("DoingStart")) };
     }
 
@@ -205,7 +213,7 @@ public sealed class HarvestActivity : BotActivity
         if (_zone is { } zone)
             return zone;
 
-        zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs);
+        zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps);
 
         if (zone.Maps.Count is 0 || zone.Targets.Count is 0)
             throw Failure("The zone holds no map to harvest.", "FailNoZone");
@@ -321,13 +329,13 @@ public sealed class HarvestActivity : BotActivity
 
     private async Task GoOnAsync(BotContext context, HarvestZone zone, CancellationToken cancellationToken)
     {
-        var remaining = _tour.Remaining(zone, _sightings);
+        var remaining = _tour.Remaining(zone);
 
         if (remaining.Count is 0)
         {
             var harvested = _tour.HasHarvested;
 
-            if (!_tour.Next(zone, _sightings))
+            if (!_tour.Next(zone))
                 throw Failure("No map of the zone holds a resource to harvest.", "FailNothing");
 
             // A tour that harvested nothing leaves the zone to grow back before the next sweeps it again.
@@ -401,7 +409,7 @@ public sealed class HarvestActivity : BotActivity
             return;
         }
 
-        var total = HarvestTour.Total(zone, _sightings);
+        var total = _tour.Total(zone);
         var progress = new ActivityProgress(
             GameText.Of(HarvestTexts.Text("Progress"), GameTextValue.Number(_tour.Round), GameTextValue.Number(Math.Min(_tour.Visited + 1, total)), GameTextValue.Number(total)),
             _tour.Visited,
@@ -419,7 +427,7 @@ public sealed class HarvestActivity : BotActivity
                 TargetElementId = target,
                 WantedElementIds = [.. state.Elements.Values.Where(element => element.EnabledSkills.Any(skill => zone.Targets.ContainsKey(skill.SkillId))).Select(element => element.ElementId)],
                 NextMapId = next,
-                Zone = _tour.Maps(zone, _sightings),
+                Zone = _tour.Maps(zone),
             },
         });
     }

@@ -27,10 +27,11 @@ internal static class MapsExtractor
 
         var maps = new ConcurrentBag<MapData>();
         var layouts = new ConcurrentDictionary<ClientMapLayout, int>();
+        var twoGraphics = 0;
 
         try
         {
-            ReadAll(bundles, maps, layouts);
+            ReadAll(bundles, maps, layouts, ref twoGraphics);
         }
         catch (AggregateException exception) when (exception.InnerExceptions.All(inner => inner is IOException or InvalidDataException))
         {
@@ -48,13 +49,17 @@ internal static class MapsExtractor
 
         Console.WriteLine(
             $"Maps: {sorted.Count:N0} ({string.Join(", ", layouts.OrderBy(layout => layout.Key).Select(layout => $"{layout.Value:N0} {layout.Key}"))}), "
-            + $"{sorted.Sum(map => map.Interactives.Length):N0} interactive elements");
+            + $"{sorted.Sum(map => map.Interactives.Length):N0} interactive elements, "
+            + $"{sorted.SelectMany(map => map.Interactives.ToArray()).Select(element => element.GfxId).Distinct().Count():N0} graphics; "
+            + $"elements drawn twice on their cell with two graphics, kept with the lowest: {twoGraphics:N0}");
 
         return sorted;
     }
 
-    private static void ReadAll(IReadOnlyList<string> bundles, ConcurrentBag<MapData> maps, ConcurrentDictionary<ClientMapLayout, int> layouts)
+    private static void ReadAll(IReadOnlyList<string> bundles, ConcurrentBag<MapData> maps, ConcurrentDictionary<ClientMapLayout, int> layouts, ref int twoGraphics)
     {
+        var total = 0;
+
         Parallel.ForEach(bundles, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, path =>
         {
             using var bundle = new UnityBundle(path);
@@ -90,7 +95,11 @@ internal static class MapsExtractor
 
                     layouts.AddOrUpdate(layout, 1, (_, count) => count + 1);
                 }
+
+                Interlocked.Add(ref total, reader.TwoGraphics);
             }
         });
+
+        twoGraphics = total;
     }
 }

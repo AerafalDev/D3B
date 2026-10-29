@@ -1,4 +1,5 @@
 using D3B.Data.Banks;
+using D3B.Data.Icons;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
@@ -13,6 +14,7 @@ public sealed class GameTables
     private readonly Lazy<JobCatalog> _jobs;
     private readonly Lazy<InteractiveCatalog> _interactives;
     private readonly Lazy<BankCatalog> _banks;
+    private readonly Lazy<IconCatalog> _icons;
 
     /// <summary>Gets the items and their types.</summary>
     /// <exception cref="KeyNotFoundException">The pack holds no items.</exception>
@@ -34,6 +36,11 @@ public sealed class GameTables
     /// <exception cref="PackFormatException">Their entry is damaged.</exception>
     public BankCatalog Banks => _banks.Value;
 
+    /// <summary>Gets the icons of the items a harvest names and of the professions.</summary>
+    /// <exception cref="KeyNotFoundException">The pack holds no icons.</exception>
+    /// <exception cref="PackFormatException">Their entry is damaged.</exception>
+    public IconCatalog Icons => _icons.Value;
+
     /// <summary>Initializes a new instance of the <see cref="GameTables"/> class.</summary>
     /// <param name="pack">The pack holding the tables.</param>
     public GameTables(GamePack pack)
@@ -45,5 +52,6 @@ public sealed class GameTables
         _jobs = new Lazy<JobCatalog>(() => pack.Read<JobCatalog>(JobCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _interactives = new Lazy<InteractiveCatalog>(() => pack.Read<InteractiveCatalog>(InteractiveCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _banks = new Lazy<BankCatalog>(() => pack.Read<BankCatalog>(BankCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
+        _icons = new Lazy<IconCatalog>(() => pack.Read<IconCatalog>(IconCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
     }
 }

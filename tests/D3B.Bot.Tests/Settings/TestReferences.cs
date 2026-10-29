@@ -31,7 +31,7 @@ internal static class TestReferences
 
     public static JobCatalog Jobs()
     {
-        Job[] jobs = [new(Job.Base, 200), new(Lumberjack, 202), new(Miner, 224)];
+        Job[] jobs = [new(Job.Base, 200, Job.NoIcon), new(Lumberjack, 202, 1), new(Miner, 224, 13)];
         Skill[] skills =
         [
             new(6, 306, Lumberjack, Ash, 1, 1, false),
@@ -45,7 +45,7 @@ internal static class TestReferences
 
     public static ItemCatalog Items()
     {
-        Item[] items = [new(Ash, 403, 38, 1, 5), new(Chestnut, 404, 38, 10, 5), new(Iron, 412, 39, 1, 5)];
+        Item[] items = [new(Ash, 403, 38, 1, 5, 38_017), new(Chestnut, 404, 38, 10, 5, 38_086), new(Iron, 412, 39, 1, 5, 39_005)];
 
         return new ItemCatalog(items, Array.Empty<ItemType>());
     }

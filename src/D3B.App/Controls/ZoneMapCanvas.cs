@@ -7,7 +7,8 @@ namespace D3B.App.Controls;
 /// <summary>A zone's mini-map: each map a square at its coordinates on the world map, as players place a zone, drawn from the atlas (D127, D131).</summary>
 /// <remarks>
 /// The squares fill the room as a grid of equal cells, keeping them square; the zone's maps are coloured by their part or
-/// by where a tour stands in them, those around dim. No texture: the atlas's coordinates say it all.
+/// by where a tour stands in them, those around dim, the probable ones marked (D138). No texture: the atlas's coordinates
+/// say it all.
 /// </remarks>
 internal sealed class ZoneMapCanvas : Control
 {
@@ -67,6 +68,7 @@ internal sealed class ZoneMapCanvas : Control
 
         var origin = new Point((Bounds.Width - (size * columns)) / 2, (Bounds.Height - (size * rows)) / 2);
         var outline = new Pen(palette.Resource, Math.Max(1, size * 0.08));
+        var unknown = new Pen(palette.Unknown, Math.Max(1, size * 0.08));
 
         Rect Square(int x, int y)
         {
@@ -81,13 +83,17 @@ internal sealed class ZoneMapCanvas : Control
             {
                 ZoneSquareKind.GroupA or ZoneSquareKind.Visited => (palette.Resource, null),
                 ZoneSquareKind.GroupB => (palette.Harvested, null),
-                ZoneSquareKind.ToVisit => (palette.Obstacle, outline),
+                ZoneSquareKind.ToVisit => (palette.Obstacle, unknown),
+                ZoneSquareKind.Probable => (palette.Harvested, outline),
                 ZoneSquareKind.Empty => (palette.Grid, null),
                 ZoneSquareKind.Unreachable => (palette.Grid, new Pen(palette.Door, Math.Max(1, size * 0.08))),
                 _ => (palette.Walkable, (Pen?)null),
             };
 
             context.DrawRectangle(fill, pen, Square(square.X, square.Y), size * Corner, size * Corner);
+
+            if (square.IsProbable)
+                context.DrawEllipse(palette.Bot, null, Square(square.X, square.Y).Center, size * 0.16, size * 0.16);
         }
 
         if (scene.Landmark is { } bank)

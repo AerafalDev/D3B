@@ -22,7 +22,7 @@ internal static class JobsExtractor
     {
         try
         {
-            var jobs = UnityDataTable.ReadById(client, "jobs").Select(record => new Job(record.Int32("id"), record.Int32("nameId"))).OrderBy(job => job.Id).ToArray();
+            var jobs = UnityDataTable.ReadById(client, "jobs").Select(record => new Job(record.Int32("id"), record.Int32("nameId"), record.Int32("iconId"))).OrderBy(job => job.Id).ToArray();
 
             if (!jobs.Any(job => job.Id is Job.Base))
                 throw new InvalidDataException($"The client has no job {Job.Base}, which the extractor takes for the job of the skills of no profession.");

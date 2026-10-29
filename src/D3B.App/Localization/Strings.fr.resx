@@ -978,7 +978,10 @@
     <value>Faites</value>
   </data>
   <data name="TourToVisit" xml:space="preserve">
-    <value>À faire</value>
+    <value>À voir</value>
+  </data>
+  <data name="TourProbable" xml:space="preserve">
+    <value>Probable</value>
   </data>
   <data name="TourEmpty" xml:space="preserve">
     <value>Sans ressource</value>

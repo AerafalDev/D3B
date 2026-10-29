@@ -15,12 +15,15 @@ internal enum ZoneSquareKind
     /// <summary>A map the tour went through.</summary>
     Visited,
 
-    /// <summary>A map the tour still goes through.</summary>
+    /// <summary>A map the tour still goes through, what it holds not known.</summary>
     ToVisit,
 
-    /// <summary>A map seen holding nothing the activity wants, which the tour leaves out.</summary>
+    /// <summary>A map seen holding nothing the activity wants, or whose graphics all offer none of it, which the tour leaves out.</summary>
     Empty,
 
     /// <summary>A map the way to failed.</summary>
     Unreachable,
+
+    /// <summary>A map the tour still goes through, likely holding a resource wanted (D138).</summary>
+    Probable,
 }
