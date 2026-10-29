@@ -64,9 +64,13 @@ public static class GuildChest
 
             asked = uids.Count;
 
-            foreach (var uid in uids)
+            for (var index = 0; index < uids.Count; index++)
             {
-                var moved = await MoveAsync(context, uid, cancellationToken).ConfigureAwait(false);
+                // Measured: moved 28 ms apart, the stacks went faster than the client showed them.
+                if (index > 0)
+                    await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
+                var moved = await MoveAsync(context, uids[index], cancellationToken).ConfigureAwait(false);
 
                 if (moved is not BankOutcome.Done)
                     outcome = moved is BankOutcome.Refused ? BankOutcome.Refused : moved;
@@ -171,10 +175,11 @@ public static class GuildChest
 
         await context.SendAsync(new ExchangeObjectMoveRequest { Uid = uid, Quantity = stack.Quantity }, cancellationToken).ConfigureAwait(false);
 
+        // Measured: the chest may take part of a stack, the rest staying in the inventory, which the character's own chest then takes.
         return await answered.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) switch
         {
             null => BankOutcome.NoAnswer,
-            TextInformationEvent => BankOutcome.Refused,
+            TextInformationEvent or ObjectQuantityEvent => BankOutcome.Refused,
             _ => BankOutcome.Done,
         };
     }

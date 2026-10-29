@@ -306,6 +306,9 @@ public sealed class HarvestActivity : BotActivity
             else
                 _unusable.Add(bag.Uid);
 
+            // Measured: used one after another, the objects went faster than the client showed them.
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
             return true;
         }
 
@@ -342,6 +345,8 @@ public sealed class HarvestActivity : BotActivity
                     break;
             }
 
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
             return true;
         }
 
@@ -372,16 +377,19 @@ public sealed class HarvestActivity : BotActivity
             _banks++;
             _chestWarning = null;
 
-            if (IsFull(context.State))
-                throw StillFull(context.State);
+            // Measured: what the harvest does not bring may weigh above the share; the character's own chest takes what is left.
+            if (!IsFull(context.State))
+            {
+                Publish(context.State, GameText.Of(HarvestTexts.Text("DoingReturn")));
 
-            Publish(context.State, GameText.Of(HarvestTexts.Text("DoingReturn")));
-
-            return true;
+                return true;
+            }
         }
-
-        // What the chest refused, or all when none was reached, goes to the character's own chest, and the card says so (D147).
-        _chestWarning = outcome is BankOutcome.Refused ? "WarningChestRefused" : "WarningChestNone";
+        else
+        {
+            // What the chest refused, or all when none was reached, goes to the character's own chest, and the card says so (D147).
+            _chestWarning = outcome is BankOutcome.Refused ? "WarningChestRefused" : "WarningChestNone";
+        }
 
         return false;
     }

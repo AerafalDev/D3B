@@ -57,7 +57,7 @@
     <value>Resources, by priority</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
-    <value>Harvested in this order on each map, of any profession or none.</value>
+    <value>In this order, of any profession or none.</value>
   </data>
   <data name="EverythingKnown" xml:space="preserve">
     <value>Everything each character can harvest at its level</value>
@@ -201,7 +201,7 @@
     <value>Go through the isolated maps too</value>
   </data>
   <data name="IsolatedMapsHelp" xml:space="preserve">
-    <value>Reached only by leaving the zone, more than 4 changes of maps away. Taken, they come last, a part at a time.</value>
+    <value>Reached only far round; gone through last.</value>
   </data>
   <data name="FigureIsolatedOne" xml:space="preserve">
     <value>isolated map, left out</value>
@@ -222,7 +222,7 @@
     <value>After a fight</value>
   </data>
   <data name="AfterFightHelp" xml:space="preserve">
-    <value>A protector's or an aggression: until step 9, you fight. Paused, the bot is resumed from its card, its tour and counts kept.</value>
+    <value>Until step 9, you fight.</value>
   </data>
   <data name="AfterFightResume" xml:space="preserve">
     <value>Resume</value>
@@ -276,7 +276,7 @@
     <value>The guild's chest</value>
   </data>
   <data name="DepositToHelp" xml:space="preserve">
-    <value>At the nearest bank that has one, in the tab it opens on. What it refuses, or everything when none is reached: its own chest, and the card says so.</value>
+    <value>Refused or none reached: its own chest.</value>
   </data>
   <data name="SectionUpkeep" xml:space="preserve">
     <value>Upkeep</value>
@@ -285,7 +285,7 @@
     <value>Open the resource bags</value>
   </data>
   <data name="OpenBagsHelp" xml:space="preserve">
-    <value>As soon as a harvest gives one: what it holds is banked with the rest.</value>
+    <value>As soon as a harvest gives one.</value>
   </data>
   <data name="Heal" xml:space="preserve">
     <value>Heal under a share of life</value>
@@ -297,7 +297,7 @@
     <value>Food, in this order</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
-    <value>One at a time, until the life is whole. With nothing left to eat, it waits for its life to regenerate.</value>
+    <value>Until the life is whole.</value>
   </data>
   <data name="DoingOpenBag" xml:space="preserve">
     <value>Opening {0}</value>

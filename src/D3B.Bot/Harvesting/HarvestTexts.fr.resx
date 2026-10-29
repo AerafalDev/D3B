@@ -57,7 +57,7 @@
     <value>Ressources, par priorité</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
-    <value>Récoltées dans cet ordre sur chaque carte, de n'importe quel métier ou sans métier.</value>
+    <value>Dans cet ordre, de n'importe quel métier ou sans métier.</value>
   </data>
   <data name="EverythingKnown" xml:space="preserve">
     <value>Tout ce que chaque perso sait récolter à son niveau</value>
@@ -201,7 +201,7 @@
     <value>Parcourir aussi les cartes isolées</value>
   </data>
   <data name="IsolatedMapsHelp" xml:space="preserve">
-    <value>Joignables seulement en sortant de la zone, à plus de 4 changements de carte. Incluses, elles passent en dernier, une partie à la fois.</value>
+    <value>Joignables seulement par un long détour ; parcourues en dernier.</value>
   </data>
   <data name="FigureIsolatedOne" xml:space="preserve">
     <value>carte isolée, laissée</value>
@@ -222,7 +222,7 @@
     <value>Après un combat</value>
   </data>
   <data name="AfterFightHelp" xml:space="preserve">
-    <value>Protecteur ou agression : jusqu'à l'étape 9, c'est toi qui combats. En pause, le bot reprend depuis sa carte, sa tournée et ses comptes gardés.</value>
+    <value>Jusqu'à l'étape 9, c'est toi qui combats.</value>
   </data>
   <data name="AfterFightResume" xml:space="preserve">
     <value>Reprendre</value>
@@ -276,7 +276,7 @@
     <value>Le coffre de guilde</value>
   </data>
   <data name="DepositToHelp" xml:space="preserve">
-    <value>À la banque la plus proche qui en a un, dans l'onglet où il s'ouvre. Ce qu'il refuse, ou tout si aucun n'est atteint : son coffre à lui, et la carte du bot le dit.</value>
+    <value>Refusé ou introuvable : son coffre à lui.</value>
   </data>
   <data name="SectionUpkeep" xml:space="preserve">
     <value>Entretien</value>
@@ -285,7 +285,7 @@
     <value>Ouvrir les sacs de ressources</value>
   </data>
   <data name="OpenBagsHelp" xml:space="preserve">
-    <value>Dès qu'une récolte en donne un : son contenu part en banque avec le reste.</value>
+    <value>Dès qu'une récolte en donne un.</value>
   </data>
   <data name="Heal" xml:space="preserve">
     <value>Se soigner sous une part de vie</value>
@@ -297,7 +297,7 @@
     <value>En mangeant, dans cet ordre</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
-    <value>Un à la fois, jusqu'à la vie pleine. Sans rien à manger, il attend que sa vie se régénère.</value>
+    <value>Jusqu'à la vie pleine.</value>
   </data>
   <data name="DoingOpenBag" xml:space="preserve">
     <value>Ouvre : {0}</value>
