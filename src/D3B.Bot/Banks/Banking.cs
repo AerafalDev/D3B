@@ -24,23 +24,17 @@ namespace D3B.Bot.Banks;
 /// request outside the exchange. The character cannot walk during a dialog or an exchange: the server refuses the walk.
 /// </para>
 /// <para>
-/// Every request waits until the client drew the map (<see cref="BotContext.SendAsync"/>, D77).
+/// Every request waits until the client drew the map (<see cref="BotContext.SendAsync"/>, D77). Banking also waits the
+/// client's display time after the banker's question, after the bank opens, and before leaving a dialog it could not
+/// take to the bank (<see cref="BotDelays.Display"/>, D132): measured through the app, D3B replying 1 ms after the
+/// question, and leaving the bank 39 ms after it opened, left both windows on the client's screen, though the server had
+/// closed them and the client asked to leave each. As the client draws a map before it follows a walk, it shows a window
+/// before it can close it.
 /// </para>
 /// </remarks>
 public static class Banking
 {
     private const int MostJourneys = 4;
-
-    private static readonly TimeSpan _answerDelay = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan _followDelay = TimeSpan.FromSeconds(1);
-
-    /// <summary>How long the client takes to show a dialog or the bank once the server opened it, before D3B goes on (D132).</summary>
-    /// <remarks>
-    /// Measured through the app: D3B replying 1 ms after the banker's question, and leaving the bank 39 ms after it opened,
-    /// left both windows on the client's screen, though the server had closed them and the client asked to leave each. As
-    /// the client draws a map before it follows a walk (D77), it shows a window before it can close it.
-    /// </remarks>
-    internal static readonly TimeSpan ShowDelay = TimeSpan.FromMilliseconds(500);
 
     /// <summary>Goes to the nearest bank, puts stacks and kamas in it, and leaves it, as the bot's behavior.</summary>
     /// <param name="bot">The bot.</param>
@@ -179,7 +173,7 @@ public static class Banking
         if (outcome is not BankOutcome.Done && context.State.Dialog is not null)
         {
             // A dialog left as soon as it opened would stay on the client's screen, as a reply sent too soon does.
-            await Task.Delay(ShowDelay, context.Time, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
             await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
         }
 
@@ -222,10 +216,10 @@ public static class Banking
 
             await context.SendAsync(new ExchangeTransferFromInventoryRequest { Uids = { stacks } }, cancellationToken).ConfigureAwait(false);
 
-            if (await deleted.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) is null)
+            if (await deleted.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is null)
                 outcome = BankOutcome.Refused;
             else
-                await weight.WaitAsync(_followDelay, cancellationToken).ConfigureAwait(false);
+                await weight.WaitAsync(context.Delays.BankFollow, cancellationToken).ConfigureAwait(false);
         }
 
         if (amount > 0)
@@ -236,10 +230,10 @@ public static class Banking
 
             await context.SendAsync(new ExchangeKamasRequest { Quantity = amount }, cancellationToken).ConfigureAwait(false);
 
-            if (await stored.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) is null)
+            if (await stored.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is null)
                 outcome = BankOutcome.Refused;
             else
-                await carried.WaitAsync(_followDelay, cancellationToken).ConfigureAwait(false);
+                await carried.WaitAsync(context.Delays.BankFollow, cancellationToken).ConfigureAwait(false);
         }
 
         var inventory = context.State.Inventory;
@@ -268,7 +262,7 @@ public static class Banking
 
         await context.SendAsync(new NpcActionRequest { Action = Banker.TalkAction, MapId = mapId, NpcActorId = npc.ActorId }, cancellationToken).ConfigureAwait(false);
 
-        switch (await asked.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false))
+        switch (await asked.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false))
         {
             case null:
                 return BankOutcome.NoAnswer;
@@ -280,7 +274,7 @@ public static class Banking
             return BankOutcome.Refused;
 
         // The client shows the dialog before the reply closes it.
-        await Task.Delay(ShowDelay, context.Time, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
 
         // The storage's content comes last of what opens the bank; a question again refuses the reply.
         var opened = context.Expect((side, message, state) => side is RelayDirection.FromServer
@@ -288,7 +282,7 @@ public static class Banking
 
         await context.SendAsync(new NpcDialogReplyRequest { ReplyId = reply }, cancellationToken).ConfigureAwait(false);
 
-        var outcome = await opened.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) switch
+        var outcome = await opened.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) switch
         {
             null => BankOutcome.NoAnswer,
             NpcDialogQuestionEvent => BankOutcome.Refused,
@@ -297,7 +291,7 @@ public static class Banking
 
         // Then the bank, before anything goes in and the leaving closes it.
         if (outcome is BankOutcome.Done)
-            await Task.Delay(ShowDelay, context.Time, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
 
         return outcome;
     }
@@ -308,6 +302,6 @@ public static class Banking
 
         await context.SendAsync(new DialogLeaveRequest(), cancellationToken).ConfigureAwait(false);
 
-        return await left.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) is null ? BankOutcome.NoAnswer : BankOutcome.Done;
+        return await left.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is null ? BankOutcome.NoAnswer : BankOutcome.Done;
     }
 }

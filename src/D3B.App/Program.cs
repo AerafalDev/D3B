@@ -12,13 +12,15 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        var host = new HostRunner(args);
+        // Before the host: it starts with the settings the app changed (D151).
+        var preferences = AppPreferences.Load(AppPreferences.DefaultPath);
+        var host = new HostRunner(args, preferences.Host);
 
         host.Start();
 
         try
         {
-            return BuildAvaloniaApp(host).StartWithClassicDesktopLifetime(args);
+            return BuildAvaloniaApp(host, preferences).StartWithClassicDesktopLifetime(args);
         }
         finally
         {
@@ -27,9 +29,9 @@ internal static class Program
         }
     }
 
-    private static AppBuilder BuildAvaloniaApp(HostRunner host)
+    private static AppBuilder BuildAvaloniaApp(HostRunner host, AppPreferences preferences)
     {
-        return App.Configure(AppBuilder.Configure(() => new App { Host = host, Preferences = AppPreferences.Load(AppPreferences.DefaultPath) }))
+        return App.Configure(AppBuilder.Configure(() => new App { Host = host, Preferences = preferences }))
             .UsePlatformDetect()
             .LogToTrace();
     }

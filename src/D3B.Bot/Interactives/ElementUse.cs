@@ -27,9 +27,8 @@ namespace D3B.Bot.Interactives;
 /// </remarks>
 public static class ElementUse
 {
-    private static readonly TimeSpan _answerDelay = TimeSpan.FromSeconds(3);
+    // The unit of the duration the server gives a use: the protocol's, not a delay of D3B's.
     private static readonly TimeSpan _durationUnit = TimeSpan.FromMilliseconds(100);
-    private static readonly TimeSpan _endDelay = TimeSpan.FromSeconds(2);
 
     /// <summary>Uses an element of the character's map with a skill, until the use is over, as the bot's behavior.</summary>
     /// <param name="bot">The bot.</param>
@@ -139,7 +138,7 @@ public static class ElementUse
 
         await context.SendAsync(Request(elementId, skill), cancellationToken).ConfigureAwait(false);
 
-        var answered = await answer.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false);
+        var answered = await answer.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
 
         if (answered is null)
             return UseOutcome.NoAnswer;
@@ -150,7 +149,7 @@ public static class ElementUse
         if (started.Duration <= 0)
             return UseOutcome.Used;
 
-        var ended = await end.WaitAsync(started.Duration * _durationUnit + _endDelay, cancellationToken).ConfigureAwait(false);
+        var ended = await end.WaitAsync(started.Duration * _durationUnit + context.Delays.UseEnd, cancellationToken).ConfigureAwait(false);
 
         return ended is null ? UseOutcome.NotEnded : UseOutcome.Used;
     }

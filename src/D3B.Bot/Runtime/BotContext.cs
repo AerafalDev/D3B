@@ -43,6 +43,9 @@ public sealed class BotContext
     /// <summary>Gets when the server last ended a use of the character's own, such as a harvest, by the bot's clock, if it ever did: a fight beginning right after is a resource's protector's (D144).</summary>
     public DateTimeOffset? UseEndedAt => _bot.UseEndedAt;
 
+    /// <summary>Gets how long behaviors wait now: the client's display time, the server's answers and the rest, which the user may raise (D151).</summary>
+    public BotDelays Delays => _bot.Delays;
+
     /// <summary>Gets the bot's log.</summary>
     public ILogger Log => _bot.Log;
 
@@ -98,15 +101,15 @@ public sealed class BotContext
     /// <param name="cancellationToken">Stops waiting; a request not gone yet then never goes.</param>
     /// <returns>A task that completes once the request went.</returns>
     /// <remarks>
-    /// The client follows what the server shows it only once it has drawn the map, half a second after the server placed
-    /// the character on it: a walk shown 1 or 50 ms after was never confirmed, and a door used before the client asked
-    /// what is on the new map left it no longer confirming walks (D73, D77). A request sent sooner waits until then.
+    /// The client follows what the server shows it only once it has drawn the map, its display time after the server
+    /// placed the character on it, half a second measured (<see cref="BotDelays.Display"/>): a walk shown 1 or 50 ms after
+    /// was never confirmed, and a door used before the client asked what is on the new map left it no longer confirming
+    /// walks (D73, D77). A request sent sooner waits until then.
     /// </remarks>
     public async Task SendAsync(IMessage request, CancellationToken cancellationToken)
     {
-        var wait = _bot.DrawnAt - _bot.Time.GetUtcNow();
-
-        if (wait > TimeSpan.Zero)
+        // Again once waited: the display time raised meanwhile, or a new map placed, holds the request longer.
+        for (var wait = _bot.DrawnAt - _bot.Time.GetUtcNow(); wait > TimeSpan.Zero; wait = _bot.DrawnAt - _bot.Time.GetUtcNow())
             await Task.Delay(wait, _bot.Time, cancellationToken).ConfigureAwait(false);
 
         await _behavior.Session.SendAsync(request, cancellationToken).ConfigureAwait(false);

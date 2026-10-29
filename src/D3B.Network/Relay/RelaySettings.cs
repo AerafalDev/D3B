@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace D3B.Network.Relay;
 
-/// <summary>Where the relay listens, where it keeps the client's configuration, and whether it records captures (D35 to D37, 3f).</summary>
+/// <summary>Where the relay listens, where it keeps the client's configuration, whether it records captures, and how long it waits (D35 to D37, 3f, D151).</summary>
 public sealed class RelaySettings
 {
     /// <summary>The setting naming D3B's loopback address.</summary>
@@ -67,19 +67,19 @@ public sealed class RelaySettings
     public string? GameCapturesDirectory => CapturesDirectory is { } directory ? Path.Combine(directory, "game") : null;
 
     /// <summary>Gets how long the relay tries each address of the server.</summary>
-    public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
+    public TimeSpan ConnectTimeout { get; init; } = RelayTimeouts.Default.Connect;
 
     /// <summary>Gets how long a side may stay open once the other has closed, before both are cut.</summary>
-    public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromSeconds(5);
+    public TimeSpan CloseTimeout { get; init; } = RelayTimeouts.Default.Close;
 
     /// <summary>Gets how long the relay holds a frame an interceptor asked for, before forwarding what came as it came.</summary>
-    public TimeSpan HoldTimeout { get; init; } = TimeSpan.FromSeconds(5);
+    public TimeSpan HoldTimeout { get; init; } = RelayTimeouts.Default.Hold;
 
     /// <summary>Gets the longest frame the relay holds for an interceptor; a longer one is forwarded as it comes.</summary>
     public int MaxHeldLength { get; init; } = 64 * 1024;
 
     /// <summary>Gets how long a server selection waits for the client's game connection before it is forgotten.</summary>
-    public TimeSpan SelectionLifetime { get; init; } = TimeSpan.FromSeconds(60);
+    public TimeSpan SelectionLifetime { get; init; } = RelayTimeouts.Default.Selection;
 
     /// <summary>Tells whether an address can be D3B's: in 127.0.0.0/8, and not 127.0.0.1 (D34).</summary>
     /// <param name="address">The address.</param>
@@ -97,7 +97,7 @@ public sealed class RelaySettings
     /// <param name="configuration">The configuration.</param>
     /// <param name="clientDirectory">The installed client's directory, as the data module finds it.</param>
     /// <returns>The settings.</returns>
-    /// <exception cref="InvalidOperationException">A setting is not a value the relay accepts.</exception>
+    /// <exception cref="InvalidOperationException">A setting is not a value the relay accepts, such as a timeout below D3B's (<see cref="RelayTimeouts"/>).</exception>
     public static RelaySettings Read(IConfiguration configuration, string clientDirectory)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -111,6 +111,7 @@ public sealed class RelaySettings
         var ports = ReadPorts(configuration, PortsKey);
         var gamePorts = ReadPorts(configuration, GamePortsKey);
         var capturesEnabled = configuration[CapturesEnabledKey] is { } enabled && bool.TryParse(enabled, out var value) && value;
+        var timeouts = RelayTimeouts.Read(configuration);
 
         return new RelaySettings
         {
@@ -120,6 +121,10 @@ public sealed class RelaySettings
             ClientDirectory = clientDirectory,
             RedirectDirectory = PathOr(configuration[RedirectDirectoryKey], DefaultRedirectDirectory),
             CapturesDirectory = capturesEnabled ? PathOr(configuration[CapturesDirectoryKey], DefaultCapturesDirectory) : null,
+            ConnectTimeout = timeouts.Connect,
+            CloseTimeout = timeouts.Close,
+            HoldTimeout = timeouts.Hold,
+            SelectionLifetime = timeouts.Selection,
         };
     }
 

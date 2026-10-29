@@ -146,8 +146,9 @@ resources.
   `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
 - **Behaviors** are async methods given a `BotContext`, the state, the pack's maps, world paths and banks, the clock and
   the game connection to send through, and run one at a time by `BotActor.RunAsync`. A request waits until the client
-  drew the map, half a second after the server placed the character (D77). A behavior expects its answer before it sends
-  its request (`Expect`), so the loop sees the expectation before any answer. An interruption cancels it, off the loop:
+  drew the map, its display time after the server placed the character, half a second measured (D77, D151). A behavior
+  expects its answer before it sends its request (`Expect`), so the loop sees the expectation before any answer. An
+  interruption cancels it, off the loop:
   the player acting, the connection closing, a fight beginning (D88), the host stopping (`BotInterruptedException`).
   Anyone may wait for what a bot's state becomes (`BotActor.WaitUntilAsync`), as a follower will at step 10, and a
   behavior for its own state, with a delay (`BotContext.WaitUntilAsync`).
@@ -206,8 +207,8 @@ resources.
   whose graphics all offer none of its skills, and those without elements. Full at its
   share of pods, it banks at the nearest bank, what the settings say, and the next step goes back; still full, it says
   why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
-  app. Banking waits half a second after the banker's question and after the bank opens, so that the client shows its
-  windows before D3B closes them (D132).
+  app. Banking waits the client's display time, half a second measured, after the banker's question and after the bank
+  opens, so that the client shows its windows before D3B closes them (D132, D151).
 - **Harvesting, grown in 6c**: a resource of `Base`, such as a well's water, is asked for as any other, without a level,
   and placed by the graphics learned (`GameReferences.IsBase`, `PlacesOf`; `GraphicPlaces`, an index of every map's
   graphics built once, D150); a sub-area's maps reached only far round from its main part are isolated and left out
@@ -231,7 +232,15 @@ resources.
   read by the app as they come.
 - **The host's problems** (D114): `HostProblems`, a logging provider, keeps the host's last 2,000 warnings and errors
   that name no bot.
-- Every delay goes through `TimeProvider`.
+- **Delays** (D151, D152): every delay goes through `TimeProvider`, and every wait of a behavior reads `BotDelays`
+  (`BotContext.Delays`): the client's display time after a map and after a window, 0.5 s measured and up to 3 s; the
+  server's answer, 3 s; a walk's arrival, 1 s, and each of its steps, 0.5 s; the new map, 10 s; a use's end, 2 s; a
+  deposit's follow-up, 1 s; recovery, 30 s. Each is its measured value by default, the least, raised only, a fixed value
+  never drawn at random. `Bots.Delays` changes them for every bot at once, and a request waiting for the map reckons its
+  display time again once waited. The host reads them from its configuration in seconds (`Delays:Display`,
+  `Delays:Answer`, `Delays:WalkArrival`, `Delays:WalkStep`, `Delays:Placed`, `Delays:UseEnd`, `Delays:BankFollow`,
+  `Delays:Recovery`), and one below its measured value stops it, saying which. An activity's own delays stay its own,
+  such as `HarvestActivity`'s.
 
 ## Network and protocol
 
@@ -321,6 +330,10 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   own (D61). `CaptureReplay` plays one into pipes, D3B's frames into a pipe of their own when asked; tests build their
   own, and `scripts/capture.cs` describes them by structure. Decoded messages come from replaying them, for the
   protocol inspector and the replay tests (D63).
+- The relay's timeouts (D151): `RelayTimeouts`, how long it tries each address of the server, keeps a side open once the
+  other closed, holds a frame not yet whole, and keeps a server selection for its game connection, 10, 5, 5 and 60 s by
+  default and raised only; read once, as the relay is built, from `Network:Timeouts:Connect`, `Close`, `Hold` and
+  `Selection`, in seconds, into `RelaySettings`.
 - The protocol inspector's frames (D115), in `D3B.Bot.Inspection`: `FrameRecorder`, a game observer, keeps each bot's
   last 3,000 frames, both sides, and D3B's own requests, which observers see apart once sent (`IGameObserver.OnSent`).
   `FrameFields` gives a readable message's fields, the ticket hidden, or the shape of one the readable protocol lacks;
@@ -373,17 +386,18 @@ Built at step 2 (D24 to D33):
 ## Desktop app
 
 Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
-5c, 5e and 5d (D96, D101, D111, D120).
+5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151).
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
   the clients and gives them their configuration back. The window shows the host getting ready, running for the
   installed client's build, or why it did not start.
 - **The window**: dark by default, light on a click; where the host stands, the language and the theme in the title
-  bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by `StatusPill`, in the tone each says
-  (`Tone`).
+  bar, and on the settings page too. Its icons are drawn by `Icon` from the app's own geometries, its statuses by
+  `StatusPill`, in the tone each says (`Tone`).
 - **The rail**, always (D101, D111, D120): the bots, the accounts, the profiles, the map, the statistics (D146), the logs and the inspector pages, a line once a module registered a page, then
-  the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip. A module's page (`ModulePageViewModel`) is made the first
+  the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip; at its foot, a gear, the
+  settings page (D151), shown whether the host runs or not. A module's page (`ModulePageViewModel`) is made the first
   time it shows and kept, refreshed every 250 ms while it shows through its context (`AppPageContext`, in
   `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead (`PageFailureViewModel`), logged, and
   the bots and the other pages go on. What a page's own code throws on the UI's thread, which nothing caught, is told by
@@ -412,6 +426,13 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
 - **The statistics page** (D146, `D3B.App.ViewModels.Statistics`): what the kept runs brought, by character and period,
   today, 7 days or everything: the resources, the time, the rate an hour and the levels gained; each resource with its icon
   and rate; the runs, the latest first, with how each ended or that it goes on.
+- **The settings page** (D151, `SettingsViewModel`, `DelayViewModel`): the machine's settings, not a profile's. The
+  client's display time, a bar from 0.5 to 3 s with its help; the delays, each a box from its default to its most with
+  its measured or D3B's value under it, a dot when raised, and a button restoring them all but the display time, the
+  bots' applying at once (`Bots.Delays`), the relay's from the next start; the captures, `Network:Captures:Enabled`,
+  from the next start, with whether the host records now and where; the language and the theme, as in the title bar;
+  where the database, the pack and the app's own file are, read-only. Once the host runs, the page shows the delays its
+  bots wait, which its command line may have raised; changed before, the page's are given to them.
 - **The logs page** (D111 to D114, `D3B.App.ViewModels.Logs`): every source by time, the host's problems, or a bot's
   journal, which its card opens, a profile that did not start on connection included (D119); filtered by tone and text,
   followed, copied. `JournalLines` says each entry in the app's
@@ -434,7 +455,10 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   French; the language starts as the system's, or the one the app was left in, and changes live, the views binding
   through `{l:Tr Key}`.
 - **Preferences** (`AppPreferences`): the language and the theme, remembered in `%LOCALAPPDATA%\D3B\app.json`, read before
-  the window shows (D101).
+  the window shows (D101); and the host's settings the settings page changed, by their configuration's keys and values,
+  such as `Delays:Display` or `Network:Captures:Enabled`, one given back its default forgotten (D151). The app reads the
+  file before the host, which starts with them (`HostRunner`, `BotHost.CreateBuilder(args, settings)`), its own
+  configuration and command line winning over them.
 
 ## Storage
 

@@ -18,7 +18,8 @@ namespace D3B.Bot.Movement;
 /// <para>
 /// Delays, measured (client.md): the server answered every path within 150 ms, so 3 s; the client confirmed 0.38 to
 /// 2.9 s later, a step taking at most 186 ms running and 491 ms walking, and the server answered within 100 ms, so 1 s
-/// and 500 ms a step. They only bound a wait that went wrong: the server's answers end the walk.
+/// and 500 ms a step (<see cref="BotDelays"/>, which the user may raise). They only bound a wait that went wrong: the
+/// server's answers end the walk.
 /// </para>
 /// <para>
 /// The client, at times, does not follow a walk the server shows it, for no cause found: the server has the character
@@ -30,10 +31,6 @@ namespace D3B.Bot.Movement;
 public static class MapWalk
 {
     private const int DirectionShift = 12;
-
-    private static readonly TimeSpan _answerDelay = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan _arrivalDelay = TimeSpan.FromSeconds(1);
-    private static readonly TimeSpan _stepDelay = TimeSpan.FromMilliseconds(500);
 
     /// <summary>Walks the bot's character to a cell of its map, as the bot's behavior.</summary>
     /// <param name="bot">The bot.</param>
@@ -120,12 +117,6 @@ public static class MapWalk
         return request;
     }
 
-    /// <summary>Gets how long the client takes at most to confirm a walk the server showed, once shown.</summary>
-    internal static TimeSpan ConfirmationDelay(int steps)
-    {
-        return _arrivalDelay + steps * _stepDelay;
-    }
-
     private static async Task<WalkOutcome> WalkToAsync(BotContext context, int cell, CancellationToken cancellationToken)
     {
         var state = context.State;
@@ -173,7 +164,7 @@ public static class MapWalk
 
     private static async Task<WalkOutcome> AnswerAsync(BotContext context, GameExpectation answer, GameExpectation arrival, CellPath path, CancellationToken cancellationToken)
     {
-        var answered = await answer.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false);
+        var answered = await answer.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
 
         if (answered is null)
             return WalkOutcome.NoAnswer;
@@ -181,7 +172,7 @@ public static class MapWalk
         if (answered is MapMovementRefusedEvent)
             return WalkOutcome.Refused;
 
-        var arrived = await arrival.WaitAsync(ConfirmationDelay(path.Steps), cancellationToken).ConfigureAwait(false);
+        var arrived = await arrival.WaitAsync(context.Delays.Confirmation(path.Steps), cancellationToken).ConfigureAwait(false);
 
         if (arrived is not null)
             return WalkOutcome.Arrived;

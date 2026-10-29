@@ -41,9 +41,6 @@ public sealed class BotActor : IAsyncDisposable
 
     private const long NeverEnded = long.MinValue;
 
-    /// <summary>How long the client takes to draw a map once the server placed the character on it (D77).</summary>
-    internal static readonly TimeSpan DrawDelay = TimeSpan.FromMilliseconds(500);
-
     private readonly Channel<Input> _inbox = Channel.CreateUnbounded<Input>(new UnboundedChannelOptions { SingleReader = true });
     private readonly List<GameExpectation> _expectations = [];
     private readonly List<Waiter> _waiters = [];
@@ -52,6 +49,7 @@ public sealed class BotActor : IAsyncDisposable
     private readonly ILogger _log;
     private readonly Lazy<WorldPathfinder> _world;
     private readonly Lazy<BankDirectory> _banks;
+    private readonly Func<BotDelays> _delays;
     private readonly Task _loop;
 
     // Only the loop reads and writes these.
@@ -64,7 +62,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile bool _paused;
     private volatile bool _acting;
     private volatile ActivityRun? _activity;
-    private long _drawnAt;
+    private long _placedAt;
     private long _useEndedAt = NeverEnded;
 
     /// <summary>Gets who the bot plays.</summary>
@@ -98,19 +96,24 @@ public sealed class BotActor : IAsyncDisposable
 
     internal ILogger Log => _log;
 
+    /// <summary>Gets how long the bot's behaviors wait now, which the app may change while they run (D151).</summary>
+    internal BotDelays Delays => _delays();
+
     /// <summary>Gets when the client has drawn the map the server last placed the character on.</summary>
-    internal DateTimeOffset DrawnAt => new(Volatile.Read(ref _drawnAt), TimeSpan.Zero);
+    /// <remarks>Reckoned from the display time now: raised, it holds the requests to come on a map placed before.</remarks>
+    internal DateTimeOffset DrawnAt => new DateTimeOffset(Volatile.Read(ref _placedAt), TimeSpan.Zero) + Delays.Display;
 
     /// <summary>Gets when the server last ended a use of the character's own, if it ever did.</summary>
     internal DateTimeOffset? UseEndedAt => Volatile.Read(ref _useEndedAt) is var ticks and not NeverEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
 
-    internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, Lazy<BankDirectory> banks, TimeProvider time, ILogger log)
+    internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, Lazy<BankDirectory> banks, Func<BotDelays> delays, TimeProvider time, ILogger log)
     {
         Key = state.Key;
         _state = state;
         Maps = maps;
         _world = world;
         _banks = banks;
+        _delays = delays;
         Time = time;
         _log = log;
         _loop = Task.Run(ReadInboxAsync);
@@ -361,7 +364,7 @@ public sealed class BotActor : IAsyncDisposable
             Volatile.Write(ref _useEndedAt, Time.GetUtcNow().UtcTicks);
 
         if (side is RelayDirection.FromServer && message is MapInformationEvent information && information.MapId == state.MapId && state.Cell is not null)
-            Volatile.Write(ref _drawnAt, (Time.GetUtcNow() + DrawDelay).UtcTicks);
+            Volatile.Write(ref _placedAt, Time.GetUtcNow().UtcTicks);
 
         // A request to leave changes nothing of the state, so this is the dialog the client sent it in.
         if (side is RelayDirection.FromClient && _behavior is { } behavior && PlayerActions.Starts(state, message))
