@@ -1250,10 +1250,9 @@ second, every time. Sitting changed nothing, the owner saw; no capture holds it.
 **Eating.** `ObjectUseRequest` names the stack. The server answers 28 ms later, once 183 ms: the regeneration's end and its
 start again, the stack's new quantity, a text 1 of the information kind, the characteristics holding the life healed, and
 the weight. Each of four breads healed the same. At full life: a text 225 of the information kind, nothing used, and
-nothing else, four times. A request of 46 bytes the readable protocol lacks uses several of a stack at once, naming the
-stack and a quantity: asked for the whole stack below full life, the server used as many as the life lacked, the last in
-part, and at full life the text 225 alone. It holds a map, which the tests' obfuscation does not make yet, so it is not
-named.
+nothing else, four times. `ObjectUseMultipleRequest` uses several of a stack at once, naming the stack and a quantity, with
+a message no capture sets, holding a map and a list: asked for the whole stack below full life, the server used as many as
+the life lacked, the last in part, in one answer; at full life, the text 225 alone (D154).
 
 **A container.** The same request on a stack of two resource bags, type 100: what the bag holds added to the inventory's
 stack of that resource, a text 21 of the information kind, the bags' quantity and the weight; the second time, the bags'
@@ -1283,6 +1282,11 @@ Not measured: changing tabs and a tab's rights, the guild having one tab; a full
 messages, 263 fields, 19 enums and 147 values checked: no failure and no note; 46 partial messages. **The mapping** is 8,926
 bytes, format 7, the same bytes on two runs. **Translation.** The 36 game connections decoded through it: of 25,258 frames,
 4,953 understood whole, 4,026 more read, and 16,279 carrying one of 206 messages the readable protocol lacks; none misread.
+
+With `ObjectUseMultipleRequest` (D154): 132 messages paired, 62 by pin, 11 by the captures and 59 by fields, the map's entry
+among them; 132 messages, 270 fields, 19 enums and 147 values audited, no failure and no note; the mapping 9,150 bytes,
+format 8, the same bytes on two runs; the 37 game connections, of 26,090 frames, 5,219 understood whole, 4,164 more read,
+and 16,707 carrying one of 206 messages the readable protocol lacks; none misread.
 
 ## Protocol code
 
