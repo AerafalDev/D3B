@@ -3249,7 +3249,8 @@ The owner asked for the map to mark the red and blue cells in a fight, where eac
 
 ## D126: Step 6 in three sessions, the icons in their own
 
-*2026-10-29, step 6, session 6a; both chosen by the owner, as the lead recommended them.*
+*2026-10-29, step 6, session 6a; both chosen by the owner, as the lead recommended them. Superseded in part by D136: the
+icons are stored as raw pixels, not PNG.*
 
 - **6a**: the first milestone itself: the harvesting module and its activity, its settings and their editor, the next
   resource and the next map, banking full and the way back, the activity resumed after a fight, a new connection or the
@@ -3434,6 +3435,146 @@ nettles, its profile "Ortie" ([client.md](client.md#the-game-harvested)):
   `CLAUDE.md` says it again. D3B's delays are those the client needs to follow what the server shows it, each measured:
   D77's for a map, D132's for a window.
 - Should the owner want to change D2, it is a change of the brief, decided apart; this session does not add them.
+
+## D135: The icons of 6b: the items a harvest names, and the professions
+
+*2026-10-29, step 6, session 6b, chosen by the owner, as the lead recommended it. Builds D126.*
+
+- **Measured** on client 3.7.12.12 (client.md): the 254 items the sub-areas list as harvestable, and the 33 a skill of
+  `Base` gathers, such as drinking water from a well, potatoes or shells, which no sub-area lists: 287 items, drawn by
+  only 121 icons, loot boxes sharing theirs. 22 of the 23 professions have an icon, 21 in all, two sharing one; `Base` has
+  none. `Picto/Items` holds 12,279 icons.
+- **In the pack**: those 121 icons and the professions' 21, by their identifier; items and jobs keep theirs (D139). An
+  item without an icon in the pack keeps the neutral square.
+- The owner noted, choosing, that a bot harvests more than professions' resources, wells among them: their icons are in,
+  and harvesting them waits for 6c (D140).
+- **Rejected.**
+  - The 254 items alone: the wells and the rest of `Base`'s would keep the neutral square.
+  - Every icon, D126's: 50 to 60 MB.
+  - Characters' classes, which the bot does not know yet, and monsters', at step 9.
+
+## D136: Icons 64 pixels square, in raw RGBA
+
+*2026-10-29, step 6, session 6b, chosen by the owner, as the lead recommended it. Supersedes in part D126: no PNG.*
+
+- **Size**: items' icons at 1x, 64 pixels, professions' at 2x, 64 pixels too. The app draws them from 16 to 34 pixels; the
+  owner's main screen is 2560x1440 at 100 %, and 64 pixels stay sharp up to 188 %.
+- **Format**: 8 bits a channel, red, green, blue, alpha, the alpha straight, rows from the top, one array per kind of icon
+  (`IconTable`), which the pack's zstd 19 compresses. Measured: items' icons at 1x take 474 KB so, 500 to 620 KB as PNG.
+- **Why not PNG**: larger, an encoder to write, and bytes depending on the zlib of .NET's runtime, where the pack must
+  stay deterministic (D25); the app makes a bitmap from the pixels as they are.
+- **Rejected.**
+  - Every icon at 2x: 1.4 MB, the same at 100 %.
+  - PNG, D126's.
+  - The client's BC7 blocks as they are, decoded by the app: a decoder in `src/`, which D126 rejected.
+
+## D137: BC7 decoded by AssetRipper.TextureDecoder, in the extractor alone
+
+*2026-10-29, step 6, session 6b, chosen by the owner, as the lead recommended it.*
+
+- `scripts/extract.cs` references AssetRipper.TextureDecoder 2.6.3: MIT, managed, for .NET 10, without dependency, the
+  decoder AssetsTools.NET.Texture uses. Nothing in `src/` decodes: the pack holds pixels (D136). Added to D15.
+- `IconsExtractor` reads each icon's texture and sprite by the typed readers, and fails on a texture that is not BC7,
+  64 pixels square, one level, its texels in the bundle's `.resS`, or whose sprite's rectangle does not cover it whole; the
+  rows are turned top first, Unity storing the bottom first.
+- **Measured**: the 142 icons decoded right, looked at; the bundle of 12,279 item textures read in 1.4 s.
+- **Rejected.**
+  - A decoder of our own: about 400 lines of BC7's partition tables, without tests in `scripts/` (D10).
+  - BCnEncoder.Net: an encoder first, with two dependencies.
+  - Kyaru.Texture2DDecoder, AssetStudio's, which Dofus Remastered uses: native binaries per system.
+
+## D138: The maps' graphics, learned by the host, foretell a tour
+
+*2026-10-29, step 6, session 6b, chosen by the owner, as the lead recommended it; what is learned changed after a measure.
+Builds D128.*
+
+- **Measured** (client.md): the client's data never says which interactive an element is, its dictionary of element
+  definitions included; the server says it of each element of the map a character enters. On 31 captures of 6a, the
+  elements one graphic draws are mostly one resource: nettle's elements share one graphic, on 775 maps of the world. Fishing
+  spots share one between seven fish. Learned on all captures but one, the graphics foretold the last right 102 times of
+  103. The 53 sub-areas listing nettle hold 3,133 maps, 750 of them drawing its graphic.
+- **In the pack**: each element's graphic, `MapInteractive.GfxId` (D139).
+- **What the host learns** (`GraphicSkills`, `GraphicLearner`): for each graphic, every skill the server says its elements
+  offer, enabled or not, none for an element that offers none; from every map's information any bot receives, whatever
+  its activity. Only the elements the server lists teach: measured, it leaves out a third of the pack's elements of the
+  maps it describes, some drawn with a resource's graphic elsewhere.
+- **Where it is kept**: D3B's database, a table `Graphics`, its skills as JSON (`GraphicRecorder`), read before the host
+  starts, written as the bots learn; from one run to the next, and from one client build to the next, a graphic being an
+  asset of the client; a contradiction only adds a skill.
+- **What a tour does with it** (`HarvestZone.Foresee`, `HarvestTour`): a map never seen is probable when one of its
+  graphics offers a skill the zone uses, without a resource when every one is known and none does, a map without elements
+  included, and unknown otherwise; what a bot saw of a map wins. A tour goes first to the probable maps, the nearest
+  first, then to the others of the world map, then to the insides, and leaves out those without a resource.
+- **In the app**: the profile's preview counts the probable maps and marks them on the zone's mini-map, the maps left out
+  dim; the tour's mini-map shows them apart, with a legend (D141).
+- **Rejected.**
+  - Kept in memory, as the maps seen (D128): every run of the app would learn again, and the preview could not foretell.
+  - Every element of a described map teaching, the unlisted ones as offering nothing: some draw a resource's graphic.
+  - A table of graphics learned from the maintainer's captures, in the pack: the server's word in a pack of the client's,
+    and only the maps the maintainer went through.
+  - Nothing in 6b, the tours staying 6a's.
+
+## D139: Pack format 4, and its release
+
+*2026-10-29, step 6, session 6b, chosen by the owner, as the lead recommended it. Builds D24, D25, D33.*
+
+- `GamePack.FormatVersion` is 4: `Item` and `Job` gain their `IconId`, `MapInteractive` its `GfxId`, and one entry,
+  `icons/catalog` (`IconCatalog`), holds the items' and the professions' icons apart, the two numbering theirs apart; read
+  once by `GameTables`. The fingerprint covers the icons' two bundles. `PackFormatTests` records format 4's layout.
+- **Measured** on 3.7.12.12: 5,382,920 bytes against 4,670,325, extracted in 18.4 s, two extractions giving the same
+  SHA-256; the icons 0.58 MB compressed, 2.33 MB read in 15 ms; the graphics 0.10 MB more on the maps, the icons' ids
+  0.03 MB on the items.
+- **Release**: `data-4.pack` and its SHA-256 go to the release `client-3.7.12.12` beside `data-3.pack`, which older hosts
+  keep, through `scripts/release.cs --publish`, on the owner's go.
+- **Rejected.**
+  - A pack of icons of its own: a second source and a second download for 0.6 MB.
+  - An entry per icon: 142 entries for a catalog read whole in milliseconds.
+
+## D140: Base's resources harvested in 6c
+
+*2026-10-29, step 6, session 6b, chosen by the owner, as the lead recommended it.*
+
+- The harvesting activity of 6a harvests professions' resources only. Wells, potatoes and the rest that skills of `Base`
+  gather wait for 6c: no sub-area lists them, so only the graphics learned (D138) say where they are, and their settings
+  have no profession's level. Their icons are in the pack already (D135).
+- **Rejected.**
+  - In 6b, whose icons, extractor, release and graphics filled the session.
+
+## D141: The icons in the app
+
+*2026-10-29, step 6, session 6b; the lists, the profession's icon and the map asked for by the owner while verifying.*
+
+- **Where**: the resource tiles, their icon on its plate, their profession's beside the level; the searches adding a
+  resource, the resource's icon and the profession's beside its detail; the bot's card, beside what it counts; the live
+  map, a resource drawn by its icon over its cell, faded once harvested. The pack's icons become bitmaps once per pack
+  (`GameIcons`); a pack without icons, or an item without one, keeps the neutral square.
+- **The owner's asks**: a search's detail under its name, so that its list keeps its width as it scrolls, in the three
+  searches of the profile editor; the profession's icon at 20 pixels, at 14 too small to read; the resources' icons on the
+  map.
+- Drawn without a screen in both languages and both themes with icons of the tests' own, discs of a colour, and looked at.
+
+## D142: 6b measured through the app
+
+*2026-10-29, step 6, session 6b.*
+
+Measured on a client of 3.7.12.12 through the app, captures on, the owner's profile "Ortie", nettle and sage in Amakna
+([client.md](client.md#the-game-foretold)):
+
+- **The icons**: the owner saw them on the resource tiles and in the search adding one.
+- **Learning**: a first run, nothing learned before, entered 43 maps in 3 minutes and learned 35 graphics, which the database
+  kept for the next run.
+- **Foretelling**, from the knowledge each map was entered with: 18 maps foretold probable, 13 of which held nettle or sage,
+  11 harvested, the 5 others drawing a resource's graphic only on elements the server did not list; 5 foretold without a
+  resource, none holding one; 20 unknown, 1 holding one.
+
+## D143: A pass on the app's UI, UX and options, in a session of its own
+
+*2026-10-29, step 6, session 6b, chosen by the owner.*
+
+- Verifying 6b, the owner noted many small things to improve in the app's interface, its ease of use and its options. A
+  pass over every page, in a session of its own after 6c: 6d in the roadmap. 6b fixed only what it drew (D141).
+- **Rejected.**
+  - The pass in 6b: every page of the app, past what this session drew.
 
 ## Open questions
 
