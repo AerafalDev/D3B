@@ -4,6 +4,10 @@ namespace D3B.Bot.Protocol;
 /// <remarks>Its message says what is missing or wrong, and how to map the build; the host shows it and does not start.</remarks>
 public sealed class ProtocolUnavailableException : Exception
 {
+    /// <summary>Gets the installed client's build when no schema or mapping of it is found, rather than one found and refused.</summary>
+    /// <remarks>The app tells such a build apart, which a newer version of D3B ships (D172).</remarks>
+    public string? MissingBuild { get; init; }
+
     /// <summary>Initializes a new instance of the <see cref="ProtocolUnavailableException"/> class.</summary>
     public ProtocolUnavailableException()
     {

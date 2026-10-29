@@ -8,8 +8,8 @@ namespace D3B.App.Hosting;
 /// <summary>The bots' host in the app's process: started with the app, stopped once its window is gone (D91).</summary>
 /// <remarks>
 /// <para>
-/// The host gets ready off the UI's thread, a pack's download included, and the window reads where it stands
-/// (<see cref="Status"/>), why it did not start (<see cref="Failure"/>), and its services once it runs.
+/// The host gets ready off the UI's thread, its pack opened and its mapping audited, and the window reads where it
+/// stands (<see cref="Status"/>), why it did not start (<see cref="Failure"/>), and its services once it runs.
 /// </para>
 /// <para>
 /// The host holds every client's game connection through its relay: stopping it, as closing the app does, disconnects
@@ -26,6 +26,7 @@ internal sealed class HostRunner
     private Task? _stopped;
     private volatile IHost? _host;
     private volatile string? _failure;
+    private volatile string? _missingBuild;
     private int _status = (int)HostStatus.Starting;
 
     /// <summary>Gets where the host stands.</summary>
@@ -33,6 +34,9 @@ internal sealed class HostRunner
 
     /// <summary>Gets why the host did not start, and what to do about it, once it failed.</summary>
     public string? Failure => _failure;
+
+    /// <summary>Gets the installed client's build, once the host did not start for lack of its pack, schema or mapping (D172).</summary>
+    public string? MissingBuild => _missingBuild;
 
     /// <summary>Gets the host's services while it runs, else <see langword="null"/>.</summary>
     public IServiceProvider? Services => Status is HostStatus.Running ? _host?.Services : null;
@@ -80,6 +84,7 @@ internal sealed class HostRunner
             }
             else
             {
+                _missingBuild = start.MissingBuild;
                 Fail(start.Failure);
             }
         }

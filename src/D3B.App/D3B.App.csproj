@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <NeutralLanguage>en</NeutralLanguage>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ClientVersion>3.7.12.12</ClientVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,10 +13,20 @@
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="ShadUI" />
+    <PackageReference Include="Velopack" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\D3B.Storage\D3B.Storage.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="ClientVersion" Value="$(ClientVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Link="LICENSE" CopyToPublishDirectory="PreserveNewest" Visible="false" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToPublishDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

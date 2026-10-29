@@ -53,7 +53,7 @@ public static class BotHost
 
     /// <summary>Builds the host, gets the game data and the protocol ready, then starts it.</summary>
     /// <param name="bot">The host's builder.</param>
-    /// <param name="cancellationToken">Stops getting the host ready, such as a pack's download.</param>
+    /// <param name="cancellationToken">Stops getting the host ready.</param>
     /// <returns>
     /// The host, started, which the caller stops and disposes; or why it did not start, for lack of game data, of a mapping
     /// that holds, or of the address its relay listens on, which is also logged.
@@ -69,8 +69,8 @@ public static class BotHost
             LogComposition(host, bot.Modules);
 
             var failure = PrepareCatalogs(host)
-                ?? await PrepareDataAsync(host, cancellationToken).ConfigureAwait(false)
-                ?? await PrepareProtocolAsync(host, cancellationToken).ConfigureAwait(false)
+                ?? PrepareData(host)
+                ?? PrepareProtocol(host)
                 ?? await PrepareModulesAsync(host, cancellationToken).ConfigureAwait(false)
                 ?? await StartHostAsync(host, cancellationToken).ConfigureAwait(false);
 
@@ -79,7 +79,7 @@ public static class BotHost
 
             host.Dispose();
 
-            return new BotHostStart(null, failure);
+            return failure;
         }
         catch
         {
@@ -117,7 +117,7 @@ public static class BotHost
         HostLog.ModulesBuilt(log, modules.Count, names);
     }
 
-    private static string? PrepareCatalogs(IHost host)
+    private static BotHostStart? PrepareCatalogs(IHost host)
     {
         try
         {
@@ -130,28 +130,21 @@ public static class BotHost
         }
         catch (InvalidOperationException exception)
         {
-            var log = Logger(host);
-
-            HostLog.DoesNotStart(log, exception.Message);
-
-            return exception.Message;
+            return Fails(host, exception.Message);
         }
     }
 
-    private static async Task<string?> PrepareDataAsync(IHost host, CancellationToken cancellationToken)
+    private static BotHostStart? PrepareData(IHost host)
     {
         // A host whose data module was disabled runs without game data.
         if (host.Services.GetService<PackSource>() is not { } source)
             return null;
 
-        var log = Logger(host);
-
         try
         {
-            // Before the host starts, so that no service reads the pack before it is in place.
-            await source.EnsureAsync(cancellationToken).ConfigureAwait(false);
-
+            // Before the host starts, so that a pack missing or unreadable stops it before any service reads it.
             var pack = host.Services.GetRequiredService<GamePack>();
+            var log = Logger(host);
 
             HostLog.PackOpened(log, pack.Info.ClientVersion, GamePack.FormatVersion, source.PackPath);
 
@@ -159,27 +152,22 @@ public static class BotHost
         }
         catch (DataUnavailableException exception)
         {
-            HostLog.DoesNotStart(log, exception.Message);
-
-            return exception.Message;
+            return Fails(host, exception.Message, exception.MissingBuild);
         }
     }
 
-    private static async Task<string?> PrepareProtocolAsync(IHost host, CancellationToken cancellationToken)
+    private static BotHostStart? PrepareProtocol(IHost host)
     {
         // A host whose protocol module was disabled, and that no module requires, reads no client's wire.
         if (host.Services.GetService<ProtocolSource>() is not { } source)
             return null;
 
-        var log = Logger(host);
-
         try
         {
             // The version gate (D11): before the host starts, so that no connection is relayed without a mapping that holds.
-            await source.EnsureAsync(cancellationToken).ConfigureAwait(false);
-
             var translation = host.Services.GetRequiredService<ProtocolTranslation>();
             var audit = translation.Audit;
+            var log = Logger(host);
 
             HostLog.MappingLoaded(log, translation.ClientVersion, MappingFile.FormatVersion, audit.Messages, audit.Fields, audit.Enums, audit.Values, source.MappingPath);
 
@@ -187,30 +175,22 @@ public static class BotHost
         }
         catch (ProtocolUnavailableException exception)
         {
-            HostLog.DoesNotStart(log, exception.Message);
-
-            return exception.Message;
+            return Fails(host, exception.Message, exception.MissingBuild);
         }
     }
 
-    private static async Task<string?> PrepareModulesAsync(IHost host, CancellationToken cancellationToken)
+    private static async Task<BotHostStart?> PrepareModulesAsync(IHost host, CancellationToken cancellationToken)
     {
         foreach (var preparation in host.Services.GetServices<IHostPreparation>())
         {
             if (await preparation.PrepareAsync(cancellationToken).ConfigureAwait(false) is { } failure)
-            {
-                var log = Logger(host);
-
-                HostLog.DoesNotStart(log, failure);
-
-                return failure;
-            }
+                return Fails(host, failure);
         }
 
         return null;
     }
 
-    private static async Task<string?> StartHostAsync(IHost host, CancellationToken cancellationToken)
+    private static async Task<BotHostStart?> StartHostAsync(IHost host, CancellationToken cancellationToken)
     {
         try
         {
@@ -220,12 +200,17 @@ public static class BotHost
         }
         catch (RelayUnavailableException exception)
         {
-            var log = Logger(host);
-
-            HostLog.DoesNotStart(log, exception.Message);
-
-            return exception.Message;
+            return Fails(host, exception.Message);
         }
+    }
+
+    private static BotHostStart Fails(IHost host, string failure, string? missingBuild = null)
+    {
+        var log = Logger(host);
+
+        HostLog.DoesNotStart(log, failure);
+
+        return new BotHostStart(null, failure, missingBuild);
     }
 
     private static ILogger Logger(IHost host)

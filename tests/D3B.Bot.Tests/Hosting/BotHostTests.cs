@@ -6,8 +6,6 @@ using D3B.Bot.Localization;
 using D3B.Bot.Pages;
 using D3B.Core.Modules;
 using D3B.Data.Packs;
-using D3B.Data.Releases;
-using D3B.Data.Tests.Releases;
 using D3B.Network.Relay;
 using D3B.Protocol.Mapping;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,8 +57,6 @@ public sealed class BotHostTests : IDisposable
     {
         var bot = CreateBuilder();
 
-        // Nothing is published: the download fails as it would for a client build without a release.
-        bot.Services.AddSingleton(_ => new ReleaseDownloader(ClientRelease.DefaultRepository, new FakeGitHub()));
         bot.Services.AddHostedService<StopOnceStarted>();
 
         var exitCode = await BotHost.RunAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
@@ -78,8 +74,6 @@ public sealed class BotHostTests : IDisposable
     {
         var bot = CreateBuilder();
 
-        bot.Services.AddSingleton(_ => new ReleaseDownloader(ClientRelease.DefaultRepository, new FakeGitHub()));
-
         var start = await BotHost.StartAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
         var failure = Assert.Single(_log.GetSnapshot(), record => record.Level is LogLevel.Critical);
 
@@ -87,6 +81,31 @@ public sealed class BotHostTests : IDisposable
         Assert.NotNull(start.Failure);
         Assert.Contains($"No pack for client {TestInstall.Version}", start.Failure, StringComparison.Ordinal);
         Assert.EndsWith(start.Failure, failure.Message, StringComparison.Ordinal);
+        Assert.Equal(TestInstall.Version, start.MissingBuild);
+    }
+
+    [Fact]
+    public async Task AMappingMissingNamesTheBuildAppsLack()
+    {
+        _install.WritePack();
+
+        var start = await BotHost.StartAsync(CreateBuilder(), TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+
+        Assert.Null(start.Host);
+        Assert.Equal(TestInstall.Version, start.MissingBuild);
+    }
+
+    [Fact]
+    public async Task AMappingThatDoesNotHoldNamesNoBuildMissing()
+    {
+        _install.WritePack();
+        _install.WriteProtocol("3.7.11.1");
+
+        var start = await BotHost.StartAsync(CreateBuilder(), TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+
+        Assert.Null(start.Host);
+        Assert.Contains("maps client 3.7.11.1", start.Failure, StringComparison.Ordinal);
+        Assert.Null(start.MissingBuild);
     }
 
     [Fact]
@@ -96,8 +115,7 @@ public sealed class BotHostTests : IDisposable
 
         var bot = CreateBuilder();
 
-        // Nothing is published: a new build, which no one has mapped yet.
-        bot.Services.AddSingleton(_ => new ReleaseDownloader(ClientRelease.DefaultRepository, new FakeGitHub()));
+        // A new build, which no one has mapped yet.
         bot.Services.AddHostedService<StopOnceStarted>();
 
         var exitCode = await BotHost.RunAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);

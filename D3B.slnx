@@ -6,6 +6,7 @@
   <Folder Name="/scripts/">
     <File Path="scripts/capture.cs" />
     <File Path="scripts/client.cs" />
+    <File Path="scripts/embed.cs" />
     <File Path="scripts/extract.cs" />
     <File Path="scripts/inspect.cs" />
     <File Path="scripts/mapping.cs" />
@@ -19,6 +20,9 @@
   </Folder>
   <Folder Name="/scripts/client/">
     <File Path="scripts/client/ClientCommand.cs" />
+  </Folder>
+  <Folder Name="/scripts/embed/">
+    <File Path="scripts/embed/EmbedCommand.cs" />
   </Folder>
   <Folder Name="/scripts/extract/">
     <File Path="scripts/extract/BanksExtractor.cs" />
@@ -68,7 +72,6 @@
     <File Path="scripts/mapping/PinProposals.cs" />
   </Folder>
   <Folder Name="/scripts/release/">
-    <File Path="scripts/release/GitHubCli.cs" />
     <File Path="scripts/release/ReleaseAsset.cs" />
     <File Path="scripts/release/ReleaseCommand.cs" />
   </Folder>
@@ -91,6 +94,7 @@
   </Folder>
   <Folder Name="/scripts/unity/">
     <File Path="scripts/unity/ClientInstall.cs" />
+    <File Path="scripts/unity/GitHubCli.cs" />
     <File Path="scripts/unity/I18nFile.cs" />
     <File Path="scripts/unity/LauncherManifest.cs" />
     <File Path="scripts/unity/UnityBundle.cs" />

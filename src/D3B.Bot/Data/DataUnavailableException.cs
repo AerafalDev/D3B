@@ -4,6 +4,10 @@ namespace D3B.Bot.Data;
 /// <remarks>Its message says what is missing and how to get it; the host shows it and does not start.</remarks>
 public sealed class DataUnavailableException : Exception
 {
+    /// <summary>Gets the installed client's build when no pack of it is found, rather than one found and refused.</summary>
+    /// <remarks>The app tells such a build apart, which a newer version of D3B ships (D172).</remarks>
+    public string? MissingBuild { get; init; }
+
     /// <summary>Initializes a new instance of the <see cref="DataUnavailableException"/> class.</summary>
     public DataUnavailableException()
     {

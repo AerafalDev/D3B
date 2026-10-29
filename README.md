@@ -32,8 +32,25 @@ and the theme. The app was redesigned page by page: a sidebar, one scale of size
 tooltips, the profile editor on a page of its own beside its zone's preview, dialogs and toasts. A harvest takes its
 resources by profession, some left out, the highest level first if asked, or as a list; chooses its place by each
 character's levels, the sub-area richest in what it can harvest and not above its level; takes a zaap only when it saves
-enough maps; and six profiles are given, an automatic harvest and one per profession. Next: the app published with its
-data and the repository public, then fights and their AI, then the blueprints. See the [roadmap](docs/roadmap.md).
+enough maps; and six profiles are given, an automatic harvest and one per profession. The app is published with an
+installer, ships the data of the client build it was made for, and updates itself from this repository's releases. Next:
+fights and their AI, then the blueprints. See the [roadmap](docs/roadmap.md).
+
+## Installing
+
+Download `D3B.App-win-Setup.exe` from the latest release `v<version>` of this repository, on Windows 10 or 11 with the
+official Dofus 3 client installed by Ankama's launcher, and run it. It installs D3B for the current user, without
+administrator rights, in `%LOCALAPPDATA%\D3B.App`, with a shortcut on the desktop and in the Start menu. The installer is
+not signed: Windows SmartScreen may say it protected the PC; *More info*, then *Run anyway*, installs it.
+
+Each version of D3B ships the data of one client build, extracted from the official client: its maps, items and texts,
+and the mapping of its protocol. When Ankama updates the client, D3B says it does not know that build yet; the version of
+D3B for it comes out afterwards, and D3B installs it. D3B checks for a newer version as it starts, downloads it, and
+installs it when you restart it from its banner or close it. Its settings page shows its version and the client build it
+ships.
+
+D3B keeps its database, settings and captures in `%LOCALAPPDATA%\D3B`. Uninstalling it from Windows' settings removes the
+app and keeps that folder.
 
 ## Building
 
@@ -48,10 +65,23 @@ dotnet run --project src/D3B.App
 `src/D3B.Host` runs the same bots without the app. Both keep the accounts their relay sees and the profiles in
 `%LOCALAPPDATA%\D3B\d3b.db` (`Storage:Path` names another file); D3B never sees a password.
 
-The host needs the data pack of the installed client's build. It looks for it in `%LOCALAPPDATA%\D3B\data`, where
-`dotnet run --file scripts/extract.cs` writes it, and otherwise downloads it from this repository's release
-`client-<version>`. While the repository is private, the download needs a GitHub token: `Releases:Token` in the host's
-configuration, or the GitHub CLI logged in with `gh auth login`.
+The host needs the data pack, the schema and the mapping of the installed client's build. It looks for them in
+`%LOCALAPPDATA%\D3B\data`, where `dotnet run --file scripts/extract.cs`, `scripts/schema.cs` and `scripts/mapping.cs`
+write them, then beside the published app. Run from the repository, the app finds them only on this machine: extract and
+map the build, or take its files from the release `client-<version>` with `dotnet run --file scripts/embed.cs --
+--client-version <version> --output %LOCALAPPDATA%\D3B\data`.
+
+The release workflow publishes the app when a tag `v<version>` is pushed. To build the same installer on this machine,
+in PowerShell:
+
+```powershell
+dotnet tool restore
+dotnet publish src/D3B.App -c Release -r win-x64 --self-contained -o publish -p:MinVerVersionOverride=0.1.0
+dotnet run --file scripts/embed.cs -- --client-version 3.7.12.12 --output publish/data --packs $env:LOCALAPPDATA\D3B\data
+dotnet vpk pack --packId D3B.App --packVersion 0.1.0 --packDir publish --mainExe D3B.App.exe --packTitle D3B -o releases
+```
+
+An installed app started with `--Updates:Source <folder>` takes its updates from a folder of releases packed so.
 
 While the host runs, the `ConfigUrl` line of the installed client's `version` file names a copy of the client's
 configuration that sends it to the host's relay, and the host gives it Ankama's back when it stops. After a crash,
