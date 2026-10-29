@@ -1224,8 +1224,65 @@ Measured the same day on the pack of 3.7.12.12 (D147, D149, D150):
   The graphics of every map of the world graph, 10,981 maps, are 3,345 graphics drawn on 24,579 pairs of a map and a
   graphic, indexed in 564 ms.
 - **The guild's chest.** Graphic 70671, which JondoEmu names the banks' guild chest, draws 21 elements on 21 maps of the
-  world graph, 20 of them insides on no world map. Not measured through the server yet.
+  world graph, 20 of them insides on no world map; measured through the server below.
 - **Resource bags.** Item type 100, "Sac de ressources", holds 73 items, such as "Sac de blé" and "Sac de Houblon".
+
+### The game, kept up
+
+Measured on 2026-10-29 for session 6c (D147, D148, D153): two game connections of a client of 3.7.12.12 through the app,
+captures on. On the first, the bot harvested for 8 minutes, a fight in between. On the second, 3 minutes by hand: a fight the
+owner began and left, food eaten one at a time, then several at once, then at full life; a stack of two resource bags and a
+barrel opened; then the guild's chest of Astrub's bank opened, stacks put in whole and in part, taken back, and objects
+refused. By structure, timing, and values compared on the machine with the build's pack and with each other, never written
+down. The owner's guild has one tab, and the character every right in it.
+
+**The life.** The characteristics (`CharacterStatsEvent`) list about 120 characteristics by id. The server sends them
+twice on entering the game, after the character is chosen without what its objects give, then once the context is
+created; then as a fight starts and ends, and after food heals. A characteristic's value is the sum of its numbers. The
+most life is the value of characteristic 0 plus that of 11, the vitality; the life, the most plus the value of 97, which is
+negative, the life lacking, or 0 at full life. Out of fights the life regenerates a point each interval
+`LifeRegenStartEvent` gives, in tenths of a second: 5 in all 48 of them, two points a second. The characteristics hold the
+life as the regeneration started; `LifeRegenEndEvent`, as a fight starts and before food heals, gives the life and the most
+then, and the points regenerated since, counted beyond the most. On the 12 ends of 6 captures, its most was the
+characteristics', its life theirs plus the points regenerated, up to the most, and those points the time since at two a
+second, every time. Sitting changed nothing, the owner saw; no capture holds it.
+
+**Eating.** `ObjectUseRequest` names the stack. The server answers 28 ms later, once 183 ms: the regeneration's end and its
+start again, the stack's new quantity, a text 1 of the information kind, the characteristics holding the life healed, and
+the weight. Each of four breads healed the same. At full life: a text 225 of the information kind, nothing used, and
+nothing else, four times. A request of 46 bytes the readable protocol lacks uses several of a stack at once, naming the
+stack and a quantity: asked for the whole stack below full life, the server used as many as the life lacked, the last in
+part, and at full life the text 225 alone. It holds a map, which the tests' obfuscation does not make yet, so it is not
+named.
+
+**A container.** The same request on a stack of two resource bags, type 100: what the bag holds added to the inventory's
+stack of that resource, a text 21 of the information kind, the bags' quantity and the weight; the second time, the bags'
+stack deleted (`ObjectDeletedEvent`). A barrel of type 184, "Conteneur", opened the same, what it held a new stack. The
+inventory gives each object's effects, which the readable protocol does not read: effect 209 names what the bags and the
+barrel hold, item and quantity, as the server then gave them.
+
+**The guild's chest.** Its element, interactive 388 "Coffre de guilde", the pack's graphic 70671, offers skill 184 in the
+three bank insides captured. Used: the use, then in the same millisecond an event the readable protocol lacks holding a
+list of one entry, the exchange of type 21 (`ExchangeStartedWithTabbedStorageEvent`, two numbers not measured), what the
+chest holds as the bank's content gives it, with no kamas (`StorageContentEvent`), and two events the readable protocol
+lacks holding strings. `ExchangeObjectMoveRequest` moves a stack, whole or in part: by the inventory's stack and a positive
+quantity into the chest, by the chest's stack and a negative one out of it. The server answers 28 ms later with the chest's
+stack as it now is (`StorageObjectUpdateEvent`), the inventory's stack deleted, changed or added, and the weight; a chest's
+stack taken out whole is removed (`StorageObjectRemovedEvent`). A stack put in gets an id of its own in the chest, and one
+taken out a new id in the inventory.
+
+| Request | When | The server's answer |
+| --- | --- | --- |
+| A stack into the chest | An object bound to the account, a cape and a companion whose effects 981 and 983 no other object carries | A text 356 of the error kind, nothing moved, three times |
+| Leaving | The chest open | The exchange over, of the storage's dialog type, 28 ms later, as the bank's |
+
+Not measured: changing tabs and a tab's rights, the guild having one tab; a full chest; kamas; the bank's list of stacks
+(`ExchangeTransferFromInventoryRequest`) on the chest, and `ExchangeObjectMoveRequest` in the bank.
+
+**Matching.** 129 messages paired, 61 by pin, 11 by the captures and 57 by fields, and 19 enums by fields. **Audit.** 129
+messages, 263 fields, 19 enums and 147 values checked: no failure and no note; 46 partial messages. **The mapping** is 8,926
+bytes, format 7, the same bytes on two runs. **Translation.** The 36 game connections decoded through it: of 25,258 frames,
+4,953 understood whole, 4,026 more read, and 16,279 carrying one of 206 messages the readable protocol lacks; none misread.
 
 ## Protocol code
 

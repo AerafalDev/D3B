@@ -27,7 +27,7 @@ message InventoryObject {
   int32 position = 4;
 }
 
-// A stack of objects, as the inventory and the bank hold it.
+// A stack of objects, as the inventory, the bank and the guild's chest hold it.
 message ObjectItem {
   option (d3b.readable.partial) = true;
 
@@ -65,6 +65,19 @@ message ObjectQuantity {
 // Stacks gone from the inventory, as when they are put in the bank.
 message ObjectsDeletedEvent {
   repeated int32 uids = 1;
+}
+
+// A stack gone from the inventory, alone: the last object of a stack used, or a stack moved whole into the guild's chest.
+message ObjectDeletedEvent {
+  int32 uid = 1;
+}
+
+// Uses one object of a stack, as eating or opening a resource bag does. Food heals: the server ends the life's
+// regeneration, starts it again, then sends the stack's new quantity, a text, the characteristics holding the new life and
+// the weight; at full life, a text alone, and nothing is used. A bag gives what it holds, a stack added to or a new one,
+// then the bag's quantity, or its stack deleted once empty, a text and the weight.
+message ObjectUseRequest {
+  int32 uid = 1;
 }
 
 // What the character obtained, as a harvest's resources: sent with the inventory's change.
