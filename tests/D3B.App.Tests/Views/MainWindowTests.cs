@@ -8,8 +8,14 @@ using D3B.App.Tests.Pages;
 using D3B.App.ViewModels;
 using D3B.App.Views;
 using D3B.Bot.Activities;
+using D3B.Bot.Hosting;
+using D3B.Bot.Inspection;
+using D3B.Bot.Pages;
 using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
+using D3B.Protocol.Game;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Tests.Views;
 
@@ -210,6 +216,80 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains(french, text => text.Contains("Bûcheron", StringComparison.Ordinal));
         Assert.Contains("Enregistrer", french);
         Assert.Contains("À la connexion", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+    }
+
+    [Fact]
+    public async Task TheLogsAndTheInspectorShowInTheRailInBothLanguagesAndACardOpensItsBotsJournal()
+    {
+        var recorder = new FrameRecorder(TimeProvider.System);
+
+        await using var play = new TestPlay([recorder]);
+
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+
+        builder.Services.AddSingleton(play.Bots);
+        builder.Services.AddSingleton(play.World);
+        builder.Services.AddSingleton(recorder);
+        builder.Services.AddSingleton(new HostProblems(TimeProvider.System));
+        builder.Services.AddSingleton(new ActivityCatalog([]));
+        builder.Services.AddSingleton(new PageCatalog([]));
+
+        using var host = builder.Build();
+        var runner = await TestHosts.RunningAsync(host);
+
+        await play.EnterAsync(300);
+
+        var (english, french, journal) = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main };
+            var texts = new List<string>();
+
+            main.Refresh();
+            window.Show();
+            main.Bots.Items[0].ShowJournalCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var journal = (main.IsLogsPage, main.Logs.Source?.Name);
+
+            texts.AddRange(Texts(window));
+            main.ShowInspectorCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            texts.AddRange(Texts(window));
+
+            var english = texts.ToList();
+
+            texts.Clear();
+            main.SwitchLanguageCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            texts.AddRange(Texts(window));
+            main.ShowLogsCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            texts.AddRange(Texts(window));
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return (english, texts, journal);
+        });
+
+        Assert.Equal((true, "Character"), journal);
+        Assert.Contains("Logs", english);
+        Assert.Contains("Plays through the game connection", english);
+        Assert.Contains("Warnings and errors", english);
+        Assert.Contains("Protocol inspector", english);
+        Assert.Contains(nameof(AuthenticationRequest), english);
+        Assert.Contains("understood", english);
+        Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Inspecteur de protocole", french);
+        Assert.Contains("compris", french);
+        Assert.Contains("Journaux", french);
+        Assert.Contains("Joue par la connexion de jeu", french);
+        Assert.Contains("Avertissements et erreurs", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
 }

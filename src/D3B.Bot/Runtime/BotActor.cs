@@ -2,6 +2,7 @@ using System.Threading.Channels;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
+using D3B.Bot.Journal;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
 using D3B.Engine.World;
@@ -35,6 +36,9 @@ namespace D3B.Bot.Runtime;
 /// </remarks>
 public sealed class BotActor : IAsyncDisposable
 {
+    /// <summary>The number of entries a bot's journal keeps: older ones are dropped (D113).</summary>
+    public const int JournalCapacity = 2_000;
+
     /// <summary>How long the client takes to draw a map once the server placed the character on it (D77).</summary>
     internal static readonly TimeSpan DrawDelay = TimeSpan.FromMilliseconds(500);
 
@@ -77,6 +81,9 @@ public sealed class BotActor : IAsyncDisposable
 
     /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
     public ActivityRun? Activity => _activity;
+
+    /// <summary>Gets what the bot did and met, its actions once over, for the app (D112).</summary>
+    public RecentItems<JournalEntry> Journal { get; } = new(JournalCapacity);
 
     internal GameMaps Maps { get; }
 
@@ -339,16 +346,25 @@ public sealed class BotActor : IAsyncDisposable
         // A request to leave changes nothing of the state, so this is the dialog the client sent it in.
         if (side is RelayDirection.FromClient && _behavior is { } behavior && PlayerActions.Starts(state, message))
         {
+            // The player's first request pauses the bot; those that come with it, such as a walk after its cancelling, add nothing.
+            if (!_paused)
+                Write(BotEvent.PausedByPlayer);
+
             _paused = true;
             Interrupt(behavior, Interruption.Player);
             BotLog.PausedByPlayer(_log, Key.CharacterId, message.Descriptor.Name);
         }
 
-        // The client walks the character in a fight with the requests a behavior sends out of one: none may go on (D88).
-        if (side is RelayDirection.FromServer && message is ContextCreationEvent { Context: ContextCreationEvent.Types.GameContext.Fight } && _behavior is { } fighting)
+        if (side is RelayDirection.FromServer && message is ContextCreationEvent { Context: ContextCreationEvent.Types.GameContext.Fight })
         {
-            Interrupt(fighting, Interruption.Fight);
-            BotLog.FightBegan(_log, Key.CharacterId);
+            Write(BotEvent.FightBegan);
+
+            // The client walks the character in a fight with the requests a behavior sends out of one: none may go on (D88).
+            if (_behavior is { } fighting)
+            {
+                Interrupt(fighting, Interruption.Fight);
+                BotLog.FightBegan(_log, Key.CharacterId);
+            }
         }
 
         foreach (var expectation in _expectations)
@@ -453,6 +469,7 @@ public sealed class BotActor : IAsyncDisposable
 
         _paused = false;
         BotLog.Resumed(_log, Key.CharacterId);
+        Write(BotEvent.Resumed);
     }
 
     private void OnAttached(GameSession session, CharacterState state)
@@ -464,6 +481,7 @@ public sealed class BotActor : IAsyncDisposable
         _state = state;
         _connected = true;
         BotLog.Attached(_log, Key.CharacterId, session.Id);
+        Write(BotEvent.Connected);
     }
 
     private void OnDetached(GameSession session)
@@ -477,6 +495,7 @@ public sealed class BotActor : IAsyncDisposable
         _session = null;
         _connected = false;
         BotLog.Detached(_log, Key.CharacterId, session.Id);
+        Write(BotEvent.Disconnected);
     }
 
     private void OnStopping()
@@ -494,6 +513,11 @@ public sealed class BotActor : IAsyncDisposable
         _waiters.Clear();
         _session = null;
         _connected = false;
+    }
+
+    private void Write(BotEvent bot)
+    {
+        Journal.Add(new BotEventEntry(Time.GetUtcNow(), bot));
     }
 
     private void Interrupt(RunningBehavior behavior, Interruption reason)

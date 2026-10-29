@@ -8,11 +8,13 @@ namespace D3B.Protocol.Mapping;
 /// every nested message reads its own bytes in turn. A field typed as text reads any length-delimited value, so many
 /// messages may read the same bytes: the one they were written as types the most of their fields, at every depth.
 /// </remarks>
-internal static class WireReading
+public static class WireReading
 {
     private const int MaxDepth = 32;
 
     /// <summary>Reads a message's fields, in the order the bytes hold them.</summary>
+    /// <param name="bytes">The message's bytes.</param>
+    /// <param name="fields">Its fields, as far as they parse.</param>
     /// <returns>Whether the bytes parse whole as fields.</returns>
     public static bool TryFields(ReadOnlySpan<byte> bytes, out List<WireField> fields)
     {
@@ -71,7 +73,7 @@ internal static class WireReading
 
     /// <summary>Counts the fields a message types in bytes, at every depth.</summary>
     /// <returns>The count, or −1 when the message does not read the bytes.</returns>
-    public static int Typed(MessageDescriptor message, ReadOnlySpan<byte> bytes)
+    internal static int Typed(MessageDescriptor message, ReadOnlySpan<byte> bytes)
     {
         return Typed(message, bytes, 0);
     }

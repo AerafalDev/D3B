@@ -1040,6 +1040,32 @@ character's map and a neighbour by a scroll, started, stopped and resumed from t
 - **Closing the app** gave the client its configuration back, closed the game connection, and the app exited with 0;
   the client lost its connection to the game, as D91 says.
 
+Measured on 2026-10-29 for session 5e (D110): two game connections of a client of 3.7.12.12 through the app, 32 s and
+1 min 59 s, the scripts' folder holding the sample stroll and a script failing at its second step.
+
+- **The scripts** were listed, neither failing to read.
+- **The stroll**, started from the card with its 10 walks: 8 walks arrived, then the stop from the card ended it at
+  once, during the 9th, its request sent: 9 frames from D3B. Run whole, 10 walks arrived. Started again,
+  the player's click during its second walk sent `MapMovementCancelRequest` then `MapMovementRequest`, which paused the
+  bot; resumed from the card 8 s later, it walked from the player's cell, 213, the script's counter at its second walk,
+  and ended `Done`: 21 frames from D3B on that connection.
+- **The failing script** failed at its second step, `erreur:10: attempt to index a nil value (local 'nothing')`: the
+  chunk is named without `.lua`.
+- **Closing the app** gave the client its configuration back, then the game connection closed.
+
+Measured the same day for the logs and the inspector (D111 to D115): a game connection of 1 min 26 s, the bot's journal
+opened from its card, the stroll run whole, then again, paused by the player's click during its third walk and resumed
+from the card, 21 frames from D3B. No warning or error in the host's log. The owner went through the pages, journal,
+filters, inspector live and a capture replayed, and reported no problem.
+
+- **The capture replayed** through the inspector's reader, by structure and counts only: 298 frames, none cut. The
+  client's 59, 32 understood and 27 not read; the server's 218, 36 understood, 33 read and 149 not read; D3B's 21, all
+  understood. Every frame not read showed its shape. `AuthenticationRequest` came first, its ticket hidden, its language
+  shown; the server confirmed the character chosen, which ties a connection's frames to its bot.
+- **An earlier attempt** that morning: the client closed its connection phase 16 s after its identification was
+  answered, without choosing a server, and never came back through D3B; the cause was not found. The launcher had
+  updated itself, the client on disk still 3.7.12.12's, its files of 2026-10-20.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

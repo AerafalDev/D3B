@@ -284,11 +284,28 @@
                                                     TextTrimming="CharacterEllipsis" />
                                                 <TextBlock Classes="Caption Muted" Text="{Binding Level}" />
                                             </StackPanel>
-                                            <c:StatusPill
+                                            <StackPanel
                                                 Grid.Column="2"
-                                                Text="{Binding Connection}"
-                                                Tone="{Binding ConnectionTone}"
-                                                VerticalAlignment="Top" />
+                                                Orientation="Horizontal"
+                                                Spacing="4"
+                                                VerticalAlignment="Top">
+                                                <Button
+                                                    Classes="Ghost"
+                                                    Command="{Binding ShowJournalCommand}"
+                                                    CornerRadius="{DynamicResource MdCornerRadius}"
+                                                    Height="26"
+                                                    IsVisible="{Binding HasJournal}"
+                                                    Padding="0"
+                                                    ToolTip.Tip="{l:Tr ShowJournal}"
+                                                    Width="26">
+                                                    <c:Icon
+                                                        Classes="Muted"
+                                                        Data="{StaticResource IconJournal}"
+                                                        Height="15"
+                                                        Width="15" />
+                                                </Button>
+                                                <c:StatusPill Text="{Binding Connection}" Tone="{Binding ConnectionTone}" />
+                                            </StackPanel>
                                         </Grid>
                                         <Grid
                                             Classes.Offline="{Binding !IsConnected}"

@@ -93,6 +93,20 @@
                     ToolTip.Tip="{l:Tr Profiles}">
                     <c:Icon Data="{StaticResource IconSliders}" />
                 </Button>
+                <Button
+                    Classes="Ghost RailItem"
+                    Classes.Selected="{Binding IsLogsPage}"
+                    Command="{Binding ShowLogsCommand}"
+                    ToolTip.Tip="{l:Tr Logs}">
+                    <c:Icon Data="{StaticResource IconJournal}" />
+                </Button>
+                <Button
+                    Classes="Ghost RailItem"
+                    Classes.Selected="{Binding IsInspectorPage}"
+                    Command="{Binding ShowInspectorCommand}"
+                    ToolTip.Tip="{l:Tr Inspector}">
+                    <c:Icon Data="{StaticResource IconInspector}" />
+                </Button>
                 <Border Classes="RailSeparator" IsVisible="{Binding HasPages}" />
                 <ItemsControl ItemsSource="{Binding Pages}">
                     <ItemsControl.ItemsPanel>
@@ -208,6 +222,12 @@
                 </Panel>
                 <Panel IsVisible="{Binding IsProfilesPage}">
                     <views:ProfilesView DataContext="{Binding Profiles}" />
+                </Panel>
+                <Panel IsVisible="{Binding IsLogsPage}">
+                    <views:LogsView DataContext="{Binding Logs}" />
+                </Panel>
+                <Panel IsVisible="{Binding IsInspectorPage}">
+                    <views:InspectorView DataContext="{Binding Inspector}" />
                 </Panel>
                 <ContentControl Content="{Binding SelectedPage.Content}" IsVisible="{Binding IsModulePage}">
                     <ContentControl.DataTemplates>

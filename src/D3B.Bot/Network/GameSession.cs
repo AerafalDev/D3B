@@ -102,6 +102,21 @@ public sealed class GameSession : IConnectionInterceptor
 
         await _connection.SendToServerAsync(frame, cancellationToken);
         GameLog.Sent(_log, Id, request.Descriptor.Name, frame.Length);
+
+        var decoded = _translation.DecodeGame(new ReadOnlySequence<byte>(frame));
+
+        foreach (var observer in _observers)
+        {
+            try
+            {
+                observer.OnSent(this, decoded);
+            }
+            catch (Exception exception)
+            {
+                // An observer only watches: its failure must not fail a request that went.
+                GameLog.ObserverFailed(_log, Id, observer.GetType(), exception);
+            }
+        }
     }
 
     bool IConnectionInterceptor.Holds(RelayDirection direction)

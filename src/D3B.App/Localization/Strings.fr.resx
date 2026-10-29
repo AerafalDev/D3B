@@ -509,4 +509,322 @@
   <data name="SummaryItem" xml:space="preserve">
     <value>{0} : {1}</value>
   </data>
+  <data name="Logs" xml:space="preserve">
+    <value>Journaux</value>
+  </data>
+  <data name="Inspector" xml:space="preserve">
+    <value>Inspecteur de protocole</value>
+  </data>
+  <data name="ShowJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="LogsEverything" xml:space="preserve">
+    <value>Tout</value>
+  </data>
+  <data name="LogsHost" xml:space="preserve">
+    <value>Hôte</value>
+  </data>
+  <data name="LevelAll" xml:space="preserve">
+    <value>Tout</value>
+  </data>
+  <data name="LevelProblems" xml:space="preserve">
+    <value>Avertissements et erreurs</value>
+  </data>
+  <data name="LevelErrors" xml:space="preserve">
+    <value>Erreurs</value>
+  </data>
+  <data name="LogsSearch" xml:space="preserve">
+    <value>Chercher</value>
+  </data>
+  <data name="Follow" xml:space="preserve">
+    <value>Suivre</value>
+  </data>
+  <data name="FollowHint" xml:space="preserve">
+    <value>Défile jusqu'à chaque nouvelle ligne ; remonter l'arrête</value>
+  </data>
+  <data name="CopyLinesHint" xml:space="preserve">
+    <value>Copier les lignes affichées</value>
+  </data>
+  <data name="LogsEmpty" xml:space="preserve">
+    <value>Aucune ligne pour l'instant : les actions d'un bot s'affichent ici à mesure qu'il les fait, ainsi que les avertissements et erreurs de l'hôte.</value>
+  </data>
+  <data name="LinesKeptOne" xml:space="preserve">
+    <value>{0:N0} ligne gardée</value>
+  </data>
+  <data name="LinesKeptOther" xml:space="preserve">
+    <value>{0:N0} lignes gardées</value>
+  </data>
+  <data name="LinesOne" xml:space="preserve">
+    <value>{0:N0} ligne</value>
+  </data>
+  <data name="LinesOther" xml:space="preserve">
+    <value>{0:N0} lignes</value>
+  </data>
+  <data name="LinesShown" xml:space="preserve">
+    <value>{0} affichées sur {1:N0}</value>
+  </data>
+  <data name="JournalWalk" xml:space="preserve">
+    <value>Marche vers la case {0}</value>
+  </data>
+  <data name="JournalScroll" xml:space="preserve">
+    <value>Change de carte : {0} → {1}, par {2}</value>
+  </data>
+  <data name="JournalMapChange" xml:space="preserve">
+    <value>Change de carte : {0} → {1}</value>
+  </data>
+  <data name="JournalMapAction" xml:space="preserve">
+    <value>Change de carte : {0} → {1}, par une action de carte</value>
+  </data>
+  <data name="JournalDoor" xml:space="preserve">
+    <value>Passe une porte : {0} → {1}</value>
+  </data>
+  <data name="JournalZaap" xml:space="preserve">
+    <value>Prend le zaap vers {0}</value>
+  </data>
+  <data name="JournalLeaveHavenBag" xml:space="preserve">
+    <value>Quitte le havre-sac</value>
+  </data>
+  <data name="JournalUse" xml:space="preserve">
+    <value>Utilise {0} ({1})</value>
+  </data>
+  <data name="JournalTravel" xml:space="preserve">
+    <value>Voyage vers {0}</value>
+  </data>
+  <data name="JournalTravelNearest" xml:space="preserve">
+    <value>Voyage vers la carte cherchée la plus proche</value>
+  </data>
+  <data name="JournalBanked" xml:space="preserve">
+    <value>Banque : {0} et {1} déposés</value>
+  </data>
+  <data name="JournalBank" xml:space="preserve">
+    <value>Banque</value>
+  </data>
+  <data name="JournalActivityStarted" xml:space="preserve">
+    <value>« {0} » démarre</value>
+  </data>
+  <data name="JournalActivityInterrupted" xml:space="preserve">
+    <value>« {0} » interrompue par {1} ; elle reprendra</value>
+  </data>
+  <data name="JournalActivityInterruptedStops" xml:space="preserve">
+    <value>« {0} » interrompue par {1} ; elle s'arrête</value>
+  </data>
+  <data name="JournalUnloading" xml:space="preserve">
+    <value>« {0} » décharge le personnage, {1:N0} pods sur {2:N0}</value>
+  </data>
+  <data name="JournalActivityDone" xml:space="preserve">
+    <value>« {0} » terminée</value>
+  </data>
+  <data name="JournalActivityStopped" xml:space="preserve">
+    <value>« {0} » arrêtée</value>
+  </data>
+  <data name="JournalActivityStillFull" xml:space="preserve">
+    <value>« {0} » a échoué : le personnage est resté plein après déchargement</value>
+  </data>
+  <data name="JournalActivityFailedWith" xml:space="preserve">
+    <value>« {0} » a échoué : {1}</value>
+  </data>
+  <data name="JournalActivityFailed" xml:space="preserve">
+    <value>« {0} » a échoué</value>
+  </data>
+  <data name="JournalConnected" xml:space="preserve">
+    <value>Joue par la connexion de jeu</value>
+  </data>
+  <data name="JournalDisconnected" xml:space="preserve">
+    <value>Connexion de jeu fermée</value>
+  </data>
+  <data name="JournalPaused" xml:space="preserve">
+    <value>Le joueur a pris la main : le bot est en pause</value>
+  </data>
+  <data name="JournalResumed" xml:space="preserve">
+    <value>Repris</value>
+  </data>
+  <data name="JournalFight" xml:space="preserve">
+    <value>Un combat a commencé</value>
+  </data>
+  <data name="OutcomeArrived" xml:space="preserve">
+    <value>arrivé</value>
+  </data>
+  <data name="OutcomeBusy" xml:space="preserve">
+    <value>occupé</value>
+  </data>
+  <data name="OutcomeNoPath" xml:space="preserve">
+    <value>pas de chemin</value>
+  </data>
+  <data name="OutcomeRefused" xml:space="preserve">
+    <value>refusé</value>
+  </data>
+  <data name="OutcomeNoAnswer" xml:space="preserve">
+    <value>pas de réponse</value>
+  </data>
+  <data name="OutcomeNotConfirmed" xml:space="preserve">
+    <value>non confirmé par le client</value>
+  </data>
+  <data name="OutcomeChanged" xml:space="preserve">
+    <value>changé</value>
+  </data>
+  <data name="OutcomeElsewhere" xml:space="preserve">
+    <value>arrivé ailleurs</value>
+  </data>
+  <data name="OutcomeNotWalked" xml:space="preserve">
+    <value>marche échouée</value>
+  </data>
+  <data name="OutcomeNotPlaced" xml:space="preserve">
+    <value>non placé</value>
+  </data>
+  <data name="OutcomeUsed" xml:space="preserve">
+    <value>fait</value>
+  </data>
+  <data name="OutcomeUnavailable" xml:space="preserve">
+    <value>indisponible</value>
+  </data>
+  <data name="OutcomeNotEnded" xml:space="preserve">
+    <value>pas terminé</value>
+  </data>
+  <data name="OutcomeFailed" xml:space="preserve">
+    <value>échoué</value>
+  </data>
+  <data name="OutcomeDone" xml:space="preserve">
+    <value>fait</value>
+  </data>
+  <data name="OutcomeNoBank" xml:space="preserve">
+    <value>aucune banque atteinte</value>
+  </data>
+  <data name="OutcomeNotTravelled" xml:space="preserve">
+    <value>voyage échoué</value>
+  </data>
+  <data name="DurationSeconds" xml:space="preserve">
+    <value>{0:0.0} s</value>
+  </data>
+  <data name="DurationMilliseconds" xml:space="preserve">
+    <value>{0:N0} ms</value>
+  </data>
+  <data name="DurationMinutes" xml:space="preserve">
+    <value>{0} min {1:00} s</value>
+  </data>
+  <data name="MapsOne" xml:space="preserve">
+    <value>{0:N0} carte</value>
+  </data>
+  <data name="MapsOther" xml:space="preserve">
+    <value>{0:N0} cartes</value>
+  </data>
+  <data name="StacksOne" xml:space="preserve">
+    <value>{0:N0} pile</value>
+  </data>
+  <data name="StacksOther" xml:space="preserve">
+    <value>{0:N0} piles</value>
+  </data>
+  <data name="MapNumber" xml:space="preserve">
+    <value>carte {0}</value>
+  </data>
+  <data name="PlaceNamed" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="SideTop" xml:space="preserve">
+    <value>le haut</value>
+  </data>
+  <data name="SideBottom" xml:space="preserve">
+    <value>le bas</value>
+  </data>
+  <data name="SideLeft" xml:space="preserve">
+    <value>la gauche</value>
+  </data>
+  <data name="SideRight" xml:space="preserve">
+    <value>la droite</value>
+  </data>
+  <data name="ElementNumber" xml:space="preserve">
+    <value>l'élément {0}</value>
+  </data>
+  <data name="SkillNumber" xml:space="preserve">
+    <value>compétence {0}</value>
+  </data>
+  <data name="Live" xml:space="preserve">
+    <value>en direct</value>
+  </data>
+  <data name="ReplayCapture" xml:space="preserve">
+    <value>Rejouer une capture…</value>
+  </data>
+  <data name="CaptureLabel" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Kilobytes" xml:space="preserve">
+    <value>{0:N0} Ko</value>
+  </data>
+  <data name="CaptureNoTranslation" xml:space="preserve">
+    <value>L'hôte n'a pas de traduction du build installé pour lire une capture.</value>
+  </data>
+  <data name="CaptureTruncated" xml:space="preserve">
+    <value>Le dernier enregistrement de la capture est coupé : ce qui suit n'y est pas.</value>
+  </data>
+  <data name="FrameClient" xml:space="preserve">
+    <value>Client</value>
+  </data>
+  <data name="FrameServer" xml:space="preserve">
+    <value>Serveur</value>
+  </data>
+  <data name="FrameD3B" xml:space="preserve">
+    <value>D3B</value>
+  </data>
+  <data name="FrameNoMessage" xml:space="preserve">
+    <value>aucun message de jeu</value>
+  </data>
+  <data name="Bytes" xml:space="preserve">
+    <value>{0:N0} o</value>
+  </data>
+  <data name="FrameUnderstood" xml:space="preserve">
+    <value>compris</value>
+  </data>
+  <data name="FrameRead" xml:space="preserve">
+    <value>lu</value>
+  </data>
+  <data name="FrameNotRead" xml:space="preserve">
+    <value>non lu</value>
+  </data>
+  <data name="FrameHidden" xml:space="preserve">
+    <value>•••••••• masqué</value>
+  </data>
+  <data name="FrameNoField" xml:space="preserve">
+    <value>aucun champ renseigné</value>
+  </data>
+  <data name="FrameShape" xml:space="preserve">
+    <value>un message que le protocole lisible ne connaît pas : la forme de ses champs, jamais leurs valeurs</value>
+  </data>
+  <data name="FrameWire" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="WireLength" xml:space="preserve">
+    <value>longueur</value>
+  </data>
+  <data name="FrameWhy" xml:space="preserve">
+    <value>pas compris en entier</value>
+  </data>
+  <data name="FramesOne" xml:space="preserve">
+    <value>{0:N0} trame</value>
+  </data>
+  <data name="FramesOther" xml:space="preserve">
+    <value>{0:N0} trames</value>
+  </data>
+  <data name="FramesShown" xml:space="preserve">
+    <value>{0} affichées sur {1}</value>
+  </data>
+  <data name="FramesSearch" xml:space="preserve">
+    <value>Message, par exemple Map</value>
+  </data>
+  <data name="HideUnread" xml:space="preserve">
+    <value>Masquer les non lus</value>
+  </data>
+  <data name="HideUnreadHint" xml:space="preserve">
+    <value>Cacher les trames dont le protocole lisible ne connaît pas le message</value>
+  </data>
+  <data name="Freeze" xml:space="preserve">
+    <value>Figer</value>
+  </data>
+  <data name="FreezeHint" xml:space="preserve">
+    <value>Les nouvelles trames attendent qu'on dégèle</value>
+  </data>
+  <data name="ClearFrames" xml:space="preserve">
+    <value>Vider la liste</value>
+  </data>
+  <data name="FramesEmpty" xml:space="preserve">
+    <value>Aucune trame : celles d'un bot s'enregistrent dès que son client passe par D3B, et une capture de la connexion de jeu se rejoue ici.</value>
+  </data>
 </root>

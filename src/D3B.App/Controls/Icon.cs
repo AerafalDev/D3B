@@ -21,6 +21,9 @@ internal sealed class Icon : Control
     /// <summary>Defines the <see cref="StrokeThickness"/> property.</summary>
     public static readonly StyledProperty<double> StrokeThicknessProperty = AvaloniaProperty.Register<Icon, double>(nameof(StrokeThickness), 2);
 
+    /// <summary>Defines the <see cref="Tone"/> property.</summary>
+    public static readonly StyledProperty<Tone> ToneProperty = AvaloniaProperty.Register<Icon, Tone>(nameof(Tone));
+
     /// <summary>Gets or sets the icon's lines, on a grid of 24 units.</summary>
     public Geometry? Data
     {
@@ -40,6 +43,13 @@ internal sealed class Icon : Control
     {
         get => GetValue(StrokeThicknessProperty);
         set => SetValue(StrokeThicknessProperty, value);
+    }
+
+    /// <summary>Gets or sets the tone the icon's lines take, as <c>Themes/Styles.axaml</c> colours each; neutral keeps the text's colour.</summary>
+    public Tone Tone
+    {
+        get => GetValue(ToneProperty);
+        set => SetValue(ToneProperty, value);
     }
 
     static Icon()

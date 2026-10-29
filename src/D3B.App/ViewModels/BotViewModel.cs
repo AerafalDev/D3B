@@ -33,6 +33,7 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly ProfileBook? _profiles;
     private readonly AccountBook? _accounts;
     private readonly ProfileStarter? _starter;
+    private readonly Action<CharacterKey>? _showJournal;
     private int _profilesVersion = -1;
     private int _catalogVersion = -1;
     private ActivityRun? _startedRun;
@@ -48,6 +49,9 @@ internal sealed partial class BotViewModel : ObservableObject
 
     /// <summary>Gets whether anything can be given.</summary>
     public bool HasActivities => Activities.Count > 0;
+
+    /// <summary>Gets whether the card opens the bot's journal on the logs page.</summary>
+    public bool HasJournal => _showJournal is not null;
 
     /// <summary>Gets the character's name.</summary>
     [ObservableProperty]
@@ -168,9 +172,11 @@ internal sealed partial class BotViewModel : ObservableObject
     /// <param name="bot">The bot.</param>
     /// <param name="services">The host's services: the activities, the profiles, and the pack's world and texts.</param>
     /// <param name="localizer">The app's texts.</param>
-    public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer)
+    /// <param name="showJournal">Shows the bot's journal on the logs page, or <see langword="null"/> when no page shows it.</param>
+    public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer, Action<CharacterKey>? showJournal = null)
     {
         Bot = bot;
+        _showJournal = showJournal;
         _services = services;
         _localizer = localizer;
         _world = services.GetService<GameWorld>();
@@ -367,6 +373,12 @@ internal sealed partial class BotViewModel : ObservableObject
     private void Resume()
     {
         Bot.Resume();
+    }
+
+    [RelayCommand]
+    private void ShowJournal()
+    {
+        _showJournal?.Invoke(Bot.Key);
     }
 
     private void RefreshPlace(CharacterState state)

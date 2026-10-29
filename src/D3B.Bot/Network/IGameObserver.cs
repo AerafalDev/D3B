@@ -21,4 +21,16 @@ public interface IGameObserver
     /// <param name="direction">Which side sent it: the client's requests, the server's events and responses.</param>
     /// <param name="frame">The frame, decoded: its message, when the readable protocol reads it.</param>
     void OnFrame(GameSession session, RelayDirection direction, DecodedGameFrame frame);
+
+    /// <summary>Sees a request D3B sent the server itself, once it went, decoded as the server reads it (D115).</summary>
+    /// <remarks>
+    /// Apart from <see cref="OnFrame"/>, which never shows D3B's own requests as the client's (D63): the bots learn what
+    /// they did from the server's answers. By default, an observer does nothing with them; the protocol inspector shows
+    /// them. Called from the sender's thread.
+    /// </remarks>
+    /// <param name="session">The session.</param>
+    /// <param name="frame">The request's frame, decoded.</param>
+    void OnSent(GameSession session, DecodedGameFrame frame)
+    {
+    }
 }

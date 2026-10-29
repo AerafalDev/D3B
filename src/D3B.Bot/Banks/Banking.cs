@@ -1,4 +1,5 @@
 using D3B.Bot.Characters;
+using D3B.Bot.Journal;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data.Banks;
@@ -62,6 +63,9 @@ public static class Banking
         ArgumentNullException.ThrowIfNull(stacks);
         ArgumentOutOfRangeException.ThrowIfNegative(kamas);
 
+        using var action = context.BeginAction();
+        var depth = action.Depth;
+        var asked = (Stacks: 0, Kamas: 0L);
         var outcome = await context.GoToBankerAsync(cancellationToken).ConfigureAwait(false);
 
         if (outcome is BankOutcome.Done)
@@ -71,13 +75,17 @@ public static class Banking
         {
             var state = context.State;
             var uids = state.Inventory.Values.Where(stack => !stack.IsWorn && stacks(stack)).Select(stack => stack.Uid).ToList();
-            var deposit = await context.DepositAsync(uids, Math.Min(kamas, state.Kamas), cancellationToken).ConfigureAwait(false);
+
+            asked = (uids.Count, Math.Min(kamas, state.Kamas));
+
+            var deposit = await context.DepositAsync(uids, asked.Kamas, cancellationToken).ConfigureAwait(false);
             var left = await context.LeaveBankAsync(cancellationToken).ConfigureAwait(false);
 
             outcome = deposit is BankOutcome.Done ? left : deposit;
         }
 
         BotLog.Banked(context.Log, context.State.Key.CharacterId, context.State.MapId ?? 0, outcome);
+        context.Record(action, (at, took) => new BankEntry(at, depth, context.State.MapId, asked.Stacks, asked.Kamas, outcome, took));
 
         return outcome;
     }
