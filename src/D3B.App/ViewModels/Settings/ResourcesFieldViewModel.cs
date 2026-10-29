@@ -1,8 +1,9 @@
+using CommunityToolkit.Mvvm.Input;
 using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>Resources of any profession, as tiles in their order: each with its profession and level, and a warning when a character playing the profile lacks it (D127).</summary>
+/// <summary>Resources of any profession, in their order: each with its profession and level, and a warning when a character playing the profile lacks it (D127); chosen several at once in a dialog (D159).</summary>
 internal sealed partial class ResourcesFieldViewModel : GamesFieldViewModel
 {
     /// <inheritdoc/>
@@ -16,9 +17,19 @@ internal sealed partial class ResourcesFieldViewModel : GamesFieldViewModel
     {
     }
 
+    /// <summary>Gets whether the dialog choosing resources can open: the editor shows in a window, and the host has the game's values.</summary>
+    public bool CanChoose => Editor.Dialogs is not null && HasGame;
+
     /// <inheritdoc/>
     protected override string? WarningOf(object value)
     {
         return Editor.MissingLevelOf((int)value);
+    }
+
+    [RelayCommand]
+    private void Choose()
+    {
+        if (Editor.Dialogs is { } dialogs)
+            dialogs.Show(new ResourcePickerViewModel(dialogs, this, Editor, Available));
     }
 }

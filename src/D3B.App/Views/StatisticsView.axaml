@@ -1,200 +1,195 @@
 <UserControl
     x:Class="D3B.App.Views.StatisticsView"
     x:ClassModifier="internal"
-    x:DataType="vm:StatisticsViewModel"
+    x:DataType="st:StatisticsViewModel"
     xmlns="https://github.com/avaloniaui"
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
-    xmlns:vm="clr-namespace:D3B.App.ViewModels.Statistics"
+    xmlns:st="clr-namespace:D3B.App.ViewModels.Statistics"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
-        <Style Selector="Border.Figure">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+        <Style Selector="Border.Run">
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="16,14" />
-        </Style>
-        <Style Selector="Border.Figure TextBlock.Value">
-            <Setter Property="FontSize" Value="22" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style Selector="Border.Row">
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
             <Setter Property="Padding" Value="0,8" />
         </Style>
     </UserControl.Styles>
-    <DockPanel>
-        <StackPanel Classes="PageHeader" DockPanel.Dock="Top">
-            <TextBlock Classes="PageTitle" Text="{l:Tr Statistics}" />
-            <TextBlock Classes="Small Muted" Text="{Binding Summary}" />
-        </StackPanel>
-        <Grid
-            ColumnDefinitions="*,Auto"
-            DockPanel.Dock="Top"
-            IsVisible="{Binding IsAvailable}"
-            Margin="32,0,32,16">
-            <ItemsControl ItemsSource="{Binding Characters}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel ItemSpacing="6" LineSpacing="6" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:StatisticsCharacterViewModel">
+    <c:AppPage Title="{l:Tr Statistics}">
+        <c:AppPage.Actions>
+            <StackPanel Classes="Toolbar" IsVisible="{Binding IsAvailable}">
+                <ComboBox
+                    AutomationProperties.Name="{l:Tr Character}"
+                    ItemsSource="{Binding Characters}"
+                    SelectedItem="{Binding SelectedCharacter}"
+                    Width="220">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="st:StatisticsCharacterViewModel">
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Border Classes="Segmented">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
                         <Button
-                            Classes="Outline Chip"
-                            Classes.Selected="{Binding IsSelected}"
-                            Command="{Binding SelectCommand}"
-                            Content="{Binding Name}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <Border
-                BorderBrush="{DynamicResource BorderColor}"
-                BorderThickness="1"
-                CornerRadius="{DynamicResource MdCornerRadius}"
-                Grid.Column="1"
-                Padding="2"
-                VerticalAlignment="Top">
-                <StackPanel Orientation="Horizontal" Spacing="2">
-                    <Button
-                        Classes="Ghost Segment"
-                        Classes.Selected="{Binding IsToday}"
-                        Command="{Binding ShowTodayCommand}"
-                        Content="{l:Tr StatisticsToday}" />
-                    <Button
-                        Classes="Ghost Segment"
-                        Classes.Selected="{Binding IsWeek}"
-                        Command="{Binding ShowWeekCommand}"
-                        Content="{l:Tr StatisticsWeek}" />
-                    <Button
-                        Classes="Ghost Segment"
-                        Classes.Selected="{Binding IsAll}"
-                        Command="{Binding ShowAllCommand}"
-                        Content="{l:Tr StatisticsAll}" />
-                </StackPanel>
-            </Border>
-        </Grid>
-        <TextBlock
-            Classes="Muted"
-            HorizontalAlignment="Center"
-            IsVisible="{Binding !IsAvailable}"
-            Text="{l:Tr StatisticsUnavailable}"
-            VerticalAlignment="Center" />
-        <ScrollViewer IsVisible="{Binding IsAvailable}">
-            <StackPanel Margin="32,0,32,32" Spacing="16">
-                <Grid ColumnDefinitions="*,12,*,12,*,12,*">
-                    <Border Classes="Figure">
-                        <StackPanel Spacing="2">
-                            <TextBlock Classes="Value Figures" Text="{Binding ResourcesValue}" />
-                            <TextBlock Classes="Small Muted" Text="{l:Tr StatisticsResources}" />
+                            Classes="Segment"
+                            Classes.Selected="{Binding IsToday}"
+                            Command="{Binding ShowTodayCommand}"
+                            Content="{l:Tr StatisticsToday}" />
+                        <Button
+                            Classes="Segment"
+                            Classes.Selected="{Binding IsWeek}"
+                            Command="{Binding ShowWeekCommand}"
+                            Content="{l:Tr StatisticsWeek}" />
+                        <Button
+                            Classes="Segment"
+                            Classes.Selected="{Binding IsAll}"
+                            Command="{Binding ShowAllCommand}"
+                            Content="{l:Tr StatisticsAll}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </c:AppPage.Actions>
+        <Panel>
+            <TextBlock
+                Classes="Muted"
+                IsVisible="{Binding !IsAvailable}"
+                Text="{l:Tr StatisticsUnavailable}"
+                TextWrapping="Wrap" />
+            <StackPanel IsVisible="{Binding IsAvailable}" Spacing="16">
+                <UniformGrid Columns="4">
+                    <Border Classes="Card" Margin="0,0,12,0">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Figure" Text="{Binding ResourcesValue}" />
+                            <TextBlock Classes="Muted" Text="{l:Tr StatisticsResources}" />
                         </StackPanel>
                     </Border>
-                    <Border Classes="Figure" Grid.Column="2">
-                        <StackPanel Spacing="2">
-                            <TextBlock Classes="Value Figures" Text="{Binding TimeValue}" />
-                            <TextBlock Classes="Small Muted" Text="{l:Tr StatisticsTime}" />
+                    <Border Classes="Card" Margin="0,0,12,0">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Figure" Text="{Binding TimeValue}" />
+                            <TextBlock Classes="Muted" Text="{l:Tr StatisticsTime}" />
                         </StackPanel>
                     </Border>
-                    <Border Classes="Figure" Grid.Column="4">
-                        <StackPanel Spacing="2">
-                            <TextBlock Classes="Value Figures" Text="{Binding RateValue}" />
-                            <TextBlock Classes="Small Muted" Text="{l:Tr StatisticsAverage}" />
+                    <Border Classes="Card" Margin="0,0,12,0">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Figure" Text="{Binding RateValue}" />
+                            <TextBlock Classes="Muted" Text="{l:Tr StatisticsAverage}" />
                         </StackPanel>
                     </Border>
-                    <Border Classes="Figure" Grid.Column="6">
-                        <StackPanel Spacing="2">
-                            <TextBlock Classes="Value Figures" Text="{Binding LevelsValue}" />
+                    <Border Classes="Card">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Figure" Text="{Binding LevelsValue}" />
                             <TextBlock
-                                Classes="Small Muted"
+                                Classes="Muted"
                                 Text="{Binding LevelsDetail}"
                                 TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </Border>
-                </Grid>
-                <TextBlock
-                    Classes="Muted"
+                </UniformGrid>
+                <c:EmptyState
+                    Icon="{StaticResource IconChart}"
                     IsVisible="{Binding IsEmpty}"
-                    Margin="0,12"
-                    Text="{l:Tr StatisticsEmpty}" />
+                    Text="{l:Tr StatisticsEmpty}"
+                    Title="{l:Tr StatisticsEmptyTitle}" />
                 <Grid ColumnDefinitions="2*,16,3*" IsVisible="{Binding !IsEmpty}">
-                    <Border Classes="Plate" Padding="18,14">
-                        <StackPanel Spacing="4">
-                            <TextBlock Classes="Small Muted" Text="{l:Tr StatisticsByResource}" />
+                    <Border Classes="Card" VerticalAlignment="Top">
+                        <StackPanel Spacing="12">
+                            <TextBlock Classes="Title" Text="{l:Tr StatisticsByResource}" />
                             <ItemsControl ItemsSource="{Binding Resources}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="12" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:StatisticsResourceViewModel">
-                                        <Border Classes="Row">
-                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <DataTemplate x:DataType="st:StatisticsResourceViewModel">
+                                        <StackPanel Spacing="4">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                                                 <Border Classes="ItemIcon" Classes.HasIcon="{Binding HasIcon}">
                                                     <Image RenderOptions.BitmapInterpolationMode="HighQuality" Source="{Binding Icon}" />
                                                 </Border>
                                                 <TextBlock
                                                     Grid.Column="1"
-                                                    Margin="10,0"
+                                                    Margin="8,0"
                                                     Text="{Binding Name}"
                                                     TextTrimming="CharacterEllipsis"
                                                     VerticalAlignment="Center" />
-                                                <StackPanel
+                                                <TextBlock
+                                                    Classes="Label Figures"
                                                     Grid.Column="2"
-                                                    Orientation="Horizontal"
-                                                    Spacing="8"
-                                                    VerticalAlignment="Center">
-                                                    <TextBlock Classes="Figures" Text="{Binding Count}" />
-                                                    <TextBlock
-                                                        Classes="Muted Figures"
-                                                        IsVisible="{Binding Rate, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                                        Text="{Binding Rate}" />
-                                                </StackPanel>
+                                                    Text="{Binding Count}"
+                                                    VerticalAlignment="Center" />
+                                                <TextBlock
+                                                    Classes="Caption Muted Figures"
+                                                    Grid.Column="3"
+                                                    IsVisible="{Binding Rate, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                    Margin="8,0,0,0"
+                                                    MinWidth="56"
+                                                    Text="{Binding Rate}"
+                                                    TextAlignment="Right"
+                                                    VerticalAlignment="Center" />
                                             </Grid>
-                                        </Border>
+                                            <ProgressBar Classes="Meter Thin" Value="{Binding Share}" />
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
                     </Border>
                     <Border
-                        Classes="Plate"
+                        Classes="Card"
                         Grid.Column="2"
-                        Padding="18,14">
-                        <StackPanel Spacing="4">
-                            <TextBlock Classes="Small Muted" Text="{l:Tr StatisticsRuns}" />
+                        VerticalAlignment="Top">
+                        <StackPanel Spacing="12">
+                            <TextBlock Classes="Title" Text="{l:Tr StatisticsRuns}" />
+                            <Grid ColumnDefinitions="64,*,80,96">
+                                <TextBlock Classes="Caption Muted" Text="{l:Tr StatisticsStarted}" />
+                                <TextBlock
+                                    Classes="Caption Muted"
+                                    Grid.Column="2"
+                                    Text="{l:Tr StatisticsDuration}"
+                                    TextAlignment="Right" />
+                                <TextBlock
+                                    Classes="Caption Muted"
+                                    Grid.Column="3"
+                                    Text="{l:Tr StatisticsTotal}"
+                                    TextAlignment="Right" />
+                            </Grid>
                             <ItemsControl ItemsSource="{Binding Runs}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:StatisticsRunViewModel">
-                                        <Border Classes="Row">
-                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                                <TextBlock
-                                                    Classes="Muted Figures"
-                                                    MinWidth="56"
-                                                    Text="{Binding When}"
-                                                    VerticalAlignment="Center" />
-                                                <StackPanel
-                                                    Grid.Column="1"
-                                                    Margin="10,0"
-                                                    Orientation="Horizontal"
-                                                    Spacing="8"
-                                                    VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Who}" TextTrimming="CharacterEllipsis" />
-                                                    <c:StatusPill Text="{Binding Outcome}" Tone="{Binding Tone}" />
-                                                </StackPanel>
-                                                <TextBlock
-                                                    Classes="Muted Figures"
-                                                    Grid.Column="2"
-                                                    Margin="0,0,16,0"
-                                                    Text="{Binding Duration}"
-                                                    VerticalAlignment="Center" />
-                                                <TextBlock
-                                                    Classes="Figures"
-                                                    Grid.Column="3"
-                                                    MinWidth="48"
-                                                    Text="{Binding Total}"
-                                                    TextAlignment="Right"
-                                                    VerticalAlignment="Center" />
-                                            </Grid>
-                                        </Border>
+                                    <DataTemplate x:DataType="st:StatisticsRunViewModel">
+                                        <StackPanel>
+                                            <TextBlock
+                                                Classes="Label"
+                                                IsVisible="{Binding StartsGroup}"
+                                                Margin="0,8,0,4"
+                                                Text="{Binding Who}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <Border Classes="Run">
+                                                <Grid ColumnDefinitions="64,*,80,96">
+                                                    <TextBlock
+                                                        Classes="Muted Figures"
+                                                        Text="{Binding When}"
+                                                        VerticalAlignment="Center" />
+                                                    <c:StatusPill
+                                                        Grid.Column="1"
+                                                        IsVisible="{Binding HasOutcome}"
+                                                        Text="{Binding Outcome}"
+                                                        Tone="{Binding Tone}" />
+                                                    <TextBlock
+                                                        Classes="Muted Figures"
+                                                        Grid.Column="2"
+                                                        Text="{Binding Duration}"
+                                                        TextAlignment="Right"
+                                                        VerticalAlignment="Center" />
+                                                    <TextBlock
+                                                        Classes="Label Figures"
+                                                        Grid.Column="3"
+                                                        Text="{Binding Total}"
+                                                        TextAlignment="Right"
+                                                        VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
@@ -202,6 +197,6 @@
                     </Border>
                 </Grid>
             </StackPanel>
-        </ScrollViewer>
-    </DockPanel>
+        </Panel>
+    </c:AppPage>
 </UserControl>

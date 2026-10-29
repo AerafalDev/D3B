@@ -1,46 +1,23 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using D3B.App.Controls;
-using D3B.Bot.Activities;
 using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>A zone's sub-areas: those where the resources asked for grow first, the zone drawn from the atlas, and what the activity says it leads to (D127).</summary>
+/// <summary>A zone's sub-areas: those where the resources asked for grow first, then any other (D127).</summary>
 /// <remarks>
 /// The sub-areas chosen come first, in their order, then the others where the resources grow, the most of them first, then
-/// the lowest; a click chooses or leaves one, and the box still adds any other. The map and the figures are the
-/// activity's preview of its settings, reckoned from the pack as they change.
+/// the lowest; a click chooses or leaves one, and the box still adds any other. The zone they make is drawn beside the
+/// settings, with the activity's preview (D159).
 /// </remarks>
 internal sealed partial class SubAreasFieldViewModel : GamesFieldViewModel
 {
     private const int MostSuggestions = 8;
 
     private string? _shown;
-    private SettingsPreview? _shownPreview;
 
     /// <summary>Gets the sub-areas suggested, those chosen first.</summary>
     [ObservableProperty]
     public partial IReadOnlyList<SuggestionViewModel> Suggestions { get; private set; } = [];
-
-    /// <summary>Gets the zone, as its mini-map draws it, once the activity says what its settings lead to.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasZone))]
-    public partial ZoneScene? Zone { get; private set; }
-
-    /// <summary>Gets the figures the activity gives of its settings.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasFigures))]
-    public partial IReadOnlyList<FigureViewModel> Figures { get; private set; } = [];
-
-    /// <summary>Gets whether the zone holds isolated maps, which its legend then names (D149).</summary>
-    [ObservableProperty]
-    public partial bool HasIsolated { get; private set; }
-
-    /// <summary>Gets whether a zone is drawn.</summary>
-    public bool HasZone => Zone is not null;
-
-    /// <summary>Gets whether the activity gives figures.</summary>
-    public bool HasFigures => Figures.Count > 0;
 
     /// <inheritdoc/>
     public override bool IsWide => true;
@@ -82,15 +59,13 @@ internal sealed partial class SubAreasFieldViewModel : GamesFieldViewModel
         var resources = Editor.SuggestionsOf(Definition);
         var within = Editor.WithinOf(Definition);
         var chosen = Definition.GetValues(Draft).Cast<int>().ToList();
-        var preview = Editor.Preview;
         var key = $"{string.Join(',', resources)}|{within}|{string.Join(',', chosen)}|{Editor.Localizer.Culture.Name}";
 
         // Read on every check of the settings: the lists are made again only when what they show changed.
-        if (key == _shown && ReferenceEquals(preview, _shownPreview))
+        if (key == _shown)
             return;
 
         _shown = key;
-        _shownPreview = preview;
 
         var holding = Editor.Game?.SubAreasHolding(resources, within) ?? [];
         var suggestions = new List<SuggestionViewModel>();
@@ -102,11 +77,6 @@ internal sealed partial class SubAreasFieldViewModel : GamesFieldViewModel
             suggestions.Add(Suggestion(subArea.SubArea.Id, subArea, chosen));
 
         Suggestions = suggestions;
-        Zone = preview is { Zone.Length: > 0 } && Editor.Atlas is { } atlas
-            ? ZoneScenes.Of(preview.Zone, atlas, tour: false, preview.LandmarkMapId, Editor.Players.FirstOrDefault(player => player.MapId is not null)?.MapId)
-            : null;
-        HasIsolated = preview is not null && preview.Zone.Any(map => map.State is ZoneMapState.Isolated);
-        Figures = preview is null || Editor.Says is not { } says ? [] : [.. preview.Figures.Select(figure => new FigureViewModel(says.Say(figure.Value), says.Say(figure.Label)))];
     }
 
     private SuggestionViewModel Suggestion(int id, SubAreaResources? held, IReadOnlyList<int> chosen)

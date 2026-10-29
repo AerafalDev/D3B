@@ -28,8 +28,9 @@ bot's map from the pack as its character moves, with its path, elements, NPCs an
 its logs page shows each bot's journal of its actions and the host's problems; its protocol inspector shows a bot's game
 frames decoded as they go, the login ticket hidden, or replays a capture; its settings page holds the client's display
 time and D3B's other delays, which a slow machine raises, and the time between two actions, the captures, the language
-and the theme. Next: a redesign of the app's interface, then
-the owner's harvesting settings, then the app published with its data and the repository public. See the [roadmap](docs/roadmap.md).
+and the theme. The app was redesigned page by page: a sidebar, one scale of sizes, Lucide's icons, short texts with their help in
+tooltips, the profile editor on a page of its own beside its zone's preview, dialogs and toasts. Next: the owner's
+harvesting settings, then the app published with its data and the repository public. See the [roadmap](docs/roadmap.md).
 
 ## Building
 
@@ -73,4 +74,4 @@ configuration, in seconds, such as `--Delays:Display 1.5`.
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE). The app's icons are Lucide's, under its own license: see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

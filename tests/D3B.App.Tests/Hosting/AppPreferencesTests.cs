@@ -69,10 +69,13 @@ public sealed class AppPreferencesTests
 
         var main = new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), preferences);
 
-        main.SwitchLanguageCommand.Execute(null);
-        main.Settings.SwitchThemeCommand.Execute(null);
+        main.Settings.UseFrenchCommand.Execute(null);
+        main.Settings.UseLightCommand.Execute(null);
+        main.ToggleSidebarCommand.Execute(null);
 
         Assert.Equal(("fr", AppPreferences.Light), (AppPreferences.Load(path).Language, AppPreferences.Load(path).Theme));
+        Assert.True(AppPreferences.Load(path).IsSidebarCollapsed);
+        Assert.False(new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), AppPreferences.Load(path)).IsSidebarExpanded);
 
         main.Settings.UseDarkCommand.Execute(null);
 

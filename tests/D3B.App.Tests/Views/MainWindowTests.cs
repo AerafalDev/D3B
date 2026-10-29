@@ -65,11 +65,13 @@ public sealed class MainWindowTests : IAsyncDisposable
 
                 var english = Texts(window);
 
-                main.SwitchLanguageCommand.Execute(null);
+                Drawings.Draw(window, "bots-en");
+                main.Settings.UseFrenchCommand.Execute(null);
                 Dispatcher.UIThread.RunJobs();
 
                 var french = Texts(window);
 
+                Drawings.Draw(window, "bots-fr");
                 localizer.Use(Localizer.English);
                 window.Close();
 
@@ -80,17 +82,52 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Bots", english);
         Assert.Contains("Character", english);
         Assert.Contains("Level 200", english);
-        Assert.Contains("Connected", english);
+        // Connected goes without saying: only a bot that is not says it.
+        Assert.DoesNotContain("Connected", english);
         Assert.Contains("Patrol", english);
         Assert.Contains("Start", english);
-        Assert.Contains("EN", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Niveau 200", french);
-        Assert.Contains("Connecté", french);
         Assert.Contains("Démarrer", french);
         Assert.Contains("En marche", french);
-        Assert.Contains("FR", french);
         Assert.DoesNotContain("Start", french);
+    }
+
+    [Fact]
+    public async Task ASidebarItemCheckedShowsItsPageAndAPageShownChecksItsItem()
+    {
+        using var host = TestHosts.Of(_play);
+        var runner = await TestHosts.RunningAsync(host);
+
+        var (shown, checkedItem) = await OnTheUIThreadAsync(() =>
+        {
+            var main = new MainViewModel(runner, Localizer.Instance);
+            var window = new MainWindow { DataContext = main };
+
+            main.Refresh();
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var items = window.GetVisualDescendants().OfType<ShadUI.SidebarItem>().ToList();
+
+            // Checked as a key or a screen reader checks it, with no click: the page shows all the same.
+            items.Single(item => item.Route == "accounts").IsChecked = true;
+            Dispatcher.UIThread.RunJobs();
+
+            var shown = (main.IsAccountsPage, main.CurrentRoute);
+
+            main.ShowLogsCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var checkedItem = items.Single(item => item.IsChecked == true).Route;
+
+            window.Close();
+
+            return (shown, checkedItem);
+        });
+
+        Assert.Equal((true, "accounts"), shown);
+        Assert.Equal("logs", checkedItem);
     }
 
     [Fact]
@@ -123,7 +160,9 @@ public sealed class MainWindowTests : IAsyncDisposable
             var english = Texts(window);
             var shown = new List<bool> { window.GetVisualDescendants().Contains(control) };
 
-            main.SwitchLanguageCommand.Execute(null);
+            Drawings.Draw(window, "module-en");
+
+            main.Settings.UseFrenchCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
             titles.Add(page.Title);
 
@@ -179,7 +218,11 @@ public sealed class MainWindowTests : IAsyncDisposable
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
+            Drawings.Draw(window, "accounts-en");
             main.ShowProfilesCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+            Drawings.Draw(window, "profiles-en");
             main.Profiles.Items[0].EditCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
@@ -188,13 +231,15 @@ public sealed class MainWindowTests : IAsyncDisposable
             var english = texts.ToList();
 
             texts.Clear();
-            main.SwitchLanguageCommand.Execute(null);
+            main.Settings.UseFrenchCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
+            Drawings.Draw(window, "profiles-edit-fr");
             main.ShowAccountsCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
+            Drawings.Draw(window, "accounts-fr");
             localizer.Use(Localizer.English);
             window.Close();
 
@@ -258,19 +303,23 @@ public sealed class MainWindowTests : IAsyncDisposable
             var journal = (main.IsLogsPage, main.Logs.Source?.Name);
 
             texts.AddRange(Texts(window));
+            Drawings.Draw(window, "logs-en");
             main.ShowInspectorCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
+            Drawings.Draw(window, "inspector-en");
 
             var english = texts.ToList();
 
             texts.Clear();
-            main.SwitchLanguageCommand.Execute(null);
+            main.Settings.UseFrenchCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
+            Drawings.Draw(window, "inspector-fr");
             main.ShowLogsCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
+            Drawings.Draw(window, "logs-fr");
             localizer.Use(Localizer.English);
             window.Close();
 
@@ -280,16 +329,16 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Equal((true, "Character"), journal);
         Assert.Contains("Logs", english);
         Assert.Contains("Plays through the game connection", english);
-        Assert.Contains("Warnings and errors", english);
-        Assert.Contains("Protocol inspector", english);
+        Assert.Contains("Warnings", english);
+        Assert.Contains("Inspector", english);
         Assert.Contains(nameof(AuthenticationRequest), english);
         Assert.Contains("understood", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Inspecteur de protocole", french);
+        Assert.Contains("Inspecteur", french);
         Assert.Contains("compris", french);
         Assert.Contains("Journaux", french);
         Assert.Contains("Joue par la connexion de jeu", french);
-        Assert.Contains("Avertissements et erreurs", french);
+        Assert.Contains("Alertes", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
 
@@ -329,7 +378,7 @@ public sealed class MainWindowTests : IAsyncDisposable
             var map = (main.IsMapPage, main.IsBotsPage, main.Map.Bot?.Name, main.Map.Scene?.Character);
             var english = Texts(window);
 
-            main.SwitchLanguageCommand.Execute(null);
+            main.Settings.UseFrenchCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
             var french = Texts(window);
@@ -344,13 +393,11 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Map", english);
         Assert.Contains("4,-18", english);
         Assert.Contains("Sub-area 440, cell 300", english);
-        Assert.Contains("Zones and floors", english);
-        Assert.Contains("Not described", english);
+        Assert.Contains("Layers", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Carte", french);
         Assert.Contains("Sous-zone 440, cellule 300", french);
-        Assert.Contains("Zones et étages", french);
-        Assert.Contains("Non décrit", french);
+        Assert.Contains("Calques", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
 }

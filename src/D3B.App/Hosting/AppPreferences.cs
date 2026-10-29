@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace D3B.App.Hosting;
 
-/// <summary>What the app remembers of its own: its language and theme, and the host's settings it changed, in a file of its own beside the database (D101, D151).</summary>
+/// <summary>What the app remembers of its own: its language and theme, its sidebar folded or not, and the host's settings it changed, in a file of its own beside the database (D101, D151, D159).</summary>
 /// <remarks>
 /// <para>
 /// Read before the window shows, while the host, and its database, still get ready: the window opens in the language and
@@ -40,14 +40,18 @@ internal sealed class AppPreferences
     /// <summary>Gets the theme the app was left in, if it was changed.</summary>
     public string? Theme { get; private set; }
 
+    /// <summary>Gets whether the sidebar was left folded to its icons.</summary>
+    public bool IsSidebarCollapsed { get; private set; }
+
     /// <summary>Gets the host's settings the app changed, by their configuration's keys, which it gives the host as it starts.</summary>
     public IReadOnlyDictionary<string, string?> Host => _host.ToDictionary(setting => setting.Key, string? (setting) => setting.Value, StringComparer.OrdinalIgnoreCase);
 
-    private AppPreferences(string path, string? language, string? theme, IReadOnlyDictionary<string, string>? host)
+    private AppPreferences(string path, string? language, string? theme, bool sidebarCollapsed, IReadOnlyDictionary<string, string>? host)
     {
         Path = path;
         Language = language;
         Theme = theme;
+        IsSidebarCollapsed = sidebarCollapsed;
         _host = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (key, value) in host ?? new Dictionary<string, string>())
@@ -68,11 +72,11 @@ internal sealed class AppPreferences
         {
             var stored = JsonSerializer.Deserialize<Stored>(File.ReadAllText(path));
 
-            return new AppPreferences(path, stored?.Language, stored?.Theme, stored?.Host);
+            return new AppPreferences(path, stored?.Language, stored?.Theme, stored?.SidebarCollapsed ?? false, stored?.Host);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
-            return new AppPreferences(path, null, null, null);
+            return new AppPreferences(path, null, null, false, null);
         }
     }
 
@@ -89,6 +93,14 @@ internal sealed class AppPreferences
     public void RememberTheme(string theme)
     {
         Theme = theme;
+        Save();
+    }
+
+    /// <summary>Remembers whether the sidebar is folded to its icons.</summary>
+    /// <param name="collapsed">Whether it is.</param>
+    public void RememberSidebar(bool collapsed)
+    {
+        IsSidebarCollapsed = collapsed;
         Save();
     }
 
@@ -114,7 +126,7 @@ internal sealed class AppPreferences
         try
         {
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Theme, _host.Count > 0 ? _host : null), _json));
+            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Theme, IsSidebarCollapsed ? true : null, _host.Count > 0 ? _host : null), _json));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -122,5 +134,5 @@ internal sealed class AppPreferences
         }
     }
 
-    private sealed record Stored(string? Language, string? Theme, IReadOnlyDictionary<string, string>? Host);
+    private sealed record Stored(string? Language, string? Theme, bool? SidebarCollapsed, IReadOnlyDictionary<string, string>? Host);
 }

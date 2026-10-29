@@ -146,7 +146,7 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
 
         preferences.RememberHost(new Dictionary<string, string?> { [BotDelays.DisplayKey] = "0.1", [RelayTimeouts.HoldKey] = "600" });
 
-        var settings = new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { });
+        var settings = new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts());
 
         Assert.Equal(0.5m, settings.Display.Value);
         Assert.Equal(5m, settings.RelayWaits[2].Value);
@@ -163,7 +163,7 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         settings.RecordsCaptures = true;
 
         Assert.Equal("True", AppPreferences.Load(PreferencesPath).Host[RelaySettings.CapturesEnabledKey]);
-        Assert.True(new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }).RecordsCaptures);
+        Assert.True(new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts()).RecordsCaptures);
 
         settings.RecordsCaptures = false;
 
@@ -184,13 +184,12 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
 
         Assert.True(settings.IsFrench);
         Assert.False(settings.IsDark);
-        Assert.Equal("FR", main.LanguageCode);
         Assert.Equal("Temps d'affichage", settings.Display.Label);
         Assert.Equal("Mesuré : 0,5 s", settings.Display.DefaultText);
         Assert.Equal(("fr", AppPreferences.Light), (AppPreferences.Load(PreferencesPath).Language, AppPreferences.Load(PreferencesPath).Theme));
 
-        main.SwitchLanguageCommand.Execute(null);
-        settings.SwitchThemeCommand.Execute(null);
+        settings.UseEnglishCommand.Execute(null);
+        settings.UseDarkCommand.Execute(null);
 
         Assert.True(settings.IsEnglish);
         Assert.True(settings.IsDark);

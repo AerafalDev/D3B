@@ -16,13 +16,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The app's window: where the bots' host stands, its pages in the rail, the language and the theme (D14, D91, D96, D101, D111, D120, D151).</summary>
+/// <summary>The app's window: where the bots' host stands, its pages in the sidebar, its dialogs and toasts (D14, D91, D96, D101, D111, D120, D151, D159).</summary>
 internal sealed partial class MainViewModel : ObservableObject
 {
     private readonly HostRunner _host;
     private readonly Localizer _localizer;
     private readonly AppPreferences? _preferences;
     private bool _pagesRead;
+
+    /// <summary>Gets the dialog the window shows over its pages.</summary>
+    public Dialogs Dialogs { get; } = new();
+
+    /// <summary>Gets what the window says in its toasts.</summary>
+    public Toasts Toasts { get; } = new();
 
     /// <summary>Gets the bots page.</summary>
     public BotsViewModel Bots { get; }
@@ -124,9 +130,20 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string? HostFailure { get; private set; }
 
-    /// <summary>Gets the language the app is in, as a code.</summary>
+    /// <summary>Gets or sets the page the sidebar marks: <c>bots</c>, <c>accounts</c>, <c>settings</c> and the others, or a module's page's route.</summary>
     [ObservableProperty]
-    public partial string LanguageCode { get; private set; } = "";
+    public partial string CurrentRoute { get; set; } = "bots";
+
+    /// <summary>Gets whether the sidebar shows its pages' names, or their icons alone.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SidebarToggleText), nameof(SidebarToggleIcon))]
+    public partial bool IsSidebarExpanded { get; private set; } = true;
+
+    /// <summary>Gets what the sidebar's button does, said.</summary>
+    public string SidebarToggleText => _localizer[IsSidebarExpanded ? "CollapseSidebar" : "ExpandSidebar"];
+
+    /// <summary>Gets the icon of the sidebar's button, by its name among the app's.</summary>
+    public string SidebarToggleIcon => IsSidebarExpanded ? "SidebarClose" : "SidebarOpen";
 
     /// <summary>Gets whether a module's page is the one the window shows.</summary>
     public bool IsModulePage => SelectedPage is not null;
@@ -141,16 +158,18 @@ internal sealed partial class MainViewModel : ObservableObject
         _localizer = localizer;
         _preferences = preferences;
 
+        IsSidebarExpanded = !(preferences?.IsSidebarCollapsed ?? false);
+
         var choice = new BotChoice();
 
-        Bots = new BotsViewModel(localizer, ShowJournalOf, ShowMapOf);
-        Accounts = new AccountsViewModel(localizer);
-        Profiles = new ProfilesViewModel(localizer);
+        Bots = new BotsViewModel(localizer, ShowJournalOf, ShowMapOf, Toasts);
+        Accounts = new AccountsViewModel(localizer, Dialogs);
+        Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts);
         Map = new MapViewModel(localizer, choice);
         Statistics = new StatisticsViewModel(localizer);
-        Logs = new LogsViewModel(localizer, choice);
+        Logs = new LogsViewModel(localizer, choice, Toasts);
         Inspector = new InspectorViewModel(localizer, choice);
-        Settings = new SettingsViewModel(localizer, preferences, UseLanguage);
+        Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts);
     }
 
     /// <summary>Reads the host and its bots again, in the language chosen.</summary>
@@ -164,7 +183,7 @@ internal sealed partial class MainViewModel : ObservableObject
         IsStopping = status is HostStatus.Stopping or HostStatus.Stopped;
         IsFailed = status is HostStatus.Failed;
         HostFailure = IsFailed ? _host.Failure : null;
-        LanguageCode = _localizer["LanguageCode"];
+        OnPropertyChanged(nameof(SidebarToggleText));
         (HostTitle, HostTone) = status switch
         {
             HostStatus.Starting => (_localizer["HostStatusStarting"], Tone.Info),
@@ -204,6 +223,44 @@ internal sealed partial class MainViewModel : ObservableObject
         RefreshPages(services);
     }
 
+    /// <summary>Shows the page of a route, as the sidebar names it.</summary>
+    /// <param name="route">The route: <c>bots</c>, <c>accounts</c> and the others, or a module's page's.</param>
+    public void Navigate(string route)
+    {
+        ArgumentNullException.ThrowIfNull(route);
+
+        switch (route)
+        {
+            case "bots":
+                ShowBots();
+                break;
+            case "accounts":
+                ShowAccounts();
+                break;
+            case "profiles":
+                ShowProfiles();
+                break;
+            case "map":
+                ShowMap();
+                break;
+            case "statistics":
+                ShowStatistics();
+                break;
+            case "logs":
+                ShowLogs();
+                break;
+            case "inspector":
+                ShowInspector();
+                break;
+            case "settings":
+                ShowSettings();
+                break;
+            default:
+                Pages.FirstOrDefault(page => page.Route == route)?.ShowCommand.Execute(null);
+                break;
+        }
+    }
+
     /// <summary>Replaces the module's page whose own code threw what nothing else caught on the UI's thread.</summary>
     /// <param name="exception">What was thrown.</param>
     /// <returns>Whether a page's code threw it, and the page now shows it instead: else the app's own fault, not handled.</returns>
@@ -235,11 +292,19 @@ internal sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleSidebar()
+    {
+        IsSidebarExpanded = !IsSidebarExpanded;
+        _preferences?.RememberSidebar(!IsSidebarExpanded);
+    }
+
+    [RelayCommand]
     private void ShowAccounts()
     {
         Select(null);
         IsBotsPage = false;
         IsAccountsPage = true;
+        CurrentRoute = "accounts";
     }
 
     [RelayCommand]
@@ -248,6 +313,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Select(null);
         IsBotsPage = false;
         IsProfilesPage = true;
+        CurrentRoute = "profiles";
     }
 
     [RelayCommand]
@@ -256,6 +322,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Select(null);
         IsBotsPage = false;
         IsMapPage = true;
+        CurrentRoute = "map";
         Map.Refresh(_host.Services);
     }
 
@@ -265,6 +332,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Select(null);
         IsBotsPage = false;
         IsStatisticsPage = true;
+        CurrentRoute = "statistics";
         Statistics.Refresh(_host.Services);
     }
 
@@ -274,6 +342,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Select(null);
         IsBotsPage = false;
         IsLogsPage = true;
+        CurrentRoute = "logs";
         Logs.Refresh(_host.Services);
     }
 
@@ -283,6 +352,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Select(null);
         IsBotsPage = false;
         IsInspectorPage = true;
+        CurrentRoute = "inspector";
         Inspector.Refresh(_host.Services);
     }
 
@@ -292,6 +362,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Select(null);
         IsBotsPage = false;
         IsSettingsPage = true;
+        CurrentRoute = "settings";
         Settings.Refresh(_host.Services);
     }
 
@@ -313,6 +384,7 @@ internal sealed partial class MainViewModel : ObservableObject
             other.IsSelected = other == page;
 
         SelectedPage = page;
+        CurrentRoute = page?.Route ?? "bots";
         IsBotsPage = page is null;
         IsAccountsPage = false;
         IsProfilesPage = false;
@@ -329,11 +401,5 @@ internal sealed partial class MainViewModel : ObservableObject
         _localizer.Use(culture);
         _preferences?.RememberLanguage(_localizer.Culture.TwoLetterISOLanguageName);
         Refresh();
-    }
-
-    [RelayCommand]
-    private void SwitchLanguage()
-    {
-        UseLanguage(_localizer.Culture.Equals(Localizer.French) ? Localizer.English : Localizer.French);
     }
 }

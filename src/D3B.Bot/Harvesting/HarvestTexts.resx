@@ -45,40 +45,40 @@
     <value>Harvesting</value>
   </data>
   <data name="SectionWhat" xml:space="preserve">
-    <value>What it harvests</value>
+    <value>Harvest</value>
   </data>
   <data name="SectionWhere" xml:space="preserve">
-    <value>Where</value>
+    <value>Place</value>
   </data>
   <data name="SectionBank" xml:space="preserve">
-    <value>When it banks</value>
+    <value>Bank</value>
   </data>
   <data name="Resources" xml:space="preserve">
-    <value>Resources, by priority</value>
+    <value>Resources</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
-    <value>In this order, of any profession or none.</value>
+    <value>In order, the first first, of any profession or none.</value>
   </data>
   <data name="EverythingKnown" xml:space="preserve">
-    <value>Everything each character can harvest at its level</value>
+    <value>Everything the character can harvest</value>
   </data>
   <data name="Area" xml:space="preserve">
     <value>Area</value>
   </data>
   <data name="AreaHelp" xml:space="preserve">
-    <value>Alone: its sub-areas where the resources grow.</value>
+    <value>Alone, it stands for its sub-areas where the resources grow.</value>
   </data>
   <data name="SubAreas" xml:space="preserve">
     <value>Sub-areas</value>
   </data>
   <data name="SubAreasHelp" xml:space="preserve">
-    <value>Without an area: from any area.</value>
+    <value>Those where the resources grow come first.</value>
   </data>
   <data name="FullAt" xml:space="preserve">
     <value>Pods full at</value>
   </data>
   <data name="Deposit" xml:space="preserve">
-    <value>What goes to the bank</value>
+    <value>What goes</value>
   </data>
   <data name="DepositHarvest" xml:space="preserve">
     <value>What harvesting brings</value>
@@ -198,10 +198,10 @@
     <value>Still full once banked, {0} of {1} pods: what is worn weighs more than the {2}% share. Raise it.</value>
   </data>
   <data name="IsolatedMaps" xml:space="preserve">
-    <value>Go through the isolated maps too</value>
+    <value>Isolated maps</value>
   </data>
   <data name="IsolatedMapsHelp" xml:space="preserve">
-    <value>Reached only far round; gone through last.</value>
+    <value>Reached only far round, gone through last.</value>
   </data>
   <data name="FigureIsolatedOne" xml:space="preserve">
     <value>isolated map, left out</value>
@@ -222,7 +222,7 @@
     <value>After a fight</value>
   </data>
   <data name="AfterFightHelp" xml:space="preserve">
-    <value>Until step 9, you fight.</value>
+    <value>D3B does not fight yet: you play the fight.</value>
   </data>
   <data name="AfterFightResume" xml:space="preserve">
     <value>Resume</value>
@@ -267,7 +267,7 @@
     <value>{0} +{1} XP</value>
   </data>
   <data name="DepositTo" xml:space="preserve">
-    <value>Where it deposits</value>
+    <value>Chest</value>
   </data>
   <data name="DepositToOwnChest" xml:space="preserve">
     <value>Its own chest in the bank</value>
@@ -276,7 +276,7 @@
     <value>The guild's chest</value>
   </data>
   <data name="DepositToHelp" xml:space="preserve">
-    <value>Refused or none reached: its own chest.</value>
+    <value>What the guild's chest refuses goes to its own.</value>
   </data>
   <data name="SectionUpkeep" xml:space="preserve">
     <value>Upkeep</value>
@@ -288,16 +288,16 @@
     <value>As soon as a harvest gives one.</value>
   </data>
   <data name="Heal" xml:space="preserve">
-    <value>Heal under a share of life</value>
+    <value>Heal</value>
   </data>
   <data name="HealBelow" xml:space="preserve">
     <value>Heal under</value>
   </data>
   <data name="Food" xml:space="preserve">
-    <value>Food, in this order</value>
+    <value>Food</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
-    <value>Until the life is whole.</value>
+    <value>In order, until life is full.</value>
   </data>
   <data name="DoingOpenBag" xml:space="preserve">
     <value>Opening {0}</value>

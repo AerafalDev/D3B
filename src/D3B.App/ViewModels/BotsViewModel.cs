@@ -14,27 +14,34 @@ internal sealed partial class BotsViewModel : ObservableObject
     private readonly Localizer _localizer;
     private readonly Action<CharacterKey>? _showJournal;
     private readonly Action<CharacterKey>? _showMap;
+    private readonly Toasts? _toasts;
 
     /// <summary>Gets the bots, in the order the host made them.</summary>
     public ObservableCollection<BotViewModel> Items { get; } = [];
 
     /// <summary>Gets whether no bot has been made yet.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasItems))]
     public partial bool IsEmpty { get; private set; } = true;
 
-    /// <summary>Gets how many bots there are, and how many a client plays.</summary>
+    /// <summary>Gets how many bots there are, which the sidebar says beside the page's name.</summary>
     [ObservableProperty]
-    public partial string Summary { get; private set; } = "";
+    public partial int Count { get; private set; }
+
+    /// <summary>Gets whether there is a bot.</summary>
+    public bool HasItems => !IsEmpty;
 
     /// <summary>Initializes a new instance of the <see cref="BotsViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
     /// <param name="showJournal">Shows a bot's journal on the logs page, as its card asks, or <see langword="null"/> when no page shows it.</param>
     /// <param name="showMap">Shows a bot's map on the map page, as its card asks, or <see langword="null"/> when no page shows it.</param>
-    public BotsViewModel(Localizer localizer, Action<CharacterKey>? showJournal = null, Action<CharacterKey>? showMap = null)
+    /// <param name="toasts">What the window says in its toasts, of what a bot meets, or <see langword="null"/> to say nothing.</param>
+    public BotsViewModel(Localizer localizer, Action<CharacterKey>? showJournal = null, Action<CharacterKey>? showMap = null, Toasts? toasts = null)
     {
         _localizer = localizer;
         _showJournal = showJournal;
         _showMap = showMap;
+        _toasts = toasts;
     }
 
     /// <summary>Reads the bots again: those the host made since are added, and every one is read.</summary>
@@ -49,7 +56,7 @@ internal sealed partial class BotsViewModel : ObservableObject
                 if (_byKey.ContainsKey(bot.Key))
                     continue;
 
-                var item = new BotViewModel(bot, services, _localizer, _showJournal, _showMap);
+                var item = new BotViewModel(bot, services, _localizer, _showJournal, _showMap, _toasts);
 
                 _byKey.Add(bot.Key, item);
                 Items.Add(item);
@@ -60,6 +67,6 @@ internal sealed partial class BotsViewModel : ObservableObject
         }
 
         IsEmpty = Items.Count == 0;
-        Summary = _localizer.Format("BotsSummary", _localizer.Plural("Bots", Items.Count), _localizer.Plural("Connected", Items.Count(item => item.IsConnected)));
+        Count = Items.Count;
     }
 }

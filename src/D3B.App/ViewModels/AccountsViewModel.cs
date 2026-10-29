@@ -33,9 +33,8 @@ internal sealed partial class AccountsViewModel : ObservableObject
     /// <summary>Gets the app's texts.</summary>
     public Localizer Localizer { get; }
 
-    /// <summary>Gets how many accounts and characters D3B saw.</summary>
-    [ObservableProperty]
-    public partial string Summary { get; private set; } = "";
+    /// <summary>Gets the window's dialogs.</summary>
+    public Dialogs Dialogs { get; }
 
     /// <summary>Gets whether D3B saw no account yet.</summary>
     [ObservableProperty]
@@ -55,9 +54,11 @@ internal sealed partial class AccountsViewModel : ObservableObject
 
     /// <summary>Initializes a new instance of the <see cref="AccountsViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
-    public AccountsViewModel(Localizer localizer)
+    /// <param name="dialogs">The window's dialogs, which ask before an account is forgotten.</param>
+    public AccountsViewModel(Localizer localizer, Dialogs dialogs)
     {
         Localizer = localizer;
+        Dialogs = dialogs;
     }
 
     /// <summary>Reads the accounts again, in the language chosen.</summary>
@@ -134,6 +135,5 @@ internal sealed partial class AccountsViewModel : ObservableObject
         }
 
         IsEmpty = Items.Count == 0;
-        Summary = Localizer.Format("AccountsSummary", Localizer.Plural("Accounts", Items.Count), Localizer.Plural("Characters", accounts.Characters.Count));
     }
 }

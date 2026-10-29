@@ -45,40 +45,40 @@
     <value>Récolte</value>
   </data>
   <data name="SectionWhat" xml:space="preserve">
-    <value>Ce qu'il récolte</value>
+    <value>Récolte</value>
   </data>
   <data name="SectionWhere" xml:space="preserve">
-    <value>Où</value>
+    <value>Lieu</value>
   </data>
   <data name="SectionBank" xml:space="preserve">
-    <value>Quand il va en banque</value>
+    <value>Banque</value>
   </data>
   <data name="Resources" xml:space="preserve">
-    <value>Ressources, par priorité</value>
+    <value>Ressources</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
-    <value>Dans cet ordre, de n'importe quel métier ou sans métier.</value>
+    <value>Dans l'ordre, la première d'abord, de tout métier ou sans métier.</value>
   </data>
   <data name="EverythingKnown" xml:space="preserve">
-    <value>Tout ce que chaque perso sait récolter à son niveau</value>
+    <value>Tout ce que le perso sait récolter</value>
   </data>
   <data name="Area" xml:space="preserve">
     <value>Zone</value>
   </data>
   <data name="AreaHelp" xml:space="preserve">
-    <value>Seule : ses sous-zones où poussent les ressources.</value>
+    <value>Seule, elle vaut ses sous-zones où poussent les ressources.</value>
   </data>
   <data name="SubAreas" xml:space="preserve">
     <value>Sous-zones</value>
   </data>
   <data name="SubAreasHelp" xml:space="preserve">
-    <value>Sans zone : de n'importe quelle zone.</value>
+    <value>Celles où poussent les ressources d'abord.</value>
   </data>
   <data name="FullAt" xml:space="preserve">
     <value>Pods pleins à</value>
   </data>
   <data name="Deposit" xml:space="preserve">
-    <value>Ce qui part en banque</value>
+    <value>Ce qui part</value>
   </data>
   <data name="DepositHarvest" xml:space="preserve">
     <value>Ce que la récolte rapporte</value>
@@ -198,10 +198,10 @@
     <value>Encore plein après la banque, {0} sur {1} pods : ce que le perso porte pèse plus que le seuil de {2} %. Monte-le.</value>
   </data>
   <data name="IsolatedMaps" xml:space="preserve">
-    <value>Parcourir aussi les cartes isolées</value>
+    <value>Cartes isolées</value>
   </data>
   <data name="IsolatedMapsHelp" xml:space="preserve">
-    <value>Joignables seulement par un long détour ; parcourues en dernier.</value>
+    <value>Joignables seulement par un long détour, parcourues en dernier.</value>
   </data>
   <data name="FigureIsolatedOne" xml:space="preserve">
     <value>carte isolée, laissée</value>
@@ -222,7 +222,7 @@
     <value>Après un combat</value>
   </data>
   <data name="AfterFightHelp" xml:space="preserve">
-    <value>Jusqu'à l'étape 9, c'est toi qui combats.</value>
+    <value>D3B ne combat pas encore : tu joues le combat.</value>
   </data>
   <data name="AfterFightResume" xml:space="preserve">
     <value>Reprendre</value>
@@ -267,7 +267,7 @@
     <value>{0} +{1} XP</value>
   </data>
   <data name="DepositTo" xml:space="preserve">
-    <value>Où il dépose</value>
+    <value>Coffre</value>
   </data>
   <data name="DepositToOwnChest" xml:space="preserve">
     <value>Son coffre en banque</value>
@@ -276,7 +276,7 @@
     <value>Le coffre de guilde</value>
   </data>
   <data name="DepositToHelp" xml:space="preserve">
-    <value>Refusé ou introuvable : son coffre à lui.</value>
+    <value>Ce que le coffre de guilde refuse va dans le sien.</value>
   </data>
   <data name="SectionUpkeep" xml:space="preserve">
     <value>Entretien</value>
@@ -288,16 +288,16 @@
     <value>Dès qu'une récolte en donne un.</value>
   </data>
   <data name="Heal" xml:space="preserve">
-    <value>Se soigner sous une part de vie</value>
+    <value>Se soigner</value>
   </data>
   <data name="HealBelow" xml:space="preserve">
     <value>Se soigner sous</value>
   </data>
   <data name="Food" xml:space="preserve">
-    <value>En mangeant, dans cet ordre</value>
+    <value>Nourriture</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
-    <value>Jusqu'à la vie pleine.</value>
+    <value>Dans l'ordre, jusqu'à la vie pleine.</value>
   </data>
   <data name="DoingOpenBag" xml:space="preserve">
     <value>Ouvre : {0}</value>

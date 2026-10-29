@@ -17,6 +17,19 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         return item.Editor!.Sections.SelectMany(section => section.Fields).OfType<T>().Single(field => field.Label == label);
     }
 
+    private static ProfileViewModel NewProfile(ProfilesViewModel page, string name, string activityId)
+    {
+        page.NewCommand.Execute(null);
+
+        var dialog = Assert.IsType<NewProfileViewModel>(page.Dialogs.Current);
+
+        dialog.Name = name;
+        dialog.Activity = dialog.Activities.Single(activity => activity.Definition?.Id == activityId);
+        dialog.CreateCommand.Execute(null);
+
+        return Assert.IsType<ProfileViewModel>(page.Editing);
+    }
+
     public ValueTask DisposeAsync()
     {
         return _store.DisposeAsync();
@@ -36,18 +49,17 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200), (70_002, "Kolossa", 87));
         await _store.Accounts.AssignAsync(TestPlay.Key, lumberjack.Id, ct);
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
 
         Assert.True(page.IsAvailable);
-        Assert.Equal("4 profiles, 1 character has one", page.Summary);
         Assert.Equal(["Gone", "Lumberjack", "Old", "Stroll"], page.Items.Select(item => item.Name));
 
         var item = page.Items[1];
 
         Assert.Equal("Harvest", item.ActivityName);
-        Assert.Equal("Focus: On Job · Job: Lumberjack · Resources: Chestnut, Ash and 1 more", item.Summary);
+        Assert.Equal("On Job · Lumberjack · Chestnut, Ash and 1 more", item.Summary);
         Assert.Equal(["AE"], item.Players);
         Assert.Equal("1 character", item.PlayersText);
         Assert.False(item.NeedsReview);
@@ -59,7 +71,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         _localizer.Use(Localizer.French);
         page.Refresh(_store.Host.Services);
 
-        Assert.Equal("Focus : On Job · Job : Bûcheron · Resources : Châtaignier, Frêne et 1 de plus", page.Items[1].Summary);
+        Assert.Equal("On Job · Bûcheron · Châtaignier, Frêne et 1 de plus", page.Items[1].Summary);
     }
 
     [Fact]
@@ -67,24 +79,36 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     {
         await _store.OpenedAsync();
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
         Assert.True(page.IsEmpty);
 
         page.NewCommand.Execute(null);
 
-        var item = Assert.Single(page.Items);
+        var dialog = Assert.IsType<NewProfileViewModel>(page.Dialogs.Current);
+
+        Assert.Equal("Harvest", dialog.Activity?.Name);
+        Assert.False(dialog.CreateCommand.CanExecute(null));
+
+        dialog.Name = "Wood";
+        dialog.CreateCommand.Execute(null);
+
+        var item = Assert.IsType<ProfileViewModel>(page.Editing);
 
         Assert.True(item.IsNew && item.IsEditing);
-        Assert.Equal("Harvest", item.EditActivity?.Name);
-        Assert.Equal("Give the profile a name", item.NameProblem);
-        Assert.Equal("New profile", item.Title);
+        Assert.Empty(page.Items);
+        Assert.Equal("Wood", item.Title);
         Assert.False(item.SaveCommand.CanExecute(null));
 
         var heard = new List<string?>();
 
         item.PropertyChanged += (_, e) => heard.Add(e.PropertyName);
+        item.EditName = "";
+
+        Assert.Equal("Give the profile a name", item.NameProblem);
+        Assert.Equal("New profile", item.Title);
+
         item.EditName = "Lumberjack";
 
         // Its header says the name as it is typed.
@@ -105,6 +129,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         var saved = Assert.Single(_store.Profiles.Profiles);
 
         Assert.False(item.IsEditing);
+        Assert.True(page.IsListing);
         Assert.Equal(("Lumberjack", TestStore.HarvestId), (saved.Name, saved.ActivityId));
         Assert.Contains($"\"Job\":{TestReferences.Lumberjack}", saved.Settings, StringComparison.Ordinal);
 
@@ -125,14 +150,12 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         await _store.OpenedAsync();
         await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
-        page.NewCommand.Execute(null);
 
-        var item = page.Items[0];
+        var item = NewProfile(page, "Walk", TestStore.StrollId);
 
-        item.EditActivity = item.Activities.Single(activity => activity.Name == "Stroll");
         item.EditName = "stroll";
 
         Assert.Equal("Another profile has this name", item.NameProblem);
@@ -150,7 +173,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         await _store.OpenedAsync();
         await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack }), TestContext.Current.CancellationToken);
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
 
@@ -242,17 +265,59 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ResourcesAreChosenSeveralAtOnceInADialogSearchedAndFilteredByProfession()
+    {
+        await _store.OpenedAsync();
+        await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack }), TestContext.Current.CancellationToken);
+
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
+
+        page.Refresh(_store.Host.Services);
+        page.Items[0].EditCommand.Execute(null);
+
+        var resources = Field<ResourcesFieldViewModel>(page.Items[0], "Resources");
+
+        Assert.True(resources.CanChoose);
+
+        resources.ChooseCommand.Execute(null);
+
+        var picker = Assert.IsType<ResourcePickerViewModel>(page.Dialogs.Current);
+
+        // Within the profession chosen, by the level it gathers them from.
+        Assert.Equal(["All", "Lumberjack"], picker.Jobs.Select(job => job.Name));
+        Assert.Equal(["Ash", "Chestnut"], picker.Shown.Select(choice => choice.Option.Name));
+        Assert.False(picker.AddCommand.CanExecute(null));
+
+        picker.Search = "CHEST";
+
+        Assert.Equal(["Chestnut"], picker.Shown.Select(choice => choice.Option.Name));
+
+        picker.Jobs[1].ChooseCommand.Execute(null);
+        picker.Search = "";
+        picker.Shown[1].IsChecked = true;
+        picker.Shown[0].IsChecked = true;
+
+        Assert.Equal("Add 2", picker.AddText);
+
+        picker.AddCommand.Execute(null);
+
+        // Added in the order they were checked.
+        Assert.Null(page.Dialogs.Current);
+        Assert.Equal(["Chestnut", "Ash"], resources.Items.Select(row => row.Option.Name));
+        Assert.True(page.Items[0].IsDirty);
+    }
+
+    [Fact]
     public async Task SubAreasAreSoughtWithinTheAreaChosenAndFoundWhateverTheAccents()
     {
         await _store.OpenedAsync();
         _localizer.Use(Localizer.French);
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
-        page.NewCommand.Execute(null);
 
-        var item = page.Items[0];
+        var item = NewProfile(page, "Amakna", TestStore.HarvestId);
         var area = Field<GameFieldViewModel>(item, "Area");
         var subAreas = Field<GamesFieldViewModel>(item, "Sub-areas");
 
@@ -272,7 +337,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         await _store.OpenedAsync();
         await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42 }), TestContext.Current.CancellationToken);
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
 
@@ -290,10 +355,17 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
 
         Assert.Equal(10, Field<NumberFieldViewModel>(item, "Walks").Value);
 
-        item.CancelCommand.Execute(null);
+        // Changed: closing asks first, and leaving drops the changes.
+        item.CloseCommand.Execute(null);
+
+        var question = Assert.IsType<QuestionViewModel>(page.Dialogs.Current);
+
+        question.OtherCommand.Execute(null);
 
         Assert.False(item.IsEditing);
         Assert.Null(item.Editor);
+        Assert.Null(page.Editing);
+        Assert.Null(page.Dialogs.Current);
     }
 
     [Fact]
@@ -302,7 +374,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         await _store.OpenedAsync();
         await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
 
@@ -322,22 +394,73 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task OnlyOneProfileIsEditedAtOnceAndANewOneUnsavedGoesWithItsEditor()
+    public async Task ANewProfileIsNamedInADialogThenEditedOnThePageAloneUntilSaved()
     {
         await _store.OpenedAsync();
         await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
         page.NewCommand.Execute(null);
 
-        Assert.Equal(2, page.Items.Count);
+        var dialog = Assert.IsType<NewProfileViewModel>(page.Dialogs.Current);
 
-        page.Items[1].EditCommand.Execute(null);
+        Assert.False(dialog.CanCreate);
+        Assert.False(dialog.HasNameProblem);
 
+        dialog.Name = "Stroll";
+
+        Assert.Equal("Another profile has this name", dialog.NameProblem);
+
+        dialog.Name = "Walk";
+        dialog.CreateCommand.Execute(null);
+
+        var editing = Assert.IsType<ProfileViewModel>(page.Editing);
+
+        Assert.Null(page.Dialogs.Current);
+        Assert.True(editing.IsNew);
+        Assert.True(editing.IsDirty);
+        Assert.Equal("Walk", editing.EditName);
         Assert.Single(page.Items);
-        Assert.True(page.Items[0].IsEditing);
+
+        page.Items[0].EditCommand.Execute(null);
+
+        Assert.Same(page.Items[0], page.Editing);
+        Assert.False(editing.IsEditing);
+        Assert.Single(page.Items);
+
+        await page.Items[0].SaveCommand.ExecuteAsync(null);
+
+        Assert.True(page.IsListing);
+        Assert.Equal("Stroll saved", Assert.Single(page.Toasts.Recent).Text);
+    }
+
+    [Fact]
+    public async Task ADuplicateStartsFromTheProfilesSettingsUnderANameOfItsOwn()
+    {
+        await _store.OpenedAsync();
+        await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42 }), TestContext.Current.CancellationToken);
+
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
+
+        page.Refresh(_store.Host.Services);
+        page.Items[0].DuplicateCommand.Execute(null);
+
+        var dialog = Assert.IsType<NewProfileViewModel>(page.Dialogs.Current);
+
+        Assert.Equal("Lumberjack (copy)", dialog.Name);
+        Assert.True(dialog.IsCopy);
+
+        dialog.CreateCommand.Execute(null);
+
+        var copy = Assert.IsType<ProfileViewModel>(page.Editing);
+
+        Assert.Equal(42, Field<NumberFieldViewModel>(copy, "Walks").Value);
+
+        await copy.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal(["Lumberjack", "Lumberjack (copy)"], page.Items.Select(item => item.Name));
     }
 
     [Fact]
@@ -346,7 +469,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         await _store.OpenedAsync();
         await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
 
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(_store.Host.Services);
 
@@ -355,11 +478,14 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         item.EditCommand.Execute(null);
         item.AskDeleteCommand.Execute(null);
 
-        Assert.True(item.IsConfirmingDelete);
+        var question = Assert.IsType<QuestionViewModel>(page.Dialogs.Current);
 
-        item.KeepItCommand.Execute(null);
+        Assert.Equal("Delete Stroll?", question.Title);
+        Assert.True(question.IsDestructive);
 
-        Assert.False(item.IsConfirmingDelete);
+        question.CancelCommand.Execute(null);
+
+        Assert.Null(page.Dialogs.Current);
         Assert.Single(_store.Profiles.Profiles);
 
         item.AskDeleteCommand.Execute(null);
@@ -368,5 +494,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.Empty(_store.Profiles.Profiles);
         Assert.Empty(page.Items);
         Assert.True(page.IsEmpty);
+        Assert.True(page.IsListing);
+        Assert.Equal("Stroll deleted", Assert.Single(page.Toasts.Recent).Text);
     }
 }

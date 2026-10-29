@@ -5,186 +5,145 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
     xmlns:vm="clr-namespace:D3B.App.ViewModels.Logs"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
         <Style Selector="Border.LogLine">
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
-            <Setter Property="Padding" Value="4,7" />
+            <Setter Property="Padding" Value="4,8" />
         </Style>
     </UserControl.Styles>
-    <DockPanel>
-        <StackPanel Classes="PageHeader" DockPanel.Dock="Top">
-            <TextBlock Classes="PageTitle" Text="{l:Tr Logs}" />
-            <TextBlock Classes="Small Muted" Text="{Binding Summary}" />
-        </StackPanel>
-        <StackPanel
-            DockPanel.Dock="Top"
-            Margin="32,0,32,14"
-            Spacing="12">
-            <ItemsControl ItemsSource="{Binding Sources}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel ItemSpacing="6" LineSpacing="6" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
+    <c:AppPage Scrolls="False" Title="{l:Tr Logs}">
+        <c:AppPage.Actions>
+            <ComboBox
+                AutomationProperties.Name="{l:Tr LogsSource}"
+                ItemsSource="{Binding Sources}"
+                SelectedItem="{Binding Chosen}"
+                Width="220">
+                <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="vm:LogSourceViewModel">
-                        <Button
-                            Classes="Outline Chip"
-                            Classes.Selected="{Binding IsSelected}"
-                            Command="{Binding SelectCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="7">
-                                <c:StatusPill
-                                    Classes="Dot"
-                                    IsVisible="{Binding IsBot}"
-                                    Tone="{Binding Tone}" />
-                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <c:StatusPill
+                                Classes="Dot"
+                                IsVisible="{Binding IsBot}"
+                                Tone="{Binding Tone}" />
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                <Border
-                    BorderBrush="{DynamicResource BorderColor}"
-                    BorderThickness="1"
-                    CornerRadius="{DynamicResource MdCornerRadius}"
-                    Padding="2">
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </c:AppPage.Actions>
+        <Grid RowDefinitions="Auto,*">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,0,0,16">
+                <Border Classes="Segmented">
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <Button
-                            Classes="Ghost Segment"
+                            Classes="Segment"
                             Classes.Selected="{Binding IsAllLevels}"
                             Command="{Binding ShowAllLevelsCommand}"
                             Content="{l:Tr LevelAll}" />
                         <Button
-                            Classes="Ghost Segment"
+                            Classes="Segment"
                             Classes.Selected="{Binding IsProblems}"
                             Command="{Binding ShowProblemsCommand}"
                             Content="{l:Tr LevelProblems}" />
                         <Button
-                            Classes="Ghost Segment"
+                            Classes="Segment"
                             Classes.Selected="{Binding IsErrors}"
                             Command="{Binding ShowErrorsCommand}"
                             Content="{l:Tr LevelErrors}" />
                     </StackPanel>
                 </Border>
                 <TextBox
+                    AutomationProperties.Name="{l:Tr LogsSearch}"
                     Grid.Column="1"
-                    HorizontalAlignment="Left"
                     Margin="12,0"
-                    MinWidth="220"
+                    MaxWidth="400"
+                    HorizontalAlignment="Left"
+                    MinWidth="240"
                     PlaceholderText="{l:Tr LogsSearch}"
                     Text="{Binding Search}"
-                    VerticalAlignment="Center"
-                    Width="300">
-                    <TextBox.InnerLeftContent>
-                        <c:Icon
-                            Classes="Muted"
-                            Data="{StaticResource IconSearch}"
-                            Height="14"
-                            Margin="10,0,0,0"
-                            Width="14" />
-                    </TextBox.InnerLeftContent>
-                </TextBox>
-                <ToggleButton
-                    Classes="Toggle"
+                    shadui:TextBoxAssist.Clearable="True" />
+                <TextBlock
+                    Classes="Caption Muted Figures"
                     Grid.Column="2"
+                    IsVisible="{Binding !IsEmpty}"
+                    Margin="0,0,12,0"
+                    Text="{Binding Summary}"
+                    VerticalAlignment="Center" />
+                <ToggleButton
+                    AutomationProperties.Name="{l:Tr Follow}"
+                    Classes="Ghost IconButton"
+                    Grid.Column="3"
                     IsChecked="{Binding Follow}"
-                    Margin="0,0,6,0"
                     ToolTip.Tip="{l:Tr FollowHint}">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <c:Icon
-                            Data="{StaticResource IconChevronDown}"
-                            Height="14"
-                            Width="14" />
-                        <TextBlock Text="{l:Tr Follow}" VerticalAlignment="Center" />
-                    </StackPanel>
+                    <c:Icon Data="{StaticResource IconFollow}" />
                 </ToggleButton>
                 <Button
-                    Classes="Outline"
+                    AutomationProperties.Name="{l:Tr Copy}"
+                    Classes="Ghost IconButton"
                     Click="OnCopyClick"
-                    Grid.Column="3"
-                    Height="28"
-                    Padding="10,0"
+                    Grid.Column="4"
+                    Margin="4,0,0,0"
                     ToolTip.Tip="{l:Tr CopyLinesHint}">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <c:Icon
-                            Data="{StaticResource IconCopy}"
-                            Height="14"
-                            Width="14" />
-                        <TextBlock
-                            FontSize="12"
-                            Text="{l:Tr Copy}"
-                            VerticalAlignment="Center" />
-                    </StackPanel>
+                    <c:Icon Data="{StaticResource IconCopy}" />
                 </Button>
             </Grid>
-        </StackPanel>
-        <Panel>
-            <TextBlock
-                Classes="Small Muted"
-                HorizontalAlignment="Center"
-                IsVisible="{Binding IsEmpty}"
-                Margin="32"
-                Text="{l:Tr LogsEmpty}"
-                TextAlignment="Center"
-                TextWrapping="Wrap"
-                VerticalAlignment="Top" />
-            <ScrollViewer Name="Scroller">
-                <ItemsControl ItemsSource="{Binding Lines}" Margin="32,0,32,24">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:LogLineViewModel">
-                            <Border Classes="LogLine" ToolTip.Tip="{Binding More}">
-                                <Grid ColumnDefinitions="72,26,Auto,*,Auto">
-                                    <TextBlock
-                                        Classes="Mono Muted Figures"
-                                        Text="{Binding Time}"
-                                        VerticalAlignment="Center" />
-                                    <c:Icon
-                                        Data="{Binding Mark, Converter={x:Static c:IconOf.Instance}}"
-                                        Grid.Column="1"
-                                        Height="15"
-                                        HorizontalAlignment="Left"
-                                        Tone="{Binding Tone}"
-                                        VerticalAlignment="Center"
-                                        Width="15" />
-                                    <TextBlock
-                                        Classes="Small"
-                                        FontWeight="SemiBold"
-                                        Grid.Column="2"
-                                        IsVisible="{Binding Source, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                        Margin="0,0,10,0"
-                                        Text="{Binding Source}"
-                                        TextTrimming="CharacterEllipsis"
-                                        VerticalAlignment="Center"
-                                        Width="120" />
-                                    <SelectableTextBlock
-                                        Classes="Small"
-                                        FontWeight="Normal"
-                                        Grid.Column="3"
-                                        Margin="{Binding Indent, Converter={x:Static c:LeftMargin.Instance}}"
-                                        Text="{Binding Text}"
-                                        TextWrapping="Wrap"
-                                        VerticalAlignment="Center" />
-                                    <TextBlock
-                                        Classes="Caption Muted Figures"
-                                        Grid.Column="4"
-                                        Margin="12,0,0,0"
-                                        Text="{Binding Detail}"
-                                        VerticalAlignment="Center" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Panel>
-    </DockPanel>
+            <Panel Grid.Row="1">
+                <c:EmptyState
+                    Icon="{StaticResource IconJournal}"
+                    IsVisible="{Binding IsEmpty}"
+                    Text="{l:Tr LogsEmpty}"
+                    Title="{l:Tr LogsEmptyTitle}" />
+                <ScrollViewer Name="Scroller">
+                    <ItemsControl ItemsSource="{Binding Lines}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:LogLineViewModel">
+                                <Border Classes="LogLine" ToolTip.Tip="{Binding More}">
+                                    <Grid ColumnDefinitions="72,24,Auto,*,Auto">
+                                        <TextBlock
+                                            Classes="Mono Muted Figures"
+                                            Text="{Binding Time}"
+                                            VerticalAlignment="Center" />
+                                        <c:Icon
+                                            Data="{Binding Mark, Converter={x:Static c:IconOf.Instance}}"
+                                            Grid.Column="1"
+                                            HorizontalAlignment="Left"
+                                            Tone="{Binding Tone}"
+                                            VerticalAlignment="Center" />
+                                        <c:StatusPill
+                                            Classes="Plain"
+                                            Grid.Column="2"
+                                            IsVisible="{Binding Source, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                            Margin="0,0,12,0"
+                                            MaxWidth="160"
+                                            Text="{Binding Source}" />
+                                        <SelectableTextBlock
+                                            Grid.Column="3"
+                                            Margin="{Binding Indent, Converter={x:Static c:LeftMargin.Instance}}"
+                                            Text="{Binding Text}"
+                                            TextWrapping="Wrap"
+                                            VerticalAlignment="Center" />
+                                        <TextBlock
+                                            Classes="Caption Muted Figures"
+                                            Grid.Column="4"
+                                            Margin="12,0,0,0"
+                                            Text="{Binding Detail}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Panel>
+        </Grid>
+    </c:AppPage>
 </UserControl>

@@ -6,12 +6,13 @@ using D3B.Storage.Profiles;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>A profile on its page: folded, its name, activity, settings at a glance and characters; unfolded, its editor (D99, D101).</summary>
+/// <summary>A profile on its page: as a card, its name, activity, settings at a glance and characters; edited, on the whole page (D99, D101, D159).</summary>
 internal sealed partial class ProfileViewModel : ObservableObject
 {
     private readonly ProfilesViewModel _page;
     private Profile? _profile;
     private bool _loading;
+    private (string Name, string? Activity, string? Settings) _baseline;
 
     /// <summary>Gets the profile's id, 0 until a new one is saved.</summary>
     public int Id => _profile?.Id ?? 0;
@@ -21,6 +22,12 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     /// <summary>Gets the activities a profile may run, named in the app's language.</summary>
     public IReadOnlyList<ActivityChoiceViewModel> Activities => _page.Activities;
+
+    /// <summary>Gets the activity the profile was saved with, if it still exists.</summary>
+    public ActivityChoiceViewModel? SavedActivity => _profile is null ? null : Activities.FirstOrDefault(activity => activity.Definition?.Id == _profile.ActivityId);
+
+    /// <summary>Gets the settings the profile was saved with, if it was.</summary>
+    public string? SavedSettings => _profile?.Settings;
 
     /// <summary>Gets the profile's name.</summary>
     [ObservableProperty]
@@ -56,9 +63,9 @@ internal sealed partial class ProfileViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsEditing { get; private set; }
 
-    /// <summary>Gets whether the profile asks whether to delete it.</summary>
+    /// <summary>Gets whether what is edited differs from what was saved, or the profile was never saved.</summary>
     [ObservableProperty]
-    public partial bool IsConfirmingDelete { get; private set; }
+    public partial bool IsDirty { get; private set; }
 
     /// <summary>Gets or sets the name being edited.</summary>
     [ObservableProperty]
@@ -69,8 +76,9 @@ internal sealed partial class ProfileViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasNameProblem))]
     public partial string? NameProblem { get; private set; }
 
-    /// <summary>Gets or sets the activity being edited: changing it starts its settings again from their defaults.</summary>
+    /// <summary>Gets or sets the activity being edited: chosen again only when the profile's is gone, its settings from their defaults.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsActivityMissing))]
     public partial ActivityChoiceViewModel? EditActivity { get; set; }
 
     /// <summary>Gets the editor of the activity's settings.</summary>
@@ -98,6 +106,9 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     /// <summary>Gets whether the profile was not saved or deleted.</summary>
     public bool HasError => Error is not null;
+
+    /// <summary>Gets whether the activity edited is none the modules registered, as when the profile's is gone: it is chosen again.</summary>
+    public bool IsActivityMissing => EditActivity?.Definition is null;
 
     /// <summary>Initializes a new instance of the <see cref="ProfileViewModel"/> class.</summary>
     /// <param name="page">The profiles' page.</param>
@@ -146,36 +157,47 @@ internal sealed partial class ProfileViewModel : ObservableObject
         CheckName();
     }
 
-    /// <summary>Folds the editor, its changes dropped.</summary>
-    [RelayCommand]
+    /// <summary>Closes the editor, its changes dropped.</summary>
     public void Cancel()
     {
         IsEditing = false;
-        IsConfirmingDelete = false;
         Error = null;
         Editor = null;
+        _page.EndEditing(this);
 
-        if (IsNew)
-            _page.Discard(this);
-        else
+        if (!IsNew)
             Show();
     }
 
-    /// <summary>Unfolds the editor, from the profile as saved.</summary>
+    /// <summary>Opens the editor on the page, from the profile as saved.</summary>
     [RelayCommand]
     public void Edit()
     {
         if (IsEditing)
             return;
 
+        Open(_profile?.Name ?? "", SavedActivity ?? (IsNew && Activities.Count > 0 ? Activities[0] : null), _profile?.Settings);
+    }
+
+    /// <summary>Opens the editor of a profile never saved, its name and activity chosen.</summary>
+    /// <param name="name">Its name.</param>
+    /// <param name="activity">Its activity.</param>
+    /// <param name="settings">The settings it starts from, or <see langword="null"/> for the activity's defaults.</param>
+    public void EditNew(string name, ActivityChoiceViewModel activity, string? settings)
+    {
+        Open(name, activity, settings);
+    }
+
+    private void Open(string name, ActivityChoiceViewModel? activity, string? settings)
+    {
         _page.BeginEditing(this);
         _loading = true;
 
         try
         {
-            EditName = _profile?.Name ?? "";
-            EditActivity = Activities.FirstOrDefault(activity => activity.Definition?.Id == _profile?.ActivityId) ?? (IsNew && Activities.Count > 0 ? Activities[0] : null);
-            Load(_profile?.Settings);
+            EditName = name;
+            EditActivity = activity;
+            Load(settings);
         }
         finally
         {
@@ -183,7 +205,9 @@ internal sealed partial class ProfileViewModel : ObservableObject
         }
 
         IsEditing = true;
+        _baseline = (EditName.Trim(), EditActivity?.Definition?.Id, Editor?.Write());
         CheckName();
+        CheckDirty();
     }
 
     private void Show()
@@ -230,7 +254,10 @@ internal sealed partial class ProfileViewModel : ObservableObject
     private void Load(string? settings)
     {
         if (Editor is { } previous)
+        {
             previous.PropertyChanged -= OnEditorChanged;
+            previous.Edited -= OnEdited;
+        }
 
         if (EditActivity?.Definition is not { } definition)
         {
@@ -242,9 +269,20 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
         var reading = definition.Settings.Read(settings);
 
-        Editor = new SettingsEditor(definition.Settings, reading.Settings, _page.Game, _page.Names, _page.Localizer, _page.Services, IsNew ? [] : _page.LevelsOf(Id));
+        Editor = new SettingsEditor(definition.Settings, reading.Settings, _page.Game, _page.Names, _page.Localizer, _page.Services, IsNew ? [] : _page.LevelsOf(Id), _page.Dialogs);
         Editor.PropertyChanged += OnEditorChanged;
+        Editor.Edited += OnEdited;
         UpdateCanSave();
+    }
+
+    private void OnEdited(object? sender, EventArgs e)
+    {
+        CheckDirty();
+    }
+
+    private void CheckDirty()
+    {
+        IsDirty = IsEditing && (IsNew || EditName.Trim() != _baseline.Name || EditActivity?.Definition?.Id != _baseline.Activity || Editor?.Write() != _baseline.Settings);
     }
 
     private void OnEditorChanged(object? sender, PropertyChangedEventArgs e)
@@ -283,9 +321,11 @@ internal sealed partial class ProfileViewModel : ObservableObject
         {
             _profile = await profiles.SaveAsync(Id, EditName, definition.Id, editor.Write(), CancellationToken.None);
             IsEditing = false;
+            IsDirty = false;
             Error = null;
             Editor = null;
             Show();
+            _page.EndEditing(this);
             _page.Saved(this);
         }
         catch (ArgumentException exception)
@@ -299,15 +339,48 @@ internal sealed partial class ProfileViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AskDelete()
+    private void Close()
     {
-        IsConfirmingDelete = true;
+        if (!IsDirty)
+        {
+            Cancel();
+
+            return;
+        }
+
+        var localizer = _page.Localizer;
+
+        _page.Dialogs.Ask(new QuestionViewModel(
+            _page.Dialogs,
+            localizer["LeaveUnsavedTitle"],
+            localizer.Format("LeaveUnsavedDetail", Title),
+            localizer["Save"],
+            localizer["Stay"],
+            () => SaveCommand.Execute(null),
+            otherText: localizer["Discard"],
+            other: Cancel));
     }
 
     [RelayCommand]
-    private void KeepIt()
+    private void Duplicate()
     {
-        IsConfirmingDelete = false;
+        _page.Duplicate(this);
+    }
+
+    [RelayCommand]
+    private void AskDelete()
+    {
+        var localizer = _page.Localizer;
+        var players = IsNew ? 0 : _page.PlayersOf(Id).Count;
+
+        _page.Dialogs.Ask(new QuestionViewModel(
+            _page.Dialogs,
+            localizer.Format("DeleteProfileTitle", Title),
+            players == 0 ? null : localizer.Plural("DeleteProfilePlayers", players),
+            localizer["Delete"],
+            localizer["Cancel"],
+            () => DeleteCommand.Execute(null),
+            destructive: true));
     }
 
     [RelayCommand]
@@ -343,13 +416,17 @@ internal sealed partial class ProfileViewModel : ObservableObject
     {
         RefreshTitle();
         CheckName();
+        CheckDirty();
     }
 
     partial void OnEditActivityChanged(ActivityChoiceViewModel? value)
     {
         // Another activity has other settings: they start from its defaults.
         if (!_loading)
+        {
             Load(null);
+            CheckDirty();
+        }
     }
 
     partial void OnIsEditingChanged(bool value)

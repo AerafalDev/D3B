@@ -1,6 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.Bot.Data;
@@ -29,6 +30,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private readonly Localizer _localizer;
     private readonly AppPreferences? _preferences;
     private readonly Action<CultureInfo> _useLanguage;
+    private readonly Toasts _toasts;
     private BotDelays _delays;
     private RelayTimeouts _timeouts;
     private Bots? _bots;
@@ -89,9 +91,11 @@ internal sealed partial class SettingsViewModel : ObservableObject
     /// <param name="localizer">The app's texts.</param>
     /// <param name="preferences">What the app remembers, or <see langword="null"/> to remember nothing.</param>
     /// <param name="useLanguage">Puts the app in a language, as its title bar does.</param>
-    public SettingsViewModel(Localizer localizer, AppPreferences? preferences, Action<CultureInfo> useLanguage)
+    /// <param name="toasts">What the window says in its toasts, such as the delays restored.</param>
+    public SettingsViewModel(Localizer localizer, AppPreferences? preferences, Action<CultureInfo> useLanguage, Toasts toasts)
     {
         _localizer = localizer;
+        _toasts = toasts;
         _preferences = preferences;
         _useLanguage = useLanguage;
 
@@ -232,6 +236,12 @@ internal sealed partial class SettingsViewModel : ObservableObject
         _preferences?.RememberHost(new Dictionary<string, string?> { [RelaySettings.CapturesEnabledKey] = value ? bool.TrueString : null });
     }
 
+    /// <summary>Says a path was copied.</summary>
+    public void Copied()
+    {
+        _toasts.Show(new Toast(_localizer["Copied"], Tone.Success));
+    }
+
     [RelayCommand(CanExecute = nameof(HasRaisedDelays))]
     private void RestoreDelays()
     {
@@ -242,6 +252,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
             delay.Reread();
 
         HasRaisedDelays = AnyRaised();
+        _toasts.Show(new Toast(_localizer["DelaysRestored"], Tone.Success));
     }
 
     [RelayCommand]
@@ -266,11 +277,5 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private void UseLight()
     {
         UseTheme(dark: false);
-    }
-
-    [RelayCommand]
-    private void SwitchTheme()
-    {
-        UseTheme(!IsDark);
     }
 }

@@ -32,13 +32,12 @@ public sealed class AccountsViewModelTests : IAsyncDisposable
         await _store.SeeAsync(TestPlay.SubscribedAccount, (TestPlay.CharacterId, "Character", 200), (70_002, "Kolossa", null));
         time.Advance(TimeSpan.FromMinutes(5));
 
-        var page = new AccountsViewModel(_localizer);
+        var page = new AccountsViewModel(_localizer, new Dialogs());
 
         page.Refresh(_store.Host.Services);
 
         Assert.True(page.IsAvailable);
         Assert.False(page.IsEmpty);
-        Assert.Equal("2 accounts, 3 characters", page.Summary);
         Assert.Equal(["nickname", "Mule"], page.Items.Select(item => item.Nickname));
 
         var account = page.Items[0];
@@ -65,7 +64,6 @@ public sealed class AccountsViewModelTests : IAsyncDisposable
         _localizer.Use(Localizer.French);
         page.Refresh(_store.Host.Services);
 
-        Assert.Equal("2 comptes, 3 personnages", page.Summary);
         Assert.Equal("Vu il y a 3 j", page.Items[1].Seen);
     }
 
@@ -79,7 +77,7 @@ public sealed class AccountsViewModelTests : IAsyncDisposable
 
         await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Character", 200));
 
-        var page = new AccountsViewModel(_localizer);
+        var page = new AccountsViewModel(_localizer, new Dialogs());
 
         page.Refresh(_store.Host.Services);
 
@@ -117,7 +115,7 @@ public sealed class AccountsViewModelTests : IAsyncDisposable
         await _store.OpenedAsync();
         await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Character", 200));
 
-        var page = new AccountsViewModel(_localizer);
+        var page = new AccountsViewModel(_localizer, new Dialogs());
 
         page.Refresh(_store.Host.Services);
 
@@ -125,30 +123,32 @@ public sealed class AccountsViewModelTests : IAsyncDisposable
 
         account.AskForgetCommand.Execute(null);
 
-        Assert.True(account.IsConfirmingForget);
+        var question = Assert.IsType<QuestionViewModel>(page.Dialogs.Current);
 
-        account.KeepItCommand.Execute(null);
+        Assert.True(question.IsDestructive);
 
-        Assert.False(account.IsConfirmingForget);
+        question.CancelCommand.Execute(null);
+
+        Assert.Null(page.Dialogs.Current);
+        Assert.Single(page.Items);
 
         var version = _store.Accounts.Version;
 
         account.AskForgetCommand.Execute(null);
-        account.ForgetCommand.Execute(null);
+        Assert.IsType<QuestionViewModel>(page.Dialogs.Current).ConfirmCommand.Execute(null);
         await Waiting.UntilAsync(() => _store.Accounts.Version > version, TimeSpan.FromSeconds(10));
         page.Refresh(_store.Host.Services);
 
         Assert.Empty(page.Items);
         Assert.True(page.IsEmpty);
-        Assert.Equal("0 accounts, 0 characters", page.Summary);
     }
 
     [Fact]
     public void APageOfAHostWithoutItsDatabaseSaysSo()
     {
         using var host = TestHosts.Of(_store.Play);
-        var page = new AccountsViewModel(_localizer);
-        var profiles = new ProfilesViewModel(_localizer);
+        var page = new AccountsViewModel(_localizer, new Dialogs());
+        var profiles = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(host.Services);
         profiles.Refresh(host.Services);
