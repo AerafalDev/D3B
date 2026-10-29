@@ -3735,6 +3735,36 @@ a page holding every delay. Builds D77, D132.*
   not, and will not write such timings whatever the file says. D151's delays are the client's own, measured, raised by
   hand where a machine needs it.
 
+## D153: Upkeep and the guild's chest, measured: mapping format 7
+
+*2026-10-29, step 6, session 6c, in a session of its own. Amends D147 and D148 with what the owner's capture measured
+([client.md](client.md#the-game-kept-up)).*
+
+- **Named and pinned** for 3.7.12.12 (D54): `ObjectUseRequest`, one request to eat and to open a bag;
+  `ObjectDeletedEvent`; the characteristics, partial (`CharacterStatsEvent`), holding the life; `LifeRegenEndEvent` and
+  `LifeRegenStartEvent`, partial; `ExchangeStartedWithTabbedStorageEvent`, partial, of the exchange type 21, now
+  `EXCHANGE_TYPE_GUILD_CHEST`; `ExchangeObjectMoveRequest`; `StorageObjectUpdateEvent`; `StorageObjectRemovedEvent`, partial.
+- **D148, the life.** The most life is characteristic 0 plus 11, the life that plus 97, the life lacking; out of fights it
+  regenerates a point every half-second, the interval the server gives, from the characteristics' life up to the most. The
+  card's life and the share under which the bot heals read it so.
+- **D148, healing.** Sitting changes nothing, the owner saw: the bot eats the profile's items one at a time, each answered
+  in 28 ms with the life healed, and with none left waits for the regeneration, sitting never. A use at full life is
+  refused with a text, nothing used. Using several at once is measured, the server using only what the life lacks, but not
+  named: its request holds a map, which the tests' obfuscation does not make.
+- **D148, bags.** A bag opens with the same request, its content joining the inventory, its stack lessened or deleted. A
+  barrel of type 184, "Conteneur", opens the same way; D148 names type 100 only, and the lead decides whether to open other
+  containers.
+- **D147, the chest.** It is an element of the bank's inside, used with skill 184, with no NPC's dialog. Stacks go one at a
+  time, whole or in part, by `ExchangeObjectMoveRequest`; the bank's list was not tried on it. An object bound to the
+  account is refused with text 356 and stays in the inventory, to go to the character's own chest as D147 says; the
+  inventory's objects carry effects 981 or 983 then, which the readable protocol does not read. It holds no kamas.
+- **D147, the tab.** Not measured: the owner's guild has one tab. Until a guild with several is captured, the bot deposits
+  in the tab the chest opens on, and the tab's setting waits.
+- **Mapping.** The readable protocol holds 129 messages, 263 fields, 19 enums and 147 values. `MappingFile.FormatVersion` is
+  7, `mapping-7.binpb`, 8,926 bytes, the same bytes on two runs, audited without failure; the 36 game connections captured
+  decode through it, 25,258 frames, none misread. The release of 3.7.12.12 needs it, which the release tool publishes
+  (D50) once the owner says so.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
