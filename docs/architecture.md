@@ -218,7 +218,11 @@ resources.
   journal names the kind (`BotActivity.Describe`, D144). `Regrowths`, one per host, learns how long each resource takes to
   grow back from every map a bot is on (`RegrowthLearner`): whole when a bot stayed on the map, else a bound from above on
   a later visit; a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
-  and waits for the first rather than D128's minute (D145). An activity gives its figures (`BotActivity.Statistics`,
+  and waits for the first rather than D128's minute (D145). Before a step, the activity opens a resource bag and, under its
+  share of life, eats the profile's food in one request (`ObjectUse.UseObjectsAsync`, the life reckoned by `BotActor.LifeAt`,
+  D148, D153, D156); full, it may deposit in the guild's chest (`GuildChest`, D147), what the chest leaves going to the
+  character's own. Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
+  An activity gives its figures (`BotActivity.Statistics`,
   `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146).
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of

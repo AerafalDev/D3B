@@ -19,12 +19,17 @@ profile's resources tour by tour through its zone and banks them when its pods a
 client connects, its card and map saying what it does; the profile editor suggests the sub-areas where the resources grow
 and draws the zone. The resources and professions show their icons, from the pack, on the profiles, the bots' cards and
 the map; every map a bot enters teaches which graphics are which resource, kept from one run to the next, so that a tour
-goes first to the maps likely holding its resources. Mods will be made as blueprints after it. The app's map page draws a
+goes first to the maps likely holding its resources. A harvest also takes resources no profession gathers, such as a well's
+water, found by those graphics; leaves out a zone's maps reached only far round unless asked; learns how long each
+resource takes to grow back and waits for it; tells a protector's fight from an aggression and resumes, pauses or stops
+after it; opens resource bags; heals by eating under a share of life; and may deposit in the guild's chest. Each run is
+kept, and a statistics page says what the runs brought. Mods will be made as blueprints after it. The app's map page draws a
 bot's map from the pack as its character moves, with its path, elements, NPCs and exits, and says what a cell holds;
 its logs page shows each bot's journal of its actions and the host's problems; its protocol inspector shows a bot's game
 frames decoded as they go, the login ticket hidden, or replays a capture; its settings page holds the client's display
-time and D3B's other delays, which a slow machine raises, the captures, the language and the theme. Next: what the first
-milestone leaves, then a pass on the app's interface. See the [roadmap](docs/roadmap.md).
+time and D3B's other delays, which a slow machine raises, and the time between two actions, the captures, the language
+and the theme. Next: a redesign of the app's interface, then
+the owner's harvesting settings, then the app published with its data and the repository public. See the [roadmap](docs/roadmap.md).
 
 ## Building
 

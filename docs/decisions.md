@@ -3810,6 +3810,37 @@ client, and the owner asked for one request. Supersedes D153's "not named" ([cli
   decode through it, 26,090 frames, none misread. `mapping-7.binpb`, published, is left as it is (D50). The release of
   3.7.12.12 needs format 8, which the release tool publishes once the owner says so.
 
+## D157: 6c checked through the app
+
+*2026-10-29, step 6, session 6c.*
+
+Checked on a client of 3.7.12.12 through the app, captures on, the owner's profile "Ortie" harvesting in Amakna, the
+guild's chest chosen, bags opened, healing under 80 % with Carasau:
+
+- **First run**: the bot ate 19 Carasau one by one, 30 ms apart, from 766 to 1,521 life; put 5 stacks in the guild's chest
+  28 ms apart, the chest taking part of the fifth; then ended still full, other things weighing 77 % of its pods over a
+  share of 50 %. The owner found it all too fast. D154 followed: the time between two actions, the guild's chest's
+  leftovers to the character's own, and the multiple use (D156).
+- **Second run**, 11 min 37 s: two deposits in the guild's chest, 7 and 10 stacks, each a display time apart, the second
+  left as it should, then the harvest went on; five runs stopped by the owner; no error in the host's log. The owner found
+  it good.
+- **Not measured**: an aggression, a fight lost, a growing back watched whole, healing in one request on the client, and
+  Base's resources found by the graphics; the tests cover them.
+
+## D158: The repository public, once the app ships with its data and updates itself
+
+*2026-10-29, step 6, session 6c, chosen by the owner. Settles D4's milestone: the first milestone is reached (D133).*
+
+- **The owner's call**: the repository goes public; the data pack, schema and mapping ship with the app, which updates
+  itself by fetching the repository's releases.
+- **Said before choosing**: a public repository makes its releases public, so the data extracted from Ankama's client, the
+  maps, texts and icons, become downloadable by anyone. The owner chose so.
+- **Not now**: the app has no build published and no update yet. A session of its own, 6f, publishes the app with its data,
+  makes it update from the releases, and turns the repository public on the owner's go; nothing is public before.
+- **Rejected.**
+  - Public now, the releases as they are: the app would still need the GitHub CLI's token, and no build to download.
+  - Each user extracting their own pack: the owner wants the data delivered with the app.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
