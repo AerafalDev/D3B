@@ -45,6 +45,8 @@ public sealed class HarvestActivity : BotActivity
     private readonly GameTables _tables;
     private readonly HarvestSightings _sightings;
     private readonly GameMaps _maps;
+    private readonly GraphicPlaces _places;
+    private readonly GraphicSkills _graphics;
     private readonly HarvestTour _tour;
     private readonly Dictionary<int, long> _harvested = [];
     private readonly HashSet<int> _skipped = [];
@@ -68,7 +70,8 @@ public sealed class HarvestActivity : BotActivity
     /// <param name="maps">The installed build's maps: the graphics of the zone's elements.</param>
     /// <param name="sightings">What the host's bots saw of the maps.</param>
     /// <param name="graphics">What the host learned of the maps' graphics.</param>
-    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics)
+    /// <param name="places">Where each graphic is drawn, which places the resources of <c>Base</c> (D150).</param>
+    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(world);
@@ -76,6 +79,7 @@ public sealed class HarvestActivity : BotActivity
         ArgumentNullException.ThrowIfNull(maps);
         ArgumentNullException.ThrowIfNull(sightings);
         ArgumentNullException.ThrowIfNull(graphics);
+        ArgumentNullException.ThrowIfNull(places);
 
         _settings = settings;
         _atlas = world.Atlas;
@@ -83,6 +87,8 @@ public sealed class HarvestActivity : BotActivity
         _tables = tables;
         _maps = maps;
         _sightings = sightings;
+        _places = places;
+        _graphics = graphics;
         _tour = new HarvestTour(sightings, graphics);
         _report = new ActivityReport { Doing = GameText.Of(HarvestTexts.Text("DoingStart")) };
     }
@@ -213,7 +219,7 @@ public sealed class HarvestActivity : BotActivity
         if (_zone is { } zone)
             return zone;
 
-        zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps);
+        zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(_settings, _tables.Jobs, _places, _graphics));
 
         if (zone.Maps.Count is 0 || zone.Targets.Count is 0)
             throw Failure("The zone holds no map to harvest.", "FailNoZone");

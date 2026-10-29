@@ -1,4 +1,5 @@
 using D3B.Bot.Characters;
+using D3B.Bot.Interactives;
 using D3B.Bot.Network;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Network;
@@ -117,6 +118,8 @@ internal sealed class TestPlay : IAsyncDisposable
 
     public GameTables Tables { get; }
 
+    public GraphicPlaces Places { get; }
+
     public Bots Bots { get; }
 
     public TestPlay(params int[] blocked)
@@ -134,6 +137,7 @@ internal sealed class TestPlay : IAsyncDisposable
         Maps = new GameMaps(_pack);
         World = new GameWorld(_pack);
         Tables = new GameTables(_pack);
+        Places = new GraphicPlaces(_pack, World);
         _logs = LoggerFactory.Create(logging => logging.AddProvider(new FakeLoggerProvider(Log)).SetMinimumLevel(LogLevel.Debug));
         Bots = new Bots(Maps, World, Tables, Time, _logs);
         _accounts = new GameAccounts(_settings.SelectionLifetime, Time);

@@ -27,7 +27,7 @@ public sealed class HarvestPreviewsTests : IAsyncDisposable
 
     private HarvestPreviews Previews(GraphicSkills? graphics = null)
     {
-        return new HarvestPreviews(_play.World, _play.Tables, _play.Maps, new HarvestSightings(), graphics ?? new GraphicSkills());
+        return new HarvestPreviews(_play.World, _play.Tables, _play.Maps, new HarvestSightings(), graphics ?? new GraphicSkills(), _play.Places);
     }
 
     [Fact]

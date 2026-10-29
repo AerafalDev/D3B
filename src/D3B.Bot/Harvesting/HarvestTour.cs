@@ -69,12 +69,29 @@ internal sealed class HarvestTour
     public HashSet<long> Remaining(HarvestZone zone)
     {
         HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !IsLeftOut(map, zone))];
-        HashSet<long> probable = [.. remaining.Where(map => IsProbable(map, zone))];
+
+        // The isolated maps a tour goes through come last, whatever they hold: the way there is long (D149).
+        HashSet<long> near = [.. remaining.Where(map => !zone.Isolated.Contains(map))];
+
+        if (near.Count is 0)
+            return remaining;
+
+        HashSet<long> probable = [.. near.Where(map => IsProbable(map, zone))];
 
         if (probable.Count > 0)
             return probable;
 
-        return remaining.Any(map => !zone.Insides.Contains(map)) ? [.. remaining.Where(map => !zone.Insides.Contains(map))] : remaining;
+        return near.Any(map => !zone.Insides.Contains(map)) ? [.. near.Where(map => !zone.Insides.Contains(map))] : near;
+    }
+
+    /// <summary>Gets how many maps of the zone are isolated, and left out unless the settings take them.</summary>
+    /// <param name="zone">The zone.</param>
+    /// <returns>How many.</returns>
+    public static int Isolated(HarvestZone zone)
+    {
+        ArgumentNullException.ThrowIfNull(zone);
+
+        return zone.Isolated.Count;
     }
 
     /// <summary>Marks a map gone through.</summary>
@@ -126,6 +143,9 @@ internal sealed class HarvestTour
         if (_visited.Contains(mapId))
             return ZoneMapState.Visited;
 
+        if (zone.Isolated.Contains(mapId) && !zone.IncludesIsolated)
+            return ZoneMapState.Isolated;
+
         if (IsLeftOut(mapId, zone))
             return ZoneMapState.Empty;
 
@@ -138,6 +158,9 @@ internal sealed class HarvestTour
     // What a bot saw of a map wins over what its graphics foretell: it is the server's word for that map.
     private bool IsLeftOut(long mapId, HarvestZone zone)
     {
+        if (zone.Isolated.Contains(mapId) && !zone.IncludesIsolated)
+            return true;
+
         return _sightings.TryGet(mapId, out var sighting)
             ? !sighting.Resources.Overlaps(zone.Wanted)
             : zone.Foresee(mapId, _graphics) is MapForecast.Without;

@@ -57,7 +57,7 @@
     <value>Resources, by priority</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
-    <value>Harvested in this order on each map, from any profession.</value>
+    <value>Harvested in this order on each map, of any profession or none.</value>
   </data>
   <data name="EverythingKnown" xml:space="preserve">
     <value>Everything each character can harvest at its level</value>
@@ -199,5 +199,23 @@
   </data>
   <data name="FailStillFullAll" xml:space="preserve">
     <value>Still full once banked, {0} of {1} pods: what is worn weighs more than the {2}% share. Raise it.</value>
+  </data>
+  <data name="IsolatedMaps" xml:space="preserve">
+    <value>Go through the isolated maps too</value>
+  </data>
+  <data name="IsolatedMapsHelp" xml:space="preserve">
+    <value>Reached only by leaving the zone, more than 4 changes of maps away. Taken, they come last, a part at a time.</value>
+  </data>
+  <data name="FigureIsolatedOne" xml:space="preserve">
+    <value>isolated map, left out</value>
+  </data>
+  <data name="FigureIsolatedMany" xml:space="preserve">
+    <value>isolated maps, left out</value>
+  </data>
+  <data name="FigureIsolatedLastOne" xml:space="preserve">
+    <value>isolated map, gone through last</value>
+  </data>
+  <data name="FigureIsolatedLastMany" xml:space="preserve">
+    <value>isolated maps, gone through last</value>
   </data>
 </root>

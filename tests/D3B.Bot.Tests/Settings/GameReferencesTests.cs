@@ -1,4 +1,7 @@
+using D3B.Bot.Interactives;
 using D3B.Bot.Settings;
+using D3B.Bot.Tests.Runtime;
+using D3B.Data.Jobs;
 
 namespace D3B.Bot.Tests.Settings;
 
@@ -63,5 +66,31 @@ public sealed class GameReferencesTests
         Assert.Throws<ArgumentOutOfRangeException>(() => _game.Options(SettingKind.Number));
         Assert.False(_game.Exists(SettingKind.Flag, 1));
         Assert.False(_game.IsWithin(SettingKind.Area, TestReferences.Amakna, TestReferences.Amakna));
+    }
+
+    [Fact]
+    public async Task BasesOwnResourcesAreOfferedWithoutALevelAndPlacedByTheLearnedGraphics()
+    {
+        const int well = 102;
+        const int water = 311;
+        await using var play = new TestPlay();
+        var jobs = new JobCatalog(play.Tables.Jobs.Jobs, play.Tables.Jobs.Skills.ToArray().Append(new Skill(well, 0, Job.Base, water, 1, 1, false)).OrderBy(skill => skill.Id).ToArray());
+        var graphics = new GraphicSkills();
+        var game = new GameReferences(play.World.Atlas, jobs, play.Tables.Items, play.World.Graph, play.Places, graphics);
+
+        Assert.Contains(game.Options(SettingKind.Resource), resource => resource.Id == water && resource.Level is null);
+        Assert.True(game.Exists(SettingKind.Resource, water));
+        Assert.True(game.IsBase(water));
+        Assert.False(game.IsBase(TestPlay.Ash));
+        Assert.False(game.TryGetSource(water, out _));
+        Assert.Empty(game.PlacesOf(water)!);
+        Assert.Null(game.PlacesOf(TestPlay.Ash));
+        Assert.Empty(game.SubAreasHolding([water]));
+
+        graphics.Learn(TestPlay.TreeGfxId, [well]);
+
+        Assert.Contains(TestPlay.MapId, game.PlacesOf(water)!);
+        Assert.Equal([TestPlay.SubAreaId], game.SubAreasHolding([water]).Select(subArea => subArea.SubArea.Id));
+        Assert.Equal([water], game.SubAreasHolding([water]).Single().Resources);
     }
 }

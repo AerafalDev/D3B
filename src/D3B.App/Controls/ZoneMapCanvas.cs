@@ -87,6 +87,8 @@ internal sealed class ZoneMapCanvas : Control
                 ZoneSquareKind.Probable => (palette.Harvested, outline),
                 ZoneSquareKind.Empty => (palette.Grid, null),
                 ZoneSquareKind.Unreachable => (palette.Grid, new Pen(palette.Door, Math.Max(1, size * 0.08))),
+                ZoneSquareKind.Isolated => (palette.Grid, new Pen(palette.Door, Math.Max(1, size * 0.08), DashStyle.Dash)),
+                ZoneSquareKind.Growing => (palette.Harvested, new Pen(palette.Element, Math.Max(1, size * 0.08))),
                 _ => (palette.Walkable, (Pen?)null),
             };
 

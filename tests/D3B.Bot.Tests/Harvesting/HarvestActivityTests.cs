@@ -49,7 +49,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
     private HarvestActivity Activity(HarvestSettings settings)
     {
-        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics);
+        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics, _play.Places);
     }
 
     [Fact]

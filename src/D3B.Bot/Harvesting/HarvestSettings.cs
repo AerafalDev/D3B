@@ -15,6 +15,9 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets the sub-areas to harvest in, of any area when no area is chosen.</summary>
     public IReadOnlyList<int> SubAreas { get; set; } = [];
 
+    /// <summary>Gets or sets whether to go through the zone's isolated maps too, last, those reached only far round (D149).</summary>
+    public bool IsolatedMaps { get; set; }
+
     /// <summary>Gets or sets how full the character is, in percent of its pods, once it banks.</summary>
     public int FullAt { get; set; } = 90;
 

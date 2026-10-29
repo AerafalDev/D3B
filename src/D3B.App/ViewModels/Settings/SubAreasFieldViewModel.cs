@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls;
+using D3B.Bot.Activities;
 using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Settings;
@@ -30,6 +31,10 @@ internal sealed partial class SubAreasFieldViewModel : GamesFieldViewModel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasFigures))]
     public partial IReadOnlyList<FigureViewModel> Figures { get; private set; } = [];
+
+    /// <summary>Gets whether the zone holds isolated maps, which its legend then names (D149).</summary>
+    [ObservableProperty]
+    public partial bool HasIsolated { get; private set; }
 
     /// <summary>Gets whether a zone is drawn.</summary>
     public bool HasZone => Zone is not null;
@@ -100,6 +105,7 @@ internal sealed partial class SubAreasFieldViewModel : GamesFieldViewModel
         Zone = preview is { Zone.Length: > 0 } && Editor.Atlas is { } atlas
             ? ZoneScenes.Of(preview.Zone, atlas, tour: false, preview.LandmarkMapId, Editor.Players.FirstOrDefault(player => player.MapId is not null)?.MapId)
             : null;
+        HasIsolated = preview is not null && preview.Zone.Any(map => map.State is ZoneMapState.Isolated);
         Figures = preview is null || Editor.Says is not { } says ? [] : [.. preview.Figures.Select(figure => new FigureViewModel(says.Say(figure.Value), says.Say(figure.Label)))];
     }
 

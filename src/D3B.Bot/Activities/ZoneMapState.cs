@@ -17,4 +17,10 @@ public enum ZoneMapState
 
     /// <summary>Still to go through, likely holding what the activity wants: seen so, or drawing an element with a graphic that offers it (D138).</summary>
     Probable,
+
+    /// <summary>Reached only far round from the rest of its part of the zone: left out (D149).</summary>
+    Isolated,
+
+    /// <summary>Gone through, what it holds growing back: to go through again once it should have (D145).</summary>
+    Growing,
 }

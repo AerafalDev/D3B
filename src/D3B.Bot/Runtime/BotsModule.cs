@@ -10,6 +10,7 @@ using D3B.Bot.Settings;
 using D3B.Core.Modules;
 using D3B.Data;
 using D3B.Data.Maps;
+using D3B.Data.Packs;
 using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -46,6 +47,7 @@ public sealed class BotsModule : IModule
 
         // Whatever the bots do, every map they enter teaches what its elements' graphics offer (D138).
         bot.Services.TryAddSingleton<GraphicSkills>();
+        bot.Services.TryAddSingleton(services => new GraphicPlaces(services.GetRequiredService<GamePack>(), services.GetRequiredService<GameWorld>()));
         bot.Services.AddSingleton<IGameObserver>(services => new GraphicLearner(services.GetRequiredService<GameMaps>(), services.GetRequiredService<GraphicSkills>()));
 
         // Recording always, after the bots, so that the protocol inspector shows what came before it was opened (D115).
@@ -64,7 +66,7 @@ public sealed class BotsModule : IModule
             var tables = services.GetRequiredService<GameTables>();
             var world = services.GetRequiredService<GameWorld>();
 
-            return new GameReferences(world.Atlas, tables.Jobs, tables.Items, world.Graph);
+            return new GameReferences(world.Atlas, tables.Jobs, tables.Items, world.Graph, services.GetRequiredService<GraphicPlaces>(), services.GetRequiredService<GraphicSkills>());
         });
     }
 }

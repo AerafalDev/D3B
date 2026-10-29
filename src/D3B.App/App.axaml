@@ -12,6 +12,7 @@
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="PlateFooterColor">#121212</Color>
+                    <Color x:Key="TourGrowingColor">#A78BFA</Color>
                     <c:MapPalette
                         x:Key="MapPalette"
                         Bot="#FAFAFA"
@@ -37,6 +38,7 @@
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Light">
                     <Color x:Key="PlateFooterColor">#FAFAFA</Color>
+                    <Color x:Key="TourGrowingColor">#7C3AED</Color>
                     <c:MapPalette
                         x:Key="MapPalette"
                         Bot="#18181B"

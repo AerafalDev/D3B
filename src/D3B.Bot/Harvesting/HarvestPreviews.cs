@@ -23,6 +23,7 @@ public sealed class HarvestPreviews
     private readonly GameMaps _maps;
     private readonly HarvestSightings _sightings;
     private readonly GraphicSkills _graphics;
+    private readonly GraphicPlaces _places;
     private readonly Lazy<WorldPathfinder> _pathfinder;
     private readonly Lock _lock = new();
     private string? _key;
@@ -34,26 +35,29 @@ public sealed class HarvestPreviews
     /// <param name="maps">The installed build's maps: the graphics of the zone's elements.</param>
     /// <param name="sightings">What the host's bots saw of the maps.</param>
     /// <param name="graphics">What the host learned of the maps' graphics.</param>
-    public HarvestPreviews(GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics)
+    /// <param name="places">Where each graphic is drawn, which places the resources of <c>Base</c> (D150).</param>
+    public HarvestPreviews(GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tables);
         ArgumentNullException.ThrowIfNull(maps);
         ArgumentNullException.ThrowIfNull(sightings);
         ArgumentNullException.ThrowIfNull(graphics);
+        ArgumentNullException.ThrowIfNull(places);
 
         _world = world;
         _tables = tables;
         _maps = maps;
         _sightings = sightings;
         _graphics = graphics;
+        _places = places;
         _pathfinder = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas), LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
     private string KeyOf(HarvestSettings settings)
     {
         // What the bots saw and learned only grows: their counts tell a preview reckoned before.
-        return $"{settings.EverythingKnown}|{string.Join(',', settings.Resources)}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{_sightings.Count}|{_graphics.Count}";
+        return $"{settings.EverythingKnown}|{string.Join(',', settings.Resources)}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{settings.IsolatedMaps}|{_sightings.Count}|{_graphics.Count}";
     }
 
     private static bool TryGetVertex(WorldGraph graph, long mapId, out int vertex)
@@ -97,7 +101,7 @@ public sealed class HarvestPreviews
     private SettingsPreview? Reckon(HarvestSettings settings)
     {
         var atlas = _world.Atlas;
-        var zone = HarvestZone.Of(settings, atlas, _world.Graph, _tables.Jobs, _maps);
+        var zone = HarvestZone.Of(settings, atlas, _world.Graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(settings, _tables.Jobs, _places, _graphics));
 
         if (zone.Targets.Count is 0 || zone.SubAreas.Count is 0)
             return null;
@@ -105,7 +109,8 @@ public sealed class HarvestPreviews
         var tour = new HarvestTour(_sightings, _graphics);
         var maps = tour.Total(zone);
         var probable = tour.Probable(zone);
-        var listed = zone.ListedIn(atlas).Count;
+        var listed = zone.PresentIn(atlas, _graphics).Count;
+        var isolated = HarvestTour.Isolated(zone);
         var resources = settings.EverythingKnown
             ? new PreviewFigure(
                 GameText.Of(HarvestTexts.Text("FigureNumber"), GameTextValue.Number(listed)),
@@ -123,6 +128,15 @@ public sealed class HarvestPreviews
                 ? new(GameText.Of(HarvestTexts.Text("FigureNone")), GameText.Of(HarvestTexts.Text("FigureNoBank")))
                 : new(GameText.Counted(HarvestTexts.Text("FigureBankOne"), HarvestTexts.Text("FigureBankMany"), changes), GameText.Of(HarvestTexts.Text("FigureBank"))),
         };
+
+        if (isolated > 0)
+        {
+            figures.Add(new(
+                GameText.Of(HarvestTexts.Text("FigureNumber"), GameTextValue.Number(isolated)),
+                settings.IsolatedMaps
+                    ? GameText.Counted(HarvestTexts.Text("FigureIsolatedLastOne"), HarvestTexts.Text("FigureIsolatedLastMany"), isolated)
+                    : GameText.Counted(HarvestTexts.Text("FigureIsolatedOne"), HarvestTexts.Text("FigureIsolatedMany"), isolated)));
+        }
 
         return new SettingsPreview
         {

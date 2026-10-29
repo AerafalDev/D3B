@@ -1010,4 +1010,16 @@
   <data name="ActivityLeftFull" xml:space="preserve">
     <value>Encore plein une fois déchargé : il reste plus que ce que l'activité dépose.</value>
   </data>
+  <data name="TourIsolated" xml:space="preserve">
+    <value>Isolée, laissée</value>
+  </data>
+  <data name="TourGrowing" xml:space="preserve">
+    <value>En repousse</value>
+  </data>
+  <data name="ResourceBasePlaced" xml:space="preserve">
+    <value>Sans métier, vue sur {0} cartes</value>
+  </data>
+  <data name="ResourceBaseUnseen" xml:space="preserve">
+    <value>Sans métier, jamais vue : apprise en passant</value>
+  </data>
 </root>

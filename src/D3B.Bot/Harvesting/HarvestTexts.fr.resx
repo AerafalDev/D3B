@@ -57,7 +57,7 @@
     <value>Ressources, par priorité</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
-    <value>Récoltées dans cet ordre sur chaque carte, de n'importe quel métier.</value>
+    <value>Récoltées dans cet ordre sur chaque carte, de n'importe quel métier ou sans métier.</value>
   </data>
   <data name="EverythingKnown" xml:space="preserve">
     <value>Tout ce que chaque perso sait récolter à son niveau</value>
@@ -199,5 +199,23 @@
   </data>
   <data name="FailStillFullAll" xml:space="preserve">
     <value>Encore plein après la banque, {0} sur {1} pods : ce que le perso porte pèse plus que le seuil de {2} %. Monte-le.</value>
+  </data>
+  <data name="IsolatedMaps" xml:space="preserve">
+    <value>Parcourir aussi les cartes isolées</value>
+  </data>
+  <data name="IsolatedMapsHelp" xml:space="preserve">
+    <value>Joignables seulement en sortant de la zone, à plus de 4 changements de carte. Incluses, elles passent en dernier, une partie à la fois.</value>
+  </data>
+  <data name="FigureIsolatedOne" xml:space="preserve">
+    <value>carte isolée, laissée</value>
+  </data>
+  <data name="FigureIsolatedMany" xml:space="preserve">
+    <value>cartes isolées, laissées</value>
+  </data>
+  <data name="FigureIsolatedLastOne" xml:space="preserve">
+    <value>carte isolée, parcourue en dernier</value>
+  </data>
+  <data name="FigureIsolatedLastMany" xml:space="preserve">
+    <value>cartes isolées, parcourues en dernier</value>
   </data>
 </root>

@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+using D3B.Bot.Interactives;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.World;
@@ -8,48 +10,65 @@ namespace D3B.Bot.Settings;
 /// <remarks>
 /// <para>
 /// Professions are every one but the base, which every character has. A profession's resources are the items its skills
-/// gather, each at the lowest level a skill gathers it from; a sub-area's level is the pack's.
+/// gather, each at the lowest level a skill gathers it from; a sub-area's level is the pack's. The resources are theirs and
+/// those only skills of <c>Base</c> gather, such as drinking water from a well, with no level (D150).
 /// </para>
 /// <para>Each list is read once, then shared: the pack does not change while the host runs.</para>
 /// </remarks>
 public sealed class GameReferences
 {
     private readonly WorldAtlas _atlas;
+    private readonly GraphicPlaces? _places;
+    private readonly GraphicSkills? _graphics;
     private readonly Lazy<IReadOnlyList<GameReference>> _jobs;
     private readonly Lazy<IReadOnlyList<GameReference>> _areas;
     private readonly Lazy<IReadOnlyList<GameReference>> _subAreas;
     private readonly Lazy<IReadOnlyList<GameReference>> _resources;
     private readonly Lazy<ILookup<int, GameReference>> _resourcesByJob;
     private readonly Lazy<Dictionary<int, ResourceSource>> _sources;
+    private readonly Lazy<FrozenDictionary<int, FrozenSet<int>>> _baseSkills;
     private readonly Lazy<ILookup<int, long>> _maps;
+    private readonly Lazy<Dictionary<long, int>> _subAreaOf;
 
     /// <summary>Initializes a new instance of the <see cref="GameReferences"/> class.</summary>
     /// <param name="atlas">The world's areas and sub-areas.</param>
     /// <param name="jobs">The professions and their skills.</param>
     /// <param name="items">The items, which name the resources.</param>
     /// <param name="graph">The world graph, which says the maps a character may travel to; without it, every map of the atlas counts.</param>
-    public GameReferences(WorldAtlas atlas, JobCatalog jobs, ItemCatalog items, WorldGraph? graph = null)
+    /// <param name="places">Where each graphic is drawn, which places the resources no sub-area lists (D150); without it, they are placed nowhere.</param>
+    /// <param name="graphics">What the host learned of the graphics, with <paramref name="places"/>.</param>
+    public GameReferences(WorldAtlas atlas, JobCatalog jobs, ItemCatalog items, WorldGraph? graph = null, GraphicPlaces? places = null, GraphicSkills? graphics = null)
     {
         ArgumentNullException.ThrowIfNull(atlas);
         ArgumentNullException.ThrowIfNull(jobs);
         ArgumentNullException.ThrowIfNull(items);
 
         _atlas = atlas;
+        _places = places;
+        _graphics = graphics;
         _maps = new Lazy<ILookup<int, long>>(() => atlas.Positions.ToArray()
             .Where(position => graph?.Contains(position.MapId) ?? true)
             .ToLookup(position => position.SubAreaId, position => position.MapId));
+        _subAreaOf = new Lazy<Dictionary<long, int>>(() => atlas.Positions.ToArray().ToDictionary(position => position.MapId, position => position.SubAreaId));
         _sources = new Lazy<Dictionary<int, ResourceSource>>(() => jobs.Skills.ToArray()
             .Where(skill => skill.GatheredItemId != Skill.NoItem && skill.JobId != Job.Base)
             .GroupBy(skill => skill.GatheredItemId)
             .ToDictionary(skills => skills.Key, skills => skills.MinBy(skill => skill.MinLevel) is var lowest ? new ResourceSource(lowest.JobId, lowest.MinLevel) : default));
+        _baseSkills = new Lazy<FrozenDictionary<int, FrozenSet<int>>>(() => jobs.Skills.ToArray()
+            .Where(skill => skill.GatheredItemId != Skill.NoItem && skill.JobId == Job.Base && !_sources.Value.ContainsKey(skill.GatheredItemId))
+            .GroupBy(skill => skill.GatheredItemId)
+            .ToFrozenDictionary(skills => skills.Key, skills => skills.Select(skill => skill.Id).ToFrozenSet()));
         _jobs = new Lazy<IReadOnlyList<GameReference>>(() => JobsOf(jobs));
         _areas = new Lazy<IReadOnlyList<GameReference>>(() => [.. atlas.Areas.ToArray().Select(area => new GameReference(area.Id, area.NameId, null))]);
         _subAreas = new Lazy<IReadOnlyList<GameReference>>(() => [.. atlas.SubAreas.ToArray().Select(subArea => new GameReference(subArea.Id, subArea.NameId, subArea.Level))]);
         _resourcesByJob = new Lazy<ILookup<int, GameReference>>(() => ResourcesByJob(jobs, items));
+
+        // Base's own resources have no profession, so no level (D150).
         _resources = new Lazy<IReadOnlyList<GameReference>>(() => [.. _resourcesByJob.Value
             .SelectMany(resources => resources)
             .GroupBy(resource => resource.Id)
             .Select(resource => resource.MinBy(gathered => gathered.Level))
+            .Concat(_baseSkills.Value.Keys.Select(item => new GameReference(item, items.TryGetItem(item, out var found) ? found.NameId : 0, null)))
             .OrderBy(resource => resource.Id)]);
     }
 
@@ -120,6 +139,25 @@ public sealed class GameReferences
         return _sources.Value.TryGetValue(resource, out source);
     }
 
+    /// <summary>Tells whether a resource is one only skills of <c>Base</c> gather, which no profession needs and no sub-area lists (D150).</summary>
+    /// <param name="resource">The resource's item.</param>
+    /// <returns>Whether it is.</returns>
+    public bool IsBase(int resource)
+    {
+        return _baseSkills.Value.ContainsKey(resource);
+    }
+
+    /// <summary>Finds the maps the host's learned graphics place a resource of <c>Base</c> on (D150).</summary>
+    /// <param name="resource">The resource's item.</param>
+    /// <returns>The maps, none while nothing learned places it; <see langword="null"/> for a resource a profession gathers, or a host that does not learn.</returns>
+    public IReadOnlySet<long>? PlacesOf(int resource)
+    {
+        if (_places is null || _graphics is null || !_baseSkills.Value.TryGetValue(resource, out var skills))
+            return null;
+
+        return _places.MapsOffering(skills, _graphics);
+    }
+
     /// <summary>Gets the maps of a sub-area a character may travel to.</summary>
     /// <param name="subArea">The sub-area.</param>
     /// <returns>Its maps, in the atlas's order; none for a sub-area the atlas lacks.</returns>
@@ -131,12 +169,17 @@ public sealed class GameReferences
     /// <summary>Gets the sub-areas where resources grow, the most of them first, then the lowest (D127).</summary>
     /// <param name="resources">The resources asked for, in order.</param>
     /// <param name="within">The area to seek them in alone, if any.</param>
-    /// <returns>Each sub-area listing at least one of them, with its maps and those it lists.</returns>
+    /// <returns>
+    /// Each sub-area listing at least one of them, or holding a map the learned graphics place a resource of <c>Base</c> on
+    /// (D150), with its maps and those it holds.
+    /// </returns>
     public IReadOnlyList<SubAreaResources> SubAreasHolding(IReadOnlyList<int> resources, int? within = null)
     {
         ArgumentNullException.ThrowIfNull(resources);
 
         var found = new List<SubAreaResources>();
+        var placed = resources.Distinct().Select(resource => (resource, maps: PlacesOf(resource))).Where(pair => pair.maps is { Count: > 0 })
+            .ToDictionary(pair => pair.resource, pair => pair.maps!.Select(map => _subAreaOf.Value.GetValueOrDefault(map, -1)).ToHashSet());
 
         foreach (var subArea in _atlas.SubAreas.Span)
         {
@@ -148,7 +191,7 @@ public sealed class GameReferences
 
             foreach (var resource in resources)
             {
-                if (listed.Contains(resource))
+                if (listed.Contains(resource) || (placed.TryGetValue(resource, out var subAreas) && subAreas.Contains(subArea.Id)))
                     held.Add(resource);
             }
 

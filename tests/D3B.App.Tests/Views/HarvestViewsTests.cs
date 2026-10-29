@@ -76,6 +76,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         builder.Services.AddSingleton(_play.Maps);
         builder.Services.AddSingleton(_play.World);
         builder.Services.AddSingleton(_play.Tables);
+        builder.Services.AddSingleton(_play.Places);
         builder.Services.AddSingleton(_game.Texts);
         builder.Services.AddSingleton(new ClientBuild(TestInstall.Version, null));
         builder.Services.AddSingleton(new GameReferences(_play.World.Atlas, _play.Tables.Jobs, _play.Tables.Items, _play.World.Graph));
