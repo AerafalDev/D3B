@@ -1192,6 +1192,41 @@ maps' ids.
 - **Foretold without a resource**: 5 maps, none holding one.
 - **Unknown**: 20 maps, many gone through on the way, 1 holding one.
 
+### The game, fought and grown back
+
+Measured on 2026-10-29 for session 6c (D144, D145): the 34 game connections captured before it, read through mapping 6, by
+structure, counts and timing, never the maps' or actors' ids.
+
+- **Fights**: 4. Three the player's: the client walks to the group, then sends its walk's confirmation and a request of 49
+  bytes the readable protocol lacks, the attack, in one read; the server destroys the context 30 ms later. One a resource's
+  protector, during 6a's activity: the character's harvest ended, then 2 ms later, with no request from the client or D3B,
+  the server destroyed the context and created a fight's; over 64.5 s later. The objects, the weight and the profession's
+  experience came between the harvest's end and the fight. An event of 38 bytes, a single `int64`, comes right before each
+  fight, but often on its own too: it does not give the fight's kind. No aggression was captured, and how a fight ended
+  is not decoded.
+- **Growing back**: the server never says when an element will offer its skill again; it shows it, the element updated, and
+  on entering a map. No growing back was seen whole, the character never staying on a map that long. Bounds, the element
+  harvested by any actor and found grown back on a later visit: nettle (skill 68) at most 445 s after, the least of 7 bounds;
+  trout (125) at most 564 s after, the least of 7; gudgeon (124) at most 1,557 s after. Trout seen still harvested 297 s after,
+  the character having stayed on the map since. A bound found on a visit holds from above only: another player may have
+  harvested the element meanwhile, unseen.
+- **Durations**: every harvest lasted 3 s, 30 tenths; drinking water from a well, 1.5 s.
+
+Measured the same day on the pack of 3.7.12.12 (D147, D149, D150):
+
+- **Zones that fall apart.** Of the 186 sub-areas listing resources, 67 fall apart through the transitions between their own
+  maps, 588 of their 8,062 maps lying off their sub-area's main part, the part holding the most maps. From the main part,
+  through the whole world graph and every transition, criteria aside: 19 maps are 2 changes away, 18 are 3, 17 are 4, 128
+  are 5 to 35, and 416 are not reached at all, only by a teleport or a door whose criterion the graph keeps. Sub-area 601
+  holds 222 maps, 141 in its main part, in 25 parts.
+- **Base's resources.** 34 skills of `Base` gather 33 items no profession gathers, among them drinking water (skill 102,
+  "Puiser"), potatoes, shells, crystals and events' items such as "Marron Glacé"; all of level 1. No sub-area lists them.
+  The graphics of every map of the world graph, 10,981 maps, are 3,345 graphics drawn on 24,579 pairs of a map and a
+  graphic, indexed in 564 ms.
+- **The guild's chest.** Graphic 70671, which JondoEmu names the banks' guild chest, draws 21 elements on 21 maps of the
+  world graph, 20 of them insides on no world map. Not measured through the server yet.
+- **Resource bags.** Item type 100, "Sac de ressources", holds 73 items, such as "Sac de blé" and "Sac de Houblon".
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it
