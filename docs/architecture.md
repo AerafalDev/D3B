@@ -34,8 +34,9 @@ plugins removed, and Lua scripts in their place at step 7, removed since (D116, 
 card staying; each bot's journal of its actions, the host's problems and each bot's game frames kept in memory, and the
 app's logs page and protocol inspector, live or replaying a capture (step 5, session 5e); the live map (step 5, session
 5d); the harvesting module, its activity touring a zone and banking full, an activity's report on the bot's card and the
-map page, and the profile editor grown with suggestions, a zone's mini-map and a preview (step 6, session 6a). Everything
-else below is the target.
+map page, and the profile editor grown with suggestions, a zone's mini-map and a preview (step 6, session 6a); the icons of
+the resources and professions in a pack of format 4, drawn on the tiles, lists, card and map, and the maps' graphics the
+bots learn, which send a tour to the probable maps first (step 6, session 6b). Everything else below is the target.
 
 ## Overview
 
@@ -195,12 +196,18 @@ client's new connection taking the bot back; in session 6a (D127 to D132), harve
 - **Harvesting** (D127 to D130), in `D3B.Bot.Harvesting`, registered by `HarvestingModule`: `HarvestActivity`, its settings
   `HarvestSettings` and their zone `HarvestZone`, the skills to use, the sub-areas and their maps, the insides apart. Each
   step harvests the wanted resource the server offers at the character's level, the first asked for then the nearest, or
-  travels to the nearest map of the tour still to go through (`HarvestTour`), the maps of the world map before the insides;
-  `HarvestSightings`, one per host, remembers what each map holds, and a tour leaves out the maps seen empty. Full at its
+  travels to the nearest map of the tour still to go through (`HarvestTour`): the probable maps first, then those of the
+  world map, then the insides. `HarvestSightings`, one per host, remembers what each map holds; a map never seen is
+  foretold by its elements' graphics (`HarvestZone.Foresee`, D138), and a tour leaves out the maps seen empty, those
+  whose graphics all offer none of its skills, and those without elements. Full at its
   share of pods, it banks at the nearest bank, what the settings say, and the next step goes back; still full, it says
   why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
   app. Banking waits half a second after the banker's question and after the bank opens, so that the client shows its
   windows before D3B closes them (D132).
+- **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
+  elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
+  the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
+  elements the server lists on the map, whatever the activity. D3B's database keeps it from one run to the next.
 - **The journal** (D112, D113), in `D3B.Bot.Journal`: each bot's last 2,000 entries (`BotActor.Journal`), written by the
   behaviors once an action is over, with its outcome and duration: a walk asked for itself, a map change, a use, a
   travel, banking; then the bot's connection, pause, resuming and fights, and its activity's start, interruptions,
@@ -319,14 +326,16 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 3 holds (D27, D29):
-  - every map as its own entry, its neighbours, cells and interactive elements (`MapData`), read through a
-    `PackCache` by `GameMaps`;
+- A pack of format 4 holds (D27, D29, D139):
+  - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
+    through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
     of map positions, sub-areas with their resources, areas and zaaps (`WorldAtlas`), both read once by `GameWorld`;
   - the game tables a harvesting and banking bot uses: items and their types (`ItemCatalog`), jobs and skills
     (`JobCatalog`), interactives (`InteractiveCatalog`), banks and bankers with the replies that open the bank
-    (`BankCatalog`), each read once by `GameTables`;
+    (`BankCatalog`), each read once by `GameTables`; items and jobs name their icon;
+  - the icons of the items a harvest names and of the professions, 64 pixels square in raw RGBA, decoded from the client's
+    BC7 textures by the extraction tool (`IconCatalog`, D135 to D137), read once by `GameTables`;
   - in French and English, the texts these name (`GameTexts`).
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
@@ -371,16 +380,19 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   with its defaults (D93, D99), the character's own profile chosen, stopped, with its status, steps and last
   interruption, and the error it failed with (D103). A profile whose activity is gone, such as a Lua script's, is offered
   with it said gone, and does not start (D119). An activity's report shows there: what it does, its tour as a bar and how
-  long it ran, what it counts, the icons' places, its warnings, and why it ended (D131).
+  long it ran, what it counts with each item's icon, its warnings, and why it ended (D131, D141).
 - **The accounts page** (D101): a card per account the relay saw, its subscription and when it was seen, forgotten on
   demand; its characters in rows, each with the profile it plays and whether it starts on connection.
 - **The profiles page** (D101): a column of profiles, each folded to its name, activity, settings at a glance and
   characters, and unfolded in place to edit it: its name, its activity, and its settings by section, a field per kind
   (`D3B.App.ViewModels.Settings`), checked as they change, searched by name for the game's values, saved once they
   hold. A profile whose activity is gone says so, and is given another or deleted (D119). Resources show as tiles in their
-  order, with their profession, level and the levels the characters playing it lack; a sub-area setting suggested by
-  resources shows the zone's mini-map (`ZoneMapCanvas`, each map a square at its coordinates from the atlas), the
-  sub-areas where they grow and the activity's preview; a percentage is a bar, a short choice segments (D127).
+  order, each with its icon, its profession's icon and level, and the levels the characters playing it lack; a search
+  shows each value's detail under its name; a sub-area setting suggested by resources shows the zone's mini-map
+  (`ZoneMapCanvas`, each map a square at its coordinates from the atlas, the probable ones marked, those left out dim), the
+  sub-areas where they grow and the activity's preview, its probable maps counted; a percentage is a bar, a short choice
+  segments (D127, D138, D141). The pack's icons are drawn as bitmaps once per pack (`GameIcons`); a pack without them, or
+  an item without one, keeps the neutral square.
 - **The logs page** (D111 to D114, `D3B.App.ViewModels.Logs`): every source by time, the host's problems, or a bot's
   journal, which its card opens, a profile that did not start on connection included (D119); filtered by tone and text,
   followed, copied. `JournalLines` says each entry in the app's
@@ -393,8 +405,9 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   map's fixed geometries built once, in seven layers toggled: the cells, the character and its path, the elements by
   what the server says of them, the NPCs, the exits from the world graph (`MapExits`), the other bots, and the zones and
   stairs; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
-  bag's and a fight's maps are drawn as the others. A running activity's report adds a line, an Activity layer ringing
-  the elements it wants and the one it goes for and marking the exit it heads to, and its tour's mini-map (D131).
+  bag's and a fight's maps are drawn as the others; a resource by its icon, faded once harvested (D141). A running
+  activity's report adds a line, an Activity layer ringing the elements it wants and the one it goes for and marking the
+  exit it heads to, and its tour's mini-map, gone through, probable, to see and without a resource (D131, D138).
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
   alone: the bots' loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
@@ -405,7 +418,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
 
 ## Storage
 
-Built in session 5c (D99, D100), in `D3B.Storage`, which the app and `D3B.Host` add to the host's composition.
+Built in session 5c (D99, D100), in `D3B.Storage`, which the app and `D3B.Host` add to the host's composition; the maps'
+graphics in session 6b (D138).
 
 - **The database**: SQLite through EF Core, in `%LOCALAPPDATA%\D3B\d3b.db` or `Storage:Path`, its migrations applied
   before the host starts (`StoragePreparation`, an `IHostPreparation`); one that does not open stops the host, which says
@@ -416,6 +430,9 @@ Built in session 5c (D99, D100), in `D3B.Storage`, which the app and `D3B.Host` 
 - **Profiles** (`ProfileBook`): a name, an activity and its settings as JSON, shared by characters. `ProfileStarter`
   starts one on a bot once its activity is registered and its settings read and hold; `StartOnConnection` starts a
   character's when its bot is made, if it asks.
+- **The maps' graphics** (`GraphicRecorder`, D138): what the bots learn of each graphic, its skills as JSON, read into
+  `GraphicSkills` once the database opens and written as the bots learn, queued off the relays' loops, whatever the
+  client's build.
 - **In memory**: both books are read once the database opens, then again after each write; the app reads them every
   refresh, and their version tells it they changed.
 - **No secret** is kept: no Data Protection yet (D100).

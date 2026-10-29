@@ -4,7 +4,7 @@ namespace D3B.Data.Items;
 
 /// <summary>An item, from the client's <c>ItemsDataRoot</c>: what a bot needs to name it, sort it and weigh it.</summary>
 /// <remarks>
-/// About 21,500 items, so the struct keeps the client's own widths: 13 bytes, packed and unmanaged, which MemoryPack
+/// About 21,500 items, so the struct keeps the client's own widths: 17 bytes, packed and unmanaged, which MemoryPack
 /// copies as raw bytes. Effects, recipes, criteria and the client's <c>m_flags</c>, whose bits are not measured, are left
 /// out (client.md).
 /// </remarks>
@@ -26,18 +26,23 @@ public readonly struct Item
     /// <summary>Gets the weight of one, in pods: what it costs of a character's carrying capacity.</summary>
     public ushort Weight { get; }
 
+    /// <summary>Gets its icon, which <see cref="Icons.IconCatalog.Items"/> holds for the items a harvest names, and not for the others.</summary>
+    public int IconId { get; }
+
     /// <summary>Initializes a new instance of the <see cref="Item"/> struct.</summary>
     /// <param name="id">Its identifier.</param>
     /// <param name="nameId">The text naming it.</param>
     /// <param name="typeId">Its type.</param>
     /// <param name="level">Its level.</param>
     /// <param name="weight">The weight of one, in pods.</param>
-    public Item(int id, int nameId, ushort typeId, byte level, ushort weight)
+    /// <param name="iconId">Its icon.</param>
+    public Item(int id, int nameId, ushort typeId, byte level, ushort weight, int iconId)
     {
         Id = id;
         NameId = nameId;
         TypeId = typeId;
         Level = level;
         Weight = weight;
+        IconId = iconId;
     }
 }

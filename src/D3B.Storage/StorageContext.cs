@@ -1,10 +1,11 @@
 using D3B.Storage.Accounts;
+using D3B.Storage.Graphics;
 using D3B.Storage.Profiles;
 using Microsoft.EntityFrameworkCore;
 
 namespace D3B.Storage;
 
-/// <summary>D3B's database: the accounts and characters it saw, and the profiles (D100).</summary>
+/// <summary>D3B's database: the accounts and characters it saw, the profiles, and what the bots learned of the maps' graphics (D100, D138).</summary>
 public sealed class StorageContext : DbContext
 {
     /// <summary>Gets the accounts.</summary>
@@ -15,6 +16,9 @@ public sealed class StorageContext : DbContext
 
     /// <summary>Gets the profiles.</summary>
     public DbSet<Profile> Profiles => Set<Profile>();
+
+    /// <summary>Gets the graphics the bots learned.</summary>
+    public DbSet<LearnedGraphic> Graphics => Set<LearnedGraphic>();
 
     /// <summary>Initializes a new instance of the <see cref="StorageContext"/> class.</summary>
     /// <param name="options">The context's options: SQLite, on the database's file.</param>
@@ -41,6 +45,13 @@ public sealed class StorageContext : DbContext
             profile.HasKey(known => known.Id);
             profile.Property(known => known.Name).HasMaxLength(Profile.NameLength).UseCollation("NOCASE");
             profile.HasIndex(known => known.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<LearnedGraphic>(graphic =>
+        {
+            graphic.ToTable("Graphics");
+            graphic.HasKey(learned => learned.GfxId);
+            graphic.Property(learned => learned.GfxId).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<KnownCharacter>(character =>

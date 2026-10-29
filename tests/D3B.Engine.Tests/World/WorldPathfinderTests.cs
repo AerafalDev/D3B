@@ -398,14 +398,14 @@ public sealed class WorldPathfinderTests
         var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => Cell(1, walkable: cell is not (273 or 260 or 274 or 289))).ToArray();
         var pathfinder = new TestWorld().Interactive(1, 2, 288).Pathfinder();
 
-        Assert.Equal([302, 316, 301, 287], pathfinder.ExitCells(MapOf(cells, new MapInteractive(515308, 288)), StepOf(pathfinder, 1, 2), _subscribed));
+        Assert.Equal([302, 316, 301, 287], pathfinder.ExitCells(MapOf(cells, new MapInteractive(515308, 288, 0)), StepOf(pathfinder, 1, 2), _subscribed));
     }
 
     [Fact]
     public void ADoorIsUsedAroundItsElementWhereverTheTransitionPutsIt()
     {
         var pathfinder = new TestWorld().Interactive(1, 2, 288).Pathfinder();
-        var exits = pathfinder.ExitCells(MapOf(EdgeCells(), new MapInteractive(515308, 300)), StepOf(pathfinder, 1, 2), _subscribed);
+        var exits = pathfinder.ExitCells(MapOf(EdgeCells(), new MapInteractive(515308, 300, 0)), StepOf(pathfinder, 1, 2), _subscribed);
 
         Assert.Equal(8, exits.Count);
         Assert.All(exits, cell => Assert.NotEqual(-1, MapGeometry.Direction(300, cell)));
@@ -416,7 +416,7 @@ public sealed class WorldPathfinderTests
     {
         var pathfinder = new TestWorld().Interactive(1, 2, 288, criterion: "PC=287|PC=301").Pathfinder();
 
-        Assert.Equal([301, 287], pathfinder.ExitCells(MapOf(EdgeCells(), new MapInteractive(515308, 288)), StepOf(pathfinder, 1, 2), _subscribed));
+        Assert.Equal([301, 287], pathfinder.ExitCells(MapOf(EdgeCells(), new MapInteractive(515308, 288, 0)), StepOf(pathfinder, 1, 2), _subscribed));
     }
 
     [Fact]

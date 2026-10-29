@@ -1,4 +1,5 @@
 using D3B.Data.Banks;
+using D3B.Data.Icons;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
@@ -24,6 +25,7 @@ public sealed class GameTablesTests : IDisposable
             writer.Add(JobCatalog.EntryName, TestTables.Jobs());
             writer.Add(InteractiveCatalog.EntryName, TestTables.Interactives());
             writer.Add(BankCatalog.EntryName, TestTables.Banks());
+            writer.Add(IconCatalog.EntryName, TestTables.Icons());
         }));
 
         var tables = new GameTables(pack);
@@ -32,6 +34,7 @@ public sealed class GameTablesTests : IDisposable
         Assert.Same(tables.Jobs, tables.Jobs);
         Assert.Same(tables.Interactives, tables.Interactives);
         Assert.Same(tables.Banks, tables.Banks);
+        Assert.Same(tables.Icons, tables.Icons);
         Assert.Equal(TestTables.Items().Items.ToArray(), tables.Items.Items.ToArray());
         Assert.Equal(TestTables.Items().Types.ToArray(), tables.Items.Types.ToArray());
         Assert.Equal(TestTables.Jobs().Jobs.ToArray(), tables.Jobs.Jobs.ToArray());
@@ -40,6 +43,10 @@ public sealed class GameTablesTests : IDisposable
         Assert.Equal(TestTables.Banks().Banks.ToArray(), tables.Banks.Banks.ToArray());
         Assert.Equal(TestTables.Banks().Bankers.ToArray(), tables.Banks.Bankers.ToArray());
         Assert.Equal(TestTables.Banks().Replies.ToArray(), tables.Banks.Replies.ToArray());
+        Assert.Equal(TestTables.Icons().Items.Ids.ToArray(), tables.Icons.Items.Ids.ToArray());
+        Assert.Equal(TestTables.Icons().Items.Pixels.ToArray(), tables.Icons.Items.Pixels.ToArray());
+        Assert.Equal(TestTables.Icons().Jobs.Ids.ToArray(), tables.Icons.Jobs.Ids.ToArray());
+        Assert.Equal(TestTables.Icons().Jobs.Pixels.ToArray(), tables.Icons.Jobs.Pixels.ToArray());
     }
 
     [Fact]
@@ -54,5 +61,6 @@ public sealed class GameTablesTests : IDisposable
         Assert.Throws<KeyNotFoundException>(() => tables.Jobs);
         Assert.Throws<KeyNotFoundException>(() => tables.Interactives);
         Assert.Throws<KeyNotFoundException>(() => tables.Banks);
+        Assert.Throws<KeyNotFoundException>(() => tables.Icons);
     }
 }

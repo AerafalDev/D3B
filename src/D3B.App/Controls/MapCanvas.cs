@@ -6,6 +6,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using D3B.Data.Maps;
 
 namespace D3B.App.Controls;
@@ -133,6 +134,17 @@ internal sealed class MapCanvas : Control
             MapMarks.Draw(context, palette, MapMark.Character, layout.Center(cell), layout.CellHeight);
     }
 
+    private static void DrawIcon(DrawingContext context, IImage icon, bool harvested, Point center, double height)
+    {
+        // Centred on its cell, its drawing within the ring the Activity layer draws around a wanted element; harvested, faded.
+        var size = height * 1.3;
+        var bounds = new Rect(center.X - (size / 2), center.Y - (size / 2), size, size);
+
+        using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
+        using (context.PushOpacity(harvested ? 0.35 : 1))
+            context.DrawImage(icon, bounds);
+    }
+
     private static void DrawActivity(DrawingContext context, MapPalette palette, MapActivity activity, MapLayout layout)
     {
         var height = layout.CellHeight;
@@ -191,7 +203,12 @@ internal sealed class MapCanvas : Control
         {
             var shown = element.Mark is MapMark.Door ? layers.HasFlag(MapLayers.Elements) || layers.HasFlag(MapLayers.Exits) : layers.HasFlag(MapLayers.Elements);
 
-            if (shown)
+            if (!shown)
+                continue;
+
+            if (element.Icon is { } icon)
+                DrawIcon(context, icon, element.Mark is MapMark.Harvested, layout.Center(element.Cell), height);
+            else
                 MapMarks.Draw(context, palette, element.Mark, layout.Center(element.Cell), height);
         }
 

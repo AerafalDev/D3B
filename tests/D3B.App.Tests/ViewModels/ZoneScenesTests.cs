@@ -52,6 +52,20 @@ public sealed class ZoneScenesTests
     }
 
     [Fact]
+    public void AProbableMapShowsOnATourAndIsMarkedOverItsPartsColour()
+    {
+        ZoneMap[] zone = [new(1, ZoneMapState.ToVisit), new(5, ZoneMapState.Probable), new(2, ZoneMapState.Empty, 1), new(3, ZoneMapState.Probable, 1)];
+
+        // The inside shares the first map's coordinates: the probable one shows there.
+        Assert.Equal(
+            [new ZoneSquare(0, 0, ZoneSquareKind.Probable), new ZoneSquare(1, 0, ZoneSquareKind.Empty), new ZoneSquare(2, 0, ZoneSquareKind.Probable)],
+            ZoneScenes.Of(zone, Atlas(), tour: true)!.Squares);
+        Assert.Equal(
+            [new ZoneSquare(0, 0, ZoneSquareKind.GroupA, IsProbable: true), new ZoneSquare(1, 0, ZoneSquareKind.Empty), new ZoneSquare(2, 0, ZoneSquareKind.GroupB, IsProbable: true)],
+            ZoneScenes.Of(zone, Atlas(), tour: false)!.Squares);
+    }
+
+    [Fact]
     public void AZoneOfNoPlacedMapHasNoScene()
     {
         Assert.Null(ZoneScenes.Of([new ZoneMap(99, ZoneMapState.ToVisit)], Atlas(), tour: true));

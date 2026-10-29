@@ -63,6 +63,8 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     private GameNames Names { get; }
 
+    private GameIcons? Icons { get; }
+
     private IServiceProvider? Services { get; }
 
     /// <summary>Initializes a new instance of the <see cref="SettingsEditor"/> class.</summary>
@@ -83,6 +85,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         Services = services;
         Players = players ?? [];
         Atlas = services?.GetService<GameWorld>()?.Atlas;
+        Icons = GameIcons.Of(services?.GetService<GameTables>());
         Says = services is null ? null : new GameTextFormatter(localizer, services.GetService<GameWorld>(), services.GetService<GameTexts>(), services.GetService<GameTables>());
 
         var sections = new List<SettingSectionViewModel>();
@@ -241,7 +244,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         if (Game is null)
             return [];
 
-        var options = Game.Options(setting.Kind, within).Select(reference => new OptionViewModel(reference.Id, Names.Name(setting.Kind, reference), DetailOf(setting.Kind, reference)));
+        var options = Game.Options(setting.Kind, within).Select(reference => Option(setting.Kind, reference));
 
         if (setting.Kind is SettingKind.Resource && within is not null)
             return [.. options];
@@ -259,7 +262,20 @@ internal sealed partial class SettingsEditor : ObservableObject
     {
         var reference = Game?.Options(setting.Kind).FirstOrDefault(option => option.Id == id) ?? new GameReference(id, 0, null);
 
-        return new OptionViewModel(id, Names.Name(setting.Kind, reference), DetailOf(setting.Kind, reference));
+        return Option(setting.Kind, reference);
+    }
+
+    private OptionViewModel Option(SettingKind kind, GameReference reference)
+    {
+        // A resource shows its icon, and its profession's beside the detail naming it; a profession its own.
+        var (icon, detailIcon) = kind switch
+        {
+            SettingKind.Resource => (Icons?.Item(reference.Id), Game is not null && Game.TryGetSource(reference.Id, out var source) ? Icons?.Job(source.JobId) : null),
+            SettingKind.Job => (Icons?.Job(reference.Id), null),
+            _ => (null, null),
+        };
+
+        return new OptionViewModel(reference.Id, Names.Name(kind, reference), DetailOf(kind, reference), icon, detailIcon);
     }
 
     private GameReference JobOf(int jobId)

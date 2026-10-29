@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using D3B.Data.Banks;
+using D3B.Data.Icons;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
@@ -32,11 +33,14 @@ public sealed class PackFormatTests
     [
         (2, "44e092e069deeecb28f1afb3f0619ff7921a30003a89974ecd5d5a93923533c8"),
         (3, "94032ad3554bc9df362222810fcb95534e53d56997b1dc1a839ac598dde39ede"),
+        (4, "4f0e5099257dbba4ee548612249d8a5c9c9da7387fdfc765b15132d9c81fa222"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
     private static readonly int[] _harvestables = [43];
     private static readonly int[] _replies = [67];
+    private static readonly int[] _itemIcons = [71];
+    private static readonly int[] _jobIcons = [72];
 
     [Fact]
     public void TheLastRecordedFormatIsTheCurrentOne()
@@ -89,7 +93,7 @@ public sealed class PackFormatTests
             13,
             14,
             Enumerable.Repeat(new MapCell(MapCellProperties.Walkable | MapCellProperties.Blue, -130, 15, 0x83, 1, 0x21, 9), MapData.CellCount).ToArray(),
-            new MapInteractive[] { new(16, 17) }));
+            new MapInteractive[] { new(16, 17, 70) }));
         Append(hash, new WorldGraph(
             new WorldVertex[] { new(18, 2), new(19, 3) },
             new WorldEdge[] { new(0, 1, 0, 1) },
@@ -101,12 +105,18 @@ public sealed class PackFormatTests
             new Area[] { new(37, 38, 39) },
             new Waypoint[] { new(40, 41, 42, true) },
             _harvestables));
-        Append(hash, new ItemCatalog(new Item[] { new(44, 45, 46, 47, 48) }, new ItemType[] { new(49, 50, 51, 52) }));
-        Append(hash, new JobCatalog(new Job[] { new(53, 54) }, new Skill[] { new(55, 56, 57, 58, 59, 60, true) }));
+        Append(hash, new ItemCatalog(new Item[] { new(44, 45, 46, 47, 48, 68) }, new ItemType[] { new(49, 50, 51, 52) }));
+        Append(hash, new JobCatalog(new Job[] { new(53, 54, 69) }, new Skill[] { new(55, 56, 57, 58, 59, 60, true) }));
         Append(hash, new InteractiveCatalog(new Interactive[] { new(61, 62) }));
         Append(hash, new BankCatalog(new Bank[] { new(63, 64) }, new Banker[] { new(65, 66, 0, 1) }, _replies));
+        Append(hash, new IconCatalog(new IconTable(_itemIcons, Pixels(73)), new IconTable(_jobIcons, Pixels(74))));
 
         return Convert.ToHexStringLower(hash.GetHashAndReset());
+    }
+
+    private static byte[] Pixels(int seed)
+    {
+        return [.. Enumerable.Range(seed, IconTable.IconLength).Select(value => (byte)value)];
     }
 
     private static void Append<T>(IncrementalHash hash, T sample)

@@ -349,16 +349,14 @@
                         SelectedItem="{Binding Selected}">
                         <AutoCompleteBox.ItemTemplate>
                             <DataTemplate x:DataType="s:OptionViewModel">
-                                <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="1">
                                     <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                                     <TextBlock
                                         Classes="Caption Muted"
-                                        Grid.Column="1"
                                         IsVisible="{Binding HasDetail}"
-                                        Margin="12,0,0,0"
                                         Text="{Binding Detail}"
-                                        VerticalAlignment="Center" />
-                                </Grid>
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
                             </DataTemplate>
                         </AutoCompleteBox.ItemTemplate>
                     </AutoCompleteBox>
@@ -415,8 +413,11 @@
                                     <Panel Height="38" Width="38">
                                         <Border
                                             Classes="ItemIcon Large"
+                                            Classes.HasIcon="{Binding Option.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
                                             HorizontalAlignment="Right"
-                                            VerticalAlignment="Bottom" />
+                                            VerticalAlignment="Bottom">
+                                            <Image RenderOptions.BitmapInterpolationMode="HighQuality" Source="{Binding Option.Icon}" />
+                                        </Border>
                                         <Border
                                             Classes="Priority"
                                             HorizontalAlignment="Left"
@@ -433,11 +434,20 @@
                                             Classes="Small"
                                             Text="{Binding Option.Name}"
                                             TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            Classes="Caption Muted"
+                                        <StackPanel
                                             IsVisible="{Binding HasDetailShown}"
-                                            Text="{Binding Option.Detail}"
-                                            TextTrimming="CharacterEllipsis" />
+                                            Orientation="Horizontal"
+                                            Spacing="5">
+                                            <Image
+                                                Classes="DetailIcon"
+                                                IsVisible="{Binding Option.DetailIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                Source="{Binding Option.DetailIcon}" />
+                                            <TextBlock
+                                                Classes="Caption Muted"
+                                                Text="{Binding Option.Detail}"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
                                         <TextBlock
                                             Classes="Caption"
                                             Foreground="{DynamicResource WarningColor}"
@@ -491,20 +501,33 @@
                     Text="{Binding Search}">
                     <AutoCompleteBox.ItemTemplate>
                         <DataTemplate x:DataType="s:OptionViewModel">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Classes="ItemIcon" Margin="0,0,8,0" />
-                                <TextBlock
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Border
+                                    Classes="ItemIcon Medium"
+                                    Classes.HasIcon="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    Margin="0,0,10,0">
+                                    <Image RenderOptions.BitmapInterpolationMode="HighQuality" Source="{Binding Icon}" />
+                                </Border>
+                                <StackPanel
                                     Grid.Column="1"
-                                    Text="{Binding Name}"
-                                    TextTrimming="CharacterEllipsis"
-                                    VerticalAlignment="Center" />
-                                <TextBlock
-                                    Classes="Caption Muted"
-                                    Grid.Column="2"
-                                    IsVisible="{Binding HasDetail}"
-                                    Margin="12,0,0,0"
-                                    Text="{Binding Detail}"
-                                    VerticalAlignment="Center" />
+                                    Spacing="1"
+                                    VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <StackPanel
+                                        IsVisible="{Binding HasDetail}"
+                                        Orientation="Horizontal"
+                                        Spacing="5">
+                                        <Image
+                                            Classes="DetailIcon"
+                                            IsVisible="{Binding DetailIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                            RenderOptions.BitmapInterpolationMode="HighQuality"
+                                            Source="{Binding DetailIcon}" />
+                                        <TextBlock
+                                            Classes="Caption Muted"
+                                            Text="{Binding Detail}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </StackPanel>
                             </Grid>
                         </DataTemplate>
                     </AutoCompleteBox.ItemTemplate>
@@ -532,12 +555,33 @@
                         TextTrimming="CharacterEllipsis" />
                 </Grid>
                 <Grid ColumnDefinitions="11*,14,10*">
-                    <Border Classes="ZoneMap" IsVisible="{Binding HasZone}">
-                        <c:ZoneMapCanvas
-                            Height="220"
-                            Palette="{DynamicResource MapPalette}"
-                            Scene="{Binding Zone}" />
-                    </Border>
+                    <StackPanel IsVisible="{Binding HasZone}" Spacing="6">
+                        <Border Classes="ZoneMap">
+                            <c:ZoneMapCanvas
+                                Height="220"
+                                Palette="{DynamicResource MapPalette}"
+                                Scene="{Binding Zone}" />
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Spacing="14">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse
+                                    Fill="{DynamicResource ForegroundColor}"
+                                    Height="7"
+                                    VerticalAlignment="Center"
+                                    Width="7" />
+                                <TextBlock Classes="Caption Muted" Text="{l:Tr TourProbable}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Border
+                                    Background="{DynamicResource BorderColor}"
+                                    CornerRadius="2"
+                                    Height="10"
+                                    VerticalAlignment="Center"
+                                    Width="10" />
+                                <TextBlock Classes="Caption Muted" Text="{l:Tr TourEmpty}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
                     <Border
                         Classes="ZoneMap"
                         IsVisible="{Binding !HasZone}"
@@ -605,16 +649,14 @@
                             Text="{Binding Search}">
                             <AutoCompleteBox.ItemTemplate>
                                 <DataTemplate x:DataType="s:OptionViewModel">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Spacing="1">
                                         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                                         <TextBlock
                                             Classes="Caption Muted"
-                                            Grid.Column="1"
                                             IsVisible="{Binding HasDetail}"
-                                            Margin="12,0,0,0"
                                             Text="{Binding Detail}"
-                                            VerticalAlignment="Center" />
-                                    </Grid>
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
                                 </DataTemplate>
                             </AutoCompleteBox.ItemTemplate>
                         </AutoCompleteBox>

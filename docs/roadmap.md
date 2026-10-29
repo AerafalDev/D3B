@@ -12,7 +12,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 3 | Protocol and connection | Done; Q10 at the next client update |
 | 4 | Bot run time and navigation | Done |
 | 5 | Desktop app, first version | Done |
-| 6 | Harvesting and banking: first milestone | Milestone reached in 6a; 6b icons, 6c to do |
+| 6 | Harvesting and banking: first milestone | Milestone reached in 6a; icons and learned graphics in 6b; 6c and 6d to do |
 | 7 | Mods: Lua scripting, then blueprints | Lua done, then removed (D119); blueprints to do, after step 6 (D117) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
 | 9 | Fights | To do |
@@ -154,9 +154,10 @@ Done on 2026-10-29, with 5d last. Next: step 6.
 One account, through its official client and D3B's MITM (D23), harvests a profile's resources across maps and banks
 them when its pods are full, controlled from the app (D16). The repository may go public once it is reached (D4).
 
-Three sessions, the split chosen by the owner (D126). The milestone was reached in 6a, on 2026-10-29: harvested from map
-to map, banked full and back, stopped, paused by the player and resumed, and a profile started on connection, measured on
-a client through the app (D133). A client update before the next session gets Q10's session first (D54).
+Three sessions, the split chosen by the owner (D126), and a fourth for the app's interface (D143). The milestone was
+reached in 6a, on 2026-10-29: harvested from map to map, banked full and back, stopped, paused by the player and resumed,
+and a profile started on connection, measured on a client through the app (D133). A client update before the next session
+gets Q10's session first (D54).
 
 - Noted by the owner for later: an option to bank into the guild's chest instead, when the character's guild has one
   and the character the rights; options such as opening resource bags automatically and healing under a share of life
@@ -167,8 +168,9 @@ a client through the app (D133). A client update before the next session gets Q1
 | Session | Content | Status |
 | --- | --- | --- |
 | 6a | The split of step 6, the icons in their own session, the owner's choices (D126); the harvesting module and its activity, its settings of D98's kinds, resources of any profession by priority or everything each character can harvest, an area and its sub-areas, the share of pods and what goes to the bank, D98 grown with sub-areas suggested by resources, percentages and a preview the activity reckons from the pack, and the profile editor as tiles, a zone's mini-map from the atlas, suggested sub-areas, figures, a bar and segments, the owner's choices among mockups (D127); tours through the zone, the wanted resource then the nearest on a map, the nearest map still to go through next, the maps seen empty left out, the host remembering, and the insides last after a measure (D128); banking full at the nearest bank and back, and the reason said when still full (D129); the activity resumed after a fight, a new connection and the player's pause (D130); an activity's report, any activity's, on the bot's card and the map page, with the tour's mini-map and an Activity layer (D131); banking letting the client show its windows, measured (D132); measured on a client through the app (D133); no human timings, D2 (D134). | Done on 2026-10-29 |
-| 6b | Icons: the items the sub-areas list as harvestable and the professions, decoded from the client's BC7 textures, in a pack of format 4 released as every pack, with the elements' graphics, which would let a tour know a zone before going there; the app's icons' places filled (D126). | To do |
-| 6c | What 6a leaves: fights while harvesting, protectors and aggressions; the resources' growing back, measured; harvest statistics; the guild's chest; the owner's options, resource bags and healing, each a request and an event to map; maps reachable only far round in a zone (D133); then the owner's call on making the repository public (D4). | To do |
+| 6b | The icons of the 287 items a harvest names and of the professions (D135), 64 pixels in raw RGBA (D136), decoded from the client's BC7 textures by AssetRipper.TextureDecoder in the extractor (D137); the maps' elements' graphics, what the server says each offers learned by the host from every map, kept in D3B's database, and a tour going to the probable maps first and leaving out those without a resource (D138); pack format 4, its release on the owner's go (D139); Base's resources in 6c (D140); the icons on the tiles, searches, card and map, a search's detail under its name, the owner's asks (D141); measured through the app (D142); a pass on the app's interface in a session of its own, 6d (D143). | Done on 2026-10-29 |
+| 6c | What 6a leaves: fights while harvesting, protectors and aggressions; the resources' growing back, measured; harvest statistics; the guild's chest; the owner's options, resource bags and healing, each a request and an event to map; maps reachable only far round in a zone (D133); harvesting Base's resources, wells among them, found by the graphics learned (D140); then the owner's call on making the repository public (D4). | To do |
+| 6d | A pass on the app's interface, its ease of use and its options, every page: margins, paddings and sizes made consistent, ShadUI's components used where they fit, the owner listing what to improve (D143). | To do |
 
 ## 7. Mods: Lua scripting, then blueprints
 

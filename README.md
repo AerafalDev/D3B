@@ -11,17 +11,19 @@ client.
 ## Status
 
 The solution and the module system: a headless host that builds its modules, starts and stops. The game data: tools that inspect the official client and extract its maps, world graph, items, jobs,
-interactives and banks, with the texts they name, into a pack per client build; a tool that publishes it as a release
+interactives, banks and the icons of resources and professions, with the texts they name, into a pack per client build; a tool that publishes it as a release
 asset; and a data module, whose pack the host finds on the machine or downloads, and without which it does not start.
 The network: while the host runs, official clients started from the launcher connect through its relay, which can record
 their connection phase. The bots walk, travel, use elements and bank. The first milestone is reached: a bot harvests a
 profile's resources tour by tour through its zone and banks them when its pods are full, started from the app or when its
 client connects, its card and map saying what it does; the profile editor suggests the sub-areas where the resources grow
-and draws the zone. Mods will be made as blueprints after it. The app's map page draws a
+and draws the zone. The resources and professions show their icons, from the pack, on the profiles, the bots' cards and
+the map; every map a bot enters teaches which graphics are which resource, kept from one run to the next, so that a tour
+goes first to the maps likely holding its resources. Mods will be made as blueprints after it. The app's map page draws a
 bot's map from the pack as its character moves, with its path, elements, NPCs and exits, and says what a cell holds;
 its logs page shows each bot's journal of its actions and the host's problems; its protocol inspector shows a bot's game
-frames decoded as they go, the login ticket hidden, or replays a capture. Next: the resources' icons, then what the first
-milestone leaves. See the [roadmap](docs/roadmap.md).
+frames decoded as they go, the login ticket hidden, or replays a capture. Next: what the first milestone leaves, then a pass on
+the app's interface. See the [roadmap](docs/roadmap.md).
 
 ## Building
 

@@ -107,6 +107,12 @@
   <data name="FigureMapsMany" xml:space="preserve">
     <value>cartes à parcourir</value>
   </data>
+  <data name="FigureProbableOne" xml:space="preserve">
+    <value>carte probable</value>
+  </data>
+  <data name="FigureProbableMany" xml:space="preserve">
+    <value>cartes probables</value>
+  </data>
   <data name="FigureResourcesPresent" xml:space="preserve">
     <value>ressources présentes</value>
   </data>

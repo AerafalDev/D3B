@@ -2,6 +2,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Data;
 using D3B.Bot.Hosting;
 using D3B.Bot.Inspection;
+using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
 using D3B.Bot.Network;
 using D3B.Bot.Pages;
@@ -11,6 +12,7 @@ using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Runtime;
@@ -21,7 +23,8 @@ namespace D3B.Bot.Runtime;
 /// network module's game sessions, the <see cref="ActivityCatalog"/> of the activities modules register with
 /// <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity}(IServiceCollection, string, LocalizedText)"/>, which the app starts, and the
 /// <see cref="PageCatalog"/> of the pages they register with <see cref="PageServiceCollectionExtensions.AddPage"/>, which
-/// the app shows, and the <see cref="GameReferences"/> the activities' settings name. Requires the data module, whose maps behaviors walk, and the network module.
+/// the app shows, the <see cref="GameReferences"/> the activities' settings name, and the <see cref="GraphicSkills"/> every map
+/// a bot enters teaches. Requires the data module, whose maps behaviors walk, and the network module.
 /// </remarks>
 public sealed class BotsModule : IModule
 {
@@ -40,6 +43,10 @@ public sealed class BotsModule : IModule
             services.GetRequiredService<TimeProvider>(),
             services.GetRequiredService<ILoggerFactory>()));
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
+
+        // Whatever the bots do, every map they enter teaches what its elements' graphics offer (D138).
+        bot.Services.TryAddSingleton<GraphicSkills>();
+        bot.Services.AddSingleton<IGameObserver>(services => new GraphicLearner(services.GetRequiredService<GameMaps>(), services.GetRequiredService<GraphicSkills>()));
 
         // Recording always, after the bots, so that the protocol inspector shows what came before it was opened (D115).
         bot.Services.AddSingleton(services => new FrameRecorder(services.GetRequiredService<TimeProvider>()));

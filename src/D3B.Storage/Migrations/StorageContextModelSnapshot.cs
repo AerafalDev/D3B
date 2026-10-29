@@ -75,6 +75,20 @@ namespace D3B.Storage.Migrations
                     b.ToTable("Characters", (string)null);
                 });
 
+            modelBuilder.Entity("D3B.Storage.Graphics.LearnedGraphic", b =>
+                {
+                    b.Property<int>("GfxId")
+                        .HasColumnType("INTEGER");
+
+                    b.PrimitiveCollection<string>("Skills")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("GfxId");
+
+                    b.ToTable("Graphics", (string)null);
+                });
+
             modelBuilder.Entity("D3B.Storage.Profiles.Profile", b =>
                 {
                     b.Property<int>("Id")

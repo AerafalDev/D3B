@@ -2,6 +2,7 @@ using System.Globalization;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Harvesting;
+using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Movement;
@@ -16,6 +17,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
     private readonly TestPlay _play = new();
     private readonly HarvestSightings _sightings = new();
+    private readonly GraphicSkills _graphics = new();
 
     public ValueTask DisposeAsync()
     {
@@ -47,7 +49,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
     private HarvestActivity Activity(HarvestSettings settings)
     {
-        return new HarvestActivity(settings, _play.World, _play.Tables, _sightings);
+        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics);
     }
 
     [Fact]
@@ -75,7 +77,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         Assert.True(_sightings.TryGet(TestPlay.MapId, out var seen));
         Assert.Equal([TestPlay.Ash], seen.Resources);
         Assert.Contains(travelling.Focus!.Zone, map => map.MapId == TestPlay.MapId && map.State is ZoneMapState.Visited);
-        Assert.Equal("Tour 1, map 2 of 5", Say(travelling.Progress!.Text));
+        Assert.Equal("Tour 1, map 2 of 4", Say(travelling.Progress!.Text));
 
         // The journey to the nearest map of the tour begins with a walk to the edge, an action cell or the door.
         Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 3));

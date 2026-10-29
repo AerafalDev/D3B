@@ -11,7 +11,8 @@ acted on through it ([the game, acted on](#the-game-acted-on)), walked by a bot 
 travelled from map to map ([the game, between maps](#the-game-between-maps)), its elements used
 ([the game, used](#the-game-used)), its bank used ([the game, banked](#the-game-banked)), its zaaps and haven bag
 used ([the game, teleported](#the-game-teleported)), and its floors, fights and disconnections met by an activity
-([the game, interrupted](#the-game-interrupted)).
+([the game, interrupted](#the-game-interrupted)). Its icons and its elements' graphics were measured on 2026-10-29 for
+session 6b ([Icons](#icons), [Graphics](#graphics)), and a tour foretold by them ([the game, foretold](#the-game-foretold)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -28,6 +29,8 @@ dotnet run --file scripts/inspect.cs -- dump skillsdataroot SkillsDataRoot --dep
 dotnet run --file scripts/inspect.cs -- layout itemsdataroot ItemsDataRoot --references  # record classes
 dotnet run --file scripts/inspect.cs -- layout worldassets_assets_all PathFindingData
 dotnet run --file scripts/inspect.cs -- layout Map/Data MapMetadata --references
+dotnet run --file scripts/inspect.cs -- objects job_assets_2x                 # the professions' icons, a texture and a sprite each
+dotnet run --file scripts/inspect.cs -- layout mapelements_assets_ MapElementsMetadata --references  # the element definitions
 dotnet run --file scripts/extract.cs -- --output <dir> --force        # extracts, counting maps, graph and tables, and checks them
 dotnet run --project src/D3B.Host -- --Network:Captures:Enabled true  # relays clients started from the launcher, logs each frame of their connection phase, and records them
 dotnet run --file scripts/client.cs                                   # which configuration the client reads, Ankama's or D3B's
@@ -127,6 +130,30 @@ An element names its graphic, `gfxId`, but not its kind: which interactive of `I
 skills it offers, the server tells for each element of the map a character enters ([Jobs and skills](#jobs-and-skills)).
 The server also lists there the elements of the neighbouring maps, marked so, with their own map's cells
 ([the game, used](#the-game-used)).
+
+### Graphics
+
+Every interactive element of both layouts names its graphic, `gfxId`, a field of its own: 3,499 graphics draw the 46,462
+elements. No element of client 3.7.12.12 is drawn twice on its cell with two graphics. `mapelements_assets_.bundle` holds
+the element definitions, `MapElementsMetadata`, a dictionary of `GfxElement` (its id, type, `m_gfxId`, height, origin and
+size) and `AnimatedElement` (an entity look and its animation): drawing only, nothing of which interactive an element is.
+
+What an element is, the server says (above). Measured for session 6b on 31 captures of 6a, the server's descriptions of
+550 elements on 102 maps, joined to the pack's elements by map and identifier, every one found:
+
+- **One graphic, one resource**, mostly: 113 graphics seen, nettle's elements all drawn with one, ash's with another.
+  Fishing spots share one graphic between seven fish, 7 interactives and their skills; a few graphics draw both an
+  interactive the server names and an element it names nothing (interactive −1). So D3B learns, for each graphic, every
+  skill seen (D138).
+- **Foretelling**: learned on every capture but one, the graphics foretold the elements of the last right 102 times of
+  103, each capture in turn.
+- **Reach**: once seen, a graphic tells of the whole world. Nettle's draws 1,178 elements on 775 maps. The 53 sub-areas
+  listing nettle hold 3,133 maps a character may travel to, 2,904 with elements and 750 drawing its graphic; over the 19
+  resources learned, 5,569 of the 32,527 maps of the sub-areas listing them draw their graphic.
+- **What the server leaves out**: of the 834 elements the pack places on the 102 maps it described, it listed 550; the 284
+  others are drawn with 49 graphics, 26 of which it names a resource or another interactive elsewhere. An element it does
+  not list says nothing of its graphic.
+- Base's resources, such as drinking water from a well, are listed by no sub-area: only the graphics say where they are.
 
 ## World graph
 
@@ -244,8 +271,9 @@ What the world tables hold, as the pack keeps them (D27, D29):
 a text in French and English. `typeId`, a `UInt16`, names 229 of the 236 types; one test item names type 264, which the
 client lacks. `level`, a `UInt8`, from 0 to 200. `realWeight`, a `UInt16`, is the weight of one item in pods: 26
 values from 0 to 20,000, 0 or 1 on 77% of items. `m_flags`, a `UInt16`, sets bits 0 to 11, bit 10 on 96% of items;
-which bit means what is not measured. The pack keeps the id, name, type, level and weight, 13 bytes an item; effects,
-recipes, drops, criteria and `m_flags` are left out (D29).
+which bit means what is not measured. `iconId` names the item's icon ([Icons](#icons)): 11,756 distinct over the items.
+The pack keeps the id, name, type, level, weight and icon, 17 bytes an item; effects, recipes, drops, criteria and
+`m_flags` are left out (D29, D139).
 
 Item types: `superTypeId` takes 25 values, the ids of `ItemSuperTypesDataRoot`, which names none of them; `categoryId`
 from 0 to 5, 2 on 78 types. The pack keeps both as they are.
@@ -330,22 +358,46 @@ Packs keep, in French and English, the numbered texts the extracted tables name 
 21,554 of them items' names. The 15,409 map positions name 3,135 distinct texts, and 12,274 positions name text 0,
 which no file holds: those maps have no name.
 
+## Icons
+
+`Picto` holds BC7 textures, one level, their texels in each bundle's `.resS`, bottom row first, each with a sprite of the
+same name at 100 pixels per unit, named by the icon's identifier, which items and jobs name as `iconId`.
+
+| Bundle | Textures | Sizes |
+| --- | ---: | --- |
+| `Picto/Items/item_assets_1x.bundle` | 12,279 | 64x64 but for 3; one RGBA32 |
+| `Picto/Items/item_assets_2x.bundle` | 12,279 | 128x128 but for 6 |
+| `Picto/UI/job_assets_1x.bundle` | 21 | 32x32 |
+| `Picto/UI/job_assets_2x.bundle` | 21 | 64x64 |
+
+- An item's sprite covers its texture whole, but draws it through a mesh trimmed to its opaque texels, whose bounds are
+  smaller; a profession's covers it whole.
+- **What a harvest names**: the 254 items the sub-areas list as harvestable and the 118 items skills gather, 85 of them
+  professions' resources and 33 `Base`'s, 287 in all, drawn by 121 icons, every one at 64 pixels in the 1x bundle. 22 of
+  the 23 jobs name an icon, 21 in all, jobs 75 and 78 sharing one; `Base` names −1, which no bundle holds.
+- **Sizes**, for the 121 items' icons at 1x: 1,982,464 bytes of RGBA, 474,157 compressed by zstd 19 icon by icon, 463,574
+  all at once, 500,449 to 620,331 as PNG; at 2x, 1,251,326 compressed. The professions' at 2x: 344,064 bytes of RGBA,
+  128,688 compressed.
+- The extractor keeps the items' at 1x and the professions' at 2x, decoded, as raw RGBA (D135 to D137).
+
 ## The pack of 3.7.12.12
 
-Format 3 (D29, D30): 4,670,325 bytes, 17,730 entries, extracted in about 14 s on 16 threads, 9 s of which read the
-client. Two extractions give the same SHA-256. The pack records the extractor's version, so another build of the
-extractor writes other bytes: 4,670,336 from session 2d's (D33).
+Format 4 (D139): 5,382,920 bytes, 17,731 entries, extracted in about 18 s on 16 threads, 13 s of which read the client.
+Two extractions give the same SHA-256. The pack records the extractor's version, so another build of the extractor writes
+other bytes: 5,382,928 from a build before the session's commit. Format 3 (D29, D30) was 4,670,325 bytes, 4,670,336 from
+session 2d's extractor (D33).
 
 | Entries | Serialized | Compressed, zstd 19 |
 | --- | ---: | ---: |
 | `texts/fr`, `texts/en` | 1.73 MB | 0.41 MB |
-| 17,722 `maps/<id>` | 90.5 MB, about 5.1 KB a map | 3.72 MB |
+| 17,722 `maps/<id>` | 90.7 MB, about 5.1 KB a map | 3.82 MB, 3.72 in format 3 |
 | `world/graph` | 1.42 MB | 0.25 MB |
 | `world/atlas` | 0.41 MB | 0.06 MB |
-| `items/catalog` | 0.28 MB | 0.10 MB |
+| `items/catalog` | 0.37 MB | 0.13 MB |
+| `icons/catalog` | 2.33 MB | 0.58 MB |
 | `jobs/catalog`, `interactives/catalog`, `banks/catalog` | 13 KB | 4 KB |
 
-Opening it reads the index in about 8 ms. A map reads in about 7 µs, the graph in 4 ms, the atlas and the items in
+Opening it reads the index in about 8 ms. The icons read in 15 ms. A map reads in about 7 µs, the graph in 4 ms, the atlas and the items in
 about 1 ms each, a language's texts in 6 ms, the other tables in under 0.2 ms.
 
 **Dictionary, measured again.** Maps are now 80% of the pack. A zstd dictionary trained on them, deterministic and in
@@ -1126,6 +1178,19 @@ never written down.
   windows closed (D132). Then a teleport back to the zone's zaap.
 - **Still full.** Once the harvest was put in, 3 stacks, the character still carried 4,958 of 7,590 pods, other things,
   above the share it banks at (D129).
+
+### The game, foretold
+
+Measured on 2026-10-29 for session 6b (D138, D142): a game connection of a client of 3.7.12.12 through the app, captures
+on, nothing learned before, the owner's profile "Ortie", nettle and sage in a sub-area of Amakna, replayed against the
+build's pack, each map's forecast reckoned from what the maps entered before it taught. By structure and counts, never the
+maps' ids.
+
+- **Learned**: 43 maps entered in 3 minutes, 35 graphics learned, which the database kept for the next run.
+- **Foretold probable**: 18 maps, 13 of which held nettle or sage, 11 harvested. On each of the 5 others, every element
+  drawn with a resource's graphic was one the server did not list (Graphics, above).
+- **Foretold without a resource**: 5 maps, none holding one.
+- **Unknown**: 20 maps, many gone through on the way, 1 holding one.
 
 ## Protocol code
 

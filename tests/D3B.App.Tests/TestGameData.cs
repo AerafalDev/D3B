@@ -59,7 +59,7 @@ internal sealed class TestGameData : IDisposable
             writer.Add(TextTable.EntryName(TextLanguages.English), new TextTable(TextLanguages.English, [.. _names.Select(name => name.Id)], [.. _names.Select(name => name.English)]));
             writer.Add(InteractiveCatalog.EntryName, new InteractiveCatalog(new[] { new Interactive(34, 501), new Interactive(316, 502) }));
             writer.Add(JobCatalog.EntryName, new JobCatalog(
-                new[] { new Job(Job.Base, 200), new Job(TestReferences.Lumberjack, 202) },
+                new[] { new Job(Job.Base, 200, Job.NoIcon), new Job(TestReferences.Lumberjack, 202, 1) },
                 new[] { new Skill(TestPlay.TreeSkillId, 503, TestReferences.Lumberjack, 289, 1, 1, false), new Skill(184, 504, Job.Base, Skill.NoItem, 0, 1, false) }));
             writer.Add(BankCatalog.EntryName, new BankCatalog(Array.Empty<Bank>(), new[] { new Banker(TestPlay.BankerNpcId, 505, 0, 1) }, new[] { TestPlay.ChestReplyId }));
             writer.Complete();

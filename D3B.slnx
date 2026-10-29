@@ -24,6 +24,7 @@
     <File Path="scripts/extract/BanksExtractor.cs" />
     <File Path="scripts/extract/ClientMapLayout.cs" />
     <File Path="scripts/extract/ExtractCommand.cs" />
+    <File Path="scripts/extract/IconsExtractor.cs" />
     <File Path="scripts/extract/InputFingerprint.cs" />
     <File Path="scripts/extract/InteractivesExtractor.cs" />
     <File Path="scripts/extract/ItemsExtractor.cs" />

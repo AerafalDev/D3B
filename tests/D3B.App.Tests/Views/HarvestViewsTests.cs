@@ -11,6 +11,7 @@ using D3B.App.Views;
 using D3B.Bot.Activities;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Hosting;
+using D3B.Bot.Interactives;
 using D3B.Bot.Pages;
 using D3B.Bot.Settings;
 using D3B.Bot.Tests;
@@ -33,6 +34,11 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     private static List<string> Texts(Visual root)
     {
         return [.. root.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text).OfType<string>().Where(text => text.Length > 0)];
+    }
+
+    private static int Icons(Visual root)
+    {
+        return root.GetVisualDescendants().OfType<Image>().Count(image => image.IsEffectivelyVisible && image.Source is not null);
     }
 
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
@@ -95,8 +101,11 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
         await host.Services.GetRequiredService<ProfileBook>().SaveAsync(0, "Ash and chestnut", HarvestingModule.ActivityId, definition.Settings.Write(settings), TestContext.Current.CancellationToken);
 
+        // A bot met an ash elsewhere: the maps drawing its graphic are probable.
+        host.Services.GetRequiredService<GraphicSkills>().Learn(TestPlay.TreeGfxId, [TestPlay.TreeSkillId]);
+
         var runner = await TestHosts.RunningAsync(host);
-        var (english, french, zone) = await OnTheUIThreadAsync(() =>
+        var (english, french, zone, icons) = await OnTheUIThreadAsync(() =>
         {
             var localizer = Localizer.Instance;
 
@@ -114,6 +123,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             var english = Texts(window);
             var zone = window.GetVisualDescendants().OfType<ZoneMapCanvas>().Single().Scene;
+            var icons = Icons(window);
 
             Draw(window, "profile-en");
             main.SwitchLanguageCommand.Execute(null);
@@ -125,9 +135,11 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             localizer.Use(Localizer.English);
             window.Close();
 
-            return (english, french, zone);
+            return (english, french, zone, icons);
         });
 
+        // Each tile's resource, and its profession beside the level.
+        Assert.Equal(4, icons);
         Assert.Contains("What it harvests", english);
         Assert.Contains("Ash", english);
         Assert.Contains("Chestnut", english);
@@ -136,6 +148,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("Where your resources grow", english);
         Assert.Contains("Level 10, 5 maps, Ash, Chestnut", english);
         Assert.Contains("maps to go through", english);
+        Assert.Contains("probable maps", english);
         Assert.Contains("2 of 2", english);
         Assert.Contains("1 map", english);
         Assert.Contains("to the nearest bank", english);
@@ -148,6 +161,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("Bûcheron, niveau 20", french);
         Assert.Contains("Où poussent tes ressources", french);
         Assert.Contains("cartes à parcourir", french);
+        Assert.Contains("cartes probables", french);
         Assert.Contains("2 sur 2", french);
         Assert.Contains("90 %", french);
         Assert.Contains("Ce que la récolte rapporte", french);
@@ -156,6 +170,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         // The zone's three maps of the world map, the insides on their coordinates, and the bank in front of one.
         Assert.NotNull(zone);
         Assert.Equal(3, zone.Squares.Count(square => square.Kind is ZoneSquareKind.GroupA));
+        Assert.Equal(2, zone.Squares.Count(square => square.IsProbable));
         Assert.Equal(new PixelPoint(4, -18), zone.Landmark);
     }
 
@@ -170,7 +185,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
         await Waiting.UntilAsync(() => run.Activity.Report?.Focus?.TargetElementId is not null, TimeSpan.FromSeconds(10));
 
-        var (english, french, map) = await OnTheUIThreadAsync(() =>
+        var (english, french, map, icons) = await OnTheUIThreadAsync(() =>
         {
             var localizer = Localizer.Instance;
 
@@ -185,6 +200,9 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             window.Show();
             Dispatcher.UIThread.RunJobs();
             english.AddRange(Texts(window));
+
+            var icons = Icons(window);
+
             Draw(window, "card-en");
             main.Bots.Items[0].ShowMapCommand.Execute(null);
             main.Refresh();
@@ -192,7 +210,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             english.AddRange(Texts(window));
             Draw(window, "map-en");
 
-            var map = (main.Map.Scene?.Activity?.Target, main.Map.Scene?.Activity?.Wanted.ToArray(), main.Map.Tour?.Squares.Length);
+            var map = (main.Map.Scene?.Activity?.Target, main.Map.Scene?.Activity?.Wanted.ToArray(), main.Map.Tour?.Squares.Length, main.Map.Scene?.Elements.Count(element => element.Icon is not null));
 
             main.SwitchLanguageCommand.Execute(null);
             main.Refresh();
@@ -206,7 +224,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             localizer.Use(Localizer.English);
             window.Close();
 
-            return (english, french, map);
+            return (english, french, map, icons);
         });
 
         run.Stop();
@@ -214,15 +232,16 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
         Assert.Contains("Harvesting", english);
         Assert.Contains("Harvesting Ash", english);
-        Assert.Contains("Tour 1, map 1 of 5", english);
+        Assert.Contains("Tour 1, map 1 of 4", english);
         Assert.Contains("Ash 0", english);
+        Assert.Equal(2, icons);
         Assert.Contains("Chestnut needs Lumberjack 20, the character is 1", english);
         Assert.Contains("Activity", english);
         Assert.Contains("The tour", english);
-        Assert.Contains("Harvesting Ash · Tour 1, map 1 of 5", english);
+        Assert.Contains("Harvesting Ash · Tour 1, map 1 of 4", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Récolte : Frêne", french);
-        Assert.Contains("Tournée 1, carte 1 sur 5", french);
+        Assert.Contains("Tournée 1, carte 1 sur 4", french);
         Assert.Contains("Frêne 0", french);
         Assert.Contains("Châtaignier demande Bûcheron 20, le perso est 1", french);
         Assert.Contains("Activité", french);
@@ -231,5 +250,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Equal(TestPlay.TreeCell, map.Target);
         Assert.Equal([TestPlay.TreeCell], map.Item2);
         Assert.True(map.Item3 > 0);
+
+        // The tree, drawn by its resource's icon; the door keeps its mark.
+        Assert.Equal(1, map.Item4);
     }
 }
