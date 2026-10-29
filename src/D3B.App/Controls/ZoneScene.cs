@@ -3,7 +3,7 @@ using Avalonia;
 
 namespace D3B.App.Controls;
 
-/// <summary>What a zone's mini-map draws: its maps at their coordinates, those around it, a landmark and the character (D127, D129).</summary>
+/// <summary>What a zone's mini-map draws: its maps at their coordinates, those around it, a landmark and the character (D127, D131).</summary>
 /// <param name="Squares">The maps, each once per coordinates, the zone's over those around it.</param>
 internal sealed record ZoneScene(ImmutableArray<ZoneSquare> Squares)
 {

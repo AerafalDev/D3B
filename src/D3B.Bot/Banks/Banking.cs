@@ -34,7 +34,7 @@ public static class Banking
     private static readonly TimeSpan _answerDelay = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan _followDelay = TimeSpan.FromSeconds(1);
 
-    /// <summary>How long the client takes to show a dialog or the bank once the server opened it, before D3B goes on (D130).</summary>
+    /// <summary>How long the client takes to show a dialog or the bank once the server opened it, before D3B goes on (D132).</summary>
     /// <remarks>
     /// Measured through the app: D3B replying 1 ms after the banker's question, and leaving the bank 39 ms after it opened,
     /// left both windows on the client's screen, though the server had closed them and the client asked to leave each. As

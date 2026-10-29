@@ -27,6 +27,6 @@ internal sealed record MapScene(MapData Map, IReadOnlyList<MapExit> Exits)
     /// <summary>Gets the path the character walks, every cell from the first; empty when it stands still.</summary>
     public ImmutableArray<int> Path { get; init; } = [];
 
-    /// <summary>Gets what the bot's activity looks at on the map, if it says (D129).</summary>
+    /// <summary>Gets what the bot's activity looks at on the map, if it says (D131).</summary>
     public MapActivity? Activity { get; init; }
 }

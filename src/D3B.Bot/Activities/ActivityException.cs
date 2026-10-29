@@ -2,7 +2,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Activities;
 
-/// <summary>An activity that cannot go on, saying why in the app's language: the error its run ends with (D126).</summary>
+/// <summary>An activity that cannot go on, saying why in the app's language: the error its run ends with (D131).</summary>
 /// <remarks>The message, in English, is the logs'; the app says <see cref="Reason"/>.</remarks>
 public sealed class ActivityException : Exception
 {

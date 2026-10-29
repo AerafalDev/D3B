@@ -13,7 +13,7 @@ using D3B.Engine.Maps;
 
 namespace D3B.Bot.Harvesting;
 
-/// <summary>Harvesting: resources harvested map after map through a zone, banked once the character is full (D127 to D129).</summary>
+/// <summary>Harvesting: resources harvested map after map through a zone, banked once the character is full (D127 to D132).</summary>
 /// <remarks>
 /// <para>
 /// Each step is chosen from the state (D87). On a map of the zone, the step harvests the element the server offers a

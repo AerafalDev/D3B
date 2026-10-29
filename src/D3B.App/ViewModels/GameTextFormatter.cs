@@ -6,7 +6,7 @@ using D3B.Data.World;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>Says a module's <see cref="GameText"/> in the app's language, the game's values named from the pack (D112, D126).</summary>
+/// <summary>Says a module's <see cref="GameText"/> in the app's language, the game's values named from the pack (D112, D131).</summary>
 /// <remarks>An item, a profession and a sub-area by their names, a map by its coordinates; what the pack does not name, by its id.</remarks>
 internal sealed class GameTextFormatter
 {

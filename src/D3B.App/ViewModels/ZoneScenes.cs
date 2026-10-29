@@ -5,7 +5,7 @@ using D3B.Data.World;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>Places a zone's maps on its mini-map from the atlas: the maps' coordinates, and those around them (D127, D129).</summary>
+/// <summary>Places a zone's maps on its mini-map from the atlas: the maps' coordinates, and those around them (D127, D131).</summary>
 internal static class ZoneScenes
 {
     /// <summary>How far around the zone a landmark or the character is still drawn, in maps.</summary>

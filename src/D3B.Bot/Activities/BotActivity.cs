@@ -24,7 +24,7 @@ public abstract class BotActivity
     /// <summary>Gets the activity's name, for the logs.</summary>
     public virtual string Name => GetType().Name;
 
-    /// <summary>Gets what the activity says of itself now, for the app (D126): none by default.</summary>
+    /// <summary>Gets what the activity says of itself now, for the app (D131): none by default.</summary>
     /// <remarks>Read from any thread, while the activity runs: an activity replaces its report whole, and never changes one.</remarks>
     public virtual ActivityReport? Report => null;
 

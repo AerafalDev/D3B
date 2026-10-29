@@ -14,12 +14,14 @@ The solution and the module system: a headless host that builds its modules, sta
 interactives and banks, with the texts they name, into a pack per client build; a tool that publishes it as a release
 asset; and a data module, whose pack the host finds on the machine or downloads, and without which it does not start.
 The network: while the host runs, official clients started from the launcher connect through its relay, which can record
-their connection phase. The bots walk, travel, use elements and bank, as activities the app starts, which D3B's
-modules register from the first milestone on; mods will be made as blueprints after it. The app's map page draws a
+their connection phase. The bots walk, travel, use elements and bank. The first milestone is reached: a bot harvests a
+profile's resources tour by tour through its zone and banks them when its pods are full, started from the app or when its
+client connects, its card and map saying what it does; the profile editor suggests the sub-areas where the resources grow
+and draws the zone. Mods will be made as blueprints after it. The app's map page draws a
 bot's map from the pack as its character moves, with its path, elements, NPCs and exits, and says what a cell holds;
 its logs page shows each bot's journal of its actions and the host's problems; its protocol inspector shows a bot's game
-frames decoded as they go, the login ticket hidden, or replays a capture. The first milestone is harvesting and banking on one account,
-controlled from the desktop app. See the [roadmap](docs/roadmap.md).
+frames decoded as they go, the login ticket hidden, or replays a capture. Next: the resources' icons, then what the first
+milestone leaves. See the [roadmap](docs/roadmap.md).
 
 ## Building
 

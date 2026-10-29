@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace D3B.Bot.Activities;
 
-/// <summary>What an activity looks at, which the app's map marks in its activity layer (D126).</summary>
+/// <summary>What an activity looks at, which the app's map marks in its activity layer (D131).</summary>
 public sealed record ActivityFocus
 {
     /// <summary>Gets the map the focus is of: the elements it names are this map's.</summary>

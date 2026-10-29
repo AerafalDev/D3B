@@ -32,8 +32,10 @@ and of the game's values; the accounts the relay sees and the profiles, in SQLit
 `D3B.Host` share; and the app's accounts and profiles pages, its rail always shown (step 5, session 5c); the external
 plugins removed, and Lua scripts in their place at step 7, removed since (D116, D119), an activity's error on the bot's
 card staying; each bot's journal of its actions, the host's problems and each bot's game frames kept in memory, and the
-app's logs page and protocol inspector, live or replaying a capture (step 5, session 5e). Everything else below is the
-target.
+app's logs page and protocol inspector, live or replaying a capture (step 5, session 5e); the live map (step 5, session
+5d); the harvesting module, its activity touring a zone and banking full, an activity's report on the bot's card and the
+map page, and the profile editor grown with suggestions, a zone's mini-map and a preview (step 6, session 6a). Everything
+else below is the target.
 
 ## Overview
 
@@ -87,9 +89,9 @@ replaced them (D116, D119). Mods come as blueprints at step 7, after step 6 (Mod
 - A module is built as soon as it is added. It requires another by calling `bot.AddModule<T>()` first in its `Build`.
   Adding a module type twice builds it once.
 - A group (`IModuleGroup`) lists modules in order; whoever adds it may disable some. `DefaultModules`, in `D3B.Bot`,
-  gathers the standard modules: so far the data module (D31), the protocol module (D48), the network module (D36) and
-  the bots module (D67), then, as the steps write them, world, movement, harvesting, bank. D3B's own features are
-  modules like any other, so they can be disabled, and later replaced (D20).
+  gathers the standard modules: so far the data module (D31), the protocol module (D48), the network module (D36), the
+  bots module (D67) and the harvesting module (D127), then, as the steps write them, fights and the rest. D3B's own
+  features are modules like any other, so they can be disabled, and later replaced (D20).
 - The host's composition, `BotHost` in `D3B.Bot.Hosting`, which the app and `D3B.Host` share (D91), adds
   `DefaultModules`, logs what it built, gets the pack of the installed client's build ready (Game data, below), then its
   protocol (Network and protocol, below), and starts the host, or says why it did not (`BotHostStart`). The app and
@@ -105,10 +107,12 @@ replaced them (D116, D119). Mods come as blueprints at step 7, after step 6 (Mod
   describes in code as it registers the activity, `AddActivity<TActivity, TSettings>(id, name, settings => ...)`, each
   property a setting of a kind, a flag, a number, a text, a choice or the game's professions, areas, sub-areas and
   resources, one or a list, with its name, bounds and help; lists ordered or not, values sought within another setting's,
-  settings shown under a condition, sections and rules. `ActivitySettings` reads and writes them as JSON and checks them, with
-  the game's values (`GameReferences`) once the pack is there; the activity receives them through its constructor.
+  settings shown under a condition, sections and rules; sub-areas suggested by a resource setting, percentages, and a
+  preview the activity reckons from its settings and the pack, figures and the maps of its zone (D127).
+  `ActivitySettings` reads and writes them as JSON and checks them, with the game's values (`GameReferences`) once the pack
+  is there; the activity receives them through its constructor.
 - The activities the app starts are listed by the `ActivityCatalog`: the modules' activities, fixed once the host is
-  built (D93). No module in `src/` registers one until step 6 (D118).
+  built (D93); D3B's first is the harvesting module's (D127).
 - A module may get something ready before the host starts, such as its database, through an `IHostPreparation`: the
   first that fails stops the host, which says why (D100).
 
@@ -118,7 +122,7 @@ Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharin
 behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
 map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank; in session 4e (D83,
 D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
-client's new connection taking the bot back.
+client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -184,6 +188,19 @@ client's new connection taking the bot back.
   module lists them in the `ActivityCatalog`; one is made, with the host's services and its settings, for each start.
 - **Recovery** (D89): before going on after an interruption, `Recovery.SettleAsync` lets a use and a walk end, leaves a
   dialog or exchange still open, and lets go of a walk the server holds, each wait bounded.
+- **An activity's report** (D131): what it does, how far it is, what it counts, its warnings and what it looks at on the
+  map (`BotActivity.Report`, `ActivityReport`), replaced whole and read by the app; its texts name the game's values by
+  their ids (`GameText`, in `D3B.Bot.Localization`). One that cannot go on says why (`ActivityException`); a run keeps the
+  name it was started under (`ActivityRun.Title`), and when it started and ended.
+- **Harvesting** (D127 to D130), in `D3B.Bot.Harvesting`, registered by `HarvestingModule`: `HarvestActivity`, its settings
+  `HarvestSettings` and their zone `HarvestZone`, the skills to use, the sub-areas and their maps, the insides apart. Each
+  step harvests the wanted resource the server offers at the character's level, the first asked for then the nearest, or
+  travels to the nearest map of the tour still to go through (`HarvestTour`), the maps of the world map before the insides;
+  `HarvestSightings`, one per host, remembers what each map holds, and a tour leaves out the maps seen empty. Full at its
+  share of pods, it banks at the nearest bank, what the settings say, and the next step goes back; still full, it says
+  why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
+  app. Banking waits half a second after the banker's question and after the bank opens, so that the client shows its
+  windows before D3B closes them (D132).
 - **The journal** (D112, D113), in `D3B.Bot.Journal`: each bot's last 2,000 entries (`BotActor.Journal`), written by the
   behaviors once an action is over, with its outcome and duration: a walk asked for itself, a map change, a use, a
   travel, banking; then the bot's connection, pause, resuming and fights, and its activity's start, interruptions,
@@ -353,13 +370,17 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   pack's texts; pods and kamas; what it is in the middle of; its activity, started from a profile or from the catalogue
   with its defaults (D93, D99), the character's own profile chosen, stopped, with its status, steps and last
   interruption, and the error it failed with (D103). A profile whose activity is gone, such as a Lua script's, is offered
-  with it said gone, and does not start (D119).
+  with it said gone, and does not start (D119). An activity's report shows there: what it does, its tour as a bar and how
+  long it ran, what it counts, the icons' places, its warnings, and why it ended (D131).
 - **The accounts page** (D101): a card per account the relay saw, its subscription and when it was seen, forgotten on
   demand; its characters in rows, each with the profile it plays and whether it starts on connection.
 - **The profiles page** (D101): a column of profiles, each folded to its name, activity, settings at a glance and
   characters, and unfolded in place to edit it: its name, its activity, and its settings by section, a field per kind
   (`D3B.App.ViewModels.Settings`), checked as they change, searched by name for the game's values, saved once they
-  hold. A profile whose activity is gone says so, and is given another or deleted (D119).
+  hold. A profile whose activity is gone says so, and is given another or deleted (D119). Resources show as tiles in their
+  order, with their profession, level and the levels the characters playing it lack; a sub-area setting suggested by
+  resources shows the zone's mini-map (`ZoneMapCanvas`, each map a square at its coordinates from the atlas), the
+  sub-areas where they grow and the activity's preview; a percentage is a bar, a short choice segments (D127).
 - **The logs page** (D111 to D114, `D3B.App.ViewModels.Logs`): every source by time, the host's problems, or a bot's
   journal, which its card opens, a profile that did not start on connection included (D119); filtered by tone and text,
   followed, copied. `JournalLines` says each entry in the app's
@@ -372,7 +393,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   map's fixed geometries built once, in seven layers toggled: the cells, the character and its path, the elements by
   what the server says of them, the NPCs, the exits from the world graph (`MapExits`), the other bots, and the zones and
   stairs; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
-  bag's and a fight's maps are drawn as the others.
+  bag's and a fight's maps are drawn as the others. A running activity's report adds a line, an Activity layer ringing
+  the elements it wants and the one it goes for and marking the exit it heads to, and its tour's mini-map (D131).
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
   alone: the bots' loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in

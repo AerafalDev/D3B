@@ -2564,7 +2564,7 @@ D102.*
 *2026-10-29, step 5, session 5c; the description in code, and the scope with the game's values and every mechanism,
 chosen by the owner, who noted that the auto modes to come, BillBot's for one, focus a profession, maps, resources of the
 profession's level, a monster, an area or a sub-area. Builds D93, D96. Maps on the live map superseded by D123: they
-wait for the activity that needs them.*
+wait for the activity that needs them. Extended by D127: sub-areas suggested by resources, percentages, and a preview.*
 
 D93 left an activity's settings to 5b and 5c, and 5b did not write them.
 
@@ -2675,7 +2675,7 @@ D93 left an activity's settings to 5b and 5c, and 5b did not write them.
 ## D101: The app's pages: a rail always, accounts by account, profiles in a column
 
 *2026-10-29, step 5, session 5c; both layouts chosen by the owner among mockups. Supersedes D96 in part: the rail
-shows always. Builds D94, D96, D99.*
+shows always. Builds D94, D96, D99. Its editor grown by D127: tiles, a zone's mini-map, figures, bars and segments.*
 
 - **The rail** shows always: the bots, the accounts, the profiles, a line once a module registered a page, then the
   modules' pages (D96). Its icons are the app's own line drawings.
@@ -3086,7 +3086,8 @@ all React where the app is Avalonia (D14):
 
 ## D118: No activity of D3B's own until step 6
 
-*2026-10-29, the session removing the Lua scripts, chosen by the owner, against the lead's recommendation. Builds D93.*
+*2026-10-29, the session removing the Lua scripts, chosen by the owner, against the lead's recommendation. Builds D93.
+Ended by D127: the harvesting module registers D3B's first activity.*
 
 Without Lua, no module in `src/` registers an activity: the scripts were the only ones, the tests' own aside.
 
@@ -3245,6 +3246,194 @@ The owner asked for the map to mark the red and blue cells in a fight, where eac
     measured.
   - The server's message mapped in 5d, from this session's capture, and a fight measured again: protocol work the size
     of a session, a mapping format 7, outside step 5.
+
+## D126: Step 6 in three sessions, the icons in their own
+
+*2026-10-29, step 6, session 6a; both chosen by the owner, as the lead recommended them.*
+
+- **6a**: the first milestone itself: the harvesting module and its activity, its settings and their editor, the next
+  resource and the next map, banking full and the way back, the activity resumed after a fight, a new connection or the
+  player's pause, and what the bot's card and the map page show of it; measured on a client through the app.
+- **6b**: icons, in the pack, the owner asking for them beside resources and items: the 254 items the sub-areas list as
+  harvestable and the 23 professions, decoded from the client's BC7 textures and stored as PNG in a pack of format 4, about
+  1 to 2 MB, released as every pack is (D10, D24); the elements' graphics with them, which would let a tour know a zone
+  before it goes there (D128). Measured: `Picto/Items` holds 12,279 item icons, 64 px at 1x and 128 at 2x, one sprite
+  each named by the item's `iconId`, in BC7; the pack keeps no icon and no `iconId`.
+- **6c**: what 6a's measures leave: fights while harvesting, the resources' growing back, harvest statistics, the
+  guild's chest the owner noted, and options the owner listed for later, such as opening resource bags and healing
+  under a share of life, each a request and an event to map; then the owner's call on making the repository public (D4).
+- 6a's views keep the icons' place, a neutral square, which 6b fills.
+- **Rejected.**
+  - 6a cut into the activity, then the app: the owner wanted to verify in the app from 6a on.
+  - Every icon, 12,279, in a pack of their own: 50 to 60 MB to download, for an app showing fewer than 300.
+  - The icons read from the installed client as they show: nothing distributed, but the Unity readers and a BC7 decoder
+    in `src/`, with their tests, reading bundles in the process that holds every connection (D91).
+  - The icons in 6a: an extractor, a decoder and a release more in a session the milestone filled.
+
+## D127: The harvesting module, its settings, and the profile editor
+
+*2026-10-29, step 6, session 6a; the module and settings as the lead recommended them, the owner asking for more: resources
+of any profession, sub-areas suggested by them, the zone's figures, the levels missing, and an editor more beautiful,
+chosen among two mockups. Builds D87, D93, D98, D101. Maps as settings still wait (D123).*
+
+- **The module** (`HarvestingModule`, in `D3B.Bot.Harvesting`), in `DefaultModules` after the bots module, registers the
+  activity `harvest` (`HarvestActivity`), the host's sightings (D128) and the previews below; its texts are a `.resx` of
+  its own in English and French (D96), `D3B.Host` running it without the app. `Register` adds it to a host that builds its
+  services apart, as a test's.
+- **The settings** (`HarvestSettings`), in three sections: what it harvests, resources of any profession in their order,
+  the first harvested first, or everything each character can harvest at its level; where, an area and sub-areas, one or
+  the other at least, an area alone standing for its sub-areas that list one of the resources, sub-areas chosen of any
+  area; when it banks, pods full at a share from 50 to 100 %, 90 by default, and what goes to the bank, what harvesting
+  brings or everything but what is worn, no kamas, which pay the zaaps and the bank's opening (D80).
+- **D98 gains three mechanisms**, for any activity: a sub-area setting suggested by a resource setting (`SuggestedBy`), the
+  sub-areas where they grow offered first, the most of them first, then the lowest (`GameReferences.SubAreasHolding`); a
+  number that is a percentage (`Percent`), shown as a bar; and a preview the activity reckons from its settings and the
+  pack (`Preview`, `SettingsPreview`), figures and the maps of its zone. `GameReferences` takes the world graph, so that a
+  sub-area counts the maps a character may travel to, and says who gathers a resource (`TryGetSource`).
+- **The harvest's preview** (`HarvestPreviews`): the maps of the zone, the resources asked for its sub-areas list, and the
+  changes from the nearest bank's front to the zone, a door more, for a character of whom nothing is known. Measured on the
+  pack of 3.7.12.12: 34 sub-areas hold ash or chestnut, suggested in 14 ms; the preview of a zone of 128 maps, its path to
+  the bank included, in 50 ms.
+- **The editor**, the generic one of D101 grown: resources as tiles in their order, each with its profession and level, the
+  icon's place, and a warning when a character playing the profile lacks the level, as its bot last saw it; the zone's
+  sub-areas beside its mini-map, each map a square at its coordinates on the world map from the atlas, the zone's parts
+  tinted, the maps around dim and the nearest bank marked (`ZoneMapCanvas`), the sub-areas suggested as rows a click chooses,
+  and the preview's figures; the share of pods as a bar, and a choice of three values at most as segments. A field may take
+  a whole row of its section (`CardGrid.IsWide`). Drawn without a screen in both languages and both themes, and looked at.
+- **Rejected.**
+  - A project `D3B.Harvesting`: a project more for a module, `DefaultModules` living in `D3B.Bot` with the behaviors it
+    calls.
+  - The area required: sub-areas of two areas could not mix.
+  - An editor of the harvest's own: the mechanisms serve every activity, the blueprints of step 7 among them.
+  - Maps as settings in 6a, a route or maps to avoid (D123): the sub-areas carry the milestone.
+
+## D128: The next resource and the next map: tours through the zone, the nearest first
+
+*2026-10-29, step 6, session 6a, chosen by the owner, as the lead recommended it; the insides last after a measure.*
+
+The references, read for ideas (D3): BillBot alone chooses by itself, the nearest resource on a map, and between maps a
+search scoring each by the time since its visit, capped at an hour, times its worth and a random factor, the maps never
+seen first; it learns, while playing, which graphic is which resource, and keeps it on disk. The owner's profession scripts
+follow fixed routes by level. None measures how long a resource takes to grow back.
+
+- **On a map**: of the elements the server offers a wanted resource's skill on, at the character's level, a profession
+  not described yet counting as the first, the resource asked for first, then the nearest by its walk; one taken by
+  another, refused or out of reach is left for the visit.
+- **A tour** (`HarvestTour`): a map with nothing left is gone through, and the step travels to the nearest map of the
+  zone still to go through, stopping on the first of the way; once every map is, the next tour begins. A tour that
+  harvested nothing waits up to a minute on its map for a resource to grow back before the next sweeps the zone again.
+- **What the host's bots saw** (`HarvestSightings`): each map's resources, harvested ones included, as the server
+  described them; a tour leaves out the maps seen holding none of its own. In memory, shared by the host's bots, nothing on
+  disk, as the banks' insides (D79).
+- **The insides last.** Measured on the client: a first tour went through a forest's houses for minutes, a journey of 12
+  changes through a zaap among them, before its first harvest. Measured on the pack: 114 of the 186 sub-areas listing
+  resources hold insides too, 1,493 maps against 6,569, and the mines are insides of such sub-areas, 36 of them with a
+  miner's resource. So a tour goes through the maps of the world map first, then its insides (`HarvestZone.Insides`).
+- **Failures**: a map the way to failed leaves the tour; three failed journeys in a row end the activity, which says why
+  (D131); a zone with no map, or none holding a resource, ends it too.
+- **Rejected.**
+  - BillBot's scoring: chance and weights nothing measured sets, for what the tours give, the maps gone through longest
+    ago first.
+  - A route the user draws: maps as settings, later (D123).
+  - The nearest alone on a map: the owner asked for a priority.
+  - The insides left out: the mines are insides.
+
+## D129: Banking full, and the way back
+
+*2026-10-29, step 6, session 6a, chosen by the owner, as the lead recommended it; the reason said after a measure.*
+
+- **Full** at the settings' share of pods, before each step (D87). **Unloaded** at the nearest bank (D79, D80): what the
+  settings say goes, in one request, no kamas; two more tries after a failure that may pass, no answer or a journey
+  missed. **The way back**: the next step starts from the state, the character off the zone, and travels to the nearest
+  map of the tour, zaaps included for a subscribed account (D83); the map it left stays in the tour while it held
+  resources.
+- **Still full once banked.** Measured on the client: the bank took the harvest, 3 stacks, and the 4,958 pods left of
+  7,590 were still above the share, the character carrying other things; the activity failed with nothing said on the
+  card. It now ends there with its reason in the app's language, the weight left and what to change, to bank everything
+  but what is worn or raise the share; any activity left full says so (`ActivityRun.IsStillFull`).
+- **Risk**: the bank's opening costs a kama per stack the storage holds (D80); a character without them is not measured.
+- **Rejected.**
+  - A bank chosen in the profile: the nearest carries the milestone.
+  - The guild's chest: 6c, its messages to map.
+  - Back to the exact map: no position kept (D87); the tour brings it back when it is worth it.
+  - Going back to the bank at every step while still full: the reason said instead.
+
+## D130: A fight, a new connection, the player's pause: the activity resumes from the state
+
+*2026-10-29, step 6, session 6a, chosen by the owner, as the lead recommended it. Builds D87 to D89.*
+
+- A fight, a protector's or an aggression or the player's own, interrupts the step; the activity waits for its end,
+  the bot not paused (D88), recovers, and the next step finds where the character is: in the zone it goes on, elsewhere it
+  travels back, full it banks first. Until step 9 the player fights.
+- A new connection takes the bot back (D65, D89); the tour and the sightings stay, the bot outliving its connections.
+- The player's pause stays D66's, resumed from the card.
+- The activity says what it waits for (D131).
+- **Rejected.**
+  - Stopping after a fight: the character left where it fought. An option for it may come in 6c, with the fights while
+    harvesting.
+
+## D131: An activity says what it does: its report, on the bot's card and the map page
+
+*2026-10-29, step 6, session 6a, chosen by the owner among mockups, as the lead recommended it.*
+
+- **The report** (`BotActivity.Report`, `ActivityReport`, in `D3B.Bot.Activities`), any activity's, replaced whole by the
+  activity and read by the app every 250 ms (D94): what it does, how far it is (`ActivityProgress`), what it counts
+  (`ActivityCount`), its warnings, and what it looks at on the map (`ActivityFocus`): the element it goes for, those it
+  wants, the next map, and the maps of its zone with where it stands in each (`ZoneMap`). An activity that cannot go on
+  says why (`ActivityException`).
+- **Its texts name the game's values by their ids** (`GameText`, `GameTextValue`, in `D3B.Bot.Localization`), as the
+  journal does (D112), the app naming items, professions, sub-areas and maps in its language (`GameTextFormatter`); a text
+  that counts gives its plural, which the app chooses as its language has it.
+- **The bot's card**: what the activity does, its tour as a bar with its map and the time it ran, what it harvested of
+  each resource with the icon's place, the banks, and the levels missing; how it ended, its reason included. A run
+  remembers the name it was started under (`ActivityRun.Title`): a profile started on connection shows by its name.
+- **The map page**: a line of what the activity does and how far; a layer, Activity, ringing the elements it wants, the
+  one it goes for brighter, and the exit it heads to; and beside the map, the tour's mini-map, the maps gone through, to go
+  through and seen empty, with the character.
+- Drawn without a screen in both languages and both themes, and looked at.
+- **Rejected.**
+  - A harvest's own display: the report serves every activity, the blueprints' among them.
+
+## D132: Banking lets the client show its windows
+
+*2026-10-29, step 6, session 6a. Builds D77, D80.*
+
+- **Measured** on a capture through the app: D3B replied 1 ms after the banker's question and left the bank 39 ms after it
+  opened, the whole bank in 130 ms; the server closed the dialog and the bank, and the client asked to leave each, but both
+  windows stayed on its screen, the owner reported. The player, in the same capture, replied 771 ms after the question.
+- **So** banking waits half a second, D77's, after the question, after the bank opens, and before leaving a dialog it could
+  not take to the bank (`Banking.ShowDelay`). Measured again: the reply 547 ms after the question, the deposit 1,085 ms after
+  the action, the bank left at 1,118 ms, the client's two requests to leave at 1,152 and 1,179 ms; the windows closed.
+- This is no timing shaped to look human (D2): the client must have shown a window to close it, as it must have drawn a
+  map to follow a walk.
+
+## D133: Harvesting, measured through the app
+
+*2026-10-29, step 6, session 6a.*
+
+Measured on a client of 3.7.12.12 through the app, captures on, four runs of the app, the owner's character harvesting
+nettles, its profile "Ortie" ([client.md](client.md#the-game-harvested)):
+
+- **From map to map**: harvests on one map after another, the tour going on to the nearest map still to go through.
+- **A fight** interrupted the activity, which went on once it was over, with no command.
+- **The player's pause**: the player's click during a journey paused the bot; resumed from the card, it went on.
+- **A new connection**: the client closed during the activity; the new connection took the bot back, and it went on.
+- **Stopped** from the card, it ended at once.
+- **A profile started on connection**, never measured before (D99, D118): three times, the profile started once the
+  client chose the character.
+- **Full**: to the bank of Bonta through a zaap and its door, the banker 6394, the stacks put in, the bank left; still full
+  once, the reason said (D129); the windows left open, then closed (D132); then back to the zone through a zaap.
+- **Found**: the houses of the zone first (D128); a journey of 12 changes to maps of the zone reachable only far round; walks
+  the client did not confirm (D85) on a map of the zone, the journey going another way.
+
+## D134: No human timings
+
+*2026-10-29, step 6, session 6a. The owner asked for human timings, as BillBot's; they stay out (D2).*
+
+- D2 keeps out of D3B every timing shaped to avoid Ankama's detection, BillBot's `human_timings` named among them, and
+  `CLAUDE.md` says it again. D3B's delays are those the client needs to follow what the server shows it, each measured:
+  D77's for a map, D132's for a window.
+- Should the owner want to change D2, it is a change of the brief, decided apart; this session does not add them.
 
 ## Open questions
 

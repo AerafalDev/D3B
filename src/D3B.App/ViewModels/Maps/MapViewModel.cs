@@ -114,11 +114,11 @@ internal sealed partial class MapViewModel : ObservableObject
     [ObservableProperty]
     public partial bool ShowsZones { get; set; }
 
-    /// <summary>Gets or sets whether what the bot's activity looks at shows (D129).</summary>
+    /// <summary>Gets or sets whether what the bot's activity looks at shows (D131).</summary>
     [ObservableProperty]
     public partial bool ShowsActivity { get; set; } = true;
 
-    /// <summary>Gets what the bot's activity says it does, and how far it is, if it runs one that says (D129).</summary>
+    /// <summary>Gets what the bot's activity says it does, and how far it is, if it runs one that says (D131).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActivity))]
     public partial string ActivityLine { get; private set; } = "";

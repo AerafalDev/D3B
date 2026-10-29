@@ -4,7 +4,7 @@ using Avalonia.Media;
 
 namespace D3B.App.Controls;
 
-/// <summary>A zone's mini-map: each map a square at its coordinates on the world map, as players place a zone, drawn from the atlas (D127, D129).</summary>
+/// <summary>A zone's mini-map: each map a square at its coordinates on the world map, as players place a zone, drawn from the atlas (D127, D131).</summary>
 /// <remarks>
 /// The squares fill the room as a grid of equal cells, keeping them square; the zone's maps are coloured by their part or
 /// by where a tour stands in them, those around dim. No texture: the atlas's coordinates say it all.

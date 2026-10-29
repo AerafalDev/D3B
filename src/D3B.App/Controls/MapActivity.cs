@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace D3B.App.Controls;
 
-/// <summary>What the bot's activity looks at on the map drawn, by cells (D129).</summary>
+/// <summary>What the bot's activity looks at on the map drawn, by cells (D131).</summary>
 internal sealed record MapActivity
 {
     /// <summary>Gets the cells of the elements the activity wants, such as the resources it harvests.</summary>

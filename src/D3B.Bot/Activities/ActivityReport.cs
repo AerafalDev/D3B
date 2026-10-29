@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Activities;
 
-/// <summary>What an activity says of itself as it runs, for the app to show on the bot's card and its map (D126).</summary>
+/// <summary>What an activity says of itself as it runs, for the app to show on the bot's card and its map (D131).</summary>
 /// <remarks>
 /// An activity replaces its report whole, from the thread that runs it, and the app reads it every 250 ms (D94): it is
 /// immutable. Its texts name the game's values by their ids, which the app names in its language (D112).

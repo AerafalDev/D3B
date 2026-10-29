@@ -1,6 +1,6 @@
 namespace D3B.App.Controls;
 
-/// <summary>What a map of a zone's mini-map is, which gives its colour (D127, D129).</summary>
+/// <summary>What a map of a zone's mini-map is, which gives its colour (D127, D131).</summary>
 internal enum ZoneSquareKind
 {
     /// <summary>A map around the zone, outside it, drawn dim for its place.</summary>

@@ -28,7 +28,7 @@ internal enum MapLayers
     /// <summary>The map's zones, when it has several, and its stairs.</summary>
     Zones = 1 << 6,
 
-    /// <summary>What the bot's activity looks at: the elements it wants, the one it goes for, and the exit it heads to (D129).</summary>
+    /// <summary>What the bot's activity looks at: the elements it wants, the one it goes for, and the exit it heads to (D131).</summary>
     Activity = 1 << 7,
 
     /// <summary>Every layer but the zones, as the page first shows them.</summary>

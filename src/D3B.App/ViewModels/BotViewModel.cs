@@ -155,7 +155,7 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     public partial string ActivityProblem { get; private set; } = "";
 
-    /// <summary>Gets what the activity says it does, if it reports it (D126).</summary>
+    /// <summary>Gets what the activity says it does, if it reports it (D131).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasDoing))]
     public partial string ActivityDoing { get; private set; } = "";
