@@ -1022,4 +1022,10 @@
   <data name="ResourceBaseUnseen" xml:space="preserve">
     <value>Sans métier, jamais vue : apprise en passant</value>
   </data>
+  <data name="JournalActivityInterruptedPauses" xml:space="preserve">
+    <value>« {0} » interrompue par {1} ; le bot se met en pause jusqu'à sa reprise</value>
+  </data>
+  <data name="JournalPausedAfterFight" xml:space="preserve">
+    <value>Après le combat, le bot se met en pause, comme son profil le dit</value>
+  </data>
 </root>

@@ -39,6 +39,8 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>The number of entries a bot's journal keeps: older ones are dropped (D113).</summary>
     public const int JournalCapacity = 2_000;
 
+    private const long NeverEnded = long.MinValue;
+
     /// <summary>How long the client takes to draw a map once the server placed the character on it (D77).</summary>
     internal static readonly TimeSpan DrawDelay = TimeSpan.FromMilliseconds(500);
 
@@ -63,6 +65,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile bool _acting;
     private volatile ActivityRun? _activity;
     private long _drawnAt;
+    private long _useEndedAt = NeverEnded;
 
     /// <summary>Gets who the bot plays.</summary>
     public CharacterKey Key { get; }
@@ -98,6 +101,9 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>Gets when the client has drawn the map the server last placed the character on.</summary>
     internal DateTimeOffset DrawnAt => new(Volatile.Read(ref _drawnAt), TimeSpan.Zero);
 
+    /// <summary>Gets when the server last ended a use of the character's own, if it ever did.</summary>
+    internal DateTimeOffset? UseEndedAt => Volatile.Read(ref _useEndedAt) is var ticks and not NeverEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
+
     internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, Lazy<BankDirectory> banks, TimeProvider time, ILogger log)
     {
         Key = state.Key;
@@ -129,6 +135,12 @@ public sealed class BotActor : IAsyncDisposable
     public void Resume()
     {
         Post(new Resuming());
+    }
+
+    /// <summary>Pauses the bot as the player's hand does, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
+    internal void Pause()
+    {
+        Post(new Pausing());
     }
 
     /// <summary>Starts an activity: its steps, one after another, until it is done, fails or is stopped (D87).</summary>
@@ -313,6 +325,9 @@ public sealed class BotActor : IAsyncDisposable
             case Resuming:
                 OnResuming();
                 break;
+            case Pausing:
+                OnPausing();
+                break;
             case Attached attached:
                 OnAttached(attached.Session, attached.State);
                 break;
@@ -337,9 +352,13 @@ public sealed class BotActor : IAsyncDisposable
         if (session != _session)
             return;
 
-        var state = CharacterEvents.Apply(_state, side, message);
+        var before = _state;
+        var state = CharacterEvents.Apply(before, side, message);
 
         _state = state;
+
+        if (before.Use is not null && state.Use is null && message is InteractiveUseEndedEvent)
+            Volatile.Write(ref _useEndedAt, Time.GetUtcNow().UtcTicks);
 
         if (side is RelayDirection.FromServer && message is MapInformationEvent information && information.MapId == state.MapId && state.Cell is not null)
             Volatile.Write(ref _drawnAt, (Time.GetUtcNow() + DrawDelay).UtcTicks);
@@ -473,6 +492,16 @@ public sealed class BotActor : IAsyncDisposable
         Write(BotEvent.Resumed);
     }
 
+    private void OnPausing()
+    {
+        if (_paused)
+            return;
+
+        _paused = true;
+        BotLog.PausedAfterFight(_log, Key.CharacterId);
+        Write(BotEvent.PausedAfterFight);
+    }
+
     private void OnAttached(GameSession session, CharacterState state)
     {
         if (_behavior is { } behavior)
@@ -548,6 +577,8 @@ public sealed class BotActor : IAsyncDisposable
     private sealed record Finished(RunningBehavior Behavior) : Input;
 
     private sealed record Resuming : Input;
+
+    private sealed record Pausing : Input;
 
     private sealed record Attached(GameSession Session, CharacterState State) : Input;
 

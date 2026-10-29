@@ -158,9 +158,6 @@
   <data name="DoingWaitGrow" xml:space="preserve">
     <value>Attend que les ressources repoussent</value>
   </data>
-  <data name="DoingFight" xml:space="preserve">
-    <value>Attend la fin du combat</value>
-  </data>
   <data name="DoingPlayer" xml:space="preserve">
     <value>En pause, à ta main</value>
   </data>
@@ -217,5 +214,44 @@
   </data>
   <data name="FigureIsolatedLastMany" xml:space="preserve">
     <value>cartes isolées, parcourues en dernier</value>
+  </data>
+  <data name="SectionFight" xml:space="preserve">
+    <value>Combats</value>
+  </data>
+  <data name="AfterFight" xml:space="preserve">
+    <value>Après un combat</value>
+  </data>
+  <data name="AfterFightHelp" xml:space="preserve">
+    <value>Protecteur ou agression : jusqu'à l'étape 9, c'est toi qui combats. En pause, le bot reprend depuis sa carte, sa tournée et ses comptes gardés.</value>
+  </data>
+  <data name="AfterFightResume" xml:space="preserve">
+    <value>Reprendre</value>
+  </data>
+  <data name="AfterFightPause" xml:space="preserve">
+    <value>Mettre en pause</value>
+  </data>
+  <data name="AfterFightStop" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="DoingFightProtector" xml:space="preserve">
+    <value>Un protecteur attaque : attend la fin du combat</value>
+  </data>
+  <data name="DoingFightAggression" xml:space="preserve">
+    <value>Agression : attend la fin du combat</value>
+  </data>
+  <data name="NoteProtectorOf" xml:space="preserve">
+    <value>un protecteur, à la fin d'une récolte ({0})</value>
+  </data>
+  <data name="NoteProtector" xml:space="preserve">
+    <value>un protecteur, à la fin d'une récolte</value>
+  </data>
+  <data name="NoteAggression" xml:space="preserve">
+    <value>une agression</value>
+  </data>
+  <data name="CountFightsOne" xml:space="preserve">
+    <value>{0} combat, protecteurs : {1}</value>
+  </data>
+  <data name="CountFightsMany" xml:space="preserve">
+    <value>{0} combats, protecteurs : {1}</value>
   </data>
 </root>

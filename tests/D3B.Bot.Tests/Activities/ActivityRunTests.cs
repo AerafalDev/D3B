@@ -194,6 +194,33 @@ public sealed class ActivityRunTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AnActivityMayPauseTheBotOnAFightWhichTheCardResumes()
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity { Response = InterruptionResponse.Pause };
+        var run = bot.StartActivity(activity);
+
+        await activity.SteppingAsync(bot);
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        await WaitForAsync(() => bot.IsPaused);
+
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        connection.Server(new MapCurrentEvent { MapId = TestPlay.MapId });
+        connection.Server(TestPlay.Information(358));
+        await bot.ProcessedAsync();
+
+        // Over, the fight leaves the bot paused: nothing starts before the card resumes it.
+        Assert.Equal(1, activity.Started);
+        Assert.Equal(ActivityStatus.Waiting, run.Status);
+
+        bot.Resume();
+
+        Assert.Equal(2, await activity.SteppingAsync(bot));
+        Assert.Equal([Interruption.Fight], activity.Recoveries);
+    }
+    [Fact]
     public async Task AnActivityMayEndOnAnInterruption()
     {
         var (connection, bot) = await _play.EnterAsync(300);

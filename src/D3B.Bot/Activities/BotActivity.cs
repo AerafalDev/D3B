@@ -1,4 +1,5 @@
 using D3B.Bot.Characters;
+using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Activities;
@@ -64,6 +65,14 @@ public abstract class BotActivity
     public virtual InterruptionResponse OnInterrupted(Interruption reason)
     {
         return InterruptionResponse.Resume;
+    }
+
+    /// <summary>Says what an interruption was, for the bot's journal, once <see cref="OnInterrupted"/> answered it, such as a fight's kind (D144).</summary>
+    /// <param name="reason">Why the step stopped.</param>
+    /// <returns>What the activity says of it; nothing by default.</returns>
+    public virtual GameText? Describe(Interruption reason)
+    {
+        return null;
     }
 
     /// <summary>Puts the character back in order once the bot can act again after an interruption, before the next step.</summary>

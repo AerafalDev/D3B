@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using D3B.Bot.Journal;
+using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Activities;
@@ -186,10 +187,12 @@ public sealed class ActivityRun
             _unloaded = false;
 
             InterruptionResponse response;
+            GameText? note;
 
             try
             {
                 response = Activity.OnInterrupted(cut);
+                note = Activity.Describe(cut);
             }
             catch (Exception exception)
             {
@@ -200,10 +203,13 @@ public sealed class ActivityRun
             }
 
             BotLog.ActivityInterrupted(_bot.Log, _bot.Key.CharacterId, Activity.Name, cut, response);
-            _bot.Journal.Add(new ActivityInterruptedEntry(_bot.Time.GetUtcNow(), Activity.Name, cut, response));
+            _bot.Journal.Add(new ActivityInterruptedEntry(_bot.Time.GetUtcNow(), Activity.Name, cut, response, note));
 
             if (response is InterruptionResponse.Stop)
                 return ActivityOutcome.Stopped;
+
+            if (response is InterruptionResponse.Pause)
+                _bot.Pause();
         }
     }
 

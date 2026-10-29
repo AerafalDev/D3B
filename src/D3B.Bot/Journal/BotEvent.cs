@@ -17,4 +17,7 @@ public enum BotEvent
 
     /// <summary>A fight began, which interrupts the bot's behavior (D88).</summary>
     FightBegan,
+
+    /// <summary>An activity paused the bot after a fight, as its settings say: it waits until it is resumed (D144).</summary>
+    PausedAfterFight,
 }

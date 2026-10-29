@@ -3,6 +3,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
+using D3B.Bot.Journal;
 using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Movement;
@@ -40,6 +41,17 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         }
 
         return activity.Report;
+    }
+
+    private static async Task WaitForAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+
+        while (!condition())
+        {
+            Assert.True(DateTime.UtcNow < deadline, "The bot never got there.");
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
     }
 
     private static CharacterState Weighing(int weight, int maxWeight)
@@ -222,7 +234,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         connection.Server(new ContextDestroyEvent());
         connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
 
-        await ReportedAsync(activity, report => Say(report.Doing) == "Waiting for the fight to end");
+        await ReportedAsync(activity, report => Say(report.Doing) == "Attacked: waiting for the fight's end");
         Assert.Equal(Interruption.Fight, run.LastInterruption);
         Assert.False(run.IsOver);
 
@@ -239,5 +251,54 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         Assert.False(activity.IsFull(Weighing(6_071, 7_590)));
         Assert.True(activity.IsFull(Weighing(6_072, 7_590)));
         Assert.False(activity.IsFull(Weighing(0, 0)));
+    }
+
+    [Fact]
+    public async Task AFightAsAHarvestEndsIsAProtectorsAndPausesTheBotWhenTheProfileSaysSo()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], AfterFight = HarvestAfterFight.Pause });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        await connection.SentAsync(2);
+
+        // Measured: the protector's fight comes 2 ms after the harvest's end, its objects between.
+        connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 });
+        connection.Server(new InteractiveUseEndedEvent { ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId });
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+
+        var fighting = await ReportedAsync(activity, report => Say(report.Doing) == "A protector attacked: waiting for the fight's end");
+
+        Assert.Contains("1 fight, protectors 1", fighting.Counts.Select(count => Say(count.Text)));
+        await WaitForAsync(() => bot.IsPaused);
+
+        var interrupted = bot.Journal.All().OfType<ActivityInterruptedEntry>().Single();
+
+        Assert.Equal((Interruption.Fight, InterruptionResponse.Pause), (interrupted.Reason, interrupted.Response));
+        Assert.Equal("a protector, as harvesting 303 ended", Say(interrupted.Note!));
+        Assert.Contains(bot.Journal.All(), entry => entry is BotEventEntry { Event: BotEvent.PausedAfterFight });
+        Assert.False(run.IsOver);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AFightOtherwiseIsAnAggressionAndEndsTheActivityWhenTheProfileSaysSo()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], AfterFight = HarvestAfterFight.Stop });
+        var run = bot.StartActivity(activity);
+
+        await connection.SentAsync(1);
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+        Assert.Equal("an aggression", Say(bot.Journal.All().OfType<ActivityInterruptedEntry>().Single().Note!));
+        Assert.False(bot.IsPaused);
     }
 }

@@ -158,9 +158,6 @@
   <data name="DoingWaitGrow" xml:space="preserve">
     <value>Waiting for the resources to grow back</value>
   </data>
-  <data name="DoingFight" xml:space="preserve">
-    <value>Waiting for the fight to end</value>
-  </data>
   <data name="DoingPlayer" xml:space="preserve">
     <value>Paused, in your hands</value>
   </data>
@@ -217,5 +214,44 @@
   </data>
   <data name="FigureIsolatedLastMany" xml:space="preserve">
     <value>isolated maps, gone through last</value>
+  </data>
+  <data name="SectionFight" xml:space="preserve">
+    <value>Fights</value>
+  </data>
+  <data name="AfterFight" xml:space="preserve">
+    <value>After a fight</value>
+  </data>
+  <data name="AfterFightHelp" xml:space="preserve">
+    <value>A protector's or an aggression: until step 9, you fight. Paused, the bot is resumed from its card, its tour and counts kept.</value>
+  </data>
+  <data name="AfterFightResume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="AfterFightPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="AfterFightStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="DoingFightProtector" xml:space="preserve">
+    <value>A protector attacked: waiting for the fight's end</value>
+  </data>
+  <data name="DoingFightAggression" xml:space="preserve">
+    <value>Attacked: waiting for the fight's end</value>
+  </data>
+  <data name="NoteProtectorOf" xml:space="preserve">
+    <value>a protector, as harvesting {0} ended</value>
+  </data>
+  <data name="NoteProtector" xml:space="preserve">
+    <value>a protector, as a harvest ended</value>
+  </data>
+  <data name="NoteAggression" xml:space="preserve">
+    <value>an aggression</value>
+  </data>
+  <data name="CountFightsOne" xml:space="preserve">
+    <value>{0} fight, protectors {1}</value>
+  </data>
+  <data name="CountFightsMany" xml:space="preserve">
+    <value>{0} fights, protectors {1}</value>
   </data>
 </root>

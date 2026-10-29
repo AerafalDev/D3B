@@ -8,4 +8,7 @@ public enum InterruptionResponse
 
     /// <summary>Ends the activity.</summary>
     Stop,
+
+    /// <summary>Pauses the bot as the player's hand does (D66), then, once it is resumed from its card and can act, recovers the character and goes on (D144).</summary>
+    Pause,
 }

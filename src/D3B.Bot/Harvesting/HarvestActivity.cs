@@ -39,6 +39,9 @@ public sealed class HarvestActivity : BotActivity
     private static readonly TimeSpan _regrowthDelay = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan _objectsDelay = TimeSpan.FromSeconds(1);
 
+    // Measured: a protector attacks 2 ms after the harvest's end; a second leaves room for the objects' events between.
+    private static readonly TimeSpan _protectorDelay = TimeSpan.FromSeconds(1);
+
     private readonly HarvestSettings _settings;
     private readonly WorldAtlas _atlas;
     private readonly WorldGraph _graph;
@@ -50,12 +53,17 @@ public sealed class HarvestActivity : BotActivity
     private readonly HarvestTour _tour;
     private readonly Dictionary<int, long> _harvested = [];
     private readonly HashSet<int> _skipped = [];
+    private readonly Dictionary<FightKind, int> _fights = [];
     private HarvestZone? _zone;
     private FrozenSet<int>? _deposited;
     private long? _skippedOn;
     private int _failedJourneys;
     private int _banks;
     private ActivityReport? _report;
+    private BotContext? _context;
+    private int? _lastTarget;
+    private FightKind? _fight;
+    private int? _fightItem;
 
     /// <inheritdoc/>
     public override string Name => "Harvesting";
@@ -118,6 +126,8 @@ public sealed class HarvestActivity : BotActivity
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+
+        _context = context;
 
         var zone = ZoneOf();
         var state = context.State;
@@ -192,18 +202,54 @@ public sealed class HarvestActivity : BotActivity
     /// <inheritdoc/>
     public override InterruptionResponse OnInterrupted(Interruption reason)
     {
+        _fight = null;
+
+        if (reason is Interruption.Fight)
+        {
+            // Measured: a protector attacks as the character's own harvest ends, the objects' events between (D144).
+            var kind = _context is { UseEndedAt: { } ended } context && context.Time.GetUtcNow() - ended <= _protectorDelay ? FightKind.Protector : FightKind.Aggression;
+
+            _fight = kind;
+            _fightItem = kind is FightKind.Protector ? _lastTarget : null;
+            _fights[kind] = _fights.GetValueOrDefault(kind) + 1;
+        }
+
         var key = reason switch
         {
-            Interruption.Fight => "DoingFight",
+            Interruption.Fight => _fight is FightKind.Protector ? "DoingFightProtector" : "DoingFightAggression",
             Interruption.Player => "DoingPlayer",
             Interruption.Disconnected => "DoingDisconnected",
             _ => null,
         };
 
         if (key is not null && Report is { } report)
-            Volatile.Write(ref _report, report with { Doing = GameText.Of(HarvestTexts.Text(key)) });
+        {
+            var counts = _zone is { } zone ? CountsOf(zone) : report.Counts;
 
-        return InterruptionResponse.Resume;
+            Volatile.Write(ref _report, report with { Doing = GameText.Of(HarvestTexts.Text(key)), Counts = counts });
+        }
+
+        if (reason is not Interruption.Fight)
+            return InterruptionResponse.Resume;
+
+        return _settings.AfterFight switch
+        {
+            HarvestAfterFight.Pause => InterruptionResponse.Pause,
+            HarvestAfterFight.Stop => InterruptionResponse.Stop,
+            _ => InterruptionResponse.Resume,
+        };
+    }
+
+    /// <inheritdoc/>
+    public override GameText? Describe(Interruption reason)
+    {
+        return (reason, _fight, _fightItem) switch
+        {
+            (Interruption.Fight, FightKind.Protector, { } item) => GameText.Of(HarvestTexts.Text("NoteProtectorOf"), GameTextValue.Item(item)),
+            (Interruption.Fight, FightKind.Protector, null) => GameText.Of(HarvestTexts.Text("NoteProtector")),
+            (Interruption.Fight, FightKind.Aggression, _) => GameText.Of(HarvestTexts.Text("NoteAggression")),
+            _ => null,
+        };
     }
 
     private ActivityException StillFull(CharacterState state)
@@ -271,6 +317,9 @@ public sealed class HarvestActivity : BotActivity
         Publish(state, doing, elementId);
 
         var before = Carried(state, target.ItemId);
+
+        _lastTarget = target.ItemId;
+
         var outcome = await context.UseAsync(elementId, target.SkillId, cancellationToken).ConfigureAwait(false);
 
         if (outcome is UseOutcome.Used)
@@ -285,6 +334,7 @@ public sealed class HarvestActivity : BotActivity
         {
             _skipped.Add(elementId);
         }
+
 
         Publish(context.State, doing);
 
@@ -447,6 +497,11 @@ public sealed class HarvestActivity : BotActivity
 
         if (_banks > 0)
             counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountBanksOne"), HarvestTexts.Text("CountBanksMany"), _banks)));
+
+        var fights = _fights.Values.Sum();
+
+        if (fights > 0)
+            counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountFightsOne"), HarvestTexts.Text("CountFightsMany"), fights, GameTextValue.Number(_fights.GetValueOrDefault(FightKind.Protector)))));
 
         return [.. counts];
     }

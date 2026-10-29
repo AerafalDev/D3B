@@ -40,6 +40,9 @@ public sealed class BotContext
     /// <summary>Gets the clock every delay goes through.</summary>
     public TimeProvider Time => _bot.Time;
 
+    /// <summary>Gets when the server last ended a use of the character's own, such as a harvest, by the bot's clock, if it ever did: a fight beginning right after is a resource's protector's (D144).</summary>
+    public DateTimeOffset? UseEndedAt => _bot.UseEndedAt;
+
     /// <summary>Gets the bot's log.</summary>
     public ILogger Log => _bot.Log;
 

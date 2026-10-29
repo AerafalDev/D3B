@@ -23,4 +23,7 @@ public sealed class HarvestSettings
 
     /// <summary>Gets or sets what goes to the bank.</summary>
     public HarvestDeposit Deposit { get; set; } = HarvestDeposit.Harvest;
+
+    /// <summary>Gets or sets what the activity does once a fight cut one of its steps (D144).</summary>
+    public HarvestAfterFight AfterFight { get; set; } = HarvestAfterFight.Resume;
 }

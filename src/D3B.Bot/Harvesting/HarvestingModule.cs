@@ -51,6 +51,10 @@ public sealed class HarvestingModule : IModule
             settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent();
             settings.Choice(s => s.Deposit, HarvestTexts.Text("Deposit"), deposit => HarvestTexts.Text(deposit is HarvestDeposit.Harvest ? "DepositHarvest" : "DepositAll"));
 
+            settings.Section(HarvestTexts.Text("SectionFight"));
+            settings.Choice(s => s.AfterFight, HarvestTexts.Text("AfterFight"), after => HarvestTexts.Text($"AfterFight{after}"))
+                .Help(HarvestTexts.Text("AfterFightHelp"));
+
             settings.Rule(s => s.EverythingKnown || s.Resources.Count > 0, HarvestTexts.Text("RuleWhat"));
             settings.Rule(s => s.Area is not null || s.SubAreas.Count > 0, HarvestTexts.Text("RuleWhere"));
             settings.Preview((s, services) => services.GetRequiredService<HarvestPreviews>().Of(s));

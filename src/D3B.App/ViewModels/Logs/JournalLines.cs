@@ -29,6 +29,7 @@ internal sealed class JournalLines
     private readonly GameWorld? _world;
     private readonly GameTexts? _texts;
     private readonly GameTables? _tables;
+    private readonly GameTextFormatter _says;
 
     /// <summary>Initializes a new instance of the <see cref="JournalLines"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
@@ -41,6 +42,7 @@ internal sealed class JournalLines
         _world = world;
         _texts = texts;
         _tables = tables;
+        _says = new GameTextFormatter(localizer, world, texts, tables);
     }
 
     private static Tone ToneOf(bool done)
@@ -128,15 +130,22 @@ internal sealed class JournalLines
 
     private string Interrupted(ActivityInterruptedEntry interrupted)
     {
-        var reason = _localizer[interrupted.Reason switch
+        // What the activity says of it, such as a fight's kind (D144), names it better than the bare reason.
+        var reason = interrupted.Note is { } note ? _says.Say(note) : _localizer[interrupted.Reason switch
         {
             Interruption.Player => "InterruptedByPlayer",
             Interruption.Disconnected => "InterruptedByDisconnection",
             Interruption.Fight => "InterruptedByFight",
             _ => "InterruptedByStop",
         }];
+        var key = interrupted.Response switch
+        {
+            InterruptionResponse.Stop => "JournalActivityInterruptedStops",
+            InterruptionResponse.Pause => "JournalActivityInterruptedPauses",
+            _ => "JournalActivityInterrupted",
+        };
 
-        return Format(interrupted.Response is InterruptionResponse.Stop ? "JournalActivityInterruptedStops" : "JournalActivityInterrupted", interrupted.Activity, reason);
+        return Format(key, interrupted.Activity, reason);
     }
 
     private (string, string?, Tone, LogMark) Over(ActivityOverEntry over)
@@ -172,6 +181,7 @@ internal sealed class JournalLines
             BotEvent.Disconnected => (_localizer["JournalDisconnected"], null, Tone.Neutral, LogMark.Plug),
             BotEvent.PausedByPlayer => (_localizer["JournalPaused"], null, Tone.Warning, LogMark.Hand),
             BotEvent.Resumed => (_localizer["JournalResumed"], null, Tone.Info, LogMark.Play),
+            BotEvent.PausedAfterFight => (_localizer["JournalPausedAfterFight"], null, Tone.Warning, LogMark.Pause),
             _ => (_localizer["JournalFight"], null, Tone.Warning, LogMark.Swords),
         };
     }
