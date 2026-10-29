@@ -19,6 +19,7 @@ using D3B.Bot.Tests.Runtime;
 using D3B.Data;
 using D3B.Data.Tests;
 using D3B.Storage;
+using D3B.Storage.Accounts;
 using D3B.Storage.Profiles;
 using D3B.Storage.Runs;
 using Microsoft.EntityFrameworkCore;
@@ -108,7 +109,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             window.Show();
             main.ShowProfilesCommand.Execute(null);
             main.Refresh();
-            main.Profiles.Items[0].EditCommand.Execute(null);
+            main.Profiles.Items.Single(profile => profile.Name == "Ash and chestnut").EditCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
             var english = Texts(window);
@@ -126,7 +127,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             // Its dialogs, over the editor: resources chosen several at once, a question, a new profile.
             var editing = main.Profiles.Editing!;
 
-            editing.Editor!.Sections.SelectMany(section => section.Fields).OfType<ResourcesFieldViewModel>().Single().ChooseCommand.Execute(null);
+            editing.Editor!.Sections.SelectMany(section => section.Fields).OfType<ResourcesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
             dialogs.Add(window.GetVisualDescendants().OfType<ResourcePickerView>().Any(view => view.IsEffectivelyVisible));
             Drawings.Draw(window, "picker-fr");
@@ -179,6 +180,102 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Equal(3, zone.Squares.Count(square => square.Kind is ZoneSquareKind.GroupA));
         Assert.Equal(2, zone.Squares.Count(square => square.IsProbable));
         Assert.Equal(new PixelPoint(4, -18), zone.Landmark);
+    }
+
+    [Fact]
+    public async Task TheHarvestByProfessionShowsItsProfessionsAndThePlaceChosenForEachCharacterInBothLanguagesAndThemes()
+    {
+        using var host = await HostAsync();
+        var ct = TestContext.Current.CancellationToken;
+        var definition = host.Services.GetRequiredService<ActivityCatalog>().All.Single();
+        var settings = new HarvestSettings
+        {
+            Mode = HarvestMode.ByProfession,
+            Jobs = [TestPlay.Lumberjack],
+            Excluded = [TestPlay.Chestnut],
+            Order = HarvestOrder.HighestLevel,
+            Place = HarvestPlace.Automatic,
+        };
+        var profiles = host.Services.GetRequiredService<ProfileBook>();
+        var accounts = host.Services.GetRequiredService<AccountBook>();
+        var profile = await profiles.SaveAsync(0, "By profession", HarvestingModule.ActivityId, definition.Settings.Write(settings), ct);
+
+        await accounts.SeeAsync(TestPlay.Account, [(TestPlay.CharacterId, "Ortie", 60)], _play.Time.GetUtcNow(), ct);
+        await accounts.AssignAsync(TestPlay.Key, profile.Id, ct);
+
+        var runner = await TestHosts.RunningAsync(host);
+
+        // Its bot plays it: the preview knows its levels.
+        await _play.EnterAsync(433);
+
+        var (english, french, notes, picker) = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main, Width = 1280, Height = 1500 };
+
+            main.Refresh();
+            window.Show();
+            main.ShowProfilesCommand.Execute(null);
+            main.Refresh();
+            main.Profiles.Items.Single(item => item.Name == "By profession").EditCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var english = Texts(window);
+            var editor = main.Profiles.Editing!.Editor!;
+            var notes = editor.PlayerNotes.ToList();
+
+            Drawings.Draw(window, "profession-en");
+            main.Settings.UseFrenchCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var french = Texts(window);
+
+            Drawings.Draw(window, "profession-fr");
+            editor.Sections.SelectMany(section => section.Fields).OfType<ResourcesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var picker = Texts(window);
+
+            Drawings.Draw(window, "exclude-fr");
+            main.Dialogs.Close();
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return (english, french, notes, picker);
+        });
+
+        Assert.Contains("By profession", english);
+        Assert.Contains("All", english);
+        Assert.Contains("Exclude resources", english);
+        Assert.Contains("Chestnut", english);
+        Assert.Contains("Highest level first", english);
+        Assert.Contains("Automatic", english);
+        Assert.Contains("Not above its level", english);
+        Assert.Contains("Zaap if it saves at least", english);
+        Assert.Contains("maps", english);
+        Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Par métier", french);
+        Assert.Contains("Tous", french);
+        Assert.Contains("Exclure des ressources", french);
+        Assert.Contains("Plus haut niveau d'abord", french);
+        Assert.Contains("Automatique", french);
+        Assert.Contains("Zaap s'il évite au moins", french);
+        Assert.Contains("cartes", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Exclure des ressources", picker);
+
+        var note = Assert.Single(notes);
+
+        Assert.Equal("Ortie", note.Name);
+        Assert.NotNull(note.Note);
+
+        // The harvest's presets were stored as the database opened, beside the profile made here.
+        Assert.Equal(7, profiles.Profiles.Count);
     }
 
     [Fact]

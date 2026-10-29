@@ -16,8 +16,8 @@ Set by the project owner, not up for decision:
 - Better than the existing bots, open source or sold: inspired by them, never copied.
 - Every feature is a module, assembled as in Bevy, in the repository (D116, the owner's change: the brief's external
   .NET plugins, then the Lua scripts of D102 that replaced them, go).
-- Mods are made in blueprint style, graphs of nodes edited in the app, after the first milestone (D117, the owner's
-  change).
+- Mods are made in blueprint style, graphs of nodes edited in the app, after the fights of step 9 (D117, D169, the
+  owner's changes).
 - The desktop UI is Avalonia with ShadUI.
 - The network goes through Kestrel's socket layer.
 - Game data is extracted from the official client by file-based apps in `scripts/`, as in Dofus Remastered.
@@ -2083,7 +2083,8 @@ misread. The release of 3.7.12.12 needs it, which the release tool publishes (D5
 
 ## D83: The path through the world teleports from where the character stands
 
-*2026-10-28, step 4, session 4e, chosen by the owner. Extends D71, D73 and D74.*
+*2026-10-28, step 4, session 4e, chosen by the owner. Extends D71, D73 and D74. Amended by D167: a teleport may count as
+more map changes, and never ties a walk.*
 
 Measured on a game connection of the player using zaaps, the haven bag and the map, then on a client of 3.7.12.12 in
 game through the host, the player's hands off, a measuring plugin, never committed, sending the requests one by one
@@ -3062,7 +3063,8 @@ freezing them as they are, no more work on their API, and deciding again after s
 ## D117: Mods in blueprint style, after step 6
 
 *2026-10-29, the session removing the Lua scripts, chosen by the owner, the step's place as the lead recommended it.
-Supersedes D116's "nothing outside the repository" for mods. Changes the brief. Opens Q13.*
+Supersedes D116's "nothing outside the repository" for mods. Changes the brief. Opens Q13. Its place amended by D169:
+after the fights of step 9.*
 
 Asked which activity D3B keeps without Lua (D118), the owner answered that mods will be made in blueprint style: graphs
 of nodes, edited on a canvas in the app. The references the owner gave, read for their look and ergonomics only (D3),
@@ -3727,7 +3729,7 @@ page alone.*
 
 ## D152: The owner's harvesting settings in 6e; no human or random timings
 
-*2026-10-29, step 6, session 6c.*
+*2026-10-29, step 6, session 6c. Its settings made by D165 to D168.*
 
 - **6e, chosen by the owner**: settings of harvesting and journeys, each submitted with mockups: no zaap when the
   destination is too near; an automatic mode choosing the zone by the character's level; the highest-level resources
@@ -3875,7 +3877,7 @@ in place. Builds D127, D155.*
 ## D160: Resources by profession or by list, in 6e
 
 *2026-10-29, step 6, session 6d, chosen by the owner among mockups, as the lead recommended it: the model now, made in 6e
-with D152's settings. Amends D127's settings and D152.*
+with D152's settings. Amends D127's settings and D152. Made by D165.*
 
 - **Two modes.** By profession: the professions chosen, all of them or none of a profession for Base's, each character's
   own level deciding; resources left out; and an order, the nearest first or the highest level first without leaving the
@@ -3968,6 +3970,115 @@ Amends D159's scale: one height of controls.*
   page of the item checked now shows (D162), tested.
 - **Not measured on the client**: the toasts of what a bot meets, and the dialog choosing resources with the pack's
   resources of every profession; the tests cover them.
+
+## D165: Resources by profession or by list, made
+
+*2026-10-29, step 6, session 6e; chosen by the owner among dark mockups, as the lead recommended it. Makes D160 and
+D152's highest level first and lists of resources. Builds D98, D127, D150, D159.*
+
+- **The harvest's card** begins with `Mode`, two segments: by profession, the default of the presets (D168), or a list, a
+  new profile's default, as before.
+- **By profession**: the professions as chips on one row, each with its icon, "All" first, which ticks the five
+  professions that gather or unticks them, and "Without a profession" last, `Base`'s, ticked apart. Each character's own
+  levels decide what it harvests. The resources left out, chosen in 6d's dialog, which then says "Exclude resources" and
+  warns of no level lacking. The order: the nearest first, or the highest level first, the map's other resources after,
+  none left; on each map, as the priorities of D128 are.
+- **A list** stays as it was: the resources in their order, the first first.
+- **The stored profiles read without anything redone**: a list stays a list; "everything each character can harvest",
+  which `HarvestSettings` no longer holds, reads as by profession with the five professions, `Base`'s not among them, as
+  it harvested (D150). Checked on the owner's profile "Ortie", stored by 6d.
+- **D98 gains**, for any activity: an activity reading what an earlier version stored, once the settings declared now are
+  read (`ReadsEarlier`); a profession setting offering those that gather alone, `Base` among them, which the app shows as
+  chips (`Gathering`, `GameReferences.GatheringJobs`); a list of resources to leave out (`Excluding`); a sub-area setting
+  suggested by resources the activity reckons from its settings, here the professions' but those left out
+  (`SuggestedBy` with a function); and a number saying what it counts (`Unit`).
+- **Rejected.**
+  - A switch "all the professions" and a list beside: two rows for one choice, the mockup 1B.
+  - "All" holding `Base`'s: its skills gather events' items too (D150).
+  - A key renamed by the settings framework: the harvest's earlier flag maps onto two settings, which only the module
+    knows.
+
+## D166: The place chosen by the activity, the sub-area richest in what the character can harvest
+
+*2026-10-29, step 6, session 6e; chosen by the owner among mockups, as the lead recommended it. Makes D152's automatic
+mode. Builds D127, D138, D144, D149.*
+
+- **Measured** on the pack of 3.7.12.12: the sub-areas list a profession's resources widely, 28 the ash, 35 the elm, and
+  the test sub-area "Test conventionné" lists every wood; the owner's 109 learned graphics place, for one, the ash on 454
+  maps and the chestnut on 458. A ranking from them takes about 10 ms once the graphics' index is built (564 ms, D150).
+- **The place**, a segment of the place's card: automatic, or chosen, the area and sub-areas as before, the default of a
+  new profile and of the profiles stored. Automatic, for each character, at the start and at each new tour, so that a
+  level gained moves it: the sub-area where the learned graphics place the most of what it can harvest at its
+  professions' levels, each map counting a resource's worth, half as much every 20 levels below its profession's; while
+  no graphic places anything it can harvest, the resources each sub-area lists. The first of the best ten it can travel to.
+- **Not above its level**, on by default: a sub-area of a level above the character's is left out, its monsters
+  attacking (D144), D3B not fighting before step 9.
+- **What the place gives**: a lumberjack of 20 of a character of 60 goes to the Forêt d'Astrub, 69 maps; one of 80 of a
+  character of 200 to the Bois de Litneg; an alchemist of 80 to the Dédale du Dark Vlad; a farmer of 40 to the Champs de
+  Cania; a miner of 1 to the Souterrains.
+- **Said**: the bot's card names the sub-area before its tour, "Forêt d'Astrub, tour 2, map 5 of 69"; the editor's preview
+  tells each character playing the profile its sub-area by its levels, as its bot last saw them, and draws the first's,
+  of the sub-areas reached from a zaap or a bank, its zaaps and criteria not known there.
+- **Rejected.**
+  - The sub-areas listing its highest resource, the nearest first: no learned graphics needed, but a listing says nothing
+    of how many grow there, Village d'Amakna listing the elm.
+  - Tables of zones by level, as the owner's profession scripts hold: data written by hand for each profession, which
+    D3B's learned graphics give for every one.
+  - Several sub-areas at once: a tour through the world for a zone the regrowth's wait already serves (D145).
+
+## D167: A zaap only when it saves enough maps
+
+*2026-10-29, step 6, session 6e; chosen by the owner among mockups, as the lead recommended it. Makes D152's "no zaap
+when the destination is too near". Amends D83's "every map change costs the same, a teleport too".*
+
+- **A setting of the profile**, in the place's card: "Zaap if it saves at least 5 maps", from 1 to 30. Every journey of the
+  activity follows it, banking's included: the activity says it (`BotActivity.TeleportChanges`), the journey's rules carry
+  it (`WorldPathRules.TeleportChanges`).
+- **The path**: a teleport counts as that many map changes, so that a zaap is taken only when it saves as many, and paid
+  only then. The costs are doubled and a teleport's is one more, odd, so that it never ties a walk: one that saves fewer
+  changes than it counts as, or none, is walked. With 1, a zaap is taken as soon as it saves a change, as before, but no
+  longer on a tie.
+- **The stored profiles** take 5, the new behaviour the owner asked for.
+- **Rejected.**
+  - No zaap when the destination is at most so many maps away on foot, the mockup 2B: further, a zaap saving one map would
+    still be taken and paid.
+  - A setting of the machine, on the settings page: the owner asked for it in the profile, and a character short of kamas
+    may want another.
+
+## D168: Profiles given by default, stored once
+
+*2026-10-29, step 6, session 6e; chosen by the owner among mockups, as the lead recommended it. Makes D152's profiles
+given by default.*
+
+- **An activity gives presets** (`ActivitySettingsBuilder.Preset`), checked whole when it registers, rules included. The
+  harvest gives six, each by profession, the highest level first, the place automatic: "Automatic harvest", the five
+  professions, and "Auto lumberjack", "Auto miner", "Auto alchemist", "Auto farmer" and "Auto fisherman".
+- **Stored once** as ordinary profiles when the database opens, before the host starts, named in the system's language:
+  edited, copied and deleted as any other; one deleted never comes back, the database keeping which were stored
+  (`Presets`, a table of migration `Presets`). A name another profile has takes a number after it.
+- **Not measured**: fishing, never harvested on the client.
+- **Rejected.**
+  - Models offered in the dialog making a profile, nothing stored: one step more to play one, the mockup 3B.
+  - Read-only profiles of D3B, copied to edit: a second kind of profile, for little.
+
+## D169: After 6e, 6f, then fights and their AI, then blueprints
+
+*2026-10-29, step 6, session 6e, chosen by the owner, as the lead recommended it. Amends D117: blueprints after step 9.*
+
+- **Asked**: fights and an AI before blueprints, an AI that is clever and complete, handles every case, thinks again as
+  the fight changes; Bubble's emulator holds much of it.
+- **The order**: 6f, which publishes the app with its data and turns the repository public (D158), then step 9, fights,
+  in several sessions, then step 7's blueprints. A client update before still gets Q10's session first.
+- **What step 9 will likely hold**, settled at its start with measures: the fight's protocol measured on the client,
+  placement (D125), turns, actions, end, and the fight's state; the spells, monsters and effects in the pack, and an engine
+  that reckons an action's outcome, Bubble's formulas measured one by one (Q5); an AI searching, each turn, the best
+  sequences of moves and spells and thinking again after each answer of the server; the hard cases, summons, glyphs and
+  traps, states, invisibility, pushes, line of sight, tackle; and the harvest fighting instead of pausing (D144). Every
+  spell through its effects, not per class.
+- **Said**: Bubble's emulator is Dofus 2's and read for ideas, never copied (D3); "every case" is reached through effects
+  as data, measured case by case, not at once.
+- **Rejected.**
+  - Fights straight after 6e, 6f after: the owner chose 6f first.
 
 ## Open questions
 

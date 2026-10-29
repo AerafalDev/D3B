@@ -1322,4 +1322,10 @@
   <data name="StatisticsEmptyTitle" xml:space="preserve">
     <value>No run</value>
   </data>
+  <data name="ExcludeResources" xml:space="preserve">
+    <value>Exclude resources</value>
+  </data>
+  <data name="ExcludeResourcesCount" xml:space="preserve">
+    <value>Exclude {0}</value>
+  </data>
 </root>

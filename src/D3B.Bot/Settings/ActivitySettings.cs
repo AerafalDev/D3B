@@ -14,14 +14,15 @@ namespace D3B.Bot.Settings;
 /// <para>
 /// Reading what was stored starts from the defaults, the class's own, then takes every value that still reads: a key
 /// the activity no longer declares is dropped, and a value that no longer reads, such as a choice it renamed, keeps the
-/// default and is reported.
+/// default and is reported. An activity may read what an earlier version stored under other keys (D165).
 /// </para>
 /// </remarks>
 public sealed class ActivitySettings
 {
     private readonly Func<object>? _create;
     private readonly IReadOnlyList<SettingRule> _rules;
-    private readonly Func<object, IServiceProvider, SettingsPreview?>? _preview;
+    private readonly Func<object, IServiceProvider, IReadOnlyList<PreviewPlayer>, SettingsPreview?>? _preview;
+    private readonly Action<object, JsonObject>? _earlier;
 
     /// <summary>Gets the settings of an activity that declares none.</summary>
     public static ActivitySettings None { get; } = new(null, null, [], []);
@@ -38,13 +39,23 @@ public sealed class ActivitySettings
     /// <summary>Gets whether the activity says what its settings lead to (<see cref="Preview"/>).</summary>
     public bool HasPreview => _preview is not null;
 
-    internal ActivitySettings(Type? type, Func<object>? create, IReadOnlyList<SettingDefinition> all, IReadOnlyList<SettingRule> rules, Func<object, IServiceProvider, SettingsPreview?>? preview = null)
+    /// <summary>Gets the settings the activity gives ready to play, which D3B stores once as profiles (D168).</summary>
+    public IReadOnlyList<SettingsPreset> Presets { get; internal set; } = [];
+
+    internal ActivitySettings(
+        Type? type,
+        Func<object>? create,
+        IReadOnlyList<SettingDefinition> all,
+        IReadOnlyList<SettingRule> rules,
+        Func<object, IServiceProvider, IReadOnlyList<PreviewPlayer>, SettingsPreview?>? preview = null,
+        Action<object, JsonObject>? earlier = null)
     {
         Type = type;
         _create = create;
         All = all;
         _rules = rules;
         _preview = preview;
+        _earlier = earlier;
     }
 
     private static bool Holds(SettingRule rule, object settings)
@@ -117,6 +128,8 @@ public sealed class ActivitySettings
                 reset.Add(setting);
         }
 
+        _earlier?.Invoke(settings, values);
+
         return new SettingsReading(settings, reset);
     }
 
@@ -181,8 +194,9 @@ public sealed class ActivitySettings
     /// <summary>Reckons what settings lead to, as the activity says it (D127).</summary>
     /// <param name="settings">The settings.</param>
     /// <param name="services">The host's services, whose pack the activity reckons from.</param>
+    /// <param name="players">The characters that play the settings, as their bots last saw them, for what the settings lead to for each (D166); none by default.</param>
     /// <returns>What they lead to; nothing when the activity says nothing, the settings say too little, or the reckoning throws.</returns>
-    public SettingsPreview? Preview(object? settings, IServiceProvider services)
+    public SettingsPreview? Preview(object? settings, IServiceProvider services, IReadOnlyList<PreviewPlayer>? players = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         CheckType(settings);
@@ -192,7 +206,7 @@ public sealed class ActivitySettings
 
         try
         {
-            return _preview(settings, services);
+            return _preview(settings, services, players ?? []);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {

@@ -16,8 +16,13 @@ namespace D3B.Bot.Harvesting;
 /// from what the host learned of its elements' graphics elsewhere (<see cref="Foresee"/>, D138).
 /// </para>
 /// <para>
+/// The resources are those listed, the first first, or every one of the professions chosen but those left out, the nearest
+/// first or the highest level first (D165).
+/// </para>
+/// <para>
 /// An area alone stands for its sub-areas that list one of the resources among their harvestables, or hold a map the learned
-/// graphics place one of <c>Base</c>'s on (D150); sub-areas chosen stand for themselves, of any area.
+/// graphics place one of <c>Base</c>'s on (D150); sub-areas chosen stand for themselves, of any area; a place the activity
+/// chooses for the character, its sub-areas (D166).
 /// </para>
 /// <para>
 /// A sub-area may fall apart through its own maps: those reached from its main part only far round are isolated, and a tour
@@ -29,7 +34,7 @@ public sealed class HarvestZone
     /// <summary>The most changes of maps a map off its sub-area's main part may lie from it, and still be gone through without asking (D149).</summary>
     public const int MostDetour = 4;
 
-    /// <summary>Gets the skills to use, by id: those gathering a resource asked for, <c>Base</c>'s included, or every profession's harvest when the activity harvests everything it can.</summary>
+    /// <summary>Gets the skills to use, by id: those gathering a resource asked for, <c>Base</c>'s included.</summary>
     public FrozenDictionary<int, HarvestTarget> Targets { get; }
 
     /// <summary>Gets every skill gathering an item, the professions' and <c>Base</c>'s, by id, with the item it gathers: what a map is seen holding.</summary>
@@ -76,8 +81,9 @@ public sealed class HarvestZone
     /// <param name="jobs">The professions' skills, each gathering a resource.</param>
     /// <param name="mapData">The maps, whose elements' graphics foretell what they hold.</param>
     /// <param name="placed">The maps the host's learned graphics place a resource of <c>Base</c> asked for on, which an area alone stands for with its sub-areas listing the others (D150).</param>
+    /// <param name="chosen">The sub-areas the activity chose for the character, when it chooses the place (D166); the settings' area and sub-areas otherwise.</param>
     /// <returns>The zone, empty when the settings name no resource or no place.</returns>
-    public static HarvestZone Of(HarvestSettings settings, WorldAtlas atlas, WorldGraph graph, JobCatalog jobs, GameMaps mapData, IReadOnlySet<long>? placed = null)
+    public static HarvestZone Of(HarvestSettings settings, WorldAtlas atlas, WorldGraph graph, JobCatalog jobs, GameMaps mapData, IReadOnlySet<long>? placed = null, IReadOnlyList<int>? chosen = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(atlas);
@@ -86,14 +92,9 @@ public sealed class HarvestZone
         ArgumentNullException.ThrowIfNull(mapData);
 
         var harvests = jobs.Skills.ToArray().Where(skill => skill.GatheredItemId != Skill.NoItem).ToList();
-        var priorities = settings.Resources.Select((item, index) => (item, index)).ToDictionary(pair => pair.item, pair => pair.index);
-
-        // Harvesting everything a character knows stays the professions': Base's skills gather events' items too (D150).
-        var targets = harvests
-            .Where(skill => settings.EverythingKnown ? skill.JobId != Job.Base : priorities.ContainsKey(skill.GatheredItemId))
-            .ToFrozenDictionary(skill => skill.Id, skill => new HarvestTarget(skill.Id, skill.GatheredItemId, skill.JobId, skill.MinLevel, settings.EverythingKnown ? 0 : priorities[skill.GatheredItemId]));
+        var targets = TargetsOf(settings, jobs);
         var wanted = targets.Values.Select(target => target.ItemId).ToFrozenSet();
-        var subAreas = SubAreasOf(settings, atlas, wanted, placed);
+        var subAreas = chosen is null ? SubAreasOf(settings, atlas, wanted, placed) : [.. chosen.Distinct()];
         var groups = subAreas.Select((subArea, index) => (subArea, index)).ToDictionary(pair => pair.subArea, pair => pair.index);
         var maps = new Dictionary<long, int>();
         var insides = new HashSet<long>();
@@ -126,6 +127,38 @@ public sealed class HarvestZone
             settings.IsolatedMaps);
     }
 
+    /// <summary>Finds the skills settings use, and the resource each gathers, with its priority.</summary>
+    /// <param name="settings">The settings.</param>
+    /// <param name="jobs">The professions' skills.</param>
+    /// <returns>
+    /// The skills, by id: of a list, those gathering a resource listed, its place in the list its priority; by profession,
+    /// those of the professions chosen gathering a resource not left out, every one first, or the highest level first (D165).
+    /// </returns>
+    public static FrozenDictionary<int, HarvestTarget> TargetsOf(HarvestSettings settings, JobCatalog jobs)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(jobs);
+
+        var harvests = jobs.Skills.ToArray().Where(skill => skill.GatheredItemId != Skill.NoItem);
+
+        if (settings.Mode is HarvestMode.ByProfession)
+        {
+            var chosen = settings.Jobs.ToHashSet();
+            var excluded = settings.Excluded.ToHashSet();
+            var highest = settings.Order is HarvestOrder.HighestLevel;
+
+            return harvests
+                .Where(skill => chosen.Contains(skill.JobId) && !excluded.Contains(skill.GatheredItemId))
+                .ToFrozenDictionary(skill => skill.Id, skill => new HarvestTarget(skill.Id, skill.GatheredItemId, skill.JobId, skill.MinLevel, highest ? -skill.MinLevel : 0));
+        }
+
+        var priorities = settings.Resources.Select((item, index) => (item, index)).ToDictionary(pair => pair.item, pair => pair.index);
+
+        return harvests
+            .Where(skill => priorities.ContainsKey(skill.GatheredItemId))
+            .ToFrozenDictionary(skill => skill.Id, skill => new HarvestTarget(skill.Id, skill.GatheredItemId, skill.JobId, skill.MinLevel, priorities[skill.GatheredItemId]));
+    }
+
     /// <summary>Finds the maps the host's learned graphics place settings' resources of <c>Base</c> on, which an area alone stands for (D150).</summary>
     /// <param name="settings">The settings.</param>
     /// <param name="jobs">The skills.</param>
@@ -138,11 +171,10 @@ public sealed class HarvestZone
         ArgumentNullException.ThrowIfNull(jobs);
         ArgumentNullException.ThrowIfNull(places);
 
-        if (settings.Area is null || settings.SubAreas.Count > 0 || settings.EverythingKnown)
+        if (settings.Place is HarvestPlace.Automatic || settings.Area is null || settings.SubAreas.Count > 0)
             return null;
 
-        var wanted = settings.Resources.ToHashSet();
-        HashSet<int> skills = [.. jobs.Skills.ToArray().Where(skill => skill.JobId == Job.Base && wanted.Contains(skill.GatheredItemId)).Select(skill => skill.Id)];
+        HashSet<int> skills = [.. TargetsOf(settings, jobs).Values.Where(target => target.JobId == Job.Base).Select(target => target.SkillId)];
 
         return skills.Count is 0 ? null : places.MapsOffering(skills, graphics);
     }

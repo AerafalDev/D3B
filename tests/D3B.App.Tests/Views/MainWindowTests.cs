@@ -223,7 +223,7 @@ public sealed class MainWindowTests : IAsyncDisposable
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             Drawings.Draw(window, "profiles-en");
-            main.Profiles.Items[0].EditCommand.Execute(null);
+            main.Profiles.Items.Single(profile => profile.Name == "Walker").EditCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));

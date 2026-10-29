@@ -166,7 +166,7 @@ public sealed class HarvestZoneTests : IAsyncDisposable
     }
 
     [Fact]
-    public void BasesResourcesAreHarvestedWhenAskedForButNotWithEverythingKnown()
+    public void BasesResourcesAreHarvestedWhenAskedForOrWithoutAProfessionChosen()
     {
         const int well = 102;
         const int water = 311;
@@ -174,12 +174,14 @@ public sealed class HarvestZoneTests : IAsyncDisposable
             _play.Tables.Jobs.Jobs,
             _play.Tables.Jobs.Skills.ToArray().Append(new Skill(well, 0, Job.Base, water, 1, 1, false)).OrderBy(skill => skill.Id).ToArray());
         var asked = HarvestZone.Of(new HarvestSettings { Resources = [water, TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }, _play.World.Atlas, _play.World.Graph, jobs, _play.Maps);
-        var everything = HarvestZone.Of(new HarvestSettings { EverythingKnown = true, SubAreas = [TestPlay.SubAreaId] }, _play.World.Atlas, _play.World.Graph, jobs, _play.Maps);
+        var professions = HarvestZone.Of(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], SubAreas = [TestPlay.SubAreaId] }, _play.World.Atlas, _play.World.Graph, jobs, _play.Maps);
+        var without = HarvestZone.TargetsOf(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack, Job.Base] }, jobs);
         var graphics = new GraphicSkills();
 
         Assert.Equal(new HarvestTarget(well, water, Job.Base, 1, 0), asked.Targets[well]);
-        Assert.DoesNotContain(well, everything.Targets.Keys);
-        Assert.Equal(water, everything.Harvests[well]);
+        Assert.DoesNotContain(well, professions.Targets.Keys);
+        Assert.Equal(water, professions.Harvests[well]);
+        Assert.Equal(new HarvestTarget(well, water, Job.Base, 1, 0), without[well]);
 
         // No sub-area lists it: only a graphic known to offer its skill tells the zone holds it.
         Assert.DoesNotContain(water, asked.PresentIn(_play.World.Atlas, graphics));
@@ -208,12 +210,35 @@ public sealed class HarvestZoneTests : IAsyncDisposable
     }
 
     [Fact]
-    public void EverythingKnownHarvestsEveryProfessionsResourceAlike()
+    public void ByProfessionHarvestsTheProfessionsResourcesAlikeOrTheHighestLevelFirst()
     {
-        var zone = ZoneOf(new HarvestSettings { EverythingKnown = true, Area = 1 });
+        var zone = ZoneOf(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], Area = 1 });
+        var highest = HarvestZone.TargetsOf(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], Order = HarvestOrder.HighestLevel }, _play.Tables.Jobs);
 
         Assert.Equal([TestPlay.ChestnutSkillId, TestPlay.TreeSkillId], zone.Targets.Keys.Order());
         Assert.All(zone.Targets.Values, target => Assert.Equal(0, target.Priority));
         Assert.DoesNotContain(184, zone.Harvests.Keys);
+        Assert.True(highest[TestPlay.ChestnutSkillId].Priority < highest[TestPlay.TreeSkillId].Priority);
+    }
+
+    [Fact]
+    public void AResourceLeftOutIsNeverATargetAndAListKeepsItsOrder()
+    {
+        var excluded = HarvestZone.TargetsOf(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], Excluded = [TestPlay.Chestnut] }, _play.Tables.Jobs);
+        var list = HarvestZone.TargetsOf(new HarvestSettings { Resources = [TestPlay.Chestnut, TestPlay.Ash], Jobs = [TestPlay.Lumberjack] }, _play.Tables.Jobs);
+
+        Assert.Equal([TestPlay.TreeSkillId], excluded.Keys);
+        Assert.Equal(0, list[TestPlay.ChestnutSkillId].Priority);
+        Assert.Equal(1, list[TestPlay.TreeSkillId].Priority);
+    }
+
+    [Fact]
+    public void ThePlaceTheActivityChoseStandsForTheSettingsAreaAndSubAreas()
+    {
+        var settings = new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], Place = HarvestPlace.Automatic };
+
+        Assert.Empty(ZoneOf(settings).SubAreas);
+        Assert.Equal([TestPlay.SubAreaId], HarvestZone.Of(settings, _play.World.Atlas, _play.World.Graph, _play.Tables.Jobs, _play.Maps, chosen: [TestPlay.SubAreaId]).SubAreas);
+        Assert.Null(HarvestZone.PlacedFor(new HarvestSettings { Place = HarvestPlace.Automatic, Area = 1 }, _play.Tables.Jobs, _play.Places, new GraphicSkills()));
     }
 }

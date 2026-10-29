@@ -54,13 +54,10 @@
     <value>Bank</value>
   </data>
   <data name="Resources" xml:space="preserve">
-    <value>Resources</value>
+    <value>List</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
     <value>In order, the first first, of any profession or none.</value>
-  </data>
-  <data name="EverythingKnown" xml:space="preserve">
-    <value>Everything the character can harvest</value>
   </data>
   <data name="Area" xml:space="preserve">
     <value>Area</value>
@@ -87,7 +84,7 @@
     <value>Everything but what is worn</value>
   </data>
   <data name="RuleWhat" xml:space="preserve">
-    <value>Choose resources, or everything the character can harvest.</value>
+    <value>Choose resources.</value>
   </data>
   <data name="RuleWhere" xml:space="preserve">
     <value>Choose an area or sub-areas.</value>
@@ -325,5 +322,116 @@
   </data>
   <data name="WarningChestNone" xml:space="preserve">
     <value>No guild's chest reached: the harvest went to the character's own chest</value>
+  </data>
+  <data name="RuleJobs" xml:space="preserve">
+    <value>Choose at least one profession.</value>
+  </data>
+  <data name="Mode" xml:space="preserve">
+    <value>Resources</value>
+  </data>
+  <data name="ModeHelp" xml:space="preserve">
+    <value>By profession, each character's levels decide; as a list, in its order.</value>
+  </data>
+  <data name="ModeByProfession" xml:space="preserve">
+    <value>By profession</value>
+  </data>
+  <data name="ModeList" xml:space="preserve">
+    <value>List</value>
+  </data>
+  <data name="Jobs" xml:space="preserve">
+    <value>Professions</value>
+  </data>
+  <data name="JobsHelp" xml:space="preserve">
+    <value>All ticks the five professions; without a profession, the water of wells and the rest.</value>
+  </data>
+  <data name="Excluded" xml:space="preserve">
+    <value>Left out</value>
+  </data>
+  <data name="ExcludedHelp" xml:space="preserve">
+    <value>Never harvested, even of a profession chosen.</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="OrderHelp" xml:space="preserve">
+    <value>On each map; the map's other resources follow.</value>
+  </data>
+  <data name="OrderNearest" xml:space="preserve">
+    <value>Nearest first</value>
+  </data>
+  <data name="OrderHighestLevel" xml:space="preserve">
+    <value>Highest level first</value>
+  </data>
+  <data name="Place" xml:space="preserve">
+    <value>Place</value>
+  </data>
+  <data name="PlaceHelp" xml:space="preserve">
+    <value>Automatic: the sub-area richest in what each character can harvest at its levels, chosen again each tour.</value>
+  </data>
+  <data name="PlaceAutomatic" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="PlaceChosen" xml:space="preserve">
+    <value>Chosen</value>
+  </data>
+  <data name="SafeLevel" xml:space="preserve">
+    <value>Not above its level</value>
+  </data>
+  <data name="SafeLevelHelp" xml:space="preserve">
+    <value>Leaves out the sub-areas above the character's level, whose monsters would attack it.</value>
+  </data>
+  <data name="ZaapSaving" xml:space="preserve">
+    <value>Zaap if it saves at least</value>
+  </data>
+  <data name="ZaapSavingUnit" xml:space="preserve">
+    <value>maps</value>
+  </data>
+  <data name="ZaapSavingHelp" xml:space="preserve">
+    <value>On every journey, the bank's included; 1 takes a zaap as soon as it saves a map.</value>
+  </data>
+  <data name="PlaceOne" xml:space="preserve">
+    <value>{1}, {0} map</value>
+  </data>
+  <data name="PlaceMany" xml:space="preserve">
+    <value>{1}, {0} maps</value>
+  </data>
+  <data name="PlaceUnseen" xml:space="preserve">
+    <value>Levels not seen yet</value>
+  </data>
+  <data name="PlaceNone" xml:space="preserve">
+    <value>Nothing to harvest at its levels</value>
+  </data>
+  <data name="FigureAutomatic" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="FigureAutomaticLabel" xml:space="preserve">
+    <value>place chosen for each character</value>
+  </data>
+  <data name="FailNoPlace" xml:space="preserve">
+    <value>No sub-area at its level holds a resource it can harvest.</value>
+  </data>
+  <data name="ProgressAt" xml:space="preserve">
+    <value>{4}, tour {0}, map {1} of {2}</value>
+  </data>
+  <data name="ProgressAtGrowing" xml:space="preserve">
+    <value>{4}, tour {0}, map {1} of {2}, {3} growing back</value>
+  </data>
+  <data name="PresetAuto" xml:space="preserve">
+    <value>Automatic harvest</value>
+  </data>
+  <data name="PresetLumberjack" xml:space="preserve">
+    <value>Auto lumberjack</value>
+  </data>
+  <data name="PresetMiner" xml:space="preserve">
+    <value>Auto miner</value>
+  </data>
+  <data name="PresetAlchemist" xml:space="preserve">
+    <value>Auto alchemist</value>
+  </data>
+  <data name="PresetFarmer" xml:space="preserve">
+    <value>Auto farmer</value>
+  </data>
+  <data name="PresetFisherman" xml:space="preserve">
+    <value>Auto fisherman</value>
   </data>
 </root>

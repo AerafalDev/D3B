@@ -15,4 +15,7 @@ public sealed record SettingsPreview
 
     /// <summary>Gets a map to mark beside the zone, such as the nearest bank's.</summary>
     public long? LandmarkMapId { get; init; }
+
+    /// <summary>Gets what the settings lead to for each character that plays them, such as the zone chosen for its levels (D166).</summary>
+    public ImmutableArray<PreviewPlayerNote> PlayerNotes { get; init; } = [];
 }

@@ -20,10 +20,21 @@ internal sealed partial class ResourcesFieldViewModel : GamesFieldViewModel
     /// <summary>Gets whether the dialog choosing resources can open: the editor shows in a window, and the host has the game's values.</summary>
     public bool CanChoose => Editor.Dialogs is not null && HasGame;
 
+    /// <summary>Gets what choosing does: adding resources, or leaving them out (D165).</summary>
+    public string ChooseText => Editor.Localizer[Definition.IsExcluding ? "ExcludeResources" : "AddResources"];
+
+    /// <inheritdoc/>
+    public override void Relabel()
+    {
+        base.Relabel();
+        OnPropertyChanged(nameof(ChooseText));
+    }
+
     /// <inheritdoc/>
     protected override string? WarningOf(object value)
     {
-        return Editor.MissingLevelOf((int)value);
+        // A resource left out is never harvested: no level it asks is lacking.
+        return Definition.IsExcluding ? null : Editor.MissingLevelOf((int)value);
     }
 
     [RelayCommand]

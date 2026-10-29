@@ -3,6 +3,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
+using D3B.Bot.Settings;
 using D3B.Bot.Tests.Runtime;
 
 namespace D3B.Bot.Tests.Harvesting;
@@ -79,5 +80,36 @@ public sealed class HarvestPreviewsTests : IAsyncDisposable
 
         Assert.Same(first, previews.Of(new HarvestSettings { Resources = [TestPlay.Ash], Area = 1, FullAt = 70 }));
         Assert.NotSame(first, previews.Of(new HarvestSettings { Resources = [TestPlay.Chestnut], Area = 1 }));
+    }
+
+    [Fact]
+    public void WhenTheActivityChoosesThePlaceEachCharacterIsToldItsByItsLevelsAndTheFirstsIsDrawn()
+    {
+        var settings = new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], Place = HarvestPlace.Automatic };
+        PreviewPlayer[] players =
+        [
+            new("Ortie", 60, new Dictionary<int, int> { [TestPlay.Lumberjack] = 20 }, null),
+            new("Kel", 5, new Dictionary<int, int> { [TestPlay.Lumberjack] = 1 }, null),
+            new("New", 0, new Dictionary<int, int>(), null),
+        ];
+        var preview = Previews().Of(settings, players)!;
+
+        // The sub-area is above the second's level: its monsters would attack it.
+        Assert.Equal(["Ortie", "Kel", "New"], preview.PlayerNotes.Select(note => note.Name));
+        Assert.StartsWith($"{TestPlay.SubAreaId}, ", Say(preview.PlayerNotes[0].Note), StringComparison.Ordinal);
+        Assert.Equal("Nothing to harvest at its levels", Say(preview.PlayerNotes[1].Note));
+        Assert.Equal("Levels not seen yet", Say(preview.PlayerNotes[2].Note));
+        Assert.NotEmpty(preview.Zone);
+        Assert.Contains(preview.Figures, figure => Say(figure.Label) == "resources in the zone");
+    }
+
+    [Fact]
+    public void WithoutACharacterTheChosenPlaceIsSaidAutomatic()
+    {
+        var preview = Previews().Of(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], Place = HarvestPlace.Automatic })!;
+
+        Assert.Empty(preview.Zone);
+        Assert.Equal(["Auto: place chosen for each character"], preview.Figures.Select(figure => $"{Say(figure.Value)}: {Say(figure.Label)}"));
+        Assert.Null(Previews().Of(new HarvestSettings { Mode = HarvestMode.ByProfession, Place = HarvestPlace.Automatic }));
     }
 }

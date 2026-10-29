@@ -7,6 +7,8 @@ namespace D3B.Engine.World;
 /// <summary>What a path through the world may follow, for one character: what its criteria are answered on, the transitions it avoids, and the zaaps it may teleport to.</summary>
 public sealed record WorldPathRules
 {
+    private readonly int _teleportChanges = 1;
+
     /// <summary>Gets what the character's criteria are answered on: the place is each transition's own map, filled in by the pathfinder.</summary>
     /// <remarks>
     /// Its <see cref="CriterionFacts.Subscribed"/> also says where the character may go: a sub-area the client closes to
@@ -23,4 +25,16 @@ public sealed record WorldPathRules
 
     /// <summary>Gets the kamas the character carries, which must cover a teleport's cost (<see cref="WorldPathfinder.TeleportCost"/>).</summary>
     public long Kamas { get; init; }
+
+    /// <summary>Gets how many map changes a teleport counts as: one is taken only when it saves at least as many (D167); 1, the default, as soon as it saves one.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The value is below 1.</exception>
+    public int TeleportChanges
+    {
+        get => _teleportChanges;
+        init
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            _teleportChanges = value;
+        }
+    }
 }

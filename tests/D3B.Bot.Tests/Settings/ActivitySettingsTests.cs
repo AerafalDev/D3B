@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using D3B.Bot.Activities;
 using D3B.Bot.Localization;
 using D3B.Bot.Settings;
+using D3B.Data.Jobs;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Tests.Settings;
@@ -445,5 +446,142 @@ public sealed class ActivitySettingsTests
         Assert.Null(failing.Preview(new TestSettings(), services));
         Assert.False(Every().HasPreview);
         Assert.Null(Every().Preview(new TestSettings(), services));
+    }
+
+    [Fact]
+    public void AnActivityMaySayWhatItsSettingsLeadToForEachCharacterThatPlaysThem()
+    {
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var declared = Register(settings =>
+        {
+            settings.Number(s => s.Walks, Text("Walks"), 1, 100);
+            settings.Preview((_, _, players) => new SettingsPreview
+            {
+                PlayerNotes = [.. players.Select(player => new PreviewPlayerNote(player.Name, GameText.Of(Text("Level {0}"), GameTextValue.Number(player.Level))))],
+            });
+        }).Settings;
+
+        var note = Assert.Single(declared.Preview(new TestSettings(), services, [new PreviewPlayer("Ortie", 60, new Dictionary<int, int>(), null)])!.PlayerNotes);
+
+        Assert.Equal("Ortie", note.Name);
+        Assert.Empty(declared.Preview(new TestSettings(), services)!.PlayerNotes);
+    }
+
+    [Fact]
+    public void WhatAnEarlierVersionStoredUnderAKeyNoLongerDeclaredIsReadOnceTheRestIs()
+    {
+        var declared = Register(settings =>
+        {
+            settings.Number(s => s.Walks, Text("Walks"), 1, 100);
+            settings.Flag(s => s.UseBank, Text("Bank"));
+            settings.ReadsEarlier((s, stored) =>
+            {
+                if (!stored.ContainsKey("UseBank") && stored["Banks"] is JsonValue banks && banks.TryGetValue(out int count))
+                    s.UseBank = count > 0;
+            });
+        }).Settings;
+
+        var earlier = Read(declared, """{"Walks":4,"Banks":0}""", out var reset);
+        var now = Read(declared, """{"Walks":4,"UseBank":true,"Banks":0}""", out _);
+
+        Assert.Equal(4, earlier.Walks);
+        Assert.False(earlier.UseBank);
+        Assert.Empty(reset);
+        Assert.True(now.UseBank);
+        Assert.DoesNotContain("Banks", declared.Write(earlier), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void APresetIsWrittenAsAProfileStoresItAndMustHoldWhole()
+    {
+        var declared = Register(settings =>
+        {
+            settings.Number(s => s.Walks, Text("Walks"), 1, 100);
+            settings.Resources(s => s.Resources, Text("Resources")).Required();
+            settings.Preset(
+                "many",
+                Text("Many walks"),
+                s =>
+                {
+                    s.Walks = 50;
+                    s.Resources = [TestReferences.Ash];
+                });
+        }).Settings;
+
+        var preset = Assert.Single(declared.Presets);
+
+        Assert.Equal("many", preset.Key);
+        Assert.Equal("Many walks", preset.Name.In(CultureInfo.InvariantCulture));
+        Assert.Equal(50, Read(declared, preset.Json, out _).Walks);
+        Assert.Empty(Every().Presets);
+        Assert.Throws<InvalidOperationException>(() => Register(settings =>
+        {
+            settings.Resources(s => s.Resources, Text("Resources")).Required();
+            settings.Preset("empty", Text("Empty"), _ => { });
+        }));
+        Assert.Throws<ArgumentException>(() => Register(settings =>
+        {
+            settings.Number(s => s.Walks, Text("Walks"), 1, 100);
+            settings.Preset("twice", Text("One"), _ => { });
+            settings.Preset("twice", Text("Two"), _ => { });
+        }));
+    }
+
+    [Fact]
+    public void AProfessionSettingMayOfferThoseThatGatherWithoutAProfessionLast()
+    {
+        var jobs = TestReferences.Jobs();
+        var gathering = new JobCatalog(jobs.Jobs, jobs.Skills.ToArray().Append(new Skill(9, 309, Job.Base, 311, 1, 1, false)).OrderBy(skill => skill.Id).ToArray());
+        var game = new GameReferences(TestReferences.Atlas(), gathering, TestReferences.Items());
+        var declared = Register(settings => settings.Jobs(s => s.Jobs, Text("Professions")).Gathering()).Settings;
+        var plain = Register(settings => settings.Jobs(s => s.Jobs, Text("Professions"))).Settings;
+
+        Assert.True(declared.All[0].IsGathering);
+        Assert.Equal([TestReferences.Lumberjack, TestReferences.Miner, Job.Base], game.GatheringJobs.Select(job => job.Id));
+        Assert.Empty(declared.Check(new TestSettings { Jobs = [Job.Base, TestReferences.Lumberjack] }, game));
+        Assert.Equal(SettingProblemKind.Unknown, Assert.Single(declared.Check(new TestSettings { Jobs = [99] }, game)).Kind);
+        Assert.Equal(SettingProblemKind.Unknown, Assert.Single(plain.Check(new TestSettings { Jobs = [Job.Base] }, game)).Kind);
+        Assert.Throws<InvalidOperationException>(() => Register(settings => settings.Resources(s => s.Resources, Text("Resources")).Gathering()));
+    }
+
+    [Fact]
+    public void SubAreasMayBeSuggestedByResourcesTheActivityReckonsFromItsSettings()
+    {
+        var game = TestReferences.Game();
+        var declared = Register(settings =>
+        {
+            settings.Job(s => s.Job, Text("Job"));
+            settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).SuggestedBy((s, game) => [.. game.Options(SettingKind.Resource, s.Job).Select(resource => resource.Id)]);
+        }).Settings;
+        var failing = Register(settings => settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).SuggestedBy((_, _) => throw new InvalidOperationException("broken"))).Settings;
+        var byResources = Register(settings =>
+        {
+            settings.Resources(s => s.Resources, Text("Resources")).VisibleWhen(s => s.UseBank);
+            settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).SuggestedBy(s => s.Resources);
+        }).Settings;
+
+        Assert.True(declared.All[1].IsSuggested);
+        Assert.Null(declared.All[1].SuggestedBy);
+        Assert.Equal([TestReferences.Ash, TestReferences.Chestnut], declared.All[1].Suggestions(new TestSettings { Job = TestReferences.Lumberjack }, game));
+        Assert.Empty(failing.All[0].Suggestions(new TestSettings(), game));
+        Assert.Equal([TestReferences.Iron], byResources.All[1].Suggestions(new TestSettings { Resources = [TestReferences.Iron] }, game));
+        Assert.Equal(3, byResources.All[1].Suggestions(new TestSettings { UseBank = false }, game).Count);
+        Assert.Empty(Every().All[8].Suggestions(new TestSettings(), game));
+    }
+
+    [Fact]
+    public void ANumberMaySayWhatItCountsAndAListOfResourcesMayLeaveThemOut()
+    {
+        var declared = Register(settings =>
+        {
+            settings.Number(s => s.Walks, Text("Walks"), 1, 100).Unit(Text("maps"));
+            settings.Resources(s => s.Resources, Text("Left out")).Excluding();
+        }).Settings;
+
+        Assert.Equal("maps", declared.All[0].Unit?.In(CultureInfo.InvariantCulture));
+        Assert.True(declared.All[1].IsExcluding);
+        Assert.Null(Every().All[0].Unit);
+        Assert.Throws<InvalidOperationException>(() => Register(settings => settings.Flag(s => s.UseBank, Text("Bank")).Unit(Text("maps"))));
+        Assert.Throws<InvalidOperationException>(() => Register(settings => settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).Excluding()));
     }
 }

@@ -1,4 +1,9 @@
+using System.Globalization;
+using D3B.Bot.Activities;
+using D3B.Bot.Localization;
 using D3B.Bot.Tests.Runtime;
+using D3B.Bot.Tests.Settings;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Storage.Tests.Profiles;
 
@@ -75,5 +80,37 @@ public sealed class ProfileBookTests : IAsyncDisposable
         Assert.Empty(_storage.Profiles.Profiles);
         Assert.Equal((null, false), (character?.ProfileId, character?.StartsOnConnection));
         Assert.True(_storage.Accounts.Version > version);
+    }
+
+    [Fact]
+    public async Task APresetIsStoredOnceAsAProfileNamedApartFromTheUsersAndNeverAgainOnceDeleted()
+    {
+        await _storage.StartedAsync();
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var services = new ServiceCollection();
+
+        services.AddActivity<SettingsActivity, TestSettings>("test.presets", LocalizedText.Invariant("Presets"), settings =>
+        {
+            settings.Number(s => s.Walks, LocalizedText.Invariant("Walks"), 1, 100);
+            settings.Preset("long", LocalizedText.Invariant("Long walk"), s => s.Walks = 50);
+            settings.Preset("short", LocalizedText.Invariant("Short walk"), s => s.Walks = 2);
+        });
+
+        var activity = Assert.Single(services.Select(descriptor => descriptor.ImplementationInstance).OfType<ActivityDefinition>());
+
+        await _storage.Profiles.SaveAsync(0, "Long walk", TestStorage.PlainActivityId, "{}", cancellationToken);
+
+        Assert.Equal(2, await _storage.Profiles.StorePresetsAsync([activity], CultureInfo.InvariantCulture, cancellationToken));
+        Assert.Equal(["Long walk", "Long walk 2", "Short walk"], _storage.Profiles.Profiles.Select(profile => profile.Name));
+
+        var stored = _storage.Profiles.Profiles.Single(profile => profile.Name == "Short walk");
+
+        Assert.Equal(("test.presets", """{"Walks":2}"""), (stored.ActivityId, stored.Settings));
+
+        await _storage.Profiles.DeleteAsync(stored.Id, cancellationToken);
+
+        Assert.Equal(0, await _storage.Profiles.StorePresetsAsync([activity], CultureInfo.InvariantCulture, cancellationToken));
+        Assert.DoesNotContain(_storage.Profiles.Profiles, profile => profile.Name == "Short walk");
     }
 }

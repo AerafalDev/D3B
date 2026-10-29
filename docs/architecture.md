@@ -38,7 +38,9 @@ map page, and the profile editor grown with suggestions, a zone's mini-map and a
 the resources and professions in a pack of format 4, drawn on the tiles, lists, card and map, and the maps' graphics the
 bots learn, which send a tour to the probable maps first (step 6, session 6b); the resources of `Base` placed by the graphics
 learned, a zone's isolated maps, fights told by their timing and followed as the profile says, the resources' growing
-back learned and kept, and each run kept for a statistics page (step 6, session 6c). Everything else below is the target.
+back learned and kept, and each run kept for a statistics page (step 6, session 6c); the app redesigned (step 6, session
+6d); the harvest's resources by profession, its place chosen by each character's levels, zaaps only when they save enough
+maps, and profiles given (step 6, session 6e). Everything else below is the target.
 
 ## Overview
 
@@ -111,7 +113,11 @@ replaced them (D116, D119). Mods come as blueprints at step 7, after step 6 (Mod
   property a setting of a kind, a flag, a number, a text, a choice or the game's professions, areas, sub-areas and
   resources, one or a list, with its name, bounds and help; lists ordered or not, values sought within another setting's,
   settings shown under a condition, sections and rules; sub-areas suggested by a resource setting, percentages, and a
-  preview the activity reckons from its settings and the pack, figures and the maps of its zone (D127).
+  preview the activity reckons from its settings and the pack, figures and the maps of its zone (D127); and, since 6e, what
+  an earlier version stored read once the rest is (`ReadsEarlier`), the professions that gather, `Base`'s among them
+  (`Gathering`), a list of resources leaving out (`Excluding`), sub-areas suggested by resources the activity reckons, a
+  number's unit, a preview telling each character playing the settings what they lead to for it (`PreviewPlayer`,
+  `PreviewPlayerNote`), and presets, settings ready to play that D3B stores once as profiles (`Preset`, D165 to D168).
   `ActivitySettings` reads and writes them as JSON and checks them, with the game's values (`GameReferences`) once the pack
   is there; the activity receives them through its constructor.
 - The activities the app starts are listed by the `ActivityCatalog`: the modules' activities, fixed once the host is
@@ -175,7 +181,9 @@ resources.
   where the character stands, until it arrives. A change that fails leaves its transition out of the journey, which
   fails after three, or when it goes on too long; a teleport that fails leaves every teleport out. A journey from the
   character's haven bag leaves it first. The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
-  on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83).
+  on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83). A teleport counts as as many map changes as
+  the running activity says (`BotActivity.TeleportChanges`, `WorldPathRules.TeleportChanges`), so that a zaap is taken only
+  when it saves that many, and never on a tie with a walk (D167).
 - **Banking** (D79, D80): `Banking`, in `D3B.Bot.Banks`, goes where a banker stands, the nearest bank's inside still
   sought, talks to him, gives the reply of his the question offers, puts the stacks asked for in by one request and the
   kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
@@ -224,6 +232,13 @@ resources.
   character's own. Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
   An activity gives its figures (`BotActivity.Statistics`,
   `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146).
+- **Harvesting, grown in 6e**: the resources by profession, the professions chosen, `Base`'s among them, but those left
+  out, the nearest first or the highest level first, or a list as before (`HarvestMode`, `HarvestOrder`,
+  `HarvestZone.TargetsOf`, D165); the place chosen, or chosen by the activity for each character at each tour, the sub-area
+  where the learned graphics place the most of what it can harvest at its levels, each 20 levels below a profession's
+  halving a resource's worth, not above the character's level (`HarvestPlace`, `AutomaticPlace`, D166), its name before
+  the tour on the card; a zaap only when it saves the profile's number of maps, 5 by default (`HarvestSettings.ZaapSaving`,
+  D167). The module reads a profile stored before as it harvested, and gives six presets (D168).
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
@@ -441,7 +456,11 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   so, and is given another or deleted (D119). Resources are rows in their order, each with its icon, its profession's
   icon and level, and a mark when a character playing it lacks the level; they are chosen several at once in a dialog,
   searched and filtered by profession (`ResourcePickerViewModel`); a sub-area setting suggested by resources lists the
-  sub-areas where they grow; a percentage is a bar, a short choice segments (D127, D138, D141). The pack's icons are drawn
+  sub-areas where they grow; a percentage is a bar, a short choice segments (D127, D138, D141). The professions that gather
+  are chips, all of them first and without a profession last (`GatheringJobsFieldViewModel`); a list leaving resources out
+  offers to exclude and warns of no level; a number says what it counts after its box; and the characters playing the
+  profile each say what the settings lead to for them, such as the place chosen for their levels (`PlayerNoteViewModel`,
+  D165 to D167). The pack's icons are drawn
   as bitmaps once per pack (`GameIcons`); a pack without them, or an item without one, keeps the neutral square.
 - **The statistics page** (D146, `D3B.App.ViewModels.Statistics`): what the kept runs brought, by character and period,
   today, 7 days or everything, both in its header: the resources, the time, the rate an hour and the levels gained; each
@@ -493,7 +512,9 @@ graphics in session 6b (D138); the resources' growing back and the runs in sessi
 - **Accounts and characters** (`AccountBook`): recorded as the relay sees them (`AccountRecorder`, an observer of the game
   connections), the server's list and the character the client chooses, queued off the relay's loop; forgotten on
   demand. Each character may play a profile, and start it on connection.
-- **Profiles** (`ProfileBook`): a name, an activity and its settings as JSON, shared by characters. `ProfileStarter`
+- **Profiles** (`ProfileBook`): a name, an activity and its settings as JSON, shared by characters. The activities' presets
+  are stored once as profiles as the database opens, named in the system's language, `Presets` keeping which were, so that
+  one deleted never comes back (`StorePresetsAsync`, D168). `ProfileStarter`
   starts one on a bot once its activity is registered and its settings read and hold; `StartOnConnection` starts a
   character's when its bot is made, if it asks.
 - **The maps' graphics** (`GraphicRecorder`, D138): what the bots learn of each graphic, its skills as JSON, read into

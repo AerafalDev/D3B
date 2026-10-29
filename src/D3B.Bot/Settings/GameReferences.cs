@@ -21,6 +21,7 @@ public sealed class GameReferences
     private readonly GraphicPlaces? _places;
     private readonly GraphicSkills? _graphics;
     private readonly Lazy<IReadOnlyList<GameReference>> _jobs;
+    private readonly Lazy<IReadOnlyList<GameReference>> _gathering;
     private readonly Lazy<IReadOnlyList<GameReference>> _areas;
     private readonly Lazy<IReadOnlyList<GameReference>> _subAreas;
     private readonly Lazy<IReadOnlyList<GameReference>> _resources;
@@ -31,6 +32,9 @@ public sealed class GameReferences
     private readonly Lazy<FrozenDictionary<int, FrozenSet<int>>> _baseSkills;
     private readonly Lazy<ILookup<int, long>> _maps;
     private readonly Lazy<Dictionary<long, int>> _subAreaOf;
+
+    /// <summary>Gets the professions whose skills gather a resource, <c>Base</c> last, whose resources no profession needs (D150, D165).</summary>
+    public IReadOnlyList<GameReference> GatheringJobs => _gathering.Value;
 
     /// <summary>Initializes a new instance of the <see cref="GameReferences"/> class.</summary>
     /// <param name="atlas">The world's areas and sub-areas.</param>
@@ -61,6 +65,7 @@ public sealed class GameReferences
             .GroupBy(skill => skill.GatheredItemId)
             .ToFrozenDictionary(skills => skills.Key, skills => skills.Select(skill => skill.Id).ToFrozenSet()));
         _jobs = new Lazy<IReadOnlyList<GameReference>>(() => JobsOf(jobs));
+        _gathering = new Lazy<IReadOnlyList<GameReference>>(() => GatheringOf(jobs));
         _areas = new Lazy<IReadOnlyList<GameReference>>(() => [.. atlas.Areas.ToArray().Select(area => new GameReference(area.Id, area.NameId, null))]);
         _subAreas = new Lazy<IReadOnlyList<GameReference>>(() => [.. atlas.SubAreas.ToArray().Select(subArea => new GameReference(subArea.Id, subArea.NameId, subArea.Level))]);
         _resourcesByJob = new Lazy<ILookup<int, GameReference>>(() => ResourcesByJob(jobs, items));
@@ -79,6 +84,16 @@ public sealed class GameReferences
     private static List<GameReference> JobsOf(JobCatalog jobs)
     {
         return [.. jobs.Jobs.ToArray().Where(job => job.Id != Job.Base).Select(job => new GameReference(job.Id, job.NameId, null))];
+    }
+
+    private static List<GameReference> GatheringOf(JobCatalog jobs)
+    {
+        HashSet<int> gathering = [.. jobs.Skills.ToArray().Where(skill => skill.GatheredItemId != Skill.NoItem).Select(skill => skill.JobId)];
+
+        return [.. jobs.Jobs.ToArray()
+            .Where(job => gathering.Contains(job.Id))
+            .OrderBy(job => job.Id == Job.Base)
+            .Select(job => new GameReference(job.Id, job.NameId, null))];
     }
 
     private static ILookup<int, GameReference> ResourcesByJob(JobCatalog jobs, ItemCatalog items)
@@ -134,6 +149,14 @@ public sealed class GameReferences
             SettingKind.Item => _itemTypes.Value.ContainsKey(id),
             _ => false,
         };
+    }
+
+    /// <summary>Tells whether a profession's skills gather a resource, <c>Base</c> among them (D165).</summary>
+    /// <param name="job">The profession.</param>
+    /// <returns>Whether they do.</returns>
+    public bool IsGathering(int job)
+    {
+        return _gathering.Value.Any(gathering => gathering.Id == job);
     }
 
     /// <summary>Finds who gathers a resource.</summary>

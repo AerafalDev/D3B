@@ -91,6 +91,52 @@ public sealed class SettingBuilder<TSettings>
         return this;
     }
 
+    /// <summary>Offers first, for a sub-area setting, the sub-areas where resources the activity reckons from its settings grow, such as a profession's (D165).</summary>
+    /// <param name="resources">Reckons the resources from the settings and the game's values; it must be quick.</param>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting holds no sub-area.</exception>
+    public SettingBuilder<TSettings> SuggestedBy(Func<TSettings, GameReferences, IReadOnlyList<int>> resources)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+
+        _setting.SetSuggesting((settings, game) => resources((TSettings)settings, game));
+
+        return this;
+    }
+
+    /// <summary>Offers, for a profession setting, the professions whose skills gather a resource alone, <c>Base</c> among them, which the app names "without a profession" (D165).</summary>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting holds no profession.</exception>
+    public SettingBuilder<TSettings> Gathering()
+    {
+        _setting.SetGathering();
+
+        return this;
+    }
+
+    /// <summary>Makes a list of resources those to leave out: the app offers to exclude rather than add, and warns of no level lacking (D165).</summary>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting is no list of resources.</exception>
+    public SettingBuilder<TSettings> Excluding()
+    {
+        _setting.SetExcluding();
+
+        return this;
+    }
+
+    /// <summary>Says what a number counts, which the app shows after it, such as "maps" (D167).</summary>
+    /// <param name="unit">What it counts.</param>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting is no number.</exception>
+    public SettingBuilder<TSettings> Unit(LocalizedText unit)
+    {
+        ArgumentNullException.ThrowIfNull(unit);
+
+        _setting.SetUnit(unit);
+
+        return this;
+    }
+
     /// <summary>Makes a number a percentage, which the app shows as a bar (D127).</summary>
     /// <returns>This builder.</returns>
     /// <exception cref="InvalidOperationException">The setting is not a number between 0 and 100.</exception>

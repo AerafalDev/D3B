@@ -100,6 +100,24 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ThePlaceTheActivityChoosesIsTheSubAreaRichestInWhatTheCharacterCanHarvestNamedFirst()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], Place = HarvestPlace.Automatic });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await connection.SentAsync(2));
+        Assert.Equal($"{TestPlay.SubAreaId}, tour 1, map 1 of 4", Say(activity.Report!.Progress!.Text));
+        Assert.Equal(5, activity.TeleportChanges);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
     public async Task AResourceAboveTheCharactersProfessionIsWarnedOfAndLeftForTheOthers()
     {
         var (connection, bot) = await _play.EnterAsync(190);

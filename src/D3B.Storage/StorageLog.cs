@@ -9,6 +9,9 @@ internal static partial class StorageLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Opened the database {Path}: {Accounts} accounts, {Characters} characters, {Profiles} profiles, {Graphics} graphics learned, {Regrowths} resources' growing back, {Runs} runs")]
     public static partial void Opened(ILogger logger, string path, int accounts, int characters, int profiles, int graphics, int regrowths, int runs);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Stored {Count} profiles the activities give")]
+    public static partial void PresetsStored(ILogger logger, int count);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "What the relay saw of an account could not be recorded")]
     public static partial void RecordFailed(ILogger logger, Exception exception);
 

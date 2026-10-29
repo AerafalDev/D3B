@@ -29,8 +29,11 @@ its logs page shows each bot's journal of its actions and the host's problems; i
 frames decoded as they go, the login ticket hidden, or replays a capture; its settings page holds the client's display
 time and D3B's other delays, which a slow machine raises, and the time between two actions, the captures, the language
 and the theme. The app was redesigned page by page: a sidebar, one scale of sizes, Lucide's icons, short texts with their help in
-tooltips, the profile editor on a page of its own beside its zone's preview, dialogs and toasts. Next: the owner's
-harvesting settings, then the app published with its data and the repository public. See the [roadmap](docs/roadmap.md).
+tooltips, the profile editor on a page of its own beside its zone's preview, dialogs and toasts. A harvest takes its
+resources by profession, some left out, the highest level first if asked, or as a list; chooses its place by each
+character's levels, the sub-area richest in what it can harvest and not above its level; takes a zaap only when it saves
+enough maps; and six profiles are given, an automatic harvest and one per profession. Next: the app published with its
+data and the repository public, then fights and their AI, then the blueprints. See the [roadmap](docs/roadmap.md).
 
 ## Building
 

@@ -19,6 +19,9 @@ public sealed class StorageContext : DbContext
     /// <summary>Gets the profiles.</summary>
     public DbSet<Profile> Profiles => Set<Profile>();
 
+    /// <summary>Gets the presets the activities give, once stored as profiles (D168).</summary>
+    public DbSet<StoredPreset> Presets => Set<StoredPreset>();
+
     /// <summary>Gets the graphics the bots learned.</summary>
     public DbSet<LearnedGraphic> Graphics => Set<LearnedGraphic>();
 
@@ -53,6 +56,12 @@ public sealed class StorageContext : DbContext
             profile.HasKey(known => known.Id);
             profile.Property(known => known.Name).HasMaxLength(Profile.NameLength).UseCollation("NOCASE");
             profile.HasIndex(known => known.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<StoredPreset>(preset =>
+        {
+            preset.ToTable("Presets");
+            preset.HasKey(stored => new { stored.ActivityId, stored.Key });
         });
 
         modelBuilder.Entity<LearnedGraphic>(graphic =>

@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.Json.Nodes;
 using D3B.Bot.Localization;
 
 namespace D3B.Bot.Settings;
@@ -20,8 +21,10 @@ public sealed class ActivitySettingsBuilder<TSettings>
 {
     private readonly List<SettingDefinition> _settings = [];
     private readonly List<SettingRule> _rules = [];
+    private readonly List<(string Key, LocalizedText Name, Action<TSettings> Fill)> _presets = [];
     private LocalizedText? _section;
-    private Func<object, IServiceProvider, SettingsPreview?>? _preview;
+    private Func<object, IServiceProvider, IReadOnlyList<PreviewPlayer>, SettingsPreview?>? _preview;
+    private Action<object, JsonObject>? _earlier;
 
     internal ActivitySettingsBuilder()
     {
@@ -37,6 +40,11 @@ public sealed class ActivitySettingsBuilder<TSettings>
         }
 
         throw new ArgumentException("A setting is a public property of the settings with a getter and a setter, named as s => s.Walks.", nameof(property));
+    }
+
+    private static string Wrong(IEnumerable<SettingProblem> problems)
+    {
+        return string.Join(", ", problems.Select(problem => $"{problem.Setting?.Key ?? "a rule"} ({problem.Kind})"));
     }
 
     /// <summary>Begins a section: the settings declared next show under its title.</summary>
@@ -215,7 +223,52 @@ public sealed class ActivitySettingsBuilder<TSettings>
     {
         ArgumentNullException.ThrowIfNull(preview);
 
-        _preview = (settings, services) => preview((TSettings)settings, services);
+        _preview = (settings, services, _) => preview((TSettings)settings, services);
+
+        return this;
+    }
+
+    /// <summary>Says what the settings lead to for each character that plays them, reckoned from the pack, which the app shows beside them (D166).</summary>
+    /// <param name="preview">Reckons it from the settings, the host's services and the characters, as their bots last saw them, or gives nothing while the settings say too little.</param>
+    /// <returns>This builder.</returns>
+    public ActivitySettingsBuilder<TSettings> Preview(Func<TSettings, IServiceProvider, IReadOnlyList<PreviewPlayer>, SettingsPreview?> preview)
+    {
+        ArgumentNullException.ThrowIfNull(preview);
+
+        _preview = (settings, services, players) => preview((TSettings)settings, services, players);
+
+        return this;
+    }
+
+    /// <summary>Reads what an earlier version of the settings stored, once the settings declared now are read: keys no longer declared, or settings declared since (D165).</summary>
+    /// <param name="read">Sets the settings from what was stored, a value per key.</param>
+    /// <returns>This builder.</returns>
+    /// <remarks>Without it, a key no longer declared is dropped, and a setting declared since keeps its default (D98).</remarks>
+    public ActivitySettingsBuilder<TSettings> ReadsEarlier(Action<TSettings, JsonObject> read)
+    {
+        ArgumentNullException.ThrowIfNull(read);
+
+        _earlier = (settings, stored) => read((TSettings)settings, stored);
+
+        return this;
+    }
+
+    /// <summary>Gives settings ready to play, which D3B stores once as a profile, such as an automatic harvest (D168).</summary>
+    /// <param name="key">What names the preset among the activity's, never shown and never changed, so that it is stored once.</param>
+    /// <param name="name">The profile's name, as the app shows it.</param>
+    /// <param name="fill">Sets the settings from the defaults.</param>
+    /// <returns>This builder.</returns>
+    /// <exception cref="ArgumentException">The key is blank, or another preset's.</exception>
+    public ActivitySettingsBuilder<TSettings> Preset(string key, LocalizedText name, Action<TSettings> fill)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(fill);
+
+        if (_presets.Exists(preset => preset.Key == key))
+            throw new ArgumentException($"The preset {key} is declared twice.", nameof(key));
+
+        _presets.Add((key, name, fill));
 
         return this;
     }
@@ -232,25 +285,38 @@ public sealed class ActivitySettingsBuilder<TSettings>
     /// <returns>The settings, declared once and for all.</returns>
     /// <remarks>
     /// A value the user must give, such as a profession, has no default, and a rule may wait for it: the defaults are
-    /// checked for what the module itself wrote wrong, a number out of its bounds, a text too long, a value repeated.
+    /// checked for what the module itself wrote wrong, a number out of its bounds, a text too long, a value repeated. A
+    /// preset is played as it is, so it must hold whole, rules included.
     /// </remarks>
-    /// <exception cref="InvalidOperationException">The defaults are out of the settings' own bounds.</exception>
+    /// <exception cref="InvalidOperationException">The defaults are out of the settings' own bounds, or a preset does not hold.</exception>
     internal ActivitySettings Build()
     {
         foreach (var setting in _settings)
             setting.Freeze();
 
-        var settings = new ActivitySettings(typeof(TSettings), static () => new TSettings(), [.. _settings], [.. _rules], _preview);
+        var settings = new ActivitySettings(typeof(TSettings), static () => new TSettings(), [.. _settings], [.. _rules], _preview, _earlier);
         var problems = settings.Check(settings.CreateDefault())
             .Where(problem => problem.Kind is not (SettingProblemKind.Required or SettingProblemKind.Rule))
             .ToList();
 
         if (problems.Count > 0)
-        {
-            var wrong = string.Join(", ", problems.Select(problem => $"{problem.Setting?.Key ?? "a rule"} ({problem.Kind})"));
+            throw new InvalidOperationException($"The default settings of {typeof(TSettings).Name} do not hold: {Wrong(problems)}.");
 
-            throw new InvalidOperationException($"The default settings of {typeof(TSettings).Name} do not hold: {wrong}.");
+        var presets = new List<SettingsPreset>();
+
+        foreach (var (key, name, fill) in _presets)
+        {
+            var preset = new TSettings();
+
+            fill(preset);
+
+            if (settings.Check(preset) is { Count: > 0 } wrong)
+                throw new InvalidOperationException($"The preset {key} of {typeof(TSettings).Name} does not hold: {Wrong(wrong)}.");
+
+            presets.Add(new SettingsPreset(key, name, settings.Write(preset)));
         }
+
+        settings.Presets = presets;
 
         return settings;
     }

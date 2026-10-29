@@ -82,11 +82,15 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets whether a character plays the profile.</summary>
     public bool HasPlayers => Players.Count > 0;
 
+    /// <summary>Gets the characters that play the profile, each with what the settings lead to for it, if the activity says (D166).</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<PlayerNoteViewModel> PlayerNotes { get; private set; } = [];
+
     /// <summary>Gets the window's dialogs, which a setting may open, such as choosing resources, if the editor shows in a window.</summary>
     public Dialogs? Dialogs { get; }
 
     /// <summary>Gets the characters that play the profile, with their professions' levels, as their bots last saw them.</summary>
-    public IReadOnlyList<PlayerLevels> Players { get; }
+    public IReadOnlyList<PreviewPlayer> Players { get; }
 
     /// <summary>Gets what says the activity's texts in the app's language, if the host runs.</summary>
     public GameTextFormatter? Says { get; }
@@ -112,7 +116,7 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <param name="services">The host's services, which the activity reckons what its settings lead to from, if it runs.</param>
     /// <param name="players">The characters that play the profile, with their professions' levels.</param>
     /// <param name="dialogs">The window's dialogs, or <see langword="null"/>.</param>
-    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PlayerLevels>? players = null, Dialogs? dialogs = null)
+    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PreviewPlayer>? players = null, Dialogs? dialogs = null)
     {
         Dialogs = dialogs;
         Settings = settings;
@@ -163,7 +167,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         var culture = Localizer.Culture;
 
         // Before the fields, which show what it says.
-        Preview = Services is null ? null : Settings.Preview(Draft, Services);
+        Preview = Services is null ? null : Settings.Preview(Draft, Services, Players);
 
         foreach (var field in _fields)
             field.Update(problems.FirstOrDefault(problem => problem.Setting == field.Definition));
@@ -226,13 +230,7 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <returns>The other's values, those it shows; every resource the game has when it is hidden, as when the activity harvests everything; none when the setting is suggested by nothing.</returns>
     public IReadOnlyList<int> SuggestionsOf(SettingDefinition setting)
     {
-        if (Draft is null || setting.SuggestedBy is not { } by)
-            return [];
-
-        if (!Settings.IsVisible(by, Draft))
-            return Game is null ? [] : [.. Game.Options(SettingKind.Resource).Select(resource => resource.Id)];
-
-        return [.. by.GetValues(Draft).Cast<int>()];
+        return Draft is null || Game is null ? [] : setting.Suggestions(Draft, Game);
     }
 
     /// <summary>Says who gathers a resource, beside its name: its profession and level, or for one of <c>Base</c>'s where the learned graphics place it (D150).</summary>
@@ -348,6 +346,12 @@ internal sealed partial class SettingsEditor : ObservableObject
             : null;
         HasIsolated = Preview is not null && Preview.Zone.Any(map => map.State is ZoneMapState.Isolated);
         Figures = Preview is null || Says is not { } says ? [] : [.. Preview.Figures.Select(figure => new FigureViewModel(says.Say(figure.Value), says.Say(figure.Label)))];
+        PlayerNotes = [.. Players.Select(player => new PlayerNoteViewModel(player.Name, NoteOf(player)))];
+    }
+
+    private string? NoteOf(PreviewPlayer player)
+    {
+        return Preview?.PlayerNotes.FirstOrDefault(note => note.Name == player.Name) is { } note && Says is { } says ? says.Say(note.Note) : null;
     }
 
     private GameReference JobOf(int jobId)
@@ -371,7 +375,8 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Choice, false) => new ChoiceFieldViewModel(setting, this),
             (SettingKind.Choice, true) => new ChoicesFieldViewModel(setting, this),
             (SettingKind.Resource, true) => new ResourcesFieldViewModel(setting, this),
-            (SettingKind.SubArea, true) when setting.SuggestedBy is not null => new SubAreasFieldViewModel(setting, this),
+            (SettingKind.Job, true) when setting.IsGathering => new GatheringJobsFieldViewModel(setting, this),
+            (SettingKind.SubArea, true) when setting.IsSuggested => new SubAreasFieldViewModel(setting, this),
             (_, false) => new GameFieldViewModel(setting, this),
             _ => new GamesFieldViewModel(setting, this),
         };
