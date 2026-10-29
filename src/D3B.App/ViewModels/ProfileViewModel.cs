@@ -26,6 +26,10 @@ internal sealed partial class ProfileViewModel : ObservableObject
     [ObservableProperty]
     public partial string Name { get; private set; } = "";
 
+    /// <summary>Gets what its header says: its name, or the name being typed for a new one, else that it is new.</summary>
+    [ObservableProperty]
+    public partial string Title { get; private set; } = "";
+
     /// <summary>Gets the name of the activity it runs.</summary>
     [ObservableProperty]
     public partial string ActivityName { get; private set; } = "";
@@ -187,7 +191,11 @@ internal sealed partial class ProfileViewModel : ObservableObject
         var culture = _page.Localizer.Culture;
         var definition = _profile is null ? null : _page.ActivityOf(_profile.ActivityId);
 
+        // Computed from the profile kept, which saving a new one gives: the view hears it is new no more.
+        OnPropertyChanged(nameof(IsNew));
+        OnPropertyChanged(nameof(Id));
         Name = _profile?.Name ?? "";
+        RefreshTitle();
         ActivityName = definition?.Name.In(culture) ?? _profile?.ActivityId ?? "";
 
         if (_profile is null)
@@ -326,8 +334,14 @@ internal sealed partial class ProfileViewModel : ObservableObject
         }
     }
 
+    private void RefreshTitle()
+    {
+        Title = !IsNew ? Name : string.IsNullOrWhiteSpace(EditName) ? _page.Localizer["NewProfile"] : EditName.Trim();
+    }
+
     partial void OnEditNameChanged(string value)
     {
+        RefreshTitle();
         CheckName();
     }
 

@@ -33,13 +33,17 @@ public sealed class HarvestZone
     /// <summary>Gets the maps of the zone a character may travel to, each with the index of its sub-area in <see cref="SubAreas"/>.</summary>
     public FrozenDictionary<long, int> Maps { get; }
 
-    private HarvestZone(FrozenDictionary<int, HarvestTarget> targets, FrozenDictionary<int, int> harvests, FrozenSet<int> wanted, IReadOnlyList<int> subAreas, FrozenDictionary<long, int> maps)
+    /// <summary>Gets the zone's maps on no world map, such as houses and mines, which a tour goes through last (D128).</summary>
+    public FrozenSet<long> Insides { get; }
+
+    private HarvestZone(FrozenDictionary<int, HarvestTarget> targets, FrozenDictionary<int, int> harvests, FrozenSet<int> wanted, IReadOnlyList<int> subAreas, FrozenDictionary<long, int> maps, FrozenSet<long> insides)
     {
         Targets = targets;
         Harvests = harvests;
         Wanted = wanted;
         SubAreas = subAreas;
         Maps = maps;
+        Insides = insides;
     }
 
     /// <summary>Reckons the zone of settings from the pack.</summary>
@@ -64,14 +68,20 @@ public sealed class HarvestZone
         var subAreas = SubAreasOf(settings, atlas, wanted);
         var groups = subAreas.Select((subArea, index) => (subArea, index)).ToDictionary(pair => pair.subArea, pair => pair.index);
         var maps = new Dictionary<long, int>();
+        var insides = new HashSet<long>();
 
         foreach (var position in atlas.Positions.Span)
         {
-            if (groups.TryGetValue(position.SubAreaId, out var group) && graph.Contains(position.MapId))
-                maps[position.MapId] = group;
+            if (!groups.TryGetValue(position.SubAreaId, out var group) || !graph.Contains(position.MapId))
+                continue;
+
+            maps[position.MapId] = group;
+
+            if (position.WorldMap < 0)
+                insides.Add(position.MapId);
         }
 
-        return new HarvestZone(targets, harvests.ToFrozenDictionary(skill => skill.Id, skill => skill.GatheredItemId), wanted, subAreas, maps.ToFrozenDictionary());
+        return new HarvestZone(targets, harvests.ToFrozenDictionary(skill => skill.Id, skill => skill.GatheredItemId), wanted, subAreas, maps.ToFrozenDictionary(), insides.ToFrozenSet());
     }
 
     private static List<int> SubAreasOf(HarvestSettings settings, WorldAtlas atlas, FrozenSet<int> wanted)

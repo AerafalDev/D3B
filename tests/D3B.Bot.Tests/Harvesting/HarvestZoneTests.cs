@@ -50,6 +50,25 @@ public sealed class HarvestZoneTests : IAsyncDisposable
     }
 
     [Fact]
+    public void ATourGoesThroughTheWorldMapsMapsBeforeTheInsides()
+    {
+        var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var sightings = new HarvestSightings();
+        var tour = new HarvestTour();
+
+        Assert.Equal(new[] { TestPlay.InsideMapId, TestPlay.OtherInsideMapId }.Order(), zone.Insides.Order());
+        Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.MapId, TestPlay.EastMapId }.Order(), tour.Remaining(zone, sightings).Order());
+
+        tour.Visit(TestPlay.NorthMapId);
+        tour.Visit(TestPlay.MapId);
+        sightings.Seen(TestPlay.EastMapId, [], DateTimeOffset.UnixEpoch);
+
+        // The maps of the world map gone through or seen empty, the insides come.
+        Assert.Equal(new[] { TestPlay.InsideMapId, TestPlay.OtherInsideMapId }.Order(), tour.Remaining(zone, sightings).Order());
+        Assert.Equal(4, HarvestTour.Total(zone, sightings));
+    }
+
+    [Fact]
     public void EverythingKnownHarvestsEveryProfessionsResourceAlike()
     {
         var zone = ZoneOf(new HarvestSettings { EverythingKnown = true, Area = 1 });

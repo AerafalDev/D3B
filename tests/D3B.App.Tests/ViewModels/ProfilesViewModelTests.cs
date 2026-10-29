@@ -79,9 +79,16 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.True(item.IsNew && item.IsEditing);
         Assert.Equal("Harvest", item.EditActivity?.Name);
         Assert.Equal("Give the profile a name", item.NameProblem);
+        Assert.Equal("New profile", item.Title);
         Assert.False(item.SaveCommand.CanExecute(null));
 
+        var heard = new List<string?>();
+
+        item.PropertyChanged += (_, e) => heard.Add(e.PropertyName);
         item.EditName = "Lumberjack";
+
+        // Its header says the name as it is typed.
+        Assert.Equal("Lumberjack", item.Title);
 
         // The profession has no default: the user must choose one.
         Assert.Equal("Required", Field<GameFieldViewModel>(item, "Job").Problem);
@@ -100,6 +107,11 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.False(item.IsEditing);
         Assert.Equal(("Lumberjack", TestStore.HarvestId), (saved.Name, saved.ActivityId));
         Assert.Contains($"\"Job\":{TestReferences.Lumberjack}", saved.Settings, StringComparison.Ordinal);
+
+        // Saved, it is new no more, and the view hears it: its header keeps its name.
+        Assert.False(item.IsNew);
+        Assert.Contains(nameof(ProfileViewModel.IsNew), heard);
+        Assert.Equal("Lumberjack", item.Title);
 
         page.Refresh(_store.Host.Services);
 
