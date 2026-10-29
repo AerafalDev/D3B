@@ -5,7 +5,6 @@ using D3B.Bot.Activities;
 using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
-using D3B.Scripting;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -196,21 +195,20 @@ public sealed class BotsViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task AScriptsErrorShowsOnItsBotsCardWithItsLine()
+    public async Task AnActivitysErrorShowsOnItsBotsCard()
     {
         using var host = TestHosts.Of(_play);
         var page = new BotsViewModel(_localizer);
         var (_, bot) = await _play.EnterAsync(300);
-        using var script = new ScriptActivity(new LuaScript("mineur.lua", "function step(bot)\n  return bot:door(330)\nend"));
 
-        await bot.StartActivity(script).Completion;
+        await bot.StartActivity(new TestActivity { Throws = true }).Completion;
         page.Refresh(host.Services);
 
         var item = Assert.Single(page.Items);
 
         Assert.Equal("Failed", item.ActivityText);
         Assert.Equal(Tone.Danger, item.ActivityTone);
-        Assert.Equal("mineur.lua:2: attempt to call a nil value", item.ActivityProblem);
+        Assert.Equal("The step failed.", item.ActivityProblem);
     }
 
     [Fact]

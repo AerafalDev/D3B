@@ -13,7 +13,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 4 | Bot run time and navigation | Done |
 | 5 | Desktop app, first version | In progress: 5a, 5b, 5c and 5e done; 5d to do |
 | 6 | Harvesting and banking: first milestone | To do |
-| 7 | Lua scripting, in place of the external plugins | Done; removed by the owner's choice, in a session to come (D116) |
+| 7 | Mods: Lua scripting, then blueprints | Lua done, then removed (D119); blueprints to do, after step 6 (D117) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
 | 9 | Fights | To do |
 | 10 | Several accounts and groups | To do |
@@ -139,7 +139,7 @@ Settles Q6 and Q11: both settled in session 5b, by D96 and D95.
 Five sessions, the split chosen by the owner (D92), after the owner chose the app over the host's gRPC API (D91). A
 client update before the next session gets Q10's session first (D54).
 
-Next (D116): the session removing the Lua scripts, then 5d.
+Next: 5d, the Lua scripts removed (D119).
 
 | Session | Content | Status |
 | --- | --- | --- |
@@ -160,9 +160,16 @@ them when its pods are full, controlled from the app (D16). The repository may g
   sub-areas; auto modes such as BillBot's add what they need to them, maps once 5d picks them on the map, monsters once
   step 9 puts them in the pack.
 
-## 7. Lua scripting
+## 7. Mods: Lua scripting, then blueprints
 
-Done on 2026-10-29, in one session, with decisions D103 to D109. Settles Q1, settled by D103.
+Settles Q13. Lua scripting done on 2026-10-29, in one session, with decisions D103 to D109, then removed (D116, D119).
+Settles Q1, settled by D103.
+
+Next, after step 6 (D117): mods in blueprint style, graphs of nodes edited on a canvas in the app, their nodes over D3B's
+behaviors and run as activities (D87). Q13 first: who writes them, where they live, what a node is, how a graph runs and
+resumes, its settings, and which canvas in Avalonia.
+
+What follows is the Lua scripting this step held first.
 
 Back, the owner's choice (D102), after D90 had dropped it: users extend the bot with Lua scripts, in place of the
 external .NET plugins.
@@ -185,9 +192,10 @@ external .NET plugins.
   plugin, its stroll written again as `samples/scripts/promenade.lua` (D109).
 
 Measured on a client through the app in session 5e (D110): listed, started, stopped, paused by the player and resumed,
-and a failing script. The owner then chose to remove the scripts, in a session of their own (D116):
-`D3B.Scripting`, the scripts' folder and its definitions, the sample stroll and LuaCSharp go; modules, activities,
-their settings and profiles stay.
+and a failing script. The owner then chose to remove the scripts, in a session of their own (D116), done on 2026-10-29
+(D119): `D3B.Scripting`, the scripts' folder and its definitions, the sample stroll and `samples/`, LuaCSharp, and D107's
+settings without a class went; modules, activities, their settings and profiles stay, a profile naming a script showing
+its activity gone. No activity of D3B's own until step 6 (D118).
 
 ## 8. MITM mode
 
@@ -217,4 +225,5 @@ Settles Q5.
 ## 13. The owner's profession scripts
 
 - The scripts in `vendor/metiers` written again for D3B, what they call measured in D104: their routes by map, harvests
-  and banking run as activities (D87), and tested end to end. How, the Lua API gone (D116), is decided at that step.
+  and banking run as activities (D87), and tested end to end. How, the Lua API gone (D116), is decided at that step,
+  after step 7's blueprints (D117).

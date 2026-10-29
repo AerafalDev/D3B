@@ -23,8 +23,8 @@ public sealed class HostRunnerTests : IDisposable
         _install.WritePack();
         _install.WriteProtocol();
 
-        // The host the app runs adds the storage and the scripts: both go to the test's own folder, never the user's.
-        var runner = new HostRunner([.. _install.Arguments, "--Storage:Path", Path.Combine(_install.Root, "d3b.db"), "--Scripting:Directory", Path.Combine(_install.Root, "scripts")]);
+        // The host the app runs adds the storage, whose database goes to the test's own folder, never the user's.
+        var runner = new HostRunner([.. _install.Arguments, "--Storage:Path", Path.Combine(_install.Root, "d3b.db")]);
 
         Assert.Equal(HostStatus.Starting, runner.Status);
 
@@ -33,7 +33,6 @@ public sealed class HostRunnerTests : IDisposable
 
         Assert.Equal(HostStatus.Running, runner.Status);
         Assert.NotNull(runner.Services?.GetService<Bots>());
-        Assert.True(File.Exists(Path.Combine(_install.Root, "scripts", "d3b.lua")));
         Assert.DoesNotContain($"ConfigUrl={_install.ConfigUrl}\n", File.ReadAllText(_install.VersionFile), StringComparison.Ordinal);
 
         await runner.StopAsync().WaitAsync(_timeout, TestContext.Current.CancellationToken);

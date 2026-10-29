@@ -27,7 +27,6 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     private ActivityCatalog? _catalog;
     private int _profilesVersion = -1;
     private int _accountsVersion = -1;
-    private int _catalogVersion = -1;
     private CultureInfo? _culture;
 
     /// <summary>Gets the profiles, a new one first, then by name.</summary>
@@ -86,12 +85,11 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         if (Profiles is null)
             return;
 
-        var relabel = !Localizer.Culture.Equals(_culture) || (_catalog?.Version ?? 0) != _catalogVersion;
+        var relabel = !Localizer.Culture.Equals(_culture);
 
         if (relabel)
         {
             _culture = Localizer.Culture;
-            _catalogVersion = _catalog?.Version ?? 0;
             Activities = [.. (_catalog?.All ?? []).Select(definition => new ActivityChoiceViewModel(definition, Localizer.Culture))];
             OnPropertyChanged(nameof(Activities));
         }

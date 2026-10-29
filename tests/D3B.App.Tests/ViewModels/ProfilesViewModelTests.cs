@@ -51,7 +51,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.Equal(["AE"], item.Players);
         Assert.Equal("1 character", item.PlayersText);
         Assert.False(item.NeedsReview);
-        Assert.Equal("Activity not found: gone", page.Items[0].Review);
+        Assert.Equal("Activity gone: gone", page.Items[0].Review);
         Assert.Equal("To review", page.Items[2].Review);
         Assert.Equal("No character", page.Items[3].PlayersText);
         Assert.Equal("", page.Items[3].Summary);

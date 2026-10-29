@@ -121,6 +121,6 @@ public sealed class BotProfilesTests : IAsyncDisposable
         }
 
         Assert.Null(bot.Activity);
-        Assert.Equal(["Old is to review in Profiles", "The activity of Gone is not loaded", "The settings of Empty do not hold: see Profiles"], errors);
+        Assert.Equal(["Old is to review in Profiles", "The activity of Gone is gone", "The settings of Empty do not hold: see Profiles"], errors);
     }
 }

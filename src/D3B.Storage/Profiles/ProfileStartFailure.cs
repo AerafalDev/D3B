@@ -3,7 +3,7 @@ namespace D3B.Storage.Profiles;
 /// <summary>Why a profile did not start on a bot.</summary>
 public enum ProfileStartFailure
 {
-    /// <summary>Nothing registers the profile's activity any more, such as a script removed or a module disabled.</summary>
+    /// <summary>Nothing registers the profile's activity any more: a module disabled, or a Lua script of before D116.</summary>
     ActivityMissing,
 
     /// <summary>A stored setting no longer reads and took its default: the profile is to be looked at again.</summary>

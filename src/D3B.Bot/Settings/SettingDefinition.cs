@@ -1,27 +1,26 @@
 using System.Collections;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 using D3B.Bot.Localization;
 
 namespace D3B.Bot.Settings;
 
-/// <summary>A setting an activity declares: a value of its settings, what it holds, its name and its bounds (D98).</summary>
+/// <summary>A setting an activity declares: a property of its settings, what it holds, its name and its bounds (D98).</summary>
 /// <remarks>
-/// Made by <see cref="ActivitySettingsBuilder{TSettings}"/> as a module registers its activity, a property of its settings'
-/// class; or by <see cref="SettingValuesBuilder"/> for settings declared without a class, such as a script's, a key of
-/// <see cref="SettingValues"/> (D107). The app edits the settings through it, a value of the setting's own type at a time,
-/// and <see cref="ActivitySettings"/> stores and checks them.
+/// Made by <see cref="ActivitySettingsBuilder{TSettings}"/> as a module registers its activity. The app edits the
+/// settings through it, a value of the property's own type at a time, and <see cref="ActivitySettings"/> stores and checks
+/// them.
 /// </remarks>
 public sealed class SettingDefinition
 {
-    private readonly Func<object, object?> _get;
-    private readonly Action<object, object?> _set;
-    private readonly Type? _choiceType;
+    private readonly PropertyInfo _property;
+    private readonly Type? _enum;
     private Func<object, bool>? _visibleWhen;
     private bool _frozen;
 
-    /// <summary>Gets the setting's key, under which its value is stored: its property's name, or the key a script declared.</summary>
-    public string Key { get; }
+    /// <summary>Gets the setting's key: its property's name, under which its value is stored.</summary>
+    public string Key => _property.Name;
 
     /// <summary>Gets what the setting holds.</summary>
     public SettingKind Kind { get; }
@@ -56,7 +55,7 @@ public sealed class SettingDefinition
     /// <summary>Gets a text's greatest length.</summary>
     public int? MaximumLength { get; }
 
-    /// <summary>Gets the values a choice offers, in the enumeration's order or the script's; empty for every other kind.</summary>
+    /// <summary>Gets the values a choice offers, in the enumeration's order; empty for every other kind.</summary>
     public IReadOnlyList<SettingOption> Options { get; }
 
     /// <summary>Gets the setting a value of the game is sought within, such as the area of a sub-area, or the profession of a resource.</summary>
@@ -64,14 +63,12 @@ public sealed class SettingDefinition
 
     private Type ElementType => Kind switch
     {
-        SettingKind.Choice => _choiceType!,
+        SettingKind.Choice => _enum!,
         _ => typeof(int),
     };
 
     internal SettingDefinition(
-        string key,
-        Func<object, object?> get,
-        Action<object, object?> set,
+        PropertyInfo property,
         SettingKind kind,
         bool isList,
         LocalizedText name,
@@ -79,13 +76,11 @@ public sealed class SettingDefinition
         int? minimum = null,
         int? maximum = null,
         int? maximumLength = null,
-        Type? choiceType = null,
-        IReadOnlyList<SettingOption>? options = null)
+        Type? enumType = null,
+        Func<object, LocalizedText>? option = null)
     {
-        Key = key;
-        _get = get;
-        _set = set;
-        _choiceType = choiceType;
+        _property = property;
+        _enum = enumType;
         Kind = kind;
         IsList = isList;
         Name = name;
@@ -93,7 +88,7 @@ public sealed class SettingDefinition
         Minimum = minimum;
         Maximum = maximum;
         MaximumLength = maximumLength;
-        Options = options ?? [];
+        Options = enumType is null || option is null ? [] : [.. Enum.GetValues(enumType).Cast<object>().Select(value => new SettingOption(value, option(value)))];
     }
 
     private static List<object> Distinct(IEnumerable values)
@@ -124,7 +119,7 @@ public sealed class SettingDefinition
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        var value = _get(settings);
+        var value = _property.GetValue(settings);
 
         if (IsList && value is null)
             return Array.CreateInstance(ElementType, 0);
@@ -142,7 +137,7 @@ public sealed class SettingDefinition
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        _set(settings, Normalize(value));
+        _property.SetValue(settings, Normalize(value));
     }
 
     /// <summary>Gets the values of a list setting, boxed, in order.</summary>
@@ -285,7 +280,7 @@ public sealed class SettingDefinition
                     if (IsRequired && choices.Count == 0)
                         return Problem(SettingProblemKind.Required);
 
-                    if (choices.Any(choice => !IsOption(choice)))
+                    if (choices.Any(choice => !Enum.IsDefined(_enum!, choice)))
                         return Problem(SettingProblemKind.Unknown);
 
                     return HasRepeats(choices) ? Problem(SettingProblemKind.Repeated) : null;
@@ -351,7 +346,7 @@ public sealed class SettingDefinition
             (SettingKind.Number, int) => value,
             (SettingKind.Text, null) => "",
             (SettingKind.Text, string) => value,
-            (SettingKind.Choice, not null) when _choiceType!.IsInstanceOfType(value) => value,
+            (SettingKind.Choice, not null) when _enum!.IsInstanceOfType(value) => value,
             (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource, null or int) => value,
             _ => throw new ArgumentException($"The setting {Key} does not hold {value ?? "nothing"}.", nameof(value)),
         };
@@ -359,12 +354,7 @@ public sealed class SettingDefinition
 
     private string NameOf(object choice)
     {
-        return _choiceType!.IsEnum ? Enum.GetName(_choiceType, choice) ?? choice.ToString()! : (string)choice;
-    }
-
-    private bool IsOption(object choice)
-    {
-        return _choiceType!.IsEnum ? Enum.IsDefined(_choiceType, choice) : Options.Any(option => option.Value.Equals(choice));
+        return Enum.GetName(_enum!, choice) ?? choice.ToString()!;
     }
 
     private (StrongBox<object?>? Value, bool Whole) ReadOne(JsonNode? node)
@@ -418,13 +408,10 @@ public sealed class SettingDefinition
     private object? ChoiceOf(JsonNode? node)
     {
         // By name, so that an activity may reorder its enumeration: a name it dropped no longer reads.
-        if (node is not JsonValue value || !value.TryGetValue<string>(out var name))
-            return null;
+        if (node is JsonValue value && value.TryGetValue<string>(out var name) && Enum.IsDefined(_enum!, name))
+            return Enum.Parse(_enum!, name);
 
-        if (_choiceType!.IsEnum)
-            return Enum.IsDefined(_choiceType, name) ? Enum.Parse(_choiceType, name) : null;
-
-        return Options.FirstOrDefault(option => option.Value is string text && text == name)?.Value;
+        return null;
     }
 
     private void ThrowIfFrozen()

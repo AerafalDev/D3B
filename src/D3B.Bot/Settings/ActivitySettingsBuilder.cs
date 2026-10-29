@@ -252,8 +252,7 @@ public sealed class ActivitySettingsBuilder<TSettings>
         if (_settings.Exists(setting => setting.Key == info.Name))
             throw new ArgumentException($"The setting {info.Name} is declared twice.", nameof(property));
 
-        var options = enumType is null || option is null ? null : Enum.GetValues(enumType).Cast<object>().Select(value => new SettingOption(value, option(value))).ToList();
-        var setting = new SettingDefinition(info.Name, info.GetValue, info.SetValue, kind, isList, name, _section, minimum, maximum, maximumLength, enumType, options);
+        var setting = new SettingDefinition(info, kind, isList, name, _section, minimum, maximum, maximumLength, enumType, option);
 
         _settings.Add(setting);
 

@@ -47,7 +47,7 @@ public sealed class ActivityRun
     /// <summary>Gets the number of steps the activity ran to their end.</summary>
     public int Steps => Volatile.Read(ref _steps);
 
-    /// <summary>Gets the error that made the activity fail, such as a script's (D103); none when it failed for a character still full.</summary>
+    /// <summary>Gets the error that made the activity fail, as it threw it; none when it failed for a character still full.</summary>
     public Exception? Failure => Volatile.Read(ref _failure);
 
     /// <summary>Gets whether the activity is over.</summary>
@@ -87,7 +87,7 @@ public sealed class ActivityRun
         BotLog.ActivityOver(_bot.Log, _bot.Key.CharacterId, Activity.Name, Steps, outcome);
         _bot.Journal.Add(new ActivityOverEntry(_bot.Time.GetUtcNow(), Activity.Name, Steps, outcome, Failure?.Message, _stillFull));
 
-        // An activity holding what must be let go of, such as a script's Lua state, is done with once over.
+        // An activity is made for one start (D93): nothing but its run holds it, so what it holds is let go of once over.
         if (Activity is IDisposable disposable)
         {
             try

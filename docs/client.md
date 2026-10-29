@@ -1066,6 +1066,20 @@ filters, inspector live and a capture replayed, and reported no problem.
   answered, without choosing a server, and never came back through D3B; the cause was not found. The launcher had
   updated itself, the client on disk still 3.7.12.12's, its files of 2026-10-20.
 
+Measured on 2026-10-29 for the removal of the Lua scripts (D119): a game connection of a client of 3.7.12.12 through
+the app, 55 s, the database a copy holding a profile that names `script:promenade.lua`, played by the character, which
+starts it on connection. The owner went through the pages and reported no problem.
+
+- **The host** built its five modules, the data, protocol, network, bots and storage modules, and no scripting module;
+  the scripts' folder, `d3b.lua` included, was left as it was, its files' dates unchanged.
+- **The profile** did not start on connection: one warning in the host's log, its activity missing, and the line in the
+  bot's journal. The card offered it, its activity said gone, and starting it said so; the profiles page showed it gone,
+  its editor offering no activity to save it with. No frame from D3B.
+- **The inspector** showed the bot's frames live and replayed a capture.
+- **Closing the app** gave the client its configuration back, then the game connection closed; the app exited with 0.
+- **Not measured**: deleting the profile, still in the copy afterwards; the player's pause, which pauses a bot only while
+  one of its behaviors runs, none running without an activity (D118).
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it
