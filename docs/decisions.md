@@ -3955,6 +3955,20 @@ Amends D159's scale: one height of controls.*
 - **Rejected.**
   - Each page fixed alone: the causes were shared, the base size, the heights and the empty states.
 
+## D164: 6d checked through the app
+
+*2026-10-29, step 6, session 6d.*
+
+- **Looked at by the owner** in the app run on the owner's data, the profile "Ortie" in Amakna and its three characters,
+  after D163: found good. The first look found the old design and the new mixed, which D163 settled.
+- **Looked at by the lead** in the app on the same data, captured page by page: the editor's zone of 85 maps, its figures
+  and characters, the accounts, the statistics of 8 runs; and every page drawn without a screen in both languages and
+  themes, the editor's dialogs included.
+- **Found while checking**: choosing a page by a key or a screen reader checked it in the sidebar without showing it; the
+  page of the item checked now shows (D162), tested.
+- **Not measured on the client**: the toasts of what a bot meets, and the dialog choosing resources with the pack's
+  resources of every profession; the tests cover them.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
