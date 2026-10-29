@@ -52,7 +52,16 @@
     { "readable": "d3b.game.TeleportDestinationsEvent", "obfuscated": "hgq" },
     { "readable": "d3b.game.TeleportRequest", "obfuscated": "hgz" },
     { "readable": "d3b.game.HavenBagEnterRequest", "obfuscated": "izg" },
-    { "readable": "d3b.game.TextInformationEvent", "obfuscated": "lof" }
+    { "readable": "d3b.game.TextInformationEvent", "obfuscated": "lof" },
+    { "readable": "d3b.game.ObjectUseRequest", "obfuscated": "iql" },
+    { "readable": "d3b.game.ObjectDeletedEvent", "obfuscated": "iqm" },
+    { "readable": "d3b.game.CharacterStatsEvent", "obfuscated": "krg" },
+    { "readable": "d3b.game.LifeRegenEndEvent", "obfuscated": "kqo" },
+    { "readable": "d3b.game.LifeRegenStartEvent", "obfuscated": "kqw" },
+    { "readable": "d3b.game.ExchangeStartedWithTabbedStorageEvent", "obfuscated": "kah" },
+    { "readable": "d3b.game.ExchangeObjectMoveRequest", "obfuscated": "jys" },
+    { "readable": "d3b.game.StorageObjectUpdateEvent", "obfuscated": "iqz" },
+    { "readable": "d3b.game.StorageObjectRemovedEvent", "obfuscated": "itf" }
   ],
   "enums": []
 }

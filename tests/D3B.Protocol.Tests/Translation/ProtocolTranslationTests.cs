@@ -219,6 +219,53 @@ public sealed class ProtocolTranslationTests
     }
 
     [Fact]
+    public void UsingAnObjectAndMovingAStackOutOfAStorageAreEncodedAsTheClientSendsThem()
+    {
+        var translation = Translate();
+        IMessage[] requests = [new ObjectUseRequest { Uid = 2752363 }, new ExchangeObjectMoveRequest { Uid = 1443864, Quantity = -15 }];
+
+        foreach (var request in requests)
+        {
+            var decoded = translation.DecodeGame(new ReadOnlySequence<byte>(translation.EncodeGameRequest(request)));
+
+            Assert.True(decoded.IsUnderstood, decoded.Problem);
+            Assert.Equal(request, decoded.Content);
+        }
+    }
+
+    [Fact]
+    public void TheLifeIsReadFromTheCharacteristicsLeavingTheirOtherFieldsOut()
+    {
+        var stats = new CharacterStats
+        {
+            Characteristics =
+            {
+                new Characteristic { Id = 0, Detailed = new DetailedCharacteristic { Number7 = 505 } },
+                new Characteristic { Id = 11, Detailed = new DetailedCharacteristic { Number5 = 1016 } },
+                new Characteristic { Id = 97, Detailed = new DetailedCharacteristic { Number7 = -760 } },
+            },
+        };
+
+        // Field 2 of the characteristics, a varint, as the build sets: the readable message leaves it out on purpose.
+        byte[] inner = [.. stats.ToByteArray(), 0x10, 0x05];
+        var decoded = Translate().DecodeGame(GameEventFrame(new CharacterStatsEvent(), extra: [0x0A, (byte)inner.Length, .. inner]));
+
+        Assert.True(decoded.IsRead);
+        Assert.False(decoded.IsUnderstood);
+        Assert.Equal(new CharacterStatsEvent { Stats = stats }, decoded.Content);
+    }
+
+    [Fact]
+    public void TheGuildChestsOpeningIsReadByItsType()
+    {
+        // Fields 2 and 3, varints of 1 and 100 as the build sets them, are not measured: the readable message leaves them out.
+        var decoded = Translate().DecodeGame(GameEventFrame(new ExchangeStartedWithTabbedStorageEvent { Type = ExchangeType.GuildChest }, extra: [0x10, 0x01, 0x18, 0x64]));
+
+        Assert.True(decoded.IsRead);
+        Assert.Equal(ExchangeType.GuildChest, Assert.IsType<ExchangeStartedWithTabbedStorageEvent>(decoded.Content).Type);
+    }
+
+    [Fact]
     public void APartialMessageIsNeverEncodedAsARequest()
     {
         var exception = Assert.Throws<ArgumentException>(() => Translate().EncodeGameRequest(new MapInformationEvent()));

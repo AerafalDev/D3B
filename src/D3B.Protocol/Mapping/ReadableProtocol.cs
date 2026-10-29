@@ -35,6 +35,7 @@ public static class ReadableProtocol
         MovementReflection.Descriptor,
         InteractivesReflection.Descriptor,
         InventoryReflection.Descriptor,
+        CharacteristicsReflection.Descriptor,
         JobsReflection.Descriptor,
         NpcsReflection.Descriptor,
         ExchangesReflection.Descriptor,
