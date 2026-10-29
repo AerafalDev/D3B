@@ -1,6 +1,11 @@
 using D3B.Bot.Settings;
 using D3B.Bot.Tests;
+using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
+using D3B.Data;
+using D3B.Data.Banks;
+using D3B.Data.Interactives;
+using D3B.Data.Jobs;
 using D3B.Data.Packs;
 using D3B.Data.Tests;
 using D3B.Data.Texts;
@@ -8,6 +13,10 @@ using D3B.Data.Texts;
 namespace D3B.App.Tests;
 
 /// <summary>The game's values of a small world, named in French and English by a pack's texts, as the app's pickers read them.</summary>
+/// <remarks>
+/// Its tables name what the map of <see cref="TestPlay"/> holds, as the map page names it: the tree and the door its
+/// server describes, the tree's skill, which gathers, the door's, and the banker.
+/// </remarks>
 internal sealed class TestGameData : IDisposable
 {
     private static readonly (int Id, string French, string English)[] _names =
@@ -22,6 +31,11 @@ internal sealed class TestGameData : IDisposable
         (403, "Frêne", "Ash"),
         (404, "Châtaignier", "Chestnut"),
         (412, "Fer", "Iron"),
+        (501, "Frêne", "Ash tree"),
+        (502, "Porte", "Door"),
+        (503, "Couper", "Cut"),
+        (504, "Entrer", "Enter"),
+        (505, "Banquier", "Banker"),
     ];
 
     private readonly TemporaryDirectory _directory = new();
@@ -30,6 +44,8 @@ internal sealed class TestGameData : IDisposable
     public GameReferences References { get; } = TestReferences.Game();
 
     public GameTexts Texts { get; }
+
+    public GameTables Tables { get; }
 
     public TestGameData()
     {
@@ -41,11 +57,17 @@ internal sealed class TestGameData : IDisposable
         {
             writer.Add(TextTable.EntryName(TextLanguages.French), new TextTable(TextLanguages.French, [.. _names.Select(name => name.Id)], [.. _names.Select(name => name.French)]));
             writer.Add(TextTable.EntryName(TextLanguages.English), new TextTable(TextLanguages.English, [.. _names.Select(name => name.Id)], [.. _names.Select(name => name.English)]));
+            writer.Add(InteractiveCatalog.EntryName, new InteractiveCatalog(new[] { new Interactive(34, 501), new Interactive(316, 502) }));
+            writer.Add(JobCatalog.EntryName, new JobCatalog(
+                new[] { new Job(Job.Base, 200), new Job(TestReferences.Lumberjack, 202) },
+                new[] { new Skill(TestPlay.TreeSkillId, 503, TestReferences.Lumberjack, 289, 1, 1, false), new Skill(184, 504, Job.Base, Skill.NoItem, 0, 1, false) }));
+            writer.Add(BankCatalog.EntryName, new BankCatalog(Array.Empty<Bank>(), new[] { new Banker(TestPlay.BankerNpcId, 505, 0, 1) }, new[] { TestPlay.ChestReplyId }));
             writer.Complete();
         }
 
         _pack = GamePack.Open(path);
         Texts = new GameTexts(_pack);
+        Tables = new GameTables(_pack);
     }
 
     public void Dispose()

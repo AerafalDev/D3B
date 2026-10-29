@@ -13,6 +13,7 @@ internal sealed partial class BotsViewModel : ObservableObject
     private readonly Dictionary<CharacterKey, BotViewModel> _byKey = [];
     private readonly Localizer _localizer;
     private readonly Action<CharacterKey>? _showJournal;
+    private readonly Action<CharacterKey>? _showMap;
 
     /// <summary>Gets the bots, in the order the host made them.</summary>
     public ObservableCollection<BotViewModel> Items { get; } = [];
@@ -28,10 +29,12 @@ internal sealed partial class BotsViewModel : ObservableObject
     /// <summary>Initializes a new instance of the <see cref="BotsViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
     /// <param name="showJournal">Shows a bot's journal on the logs page, as its card asks, or <see langword="null"/> when no page shows it.</param>
-    public BotsViewModel(Localizer localizer, Action<CharacterKey>? showJournal = null)
+    /// <param name="showMap">Shows a bot's map on the map page, as its card asks, or <see langword="null"/> when no page shows it.</param>
+    public BotsViewModel(Localizer localizer, Action<CharacterKey>? showJournal = null, Action<CharacterKey>? showMap = null)
     {
         _localizer = localizer;
         _showJournal = showJournal;
+        _showMap = showMap;
     }
 
     /// <summary>Reads the bots again: those the host made since are added, and every one is read.</summary>
@@ -46,7 +49,7 @@ internal sealed partial class BotsViewModel : ObservableObject
                 if (_byKey.ContainsKey(bot.Key))
                     continue;
 
-                var item = new BotViewModel(bot, services, _localizer, _showJournal);
+                var item = new BotViewModel(bot, services, _localizer, _showJournal, _showMap);
 
                 _byKey.Add(bot.Key, item);
                 Items.Add(item);

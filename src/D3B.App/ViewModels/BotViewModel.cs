@@ -34,6 +34,7 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly AccountBook? _accounts;
     private readonly ProfileStarter? _starter;
     private readonly Action<CharacterKey>? _showJournal;
+    private readonly Action<CharacterKey>? _showMap;
     private int _profilesVersion = -1;
     private ActivityRun? _startedRun;
     private ActivityChoiceViewModel? _startedChoice;
@@ -51,6 +52,9 @@ internal sealed partial class BotViewModel : ObservableObject
 
     /// <summary>Gets whether the card opens the bot's journal on the logs page.</summary>
     public bool HasJournal => _showJournal is not null;
+
+    /// <summary>Gets whether the card opens the bot's map on the map page.</summary>
+    public bool HasMap => _showMap is not null;
 
     /// <summary>Gets the character's name.</summary>
     [ObservableProperty]
@@ -172,10 +176,12 @@ internal sealed partial class BotViewModel : ObservableObject
     /// <param name="services">The host's services: the activities, the profiles, and the pack's world and texts.</param>
     /// <param name="localizer">The app's texts.</param>
     /// <param name="showJournal">Shows the bot's journal on the logs page, or <see langword="null"/> when no page shows it.</param>
-    public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer, Action<CharacterKey>? showJournal = null)
+    /// <param name="showMap">Shows the bot's map on the map page, or <see langword="null"/> when no page shows it.</param>
+    public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer, Action<CharacterKey>? showJournal = null, Action<CharacterKey>? showMap = null)
     {
         Bot = bot;
         _showJournal = showJournal;
+        _showMap = showMap;
         _services = services;
         _localizer = localizer;
         _world = services.GetService<GameWorld>();
@@ -191,7 +197,10 @@ internal sealed partial class BotViewModel : ObservableObject
         return choice.Profile is { } profile ? profile.Id == other.Profile?.Id : other.Profile is null && choice.Definition?.Id == other.Definition?.Id;
     }
 
-    private static string DoingOf(CharacterState state)
+    /// <summary>Gets what a character is in the middle of, as the key of the app's text that says it.</summary>
+    /// <param name="state">The character's state.</param>
+    /// <returns>The text's key.</returns>
+    internal static string DoingOf(CharacterState state)
     {
         if (state.IsFighting)
             return "Fighting";
@@ -376,6 +385,12 @@ internal sealed partial class BotViewModel : ObservableObject
     private void ShowJournal()
     {
         _showJournal?.Invoke(Bot.Key);
+    }
+
+    [RelayCommand]
+    private void ShowMap()
+    {
+        _showMap?.Invoke(Bot.Key);
     }
 
     private void RefreshPlace(CharacterState state)

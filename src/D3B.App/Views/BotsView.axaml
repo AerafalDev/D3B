@@ -291,6 +291,21 @@
                                                 VerticalAlignment="Top">
                                                 <Button
                                                     Classes="Ghost"
+                                                    Command="{Binding ShowMapCommand}"
+                                                    CornerRadius="{DynamicResource MdCornerRadius}"
+                                                    Height="26"
+                                                    IsVisible="{Binding HasMap}"
+                                                    Padding="0"
+                                                    ToolTip.Tip="{l:Tr ShowMap}"
+                                                    Width="26">
+                                                    <c:Icon
+                                                        Classes="Muted"
+                                                        Data="{StaticResource IconMap}"
+                                                        Height="15"
+                                                        Width="15" />
+                                                </Button>
+                                                <Button
+                                                    Classes="Ghost"
                                                     Command="{Binding ShowJournalCommand}"
                                                     CornerRadius="{DynamicResource MdCornerRadius}"
                                                     Height="26"
