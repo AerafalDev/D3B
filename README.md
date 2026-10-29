@@ -15,9 +15,10 @@ interactives and banks, with the texts they name, into a pack per client build; 
 asset; and a data module, whose pack the host finds on the machine or downloads, and without which it does not start.
 The network: while the host runs, official clients started from the launcher connect through its relay, which can record
 their connection phase. The bots walk, travel, use elements and bank, as activities the app starts, which D3B's
-modules register from the first milestone on; mods will be made as blueprints after it. The app's logs page shows each
-bot's journal of its actions and the host's problems; its protocol inspector shows a bot's game frames decoded as they
-go, the login ticket hidden, or replays a capture. The first milestone is harvesting and banking on one account,
+modules register from the first milestone on; mods will be made as blueprints after it. The app's map page draws a
+bot's map from the pack as its character moves, with its path, elements, NPCs and exits, and says what a cell holds;
+its logs page shows each bot's journal of its actions and the host's problems; its protocol inspector shows a bot's game
+frames decoded as they go, the login ticket hidden, or replays a capture. The first milestone is harvesting and banking on one account,
 controlled from the desktop app. See the [roadmap](docs/roadmap.md).
 
 ## Building

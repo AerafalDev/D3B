@@ -2563,7 +2563,8 @@ D102.*
 
 *2026-10-29, step 5, session 5c; the description in code, and the scope with the game's values and every mechanism,
 chosen by the owner, who noted that the auto modes to come, BillBot's for one, focus a profession, maps, resources of the
-profession's level, a monster, an area or a sub-area. Builds D93, D96.*
+profession's level, a monster, an area or a sub-area. Builds D93, D96. Maps on the live map superseded by D123: they
+wait for the activity that needs them.*
 
 D93 left an activity's settings to 5b and 5c, and 5b did not write them.
 
@@ -3130,6 +3131,120 @@ D108's source of activities, the owner's choice against the lead's recommendatio
   said; the card and the profiles page showed its activity gone; the inspector live and a capture replayed; closing the
   app gave the client its configuration back. Not measured on the client: deleting the profile, which the tests do; the
   player's pause, which needs a behavior running, and so an activity (D118).
+
+## D120: The live map, a page of the rail
+
+*2026-10-29, step 5, session 5d, chosen by the owner among three mockups, as the lead recommended it. Carries out D92's
+5d.*
+
+- **A page** in the rail, after the profiles, before the logs: "Map". It looks at one bot, chosen among chips as on the
+  logs page and the inspector, and shares their choice (`BotChoice`, D111): a bot chosen on one is the others'. A bot's
+  card has a map button beside its journal button, which opens the page on its bot.
+- **Its header**: the map's coordinates large, then where the character is, the sub-area and the cell, in a fight, in a
+  haven bag or off the atlas, then what it is in the middle of, as its card says it (D94), and the map's id; the layers'
+  toggles beside it, the legend under the map.
+- **Read every 250 ms** while it shows, as the other pages (D94): a new scene only when the bot's snapshot, the other
+  bots on its map, its connection, its pause or the app's language changed.
+- **Rejected.**
+  - The map on the bot's card alone: each card some 200 px taller, against D94's whole cards, its cells some 10 px high,
+    too small for the elements and to point at.
+  - A thumbnail on the card that opens the page: it repeats what the card says large, drawn again for every bot. Still
+    possible later, the control being the page's.
+
+## D121: The live map shows what the pack and the state hold, in layers
+
+*2026-10-29, step 5, session 5d, chosen by the owner, as the lead recommended it.*
+
+- **Seven layers**, each toggled: the cells, walkable, obstacles that block the sight and voids that let it through, and
+  the grid; the character, its path as the server showed it and its end; the interactive elements, placed from the pack
+  and marked by what the server says of them, a resource to harvest, harvested, another element, a door, or not
+  described, grey; the NPCs, a banker named from the pack, any other by its id; the exits, each side's cells with the
+  neighbour's coordinates, the map actions and the doors with the maps they lead to, from the world graph, criteria not
+  answered; the other bots of D3B on the map; and the zones and stairs, hidden at first, tinted where a map has more than
+  one zone, or both move zones (D86).
+- **A cell under the pointer** is described in a card beside it, in the app's language: its number and coordinates,
+  walkable with its floor and zone, a stair, an obstacle or a void, then what stands on it: the character, the path's
+  start or end, another bot, the element with the skills it offers or that it is harvested, the NPC, and where an exit
+  leads.
+- **The exits** (`MapExits`): a scroll goes with every walkable cell of its edge that leaves the map that way
+  (`MapGeometry.LeavesTowards`, moved from `WorldPathfinder` for it), each cell with the nearest scroll of its zone and
+  direction (D71); a map action by its cell; a door by its element, on the element's own cell.
+- **In a haven bag** the bag's map is drawn as any other, "Haven bag" in place of the place. **In a fight** the fight's
+  own map is drawn, its coordinates left out (D88); the character shows once the server shows it moving, its placement
+  not being in the readable protocol (D125).
+- **Out of 5d**: other players and monsters, which the readable protocol does not read among the map's actors (D55),
+  steps 9 and 10; walking to a cell clicked, a command of its own; the world map.
+- **Rejected.**
+  - The cells, the character and its path alone: the rest is in the state and the pack already, and costs nearly as
+    much later.
+  - Other players and monsters too: the protocol, the state and the mapping to extend and measure, steps 9 and 10.
+
+## D122: The live map, drawn flat from the pack
+
+*2026-10-29, step 5, session 5d, chosen by the owner, as the lead recommended it.*
+
+- **A control of the app's** (`MapCanvas`, in `D3B.App.Controls`) draws the cells read from the pack, as diamonds of 14
+  columns by 40 staggered rows, fitted to its room with margins for the exits' labels (`MapLayout`). What a map holds,
+  its walkable cells, obstacles, stairs, zones and exits, is built into geometries once per map; what moves is drawn
+  again each refresh.
+- **Flat**: floors drawn in height would overlap cells on a map with stairs; the stairs are tinted in the zones' layer,
+  and a cell's floor is given under the pointer.
+- **The pointer** finds its cell from the cells' geometry (`MapLayout.CellAt`), never by testing the shapes drawn.
+- **Colours** from the theme: a palette per theme (`MapPalette`, in `App.axaml`'s theme dictionaries), the dark's and
+  the light's; the legend draws each mark with the map's own drawing (`MapMarkIcon`).
+- **Nothing to extract** or publish: the pack of 3.7.12.12 holds it all.
+- **Rejected.**
+  - The client's textures: 63,454 graphics in three scales, the smallest 1.3 GiB on disk and 6.3 GiB decompressed,
+    assembled per map in three layers with effects and shaders; an extractor, a pack of textures per build released
+    (D24) and a renderer, more than the rest of step 5, for a map prettier and harder to read.
+
+## D123: Maps for settings wait for the activity that needs them
+
+*2026-10-29, step 5, session 5d, chosen by the owner, as the lead recommended it. Supersedes D98's "maps, picked on the
+live map (5d)".*
+
+- **Not in 5d**: a setting of maps, its kind `Map` or `Maps`, comes with the first activity that needs it, at step 6 or
+  later. What it holds, one map or several, ordered as a route or a set, within a sub-area, is that activity's to say.
+- **The control is reusable**: `MapCanvas` draws any scene, a map and what stands on it, and says the cell under the
+  pointer, so that a setting's editor may show a map.
+- **Rejected.**
+  - The kinds `Map` and `Maps` in 5d, a field of the profiles page and "Add to a profile…" on the map page: a third of a
+    session measured only by the tests, no activity existing before step 6 (D118), its shape guessed.
+  - The same with a world map to pick from: a page of its own.
+
+## D124: The live map, measured through the app
+
+*2026-10-29, step 5, session 5d.*
+
+Measured on a client of 3.7.12.12 through the app, a game connection of 2 min 49 s, the player moving the character by
+hand and no activity started (D118), captures on ([client.md](client.md#the-game-from-the-app)):
+
+- **Followed**, the owner reported, in every case: walks on the map of a zaap, the haven bag entered and left there, a
+  scroll to a neighbour, the haven bag again from it, then a fight, and the map after it.
+- **The maps**, five, all in the pack: two of the world graph, the haven bag's, off the graph at 0,0 on no world map, the
+  fight's own, off the graph at 0,0, and a zaap's, where the fight left the character, neither the map it began on nor a
+  neighbour of it. The page drew each.
+- **The player's walks**, 13, each confirmed; the server showed 13 more of other actors.
+- **No frame from D3B**, nothing in the host's log above information.
+- **Found**: neither the fight's map nor the map it began on holds a cell marked `red` or `blue` in the pack (D125).
+
+## D125: A fight's placement cells, from the server at step 9
+
+*2026-10-29, step 5, session 5d, asked for by the owner, chosen as the lead recommended it.*
+
+The owner asked for the map to mark the red and blue cells in a fight, where each team is placed.
+
+- **At step 9**: the cells the server gives when a fight begins, its message mapped and measured, then marked on the
+  map. In 5d, nothing.
+- **Why not the pack's**: the cells marked `red` and `blue`, whose meaning is Dofus 2's, not measured (client.md), are on
+  neither the fight's map measured nor the map it began on; of the 2,877 maps at 0,0, off the world graph and on a world
+  map, as the fight's is, 1,158 hold some. In the same millisecond as the fight's context, the server sent 16 frames the readable
+  protocol lacks, the placement likely among them.
+- **Rejected.**
+  - The pack's flags tinted on a fight's map from 5d: little code, but nothing for the fight measured, and a meaning not
+    measured.
+  - The server's message mapped in 5d, from this session's capture, and a fight measured again: protocol work the size
+    of a session, a mapping format 7, outside step 5.
 
 ## Open questions
 
