@@ -65,17 +65,16 @@ public sealed class MainViewModelTests : IAsyncDisposable
         Assert.Equal("Running", main.HostTitle);
         Assert.Equal($"Client {TestInstall.Version}", main.HostDetail);
         Assert.Equal(Tone.Success, main.HostTone);
-        Assert.Equal("EN", main.LanguageCode);
         Assert.Equal("Level 200", Assert.Single(main.Bots.Items).Level);
+        Assert.Equal(1, main.Bots.Count);
 
-        main.SwitchLanguageCommand.Execute(null);
+        main.Settings.UseFrenchCommand.Execute(null);
 
         Assert.Equal(Localizer.French, _localizer.Culture);
         Assert.Equal("En marche", main.HostTitle);
-        Assert.Equal("FR", main.LanguageCode);
         Assert.Equal("Niveau 200", Assert.Single(main.Bots.Items).Level);
 
-        main.SwitchLanguageCommand.Execute(null);
+        main.Settings.UseEnglishCommand.Execute(null);
 
         Assert.Equal(Localizer.English, _localizer.Culture);
     }

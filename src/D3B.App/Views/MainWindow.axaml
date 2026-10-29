@@ -19,173 +19,198 @@
     <shadui:Window.LogoContent>
         <c:Icon
             Data="{StaticResource IconBot}"
-            Height="16"
             Margin="12,0,0,0"
-            VerticalAlignment="Center"
-            Width="16" />
+            VerticalAlignment="Center" />
     </shadui:Window.LogoContent>
     <shadui:Window.RightWindowTitleBarContent>
-        <StackPanel
-            Margin="0,0,6,0"
-            Orientation="Horizontal"
-            Spacing="4"
-            VerticalAlignment="Center">
-            <c:StatusPill
-                Margin="0,0,8,0"
-                Text="{Binding HostTitle}"
-                ToolTip.Tip="{Binding HostDetail}"
-                Tone="{Binding HostTone}" />
-            <Button
-                Classes="Ghost"
-                Command="{Binding SwitchLanguageCommand}"
-                CornerRadius="{DynamicResource MdCornerRadius}"
-                Height="30"
-                Padding="10,0"
-                ToolTip.Tip="{l:Tr SwitchLanguage}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <c:Icon
-                        Data="{StaticResource IconLanguage}"
-                        Height="15"
-                        Width="15" />
-                    <TextBlock
-                        FontSize="12"
-                        FontWeight="SemiBold"
-                        Text="{Binding LanguageCode}"
-                        VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
-            <Button
-                Classes="Ghost"
-                Command="{Binding Settings.SwitchThemeCommand}"
-                CornerRadius="{DynamicResource MdCornerRadius}"
-                Height="30"
-                Padding="0"
-                ToolTip.Tip="{l:Tr SwitchTheme}"
-                Width="30">
-                <c:Icon
-                    Height="15"
-                    Name="ThemeIcon"
-                    Width="15" />
-            </Button>
-        </StackPanel>
+        <c:StatusPill
+            Margin="0,0,12,0"
+            Text="{Binding HostTitle}"
+            ToolTip.Tip="{Binding HostDetail}"
+            Tone="{Binding HostTone}" />
     </shadui:Window.RightWindowTitleBarContent>
+    <shadui:Window.Hosts>
+        <shadui:DialogHost Name="DialogHost" />
+        <shadui:ToastHost Name="ToastHost" Position="BottomRight" />
+    </shadui:Window.Hosts>
     <Grid ColumnDefinitions="Auto,*">
-        <Border Classes="Rail">
-            <StackPanel Margin="0,14" Spacing="6">
-                <Button
-                    Classes="Ghost RailItem"
-                    Classes.Selected="{Binding IsBotsPage}"
+        <shadui:Sidebar
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="0,0,1,0"
+            CurrentRoute="{Binding CurrentRoute, Mode=TwoWay}"
+            Expanded="{Binding IsSidebarExpanded}"
+            MinWidth="56"
+            Width="200">
+            <StackPanel Margin="0,8" Spacing="4">
+                <shadui:SidebarItem
+                    AutomationProperties.Name="{l:Tr Bots}"
                     Command="{Binding ShowBotsCommand}"
+                    Route="bots"
+                    ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
                     ToolTip.Tip="{l:Tr Bots}">
-                    <c:Icon Data="{StaticResource IconCards}" />
-                </Button>
-                <Button
-                    Classes="Ghost RailItem"
-                    Classes.Selected="{Binding IsAccountsPage}"
+                    <shadui:SidebarItem.Icon>
+                        <c:Icon Data="{StaticResource IconBot}" />
+                    </shadui:SidebarItem.Icon>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{l:Tr Bots}" VerticalAlignment="Center" />
+                        <TextBlock
+                            Classes="Caption Muted Figures"
+                            Grid.Column="1"
+                            IsVisible="{Binding Bots.HasItems}"
+                            Text="{Binding Bots.Count}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </shadui:SidebarItem>
+                <shadui:SidebarItem
+                    AutomationProperties.Name="{l:Tr Accounts}"
                     Command="{Binding ShowAccountsCommand}"
+                    Content="{l:Tr Accounts}"
+                    Route="accounts"
+                    ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
                     ToolTip.Tip="{l:Tr Accounts}">
-                    <c:Icon Data="{StaticResource IconUsers}" />
-                </Button>
-                <Button
-                    Classes="Ghost RailItem"
-                    Classes.Selected="{Binding IsProfilesPage}"
+                    <shadui:SidebarItem.Icon>
+                        <c:Icon Data="{StaticResource IconUsers}" />
+                    </shadui:SidebarItem.Icon>
+                </shadui:SidebarItem>
+                <shadui:SidebarItem
+                    AutomationProperties.Name="{l:Tr Profiles}"
                     Command="{Binding ShowProfilesCommand}"
+                    Content="{l:Tr Profiles}"
+                    Route="profiles"
+                    ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
                     ToolTip.Tip="{l:Tr Profiles}">
-                    <c:Icon Data="{StaticResource IconSliders}" />
-                </Button>
-                <Button
-                    Classes="Ghost RailItem"
-                    Classes.Selected="{Binding IsMapPage}"
+                    <shadui:SidebarItem.Icon>
+                        <c:Icon Data="{StaticResource IconSliders}" />
+                    </shadui:SidebarItem.Icon>
+                </shadui:SidebarItem>
+                <shadui:SidebarItem
+                    AutomationProperties.Name="{l:Tr Map}"
                     Command="{Binding ShowMapCommand}"
+                    Content="{l:Tr Map}"
+                    Route="map"
+                    ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
                     ToolTip.Tip="{l:Tr Map}">
-                    <c:Icon Data="{StaticResource IconMap}" />
-                </Button>
-                <Button
-                    Classes="Ghost RailItem"
-                    Classes.Selected="{Binding IsStatisticsPage}"
+                    <shadui:SidebarItem.Icon>
+                        <c:Icon Data="{StaticResource IconMap}" />
+                    </shadui:SidebarItem.Icon>
+                </shadui:SidebarItem>
+                <shadui:SidebarItem
+                    AutomationProperties.Name="{l:Tr Statistics}"
                     Command="{Binding ShowStatisticsCommand}"
+                    Content="{l:Tr Statistics}"
+                    Route="statistics"
+                    ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
                     ToolTip.Tip="{l:Tr Statistics}">
-                    <c:Icon Data="{StaticResource IconChart}" />
-                </Button>
-                <Button
-                    Classes="Ghost RailItem"
-                    Classes.Selected="{Binding IsLogsPage}"
+                    <shadui:SidebarItem.Icon>
+                        <c:Icon Data="{StaticResource IconChart}" />
+                    </shadui:SidebarItem.Icon>
+                </shadui:SidebarItem>
+                <shadui:SidebarItem
+                    AutomationProperties.Name="{l:Tr Logs}"
                     Command="{Binding ShowLogsCommand}"
+                    Content="{l:Tr Logs}"
+                    Route="logs"
+                    ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
                     ToolTip.Tip="{l:Tr Logs}">
-                    <c:Icon Data="{StaticResource IconJournal}" />
-                </Button>
-                <Button
-                    Classes="Ghost RailItem"
-                    Classes.Selected="{Binding IsInspectorPage}"
+                    <shadui:SidebarItem.Icon>
+                        <c:Icon Data="{StaticResource IconJournal}" />
+                    </shadui:SidebarItem.Icon>
+                </shadui:SidebarItem>
+                <shadui:SidebarItem
+                    AutomationProperties.Name="{l:Tr Inspector}"
                     Command="{Binding ShowInspectorCommand}"
+                    Content="{l:Tr Inspector}"
+                    Route="inspector"
+                    ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
                     ToolTip.Tip="{l:Tr Inspector}">
-                    <c:Icon Data="{StaticResource IconInspector}" />
-                </Button>
-                <Border Classes="RailSeparator" IsVisible="{Binding HasPages}" />
+                    <shadui:SidebarItem.Icon>
+                        <c:Icon Data="{StaticResource IconInspector}" />
+                    </shadui:SidebarItem.Icon>
+                </shadui:SidebarItem>
+                <Separator IsVisible="{Binding HasPages}" Margin="12,4" />
                 <ItemsControl ItemsSource="{Binding Pages}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <StackPanel Spacing="6" />
+                            <StackPanel Spacing="4" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:ModulePageViewModel">
-                            <Button
-                                Classes="Ghost RailItem"
-                                Classes.Selected="{Binding IsSelected}"
+                            <shadui:SidebarItem
+                                AutomationProperties.Name="{Binding Title}"
                                 Command="{Binding ShowCommand}"
+                                Content="{Binding Title}"
+                                Route="{Binding Route}"
                                 ToolTip.Tip="{Binding Title}">
-                                <c:Icon Data="{Binding Icon, TargetNullValue={StaticResource IconModule}}" />
-                            </Button>
+                                <shadui:SidebarItem.Icon>
+                                    <c:Icon Data="{Binding Icon, TargetNullValue={StaticResource IconModule}}" />
+                                </shadui:SidebarItem.Icon>
+                            </shadui:SidebarItem>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
-        </Border>
-        <Button
-            Classes="Ghost RailItem"
-            Classes.Selected="{Binding IsSettingsPage}"
-            Command="{Binding ShowSettingsCommand}"
-            Margin="0,0,0,14"
-            ToolTip.Tip="{l:Tr Settings}"
-            VerticalAlignment="Bottom">
-            <c:Icon Data="{StaticResource IconGear}" />
-        </Button>
-        <Panel Grid.Column="1" IsVisible="{Binding IsSettingsPage}">
+            <shadui:Sidebar.Footer>
+                <StackPanel Margin="0,8" Spacing="4">
+                    <shadui:SidebarItem
+                        AutomationProperties.Name="{l:Tr Settings}"
+                        Command="{Binding ShowSettingsCommand}"
+                        Content="{l:Tr Settings}"
+                        Route="settings"
+                        ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
+                        ToolTip.Tip="{l:Tr Settings}">
+                        <shadui:SidebarItem.Icon>
+                            <c:Icon Data="{StaticResource IconGear}" />
+                        </shadui:SidebarItem.Icon>
+                    </shadui:SidebarItem>
+                    <Button
+                        AutomationProperties.Name="{Binding SidebarToggleText}"
+                        Classes="Ghost IconButton"
+                        Command="{Binding ToggleSidebarCommand}"
+                        HorizontalAlignment="Left"
+                        Margin="8,0"
+                        ToolTip.Tip="{Binding SidebarToggleText}">
+                        <c:Icon Data="{Binding SidebarToggleIcon, Converter={x:Static c:IconOf.Instance}}" />
+                    </Button>
+                </StackPanel>
+            </shadui:Sidebar.Footer>
+        </shadui:Sidebar>
+        <Panel
+            Classes="PageHost"
+            Grid.Column="1"
+            IsVisible="{Binding IsSettingsPage}">
             <views:SettingsView DataContext="{Binding Settings}" />
         </Panel>
         <Panel Grid.Column="1" IsVisible="{Binding !IsSettingsPage}">
             <StackPanel
                 HorizontalAlignment="Center"
                 IsVisible="{Binding IsStarting}"
-                MaxWidth="420"
-                Spacing="14"
+                Spacing="12"
                 VerticalAlignment="Center">
                 <shadui:Loading
-                    Height="28"
+                    Height="24"
                     HorizontalAlignment="Center"
-                    Width="28" />
+                    Width="24" />
                 <TextBlock
-                    Classes="h4"
+                    Classes="Title"
                     HorizontalAlignment="Center"
                     Text="{l:Tr HostStartingTitle}" />
                 <TextBlock
-                    Classes="Small Muted"
-                    Text="{l:Tr HostStartingDetail}"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
+                    Classes="Muted"
+                    HorizontalAlignment="Center"
+                    Text="{l:Tr HostStartingDetail}" />
             </StackPanel>
             <StackPanel
                 HorizontalAlignment="Center"
                 IsVisible="{Binding IsStopping}"
-                Spacing="14"
+                Spacing="12"
                 VerticalAlignment="Center">
                 <shadui:Loading
-                    Height="28"
+                    Height="24"
                     HorizontalAlignment="Center"
-                    Width="28" />
+                    Width="24" />
                 <TextBlock
-                    Classes="h4"
+                    Classes="Title"
                     HorizontalAlignment="Center"
                     Text="{l:Tr HostStoppingTitle}" />
             </StackPanel>
@@ -193,20 +218,18 @@
                 <Border
                     Classes="Banner Danger"
                     HorizontalAlignment="Center"
-                    Margin="40"
+                    Margin="32"
                     MaxWidth="720"
-                    Padding="24,22"
                     VerticalAlignment="Center">
                     <StackPanel Spacing="16">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <c:Icon
+                                Classes="Large"
                                 Data="{StaticResource IconAlert}"
-                                Foreground="{DynamicResource ErrorColor}"
-                                Height="20"
-                                VerticalAlignment="Center"
-                                Width="20" />
+                                Tone="Danger"
+                                VerticalAlignment="Center" />
                             <TextBlock
-                                Classes="h4"
+                                Classes="Title"
                                 Text="{l:Tr HostFailedTitle}"
                                 VerticalAlignment="Center" />
                         </StackPanel>
@@ -216,79 +239,65 @@
                                 Text="{Binding HostFailure}"
                                 TextWrapping="Wrap" />
                         </Border>
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock
-                                Classes="Small Muted"
-                                Text="{l:Tr HostFailedHint}"
-                                TextWrapping="Wrap"
-                                VerticalAlignment="Center" />
-                            <Button
-                                Classes="Outline"
-                                Click="OnCopyFailureClick"
-                                Grid.Column="1"
-                                Margin="16,0,0,0">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <c:Icon
-                                        Data="{StaticResource IconCopy}"
-                                        Height="14"
-                                        Width="14" />
-                                    <TextBlock Text="{l:Tr Copy}" />
-                                </StackPanel>
-                            </Button>
-                        </Grid>
+                        <Button
+                            Classes="Outline"
+                            Click="OnCopyFailureClick"
+                            HorizontalAlignment="Right">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <c:Icon Data="{StaticResource IconCopy}" />
+                                <TextBlock Text="{l:Tr Copy}" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
             </ScrollViewer>
             <Panel IsVisible="{Binding IsRunning}">
-                <Panel IsVisible="{Binding IsBotsPage}">
+                <Panel Classes="PageHost" IsVisible="{Binding IsBotsPage}">
                     <views:BotsView DataContext="{Binding Bots}" />
                 </Panel>
-                <Panel IsVisible="{Binding IsAccountsPage}">
+                <Panel Classes="PageHost" IsVisible="{Binding IsAccountsPage}">
                     <views:AccountsView DataContext="{Binding Accounts}" />
                 </Panel>
-                <Panel IsVisible="{Binding IsProfilesPage}">
+                <Panel Classes="PageHost" IsVisible="{Binding IsProfilesPage}">
                     <views:ProfilesView DataContext="{Binding Profiles}" />
                 </Panel>
-                <Panel IsVisible="{Binding IsMapPage}">
+                <Panel Classes="PageHost" IsVisible="{Binding IsMapPage}">
                     <views:MapView DataContext="{Binding Map}" />
                 </Panel>
-                <Panel IsVisible="{Binding IsStatisticsPage}">
+                <Panel Classes="PageHost" IsVisible="{Binding IsStatisticsPage}">
                     <views:StatisticsView DataContext="{Binding Statistics}" />
                 </Panel>
-                <Panel IsVisible="{Binding IsLogsPage}">
+                <Panel Classes="PageHost" IsVisible="{Binding IsLogsPage}">
                     <views:LogsView DataContext="{Binding Logs}" />
                 </Panel>
-                <Panel IsVisible="{Binding IsInspectorPage}">
+                <Panel Classes="PageHost" IsVisible="{Binding IsInspectorPage}">
                     <views:InspectorView DataContext="{Binding Inspector}" />
                 </Panel>
-                <ContentControl Content="{Binding SelectedPage.Content}" IsVisible="{Binding IsModulePage}">
+                <ContentControl
+                    Classes="PageHost"
+                    Content="{Binding SelectedPage.Content}"
+                    IsVisible="{Binding IsModulePage}">
                     <ContentControl.DataTemplates>
                         <DataTemplate x:DataType="vm:PageFailureViewModel">
                             <ScrollViewer>
                                 <Border
                                     Classes="Banner Danger"
                                     HorizontalAlignment="Center"
-                                    Margin="40"
+                                    Margin="32"
                                     MaxWidth="720"
-                                    Padding="24,22"
                                     VerticalAlignment="Center">
                                     <StackPanel Spacing="16">
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
                                             <c:Icon
+                                                Classes="Large"
                                                 Data="{StaticResource IconAlert}"
-                                                Foreground="{DynamicResource ErrorColor}"
-                                                Height="20"
-                                                VerticalAlignment="Center"
-                                                Width="20" />
+                                                Tone="Danger"
+                                                VerticalAlignment="Center" />
                                             <TextBlock
-                                                Classes="h4"
+                                                Classes="Title"
                                                 Text="{l:Tr PageFailedTitle}"
                                                 VerticalAlignment="Center" />
                                         </StackPanel>
-                                        <TextBlock
-                                            Classes="Small Muted"
-                                            Text="{l:Tr PageFailedDetail}"
-                                            TextWrapping="Wrap" />
                                         <Border Classes="Code">
                                             <SelectableTextBlock
                                                 Classes="Mono"

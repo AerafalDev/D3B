@@ -1,6 +1,8 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using D3B.App.Controls;
 using D3B.App.Localization;
+using D3B.Bot.Activities;
 using D3B.Bot.Settings;
 using D3B.Data;
 using D3B.Data.Texts;
@@ -18,6 +20,8 @@ namespace D3B.App.ViewModels.Settings;
 internal sealed partial class SettingsEditor : ObservableObject
 {
     private readonly List<SettingFieldViewModel> _fields = [];
+    private SettingsPreview? _shownPreview;
+    private CultureInfo? _shownCulture;
 
     /// <summary>Gets the settings the activity declares.</summary>
     public ActivitySettings Settings { get; }
@@ -52,6 +56,35 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets what the settings lead to, as the activity reckons it from the pack, if it says (D127).</summary>
     public SettingsPreview? Preview { get; private set; }
 
+    /// <summary>Gets the zone the settings lead to, as its mini-map draws it, beside the settings (D159).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasZone), nameof(HasPreview))]
+    public partial ZoneScene? Zone { get; private set; }
+
+    /// <summary>Gets whether the zone holds isolated maps, which its legend then names (D149).</summary>
+    [ObservableProperty]
+    public partial bool HasIsolated { get; private set; }
+
+    /// <summary>Gets the figures the activity gives of its settings.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasFigures), nameof(HasPreview))]
+    public partial IReadOnlyList<FigureViewModel> Figures { get; private set; } = [];
+
+    /// <summary>Gets whether a zone is drawn.</summary>
+    public bool HasZone => Zone is not null;
+
+    /// <summary>Gets whether the activity gives figures.</summary>
+    public bool HasFigures => Figures.Count > 0;
+
+    /// <summary>Gets whether the activity says what its settings lead to.</summary>
+    public bool HasPreview => HasZone || HasFigures;
+
+    /// <summary>Gets whether a character plays the profile.</summary>
+    public bool HasPlayers => Players.Count > 0;
+
+    /// <summary>Gets the window's dialogs, which a setting may open, such as choosing resources, if the editor shows in a window.</summary>
+    public Dialogs? Dialogs { get; }
+
     /// <summary>Gets the characters that play the profile, with their professions' levels, as their bots last saw them.</summary>
     public IReadOnlyList<PlayerLevels> Players { get; }
 
@@ -67,6 +100,9 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     private IServiceProvider? Services { get; }
 
+    /// <summary>Occurs once a setting changed and the settings were checked again.</summary>
+    public event EventHandler? Edited;
+
     /// <summary>Initializes a new instance of the <see cref="SettingsEditor"/> class.</summary>
     /// <param name="settings">The settings the activity declares.</param>
     /// <param name="draft">The settings to edit, which the editor writes into.</param>
@@ -75,8 +111,10 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <param name="localizer">The app's texts.</param>
     /// <param name="services">The host's services, which the activity reckons what its settings lead to from, if it runs.</param>
     /// <param name="players">The characters that play the profile, with their professions' levels.</param>
-    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PlayerLevels>? players = null)
+    /// <param name="dialogs">The window's dialogs, or <see langword="null"/>.</param>
+    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PlayerLevels>? players = null, Dialogs? dialogs = null)
     {
+        Dialogs = dialogs;
         Settings = settings;
         Draft = draft;
         Game = game;
@@ -133,8 +171,10 @@ internal sealed partial class SettingsEditor : ObservableObject
         foreach (var section in Sections)
             section.Update(this);
 
+        ShowPreview();
         Rules = string.Join(Environment.NewLine, problems.Where(problem => problem.Setting is null).Select(problem => problem.Message?.In(culture)));
         HasProblems = problems.Count > 0 || _fields.Any(field => field.IsVisible && field.HasInputProblem);
+        Edited?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Names everything again, in the app's language.</summary>
@@ -285,6 +325,29 @@ internal sealed partial class SettingsEditor : ObservableObject
         };
 
         return new OptionViewModel(reference.Id, Names.Name(kind, reference), DetailOf(kind, reference), icon, detailIcon);
+    }
+
+    /// <summary>Names a profession, with its icon, in the app's language.</summary>
+    /// <param name="jobId">The profession.</param>
+    /// <returns>It, named.</returns>
+    public OptionViewModel JobOption(int jobId)
+    {
+        return Option(SettingKind.Job, JobOf(jobId));
+    }
+
+    private void ShowPreview()
+    {
+        // Reckoned on every check of the settings: drawn again only when the activity reckoned something new.
+        if (ReferenceEquals(Preview, _shownPreview) && Localizer.Culture.Equals(_shownCulture))
+            return;
+
+        _shownPreview = Preview;
+        _shownCulture = Localizer.Culture;
+        Zone = Preview is { Zone.Length: > 0 } preview && Atlas is { } atlas
+            ? ZoneScenes.Of(preview.Zone, atlas, tour: false, preview.LandmarkMapId, Players.FirstOrDefault(player => player.MapId is not null)?.MapId)
+            : null;
+        HasIsolated = Preview is not null && Preview.Zone.Any(map => map.State is ZoneMapState.Isolated);
+        Figures = Preview is null || Says is not { } says ? [] : [.. Preview.Figures.Select(figure => new FigureViewModel(says.Say(figure.Value), says.Say(figure.Label)))];
     }
 
     private GameReference JobOf(int jobId)

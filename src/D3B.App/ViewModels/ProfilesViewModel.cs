@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Settings;
 using D3B.Bot.Activities;
@@ -14,14 +15,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The profiles page: a column of profiles, the one being edited unfolded in place (D99, D101).</summary>
+/// <summary>The profiles page: the profiles as cards, or the one being edited on the whole page (D99, D101, D159).</summary>
 /// <remarks>
 /// It reads the profiles and characters from memory each refresh, and makes its items again only once their books
-/// changed: a profile being edited keeps its editor while the relay records what it sees.
+/// changed: a profile being edited keeps its editor while the relay records what it sees, and while another page shows.
 /// </remarks>
 internal sealed partial class ProfilesViewModel : ObservableObject
 {
     private const int SummaryLength = 3;
+    private const int CopyAttempts = 50;
 
     private readonly Dictionary<int, ProfileViewModel> _byId = [];
     private IServiceProvider? _services;
@@ -35,6 +37,12 @@ internal sealed partial class ProfilesViewModel : ObservableObject
 
     /// <summary>Gets the app's texts.</summary>
     public Localizer Localizer { get; }
+
+    /// <summary>Gets the window's dialogs.</summary>
+    public Dialogs Dialogs { get; }
+
+    /// <summary>Gets what the window says in its toasts.</summary>
+    public Toasts Toasts { get; }
 
     /// <summary>Gets the activities a profile may run, named in the app's language.</summary>
     public IReadOnlyList<ActivityChoiceViewModel> Activities { get; private set; } = [];
@@ -51,9 +59,10 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <summary>Gets the host's services, once it runs: an activity reckons what its settings lead to from them (D127).</summary>
     public IServiceProvider? Services => _services;
 
-    /// <summary>Gets how many profiles there are, and how many characters play one.</summary>
+    /// <summary>Gets the profile whose editor shows on the page, if any.</summary>
     [ObservableProperty]
-    public partial string Summary { get; private set; } = "";
+    [NotifyPropertyChangedFor(nameof(IsListing))]
+    public partial ProfileViewModel? Editing { get; private set; }
 
     /// <summary>Gets whether there is no profile.</summary>
     [ObservableProperty]
@@ -63,13 +72,20 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsAvailable { get; private set; }
 
+    /// <summary>Gets whether the page shows the profiles, no editor open.</summary>
+    public bool IsListing => Editing is null;
+
     private AccountBook? Accounts => _services?.GetService<AccountBook>();
 
     /// <summary>Initializes a new instance of the <see cref="ProfilesViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
-    public ProfilesViewModel(Localizer localizer)
+    /// <param name="dialogs">The window's dialogs.</param>
+    /// <param name="toasts">What the window says in its toasts.</param>
+    public ProfilesViewModel(Localizer localizer, Dialogs dialogs, Toasts toasts)
     {
         Localizer = localizer;
+        Dialogs = dialogs;
+        Toasts = toasts;
         Names = new GameNames(null, localizer);
     }
 
@@ -147,8 +163,9 @@ internal sealed partial class ProfilesViewModel : ObservableObject
 
         foreach (var setting in declared.All.Where(setting => declared.IsVisible(setting, settings)))
         {
+            // The game's values say what they are, a resource or a sub-area; a flag says its name, a number with it.
             if (Describe(setting, settings) is { Length: > 0 } value)
-                parts.Add(setting.Kind is SettingKind.Flag ? value : Localizer.Format("SummaryItem", setting.Name.In(culture), value));
+                parts.Add(setting.Kind is SettingKind.Number ? Localizer.Format("SummaryItem", setting.Name.In(culture), value) : value);
 
             if (parts.Count == SummaryLength)
                 break;
@@ -157,20 +174,54 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         return string.Join(" · ", parts);
     }
 
-    /// <summary>Makes its editor the only one unfolded.</summary>
+    /// <summary>Shows a profile's editor on the page, the only one open.</summary>
     /// <param name="item">The profile being edited.</param>
     public void BeginEditing(ProfileViewModel item)
     {
-        foreach (var other in Items.Where(other => other != item && other.IsEditing).ToList())
+        if (Editing is { } other && other != item)
             other.Cancel();
+
+        Editing = item;
     }
 
-    /// <summary>Drops a new profile, never saved.</summary>
-    /// <param name="item">The profile.</param>
-    public void Discard(ProfileViewModel item)
+    /// <summary>Shows the profiles again, once a profile's editor closed.</summary>
+    /// <param name="item">The profile that was edited.</param>
+    public void EndEditing(ProfileViewModel item)
     {
-        Items.Remove(item);
-        IsEmpty = Items.Count == 0;
+        if (Editing == item)
+            Editing = null;
+    }
+
+    /// <summary>Opens the editor of a new profile, its name and activity chosen, its settings another's or the activity's defaults.</summary>
+    /// <param name="name">Its name.</param>
+    /// <param name="activity">Its activity.</param>
+    /// <param name="settings">The settings it starts from, a profile's, or <see langword="null"/> for the activity's defaults.</param>
+    public void Create(string name, ActivityChoiceViewModel activity, string? settings)
+    {
+        new ProfileViewModel(this, null).EditNew(name, activity, settings);
+    }
+
+    /// <summary>Asks the name of a copy of a profile, which then opens in the editor.</summary>
+    /// <param name="item">The profile copied.</param>
+    public void Duplicate(ProfileViewModel item)
+    {
+        Dialogs.Show(new NewProfileViewModel(this, item));
+    }
+
+    /// <summary>Gives a name no profile has, from a profile's own.</summary>
+    /// <param name="name">The profile's name.</param>
+    /// <returns>Its copy's name.</returns>
+    public string CopyName(string name)
+    {
+        for (var attempt = 1; attempt <= CopyAttempts; attempt++)
+        {
+            var copy = attempt == 1 ? Localizer.Format("CopyOf", name) : Localizer.Format("CopyOfNumbered", name, attempt);
+
+            if (Profiles?.IsTaken(copy, null) != true)
+                return copy;
+        }
+
+        return name;
     }
 
     /// <summary>Keeps a profile saved, by its id.</summary>
@@ -179,6 +230,7 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     {
         _byId[item.Id] = item;
         Sync(false);
+        Toasts.Show(new Toast(Localizer.Format("ProfileSaved", item.Name), Tone.Success));
     }
 
     /// <summary>Drops a profile deleted.</summary>
@@ -187,7 +239,9 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     {
         _byId.Remove(item.Id);
         Items.Remove(item);
+        EndEditing(item);
         Sync(false);
+        Toasts.Show(new Toast(Localizer.Format("ProfileDeleted", item.Name)));
     }
 
     private string Describe(SettingDefinition setting, object settings)
@@ -201,7 +255,7 @@ internal sealed partial class ProfilesViewModel : ObservableObject
                 return value is true ? setting.Name.In(culture) : "";
 
             case SettingKind.Number:
-                return ((int)value!).ToString(culture);
+                return setting.IsPercent ? Localizer.Format("PercentValue", (int)value!) : ((int)value!).ToString(culture);
 
             case SettingKind.Text:
                 return (string)value!;
@@ -263,11 +317,11 @@ internal sealed partial class ProfilesViewModel : ObservableObject
             }
         }
 
-        foreach (var item in Items.Where(item => item.IsNew))
-            item.Relabel();
+        if (relabel && Editing is { IsNew: true } editing)
+            editing.Relabel();
 
-        // A new profile not saved yet stays first; the others follow the book's order, by name.
-        List<ProfileViewModel> order = [.. Items.Where(item => item.IsNew), .. profiles.Select(profile => _byId[profile.Id])];
+        // A new profile shows in its editor alone until it is saved; the others follow the book's order, by name.
+        List<ProfileViewModel> order = [.. profiles.Select(profile => _byId[profile.Id])];
 
         for (var index = 0; index < order.Count; index++)
         {
@@ -280,26 +334,11 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         }
 
         IsEmpty = Items.Count == 0;
-        Summary = Localizer.Format(
-            "ProfilesSummary",
-            Localizer.Plural("Profiles", profiles.Count),
-            Localizer.Plural("Profiled", (Accounts?.Characters ?? []).Count(character => character.ProfileId is { } id && ids.Contains(id))));
     }
 
     [RelayCommand]
     private void New()
     {
-        if (Items.FirstOrDefault(item => item.IsNew) is { } pending)
-        {
-            pending.Edit();
-
-            return;
-        }
-
-        var item = new ProfileViewModel(this, null);
-
-        Items.Insert(0, item);
-        IsEmpty = false;
-        item.Edit();
+        Dialogs.Show(new NewProfileViewModel(this, null));
     }
 }

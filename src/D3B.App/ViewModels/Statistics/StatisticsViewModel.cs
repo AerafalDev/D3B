@@ -30,6 +30,7 @@ internal sealed partial class StatisticsViewModel : ObservableObject
     private CultureInfo? _culture;
     private CharacterKey? _character;
     private bool _changed = true;
+    private bool _rebuilding;
 
     /// <summary>Gets the app's texts.</summary>
     public Localizer Localizer { get; }
@@ -48,9 +49,9 @@ internal sealed partial class StatisticsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsWeek), nameof(IsAll))]
     public partial StatisticsPeriod Period { get; private set; } = StatisticsPeriod.Today;
 
-    /// <summary>Gets what the page counts, in a line.</summary>
+    /// <summary>Gets or sets the character whose runs are counted, or every one.</summary>
     [ObservableProperty]
-    public partial string Summary { get; private set; } = "";
+    public partial StatisticsCharacterViewModel? SelectedCharacter { get; set; }
 
     /// <summary>Gets how many resources the runs brought.</summary>
     [ObservableProperty]
@@ -142,7 +143,6 @@ internal sealed partial class StatisticsViewModel : ObservableObject
         var hours = time.TotalHours;
 
         IsEmpty = runs.Count is 0;
-        Summary = Localizer.Format(runs.Count == 1 ? "StatisticsSummaryOne" : "StatisticsSummaryMany", runs.Count);
         ResourcesValue = total.ToString("N0", culture);
         TimeValue = DurationText(time);
         RateValue = hours >= 1.0 / 60 ? Localizer.Format("StatisticsRate", Math.Round(total / hours).ToString("N0", culture)) : Localizer["StatisticsNone"];
@@ -156,26 +156,48 @@ internal sealed partial class StatisticsViewModel : ObservableObject
 
         Resources.Clear();
 
-        foreach (var (item, count) in runs.SelectMany(run => run.Items).GroupBy(pair => pair.Key).Select(pair => (pair.Key, pair.Sum(each => each.Value))).OrderByDescending(pair => pair.Item2).ThenBy(pair => pair.Key))
+        var counts = runs.SelectMany(run => run.Items).GroupBy(pair => pair.Key).Select(pair => (Item: pair.Key, Count: pair.Sum(each => each.Value))).OrderByDescending(pair => pair.Count).ThenBy(pair => pair.Item).ToList();
+        var most = counts.Count > 0 ? counts[0].Count : 0;
+
+        foreach (var (item, count) in counts)
         {
             var rate = hours >= 1.0 / 60 ? Localizer.Format("StatisticsRate", Math.Round(count / hours).ToString("N0", culture)) : null;
 
-            Resources.Add(new StatisticsResourceViewModel(_icons?.Item(item), _says?.Item(item) ?? item.ToString(culture), count.ToString("N0", culture), rate));
+            Resources.Add(new StatisticsResourceViewModel(_icons?.Item(item), _says?.Item(item) ?? item.ToString(culture), count.ToString("N0", culture), rate, most > 0 ? 100.0 * count / most : 0));
         }
 
         Runs.Clear();
 
+        // A run names who ran what once, above the runs that follow it of the same.
+        string? previous = null;
+
         foreach (var run in runs)
-            Runs.Add(RunOf(run, now));
+        {
+            var row = RunOf(run, now, previous);
+
+            previous = row.Who;
+            Runs.Add(row);
+        }
     }
 
     private void RebuildCharacters(IReadOnlyList<RunRecord> all)
     {
-        Characters.Clear();
-        Characters.Add(new StatisticsCharacterViewModel(null, Localizer["StatisticsEveryCharacter"], Select) { IsSelected = _character is null });
+        _rebuilding = true;
 
-        foreach (var character in all.GroupBy(run => new CharacterKey(run.AccountId, run.CharacterId)).OrderBy(group => group.First().CharacterName, StringComparer.Create(Localizer.Culture, true)))
-            Characters.Add(new StatisticsCharacterViewModel(character.Key, character.First().CharacterName, Select) { IsSelected = _character == character.Key });
+        try
+        {
+            Characters.Clear();
+            Characters.Add(new StatisticsCharacterViewModel(null, Localizer["StatisticsEveryCharacter"], Select) { IsSelected = _character is null });
+
+            foreach (var character in all.GroupBy(run => new CharacterKey(run.AccountId, run.CharacterId)).OrderBy(group => group.First().CharacterName, StringComparer.Create(Localizer.Culture, true)))
+                Characters.Add(new StatisticsCharacterViewModel(character.Key, character.First().CharacterName, Select) { IsSelected = _character == character.Key });
+
+            SelectedCharacter = Characters.FirstOrDefault(character => character.IsSelected);
+        }
+        finally
+        {
+            _rebuilding = false;
+        }
     }
 
     private bool IsIn(RunRecord run, DateTimeOffset now)
@@ -190,7 +212,7 @@ internal sealed partial class StatisticsViewModel : ObservableObject
         };
     }
 
-    private StatisticsRunViewModel RunOf(RunRecord run, DateTimeOffset now)
+    private StatisticsRunViewModel RunOf(RunRecord run, DateTimeOffset now, string? previous)
     {
         var culture = Localizer.Culture;
         var began = run.StartedAt.ToOffset(now.Offset);
@@ -204,7 +226,8 @@ internal sealed partial class StatisticsViewModel : ObservableObject
         };
         var who = run.Title is { Length: > 0 } title ? $"{run.CharacterName} · {title}" : run.CharacterName;
 
-        return new StatisticsRunViewModel(when, who, DurationText(DurationOf(run)), TotalOf(run).ToString("N0", culture), outcome, tone);
+        // A run stopped or done ended as runs do: only one going on, or failed, says so.
+        return new StatisticsRunViewModel(when, who, who != previous, DurationText(DurationOf(run)), TotalOf(run).ToString("N0", culture), outcome, tone, run.Outcome is not (ActivityOutcome.Done or ActivityOutcome.Stopped));
     }
 
     private string DurationText(TimeSpan duration)
@@ -229,6 +252,12 @@ internal sealed partial class StatisticsViewModel : ObservableObject
         Period = period;
         _changed = true;
         Refresh(null);
+    }
+
+    partial void OnSelectedCharacterChanged(StatisticsCharacterViewModel? value)
+    {
+        if (!_rebuilding && value is not null && value.Key != _character)
+            Select(value);
     }
 
     [RelayCommand]

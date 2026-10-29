@@ -1,0 +1,132 @@
+<UserControl
+    x:Class="D3B.App.Views.ResourcePickerView"
+    x:ClassModifier="internal"
+    x:DataType="s:ResourcePickerViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:s="clr-namespace:D3B.App.ViewModels.Settings"
+    xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.KeyBindings>
+        <KeyBinding Command="{Binding CancelCommand}" Gesture="Escape" />
+    </UserControl.KeyBindings>
+    <UserControl.Styles>
+        <Style Selector="CheckBox.Choice">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="Border.Choice">
+            <Setter Property="Background" Value="{DynamicResource GhostColor}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+        </Style>
+        <Style Selector="Border.Choice.TooHigh">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+    </UserControl.Styles>
+    <StackPanel Margin="24" Spacing="16">
+        <TextBlock Classes="Title" Text="{Binding Title}" />
+        <TextBox
+            AutomationProperties.Name="{l:Tr Search}"
+            PlaceholderText="{l:Tr Search}"
+            Text="{Binding Search}"
+            shadui:TextBoxAssist.Clearable="True" />
+        <ItemsControl ItemsSource="{Binding Jobs}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="s:JobFilterViewModel">
+                    <Button
+                        Classes="Outline Small"
+                        Classes.Selected="{Binding IsSelected}"
+                        Command="{Binding ChooseCommand}"
+                        Margin="0,0,8,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Image
+                                Classes="DetailIcon"
+                                IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                RenderOptions.BitmapInterpolationMode="HighQuality"
+                                Source="{Binding Icon}" />
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+            <ItemsControl.Styles>
+                <Style Selector="Button.Selected">
+                    <Setter Property="Background" Value="{DynamicResource GhostHoverColor}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource ForegroundColor}" />
+                </Style>
+            </ItemsControl.Styles>
+        </ItemsControl>
+        <ScrollViewer Height="320">
+            <Panel>
+                <TextBlock
+                    Classes="Muted"
+                    HorizontalAlignment="Center"
+                    IsVisible="{Binding IsEmpty}"
+                    Margin="0,32,0,0"
+                    Text="{l:Tr NoMatch}" />
+                <ItemsControl ItemsSource="{Binding Shown}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <c:CardGrid
+                                MaxColumns="3"
+                                MinColumnWidth="180"
+                                Spacing="0" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="s:ResourceChoiceViewModel">
+                            <Border Classes="Choice" Classes.TooHigh="{Binding IsTooHigh}">
+                                <CheckBox Classes="Choice" IsChecked="{Binding IsChecked}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="4,0,0,0">
+                                        <Border
+                                            Classes="ItemIcon"
+                                            Classes.HasIcon="{Binding Option.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                            Height="24"
+                                            Margin="0,0,8,0"
+                                            Width="24">
+                                            <Image RenderOptions.BitmapInterpolationMode="HighQuality" Source="{Binding Option.Icon}" />
+                                        </Border>
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Text="{Binding Option.Name}"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTip.Tip="{Binding Option.Detail}"
+                                            VerticalAlignment="Center" />
+                                        <TextBlock
+                                            Classes="Caption Muted Figures"
+                                            Grid.Column="2"
+                                            Margin="8,0,0,0"
+                                            Text="{Binding LevelText}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </CheckBox>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Panel>
+        </ScrollViewer>
+        <StackPanel
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            Spacing="8">
+            <Button
+                Classes="Outline"
+                Command="{Binding CancelCommand}"
+                Content="{l:Tr Cancel}" />
+            <Button
+                Classes="Primary"
+                Command="{Binding AddCommand}"
+                Content="{Binding AddText}"
+                IsDefault="True" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

@@ -32,7 +32,7 @@ public sealed class GoneActivityTests : IAsyncDisposable
     public async Task AProfileNamingAScriptShowsItsActivityGoneAndCanBeDeleted()
     {
         var services = await OpenedAsync();
-        var page = new ProfilesViewModel(_localizer);
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
         page.Refresh(services);
 

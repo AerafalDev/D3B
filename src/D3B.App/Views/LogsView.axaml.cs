@@ -72,6 +72,9 @@ internal sealed partial class LogsView : UserControl
     private async void OnCopyClick(object? sender, RoutedEventArgs e)
     {
         if (_model is not null && TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
+        {
             await clipboard.SetTextAsync(_model.Text());
+            _model.Copied();
+        }
     }
 }

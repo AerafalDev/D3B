@@ -63,6 +63,17 @@ internal sealed partial class MapViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasBot))]
     public partial LogSourceViewModel? Bot { get; private set; }
 
+    /// <summary>Gets or sets the source chosen in the page's selector: setting it chooses it, as a click on it does.</summary>
+    public LogSourceViewModel? Chosen
+    {
+        get => Bot;
+        set
+        {
+            if (value is not null)
+                Choose(value);
+        }
+    }
+
     /// <summary>Gets whether no bot has been made, so that the page has nothing to show.</summary>
     [ObservableProperty]
     public partial bool HasNoBot { get; private set; } = true;
@@ -611,5 +622,10 @@ internal sealed partial class MapViewModel : ObservableObject
     private string NameOf(BotActor bot)
     {
         return bot.State.Name.Length > 0 ? bot.State.Name : _localizer.Format("CharacterNamed", bot.Key.CharacterId);
+    }
+
+    partial void OnBotChanged(LogSourceViewModel? value)
+    {
+        OnPropertyChanged(nameof(Chosen));
     }
 }

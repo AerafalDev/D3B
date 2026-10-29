@@ -54,6 +54,16 @@ internal abstract partial class ListFieldViewModel : SettingFieldViewModel
         WriteValues(values);
     }
 
+    /// <summary>Adds values at the end, in their order.</summary>
+    /// <param name="options">The values.</param>
+    public void AddAll(IReadOnlyList<OptionViewModel> options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (options.Count > 0)
+            WriteValues([.. Definition.GetValues(Draft), .. options.Select(option => option.Value)]);
+    }
+
     /// <summary>Adds a value at the end.</summary>
     /// <param name="option">The value.</param>
     protected void Add(OptionViewModel option)

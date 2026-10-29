@@ -1,13 +1,16 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
+using Avalonia.Rendering;
 using Avalonia.Media;
 
 namespace D3B.App.Controls;
 
 /// <summary>A line icon drawn from a geometry on a grid of 24 units, in the colour of the text around it.</summary>
-/// <remarks>The geometries are the app's own, in <c>Themes/Icons.axaml</c>; a button's icon takes the button's text colour.</remarks>
-internal sealed class Icon : Control
+/// <remarks>
+/// The geometries are Lucide's, in <c>Themes/Icons.axaml</c> (D161); a button's icon takes the button's text colour.
+/// </remarks>
+internal sealed class Icon : Control, ICustomHitTest
 {
     /// <summary>The geometry's grid: an icon of any size draws it scaled from 24 units.</summary>
     private const double Grid = 24;
@@ -57,6 +60,13 @@ internal sealed class Icon : Control
         AffectsRender<Icon>(DataProperty, ForegroundProperty, StrokeThicknessProperty);
         WidthProperty.OverrideDefaultValue<Icon>(16);
         HeightProperty.OverrideDefaultValue<Icon>(16);
+    }
+
+    /// <inheritdoc/>
+    public bool HitTest(Point point)
+    {
+        // An icon may carry a tooltip, such as a setting's help: its whole square answers the pointer, not its lines alone.
+        return new Rect(Bounds.Size).Contains(point);
     }
 
     /// <inheritdoc/>

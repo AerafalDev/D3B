@@ -31,6 +31,9 @@ internal sealed partial class ModulePageViewModel : ObservableObject
     /// <summary>Gets the page's id.</summary>
     public string Id => _definition.Id;
 
+    /// <summary>Gets the route the sidebar marks it by, apart from the app's own pages.</summary>
+    public string Route => "page:" + _definition.Id;
+
     /// <summary>Gets the page's icon, or <see langword="null"/> when it gave none the app can draw: then the app's own.</summary>
     public Geometry? Icon { get; }
 

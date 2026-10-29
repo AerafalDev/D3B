@@ -35,7 +35,7 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         var item = Assert.Single(page.Items);
 
         Assert.False(page.IsEmpty);
-        Assert.Equal("1 bot, 1 connected", page.Summary);
+        Assert.Equal(1, page.Count);
         Assert.Same(bot, item.Bot);
         Assert.Equal("Character", item.Name);
         Assert.Equal("CH", item.Initials);
@@ -75,7 +75,6 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         var item = Assert.Single(page.Items);
         var separator = Localizer.French.NumberFormat.NumberGroupSeparator;
 
-        Assert.Equal("1 bot, 0 connecté", page.Summary);
         Assert.Equal("Niveau 200", item.Level);
         Assert.False(item.IsConnected);
         Assert.Equal("Déconnecté", item.Connection);
@@ -175,6 +174,50 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         Assert.False(bot.IsPaused);
         Assert.False(item.IsPaused);
         Assert.False(item.ResumeCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task WhatABotMeetsIsToastedOnceAndWhatItAlreadyWasIsNot()
+    {
+        var activity = new TestActivity();
+
+        using var host = TestHosts.Of(_play, new ActivityDefinition("patrol", "Patrol", _ => activity));
+        var toasts = new Toasts();
+        var page = new BotsViewModel(_localizer, toasts: toasts);
+        var (connection, bot) = await _play.EnterAsync(300);
+
+        page.Refresh(host.Services);
+
+        var item = Assert.Single(page.Items);
+
+        item.StartCommand.Execute(null);
+        await activity.SteppingAsync(bot);
+        page.Refresh(host.Services);
+        connection.Client(new InteractiveUseRequest { ElementId = 1, SkillInstanceId = 2 });
+        await bot.ProcessedAsync();
+        await Waiting.UntilAsync(() => bot.Activity?.Status is ActivityStatus.Waiting, TimeSpan.FromSeconds(10));
+        page.Refresh(host.Services);
+        page.Refresh(host.Services);
+
+        var toast = Assert.Single(toasts.Recent);
+
+        Assert.Equal(("Character: paused, you are playing it", Tone.Warning), (toast.Text, toast.Tone));
+
+        // A page that meets the bot paused already says nothing of it.
+        var later = new Toasts();
+
+        new BotsViewModel(_localizer, toasts: later).Refresh(host.Services);
+
+        Assert.Empty(later.Recent);
+
+        // Stopped from the app, the activity ended as the owner asked: nothing to say.
+        item.ResumeCommand.Execute(null);
+        await bot.ProcessedAsync();
+        item.StopCommand.Execute(null);
+        await bot.Activity!.Completion;
+        page.Refresh(host.Services);
+
+        Assert.Single(toasts.Recent);
     }
 
     [Fact]

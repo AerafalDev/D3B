@@ -52,7 +52,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     public async Task ABotsJournalIsSaidInTheAppsLanguageEachActionOnALine()
     {
         var (_, bot) = await _play.EnterAsync(300);
-        var page = new LogsViewModel(_french, new BotChoice());
+        var page = new LogsViewModel(_french, new BotChoice(), new Toasts());
 
         Write(bot);
         page.Refresh(_host.Services);
@@ -77,7 +77,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     public async Task WhatComesSinceIsAddedAtEachRefresh()
     {
         var (_, bot) = await _play.EnterAsync(300);
-        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key });
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
 
         page.Refresh(_host.Services);
 
@@ -94,7 +94,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     public async Task AProfileThatDidNotStartOnConnectionSaysWhy()
     {
         var (_, bot) = await _play.EnterAsync(300);
-        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key });
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
 
         bot.Journal.Add(new ProfileNotStartedEntry(_at, "Promenade", "script:promenade.lua", ProfileStartFailure.ActivityMissing, null));
         page.Refresh(_host.Services);
@@ -108,7 +108,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     public async Task TheLevelAndTheTextSoughtFilterTheLines()
     {
         var (_, bot) = await _play.EnterAsync(300);
-        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key });
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
 
         Write(bot);
         bot.Journal.Add(new WalkEntry(_at, 0, TestPlay.MapId, 12, WalkOutcome.Refused, TimeSpan.FromMilliseconds(100)));
@@ -132,13 +132,13 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     public async Task EverySourceNamesEachLinesAndTheHostShowsItsProblems()
     {
         var (_, bot) = await _play.EnterAsync(300);
-        var page = new LogsViewModel(_french, new BotChoice());
+        var page = new LogsViewModel(_french, new BotChoice(), new Toasts());
 
         _problems.Problems.Add(new HostProblem(_at, LogLevel.Warning, "D3B.Bot.Runtime.Bots", "Game connection 7: its account is not known, so no bot plays its character", null));
         page.Refresh(_host.Services);
 
         Assert.True(page.ShowsSources);
-        Assert.Equal(["Tout", "Hôte", "Character"], page.Sources.Select(source => source.Name));
+        Assert.Equal(["Toutes les sources", "Hôte", "Character"], page.Sources.Select(source => source.Name));
         Assert.Equal(["Character", "Hôte"], page.Lines.Select(line => line.Source).Order(StringComparer.Ordinal));
 
         page.Sources[1].SelectCommand.Execute(null);
@@ -153,7 +153,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     public async Task ANewLanguageSaysTheLinesAgain()
     {
         var (_, bot) = await _play.EnterAsync(300);
-        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key });
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
 
         page.Refresh(_host.Services);
         _french.Use(Localizer.English);
@@ -167,7 +167,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     {
         var (_, bot) = await _play.EnterAsync(300);
         var choice = new BotChoice();
-        var page = new LogsViewModel(_french, choice);
+        var page = new LogsViewModel(_french, choice, new Toasts());
 
         page.Refresh(_host.Services);
         page.Sources[2].SelectCommand.Execute(null);

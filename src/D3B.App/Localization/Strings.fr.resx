@@ -41,15 +41,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="LanguageCode" xml:space="preserve">
-    <value>FR</value>
-  </data>
-  <data name="SwitchLanguage" xml:space="preserve">
-    <value>Switch to English</value>
-  </data>
-  <data name="SwitchTheme" xml:space="preserve">
-    <value>Thème clair ou sombre</value>
-  </data>
   <data name="Bots" xml:space="preserve">
     <value>Bots</value>
   </data>
@@ -81,7 +72,7 @@
     <value>Préparation de D3B</value>
   </data>
   <data name="HostStartingDetail" xml:space="preserve">
-    <value>Modules, données du jeu et protocole du client installé. Un premier démarrage peut les télécharger.</value>
+    <value>Modules, données du jeu et protocole.</value>
   </data>
   <data name="HostStoppingTitle" xml:space="preserve">
     <value>Arrêt des bots</value>
@@ -89,41 +80,20 @@
   <data name="HostFailedTitle" xml:space="preserve">
     <value>D3B n'a pas démarré</value>
   </data>
-  <data name="HostFailedHint" xml:space="preserve">
-    <value>Corrige ce qui est indiqué ci-dessus, puis relance D3B.</value>
-  </data>
   <data name="Copy" xml:space="preserve">
     <value>Copier</value>
   </data>
   <data name="NoBotTitle" xml:space="preserve">
-    <value>Aucun bot pour l'instant</value>
+    <value>Aucun bot</value>
   </data>
   <data name="NoBotDetail" xml:space="preserve">
-    <value>Un bot apparaît pour chaque personnage qu'un client joue à travers D3B.</value>
-  </data>
-  <data name="NoBotStep1" xml:space="preserve">
-    <value>Lance un client depuis le launcher d'Ankama.</value>
-  </data>
-  <data name="NoBotStep2" xml:space="preserve">
-    <value>Connecte-toi et choisis un personnage.</value>
-  </data>
-  <data name="NoBotStep3" xml:space="preserve">
-    <value>Son bot s'affiche ici, prêt pour une activité.</value>
-  </data>
-  <data name="BotsOne" xml:space="preserve">
-    <value>{0} bot</value>
-  </data>
-  <data name="BotsOther" xml:space="preserve">
-    <value>{0} bots</value>
+    <value>Lance le jeu et choisis un perso : son bot apparaît ici.</value>
   </data>
   <data name="ConnectedOne" xml:space="preserve">
     <value>{0} connecté</value>
   </data>
   <data name="ConnectedOther" xml:space="preserve">
     <value>{0} connectés</value>
-  </data>
-  <data name="BotsSummary" xml:space="preserve">
-    <value>{0}, {1}</value>
   </data>
   <data name="CharacterNamed" xml:space="preserve">
     <value>Personnage {0}</value>
@@ -141,7 +111,7 @@
     <value>En pause</value>
   </data>
   <data name="PausedTitle" xml:space="preserve">
-    <value>Le joueur a repris la main</value>
+    <value>Tu joues ce perso</value>
   </data>
   <data name="PausedDetail" xml:space="preserve">
     <value>Le bot attend que tu le reprennes.</value>
@@ -240,7 +210,7 @@
     <value>Profil ou activité</value>
   </data>
   <data name="NoActivityAvailable" xml:space="preserve">
-    <value>Aucune activité à démarrer pour l'instant : les modules de D3B en ajouteront.</value>
+    <value>Aucune activité disponible.</value>
   </data>
   <data name="Start" xml:space="preserve">
     <value>Démarrer</value>
@@ -257,35 +227,17 @@
   <data name="PageFailedTitle" xml:space="preserve">
     <value>Cette page n'a pas pu s'afficher</value>
   </data>
-  <data name="PageFailedDetail" xml:space="preserve">
-    <value>Son module a levé l'erreur ci-dessous. Les bots et les autres pages continuent.</value>
-  </data>
   <data name="Accounts" xml:space="preserve">
     <value>Comptes</value>
   </data>
-  <data name="AccountsOne" xml:space="preserve">
-    <value>{0} compte</value>
-  </data>
-  <data name="AccountsOther" xml:space="preserve">
-    <value>{0} comptes</value>
-  </data>
-  <data name="CharactersOne" xml:space="preserve">
-    <value>{0} personnage</value>
-  </data>
-  <data name="CharactersOther" xml:space="preserve">
-    <value>{0} personnages</value>
-  </data>
-  <data name="AccountsSummary" xml:space="preserve">
-    <value>{0}, {1}</value>
-  </data>
   <data name="AccountsHint" xml:space="preserve">
-    <value>Un compte apparaît dès que son client passe par D3B, qui ne voit jamais son mot de passe.</value>
+    <value>Un compte apparaît quand son client passe par D3B. D3B ne voit jamais ton mot de passe.</value>
   </data>
   <data name="NoAccountTitle" xml:space="preserve">
-    <value>Aucun compte pour l'instant</value>
+    <value>Aucun compte</value>
   </data>
   <data name="NoAccountDetail" xml:space="preserve">
-    <value>Lance un client depuis le launcher Ankama pendant que D3B tourne : son compte et ses personnages apparaîtront ici.</value>
+    <value>Lance le jeu depuis le launcher Ankama : ton compte apparaît ici.</value>
   </data>
   <data name="AccountNamed" xml:space="preserve">
     <value>Compte {0}</value>
@@ -348,16 +300,16 @@
     <value>À la connexion</value>
   </data>
   <data name="StartsOnConnectionHint" xml:space="preserve">
-    <value>Lance son profil à la première connexion de son client pendant que D3B tourne.</value>
+    <value>Lance son profil dès que le perso se connecte.</value>
   </data>
   <data name="Forget" xml:space="preserve">
-    <value>Oublier ce compte</value>
+    <value>Oublier</value>
   </data>
   <data name="ForgetConfirm" xml:space="preserve">
     <value>Oublier</value>
   </data>
   <data name="ForgetDetail" xml:space="preserve">
-    <value>Ses personnages et leurs profils sont oubliés jusqu'à la prochaine connexion de son client.</value>
+    <value>Ses persos et leurs profils sont oubliés jusqu'à sa prochaine connexion.</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Annuler</value>
@@ -366,25 +318,10 @@
     <value>Non enregistré : {0}</value>
   </data>
   <data name="StorageUnavailable" xml:space="preserve">
-    <value>La base de D3B n'est pas ouverte : les comptes et les profils ne sont pas disponibles.</value>
+    <value>La base de D3B ne s'est pas ouverte.</value>
   </data>
   <data name="Profiles" xml:space="preserve">
     <value>Profils</value>
-  </data>
-  <data name="ProfilesOne" xml:space="preserve">
-    <value>{0} profil</value>
-  </data>
-  <data name="ProfilesOther" xml:space="preserve">
-    <value>{0} profils</value>
-  </data>
-  <data name="ProfiledOne" xml:space="preserve">
-    <value>{0} personnage en a un</value>
-  </data>
-  <data name="ProfiledOther" xml:space="preserve">
-    <value>{0} personnages en ont un</value>
-  </data>
-  <data name="ProfilesSummary" xml:space="preserve">
-    <value>{0}, {1}</value>
   </data>
   <data name="PlayersOne" xml:space="preserve">
     <value>{0} personnage</value>
@@ -399,10 +336,10 @@
     <value>Nouveau profil</value>
   </data>
   <data name="NoProfileTitle" xml:space="preserve">
-    <value>Aucun profil pour l'instant</value>
+    <value>Aucun profil</value>
   </data>
   <data name="NoProfileDetail" xml:space="preserve">
-    <value>Un profil, c'est une activité et ses réglages, que des personnages partagent. Crée-le ici, puis donne-le à un personnage dans Comptes.</value>
+    <value>Un profil, c'est une activité et ses réglages, partagés par des persos.</value>
   </data>
   <data name="ProfileName" xml:space="preserve">
     <value>Nom</value>
@@ -418,9 +355,6 @@
   </data>
   <data name="Delete" xml:space="preserve">
     <value>Supprimer</value>
-  </data>
-  <data name="DeleteConfirm" xml:space="preserve">
-    <value>Supprimer ce profil ? Ses personnages n'en auront plus.</value>
   </data>
   <data name="ProfileNeedsReview" xml:space="preserve">
     <value>À revoir</value>
@@ -471,10 +405,10 @@
     <value>Ressource {0}</value>
   </data>
   <data name="Search" xml:space="preserve">
-    <value>Rechercher…</value>
+    <value>Rechercher</value>
   </data>
   <data name="AddValue" xml:space="preserve">
-    <value>Ajouter…</value>
+    <value>Ajouter</value>
   </data>
   <data name="Clear" xml:space="preserve">
     <value>Effacer</value>
@@ -507,31 +441,25 @@
     <value>{0} a besoin de réglages : crée-lui un profil</value>
   </data>
   <data name="SummaryItem" xml:space="preserve">
-    <value>{0} : {1}</value>
+    <value>{0} {1}</value>
   </data>
   <data name="Logs" xml:space="preserve">
     <value>Journaux</value>
   </data>
   <data name="Inspector" xml:space="preserve">
-    <value>Inspecteur de protocole</value>
+    <value>Inspecteur</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Paramètres</value>
   </data>
-  <data name="SettingsSummary" xml:space="preserve">
-    <value>Les paramètres de cette machine, gardés dans app.json. Les délais des bots s'appliquent aussitôt ; ceux du relais et les captures au prochain démarrage.</value>
-  </data>
   <data name="SettingsClient" xml:space="preserve">
     <value>Client</value>
-  </data>
-  <data name="SettingsClientDetail" xml:space="preserve">
-    <value>Celui de cette machine, pour tous les bots et profils</value>
   </data>
   <data name="DelayDisplay" xml:space="preserve">
     <value>Temps d'affichage</value>
   </data>
   <data name="DelayDisplayHelp" xml:space="preserve">
-    <value>Le temps que D3B laisse au client pour dessiner une carte avant qu'un bot y agisse, et pour afficher une fenêtre avant qu'un bot la ferme. Augmente-le sur une machine lente si les bots marchent sans que le client suive, ou laissent les fenêtres de la banque ouvertes.</value>
+    <value>Le temps laissé au client pour dessiner une carte ou une fenêtre. Augmente-le si le client ne suit pas.</value>
   </data>
   <data name="DelayMeasured" xml:space="preserve">
     <value>Mesuré : {0}</value>
@@ -552,19 +480,16 @@
     <value>Délais</value>
   </data>
   <data name="SettingsDelaysDetail" xml:space="preserve">
-    <value>Chacun borne une attente qui a mal tourné, et finit dès que la réponse vient. N'en augmente un que s'il s'épuise sur cette machine.</value>
+    <value>Chacun borne une attente, qui finit dès que la réponse vient. N'en augmente un que s'il s'épuise.</value>
   </data>
   <data name="RestoreDelays" xml:space="preserve">
-    <value>Rétablir les valeurs par défaut</value>
+    <value>Rétablir</value>
   </data>
   <data name="DelaysBots" xml:space="preserve">
     <value>Bots</value>
   </data>
   <data name="DelaysRelay" xml:space="preserve">
     <value>Relais</value>
-  </data>
-  <data name="AppliesAtOnce" xml:space="preserve">
-    <value>S'applique aussitôt</value>
   </data>
   <data name="AppliesNextStart" xml:space="preserve">
     <value>Au prochain démarrage</value>
@@ -573,67 +498,67 @@
     <value>Réponse du serveur</value>
   </data>
   <data name="DelayAnswerHelp" xml:space="preserve">
-    <value>Le temps qu'une marche, un changement de carte, un usage ou la banque attend que le serveur réponde à sa requête.</value>
+    <value>Attente de la réponse du serveur à une requête.</value>
   </data>
   <data name="DelayWalkArrival" xml:space="preserve">
     <value>Arrivée d'une marche</value>
   </data>
   <data name="DelayWalkArrivalHelp" xml:space="preserve">
-    <value>Le temps que le client peut prendre pour confirmer une marche une fois ses pas faits.</value>
+    <value>Attente de la fin d'une marche par le client.</value>
   </data>
   <data name="DelayWalkStep" xml:space="preserve">
     <value>Pas d'une marche</value>
   </data>
   <data name="DelayWalkStepHelp" xml:space="preserve">
-    <value>Le temps que le client peut prendre pour chaque pas d'une marche.</value>
+    <value>Attente de chaque pas d'une marche.</value>
   </data>
   <data name="DelayPlaced" xml:space="preserve">
     <value>Nouvelle carte</value>
   </data>
   <data name="DelayPlacedHelp" xml:space="preserve">
-    <value>Le temps qu'un changement de carte attend que le personnage soit placé sur la nouvelle carte.</value>
+    <value>Attente du placement sur la nouvelle carte.</value>
   </data>
   <data name="DelayUseEnd" xml:space="preserve">
     <value>Fin d'un usage</value>
   </data>
   <data name="DelayUseEndHelp" xml:space="preserve">
-    <value>Le temps qu'une récolte ou un autre usage peut durer au-delà de la durée que le serveur lui a donnée.</value>
+    <value>Marge au-delà de la durée qu'un usage reçoit du serveur.</value>
   </data>
   <data name="DelayBankFollow" xml:space="preserve">
     <value>Suite d'un dépôt</value>
   </data>
   <data name="DelayBankFollowHelp" xml:space="preserve">
-    <value>Le temps que la banque attend le poids et les kamas qui suivent un dépôt.</value>
+    <value>Attente du poids et des kamas après un dépôt.</value>
   </data>
   <data name="DelayRecovery" xml:space="preserve">
     <value>Reprise</value>
   </data>
   <data name="DelayRecoveryHelp" xml:space="preserve">
-    <value>Le temps qu'un bot laisse finir une récolte qu'une interruption a laissée en cours, avant que son activité reprenne.</value>
+    <value>Temps laissé à une récolte interrompue avant que l'activité reprenne.</value>
   </data>
   <data name="DelayConnect" xml:space="preserve">
     <value>Connexion au serveur</value>
   </data>
   <data name="DelayConnectHelp" xml:space="preserve">
-    <value>Le temps que le relais essaie chaque adresse du serveur d'Ankama.</value>
+    <value>Essai de chaque adresse du serveur d'Ankama.</value>
   </data>
   <data name="DelayClose" xml:space="preserve">
     <value>Fermeture</value>
   </data>
   <data name="DelayCloseHelp" xml:space="preserve">
-    <value>Le temps qu'un côté d'une connexion peut rester ouvert une fois l'autre fermé.</value>
+    <value>Temps qu'un côté reste ouvert une fois l'autre fermé.</value>
   </data>
   <data name="DelayHold" xml:space="preserve">
     <value>Trame retenue</value>
   </data>
   <data name="DelayHoldHelp" xml:space="preserve">
-    <value>Le temps que le relais retient une trame incomplète, avant de la passer telle qu'elle est venue.</value>
+    <value>Attente d'une trame incomplète avant de la passer.</value>
   </data>
   <data name="DelaySelection" xml:space="preserve">
     <value>Choix du serveur</value>
   </data>
   <data name="DelaySelectionHelp" xml:space="preserve">
-    <value>Le temps qu'un choix de serveur attend la connexion de jeu du client.</value>
+    <value>Attente de la connexion de jeu après le choix du serveur.</value>
   </data>
   <data name="SettingsCaptures" xml:space="preserve">
     <value>Captures</value>
@@ -642,7 +567,7 @@
     <value>Enregistrer les connexions</value>
   </data>
   <data name="RecordCapturesHelp" xml:space="preserve">
-    <value>Ce que lit chaque connexion va dans un fichier .d3bcap, pour l'inspecteur de protocole et les outils de mapping. Elles contiennent ta session : ne les partage jamais.</value>
+    <value>Enregistre chaque connexion dans un fichier .d3bcap, pour l'inspecteur. Il contient ta session : ne le partage jamais.</value>
   </data>
   <data name="CapturesRecording" xml:space="preserve">
     <value>Enregistre en ce moment, dans {0}</value>
@@ -652,9 +577,6 @@
   </data>
   <data name="SettingsAppearance" xml:space="preserve">
     <value>Apparence</value>
-  </data>
-  <data name="SettingsAppearanceDetail" xml:space="preserve">
-    <value>Aussi dans la barre de titre</value>
   </data>
   <data name="Language" xml:space="preserve">
     <value>Langue</value>
@@ -670,9 +592,6 @@
   </data>
   <data name="SettingsData" xml:space="preserve">
     <value>Données</value>
-  </data>
-  <data name="SettingsDataDetail" xml:space="preserve">
-    <value>Où D3B garde ce qu'il sait, sur cette machine</value>
   </data>
   <data name="DataDatabase" xml:space="preserve">
     <value>Base de données</value>
@@ -690,7 +609,7 @@
     <value>Journal</value>
   </data>
   <data name="LogsEverything" xml:space="preserve">
-    <value>Tout</value>
+    <value>Toutes les sources</value>
   </data>
   <data name="LogsHost" xml:space="preserve">
     <value>Hôte</value>
@@ -699,7 +618,7 @@
     <value>Tout</value>
   </data>
   <data name="LevelProblems" xml:space="preserve">
-    <value>Avertissements et erreurs</value>
+    <value>Alertes</value>
   </data>
   <data name="LevelErrors" xml:space="preserve">
     <value>Erreurs</value>
@@ -711,13 +630,13 @@
     <value>Suivre</value>
   </data>
   <data name="FollowHint" xml:space="preserve">
-    <value>Défile jusqu'à chaque nouvelle ligne ; remonter l'arrête</value>
+    <value>Suivre les nouvelles lignes</value>
   </data>
   <data name="CopyLinesHint" xml:space="preserve">
     <value>Copier les lignes affichées</value>
   </data>
   <data name="LogsEmpty" xml:space="preserve">
-    <value>Aucune ligne pour l'instant : les actions d'un bot s'affichent ici à mesure qu'il les fait, ainsi que les avertissements et erreurs de l'hôte.</value>
+    <value>Aucune ligne : les actions des bots s'affichent ici.</value>
   </data>
   <data name="LinesKeptOne" xml:space="preserve">
     <value>{0:N0} ligne gardée</value>
@@ -914,9 +833,6 @@
   <data name="SkillNumber" xml:space="preserve">
     <value>compétence {0}</value>
   </data>
-  <data name="Live" xml:space="preserve">
-    <value>en direct</value>
-  </data>
   <data name="ReplayCapture" xml:space="preserve">
     <value>Rejouer une capture…</value>
   </data>
@@ -984,37 +900,34 @@
     <value>{0} affichées sur {1}</value>
   </data>
   <data name="FramesSearch" xml:space="preserve">
-    <value>Message, par exemple Map</value>
+    <value>Message</value>
   </data>
   <data name="HideUnread" xml:space="preserve">
     <value>Masquer les non lus</value>
   </data>
   <data name="HideUnreadHint" xml:space="preserve">
-    <value>Cacher les trames dont le protocole lisible ne connaît pas le message</value>
+    <value>Masquer les trames que le protocole lisible ne lit pas</value>
   </data>
   <data name="Freeze" xml:space="preserve">
     <value>Figer</value>
   </data>
   <data name="FreezeHint" xml:space="preserve">
-    <value>Les nouvelles trames attendent qu'on dégèle</value>
+    <value>Figer : les nouvelles trames attendent</value>
   </data>
   <data name="ClearFrames" xml:space="preserve">
     <value>Vider la liste</value>
   </data>
   <data name="FramesEmpty" xml:space="preserve">
-    <value>Aucune trame : celles d'un bot s'enregistrent dès que son client passe par D3B, et une capture de la connexion de jeu se rejoue ici.</value>
+    <value>Aucune trame : celles d'un bot s'affichent dès qu'il joue, ou rejoue une capture.</value>
   </data>
   <data name="Map" xml:space="preserve">
     <value>Carte</value>
-  </data>
-  <data name="MapHint" xml:space="preserve">
-    <value>La carte d'un bot, dessinée depuis le pack de ce build au fil de ses déplacements</value>
   </data>
   <data name="ShowMap" xml:space="preserve">
     <value>Carte</value>
   </data>
   <data name="MapNoBot" xml:space="preserve">
-    <value>Aucun bot : la carte suit un bot dès que son client a choisi son perso à travers D3B.</value>
+    <value>Aucun bot : la carte suit un bot dès qu'il joue.</value>
   </data>
   <data name="MapNotInPack" xml:space="preserve">
     <value>La carte {0} n'est pas dans le pack de ce build.</value>
@@ -1170,16 +1083,13 @@
     <value>Ajouter une ressource</value>
   </data>
   <data name="ZoneNothingYet" xml:space="preserve">
-    <value>Choisis des ressources et un lieu : la zone s'affiche ici.</value>
-  </data>
-  <data name="ZoneSuggested" xml:space="preserve">
-    <value>Où poussent tes ressources</value>
+    <value>Choisis des ressources et un lieu.</value>
   </data>
   <data name="ZoneSearch" xml:space="preserve">
-    <value>Chercher une autre sous-zone</value>
+    <value>Autre sous-zone</value>
   </data>
   <data name="ActivityLeftFull" xml:space="preserve">
-    <value>Encore plein une fois déchargé : il reste plus que ce que l'activité dépose.</value>
+    <value>Encore plein après le dépôt.</value>
   </data>
   <data name="TourIsolated" xml:space="preserve">
     <value>Isolée, laissée</value>
@@ -1201,12 +1111,6 @@
   </data>
   <data name="Statistics" xml:space="preserve">
     <value>Statistiques</value>
-  </data>
-  <data name="StatisticsSummaryOne" xml:space="preserve">
-    <value>{0} session comptée, gardée d'un lancement de l'app à l'autre</value>
-  </data>
-  <data name="StatisticsSummaryMany" xml:space="preserve">
-    <value>{0} sessions comptées, gardées d'un lancement de l'app à l'autre</value>
   </data>
   <data name="StatisticsEveryCharacter" xml:space="preserve">
     <value>Tous les persos</value>
@@ -1251,10 +1155,10 @@
     <value>En cours</value>
   </data>
   <data name="StatisticsEmpty" xml:space="preserve">
-    <value>Aucune session sur cette période pour l'instant.</value>
+    <value>Aucune session sur cette période.</value>
   </data>
   <data name="StatisticsUnavailable" xml:space="preserve">
-    <value>Les statistiques ont besoin de la base de D3B, qui ne s'est pas ouverte.</value>
+    <value>La base de D3B ne s'est pas ouverte.</value>
   </data>
   <data name="StatisticsLevelsOne" xml:space="preserve">
     <value>+{0} niveau</value>
@@ -1272,6 +1176,141 @@
     <value>Entre deux actions</value>
   </data>
   <data name="DelayBetweenStepsHelp" xml:space="preserve">
-    <value>Ce qu'une activité laisse passer après chaque action, récolte, trajet ou dépôt, pour que le client l'affiche.</value>
+    <value>Pause après chaque action, pour que le client l'affiche.</value>
+  </data>
+  <data name="CollapseSidebar" xml:space="preserve">
+    <value>Réduire la barre latérale</value>
+  </data>
+  <data name="ExpandSidebar" xml:space="preserve">
+    <value>Afficher la barre latérale</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>Aperçu</value>
+  </data>
+  <data name="PlayedBy" xml:space="preserve">
+    <value>Joué par</value>
+  </data>
+  <data name="More" xml:space="preserve">
+    <value>Plus</value>
+  </data>
+  <data name="Duplicate" xml:space="preserve">
+    <value>Dupliquer</value>
+  </data>
+  <data name="DuplicateProfile" xml:space="preserve">
+    <value>Dupliquer le profil</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Retour</value>
+  </data>
+  <data name="Unsaved" xml:space="preserve">
+    <value>Non enregistré</value>
+  </data>
+  <data name="AddResources" xml:space="preserve">
+    <value>Ajouter des ressources</value>
+  </data>
+  <data name="AddResourcesCount" xml:space="preserve">
+    <value>Ajouter {0}</value>
+  </data>
+  <data name="AllJobs" xml:space="preserve">
+    <value>Tous</value>
+  </data>
+  <data name="NoJob" xml:space="preserve">
+    <value>Sans métier</value>
+  </data>
+  <data name="NoMatch" xml:space="preserve">
+    <value>Aucun résultat</value>
+  </data>
+  <data name="CopyOf" xml:space="preserve">
+    <value>{0} (copie)</value>
+  </data>
+  <data name="CopyOfNumbered" xml:space="preserve">
+    <value>{0} (copie {1})</value>
+  </data>
+  <data name="ProfileSaved" xml:space="preserve">
+    <value>{0} enregistré</value>
+  </data>
+  <data name="ProfileDeleted" xml:space="preserve">
+    <value>{0} supprimé</value>
+  </data>
+  <data name="LeaveUnsavedTitle" xml:space="preserve">
+    <value>Quitter sans enregistrer ?</value>
+  </data>
+  <data name="LeaveUnsavedDetail" xml:space="preserve">
+    <value>{0} a des changements.</value>
+  </data>
+  <data name="Stay" xml:space="preserve">
+    <value>Rester</value>
+  </data>
+  <data name="Discard" xml:space="preserve">
+    <value>Ignorer</value>
+  </data>
+  <data name="DeleteProfileTitle" xml:space="preserve">
+    <value>Supprimer {0} ?</value>
+  </data>
+  <data name="DeleteProfilePlayersOne" xml:space="preserve">
+    <value>{0} perso le joue : il n'aura plus de profil.</value>
+  </data>
+  <data name="DeleteProfilePlayersOther" xml:space="preserve">
+    <value>{0} persos le jouent : ils n'auront plus de profil.</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Créer</value>
+  </data>
+  <data name="Pods" xml:space="preserve">
+    <value>Pods</value>
+  </data>
+  <data name="ForgetTitle" xml:space="preserve">
+    <value>Oublier {0} ?</value>
+  </data>
+  <data name="Character" xml:space="preserve">
+    <value>Perso</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="StatisticsStarted" xml:space="preserve">
+    <value>Début</value>
+  </data>
+  <data name="StatisticsDuration" xml:space="preserve">
+    <value>Durée</value>
+  </data>
+  <data name="Layers" xml:space="preserve">
+    <value>Calques</value>
+  </data>
+  <data name="LogsSource" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="LinesCopiedOne" xml:space="preserve">
+    <value>{0} ligne copiée</value>
+  </data>
+  <data name="LinesCopiedOther" xml:space="preserve">
+    <value>{0} lignes copiées</value>
+  </data>
+  <data name="DelaysRestored" xml:space="preserve">
+    <value>Délais rétablis</value>
+  </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Copié</value>
+  </data>
+  <data name="StatisticsTotal" xml:space="preserve">
+    <value>Ressources</value>
+  </data>
+  <data name="ToastDone" xml:space="preserve">
+    <value>{0} : activité finie</value>
+  </data>
+  <data name="ToastFailed" xml:space="preserve">
+    <value>{0} : activité échouée</value>
+  </data>
+  <data name="ToastStillFull" xml:space="preserve">
+    <value>{0} : encore plein après la banque</value>
+  </data>
+  <data name="ToastPaused" xml:space="preserve">
+    <value>{0} : en pause, tu le joues</value>
+  </data>
+  <data name="ToastDisconnected" xml:space="preserve">
+    <value>{0} : déconnecté</value>
+  </data>
+  <data name="ToastFight" xml:space="preserve">
+    <value>{0} : en combat</value>
   </data>
 </root>

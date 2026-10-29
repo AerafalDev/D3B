@@ -1,12 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
 using D3B.Bot.Activities;
 using D3B.Bot.Harvesting;
@@ -46,21 +46,6 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
     {
         return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(HarvestViewsTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
-    }
-
-    private static void Draw(Window window, string name)
-    {
-        // Both themes drawn, as the app has them; the app's own is given back.
-        foreach (var theme in new[] { ThemeVariant.Dark, ThemeVariant.Light })
-        {
-            Application.Current!.RequestedThemeVariant = theme;
-            Dispatcher.UIThread.RunJobs();
-            Assert.NotNull(window.CaptureRenderedFrame());
-            Drawings.Save(window, $"{name}-{theme}");
-        }
-
-        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
-        Dispatcher.UIThread.RunJobs();
     }
 
     public async ValueTask DisposeAsync()
@@ -107,6 +92,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         // A bot met an ash elsewhere: the maps drawing its graphic are probable.
         host.Services.GetRequiredService<GraphicSkills>().Learn(TestPlay.TreeGfxId, [TestPlay.TreeSkillId]);
 
+        var dialogs = new List<bool>();
         var runner = await TestHosts.RunningAsync(host);
         var (english, french, zone, icons) = await OnTheUIThreadAsync(() =>
         {
@@ -117,6 +103,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             var main = new MainViewModel(runner, localizer);
             var window = new MainWindow { DataContext = main, Width = 1280, Height = 2000 };
 
+            dialogs.Clear();
             main.Refresh();
             window.Show();
             main.ShowProfilesCommand.Execute(null);
@@ -128,13 +115,29 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             var zone = window.GetVisualDescendants().OfType<ZoneMapCanvas>().Single().Scene;
             var icons = Icons(window);
 
-            Draw(window, "profile-en");
-            main.SwitchLanguageCommand.Execute(null);
+            Drawings.Draw(window, "profile-en");
+            main.Settings.UseFrenchCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
             var french = Texts(window);
 
-            Draw(window, "profile-fr");
+            Drawings.Draw(window, "profile-fr");
+
+            // Its dialogs, over the editor: resources chosen several at once, a question, a new profile.
+            var editing = main.Profiles.Editing!;
+
+            editing.Editor!.Sections.SelectMany(section => section.Fields).OfType<ResourcesFieldViewModel>().Single().ChooseCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            dialogs.Add(window.GetVisualDescendants().OfType<ResourcePickerView>().Any(view => view.IsEffectivelyVisible));
+            Drawings.Draw(window, "picker-fr");
+            main.Dialogs.Close();
+            editing.AskDeleteCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            dialogs.Add(window.GetVisualDescendants().OfType<QuestionView>().Any(view => view.IsEffectivelyVisible));
+            Drawings.Draw(window, "question-fr");
+            main.Dialogs.Close();
+            Dispatcher.UIThread.RunJobs();
+            dialogs.Add(main.Dialogs.IsOpen);
             localizer.Use(Localizer.English);
             window.Close();
 
@@ -143,12 +146,12 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
         // Each tile's resource, and its profession beside the level.
         Assert.Equal(4, icons);
-        Assert.Contains("What it harvests", english);
+        Assert.Contains("Place", english);
         Assert.Contains("Ash", english);
         Assert.Contains("Chestnut", english);
         Assert.Contains("Lumberjack, level 1", english);
         Assert.Contains("Lumberjack, level 20", english);
-        Assert.Contains("Where your resources grow", english);
+        Assert.Contains("Preview", english);
         Assert.Contains("Level 10, 5 maps, Ash, Chestnut", english);
         Assert.Contains("maps to go through", english);
         Assert.Contains("probable maps", english);
@@ -159,10 +162,11 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("What harvesting brings", english);
         Assert.Contains("Everything but what is worn", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Ce qu'il récolte", french);
+        Assert.Contains("Lieu", french);
+        Assert.Equal([true, true, false], dialogs);
         Assert.Contains("Frêne", french);
         Assert.Contains("Bûcheron, niveau 20", french);
-        Assert.Contains("Où poussent tes ressources", french);
+        Assert.Contains("Aperçu", french);
         Assert.Contains("cartes à parcourir", french);
         Assert.Contains("cartes probables", french);
         Assert.Contains("2 sur 2", french);
@@ -206,16 +210,16 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             var icons = Icons(window);
 
-            Draw(window, "card-en");
+            Drawings.Draw(window, "card-en");
             main.Bots.Items[0].ShowMapCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             english.AddRange(Texts(window));
-            Draw(window, "map-en");
+            Drawings.Draw(window, "map-en");
 
             var map = (main.Map.Scene?.Activity?.Target, main.Map.Scene?.Activity?.Wanted.ToArray(), main.Map.Tour?.Squares.Length, main.Map.Scene?.Elements.Count(element => element.Icon is not null));
 
-            main.SwitchLanguageCommand.Execute(null);
+            main.Settings.UseFrenchCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));
@@ -223,7 +227,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));
-            Draw(window, "card-fr");
+            Drawings.Draw(window, "card-fr");
             localizer.Use(Localizer.English);
             window.Close();
 
@@ -239,7 +243,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("Ash 0", english);
         Assert.Equal(2, icons);
         Assert.Contains("Chestnut needs Lumberjack 20, the character is 1", english);
-        Assert.Contains("Activity", english);
+        Assert.Contains("Layers", english);
         Assert.Contains("The tour", english);
         Assert.Contains("Harvesting Ash · Tour 1, map 1 of 4", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
@@ -247,7 +251,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("Tournée 1, carte 1 sur 4", french);
         Assert.Contains("Frêne 0", french);
         Assert.Contains("Châtaignier demande Bûcheron 20, le perso est 1", french);
-        Assert.Contains("Activité", french);
+        Assert.Contains("Calques", french);
         Assert.Contains("La tournée", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Equal(TestPlay.TreeCell, map.Target);
@@ -320,14 +324,14 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             var english = Texts(window);
             var icons = Icons(window);
 
-            Draw(window, "statistics-en");
-            main.SwitchLanguageCommand.Execute(null);
+            Drawings.Draw(window, "statistics-en");
+            main.Settings.UseFrenchCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
 
             var french = Texts(window);
 
-            Draw(window, "statistics-fr");
+            Drawings.Draw(window, "statistics-fr");
             localizer.Use(Localizer.English);
             window.Close();
 

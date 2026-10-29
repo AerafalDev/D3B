@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D3B.App.Hosting;
@@ -35,21 +34,6 @@ public sealed class SettingsViewTests : IAsyncDisposable
     private static List<string?> Boxes(Visual root)
     {
         return [.. root.GetVisualDescendants().OfType<NumericUpDown>().Select(box => box.Text)];
-    }
-
-    private static void Draw(Window window, string name)
-    {
-        // Both themes drawn, as the app has them; the app's own is given back.
-        foreach (var theme in new[] { ThemeVariant.Dark, ThemeVariant.Light })
-        {
-            Application.Current!.RequestedThemeVariant = theme;
-            Dispatcher.UIThread.RunJobs();
-            Assert.NotNull(window.CaptureRenderedFrame());
-            Drawings.Save(window, $"{name}-{theme}");
-        }
-
-        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
-        Dispatcher.UIThread.RunJobs();
     }
 
     public async ValueTask DisposeAsync()
@@ -111,16 +95,16 @@ public sealed class SettingsViewTests : IAsyncDisposable
                 var english = Texts(window);
                 var boxes = new List<List<string?>> { Boxes(window) };
 
-                Draw(window, "settings-en");
+                Drawings.Draw(window, "settings-en");
                 main.Settings.UseFrenchCommand.Execute(null);
                 Dispatcher.UIThread.RunJobs();
 
                 var french = Texts(window);
 
                 boxes.Add(Boxes(window));
-                Draw(window, "settings-fr");
+                Drawings.Draw(window, "settings-fr");
 
-                var raised = window.GetVisualDescendants().OfType<Border>().Count(border => border.Classes.Contains("Raised") && border.IsEffectivelyVisible);
+                var raised = window.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Ellipse>().Count(dot => dot.Classes.Contains("Raised") && dot.IsEffectivelyVisible);
 
                 localizer.Use(Localizer.English);
                 window.Close();
@@ -132,10 +116,8 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Contains("Settings", english);
         Assert.Contains("Display time", english);
         Assert.Contains("1.2 s", english);
-        Assert.Contains("Measured: 0.5 s", english);
         Assert.Contains("Server's answer", english);
-        Assert.Contains("Default: 10 s", english);
-        Assert.Contains("Restore defaults", english);
+        Assert.Contains("Restore", english);
         Assert.Contains("Record the connections", english);
         Assert.Contains(@"Recording now, in C:\Users\Player\AppData\Local\D3B\captures", english);
         Assert.Contains("Appearance", english);
@@ -146,7 +128,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Contains("Temps d'affichage", french);
         Assert.Contains("1,2 s", french);
         Assert.Contains("Réponse du serveur", french);
-        Assert.Contains("Rétablir les valeurs par défaut", french);
+        Assert.Contains("Rétablir", french);
         Assert.Contains("Au prochain démarrage", french);
         Assert.Contains("Sombre", french);
         Assert.Contains("Base de données", french);

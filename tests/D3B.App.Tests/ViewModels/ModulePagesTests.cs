@@ -126,7 +126,7 @@ public sealed class ModulePagesTests : IAsyncDisposable
             var control = Assert.IsType<TestPage>(page.Content);
             var english = (page.Title, control.Greeting, control.Count);
 
-            main.SwitchLanguageCommand.Execute(null);
+            main.Settings.UseFrenchCommand.Execute(null);
 
             return (english, (page.Title, control.Greeting, control.Count));
         });
@@ -199,7 +199,7 @@ public sealed class ModulePagesTests : IAsyncDisposable
             main.Refresh();
             main.Pages[0].ShowCommand.Execute(null);
             main.Pages[1].ShowCommand.Execute(null);
-            main.SwitchLanguageCommand.Execute(null);
+            main.Settings.UseFrenchCommand.Execute(null);
 
             return (main.Pages[0].Content, main.Pages[1].Content);
         });

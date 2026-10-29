@@ -28,6 +28,7 @@ internal sealed partial class LogsViewModel : ObservableObject
 {
     private readonly Localizer _localizer;
     private readonly BotChoice _choice;
+    private readonly Toasts _toasts;
     private readonly List<LogLineViewModel> _lines = [];
     private readonly Dictionary<CharacterKey, long> _readOfBots = [];
     private long _readOfHost;
@@ -45,6 +46,17 @@ internal sealed partial class LogsViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowsSources))]
     public partial LogSourceViewModel? Source { get; private set; }
+
+    /// <summary>Gets or sets the source chosen in the page's selector: setting it chooses it, as a click on it does.</summary>
+    public LogSourceViewModel? Chosen
+    {
+        get => Source;
+        set
+        {
+            if (value is not null)
+                Choose(value);
+        }
+    }
 
     /// <summary>Gets which lines the page shows, by their tone.</summary>
     [ObservableProperty]
@@ -82,9 +94,11 @@ internal sealed partial class LogsViewModel : ObservableObject
     /// <summary>Initializes a new instance of the <see cref="LogsViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
     /// <param name="choice">The bot the logs page and the inspector look at.</param>
-    public LogsViewModel(Localizer localizer, BotChoice choice)
+    /// <param name="toasts">What the window says in its toasts, such as the lines copied.</param>
+    public LogsViewModel(Localizer localizer, BotChoice choice, Toasts toasts)
     {
         _localizer = localizer;
+        _toasts = toasts;
         _choice = choice;
         Sources.Add(new LogSourceViewModel(LogSourceKind.All, null, Choose));
         Sources.Add(new LogSourceViewModel(LogSourceKind.Host, null, Choose));
@@ -297,6 +311,12 @@ internal sealed partial class LogsViewModel : ObservableObject
         return level && line.Says(Search.Trim());
     }
 
+    /// <summary>Says the lines shown were copied.</summary>
+    public void Copied()
+    {
+        _toasts.Show(new Toast(_localizer.Plural("LinesCopied", Lines.Count), Tone.Success));
+    }
+
     private void RefreshSummary()
     {
         IsEmpty = Lines.Count is 0;
@@ -313,5 +333,10 @@ internal sealed partial class LogsViewModel : ObservableObject
     private string NameOf(BotActor bot)
     {
         return bot.State.Name.Length > 0 ? bot.State.Name : _localizer.Format("CharacterNamed", bot.Key.CharacterId);
+    }
+
+    partial void OnSourceChanged(LogSourceViewModel? value)
+    {
+        OnPropertyChanged(nameof(Chosen));
     }
 }

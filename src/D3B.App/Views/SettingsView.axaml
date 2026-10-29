@@ -8,418 +8,336 @@
     xmlns:vm="clr-namespace:D3B.App.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
-        <Style Selector="Border.SectionHead">
-            <Setter Property="Padding" Value="20,16,16,14" />
-        </Style>
-        <Style Selector="Border.SectionIcon">
-            <Setter Property="Width" Value="30" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="CornerRadius" Value="{DynamicResource MdCornerRadius}" />
-            <Setter Property="Background" Value="{DynamicResource GhostColor}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Border.SectionIcon c|Icon">
-            <Setter Property="Width" Value="16" />
-            <Setter Property="Height" Value="16" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-        </Style>
-        <Style Selector="TextBlock.SectionTitle">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style Selector="Border.Row">
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-            <Setter Property="BorderThickness" Value="0,1,0,0" />
-            <Setter Property="Padding" Value="20,14" />
-        </Style>
-        <Style Selector="TextBlock.FieldLabel">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="Medium" />
-        </Style>
-        <Style Selector="TextBlock.GroupTitle">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-        </Style>
-        <Style Selector="Border.Group">
-            <Setter Property="Background" Value="{DynamicResource PlateFooterColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-            <Setter Property="BorderThickness" Value="0,1,0,0" />
-            <Setter Property="Padding" Value="20,9" />
-        </Style>
-        <Style Selector="Border.Raised">
+        <Style Selector="Ellipse.Raised">
             <Setter Property="Width" Value="6" />
             <Setter Property="Height" Value="6" />
-            <Setter Property="CornerRadius" Value="3" />
-            <Setter Property="Background" Value="{DynamicResource WarningColor}" />
+            <Setter Property="Fill" Value="{DynamicResource WarningColor}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
-        <Style Selector="Border.Segments">
-            <Setter Property="Background" Value="{DynamicResource GhostColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="{DynamicResource MdCornerRadius}" />
-            <Setter Property="Padding" Value="3" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Border.Segment">
-            <Setter Property="CornerRadius" Value="{DynamicResource SmCornerRadius}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="MinWidth" Value="104" />
-        </Style>
-        <Style Selector="Border.Segment.Selected">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-        </Style>
-        <Style Selector="Border.Segment TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-        </Style>
-        <Style Selector="Border.Segment.Selected TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style Selector="Border.Segment c|Icon">
-            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-        </Style>
-        <Style Selector="Border.Segment.Selected c|Icon">
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
-        </Style>
-        <Style Selector="Button.SegmentButton">
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="Padding" Value="12,0" />
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="SelectableTextBlock.Path">
-            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New" />
+        <Style Selector="TextBlock.Group">
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </UserControl.Styles>
     <UserControl.DataTemplates>
         <DataTemplate x:DataType="vm:DelayViewModel">
             <Border Classes="Row">
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Spacing="3" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock
-                                Classes="FieldLabel"
-                                Text="{Binding Label}"
-                                TextTrimming="CharacterEllipsis" />
-                            <Border
-                                Classes="Raised"
-                                IsVisible="{Binding IsRaised}"
-                                ToolTip.Tip="{l:Tr DelayRaised}" />
-                        </StackPanel>
-                        <TextBlock
-                            Classes="Caption Muted"
-                            Text="{Binding Help}"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
                     <StackPanel
-                        Grid.Column="1"
-                        Margin="20,0,0,0"
-                        Spacing="4"
+                        Orientation="Horizontal"
+                        Spacing="8"
                         VerticalAlignment="Center">
-                        <NumericUpDown
-                            FormatString="0.0"
-                            Increment="{Binding Increment}"
-                            Maximum="{Binding Maximum}"
-                            Minimum="{Binding Minimum}"
-                            NumberFormat="{Binding NumberFormat}"
-                            Value="{Binding Value}"
-                            Width="132" />
                         <TextBlock
-                            Classes="Caption Muted Figures"
-                            HorizontalAlignment="Right"
-                            Text="{Binding DefaultText}" />
+                            Classes="Label"
+                            Text="{Binding Label}"
+                            TextTrimming="CharacterEllipsis"
+                            VerticalAlignment="Center" />
+                        <c:Icon Classes="Help" Data="{StaticResource IconInfo}">
+                            <ToolTip.Tip>
+                                <StackPanel MaxWidth="320" Spacing="4">
+                                    <TextBlock Text="{Binding Help}" TextWrapping="Wrap" />
+                                    <TextBlock Classes="Caption Muted" Text="{Binding DefaultText}" />
+                                </StackPanel>
+                            </ToolTip.Tip>
+                        </c:Icon>
+                        <Ellipse
+                            Classes="Raised"
+                            IsVisible="{Binding IsRaised}"
+                            ToolTip.Tip="{l:Tr DelayRaised}" />
                     </StackPanel>
+                    <NumericUpDown
+                        AutomationProperties.Name="{Binding Label}"
+                        FormatString="0.0"
+                        Grid.Column="1"
+                        Increment="{Binding Increment}"
+                        Margin="16,0,0,0"
+                        Maximum="{Binding Maximum}"
+                        Minimum="{Binding Minimum}"
+                        NumberFormat="{Binding NumberFormat}"
+                        Value="{Binding Value}"
+                        Width="132" />
                 </Grid>
             </Border>
         </DataTemplate>
     </UserControl.DataTemplates>
-    <DockPanel>
-        <StackPanel Classes="PageHeader" DockPanel.Dock="Top">
-            <TextBlock Classes="PageTitle" Text="{l:Tr Settings}" />
-            <TextBlock
-                Classes="Small Muted"
-                Text="{l:Tr SettingsSummary}"
-                TextWrapping="Wrap" />
-        </StackPanel>
-        <ScrollViewer>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition MaxWidth="864" Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Margin="32,0,32,32" Spacing="16">
-                    <Border Classes="Plate">
-                        <StackPanel>
-                            <Border Classes="SectionHead">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <Border Classes="SectionIcon">
-                                        <c:Icon Data="{StaticResource IconScreen}" />
-                                    </Border>
-                                    <StackPanel Spacing="1" VerticalAlignment="Center">
-                                        <TextBlock Classes="SectionTitle" Text="{l:Tr SettingsClient}" />
-                                        <TextBlock Classes="Caption Muted" Text="{l:Tr SettingsClientDetail}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                            <Border Classes="Row" Padding="20,16,20,18">
-                                <StackPanel Spacing="10">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <TextBlock
-                                                Classes="FieldLabel"
-                                                Text="{Binding Display.Label}"
-                                                VerticalAlignment="Center" />
-                                            <Border
-                                                Classes="Raised"
-                                                IsVisible="{Binding Display.IsRaised}"
-                                                ToolTip.Tip="{l:Tr DelayRaised}" />
+    <c:AppPage Title="{l:Tr Settings}">
+        <StackPanel MaxWidth="840" HorizontalAlignment="Left" Spacing="16">
+            <Border Classes="Card">
+                <StackPanel>
+                    <TextBlock
+                        Classes="Title"
+                        Margin="0,0,0,4"
+                        Text="{l:Tr SettingsClient}" />
+                    <Border Classes="Row">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Classes="Label"
+                                    Text="{Binding Display.Label}"
+                                    VerticalAlignment="Center" />
+                                <c:Icon Classes="Help" Data="{StaticResource IconInfo}">
+                                    <ToolTip.Tip>
+                                        <StackPanel MaxWidth="320" Spacing="4">
+                                            <TextBlock Text="{Binding Display.Help}" TextWrapping="Wrap" />
+                                            <TextBlock Classes="Caption Muted" Text="{Binding Display.DefaultText}" />
                                         </StackPanel>
-                                        <TextBlock
-                                            Classes="Figures"
-                                            FontSize="22"
-                                            FontWeight="SemiBold"
-                                            Grid.Column="1"
-                                            Text="{Binding Display.ValueText}" />
-                                    </Grid>
-                                    <Slider
-                                        IsSnapToTickEnabled="True"
-                                        Maximum="{Binding Display.SliderMaximum}"
-                                        Minimum="{Binding Display.SliderMinimum}"
-                                        TickFrequency="{Binding Display.SliderStep}"
-                                        Value="{Binding Display.Slider}" />
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Classes="Caption Muted Figures" Text="{Binding Display.DefaultText}" />
-                                        <TextBlock
-                                            Classes="Caption Muted Figures"
-                                            Grid.Column="1"
-                                            Text="{Binding Display.MostText}" />
-                                    </Grid>
-                                    <TextBlock
-                                        Classes="Small Muted"
-                                        Text="{Binding Display.Help}"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-                    <Border Classes="Plate">
-                        <StackPanel>
-                            <Border Classes="SectionHead">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Border Classes="SectionIcon">
-                                        <c:Icon Data="{StaticResource IconClock}" />
-                                    </Border>
-                                    <StackPanel
-                                        Grid.Column="1"
-                                        Margin="12,0,0,0"
-                                        Spacing="1"
-                                        VerticalAlignment="Center">
-                                        <TextBlock Classes="SectionTitle" Text="{l:Tr SettingsDelays}" />
-                                        <TextBlock
-                                            Classes="Caption Muted"
-                                            Text="{l:Tr SettingsDelaysDetail}"
-                                            TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <Button
-                                        Classes="Outline"
-                                        Command="{Binding RestoreDelaysCommand}"
-                                        Grid.Column="2"
-                                        Margin="16,0,0,0"
-                                        VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <c:Icon
-                                                Data="{StaticResource IconResume}"
-                                                Height="14"
-                                                Width="14" />
-                                            <TextBlock Text="{l:Tr RestoreDelays}" />
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                            </Border>
-                            <Border Classes="Group">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="GroupTitle" Text="{l:Tr DelaysBots}" />
-                                    <TextBlock
-                                        Classes="Caption Muted"
-                                        Grid.Column="1"
-                                        Text="{l:Tr AppliesAtOnce}" />
-                                </Grid>
-                            </Border>
-                            <ItemsControl ItemsSource="{Binding BotWaits}" />
-                            <Border Classes="Group">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="GroupTitle" Text="{l:Tr DelaysRelay}" />
-                                    <TextBlock
-                                        Classes="Caption Muted"
-                                        Grid.Column="1"
-                                        Text="{l:Tr AppliesNextStart}" />
-                                </Grid>
-                            </Border>
-                            <ItemsControl ItemsSource="{Binding RelayWaits}" />
-                        </StackPanel>
-                    </Border>
-                    <Border Classes="Plate">
-                        <StackPanel>
-                            <Border Classes="SectionHead">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <Border Classes="SectionIcon">
-                                        <c:Icon Data="{StaticResource IconRecord}" />
-                                    </Border>
-                                    <StackPanel Spacing="1" VerticalAlignment="Center">
-                                        <TextBlock Classes="SectionTitle" Text="{l:Tr SettingsCaptures}" />
-                                        <TextBlock Classes="Caption Muted" Text="{l:Tr AppliesNextStart}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                            <Border Classes="Row">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Spacing="3" VerticalAlignment="Center">
-                                        <TextBlock Classes="FieldLabel" Text="{l:Tr RecordCaptures}" />
-                                        <TextBlock
-                                            Classes="Caption Muted"
-                                            Text="{l:Tr RecordCapturesHelp}"
-                                            TextWrapping="Wrap" />
-                                        <TextBlock
-                                            Classes="Caption"
-                                            IsVisible="{Binding CapturesNow, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                            Margin="0,4,0,0"
-                                            Text="{Binding CapturesNow}"
-                                            TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <ToggleSwitch
-                                        Grid.Column="1"
-                                        IsChecked="{Binding RecordsCaptures}"
-                                        Margin="20,0,0,0"
-                                        OffContent=""
-                                        OnContent=""
-                                        VerticalAlignment="Center" />
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-                    <Border Classes="Plate">
-                        <StackPanel>
-                            <Border Classes="SectionHead">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <Border Classes="SectionIcon">
-                                        <c:Icon Data="{StaticResource IconPalette}" />
-                                    </Border>
-                                    <StackPanel Spacing="1" VerticalAlignment="Center">
-                                        <TextBlock Classes="SectionTitle" Text="{l:Tr SettingsAppearance}" />
-                                        <TextBlock Classes="Caption Muted" Text="{l:Tr SettingsAppearanceDetail}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                            <Border Classes="Row">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock
-                                        Classes="FieldLabel"
-                                        Text="{l:Tr Language}"
-                                        VerticalAlignment="Center" />
-                                    <Border Classes="Segments" Grid.Column="1">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Border Classes="Segment" Classes.Selected="{Binding IsFrench}">
-                                                <Button Classes="Ghost SegmentButton" Command="{Binding UseFrenchCommand}">
-                                                    <TextBlock FontSize="12" Text="Français" />
-                                                </Button>
-                                            </Border>
-                                            <Border Classes="Segment" Classes.Selected="{Binding IsEnglish}">
-                                                <Button Classes="Ghost SegmentButton" Command="{Binding UseEnglishCommand}">
-                                                    <TextBlock FontSize="12" Text="English" />
-                                                </Button>
-                                            </Border>
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                            <Border Classes="Row">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock
-                                        Classes="FieldLabel"
-                                        Text="{l:Tr Theme}"
-                                        VerticalAlignment="Center" />
-                                    <Border Classes="Segments" Grid.Column="1">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Border Classes="Segment" Classes.Selected="{Binding IsDark}">
-                                                <Button Classes="Ghost SegmentButton" Command="{Binding UseDarkCommand}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                                        <c:Icon
-                                                            Data="{StaticResource IconMoon}"
-                                                            Height="13"
-                                                            Width="13" />
-                                                        <TextBlock FontSize="12" Text="{l:Tr ThemeDark}" />
-                                                    </StackPanel>
-                                                </Button>
-                                            </Border>
-                                            <Border Classes="Segment" Classes.Selected="{Binding IsLight}">
-                                                <Button Classes="Ghost SegmentButton" Command="{Binding UseLightCommand}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                                        <c:Icon
-                                                            Data="{StaticResource IconSun}"
-                                                            Height="13"
-                                                            Width="13" />
-                                                        <TextBlock FontSize="12" Text="{l:Tr ThemeLight}" />
-                                                    </StackPanel>
-                                                </Button>
-                                            </Border>
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-                    <Border Classes="Plate">
-                        <StackPanel>
-                            <Border Classes="SectionHead">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <Border Classes="SectionIcon">
-                                        <c:Icon Data="{StaticResource IconDatabase}" />
-                                    </Border>
-                                    <StackPanel Spacing="1" VerticalAlignment="Center">
-                                        <TextBlock Classes="SectionTitle" Text="{l:Tr SettingsData}" />
-                                        <TextBlock Classes="Caption Muted" Text="{l:Tr SettingsDataDetail}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                            <Border Classes="Row">
-                                <Grid ColumnDefinitions="168,*">
-                                    <TextBlock Classes="FieldLabel" Text="{l:Tr DataDatabase}" />
-                                    <SelectableTextBlock
-                                        Classes="Path"
-                                        Grid.Column="1"
-                                        Text="{Binding DatabasePath}" />
-                                </Grid>
-                            </Border>
-                            <Border Classes="Row">
-                                <Grid ColumnDefinitions="168,*">
-                                    <TextBlock Classes="FieldLabel" Text="{l:Tr DataPack}" />
-                                    <SelectableTextBlock
-                                        Classes="Path"
-                                        Grid.Column="1"
-                                        Text="{Binding PackPath}" />
-                                </Grid>
-                            </Border>
-                            <Border Classes="Row">
-                                <Grid ColumnDefinitions="168,*">
-                                    <TextBlock Classes="FieldLabel" Text="{l:Tr DataSettings}" />
-                                    <SelectableTextBlock
-                                        Classes="Path"
-                                        Grid.Column="1"
-                                        Text="{Binding SettingsPath}" />
-                                </Grid>
-                            </Border>
-                        </StackPanel>
+                                    </ToolTip.Tip>
+                                </c:Icon>
+                                <Ellipse
+                                    Classes="Raised"
+                                    IsVisible="{Binding Display.IsRaised}"
+                                    ToolTip.Tip="{l:Tr DelayRaised}" />
+                            </StackPanel>
+                            <StackPanel
+                                Grid.Column="1"
+                                Margin="16,0,0,0"
+                                Orientation="Horizontal"
+                                Spacing="12">
+                                <Slider
+                                    AutomationProperties.Name="{Binding Display.Label}"
+                                    IsSnapToTickEnabled="True"
+                                    Maximum="{Binding Display.SliderMaximum}"
+                                    Minimum="{Binding Display.SliderMinimum}"
+                                    TickFrequency="{Binding Display.SliderStep}"
+                                    ToolTip.Tip="{Binding Display.MostText}"
+                                    Value="{Binding Display.Slider}"
+                                    VerticalAlignment="Center"
+                                    Width="240" />
+                                <TextBlock
+                                    Classes="Label Figures"
+                                    MinWidth="40"
+                                    Text="{Binding Display.ValueText}"
+                                    TextAlignment="Right"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
                     </Border>
                 </StackPanel>
-            </Grid>
-        </ScrollViewer>
-    </DockPanel>
+            </Border>
+            <Border Classes="Card">
+                <StackPanel>
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center">
+                            <TextBlock Classes="Title" Text="{l:Tr SettingsDelays}" />
+                            <c:Icon
+                                Classes="Help"
+                                Data="{StaticResource IconInfo}"
+                                ToolTip.Tip="{l:Tr SettingsDelaysDetail}" />
+                        </StackPanel>
+                        <Button
+                            Classes="Outline Small"
+                            Command="{Binding RestoreDelaysCommand}"
+                            Grid.Column="1">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <c:Icon Data="{StaticResource IconRestore}" />
+                                <TextBlock Text="{l:Tr RestoreDelays}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <TextBlock
+                        Classes="Group"
+                        Margin="0,12,0,0"
+                        Text="{l:Tr DelaysBots}" />
+                    <ItemsControl ItemsSource="{Binding BotWaits}" />
+                    <StackPanel
+                        Margin="0,16,0,0"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <TextBlock Classes="Group" Text="{l:Tr DelaysRelay}" />
+                        <c:StatusPill Classes="Plain" Text="{l:Tr AppliesNextStart}" />
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding RelayWaits}" />
+                </StackPanel>
+            </Border>
+            <Border Classes="Card">
+                <StackPanel>
+                    <TextBlock
+                        Classes="Title"
+                        Margin="0,0,0,4"
+                        Text="{l:Tr SettingsCaptures}" />
+                    <Border Classes="Row">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock
+                                        Classes="Label"
+                                        Text="{l:Tr RecordCaptures}"
+                                        VerticalAlignment="Center" />
+                                    <c:Icon
+                                        Classes="Help"
+                                        Data="{StaticResource IconInfo}"
+                                        ToolTip.Tip="{l:Tr RecordCapturesHelp}" />
+                                    <c:StatusPill Classes="Plain" Text="{l:Tr AppliesNextStart}" />
+                                </StackPanel>
+                                <TextBlock
+                                    Classes="Caption Muted"
+                                    IsVisible="{Binding CapturesNow, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    Text="{Binding CapturesNow}"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTip.Tip="{Binding CapturesNow}" />
+                            </StackPanel>
+                            <ToggleSwitch
+                                AutomationProperties.Name="{l:Tr RecordCaptures}"
+                                Grid.Column="1"
+                                IsChecked="{Binding RecordsCaptures}"
+                                Margin="16,0,0,0"
+                                OffContent=""
+                                OnContent=""
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+            <Border Classes="Card">
+                <StackPanel>
+                    <TextBlock
+                        Classes="Title"
+                        Margin="0,0,0,4"
+                        Text="{l:Tr SettingsAppearance}" />
+                    <Border Classes="Row">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock
+                                Classes="Label"
+                                Text="{l:Tr Language}"
+                                VerticalAlignment="Center" />
+                            <Border Classes="Segmented" Grid.Column="1">
+                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                    <Button
+                                        Classes="Segment"
+                                        Classes.Selected="{Binding IsFrench}"
+                                        Command="{Binding UseFrenchCommand}"
+                                        Content="Français" />
+                                    <Button
+                                        Classes="Segment"
+                                        Classes.Selected="{Binding IsEnglish}"
+                                        Command="{Binding UseEnglishCommand}"
+                                        Content="English" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <Border Classes="Row">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock
+                                Classes="Label"
+                                Text="{l:Tr Theme}"
+                                VerticalAlignment="Center" />
+                            <Border Classes="Segmented" Grid.Column="1">
+                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                    <Button
+                                        Classes="Segment"
+                                        Classes.Selected="{Binding IsDark}"
+                                        Command="{Binding UseDarkCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <c:Icon Classes="Small" Data="{StaticResource IconMoon}" />
+                                            <TextBlock Text="{l:Tr ThemeDark}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button
+                                        Classes="Segment"
+                                        Classes.Selected="{Binding IsLight}"
+                                        Command="{Binding UseLightCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <c:Icon Classes="Small" Data="{StaticResource IconSun}" />
+                                            <TextBlock Text="{l:Tr ThemeLight}" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+            <Border Classes="Card">
+                <StackPanel>
+                    <TextBlock
+                        Classes="Title"
+                        Margin="0,0,0,4"
+                        Text="{l:Tr SettingsData}" />
+                    <Border Classes="Row">
+                        <Grid ColumnDefinitions="160,*,Auto">
+                            <TextBlock
+                                Classes="Label"
+                                Text="{l:Tr DataDatabase}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Classes="Mono Muted"
+                                Grid.Column="1"
+                                Text="{Binding DatabasePath}"
+                                TextTrimming="PrefixCharacterEllipsis"
+                                ToolTip.Tip="{Binding DatabasePath}"
+                                VerticalAlignment="Center" />
+                            <Button
+                                AutomationProperties.Name="{l:Tr Copy}"
+                                Classes="Ghost IconButton"
+                                Click="OnCopyPathClick"
+                                Grid.Column="2"
+                                Margin="8,0,0,0"
+                                Tag="{Binding DatabasePath}"
+                                ToolTip.Tip="{l:Tr Copy}">
+                                <c:Icon Data="{StaticResource IconCopy}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <Border Classes="Row">
+                        <Grid ColumnDefinitions="160,*,Auto">
+                            <TextBlock
+                                Classes="Label"
+                                Text="{l:Tr DataPack}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Classes="Mono Muted"
+                                Grid.Column="1"
+                                Text="{Binding PackPath}"
+                                TextTrimming="PrefixCharacterEllipsis"
+                                ToolTip.Tip="{Binding PackPath}"
+                                VerticalAlignment="Center" />
+                            <Button
+                                AutomationProperties.Name="{l:Tr Copy}"
+                                Classes="Ghost IconButton"
+                                Click="OnCopyPathClick"
+                                Grid.Column="2"
+                                Margin="8,0,0,0"
+                                Tag="{Binding PackPath}"
+                                ToolTip.Tip="{l:Tr Copy}">
+                                <c:Icon Data="{StaticResource IconCopy}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <Border Classes="Row">
+                        <Grid ColumnDefinitions="160,*,Auto">
+                            <TextBlock
+                                Classes="Label"
+                                Text="{l:Tr DataSettings}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Classes="Mono Muted"
+                                Grid.Column="1"
+                                Text="{Binding SettingsPath}"
+                                TextTrimming="PrefixCharacterEllipsis"
+                                ToolTip.Tip="{Binding SettingsPath}"
+                                VerticalAlignment="Center" />
+                            <Button
+                                AutomationProperties.Name="{l:Tr Copy}"
+                                Classes="Ghost IconButton"
+                                Click="OnCopyPathClick"
+                                Grid.Column="2"
+                                Margin="8,0,0,0"
+                                Tag="{Binding SettingsPath}"
+                                ToolTip.Tip="{l:Tr Copy}">
+                                <c:Icon Data="{StaticResource IconCopy}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </c:AppPage>
 </UserControl>

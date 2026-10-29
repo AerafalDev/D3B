@@ -37,6 +37,7 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly ProfileStarter? _starter;
     private readonly Action<CharacterKey>? _showJournal;
     private readonly Action<CharacterKey>? _showMap;
+    private readonly Toasts? _toasts;
     private readonly GameTextFormatter _says;
     private readonly GameIcons? _icons;
     private readonly TimeProvider _time;
@@ -45,6 +46,11 @@ internal sealed partial class BotViewModel : ObservableObject
     private ActivityChoiceViewModel? _startedChoice;
     private ActivityReport? _shownReport;
     private CultureInfo? _shownCulture;
+    private bool _seen;
+    private bool _wasPaused;
+    private bool _wasConnected;
+    private bool _wasFighting;
+    private ActivityRun? _runningSeen;
 
     /// <summary>Gets the bot.</summary>
     public BotActor Bot { get; }
@@ -236,9 +242,11 @@ internal sealed partial class BotViewModel : ObservableObject
     /// <param name="localizer">The app's texts.</param>
     /// <param name="showJournal">Shows the bot's journal on the logs page, or <see langword="null"/> when no page shows it.</param>
     /// <param name="showMap">Shows the bot's map on the map page, or <see langword="null"/> when no page shows it.</param>
-    public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer, Action<CharacterKey>? showJournal = null, Action<CharacterKey>? showMap = null)
+    /// <param name="toasts">What the window says in its toasts, of what the bot meets, or <see langword="null"/> to say nothing.</param>
+    public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer, Action<CharacterKey>? showJournal = null, Action<CharacterKey>? showMap = null, Toasts? toasts = null)
     {
         Bot = bot;
+        _toasts = toasts;
         _showJournal = showJournal;
         _showMap = showMap;
         _services = services;
@@ -335,6 +343,7 @@ internal sealed partial class BotViewModel : ObservableObject
         RefreshLoad(state);
         RefreshActivity();
         RefreshTone();
+        Announce(state);
     }
 
     [RelayCommand(CanExecute = nameof(CanStart))]
@@ -556,6 +565,43 @@ internal sealed partial class BotViewModel : ObservableObject
             : run.IsStillFull ? _localizer["ActivityLeftFull"]
             : run.Failure?.Message ?? "";
         RefreshReport(run, run.Activity.Report);
+    }
+
+    private void Announce(CharacterState state)
+    {
+        var run = Bot.Activity;
+        var running = run is { IsOver: false };
+
+        // Only what changed under the app's eyes is said: a bot met for the first time already paused or done says nothing.
+        if (_seen && _toasts is { } toasts)
+        {
+            if (run is { IsOver: true } && run == _runningSeen)
+            {
+                var outcome = run.Completion.GetAwaiter().GetResult();
+                var (key, tone) = run.IsStillFull ? ("ToastStillFull", Tone.Warning)
+                    : outcome is ActivityOutcome.Failed ? ("ToastFailed", Tone.Danger)
+                    : outcome is ActivityOutcome.Done ? ("ToastDone", Tone.Success)
+                    : (null, Tone.Neutral);
+
+                if (key is not null)
+                    toasts.Show(new Toast(_localizer.Format(key, Name), tone, _localizer["ShowJournal"], () => _showJournal?.Invoke(Bot.Key)));
+            }
+
+            if (IsPaused && !_wasPaused)
+                toasts.Show(new Toast(_localizer.Format("ToastPaused", Name), Tone.Warning));
+
+            if (!IsConnected && _wasConnected && (running || _runningSeen is not null))
+                toasts.Show(new Toast(_localizer.Format("ToastDisconnected", Name), Tone.Warning, _localizer["ShowJournal"], () => _showJournal?.Invoke(Bot.Key)));
+
+            if (state.IsFighting && !_wasFighting && running)
+                toasts.Show(new Toast(_localizer.Format("ToastFight", Name), Tone.Warning, _localizer["ShowMap"], () => _showMap?.Invoke(Bot.Key)));
+        }
+
+        _seen = true;
+        _wasPaused = IsPaused;
+        _wasConnected = IsConnected;
+        _wasFighting = state.IsFighting;
+        _runningSeen = running ? run : null;
     }
 
     private void RefreshReport(ActivityRun? run, ActivityReport? report)

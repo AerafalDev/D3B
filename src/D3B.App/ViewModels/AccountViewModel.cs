@@ -34,10 +34,6 @@ internal sealed partial class AccountViewModel : ObservableObject
     [ObservableProperty]
     public partial string Seen { get; private set; } = "";
 
-    /// <summary>Gets whether the card asks whether to forget the account.</summary>
-    [ObservableProperty]
-    public partial bool IsConfirmingForget { get; private set; }
-
     /// <summary>Initializes a new instance of the <see cref="AccountViewModel"/> class.</summary>
     /// <param name="page">The accounts page.</param>
     /// <param name="account">The account, as recorded.</param>
@@ -76,19 +72,14 @@ internal sealed partial class AccountViewModel : ObservableObject
     [RelayCommand]
     private void AskForget()
     {
-        IsConfirmingForget = true;
-    }
+        var localizer = _page.Localizer;
 
-    [RelayCommand]
-    private void KeepIt()
-    {
-        IsConfirmingForget = false;
+        _page.Dialogs.Ask(new QuestionViewModel(_page.Dialogs, localizer.Format("ForgetTitle", Nickname), localizer["ForgetDetail"], localizer["ForgetConfirm"], localizer["Cancel"], () => ForgetCommand.Execute(null), destructive: true));
     }
 
     [RelayCommand]
     private void Forget()
     {
-        IsConfirmingForget = false;
         _ = _page.WriteAsync(books => books.ForgetAsync(Account.Id, CancellationToken.None));
     }
 }

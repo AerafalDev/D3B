@@ -52,6 +52,17 @@ internal sealed partial class InspectorViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsLive))]
     public partial LogSourceViewModel? Bot { get; private set; }
 
+    /// <summary>Gets or sets the source chosen in the page's selector: setting it chooses it, as a click on it does.</summary>
+    public LogSourceViewModel? Chosen
+    {
+        get => Bot;
+        set
+        {
+            if (value is not null)
+                Choose(value);
+        }
+    }
+
     /// <summary>Gets or sets the capture the inspector replays, if it replays one.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsLive))]
@@ -376,5 +387,10 @@ internal sealed partial class InspectorViewModel : ObservableObject
     {
         // A frame unfolded is being read: the frames that come must not scroll it away.
         Follow = false;
+    }
+
+    partial void OnBotChanged(LogSourceViewModel? value)
+    {
+        OnPropertyChanged(nameof(Chosen));
     }
 }
