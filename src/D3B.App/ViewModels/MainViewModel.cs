@@ -223,6 +223,44 @@ internal sealed partial class MainViewModel : ObservableObject
         RefreshPages(services);
     }
 
+    /// <summary>Shows the page of a route, as the sidebar names it.</summary>
+    /// <param name="route">The route: <c>bots</c>, <c>accounts</c> and the others, or a module's page's.</param>
+    public void Navigate(string route)
+    {
+        ArgumentNullException.ThrowIfNull(route);
+
+        switch (route)
+        {
+            case "bots":
+                ShowBots();
+                break;
+            case "accounts":
+                ShowAccounts();
+                break;
+            case "profiles":
+                ShowProfiles();
+                break;
+            case "map":
+                ShowMap();
+                break;
+            case "statistics":
+                ShowStatistics();
+                break;
+            case "logs":
+                ShowLogs();
+                break;
+            case "inspector":
+                ShowInspector();
+                break;
+            case "settings":
+                ShowSettings();
+                break;
+            default:
+                Pages.FirstOrDefault(page => page.Route == route)?.ShowCommand.Execute(null);
+                break;
+        }
+    }
+
     /// <summary>Replaces the module's page whose own code threw what nothing else caught on the UI's thread.</summary>
     /// <param name="exception">What was thrown.</param>
     /// <returns>Whether a page's code threw it, and the page now shows it instead: else the app's own fault, not handled.</returns>

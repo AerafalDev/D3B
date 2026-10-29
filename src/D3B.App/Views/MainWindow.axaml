@@ -35,16 +35,16 @@
     </shadui:Window.Hosts>
     <Grid ColumnDefinitions="Auto,*">
         <shadui:Sidebar
+            Name="Sidebar"
             BorderBrush="{DynamicResource BorderColor}"
             BorderThickness="0,0,1,0"
-            CurrentRoute="{Binding CurrentRoute, Mode=TwoWay}"
+            CurrentRoute="{Binding CurrentRoute}"
             Expanded="{Binding IsSidebarExpanded}"
             MinWidth="56"
             Width="200">
             <StackPanel Margin="0,8" Spacing="4">
                 <shadui:SidebarItem
                     AutomationProperties.Name="{l:Tr Bots}"
-                    Command="{Binding ShowBotsCommand}"
                     Route="bots"
                     ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
                     ToolTip.Tip="{l:Tr Bots}">
@@ -63,7 +63,6 @@
                 </shadui:SidebarItem>
                 <shadui:SidebarItem
                     AutomationProperties.Name="{l:Tr Accounts}"
-                    Command="{Binding ShowAccountsCommand}"
                     Content="{l:Tr Accounts}"
                     Route="accounts"
                     ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
@@ -74,7 +73,6 @@
                 </shadui:SidebarItem>
                 <shadui:SidebarItem
                     AutomationProperties.Name="{l:Tr Profiles}"
-                    Command="{Binding ShowProfilesCommand}"
                     Content="{l:Tr Profiles}"
                     Route="profiles"
                     ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
@@ -85,7 +83,6 @@
                 </shadui:SidebarItem>
                 <shadui:SidebarItem
                     AutomationProperties.Name="{l:Tr Map}"
-                    Command="{Binding ShowMapCommand}"
                     Content="{l:Tr Map}"
                     Route="map"
                     ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
@@ -96,7 +93,6 @@
                 </shadui:SidebarItem>
                 <shadui:SidebarItem
                     AutomationProperties.Name="{l:Tr Statistics}"
-                    Command="{Binding ShowStatisticsCommand}"
                     Content="{l:Tr Statistics}"
                     Route="statistics"
                     ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
@@ -107,7 +103,6 @@
                 </shadui:SidebarItem>
                 <shadui:SidebarItem
                     AutomationProperties.Name="{l:Tr Logs}"
-                    Command="{Binding ShowLogsCommand}"
                     Content="{l:Tr Logs}"
                     Route="logs"
                     ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
@@ -118,7 +113,6 @@
                 </shadui:SidebarItem>
                 <shadui:SidebarItem
                     AutomationProperties.Name="{l:Tr Inspector}"
-                    Command="{Binding ShowInspectorCommand}"
                     Content="{l:Tr Inspector}"
                     Route="inspector"
                     ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"
@@ -138,7 +132,6 @@
                         <DataTemplate x:DataType="vm:ModulePageViewModel">
                             <shadui:SidebarItem
                                 AutomationProperties.Name="{Binding Title}"
-                                Command="{Binding ShowCommand}"
                                 Content="{Binding Title}"
                                 Route="{Binding Route}"
                                 ToolTip.Tip="{Binding Title}">
@@ -154,7 +147,6 @@
                 <StackPanel Margin="0,8" Spacing="4">
                     <shadui:SidebarItem
                         AutomationProperties.Name="{l:Tr Settings}"
-                        Command="{Binding ShowSettingsCommand}"
                         Content="{l:Tr Settings}"
                         Route="settings"
                         ToolTip.ServiceEnabled="{Binding !IsSidebarExpanded}"

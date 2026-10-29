@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Styling;
@@ -27,6 +28,7 @@ internal sealed partial class MainWindow : ShadUI.Window
         InitializeComponent();
         DialogHost.Manager = _dialogManager;
         ToastHost.Manager = _toastManager;
+        Sidebar.AddHandler(ToggleButton.IsCheckedChangedEvent, OnSidebarChecked);
     }
 
     /// <inheritdoc/>
@@ -62,6 +64,14 @@ internal sealed partial class MainWindow : ShadUI.Window
     {
         if (e.PropertyName == nameof(SettingsViewModel.IsDark) && sender is SettingsViewModel settings && Avalonia.Application.Current is { } application)
             application.RequestedThemeVariant = settings.IsDark ? ThemeVariant.Dark : ThemeVariant.Light;
+    }
+
+    private void OnSidebarChecked(object? sender, RoutedEventArgs e)
+    {
+        // ShadUI's sidebar checks the item of its route, and no more: a page checked by a click, a key or a screen reader is
+        // the one to show, which then names the route back.
+        if (e.Source is SidebarItem { IsChecked: true, Route: { Length: > 0 } route } && _main is not null && route != _main.CurrentRoute)
+            _main.Navigate(route);
     }
 
     private void OnDialogsChanged(object? sender, PropertyChangedEventArgs e)

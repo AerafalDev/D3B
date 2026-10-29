@@ -94,6 +94,43 @@ public sealed class MainWindowTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ASidebarItemCheckedShowsItsPageAndAPageShownChecksItsItem()
+    {
+        using var host = TestHosts.Of(_play);
+        var runner = await TestHosts.RunningAsync(host);
+
+        var (shown, checkedItem) = await OnTheUIThreadAsync(() =>
+        {
+            var main = new MainViewModel(runner, Localizer.Instance);
+            var window = new MainWindow { DataContext = main };
+
+            main.Refresh();
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var items = window.GetVisualDescendants().OfType<ShadUI.SidebarItem>().ToList();
+
+            // Checked as a key or a screen reader checks it, with no click: the page shows all the same.
+            items.Single(item => item.Route == "accounts").IsChecked = true;
+            Dispatcher.UIThread.RunJobs();
+
+            var shown = (main.IsAccountsPage, main.CurrentRoute);
+
+            main.ShowLogsCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var checkedItem = items.Single(item => item.IsChecked == true).Route;
+
+            window.Close();
+
+            return (shown, checkedItem);
+        });
+
+        Assert.Equal((true, "accounts"), shown);
+        Assert.Equal("logs", checkedItem);
+    }
+
+    [Fact]
     public async Task AModulesPageShowsInTheRailInTheAppsLanguage()
     {
         using var host = TestHosts.Of(_play, [TestPage.Definition()], new ActivityDefinition("patrol", "Patrol", _ => new TestActivity()));
