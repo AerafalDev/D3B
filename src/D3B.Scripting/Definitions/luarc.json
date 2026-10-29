@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.2",
+  "runtime.builtin": {
+    "bit": "disable",
+    "coroutine": "disable",
+    "debug": "disable",
+    "ffi": "disable",
+    "io": "disable",
+    "jit": "disable",
+    "package": "disable",
+    "utf8": "disable"
+  },
+  "diagnostics.disable": ["lowercase-global"],
+  "workspace.checkThirdParty": false
+}

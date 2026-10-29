@@ -1,12 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <IsPackable>true</IsPackable>
-    <PackageId>D3B.Network</PackageId>
-    <Description>The network of D3B, a bot for Dofus 3: the relay between the official client and Ankama's servers.</Description>
-    <PackageTags>d3b;dofus;bot;plugin;network</PackageTags>
-  </PropertyGroup>
-
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

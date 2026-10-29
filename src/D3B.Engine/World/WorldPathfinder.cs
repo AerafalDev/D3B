@@ -53,6 +53,9 @@ public sealed class WorldPathfinder
     /// <summary>Gets the world graph the paths go through.</summary>
     public WorldGraph Graph { get; }
 
+    /// <summary>Gets the atlas the paths are placed on: each map's coordinates and sub-area.</summary>
+    public WorldAtlas Atlas { get; }
+
     /// <summary>Initializes a new instance of the <see cref="WorldPathfinder"/> class.</summary>
     /// <param name="graph">The world graph.</param>
     /// <param name="atlas">The atlas giving each map its sub-area, and each sub-area its area and whether accounts without a subscription enter it.</param>
@@ -64,6 +67,7 @@ public sealed class WorldPathfinder
         var vertices = graph.Vertices.Span;
 
         Graph = graph;
+        Atlas = atlas;
         _criteria = new Criterion?[graph.Criteria.Length];
         _subAreas = new int[vertices.Length];
         _areas = new int[vertices.Length];

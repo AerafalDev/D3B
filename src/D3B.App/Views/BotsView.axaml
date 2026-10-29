@@ -196,6 +196,12 @@
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>
+                                            <SelectableTextBlock
+                                                Classes="Caption Figures"
+                                                Foreground="{DynamicResource ErrorColor}"
+                                                IsVisible="{Binding ActivityProblem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                Text="{Binding ActivityProblem}"
+                                                TextWrapping="Wrap" />
                                             <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsChoosing}">
                                                 <ComboBox
                                                     HorizontalAlignment="Stretch"

@@ -48,7 +48,7 @@ internal sealed class DataSettings
 
     private static string PathOr(string? configured, string fallback)
     {
-        // As for plugins, a relative path starts from the host, never from the directory it was started in.
+        // A relative path starts from the host, never from the directory it was started in.
         return string.IsNullOrWhiteSpace(configured) ? fallback : Path.GetFullPath(configured, AppContext.BaseDirectory);
     }
 }

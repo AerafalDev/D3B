@@ -34,6 +34,7 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly AccountBook? _accounts;
     private readonly ProfileStarter? _starter;
     private int _profilesVersion = -1;
+    private int _catalogVersion = -1;
     private ActivityRun? _startedRun;
     private ActivityChoiceViewModel? _startedChoice;
 
@@ -136,6 +137,10 @@ internal sealed partial class BotViewModel : ObservableObject
     /// <summary>Gets the activity's steps and last interruption.</summary>
     [ObservableProperty]
     public partial string ActivityDetail { get; private set; } = "";
+
+    /// <summary>Gets the error that made the activity fail, such as a script's with its line (D103); empty otherwise.</summary>
+    [ObservableProperty]
+    public partial string ActivityProblem { get; private set; } = "";
 
     /// <summary>Gets whether the bot runs an activity that is not over.</summary>
     [ObservableProperty]
@@ -243,7 +248,8 @@ internal sealed partial class BotViewModel : ObservableObject
         Doing = IsConnected ? _localizer[DoingOf(state)] : "";
         Kamas = _localizer.Format("KamasOf", state.Kamas);
 
-        if ((_profiles?.Version ?? 0) != _profilesVersion)
+        // Scripts come and go while the host runs (D108): the choices follow them, as they follow the profiles.
+        if ((_profiles?.Version ?? 0) != _profilesVersion || (_services.GetService<ActivityCatalog>()?.Version ?? 0) != _catalogVersion)
             RefreshChoices();
 
         foreach (var activity in Activities)
@@ -312,7 +318,7 @@ internal sealed partial class BotViewModel : ObservableObject
         }
         catch (Exception exception)
         {
-            // An activity a plugin wrote may fail as it is made; the bot may already run one, or be stopped with the host.
+            // An activity, a module's or a script's, may fail as it is made; the bot may already run one, or be stopped with the host.
             Error = _localizer.Format("StartFailed", exception.Message);
         }
     }
@@ -325,6 +331,7 @@ internal sealed partial class BotViewModel : ObservableObject
         var choices = new List<ActivityChoiceViewModel>();
 
         _profilesVersion = _profiles?.Version ?? 0;
+        _catalogVersion = catalog?.Version ?? 0;
 
         foreach (var profile in _profiles?.Profiles ?? [])
         {
@@ -425,6 +432,7 @@ internal sealed partial class BotViewModel : ObservableObject
             ActivityText = "";
             ActivityTone = Tone.Neutral;
             ActivityDetail = "";
+            ActivityProblem = "";
 
             return;
         }
@@ -439,6 +447,9 @@ internal sealed partial class BotViewModel : ObservableObject
         ActivityDetail = run.LastInterruption is { } interruption
             ? _localizer.Format("StepsInterrupted", steps, _localizer[InterruptionOf(interruption)])
             : steps;
+
+        // The error as the activity raised it: a script's names its line, which the owner fixes it by.
+        ActivityProblem = run.IsOver ? run.Failure?.Message ?? "" : "";
     }
 
     private void RefreshTone()

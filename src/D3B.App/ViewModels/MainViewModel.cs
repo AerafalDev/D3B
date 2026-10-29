@@ -28,7 +28,7 @@ internal sealed partial class MainViewModel : ObservableObject
     public ProfilesViewModel Profiles { get; }
 
     /// <summary>Gets the pages the host's modules registered, in the rail after the app's own, once the host runs.</summary>
-    public ObservableCollection<PluginPageViewModel> Pages { get; } = [];
+    public ObservableCollection<ModulePageViewModel> Pages { get; } = [];
 
     /// <summary>Gets whether the bots page is the one the window shows.</summary>
     [ObservableProperty]
@@ -44,8 +44,8 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets the module's page the window shows, if it shows one.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsPluginPage))]
-    public partial PluginPageViewModel? SelectedPage { get; private set; }
+    [NotifyPropertyChangedFor(nameof(IsModulePage))]
+    public partial ModulePageViewModel? SelectedPage { get; private set; }
 
     /// <summary>Gets whether any module registered a page.</summary>
     [ObservableProperty]
@@ -88,7 +88,7 @@ internal sealed partial class MainViewModel : ObservableObject
     public partial string LanguageCode { get; private set; } = "";
 
     /// <summary>Gets whether a module's page is the one the window shows.</summary>
-    public bool IsPluginPage => SelectedPage is not null;
+    public bool IsModulePage => SelectedPage is not null;
 
     /// <summary>Initializes a new instance of the <see cref="MainViewModel"/> class.</summary>
     /// <param name="host">The bots' host in the app's process.</param>
@@ -160,7 +160,7 @@ internal sealed partial class MainViewModel : ObservableObject
         if (!_pagesRead && IsRunning && services is not null)
         {
             foreach (var definition in services.GetService<PageCatalog>()?.All ?? [])
-                Pages.Add(new PluginPageViewModel(definition, services, _localizer, Select));
+                Pages.Add(new ModulePageViewModel(definition, services, _localizer, Select));
 
             _pagesRead = true;
             HasPages = Pages.Count > 0;
@@ -192,7 +192,7 @@ internal sealed partial class MainViewModel : ObservableObject
         IsProfilesPage = true;
     }
 
-    private void Select(PluginPageViewModel? page)
+    private void Select(ModulePageViewModel? page)
     {
         foreach (var other in Pages)
             other.IsSelected = other == page;

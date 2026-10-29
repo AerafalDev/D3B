@@ -5,6 +5,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
+using D3B.Scripting;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -180,7 +181,7 @@ public sealed class BotsViewModelTests : IAsyncDisposable
     [Fact]
     public async Task AnActivityThatCannotBeMadeSaysWhy()
     {
-        using var host = TestHosts.Of(_play, new ActivityDefinition("broken", "Broken", _ => throw new InvalidOperationException("The plugin's activity failed.")));
+        using var host = TestHosts.Of(_play, new ActivityDefinition("broken", "Broken", _ => throw new InvalidOperationException("The module's activity failed.")));
         var page = new BotsViewModel(_localizer);
         var (_, bot) = await _play.EnterAsync(300);
 
@@ -191,7 +192,25 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         item.StartCommand.Execute(null);
 
         Assert.Null(bot.Activity);
-        Assert.Equal("Could not start: The plugin's activity failed.", item.Error);
+        Assert.Equal("Could not start: The module's activity failed.", item.Error);
+    }
+
+    [Fact]
+    public async Task AScriptsErrorShowsOnItsBotsCardWithItsLine()
+    {
+        using var host = TestHosts.Of(_play);
+        var page = new BotsViewModel(_localizer);
+        var (_, bot) = await _play.EnterAsync(300);
+        using var script = new ScriptActivity(new LuaScript("mineur.lua", "function step(bot)\n  return bot:door(330)\nend"));
+
+        await bot.StartActivity(script).Completion;
+        page.Refresh(host.Services);
+
+        var item = Assert.Single(page.Items);
+
+        Assert.Equal("Failed", item.ActivityText);
+        Assert.Equal(Tone.Danger, item.ActivityTone);
+        Assert.Equal("mineur.lua:2: attempt to call a nil value", item.ActivityProblem);
     }
 
     [Fact]

@@ -56,7 +56,7 @@ public sealed class StoragePreparationTests
         install.WriteProtocol();
 
         var path = directory.Combine("shared", "d3b.db");
-        var bot = BotHost.CreateBuilder([.. install.Arguments, "--Plugins:Directory", directory.Combine("no-plugins"), "--Storage:Path", path])
+        var bot = BotHost.CreateBuilder([.. install.Arguments, "--Storage:Path", path])
             .AddModule<StorageModule>();
 
         bot.Logging.AddProvider(new FakeLoggerProvider(log));

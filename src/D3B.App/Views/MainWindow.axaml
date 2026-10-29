@@ -101,13 +101,13 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:PluginPageViewModel">
+                        <DataTemplate x:DataType="vm:ModulePageViewModel">
                             <Button
                                 Classes="Ghost RailItem"
                                 Classes.Selected="{Binding IsSelected}"
                                 Command="{Binding ShowCommand}"
                                 ToolTip.Tip="{Binding Title}">
-                                <c:Icon Data="{Binding Icon, TargetNullValue={StaticResource IconPlugin}}" />
+                                <c:Icon Data="{Binding Icon, TargetNullValue={StaticResource IconModule}}" />
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -209,7 +209,7 @@
                 <Panel IsVisible="{Binding IsProfilesPage}">
                     <views:ProfilesView DataContext="{Binding Profiles}" />
                 </Panel>
-                <ContentControl Content="{Binding SelectedPage.Content}" IsVisible="{Binding IsPluginPage}">
+                <ContentControl Content="{Binding SelectedPage.Content}" IsVisible="{Binding IsModulePage}">
                     <ContentControl.DataTemplates>
                         <DataTemplate x:DataType="vm:PageFailureViewModel">
                             <ScrollViewer>

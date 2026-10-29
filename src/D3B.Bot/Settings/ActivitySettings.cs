@@ -50,7 +50,7 @@ public sealed class ActivitySettings
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
-            // A plugin's rule runs in the app, which holds every client's connection (D91): one that throws does not hold.
+            // An activity's rule runs in the app, which holds every client's connection (D91): one that throws does not hold.
             return false;
         }
     }

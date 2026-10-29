@@ -81,7 +81,7 @@
     <value>Getting D3B ready</value>
   </data>
   <data name="HostStartingDetail" xml:space="preserve">
-    <value>Plugins, game data and protocol of the installed client. A first start may download them.</value>
+    <value>Modules, game data and protocol of the installed client. A first start may download them.</value>
   </data>
   <data name="HostStoppingTitle" xml:space="preserve">
     <value>Stopping the bots</value>
@@ -240,7 +240,7 @@
     <value>Profile or activity</value>
   </data>
   <data name="NoActivityAvailable" xml:space="preserve">
-    <value>No activity to start yet: modules and plugins add them.</value>
+    <value>No activity to start yet: modules and scripts add them.</value>
   </data>
   <data name="Start" xml:space="preserve">
     <value>Start</value>
@@ -258,7 +258,7 @@
     <value>This page could not be shown</value>
   </data>
   <data name="PageFailedDetail" xml:space="preserve">
-    <value>Its plugin raised the error below. The bots and the other pages go on.</value>
+    <value>Its module raised the error below. The bots and the other pages go on.</value>
   </data>
   <data name="Accounts" xml:space="preserve">
     <value>Accounts</value>

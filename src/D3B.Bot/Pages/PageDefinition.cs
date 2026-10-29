@@ -7,7 +7,7 @@ namespace D3B.Bot.Pages;
 /// <remarks>
 /// A module registers it with <see cref="PageServiceCollectionExtensions.AddPage"/>; <see cref="PageCatalog"/> lists them.
 /// The page is the app's UI framework's own control, made only by the app: a host without the app never makes one, so
-/// this contract names none of the framework's types, and a plugin with a page loads where the framework is missing (D97).
+/// this contract names none of the framework's types, which neither <c>D3B.Bot</c> nor <c>D3B.Host</c> holds (D96).
 /// </remarks>
 public sealed class PageDefinition
 {

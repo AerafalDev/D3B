@@ -38,7 +38,7 @@ public sealed class LocalizedTextTests
     [Fact]
     public void ResourcesNamedWrongShowTheirKeysRatherThanThrow()
     {
-        // As a plugin whose .resx moved to a folder, its manifest named after the folder.
+        // As a module whose .resx moved to a folder, its manifest named after the folder.
         var resources = new ResourceManager("D3B.Bot.Tests.Resources.TestTexts", typeof(TestTexts).Assembly);
 
         Assert.Equal("[Greeting]", LocalizedText.From(resources, "Greeting").In(_french));

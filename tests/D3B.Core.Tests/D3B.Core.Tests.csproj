@@ -1,13 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\D3B.Bot\D3B.Bot.csproj" />
     <ProjectReference Include="..\..\src\D3B.Core\D3B.Core.csproj" />
-    <ProjectReference Include="..\..\samples\D3B.Samples.Hello\D3B.Samples.Hello.csproj" ReferenceOutputAssembly="false" OutputItemType="SamplePlugin" />
   </ItemGroup>
 
 </Project>

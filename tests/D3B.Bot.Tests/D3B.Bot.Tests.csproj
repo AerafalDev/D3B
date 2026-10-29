@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\D3B.Bot\D3B.Bot.csproj" />
-    <ProjectReference Include="..\..\samples\D3B.Samples.Hello\D3B.Samples.Hello.csproj" ReferenceOutputAssembly="false" OutputItemType="SamplePlugin" />
   </ItemGroup>
 
   <ItemGroup>

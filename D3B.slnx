@@ -3,8 +3,8 @@
     <Project Path="benchmarks/D3B.Engine.Benchmarks/D3B.Engine.Benchmarks.csproj" />
     <Project Path="benchmarks/D3B.Network.Benchmarks/D3B.Network.Benchmarks.csproj" />
   </Folder>
-  <Folder Name="/samples/">
-    <Project Path="samples/D3B.Samples.Hello/D3B.Samples.Hello.csproj" />
+  <Folder Name="/samples/scripts/">
+    <File Path="samples/scripts/promenade.lua" />
   </Folder>
   <Folder Name="/scripts/">
     <File Path="scripts/capture.cs" />
@@ -113,24 +113,8 @@
     <Project Path="src/D3B.Host/D3B.Host.csproj" />
     <Project Path="src/D3B.Network/D3B.Network.csproj" />
     <Project Path="src/D3B.Protocol/D3B.Protocol.csproj" />
+    <Project Path="src/D3B.Scripting/D3B.Scripting.csproj" />
     <Project Path="src/D3B.Storage/D3B.Storage.csproj" />
-  </Folder>
-  <Folder Name="/templates/" />
-  <Folder Name="/templates/d3b-plugin/">
-    <File Path="templates/d3b-plugin/MyPlugin.csproj" />
-    <File Path="templates/d3b-plugin/MyPluginActivity.cs" />
-    <File Path="templates/d3b-plugin/MyPluginModule.cs" />
-    <File Path="templates/d3b-plugin/MyPluginPage.axaml" />
-    <File Path="templates/d3b-plugin/MyPluginPage.axaml.cs" />
-    <File Path="templates/d3b-plugin/MyPluginPageModel.cs" />
-    <File Path="templates/d3b-plugin/MyPluginSettings.cs" />
-    <File Path="templates/d3b-plugin/MyPluginTexts.cs" />
-    <File Path="templates/d3b-plugin/Strings.fr.resx" />
-    <File Path="templates/d3b-plugin/Strings.resx" />
-  </Folder>
-  <Folder Name="/templates/d3b-plugin/.template.config/">
-    <File Path="templates/d3b-plugin/.template.config/dotnetcli.host.json" />
-    <File Path="templates/d3b-plugin/.template.config/template.json" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/D3B.App.Tests/D3B.App.Tests.csproj" />
@@ -140,6 +124,7 @@
     <Project Path="tests/D3B.Engine.Tests/D3B.Engine.Tests.csproj" />
     <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
     <Project Path="tests/D3B.Protocol.Tests/D3B.Protocol.Tests.csproj" />
+    <Project Path="tests/D3B.Scripting.Tests/D3B.Scripting.Tests.csproj" />
     <Project Path="tests/D3B.Storage.Tests/D3B.Storage.Tests.csproj" />
   </Folder>
 </Solution>

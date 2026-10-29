@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\D3B.Scripting\D3B.Scripting.csproj" />
     <ProjectReference Include="..\D3B.Storage\D3B.Storage.csproj" />
   </ItemGroup>
 
