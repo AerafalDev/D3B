@@ -4080,6 +4080,19 @@ given by default.*
 - **Rejected.**
   - Fights straight after 6e, 6f after: the owner chose 6f first.
 
+## D170: 6e checked through the app
+
+*2026-10-29, step 6, session 6e.*
+
+- **Looked at by the owner** on a client of 3.7.12.12 through the app, run on the owner's data: found good. The database
+  migrated, the six presets stored, named in French, beside "Ortie", which read as before, a list in Amakna.
+- **Played**, one character, a connection of 2 min 42 s: "Auto lumberjack", its lumberjack at 79, harvested 15 walnut wood
+  in 21 s, then stopped by the owner; "Auto alchemist", its alchemist at 104, harvested in 70 s edelweiss, the highest of
+  its level, then Freyesque orchids, wild mint, five-leaf clovers and sage, 86 resources and 268 experience, until the
+  owner closed the app. The host's log held no warning or error; the graphics learned went from 109 to 111.
+- **Not measured on the client**: a level gained moving the place at the next tour, a zaap left for a walk, the dialog
+  excluding resources with the pack's, and fishing; the tests cover the first three.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
