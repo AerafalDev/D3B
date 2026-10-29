@@ -390,63 +390,80 @@ Built at step 2 (D24 to D33):
 ## Desktop app
 
 Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
-5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151).
+5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151); redesigned in 6d (D159 to D162).
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
   the clients and gives them their configuration back. The window shows the host getting ready, running for the
   installed client's build, or why it did not start.
-- **The window**: dark by default, light on a click; where the host stands, the language and the theme in the title
-  bar, and on the settings page too. Its icons are drawn by `Icon` from the app's own geometries, its statuses by
-  `StatusPill`, in the tone each says (`Tone`).
-- **The rail**, always (D101, D111, D120): the bots, the accounts, the profiles, the map, the statistics (D146), the logs and the inspector pages, a line once a module registered a page, then
-  the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip; at its foot, a gear, the
+- **The window**: dark by default; where the host stands in the title bar, nothing else (D162). Its icons are Lucide's,
+  drawn by `Icon` from `Themes/Icons.axaml` (D161), its statuses by `StatusPill`, in the tone each says (`Tone`).
+- **One scale** (D159), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32, fonts 12, 14, 16, 22
+  and 28 (`Caption`, `Label`, `Title`, `PageTitle`, `Figure`), controls 32 and 36 high, radii 6, 8 and 12, icons 14, 16 and
+  20. Every page is an `AppPage` (`D3B.App.Controls`): its title or a header of its own, its actions on the right, the
+  same margins and the window's width up to 1,200 pixels; it fades in as it shows. A setting's help, a delay's default
+  and what a page is for are tooltips on a mark beside their name.
+- **Dialogs and toasts** (D159, D162): `Dialogs` holds the dialog shown, a `QuestionViewModel` or a dialog's own view model
+  (choosing resources, a new profile), which the window shows through ShadUI's dialog host, closed by its buttons and
+  Escape; `Toasts` says what was done and what a bot met, which the window shows through ShadUI's toasts. The view models
+  only open, close and say, tested without a window.
+- **The sidebar**, always (D101, D111, D120, D162): ShadUI's, the bots with their count, the accounts, the profiles, the
+  map, the statistics (D146), the logs and the inspector, a line once a module registered a page, then the modules' pages
+  in the catalogue's order (D96), each named, folded to their icons on a click that `app.json` remembers; at its foot the
   settings page (D151), shown whether the host runs or not. A module's page (`ModulePageViewModel`) is made the first
   time it shows and kept, refreshed every 250 ms while it shows through its context (`AppPageContext`, in
   `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead (`PageFailureViewModel`), logged, and
   the bots and the other pages go on. What a page's own code throws on the UI's thread, which nothing caught, is told by
-  the page's assembly in its stack and fails that page alone; the app's own faults still end it. A page looks like the app's through the theme, Inter and ShadUI's styles it inherits, and
-  the app's classes it may use: `PageHeader`, `PageTitle`, `Plate`, `PlateFooter` and the typography's.
-- **The bots page**: a card per bot, in as many columns as the width holds (`CardGrid`), each whole: who, its
-  connection and the player's pause, resumed from the card; where, the coordinates large and the sub-area named from the
+  the page's assembly in its stack and fails that page alone; the app's own faults still end it. A page looks like the
+  app's through the theme, Inter and ShadUI's styles it inherits, and the app's classes it may use: `PageHeader`,
+  `PageTitle`, `Plate`, `PlateFooter`, `Card` and the typography's.
+- **The bots page**: a card per bot, in as many columns as the width holds (`CardGrid`), each whole: who, a dot of its
+  connection, said only when it is not connected, and the player's pause, resumed from the card; where, the coordinates large and the sub-area named from the
   pack's texts; pods and kamas; what it is in the middle of; its activity, started from a profile or from the catalogue
   with its defaults (D93, D99), the character's own profile chosen, stopped, with its status, steps and last
   interruption, and the error it failed with (D103). A profile whose activity is gone, such as a Lua script's, is offered
   with it said gone, and does not start (D119). An activity's report shows there: what it does, its tour as a bar and how
   long it ran, what it counts with each item's icon and rate an hour, the experience gained and the fights, its warnings, and why it
-  ended (D131, D141, D144, D146).
-- **The accounts page** (D101): a card per account the relay saw, its subscription and when it was seen, forgotten on
-  demand; its characters in rows, each with the profile it plays and whether it starts on connection.
-- **The profiles page** (D101): a column of profiles, each folded to its name, activity, settings at a glance and
-  characters, and unfolded in place to edit it: its name, its activity, and its settings by section, a field per kind
-  (`D3B.App.ViewModels.Settings`), checked as they change, searched by name for the game's values, saved once they
-  hold. A profile whose activity is gone says so, and is given another or deleted (D119). Resources show as tiles in their
-  order, each with its icon, its profession's icon and level, and the levels the characters playing it lack; a search
-  shows each value's detail under its name; a sub-area setting suggested by resources shows the zone's mini-map
-  (`ZoneMapCanvas`, each map a square at its coordinates from the atlas, the probable ones marked, those left out dim), the
-  sub-areas where they grow and the activity's preview, its probable maps counted; a percentage is a bar, a short choice
-  segments (D127, D138, D141). The pack's icons are drawn as bitmaps once per pack (`GameIcons`); a pack without them, or
-  an item without one, keeps the neutral square.
+  ended (D131, D141, D144, D146). What a bot meets while the app looks, its activity done, failed or still full, the
+  player taking it over, a disconnection while it ran, a fight, is a toast with a way to its journal or map (D162).
+- **The accounts page** (D101): a card per account the relay saw, its subscription and when it was seen, forgotten after a
+  question; its characters in rows under columns named once, each with the profile it plays and whether it starts on
+  connection.
+- **The profiles page** (D101, D159): the profiles as cards, each with its name, activity, settings at a glance and
+  characters, edited, copied or deleted. A new profile, or a copy, is named in a dialog with its activity
+  (`NewProfileViewModel`), then edited. The editor takes the page: its name in its header, beside its activity, cancel,
+  save and a menu; its settings by section, a card each, a row per setting, its name and help left and its control right,
+  a list or a zone the card's width (`D3B.App.ViewModels.Settings`), checked as they change, searched by name for the
+  game's values, saved once they hold; beside them, the activity's preview, the zone's mini-map (`ZoneMapCanvas`, each map
+  a square at its coordinates from the atlas, the probable ones marked, those left out dim) and its figures, and who plays
+  the profile. Closing it with changes asks to save, discard or stay; Ctrl+S saves. A profile whose activity is gone says
+  so, and is given another or deleted (D119). Resources are rows in their order, each with its icon, its profession's
+  icon and level, and a mark when a character playing it lacks the level; they are chosen several at once in a dialog,
+  searched and filtered by profession (`ResourcePickerViewModel`); a sub-area setting suggested by resources lists the
+  sub-areas where they grow; a percentage is a bar, a short choice segments (D127, D138, D141). The pack's icons are drawn
+  as bitmaps once per pack (`GameIcons`); a pack without them, or an item without one, keeps the neutral square.
 - **The statistics page** (D146, `D3B.App.ViewModels.Statistics`): what the kept runs brought, by character and period,
-  today, 7 days or everything: the resources, the time, the rate an hour and the levels gained; each resource with its icon
-  and rate; the runs, the latest first, with how each ended or that it goes on.
-- **The settings page** (D151, `SettingsViewModel`, `DelayViewModel`): the machine's settings, not a profile's. The
-  client's display time, a bar from 0.5 to 3 s with its help; the delays, each a box from its default to its most with
-  its measured or D3B's value under it, a dot when raised, and a button restoring them all but the display time, the
-  bots' applying at once (`Bots.Delays`), the relay's from the next start; the captures, `Network:Captures:Enabled`,
-  from the next start, with whether the host records now and where; the language and the theme, as in the title bar;
-  where the database, the pack and the app's own file are, read-only. Once the host runs, the page shows the delays its
+  today, 7 days or everything, both in its header: the resources, the time, the rate an hour and the levels gained; each
+  resource with its icon, rate and a bar; the runs, the latest first, grouped by who ran what, the one going on or failed
+  saying so.
+- **The settings page** (D151, `SettingsViewModel`, `DelayViewModel`): the machine's settings, not a profile's, a card of
+  rows each. The client's display time, a bar from 0.5 to 3 s; the delays, each a box from its default to its most, its
+  help and measured or D3B's value in a tooltip, a dot when raised, and a button restoring them all but the display time,
+  the bots' applying at once (`Bots.Delays`), the relay's from the next start; the captures, `Network:Captures:Enabled`,
+  from the next start, with whether the host records now and where; the language and the theme; where the database, the
+  pack and the app's own file are, each copied on a click. Once the host runs, the page shows the delays its
   bots wait, which its command line may have raised; changed before, the page's are given to them.
 - **The logs page** (D111 to D114, `D3B.App.ViewModels.Logs`): every source by time, the host's problems, or a bot's
-  journal, which its card opens, a profile that did not start on connection included (D119); filtered by tone and text,
-  followed, copied. `JournalLines` says each entry in the app's
+  journal, which its card opens, a profile that did not start on connection included (D119), chosen top right; filtered
+  by tone and text, followed, copied, in one toolbar. `JournalLines` says each entry in the app's
   language, maps by their coordinates and sub-area, elements and skills by their names in the pack.
 - **The protocol inspector** (D111, D115, `D3B.App.ViewModels.Inspector`): a bot's frames live, frozen on demand, or a
-  capture of the game connection replayed; filtered by sender, name and whether the readable protocol read them; a frame
-  unfolded in place, the ticket hidden. Both pages and the map look at one bot (`BotChoice`).
+  capture of the game connection replayed, both chosen top right; filtered by sender, name and whether the readable
+  protocol read them, in one toolbar; a frame unfolded in place, the ticket hidden. Both pages and the map look at one
+  bot (`BotChoice`), each chosen in the same selector.
 - **The map page** (D120 to D122, `D3B.App.ViewModels.Maps`): the bot's map drawn from the pack as its character moves,
   which its card opens. `MapCanvas`, in `D3B.App.Controls`, draws a scene flat in the theme's palette (`MapPalette`), a
-  map's fixed geometries built once, in seven layers toggled: the cells, the character and its path, the elements by
+  map's fixed geometries built once, in seven layers toggled in a menu that shows each one's marks, the legend (D162): the cells, the character and its path, the elements by
   what the server says of them, the NPCs, the exits from the world graph (`MapExits`), the other bots, and the zones and
   stairs; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
   bag's and a fight's maps are drawn as the others; a resource by its icon, faded once harvested (D141). A running
@@ -458,8 +475,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
   French; the language starts as the system's, or the one the app was left in, and changes live, the views binding
   through `{l:Tr Key}`.
-- **Preferences** (`AppPreferences`): the language and the theme, remembered in `%LOCALAPPDATA%\D3B\app.json`, read before
-  the window shows (D101); and the host's settings the settings page changed, by their configuration's keys and values,
+- **Preferences** (`AppPreferences`): the language, the theme and the sidebar folded or not, remembered in
+  `%LOCALAPPDATA%\D3B\app.json`, read before the window shows (D101, D162); and the host's settings the settings page changed, by their configuration's keys and values,
   such as `Delays:Display` or `Network:Captures:Enabled`, one given back its default forgotten (D151). The app reads the
   file before the host, which starts with them (`HostRunner`, `BotHost.CreateBuilder(args, settings)`), its own
   configuration and command line winning over them.
@@ -555,6 +572,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - A bot's journal is read after the behaviors the bots' tests play, each entry and its depth (D112); the frame recorder
   through game sessions, D3B's requests included, and the inspector's fields and replays on captures the tests write
   (D115); the logs and inspector pages against bots played the same way, in both languages (D111).
+- The app's dialogs and toasts are read from its view models (`Dialogs`, `Toasts`): a profile made, copied, closed with
+  changes and deleted, an account forgotten, resources chosen several at once, what a bot met said once; every icon is
+  parsed within its grid (D161); every page and the profile editor's dialogs are drawn without a screen in both languages
+  and themes, and looked at (D159, D162).
 - The map page against bots played the same way: its scene, exits, elements, NPCs, other bots, a fight's and a missing
   map, and what a cell holds, in both languages; its drawing without a screen, a pixel of each mark checked in each
   theme's palette and the cell under the pointer described; its layout's cells found back from their centres (D120 to

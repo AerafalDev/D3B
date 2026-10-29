@@ -2404,7 +2404,8 @@ register activities.*
 
 *2026-10-29, step 5, session 5a; dark by default, chosen by the owner, who asked for a real effort on the interface,
 then for a page more practical and pleasant than three panes, its design left to the lead. Builds D14. The theme and the
-language are remembered since D101.*
+language are remembered since D101. Superseded in part by D161 and D162: Lucide's icons, the sidebar, and the
+language and the theme on the settings page alone.*
 
 - **The stack** (D15): Avalonia 12.1.4, ShadUI 0.2.4, CommunityToolkit.Mvvm 8.4.2, and Avalonia.Fonts.Inter 12.1.4,
   Inter being the typeface ShadUI's design comes from, the same on every machine. Avalonia's packages ShadUI brings are
@@ -2675,7 +2676,8 @@ D93 left an activity's settings to 5b and 5c, and 5b did not write them.
 ## D101: The app's pages: a rail always, accounts by account, profiles in a column
 
 *2026-10-29, step 5, session 5c; both layouts chosen by the owner among mockups. Supersedes D96 in part: the rail
-shows always. Builds D94, D96, D99. Its editor grown by D127: tiles, a zone's mini-map, figures, bars and segments.*
+shows always. Builds D94, D96, D99. Its editor grown by D127: tiles, a zone's mini-map, figures, bars and segments. Superseded in part by D159
+and D162: the editor on a page of its own, deleting asked in a dialog.*
 
 - **The rail** shows always: the bots, the accounts, the profiles, a line once a module registered a page, then the
   modules' pages (D96). Its icons are the app's own line drawings.
@@ -2931,7 +2933,7 @@ Measured on a client of 3.7.12.12 through the app, in two runs, the scripts' fol
 ## D111: The logs and the protocol inspector, two pages of the rail
 
 *2026-10-29, step 5, session 5e; the layout chosen by the owner among three mockups, the filters as the lead proposed
-them, chosen by the owner. Builds D92, D101.*
+them, chosen by the owner. Builds D92, D101. Superseded in part by D162: a selector in place of the chips, one toolbar.*
 
 - **Two pages** in the rail, after the profiles: the logs, and the protocol inspector. They look at one bot
   (`BotChoice`): chosen on either, it is the other's. A bot's card has a journal button, beside its connection, which
@@ -3136,7 +3138,7 @@ D108's source of activities, the owner's choice against the lead's recommendatio
 ## D120: The live map, a page of the rail
 
 *2026-10-29, step 5, session 5d, chosen by the owner among three mockups, as the lead recommended it. Carries out D92's
-5d.*
+5d. Superseded in part by D162: a selector in place of the chips.*
 
 - **A page** in the rail, after the profiles, before the logs: "Map". It looks at one bot, chosen among chips as on the
   logs page and the inspector, and shares their choice (`BotChoice`, D111): a bot chosen on one is the others'. A bot's
@@ -3154,7 +3156,8 @@ D108's source of activities, the owner's choice against the lead's recommendatio
 
 ## D121: The live map shows what the pack and the state hold, in layers
 
-*2026-10-29, step 5, session 5d, chosen by the owner, as the lead recommended it.*
+*2026-10-29, step 5, session 5d, chosen by the owner, as the lead recommended it. Superseded in part by D162: the
+layers in a menu, with their marks as the legend.*
 
 - **Seven layers**, each toggled: the cells, walkable, obstacles that block the sight and voids that let it through, and
   the grid; the character, its path as the server showed it and its end; the interactive elements, placed from the pack
@@ -3704,7 +3707,8 @@ Measured on a client of 3.7.12.12 through the app, captures on, the owner's prof
 ## D151: The client's display time, and every delay of D3B in a settings page
 
 *2026-10-29, step 6, session 6c; the owner asked for longer delays, the bots doing "anything" on small machines, then for
-a page holding every delay. Builds D77, D132.*
+a page holding every delay. Builds D77, D132. Superseded in part by D162: the language and the theme on the settings
+page alone.*
 
 - **Why**: D3B waits half a second after the server placed the character on a map before acting (D77), and half a second
   for a window to show before closing it (D132), both measured on the owner's machine. On a slower one the client has not
@@ -3840,6 +3844,100 @@ guild's chest chosen, bags opened, healing under 80 % with Carasau:
 - **Rejected.**
   - Public now, the releases as they are: the app would still need the GitHub CLI's token, and no build to download.
   - Each user extracting their own pack: the owner wants the data delivered with the app.
+
+## D159: The profile editor, a page of its own, its preview beside; one scale for the app
+
+*2026-10-29, step 6, session 6d; the editor chosen by the owner among three mockups, as the lead recommended it, the
+owner asking for toasts, dialogs and the resources' modes (D160); the scale the lead's. Supersedes D101's editor unfolded
+in place. Builds D127, D155.*
+
+- **What the survey found**, every page drawn without a screen in both languages and themes and the app run on the owner's
+  data: no scale, 20 spacings, some 30 paddings, 13 radii, icons in 7 sizes and 10 font sizes; the same classes redefined
+  by each view with other values; pages 864, 964 or the whole width wide; 22 texts over 80 characters and 39 helps, details
+  or empty states; the editor some 2,000 pixels long, its preview lost among the sub-areas; icon buttons without a name
+  for a screen reader; ShadUI's cards, badges, field labels and hints, clearable boxes, toasts and dialogs unused.
+- **The editor** opens on the page, the list gone, behind a way back: the profile's name, its activity, cancel and save in
+  its header, delete and duplicate in a menu. Its settings go in a column, a card per section, each setting a row, its name
+  left and its control right, a list or a zone the card's width; the activity's preview beside, the zone's mini-map, the
+  figures and the characters playing the profile, in view as the settings change.
+- **Less text**: an activity's help shows in a tooltip, on a mark beside the setting's name; a number's bounds are the bar's
+  own; what is wrong stays in view, under its setting or as a badge.
+- **Dialogs and toasts**, ShadUI's: a new profile, leaving the editor with changes, deleting a profile and forgetting an
+  account, changing the activity, and choosing resources several at once, searched and filtered by profession and level;
+  toasts for what was saved, deleted, copied or restored, and for what a bot met, seen from any page, with a way to it.
+- **One scale**, held on every page through the app's resources: spacings 4, 8, 12, 16, 24 and 32; fonts 12, 14, 16, 22
+  and 28; controls 32 and 36 high; radii 6, 8, 12 and round; icons 14, 16 and 20; pages the window's width up to 1,200,
+  32 from its edges.
+- **Rejected.**
+  - Tabs, a section at a time: shorter, but four sections of five hidden.
+  - The editor unfolded in place, compacted: still some 1,300 pixels, its map small.
+
+## D160: Resources by profession or by list, in 6e
+
+*2026-10-29, step 6, session 6d, chosen by the owner among mockups, as the lead recommended it: the model now, made in 6e
+with D152's settings. Amends D127's settings and D152.*
+
+- **Two modes.** By profession: the professions chosen, all of them or none of a profession for Base's, each character's
+  own level deciding; resources left out; and an order, the nearest first or the highest level first without leaving the
+  others. A list: the resources chosen, in their order, as now.
+- **Profiles kept**: "everything each character can harvest" reads as every profession but Base's, as the harvest does
+  now; a list stays a list.
+- **The dialog choosing resources** (D159) serves the list and those left out.
+- **6d** draws the harvest's card with it and makes the dialog for the list; 6e makes the modes, the activity's choice of
+  its targets, the preview and the stored profiles' reading.
+- **Rejected.**
+  - The modes in 6d: the harvest's settings, its activity and the stored profiles, D152's work, in a session that redraws
+    nine pages.
+
+## D161: Lucide's icons, as the app's geometries
+
+*2026-10-29, step 6, session 6d, asked by the owner. Supersedes D94's icons of the app's own drawing, and keeps its
+rejection of an icon font.*
+
+- **What**: the 74 icons the app draws are Lucide's 1.64.0, read from its SVG files and written as path geometries in
+  `Themes/Icons.axaml`, each element a path: a circle, a rectangle or a line becomes the arcs and lines that draw it. The
+  `Icon` control draws them as Lucide does, lines of 2 on a grid of 24, round caps and joins, in the text's colour.
+- **The license**: ISC, some icons Feather's under MIT, copied whole into `THIRD-PARTY-NOTICES.md`.
+- **Checked**: the build does not read a geometry's text; a test reads every icon, each within its grid, since a path
+  Avalonia cannot parse fails only once a view shows it, as one did while converting.
+- **An icon answers the pointer** on its whole square, not on its lines alone, so that one carrying a tooltip, a
+  setting's help, shows it.
+- **Rejected.**
+  - Lucide's font: a binary asset, and the icons drawn as text, D94's reason.
+  - Lucide's Avalonia package: a dependency for 74 geometries.
+
+## D162: What the redesign settled while making the pages
+
+*2026-10-29, step 6, session 6d, the lead's choices, within D159's mockups the owner chose. Supersedes D94's language and
+theme in the title bar, D101's unfolded editor, D111's and D120's chips choosing a bot, D121's layers as toggles beside
+the map and its legend under it, and D151's language and theme kept in the title bar too.*
+
+- **A page of the app** is an `AppPage`: its title, or a header of its own, its actions on the right, its content, with the
+  same margins and the window's width up to 1,200 pixels. A page whose lists keep their own scroll, the map, the logs and
+  the inspector, does not scroll as a whole. No page has a subtitle: what one said moved into a tooltip, a badge or the
+  toolbar.
+- **The sidebar** is ShadUI's, its pages named, folded to their icons on a click, which `app.json` remembers. The bots page
+  says how many bots there are beside its name. The title bar says where the host stands, nothing else: the language and
+  the theme are the settings page's alone.
+- **One selector** chooses the bot of the map, the logs and the inspector, top right of each, still shared (`BotChoice`);
+  the inspector's captures in a second beside it. The map's layers are a menu, each with the marks it draws, which is the
+  legend.
+- **Dialogs and toasts** are the view models' (`Dialogs`, `Toasts`), shown by the window through ShadUI's hosts, so that the
+  view models are tested without a window. A dialog closes by its buttons and by Escape, never by a click beside it:
+  ShadUI closes one so without telling its callbacks.
+- **The profile editor**: the activity is chosen with the name, in the dialog making the profile, or copying one; the
+  editor chooses it again only when the profile's is gone, the confirmation D159 foresaw needless. Closing it with changes
+  asks to save, discard or stay; Ctrl+S saves, Escape closes. Deleting a profile, forgetting an account ask in a dialog.
+- **Toasts**: a profile saved or deleted, a copy, the delays restored; and what a bot met under the app's eyes, its activity
+  done, failed or still full, the player taking it over, a disconnection while it ran, a fight, with a way to its journal
+  or its map. A bot met already paused or done says nothing.
+- **Texts**: every page's and the harvest's rewritten short, in both languages; a setting's help, a delay's default and
+  what a delay is for are tooltips.
+- **Accessibility**: every button drawn as an icon has a name a screen reader says.
+- **Drawn without a screen** in both languages and themes, every page and the editor's three dialogs, and looked at.
+- **Rejected.**
+  - Our own dialog overlay: ShadUI's host animates and dims, and its manager opens a view by its context's type.
+  - No toast when the player takes a bot over: several bots run while one is played, the others' cards out of view.
 
 ## Open questions
 
