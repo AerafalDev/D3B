@@ -6,6 +6,7 @@ using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
+using D3B.App.ViewModels.Statistics;
 using D3B.App.ViewModels.Maps;
 using D3B.Bot.Characters;
 using D3B.Bot.Pages;
@@ -34,6 +35,9 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the map page.</summary>
     public MapViewModel Map { get; }
 
+    /// <summary>Gets the statistics page.</summary>
+    public StatisticsViewModel Statistics { get; }
+
     /// <summary>Gets the logs page.</summary>
     public LogsViewModel Logs { get; }
 
@@ -58,6 +62,10 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets whether the map page is the one the window shows.</summary>
     [ObservableProperty]
     public partial bool IsMapPage { get; private set; }
+
+    /// <summary>Gets whether the statistics page is the one the window shows.</summary>
+    [ObservableProperty]
+    public partial bool IsStatisticsPage { get; private set; }
 
     /// <summary>Gets whether the logs page is the one the window shows.</summary>
     [ObservableProperty]
@@ -131,6 +139,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Accounts = new AccountsViewModel(localizer);
         Profiles = new ProfilesViewModel(localizer);
         Map = new MapViewModel(localizer, choice);
+        Statistics = new StatisticsViewModel(localizer);
         Logs = new LogsViewModel(localizer, choice);
         Inspector = new InspectorViewModel(localizer, choice);
     }
@@ -171,6 +180,9 @@ internal sealed partial class MainViewModel : ObservableObject
         // Only the page shown reads what came since: the others read it all once shown again.
         if (IsMapPage)
             Map.Refresh(services);
+
+        if (IsStatisticsPage)
+            Statistics.Refresh(services);
 
         if (IsLogsPage)
             Logs.Refresh(services);
@@ -244,6 +256,15 @@ internal sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ShowStatistics()
+    {
+        Select(null);
+        IsBotsPage = false;
+        IsStatisticsPage = true;
+        Statistics.Refresh(_host.Services);
+    }
+
+    [RelayCommand]
     private void ShowLogs()
     {
         Select(null);
@@ -283,6 +304,7 @@ internal sealed partial class MainViewModel : ObservableObject
         IsAccountsPage = false;
         IsProfilesPage = false;
         IsMapPage = false;
+        IsStatisticsPage = false;
         IsLogsPage = false;
         IsInspectorPage = false;
         page?.Refresh();

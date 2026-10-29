@@ -20,6 +20,8 @@ using D3B.Data;
 using D3B.Data.Tests;
 using D3B.Storage;
 using D3B.Storage.Profiles;
+using D3B.Storage.Runs;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -254,5 +256,100 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
         // The tree, drawn by its resource's icon; the door keeps its mark.
         Assert.Equal(1, map.Item4);
+    }
+
+    [Fact]
+    public async Task TheStatisticsSayWhatTheRunsBroughtInBothLanguagesAndThemes()
+    {
+        using var host = await HostAsync();
+        var now = new DateTimeOffset(2026, 10, 29, 15, 0, 0, TimeSpan.Zero);
+
+        _play.Time.SetUtcNow(now);
+
+        var contexts = host.Services.GetRequiredService<IDbContextFactory<StorageContext>>();
+
+        await using (var context = await contexts.CreateDbContextAsync(TestContext.Current.CancellationToken))
+        {
+            context.Runs.Add(new RunRecord
+            {
+                AccountId = TestPlay.AccountId,
+                CharacterId = TestPlay.CharacterId,
+                CharacterName = "Character",
+                Title = "Ortie",
+                Activity = "Harvesting",
+                StartedAt = now.AddHours(-4),
+                LastAt = now.AddHours(-4).AddMinutes(112),
+                EndedAt = now.AddHours(-4).AddMinutes(112),
+                Outcome = ActivityOutcome.Stopped,
+                Items = new() { [TestPlay.Ash] = 600, [TestPlay.Chestnut] = 106 },
+                Jobs = [new RunJob(TestPlay.Lumberjack, 10, 11, 4_200)],
+                Banks = 2,
+                Protectors = 1,
+            });
+            context.Runs.Add(new RunRecord
+            {
+                AccountId = TestPlay.AccountId,
+                CharacterId = TestPlay.CharacterId,
+                CharacterName = "Character",
+                Title = "Ortie",
+                Activity = "Harvesting",
+                StartedAt = now.AddMinutes(-58),
+                LastAt = now,
+                Items = new() { [TestPlay.Ash] = 100 },
+            });
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await host.Services.GetRequiredService<RunBook>().LoadAsync(TestContext.Current.CancellationToken);
+
+        var runner = await TestHosts.RunningAsync(host);
+        var (english, french, icons) = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main, Width = 1280, Height = 900 };
+
+            main.Refresh();
+            window.Show();
+            main.ShowStatisticsCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var english = Texts(window);
+            var icons = Icons(window);
+
+            Draw(window, "statistics-en");
+            main.SwitchLanguageCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var french = Texts(window);
+
+            Draw(window, "statistics-fr");
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return (english, french, icons);
+        });
+
+        // 806 resources over 2 h 50, the run going on counted to its last write.
+        Assert.Contains("806", english);
+        Assert.Contains("2 h 50", english);
+        Assert.Contains("284/h", english);
+        Assert.Contains("+1 level", english);
+        Assert.Contains("Lumberjack 10 → 11", english);
+        Assert.Contains("Ash", english);
+        Assert.Contains("700", english);
+        Assert.Contains("Character · Ortie", english);
+        Assert.Contains("Running", english);
+        Assert.Equal(2, icons);
+        Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Statistiques", french);
+        Assert.Contains("Tous les persos", french);
+        Assert.Contains("En cours", french);
+        Assert.Contains("Frêne", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
 }

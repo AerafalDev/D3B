@@ -1028,4 +1028,64 @@
   <data name="JournalPausedAfterFight" xml:space="preserve">
     <value>After the fight, the bot pauses, as its profile says</value>
   </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="StatisticsSummaryOne" xml:space="preserve">
+    <value>{0} run counted, kept from one session of the app to the next</value>
+  </data>
+  <data name="StatisticsSummaryMany" xml:space="preserve">
+    <value>{0} runs counted, kept from one session of the app to the next</value>
+  </data>
+  <data name="StatisticsEveryCharacter" xml:space="preserve">
+    <value>Every character</value>
+  </data>
+  <data name="StatisticsToday" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="StatisticsWeek" xml:space="preserve">
+    <value>7 days</value>
+  </data>
+  <data name="StatisticsAll" xml:space="preserve">
+    <value>Everything</value>
+  </data>
+  <data name="StatisticsResources" xml:space="preserve">
+    <value>resources</value>
+  </data>
+  <data name="StatisticsTime" xml:space="preserve">
+    <value>of harvesting</value>
+  </data>
+  <data name="StatisticsAverage" xml:space="preserve">
+    <value>on average</value>
+  </data>
+  <data name="StatisticsRate" xml:space="preserve">
+    <value>{0}/h</value>
+  </data>
+  <data name="StatisticsNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="StatisticsLevels" xml:space="preserve">
+    <value>+{0} levels</value>
+  </data>
+  <data name="StatisticsLevelsOf" xml:space="preserve">
+    <value>{0} {1} → {2}</value>
+  </data>
+  <data name="StatisticsByResource" xml:space="preserve">
+    <value>By resource</value>
+  </data>
+  <data name="StatisticsRuns" xml:space="preserve">
+    <value>Runs</value>
+  </data>
+  <data name="StatisticsOngoing" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="StatisticsEmpty" xml:space="preserve">
+    <value>No run in this period yet.</value>
+  </data>
+  <data name="StatisticsUnavailable" xml:space="preserve">
+    <value>The statistics need D3B's database, which did not open.</value>
+  </data>
+  <data name="StatisticsLevelsOne" xml:space="preserve">
+    <value>+{0} level</value>
+  </data>
 </root>
