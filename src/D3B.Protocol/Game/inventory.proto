@@ -80,6 +80,23 @@ message ObjectUseRequest {
   int32 uid = 1;
 }
 
+// Uses up to a quantity of a stack's objects at once. Food heals as ObjectUseRequest's does, in one answer 28 ms later: asked
+// for the whole stack below full life, the server used only as many as the life lacked, the last in part; at full life, a
+// text alone, and nothing is used.
+message ObjectUseMultipleRequest {
+  int32 uid = 1;
+
+  // No capture sets it.
+  Unmeasured message_2 = 2;
+
+  int32 quantity = 3;
+
+  message Unmeasured {
+    map<bool, string> map_1 = 1;
+    repeated int64 numbers_2 = 2;
+  }
+}
+
 // What the character obtained, as a harvest's resources: sent with the inventory's change.
 message ObjectObtainedEvent {
   // Four values in this build; no capture sets it.

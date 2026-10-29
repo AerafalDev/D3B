@@ -78,7 +78,8 @@ public sealed class ProtocolTranslation
             throw new ProtocolMismatchException(mapping.ClientVersion, failures);
 
         var readable = ReadableProtocol.Files.SelectMany(file => Descriptors.Messages(file.MessageTypes)).ToDictionary(message => message.FullName, StringComparer.Ordinal);
-        var readableOf = mapping.Messages.ToDictionary(
+        // A map's entry is paired so that the audit checks its key and value, but it has no class and no frame carries it alone.
+        var readableOf = mapping.Messages.Where(pair => !Descriptors.IsMapEntry(readable[pair.Readable])).ToDictionary(
             pair => pair.Obfuscated,
             pair => (readable[pair.Readable], readable[pair.Readable].Parser.WithDiscardUnknownFields(true)),
             StringComparer.Ordinal);

@@ -219,10 +219,21 @@ public sealed class ProtocolTranslationTests
     }
 
     [Fact]
-    public void UsingAnObjectAndMovingAStackOutOfAStorageAreEncodedAsTheClientSendsThem()
+    public void UsingObjectsAndMovingAStackOutOfAStorageAreEncodedAsTheClientSendsThem()
     {
         var translation = Translate();
-        IMessage[] requests = [new ObjectUseRequest { Uid = 2752363 }, new ExchangeObjectMoveRequest { Uid = 1443864, Quantity = -15 }];
+        IMessage[] requests =
+        [
+            new ObjectUseRequest { Uid = 2752363 },
+            new ObjectUseMultipleRequest { Uid = 2752342, Quantity = 266 },
+            new ObjectUseMultipleRequest
+            {
+                Uid = 2752342,
+                Message2 = new ObjectUseMultipleRequest.Types.Unmeasured { Map1 = { [true] = "a" }, Numbers2 = { 3 } },
+                Quantity = 266,
+            },
+            new ExchangeObjectMoveRequest { Uid = 1443864, Quantity = -15 },
+        ];
 
         foreach (var request in requests)
         {
