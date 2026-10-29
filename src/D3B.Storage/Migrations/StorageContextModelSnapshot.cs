@@ -139,6 +139,63 @@ namespace D3B.Storage.Migrations
                     b.ToTable("Profiles", (string)null);
                 });
 
+            modelBuilder.Entity("D3B.Storage.Runs.RunRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("AccountId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Activity")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Aggressions")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Banks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CharacterId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CharacterName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Items")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Jobs")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("LastAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Outcome")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Protectors")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Runs", (string)null);
+                });
+
             modelBuilder.Entity("D3B.Storage.Accounts.KnownCharacter", b =>
                 {
                     b.HasOne("D3B.Storage.Accounts.KnownAccount", null)

@@ -260,4 +260,10 @@
   <data name="ProgressGrowing" xml:space="preserve">
     <value>Tournée {0}, carte {1} sur {2}, {3} en repousse</value>
   </data>
+  <data name="CountItemRate" xml:space="preserve">
+    <value>{0} {1}, {2}/h</value>
+  </data>
+  <data name="CountExperience" xml:space="preserve">
+    <value>{0} +{1} XP</value>
+  </data>
 </root>

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using D3B.Bot.Characters;
 using D3B.Bot.Journal;
 using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
@@ -45,6 +46,9 @@ public sealed class ActivityRun
     /// <summary>Gets the name the activity was started under, such as its profile's, if its starter gave one.</summary>
     public string? Title { get; }
 
+    /// <summary>Gets the character as the activity found it, from which what it gained is told, such as its professions' experience (D146).</summary>
+    public CharacterState StartedWith { get; }
+
     /// <summary>Gets what the activity does now.</summary>
     public ActivityStatus Status => (ActivityStatus)Volatile.Read(ref _status);
 
@@ -81,6 +85,7 @@ public sealed class ActivityRun
         _bot = bot;
         Activity = activity;
         Title = title;
+        StartedWith = bot.State;
         _startedAt = bot.Time.GetUtcNow();
     }
 

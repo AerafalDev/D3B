@@ -29,6 +29,10 @@ public abstract class BotActivity
     /// <remarks>Read from any thread, while the activity runs: an activity replaces its report whole, and never changes one.</remarks>
     public virtual ActivityReport? Report => null;
 
+    /// <summary>Gets what the activity brought so far, in figures D3B keeps (D146): none by default.</summary>
+    /// <remarks>Read from any thread, while the activity runs: an activity replaces them whole.</remarks>
+    public virtual ActivityStatistics? Statistics => null;
+
     /// <summary>Runs the next step, chosen from the character's state now.</summary>
     /// <param name="context">The step's behavior context.</param>
     /// <param name="cancellationToken">The step's token: an interruption or the activity's stop cancels it.</param>

@@ -37,6 +37,6 @@ public sealed class RegrowthRecorderTests : IDisposable
         Assert.Equal(2, known.Count);
         Assert.Equal(new Regrowth(TimeSpan.FromMilliseconds(400_500), 1, null), known.TryGet(68, out var nettle) ? nettle : default);
         Assert.Equal(new Regrowth(null, 0, TimeSpan.FromSeconds(564)), known.TryGet(125, out var trout) ? trout : default);
-        Assert.Contains(next.Log.GetSnapshot(), record => record.Message.EndsWith(", 2 resources' growing back", StringComparison.Ordinal));
+        Assert.Contains(next.Log.GetSnapshot(), record => record.Message.Contains(", 2 resources' growing back,", StringComparison.Ordinal));
     }
 }

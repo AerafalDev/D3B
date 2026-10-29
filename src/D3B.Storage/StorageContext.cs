@@ -2,6 +2,7 @@ using D3B.Storage.Accounts;
 using D3B.Storage.Graphics;
 using D3B.Storage.Harvests;
 using D3B.Storage.Profiles;
+using D3B.Storage.Runs;
 using Microsoft.EntityFrameworkCore;
 
 namespace D3B.Storage;
@@ -23,6 +24,9 @@ public sealed class StorageContext : DbContext
 
     /// <summary>Gets how long the resources take to grow back, by the skill that gathers each (D145).</summary>
     public DbSet<LearnedRegrowth> Regrowths => Set<LearnedRegrowth>();
+
+    /// <summary>Gets the runs of the activities, for the statistics (D146).</summary>
+    public DbSet<RunRecord> Runs => Set<RunRecord>();
 
     /// <summary>Initializes a new instance of the <see cref="StorageContext"/> class.</summary>
     /// <param name="options">The context's options: SQLite, on the database's file.</param>
@@ -63,6 +67,14 @@ public sealed class StorageContext : DbContext
             regrowth.ToTable("Regrowths");
             regrowth.HasKey(learned => learned.SkillId);
             regrowth.Property(learned => learned.SkillId).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<RunRecord>(run =>
+        {
+            run.ToTable("Runs");
+            run.HasKey(record => record.Id);
+            run.Property(record => record.Items).HasConversion(items => RunJson.Write(items), json => RunJson.ReadItems(json), RunJson.ItemsComparer);
+            run.Property(record => record.Jobs).HasConversion(jobs => RunJson.Write(jobs), json => RunJson.ReadJobs(json), RunJson.JobsComparer);
         });
 
         modelBuilder.Entity<KnownCharacter>(character =>

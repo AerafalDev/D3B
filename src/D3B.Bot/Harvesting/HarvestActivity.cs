@@ -60,6 +60,9 @@ public sealed class HarvestActivity : BotActivity
     private int _failedJourneys;
     private int _banks;
     private ActivityReport? _report;
+    private ActivityStatistics? _statistics;
+    private DateTimeOffset? _startedAt;
+    private ImmutableSortedDictionary<int, CharacterJob>? _startJobs;
     private BotContext? _context;
     private int? _lastTarget;
     private FightKind? _fight;
@@ -70,6 +73,9 @@ public sealed class HarvestActivity : BotActivity
 
     /// <inheritdoc/>
     public override ActivityReport? Report => Volatile.Read(ref _report);
+
+    /// <inheritdoc/>
+    public override ActivityStatistics? Statistics => Volatile.Read(ref _statistics);
 
     /// <summary>Initializes a new instance of the <see cref="HarvestActivity"/> class.</summary>
     /// <param name="settings">What to harvest, where, and when to bank.</param>
@@ -132,6 +138,8 @@ public sealed class HarvestActivity : BotActivity
         ArgumentNullException.ThrowIfNull(context);
 
         _context = context;
+        _startedAt ??= context.Time.GetUtcNow();
+        _startJobs ??= context.State.Jobs;
 
         var zone = ZoneOf();
         var state = context.State;
@@ -228,6 +236,8 @@ public sealed class HarvestActivity : BotActivity
 
         if (key is not null && Report is { } report)
         {
+            Tally();
+
             var counts = _zone is { } zone ? CountsOf(zone) : report.Counts;
 
             Volatile.Write(ref _report, report with { Doing = GameText.Of(HarvestTexts.Text(key)), Counts = counts });
@@ -502,6 +512,8 @@ public sealed class HarvestActivity : BotActivity
             return;
         }
 
+        Tally();
+
         var total = _tour.Total(zone);
         var growing = _tour.Growing(zone);
         var progress = new ActivityProgress(
@@ -528,12 +540,40 @@ public sealed class HarvestActivity : BotActivity
         });
     }
 
+    private void Tally()
+    {
+        Volatile.Write(ref _statistics, new ActivityStatistics
+        {
+            Items = _harvested.ToImmutableDictionary(),
+            Banks = _banks,
+            Fights = _fights.ToImmutableDictionary(),
+        });
+    }
+
     private ImmutableArray<ActivityCount> CountsOf(HarvestZone zone)
     {
         List<int> items = _settings.EverythingKnown
             ? [.. _harvested.Keys.Order()]
             : [.. _settings.Resources.Where(zone.Wanted.Contains).Concat(_harvested.Keys.Where(item => !_settings.Resources.Contains(item))).Distinct()];
-        var counts = items.Select(item => new ActivityCount(GameText.Of(HarvestTexts.Text("CountItem"), GameTextValue.Item(item), GameTextValue.Number(_harvested.GetValueOrDefault(item))), item)).ToList();
+
+        // A rate over less than a minute says little: shown once the activity ran that long (D146).
+        var hours = _context is { } context && _startedAt is { } started ? (context.Time.GetUtcNow() - started).TotalHours : 0;
+        var counts = items.Select(item => new ActivityCount(
+            hours >= 1.0 / 60
+                ? GameText.Of(HarvestTexts.Text("CountItemRate"), GameTextValue.Item(item), GameTextValue.Number(_harvested.GetValueOrDefault(item)), GameTextValue.Number((long)Math.Round(_harvested.GetValueOrDefault(item) / hours)))
+                : GameText.Of(HarvestTexts.Text("CountItem"), GameTextValue.Item(item), GameTextValue.Number(_harvested.GetValueOrDefault(item))),
+            item)).ToList();
+
+        if (_context?.State is { } now && _startJobs is { } before)
+        {
+            foreach (var job in now.Jobs.Values)
+            {
+                var gained = job.Experience - (before.TryGetValue(job.JobId, out var then) ? then.Experience : job.Experience);
+
+                if (gained > 0)
+                    counts.Add(new ActivityCount(GameText.Of(HarvestTexts.Text("CountExperience"), GameTextValue.Job(job.JobId), GameTextValue.Number(gained))));
+            }
+        }
 
         if (_banks > 0)
             counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountBanksOne"), HarvestTexts.Text("CountBanksMany"), _banks)));
