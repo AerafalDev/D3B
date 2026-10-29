@@ -84,6 +84,9 @@ internal sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Gets the file the app keeps its settings in.</summary>
     public string SettingsPath { get; }
 
+    /// <summary>Gets the app's version and its update (D173).</summary>
+    public UpdatesViewModel Updates { get; }
+
     /// <summary>Gets whether the app is light.</summary>
     public bool IsLight => !IsDark;
 
@@ -92,12 +95,14 @@ internal sealed partial class SettingsViewModel : ObservableObject
     /// <param name="preferences">What the app remembers, or <see langword="null"/> to remember nothing.</param>
     /// <param name="useLanguage">Puts the app in a language, as its title bar does.</param>
     /// <param name="toasts">What the window says in its toasts, such as the delays restored.</param>
-    public SettingsViewModel(Localizer localizer, AppPreferences? preferences, Action<CultureInfo> useLanguage, Toasts toasts)
+    /// <param name="updates">The app's version and its update, or <see langword="null"/> for an app that never updates.</param>
+    public SettingsViewModel(Localizer localizer, AppPreferences? preferences, Action<CultureInfo> useLanguage, Toasts toasts, UpdatesViewModel? updates = null)
     {
         _localizer = localizer;
         _toasts = toasts;
         _preferences = preferences;
         _useLanguage = useLanguage;
+        Updates = updates ?? new UpdatesViewModel(localizer, null, new Dialogs(), () => false, () => { });
 
         var stored = new ConfigurationBuilder().AddInMemoryCollection(preferences?.Host ?? new Dictionary<string, string?>()).Build();
 

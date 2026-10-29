@@ -1328,4 +1328,61 @@
   <data name="ExcludeResourcesCount" xml:space="preserve">
     <value>Exclude {0}</value>
   </data>
+  <data name="UpdateReady" xml:space="preserve">
+    <value>D3B {0} is ready to install.</value>
+  </data>
+  <data name="UpdateReadyDetail" xml:space="preserve">
+    <value>D3B {0} is downloaded: it installs when D3B restarts or closes.</value>
+  </data>
+  <data name="UpdateRestart" xml:space="preserve">
+    <value>Restart</value>
+  </data>
+  <data name="UpdateNow" xml:space="preserve">
+    <value>Update and restart</value>
+  </data>
+  <data name="UpdateCheck" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="UpdateRestartQuestion" xml:space="preserve">
+    <value>Restart D3B to install its update?</value>
+  </data>
+  <data name="UpdateRestartMessage" xml:space="preserve">
+    <value>Its bots stop and the clients are disconnected.</value>
+  </data>
+  <data name="UpdateNotInstalled" xml:space="preserve">
+    <value>Run from its code, D3B does not update itself.</value>
+  </data>
+  <data name="UpdateNotChecked" xml:space="preserve">
+    <value>Not checked yet.</value>
+  </data>
+  <data name="UpdateChecking" xml:space="preserve">
+    <value>Checking for an update…</value>
+  </data>
+  <data name="UpdateUpToDate" xml:space="preserve">
+    <value>Up to date.</value>
+  </data>
+  <data name="UpdateDownloading" xml:space="preserve">
+    <value>Downloading D3B {0}: {1} %</value>
+  </data>
+  <data name="UpdateFailed" xml:space="preserve">
+    <value>The check failed: {0}</value>
+  </data>
+  <data name="MissingBuildTitle" xml:space="preserve">
+    <value>D3B does not know this client yet</value>
+  </data>
+  <data name="MissingBuildText" xml:space="preserve">
+    <value>The launcher installed client {0}; D3B {1} ships the data of client {2}. The version of D3B for this client comes out after Ankama's update, and D3B updates itself to it.</value>
+  </data>
+  <data name="SettingsAbout" xml:space="preserve">
+    <value>D3B</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="AboutClient" xml:space="preserve">
+    <value>Client build</value>
+  </data>
+  <data name="AboutUpdate" xml:space="preserve">
+    <value>Update</value>
+  </data>
 </root>

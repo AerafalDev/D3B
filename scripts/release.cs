@@ -3,7 +3,7 @@
 #:package System.CommandLine
 #:project ../src/D3B.Data/D3B.Data.csproj
 #:project ../src/D3B.Protocol/D3B.Protocol.csproj
-#:include release/GitHubCli.cs
+#:include unity/GitHubCli.cs
 #:include release/ReleaseAsset.cs
 #:include release/ReleaseCommand.cs
 #:include unity/ClientInstall.cs

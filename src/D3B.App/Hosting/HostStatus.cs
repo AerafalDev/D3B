@@ -3,7 +3,7 @@ namespace D3B.App.Hosting;
 /// <summary>Where the bots' host stands in the app's process (D91).</summary>
 internal enum HostStatus
 {
-    /// <summary>Gets ready: builds its modules, finds or downloads the pack and the mapping, starts the relay.</summary>
+    /// <summary>Gets ready: builds its modules, finds the pack and the mapping, starts the relay.</summary>
     Starting,
 
     /// <summary>Runs: clients started from the launcher go through its relay, and their characters get bots.</summary>

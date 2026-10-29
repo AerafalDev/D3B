@@ -1328,4 +1328,61 @@
   <data name="ExcludeResourcesCount" xml:space="preserve">
     <value>Exclure {0}</value>
   </data>
+  <data name="UpdateReady" xml:space="preserve">
+    <value>D3B {0} est prête à s'installer.</value>
+  </data>
+  <data name="UpdateReadyDetail" xml:space="preserve">
+    <value>D3B {0} est téléchargée : elle s'installe au redémarrage ou à la fermeture de D3B.</value>
+  </data>
+  <data name="UpdateRestart" xml:space="preserve">
+    <value>Redémarrer</value>
+  </data>
+  <data name="UpdateNow" xml:space="preserve">
+    <value>Mettre à jour et redémarrer</value>
+  </data>
+  <data name="UpdateCheck" xml:space="preserve">
+    <value>Rechercher les mises à jour</value>
+  </data>
+  <data name="UpdateRestartQuestion" xml:space="preserve">
+    <value>Redémarrer D3B pour installer sa mise à jour ?</value>
+  </data>
+  <data name="UpdateRestartMessage" xml:space="preserve">
+    <value>Ses bots s'arrêtent et les clients sont déconnectés.</value>
+  </data>
+  <data name="UpdateNotInstalled" xml:space="preserve">
+    <value>Lancé depuis son code, D3B ne se met pas à jour.</value>
+  </data>
+  <data name="UpdateNotChecked" xml:space="preserve">
+    <value>Pas encore recherchée.</value>
+  </data>
+  <data name="UpdateChecking" xml:space="preserve">
+    <value>Recherche d'une mise à jour…</value>
+  </data>
+  <data name="UpdateUpToDate" xml:space="preserve">
+    <value>À jour.</value>
+  </data>
+  <data name="UpdateDownloading" xml:space="preserve">
+    <value>Téléchargement de D3B {0} : {1} %</value>
+  </data>
+  <data name="UpdateFailed" xml:space="preserve">
+    <value>La recherche a échoué : {0}</value>
+  </data>
+  <data name="MissingBuildTitle" xml:space="preserve">
+    <value>D3B ne connaît pas encore ce client</value>
+  </data>
+  <data name="MissingBuildText" xml:space="preserve">
+    <value>Le launcher a installé le client {0} ; D3B {1} embarque les données du client {2}. La version de D3B pour ce client sort après la mise à jour d'Ankama, et D3B s'y met à jour de lui-même.</value>
+  </data>
+  <data name="SettingsAbout" xml:space="preserve">
+    <value>D3B</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="AboutClient" xml:space="preserve">
+    <value>Build du client</value>
+  </data>
+  <data name="AboutUpdate" xml:space="preserve">
+    <value>Mise à jour</value>
+  </data>
 </root>

@@ -62,6 +62,9 @@ jobs:
       - name: Build the mapping tool
         run: dotnet build scripts/mapping.cs
 
+      - name: Build the embedding tool
+        run: dotnet build scripts/embed.cs
+
       - name: Check formatting
         run: dotnet format --verify-no-changes --no-restore
 

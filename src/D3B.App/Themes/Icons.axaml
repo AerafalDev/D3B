@@ -15,6 +15,7 @@
     <StreamGeometry x:Key="IconCoins">M13.744 17.736a6 6 0 1 1-7.48-7.48 M15 6h1v4 M6.134 14.768l.866-.5 2 3.464 M10 8A6 6 0 1 0 22 8A6 6 0 1 0 10 8Z</StreamGeometry>
     <StreamGeometry x:Key="IconCopy">M10 8H20A2 2 0 0 1 22 10V20A2 2 0 0 1 20 22H10A2 2 0 0 1 8 20V10A2 2 0 0 1 10 8Z M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2</StreamGeometry>
     <StreamGeometry x:Key="IconDatabase">M3 5A9 3 0 1 0 21 5A9 3 0 1 0 3 5Z M3 5V19A9 3 0 0 0 21 19V5 M3 12A9 3 0 0 0 21 12</StreamGeometry>
+    <StreamGeometry x:Key="IconDownload">M12 15V3 M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5</StreamGeometry>
     <StreamGeometry x:Key="IconDoor">M10 21H2 M10 3H7a2 2 0 00-2 2v16 M14 12h.01 M19 21V5a2 2 0 00-1.675-1.974l-6.163-1.013A1 1 0 0010 3v18a1 1 0 001.124.992z M22 21h-3</StreamGeometry>
     <StreamGeometry x:Key="IconDuplicate">M15 12L15 18 M12 15L18 15 M10 8H20A2 2 0 0 1 22 10V20A2 2 0 0 1 20 22H10A2 2 0 0 1 8 20V10A2 2 0 0 1 10 8Z M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2</StreamGeometry>
     <StreamGeometry x:Key="IconFailure">M2 12A10 10 0 1 0 22 12A10 10 0 1 0 2 12Z M15 9l-6 6 M9 9l6 6</StreamGeometry>

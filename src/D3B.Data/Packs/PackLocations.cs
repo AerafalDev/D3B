@@ -2,8 +2,8 @@ namespace D3B.Data.Packs;
 
 /// <summary>Where packs are kept on a machine: one directory per client version, one file per pack format (D24).</summary>
 /// <remarks>
-/// The extraction tool writes there by default and the host looks there first, so a pack extracted locally is used
-/// without being downloaded. The format is in the file's name, so that versions of D3B reading different formats keep
+/// The extraction tool writes there by default and the host looks there first, so a pack extracted locally is used over
+/// the one the app ships (D172). The format is in the file's name, so that versions of D3B reading different formats keep
 /// their packs side by side.
 /// </remarks>
 public static class PackLocations

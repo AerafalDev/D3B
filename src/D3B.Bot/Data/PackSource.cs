@@ -1,16 +1,14 @@
 using D3B.Data;
 using D3B.Data.Packs;
-using D3B.Data.Releases;
-using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Data;
 
-/// <summary>The pack of the installed client's build: kept on this machine, else downloaded from its release (D24).</summary>
+/// <summary>The pack of the installed client's build: extracted on this machine, else the one the app ships (D24, D172).</summary>
 /// <remarks>
 /// <para>
-/// A pack extracted on this machine is found first, so a host works offline. Otherwise <see cref="EnsureAsync"/>
-/// downloads the release's, checks it against its SHA-256 and that it was extracted from this build, then moves it into
-/// place. The pack of another build is never used: the data, and from step 3 the protocol mapping, must match the client.
+/// A pack extracted on this machine is found first, so that the maintainer's extraction of a build is used. Otherwise the
+/// pack the published app ships with its build's release is. The pack of another build is never used: the data, and the
+/// protocol mapping beside it, must match the client.
 /// </para>
 /// <para>
 /// Every failure is a <see cref="DataUnavailableException"/> whose message says which build lacks its pack and how to
@@ -20,74 +18,22 @@ namespace D3B.Bot.Data;
 public sealed class PackSource
 {
     private readonly DataSettings _settings;
-    private readonly ReleaseDownloader _downloader;
-    private readonly ReleaseToken _token;
-    private readonly ILogger _log;
     private readonly Lazy<ClientBuild> _build;
 
     /// <summary>Gets the build of the installed client.</summary>
     /// <exception cref="DataUnavailableException">No client is installed where the configuration says.</exception>
     public ClientBuild Build => _build.Value;
 
-    /// <summary>Gets where the pack of the installed build is kept.</summary>
+    /// <summary>Gets where the pack of the installed build is: on this machine, else among the app's own.</summary>
     /// <exception cref="DataUnavailableException">No client is installed where the configuration says.</exception>
-    public string PackPath => PackLocations.PathOf(_settings.PacksDirectory, Build);
+    public string PackPath => _settings.Locate(root => PackLocations.PathOf(root, Build));
 
-    internal PackSource(DataSettings settings, ReleaseDownloader downloader, ReleaseToken token, ILogger<PackSource> log)
+    internal PackSource(DataSettings settings)
     {
         _settings = settings;
-        _downloader = downloader;
-        _token = token;
-        _log = log;
 
         // Publication only: a failed read is not remembered, so that a client installed meanwhile is found.
         _build = new Lazy<ClientBuild>(ReadBuild, LazyThreadSafetyMode.PublicationOnly);
-    }
-
-    private static void Check(string path, ClientBuild build)
-    {
-        using var pack = GamePack.Open(path);
-
-        if (pack.Info.ClientVersion != build.Version)
-            throw new PackFormatException($"the release's {PackLocations.FileName} was extracted from client {pack.Info.ClientVersion}.");
-    }
-
-    /// <summary>Makes sure the pack of the installed build is on this machine, downloading it when it is not.</summary>
-    /// <param name="cancellationToken">Stops the download.</param>
-    /// <returns>Whether this call downloaded the pack, rather than finding it in place.</returns>
-    /// <exception cref="DataUnavailableException">No client is installed, or its build's pack is neither here nor downloadable.</exception>
-    public async Task<bool> EnsureAsync(CancellationToken cancellationToken)
-    {
-        var build = Build;
-        var path = PackPath;
-
-        if (File.Exists(path))
-            return false;
-
-        var tag = ClientRelease.TagOf(build);
-        var token = await _token.GetAsync(cancellationToken);
-
-        DataLog.Downloading(_log, build.Version, _settings.PacksDirectory, PackLocations.FileName, tag, _downloader.Repository, token is null ? "without a token" : "with a token");
-
-        try
-        {
-            var hash = await _downloader.DownloadAsync(tag, PackLocations.FileName, path, token, file => Check(file, build), cancellationToken);
-
-            // Null when a pack landed meanwhile, such as one the extraction tool wrote: Open checks it like any other.
-            if (hash is null)
-                return false;
-
-            DataLog.Downloaded(_log, path, hash);
-
-            return true;
-        }
-        catch (Exception exception) when (exception is IOException or HttpRequestException or UnauthorizedAccessException)
-        {
-            // Without a token the repository looks empty while it is private; say where one comes from.
-            var hint = token is null ? $" A private repository needs a token: {DataSettings.TokenKey}, or the GitHub CLI's once logged in with gh auth login." : string.Empty;
-
-            throw new DataUnavailableException($"No pack for client {build.Version}: none at {path}, and the download from release {tag} failed: {exception.Message}{hint} {ExtractHint(false)}", exception);
-        }
     }
 
     /// <summary>Opens the pack of the installed build.</summary>
@@ -99,7 +45,14 @@ public sealed class PackSource
         var path = PackPath;
 
         if (!File.Exists(path))
-            throw new DataUnavailableException($"No pack for client {build.Version}: none at {path}. {ExtractHint(false)}");
+        {
+            var bundled = PackLocations.PathOf(_settings.BundledDirectory, build);
+
+            throw new DataUnavailableException($"No pack for client {build.Version}: none at {path}, nor at {bundled} among the app's own. {ExtractHint(false)}")
+            {
+                MissingBuild = build.Version,
+            };
+        }
 
         GamePack pack;
 

@@ -168,142 +168,213 @@
                 </StackPanel>
             </shadui:Sidebar.Footer>
         </shadui:Sidebar>
-        <Panel
-            Classes="PageHost"
-            Grid.Column="1"
-            IsVisible="{Binding IsSettingsPage}">
-            <views:SettingsView DataContext="{Binding Settings}" />
-        </Panel>
-        <Panel Grid.Column="1" IsVisible="{Binding !IsSettingsPage}">
-            <StackPanel
-                HorizontalAlignment="Center"
-                IsVisible="{Binding IsStarting}"
-                Spacing="12"
-                VerticalAlignment="Center">
-                <shadui:Loading
-                    Height="24"
-                    HorizontalAlignment="Center"
-                    Width="24" />
-                <TextBlock
-                    Classes="Title"
-                    HorizontalAlignment="Center"
-                    Text="{l:Tr HostStartingTitle}" />
-                <TextBlock
-                    Classes="Muted"
-                    HorizontalAlignment="Center"
-                    Text="{l:Tr HostStartingDetail}" />
-            </StackPanel>
-            <StackPanel
-                HorizontalAlignment="Center"
-                IsVisible="{Binding IsStopping}"
-                Spacing="12"
-                VerticalAlignment="Center">
-                <shadui:Loading
-                    Height="24"
-                    HorizontalAlignment="Center"
-                    Width="24" />
-                <TextBlock
-                    Classes="Title"
-                    HorizontalAlignment="Center"
-                    Text="{l:Tr HostStoppingTitle}" />
-            </StackPanel>
-            <ScrollViewer IsVisible="{Binding IsFailed}">
-                <Border
-                    Classes="Banner Danger"
-                    HorizontalAlignment="Center"
-                    Margin="32"
-                    MaxWidth="720"
-                    VerticalAlignment="Center">
-                    <StackPanel Spacing="16">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <c:Icon
-                                Classes="Large"
-                                Data="{StaticResource IconAlert}"
-                                Tone="Danger"
-                                VerticalAlignment="Center" />
-                            <TextBlock
-                                Classes="Title"
-                                Text="{l:Tr HostFailedTitle}"
-                                VerticalAlignment="Center" />
-                        </StackPanel>
-                        <Border Classes="Code">
-                            <SelectableTextBlock
-                                Classes="Mono"
-                                Text="{Binding HostFailure}"
-                                TextWrapping="Wrap" />
-                        </Border>
-                        <Button
-                            Classes="Outline"
-                            Click="OnCopyFailureClick"
-                            HorizontalAlignment="Right">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <c:Icon Data="{StaticResource IconCopy}" />
-                                <TextBlock Text="{l:Tr Copy}" />
-                            </StackPanel>
-                        </Button>
+        <DockPanel Grid.Column="1">
+            <Border
+                Classes="Banner Info Strip"
+                DockPanel.Dock="Top"
+                IsVisible="{Binding Updates.IsReady}"
+                Margin="16,12,16,0">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <c:Icon
+                        Data="{StaticResource IconDownload}"
+                        Tone="Info"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Margin="12,0"
+                        Text="{Binding Updates.ReadyText}"
+                        TextTrimming="CharacterEllipsis"
+                        VerticalAlignment="Center" />
+                    <Button
+                        Classes="Primary"
+                        Command="{Binding Updates.RestartCommand}"
+                        Content="{l:Tr UpdateRestart}"
+                        Grid.Column="2" />
+                </Grid>
+            </Border>
+            <Panel>
+                <Panel Classes="PageHost" IsVisible="{Binding IsSettingsPage}">
+                    <views:SettingsView DataContext="{Binding Settings}" />
+                </Panel>
+                <Panel IsVisible="{Binding !IsSettingsPage}">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        IsVisible="{Binding IsStarting}"
+                        Spacing="12"
+                        VerticalAlignment="Center">
+                        <shadui:Loading
+                            Height="24"
+                            HorizontalAlignment="Center"
+                            Width="24" />
+                        <TextBlock
+                            Classes="Title"
+                            HorizontalAlignment="Center"
+                            Text="{l:Tr HostStartingTitle}" />
+                        <TextBlock
+                            Classes="Muted"
+                            HorizontalAlignment="Center"
+                            Text="{l:Tr HostStartingDetail}" />
                     </StackPanel>
-                </Border>
-            </ScrollViewer>
-            <Panel IsVisible="{Binding IsRunning}">
-                <Panel Classes="PageHost" IsVisible="{Binding IsBotsPage}">
-                    <views:BotsView DataContext="{Binding Bots}" />
-                </Panel>
-                <Panel Classes="PageHost" IsVisible="{Binding IsAccountsPage}">
-                    <views:AccountsView DataContext="{Binding Accounts}" />
-                </Panel>
-                <Panel Classes="PageHost" IsVisible="{Binding IsProfilesPage}">
-                    <views:ProfilesView DataContext="{Binding Profiles}" />
-                </Panel>
-                <Panel Classes="PageHost" IsVisible="{Binding IsMapPage}">
-                    <views:MapView DataContext="{Binding Map}" />
-                </Panel>
-                <Panel Classes="PageHost" IsVisible="{Binding IsStatisticsPage}">
-                    <views:StatisticsView DataContext="{Binding Statistics}" />
-                </Panel>
-                <Panel Classes="PageHost" IsVisible="{Binding IsLogsPage}">
-                    <views:LogsView DataContext="{Binding Logs}" />
-                </Panel>
-                <Panel Classes="PageHost" IsVisible="{Binding IsInspectorPage}">
-                    <views:InspectorView DataContext="{Binding Inspector}" />
-                </Panel>
-                <ContentControl
-                    Classes="PageHost"
-                    Content="{Binding SelectedPage.Content}"
-                    IsVisible="{Binding IsModulePage}">
-                    <ContentControl.DataTemplates>
-                        <DataTemplate x:DataType="vm:PageFailureViewModel">
-                            <ScrollViewer>
-                                <Border
-                                    Classes="Banner Danger"
-                                    HorizontalAlignment="Center"
-                                    Margin="32"
-                                    MaxWidth="720"
-                                    VerticalAlignment="Center">
-                                    <StackPanel Spacing="16">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <c:Icon
-                                                Classes="Large"
-                                                Data="{StaticResource IconAlert}"
-                                                Tone="Danger"
-                                                VerticalAlignment="Center" />
-                                            <TextBlock
-                                                Classes="Title"
-                                                Text="{l:Tr PageFailedTitle}"
-                                                VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <Border Classes="Code">
-                                            <SelectableTextBlock
-                                                Classes="Mono"
-                                                Text="{Binding Message}"
-                                                TextWrapping="Wrap" />
-                                        </Border>
-                                    </StackPanel>
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        IsVisible="{Binding IsStopping}"
+                        Spacing="12"
+                        VerticalAlignment="Center">
+                        <shadui:Loading
+                            Height="24"
+                            HorizontalAlignment="Center"
+                            Width="24" />
+                        <TextBlock
+                            Classes="Title"
+                            HorizontalAlignment="Center"
+                            Text="{l:Tr HostStoppingTitle}" />
+                    </StackPanel>
+                    <ScrollViewer IsVisible="{Binding IsMissingBuild}">
+                        <Border
+                            Classes="Banner Info"
+                            HorizontalAlignment="Center"
+                            Margin="32"
+                            MaxWidth="720"
+                            VerticalAlignment="Center">
+                            <StackPanel Spacing="16">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <c:Icon
+                                        Classes="Large"
+                                        Data="{StaticResource IconDownload}"
+                                        Tone="Info"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Classes="Title"
+                                        Text="{l:Tr MissingBuildTitle}"
+                                        VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding MissingBuildText}" TextWrapping="Wrap" />
+                                <c:StatusPill
+                                    HorizontalAlignment="Left"
+                                    Text="{Binding Updates.StatusText}"
+                                    Tone="{Binding Updates.StatusTone}" />
+                                <StackPanel
+                                    HorizontalAlignment="Right"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <Button
+                                        Classes="Outline"
+                                        Command="{Binding Updates.CheckCommand}"
+                                        Content="{l:Tr UpdateCheck}" />
+                                    <Button
+                                        Classes="Primary"
+                                        Command="{Binding Updates.RestartCommand}"
+                                        Content="{l:Tr UpdateNow}"
+                                        IsVisible="{Binding Updates.IsReady}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </ScrollViewer>
+                    <ScrollViewer>
+                        <ScrollViewer.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="IsFailed" />
+                                <Binding Path="!IsMissingBuild" />
+                            </MultiBinding>
+                        </ScrollViewer.IsVisible>
+                        <Border
+                            Classes="Banner Danger"
+                            HorizontalAlignment="Center"
+                            Margin="32"
+                            MaxWidth="720"
+                            VerticalAlignment="Center">
+                            <StackPanel Spacing="16">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <c:Icon
+                                        Classes="Large"
+                                        Data="{StaticResource IconAlert}"
+                                        Tone="Danger"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Classes="Title"
+                                        Text="{l:Tr HostFailedTitle}"
+                                        VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Border Classes="Code">
+                                    <SelectableTextBlock
+                                        Classes="Mono"
+                                        Text="{Binding HostFailure}"
+                                        TextWrapping="Wrap" />
                                 </Border>
-                            </ScrollViewer>
-                        </DataTemplate>
-                    </ContentControl.DataTemplates>
-                </ContentControl>
+                                <Button
+                                    Classes="Outline"
+                                    Click="OnCopyFailureClick"
+                                    HorizontalAlignment="Right">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <c:Icon Data="{StaticResource IconCopy}" />
+                                        <TextBlock Text="{l:Tr Copy}" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </ScrollViewer>
+                    <Panel IsVisible="{Binding IsRunning}">
+                        <Panel Classes="PageHost" IsVisible="{Binding IsBotsPage}">
+                            <views:BotsView DataContext="{Binding Bots}" />
+                        </Panel>
+                        <Panel Classes="PageHost" IsVisible="{Binding IsAccountsPage}">
+                            <views:AccountsView DataContext="{Binding Accounts}" />
+                        </Panel>
+                        <Panel Classes="PageHost" IsVisible="{Binding IsProfilesPage}">
+                            <views:ProfilesView DataContext="{Binding Profiles}" />
+                        </Panel>
+                        <Panel Classes="PageHost" IsVisible="{Binding IsMapPage}">
+                            <views:MapView DataContext="{Binding Map}" />
+                        </Panel>
+                        <Panel Classes="PageHost" IsVisible="{Binding IsStatisticsPage}">
+                            <views:StatisticsView DataContext="{Binding Statistics}" />
+                        </Panel>
+                        <Panel Classes="PageHost" IsVisible="{Binding IsLogsPage}">
+                            <views:LogsView DataContext="{Binding Logs}" />
+                        </Panel>
+                        <Panel Classes="PageHost" IsVisible="{Binding IsInspectorPage}">
+                            <views:InspectorView DataContext="{Binding Inspector}" />
+                        </Panel>
+                        <ContentControl
+                            Classes="PageHost"
+                            Content="{Binding SelectedPage.Content}"
+                            IsVisible="{Binding IsModulePage}">
+                            <ContentControl.DataTemplates>
+                                <DataTemplate x:DataType="vm:PageFailureViewModel">
+                                    <ScrollViewer>
+                                        <Border
+                                            Classes="Banner Danger"
+                                            HorizontalAlignment="Center"
+                                            Margin="32"
+                                            MaxWidth="720"
+                                            VerticalAlignment="Center">
+                                            <StackPanel Spacing="16">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <c:Icon
+                                                        Classes="Large"
+                                                        Data="{StaticResource IconAlert}"
+                                                        Tone="Danger"
+                                                        VerticalAlignment="Center" />
+                                                    <TextBlock
+                                                        Classes="Title"
+                                                        Text="{l:Tr PageFailedTitle}"
+                                                        VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <Border Classes="Code">
+                                                    <SelectableTextBlock
+                                                        Classes="Mono"
+                                                        Text="{Binding Message}"
+                                                        TextWrapping="Wrap" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </ScrollViewer>
+                                </DataTemplate>
+                            </ContentControl.DataTemplates>
+                        </ContentControl>
+                    </Panel>
+                </Panel>
             </Panel>
-        </Panel>
+        </DockPanel>
     </Grid>
 </shadui:Window>

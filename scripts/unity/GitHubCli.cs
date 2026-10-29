@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace D3B.Scripts.Release;
+namespace D3B.Scripts.Unity;
 
 /// <summary>Runs the GitHub CLI, which holds the maintainer's credentials, so that the tool never handles a token.</summary>
 internal static class GitHubCli

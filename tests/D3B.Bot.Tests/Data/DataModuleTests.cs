@@ -99,14 +99,4 @@ public sealed class DataModuleTests : IDisposable
         Assert.Contains("extracted from client 3.7.11.1", exception.Message, StringComparison.Ordinal);
         Assert.Contains("--force", exception.Message, StringComparison.Ordinal);
     }
-
-    [Fact]
-    public void ARepositoryThatIsNotOneStopsTheModule()
-    {
-        var bot = _install.Bot("--Releases:Repository", "not a repository");
-
-        var exception = Assert.Throws<InvalidOperationException>(() => bot.AddModule<DataModule>());
-
-        Assert.Contains("Releases:Repository", exception.Message, StringComparison.Ordinal);
-    }
 }

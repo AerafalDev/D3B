@@ -4,7 +4,8 @@ namespace D3B.Data.Releases;
 
 /// <summary>How the files made from a client build are published: one GitHub release per build, an asset per file (D24).</summary>
 /// <remarks>
-/// The host that downloads an asset and the tool that publishes it share these names, so that they cannot drift apart.
+/// The tool that publishes an asset and the one that ships it beside the app share these names, so that they cannot drift
+/// apart (D172).
 /// Each asset comes with a second one, its SHA-256 in the format <c>sha256sum</c> writes and checks.
 /// </remarks>
 public static class ClientRelease

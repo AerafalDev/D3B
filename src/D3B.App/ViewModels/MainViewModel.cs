@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
+using D3B.App.Updates;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
 using D3B.App.ViewModels.Statistics;
@@ -53,6 +54,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets the settings page, at the rail's foot, whose theme the window follows.</summary>
     public SettingsViewModel Settings { get; }
+
+    /// <summary>Gets the app's version and its update, in the window's banner and on the settings page (D173).</summary>
+    public UpdatesViewModel Updates { get; }
 
     /// <summary>Gets the pages the host's modules registered, in the rail after the app's own, once the host runs.</summary>
     public ObservableCollection<ModulePageViewModel> Pages { get; } = [];
@@ -130,6 +134,14 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string? HostFailure { get; private set; }
 
+    /// <summary>Gets whether the installed app did not start for a client build it does not ship, which a newer version does (D172).</summary>
+    [ObservableProperty]
+    public partial bool IsMissingBuild { get; private set; }
+
+    /// <summary>Gets what the window says of the client build the installed app does not ship.</summary>
+    [ObservableProperty]
+    public partial string MissingBuildText { get; private set; } = "";
+
     /// <summary>Gets or sets the page the sidebar marks: <c>bots</c>, <c>accounts</c>, <c>settings</c> and the others, or a module's page's route.</summary>
     [ObservableProperty]
     public partial string CurrentRoute { get; set; } = "bots";
@@ -152,7 +164,9 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <param name="host">The bots' host in the app's process.</param>
     /// <param name="localizer">The app's texts.</param>
     /// <param name="preferences">What the app remembers of its own, its language, theme and the host's settings, or <see langword="null"/> to remember nothing.</param>
-    public MainViewModel(HostRunner host, Localizer localizer, AppPreferences? preferences = null)
+    /// <param name="updates">The app's updates, or <see langword="null"/> for an app that never updates.</param>
+    /// <param name="close">Closes the app, as restarting it to install its update does.</param>
+    public MainViewModel(HostRunner host, Localizer localizer, AppPreferences? preferences = null, AppUpdates? updates = null, Action? close = null)
     {
         _host = host;
         _localizer = localizer;
@@ -169,7 +183,8 @@ internal sealed partial class MainViewModel : ObservableObject
         Statistics = new StatisticsViewModel(localizer);
         Logs = new LogsViewModel(localizer, choice, Toasts);
         Inspector = new InspectorViewModel(localizer, choice);
-        Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts);
+        Updates = new UpdatesViewModel(localizer, updates, Dialogs, () => IsRunning && Bots.HasItems, close ?? (() => { }));
+        Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates);
     }
 
     /// <summary>Reads the host and its bots again, in the language chosen.</summary>
@@ -183,6 +198,11 @@ internal sealed partial class MainViewModel : ObservableObject
         IsStopping = status is HostStatus.Stopping or HostStatus.Stopped;
         IsFailed = status is HostStatus.Failed;
         HostFailure = IsFailed ? _host.Failure : null;
+        Updates.Refresh();
+
+        // Run from its code, the app says what the maintainer does: extract and map the build; installed, that it updates.
+        IsMissingBuild = IsFailed && _host.MissingBuild is not null && Updates.IsInstalled;
+        MissingBuildText = IsMissingBuild ? _localizer.Format("MissingBuildText", _host.MissingBuild, Updates.Version, Updates.ClientVersion) : "";
         OnPropertyChanged(nameof(SidebarToggleText));
         (HostTitle, HostTone) = status switch
         {

@@ -40,7 +40,9 @@ bots learn, which send a tour to the probable maps first (step 6, session 6b); t
 learned, a zone's isolated maps, fights told by their timing and followed as the profile says, the resources' growing
 back learned and kept, and each run kept for a statistics page (step 6, session 6c); the app redesigned (step 6, session
 6d); the harvest's resources by profession, its place chosen by each character's levels, zaaps only when they save enough
-maps, and profiles given (step 6, session 6e). Everything else below is the target.
+maps, and profiles given (step 6, session 6e); the app published by CI with Velopack, shipping its client build's pack,
+schema and mapping, and updating itself from the repository's releases, the host downloading nothing (step 6, session
+6f). Everything else below is the target.
 
 ## Overview
 
@@ -48,9 +50,10 @@ maps, and profiles given (step 6, session 6e). Everything else below is the targ
 Official client (Unity)                 scripts/ (file-based apps, D10)              release artifacts, per client build
 Dofus_Data/StreamingAssets/** ────────► extraction: Unity readers ───────────────►  data pack (MemoryPack + zstd)
 GameAssembly.dll + metadata   ────────► mapping: schema, captures, matching ─────►  schema, protocol mapping
-                                                                                             │ fetched and loaded by
+                                                                                             │ shipped with the app (D172)
                                                                                              ▼
 D3B.App (Avalonia, ShadUI) ── runs in its own process (D91) ──► the bots' host: Generic Host, Kestrel
+installed and updated by Velopack from the releases (D171, D173)
 D3B.Host: the same host, without the app                          │ BotBuilder: default modules, storage (D5)
                                                                   ▼
                                                                 one async actor per bot (D9)
@@ -335,9 +338,9 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   only when its message encodes back to its length; one that is not is passed on as it is, and never rewritten. A game
   frame's type URL names the build's message, which the mapping turns into the readable one (`DecodeGame`, D58); a frame
   of a partial message is read without being understood whole (D55).
-- The version gate (D48): the protocol module (`ProtocolModule`, in `D3B.Bot`) registers `ProtocolSource`, which finds
-  the build's schema and mapping beside its pack, else downloads them from its release, and the translation, which the
-  host asks for before it starts. Without a mapping that holds, the host logs what fails and the commands mapping the
+- The version gate (D48, D172): the protocol module (`ProtocolModule`, in `D3B.Bot`) registers `ProtocolSource`, which
+  finds the build's schema and mapping beside its pack on this machine, else among the app's own, and the translation,
+  which the host asks for before it starts. Without a mapping that holds, the host logs what fails and the commands mapping the
   build, `scripts/schema.cs` then `scripts/mapping.cs`, which need no capture, and exits with code 1.
 - The connection phase, decoded (D49, D51): `RelayDecoder` gives each connection phase a `ConnectionPhaseSession`, which decodes every frame through the translation and logs it by the readable fields
   its oneofs hold and its length, never a value, a frame not understood being a warning, and rewrites the server
@@ -390,22 +393,23 @@ Built at step 2 (D24 to D33):
 - Packs, schemas and mappings are assets of this repository's releases, one release per client build, tagged
   `client-<version>`, each asset with its SHA-256 beside it, never committed (D10, D11, D24, D39). `ClientRelease`
   names them; `scripts/release.cs` publishes a build's pack, schema and mapping together, once the mapping holds, never
-  replacing an asset already published (D33, D50).
+  replacing an asset already published (D33, D50). The app's release workflow takes them from there with
+  `scripts/embed.cs`, checked, to ship them beside the app (D172).
 - The data module (`DataModule`, in `D3B.Bot`, D31) registers, as singletons every bot shares, the installed
-  `ClientBuild`, the `PackSource` that finds its pack, the `ReleaseDownloader`, the `GamePack`, opened once and closed
-  with the host, and the stores reading it: `GameTexts`, `GameMaps`, `GameWorld` and `GameTables`. The configuration
-  names the client (`Client:Directory`), the packs' directory (`Data:Directory`) and the releases' repository
-  (`Releases:Repository`).
-- Before the host starts, `PackSource` looks for the pack of the installed build on this machine, else downloads the
-  release's, checks it against its SHA-256 and that it was extracted from this build, and moves it into place; then the
-  host opens it. While the repository is private, the download sends `Releases:Token`, else the GitHub CLI's token
-  (D32). With no pack for the installed build, the host does not start: it says which build lacks one and how to
-  extract it, and exits with code 1. The pack of another build is never used.
+  `ClientBuild`, the `PackSource` that finds its pack, the `GamePack`, opened once and closed with the host, and the
+  stores reading it: `GameTexts`, `GameMaps`, `GameWorld` and `GameTables`. The configuration names the client
+  (`Client:Directory`) and the packs' directory on this machine (`Data:Directory`).
+- Before the host starts, it opens the pack of the installed build (D172): the one on this machine, where the tools write,
+  else the one the published app ships in `data/<version>/` beside its executable (`DataSettings.Locate`). Nothing is
+  downloaded. With no pack for the installed build, the host does not start: it says which build lacks one and how to
+  extract it, names that build to the app (`BotHostStart.MissingBuild`), and exits with code 1. The pack of another build
+  is never used.
 
 ## Desktop app
 
 Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
-5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151); redesigned in 6d (D159 to D162).
+5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151); redesigned in 6d (D159 to D162); published and
+updating itself in 6f (D171 to D173).
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
@@ -471,7 +475,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   help and measured or D3B's value in a tooltip, a dot when raised, and a button restoring them all but the display time,
   the bots' applying at once (`Bots.Delays`), the relay's from the next start; the captures, `Network:Captures:Enabled`,
   from the next start, with whether the host records now and where; the language and the theme; where the database, the
-  pack and the app's own file are, each copied on a click. Once the host runs, the page shows the delays its
+  pack and the app's own file are, each copied on a click; D3B's version, the client build it ships and its update
+  (D173). Once the host runs, the page shows the delays its
   bots wait, which its command line may have raised; changed before, the page's are given to them.
 - **The logs page** (D111 to D114, `D3B.App.ViewModels.Logs`): every source by time, the host's problems, or a bot's
   journal, which its card opens, a profile that did not start on connection included (D119), chosen top right; filtered
@@ -490,6 +495,18 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   activity's report adds a line, an Activity layer ringing the elements it wants and the one it goes for and marking the
   exit it heads to, and its tour's mini-map, gone through, probable, to see, without a resource, growing back and isolated
   (D131, D138, D145, D149).
+- **Published** (D171): pushing a tag `v<version>` has `.github/workflows/release.yml` publish the app self-contained for
+  win-x64, put the pack, schema and mapping of the build `ClientVersion` names in `data/<version>/` beside it with
+  `scripts/embed.cs` (D172), and pack it with Velopack into the release `v<version>`: an installer, a portable zip, full and
+  delta packages. Installed per user into `%LOCALAPPDATA%\D3B.App`, apart from `%LOCALAPPDATA%\D3B`, which uninstalling
+  keeps. `LICENSE` and `THIRD-PARTY-NOTICES.md` ship beside it.
+- **Updates** (D173, `D3B.App.Updates`): `Program` lets Velopack run first, as an install, an update or an uninstall asks;
+  `AppUpdates` checks the repository's releases as the app starts (`VelopackUpdateClient`, or the folder `Updates:Source`
+  names), downloads a newer version at once, and installs it when the user restarts from the window's banner, asked first
+  while bots play, or once the window is gone and the host stopped. `UpdatesViewModel` says it in the banner and on the
+  settings page, with the app's version and the client build it ships (`AppRelease`); when the host lacks the installed
+  build's files (D172), the installed app says so instead of the host's message, with the update and a button installing
+  it. Run from its code, the app does not check.
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
   alone: the bots' loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in

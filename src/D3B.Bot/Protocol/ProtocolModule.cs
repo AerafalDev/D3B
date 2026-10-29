@@ -1,10 +1,8 @@
 using D3B.Bot.Data;
 using D3B.Core.Modules;
 using D3B.Data;
-using D3B.Data.Releases;
 using D3B.Protocol.Translation;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Protocol;
 
@@ -16,9 +14,8 @@ namespace D3B.Bot.Protocol;
 /// first asked for.
 /// </para>
 /// <para>
-/// Nothing is read or downloaded while the module builds. The host calls <see cref="ProtocolSource.EnsureAsync"/>, then
-/// asks for the translation, before it starts: a build without a mapping that holds stops it, with the commands that map
-/// the build.
+/// Nothing is read while the module builds. The host asks for the translation before it starts: a build without a mapping
+/// that holds stops it, with the commands that map the build.
 /// </para>
 /// </remarks>
 public sealed class ProtocolModule : IModule
@@ -32,12 +29,7 @@ public sealed class ProtocolModule : IModule
 
         var settings = DataSettings.Read(bot.Configuration);
 
-        bot.Services.AddSingleton(services => new ProtocolSource(
-            settings,
-            services.GetRequiredService<ClientBuild>(),
-            services.GetRequiredService<ReleaseDownloader>(),
-            services.GetRequiredService<ReleaseToken>(),
-            services.GetRequiredService<ILogger<ProtocolSource>>()));
+        bot.Services.AddSingleton(services => new ProtocolSource(settings, services.GetRequiredService<ClientBuild>()));
         bot.Services.AddSingleton(services => services.GetRequiredService<ProtocolSource>().Load());
     }
 }

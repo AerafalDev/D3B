@@ -7,6 +7,7 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using D3B.App.Hosting;
 using D3B.App.Localization;
+using D3B.App.Updates;
 using D3B.App.ViewModels;
 using D3B.App.Views;
 
@@ -23,6 +24,9 @@ internal sealed partial class App : Application
 
     /// <summary>Gets what the app remembers of its own: its language and theme.</summary>
     public AppPreferences? Preferences { get; init; }
+
+    /// <summary>Gets the app's updates, checked as it starts (D173).</summary>
+    public AppUpdates? Updates { get; init; }
 
     /// <summary>Configures what the app draws with, the same with a screen and without one.</summary>
     /// <param name="builder">The app's builder.</param>
@@ -62,7 +66,8 @@ internal sealed partial class App : Application
             if (Preferences?.Theme == AppPreferences.Light)
                 RequestedThemeVariant = ThemeVariant.Light;
 
-            var main = new MainViewModel(host, Localizer.Instance, Preferences);
+            // Closing the window stops the host, then installs the version downloaded and starts the app again (D173).
+            var main = new MainViewModel(host, Localizer.Instance, Preferences, Updates, () => desktop.Shutdown());
 
             main.Refresh();
             desktop.MainWindow = new MainWindow { DataContext = main };

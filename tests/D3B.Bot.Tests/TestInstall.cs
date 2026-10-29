@@ -1,3 +1,4 @@
+using D3B.Bot.Data;
 using D3B.Core.Modules;
 using D3B.Data;
 using D3B.Data.Interactives;
@@ -16,7 +17,6 @@ namespace D3B.Bot.Tests;
 internal sealed class TestInstall : IDisposable
 {
     public const string Version = "3.7.12.12";
-    public const string Token = "test-token";
     public const long MapId = 191_104_002;
     public const int AshNameId = 10;
 
@@ -26,11 +26,21 @@ internal sealed class TestInstall : IDisposable
 
     public string PacksDirectory => Path.Combine(Root, "data");
 
+    /// <summary>Gets where a published app's own files would be, beside its executable.</summary>
+    public string BundledDirectory => Path.Combine(Root, "app", "data");
+
     public string PackPath => PackLocations.PathOf(PacksDirectory, new ClientBuild(Version, null));
 
     public string SchemaPath => SchemaFile.PathOf(PacksDirectory, Version);
 
     public string MappingPath => MappingFile.PathOf(PacksDirectory, Version);
+
+    public string BundledPackPath => PackLocations.PathOf(BundledDirectory, new ClientBuild(Version, null));
+
+    public string BundledMappingPath => MappingFile.PathOf(BundledDirectory, Version);
+
+    /// <summary>Gets the data settings pointing at them, the app's own files included.</summary>
+    public DataSettings Settings => new() { ClientDirectory = ClientDirectory, PacksDirectory = PacksDirectory, BundledDirectory = BundledDirectory };
 
     public string RedirectDirectory => Path.Combine(Root, "redirect");
 
@@ -41,7 +51,7 @@ internal sealed class TestInstall : IDisposable
 
     /// <summary>Gets the settings that point a host at them, as command-line arguments.</summary>
     /// <remarks>The relay listens on a port of its own, so that tests never take 5555 or 443 from a host running beside them.</remarks>
-    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Releases:Token", Token, "--Network:Ports:0", "0", "--Network:Game:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory];
+    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Network:Ports:0", "0", "--Network:Game:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory];
 
     public TestInstall()
     {
@@ -94,19 +104,25 @@ internal sealed class TestInstall : IDisposable
         return new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true, Args = [.. Arguments, .. arguments] });
     }
 
-    public void WritePack(string clientVersion = Version)
+    /// <summary>Writes a pack where the extraction tool would, or among the app's own files when <paramref name="bundled"/>.</summary>
+    public void WritePack(string clientVersion = Version, bool bundled = false)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(PackPath)!);
-        File.WriteAllBytes(PackPath, Pack(clientVersion));
+        var path = bundled ? BundledPackPath : PackPath;
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllBytes(path, Pack(clientVersion));
     }
 
-    public void WriteProtocol(string clientVersion = Version, Action<ProtocolMapping>? edit = null)
+    /// <summary>Writes a schema and mapping where the mapping tools would, or among the app's own files when <paramref name="bundled"/>.</summary>
+    public void WriteProtocol(string clientVersion = Version, Action<ProtocolMapping>? edit = null, bool bundled = false)
     {
         var (schema, mapping) = Protocol(clientVersion, edit);
+        var root = bundled ? BundledDirectory : PacksDirectory;
+        var schemaPath = SchemaFile.PathOf(root, Version);
 
-        Directory.CreateDirectory(Path.GetDirectoryName(SchemaPath)!);
-        File.WriteAllBytes(SchemaPath, schema);
-        File.WriteAllBytes(MappingPath, mapping);
+        Directory.CreateDirectory(Path.GetDirectoryName(schemaPath)!);
+        File.WriteAllBytes(schemaPath, schema);
+        File.WriteAllBytes(MappingFile.PathOf(root, Version), mapping);
     }
 
     public void Dispose()
