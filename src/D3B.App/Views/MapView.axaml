@@ -139,22 +139,11 @@
             </StackPanel>
         </c:AppPage.Actions>
         <Panel>
-            <StackPanel
-                HorizontalAlignment="Center"
+            <c:EmptyState
+                Icon="{StaticResource IconMap}"
                 IsVisible="{Binding HasNoBot}"
-                Margin="0,64,0,0"
-                MaxWidth="400"
-                Spacing="8">
-                <c:Icon
-                    Classes="Large Muted"
-                    Data="{StaticResource IconMap}"
-                    HorizontalAlignment="Center" />
-                <TextBlock
-                    Classes="Muted"
-                    Text="{l:Tr MapNoBot}"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
-            </StackPanel>
+                Text="{l:Tr MapNoBot}"
+                Title="{l:Tr NoBotTitle}" />
             <Grid IsVisible="{Binding HasBot}" RowDefinitions="Auto,*">
                 <StackPanel Margin="0,0,0,16" Spacing="8">
                     <StackPanel Orientation="Horizontal" Spacing="16">

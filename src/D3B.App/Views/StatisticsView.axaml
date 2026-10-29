@@ -85,12 +85,11 @@
                         </StackPanel>
                     </Border>
                 </UniformGrid>
-                <TextBlock
-                    Classes="Muted"
-                    HorizontalAlignment="Center"
+                <c:EmptyState
+                    Icon="{StaticResource IconChart}"
                     IsVisible="{Binding IsEmpty}"
-                    Margin="0,32,0,0"
-                    Text="{l:Tr StatisticsEmpty}" />
+                    Text="{l:Tr StatisticsEmpty}"
+                    Title="{l:Tr StatisticsEmptyTitle}" />
                 <Grid ColumnDefinitions="2*,16,3*" IsVisible="{Binding !IsEmpty}">
                     <Border Classes="Card" VerticalAlignment="Top">
                         <StackPanel Spacing="12">

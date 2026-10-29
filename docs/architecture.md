@@ -398,9 +398,10 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   installed client's build, or why it did not start.
 - **The window**: dark by default; where the host stands in the title bar, nothing else (D162). Its icons are Lucide's,
   drawn by `Icon` from `Themes/Icons.axaml` (D161), its statuses by `StatusPill`, in the tone each says (`Tone`).
-- **One scale** (D159), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32, fonts 12, 14, 16, 22
-  and 28 (`Caption`, `Label`, `Title`, `PageTitle`, `Figure`), controls 32 and 36 high, radii 6, 8 and 12, icons 14, 16 and
-  20. Every page is an `AppPage` (`D3B.App.Controls`): its title or a header of its own, its actions on the right, the
+- **One scale** (D159, D163), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32, fonts 12, 14,
+  16, 22 and 28 (`Caption`, the window's text, `Title`, `PageTitle`, `Figure`), every control of a toolbar or a row 36 high,
+  the icon buttons of a list's items 32, radii 6, 8 and 12, ShadUI's included, icons 14, 16 and 20. A page with nothing to
+  show says so with an `EmptyState`, the same on every page. Every page is an `AppPage` (`D3B.App.Controls`): its title or a header of its own, its actions on the right, the
   same margins and the window's width up to 1,200 pixels; it fades in as it shows. A setting's help, a delay's default
   and what a page is for are tooltips on a mark beside their name.
 - **Dialogs and toasts** (D159, D162): `Dialogs` holds the dialog shown, a `QuestionViewModel` or a dialog's own view model

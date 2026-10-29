@@ -3939,6 +3939,22 @@ the map and its legend under it, and D151's language and theme kept in the title
   - Our own dialog overlay: ShadUI's host animates and dims, and its manager opens a view by its context's type.
   - No toast when the player takes a bot over: several bots run while one is played, the others' cards out of view.
 
+## D163: The redesign made consistent, where the old and the new still mixed
+
+*2026-10-29, step 6, session 6d; the owner found the app a mix of the old design and the new, the lead found why.
+Amends D159's scale: one height of controls.*
+
+- **Text**: a text with no class was Avalonia's 12, beside labels of 14; the window's text is 14, a caption 12 by its class.
+- **One height**: every control of a toolbar or a row is 36, ShadUI's fields', segments included; the small buttons of 32
+  went. Only the icon buttons inside a list's items are 32, in their row of 40.
+- **One empty state** on every page (`EmptyState`): an icon, a few words, a line saying what to do, in the same place; a
+  list's count hides while it is empty.
+- **Rows**: the editor's settings are separated as the settings page's, a line between two, the card's title above.
+- **Radii**: ShadUI's 10 and 14 follow the scale, 8 and 12, so that its controls and the app's have the same corners.
+- **Bars**: a meter is the text's colour on the ghost's, a tour's the info tone, a life's the danger tone.
+- **Rejected.**
+  - Each page fixed alone: the causes were shared, the base size, the heights and the empty states.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

@@ -108,6 +108,7 @@
                 <TextBlock
                     Classes="Caption Muted Figures"
                     Grid.Column="2"
+                    IsVisible="{Binding !IsEmpty}"
                     Margin="0,0,12,0"
                     Text="{Binding Summary}"
                     VerticalAlignment="Center" />
@@ -155,15 +156,11 @@
                 Margin="0,0,0,12"
                 Text="{Binding CaptureProblem}" />
             <Panel Grid.Row="2">
-                <TextBlock
-                    Classes="Muted"
-                    HorizontalAlignment="Center"
+                <c:EmptyState
+                    Icon="{StaticResource IconInspector}"
                     IsVisible="{Binding IsEmpty}"
-                    Margin="0,32,0,0"
-                    MaxWidth="520"
                     Text="{l:Tr FramesEmpty}"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
+                    Title="{l:Tr FramesEmptyTitle}" />
                 <ScrollViewer Name="Scroller">
                     <ItemsControl ItemsSource="{Binding Frames}">
                         <ItemsControl.ItemsPanel>

@@ -636,7 +636,7 @@
     <value>Copy the lines shown</value>
   </data>
   <data name="LogsEmpty" xml:space="preserve">
-    <value>No line yet: the bots' actions show here.</value>
+    <value>The bots' actions show here.</value>
   </data>
   <data name="LinesKeptOne" xml:space="preserve">
     <value>{0:N0} line kept</value>
@@ -918,7 +918,7 @@
     <value>Clear the list</value>
   </data>
   <data name="FramesEmpty" xml:space="preserve">
-    <value>No frame: a bot's show as soon as it plays, or replay a capture.</value>
+    <value>A bot's show as soon as it plays, or replay a capture.</value>
   </data>
   <data name="Map" xml:space="preserve">
     <value>Map</value>
@@ -927,7 +927,7 @@
     <value>Map</value>
   </data>
   <data name="MapNoBot" xml:space="preserve">
-    <value>No bot: the map follows a bot as soon as it plays.</value>
+    <value>The map follows a bot as soon as it plays.</value>
   </data>
   <data name="MapNotInPack" xml:space="preserve">
     <value>Map {0} is not in this build's pack.</value>
@@ -1155,7 +1155,7 @@
     <value>Running</value>
   </data>
   <data name="StatisticsEmpty" xml:space="preserve">
-    <value>No run in this period.</value>
+    <value>Nothing in this period.</value>
   </data>
   <data name="StatisticsUnavailable" xml:space="preserve">
     <value>D3B's database did not open.</value>
@@ -1312,5 +1312,14 @@
   </data>
   <data name="ToastFight" xml:space="preserve">
     <value>{0}: in a fight</value>
+  </data>
+  <data name="LogsEmptyTitle" xml:space="preserve">
+    <value>No line</value>
+  </data>
+  <data name="FramesEmptyTitle" xml:space="preserve">
+    <value>No frame</value>
+  </data>
+  <data name="StatisticsEmptyTitle" xml:space="preserve">
+    <value>No run</value>
   </data>
 </root>

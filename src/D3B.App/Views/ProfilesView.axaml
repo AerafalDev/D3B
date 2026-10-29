@@ -299,7 +299,7 @@
                             ToolTip.Tip="{Binding Help}" />
                     </StackPanel>
                     <Button
-                        Classes="Outline Small"
+                        Classes="Outline"
                         Command="{Binding ChooseCommand}"
                         Grid.Column="1"
                         IsVisible="{Binding CanChoose}">
@@ -364,7 +364,7 @@
                                         VerticalAlignment="Center" />
                                     <Button
                                         AutomationProperties.Name="{l:Tr MoveUp}"
-                                        Classes="Ghost IconButton"
+                                        Classes="Ghost IconButton Compact"
                                         Command="{Binding MoveUpCommand}"
                                         Grid.Column="4"
                                         IsEnabled="{Binding CanMoveUp}"
@@ -373,7 +373,7 @@
                                     </Button>
                                     <Button
                                         AutomationProperties.Name="{l:Tr MoveDown}"
-                                        Classes="Ghost IconButton"
+                                        Classes="Ghost IconButton Compact"
                                         Command="{Binding MoveDownCommand}"
                                         Grid.Column="5"
                                         IsEnabled="{Binding CanMoveDown}"
@@ -382,7 +382,7 @@
                                     </Button>
                                     <Button
                                         AutomationProperties.Name="{l:Tr Remove}"
-                                        Classes="Ghost IconButton"
+                                        Classes="Ghost IconButton Compact"
                                         Command="{Binding RemoveCommand}"
                                         Grid.Column="6"
                                         ToolTip.Tip="{l:Tr Remove}">
@@ -586,7 +586,7 @@
                     </StackPanel>
                     <Button
                         AutomationProperties.Name="{l:Tr MoveUp}"
-                        Classes="Ghost IconButton"
+                        Classes="Ghost IconButton Compact"
                         Command="{Binding MoveUpCommand}"
                         Grid.Column="3"
                         IsEnabled="{Binding CanMoveUp}"
@@ -596,7 +596,7 @@
                     </Button>
                     <Button
                         AutomationProperties.Name="{l:Tr MoveDown}"
-                        Classes="Ghost IconButton"
+                        Classes="Ghost IconButton Compact"
                         Command="{Binding MoveDownCommand}"
                         Grid.Column="4"
                         IsEnabled="{Binding CanMoveDown}"
@@ -606,7 +606,7 @@
                     </Button>
                     <Button
                         AutomationProperties.Name="{l:Tr Remove}"
-                        Classes="Ghost IconButton"
+                        Classes="Ghost IconButton Compact"
                         Command="{Binding RemoveCommand}"
                         Grid.Column="5"
                         ToolTip.Tip="{l:Tr Remove}">
@@ -685,7 +685,10 @@
                                     <TextBlock Classes="Caption Muted" Text="{l:Tr TourIsolated}" />
                                 </StackPanel>
                             </WrapPanel>
-                            <ItemsControl IsVisible="{Binding HasFigures}" ItemsSource="{Binding Figures}">
+                            <ItemsControl
+                                IsVisible="{Binding HasFigures}"
+                                ItemsSource="{Binding Figures}"
+                                Margin="0,0,-8,-8">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <UniformGrid Columns="2" />
@@ -756,17 +759,13 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="s:SettingSectionViewModel">
                                 <Border Classes="Card">
-                                    <StackPanel Spacing="16">
+                                    <StackPanel>
                                         <TextBlock
                                             Classes="Title"
                                             IsVisible="{Binding HasTitle}"
+                                            Margin="0,0,0,4"
                                             Text="{Binding Title}" />
-                                        <ItemsControl ItemsSource="{Binding Fields}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Spacing="16" />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
+                                        <ItemsControl Classes="Rows" ItemsSource="{Binding Fields}">
                                             <ItemsControl.Styles>
                                                 <Style Selector="ContentPresenter" x:DataType="s:SettingFieldViewModel">
                                                     <Setter Property="IsVisible" Value="{Binding IsVisible}" />
@@ -808,26 +807,11 @@
                 </Button>
             </c:AppPage.Actions>
             <Panel>
-                <StackPanel
-                    HorizontalAlignment="Center"
+                <c:EmptyState
+                    Icon="{StaticResource IconSliders}"
                     IsVisible="{Binding IsEmpty}"
-                    Margin="0,64,0,0"
-                    MaxWidth="400"
-                    Spacing="8">
-                    <c:Icon
-                        Classes="Large Muted"
-                        Data="{StaticResource IconSliders}"
-                        HorizontalAlignment="Center" />
-                    <TextBlock
-                        Classes="Title"
-                        HorizontalAlignment="Center"
-                        Text="{l:Tr NoProfileTitle}" />
-                    <TextBlock
-                        Classes="Muted"
-                        Text="{l:Tr NoProfileDetail}"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-                </StackPanel>
+                    Text="{l:Tr NoProfileDetail}"
+                    Title="{l:Tr NoProfileTitle}" />
                 <ItemsControl IsVisible="{Binding !IsEmpty}" ItemsSource="{Binding Items}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -910,7 +894,7 @@
                                                 VerticalAlignment="Center" />
                                         </StackPanel>
                                         <Button
-                                            Classes="Outline Small"
+                                            Classes="Outline"
                                             Command="{Binding EditCommand}"
                                             Content="{l:Tr Edit}"
                                             Grid.Column="1" />

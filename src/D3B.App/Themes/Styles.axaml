@@ -105,26 +105,33 @@
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="12" />
     </Style>
+    <Style Selector="ItemsControl.Rows > ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Padding" Value="0,12" />
+    </Style>
     <Style Selector="StackPanel.Toolbar">
         <Setter Property="Orientation" Value="Horizontal" />
         <Setter Property="Spacing" Value="8" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
-    <Style Selector="Button.Small, ToggleButton.Small">
-        <Setter Property="Height" Value="32" />
-        <Setter Property="MinHeight" Value="32" />
-        <Setter Property="Padding" Value="12,0" />
-    </Style>
+    <!--  Every control of a toolbar or a row is 36 high, ShadUI's fields' height, so that a row lines up; only the icon
+         buttons of a list's items are 32, inside their 40.  -->
     <Style Selector="Button.IconButton, ToggleButton.IconButton">
-        <Setter Property="Width" Value="32" />
-        <Setter Property="Height" Value="32" />
-        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="MinHeight" Value="36" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+    </Style>
+    <Style Selector="Button.IconButton.Compact">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinHeight" Value="32" />
     </Style>
     <Style Selector="Button.IconButton:pointerover, ToggleButton.IconButton:pointerover, ToggleButton.IconButton:checked">
         <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
@@ -142,8 +149,8 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.Segment, ToggleButton.Segment">
-        <Setter Property="Height" Value="26" />
-        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="MinHeight" Value="30" />
         <Setter Property="Padding" Value="12,0" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="FontSize" Value="12" />
@@ -224,6 +231,8 @@
         <Setter Property="Height" Value="6" />
         <Setter Property="MinHeight" Value="6" />
         <Setter Property="Maximum" Value="100" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+        <Setter Property="Background" Value="{DynamicResource GhostColor}" />
     </Style>
     <Style Selector="ProgressBar.Meter.Thin">
         <Setter Property="Height" Value="4" />

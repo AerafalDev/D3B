@@ -63,6 +63,8 @@
                         Zone4="#FFEDD5" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+            <CornerRadius x:Key="LgCornerRadius">8</CornerRadius>
+            <CornerRadius x:Key="XlCornerRadius">12</CornerRadius>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://D3B.App/Themes/Icons.axaml" />
                 <ResourceInclude Source="avares://D3B.App/Themes/Controls.axaml" />

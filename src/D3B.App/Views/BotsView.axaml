@@ -21,26 +21,11 @@
     </UserControl.Styles>
     <c:AppPage Title="{l:Tr Bots}">
         <Panel>
-            <StackPanel
-                HorizontalAlignment="Center"
+            <c:EmptyState
+                Icon="{StaticResource IconBot}"
                 IsVisible="{Binding IsEmpty}"
-                Margin="0,96,0,0"
-                MaxWidth="400"
-                Spacing="8">
-                <c:Icon
-                    Classes="Large Muted"
-                    Data="{StaticResource IconBot}"
-                    HorizontalAlignment="Center" />
-                <TextBlock
-                    Classes="Title"
-                    HorizontalAlignment="Center"
-                    Text="{l:Tr NoBotTitle}" />
-                <TextBlock
-                    Classes="Muted"
-                    Text="{l:Tr NoBotDetail}"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
-            </StackPanel>
+                Text="{l:Tr NoBotDetail}"
+                Title="{l:Tr NoBotTitle}" />
             <ItemsControl IsVisible="{Binding !IsEmpty}" ItemsSource="{Binding Items}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -70,7 +55,6 @@
                                                 ToolTip.Tip="{l:Tr PausedDetail}"
                                                 VerticalAlignment="Center" />
                                             <Button
-                                                Classes="Small"
                                                 Command="{Binding ResumeCommand}"
                                                 Grid.Column="2">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -92,7 +76,7 @@
                                                     Text="{Binding ActivityText}"
                                                     Tone="{Binding ActivityTone}" />
                                                 <Button
-                                                    Classes="Outline Small"
+                                                    Classes="Outline"
                                                     Command="{Binding StopCommand}"
                                                     Grid.Column="2"
                                                     IsVisible="{Binding IsActivityRunning}">

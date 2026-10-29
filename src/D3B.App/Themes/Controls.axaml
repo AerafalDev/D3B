@@ -50,6 +50,33 @@
             <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
         </Style>
     </ControlTheme>
+    <ControlTheme TargetType="c:EmptyState" x:Key="{x:Type c:EmptyState}">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Margin" Value="0,64,0,0" />
+        <Setter Property="MaxWidth" Value="400" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <StackPanel Spacing="8">
+                    <c:Icon
+                        Classes="Large Muted"
+                        Data="{TemplateBinding Icon}"
+                        HorizontalAlignment="Center" />
+                    <TextBlock
+                        Classes="Title"
+                        HorizontalAlignment="Center"
+                        Text="{TemplateBinding Title}"
+                        TextAlignment="Center" />
+                    <TextBlock
+                        Classes="Muted"
+                        HorizontalAlignment="Center"
+                        Text="{TemplateBinding Text}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
     <ControlTheme TargetType="c:StatusPill" x:Key="{x:Type c:StatusPill}">
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         <Setter Property="Background" Value="{DynamicResource GhostColor}" />

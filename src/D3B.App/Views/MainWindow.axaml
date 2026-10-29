@@ -2,6 +2,7 @@
     x:Class="D3B.App.Views.MainWindow"
     x:ClassModifier="internal"
     x:DataType="vm:MainViewModel"
+    FontSize="14"
     Title="D3B"
     TitleFontWeight="SemiBold"
     Width="1240"

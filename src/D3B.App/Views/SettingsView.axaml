@@ -132,7 +132,7 @@
                                 ToolTip.Tip="{l:Tr SettingsDelaysDetail}" />
                         </StackPanel>
                         <Button
-                            Classes="Outline Small"
+                            Classes="Outline"
                             Command="{Binding RestoreDelaysCommand}"
                             Grid.Column="1">
                             <StackPanel Orientation="Horizontal" Spacing="8">

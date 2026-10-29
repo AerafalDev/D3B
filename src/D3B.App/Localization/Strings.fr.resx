@@ -636,7 +636,7 @@
     <value>Copier les lignes affichées</value>
   </data>
   <data name="LogsEmpty" xml:space="preserve">
-    <value>Aucune ligne : les actions des bots s'affichent ici.</value>
+    <value>Les actions des bots s'affichent ici.</value>
   </data>
   <data name="LinesKeptOne" xml:space="preserve">
     <value>{0:N0} ligne gardée</value>
@@ -918,7 +918,7 @@
     <value>Vider la liste</value>
   </data>
   <data name="FramesEmpty" xml:space="preserve">
-    <value>Aucune trame : celles d'un bot s'affichent dès qu'il joue, ou rejoue une capture.</value>
+    <value>Celles d'un bot s'affichent dès qu'il joue, ou rejoue une capture.</value>
   </data>
   <data name="Map" xml:space="preserve">
     <value>Carte</value>
@@ -927,7 +927,7 @@
     <value>Carte</value>
   </data>
   <data name="MapNoBot" xml:space="preserve">
-    <value>Aucun bot : la carte suit un bot dès qu'il joue.</value>
+    <value>La carte suit un bot dès qu'il joue.</value>
   </data>
   <data name="MapNotInPack" xml:space="preserve">
     <value>La carte {0} n'est pas dans le pack de ce build.</value>
@@ -1155,7 +1155,7 @@
     <value>En cours</value>
   </data>
   <data name="StatisticsEmpty" xml:space="preserve">
-    <value>Aucune session sur cette période.</value>
+    <value>Rien sur cette période.</value>
   </data>
   <data name="StatisticsUnavailable" xml:space="preserve">
     <value>La base de D3B ne s'est pas ouverte.</value>
@@ -1312,5 +1312,14 @@
   </data>
   <data name="ToastFight" xml:space="preserve">
     <value>{0} : en combat</value>
+  </data>
+  <data name="LogsEmptyTitle" xml:space="preserve">
+    <value>Aucune ligne</value>
+  </data>
+  <data name="FramesEmptyTitle" xml:space="preserve">
+    <value>Aucune trame</value>
+  </data>
+  <data name="StatisticsEmptyTitle" xml:space="preserve">
+    <value>Aucune session</value>
   </data>
 </root>

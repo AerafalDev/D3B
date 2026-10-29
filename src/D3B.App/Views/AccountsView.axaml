@@ -27,26 +27,11 @@
                     Classes="Problem"
                     IsVisible="{Binding HasError}"
                     Text="{Binding Error}" />
-                <StackPanel
-                    HorizontalAlignment="Center"
+                <c:EmptyState
+                    Icon="{StaticResource IconUsers}"
                     IsVisible="{Binding IsEmpty}"
-                    Margin="0,64,0,0"
-                    MaxWidth="400"
-                    Spacing="8">
-                    <c:Icon
-                        Classes="Large Muted"
-                        Data="{StaticResource IconUsers}"
-                        HorizontalAlignment="Center" />
-                    <TextBlock
-                        Classes="Title"
-                        HorizontalAlignment="Center"
-                        Text="{l:Tr NoAccountTitle}" />
-                    <TextBlock
-                        Classes="Muted"
-                        Text="{l:Tr NoAccountDetail}"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-                </StackPanel>
+                    Text="{l:Tr NoAccountDetail}"
+                    Title="{l:Tr NoAccountTitle}" />
                 <ItemsControl ItemsSource="{Binding Items}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
