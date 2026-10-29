@@ -1,4 +1,5 @@
 using D3B.Bot.Data;
+using D3B.Bot.Harvesting;
 using D3B.Bot.Network;
 using D3B.Bot.Protocol;
 using D3B.Bot.Runtime;
@@ -42,10 +43,18 @@ public sealed class DefaultModulesTests
     }
 
     [Fact]
+    public void TheHarvestingModuleBuildsAfterTheBotsModule()
+    {
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules());
+
+        Assert.IsType<HarvestingModule>(bot.Modules[4]);
+    }
+
+    [Fact]
     public void TheDataModuleCanBeDisabledWithTheModulesRequiringIt()
     {
         var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true })
-            .AddModules(new DefaultModules(), group => group.Disable<BotsModule>().Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
+            .AddModules(new DefaultModules(), group => group.Disable<HarvestingModule>().Disable<BotsModule>().Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
 
         Assert.False(bot.HasModule<DataModule>());
     }

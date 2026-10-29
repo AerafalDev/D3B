@@ -29,6 +29,12 @@
         <Style Selector="ProgressBar.Load.Full">
             <Setter Property="Foreground" Value="{DynamicResource WarningColor}" />
         </Style>
+        <Style Selector="ProgressBar.Tour">
+            <Setter Property="Height" Value="4" />
+            <Setter Property="MinHeight" Value="4" />
+            <Setter Property="Maximum" Value="100" />
+            <Setter Property="Foreground" Value="{DynamicResource SuccessColor}" />
+        </Style>
         <Style Selector="Grid.Offline">
             <Setter Property="Opacity" Value="0.55" />
         </Style>
@@ -172,7 +178,13 @@
                                                         Text="{Binding ActivityName}"
                                                         TextTrimming="CharacterEllipsis" />
                                                     <TextBlock
+                                                        Classes="Caption Figures"
+                                                        IsVisible="{Binding HasDoing}"
+                                                        Text="{Binding ActivityDoing}"
+                                                        TextWrapping="Wrap" />
+                                                    <TextBlock
                                                         Classes="Caption Muted Figures"
+                                                        IsVisible="{Binding !HasDoing}"
                                                         Text="{Binding ActivityDetail}"
                                                         TextWrapping="Wrap" />
                                                 </StackPanel>
@@ -196,6 +208,59 @@
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>
+                                            <StackPanel IsVisible="{Binding HasProgress}" Spacing="5">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock
+                                                        Classes="Caption Muted Figures"
+                                                        Text="{Binding ProgressText}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Classes="Caption Muted Figures"
+                                                        Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        Text="{Binding Elapsed}" />
+                                                </Grid>
+                                                <ProgressBar Classes="Tour" Value="{Binding ProgressPercent}" />
+                                            </StackPanel>
+                                            <ItemsControl IsVisible="{Binding HasCounts}" ItemsSource="{Binding Counts}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel ItemSpacing="14" LineSpacing="6" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:ActivityCountViewModel">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <Border Classes="ItemIcon" IsVisible="{Binding IsItem}" />
+                                                            <TextBlock
+                                                                Classes="Caption Figures"
+                                                                Text="{Binding Text}"
+                                                                VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <ItemsControl IsVisible="{Binding HasWarnings}" ItemsSource="{Binding Warnings}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="x:String">
+                                                        <Grid ColumnDefinitions="Auto,*" Margin="0,1">
+                                                            <c:Icon
+                                                                Data="{StaticResource IconAlert}"
+                                                                Height="13"
+                                                                Tone="Warning"
+                                                                VerticalAlignment="Top"
+                                                                Width="13" />
+                                                            <TextBlock
+                                                                Classes="Caption"
+                                                                Foreground="{DynamicResource WarningColor}"
+                                                                Grid.Column="1"
+                                                                Margin="6,0,0,0"
+                                                                Text="{Binding}"
+                                                                TextWrapping="Wrap" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                             <SelectableTextBlock
                                                 Classes="Caption Figures"
                                                 Foreground="{DynamicResource ErrorColor}"

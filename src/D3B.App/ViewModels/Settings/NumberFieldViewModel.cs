@@ -22,6 +22,29 @@ internal sealed partial class NumberFieldViewModel : SettingFieldViewModel
     [ObservableProperty]
     public partial string Range { get; private set; } = "";
 
+    /// <summary>Gets the number, as a percentage, said.</summary>
+    [ObservableProperty]
+    public partial string PercentText { get; private set; } = "";
+
+    /// <summary>Gets whether the number is a percentage, shown as a bar (D127).</summary>
+    public bool IsPercent => Definition.IsPercent;
+
+    /// <summary>Gets whether the number is shown as a box.</summary>
+    public bool IsBox => !Definition.IsPercent;
+
+    /// <summary>Gets the lowest value, for the bar of a percentage.</summary>
+    public double SliderMinimum => (double)Minimum;
+
+    /// <summary>Gets the highest value, for the bar of a percentage.</summary>
+    public double SliderMaximum => (double)Maximum;
+
+    /// <summary>Gets or sets the number, as the bar of a percentage moves it.</summary>
+    public double Slider
+    {
+        get => (double)(Value ?? Minimum);
+        set => Value = (decimal)Math.Round(value);
+    }
+
     /// <inheritdoc/>
     public override bool HasInputProblem => _empty;
 
@@ -40,6 +63,7 @@ internal sealed partial class NumberFieldViewModel : SettingFieldViewModel
     {
         base.Relabel();
         Range = Editor.Localizer.Format("NumberRange", Minimum, Maximum);
+        PercentText = Value is { } shown ? Editor.Localizer.Format("PercentValue", shown) : "";
     }
 
     /// <inheritdoc/>
@@ -51,6 +75,8 @@ internal sealed partial class NumberFieldViewModel : SettingFieldViewModel
     partial void OnValueChanged(decimal? value)
     {
         _empty = value is null;
+        PercentText = value is { } shown ? Editor.Localizer.Format("PercentValue", shown) : "";
+        OnPropertyChanged(nameof(Slider));
 
         if (value is { } number)
             Write((int)Math.Round(Math.Clamp(number, int.MinValue, int.MaxValue)));

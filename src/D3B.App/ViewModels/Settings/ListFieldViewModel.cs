@@ -66,6 +66,14 @@ internal abstract partial class ListFieldViewModel : SettingFieldViewModel
     /// <returns>It, named.</returns>
     protected abstract OptionViewModel OptionOf(object value);
 
+    /// <summary>Says what the list warns of a value, if anything.</summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The warning; none by default.</returns>
+    protected virtual string? WarningOf(object value)
+    {
+        return null;
+    }
+
     /// <summary>Shows the values as the settings hold them.</summary>
     protected virtual void ReadItems()
     {
@@ -74,7 +82,7 @@ internal abstract partial class ListFieldViewModel : SettingFieldViewModel
         Items.Clear();
 
         for (var index = 0; index < values.Count; index++)
-            Items.Add(new ListItemViewModel(this, OptionOf(values[index]), index, values.Count));
+            Items.Add(new ListItemViewModel(this, OptionOf(values[index]), index, values.Count, WarningOf(values[index])));
 
         IsEmpty = Items.Count == 0;
     }

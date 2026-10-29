@@ -22,6 +22,27 @@
             <Setter Property="Palette" Value="{DynamicResource MapPalette}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+        <Style Selector="Border.ActivityStrip">
+            <Setter Property="Background" Value="{DynamicResource SuccessColor10}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SuccessColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource MdCornerRadius}" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style Selector="StackPanel.TourLegend > StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="Spacing" Value="7" />
+        </Style>
+        <Style Selector="StackPanel.TourLegend Border">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="StackPanel.TourLegend TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
         <Style Selector="Border.HoverCard">
             <Setter Property="Background" Value="{DynamicResource DialogBackgroundColor}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
@@ -121,9 +142,30 @@
                             Classes="Toggle"
                             Content="{l:Tr LayerZones}"
                             IsChecked="{Binding ShowsZones}" />
+                        <ToggleButton
+                            Classes="Toggle"
+                            Content="{l:Tr LayerActivity}"
+                            IsChecked="{Binding ShowsActivity}" />
                     </WrapPanel>
                 </Border>
             </Grid>
+            <Border Classes="ActivityStrip" IsVisible="{Binding HasActivity}">
+                <Grid ColumnDefinitions="Auto,*">
+                    <c:Icon
+                        Data="{StaticResource IconLeaf}"
+                        Height="15"
+                        Tone="Success"
+                        VerticalAlignment="Center"
+                        Width="15" />
+                    <TextBlock
+                        Classes="Small"
+                        Grid.Column="1"
+                        Margin="10,0,0,0"
+                        Text="{Binding ActivityLine}"
+                        TextTrimming="CharacterEllipsis"
+                        VerticalAlignment="Center" />
+                </Grid>
+            </Border>
         </StackPanel>
         <WrapPanel
             DockPanel.Dock="Bottom"
@@ -172,7 +214,36 @@
                 </StackPanel>
             </StackPanel>
         </WrapPanel>
-        <Panel Margin="32,0">
+        <Grid ColumnDefinitions="*,Auto" Margin="32,0">
+            <StackPanel
+                Grid.Column="1"
+                IsVisible="{Binding HasTour}"
+                Margin="14,0,0,0"
+                Spacing="8"
+                Width="170">
+                <TextBlock Classes="Small Muted" Text="{l:Tr MapTour}" />
+                <Border Classes="Plate" Padding="8">
+                    <c:ZoneMapCanvas
+                        Height="150"
+                        Name="TourMap"
+                        Palette="{DynamicResource MapPalette}"
+                        Scene="{Binding Tour}" />
+                </Border>
+                <StackPanel Classes="TourLegend" Spacing="4">
+                    <StackPanel>
+                        <Border Background="{DynamicResource SuccessColor}" />
+                        <TextBlock Text="{l:Tr TourVisited}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <Border BorderBrush="{DynamicResource SuccessColor}" BorderThickness="1" />
+                        <TextBlock Text="{l:Tr TourToVisit}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <Border Background="{DynamicResource BorderColor}" />
+                        <TextBlock Text="{l:Tr TourEmpty}" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
             <TextBlock
                 Classes="Muted"
                 HorizontalAlignment="Center"
@@ -223,6 +294,6 @@
                     </Canvas>
                 </Panel>
             </Border>
-        </Panel>
+        </Grid>
     </DockPanel>
 </UserControl>

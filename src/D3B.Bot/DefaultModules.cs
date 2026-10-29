@@ -1,4 +1,5 @@
 using D3B.Bot.Data;
+using D3B.Bot.Harvesting;
 using D3B.Bot.Network;
 using D3B.Bot.Protocol;
 using D3B.Bot.Runtime;
@@ -22,5 +23,6 @@ public sealed class DefaultModules : IModuleGroup
         group.Add<ProtocolModule>();
         group.Add<NetworkModule>();
         group.Add<BotsModule>();
+        group.Add<HarvestingModule>();
     }
 }

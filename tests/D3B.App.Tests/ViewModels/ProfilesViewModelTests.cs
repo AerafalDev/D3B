@@ -151,11 +151,11 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.Equal(["What", "Where", "How"], editor.Sections.Select(section => section.Title));
         Assert.True(item.CanSave);
 
-        // Resources are offered within the profession chosen, by the level it gathers them from.
+        // Resources are offered within the profession chosen, by the level it gathers them from, each saying whose it is.
         var resources = Field<GamesFieldViewModel>(item, "Resources");
 
         Assert.Equal(["Ash", "Chestnut"], resources.Available.Select(option => option.Name));
-        Assert.Equal(["Level 1", "Level 10"], resources.Available.Select(option => option.Detail));
+        Assert.Equal(["Lumberjack, level 1", "Lumberjack, level 10"], resources.Available.Select(option => option.Detail));
 
         resources.ToAdd = resources.Available[1];
         resources.ToAdd = resources.Available[0];

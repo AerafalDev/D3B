@@ -64,6 +64,104 @@
             <Setter Property="Width" Value="13" />
             <Setter Property="Height" Value="13" />
         </Style>
+        <Style Selector="Border.ResourceTile">
+            <Setter Property="Background" Value="{DynamicResource GhostColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}" />
+            <Setter Property="Padding" Value="9,7,4,7" />
+        </Style>
+        <Style Selector="Border.ResourceTile.Warned">
+            <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}" />
+        </Style>
+        <Style Selector="Border.Priority">
+            <Setter Property="Width" Value="17" />
+            <Setter Property="Height" Value="17" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Background" Value="{DynamicResource ForegroundColor}" />
+        </Style>
+        <Style Selector="Border.Priority > TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontFeatures" Value="+tnum" />
+            <Setter Property="Foreground" Value="{DynamicResource CardBackgroundColor}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.ZoneMap">
+            <Setter Property="Background" Value="{DynamicResource PlateFooterColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}" />
+            <Setter Property="Padding" Value="10" />
+        </Style>
+        <Style Selector="Border.Figures">
+            <Setter Property="Background" Value="{DynamicResource PlateFooterColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}" />
+            <Setter Property="Padding" Value="14,10" />
+        </Style>
+        <Style Selector="Border.Segments">
+            <Setter Property="Background" Value="{DynamicResource GhostColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource MdCornerRadius}" />
+            <Setter Property="Padding" Value="3" />
+        </Style>
+        <Style Selector="Button.Wide">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.Suggestion">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Height" Value="NaN" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="{DynamicResource MdCornerRadius}" />
+        </Style>
+        <Style Selector="Button.Suggestion.Chosen">
+            <Setter Property="Background" Value="{DynamicResource SuccessColor10}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SuccessColor}" />
+        </Style>
+        <Style Selector="Border.Check">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.Check.Chosen">
+            <Setter Property="Background" Value="{DynamicResource SuccessColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SuccessColor}" />
+        </Style>
+        <Style Selector="Border.Check.Chosen.Second">
+            <Setter Property="Opacity" Value="0.7" />
+        </Style>
+        <Style Selector="Border.Check c|Icon">
+            <Setter Property="Foreground" Value="{DynamicResource CardBackgroundColor}" />
+        </Style>
+        <Style Selector="Border.Segment">
+            <Setter Property="CornerRadius" Value="{DynamicResource SmCornerRadius}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.Segment.Selected">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        </Style>
+        <Style Selector="Border.Segment TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
+        <Style Selector="Border.Segment.Selected TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
     </UserControl.Styles>
     <UserControl.DataTemplates>
         <DataTemplate x:DataType="s:FlagFieldViewModel">
@@ -102,17 +200,38 @@
                     <TextBlock
                         Classes="Caption Muted Figures"
                         Grid.Column="1"
+                        IsVisible="{Binding IsBox}"
                         Margin="8,0,0,0"
                         Text="{Binding Range}"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Classes="Small Figures"
+                        FontWeight="SemiBold"
+                        Grid.Column="1"
+                        IsVisible="{Binding IsPercent}"
+                        Margin="8,0,0,0"
+                        Text="{Binding PercentText}"
                         VerticalAlignment="Center" />
                 </Grid>
                 <NumericUpDown
                     FormatString="0"
                     HorizontalAlignment="Stretch"
                     Increment="1"
+                    IsVisible="{Binding IsBox}"
                     Maximum="{Binding Maximum}"
                     Minimum="{Binding Minimum}"
                     Value="{Binding Value}" />
+                <Slider
+                    IsSnapToTickEnabled="True"
+                    IsVisible="{Binding IsPercent}"
+                    Maximum="{Binding SliderMaximum}"
+                    Minimum="{Binding SliderMinimum}"
+                    TickFrequency="1"
+                    Value="{Binding Slider}" />
+                <TextBlock
+                    Classes="Caption Muted Figures"
+                    IsVisible="{Binding IsPercent}"
+                    Text="{Binding Range}" />
                 <TextBlock
                     Classes="Caption Muted"
                     IsVisible="{Binding HasHelp}"
@@ -142,8 +261,29 @@
         <DataTemplate x:DataType="s:ChoiceFieldViewModel">
             <StackPanel Spacing="6">
                 <TextBlock Classes="FieldLabel" Text="{Binding Label}" />
+                <Border Classes="Segments" IsVisible="{Binding IsSegmented}">
+                    <ItemsControl ItemsSource="{Binding Segments}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="s:SegmentViewModel">
+                                <Border Classes="Segment" Classes.Selected="{Binding IsSelected}">
+                                    <Button
+                                        Classes="Ghost Wide"
+                                        Command="{Binding ChooseCommand}">
+                                        <TextBlock FontSize="12" Text="{Binding Option.Name}" TextTrimming="CharacterEllipsis" />
+                                    </Button>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
                 <ComboBox
                     HorizontalAlignment="Stretch"
+                    IsVisible="{Binding IsList}"
                     ItemsSource="{Binding Options}"
                     SelectedItem="{Binding Selected}">
                     <ComboBox.ItemTemplate>
@@ -241,6 +381,273 @@
                     IsVisible="{Binding HasHelp}"
                     Text="{Binding Help}"
                     TextWrapping="Wrap" />
+                <TextBlock
+                    Classes="Problem"
+                    IsVisible="{Binding HasProblem}"
+                    Text="{Binding Problem}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:ResourcesFieldViewModel">
+            <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="FieldLabel" Text="{Binding Label}" />
+                    <TextBlock
+                        Classes="Caption Muted"
+                        Grid.Column="1"
+                        IsVisible="{Binding HasHelp}"
+                        Margin="12,0,0,0"
+                        Text="{Binding Help}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+                <ItemsControl IsVisible="{Binding !IsEmpty}" ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <c:CardGrid
+                                MaxColumns="3"
+                                MinColumnWidth="230"
+                                Spacing="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="s:ListItemViewModel">
+                            <Border Classes="ResourceTile" Classes.Warned="{Binding HasWarning}">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Panel Height="38" Width="38">
+                                        <Border
+                                            Classes="ItemIcon Large"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Bottom" />
+                                        <Border
+                                            Classes="Priority"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top">
+                                            <TextBlock Text="{Binding Position}" />
+                                        </Border>
+                                    </Panel>
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        Margin="10,0,6,0"
+                                        Spacing="1"
+                                        VerticalAlignment="Center">
+                                        <TextBlock
+                                            Classes="Small"
+                                            Text="{Binding Option.Name}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Classes="Caption Muted"
+                                            IsVisible="{Binding HasDetailShown}"
+                                            Text="{Binding Option.Detail}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Classes="Caption"
+                                            Foreground="{DynamicResource WarningColor}"
+                                            IsVisible="{Binding HasWarning}"
+                                            Text="{Binding Warning}"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <StackPanel
+                                        Grid.Column="2"
+                                        Spacing="0"
+                                        VerticalAlignment="Center">
+                                        <Button
+                                            Classes="Ghost Tiny"
+                                            Command="{Binding MoveUpCommand}"
+                                            Height="20"
+                                            IsEnabled="{Binding CanMoveUp}"
+                                            ToolTip.Tip="{l:Tr MoveUp}">
+                                            <c:Icon Data="{StaticResource IconChevronUp}" />
+                                        </Button>
+                                        <Button
+                                            Classes="Ghost Tiny"
+                                            Command="{Binding RemoveCommand}"
+                                            Height="20"
+                                            ToolTip.Tip="{l:Tr Remove}">
+                                            <c:Icon Classes="Muted" Data="{StaticResource IconClose}" />
+                                        </Button>
+                                        <Button
+                                            Classes="Ghost Tiny"
+                                            Command="{Binding MoveDownCommand}"
+                                            Height="20"
+                                            IsEnabled="{Binding CanMoveDown}"
+                                            ToolTip.Tip="{l:Tr MoveDown}">
+                                            <c:Icon Data="{StaticResource IconChevronDown}" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <AutoCompleteBox
+                    FilterMode="Custom"
+                    HorizontalAlignment="Left"
+                    ItemFilter="{x:Static s:OptionViewModel.Filter}"
+                    ItemsSource="{Binding Available}"
+                    MaxDropDownHeight="280"
+                    MinimumPrefixLength="0"
+                    MinWidth="320"
+                    PlaceholderText="{l:Tr AddResource}"
+                    SelectedItem="{Binding ToAdd}"
+                    Text="{Binding Search}">
+                    <AutoCompleteBox.ItemTemplate>
+                        <DataTemplate x:DataType="s:OptionViewModel">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Border Classes="ItemIcon" Margin="0,0,8,0" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{Binding Name}"
+                                    TextTrimming="CharacterEllipsis"
+                                    VerticalAlignment="Center" />
+                                <TextBlock
+                                    Classes="Caption Muted"
+                                    Grid.Column="2"
+                                    IsVisible="{Binding HasDetail}"
+                                    Margin="12,0,0,0"
+                                    Text="{Binding Detail}"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </AutoCompleteBox.ItemTemplate>
+                </AutoCompleteBox>
+                <TextBlock
+                    Classes="Caption Muted"
+                    IsVisible="{Binding !HasGame}"
+                    Text="{l:Tr NoGameData}" />
+                <TextBlock
+                    Classes="Problem"
+                    IsVisible="{Binding HasProblem}"
+                    Text="{Binding Problem}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:SubAreasFieldViewModel">
+            <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="FieldLabel" Text="{Binding Label}" />
+                    <TextBlock
+                        Classes="Caption Muted"
+                        Grid.Column="1"
+                        IsVisible="{Binding HasHelp}"
+                        Margin="12,0,0,0"
+                        Text="{Binding Help}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+                <Grid ColumnDefinitions="11*,14,10*">
+                    <Border Classes="ZoneMap" IsVisible="{Binding HasZone}">
+                        <c:ZoneMapCanvas
+                            Height="220"
+                            Palette="{DynamicResource MapPalette}"
+                            Scene="{Binding Zone}" />
+                    </Border>
+                    <Border
+                        Classes="ZoneMap"
+                        IsVisible="{Binding !HasZone}"
+                        MinHeight="120">
+                        <TextBlock
+                            Classes="Caption Muted"
+                            HorizontalAlignment="Center"
+                            Text="{l:Tr ZoneNothingYet}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap"
+                            VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Classes="Caption Muted" Text="{l:Tr ZoneSuggested}" />
+                        <ItemsControl ItemsSource="{Binding Suggestions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="3" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="s:SuggestionViewModel">
+                                    <Button
+                                        Classes="Ghost Suggestion"
+                                        Classes.Chosen="{Binding IsChosen}"
+                                        Command="{Binding ToggleCommand}">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <Border
+                                                Classes="Check"
+                                                Classes.Chosen="{Binding IsChosen}"
+                                                Classes.Second="{Binding IsSecond}">
+                                                <c:Icon
+                                                    Data="{StaticResource IconCheck}"
+                                                    Height="11"
+                                                    IsVisible="{Binding IsChosen}"
+                                                    Width="11" />
+                                            </Border>
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                Margin="10,0,0,0"
+                                                Spacing="1">
+                                                <TextBlock
+                                                    Classes="Small"
+                                                    Text="{Binding Name}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Classes="Caption Muted"
+                                                    Text="{Binding Detail}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <AutoCompleteBox
+                            FilterMode="Custom"
+                            ItemFilter="{x:Static s:OptionViewModel.Filter}"
+                            ItemsSource="{Binding Available}"
+                            Margin="0,4,0,0"
+                            MaxDropDownHeight="280"
+                            MinimumPrefixLength="0"
+                            PlaceholderText="{l:Tr ZoneSearch}"
+                            SelectedItem="{Binding ToAdd}"
+                            Text="{Binding Search}">
+                            <AutoCompleteBox.ItemTemplate>
+                                <DataTemplate x:DataType="s:OptionViewModel">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Classes="Caption Muted"
+                                            Grid.Column="1"
+                                            IsVisible="{Binding HasDetail}"
+                                            Margin="12,0,0,0"
+                                            Text="{Binding Detail}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </AutoCompleteBox.ItemTemplate>
+                        </AutoCompleteBox>
+                    </StackPanel>
+                </Grid>
+                <Border Classes="Figures" IsVisible="{Binding HasFigures}">
+                    <ItemsControl ItemsSource="{Binding Figures}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="s:FigureViewModel">
+                                <StackPanel Margin="0,0,12,0" Spacing="1">
+                                    <TextBlock
+                                        Classes="Figures"
+                                        FontSize="18"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding Value}" />
+                                    <TextBlock
+                                        Classes="Caption Muted"
+                                        Text="{Binding Label}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+                <TextBlock
+                    Classes="Caption Muted"
+                    IsVisible="{Binding !HasGame}"
+                    Text="{l:Tr NoGameData}" />
                 <TextBlock
                     Classes="Problem"
                     IsVisible="{Binding HasProblem}"
@@ -384,6 +791,7 @@
                                     <ItemsControl.Styles>
                                         <Style Selector="ContentPresenter" x:DataType="s:SettingFieldViewModel">
                                             <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+                                            <Setter Property="c:CardGrid.IsWide" Value="{Binding IsWide}" />
                                         </Style>
                                     </ItemsControl.Styles>
                                 </ItemsControl>

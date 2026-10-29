@@ -21,6 +21,7 @@ public sealed class ActivitySettingsBuilder<TSettings>
     private readonly List<SettingDefinition> _settings = [];
     private readonly List<SettingRule> _rules = [];
     private LocalizedText? _section;
+    private Func<object, IServiceProvider, SettingsPreview?>? _preview;
 
     internal ActivitySettingsBuilder()
     {
@@ -198,6 +199,18 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return this;
     }
 
+    /// <summary>Says what the settings lead to, reckoned from the pack, which the app shows beside them (D127).</summary>
+    /// <param name="preview">Reckons it from the settings and the host's services, or gives nothing while the settings say too little.</param>
+    /// <returns>This builder.</returns>
+    public ActivitySettingsBuilder<TSettings> Preview(Func<TSettings, IServiceProvider, SettingsPreview?> preview)
+    {
+        ArgumentNullException.ThrowIfNull(preview);
+
+        _preview = (settings, services) => preview((TSettings)settings, services);
+
+        return this;
+    }
+
     internal SettingDefinition Find(LambdaExpression property)
     {
         var info = PropertyOf(property);
@@ -218,7 +231,7 @@ public sealed class ActivitySettingsBuilder<TSettings>
         foreach (var setting in _settings)
             setting.Freeze();
 
-        var settings = new ActivitySettings(typeof(TSettings), static () => new TSettings(), [.. _settings], [.. _rules]);
+        var settings = new ActivitySettings(typeof(TSettings), static () => new TSettings(), [.. _settings], [.. _rules], _preview);
         var problems = settings.Check(settings.CreateDefault())
             .Where(problem => problem.Kind is not (SettingProblemKind.Required or SettingProblemKind.Rule))
             .ToList();

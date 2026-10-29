@@ -6,6 +6,7 @@ using D3B.Data.World;
 namespace D3B.Bot.Tests.Settings;
 
 /// <summary>The game's values of a small world: two areas, three sub-areas, a lumberjack and a miner.</summary>
+/// <remarks>The forest lists ash and chestnut on its two maps, the hills chestnut on one, the city iron on none.</remarks>
 internal static class TestReferences
 {
     public const int Amakna = 1;
@@ -21,10 +22,11 @@ internal static class TestReferences
 
     public static WorldAtlas Atlas()
     {
-        SubArea[] subAreas = [new(Forest, 110, Amakna, 5, SubArea.NoZaap, true, 0, 0), new(Hills, 111, Amakna, 20, SubArea.NoZaap, true, 0, 0), new(City, 120, Astrub, 1, SubArea.NoZaap, true, 0, 0)];
+        SubArea[] subAreas = [new(Forest, 110, Amakna, 5, SubArea.NoZaap, true, 0, 2), new(Hills, 111, Amakna, 20, SubArea.NoZaap, true, 2, 1), new(City, 120, Astrub, 1, SubArea.NoZaap, true, 3, 1)];
         Area[] areas = [new(Amakna, 101, 0), new(Astrub, 102, 0)];
+        MapPosition[] positions = [new(1_001, 0, 0, Forest, 1, 0, 0), new(1_002, 1, 0, Forest, 1, 0, 0), new(1_003, 2, 0, Hills, 1, 0, 0)];
 
-        return new WorldAtlas(Array.Empty<MapPosition>(), subAreas, areas, Array.Empty<Waypoint>(), Array.Empty<int>());
+        return new WorldAtlas(positions, subAreas, areas, Array.Empty<Waypoint>(), new[] { Ash, Chestnut, Chestnut, Iron });
     }
 
     public static JobCatalog Jobs()

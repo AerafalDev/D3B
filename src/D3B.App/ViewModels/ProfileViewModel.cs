@@ -117,6 +117,27 @@ internal sealed partial class ProfileViewModel : ObservableObject
     public void Relabel()
     {
         Show();
+
+        // The activities are named again in the new language: the one being edited is chosen among them, its settings kept,
+        // whatever the list clears as its items change.
+        var edited = EditActivity?.Definition;
+
+        _loading = true;
+
+        try
+        {
+            OnPropertyChanged(nameof(Activities));
+
+            if (edited is not null)
+                EditActivity = Activities.FirstOrDefault(activity => activity.Definition?.Id == edited.Id) ?? EditActivity;
+        }
+        finally
+        {
+            _loading = false;
+        }
+
+        UpdateCanSave();
+
         Editor?.Relabel();
         CheckName();
     }
@@ -213,7 +234,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
         var reading = definition.Settings.Read(settings);
 
-        Editor = new SettingsEditor(definition.Settings, reading.Settings, _page.Game, _page.Names, _page.Localizer);
+        Editor = new SettingsEditor(definition.Settings, reading.Settings, _page.Game, _page.Names, _page.Localizer, _page.Services, IsNew ? [] : _page.LevelsOf(Id));
         Editor.PropertyChanged += OnEditorChanged;
         UpdateCanSave();
     }

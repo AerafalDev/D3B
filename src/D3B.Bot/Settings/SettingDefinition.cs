@@ -61,6 +61,12 @@ public sealed class SettingDefinition
     /// <summary>Gets the setting a value of the game is sought within, such as the area of a sub-area, or the profession of a resource.</summary>
     public SettingDefinition? Within { get; private set; }
 
+    /// <summary>Gets the resources whose sub-areas a sub-area setting offers first, those where they grow (D127).</summary>
+    public SettingDefinition? SuggestedBy { get; private set; }
+
+    /// <summary>Gets whether a number is a percentage, which the app shows as a bar (D127).</summary>
+    public bool IsPercent { get; private set; }
+
     private Type ElementType => Kind switch
     {
         SettingKind.Choice => _enum!,
@@ -216,6 +222,29 @@ public sealed class SettingDefinition
             throw new InvalidOperationException($"The setting {Key} is sought within one {expected}, which {parent.Key} is not.");
 
         Within = parent;
+    }
+
+    internal void SetSuggestedBy(SettingDefinition resources)
+    {
+        ThrowIfFrozen();
+
+        if (Kind is not SettingKind.SubArea)
+            throw new InvalidOperationException($"The setting {Key} is suggested by nothing: only sub-areas are, by resources.");
+
+        if (resources.Kind is not SettingKind.Resource)
+            throw new InvalidOperationException($"The setting {Key} is suggested by resources, which {resources.Key} is not.");
+
+        SuggestedBy = resources;
+    }
+
+    internal void SetPercent()
+    {
+        ThrowIfFrozen();
+
+        if (Kind is not SettingKind.Number || Minimum < 0 || Maximum > 100)
+            throw new InvalidOperationException($"The setting {Key} is no percentage: only a number between 0 and 100 is.");
+
+        IsPercent = true;
     }
 
     internal void Freeze()

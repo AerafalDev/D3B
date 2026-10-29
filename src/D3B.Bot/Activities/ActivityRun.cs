@@ -22,12 +22,15 @@ namespace D3B.Bot.Activities;
 public sealed class ActivityRun
 {
     private const int NoInterruption = -1;
+    private const long NotEnded = -1;
 
     private readonly BotActor _bot;
     private readonly CancellationTokenSource _stop = new();
     private readonly TaskCompletionSource<ActivityOutcome> _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private int _status = (int)ActivityStatus.Waiting;
     private int _interruption = NoInterruption;
+    private readonly DateTimeOffset _startedAt;
+    private long _endedAt = NotEnded;
     private int _steps;
     private Exception? _failure;
 
@@ -38,6 +41,9 @@ public sealed class ActivityRun
     /// <summary>Gets the activity.</summary>
     public BotActivity Activity { get; }
 
+    /// <summary>Gets the name the activity was started under, such as its profile's, if its starter gave one.</summary>
+    public string? Title { get; }
+
     /// <summary>Gets what the activity does now.</summary>
     public ActivityStatus Status => (ActivityStatus)Volatile.Read(ref _status);
 
@@ -46,6 +52,12 @@ public sealed class ActivityRun
 
     /// <summary>Gets the number of steps the activity ran to their end.</summary>
     public int Steps => Volatile.Read(ref _steps);
+
+    /// <summary>Gets when the activity started, by the bot's clock.</summary>
+    public DateTimeOffset StartedAt => _startedAt;
+
+    /// <summary>Gets when the activity ended, by the bot's clock, once it is over.</summary>
+    public DateTimeOffset? EndedAt => Volatile.Read(ref _endedAt) is var ticks and not NotEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
 
     /// <summary>Gets the error that made the activity fail, as it threw it; none when it failed for a character still full.</summary>
     public Exception? Failure => Volatile.Read(ref _failure);
@@ -59,10 +71,12 @@ public sealed class ActivityRun
     /// <summary>Raised when what the activity does changes, from the thread that runs it: a handler must be quick, and must not throw.</summary>
     public event EventHandler<ActivityStatus>? StatusChanged;
 
-    internal ActivityRun(BotActor bot, BotActivity activity)
+    internal ActivityRun(BotActor bot, BotActivity activity, string? title = null)
     {
         _bot = bot;
         Activity = activity;
+        Title = title;
+        _startedAt = bot.Time.GetUtcNow();
     }
 
     /// <summary>Stops the activity: the step in progress is cancelled, and no other starts.</summary>
@@ -100,6 +114,7 @@ public sealed class ActivityRun
             }
         }
 
+        Volatile.Write(ref _endedAt, _bot.Time.GetUtcNow().UtcTicks);
         SetStatus(ActivityStatus.Over);
         _completion.TrySetResult(outcome);
     }

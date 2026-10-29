@@ -133,10 +133,11 @@ public sealed class BotActor : IAsyncDisposable
 
     /// <summary>Starts an activity: its steps, one after another, until it is done, fails or is stopped (D87).</summary>
     /// <param name="activity">The activity.</param>
+    /// <param name="title">The name it is started under, such as its profile's, which the app shows.</param>
     /// <returns>The activity's run, which says how it goes and stops it.</returns>
     /// <exception cref="InvalidOperationException">The bot already runs an activity.</exception>
     /// <exception cref="ObjectDisposedException">The bot was stopped.</exception>
-    public ActivityRun StartActivity(BotActivity activity)
+    public ActivityRun StartActivity(BotActivity activity, string? title = null)
     {
         ArgumentNullException.ThrowIfNull(activity);
 
@@ -147,7 +148,7 @@ public sealed class BotActor : IAsyncDisposable
             if (_activity is { IsOver: false })
                 throw new InvalidOperationException("The bot already runs an activity.");
 
-            var run = new ActivityRun(this, activity);
+            var run = new ActivityRun(this, activity, title);
 
             _activity = run;
             run.Start();

@@ -42,6 +42,9 @@ internal abstract partial class SettingFieldViewModel : ObservableObject
     /// <summary>Gets whether what was typed is no value at all, such as an empty number.</summary>
     public virtual bool HasInputProblem => false;
 
+    /// <summary>Gets whether the field takes a whole row of its section, as a list of tiles or a zone with its map does (D127).</summary>
+    public virtual bool IsWide => false;
+
     /// <summary>Gets the editor the setting belongs to.</summary>
     protected SettingsEditor Editor { get; }
 

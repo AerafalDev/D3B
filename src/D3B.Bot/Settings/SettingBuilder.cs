@@ -77,4 +77,27 @@ public sealed class SettingBuilder<TSettings>
 
         return this;
     }
+
+    /// <summary>Offers first, for a sub-area setting, the sub-areas where resources of another setting grow (D127).</summary>
+    /// <param name="resources">The resources' setting, declared before, such as <c>s =&gt; s.Resources</c>.</param>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting holds no sub-area, or the other is not declared before, or holds no resource.</exception>
+    public SettingBuilder<TSettings> SuggestedBy(Expression<Func<TSettings, IReadOnlyList<int>>> resources)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+
+        _setting.SetSuggestedBy(_owner.Find(resources));
+
+        return this;
+    }
+
+    /// <summary>Makes a number a percentage, which the app shows as a bar (D127).</summary>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting is not a number between 0 and 100.</exception>
+    public SettingBuilder<TSettings> Percent()
+    {
+        _setting.SetPercent();
+
+        return this;
+    }
 }

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Settings;
 using D3B.Bot.Activities;
+using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
 using D3B.Data.Texts;
 using D3B.Storage.Accounts;
@@ -46,6 +47,9 @@ internal sealed partial class ProfilesViewModel : ObservableObject
 
     /// <summary>Gets what names those values.</summary>
     public GameNames Names { get; private set; }
+
+    /// <summary>Gets the host's services, once it runs: an activity reckons what its settings lead to from them (D127).</summary>
+    public IServiceProvider? Services => _services;
 
     /// <summary>Gets how many profiles there are, and how many characters play one.</summary>
     [ObservableProperty]
@@ -112,6 +116,21 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     public IReadOnlyList<KnownCharacter> PlayersOf(int id)
     {
         return [.. (Accounts?.Characters ?? []).Where(character => character.ProfileId == id)];
+    }
+
+    /// <summary>Gets the characters that play a profile, with their professions' levels and their map, as their bots last saw them.</summary>
+    /// <param name="id">The profile's id.</param>
+    /// <returns>The characters; those no bot plays yet with no level known.</returns>
+    public IReadOnlyList<PlayerLevels> LevelsOf(int id)
+    {
+        var bots = _services?.GetService<Bots>();
+
+        return
+        [
+            .. PlayersOf(id).Select(character => bots is not null && bots.TryGet(character.Key, out var bot)
+                ? new PlayerLevels(character.Name, bot.State.Jobs.Values.ToDictionary(job => job.JobId, job => job.Level), bot.State.MapId)
+                : new PlayerLevels(character.Name, new Dictionary<int, int>(), null)),
+        ];
     }
 
     /// <summary>Says a few of a profile's settings, those that show, at a glance.</summary>

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Logs;
+using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
 using D3B.Data;
@@ -43,7 +44,9 @@ internal sealed partial class MapViewModel : ObservableObject
     private string _drawnOthers = "";
     private bool _drawnConnected;
     private bool _drawnPaused;
+    private ActivityReport? _drawnReport;
     private CultureInfo? _drawnCulture;
+    private GameTextFormatter? _says;
     private MapData? _map;
     private CultureInfo? _exitsCulture;
     private bool _mapHasStairs;
@@ -110,6 +113,26 @@ internal sealed partial class MapViewModel : ObservableObject
     /// <summary>Gets or sets whether the zones and the stairs show, hidden at first.</summary>
     [ObservableProperty]
     public partial bool ShowsZones { get; set; }
+
+    /// <summary>Gets or sets whether what the bot's activity looks at shows (D129).</summary>
+    [ObservableProperty]
+    public partial bool ShowsActivity { get; set; } = true;
+
+    /// <summary>Gets what the bot's activity says it does, and how far it is, if it runs one that says (D129).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActivity))]
+    public partial string ActivityLine { get; private set; } = "";
+
+    /// <summary>Gets the zone the bot's activity goes through, where it stands in each map, as a mini-map.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTour))]
+    public partial ZoneScene? Tour { get; private set; }
+
+    /// <summary>Gets whether the bot's activity says what it does.</summary>
+    public bool HasActivity => ActivityLine.Length > 0;
+
+    /// <summary>Gets whether the bot's activity goes through a zone.</summary>
+    public bool HasTour => Tour is not null;
 
     /// <summary>Gets the layers the map shows.</summary>
     [ObservableProperty]
@@ -188,6 +211,7 @@ internal sealed partial class MapViewModel : ObservableObject
             _maps = services.GetService<GameMaps>();
             _world = services.GetService<GameWorld>();
             _names = new MapNames(_localizer, _world, services.GetService<GameTexts>(), services.GetService<GameTables>());
+            _says = new GameTextFormatter(_localizer, _world, services.GetService<GameTexts>(), services.GetService<GameTables>());
         }
 
         _bots = services?.GetService<Bots>() ?? _bots;
@@ -247,6 +271,11 @@ internal sealed partial class MapViewModel : ObservableObject
         RefreshLayers();
     }
 
+    partial void OnShowsActivityChanged(bool value)
+    {
+        RefreshLayers();
+    }
+
     partial void OnHoveredCellChanged(int? value)
     {
         Describe();
@@ -263,6 +292,7 @@ internal sealed partial class MapViewModel : ObservableObject
         layers |= ShowsExits ? MapLayers.Exits : MapLayers.None;
         layers |= ShowsBots ? MapLayers.Bots : MapLayers.None;
         layers |= ShowsZones ? MapLayers.Zones : MapLayers.None;
+        layers |= ShowsActivity ? MapLayers.Activity : MapLayers.None;
         Layers = layers;
     }
 
@@ -310,23 +340,42 @@ internal sealed partial class MapViewModel : ObservableObject
         var state = bot.State;
         var others = _bots is null ? [] : OthersOn(_bots, bot, state);
         var othersKey = string.Join(';', others.Select(other => $"{other.Name}:{other.Cell}"));
+        var report = bot.Activity is { IsOver: false } run ? run.Activity.Report : null;
 
         if (bot == _drawnBot && ReferenceEquals(state, _drawnState) && othersKey == _drawnOthers && bot.IsConnected == _drawnConnected
-            && bot.IsPaused == _drawnPaused && _localizer.Culture.Equals(_drawnCulture))
+            && bot.IsPaused == _drawnPaused && ReferenceEquals(report, _drawnReport) && _localizer.Culture.Equals(_drawnCulture))
         {
             return;
         }
+
+        var tourChanged = report?.Focus?.Zone != _drawnReport?.Focus?.Zone || state.MapId != _drawnState?.MapId || bot != _drawnBot;
 
         _drawnBot = bot;
         _drawnState = state;
         _drawnOthers = othersKey;
         _drawnConnected = bot.IsConnected;
         _drawnPaused = bot.IsPaused;
+        _drawnReport = report;
         _drawnCulture = _localizer.Culture;
         _others = others;
         RefreshHeader(bot, state);
-        Scene = SceneOf(state);
+        ActivityLine = ActivityLineOf(report);
+
+        if (tourChanged)
+            Tour = report?.Focus is { Zone.Length: > 0 } focus && _world is not null ? ZoneScenes.Of(focus.Zone, _world.Atlas, tour: true, character: state.MapId) : null;
+
+        Scene = SceneOf(state, report?.Focus);
         Describe();
+    }
+
+    private string ActivityLineOf(ActivityReport? report)
+    {
+        if (report is null || _says is null)
+            return "";
+
+        var doing = _says.Say(report.Doing);
+
+        return report.Progress is { } progress ? doing + Separator + _says.Say(progress.Text) : doing;
     }
 
     private List<(string Name, int Cell)> OthersOn(Bots bots, BotActor bot, CharacterState state)
@@ -382,7 +431,7 @@ internal sealed partial class MapViewModel : ObservableObject
         Detail = doing + Separator + _localizer.Format("MapNumber", mapId);
     }
 
-    private MapScene? SceneOf(CharacterState state)
+    private MapScene? SceneOf(CharacterState state, ActivityFocus? focus)
     {
         if (state.MapId is not { } mapId)
         {
@@ -411,13 +460,31 @@ internal sealed partial class MapViewModel : ObservableObject
             _mapHasStairs = HasStairs(map);
         }
 
+        var elements = ElementsOf(map, state);
+
         return new MapScene(map, _exits)
         {
-            Elements = ElementsOf(map, state),
+            Elements = elements,
             Npcs = [.. state.Npcs.Values.Select(npc => npc.Cell ?? -1).Where(IsCell)],
             Bots = [.. _others.Select(other => other.Cell)],
             Character = state.Cell is { } cell && IsCell(cell) ? cell : null,
             Path = [.. state.Path.Where(IsCell)],
+            Activity = focus is not null && focus.MapId == mapId ? ActivityOf(focus, elements) : null,
+        };
+    }
+
+    private MapActivity ActivityOf(ActivityFocus focus, ImmutableArray<MapElementMark> elements)
+    {
+        var cells = elements.ToDictionary(element => element.ElementId, element => element.Cell);
+        int? target = focus.TargetElementId is { } id && cells.TryGetValue(id, out var cell) ? cell : null;
+
+        return new MapActivity
+        {
+            Wanted = [.. focus.WantedElementIds.Where(cells.ContainsKey).Select(element => cells[element])],
+            Target = target,
+            NextExit = focus.NextMapId is { } next
+                ? [.. _exits.Where(exit => exit.Kind is not MapExitKind.Door && exit.Destinations.Contains(next)).SelectMany(exit => exit.Cells).Distinct()]
+                : [],
         };
     }
 
