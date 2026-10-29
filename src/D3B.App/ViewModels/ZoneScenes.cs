@@ -39,6 +39,7 @@ internal static class ZoneScenes
             // Coloured by their parts, the maps left out show as such, and the probable ones are marked over their part's colour.
             var kind = tour ? KindOf(map.State)
                 : map.State is ZoneMapState.Empty ? ZoneSquareKind.Empty
+                : map.State is ZoneMapState.Isolated ? ZoneSquareKind.Isolated
                 : map.Group % 2 is 0 ? ZoneSquareKind.GroupA : ZoneSquareKind.GroupB;
 
             if (!tour && map.State is ZoneMapState.Probable)
@@ -94,6 +95,8 @@ internal static class ZoneScenes
             ZoneMapState.Empty => ZoneSquareKind.Empty,
             ZoneMapState.Unreachable => ZoneSquareKind.Unreachable,
             ZoneMapState.Probable => ZoneSquareKind.Probable,
+            ZoneMapState.Isolated => ZoneSquareKind.Isolated,
+            ZoneMapState.Growing => ZoneSquareKind.Growing,
             _ => ZoneSquareKind.ToVisit,
         };
     }
@@ -106,8 +109,8 @@ internal static class ZoneScenes
             ZoneSquareKind.Probable => 5,
             ZoneSquareKind.ToVisit => 4,
             ZoneSquareKind.Unreachable => 3,
-            ZoneSquareKind.Visited or ZoneSquareKind.GroupA or ZoneSquareKind.GroupB => 2,
-            ZoneSquareKind.Empty => 1,
+            ZoneSquareKind.Visited or ZoneSquareKind.Growing or ZoneSquareKind.GroupA or ZoneSquareKind.GroupB => 2,
+            ZoneSquareKind.Empty or ZoneSquareKind.Isolated => 1,
             _ => 0,
         };
     }

@@ -10,8 +10,8 @@ namespace D3B.Protocol.Tests.Mapping;
 public sealed class ContractAuditTests
 {
     // The readable protocol's size, which the audit checks whole: messages, fields, enums and enum values.
-    private const int ReadableMessages = 117;
-    private const int ReadableFields = 241;
+    private const int ReadableMessages = 132;
+    private const int ReadableFields = 270;
     private const int ReadableEnums = 19;
     private const int ReadableValues = 147;
 
@@ -135,6 +135,24 @@ public sealed class ContractAuditTests
         var report = Audit(obfuscation => Field(obfuscation, ServerSelectionResponse.Types.Success.Descriptor, 3).Label = FieldDescriptorProto.Types.Label.Optional);
 
         Assert.Contains(report.Failures, failure => failure.StartsWith("Field 3 of d3b.connection.ServerSelectionResponse.Success", StringComparison.Ordinal) && failure.Contains("does not have the label", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AMapFacingAListOfMessagesFails()
+    {
+        var entry = ObjectUseMultipleRequest.Types.Unmeasured.Descriptor.FindFieldByNumber(1).MessageType;
+        var report = Audit(obfuscation => obfuscation.Message(entry.FullName).Options = null);
+
+        Assert.Contains(report.Failures, failure => failure.StartsWith("Field 1 of d3b.game.ObjectUseMultipleRequest.Unmeasured", StringComparison.Ordinal) && failure.Contains("does not have the label", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AMapOfAnotherValueTypeFails()
+    {
+        var entry = ObjectUseMultipleRequest.Types.Unmeasured.Descriptor.FindFieldByNumber(1).MessageType;
+        var report = Audit(obfuscation => Field(obfuscation, entry, 2).Type = FieldDescriptorProto.Types.Type.Int32);
+
+        Assert.Contains(report.Failures, failure => failure.StartsWith($"Field 2 of {entry.FullName}", StringComparison.Ordinal) && failure.Contains("does not have the type", StringComparison.Ordinal));
     }
 
     [Fact]

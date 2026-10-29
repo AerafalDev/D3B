@@ -57,7 +57,7 @@
     <value>Resources, by priority</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
-    <value>Harvested in this order on each map, from any profession.</value>
+    <value>In this order, of any profession or none.</value>
   </data>
   <data name="EverythingKnown" xml:space="preserve">
     <value>Everything each character can harvest at its level</value>
@@ -158,9 +158,6 @@
   <data name="DoingWaitGrow" xml:space="preserve">
     <value>Waiting for the resources to grow back</value>
   </data>
-  <data name="DoingFight" xml:space="preserve">
-    <value>Waiting for the fight to end</value>
-  </data>
   <data name="DoingPlayer" xml:space="preserve">
     <value>Paused, in your hands</value>
   </data>
@@ -199,5 +196,134 @@
   </data>
   <data name="FailStillFullAll" xml:space="preserve">
     <value>Still full once banked, {0} of {1} pods: what is worn weighs more than the {2}% share. Raise it.</value>
+  </data>
+  <data name="IsolatedMaps" xml:space="preserve">
+    <value>Go through the isolated maps too</value>
+  </data>
+  <data name="IsolatedMapsHelp" xml:space="preserve">
+    <value>Reached only far round; gone through last.</value>
+  </data>
+  <data name="FigureIsolatedOne" xml:space="preserve">
+    <value>isolated map, left out</value>
+  </data>
+  <data name="FigureIsolatedMany" xml:space="preserve">
+    <value>isolated maps, left out</value>
+  </data>
+  <data name="FigureIsolatedLastOne" xml:space="preserve">
+    <value>isolated map, gone through last</value>
+  </data>
+  <data name="FigureIsolatedLastMany" xml:space="preserve">
+    <value>isolated maps, gone through last</value>
+  </data>
+  <data name="SectionFight" xml:space="preserve">
+    <value>Fights</value>
+  </data>
+  <data name="AfterFight" xml:space="preserve">
+    <value>After a fight</value>
+  </data>
+  <data name="AfterFightHelp" xml:space="preserve">
+    <value>Until step 9, you fight.</value>
+  </data>
+  <data name="AfterFightResume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="AfterFightPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="AfterFightStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="DoingFightProtector" xml:space="preserve">
+    <value>A protector attacked: waiting for the fight's end</value>
+  </data>
+  <data name="DoingFightAggression" xml:space="preserve">
+    <value>Attacked: waiting for the fight's end</value>
+  </data>
+  <data name="NoteProtectorOf" xml:space="preserve">
+    <value>a protector, as harvesting {0} ended</value>
+  </data>
+  <data name="NoteProtector" xml:space="preserve">
+    <value>a protector, as a harvest ended</value>
+  </data>
+  <data name="NoteAggression" xml:space="preserve">
+    <value>an aggression</value>
+  </data>
+  <data name="CountFightsOne" xml:space="preserve">
+    <value>{0} fight, protectors {1}</value>
+  </data>
+  <data name="CountFightsMany" xml:space="preserve">
+    <value>{0} fights, protectors {1}</value>
+  </data>
+  <data name="DoingWaitGrowFor" xml:space="preserve">
+    <value>Waiting for the resources to grow back, the next in {0} s</value>
+  </data>
+  <data name="ProgressGrowing" xml:space="preserve">
+    <value>Tour {0}, map {1} of {2}, {3} growing back</value>
+  </data>
+  <data name="CountItemRate" xml:space="preserve">
+    <value>{0} {1}, {2}/h</value>
+  </data>
+  <data name="CountExperience" xml:space="preserve">
+    <value>{0} +{1} XP</value>
+  </data>
+  <data name="DepositTo" xml:space="preserve">
+    <value>Where it deposits</value>
+  </data>
+  <data name="DepositToOwnChest" xml:space="preserve">
+    <value>Its own chest in the bank</value>
+  </data>
+  <data name="DepositToGuildChest" xml:space="preserve">
+    <value>The guild's chest</value>
+  </data>
+  <data name="DepositToHelp" xml:space="preserve">
+    <value>Refused or none reached: its own chest.</value>
+  </data>
+  <data name="SectionUpkeep" xml:space="preserve">
+    <value>Upkeep</value>
+  </data>
+  <data name="OpenBags" xml:space="preserve">
+    <value>Open the resource bags</value>
+  </data>
+  <data name="OpenBagsHelp" xml:space="preserve">
+    <value>As soon as a harvest gives one.</value>
+  </data>
+  <data name="Heal" xml:space="preserve">
+    <value>Heal under a share of life</value>
+  </data>
+  <data name="HealBelow" xml:space="preserve">
+    <value>Heal under</value>
+  </data>
+  <data name="Food" xml:space="preserve">
+    <value>Food, in this order</value>
+  </data>
+  <data name="FoodHelp" xml:space="preserve">
+    <value>Until the life is whole.</value>
+  </data>
+  <data name="DoingOpenBag" xml:space="preserve">
+    <value>Opening {0}</value>
+  </data>
+  <data name="DoingEat" xml:space="preserve">
+    <value>Healing: eating {0}</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Waiting for its life to regenerate, {0} s</value>
+  </data>
+  <data name="CountBagsOne" xml:space="preserve">
+    <value>{0} bag opened</value>
+  </data>
+  <data name="CountBagsMany" xml:space="preserve">
+    <value>{0} bags opened</value>
+  </data>
+  <data name="CountEatenOne" xml:space="preserve">
+    <value>{0} food eaten</value>
+  </data>
+  <data name="CountEatenMany" xml:space="preserve">
+    <value>{0} food eaten</value>
+  </data>
+  <data name="WarningChestRefused" xml:space="preserve">
+    <value>The guild's chest refused some stacks: they went to the character's own chest</value>
+  </data>
+  <data name="WarningChestNone" xml:space="preserve">
+    <value>No guild's chest reached: the harvest went to the character's own chest</value>
   </data>
 </root>

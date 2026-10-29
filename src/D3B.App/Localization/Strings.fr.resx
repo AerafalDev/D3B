@@ -515,6 +515,177 @@
   <data name="Inspector" xml:space="preserve">
     <value>Inspecteur de protocole</value>
   </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="SettingsSummary" xml:space="preserve">
+    <value>Les paramètres de cette machine, gardés dans app.json. Les délais des bots s'appliquent aussitôt ; ceux du relais et les captures au prochain démarrage.</value>
+  </data>
+  <data name="SettingsClient" xml:space="preserve">
+    <value>Client</value>
+  </data>
+  <data name="SettingsClientDetail" xml:space="preserve">
+    <value>Celui de cette machine, pour tous les bots et profils</value>
+  </data>
+  <data name="DelayDisplay" xml:space="preserve">
+    <value>Temps d'affichage</value>
+  </data>
+  <data name="DelayDisplayHelp" xml:space="preserve">
+    <value>Le temps que D3B laisse au client pour dessiner une carte avant qu'un bot y agisse, et pour afficher une fenêtre avant qu'un bot la ferme. Augmente-le sur une machine lente si les bots marchent sans que le client suive, ou laissent les fenêtres de la banque ouvertes.</value>
+  </data>
+  <data name="DelayMeasured" xml:space="preserve">
+    <value>Mesuré : {0}</value>
+  </data>
+  <data name="DelayDefault" xml:space="preserve">
+    <value>Par défaut : {0}</value>
+  </data>
+  <data name="DelayMost" xml:space="preserve">
+    <value>Jusqu'à {0}</value>
+  </data>
+  <data name="DelaySeconds" xml:space="preserve">
+    <value>{0:0.##} s</value>
+  </data>
+  <data name="DelayRaised" xml:space="preserve">
+    <value>Augmenté au-dessus de sa valeur par défaut</value>
+  </data>
+  <data name="SettingsDelays" xml:space="preserve">
+    <value>Délais</value>
+  </data>
+  <data name="SettingsDelaysDetail" xml:space="preserve">
+    <value>Chacun borne une attente qui a mal tourné, et finit dès que la réponse vient. N'en augmente un que s'il s'épuise sur cette machine.</value>
+  </data>
+  <data name="RestoreDelays" xml:space="preserve">
+    <value>Rétablir les valeurs par défaut</value>
+  </data>
+  <data name="DelaysBots" xml:space="preserve">
+    <value>Bots</value>
+  </data>
+  <data name="DelaysRelay" xml:space="preserve">
+    <value>Relais</value>
+  </data>
+  <data name="AppliesAtOnce" xml:space="preserve">
+    <value>S'applique aussitôt</value>
+  </data>
+  <data name="AppliesNextStart" xml:space="preserve">
+    <value>Au prochain démarrage</value>
+  </data>
+  <data name="DelayAnswer" xml:space="preserve">
+    <value>Réponse du serveur</value>
+  </data>
+  <data name="DelayAnswerHelp" xml:space="preserve">
+    <value>Le temps qu'une marche, un changement de carte, un usage ou la banque attend que le serveur réponde à sa requête.</value>
+  </data>
+  <data name="DelayWalkArrival" xml:space="preserve">
+    <value>Arrivée d'une marche</value>
+  </data>
+  <data name="DelayWalkArrivalHelp" xml:space="preserve">
+    <value>Le temps que le client peut prendre pour confirmer une marche une fois ses pas faits.</value>
+  </data>
+  <data name="DelayWalkStep" xml:space="preserve">
+    <value>Pas d'une marche</value>
+  </data>
+  <data name="DelayWalkStepHelp" xml:space="preserve">
+    <value>Le temps que le client peut prendre pour chaque pas d'une marche.</value>
+  </data>
+  <data name="DelayPlaced" xml:space="preserve">
+    <value>Nouvelle carte</value>
+  </data>
+  <data name="DelayPlacedHelp" xml:space="preserve">
+    <value>Le temps qu'un changement de carte attend que le personnage soit placé sur la nouvelle carte.</value>
+  </data>
+  <data name="DelayUseEnd" xml:space="preserve">
+    <value>Fin d'un usage</value>
+  </data>
+  <data name="DelayUseEndHelp" xml:space="preserve">
+    <value>Le temps qu'une récolte ou un autre usage peut durer au-delà de la durée que le serveur lui a donnée.</value>
+  </data>
+  <data name="DelayBankFollow" xml:space="preserve">
+    <value>Suite d'un dépôt</value>
+  </data>
+  <data name="DelayBankFollowHelp" xml:space="preserve">
+    <value>Le temps que la banque attend le poids et les kamas qui suivent un dépôt.</value>
+  </data>
+  <data name="DelayRecovery" xml:space="preserve">
+    <value>Reprise</value>
+  </data>
+  <data name="DelayRecoveryHelp" xml:space="preserve">
+    <value>Le temps qu'un bot laisse finir une récolte qu'une interruption a laissée en cours, avant que son activité reprenne.</value>
+  </data>
+  <data name="DelayConnect" xml:space="preserve">
+    <value>Connexion au serveur</value>
+  </data>
+  <data name="DelayConnectHelp" xml:space="preserve">
+    <value>Le temps que le relais essaie chaque adresse du serveur d'Ankama.</value>
+  </data>
+  <data name="DelayClose" xml:space="preserve">
+    <value>Fermeture</value>
+  </data>
+  <data name="DelayCloseHelp" xml:space="preserve">
+    <value>Le temps qu'un côté d'une connexion peut rester ouvert une fois l'autre fermé.</value>
+  </data>
+  <data name="DelayHold" xml:space="preserve">
+    <value>Trame retenue</value>
+  </data>
+  <data name="DelayHoldHelp" xml:space="preserve">
+    <value>Le temps que le relais retient une trame incomplète, avant de la passer telle qu'elle est venue.</value>
+  </data>
+  <data name="DelaySelection" xml:space="preserve">
+    <value>Choix du serveur</value>
+  </data>
+  <data name="DelaySelectionHelp" xml:space="preserve">
+    <value>Le temps qu'un choix de serveur attend la connexion de jeu du client.</value>
+  </data>
+  <data name="SettingsCaptures" xml:space="preserve">
+    <value>Captures</value>
+  </data>
+  <data name="RecordCaptures" xml:space="preserve">
+    <value>Enregistrer les connexions</value>
+  </data>
+  <data name="RecordCapturesHelp" xml:space="preserve">
+    <value>Ce que lit chaque connexion va dans un fichier .d3bcap, pour l'inspecteur de protocole et les outils de mapping. Elles contiennent ta session : ne les partage jamais.</value>
+  </data>
+  <data name="CapturesRecording" xml:space="preserve">
+    <value>Enregistre en ce moment, dans {0}</value>
+  </data>
+  <data name="CapturesNotRecording" xml:space="preserve">
+    <value>N'enregistre pas en ce moment</value>
+  </data>
+  <data name="SettingsAppearance" xml:space="preserve">
+    <value>Apparence</value>
+  </data>
+  <data name="SettingsAppearanceDetail" xml:space="preserve">
+    <value>Aussi dans la barre de titre</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Langue</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Thème</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>Sombre</value>
+  </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>Clair</value>
+  </data>
+  <data name="SettingsData" xml:space="preserve">
+    <value>Données</value>
+  </data>
+  <data name="SettingsDataDetail" xml:space="preserve">
+    <value>Où D3B garde ce qu'il sait, sur cette machine</value>
+  </data>
+  <data name="DataDatabase" xml:space="preserve">
+    <value>Base de données</value>
+  </data>
+  <data name="DataPack" xml:space="preserve">
+    <value>Données du jeu</value>
+  </data>
+  <data name="DataSettings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="PackPathUnknown" xml:space="preserve">
+    <value>Connu une fois l'hôte démarré</value>
+  </data>
   <data name="ShowJournal" xml:space="preserve">
     <value>Journal</value>
   </data>
@@ -1009,5 +1180,98 @@
   </data>
   <data name="ActivityLeftFull" xml:space="preserve">
     <value>Encore plein une fois déchargé : il reste plus que ce que l'activité dépose.</value>
+  </data>
+  <data name="TourIsolated" xml:space="preserve">
+    <value>Isolée, laissée</value>
+  </data>
+  <data name="TourGrowing" xml:space="preserve">
+    <value>En repousse</value>
+  </data>
+  <data name="ResourceBasePlaced" xml:space="preserve">
+    <value>Sans métier, vue sur {0} cartes</value>
+  </data>
+  <data name="ResourceBaseUnseen" xml:space="preserve">
+    <value>Sans métier, jamais vue : apprise en passant</value>
+  </data>
+  <data name="JournalActivityInterruptedPauses" xml:space="preserve">
+    <value>« {0} » interrompue par {1} ; le bot se met en pause jusqu'à sa reprise</value>
+  </data>
+  <data name="JournalPausedAfterFight" xml:space="preserve">
+    <value>Après le combat, le bot se met en pause, comme son profil le dit</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>Statistiques</value>
+  </data>
+  <data name="StatisticsSummaryOne" xml:space="preserve">
+    <value>{0} session comptée, gardée d'un lancement de l'app à l'autre</value>
+  </data>
+  <data name="StatisticsSummaryMany" xml:space="preserve">
+    <value>{0} sessions comptées, gardées d'un lancement de l'app à l'autre</value>
+  </data>
+  <data name="StatisticsEveryCharacter" xml:space="preserve">
+    <value>Tous les persos</value>
+  </data>
+  <data name="StatisticsToday" xml:space="preserve">
+    <value>Aujourd'hui</value>
+  </data>
+  <data name="StatisticsWeek" xml:space="preserve">
+    <value>7 jours</value>
+  </data>
+  <data name="StatisticsAll" xml:space="preserve">
+    <value>Tout</value>
+  </data>
+  <data name="StatisticsResources" xml:space="preserve">
+    <value>ressources</value>
+  </data>
+  <data name="StatisticsTime" xml:space="preserve">
+    <value>de récolte</value>
+  </data>
+  <data name="StatisticsAverage" xml:space="preserve">
+    <value>en moyenne</value>
+  </data>
+  <data name="StatisticsRate" xml:space="preserve">
+    <value>{0}/h</value>
+  </data>
+  <data name="StatisticsNone" xml:space="preserve">
+    <value>Aucun</value>
+  </data>
+  <data name="StatisticsLevels" xml:space="preserve">
+    <value>+{0} niveaux</value>
+  </data>
+  <data name="StatisticsLevelsOf" xml:space="preserve">
+    <value>{0} {1} → {2}</value>
+  </data>
+  <data name="StatisticsByResource" xml:space="preserve">
+    <value>Par ressource</value>
+  </data>
+  <data name="StatisticsRuns" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="StatisticsOngoing" xml:space="preserve">
+    <value>En cours</value>
+  </data>
+  <data name="StatisticsEmpty" xml:space="preserve">
+    <value>Aucune session sur cette période pour l'instant.</value>
+  </data>
+  <data name="StatisticsUnavailable" xml:space="preserve">
+    <value>Les statistiques ont besoin de la base de D3B, qui ne s'est pas ouverte.</value>
+  </data>
+  <data name="StatisticsLevelsOne" xml:space="preserve">
+    <value>+{0} niveau</value>
+  </data>
+  <data name="ItemNamed" xml:space="preserve">
+    <value>Objet {0}</value>
+  </data>
+  <data name="Life" xml:space="preserve">
+    <value>Vie</value>
+  </data>
+  <data name="LifeOf" xml:space="preserve">
+    <value>{0:N0} / {1:N0}</value>
+  </data>
+  <data name="DelayBetweenSteps" xml:space="preserve">
+    <value>Entre deux actions</value>
+  </data>
+  <data name="DelayBetweenStepsHelp" xml:space="preserve">
+    <value>Ce qu'une activité laisse passer après chaque action, récolte, trajet ou dépôt, pour que le client l'affiche.</value>
   </data>
 </root>

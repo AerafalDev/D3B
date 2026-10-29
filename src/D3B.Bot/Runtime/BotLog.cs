@@ -22,6 +22,9 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: resumed")]
     public static partial void Resumed(ILogger logger, long character);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: paused after a fight, until it is resumed")]
+    public static partial void PausedAfterFight(ILogger logger, long character);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: its behavior was interrupted, {Reason}")]
     public static partial void Interrupted(ILogger logger, long character, Interruption reason);
 

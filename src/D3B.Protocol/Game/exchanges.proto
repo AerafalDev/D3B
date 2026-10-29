@@ -1,5 +1,6 @@
 // The bank: once the banker's reply is chosen, an exchange with the character's storage opens, holding its objects and
-// kamas; the character moves objects and kamas into it or out of it, then leaves.
+// kamas; the character moves objects and kamas into it or out of it, then leaves. The guild's chest: its element used, an
+// exchange with the guild's storage opens, holding its objects; the character moves them a stack at a time, then leaves.
 syntax = "proto3";
 
 package d3b.game;
@@ -20,8 +21,8 @@ message ExchangeStartedWithStorageEvent {
   int32 max_slots = 2;
 }
 
-// What kind of exchange opened. Twenty-three values in this build: 15 opened the bank, in the captures; the others are
-// not measured.
+// What kind of exchange opened. Twenty-three values in this build: 15 opened the bank and 21 the guild's chest, in the
+// captures; the others are not measured.
 enum ExchangeType {
   EXCHANGE_TYPE_VALUE_0 = 0;
   EXCHANGE_TYPE_VALUE_1 = 1;
@@ -44,11 +45,11 @@ enum ExchangeType {
   EXCHANGE_TYPE_VALUE_18 = 18;
   EXCHANGE_TYPE_VALUE_19 = 19;
   EXCHANGE_TYPE_VALUE_20 = 20;
-  EXCHANGE_TYPE_VALUE_21 = 21;
+  EXCHANGE_TYPE_GUILD_CHEST = 21;
   EXCHANGE_TYPE_VALUE_22 = 22;
 }
 
-// What the storage holds, sent as it opens.
+// What the storage holds, sent as it opens: the bank's and the guild's chest's, which sets no kamas.
 message StorageContentEvent {
   option (d3b.readable.partial) = true;
 
@@ -123,9 +124,43 @@ message DialogLeaveRequest {
   }
 }
 
-// The exchange is over, as the bank's once the character left it.
+// The exchange is over, as the bank's or the guild's chest's once the character left it.
 message ExchangeLeaveEvent {
   option (d3b.readable.partial) = true;
 
   DialogType type = 1;
+}
+
+// An exchange with a storage of tabs opened, as the guild's chest's does when its element is used: then what the open tab
+// holds, StorageContentEvent. The tabs themselves are not measured: the guild captured had one.
+message ExchangeStartedWithTabbedStorageEvent {
+  option (d3b.readable.partial) = true;
+
+  ExchangeType type = 1;
+}
+
+// Moves a stack, or part of it, between the inventory and the open storage: a quantity of the inventory's stack into the
+// storage, positive, or of the storage's stack out of it, negative, each stack named by its own uid. Measured on the guild's
+// chest: the server answers 28 ms later with the storage's stack, the inventory's stack, added to, changed or deleted, and
+// the weight; it refuses an object bound to the account with a text of the error kind, and moves nothing.
+message ExchangeObjectMoveRequest {
+  int32 uid = 1;
+
+  // No capture sets it.
+  repeated bool flags_2 = 2;
+
+  int32 quantity = 3;
+}
+
+// A stack of the storage changed, alone, as when a quantity is moved into or out of the guild's chest: the stack as it now
+// is.
+message StorageObjectUpdateEvent {
+  InventoryObject object = 1;
+}
+
+// A stack gone from the storage, as when the character took the guild chest's stack back whole.
+message StorageObjectRemovedEvent {
+  option (d3b.readable.partial) = true;
+
+  int32 uid = 1;
 }

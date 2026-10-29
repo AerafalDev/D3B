@@ -136,6 +136,9 @@ public sealed class CharacterEventsTests
                 }
               },
               "Kamas": 12500,
+              "Life": null,
+              "MaxLife": null,
+              "LifeRegenInterval": null,
               "Weight": 770,
               "MaxWeight": 7590,
               "Load": 0.10144927536231885,

@@ -10,7 +10,10 @@ namespace D3B.Protocol.Tests.Mapping;
 /// top-level types reversed. Field and value numbers stay, as the client's obfuscation keeps them, and so do protobuf's
 /// own types, such as <c>google.protobuf.Any</c>, whose file joins the schema when a file uses it.
 /// </summary>
-/// <remarks>Maps are not handled: no readable file holds one yet.</remarks>
+/// <remarks>
+/// A map's entry is renamed as any nested message and keeps its option, so that the schema still holds a map, its key and
+/// value paired and audited as a message's fields.
+/// </remarks>
 internal sealed class Obfuscation
 {
     private readonly Dictionary<string, string> _names = new(StringComparer.Ordinal);

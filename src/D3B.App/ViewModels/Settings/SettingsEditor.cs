@@ -195,15 +195,21 @@ internal sealed partial class SettingsEditor : ObservableObject
         return [.. by.GetValues(Draft).Cast<int>()];
     }
 
-    /// <summary>Says who gathers a resource, beside its name: its profession and level.</summary>
+    /// <summary>Says who gathers a resource, beside its name: its profession and level, or for one of <c>Base</c>'s where the learned graphics place it (D150).</summary>
     /// <param name="resource">The resource's item.</param>
-    /// <returns>Its profession and level, or <see langword="null"/> when no profession gathers it.</returns>
+    /// <returns>Its profession and level, or where it was seen; <see langword="null"/> when the game names no such resource.</returns>
     public string? SourceOf(int resource)
     {
-        if (Game is null || !Game.TryGetSource(resource, out var source))
+        if (Game is null)
             return null;
 
-        return Localizer.Format("ResourceSource", Names.Name(SettingKind.Job, JobOf(source.JobId)), source.Level);
+        if (Game.TryGetSource(resource, out var source))
+            return Localizer.Format("ResourceSource", Names.Name(SettingKind.Job, JobOf(source.JobId)), source.Level);
+
+        if (!Game.IsBase(resource))
+            return null;
+
+        return Game.PlacesOf(resource) is { Count: > 0 } places ? Localizer.Format("ResourceBasePlaced", places.Count) : Localizer["ResourceBaseUnseen"];
     }
 
     /// <summary>Says which character playing the profile lacks a profession's level for a resource, if one does.</summary>
@@ -244,7 +250,9 @@ internal sealed partial class SettingsEditor : ObservableObject
         if (Game is null)
             return [];
 
-        var options = Game.Options(setting.Kind, within).Select(reference => Option(setting.Kind, reference));
+        // An item setting may offer some types alone, such as food's (D148).
+        var references = setting.Kind is SettingKind.Item && setting.ItemTypes is { } types ? Game.ItemsOf(types) : Game.Options(setting.Kind, within);
+        var options = references.Select(reference => Option(setting.Kind, reference));
 
         if (setting.Kind is SettingKind.Resource && within is not null)
             return [.. options];
@@ -272,6 +280,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         {
             SettingKind.Resource => (Icons?.Item(reference.Id), Game is not null && Game.TryGetSource(reference.Id, out var source) ? Icons?.Job(source.JobId) : null),
             SettingKind.Job => (Icons?.Job(reference.Id), null),
+            SettingKind.Item => (Icons?.Item(reference.Id), null),
             _ => (null, null),
         };
 

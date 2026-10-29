@@ -100,4 +100,17 @@ public sealed class SettingBuilder<TSettings>
 
         return this;
     }
+
+    /// <summary>Restricts an item setting to some types of items, such as food's (D148).</summary>
+    /// <param name="types">The item types, by id in the client's tables.</param>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting holds no item.</exception>
+    public SettingBuilder<TSettings> OfItemTypes(params int[] types)
+    {
+        ArgumentNullException.ThrowIfNull(types);
+
+        _setting.SetItemTypes(types);
+
+        return this;
+    }
 }

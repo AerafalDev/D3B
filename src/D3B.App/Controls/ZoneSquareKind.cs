@@ -26,4 +26,10 @@ internal enum ZoneSquareKind
 
     /// <summary>A map the tour still goes through, likely holding a resource wanted (D138).</summary>
     Probable,
+
+    /// <summary>A map reached only far round, which the tour leaves out unless the settings take it (D149).</summary>
+    Isolated,
+
+    /// <summary>A map the tour went through, whose resources grow back (D145).</summary>
+    Growing,
 }

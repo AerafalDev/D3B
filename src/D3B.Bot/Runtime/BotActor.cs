@@ -39,8 +39,7 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>The number of entries a bot's journal keeps: older ones are dropped (D113).</summary>
     public const int JournalCapacity = 2_000;
 
-    /// <summary>How long the client takes to draw a map once the server placed the character on it (D77).</summary>
-    internal static readonly TimeSpan DrawDelay = TimeSpan.FromMilliseconds(500);
+    private const long NeverEnded = long.MinValue;
 
     private readonly Channel<Input> _inbox = Channel.CreateUnbounded<Input>(new UnboundedChannelOptions { SingleReader = true });
     private readonly List<GameExpectation> _expectations = [];
@@ -50,6 +49,7 @@ public sealed class BotActor : IAsyncDisposable
     private readonly ILogger _log;
     private readonly Lazy<WorldPathfinder> _world;
     private readonly Lazy<BankDirectory> _banks;
+    private readonly Func<BotDelays> _delays;
     private readonly Task _loop;
 
     // Only the loop reads and writes these.
@@ -62,7 +62,9 @@ public sealed class BotActor : IAsyncDisposable
     private volatile bool _paused;
     private volatile bool _acting;
     private volatile ActivityRun? _activity;
-    private long _drawnAt;
+    private long _placedAt;
+    private long _useEndedAt = NeverEnded;
+    private long _regeneratingSince = NeverEnded;
 
     /// <summary>Gets who the bot plays.</summary>
     public CharacterKey Key { get; }
@@ -95,16 +97,24 @@ public sealed class BotActor : IAsyncDisposable
 
     internal ILogger Log => _log;
 
-    /// <summary>Gets when the client has drawn the map the server last placed the character on.</summary>
-    internal DateTimeOffset DrawnAt => new(Volatile.Read(ref _drawnAt), TimeSpan.Zero);
+    /// <summary>Gets how long the bot's behaviors wait now, which the app may change while they run (D151).</summary>
+    internal BotDelays Delays => _delays();
 
-    internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, Lazy<BankDirectory> banks, TimeProvider time, ILogger log)
+    /// <summary>Gets when the client has drawn the map the server last placed the character on.</summary>
+    /// <remarks>Reckoned from the display time now: raised, it holds the requests to come on a map placed before.</remarks>
+    internal DateTimeOffset DrawnAt => new DateTimeOffset(Volatile.Read(ref _placedAt), TimeSpan.Zero) + Delays.Display;
+
+    /// <summary>Gets when the server last ended a use of the character's own, if it ever did.</summary>
+    internal DateTimeOffset? UseEndedAt => Volatile.Read(ref _useEndedAt) is var ticks and not NeverEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
+
+    internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, Lazy<BankDirectory> banks, Func<BotDelays> delays, TimeProvider time, ILogger log)
     {
         Key = state.Key;
         _state = state;
         Maps = maps;
         _world = world;
         _banks = banks;
+        _delays = delays;
         Time = time;
         _log = log;
         _loop = Task.Run(ReadInboxAsync);
@@ -129,6 +139,36 @@ public sealed class BotActor : IAsyncDisposable
     public void Resume()
     {
         Post(new Resuming());
+    }
+
+    /// <summary>Reckons the character's life at a time: the life the server last said, and a point each interval it regenerates since (D153).</summary>
+    /// <param name="at">The time, by the bot's clock.</param>
+    /// <returns>The life, at most the most; <see langword="null"/> while the server has not said it.</returns>
+    /// <remarks>
+    /// Measured on client 3.7.12.12: out of fights the life regenerates a point every interval the server gives, 5 tenths of
+    /// a second in all captures, from the life the characteristics hold as the regeneration starts, up to the most.
+    /// </remarks>
+    public int? LifeAt(DateTimeOffset at)
+    {
+        var state = _state;
+
+        if (state.Life is not { } life || state.MaxLife is not { } most)
+            return state.Life;
+
+        var since = Volatile.Read(ref _regeneratingSince);
+
+        if (state.LifeRegenInterval is not { } interval || since == NeverEnded)
+            return Math.Min(life, most);
+
+        var points = (at - new DateTimeOffset(since, TimeSpan.Zero)).Ticks / (interval * TimeSpan.TicksPerMillisecond * 100);
+
+        return (int)Math.Clamp(life + Math.Max(0, points), 0, most);
+    }
+
+    /// <summary>Pauses the bot as the player's hand does, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
+    internal void Pause()
+    {
+        Post(new Pausing());
     }
 
     /// <summary>Starts an activity: its steps, one after another, until it is done, fails or is stopped (D87).</summary>
@@ -313,6 +353,9 @@ public sealed class BotActor : IAsyncDisposable
             case Resuming:
                 OnResuming();
                 break;
+            case Pausing:
+                OnPausing();
+                break;
             case Attached attached:
                 OnAttached(attached.Session, attached.State);
                 break;
@@ -337,12 +380,19 @@ public sealed class BotActor : IAsyncDisposable
         if (session != _session)
             return;
 
-        var state = CharacterEvents.Apply(_state, side, message);
+        var before = _state;
+        var state = CharacterEvents.Apply(before, side, message);
 
         _state = state;
 
+        if (before.Use is not null && state.Use is null && message is InteractiveUseEndedEvent)
+            Volatile.Write(ref _useEndedAt, Time.GetUtcNow().UtcTicks);
+
+        if (side is RelayDirection.FromServer && message is LifeRegenStartEvent)
+            Volatile.Write(ref _regeneratingSince, Time.GetUtcNow().UtcTicks);
+
         if (side is RelayDirection.FromServer && message is MapInformationEvent information && information.MapId == state.MapId && state.Cell is not null)
-            Volatile.Write(ref _drawnAt, (Time.GetUtcNow() + DrawDelay).UtcTicks);
+            Volatile.Write(ref _placedAt, Time.GetUtcNow().UtcTicks);
 
         // A request to leave changes nothing of the state, so this is the dialog the client sent it in.
         if (side is RelayDirection.FromClient && _behavior is { } behavior && PlayerActions.Starts(state, message))
@@ -473,6 +523,16 @@ public sealed class BotActor : IAsyncDisposable
         Write(BotEvent.Resumed);
     }
 
+    private void OnPausing()
+    {
+        if (_paused)
+            return;
+
+        _paused = true;
+        BotLog.PausedAfterFight(_log, Key.CharacterId);
+        Write(BotEvent.PausedAfterFight);
+    }
+
     private void OnAttached(GameSession session, CharacterState state)
     {
         if (_behavior is { } behavior)
@@ -548,6 +608,8 @@ public sealed class BotActor : IAsyncDisposable
     private sealed record Finished(RunningBehavior Behavior) : Input;
 
     private sealed record Resuming : Input;
+
+    private sealed record Pausing : Input;
 
     private sealed record Attached(GameSession Session, CharacterState State) : Input;
 

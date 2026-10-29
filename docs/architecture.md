@@ -36,7 +36,9 @@ app's logs page and protocol inspector, live or replaying a capture (step 5, ses
 5d); the harvesting module, its activity touring a zone and banking full, an activity's report on the bot's card and the
 map page, and the profile editor grown with suggestions, a zone's mini-map and a preview (step 6, session 6a); the icons of
 the resources and professions in a pack of format 4, drawn on the tiles, lists, card and map, and the maps' graphics the
-bots learn, which send a tour to the probable maps first (step 6, session 6b). Everything else below is the target.
+bots learn, which send a tour to the probable maps first (step 6, session 6b); the resources of `Base` placed by the graphics
+learned, a zone's isolated maps, fights told by their timing and followed as the profile says, the resources' growing
+back learned and kept, and each run kept for a statistics page (step 6, session 6c). Everything else below is the target.
 
 ## Overview
 
@@ -123,7 +125,9 @@ Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharin
 behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
 map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank; in session 4e (D83,
 D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
-client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report.
+client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c
+(D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's
+resources.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -142,8 +146,9 @@ client's new connection taking the bot back; in session 6a (D127 to D132), harve
   `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
 - **Behaviors** are async methods given a `BotContext`, the state, the pack's maps, world paths and banks, the clock and
   the game connection to send through, and run one at a time by `BotActor.RunAsync`. A request waits until the client
-  drew the map, half a second after the server placed the character (D77). A behavior expects its answer before it sends
-  its request (`Expect`), so the loop sees the expectation before any answer. An interruption cancels it, off the loop:
+  drew the map, its display time after the server placed the character, half a second measured (D77, D151). A behavior
+  expects its answer before it sends its request (`Expect`), so the loop sees the expectation before any answer. An
+  interruption cancels it, off the loop:
   the player acting, the connection closing, a fight beginning (D88), the host stopping (`BotInterruptedException`).
   Anyone may wait for what a bot's state becomes (`BotActor.WaitUntilAsync`), as a follower will at step 10, and a
   behavior for its own state, with a delay (`BotContext.WaitUntilAsync`).
@@ -202,8 +207,23 @@ client's new connection taking the bot back; in session 6a (D127 to D132), harve
   whose graphics all offer none of its skills, and those without elements. Full at its
   share of pods, it banks at the nearest bank, what the settings say, and the next step goes back; still full, it says
   why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
-  app. Banking waits half a second after the banker's question and after the bank opens, so that the client shows its
-  windows before D3B closes them (D132).
+  app. Banking waits the client's display time, half a second measured, after the banker's question and after the bank
+  opens, so that the client shows its windows before D3B closes them (D132, D151).
+- **Harvesting, grown in 6c**: a resource of `Base`, such as a well's water, is asked for as any other, without a level,
+  and placed by the graphics learned (`GameReferences.IsBase`, `PlacesOf`; `GraphicPlaces`, an index of every map's
+  graphics built once, D150); a sub-area's maps reached only far round from its main part are isolated and left out
+  unless the settings take them, last (`HarvestZone.Isolated`, D149). A fight that cuts a step is a protector's when it
+  begins within a second of the character's own use ending (`BotContext.UseEndedAt`), else an aggression; the activity
+  then resumes, pauses the bot (`InterruptionResponse.Pause`, `BotActor.Pause`) or stops, as its settings say, and the
+  journal names the kind (`BotActivity.Describe`, D144). `Regrowths`, one per host, learns how long each resource takes to
+  grow back from every map a bot is on (`RegrowthLearner`): whole when a bot stayed on the map, else a bound from above on
+  a later visit; a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
+  and waits for the first rather than D128's minute (D145). Before a step, the activity opens a resource bag and, under its
+  share of life, eats the profile's food in one request (`ObjectUse.UseObjectsAsync`, the life reckoned by `BotActor.LifeAt`,
+  D148, D153, D156); full, it may deposit in the guild's chest (`GuildChest`, D147), what the chest leaves going to the
+  character's own. Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
+  An activity gives its figures (`BotActivity.Statistics`,
+  `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146).
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
@@ -216,7 +236,15 @@ client's new connection taking the bot back; in session 6a (D127 to D132), harve
   read by the app as they come.
 - **The host's problems** (D114): `HostProblems`, a logging provider, keeps the host's last 2,000 warnings and errors
   that name no bot.
-- Every delay goes through `TimeProvider`.
+- **Delays** (D151, D152): every delay goes through `TimeProvider`, and every wait of a behavior reads `BotDelays`
+  (`BotContext.Delays`): the client's display time after a map and after a window, 0.5 s measured and up to 3 s; the
+  server's answer, 3 s; a walk's arrival, 1 s, and each of its steps, 0.5 s; the new map, 10 s; a use's end, 2 s; a
+  deposit's follow-up, 1 s; recovery, 30 s. Each is its measured value by default, the least, raised only, a fixed value
+  never drawn at random. `Bots.Delays` changes them for every bot at once, and a request waiting for the map reckons its
+  display time again once waited. The host reads them from its configuration in seconds (`Delays:Display`,
+  `Delays:Answer`, `Delays:WalkArrival`, `Delays:WalkStep`, `Delays:Placed`, `Delays:UseEnd`, `Delays:BankFollow`,
+  `Delays:Recovery`), and one below its measured value stops it, saying which. An activity's own delays stay its own,
+  such as `HarvestActivity`'s.
 
 ## Network and protocol
 
@@ -282,7 +310,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-6.binpb` (`MappingFile`, D84), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-8.binpb` (`MappingFile`, D156), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -306,6 +334,10 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   own (D61). `CaptureReplay` plays one into pipes, D3B's frames into a pipe of their own when asked; tests build their
   own, and `scripts/capture.cs` describes them by structure. Decoded messages come from replaying them, for the
   protocol inspector and the replay tests (D63).
+- The relay's timeouts (D151): `RelayTimeouts`, how long it tries each address of the server, keeps a side open once the
+  other closed, holds a frame not yet whole, and keeps a server selection for its game connection, 10, 5, 5 and 60 s by
+  default and raised only; read once, as the relay is built, from `Network:Timeouts:Connect`, `Close`, `Hold` and
+  `Selection`, in seconds, into `RelaySettings`.
 - The protocol inspector's frames (D115), in `D3B.Bot.Inspection`: `FrameRecorder`, a game observer, keeps each bot's
   last 3,000 frames, both sides, and D3B's own requests, which observers see apart once sent (`IGameObserver.OnSent`).
   `FrameFields` gives a readable message's fields, the ticket hidden, or the shape of one the readable protocol lacks;
@@ -358,17 +390,18 @@ Built at step 2 (D24 to D33):
 ## Desktop app
 
 Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
-5c, 5e and 5d (D96, D101, D111, D120).
+5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151).
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
   the clients and gives them their configuration back. The window shows the host getting ready, running for the
   installed client's build, or why it did not start.
 - **The window**: dark by default, light on a click; where the host stands, the language and the theme in the title
-  bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by `StatusPill`, in the tone each says
-  (`Tone`).
-- **The rail**, always (D101, D111, D120): the bots, the accounts, the profiles, the map, the logs and the inspector pages, a line once a module registered a page, then
-  the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip. A module's page (`ModulePageViewModel`) is made the first
+  bar, and on the settings page too. Its icons are drawn by `Icon` from the app's own geometries, its statuses by
+  `StatusPill`, in the tone each says (`Tone`).
+- **The rail**, always (D101, D111, D120): the bots, the accounts, the profiles, the map, the statistics (D146), the logs and the inspector pages, a line once a module registered a page, then
+  the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip; at its foot, a gear, the
+  settings page (D151), shown whether the host runs or not. A module's page (`ModulePageViewModel`) is made the first
   time it shows and kept, refreshed every 250 ms while it shows through its context (`AppPageContext`, in
   `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead (`PageFailureViewModel`), logged, and
   the bots and the other pages go on. What a page's own code throws on the UI's thread, which nothing caught, is told by
@@ -380,7 +413,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   with its defaults (D93, D99), the character's own profile chosen, stopped, with its status, steps and last
   interruption, and the error it failed with (D103). A profile whose activity is gone, such as a Lua script's, is offered
   with it said gone, and does not start (D119). An activity's report shows there: what it does, its tour as a bar and how
-  long it ran, what it counts with each item's icon, its warnings, and why it ended (D131, D141).
+  long it ran, what it counts with each item's icon and rate an hour, the experience gained and the fights, its warnings, and why it
+  ended (D131, D141, D144, D146).
 - **The accounts page** (D101): a card per account the relay saw, its subscription and when it was seen, forgotten on
   demand; its characters in rows, each with the profile it plays and whether it starts on connection.
 - **The profiles page** (D101): a column of profiles, each folded to its name, activity, settings at a glance and
@@ -393,6 +427,16 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   sub-areas where they grow and the activity's preview, its probable maps counted; a percentage is a bar, a short choice
   segments (D127, D138, D141). The pack's icons are drawn as bitmaps once per pack (`GameIcons`); a pack without them, or
   an item without one, keeps the neutral square.
+- **The statistics page** (D146, `D3B.App.ViewModels.Statistics`): what the kept runs brought, by character and period,
+  today, 7 days or everything: the resources, the time, the rate an hour and the levels gained; each resource with its icon
+  and rate; the runs, the latest first, with how each ended or that it goes on.
+- **The settings page** (D151, `SettingsViewModel`, `DelayViewModel`): the machine's settings, not a profile's. The
+  client's display time, a bar from 0.5 to 3 s with its help; the delays, each a box from its default to its most with
+  its measured or D3B's value under it, a dot when raised, and a button restoring them all but the display time, the
+  bots' applying at once (`Bots.Delays`), the relay's from the next start; the captures, `Network:Captures:Enabled`,
+  from the next start, with whether the host records now and where; the language and the theme, as in the title bar;
+  where the database, the pack and the app's own file are, read-only. Once the host runs, the page shows the delays its
+  bots wait, which its command line may have raised; changed before, the page's are given to them.
 - **The logs page** (D111 to D114, `D3B.App.ViewModels.Logs`): every source by time, the host's problems, or a bot's
   journal, which its card opens, a profile that did not start on connection included (D119); filtered by tone and text,
   followed, copied. `JournalLines` says each entry in the app's
@@ -407,19 +451,23 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   stairs; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
   bag's and a fight's maps are drawn as the others; a resource by its icon, faded once harvested (D141). A running
   activity's report adds a line, an Activity layer ringing the elements it wants and the one it goes for and marking the
-  exit it heads to, and its tour's mini-map, gone through, probable, to see and without a resource (D131, D138).
+  exit it heads to, and its tour's mini-map, gone through, probable, to see, without a resource, growing back and isolated
+  (D131, D138, D145, D149).
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
   alone: the bots' loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
   French; the language starts as the system's, or the one the app was left in, and changes live, the views binding
   through `{l:Tr Key}`.
 - **Preferences** (`AppPreferences`): the language and the theme, remembered in `%LOCALAPPDATA%\D3B\app.json`, read before
-  the window shows (D101).
+  the window shows (D101); and the host's settings the settings page changed, by their configuration's keys and values,
+  such as `Delays:Display` or `Network:Captures:Enabled`, one given back its default forgotten (D151). The app reads the
+  file before the host, which starts with them (`HostRunner`, `BotHost.CreateBuilder(args, settings)`), its own
+  configuration and command line winning over them.
 
 ## Storage
 
 Built in session 5c (D99, D100), in `D3B.Storage`, which the app and `D3B.Host` add to the host's composition; the maps'
-graphics in session 6b (D138).
+graphics in session 6b (D138); the resources' growing back and the runs in session 6c (D145, D146).
 
 - **The database**: SQLite through EF Core, in `%LOCALAPPDATA%\D3B\d3b.db` or `Storage:Path`, its migrations applied
   before the host starts (`StoragePreparation`, an `IHostPreparation`); one that does not open stops the host, which says
@@ -433,6 +481,12 @@ graphics in session 6b (D138).
 - **The maps' graphics** (`GraphicRecorder`, D138): what the bots learn of each graphic, its skills as JSON, read into
   `GraphicSkills` once the database opens and written as the bots learn, queued off the relays' loops, whatever the
   client's build.
+- **The resources' growing back** (`RegrowthRecorder`, D145): `Regrowths` by skill, the longest seen whole, how many and the
+  least bound, read back before the host starts and written as the bots learn, as the graphics are.
+- **Runs** (`RunRecorder`, `RunBook`, D146): each activity's run, its character, profile, times and outcome, the items it
+  brought, the experience its character gained and its banks and fights; the recorder looks at the bots every 5 s and
+  writes a run as it begins, banks, once a minute while its figures change, and once over. The book reads them back after
+  each write, for the app's statistics.
 - **In memory**: both books are read once the database opens, then again after each write; the app reads them every
   refresh, and their version tells it they changed.
 - **No secret** is kept: no Data Protection yet (D100).

@@ -10,5 +10,6 @@ namespace D3B.Bot.Journal;
 /// <param name="Kamas">The kamas it asked to put in, once the bank was open; 0 before.</param>
 /// <param name="Outcome">How it ended.</param>
 /// <param name="Duration">How long it took.</param>
-public sealed record BankEntry(DateTimeOffset At, int Depth, long? MapId, int Stacks, long Kamas, BankOutcome Outcome, TimeSpan Duration)
+/// <param name="GuildChest">Whether it went to the guild's chest, rather than the character's own (D147).</param>
+public sealed record BankEntry(DateTimeOffset At, int Depth, long? MapId, int Stacks, long Kamas, BankOutcome Outcome, TimeSpan Duration, bool GuildChest = false)
     : JournalEntry(At, Depth);

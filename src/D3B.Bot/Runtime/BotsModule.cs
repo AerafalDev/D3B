@@ -10,6 +10,7 @@ using D3B.Bot.Settings;
 using D3B.Core.Modules;
 using D3B.Data;
 using D3B.Data.Maps;
+using D3B.Data.Packs;
 using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -24,7 +25,8 @@ namespace D3B.Bot.Runtime;
 /// <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity}(IServiceCollection, string, LocalizedText)"/>, which the app starts, and the
 /// <see cref="PageCatalog"/> of the pages they register with <see cref="PageServiceCollectionExtensions.AddPage"/>, which
 /// the app shows, the <see cref="GameReferences"/> the activities' settings name, and the <see cref="GraphicSkills"/> every map
-/// a bot enters teaches. Requires the data module, whose maps behaviors walk, and the network module.
+/// a bot enters teaches. The bots wait the <see cref="BotDelays"/> the configuration names, in seconds under
+/// <c>Delays</c>. Requires the data module, whose maps behaviors walk, and the network module.
 /// </remarks>
 public sealed class BotsModule : IModule
 {
@@ -36,16 +38,23 @@ public sealed class BotsModule : IModule
         bot.AddModule<DataModule>();
         bot.AddModule<NetworkModule>();
 
+        // Read as the module is built, so that a delay below its measured value stops the host before it starts (D151).
+        var delays = BotDelays.Read(bot.Configuration);
+
         bot.Services.AddSingleton(services => new Bots(
             services.GetRequiredService<GameMaps>(),
             services.GetRequiredService<GameWorld>(),
             services.GetRequiredService<GameTables>(),
             services.GetRequiredService<TimeProvider>(),
-            services.GetRequiredService<ILoggerFactory>()));
+            services.GetRequiredService<ILoggerFactory>())
+        {
+            Delays = delays,
+        });
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
 
         // Whatever the bots do, every map they enter teaches what its elements' graphics offer (D138).
         bot.Services.TryAddSingleton<GraphicSkills>();
+        bot.Services.TryAddSingleton(services => new GraphicPlaces(services.GetRequiredService<GamePack>(), services.GetRequiredService<GameWorld>()));
         bot.Services.AddSingleton<IGameObserver>(services => new GraphicLearner(services.GetRequiredService<GameMaps>(), services.GetRequiredService<GraphicSkills>()));
 
         // Recording always, after the bots, so that the protocol inspector shows what came before it was opened (D115).
@@ -64,7 +73,7 @@ public sealed class BotsModule : IModule
             var tables = services.GetRequiredService<GameTables>();
             var world = services.GetRequiredService<GameWorld>();
 
-            return new GameReferences(world.Atlas, tables.Jobs, tables.Items, world.Graph);
+            return new GameReferences(world.Atlas, tables.Jobs, tables.Items, world.Graph, services.GetRequiredService<GraphicPlaces>(), services.GetRequiredService<GraphicSkills>());
         });
     }
 }

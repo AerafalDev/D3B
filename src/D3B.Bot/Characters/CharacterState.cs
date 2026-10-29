@@ -98,6 +98,16 @@ public sealed record CharacterState
     /// <summary>Gets the kamas the character carries.</summary>
     public long Kamas { get; init; }
 
+    /// <summary>Gets the character's life, as the server last said it: in its characteristics, or as its regeneration stopped (D153).</summary>
+    /// <remarks>Out of fights it regenerates since, a point each <see cref="LifeRegenInterval"/>: <see cref="Runtime.BotActor.LifeAt"/> reckons it now.</remarks>
+    public int? Life { get; init; }
+
+    /// <summary>Gets the most life the character has, as the server last said it.</summary>
+    public int? MaxLife { get; init; }
+
+    /// <summary>Gets every how many tenths of a second the life regenerates a point, while it does; none in a fight, or before the server said.</summary>
+    public int? LifeRegenInterval { get; init; }
+
     /// <summary>Gets the weight the character carries, in pods.</summary>
     public int Weight { get; init; }
 

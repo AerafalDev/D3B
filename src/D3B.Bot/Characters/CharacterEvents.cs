@@ -43,6 +43,10 @@ namespace D3B.Bot.Characters;
 /// </remarks>
 public static class CharacterEvents
 {
+    private const int MostLife = 0;
+    private const int Vitality = 11;
+    private const int LifeLacking = 97;
+
     /// <summary>Gives the character's state once a side sent a message.</summary>
     /// <param name="state">The state before the message.</param>
     /// <param name="side">The side that sent it: the client's requests, the server's events and responses.</param>
@@ -130,6 +134,7 @@ public static class CharacterEvents
             ZaapKnownListEvent known => state with { KnownZaaps = [.. known.MapIds] },
             TeleportDestinationsEvent destinations => state with { ZaapDialog = new ZaapDialog(destinations.Type, Costs(destinations)) },
             ExchangeStartedWithStorageEvent { Type: ExchangeType.Storage } => state with { Dialog = null, Storage = new OpenStorage(0) },
+            ExchangeStartedWithTabbedStorageEvent { Type: ExchangeType.GuildChest } => state with { Dialog = null, Storage = new OpenStorage(0, IsGuildChest: true) },
             StorageContentEvent content when state.Storage is { } storage => state with { Storage = storage with { Kamas = content.Kamas } },
             StorageKamasUpdateEvent kamas when state.Storage is { } storage => state with { Storage = storage with { Kamas = kamas.Kamas } },
             ExchangeLeaveEvent => state with { Storage = null },
@@ -140,6 +145,10 @@ public static class CharacterEvents
                 Inventory = state.Inventory.SetItem(changed.Uid, stack with { Quantity = changed.Quantity }),
             },
             ObjectsDeletedEvent deleted => state with { Inventory = state.Inventory.RemoveRange(deleted.Uids) },
+            ObjectDeletedEvent deleted => state with { Inventory = state.Inventory.Remove(deleted.Uid) },
+            CharacterStatsEvent { Stats: { } stats } => Lived(state, stats),
+            LifeRegenEndEvent ended => state with { Life = ended.Life, MaxLife = ended.MaxLife, LifeRegenInterval = null },
+            LifeRegenStartEvent started => state with { LifeRegenInterval = started.Interval > 0 ? started.Interval : null },
             KamasUpdateEvent kamas => state with { Kamas = kamas.Kamas },
             InventoryWeightEvent weight => state with { Weight = weight.Weight, MaxWeight = weight.MaxWeight },
             JobDescriptionEvent description => state with { Jobs = Described(state.Jobs, description) },
@@ -169,6 +178,29 @@ public static class CharacterEvents
         var owner = information.PlaceCase is MapInformationEvent.PlaceOneofCase.HavenBag ? information.HavenBag.Owner?.Id : null;
 
         return state with { SubAreaId = information.SubAreaId, Cell = cell, Elements = elements, Npcs = npcs, HavenBagOwnerId = owner };
+    }
+
+    private static CharacterState Lived(CharacterState state, CharacterStats stats)
+    {
+        // Measured (D153): the most life is characteristic 0 plus 11, the vitality; the life, the most plus 97, the life lacking.
+        int? ValueOf(int id)
+        {
+            var found = stats.Characteristics.FirstOrDefault(characteristic => characteristic.Id == id);
+
+            if (found is null)
+                return null;
+
+            var numbers = found.Detailed;
+
+            return numbers is null ? 0 : numbers.Number1 + numbers.Number2 + numbers.Number3 + numbers.Number4 + numbers.Number5 + numbers.Number7;
+        }
+
+        if (ValueOf(MostLife) is not { } most)
+            return state;
+
+        var max = most + (ValueOf(Vitality) ?? 0);
+
+        return state with { MaxLife = max, Life = max + (ValueOf(LifeLacking) ?? 0) };
     }
 
     private static ImmutableSortedDictionary<long, int> Costs(TeleportDestinationsEvent destinations)

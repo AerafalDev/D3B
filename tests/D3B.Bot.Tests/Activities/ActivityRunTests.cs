@@ -38,6 +38,30 @@ public sealed class ActivityRunTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheNextStepWaitsTheTimeBetweenTwoActions()
+    {
+        _play.Bots.Delays = BotDelays.Measured;
+
+        var (connection, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity();
+        var run = bot.StartActivity(activity);
+
+        await activity.SteppingAsync(bot);
+        connection.Server(new KamasUpdateEvent { Kamas = 1 });
+        await WaitForAsync(() => run.Steps is 1);
+
+        // The client's display time at least, measured: the next step starts once it passed.
+        _play.Time.Advance(BotDelays.Measured.BetweenSteps - TimeSpan.FromMilliseconds(1));
+        await Task.Delay(20, TestContext.Current.CancellationToken);
+        Assert.Equal(1, activity.Started);
+
+        _play.Time.Advance(TimeSpan.FromMilliseconds(1));
+
+        Assert.Equal(2, await activity.SteppingAsync(bot));
+        run.Stop();
+        await run.Completion;
+    }
+    [Fact]
     public async Task OneActivityRunsAtATime()
     {
         var (connection, bot) = await _play.EnterAsync(300);
@@ -193,6 +217,33 @@ public sealed class ActivityRunTests : IAsyncDisposable
         Assert.Equal([Interruption.Fight], activity.Recoveries);
     }
 
+    [Fact]
+    public async Task AnActivityMayPauseTheBotOnAFightWhichTheCardResumes()
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity { Response = InterruptionResponse.Pause };
+        var run = bot.StartActivity(activity);
+
+        await activity.SteppingAsync(bot);
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        await WaitForAsync(() => bot.IsPaused);
+
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        connection.Server(new MapCurrentEvent { MapId = TestPlay.MapId });
+        connection.Server(TestPlay.Information(358));
+        await bot.ProcessedAsync();
+
+        // Over, the fight leaves the bot paused: nothing starts before the card resumes it.
+        Assert.Equal(1, activity.Started);
+        Assert.Equal(ActivityStatus.Waiting, run.Status);
+
+        bot.Resume();
+
+        Assert.Equal(2, await activity.SteppingAsync(bot));
+        Assert.Equal([Interruption.Fight], activity.Recoveries);
+    }
     [Fact]
     public async Task AnActivityMayEndOnAnInterruption()
     {

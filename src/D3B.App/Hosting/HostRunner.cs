@@ -39,8 +39,9 @@ internal sealed class HostRunner
 
     /// <summary>Initializes a new instance of the <see cref="HostRunner"/> class, for the default modules and the database.</summary>
     /// <param name="args">The command-line arguments, read as the host's configuration.</param>
-    public HostRunner(string[] args)
-        : this(cancellationToken => BotHost.StartAsync(BotHost.CreateBuilder(args).AddModule<StorageModule>(), cancellationToken))
+    /// <param name="settings">The host's settings the app changed (D151), which its configuration and command line win over.</param>
+    public HostRunner(string[] args, IReadOnlyDictionary<string, string?> settings)
+        : this(cancellationToken => BotHost.StartAsync(BotHost.CreateBuilder(args, settings).AddModule<StorageModule>(), cancellationToken))
     {
     }
 

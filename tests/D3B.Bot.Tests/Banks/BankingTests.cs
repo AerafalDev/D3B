@@ -100,6 +100,32 @@ public sealed class BankingTests
     }
 
     [Fact]
+    public async Task BankingLetsTheClientShowItsWindowsForTheDisplayTimeChosen()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await InTheBankAsync(play);
+
+        play.Bots.Delays = BotDelays.Measured with { Display = TimeSpan.FromSeconds(2) };
+
+        var banking = bot.BankAsync(stack => stack.ItemId == 303, 0, TestContext.Current.CancellationToken);
+
+        await TestWalks.SentAsync(play, connection, 1);
+        Asked(connection, TestPlay.ChestReplyId);
+
+        var asked = play.Time.GetUtcNow();
+
+        Assert.IsType<NpcDialogReplyRequest>(await TestWalks.SentAsync(play, connection, 2));
+        Assert.True(play.Time.GetUtcNow() - asked >= TimeSpan.FromSeconds(2));
+        Opened(connection);
+
+        var opened = play.Time.GetUtcNow();
+
+        Assert.IsType<ExchangeTransferFromInventoryRequest>(await TestWalks.SentAsync(play, connection, 3));
+        Assert.True(play.Time.GetUtcNow() - opened >= TimeSpan.FromSeconds(2));
+        Assert.False(banking.IsCompleted);
+    }
+
+    [Fact]
     public async Task ThePlayerClosingTheBankInterruptsBankingAndPausesTheBot()
     {
         await using var play = new TestPlay();

@@ -1,5 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
+using D3B.Bot.Characters;
 using D3B.Bot.Journal;
+using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Activities;
@@ -44,6 +46,9 @@ public sealed class ActivityRun
     /// <summary>Gets the name the activity was started under, such as its profile's, if its starter gave one.</summary>
     public string? Title { get; }
 
+    /// <summary>Gets the character as the activity found it, from which what it gained is told, such as its professions' experience (D146).</summary>
+    public CharacterState StartedWith { get; }
+
     /// <summary>Gets what the activity does now.</summary>
     public ActivityStatus Status => (ActivityStatus)Volatile.Read(ref _status);
 
@@ -80,6 +85,7 @@ public sealed class ActivityRun
         _bot = bot;
         Activity = activity;
         Title = title;
+        StartedWith = bot.State;
         _startedAt = bot.Time.GetUtcNow();
     }
 
@@ -153,6 +159,10 @@ public sealed class ActivityRun
                         return ActivityOutcome.Failed;
                 }
 
+                // Measured through the app: steps sent one after another went faster than the client showed them. The
+                // client's display time at least, fixed and the owner's to raise, is let pass after each (D154).
+                await Task.Delay(_bot.Delays.BetweenSteps, _bot.Time, _stop.Token).ConfigureAwait(false);
+
                 continue;
             }
             catch (BotInterruptedException exception) when (exception.Reason is not Interruption.Stopped)
@@ -186,10 +196,12 @@ public sealed class ActivityRun
             _unloaded = false;
 
             InterruptionResponse response;
+            GameText? note;
 
             try
             {
                 response = Activity.OnInterrupted(cut);
+                note = Activity.Describe(cut);
             }
             catch (Exception exception)
             {
@@ -200,10 +212,13 @@ public sealed class ActivityRun
             }
 
             BotLog.ActivityInterrupted(_bot.Log, _bot.Key.CharacterId, Activity.Name, cut, response);
-            _bot.Journal.Add(new ActivityInterruptedEntry(_bot.Time.GetUtcNow(), Activity.Name, cut, response));
+            _bot.Journal.Add(new ActivityInterruptedEntry(_bot.Time.GetUtcNow(), Activity.Name, cut, response, note));
 
             if (response is InterruptionResponse.Stop)
                 return ActivityOutcome.Stopped;
+
+            if (response is InterruptionResponse.Pause)
+                _bot.Pause();
         }
     }
 

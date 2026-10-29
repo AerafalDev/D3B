@@ -25,7 +25,8 @@ namespace D3B.Bot.Movement;
 /// <para>
 /// The server answers nothing to a request for the neighbour it refuses: from a cell off its edge, for another map, or
 /// once the character is on another map. The change then ends after its delay, 3 s for the new map; 10 s bound the wait
-/// for what is on it. It refuses a door's use from too far with an <see cref="InteractiveUseErrorEvent"/>.
+/// for what is on it (<see cref="BotDelays.Answer"/>, <see cref="BotDelays.Placed"/>). It refuses a door's use from too
+/// far with an <see cref="InteractiveUseErrorEvent"/>.
 /// </para>
 /// <para>
 /// The change is over once the character is placed. The client then draws the new map, which the bot's next request waits
@@ -41,9 +42,6 @@ namespace D3B.Bot.Movement;
 /// </remarks>
 public static class MapChange
 {
-    private static readonly TimeSpan _answerDelay = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan _placedDelay = TimeSpan.FromSeconds(10);
-
     /// <summary>Follows one step of a path through the world, as the bot's behavior.</summary>
     /// <param name="bot">The bot.</param>
     /// <param name="step">The step, leaving the vertex the character stands in.</param>
@@ -248,7 +246,7 @@ public static class MapChange
 
             await context.SendAsync(ElementUse.Request(door.ElementId, skill), cancellationToken).ConfigureAwait(false);
 
-            if (await answer.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) is InteractiveUseErrorEvent)
+            if (await answer.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is InteractiveUseErrorEvent)
                 return MapChangeOutcome.Refused;
         }
 
@@ -263,7 +261,7 @@ public static class MapChange
 
         await context.SendAsync(new TeleportRequest { MapId = zaap, Source = TeleporterType.Map }, cancellationToken).ConfigureAwait(false);
 
-        return await answer.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) switch
+        return await answer.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) switch
         {
             null => MapChangeOutcome.NoAnswer,
             TextInformationEvent => MapChangeOutcome.Refused,
@@ -273,9 +271,9 @@ public static class MapChange
 
     private static async Task<MapChangeOutcome> NewMapAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)
     {
-        if (await current.WaitAsync(_answerDelay, cancellationToken).ConfigureAwait(false) is null)
+        if (await current.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is null)
             return MapChangeOutcome.NoAnswer;
 
-        return await placed.WaitAsync(_placedDelay, cancellationToken).ConfigureAwait(false) is null ? MapChangeOutcome.NotPlaced : MapChangeOutcome.Changed;
+        return await placed.WaitAsync(context.Delays.Placed, cancellationToken).ConfigureAwait(false) is null ? MapChangeOutcome.NotPlaced : MapChangeOutcome.Changed;
     }
 }

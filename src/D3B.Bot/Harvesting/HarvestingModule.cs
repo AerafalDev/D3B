@@ -1,7 +1,11 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Interactives;
+using D3B.Bot.Network;
 using D3B.Bot.Runtime;
 using D3B.Core.Modules;
+using D3B.Data;
+using D3B.Data.Packs;
+using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -25,7 +29,12 @@ public sealed class HarvestingModule : IModule
 
         // The bots module teaches it; a test's host without one gets it empty.
         services.TryAddSingleton<GraphicSkills>();
+        services.TryAddSingleton(services => new GraphicPlaces(services.GetRequiredService<GamePack>(), services.GetRequiredService<GameWorld>()));
         services.AddSingleton<HarvestSightings>();
+
+        // Whatever the bots do, every map they are on teaches how long its resources take to grow back (D145).
+        services.TryAddSingleton<Regrowths>();
+        services.AddSingleton<IGameObserver>(services => new RegrowthLearner(services.GetRequiredService<Regrowths>(), services.GetRequiredService<GameTables>(), services.GetRequiredService<TimeProvider>()));
         services.AddSingleton<HarvestPreviews>();
         services.AddActivity<HarvestActivity, HarvestSettings>(ActivityId, HarvestTexts.Text("Name"), settings =>
         {
@@ -42,10 +51,30 @@ public sealed class HarvestingModule : IModule
                 .Within(s => s.Area)
                 .SuggestedBy(s => s.Resources)
                 .Help(HarvestTexts.Text("SubAreasHelp"));
+            settings.Flag(s => s.IsolatedMaps, HarvestTexts.Text("IsolatedMaps")).Help(HarvestTexts.Text("IsolatedMapsHelp"));
 
             settings.Section(HarvestTexts.Text("SectionBank"));
             settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent();
             settings.Choice(s => s.Deposit, HarvestTexts.Text("Deposit"), deposit => HarvestTexts.Text(deposit is HarvestDeposit.Harvest ? "DepositHarvest" : "DepositAll"));
+
+            settings.Choice(s => s.DepositTo, HarvestTexts.Text("DepositTo"), place => HarvestTexts.Text($"DepositTo{place}"))
+                .Help(HarvestTexts.Text("DepositToHelp"));
+
+            settings.Section(HarvestTexts.Text("SectionUpkeep"));
+            settings.Flag(s => s.OpenBags, HarvestTexts.Text("OpenBags")).Help(HarvestTexts.Text("OpenBagsHelp"));
+            settings.Flag(s => s.Heal, HarvestTexts.Text("Heal"));
+            settings.Number(s => s.HealBelow, HarvestTexts.Text("HealBelow"), 10, 95)
+                .Percent()
+                .VisibleWhen(s => s.Heal);
+            settings.Items(s => s.Food, HarvestTexts.Text("Food"))
+                .Ordered()
+                .OfItemTypes([.. HarvestActivity.FoodTypes])
+                .Help(HarvestTexts.Text("FoodHelp"))
+                .VisibleWhen(s => s.Heal);
+
+            settings.Section(HarvestTexts.Text("SectionFight"));
+            settings.Choice(s => s.AfterFight, HarvestTexts.Text("AfterFight"), after => HarvestTexts.Text($"AfterFight{after}"))
+                .Help(HarvestTexts.Text("AfterFightHelp"));
 
             settings.Rule(s => s.EverythingKnown || s.Resources.Count > 0, HarvestTexts.Text("RuleWhat"));
             settings.Rule(s => s.Area is not null || s.SubAreas.Count > 0, HarvestTexts.Text("RuleWhere"));

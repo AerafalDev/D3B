@@ -248,6 +248,22 @@
                         <Border Background="{DynamicResource BorderColor}" />
                         <TextBlock Text="{l:Tr TourEmpty}" />
                     </StackPanel>
+                    <StackPanel>
+                        <Border BorderBrush="{DynamicResource TourGrowingColor}" BorderThickness="1" />
+                        <TextBlock Text="{l:Tr TourGrowing}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <Rectangle
+                            Height="10"
+                            RadiusX="2"
+                            RadiusY="2"
+                            Stroke="{DynamicResource WarningColor}"
+                            StrokeDashArray="2,1"
+                            StrokeThickness="1"
+                            VerticalAlignment="Center"
+                            Width="10" />
+                        <TextBlock Text="{l:Tr TourIsolated}" />
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
             <TextBlock

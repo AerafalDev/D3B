@@ -56,6 +56,35 @@ public sealed class RelaySettingsTests
         Assert.Equal(RelaySettings.DefaultCapturesDirectory, settings.CapturesDirectory);
     }
 
+    [Fact]
+    public void TheRelaysTimeoutsAreD3BsUnlessTheConfigurationRaisesThem()
+    {
+        var defaults = RelaySettings.Read(Configuration(), ClientDirectory);
+        var configuration = Configuration((RelayTimeouts.ConnectKey, "30"), (RelayTimeouts.SelectionKey, "120.5"));
+        var raised = RelaySettings.Read(configuration, ClientDirectory);
+
+        Assert.Equal(
+            (TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(60)),
+            (defaults.ConnectTimeout, defaults.CloseTimeout, defaults.HoldTimeout, defaults.SelectionLifetime));
+        Assert.Equal(
+            (TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(120.5)),
+            (raised.ConnectTimeout, raised.CloseTimeout, raised.HoldTimeout, raised.SelectionLifetime));
+        Assert.Equal(
+            new Dictionary<string, string?> { [RelayTimeouts.ConnectKey] = "30", [RelayTimeouts.CloseKey] = null, [RelayTimeouts.HoldKey] = null, [RelayTimeouts.SelectionKey] = "120.5" },
+            RelayTimeouts.Read(configuration).ToConfiguration());
+    }
+
+    [Theory]
+    [InlineData(RelayTimeouts.ConnectKey, "5")]
+    [InlineData(RelayTimeouts.HoldKey, "31")]
+    [InlineData(RelayTimeouts.CloseKey, "soon")]
+    public void ATimeoutBelowD3BsOrAboveItsMostIsRefused(string key, string value)
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() => RelaySettings.Read(Configuration((key, value)), ClientDirectory));
+
+        Assert.Contains(key, exception.Message, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("127.0.0.1")]
     [InlineData("10.0.0.1")]

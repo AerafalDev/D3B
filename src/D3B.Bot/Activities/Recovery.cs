@@ -14,14 +14,13 @@ namespace D3B.Bot.Activities;
 /// </para>
 /// <para>
 /// So the recovery lets a use end, then a walk, settling one the client does not confirm where the server has the
-/// character, leaves a dialog or exchange still open, and lets go of a walk the server holds. Each wait is bounded: past
-/// it, the next step finds the state as it is.
+/// character, leaves a dialog or exchange still open, and lets go of a walk the server holds. Each wait is bounded
+/// (<see cref="BotDelays.Recovery"/>, <see cref="BotDelays.Confirmation"/>): past it, the next step finds the state as it
+/// is.
 /// </para>
 /// </remarks>
 public static class Recovery
 {
-    private static readonly TimeSpan _useDelay = TimeSpan.FromSeconds(30);
-
     /// <summary>Puts the character back in order, within a behavior.</summary>
     /// <param name="context">The behavior's context.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
@@ -32,10 +31,10 @@ public static class Recovery
 
         // A harvest goes on to its end, which a request would not shorten: the server refuses a walk during one.
         if (context.State.IsUsing)
-            await context.WaitUntilAsync(state => !state.IsUsing, _useDelay, cancellationToken).ConfigureAwait(false);
+            await context.WaitUntilAsync(state => !state.IsUsing, context.Delays.Recovery, cancellationToken).ConfigureAwait(false);
 
         if (context.State is { IsWalking: true } walking
-            && !await context.WaitUntilAsync(state => !state.IsWalking, MapWalk.ConfirmationDelay(walking.Path.Length - 1), cancellationToken).ConfigureAwait(false))
+            && !await context.WaitUntilAsync(state => !state.IsWalking, context.Delays.Confirmation(walking.Path.Length - 1), cancellationToken).ConfigureAwait(false))
         {
             await context.SettleWalkAsync().ConfigureAwait(false);
         }

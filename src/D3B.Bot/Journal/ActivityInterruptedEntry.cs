@@ -1,4 +1,5 @@
 using D3B.Bot.Activities;
+using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Journal;
@@ -7,5 +8,6 @@ namespace D3B.Bot.Journal;
 /// <param name="At">When.</param>
 /// <param name="Activity">The activity's name.</param>
 /// <param name="Reason">What cut it.</param>
-/// <param name="Response">Whether it resumes or stops.</param>
-public sealed record ActivityInterruptedEntry(DateTimeOffset At, string Activity, Interruption Reason, InterruptionResponse Response) : JournalEntry(At, 0);
+/// <param name="Response">Whether it resumes, pauses the bot or stops.</param>
+/// <param name="Note">What the activity says of it, such as a fight's kind (D144), if it says.</param>
+public sealed record ActivityInterruptedEntry(DateTimeOffset At, string Activity, Interruption Reason, InterruptionResponse Response, GameText? Note = null) : JournalEntry(At, 0);

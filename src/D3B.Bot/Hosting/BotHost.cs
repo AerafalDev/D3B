@@ -7,6 +7,7 @@ using D3B.Data.Packs;
 using D3B.Network.Relay;
 using D3B.Protocol.Mapping;
 using D3B.Protocol.Translation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,26 @@ public static class BotHost
     /// <returns>The builder, to which a caller may add modules before it starts the host.</returns>
     public static BotBuilder CreateBuilder(string[] args)
     {
-        var bot = new BotBuilder(args);
+        return CreateBuilder(args, new Dictionary<string, string?>());
+    }
+
+    /// <summary>Creates the builder of the bots' host, with the default modules and settings of the caller's own.</summary>
+    /// <param name="args">The command-line arguments, read as configuration.</param>
+    /// <param name="settings">
+    /// Settings such as the app's (D151), read before every other source: the host's own configuration and its command
+    /// line win over them. One with no value is not set.
+    /// </param>
+    /// <returns>The builder, to which a caller may add modules before it starts the host.</returns>
+    public static BotBuilder CreateBuilder(string[] args, IReadOnlyDictionary<string, string?> settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        // The modules read the configuration as they are built, below: the settings must be in it before.
+        var configuration = new ConfigurationManager();
+
+        configuration.AddInMemoryCollection(settings.Where(setting => setting.Value is not null));
+
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { Args = args, Configuration = configuration });
 
         bot.AddModules(new DefaultModules());
 
