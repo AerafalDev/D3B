@@ -244,7 +244,8 @@ version: accounts and profiles, the live map with the bot's state, and logs with
 ## D15: The rest of the stack
 
 *2026-10-27. Superseded in part by D23: D3B does not call Haapi, so the "HTTP (Haapi authentication)" row no longer
-applies. The "Secrets" row waits for a secret to keep (D100). The "Scripts" row holds since D103.*
+applies. The "Secrets" row waits for a secret to keep (D100). The "Scripts" row holds since D103. The "Distribution" row
+is built by D171.*
 
 Versions are the latest stable on NuGet on 2026-10-27, unless the line says otherwise.
 
@@ -411,7 +412,8 @@ and the "in socket mode" of D16. The rest of D8 stands: Kestrel's transport, `Co
 
 ## D24: Packs ship as releases of the D3B repository, one release per client build
 
-*2026-10-27, step 2, chosen by the owner. Settles Q4.*
+*2026-10-27, step 2, chosen by the owner. Settles Q4. Superseded in part by D172: the host no longer downloads; the
+releases are where the app's workflow takes a build's files to ship them.*
 
 Data packs, and from step 3 the protocol mappings (D11), are assets of the D3B repository's GitHub releases.
 
@@ -627,7 +629,8 @@ decompress in 2.3 µs instead of 3.5; the other entries gain nothing (client.md)
 
 ## D31: The host gets the pack of the installed build before it starts
 
-*2026-10-27, step 2, session 2d. Builds D24's fetching.*
+*2026-10-27, step 2, session 2d. Builds D24's fetching. Superseded in part by D172: the host finds the pack on this
+machine, else among the app's own, and downloads nothing.*
 
 - **Flow.** `BotHost.RunAsync` builds the host, then, before starting it, calls `PackSource.EnsureAsync`: it reads the
   installed client's build (`ClientBuild`, from `Client:Directory`, by default where the launcher installs it), looks
@@ -667,7 +670,7 @@ decompress in 2.3 µs instead of 3.5; the other entries gain nothing (client.md)
 
 ## D32: The download's token comes from the configuration, else from the GitHub CLI
 
-*2026-10-27, step 2, session 2d, chosen by the owner*
+*2026-10-27, step 2, session 2d, chosen by the owner. Superseded by D172: nothing downloads, so no token is read.*
 
 While the repository is private (D4), a download needs a GitHub token. `ReleaseToken` takes `Releases:Token` when the
 host's configuration sets it, such as the user environment variable `Releases__Token`, and otherwise asks the GitHub CLI
@@ -1184,7 +1187,8 @@ whose mapping holds, and decodes through it.
 
 ## D48: The version gate
 
-*2026-10-28, step 3, session 3e. Builds D11's gate.*
+*2026-10-28, step 3, session 3e. Builds D11's gate. Superseded in part by D172: the schema and mapping are found
+beside the pack on this machine, else among the app's own, never downloaded.*
 
 - **The protocol module.** `ProtocolModule`, in `D3B.Bot.Protocol`, requires the data module and registers
   `ProtocolSource` and the build's `ProtocolTranslation`, a singleton every bot shares. `DefaultModules` holds the data,
@@ -4092,6 +4096,121 @@ given by default.*
   owner closed the app. The host's log held no warning or error; the graphics learned went from 109 to 111.
 - **Not measured on the client**: a level gained moving the place at the next tour, a zaap left for a walk, the dialog
   excluding resources with the pack's, and fishing; the tests cover the first three.
+
+## D171: The app published by CI with Velopack, on a tag
+
+*2026-10-29, step 6, session 6f, chosen by the owner, as the lead recommended it. Builds D15's "Distribution" row.*
+
+- **How.** Pushing a tag `v<version>` runs `.github/workflows/release.yml` on Windows: the build and the tests, `dotnet
+  publish` of `src/D3B.App`, self-contained for win-x64, the client build's files beside it (D172), then Velopack's `vpk
+  pack` and `vpk upload github` into the release `v<version>`: `D3B.App-win-Setup.exe`, a portable zip, the full package,
+  the delta from the release before, and `releases.win.json`. MinVer reads the version from the same tag. CI can do it,
+  unlike the packs (D24): building the app needs no client. Only that job may write to the repository, and only a
+  collaborator pushes a tag; its actions are pinned by their SHA, as in CI. A version with a suffix, such as `0.2.0-rc.1`,
+  is published as a prerelease, which installed apps do not take.
+- **Installed** per user, without elevation, into `%LOCALAPPDATA%\D3B.App`: Velopack's package id is `D3B.App`, never `D3B`,
+  since uninstalling deletes the whole folder of the id, and `%LOCALAPPDATA%\D3B` holds the database, the app's settings,
+  the packs extracted and the captures, which uninstalling keeps. Shortcuts on the desktop and in the Start menu, named D3B.
+- **Self-contained**: a user installs neither .NET 10 nor ASP.NET Core, whose installers ask for elevation. No trimming, no
+  ReadyToRun and no single file: EF Core, protobuf's reflection and MemoryPack suit them badly, as D15 said of AOT.
+- **Unsigned**: SmartScreen warns of a downloaded Setup.exe, until signing is worth a certificate or Azure's signing service;
+  the README says so.
+- **vpk** is a local tool at 1.2.161, the library's version, so that CI and the maintainer run the same. `LICENSE` and
+  `THIRD-PARTY-NOTICES.md` ship beside the app, the notices naming every component it redistributes and its license.
+- **Measured** on this machine: 147 MB published in 398 files, the `.pdb` files left out as vpk does; the full package
+  74.6 MB, Setup.exe 82 MB; the delta from 0.1.0 to 0.1.1, the code alone changed, 139 KB.
+- **Risk, accepted.** Velopack 1.2.161 can leave an install without its `current` folder when a file of the update is
+  locked, by an antivirus for instance (velopack#1086); the fix is in 1.3's prereleases. Setup.exe run again repairs it.
+- **Rejected.**
+  - The same package built and uploaded from the maintainer's machine: CI would have no write access, but each release
+    would depend on that machine's state.
+  - A zip of `dotnet publish` and an updater of our own: replacing a running executable, restarting and deltas are what
+    Velopack does.
+  - MSIX, winget or the Store: MSIX needs a certificate, and the stores' policies leave out a bot.
+  - Framework-dependent: smaller, but two runtimes to install, with elevation.
+
+## D172: The app ships its client build's files
+
+*2026-10-29, step 6, session 6f, chosen by the owner; the lead recommended downloading them. Supersedes D32, and D24's,
+D31's and D48's downloads.*
+
+- **Each version of the app ships the pack, schema and mapping of one client build**, the `ClientVersion` property of
+  `src/D3B.App`, which the app also reads from its metadata: in `data/<version>/` beside its executable. The release
+  workflow takes them from the release `client-<version>` with `scripts/embed.cs`, checked against their SHA-256, then as
+  the host checks them: the pack opens as the build's, and the mapping holds against the schema (D48).
+- **The host looks on this machine first** (`Data:Directory`, where the tools write, D24), so that the maintainer's
+  extraction or mapping of a build is used, **then among the app's own** (`DataSettings.Locate`), each file on its own.
+  Nothing is downloaded any more: `ReleaseDownloader`, `ReleaseToken`, `Releases:Repository` and `Releases:Token` go, and
+  with them the GitHub CLI the host started for its token (D32).
+- **A client the app does not ship**, after an update of Ankama's: the host does not start, and says which file of which
+  build it lacks (`BotHostStart.MissingBuild`). The installed app says that this version of D3B ships another build, and
+  that the version for this one comes out after Ankama's update and installs itself (D173); run from its code, it shows
+  the host's message, which says how to extract and map the build.
+- **A client update** is then a client release, through Q10's session and `scripts/release.cs`, then an app release whose
+  `ClientVersion` names the new build: the releases `client-<version>` stay, as the workflow's source.
+- **Said before choosing**: an app tied to one build, a release of the app at every update of Ankama's, and the data in
+  every installer; for it, an app working offline from its first start.
+- **Rejected.**
+  - Downloading the build's files at the first start, without a token, which the lead recommended: a client update would
+    not stop the app until its own update, and the data would never be in the installer.
+  - Both, shipped and downloaded: two paths to keep.
+
+## D173: The app updates itself from the repository's releases, when its user chooses
+
+*2026-10-29, step 6, session 6f, chosen by the owner, as the lead recommended it.*
+
+- **Checked as the app starts**, beside its host getting ready, and downloaded at once (`AppUpdates`, in
+  `D3B.App.Updates`, over Velopack's `UpdateManager`). Installed when the user restarts the app from the window's banner,
+  asked first while bots play since a restart disconnects the clients (D91), or once the app closes, after its host has
+  stopped and given the clients their configuration back. The app never restarts by itself.
+- **When the client is a build the app does not ship** (D172), the window says so, with where the update stands and a
+  button installing it at once: no bot runs.
+- **The settings page** says the app's version, the client build it ships, where the update stands, and checks again on a
+  click. A check that fails is said, never thrown: the app runs on.
+- **Source**: the repository's stable releases through Velopack's GitHub source, which skips the releases without the
+  app's packages, the clients' among them, and needs no token once the repository is public (D174). It reads the 10 newest
+  releases only: since every client release is followed by the app's (D172), the app's newest is always among them.
+  `Updates:Source`, on the command line or as `Updates__Source`, names a folder of releases instead, to try an update made
+  on this machine.
+- **Run from its code**, the app does not check: Velopack updates only an installed app.
+- **Rejected.**
+  - Blocking at start, checked, downloaded and installed before the host: always the latest, but a slower start, no
+    choice of when, and a wait offline.
+  - Manual only: a client update would leave the app stopped until its user thinks of it.
+
+## D174: The repository public at 6f's end, each step on the owner's go
+
+*2026-10-29, step 6, session 6f, chosen by the owner, as the lead recommended it. Settles D158's "not now".*
+
+- **Checked before**: the history holds no token, no data extracted from the client, no capture and no binary; its only
+  e-mail address is GitHub's noreply one; `vendor/` was never committed; `main` is the only branch on GitHub.
+- **What it changes**: no token anywhere (D172); the releases, the clients' files and the app's installers that hold them,
+  are downloadable by anyone, as D158 accepted; D24's risk stands, a DMCA notice reaching the whole repository, the scripts
+  extracting locally whatever happens. CI keeps running pull requests from forks with a read-only token and no secret;
+  only the release workflow writes, on a tag.
+- **In order, each on the owner's go**: mapping format 8 uploaded to the release `client-3.7.12.12` (D156); this session's
+  pull request merged; the repository made public; the tag `v0.1.0` pushed, which publishes the app (D171); an install
+  from that release, checked on the owner's machine.
+- **Rejected.**
+  - The app published while the repository stays private: neither the installer nor the updates are readable without a
+    token, which the app would have to carry.
+  - Everything put off: D158 wants the app shipped with its data before the fights.
+
+## D175: 6f checked on the owner's machine, before anything is published
+
+*2026-10-29, step 6, session 6f.*
+
+- **Installed** from a Setup.exe of 0.1.0 packed on the owner's machine as the workflow packs it, the data the tools wrote,
+  the database and the app's settings set aside: installed into `%LOCALAPPDATA%\D3B.App`, its build's three files in
+  `current\data\3.7.12.12`, a new database made; the host ran for 3.7.12.12 on the files the app ships, and a profile given
+  played with the owner's client: found good. The check for an update failed, as it must while the repository is private.
+- **Updated** to 0.1.1, packed beside it with its 139 KB delta, the app started with `Updates__Source` naming that folder:
+  the banner said the version ready, the restart installed it, and the settings page then said 0.1.1, up to date. Velopack's
+  updater could not wait for the app's process, access denied, and went on; it installed whole, the process having ended.
+- **Uninstalled** from Windows' settings: `%LOCALAPPDATA%\D3B.App`, the shortcuts and the uninstall entry gone,
+  `%LOCALAPPDATA%\D3B` kept. The owner's files were put back.
+- **Not measured yet**: an install from the release on GitHub, which waits for the steps of D174, and a client the app does
+  not ship, which the tests cover.
 
 ## Open questions
 
