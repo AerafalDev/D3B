@@ -480,6 +480,27 @@ public sealed class WorldPathfinderTests
         Assert.False(Assert.Single(path.Steps).IsTeleport);
     }
 
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(3, true)]
+    [InlineData(4, false)]
+    public void AZaapIsTakenOnlyWhenItSavesAsManyChangesAsATeleportCounts(int changes, bool teleports)
+    {
+        var pathfinder = Grid().Pathfinder();
+
+        // Walked, 1 to 9 is 4 changes: the zaap of 9 saves 3.
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(0, 9) with { TeleportChanges = changes }, out var path));
+
+        Assert.Equal(teleports, path.Steps.Any(step => step.IsTeleport));
+        Assert.Equal(teleports ? 1 : 4, path.Steps.Count);
+    }
+
+    [Fact]
+    public void ATeleportCountsAsOneChangeAtLeast()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => _subscribed with { TeleportChanges = 0 });
+    }
+
     [Fact]
     public void AnAccountWithoutASubscriptionDoesNotTeleport()
     {

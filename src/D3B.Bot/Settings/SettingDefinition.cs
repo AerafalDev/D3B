@@ -17,6 +17,7 @@ public sealed class SettingDefinition
     private readonly PropertyInfo _property;
     private readonly Type? _enum;
     private Func<object, bool>? _visibleWhen;
+    private Func<object, GameReferences, IReadOnlyList<int>>? _suggesting;
     private bool _frozen;
 
     /// <summary>Gets the setting's key: its property's name, under which its value is stored.</summary>
@@ -63,6 +64,18 @@ public sealed class SettingDefinition
 
     /// <summary>Gets the resources whose sub-areas a sub-area setting offers first, those where they grow (D127).</summary>
     public SettingDefinition? SuggestedBy { get; private set; }
+
+    /// <summary>Gets whether a sub-area setting offers first the sub-areas where some resources grow: those of a resource setting, or those the activity reckons from its settings (D127, D165).</summary>
+    public bool IsSuggested => SuggestedBy is not null || _suggesting is not null;
+
+    /// <summary>Gets whether a profession setting offers the professions whose skills gather a resource alone, <c>Base</c> among them (D165).</summary>
+    public bool IsGathering { get; private set; }
+
+    /// <summary>Gets what a number counts, which the app shows after it, such as "maps" (D167).</summary>
+    public LocalizedText? Unit { get; private set; }
+
+    /// <summary>Gets whether a list of resources holds those to leave out (D165).</summary>
+    public bool IsExcluding { get; private set; }
 
     /// <summary>Gets whether a number is a percentage, which the app shows as a bar (D127).</summary>
     public bool IsPercent { get; private set; }
@@ -240,6 +253,77 @@ public sealed class SettingDefinition
         SuggestedBy = resources;
     }
 
+    internal void SetSuggesting(Func<object, GameReferences, IReadOnlyList<int>> resources)
+    {
+        ThrowIfFrozen();
+
+        if (Kind is not SettingKind.SubArea)
+            throw new InvalidOperationException($"The setting {Key} is suggested by nothing: only sub-areas are, by resources.");
+
+        _suggesting = resources;
+    }
+
+    internal void SetUnit(LocalizedText unit)
+    {
+        ThrowIfFrozen();
+
+        if (Kind is not SettingKind.Number)
+            throw new InvalidOperationException($"The setting {Key} is no number: only a number counts something.");
+
+        Unit = unit;
+    }
+
+    internal void SetExcluding()
+    {
+        ThrowIfFrozen();
+
+        if (Kind is not SettingKind.Resource || !IsList)
+            throw new InvalidOperationException($"The setting {Key} is no list of resources: only one leaves resources out.");
+
+        IsExcluding = true;
+    }
+
+    internal void SetGathering()
+    {
+        ThrowIfFrozen();
+
+        if (Kind is not SettingKind.Job)
+            throw new InvalidOperationException($"The setting {Key} holds no profession: only a profession setting offers those that gather.");
+
+        IsGathering = true;
+    }
+
+    /// <summary>Gets the resources whose sub-areas a sub-area setting offers first (<see cref="IsSuggested"/>).</summary>
+    /// <param name="settings">The activity's settings.</param>
+    /// <param name="game">The game's values.</param>
+    /// <returns>
+    /// Those the activity reckons, or the resource setting's while it shows, every resource the game has while it is hidden,
+    /// as when the activity harvests by profession; none when the setting is suggested by nothing, or the reckoning throws.
+    /// </returns>
+    public IReadOnlyList<int> Suggestions(object settings, GameReferences game)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(game);
+
+        if (_suggesting is { } suggesting)
+        {
+            try
+            {
+                return suggesting(settings, game);
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                // An activity's reckoning runs in the app, which holds every client's connection (D91): it must not throw there.
+                return [];
+            }
+        }
+
+        if (SuggestedBy is not { } by)
+            return [];
+
+        return by.IsVisible(settings) ? [.. by.GetValues(settings).Cast<int>()] : [.. game.Options(SettingKind.Resource).Select(resource => resource.Id)];
+    }
+
     internal void SetPercent()
     {
         ThrowIfFrozen();
@@ -347,7 +431,7 @@ public sealed class SettingDefinition
         if (game is null)
             return null;
 
-        if (ids.Any(item => !game.Exists(Kind, (int)item) || (ItemTypes is { } types && !game.IsItemOf((int)item, types))))
+        if (ids.Any(item => !(IsGathering ? game.IsGathering((int)item) : game.Exists(Kind, (int)item)) || (ItemTypes is { } types && !game.IsItemOf((int)item, types))))
             return Problem(SettingProblemKind.Unknown);
 
         if (Within?.GetValue(settings) is int within && ids.Any(item => !game.IsWithin(Kind, (int)item, within)))

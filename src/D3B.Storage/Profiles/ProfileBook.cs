@@ -1,3 +1,5 @@
+using System.Globalization;
+using D3B.Bot.Activities;
 using D3B.Storage.Accounts;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,6 +37,17 @@ public sealed class ProfileBook : IDisposable
         _contexts = contexts;
         _accounts = accounts;
         _time = time;
+    }
+
+    private static string Unique(string name, HashSet<string> names)
+    {
+        var trimmed = name.Trim();
+        var unique = trimmed;
+
+        for (var number = 2; names.Contains(unique); number++)
+            unique = $"{trimmed} {number}";
+
+        return unique.Length <= Profile.NameLength ? unique : unique[..Profile.NameLength];
     }
 
     /// <summary>Finds a profile.</summary>
@@ -115,6 +128,50 @@ public sealed class ProfileBook : IDisposable
             },
             cancellationToken).ConfigureAwait(false);
         await _accounts.LoadAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Stores, as profiles, the presets the activities give that were never stored, even if their profiles were deleted since (D168).</summary>
+    /// <param name="activities">The activities, whose presets to store.</param>
+    /// <param name="culture">The language the profiles are named in.</param>
+    /// <param name="cancellationToken">Stops the write.</param>
+    /// <returns>How many profiles were stored.</returns>
+    /// <remarks>A name another profile has takes a number after it, so that the user's profile keeps its own.</remarks>
+    public async Task<int> StorePresetsAsync(IEnumerable<ActivityDefinition> activities, CultureInfo culture, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(activities);
+        ArgumentNullException.ThrowIfNull(culture);
+
+        var stored = 0;
+
+        await WriteAsync(
+            async context =>
+            {
+                var known = (await context.Presets.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false))
+                    .Select(preset => (preset.ActivityId, preset.Key))
+                    .ToHashSet();
+                var names = (await context.Profiles.AsNoTracking().Select(profile => profile.Name).ToListAsync(cancellationToken).ConfigureAwait(false))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var now = _time.GetUtcNow();
+
+                foreach (var activity in activities)
+                {
+                    foreach (var preset in activity.Settings.Presets)
+                    {
+                        if (!known.Add((activity.Id, preset.Key)))
+                            continue;
+
+                        var name = Unique(preset.Name.In(culture), names);
+
+                        names.Add(name);
+                        context.Profiles.Add(new Profile { Name = name, ActivityId = activity.Id, Settings = preset.Json, Updated = now });
+                        context.Presets.Add(new StoredPreset { ActivityId = activity.Id, Key = preset.Key, Stored = now });
+                        stored++;
+                    }
+                }
+            },
+            cancellationToken).ConfigureAwait(false);
+
+        return stored;
     }
 
     /// <inheritdoc/>

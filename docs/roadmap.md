@@ -12,10 +12,10 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 3 | Protocol and connection | Done; Q10 at the next client update |
 | 4 | Bot run time and navigation | Done |
 | 5 | Desktop app, first version | Done |
-| 6 | Harvesting and banking: first milestone | Milestone reached in 6a; icons and learned graphics in 6b; what 6a left in 6c; the app redesigned in 6d; 6e and 6f to do |
-| 7 | Mods: Lua scripting, then blueprints | Lua done, then removed (D119); blueprints to do, after step 6 (D117) |
+| 6 | Harvesting and banking: first milestone | Milestone reached in 6a; icons and learned graphics in 6b; what 6a left in 6c; the app redesigned in 6d; the owner's settings in 6e; 6f to do |
+| 7 | Mods: Lua scripting, then blueprints | Lua done, then removed (D119); blueprints to do, after step 9 (D117, D169) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
-| 9 | Fights | To do |
+| 9 | Fights | To do, next after 6f, before the blueprints (D169) |
 | 10 | Several accounts and groups | To do |
 | 11 | Marketplace and crafting | To do |
 | 12 | Treasure hunts and dungeons | To do |
@@ -172,7 +172,7 @@ gets Q10's session first (D54).
 | 6b | The icons of the 287 items a harvest names and of the professions (D135), 64 pixels in raw RGBA (D136), decoded from the client's BC7 textures by AssetRipper.TextureDecoder in the extractor (D137); the maps' elements' graphics, what the server says each offers learned by the host from every map, kept in D3B's database, and a tour going to the probable maps first and leaving out those without a resource (D138); pack format 4, its release on the owner's go (D139); Base's resources in 6c (D140); the icons on the tiles, searches, card and map, a search's detail under its name, the owner's asks (D141); measured through the app (D142); a pass on the app's interface in a session of its own, 6d (D143). | Done on 2026-10-29 |
 | 6c | What 6a leaves: fights while harvesting, protectors and aggressions; the resources' growing back, measured; harvest statistics; the guild's chest; the owner's options, resource bags and healing, each a request and an event to map; maps reachable only far round in a zone (D133); harvesting Base's resources, wells among them, found by the graphics learned (D140); then the owner's call on making the repository public (D4). Done: a fight resumed, paused or stopped, as the profile says (D144); the growing back learned by the host (D145); statistics in the database and a page (D146); the guild's chest, measured first (D147); bags and healing (D148); isolated maps left out unless taken (D149); Base's resources as the others (D150); the client's display time and every delay in a settings page (D151); the owner's settings in 6e, no random timings (D152); upkeep and the guild's chest measured, mapping 7 (D153); checked through the app, the time between two actions (D154); 6d a redesign (D155); the multiple use, mapping 8 (D156); checked again, good (D157); the repository public once the app ships with its data, in 6f (D158). | Done on 2026-10-29 |
 | 6d | A redesign of the app's interface, mockups first, page by page, the profile editor first: less text, one scale of spacing and sizes, ShadUI's components where they fit, the owner listing what to improve (D143, D155). Done: the survey of every page, the editor on a page of its own with its preview beside, one scale for the app, dialogs and toasts, chosen by the owner among mockups (D159); the resources by profession or by list, modelled, made in 6e (D160); Lucide's icons (D161); the sidebar, one bot selector, the map's layers as a menu, texts rewritten short, what a bot meets toasted (D162); the old and the new no longer mixed, one text size, one height, one empty state (D163); checked through the app, good (D164). | Done on 2026-10-29 |
-| 6e | The owner's settings of harvesting and journeys: no zaap when the destination is too near, an automatic mode choosing the zone by level, the highest-level resources first, resources to take in or leave out, profiles given by default, and what the owner adds (D152); the resources by profession, left out and ordered, or by list, as D160 models them, in the harvest's card 6d drew. | To do |
+| 6e | The owner's settings of harvesting and journeys: no zaap when the destination is too near, an automatic mode choosing the zone by level, the highest-level resources first, resources to take in or leave out, profiles given by default, and what the owner adds (D152); the resources by profession, left out and ordered, or by list, as D160 models them, in the harvest's card 6d drew. Done: the resources by profession as chips, those left out, the nearest or the highest level first, or a list, the stored profiles read as they were, D98 grown with what an earlier version stored, the professions that gather, a list leaving out, suggestions the activity reckons and a number's unit (D165); the place the activity chooses, the sub-area richest in what each character can harvest at its levels, not above its level, said on the card and for each character in the preview (D166); a zaap only when it saves 5 maps, every journey of the activity (D167); six profiles given, stored once (D168); after 6e, 6f, then fights and their AI, then blueprints (D169); checked through the app, good (D170). | Done on 2026-10-29 |
 | 6f | The app published with its data pack, schema and mapping, updating itself from the repository's releases; then the repository public on the owner's go (D158). | To do |
 
 ## 7. Mods: Lua scripting, then blueprints
@@ -180,7 +180,7 @@ gets Q10's session first (D54).
 Settles Q13. Lua scripting done on 2026-10-29, in one session, with decisions D103 to D109, then removed (D116, D119).
 Settles Q1, settled by D103.
 
-Next, after step 6 (D117): mods in blueprint style, graphs of nodes edited on a canvas in the app, their nodes over D3B's
+Next, after step 9 (D117, D169): mods in blueprint style, graphs of nodes edited on a canvas in the app, their nodes over D3B's
 behaviors and run as activities (D87). Q13 first: who writes them, where they live, what a node is, how a graph runs and
 resumes, its settings, and which canvas in Avalonia.
 
@@ -218,7 +218,8 @@ Dropped: MITM is D3B's only mode (D23), built at step 3. The number stays, so th
 
 ## 9. Fights
 
-Settles Q5.
+Settles Q5. Next after 6f, before step 7's blueprints, the owner's choice (D169): a clever and complete AI, which thinks
+again as the fight changes, in several sessions settled at the step's start with measures.
 
 - The fight simulator in `D3B.Engine`, from spell effects in the game data, and strategies as modules (D13).
 - Strategies for every breed, a large effort the owner noted: the references in `vendor/` give ideas for each, to be

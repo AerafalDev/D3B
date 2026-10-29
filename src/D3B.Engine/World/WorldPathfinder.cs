@@ -24,8 +24,9 @@ namespace D3B.Engine.World;
 /// </para>
 /// <para>
 /// Every map change costs the same, a teleport too: the character walks across a map or the server moves it, then the
-/// client loads the next, a few seconds either way (client.md), so the quickest path is the one with the fewest.
-/// Dijkstra's search, with no estimate: map actions and teleports lead anywhere, so no distance between maps bounds what
+/// client loads the next, a few seconds either way (client.md), so the quickest path is the one with the fewest. A
+/// teleport may count as more (<see cref="WorldPathRules.TeleportChanges"/>), so that a zaap is taken only when it saves
+/// that many changes, and paid only then; one that saves nothing is never taken (D167). Dijkstra's search, with no estimate: map actions and teleports lead anywhere, so no distance between maps bounds what
 /// is left.
 /// </para>
 /// <para>
@@ -38,7 +39,9 @@ public sealed class WorldPathfinder
     /// <summary>The skill a door is used with, "Utiliser": 5,237 of the graph's 5,506 interactive transitions name it.</summary>
     public const int DoorSkillId = 184;
 
-    private const int ChangeCost = 1;
+    // Doubled, and a teleport one more than its changes' double: odd, it never ties a walk, so that one saving fewer changes
+    // than it counts as, or none, is walked (D167).
+    private const int ChangeCost = 2;
     private const int KamasPerCoordinate = 10;
     private const int OtherWorldMapCost = 1000;
     private const int NoVertex = -1;
@@ -206,7 +209,7 @@ public sealed class WorldPathfinder
 
             if (teleportedFrom is not null && zaaps.Count > 0 && _positions[vertex] is { AllowsTeleport: true } place)
             {
-                var cost = costs[vertex] + ChangeCost;
+                var cost = costs[vertex] + (ChangeCost * rules.TeleportChanges) + 1;
 
                 // Vertices come in order of cost, and every teleport costs the same: a zaap this one reaches, or one
                 // already as near, no later vertex brings nearer, so it leaves the list. One the character cannot pay

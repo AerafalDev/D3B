@@ -54,13 +54,10 @@
     <value>Banque</value>
   </data>
   <data name="Resources" xml:space="preserve">
-    <value>Ressources</value>
+    <value>Liste</value>
   </data>
   <data name="ResourcesHelp" xml:space="preserve">
     <value>Dans l'ordre, la première d'abord, de tout métier ou sans métier.</value>
-  </data>
-  <data name="EverythingKnown" xml:space="preserve">
-    <value>Tout ce que le perso sait récolter</value>
   </data>
   <data name="Area" xml:space="preserve">
     <value>Zone</value>
@@ -87,7 +84,7 @@
     <value>Tout sauf l'équipement porté</value>
   </data>
   <data name="RuleWhat" xml:space="preserve">
-    <value>Choisis des ressources, ou tout ce que le perso sait récolter.</value>
+    <value>Choisis des ressources.</value>
   </data>
   <data name="RuleWhere" xml:space="preserve">
     <value>Choisis une zone ou des sous-zones.</value>
@@ -325,5 +322,116 @@
   </data>
   <data name="WarningChestNone" xml:space="preserve">
     <value>Aucun coffre de guilde atteint : la récolte est partie dans son coffre à lui</value>
+  </data>
+  <data name="RuleJobs" xml:space="preserve">
+    <value>Choisis au moins un métier.</value>
+  </data>
+  <data name="Mode" xml:space="preserve">
+    <value>Ressources</value>
+  </data>
+  <data name="ModeHelp" xml:space="preserve">
+    <value>Par métier, le niveau de chaque perso décide ; en liste, dans son ordre.</value>
+  </data>
+  <data name="ModeByProfession" xml:space="preserve">
+    <value>Par métier</value>
+  </data>
+  <data name="ModeList" xml:space="preserve">
+    <value>Liste</value>
+  </data>
+  <data name="Jobs" xml:space="preserve">
+    <value>Métiers</value>
+  </data>
+  <data name="JobsHelp" xml:space="preserve">
+    <value>Tous coche les cinq métiers ; Sans métier, l'eau des puits et le reste.</value>
+  </data>
+  <data name="Excluded" xml:space="preserve">
+    <value>Exclues</value>
+  </data>
+  <data name="ExcludedHelp" xml:space="preserve">
+    <value>Jamais récoltées, même d'un métier choisi.</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Ordre</value>
+  </data>
+  <data name="OrderHelp" xml:space="preserve">
+    <value>Sur chaque carte ; les autres ressources de la carte suivent.</value>
+  </data>
+  <data name="OrderNearest" xml:space="preserve">
+    <value>Au plus près</value>
+  </data>
+  <data name="OrderHighestLevel" xml:space="preserve">
+    <value>Plus haut niveau d'abord</value>
+  </data>
+  <data name="Place" xml:space="preserve">
+    <value>Lieu</value>
+  </data>
+  <data name="PlaceHelp" xml:space="preserve">
+    <value>Automatique : la sous-zone la plus riche en ce que chaque perso sait récolter à son niveau, revue à chaque tournée.</value>
+  </data>
+  <data name="PlaceAutomatic" xml:space="preserve">
+    <value>Automatique</value>
+  </data>
+  <data name="PlaceChosen" xml:space="preserve">
+    <value>Choisi</value>
+  </data>
+  <data name="SafeLevel" xml:space="preserve">
+    <value>Pas au-dessus de son niveau</value>
+  </data>
+  <data name="SafeLevelHelp" xml:space="preserve">
+    <value>Laisse les sous-zones d'un niveau supérieur au sien, dont les monstres l'agresseraient.</value>
+  </data>
+  <data name="ZaapSaving" xml:space="preserve">
+    <value>Zaap s'il évite au moins</value>
+  </data>
+  <data name="ZaapSavingUnit" xml:space="preserve">
+    <value>cartes</value>
+  </data>
+  <data name="ZaapSavingHelp" xml:space="preserve">
+    <value>Sur chaque trajet, celui de la banque compris ; 1 prend un zaap dès qu'il évite une carte.</value>
+  </data>
+  <data name="PlaceOne" xml:space="preserve">
+    <value>{1}, {0} carte</value>
+  </data>
+  <data name="PlaceMany" xml:space="preserve">
+    <value>{1}, {0} cartes</value>
+  </data>
+  <data name="PlaceUnseen" xml:space="preserve">
+    <value>Niveaux pas encore vus</value>
+  </data>
+  <data name="PlaceNone" xml:space="preserve">
+    <value>Rien à récolter à son niveau</value>
+  </data>
+  <data name="FigureAutomatic" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="FigureAutomaticLabel" xml:space="preserve">
+    <value>lieu choisi pour chaque perso</value>
+  </data>
+  <data name="FailNoPlace" xml:space="preserve">
+    <value>Aucune sous-zone à son niveau ne porte de ressource qu'il sait récolter.</value>
+  </data>
+  <data name="ProgressAt" xml:space="preserve">
+    <value>{4}, tournée {0}, carte {1} sur {2}</value>
+  </data>
+  <data name="ProgressAtGrowing" xml:space="preserve">
+    <value>{4}, tournée {0}, carte {1} sur {2}, {3} en repousse</value>
+  </data>
+  <data name="PresetAuto" xml:space="preserve">
+    <value>Récolte automatique</value>
+  </data>
+  <data name="PresetLumberjack" xml:space="preserve">
+    <value>Bûcheron auto</value>
+  </data>
+  <data name="PresetMiner" xml:space="preserve">
+    <value>Mineur auto</value>
+  </data>
+  <data name="PresetAlchemist" xml:space="preserve">
+    <value>Alchimiste auto</value>
+  </data>
+  <data name="PresetFarmer" xml:space="preserve">
+    <value>Paysan auto</value>
+  </data>
+  <data name="PresetFisherman" xml:space="preserve">
+    <value>Pêcheur auto</value>
   </data>
 </root>

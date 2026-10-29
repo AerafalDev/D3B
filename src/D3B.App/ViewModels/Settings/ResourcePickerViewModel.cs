@@ -15,6 +15,7 @@ internal sealed partial class ResourcePickerViewModel : ObservableObject
     private readonly Localizer _localizer;
     private readonly IReadOnlyList<ResourceChoiceViewModel> _all;
     private readonly List<ResourceChoiceViewModel> _checked = [];
+    private readonly string _add;
 
     /// <summary>Gets the professions to filter by, every one first.</summary>
     public IReadOnlyList<JobFilterViewModel> Jobs { get; }
@@ -55,7 +56,8 @@ internal sealed partial class ResourcePickerViewModel : ObservableObject
         _dialogs = dialogs;
         _field = field;
         _localizer = editor.Localizer;
-        Title = _localizer["AddResources"];
+        _add = field.Definition.IsExcluding ? "ExcludeResources" : "AddResources";
+        Title = _localizer[_add];
 
         var game = editor.Game;
         var compare = StringComparer.Create(editor.Localizer.Culture, CompareOptions.IgnoreCase);
@@ -91,7 +93,7 @@ internal sealed partial class ResourcePickerViewModel : ObservableObject
         }
 
         Jobs = jobs;
-        AddText = editor.Localizer["AddResources"];
+        AddText = editor.Localizer[_add];
         Filter();
     }
 
@@ -123,7 +125,7 @@ internal sealed partial class ResourcePickerViewModel : ObservableObject
             _checked.Remove(choice);
 
         HasChecked = _checked.Count > 0;
-        AddText = _checked.Count == 0 ? _localizer["AddResources"] : _localizer.Format("AddResourcesCount", _checked.Count);
+        AddText = _checked.Count == 0 ? _localizer[_add] : _localizer.Format(_add + "Count", _checked.Count);
     }
 
     [RelayCommand(CanExecute = nameof(HasChecked))]

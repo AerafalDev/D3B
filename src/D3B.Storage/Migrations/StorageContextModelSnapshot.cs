@@ -139,6 +139,22 @@ namespace D3B.Storage.Migrations
                     b.ToTable("Profiles", (string)null);
                 });
 
+            modelBuilder.Entity("D3B.Storage.Profiles.StoredPreset", b =>
+                {
+                    b.Property<string>("ActivityId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("Stored")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ActivityId", "Key");
+
+                    b.ToTable("Presets", (string)null);
+                });
+
             modelBuilder.Entity("D3B.Storage.Runs.RunRecord", b =>
                 {
                     b.Property<int>("Id")

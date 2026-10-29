@@ -1,13 +1,28 @@
 namespace D3B.Bot.Harvesting;
 
-/// <summary>The harvesting activity's settings: what it harvests, where, and when it banks (D127).</summary>
+/// <summary>The harvesting activity's settings: what it harvests, where, and when it banks (D127, D165 to D167).</summary>
 public sealed class HarvestSettings
 {
-    /// <summary>Gets or sets the resources to harvest, by their items' ids, of any profession, the first harvested first on each map.</summary>
+    /// <summary>Gets or sets how the resources are chosen: by profession, or as a list (D165).</summary>
+    public HarvestMode Mode { get; set; } = HarvestMode.List;
+
+    /// <summary>Gets or sets the professions whose resources to harvest by profession, <c>Base</c>'s among them, each character's own levels deciding.</summary>
+    public IReadOnlyList<int> Jobs { get; set; } = [];
+
+    /// <summary>Gets or sets the resources left out by profession, by their items' ids.</summary>
+    public IReadOnlyList<int> Excluded { get; set; } = [];
+
+    /// <summary>Gets or sets which resource of a map is harvested first by profession.</summary>
+    public HarvestOrder Order { get; set; } = HarvestOrder.Nearest;
+
+    /// <summary>Gets or sets the resources to harvest as a list, by their items' ids, of any profession, the first harvested first on each map.</summary>
     public IReadOnlyList<int> Resources { get; set; } = [];
 
-    /// <summary>Gets or sets whether to harvest every resource the character can at its professions' levels, rather than <see cref="Resources"/>.</summary>
-    public bool EverythingKnown { get; set; }
+    /// <summary>Gets or sets how the place is chosen: by the activity, for each character's levels, or as the area and sub-areas (D166).</summary>
+    public HarvestPlace Place { get; set; } = HarvestPlace.Chosen;
+
+    /// <summary>Gets or sets whether the place the activity chooses is never above the character's level, so that its monsters do not overwhelm it.</summary>
+    public bool SafeLevel { get; set; } = true;
 
     /// <summary>Gets or sets the area to harvest in: alone, its sub-areas where the resources grow.</summary>
     public int? Area { get; set; }
@@ -17,6 +32,9 @@ public sealed class HarvestSettings
 
     /// <summary>Gets or sets whether to go through the zone's isolated maps too, last, those reached only far round (D149).</summary>
     public bool IsolatedMaps { get; set; }
+
+    /// <summary>Gets or sets how many map changes a zaap must save to be taken, on every journey (D167).</summary>
+    public int ZaapSaving { get; set; } = 5;
 
     /// <summary>Gets or sets how full the character is, in percent of its pods, once it banks.</summary>
     public int FullAt { get; set; } = 90;

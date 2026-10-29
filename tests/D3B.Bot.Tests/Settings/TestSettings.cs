@@ -15,6 +15,8 @@ public sealed class TestSettings
 
     public int? Job { get; set; }
 
+    public IReadOnlyList<int> Jobs { get; set; } = [];
+
     public IReadOnlyList<int> Resources { get; set; } = [];
 
     public int? Area { get; set; }

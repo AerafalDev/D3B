@@ -9,6 +9,7 @@ using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data;
+using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.World;
 using D3B.Engine.Maps;
@@ -90,6 +91,9 @@ public sealed class HarvestActivity : BotActivity
     /// <inheritdoc/>
     public override ActivityStatistics? Statistics => Volatile.Read(ref _statistics);
 
+    /// <inheritdoc/>
+    public override int TeleportChanges => _settings.ZaapSaving;
+
     /// <summary>Initializes a new instance of the <see cref="HarvestActivity"/> class.</summary>
     /// <param name="settings">What to harvest, where, and when to bank.</param>
     /// <param name="world">The installed build's world: the zone's maps.</param>
@@ -154,7 +158,6 @@ public sealed class HarvestActivity : BotActivity
         _startedAt ??= context.Time.GetUtcNow();
         _startJobs ??= context.State.Jobs;
 
-        var zone = ZoneOf();
         var state = context.State;
 
         if (state.IsBusy || state.MapId is not { } mapId)
@@ -163,6 +166,8 @@ public sealed class HarvestActivity : BotActivity
 
             return true;
         }
+
+        var zone = ZoneOf(context);
 
         if (await UpkeepAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
@@ -397,22 +402,65 @@ public sealed class HarvestActivity : BotActivity
         return false;
     }
 
-    private HarvestZone ZoneOf()
+    private HarvestZone ZoneOf(BotContext context)
     {
         if (_zone is { } zone)
             return zone;
 
-        zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(_settings, _tables.Jobs, _places, _graphics));
+        if (_settings.Place is HarvestPlace.Automatic)
+        {
+            zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps, chosen: PlaceOf(context));
 
-        if (zone.Maps.Count is 0 || zone.Targets.Count is 0)
-            throw Failure("The zone holds no map to harvest.", "FailNoZone");
+            if (zone.Maps.Count is 0 || zone.Targets.Count is 0)
+                throw Failure("No sub-area holds a resource the character can harvest.", "FailNoPlace");
+        }
+        else
+        {
+            zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(_settings, _tables.Jobs, _places, _graphics));
+
+            if (zone.Maps.Count is 0 || zone.Targets.Count is 0)
+                throw Failure("The zone holds no map to harvest.", "FailNoZone");
+        }
 
         return _zone = zone;
     }
 
+    // The sub-area richest in what the character can harvest now, the first of the best ten it can travel to (D166).
+    private int[] PlaceOf(BotContext context)
+    {
+        var state = context.State;
+        var levels = state.Jobs.Values.ToDictionary(job => job.JobId, job => job.Level);
+        var ranked = AutomaticPlace.Rank(HarvestZone.TargetsOf(_settings, _tables.Jobs).Values, state.Level ?? 0, levels, _settings.SafeLevel, _atlas, _graph, _places, _graphics);
+
+        if (ranked.Count is 0)
+            return [];
+
+        if (state.MapId is not { } mapId || state.Cell is not { } cell || !context.Maps.TryGet(mapId, out var map)
+            || !context.World.TryGetVertex(map, cell, out var vertex))
+        {
+            return [ranked[0].SubAreaId];
+        }
+
+        var rules = WorldTravel.RulesOf(context);
+
+        foreach (var candidate in ranked.Take(10))
+        {
+            HashSet<long> maps = [.. _atlas.Positions.ToArray().Where(position => position.SubAreaId == candidate.SubAreaId).Select(position => position.MapId)];
+
+            if (context.World.TryFind(vertex, maps, rules, out _))
+                return [candidate.SubAreaId];
+        }
+
+        return [ranked[0].SubAreaId];
+    }
+
     private FrozenSet<int> DepositedItems()
     {
-        return _deposited ??= ZoneOf().Harvests.Values.Concat(_atlas.Harvestables.ToArray()).ToFrozenSet();
+        return _deposited ??= _tables.Jobs.Skills.ToArray()
+            .Where(skill => skill.GatheredItemId != Skill.NoItem)
+            .Select(skill => skill.GatheredItemId)
+            .Concat(_atlas.Harvestables.ToArray())
+            .ToFrozenSet();
     }
 
     private void See(CharacterState state, long mapId, HarvestZone zone, DateTimeOffset now)
@@ -542,6 +590,13 @@ public sealed class HarvestActivity : BotActivity
         {
             var harvested = _tour.HasHarvested;
 
+            // A level gained since moves the place the activity chose at the next tour (D166).
+            if (_settings.Place is HarvestPlace.Automatic && PlaceOf(context) is { Length: > 0 } place && !place.SequenceEqual(zone.SubAreas))
+            {
+                _zone = null;
+                zone = ZoneOf(context);
+            }
+
             if (!_tour.Next(zone))
                 throw Failure("No map of the zone holds a resource to harvest.", "FailNothing");
 
@@ -639,12 +694,25 @@ public sealed class HarvestActivity : BotActivity
 
         var total = _tour.Total(zone);
         var growing = _tour.Growing(zone);
-        var progress = new ActivityProgress(
-            growing > 0
-                ? GameText.Of(HarvestTexts.Text("ProgressGrowing"), GameTextValue.Number(_tour.Round), GameTextValue.Number(Math.Min(_tour.Visited + 1, total)), GameTextValue.Number(total), GameTextValue.Number(growing))
-                : GameText.Of(HarvestTexts.Text("Progress"), GameTextValue.Number(_tour.Round), GameTextValue.Number(Math.Min(_tour.Visited + 1, total)), GameTextValue.Number(total)),
-            _tour.Visited,
-            total);
+
+        // The place the activity chose names itself first, the 5th value (D166).
+        var automatic = _settings.Place is HarvestPlace.Automatic && zone.SubAreas.Count > 0;
+        var values = new[]
+        {
+            GameTextValue.Number(_tour.Round),
+            GameTextValue.Number(Math.Min(_tour.Visited + 1, total)),
+            GameTextValue.Number(total),
+            GameTextValue.Number(growing),
+            GameTextValue.SubArea(automatic ? zone.SubAreas[0] : 0),
+        };
+        var key = (growing > 0, automatic) switch
+        {
+            (true, true) => "ProgressAtGrowing",
+            (true, false) => "ProgressGrowing",
+            (false, true) => "ProgressAt",
+            _ => "Progress",
+        };
+        var progress = new ActivityProgress(GameText.Of(HarvestTexts.Text(key), values), _tour.Visited, total);
 
         Volatile.Write(ref _report, new ActivityReport
         {
@@ -675,7 +743,7 @@ public sealed class HarvestActivity : BotActivity
 
     private ImmutableArray<ActivityCount> CountsOf(HarvestZone zone)
     {
-        List<int> items = _settings.EverythingKnown
+        List<int> items = _settings.Mode is HarvestMode.ByProfession
             ? [.. _harvested.Keys.Order()]
             : [.. _settings.Resources.Where(zone.Wanted.Contains).Concat(_harvested.Keys.Where(item => !_settings.Resources.Contains(item))).Distinct()];
 
@@ -722,7 +790,7 @@ public sealed class HarvestActivity : BotActivity
         if (_chestWarning is { } chest)
             warnings.Add(GameText.Of(HarvestTexts.Text(chest)));
 
-        if (_settings.EverythingKnown)
+        if (_settings.Mode is HarvestMode.ByProfession)
             return [.. warnings];
 
         foreach (var item in _settings.Resources)

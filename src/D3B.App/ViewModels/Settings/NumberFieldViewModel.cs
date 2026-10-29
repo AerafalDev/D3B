@@ -32,6 +32,14 @@ internal sealed partial class NumberFieldViewModel : SettingFieldViewModel
     /// <summary>Gets whether the number is shown as a box.</summary>
     public bool IsBox => !Definition.IsPercent;
 
+    /// <summary>Gets what the number counts, after it, in the app's language (D167).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasUnit))]
+    public partial string? Unit { get; private set; }
+
+    /// <summary>Gets whether the number counts something it says.</summary>
+    public bool HasUnit => Unit is not null;
+
     /// <summary>Gets the lowest value, for the bar of a percentage.</summary>
     public double SliderMinimum => (double)Minimum;
 
@@ -55,6 +63,7 @@ internal sealed partial class NumberFieldViewModel : SettingFieldViewModel
         : base(definition, editor)
     {
         Range = editor.Localizer.Format("NumberRange", Minimum, Maximum);
+        Unit = definition.Unit?.In(editor.Localizer.Culture);
         Quiet(() => Value = (int)definition.GetValue(Draft)!);
     }
 
@@ -63,6 +72,7 @@ internal sealed partial class NumberFieldViewModel : SettingFieldViewModel
     {
         base.Relabel();
         Range = Editor.Localizer.Format("NumberRange", Minimum, Maximum);
+        Unit = Definition.Unit?.In(Editor.Localizer.Culture);
         PercentText = Value is { } shown ? Editor.Localizer.Format("PercentValue", shown) : "";
     }
 

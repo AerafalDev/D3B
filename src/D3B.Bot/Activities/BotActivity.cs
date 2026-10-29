@@ -33,6 +33,10 @@ public abstract class BotActivity
     /// <remarks>Read from any thread, while the activity runs: an activity replaces them whole.</remarks>
     public virtual ActivityStatistics? Statistics => null;
 
+    /// <summary>Gets how many map changes a teleport counts as on the activity's journeys, its banking's included: a zaap is taken only when it saves as many (D167).</summary>
+    /// <remarks>1 by default: a zaap as soon as it saves a change, as before.</remarks>
+    public virtual int TeleportChanges => 1;
+
     /// <summary>Runs the next step, chosen from the character's state now.</summary>
     /// <param name="context">The step's behavior context.</param>
     /// <param name="cancellationToken">The step's token: an interruption or the activity's stop cancels it.</param>

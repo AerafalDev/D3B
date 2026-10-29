@@ -134,18 +134,18 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         return [.. (Accounts?.Characters ?? []).Where(character => character.ProfileId == id)];
     }
 
-    /// <summary>Gets the characters that play a profile, with their professions' levels and their map, as their bots last saw them.</summary>
+    /// <summary>Gets the characters that play a profile, with their levels and their map, as their bots last saw them.</summary>
     /// <param name="id">The profile's id.</param>
     /// <returns>The characters; those no bot plays yet with no level known.</returns>
-    public IReadOnlyList<PlayerLevels> LevelsOf(int id)
+    public IReadOnlyList<PreviewPlayer> LevelsOf(int id)
     {
         var bots = _services?.GetService<Bots>();
 
         return
         [
             .. PlayersOf(id).Select(character => bots is not null && bots.TryGet(character.Key, out var bot)
-                ? new PlayerLevels(character.Name, bot.State.Jobs.Values.ToDictionary(job => job.JobId, job => job.Level), bot.State.MapId)
-                : new PlayerLevels(character.Name, new Dictionary<int, int>(), null)),
+                ? new PreviewPlayer(character.Name, bot.State.Level ?? 0, bot.State.Jobs.Values.ToDictionary(job => job.JobId, job => job.Level), bot.State.MapId)
+                : new PreviewPlayer(character.Name, 0, new Dictionary<int, int>(), null)),
         ];
     }
 

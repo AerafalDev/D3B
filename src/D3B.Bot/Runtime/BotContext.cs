@@ -49,6 +49,9 @@ public sealed class BotContext
     /// <summary>Gets how long behaviors wait now: the client's display time, the server's answers and the rest, which the user may raise (D151).</summary>
     public BotDelays Delays => _bot.Delays;
 
+    /// <summary>Gets how many map changes a teleport counts as on a journey: as the running activity says, 1 without one (D167).</summary>
+    public int TeleportChanges => _bot.Activity?.Activity.TeleportChanges ?? 1;
+
     /// <summary>Gets the bot's log.</summary>
     public ILogger Log => _bot.Log;
 
