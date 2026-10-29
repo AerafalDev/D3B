@@ -65,6 +65,10 @@ public sealed class ActivityRun
     /// <summary>Gets whether the activity is over.</summary>
     public bool IsOver => _completion.Task.IsCompleted;
 
+    /// <summary>Gets whether the activity failed for a character still full once unloaded, which no error says.</summary>
+    /// <remarks>Read once the run is over: the run writes it before it completes.</remarks>
+    public bool IsStillFull => IsOver && _stillFull;
+
     /// <summary>Gets a task that completes once the activity is over, with how it ended.</summary>
     public Task<ActivityOutcome> Completion => _completion.Task;
 

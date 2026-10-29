@@ -155,6 +155,12 @@ public sealed class HarvestActivity : BotActivity
             {
                 case BankOutcome.Done:
                     _banks++;
+
+                    // Measured: what the settings leave in the inventory may weigh more than the share the character banks at;
+                    // the activity says so, rather than go back to the bank at every step.
+                    if (IsFull(context.State))
+                        throw StillFull(context.State);
+
                     Publish(context.State, GameText.Of(HarvestTexts.Text("DoingReturn")));
 
                     return true;
@@ -184,6 +190,14 @@ public sealed class HarvestActivity : BotActivity
             Volatile.Write(ref _report, report with { Doing = GameText.Of(HarvestTexts.Text(key)) });
 
         return InterruptionResponse.Resume;
+    }
+
+    private ActivityException StillFull(CharacterState state)
+    {
+        var key = _settings.Deposit is HarvestDeposit.Harvest ? "FailStillFullHarvest" : "FailStillFullAll";
+        var reason = GameText.Of(HarvestTexts.Text(key), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight), GameTextValue.Number(_settings.FullAt));
+
+        return new ActivityException($"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.", reason);
     }
 
     private HarvestZone ZoneOf()

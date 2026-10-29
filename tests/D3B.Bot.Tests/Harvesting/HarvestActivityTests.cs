@@ -156,6 +156,47 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ACharacterStillFullOnceBankedFailsTheActivitySayingWhatToChange()
+    {
+        var (connection, bot) = await _play.EnterAsync(396, TestPlay.InsideMapId);
+
+        connection.Server(new InventoryContentEvent
+        {
+            Objects =
+            {
+                new InventoryObject { Item = new ObjectItem { Uid = 12, ItemId = TestPlay.Ash, Quantity = 40 }, Position = 63 },
+                new InventoryObject { Item = new ObjectItem { Uid = 13, ItemId = 1_782, Quantity = 300 }, Position = 63 },
+            },
+        });
+        connection.Server(new InventoryWeightEvent { Weight = 7_000, MaxWeight = 7_590 });
+        await bot.ProcessedAsync();
+
+        var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }));
+
+        await connection.SentAsync(1);
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId });
+        connection.Server(new NpcDialogQuestionEvent { MessageId = 48_366, Replies = { new NpcReply { ReplyId = TestPlay.ChestReplyId } } });
+        await connection.SentAsync(2);
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage, MaxSlots = int.MaxValue });
+        connection.Server(new StorageContentEvent());
+        await connection.SentAsync(3);
+
+        // The ash goes; what is left still weighs more than the share the character banks at.
+        connection.Server(new ObjectsDeletedEvent { Uids = { 12 } });
+        connection.Server(new InventoryWeightEvent { Weight = 6_900, MaxWeight = 7_590 });
+        await connection.SentAsync(4);
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+        var failure = Assert.IsType<ActivityException>(run.Failure);
+
+        Assert.StartsWith("Still full once banked, 6900 of 7590 pods: what is left is not harvest.", Say(failure.Reason!), StringComparison.Ordinal);
+        Assert.Contains("90%", Say(failure.Reason!), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task AZoneWithoutAMapFailsTheActivitySayingWhy()
     {
         var (_, bot) = await _play.EnterAsync(300);

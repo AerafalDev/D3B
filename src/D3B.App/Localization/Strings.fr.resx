@@ -1004,4 +1004,7 @@
   <data name="ZoneSearch" xml:space="preserve">
     <value>Chercher une autre sous-zone</value>
   </data>
+  <data name="ActivityLeftFull" xml:space="preserve">
+    <value>Encore plein une fois déchargé : il reste plus que ce que l'activité dépose.</value>
+  </data>
 </root>

@@ -524,6 +524,7 @@ internal sealed partial class BotViewModel : ObservableObject
 
         ActivityProblem = !run.IsOver ? ""
             : run.Failure is ActivityException { Reason: { } reason } ? _says.Say(reason)
+            : run.IsStillFull ? _localizer["ActivityLeftFull"]
             : run.Failure?.Message ?? "";
         RefreshReport(run, run.Activity.Report);
     }

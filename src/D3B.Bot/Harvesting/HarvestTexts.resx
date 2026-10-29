@@ -188,4 +188,10 @@
   <data name="FailLost" xml:space="preserve">
     <value>The way through the zone failed three times in a row.</value>
   </data>
+  <data name="FailStillFullHarvest" xml:space="preserve">
+    <value>Still full once banked, {0} of {1} pods: what is left is not harvest. Bank everything but what is worn, or raise the {2}% share.</value>
+  </data>
+  <data name="FailStillFullAll" xml:space="preserve">
+    <value>Still full once banked, {0} of {1} pods: what is worn weighs more than the {2}% share. Raise it.</value>
+  </data>
 </root>

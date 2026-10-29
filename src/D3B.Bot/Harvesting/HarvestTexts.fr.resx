@@ -188,4 +188,10 @@
   <data name="FailLost" xml:space="preserve">
     <value>Le chemin dans la zone a échoué trois fois de suite.</value>
   </data>
+  <data name="FailStillFullHarvest" xml:space="preserve">
+    <value>Encore plein après la banque, {0} sur {1} pods : ce qui reste n'est pas de la récolte. Dépose tout sauf l'équipement porté, ou monte le seuil de {2} %.</value>
+  </data>
+  <data name="FailStillFullAll" xml:space="preserve">
+    <value>Encore plein après la banque, {0} sur {1} pods : ce que le perso porte pèse plus que le seuil de {2} %. Monte-le.</value>
+  </data>
 </root>
