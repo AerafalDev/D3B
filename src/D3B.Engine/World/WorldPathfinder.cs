@@ -111,24 +111,6 @@ public sealed class WorldPathfinder
         return from.WorldMap >= 0 && to.WorldMap >= 0 && from.WorldMap != to.WorldMap ? cost + OtherWorldMapCost : cost;
     }
 
-    private static bool LeavesTowards(MapCell mapCell, int cell, int direction)
-    {
-        if (mapCell.LeavesMapTowards(direction))
-            return true;
-
-        // A corner lies on two edges, which share its diagonal marks: only the straight one tells which edge it leaves by.
-        var edges = 0;
-
-        for (var straight = 0; straight < MapCell.DirectionCount; straight += 2)
-        {
-            if (MapGeometry.Neighbour(cell, straight) < 0)
-                edges++;
-        }
-
-        return edges is 1
-            && (mapCell.LeavesMapTowards((direction + 1) % MapCell.DirectionCount) || mapCell.LeavesMapTowards((direction + MapCell.DirectionCount - 1) % MapCell.DirectionCount));
-    }
-
     private static bool IsFollowed(WorldTransition transition)
     {
         return transition.Type is WorldTransitionType.Scroll or WorldTransitionType.ScrollAction or WorldTransitionType.MapAction
@@ -313,7 +295,7 @@ public sealed class WorldPathfinder
             if (!mapCell.IsWalkable || mapCell.Zone != zone || MapGeometry.Neighbour(cell, direction) >= 0)
                 continue;
 
-            if (cell != transition.CellId && !LeavesTowards(mapCell, cell, direction))
+            if (cell != transition.CellId && !MapGeometry.LeavesTowards(mapCell, cell, direction))
                 continue;
 
             var at = facts with { Cell = cell };

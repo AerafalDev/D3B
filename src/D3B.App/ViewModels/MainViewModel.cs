@@ -6,6 +6,7 @@ using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
+using D3B.App.ViewModels.Maps;
 using D3B.Bot.Characters;
 using D3B.Bot.Pages;
 using D3B.Data;
@@ -13,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The app's window: where the bots' host stands, its pages in the rail, and the language (D14, D91, D96, D101, D111).</summary>
+/// <summary>The app's window: where the bots' host stands, its pages in the rail, and the language (D14, D91, D96, D101, D111, D120).</summary>
 internal sealed partial class MainViewModel : ObservableObject
 {
     private readonly HostRunner _host;
@@ -29,6 +30,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets the profiles page.</summary>
     public ProfilesViewModel Profiles { get; }
+
+    /// <summary>Gets the map page.</summary>
+    public MapViewModel Map { get; }
 
     /// <summary>Gets the logs page.</summary>
     public LogsViewModel Logs { get; }
@@ -50,6 +54,10 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets whether the profiles page is the one the window shows.</summary>
     [ObservableProperty]
     public partial bool IsProfilesPage { get; private set; }
+
+    /// <summary>Gets whether the map page is the one the window shows.</summary>
+    [ObservableProperty]
+    public partial bool IsMapPage { get; private set; }
 
     /// <summary>Gets whether the logs page is the one the window shows.</summary>
     [ObservableProperty]
@@ -119,9 +127,10 @@ internal sealed partial class MainViewModel : ObservableObject
 
         var choice = new BotChoice();
 
-        Bots = new BotsViewModel(localizer, ShowJournalOf);
+        Bots = new BotsViewModel(localizer, ShowJournalOf, ShowMapOf);
         Accounts = new AccountsViewModel(localizer);
         Profiles = new ProfilesViewModel(localizer);
+        Map = new MapViewModel(localizer, choice);
         Logs = new LogsViewModel(localizer, choice);
         Inspector = new InspectorViewModel(localizer, choice);
     }
@@ -159,7 +168,10 @@ internal sealed partial class MainViewModel : ObservableObject
         Accounts.Refresh(services);
         Bots.Refresh(services);
 
-        // Only the page shown reads what came since: the other reads it all once shown again.
+        // Only the page shown reads what came since: the others read it all once shown again.
+        if (IsMapPage)
+            Map.Refresh(services);
+
         if (IsLogsPage)
             Logs.Refresh(services);
 
@@ -223,6 +235,15 @@ internal sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ShowMap()
+    {
+        Select(null);
+        IsBotsPage = false;
+        IsMapPage = true;
+        Map.Refresh(_host.Services);
+    }
+
+    [RelayCommand]
     private void ShowLogs()
     {
         Select(null);
@@ -246,6 +267,12 @@ internal sealed partial class MainViewModel : ObservableObject
         Logs.Show(key);
     }
 
+    private void ShowMapOf(CharacterKey key)
+    {
+        ShowMap();
+        Map.Show(key);
+    }
+
     private void Select(ModulePageViewModel? page)
     {
         foreach (var other in Pages)
@@ -255,6 +282,7 @@ internal sealed partial class MainViewModel : ObservableObject
         IsBotsPage = page is null;
         IsAccountsPage = false;
         IsProfilesPage = false;
+        IsMapPage = false;
         IsLogsPage = false;
         IsInspectorPage = false;
         page?.Refresh();

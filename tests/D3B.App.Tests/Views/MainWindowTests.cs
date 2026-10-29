@@ -292,4 +292,65 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Avertissements et erreurs", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
+
+    [Fact]
+    public async Task TheMapShowsInTheRailInBothLanguagesAndACardOpensItsBotsMap()
+    {
+        using var game = new TestGameData();
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+
+        builder.Services.AddSingleton(_play.Bots);
+        builder.Services.AddSingleton(_play.Maps);
+        builder.Services.AddSingleton(_play.World);
+        builder.Services.AddSingleton(game.Texts);
+        builder.Services.AddSingleton(game.Tables);
+        builder.Services.AddSingleton(new ActivityCatalog([]));
+        builder.Services.AddSingleton(new PageCatalog([]));
+
+        using var host = builder.Build();
+        var runner = await TestHosts.RunningAsync(host);
+
+        await _play.EnterAsync(300);
+
+        var (english, french, map) = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main };
+
+            main.Refresh();
+            window.Show();
+            main.Bots.Items[0].ShowMapCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var map = (main.IsMapPage, main.IsBotsPage, main.Map.Bot?.Name, main.Map.Scene?.Character);
+            var english = Texts(window);
+
+            main.SwitchLanguageCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var french = Texts(window);
+
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return (english, french, map);
+        });
+
+        Assert.Equal((true, false, "Character", 300), map);
+        Assert.Contains("Map", english);
+        Assert.Contains("4,-18", english);
+        Assert.Contains("Sub-area 440, cell 300", english);
+        Assert.Contains("Zones and floors", english);
+        Assert.Contains("Not described", english);
+        Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Carte", french);
+        Assert.Contains("Sous-zone 440, cellule 300", french);
+        Assert.Contains("Zones et étages", french);
+        Assert.Contains("Non décrit", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+    }
 }

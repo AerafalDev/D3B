@@ -1080,6 +1080,25 @@ starts it on connection. The owner went through the pages and reported no proble
 - **Not measured**: deleting the profile, still in the copy afterwards; the player's pause, which pauses a bot only while
   one of its behaviors runs, none running without an activity (D118).
 
+Measured on 2026-10-29 for session 5d (D120 to D125): a game connection of a client of 3.7.12.12 through the app, 2 min
+49 s, the map page open on the character, which the player moved by hand, no activity started. By structure, counts and
+timing, and the maps' ids compared on the machine with the build's pack, never written down. The owner reported the map
+following in every case.
+
+- **The frames**: 567, none cut. The client's 101, 43 understood and
+  58 not read; the server's 466, 34 understood, 41 read and 391 not read; none from D3B, and nothing in the host's log
+  above information.
+- **The player**: 13 walks, each confirmed; the server showed 13 more, of other actors, one of them in the fight.
+- **8 maps named**, 5 of them distinct, all in the pack: the map of a zaap; the haven bag, entered there and left back
+  to it, then entered and left again from a neighbour the client scrolled to, the bag's map off the world graph, at 0,0 on
+  no world map; the fight's own map, off the graph at 0,0 on a world map, which got no map information, as before; and,
+  once the fight was over, 10 s later, the map of another zaap, neither the map the fight began on nor a neighbour of it.
+  How the fight ended is not decoded.
+- **The fight's placement**: neither the fight's map nor the map it began on holds a cell marked `red` or `blue`. Of the
+  2,877 maps of the pack at 0,0, off the graph and on a world map, as the fight's is, 1,158 hold some; of the graph's
+  8,402 maps on a world map elsewhere than 0,0, 643. In the same millisecond as the fight's context and map, the server
+  sent 16 frames the readable protocol lacks. The client sent no walk in the fight.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

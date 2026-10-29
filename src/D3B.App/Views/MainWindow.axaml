@@ -95,6 +95,13 @@
                 </Button>
                 <Button
                     Classes="Ghost RailItem"
+                    Classes.Selected="{Binding IsMapPage}"
+                    Command="{Binding ShowMapCommand}"
+                    ToolTip.Tip="{l:Tr Map}">
+                    <c:Icon Data="{StaticResource IconMap}" />
+                </Button>
+                <Button
+                    Classes="Ghost RailItem"
                     Classes.Selected="{Binding IsLogsPage}"
                     Command="{Binding ShowLogsCommand}"
                     ToolTip.Tip="{l:Tr Logs}">
@@ -222,6 +229,9 @@
                 </Panel>
                 <Panel IsVisible="{Binding IsProfilesPage}">
                     <views:ProfilesView DataContext="{Binding Profiles}" />
+                </Panel>
+                <Panel IsVisible="{Binding IsMapPage}">
+                    <views:MapView DataContext="{Binding Map}" />
                 </Panel>
                 <Panel IsVisible="{Binding IsLogsPage}">
                     <views:LogsView DataContext="{Binding Logs}" />

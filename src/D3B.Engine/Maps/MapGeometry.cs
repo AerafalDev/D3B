@@ -82,6 +82,30 @@ public static class MapGeometry
         return direction % 2 is 0;
     }
 
+    /// <summary>Tells whether a cell of a map's edge leaves the map in a straight direction.</summary>
+    /// <param name="mapCell">The cell's data.</param>
+    /// <param name="cell">The cell.</param>
+    /// <param name="direction">A straight direction: 0 east, 2 south, 4 west or 6 north.</param>
+    /// <returns>Whether the client's data marks the cell as leaving that way.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The cell or the direction does not exist.</exception>
+    public static bool LeavesTowards(MapCell mapCell, int cell, int direction)
+    {
+        if (mapCell.LeavesMapTowards(direction))
+            return true;
+
+        // A corner lies on two edges, which share its diagonal marks: only the straight one tells which edge it leaves by.
+        var edges = 0;
+
+        for (var straight = 0; straight < MapCell.DirectionCount; straight += 2)
+        {
+            if (Neighbour(cell, straight) < 0)
+                edges++;
+        }
+
+        return edges is 1
+            && (mapCell.LeavesMapTowards((direction + 1) % MapCell.DirectionCount) || mapCell.LeavesMapTowards((direction + MapCell.DirectionCount - 1) % MapCell.DirectionCount));
+    }
+
     /// <summary>Gets a cell's coordinates.</summary>
     /// <param name="cell">A cell of the map.</param>
     /// <returns>The coordinates.</returns>

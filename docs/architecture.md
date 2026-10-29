@@ -332,7 +332,7 @@ Built at step 2 (D24 to D33):
 ## Desktop app
 
 Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
-5c and 5e (D96, D101, D111).
+5c, 5e and 5d (D96, D101, D111, D120).
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
@@ -341,7 +341,7 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
 - **The window**: dark by default, light on a click; where the host stands, the language and the theme in the title
   bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by `StatusPill`, in the tone each says
   (`Tone`).
-- **The rail**, always (D101, D111): the bots, the accounts, the profiles, the logs and the inspector pages, a line once a module registered a page, then
+- **The rail**, always (D101, D111, D120): the bots, the accounts, the profiles, the map, the logs and the inspector pages, a line once a module registered a page, then
   the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip. A module's page (`ModulePageViewModel`) is made the first
   time it shows and kept, refreshed every 250 ms while it shows through its context (`AppPageContext`, in
   `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead (`PageFailureViewModel`), logged, and
@@ -366,7 +366,13 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   language, maps by their coordinates and sub-area, elements and skills by their names in the pack.
 - **The protocol inspector** (D111, D115, `D3B.App.ViewModels.Inspector`): a bot's frames live, frozen on demand, or a
   capture of the game connection replayed; filtered by sender, name and whether the readable protocol read them; a frame
-  unfolded in place, the ticket hidden. Both pages look at one bot (`BotChoice`).
+  unfolded in place, the ticket hidden. Both pages and the map look at one bot (`BotChoice`).
+- **The map page** (D120 to D122, `D3B.App.ViewModels.Maps`): the bot's map drawn from the pack as its character moves,
+  which its card opens. `MapCanvas`, in `D3B.App.Controls`, draws a scene flat in the theme's palette (`MapPalette`), a
+  map's fixed geometries built once, in seven layers toggled: the cells, the character and its path, the elements by
+  what the server says of them, the NPCs, the exits from the world graph (`MapExits`), the other bots, and the zones and
+  stairs; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
+  bag's and a fight's maps are drawn as the others.
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
   alone: the bots' loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
@@ -374,7 +380,6 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   through `{l:Tr Key}`.
 - **Preferences** (`AppPreferences`): the language and the theme, remembered in `%LOCALAPPDATA%\D3B\app.json`, read before
   the window shows (D101).
-- Page to come: the live map (5d) (D92).
 
 ## Storage
 
@@ -405,8 +410,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 (D68), 4b (D71, D73), 4c (D75, D76), 4d (D79), 4e (D83) and 4f (D86):
 
 - `MapGeometry`, in `D3B.Engine.Maps`: 14 columns of 40 staggered rows, the eight directions between neighbours, the
-  coordinates the server names a cell by (`MapPoint`), measured on the captures, and the distance between two cells, the
-  sum of their coordinates' differences, by which the server measures a skill's range.
+  coordinates the server names a cell by (`MapPoint`), measured on the captures, the distance between two cells, the
+  sum of their coordinates' differences, by which the server measures a skill's range, and whether a cell of an edge
+  leaves the map in a direction, which the paths and the app's map share (D121).
 - `ElementCells`: the cells a character uses an element from, as the client chooses them, the walkable neighbours of the
   element's cell in the character's zone, else the zone's walkable cells nearest it.
 - `CellPathfinder`: A* over the cells a character may walk on, a step across passing beside at least one walkable cell,
@@ -456,4 +462,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - A bot's journal is read after the behaviors the bots' tests play, each entry and its depth (D112); the frame recorder
   through game sessions, D3B's requests included, and the inspector's fields and replays on captures the tests write
   (D115); the logs and inspector pages against bots played the same way, in both languages (D111).
+- The map page against bots played the same way: its scene, exits, elements, NPCs, other bots, a fight's and a missing
+  map, and what a cell holds, in both languages; its drawing without a screen, a pixel of each mark checked in each
+  theme's palette and the cell under the pointer described; its layout's cells found back from their centres (D120 to
+  D122).
 - Time is controlled through `FakeTimeProvider`.

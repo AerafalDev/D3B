@@ -833,4 +833,130 @@
   <data name="FramesEmpty" xml:space="preserve">
     <value>Aucune trame : celles d'un bot s'enregistrent dès que son client passe par D3B, et une capture de la connexion de jeu se rejoue ici.</value>
   </data>
+  <data name="Map" xml:space="preserve">
+    <value>Carte</value>
+  </data>
+  <data name="MapHint" xml:space="preserve">
+    <value>La carte d'un bot, dessinée depuis le pack de ce build au fil de ses déplacements</value>
+  </data>
+  <data name="ShowMap" xml:space="preserve">
+    <value>Carte</value>
+  </data>
+  <data name="MapNoBot" xml:space="preserve">
+    <value>Aucun bot : la carte suit un bot dès que son client a choisi son perso à travers D3B.</value>
+  </data>
+  <data name="MapNotInPack" xml:space="preserve">
+    <value>La carte {0} n'est pas dans le pack de ce build.</value>
+  </data>
+  <data name="MapInFight" xml:space="preserve">
+    <value>En combat, sur sa carte</value>
+  </data>
+  <data name="LayerCells" xml:space="preserve">
+    <value>Cellules</value>
+  </data>
+  <data name="LayerCharacter" xml:space="preserve">
+    <value>Perso</value>
+  </data>
+  <data name="LayerElements" xml:space="preserve">
+    <value>Éléments</value>
+  </data>
+  <data name="LayerNpcs" xml:space="preserve">
+    <value>PNJ</value>
+  </data>
+  <data name="LayerExits" xml:space="preserve">
+    <value>Sorties</value>
+  </data>
+  <data name="LayerBots" xml:space="preserve">
+    <value>Autres bots</value>
+  </data>
+  <data name="LayerZones" xml:space="preserve">
+    <value>Zones et étages</value>
+  </data>
+  <data name="LegendCharacter" xml:space="preserve">
+    <value>Perso et chemin</value>
+  </data>
+  <data name="LegendResource" xml:space="preserve">
+    <value>Ressource</value>
+  </data>
+  <data name="LegendHarvested" xml:space="preserve">
+    <value>Récoltée</value>
+  </data>
+  <data name="LegendElement" xml:space="preserve">
+    <value>Élément</value>
+  </data>
+  <data name="LegendDoor" xml:space="preserve">
+    <value>Porte</value>
+  </data>
+  <data name="LegendUnknown" xml:space="preserve">
+    <value>Non décrit</value>
+  </data>
+  <data name="LegendNpc" xml:space="preserve">
+    <value>PNJ</value>
+  </data>
+  <data name="LegendBot" xml:space="preserve">
+    <value>Autre bot</value>
+  </data>
+  <data name="LegendExit" xml:space="preserve">
+    <value>Sortie</value>
+  </data>
+  <data name="MapHoverCell" xml:space="preserve">
+    <value>Cellule {0} ({1}, {2})</value>
+  </data>
+  <data name="MapWalkable" xml:space="preserve">
+    <value>Marchable, étage {0}, zone {1}</value>
+  </data>
+  <data name="MapStairs" xml:space="preserve">
+    <value>Escalier, étage {0}, zone {1}</value>
+  </data>
+  <data name="MapObstacle" xml:space="preserve">
+    <value>Obstacle, qui bloque la vue</value>
+  </data>
+  <data name="MapVoid" xml:space="preserve">
+    <value>Non marchable, la vue passe</value>
+  </data>
+  <data name="MapCharacterHere" xml:space="preserve">
+    <value>{0} est ici</value>
+  </data>
+  <data name="MapCharacterWalks" xml:space="preserve">
+    <value>{0} part d'ici, {1}</value>
+  </data>
+  <data name="PathCellsOne" xml:space="preserve">
+    <value>{0:N0} cellule à parcourir</value>
+  </data>
+  <data name="PathCellsOther" xml:space="preserve">
+    <value>{0:N0} cellules à parcourir</value>
+  </data>
+  <data name="MapPathEnd" xml:space="preserve">
+    <value>Fin de la marche de {0}</value>
+  </data>
+  <data name="MapOtherBot" xml:space="preserve">
+    <value>{0}, un autre bot</value>
+  </data>
+  <data name="MapElement" xml:space="preserve">
+    <value>Élément {0}</value>
+  </data>
+  <data name="MapOffers" xml:space="preserve">
+    <value>{0} : {1}</value>
+  </data>
+  <data name="MapHarvested" xml:space="preserve">
+    <value>{0} : rien à récolter avant la repousse</value>
+  </data>
+  <data name="MapNotDescribed" xml:space="preserve">
+    <value>Élément {0}, que le serveur n'a pas décrit</value>
+  </data>
+  <data name="MapNpc" xml:space="preserve">
+    <value>PNJ {0}</value>
+  </data>
+  <data name="MapExitSide" xml:space="preserve">
+    <value>Sort par {0} vers {1}</value>
+  </data>
+  <data name="MapActionTo" xml:space="preserve">
+    <value>Action de carte vers {0}</value>
+  </data>
+  <data name="MapLeadsTo" xml:space="preserve">
+    <value>{0} mène à {1}</value>
+  </data>
+  <data name="MapInside" xml:space="preserve">
+    <value>un intérieur en {0}</value>
+  </data>
 </root>

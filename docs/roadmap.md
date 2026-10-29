@@ -11,7 +11,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 2 | Game data | Done |
 | 3 | Protocol and connection | Done; Q10 at the next client update |
 | 4 | Bot run time and navigation | Done |
-| 5 | Desktop app, first version | In progress: 5a, 5b, 5c and 5e done; 5d to do |
+| 5 | Desktop app, first version | Done |
 | 6 | Harvesting and banking: first milestone | To do |
 | 7 | Mods: Lua scripting, then blueprints | Lua done, then removed (D119); blueprints to do, after step 6 (D117) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
@@ -139,14 +139,14 @@ Settles Q6 and Q11: both settled in session 5b, by D96 and D95.
 Five sessions, the split chosen by the owner (D92), after the owner chose the app over the host's gRPC API (D91). A
 client update before the next session gets Q10's session first (D54).
 
-Next: 5d, the Lua scripts removed (D119).
+Done on 2026-10-29, with 5d last. Next: step 6.
 
 | Session | Content | Status |
 | --- | --- | --- |
 | 5a | The app with the bots in it: the bots' host in the app's process, its composition shared with `D3B.Host`, which keeps its entry point alone, and no gRPC nor `D3B.Contracts`, the owner's choice (D91); the split of step 5 (D92); the catalogue of the activities modules register, which the app starts (D93); Avalonia 12, ShadUI and Inter, dark by default, the owner's choice, the host's state and why it did not start, the bots page as a card per bot, whole, with its position, pods, kamas, pause and activity, started, stopped and resumed, after the owner turned down three panes, French and English switched live, the window read every 250 ms, and the window drawn in tests (D94); measured on a client through the app. | Done on 2026-10-29 |
 | 5b | What a plugin sees and declares: Q11 settled, `D3B.Bot` packed with the libraries it names, which a plugin references, the owner's choice (D95); Q6 settled, a module's page registered with `AddPage`, made by the app from a factory naming no UI type, given the host's services, the app's language, the plugin's own texts and the window's refresh, in a rail on the left, the owner's choice among three mockups, a failing page replaced by its error, and activities and pages named in the app's language (D96); the plugin's root module read from its metadata, so that a plugin with a page loads in a host without the app (D97); the sample plugin's stroll and page, drawn in both languages and themes; the template with an activity and a page, `--page false` without; CI packing the six packages and building both. | Done on 2026-10-29 |
 | 5c | Activities' settings, a class its module describes in code, the owner's choice, of every kind and of the game's values, professions, areas, sub-areas and resources, with lists, order, dependencies, conditions, sections and rules, the owner's scope (D98); accounts recorded as the relay sees them, and profiles shared by characters, a character's own preselected and started on connection when asked, the owner's choice (D99); `D3B.Storage`, SQLite through EF Core 10.0.14 and its migrations, shared by the app and `D3B.Host`, applied before the host starts, and no Data Protection, nothing kept being a secret (D100); the rail always shown, the accounts page as a card per account and the profiles page as a column unfolded in place, the owner's choices among mockups, a bot's card offering the profiles, and the language and theme remembered (D101); Lua scripts to replace the external plugins at step 7, the owner's choice (D102); drawn without a screen in both languages and themes. Not measured on a client. | Done on 2026-10-29 |
-| 5d | The live map, read from the pack by the app: cells, the character, its path, elements and NPCs. | To do |
+| 5d | The live map, a page of the rail looking at one bot, shared with the logs and the inspector, a bot's card opening it, the owner's choice among three mockups (D120); what the pack and the state hold, in seven layers toggled, the cells, the character and its path, the elements by what the server says, the NPCs, the exits, map actions and doors from the world graph, the other bots, and the zones and stairs hidden at first, a cell under the pointer described in the app's language, other players and monsters left to steps 9 and 10, the owner's choice (D121); drawn flat from the pack in each theme's palette, no textures, the owner's choice (D122); maps for settings left to the activity that needs them, the owner's choice (D123); drawn without a screen in both languages and themes; measured on a client through the app, the player's walks, a scroll, the haven bag and a fight followed (D124); a fight's placement cells at step 9, from the server, the owner's choice (D125). | Done on 2026-10-29 |
 | 5e | Lua scripts measured through the app, a stop, the player's pause and its resume, a failing script, the chunk's name found without `.lua` (D110); the logs and the protocol inspector, two pages of the rail sharing their bot, a bot's card opening its journal, and their filters, the owner's choices among mockups (D111); a bot's journal of its actions, written by the behaviors once over, named from the pack in the app's language, never the protocol's messages, the owner's request (D112); journals, the host's problems and frames kept in memory always, 2,000 entries, 2,000 problems and 3,000 frames, the owner's choice (D113); the host's warnings and errors naming no bot, its own source (D114); the inspector: each bot's frames recorded, D3B's requests included, a frame unfolded in place, the ticket hidden, the shape of what the readable protocol lacks, a capture of the installed build replayed (D115); Lua scripts to go in a session of their own, the owner's choice (D116); drawn without a screen in both languages and themes; measured on a client through the app, a capture of 298 frames replayed, the ticket hidden. | Done on 2026-10-29 |
 
 ## 6. Harvesting and banking: first milestone
@@ -157,8 +157,8 @@ them when its pods are full, controlled from the app (D16). The repository may g
 - Noted by the owner for later: an option to bank into the guild's chest instead, when the character's guild has one
   and the character the rights.
 - The harvesting activity's settings use D98's kinds: a profession, its resources by priority, an area and its
-  sub-areas; auto modes such as BillBot's add what they need to them, maps once 5d picks them on the map, monsters once
-  step 9 puts them in the pack.
+  sub-areas; auto modes such as BillBot's add what they need to them, maps once an activity needs them, the map's control
+  reused to pick them (D123), monsters once step 9 puts them in the pack.
 
 ## 7. Mods: Lua scripting, then blueprints
 
@@ -209,6 +209,8 @@ Settles Q5.
 - Strategies for every breed, a large effort the owner noted: the references in `vendor/` give ideas for each, to be
   done better and thought through, never copied (D3).
 - Placement, turns, line of sight, spell choice, end of fight, and fights as interruptions of other activities.
+- The placement cells the server gives when a fight begins, its message mapped and measured, marked on the app's map
+  in a fight, the owner's request (D125).
 
 ## 10. Several accounts and groups
 

@@ -1,0 +1,228 @@
+<UserControl
+    x:Class="D3B.App.Views.MapView"
+    x:ClassModifier="internal"
+    x:DataType="vm:MapViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:logs="clr-namespace:D3B.App.ViewModels.Logs"
+    xmlns:vm="clr-namespace:D3B.App.ViewModels.Maps"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="StackPanel.Legend > StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="Spacing" Value="6" />
+        </Style>
+        <Style Selector="StackPanel.Legend TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="StackPanel.Legend c|MapMarkIcon">
+            <Setter Property="Palette" Value="{DynamicResource MapPalette}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.HoverCard">
+            <Setter Property="Background" Value="{DynamicResource DialogBackgroundColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BoxShadow" Value="0 4 14 0 #40000000" />
+            <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}" />
+            <Setter Property="MaxWidth" Value="300" />
+            <Setter Property="Padding" Value="12,9" />
+        </Style>
+    </UserControl.Styles>
+    <DockPanel>
+        <StackPanel Classes="PageHeader" DockPanel.Dock="Top">
+            <TextBlock Classes="PageTitle" Text="{l:Tr Map}" />
+            <TextBlock Classes="Small Muted" Text="{l:Tr MapHint}" />
+        </StackPanel>
+        <StackPanel
+            DockPanel.Dock="Top"
+            Margin="32,0,32,14"
+            Spacing="14">
+            <ItemsControl ItemsSource="{Binding Bots}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel ItemSpacing="6" LineSpacing="6" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="logs:LogSourceViewModel">
+                        <Button
+                            Classes="Outline Chip"
+                            Classes.Selected="{Binding IsSelected}"
+                            Command="{Binding SelectCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <c:StatusPill Classes="Dot" Tone="{Binding Tone}" />
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock
+                Classes="Small Muted"
+                IsVisible="{Binding HasNoBot}"
+                Text="{l:Tr MapNoBot}"
+                TextWrapping="Wrap" />
+            <Grid ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding HasBot}">
+                <TextBlock
+                    Classes="Coordinates"
+                    Text="{Binding Coordinates}"
+                    VerticalAlignment="Center" />
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="18,0,12,0"
+                    Spacing="2"
+                    VerticalAlignment="Center">
+                    <TextBlock
+                        FontWeight="Medium"
+                        Text="{Binding Place}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Classes="Small Muted"
+                        Text="{Binding Detail}"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Border
+                    BorderBrush="{DynamicResource BorderColor}"
+                    BorderThickness="1"
+                    CornerRadius="{DynamicResource MdCornerRadius}"
+                    Grid.Column="2"
+                    Padding="2"
+                    VerticalAlignment="Center">
+                    <WrapPanel ItemSpacing="2" LineSpacing="2">
+                        <ToggleButton
+                            Classes="Toggle"
+                            Content="{l:Tr LayerCells}"
+                            IsChecked="{Binding ShowsCells}" />
+                        <ToggleButton
+                            Classes="Toggle"
+                            Content="{l:Tr LayerCharacter}"
+                            IsChecked="{Binding ShowsCharacter}" />
+                        <ToggleButton
+                            Classes="Toggle"
+                            Content="{l:Tr LayerElements}"
+                            IsChecked="{Binding ShowsElements}" />
+                        <ToggleButton
+                            Classes="Toggle"
+                            Content="{l:Tr LayerNpcs}"
+                            IsChecked="{Binding ShowsNpcs}" />
+                        <ToggleButton
+                            Classes="Toggle"
+                            Content="{l:Tr LayerExits}"
+                            IsChecked="{Binding ShowsExits}" />
+                        <ToggleButton
+                            Classes="Toggle"
+                            Content="{l:Tr LayerBots}"
+                            IsChecked="{Binding ShowsBots}" />
+                        <ToggleButton
+                            Classes="Toggle"
+                            Content="{l:Tr LayerZones}"
+                            IsChecked="{Binding ShowsZones}" />
+                    </WrapPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+        <WrapPanel
+            DockPanel.Dock="Bottom"
+            IsVisible="{Binding HasScene}"
+            ItemSpacing="18"
+            LineSpacing="8"
+            Margin="32,12,32,22">
+            <StackPanel Classes="Legend" Orientation="Horizontal" Spacing="18">
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Character" />
+                    <TextBlock Text="{l:Tr LegendCharacter}" />
+                </StackPanel>
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Resource" />
+                    <TextBlock Text="{l:Tr LegendResource}" />
+                </StackPanel>
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Harvested" />
+                    <TextBlock Text="{l:Tr LegendHarvested}" />
+                </StackPanel>
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Element" />
+                    <TextBlock Text="{l:Tr LegendElement}" />
+                </StackPanel>
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Door" />
+                    <TextBlock Text="{l:Tr LegendDoor}" />
+                </StackPanel>
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Unknown" />
+                    <TextBlock Text="{l:Tr LegendUnknown}" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Classes="Legend" Orientation="Horizontal" Spacing="18">
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Npc" />
+                    <TextBlock Text="{l:Tr LegendNpc}" />
+                </StackPanel>
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Bot" />
+                    <TextBlock Text="{l:Tr LegendBot}" />
+                </StackPanel>
+                <StackPanel>
+                    <c:MapMarkIcon Mark="Exit" />
+                    <TextBlock Text="{l:Tr LegendExit}" />
+                </StackPanel>
+            </StackPanel>
+        </WrapPanel>
+        <Panel Margin="32,0">
+            <TextBlock
+                Classes="Muted"
+                HorizontalAlignment="Center"
+                IsVisible="{Binding Problem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Text="{Binding Problem}"
+                TextWrapping="Wrap"
+                VerticalAlignment="Center" />
+            <Border
+                Classes="Plate"
+                IsVisible="{Binding HasScene}"
+                Padding="8">
+                <Panel Name="Surface">
+                    <c:MapCanvas
+                        HoveredCell="{Binding HoveredCell}"
+                        Layers="{Binding Layers}"
+                        Name="Map"
+                        Palette="{DynamicResource MapPalette}"
+                        PointerMoved="OnCanvasPointerMoved"
+                        Scene="{Binding Scene}" />
+                    <Canvas IsHitTestVisible="False">
+                        <Border
+                            Classes="HoverCard"
+                            IsVisible="{Binding HasHover}"
+                            Name="HoverCard">
+                            <StackPanel Spacing="3">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding HoverTitle}" />
+                                <TextBlock
+                                    Classes="Muted"
+                                    FontSize="12"
+                                    Text="{Binding HoverDetail}"
+                                    TextWrapping="Wrap" />
+                                <ItemsControl ItemsSource="{Binding HoverItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <TextBlock
+                                                FontSize="12"
+                                                Margin="0,2,0,0"
+                                                Text="{Binding}"
+                                                TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Canvas>
+                </Panel>
+            </Border>
+        </Panel>
+    </DockPanel>
+</UserControl>
