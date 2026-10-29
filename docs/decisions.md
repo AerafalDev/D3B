@@ -3571,8 +3571,9 @@ Measured on a client of 3.7.12.12 through the app, captures on, the owner's prof
 
 *2026-10-29, step 6, session 6b, chosen by the owner.*
 
-- Verifying 6b, the owner noted many small things to improve in the app's interface, its ease of use and its options. A
-  pass over every page, in a session of its own after 6c: 6d in the roadmap. 6b fixed only what it drew (D141).
+- Verifying 6b, the owner noted many small things to improve in the app's interface, its ease of use and its options:
+  margins, paddings and sizes inconsistent across the app, and many of ShadUI's components left unused. A pass over every
+  page, in a session of its own after 6c: 6d in the roadmap. 6b fixed only what it drew (D141).
 - **Rejected.**
   - The pass in 6b: every page of the app, past what this session drew.
 
