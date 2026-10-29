@@ -3,7 +3,7 @@ using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Activities;
 
-/// <summary>What a bot does over time: steps chosen one after another from the character's state, written by a module or run from a script (D87, D102).</summary>
+/// <summary>What a bot does over time: steps chosen one after another from the character's state, written by a module (D87, D116).</summary>
 /// <remarks>
 /// <para>
 /// A step is a behavior's worth of work, such as harvesting the nearest resource, going to the next map or banking, chosen

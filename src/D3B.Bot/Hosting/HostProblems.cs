@@ -8,7 +8,7 @@ namespace D3B.Bot.Hosting;
 /// <para>
 /// A logging provider beside the others: what the host's log writes at the warning level or above reaches it, unless it
 /// names a bot by its character (a <c>Character</c> value, as every bot's message does), whose journal says it already in
-/// the app's words (D112). So it holds a script that does not read, a connection whose account is unknown, a relay's
+/// the app's words (D112). So it holds a connection whose account is unknown, a database that fails to write, a relay's
 /// failure: what the host says of itself, as it says it.
 /// </para>
 /// <para>

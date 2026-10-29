@@ -48,7 +48,7 @@ public sealed class BotsModule : IModule
         // Beside the host's other logs: the app's logs page reads what the host says of itself (D114).
         bot.Services.AddSingleton(services => new HostProblems(services.GetRequiredService<TimeProvider>()));
         bot.Services.AddSingleton<ILoggerProvider>(services => services.GetRequiredService<HostProblems>());
-        bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>(), services.GetServices<IActivitySource>()));
+        bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
         bot.Services.AddSingleton(services => new PageCatalog(services.GetServices<PageDefinition>()));
 
         // Read once something asks, the app's settings or a profile started: a host that starts no activity never reads them.

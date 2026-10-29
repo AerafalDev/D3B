@@ -3,9 +3,6 @@
     <Project Path="benchmarks/D3B.Engine.Benchmarks/D3B.Engine.Benchmarks.csproj" />
     <Project Path="benchmarks/D3B.Network.Benchmarks/D3B.Network.Benchmarks.csproj" />
   </Folder>
-  <Folder Name="/samples/scripts/">
-    <File Path="samples/scripts/promenade.lua" />
-  </Folder>
   <Folder Name="/scripts/">
     <File Path="scripts/capture.cs" />
     <File Path="scripts/client.cs" />
@@ -113,7 +110,6 @@
     <Project Path="src/D3B.Host/D3B.Host.csproj" />
     <Project Path="src/D3B.Network/D3B.Network.csproj" />
     <Project Path="src/D3B.Protocol/D3B.Protocol.csproj" />
-    <Project Path="src/D3B.Scripting/D3B.Scripting.csproj" />
     <Project Path="src/D3B.Storage/D3B.Storage.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -124,7 +120,6 @@
     <Project Path="tests/D3B.Engine.Tests/D3B.Engine.Tests.csproj" />
     <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
     <Project Path="tests/D3B.Protocol.Tests/D3B.Protocol.Tests.csproj" />
-    <Project Path="tests/D3B.Scripting.Tests/D3B.Scripting.Tests.csproj" />
     <Project Path="tests/D3B.Storage.Tests/D3B.Storage.Tests.csproj" />
   </Folder>
 </Solution>

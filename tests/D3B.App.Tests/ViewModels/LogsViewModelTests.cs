@@ -8,6 +8,7 @@ using D3B.Bot.Journal;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
+using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -44,7 +45,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         bot.Journal.Add(new WalkEntry(_at, 0, TestPlay.MapId, 388, WalkOutcome.Arrived, TimeSpan.FromMilliseconds(900)));
         bot.Journal.Add(new MapChangeEntry(_at, 1, TestPlay.MapId, TestPlay.NorthMapId, TestPlay.NorthMapId, MapChangeKind.Scroll, MapChangeOutcome.Changed, TimeSpan.FromMilliseconds(1_400)));
         bot.Journal.Add(new TravelEntry(_at, 0, TestPlay.MapId, TestPlay.NorthMapId, TestPlay.NorthMapId, 1, TravelOutcome.Arrived, TimeSpan.FromMilliseconds(3_300)));
-        bot.Journal.Add(new ActivityOverEntry(_at, "promenade", 1, ActivityOutcome.Failed, "erreur.lua:10: attempt to index a nil value (local 'nothing')", false));
+        bot.Journal.Add(new ActivityOverEntry(_at, "patrouille", 1, ActivityOutcome.Failed, "The step failed.", false));
     }
 
     [Fact]
@@ -63,7 +64,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
                 ("Marche vers la case 388", "arrivé · 900 ms"),
                 ("Change de carte : 4,-18 → 4,-19, par le haut", "changé · 1,4 s"),
                 ("Voyage vers 4,-19", "arrivé · 1 carte · 3,3 s"),
-                ("« promenade » a échoué : erreur.lua:10: attempt to index a nil value (local 'nothing')", "1 étape"),
+                ("« patrouille » a échoué : The step failed.", "1 étape"),
             ],
             page.Lines.Select(line => (line.Text, line.Detail)));
         Assert.Equal([Tone.Success, Tone.Success, Tone.Success, Tone.Success, Tone.Danger], page.Lines.Select(line => line.Tone));
@@ -90,6 +91,20 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AProfileThatDidNotStartOnConnectionSaysWhy()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key });
+
+        bot.Journal.Add(new ProfileNotStartedEntry(_at, "Promenade", "script:promenade.lua", ProfileStartFailure.ActivityMissing, null));
+        page.Refresh(_host.Services);
+
+        var line = page.Lines[^1];
+
+        Assert.Equal(("Le profil « Promenade » n'a pas démarré à la connexion", "Activité disparue : script:promenade.lua", Tone.Warning), (line.Text, line.Detail, line.Tone));
+    }
+
+    [Fact]
     public async Task TheLevelAndTheTextSoughtFilterTheLines()
     {
         var (_, bot) = await _play.EnterAsync(300);
@@ -100,7 +115,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         page.Refresh(_host.Services);
         page.ShowProblemsCommand.Execute(null);
 
-        Assert.Equal(["« promenade » a échoué : erreur.lua:10: attempt to index a nil value (local 'nothing')", "Marche vers la case 12"], page.Lines.Select(line => line.Text));
+        Assert.Equal(["« patrouille » a échoué : The step failed.", "Marche vers la case 12"], page.Lines.Select(line => line.Text));
 
         page.ShowErrorsCommand.Execute(null);
 
@@ -119,7 +134,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         var (_, bot) = await _play.EnterAsync(300);
         var page = new LogsViewModel(_french, new BotChoice());
 
-        _problems.Problems.Add(new HostProblem(_at, LogLevel.Warning, "D3B.Scripting.Library.ScriptLibrary", "Script mineur does not read: mineur.lua:3: unexpected symbol", null));
+        _problems.Problems.Add(new HostProblem(_at, LogLevel.Warning, "D3B.Bot.Runtime.Bots", "Game connection 7: its account is not known, so no bot plays its character", null));
         page.Refresh(_host.Services);
 
         Assert.True(page.ShowsSources);
@@ -130,7 +145,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
 
         var problem = Assert.Single(page.Lines);
 
-        Assert.Equal(("Script mineur does not read: mineur.lua:3: unexpected symbol", "ScriptLibrary", Tone.Warning), (problem.Text, problem.Detail, problem.Tone));
+        Assert.Equal(("Game connection 7: its account is not known, so no bot plays its character", "Bots", Tone.Warning), (problem.Text, problem.Detail, problem.Tone));
         Assert.False(page.ShowsSources);
     }
 

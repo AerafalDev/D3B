@@ -10,6 +10,7 @@ using D3B.Bot.Runtime;
 using D3B.Data;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Storage.Profiles;
 using Microsoft.Extensions.Logging;
 
 namespace D3B.App.ViewModels.Logs;
@@ -64,6 +65,7 @@ internal sealed class JournalLines
             ActivityInterruptedEntry interrupted => (Interrupted(interrupted), null, Tone.Warning, LogMark.Pause),
             ActivityUnloadingEntry unloading => (Format("JournalUnloading", unloading.Activity, unloading.Weight, unloading.MaxWeight), null, Tone.Info, LogMark.Bag),
             ActivityOverEntry over => Over(over),
+            ProfileNotStartedEntry profile => (Format("JournalProfileNotStarted", profile.Profile), NotStarted(profile), Tone.Warning, LogMark.Alert),
             BotEventEntry bot => Event(bot.Event),
             _ => (entry.GetType().Name, null, Tone.Neutral, LogMark.Alert),
         };
@@ -148,6 +150,17 @@ internal sealed class JournalLines
             _ when over.StillFull => (Format("JournalActivityStillFull", over.Activity), steps, Tone.Danger, LogMark.Alert),
             _ when over.Error is { } error => (Format("JournalActivityFailedWith", over.Activity, error), steps, Tone.Danger, LogMark.Alert),
             _ => (Format("JournalActivityFailed", over.Activity), steps, Tone.Danger, LogMark.Alert),
+        };
+    }
+
+    private string? NotStarted(ProfileNotStartedEntry profile)
+    {
+        return profile.Failure switch
+        {
+            ProfileStartFailure.ActivityMissing => Format("ActivityMissing", profile.ActivityId),
+            ProfileStartFailure.SettingsReset => _localizer["ProfileNeedsReview"],
+            ProfileStartFailure.SettingsInvalid => _localizer["SettingsDoNotHold"],
+            _ => profile.Error,
         };
     }
 

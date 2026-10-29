@@ -240,7 +240,7 @@
     <value>Profile or activity</value>
   </data>
   <data name="NoActivityAvailable" xml:space="preserve">
-    <value>No activity to start yet: modules and scripts add them.</value>
+    <value>No activity to start yet: D3B's modules will add them.</value>
   </data>
   <data name="Start" xml:space="preserve">
     <value>Start</value>
@@ -426,7 +426,7 @@
     <value>To review</value>
   </data>
   <data name="ActivityMissing" xml:space="preserve">
-    <value>Activity not found: {0}</value>
+    <value>Activity gone: {0}</value>
   </data>
   <data name="NoSetting" xml:space="preserve">
     <value>This activity has no setting.</value>
@@ -495,7 +495,7 @@
     <value>default settings</value>
   </data>
   <data name="ProfileActivityMissing" xml:space="preserve">
-    <value>The activity of {0} is not loaded</value>
+    <value>The activity of {0} is gone</value>
   </data>
   <data name="ProfileToReview" xml:space="preserve">
     <value>{0} is to review in Profiles</value>
@@ -640,6 +640,12 @@
   </data>
   <data name="JournalFight" xml:space="preserve">
     <value>A fight began</value>
+  </data>
+  <data name="JournalProfileNotStarted" xml:space="preserve">
+    <value>Profile « {0} » did not start on connection</value>
+  </data>
+  <data name="SettingsDoNotHold" xml:space="preserve">
+    <value>Its settings do not hold</value>
   </data>
   <data name="OutcomeArrived" xml:space="preserve">
     <value>arrived</value>

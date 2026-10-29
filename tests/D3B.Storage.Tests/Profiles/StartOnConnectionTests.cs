@@ -1,7 +1,7 @@
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
 using D3B.Protocol.Game;
-using Microsoft.Extensions.Logging;
+using D3B.Storage.Profiles;
 
 namespace D3B.Storage.Tests.Profiles;
 
@@ -61,7 +61,7 @@ public sealed class StartOnConnectionTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task AProfileThatDoesNotHoldOnConnectionIsLoggedAndDoesNotStart()
+    public async Task AProfileThatDoesNotHoldOnConnectionDoesNotStartAndSaysWhyInTheJournal()
     {
         await _storage.StartedAsync();
 
@@ -78,9 +78,13 @@ public sealed class StartOnConnectionTests : IAsyncDisposable
 
         var (_, bot) = await _storage.Play.EnterAsync(300);
 
-        await Waiting.UntilAsync(() => _storage.Log.GetSnapshot().Any(record => record.Level is LogLevel.Warning));
+        // The journal is written once the host's log was.
+        await Waiting.UntilAsync(() => bot.Journal.All().OfType<ProfileNotStartedEntry>().Any());
+
+        var entry = bot.Journal.All().OfType<ProfileNotStartedEntry>().Single();
 
         Assert.Null(bot.Activity);
         Assert.Contains(_storage.Log.GetSnapshot(), record => record.Message.StartsWith($"Bot {TestPlay.CharacterId}: profile Broken did not start on its connection, ActivityMissing", StringComparison.Ordinal));
+        Assert.Equal(new ProfileNotStartedEntry(entry.At, "Broken", "gone", ProfileStartFailure.ActivityMissing, null), entry);
     }
 }
