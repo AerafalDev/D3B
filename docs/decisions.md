@@ -16,6 +16,8 @@ Set by the project owner, not up for decision:
 - Better than the existing bots, open source or sold: inspired by them, never copied.
 - Every feature is a module, assembled as in Bevy, in the repository (D116, the owner's change: the brief's external
   .NET plugins, then the Lua scripts of D102 that replaced them, go).
+- Mods are made in blueprint style, graphs of nodes edited in the app, after the first milestone (D117, the owner's
+  change).
 - The desktop UI is Avalonia with ShadUI.
 - The network goes through Kestrel's socket layer.
 - Game data is extracted from the official client by file-based apps in `scripts/`, as in Dofus Remastered.
@@ -2892,7 +2894,8 @@ are; the owner chose an API of D3B's own. The form is the lead's, local and reve
 
 ## D109: The external plugins removed
 
-*2026-10-29, step 7. Carries out D102. Supersedes in part D19, whose `samples/` now holds example scripts.*
+*2026-10-29, step 7. Carries out D102. Supersedes in part D19, whose `samples/` now holds example scripts; `samples/`
+goes with them, by D119.*
 
 - **Gone**: the plugin loader and its attribute, its load context and `PluginInfo` (`D3B.Core.Plugins`), the `plugins`
   folder and `Plugins:Directory`, packing `D3B.Core`, `D3B.Bot` and the four libraries it names, CI's check of the
@@ -3036,7 +3039,8 @@ protocol's messages.*
 ## D116: Lua scripts go, in a session of their own
 
 *2026-10-29, step 5, session 5e, chosen by the owner, against the lead's recommendation. Supersedes D102 and D105 to
-D108; D103 stays as what was measured. Changes the brief.*
+D108; D103 stays as what was measured. Changes the brief. Carried out by D119; nothing outside the repository superseded
+by D117, mods coming as blueprints.*
 
 Once the scripts were measured through the app (D110), the owner chose to do without them. The lead recommended
 freezing them as they are, no more work on their API, and deciding again after step 6.
@@ -3052,6 +3056,81 @@ freezing them as they are, no more work on their API, and deciding again after s
   - Freezing them, the lead's recommendation: an API and its definitions kept, unused.
   - Removing them within 5e: one large task per session (D17).
 
+## D117: Mods in blueprint style, after step 6
+
+*2026-10-29, the session removing the Lua scripts, chosen by the owner, the step's place as the lead recommended it.
+Supersedes D116's "nothing outside the repository" for mods. Changes the brief. Opens Q13.*
+
+Asked which activity D3B keeps without Lua (D118), the owner answered that mods will be made in blueprint style: graphs
+of nodes, edited on a canvas in the app. The references the owner gave, read for their look and ergonomics only (D3),
+all React where the app is Avalonia (D14):
+
+- shadcn.io's Canvas, a node editor for agents' workflows: nodes as cards with a header, content and footer and their
+  input and output handles, curved edges, animated or dashed, panning, zooming, fitting, a toolbar on the node chosen,
+  keyboard control; written without a flow library.
+- React Flow's Workflow Editor template: nodes dragged from a sidebar, laid out automatically (ELKjs), and a runner that
+  executes the nodes one after another and shows where it is.
+- ReUI's flow blocks, on React Flow: nodes as cards with their status, duration and owner, labelled edges such as yes
+  and no, an inspector beside the canvas that reads and edits the node chosen, snapping to a grid, a context menu.
+
+- **When**: after step 6, as step 7, whose number Lua held. A node wraps a behavior of D3B's, and harvesting's, which
+  step 6 writes, do not exist yet; step 6's harvesting is a module's activity (D87), the first milestone.
+- **What is open** (Q13): who writes mods, the owner or users too; where they live; what a node is over D3B's behaviors
+  and state; how a graph runs as an activity, interrupted and resumed from the state (D87); its settings (D98); and which
+  canvas in Avalonia, a library or the app's own.
+- **Risk**, the lead's: a graph that runs is a language to keep, what Lua cost (D116); its contract is to stay small.
+- **Rejected.**
+  - The blueprints right after 5d, before harvesting: a runner and nodes over behaviors not written yet.
+  - The blueprints before 5d.
+
+## D118: No activity of D3B's own until step 6
+
+*2026-10-29, the session removing the Lua scripts, chosen by the owner, against the lead's recommendation. Builds D93.*
+
+Without Lua, no module in `src/` registers an activity: the scripts were the only ones, the tests' own aside.
+
+- **The catalogue is empty** until step 6 writes harvesting (D93): a bot's card says there is no activity to start yet,
+  and that D3B's modules will add them; the profiles page has no activity to give a new profile.
+- **What waits**: starting, stopping, pausing and resuming an activity from the app on a client, and profiles, their
+  settings and starting on connection, which D99 and D110 did not measure on a client, until step 6. 5d measures the
+  live map with what the player does.
+- **Rejected.**
+  - The stroll written again in C#, a module's activity with its two settings, the lead's recommendation: 5d would see
+    the bot walk on its own, and profiles would be measured on a client, for about a hundred lines to keep or drop at
+    step 6.
+
+## D119: The Lua scripts removed
+
+*2026-10-29, the session removing the Lua scripts. Carries out D116. Supersedes D107's settings without a class and
+D108's source of activities, the owner's choice against the lead's recommendation, and D109's `samples/`.*
+
+- **Gone**: `D3B.Scripting` and its tests, the scripting module the app and `D3B.Host` added, the scripts' folder and
+  `Scripting:Directory`, `d3b.lua` and `.luarc.json`, `samples/scripts/` with its stroll, and `samples/` with it, empty,
+  and LuaCSharp from the central packages. CI named none of them.
+- **D107's pieces go too**, the owner's choice: the lead recommended keeping them for the blueprints (D117), whose
+  mods' settings are data and whose activities come and go. Gone: `IActivitySource`, the catalogue's `Version` and the
+  app's lists read again when it changed; `SettingValuesBuilder`, `SettingValueBuilder` and `SettingValues`; choices of
+  strings; `LocalizedText.ByLanguage`. `SettingDefinition` is a property of the settings' class again, as before step 7;
+  the catalogue holds the modules' activities alone, fixed once the host is built (D93).
+- **Kept**, serving any activity: `ActivityRun.Failure` and the error on the bot's card (D103); an activity that is
+  `IDisposable` disposed once over, its run being the only one to hold it (D93); `WorldPathfinder.Atlas`, which the card
+  places the character with.
+- **A profile naming a script** names an activity gone, and nothing maps it to another: the profiles page says
+  "Activity gone" with its id, `script:promenade.lua`, and edits it only once given another activity; deleting it works.
+  A bot's card offers it, the gone activity beside it, and starting it says the activity is gone.
+- **On connection**, a profile that does not start says why in the bot's journal (`ProfileNotStartedEntry`, in
+  `D3B.Storage.Profiles`), its activity gone, its settings to review or not holding: the host's log names the bot, which
+  the host's problems leave to the journal (D114), and the journal said nothing of it, the bot doing nothing in the app
+  with no reason shown.
+- **The user's folder** `%LOCALAPPDATA%\D3B\scripts` stays as it is: D3B neither reads nor writes it any more, and the
+  owner deletes it.
+- **Measured** on a client of 3.7.12.12 through the app, on a copy of the database holding a profile that names
+  `script:promenade.lua`, its character's own, started on connection ([client.md](client.md#the-game-from-the-app)): the
+  host built its five modules, no scripting among them; the profile did not start on connection, which the bot's journal
+  said; the card and the profiles page showed its activity gone; the inspector live and a capture replayed; closing the
+  app gave the client its configuration back. Not measured on the client: deleting the profile, which the tests do; the
+  player's pause, which needs a behavior running, and so an activity (D118).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -3061,3 +3140,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
+| Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
