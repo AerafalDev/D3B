@@ -210,7 +210,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             english.AddRange(Texts(window));
             Draw(window, "map-en");
 
-            var map = (main.Map.Scene?.Activity?.Target, main.Map.Scene?.Activity?.Wanted.ToArray(), main.Map.Tour?.Squares.Length);
+            var map = (main.Map.Scene?.Activity?.Target, main.Map.Scene?.Activity?.Wanted.ToArray(), main.Map.Tour?.Squares.Length, main.Map.Scene?.Elements.Count(element => element.Icon is not null));
 
             main.SwitchLanguageCommand.Execute(null);
             main.Refresh();
@@ -250,5 +250,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Equal(TestPlay.TreeCell, map.Target);
         Assert.Equal([TestPlay.TreeCell], map.Item2);
         Assert.True(map.Item3 > 0);
+
+        // The tree, drawn by its resource's icon; the door keeps its mark.
+        Assert.Equal(1, map.Item4);
     }
 }

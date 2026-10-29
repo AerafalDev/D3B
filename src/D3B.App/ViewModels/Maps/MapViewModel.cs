@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls;
 using D3B.App.Localization;
@@ -38,6 +39,7 @@ internal sealed partial class MapViewModel : ObservableObject
     private GameMaps? _maps;
     private GameWorld? _world;
     private MapNames? _names;
+    private GameIcons? _icons;
     private Bots? _bots;
     private BotActor? _drawnBot;
     private CharacterState? _drawnState;
@@ -211,6 +213,7 @@ internal sealed partial class MapViewModel : ObservableObject
             _maps = services.GetService<GameMaps>();
             _world = services.GetService<GameWorld>();
             _names = new MapNames(_localizer, _world, services.GetService<GameTexts>(), services.GetService<GameTables>());
+            _icons = GameIcons.Of(services.GetService<GameTables>());
             _says = new GameTextFormatter(_localizer, _world, services.GetService<GameTexts>(), services.GetService<GameTables>());
         }
 
@@ -498,12 +501,20 @@ internal sealed partial class MapViewModel : ObservableObject
             if (element.CellId == MapInteractive.NoCell)
                 continue;
 
-            var mark = doors.Contains(element.ElementId) ? MapMark.Door : MarkOf(state.Elements.GetValueOrDefault(element.ElementId));
+            var described = state.Elements.GetValueOrDefault(element.ElementId);
+            var mark = doors.Contains(element.ElementId) ? MapMark.Door : MarkOf(described);
 
-            marks.Add(new MapElementMark(element.ElementId, element.CellId, mark));
+            marks.Add(new MapElementMark(element.ElementId, element.CellId, mark, mark is MapMark.Resource or MapMark.Harvested ? IconOf(described!) : null));
         }
 
         return marks.ToImmutable();
+    }
+
+    private IImage? IconOf(MapElement element)
+    {
+        var gathered = element.EnabledSkills.Concat(element.DisabledSkills).Select(skill => _names!.Gathered(skill.SkillId)).FirstOrDefault(item => item is not null);
+
+        return gathered is { } item ? _icons?.Item(item) : null;
     }
 
     private MapMark MarkOf(MapElement? element)

@@ -81,6 +81,14 @@ internal sealed class MapNames
         return _tables is not null && _tables.Jobs.TryGetSkill(skillId, out var skill) && skill.GatheredItemId > 0;
     }
 
+    /// <summary>Finds the resource a skill gathers.</summary>
+    /// <param name="skillId">The skill.</param>
+    /// <returns>The item it gathers, or <see langword="null"/> when it gathers none, or without the pack's tables.</returns>
+    public int? Gathered(int skillId)
+    {
+        return _tables is not null && _tables.Jobs.TryGetSkill(skillId, out var skill) && skill.GatheredItemId > 0 ? skill.GatheredItemId : null;
+    }
+
     /// <summary>Names a non-player character: a banker by the pack's name, any other by its id.</summary>
     /// <param name="npcId">Which NPC it is.</param>
     /// <returns>Its name.</returns>
