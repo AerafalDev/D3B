@@ -36,7 +36,9 @@ app's logs page and protocol inspector, live or replaying a capture (step 5, ses
 5d); the harvesting module, its activity touring a zone and banking full, an activity's report on the bot's card and the
 map page, and the profile editor grown with suggestions, a zone's mini-map and a preview (step 6, session 6a); the icons of
 the resources and professions in a pack of format 4, drawn on the tiles, lists, card and map, and the maps' graphics the
-bots learn, which send a tour to the probable maps first (step 6, session 6b); the resources of `Base` placed by the graphics\nlearned, a zone's isolated maps, fights told by their timing and followed as the profile says, the resources' growing\nback learned and kept, and each run kept for a statistics page (step 6, session 6c). Everything else below is the target.
+bots learn, which send a tour to the probable maps first (step 6, session 6b); the resources of `Base` placed by the graphics
+learned, a zone's isolated maps, fights told by their timing and followed as the profile says, the resources' growing
+back learned and kept, and each run kept for a statistics page (step 6, session 6c). Everything else below is the target.
 
 ## Overview
 
@@ -123,7 +125,9 @@ Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharin
 behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
 map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank; in session 4e (D83,
 D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
-client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c\n(D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's\nresources.
+client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c
+(D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's
+resources.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -391,7 +395,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   with its defaults (D93, D99), the character's own profile chosen, stopped, with its status, steps and last
   interruption, and the error it failed with (D103). A profile whose activity is gone, such as a Lua script's, is offered
   with it said gone, and does not start (D119). An activity's report shows there: what it does, its tour as a bar and how
-  long it ran, what it counts with each item's icon and rate an hour, the experience gained and the fights, its warnings, and why it\n  ended (D131, D141, D144, D146).
+  long it ran, what it counts with each item's icon and rate an hour, the experience gained and the fights, its warnings, and why it
+  ended (D131, D141, D144, D146).
 - **The accounts page** (D101): a card per account the relay saw, its subscription and when it was seen, forgotten on
   demand; its characters in rows, each with the profile it plays and whether it starts on connection.
 - **The profiles page** (D101): a column of profiles, each folded to its name, activity, settings at a glance and
@@ -421,7 +426,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   stairs; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
   bag's and a fight's maps are drawn as the others; a resource by its icon, faded once harvested (D141). A running
   activity's report adds a line, an Activity layer ringing the elements it wants and the one it goes for and marking the
-  exit it heads to, and its tour's mini-map, gone through, probable, to see, without a resource, growing back and isolated\n  (D131, D138, D145, D149).
+  exit it heads to, and its tour's mini-map, gone through, probable, to see, without a resource, growing back and isolated
+  (D131, D138, D145, D149).
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
   alone: the bots' loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
@@ -447,7 +453,13 @@ graphics in session 6b (D138); the resources' growing back and the runs in sessi
 - **The maps' graphics** (`GraphicRecorder`, D138): what the bots learn of each graphic, its skills as JSON, read into
   `GraphicSkills` once the database opens and written as the bots learn, queued off the relays' loops, whatever the
   client's build.
-- **The resources' growing back** (`RegrowthRecorder`, D145): `Regrowths` by skill, the longest seen whole, how many and the\n  least bound, read back before the host starts and written as the bots learn, as the graphics are.\n- **Runs** (`RunRecorder`, `RunBook`, D146): each activity's run, its character, profile, times and outcome, the items it\n  brought, the experience its character gained and its banks and fights; the recorder looks at the bots every 5 s and\n  writes a run as it begins, banks, once a minute while its figures change, and once over. The book reads them back after\n  each write, for the app's statistics.\n- **In memory**: both books are read once the database opens, then again after each write; the app reads them every
+- **The resources' growing back** (`RegrowthRecorder`, D145): `Regrowths` by skill, the longest seen whole, how many and the
+  least bound, read back before the host starts and written as the bots learn, as the graphics are.
+- **Runs** (`RunRecorder`, `RunBook`, D146): each activity's run, its character, profile, times and outcome, the items it
+  brought, the experience its character gained and its banks and fights; the recorder looks at the bots every 5 s and
+  writes a run as it begins, banks, once a minute while its figures change, and once over. The book reads them back after
+  each write, for the app's statistics.
+- **In memory**: both books are read once the database opens, then again after each write; the app reads them every
   refresh, and their version tells it they changed.
 - **No secret** is kept: no Data Protection yet (D100).
 

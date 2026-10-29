@@ -154,7 +154,8 @@ Done on 2026-10-29, with 5d last. Next: step 6.
 One account, through its official client and D3B's MITM (D23), harvests a profile's resources across maps and banks
 them when its pods are full, controlled from the app (D16). The repository may go public once it is reached (D4).
 
-Three sessions, the split chosen by the owner (D126), a fourth for the app's interface (D143) and a fifth for the owner's\nharvesting settings (D152). The milestone was
+Three sessions, the split chosen by the owner (D126), a fourth for the app's interface (D143) and a fifth for the owner's
+harvesting settings (D152). The milestone was
 reached in 6a, on 2026-10-29: harvested from map to map, banked full and back, stopped, paused by the player and resumed,
 and a profile started on connection, measured on a client through the app (D133). A client update before the next session
 gets Q10's session first (D54).
