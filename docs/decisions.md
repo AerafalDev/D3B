@@ -3765,6 +3765,33 @@ a page holding every delay. Builds D77, D132.*
   decode through it, 25,258 frames, none misread. The release of 3.7.12.12 needs it, which the release tool publishes
   (D50) once the owner says so.
 
+## D154: What the first check through the app found, and the time between two actions
+
+*2026-10-29, step 6, session 6c, the owner verifying on the client; the time between two actions chosen by the owner, as the
+lead recommended it. Builds D151, amends D147 and D148.*
+
+- **Too fast**: the bot ate 19 breads 30 ms apart, from 766 to 1,521 life, and put 5 stacks in the guild's chest 28 ms
+  apart; the owner saw the client unable to follow. So the client's display time passes between two objects used and two
+  stacks moved, and after each step of an activity, each an action such as a harvest, a journey or a deposit: a delay of
+  its own, `BotDelays.BetweenSteps`, the display time's half second at least, raised in the settings page. Fixed, never
+  drawn at random: the owner asked again for a least and a most drawn at random, as BillBot's, which D152 keeps out.
+- **The multiple use**, which D153 measured and left unnamed: the owner asked for it, food then eaten in one request, the
+  server using what the life lacks. Named in the protocol by the session that mapped D153.
+- **The guild's chest** took 4 stacks whole and part of a fifth, 9 of 52 left in the inventory; then the character, carrying
+  other things, was still above its share of 50 % at 77 %, and the activity ended still full. So a part taken counts as
+  refused, and what the guild's chest leaves goes to the character's own chest before the activity says it is still full.
+- **What goes to the bank** stays the setting's: "what harvesting brings" leaves what the owner took from the bank.
+
+## D155: 6d, a redesign of the app's interface
+
+*2026-10-29, step 6, session 6c, chosen by the owner. Amends D143.*
+
+- Verifying 6c, the owner found the app a catch-all: too much text, too many explanations, views cut, not pleasant. 6d is
+  no longer a pass over spacing: a redesign, mockups first, page by page, the profile editor first, help texts short or
+  gone, one scale of spacing and sizes, ShadUI's components where they fit.
+- **Rejected.**
+  - The redesign in 6c: 6c ends with its check on the client and the call on the repository (D4).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
