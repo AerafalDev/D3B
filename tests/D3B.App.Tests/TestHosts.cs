@@ -6,6 +6,7 @@ using D3B.Bot.Tests;
 using D3B.Bot.Tests.Runtime;
 using D3B.Core.Modules;
 using D3B.Core.Plugins;
+using D3B.Storage;
 using D3B.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -49,6 +50,26 @@ internal static class TestHosts
         bot.Services.AddSingleton(services => new PageCatalog(services.GetServices<PageDefinition>()));
 
         return bot.Build();
+    }
+
+    /// <summary>A host of the bots a test plays, with its activities, the game's values of a small world and a database of the test's own, opened.</summary>
+    public static async Task<IHost> WithStorageAsync(TestPlay play, string path, TestGameData game, params ActivityDefinition[] activities)
+    {
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+
+        Register(builder.Services, play);
+        builder.Services.AddSingleton(new ActivityCatalog(activities));
+        builder.Services.AddSingleton(new PageCatalog([]));
+        builder.Services.AddSingleton(game.References);
+        builder.Services.AddSingleton(game.Texts);
+        builder.Services.AddSingleton<TimeProvider>(play.Time);
+        StorageModule.Register(builder.Services, new StorageSettings { Path = path });
+
+        var host = builder.Build();
+
+        Assert.Null(await host.Services.GetRequiredService<IHostPreparation>().PrepareAsync(TestContext.Current.CancellationToken));
+
+        return host;
     }
 
     /// <summary>The app's runner of a host that started.</summary>

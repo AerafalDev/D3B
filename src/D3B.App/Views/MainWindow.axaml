@@ -70,7 +70,7 @@
         </StackPanel>
     </shadui:Window.RightWindowTitleBarContent>
     <Grid ColumnDefinitions="Auto,*">
-        <Border Classes="Rail" IsVisible="{Binding HasPages}">
+        <Border Classes="Rail">
             <StackPanel Margin="0,14" Spacing="6">
                 <Button
                     Classes="Ghost RailItem"
@@ -79,7 +79,21 @@
                     ToolTip.Tip="{l:Tr Bots}">
                     <c:Icon Data="{StaticResource IconCards}" />
                 </Button>
-                <Border Classes="RailSeparator" />
+                <Button
+                    Classes="Ghost RailItem"
+                    Classes.Selected="{Binding IsAccountsPage}"
+                    Command="{Binding ShowAccountsCommand}"
+                    ToolTip.Tip="{l:Tr Accounts}">
+                    <c:Icon Data="{StaticResource IconUsers}" />
+                </Button>
+                <Button
+                    Classes="Ghost RailItem"
+                    Classes.Selected="{Binding IsProfilesPage}"
+                    Command="{Binding ShowProfilesCommand}"
+                    ToolTip.Tip="{l:Tr Profiles}">
+                    <c:Icon Data="{StaticResource IconSliders}" />
+                </Button>
+                <Border Classes="RailSeparator" IsVisible="{Binding HasPages}" />
                 <ItemsControl ItemsSource="{Binding Pages}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -189,7 +203,13 @@
                 <Panel IsVisible="{Binding IsBotsPage}">
                     <views:BotsView DataContext="{Binding Bots}" />
                 </Panel>
-                <ContentControl Content="{Binding SelectedPage.Content}" IsVisible="{Binding !IsBotsPage}">
+                <Panel IsVisible="{Binding IsAccountsPage}">
+                    <views:AccountsView DataContext="{Binding Accounts}" />
+                </Panel>
+                <Panel IsVisible="{Binding IsProfilesPage}">
+                    <views:ProfilesView DataContext="{Binding Profiles}" />
+                </Panel>
+                <ContentControl Content="{Binding SelectedPage.Content}" IsVisible="{Binding IsPluginPage}">
                     <ContentControl.DataTemplates>
                         <DataTemplate x:DataType="vm:PageFailureViewModel">
                             <ScrollViewer>

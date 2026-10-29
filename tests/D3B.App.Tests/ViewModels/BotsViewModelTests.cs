@@ -107,7 +107,7 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         Assert.True(item.HasActivities);
         Assert.True(item.IsChoosing);
         Assert.False(item.HasNothingToChoose);
-        Assert.Equal("patrol", item.SelectedActivity?.Definition.Id);
+        Assert.Equal("patrol", item.SelectedActivity?.Definition?.Id);
         Assert.True(item.StartCommand.CanExecute(null));
         Assert.False(item.StopCommand.CanExecute(null));
 

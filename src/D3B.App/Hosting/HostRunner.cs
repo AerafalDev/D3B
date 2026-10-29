@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using D3B.Bot.Hosting;
+using D3B.Storage;
 using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Hosting;
@@ -36,10 +37,10 @@ internal sealed class HostRunner
     /// <summary>Gets the host's services while it runs, else <see langword="null"/>.</summary>
     public IServiceProvider? Services => Status is HostStatus.Running ? _host?.Services : null;
 
-    /// <summary>Initializes a new instance of the <see cref="HostRunner"/> class, for the default modules and the plugins.</summary>
+    /// <summary>Initializes a new instance of the <see cref="HostRunner"/> class, for the default modules, the plugins and the database.</summary>
     /// <param name="args">The command-line arguments, read as the host's configuration.</param>
     public HostRunner(string[] args)
-        : this(cancellationToken => BotHost.StartAsync(BotHost.CreateBuilder(args), cancellationToken))
+        : this(cancellationToken => BotHost.StartAsync(BotHost.CreateBuilder(args).AddModule<StorageModule>(), cancellationToken))
     {
     }
 

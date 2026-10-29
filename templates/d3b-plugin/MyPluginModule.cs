@@ -24,7 +24,11 @@ public sealed class MyPluginModule : IModule
 
         // Add the modules this plugin requires first, with bot.AddModule<T>(), then register what it brings
         // through bot.Services: its services, its activities, which the app starts on a bot, and its pages.
-        bot.Services.AddActivity<MyPluginActivity>("com.example.myplugin.activity", LocalizedText.From(MyPluginTexts.Resources, "ActivityName"));
+        bot.Services.AddActivity<MyPluginActivity, MyPluginSettings>("com.example.myplugin.activity", LocalizedText.From(MyPluginTexts.Resources, "ActivityName"), settings =>
+        {
+            // Each setting, as the app shows and checks it; a profile keeps their values.
+            settings.Number(s => s.Steps, LocalizedText.From(MyPluginTexts.Resources, "StepsSetting"), 1, 100);
+        });
 #if (Page)
 
         // The page's types are named in its factory alone: a host without the app, which lacks Avalonia, builds this

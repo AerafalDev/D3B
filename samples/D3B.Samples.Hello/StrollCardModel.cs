@@ -105,7 +105,7 @@ internal sealed partial class StrollCardModel : ObservableObject
         ArrivalsLabel = Texts.Plural("WalksArrived", entry?.Arrivals ?? 0);
         LastWalk = entry is null ? Texts["NoWalkYet"] : Texts.Format("LastWalk", entry.LastCell, Texts[OutcomeKey(entry.LastOutcome)]);
         HasStroll = stroll is not null;
-        Progress = stroll is null ? 0 : 100.0 * stroll.Walked / Stroll.Length;
-        ProgressText = stroll is null ? "" : Texts.Format("ProgressOf", stroll.Walked, Stroll.Length);
+        Progress = stroll is null ? 0 : 100.0 * stroll.Walked / stroll.Length;
+        ProgressText = stroll is null ? "" : Texts.Format("ProgressOf", stroll.Walked, stroll.Length);
     }
 }

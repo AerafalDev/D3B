@@ -101,6 +101,12 @@ internal sealed class TestPlay : IAsyncDisposable
     public Bots Bots { get; }
 
     public TestPlay(params int[] blocked)
+        : this([], blocked)
+    {
+    }
+
+    /// <summary>A play whose game connections other observers see too, after the bots.</summary>
+    public TestPlay(IReadOnlyList<IGameObserver> observers, params int[] blocked)
     {
         var path = _directory.Combine("data-3.pack");
 
@@ -112,7 +118,7 @@ internal sealed class TestPlay : IAsyncDisposable
         _logs = LoggerFactory.Create(logging => logging.AddProvider(new FakeLoggerProvider(Log)).SetMinimumLevel(LogLevel.Debug));
         Bots = new Bots(Maps, World, Tables, Time, _logs);
         _accounts = new GameAccounts(_settings.SelectionLifetime, Time);
-        _decoder = new RelayDecoder(Translation, new GameServerSelections(_settings, Time), _accounts, [Bots], _logs);
+        _decoder = new RelayDecoder(Translation, new GameServerSelections(_settings, Time), _accounts, [Bots, .. observers], _logs);
     }
 
     /// <summary>The character as the server's confirmation of the choice describes it.</summary>

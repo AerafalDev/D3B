@@ -14,7 +14,8 @@ Set by the project owner, not up for decision:
 
 - An open-source bot for Dofus 3 (Unity), in .NET 10.
 - Better than the existing bots, open source or sold: inspired by them, never copied.
-- Every feature is a module, assembled as in Bevy. External .NET plugins add modules.
+- Every feature is a module, assembled as in Bevy. Users extend the bot with Lua scripts (D102, the owner's change to
+  the brief's external .NET plugins).
 - The desktop UI is Avalonia with ShadUI.
 - The network goes through Kestrel's socket layer.
 - Game data is extracted from the official client by file-based apps in `scripts/`, as in Dofus Remastered.
@@ -105,7 +106,7 @@ logging and dependency injection the Generic Host already covers.
 
 ## D6: External plugins load once, never unload
 
-*2026-10-27*
+*2026-10-27. Superseded by D102: Lua scripts replace the external plugins.*
 
 An external plugin is a folder under `plugins/`. Each loads into its own `AssemblyLoadContext`, which shares the host's
 assemblies, as Palforge's `PluginLoadContext`, but is not collectible. A plugin declares its identity with an
@@ -240,7 +241,7 @@ version: accounts and profiles, the live map with the bot's state, and logs with
 ## D15: The rest of the stack
 
 *2026-10-27. Superseded in part by D23: D3B does not call Haapi, so the "HTTP (Haapi authentication)" row no longer
-applies.*
+applies. The "Secrets" row waits for a secret to keep (D100).*
 
 Versions are the latest stable on NuGet on 2026-10-27, unless the line says otherwise.
 
@@ -346,7 +347,7 @@ built as soon as it is added, as in Bevy and Dofus Remastered's `AppBuilder`:
 
 ## D21: The plugin contract
 
-*2026-10-27, step 1*
+*2026-10-27, step 1. Superseded by D102 for external plugins.*
 
 `bot.AddPlugins(directory)` loads the plugins under a directory. The host passes `plugins/` next to its executable,
 or the `Plugins:Directory` setting, resolved from the executable's directory.
@@ -2321,7 +2322,8 @@ So:
 
 ## D90: Plugins, not Lua
 
-*2026-10-28, step 4, session 4f, chosen by the owner. Supersedes D12; drops Q1 and step 7.*
+*2026-10-28, step 4, session 4f, chosen by the owner. Supersedes D12; drops Q1 and step 7. Superseded by D102: Lua
+scripts replace the plugins.*
 
 The owner does not want Lua scripts: routes and routines are written as .NET plugins, like every feature (D5, D6, D21),
 their activities `BotActivity` (D87).
@@ -2398,7 +2400,8 @@ register activities.*
 ## D94: The app's first version
 
 *2026-10-29, step 5, session 5a; dark by default, chosen by the owner, who asked for a real effort on the interface,
-then for a page more practical and pleasant than three panes, its design left to the lead. Builds D14.*
+then for a page more practical and pleasant than three panes, its design left to the lead. Builds D14. The theme and the
+language are remembered since D101.*
 
 - **The stack** (D15): Avalonia 12.1.4, ShadUI 0.2.4, CommunityToolkit.Mvvm 8.4.2, and Avalonia.Fonts.Inter 12.1.4,
   Inter being the typeface ShadUI's design comes from, the same on every machine. Avalonia's packages ShadUI brings are
@@ -2443,7 +2446,7 @@ then for a page more practical and pleasant than three panes, its design left to
 ## D95: Plugins compile against the D3B.Bot package
 
 *2026-10-29, step 5, session 5b, chosen by the owner. Settles Q11. Supersedes D22 in part: D3B.Core is no longer the
-only package, nor what a plugin references.*
+only package, nor what a plugin references. Superseded by D102: there are no plugins to compile.*
 
 What a plugin needs to write an activity is the bots' run time itself: `BotContext` names the pack's maps
 (`D3B.Data`), the paths through the world (`D3B.Engine`), the side a message came from (`D3B.Network`) and the readable
@@ -2476,7 +2479,8 @@ walking, travelling, using an element, banking, live beside the actor.
 ## D96: A plugin's page, in the app's rail
 
 *2026-10-29, step 5, session 5b; the rail chosen by the owner among three mockups. Settles Q6. Builds D5, D91, D93 and
-D94.*
+D94. The rail shows always since D101, the app having pages of its own; pages come from D3B's own modules alone since
+D102.*
 
 - **Registered by its module**, as D5 planned: `services.AddPage(id, title, icon, create)`
   (`PageServiceCollectionExtensions`, in `D3B.Bot.Pages`), a `PageDefinition`, its id unique in the host, which a
@@ -2532,7 +2536,7 @@ D94.*
 
 ## D97: The loader reads a plugin's root module from its metadata
 
-*2026-10-29, step 5, session 5b. Builds D21.*
+*2026-10-29, step 5, session 5b. Builds D21. Superseded by D102: the loader goes.*
 
 - `PluginLoader` finds the public class marked `[Plugin]` by reading the assembly's metadata
   (`System.Reflection.Metadata`), then loads that type alone. Looking for the attribute by reflection over every public
@@ -2552,12 +2556,193 @@ D94.*
   - `System.Reflection.MetadataLoadContext`: a package, for a search the metadata reader in the framework does.
   - `D3B.Host` shipping Avalonia: a UI framework in the host without the app, for types it never makes.
 
+## D98: An activity's settings, a class its module describes in code
+
+*2026-10-29, step 5, session 5c; the description in code, and the scope with the game's values and every mechanism,
+chosen by the owner, who noted that the auto modes to come, BillBot's for one, focus a profession, maps, resources of the
+profession's level, a monster, an area or a sub-area. Builds D93, D96.*
+
+D93 left an activity's settings to 5b and 5c, and 5b did not write them.
+
+- **What a module declares**: a class of the settings, with a constructor of no parameter, whose initial values are the
+  defaults, and each of its properties it makes a setting, in code, as it registers the activity:
+  `services.AddActivity<TActivity, TSettings>(id, name, settings => ...)` (`ActivitySettingsBuilder<TSettings>`, in
+  `D3B.Bot.Settings`). A setting is named by an expression, `s => s.Walks`, whose type says what it holds; its name and
+  help are `LocalizedText`s (D96).
+- **The kinds** (`SettingKind`), D3B's, each with its editor in the app: `Flag`, a `bool`; `Number`, an `int` between
+  bounds; `Text`, a `string` of bounded length; `Choice`, an enumeration's value, or a list of them (`Choices`), each
+  named by the module; and the game's values by their ids, `Job`, `Area`, `SubArea` and `Resource`, an `int?` for one
+  and a list of `int`s for several (`Jobs`, `Areas`, `SubAreas`, `Resources`). A list holds each value once; `Ordered`
+  says its order matters, such as a priority. `Required` asks for a value. A sub-area is sought `Within` an area, a
+  resource within a profession: the app offers those within the parent's value once it has one. `VisibleWhen` shows a
+  setting when a condition of the settings holds, hidden it is not checked. `Section` groups the next settings under a
+  title. `Rule` declares what the settings hold together, such as a minimum below a maximum, and what to say when they do
+  not.
+- **The game's values** (`GameReferences`, registered by the bots module): professions but the base, the atlas's areas
+  and sub-areas, each sub-area's level, and the items each profession's skills gather, at the lowest level a skill
+  gathers each. Read from the installed build's pack the first time something asks: a host that starts nothing never
+  reads them. The app names them from the pack's texts in its language, and searches them whatever the case and accents,
+  "frene" finding Frêne.
+- **Checked in `D3B.Bot`** (`ActivitySettings.Check`), so a host without the app checks too: a problem per setting at
+  most, of a kind the app says in its own language (`SettingProblemKind`: required, out of range, too long, unknown,
+  repeated, not within), then each rule that does not hold, with the module's text. Without the pack, the game's ids are
+  not checked. A condition or rule of a plugin's that throws shows the setting, or does not hold: the app runs it on its
+  UI's thread, in the process that holds every client's connection (D91).
+- **Registration checks the defaults** for what the module wrote wrong, a number out of its bounds, a text too long, a
+  value repeated: the host does not start (D21). A value the user must give, such as a profession, has no default, and a
+  rule may wait for it.
+- **Stored as JSON**, a value per setting's key, its property's name; a choice by its value's name, so that an
+  enumeration may be reordered. Reading starts from the defaults and takes each value that still reads: a key no longer
+  declared is dropped, a value that no longer reads keeps its default and is reported (`SettingsReading.Reset`); of a
+  list, what still reads is kept.
+- **The activity receives them** through its constructor, an instance of the class, beside the services it asks for
+  (`ActivityDefinition.Create(services, settings)`); started without a profile, with the defaults. `AddActivity<T>`
+  without settings stays as it was (`ActivitySettings.None`).
+- **The sample**: the stroll takes its number of walks and its reach as settings. **The template**: its activity takes a
+  setting.
+- **Later**: maps, picked on the live map (5d); monsters, once step 9 puts them in the pack. A plugin's own editor, for a
+  setting no kind holds such as a path drawn on the map, stays possible beside the kinds.
+- **Rejected.**
+  - Attributes on the class, as DataAnnotations: least code, but an attribute holds no `LocalizedText`, the texts become
+    keys resolved apart, and a wrong kind shows only to reflection.
+  - Typed keys and a bag of values: no reflection, but the activity reads `settings.Get(Walks)` rather than an object.
+  - An editor a plugin writes, with JSON of its own: every plugin writes its forms again, nothing is checked without the
+    app, and the design splits.
+  - The kinds alone, the game's values left to step 6: the mechanisms, lists, order, dependencies, conditions, are what
+    is dear to add once activities rely on the settings.
+
+## D99: Accounts seen, reusable profiles, a character's own
+
+*2026-10-29, step 5, session 5c; the profile chosen by the owner. Builds D23, D65, D87.*
+
+- **An account is never added by hand**: D3B sees no password (D23). It comes the first time its client lists its
+  characters through D3B: the identification gives its id, nickname, tag and subscription (D72), the server's list each
+  character's id, name and level (`KnownAccount`, `KnownCharacter`, in `D3B.Storage.Accounts`). The character the client
+  chooses is dated as played. It may be forgotten, its characters with it, until its client lists them again.
+- **A profile** (`Profile`, in `D3B.Storage.Profiles`) is a name, unique whatever its case, an activity by its id, and
+  its settings as JSON (D98), shared by characters: changing it once changes it for all.
+- **A character plays a profile, or none**, preselected on its bot's card; and may ask for it to start on connection,
+  off by default: once its client first connects while the host runs, when its bot is made, the profile starts
+  (`StartOnConnection`). Once per run: a new connection of the client carries the activity on (D89), and an activity
+  the owner stopped stays stopped. A character with no profile never starts.
+- **Recorded as the relay sees it** (`AccountRecorder`, an observer of the game connections, D62): dated as seen, queued
+  off the relay's read loop, written one at a time, a write that fails logged and the relay going on.
+- **A profile starts** (`ProfileStarter`) once its activity is registered, every stored value reads, and the settings
+  hold in the pack; else it says why, and the bot is left alone: a setting reset is looked at in the app before the bot
+  runs on defaults it was not given.
+- **Groups**, a master and its followers, come at step 10, over this model.
+- **Not measured**: recording and starting on connection on a client through the app; the tests play them through game
+  connections built as the relay shows them.
+- **Rejected.**
+  - A profile chosen on the card at each start, kept by no character: nothing remembered, nothing starts by itself.
+  - A profile of a character's own: the same settings copied for every character that does the same.
+  - A profile per account: a bot is a character (D65), and an account's characters rarely do the same.
+
+## D100: D3B's database: SQLite through EF Core, in a project of its own, no secret
+
+*2026-10-29, step 5, session 5c. Builds D15, D91, D95.*
+
+- **`D3B.Storage`**, not packed: EF Core 10.0.14 on SQLite, its context (`StorageContext`), its migrations, and its
+  module (`StorageModule`). Not in `D3B.Bot`: the package plugins compile against would bring EF Core, and SQLite's
+  native libraries into every plugin's folder, which D95 checks. Plugins do not see it: profiles are D3B's, and only
+  name the activities plugins register.
+- **Shared by the app and `D3B.Host`**: both add the module to the host's composition (`BotHost`), so both read and write
+  one file, `%LOCALAPPDATA%\D3B\d3b.db`, beside the packs, captures and the client's configuration, or `Storage:Path`.
+  Connections are not pooled, so the file is not held while D3B is idle, and foreign keys are on: forgetting an account
+  forgets its characters, deleting a profile leaves its characters without one.
+- **The migrations apply before the host starts**, through a step any module may add (`IHostPreparation`, in
+  `D3B.Bot.Hosting`), run once the game data and the protocol are ready: a database that does not open stops the host,
+  which says why and how to name another file, as for a missing pack (D31). `dotnet tool run dotnet-ef migrations add
+  <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations` writes the next, through a
+  design-time context that needs no host; `dotnet-ef` 10.0.14 is a local tool (`dotnet-tools.json`). Migrations are
+  generated code, which the analyzers and the formatter leave alone.
+- **In memory too**: the accounts and the profiles are read once the database opens, then again after each write, a few
+  rows; the app reads them each refresh without the database, and a version number tells it they changed
+  (`AccountBook`, `ProfileBook`). Writes go one at a time per book.
+- **No Data Protection**: nothing kept is a secret. Ids, nicknames, character names and settings are personal data, not
+  secrets; the ticket is never kept (D65); the file lives in the user's own profile. D15's "Secrets" row waits for the
+  first secret D3B keeps, such as a Discord webhook at its step.
+- **Rejected.**
+  - The storage in `D3B.Bot`: see above.
+  - Migrations applied by a hosted service as the host starts: a failure would escape the host's start rather than say
+    why it did not start.
+  - Data Protection now: it would protect nothing.
+
+## D101: The app's pages: a rail always, accounts by account, profiles in a column
+
+*2026-10-29, step 5, session 5c; both layouts chosen by the owner among mockups. Supersedes D96 in part: the rail
+shows always. Builds D94, D96, D99.*
+
+- **The rail** shows always: the bots, the accounts, the profiles, a line once a module registered a page, then the
+  modules' pages (D96). Its icons are the app's own line drawings.
+- **The accounts page**: a card per account, the one seen last first: nickname and tag, its subscription's end or that it
+  has none, when D3B last saw it or that a bot of its plays now, and a button that forgets it, which asks first. Its
+  characters are rows: initials with a dot of their bot's connection, name, level and when they last played, the profile
+  they play, chosen from a list, and the switch that starts it on connection, enabled once they have one. An account
+  explains where it comes from: its client going through D3B, which never sees its password.
+- **The profiles page**: a column of profiles, by name, a new one first. Folded, a profile says its name, its activity,
+  three of its settings at a glance, and the characters that play it; to look at again when its activity is gone or a
+  stored value no longer reads. "Edit" unfolds it in place, one at a time: its name, its activity, then each section of
+  its settings in two columns as the width holds, each setting by its kind, its bounds, help and problem, the rules that
+  do not hold below, and save, enabled once all hold, cancel, and delete, which asks first. Changing the activity starts
+  its settings again from their defaults. While a profile is edited, what the relay records does not disturb its editor.
+- **A bot's card** offers the profiles first, by name, with their activity beside, then the activities with their
+  defaults; the profile its character plays is chosen. An activity whose settings need a value asks for a profile; a
+  profile that does not start says why.
+- **The language and the theme are remembered** in a file of the app's own, `%LOCALAPPDATA%\D3B\app.json`
+  (`AppPreferences`), read before the window shows, while the host and its database still get ready: the window opens as
+  it was left. A file that does not read leaves the defaults. This is not the database: the app reads it before the host
+  runs.
+- **Drawn without a screen** in both languages and both themes, and looked at; the window's tests read both pages' texts in
+  French and English.
+- **Rejected.**
+  - For profiles, cards with an editing panel on the right: the form, which the game's values will lengthen, squeezed into
+    a narrow panel. A list beside a permanent editor: the three panes the owner turned down in 5a.
+  - For accounts, a table of characters grouped by account.
+  - The rail shown only beside a module's page: the app has three pages of its own.
+
+## D102: Lua scripts replace the external .NET plugins
+
+*2026-10-29, step 5, session 5c, chosen by the owner. Supersedes D90, D95, D97, and D6, D21, D22 and D96 for external
+plugins; brings Q1 and step 7 back. Changes the brief.*
+
+The owner chose to drop the external .NET plugins for a Lua scripting system, once 5c showed what remained before the
+plugins' packages could be published: trimming the six packages' public API, about 180 types without the protocol's
+generated classes, to what a plugin needs, which the app, `D3B.Host`, the storage and the file-based tools all made
+hard. The lead recommended finishing 5c, then deciding after a prototype of Lua, which Q1 never got; the owner decided
+now.
+
+- **What a user extends the bot with** is Lua scripts: routes and routines, as the bots sold and the owner's profession
+  scripts in `vendor/metiers` are written. The brief's "External .NET plugins add modules" becomes: users extend the bot
+  with Lua scripts. D3B's own features stay modules (D5, D20), in the repository, which may disable and replace them.
+- **Why**: a small API made for scripts, in place of every public type of six packages kept stable; the language the
+  ecosystem uses, so that the owner's scripts are adapted rather than written again in C#; no compiling, no packages,
+  a file reloaded.
+- **What stays**: modules, activities (D87), whose script will be one kind of `BotActivity`; settings (D98), whose kinds,
+  checks, editor and profiles serve scripts too, a script declaring its settings in a table rather than a class;
+  profiles (D99), naming a script as they name an activity; the pages of D3B's own modules (D96), registered as now.
+- **What goes**, in a session of its own: the plugin loader and its attribute, the `plugins` folder, packing `D3B.Bot`
+  and the five it names, CI's template check, the `dotnet new d3b-plugin` template, and the sample plugin, its stroll
+  written again as a script. Q11's question, what a plugin sees, has no object.
+- **Step 7, Lua scripting, comes back**, its number kept. Its first task settles Q1: LuaCSharp behind a `BotActivity`, a
+  step calling the bot's behaviors and awaiting them, cancelled by an interruption and resumed, a script's settings,
+  errors told in the app, no access to files or processes; a piece of one of the owner's scripts ported. The API's
+  namespaces start from D12's (`global`, `map`, `inventory`, `npc`, `job`, `exchange`, `character`) and the owner's
+  scripts, a script's `move()` and `bank()` as their steps (D87). LuaCSharp's version is the latest stable then (D15).
+- **Risks.** Q1 is unproven: LuaCSharp may not hold up, and the decision would be looked at again. A script brings no
+  page of its own.
+- **Rejected.**
+  - Deciding after a prototype, the lead's recommendation.
+  - Lua beside the plugins, as D12 had it: two APIs to keep.
+  - Keeping the plugins (D90), their API trimmed and frozen before the first milestone.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
 
 | Id | Question | Settled in |
 | --- | --- | --- |
+| Q1 | Does LuaCSharp hold up for D3B's scripts: calls that await the bot's behaviors, a step cancelled by an interruption and resumed, a script's settings, errors told in the app, no access to files or processes (D102)? | Step 7 |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |

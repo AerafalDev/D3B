@@ -14,6 +14,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="D3B.Network.Tests" />
     <InternalsVisibleTo Include="D3B.Bot.Tests" />
+    <InternalsVisibleTo Include="D3B.Storage.Tests" />
     <InternalsVisibleTo Include="D3B.App.Tests" />
   </ItemGroup>
 

@@ -113,6 +113,7 @@
     <Project Path="src/D3B.Host/D3B.Host.csproj" />
     <Project Path="src/D3B.Network/D3B.Network.csproj" />
     <Project Path="src/D3B.Protocol/D3B.Protocol.csproj" />
+    <Project Path="src/D3B.Storage/D3B.Storage.csproj" />
   </Folder>
   <Folder Name="/templates/" />
   <Folder Name="/templates/d3b-plugin/">
@@ -122,6 +123,7 @@
     <File Path="templates/d3b-plugin/MyPluginPage.axaml" />
     <File Path="templates/d3b-plugin/MyPluginPage.axaml.cs" />
     <File Path="templates/d3b-plugin/MyPluginPageModel.cs" />
+    <File Path="templates/d3b-plugin/MyPluginSettings.cs" />
     <File Path="templates/d3b-plugin/MyPluginTexts.cs" />
     <File Path="templates/d3b-plugin/Strings.fr.resx" />
     <File Path="templates/d3b-plugin/Strings.resx" />
@@ -138,5 +140,6 @@
     <Project Path="tests/D3B.Engine.Tests/D3B.Engine.Tests.csproj" />
     <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
     <Project Path="tests/D3B.Protocol.Tests/D3B.Protocol.Tests.csproj" />
+    <Project Path="tests/D3B.Storage.Tests/D3B.Storage.Tests.csproj" />
   </Folder>
 </Solution>

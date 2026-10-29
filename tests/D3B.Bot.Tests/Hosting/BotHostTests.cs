@@ -184,6 +184,32 @@ public sealed class BotHostTests : IDisposable
     }
 
     [Fact]
+    public async Task AModulesPreparationThatFailsStopsTheHostOnceTheDataAndProtocolAreReady()
+    {
+        _install.WritePack();
+        _install.WriteProtocol();
+
+        var bot = CreateBuilder();
+        var first = new TestPreparation(null);
+        var failing = new TestPreparation("The database is locked.");
+        var never = new TestPreparation(null);
+
+        bot.Services.AddSingleton<IHostPreparation>(first);
+        bot.Services.AddSingleton<IHostPreparation>(failing);
+        bot.Services.AddSingleton<IHostPreparation>(never);
+
+        var start = await BotHost.StartAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+
+        Assert.Null(start.Host);
+        Assert.Equal("The database is locked.", start.Failure);
+        Assert.True(first.Prepared && failing.Prepared);
+        Assert.False(never.Prepared);
+        Assert.Contains(_log.GetSnapshot(), record => record.Message.StartsWith("Loaded the mapping", StringComparison.Ordinal));
+        Assert.Contains(_log.GetSnapshot(), record => record.Level is LogLevel.Critical && record.Message == "The host does not start. The database is locked.");
+        Assert.DoesNotContain(_log.GetSnapshot(), IsStarted);
+    }
+
+    [Fact]
     public void PluginsLiveNextToTheHostByDefault()
     {
         var configuration = new ConfigurationBuilder().Build();

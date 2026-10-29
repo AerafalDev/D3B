@@ -15,6 +15,11 @@ public sealed class HelloModule : IModule
     private const string PageIcon = "M5 4.5 H19 A2 2 0 0 1 21 6.5 V14.5 A2 2 0 0 1 19 16.5 H10 L6 20 V16.5 H5 A2 2 0 0 1 3 14.5 V6.5 A2 2 0 0 1 5 4.5 Z"
         + " M8 10.5 H8.01 M12 10.5 H12.01 M16 10.5 H16.01";
 
+    private static LocalizedText Text(string key)
+    {
+        return LocalizedText.From(HelloTexts.Resources, key);
+    }
+
     /// <inheritdoc/>
     public void Build(BotBuilder bot)
     {
@@ -22,13 +27,17 @@ public sealed class HelloModule : IModule
 
         bot.Services.AddHostedService<Greeter>();
         bot.Services.AddSingleton<StrollJournal>();
-        bot.Services.AddActivity<Stroll>("d3b.samples.hello.stroll", LocalizedText.From(HelloTexts.Resources, "StrollName"));
+        bot.Services.AddActivity<Stroll, StrollSettings>("d3b.samples.hello.stroll", Text("StrollName"), settings =>
+        {
+            settings.Number(s => s.Walks, Text("StrollWalks"), 1, 100).Help(Text("StrollWalksHelp"));
+            settings.Number(s => s.Reach, Text("StrollReach"), 1, 8).Help(Text("StrollReachHelp"));
+        });
 
         // The page's types are named in its factory alone: a host without the app, which lacks Avalonia, builds this
         // module and never loads them.
         bot.Services.AddPage(
             "d3b.samples.hello",
-            LocalizedText.From(HelloTexts.Resources, "PageTitle"),
+            Text("PageTitle"),
             PageIcon,
             context => new HelloPage(new HelloPageModel(context)));
     }

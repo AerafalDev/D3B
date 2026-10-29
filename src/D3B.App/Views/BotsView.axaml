@@ -204,7 +204,16 @@
                                                     SelectedItem="{Binding SelectedActivity}">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate x:DataType="vm:ActivityChoiceViewModel">
-                                                            <TextBlock Text="{Binding Name}" />
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock
+                                                                    Classes="Caption Muted"
+                                                                    Grid.Column="1"
+                                                                    IsVisible="{Binding HasDetail}"
+                                                                    Margin="10,0,0,0"
+                                                                    Text="{Binding Detail}"
+                                                                    VerticalAlignment="Center" />
+                                                            </Grid>
                                                         </DataTemplate>
                                                     </ComboBox.ItemTemplate>
                                                 </ComboBox>

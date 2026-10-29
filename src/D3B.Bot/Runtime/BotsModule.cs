@@ -3,6 +3,7 @@ using D3B.Bot.Data;
 using D3B.Bot.Localization;
 using D3B.Bot.Network;
 using D3B.Bot.Pages;
+using D3B.Bot.Settings;
 using D3B.Core.Modules;
 using D3B.Data;
 using D3B.Data.Maps;
@@ -18,7 +19,7 @@ namespace D3B.Bot.Runtime;
 /// network module's game sessions, the <see cref="ActivityCatalog"/> of the activities modules register with
 /// <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity}(IServiceCollection, string, LocalizedText)"/>, which the app starts, and the
 /// <see cref="PageCatalog"/> of the pages they register with <see cref="PageServiceCollectionExtensions.AddPage"/>, which
-/// the app shows. Requires the data module, whose maps behaviors walk, and the network module.
+/// the app shows, and the <see cref="GameReferences"/> the activities' settings name. Requires the data module, whose maps behaviors walk, and the network module.
 /// </remarks>
 public sealed class BotsModule : IModule
 {
@@ -39,5 +40,13 @@ public sealed class BotsModule : IModule
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
         bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
         bot.Services.AddSingleton(services => new PageCatalog(services.GetServices<PageDefinition>()));
+
+        // Read once something asks, the app's settings or a profile started: a host that starts no activity never reads them.
+        bot.Services.AddSingleton(services =>
+        {
+            var tables = services.GetRequiredService<GameTables>();
+
+            return new GameReferences(services.GetRequiredService<GameWorld>().Atlas, tables.Jobs, tables.Items);
+        });
     }
 }

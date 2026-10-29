@@ -18,6 +18,10 @@
     <Compile Include="..\D3B.Bot.Tests\Network\TestGame.cs" Link="Bot\TestGame.cs" />
     <Compile Include="..\D3B.Bot.Tests\Runtime\TestConnection.cs" Link="Bot\TestConnection.cs" />
     <Compile Include="..\D3B.Bot.Tests\Runtime\TestPlay.cs" Link="Bot\TestPlay.cs" />
+    <Compile Include="..\D3B.Bot.Tests\Settings\SettingsActivity.cs" Link="Bot\SettingsActivity.cs" />
+    <Compile Include="..\D3B.Bot.Tests\Settings\TestFocus.cs" Link="Bot\TestFocus.cs" />
+    <Compile Include="..\D3B.Bot.Tests\Settings\TestReferences.cs" Link="Bot\TestReferences.cs" />
+    <Compile Include="..\D3B.Bot.Tests\Settings\TestSettings.cs" Link="Bot\TestSettings.cs" />
     <Compile Include="..\D3B.Bot.Tests\TestInstall.cs" Link="Bot\TestInstall.cs" />
     <Compile Include="..\D3B.Data.Tests\TemporaryDirectory.cs" Link="Data\TemporaryDirectory.cs" />
     <Compile Include="..\D3B.Protocol.Tests\Mapping\Obfuscation.cs" Link="Protocol\Obfuscation.cs" />

@@ -1,7 +1,9 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using D3B.App.Hosting;
 using D3B.App.Localization;
@@ -18,6 +20,9 @@ internal sealed partial class App : Application
 
     /// <summary>Gets the bots' host the window shows.</summary>
     public HostRunner? Host { get; init; }
+
+    /// <summary>Gets what the app remembers of its own: its language and theme.</summary>
+    public AppPreferences? Preferences { get; init; }
 
     /// <summary>Configures what the app draws with, the same with a screen and without one.</summary>
     /// <param name="builder">The app's builder.</param>
@@ -50,7 +55,14 @@ internal sealed partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && Host is { } host)
         {
-            var main = new MainViewModel(host, Localizer.Instance);
+            // The language and theme the app was left in, before the window shows.
+            if (Preferences?.Language is { } language)
+                Localizer.Instance.Use(CultureInfo.GetCultureInfo(language));
+
+            if (Preferences?.Theme == AppPreferences.Light)
+                RequestedThemeVariant = ThemeVariant.Light;
+
+            var main = new MainViewModel(host, Localizer.Instance, Preferences);
 
             main.Refresh();
             desktop.MainWindow = new MainWindow { DataContext = main };

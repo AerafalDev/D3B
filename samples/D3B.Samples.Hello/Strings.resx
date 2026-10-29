@@ -110,4 +110,16 @@
   <data name="StartHint" xml:space="preserve">
     <value>Start the Stroll from this bot's card, on the Bots page.</value>
   </data>
+  <data name="StrollWalks" xml:space="preserve">
+    <value>Walks</value>
+  </data>
+  <data name="StrollWalksHelp" xml:space="preserve">
+    <value>How many walks before the stroll ends.</value>
+  </data>
+  <data name="StrollReach" xml:space="preserve">
+    <value>Reach</value>
+  </data>
+  <data name="StrollReachHelp" xml:space="preserve">
+    <value>How far each walk goes, in cells.</value>
+  </data>
 </root>

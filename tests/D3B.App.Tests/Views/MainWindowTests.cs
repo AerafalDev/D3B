@@ -193,4 +193,74 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("This stroll", texts);
         Assert.Contains("1 of 10", texts);
     }
+
+    [Fact]
+    public async Task TheAccountsAndProfilesPagesShowInTheRailInBothLanguages()
+    {
+        await using var store = new TestStore();
+
+        await store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+        var walker = await store.Profiles.SaveAsync(0, "Walker", TestStore.HarvestId, TestStore.Settings(new() { Job = D3B.Bot.Tests.Settings.TestReferences.Lumberjack }), ct);
+
+        await store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
+        await store.Accounts.AssignAsync(TestPlay.Key, walker.Id, ct);
+
+        var runner = await TestHosts.RunningAsync(store.Host);
+        var (english, french) = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main };
+            var texts = new List<string>();
+
+            main.Refresh();
+            window.Show();
+            main.ShowAccountsCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+            texts.AddRange(Texts(window));
+            main.ShowProfilesCommand.Execute(null);
+            main.Profiles.Items[0].EditCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+            texts.AddRange(Texts(window));
+
+            var english = texts.ToList();
+
+            texts.Clear();
+            main.SwitchLanguageCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            texts.AddRange(Texts(window));
+            main.ShowAccountsCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+            texts.AddRange(Texts(window));
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return (english, texts);
+        });
+
+        Assert.Contains("Accounts", english);
+        Assert.Contains("Aerafa", english);
+        Assert.Contains("Walker", english);
+        Assert.Contains("On connection", english);
+        Assert.Contains("Profiles", english);
+        Assert.Contains("New profile", english);
+        Assert.Contains(english, text => text.Contains("Lumberjack", StringComparison.Ordinal));
+        Assert.Contains("Save", english);
+        Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Comptes", french);
+        Assert.Contains("Profils", french);
+        Assert.Contains("Nouveau profil", french);
+        Assert.Contains(french, text => text.Contains("Bûcheron", StringComparison.Ordinal));
+        Assert.Contains("Enregistrer", french);
+        Assert.Contains("À la connexion", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+    }
 }
