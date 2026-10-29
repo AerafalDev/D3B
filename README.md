@@ -1,7 +1,7 @@
 # D3B
 
 An open-source bot for Dofus 3 (Unity), in .NET 10 on Windows. Every feature is a module, assembled as in Bevy, and
-external .NET plugins add their own. An Avalonia desktop app runs the bots and controls them; a headless host runs them
+users extend the bot with Lua scripts. An Avalonia desktop app runs the bots and controls them; a headless host runs them
 without it.
 
 This project is not affiliated with Ankama. Dofus is a trademark of Ankama. Using a bot on the official servers breaches
@@ -11,12 +11,12 @@ client.
 
 ## Status
 
-The solution and the module system: a headless host that builds its modules, loads external plugins from `plugins/`,
-starts and stops. The game data: tools that inspect the official client and extract its maps, world graph, items, jobs,
+The solution and the module system: a headless host that builds its modules, starts and stops. The game data: tools that inspect the official client and extract its maps, world graph, items, jobs,
 interactives and banks, with the texts they name, into a pack per client build; a tool that publishes it as a release
 asset; and a data module, whose pack the host finds on the machine or downloads, and without which it does not start.
 The network: while the host runs, official clients started from the launcher connect through its relay, which can record
-their connection phase. No game logic yet. The first milestone is harvesting and banking on one account, controlled from the desktop app. See the
+their connection phase. The bots walk, travel, use elements and bank, as activities the app starts, or Lua scripts.
+The first milestone is harvesting and banking on one account, controlled from the desktop app. See the
 [roadmap](docs/roadmap.md).
 
 ## Building
@@ -41,9 +41,10 @@ While the host runs, the `ConfigUrl` line of the installed client's `version` fi
 configuration that sends it to the host's relay, and the host gives it Ankama's back when it stops. After a crash,
 `dotnet run --file scripts/client.cs -- restore` does it, so that the client plays without D3B.
 
-A plugin is a .NET assembly that compiles against the `D3B.Bot` package: activities the app starts on a bot, and pages
-in the app's rail. `templates/d3b-plugin` creates one with `dotnet new d3b-plugin`; `samples/D3B.Samples.Hello` is a
-working example.
+A script is a `.lua` file of `%LOCALAPPDATA%\D3B\scripts` (`Scripting:Directory` names another folder): the app lists
+it as an activity as soon as it is saved, its settings edited in a profile. D3B writes `d3b.lua` there, the API's
+definitions: opened in VS Code with its Lua extension, the folder has the API's documentation and completion.
+`samples/scripts/promenade.lua` is a working example.
 
 ## Documents
 

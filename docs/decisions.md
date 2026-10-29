@@ -69,7 +69,8 @@ D3B never contains, in its code, its default modules or its documentation:
 | `JondoEmu-main` (.NET 10) | None | Ideas: protocol rebuilt from the Cpp2IL dump, anchors named from real captures, structural matching across builds. |
 | `dofus-unity-proto-main` | None | Reference for message shapes. |
 | `Dofus` (Dofus Remastered) | MIT, same owner | Unity readers copied into `scripts/` (D10), conventions, the Bevy-like plugin model. |
-| `metiers` | The owner's | Lua scripts the owner wrote for Snowbot, levelling each profession from 1 to 200. They are the acceptance test of the Lua API (D12). |
+| `metiers` | The owner's | Lua scripts the owner wrote for Snowbot, levelling each profession from 1 to 200. They are the acceptance test of the Lua API (D12), measured in D104. |
+| `moonbot` | None | The documentation of MoonBot's Lua API, of Snowbot's family: ideas for the scripts' API, added in D104. |
 
 - **Why.** Copying GPL code would make D3B GPL (D4). Code with no license cannot be reused at all. BubbleBot's damage
   calculator is a port of Ankama's own client code. Reading for ideas and rewriting keeps D3B clean and lets it fix
@@ -241,7 +242,7 @@ version: accounts and profiles, the live map with the bot's state, and logs with
 ## D15: The rest of the stack
 
 *2026-10-27. Superseded in part by D23: D3B does not call Haapi, so the "HTTP (Haapi authentication)" row no longer
-applies. The "Secrets" row waits for a secret to keep (D100).*
+applies. The "Secrets" row waits for a secret to keep (D100). The "Scripts" row holds since D103.*
 
 Versions are the latest stable on NuGet on 2026-10-27, unless the line says otherwise.
 
@@ -299,7 +300,7 @@ The project, its solution and its namespaces are named D3B (`D3B.*`).
 
 ## D19: The solution's layout and build
 
-*2026-10-27, step 1*
+*2026-10-27, step 1. Superseded in part by D109: `samples/` holds example scripts, and no plugin.*
 
 The projects of the [architecture](architecture.md#projects) are confirmed, in `D3B.slnx`. They target `net10.0`, not
 `net10.0-windows`: nothing needs a Windows API yet, and D1 keeps a Linux host possible. The build follows Dofus
@@ -2736,13 +2737,177 @@ now.
   - Lua beside the plugins, as D12 had it: two APIs to keep.
   - Keeping the plugins (D90), their API trimmed and frozen before the first milestone.
 
+## D103: LuaCSharp holds, Q1 settled
+
+*2026-10-29, step 7. Settles Q1. Confirms D15's "Scripts" row: LuaCSharp 0.5.8, of 2026-10-25, is still the latest on
+NuGet, every version so far a 0.x.*
+
+A prototype ran Lua scripts behind a `BotActivity` (`ScriptActivity`, in `src/D3B.Scripting`, which D90 had removed
+empty), on the bots the tests play (D67), then the API of D105 over it. Measured:
+
+- **A call that waits for the bot.** A C# function of the API is a `LuaFunction` that awaits a behavior, such as
+  `bot:walk`, with the step's token; the script resumes once it is over. A Lua function kept in a table is called from
+  C# after an `await`.
+- **A step cancelled, then resumed.** An interruption cancels the call the script awaits: it comes out as
+  `LuaCanceledException`, an `OperationCanceledException`, which the run turns into the interruption (D87). `pcall` does
+  not catch it, nor any `OperationCanceledException` a C# function throws, so a script cannot swallow an interruption; it
+  does catch every other exception, as a Lua error. The script's globals and the locals its functions hold stay as they
+  were: the next step starts from the state with them.
+- **A script that never waits.** LuaCSharp checks the token as the script loops, about every 100 ms measured, so a
+  `while true do end` stops with its activity; an endless recursion is a stack overflow, a Lua error.
+- **No files, no processes** (`ScriptSandbox`): the base library without `dofile`, `loadfile`, `load`, which also loads
+  bytecode, and `collectgarbage`, which drives the process's collector; `string` without `dump`; `table`, `math`,
+  `bit32`; of `os` its clock and dates alone. No `io`, `package`, `require`, `debug` or `coroutine`. The platform under it
+  refuses files, the environment and an exit, should a library come to ask. `print` writes to the script's console.
+- **Errors told in the app.** A script's error fails the activity with a `ScriptException` reading as Lua's,
+  `mineur.lua:3: attempt to index a nil value (local 'mine')`; the run keeps it (`ActivityRun.Failure`), the bot's card
+  shows it in the danger tone, and the script's console (`ScriptConsole`, its last 200 lines) ends with it. Drawn without
+  a screen.
+- **The owner's scripts**: their 58 files and 17 settings files compile as they are.
+- **Limits of LuaCSharp 0.5.8**: writing the stack of a cancellation inside a function throws, which `ScriptException`
+  works around; "attempt to call a nil value" does not name the field, where C Lua does; an error raised by a function
+  called in a tail call has no line, as in C Lua; strings are UTF-16, `#"é"` being 1; nothing bounds a script's memory,
+  `string.rep("x", 1e8)` allocating what it asks.
+- **Rejected.**
+  - A hook counting instructions to stop a loop: LuaCSharp's own check of the token does it.
+
+## D104: MoonBot among the references, and what the owner's scripts call
+
+*2026-10-29, step 7, MoonBot added by the owner. Adds to D3.*
+
+`vendor/moonbot/lua-api.md`, the documentation of MoonBot's Lua API, a bot sold for Dofus 3, joins D3's references, for
+ideas only, as Snowbot's family: D3B copies none of its text and none of what D2 excludes, which it documents too
+(reconnections and their staggering, subscription purchases, raw packets).
+
+Measured on the latest version of each of the owner's five profession scripts (`vendor/metiers`), what they ask of a bot:
+
+- **37 functions** of 9 namespaces, `global:printMessage` 113 times, then `global:delay`, `global:printError`,
+  `developer:createMessage` and `sendMessage` 35 times each, `map:currentMapId`, `job:level`; 30 of the 37 exist under the
+  same name in MoonBot's, so Snowbot's and MoonBot's names are one family. MoonBot lacks `printColor`, `getTeamMembersIds`,
+  `Get/AddInGlobalMemory`, `getLastChallengeProposalMessage` and `character:id`.
+- **Routes**: `move()` and `bank()` return a table of steps by map, run on the map the character stands on: 2,461 `path`,
+  2,091 `gather`, 70 `door`, 43 `custom`. Paths are sides (2,224), `havenbag` (108), `zaap(id)` (80), cells, sides to
+  choose from at random (`top|right`) and sides from a cell (`left(392)`). Globals the bot reads: `GATHER`,
+  `PODS_THRESHOLD`, `OPEN_BAGS`, `MIN_MONSTERS`, `MAX_MONSTERS`.
+- **Settings**: a `settingsX.lua` beside the script, loaded with `pcall(dofile, ...)`.
+- **The protocol**: the fight's challenges, by name (`ChallengeSelectionRequest`), and one request by an obfuscated name.
+- A dump of the readable names of the game's messages and fields that a third party published, given by the owner, fits
+  3.7.12.12: 1,344 of its 1,345 obfuscated types are in the build's schema (D39), and where D3B's mapping pairs a message
+  the dump names the same type, under the same name 43 times and another 16, where D3B chose its own words (D42). It is
+  data derived from the client, of no license: never committed, read at most for ideas when the readable protocol grows
+  (D3, D11).
+
+## D105: The Lua API is D3B's own
+
+*2026-10-29, step 7, chosen by the owner, against the lead's recommendation of the family's names. Builds D87, D102.*
+
+The lead recommended the names of Snowbot's and MoonBot's family (D104), so that the owner's scripts run nearly as they
+are; the owner chose an API of D3B's own. The form is the lead's, local and reversible:
+
+- **Hooks**: a script defines the hooks of `BotActivity` (D87), each given the `bot`: `step(bot)`, required, a step chosen
+  from the state, `false` ending the activity; and optionally `isFull(bot)`, which reads and never acts, `unload(bot)`,
+  `onInterrupted(reason)`, answering `"stop"` to end the activity, and `recover(bot, reason)`, run after the default
+  recovery (D89). Reasons are `player`, `disconnected`, `fight` and `stopped`.
+- **The text runs first**, once per start, to define the hooks and declare the settings (D107). It cannot act: the `bot`
+  is no global. Once it ran, its global `settings` holds the values. A first step cut short before it ran whole runs it
+  again in a new state; a character full once it ran is unloaded before the first step.
+- **The bot** (`BotObject`): fields read the state live, `bot.character`, `bot.map` (id, coordinates, world map,
+  sub-area), `bot.cell`, `bot.inventory` (weight, load, kamas, items), `bot.jobs`, `bot.isBusy` and the like; methods act
+  through the hook's behavior and wait: `walk`, `changeMap` (a side or a map action's cell), `travel`, `use`, `bank`,
+  `leaveHavenBag`, `wait`, `waitIdle`, and `count`, `jobLevel`, which read. An action answers as Lua's own functions,
+  `true`, or `false` and why, the behavior's outcome in lower camel case: `local ok, why = bot:walk(301)`.
+- **Globals**: `log.info`, `log.success`, `log.error` and `print`, to the script's console and the bot's log; `game`,
+  the pack's data: `mapsAt`, `position`, `distance`, `cell`, `mapActions`.
+- **Names** in lower camel case; methods with `:`, functions of a namespace with `.`; a `:` call to a namespace's function
+  reads as a `.` one.
+- **Not yet**: harvesting, fights and the rest of the milestones, which the API gains as D3B's behaviors do; routes as the
+  owner's tables, which step 13 may bring as a helper of D3B's own.
+- **Rejected.**
+  - The family's names, `global:`, `map:`, `move()` returning a route by map, the lead's recommendation: the owner's
+    scripts adapted rather than written again, but a dialect of others' with its quirks, `podsP` and two calling forms.
+  - Both, D3B's API and the family's over it in Lua: two surfaces to document, test and keep in step.
+
+## D106: Scripts reach the protocol through D3B's readable requests
+
+*2026-10-29, step 7, the lead's recommendation, which the owner left to the lead. Frames the family's
+`developer:createMessage` and `sendMessage`.*
+
+- `bot:send(name, fields)` sends the game server a request of D3B's readable protocol, named as its `.proto` files name
+  it, whole (D55), its fields by their JSON names, in lower camel case as the rest of the API; every field is checked
+  against the message's descriptor, an unknown field or a value that does not fit failing the call (`ProtocolTables`).
+  It goes through the hook's behavior, between the client's frames (D61), and the client is not told.
+- `bot:waitFor(name, ms)` waits for the next event or response of that name, from now on, and gives the fields the
+  readable protocol reads, an enumeration's value by name; `nil, "timeout"` when it does not come. `bot:request(name,
+  fields, answer, ms)` expects the answer before it sends, as every behavior does (D67).
+- Never raw bytes, never a message to the client, no obfuscated name.
+- **Risk.** A request the client does not follow may leave it out of step with the server (D60): the script's author
+  answers for it, and the definitions say so.
+- **Rejected.**
+  - No protocol at all: the client always consistent, but what has no behavior yet, such as the owner's challenges, waits.
+  - Ankama's original names beside D3B's, from a table per build shipped as the mappings are: closer to the family, but a
+    table per build to make, of names D3B does not choose.
+
+## D107: A script's settings, a table onto D98's kinds
+
+*2026-10-29, step 7, the form chosen by the owner. Builds D98, D99.*
+
+- **Declared as data**, an entry per setting in the order the app shows them, `{ key, kind, name, help, default, min,
+  max, maxLength, options, required, ordered, within }`, or `{ section = ... }`; kinds `flag`, `number`, `text`,
+  `choice` and `choices` among the entry's options, and the game's `job`, `area`, `subArea`, `resource`, with an `s` for
+  several. A text is a string, or a table by language, `{ fr = "...", en = "..." }` (`LocalizedText.ByLanguage`). Read
+  without the bot (`ScriptSettings`), a declaration that does not read says what and where.
+- **Into D98's settings**, without a class: `SettingValues`, a value per key, and `SettingValuesBuilder`, whose settings
+  are `SettingDefinition`s like a class's, a choice's values being the declaration's own strings rather than an
+  enumeration's. The app edits them, a profile stores them as JSON by key, checks and resets apply as for a module's; a
+  profile names a script as it names an activity (D99).
+- **Not yet**: conditions and rules, which are code in D98 and would run a script's function on the app's thread.
+- **Rejected.**
+  - Builder functions, `setting.number(...)`: the same data, with functions to document beside it.
+
+## D108: Scripts live in a watched folder, with the API's definitions
+
+*2026-10-29, step 7, the folder chosen by the owner; the definitions asked for by the owner.*
+
+- **Where**: `%LOCALAPPDATA%\D3B\scripts`, or `Scripting:Directory`, beside the database: every `.lua` file of it and of
+  its folders is a script, but the definitions below. The scripting module (`ScriptingModule`), which the app and
+  `D3B.Host` add as they add the storage's, registers the `ScriptLibrary`.
+- **Listed as activities**: `script:` and the file's path, such as `script:metiers/paysan.lua`, shown as its path without
+  the extension. The library is a source of the `ActivityCatalog` (`IActivitySource`), which lists the modules'
+  activities then the sources', and changes `Version` with them; the bots' cards and the profiles page list them again
+  when it changes.
+- **Read without the bot** (`ScriptReader`): the text runs in its sandbox, 2 s at most, its hooks found and its
+  settings read. A script that does not read is listed still, as an activity whose start fails with its error, which the
+  card shows; the log says why.
+- **Reloaded**: the folder is watched, and once quiet for 300 ms every script is read again, the list replaced whole. A
+  start takes the text as last saved; an activity running keeps the text it started with.
+- **Documentation and completion**: D3B writes into the folder `d3b.lua`, the API as LuaCATS annotations, and
+  `.luarc.json`, Lua 5.2 and the libraries a script lacks, as the host starts, when they differ: opened in VS Code with
+  its Lua extension, the folder has the API's documentation and completion. A test checks that `d3b.lua` documents every
+  hook, field, method and function of the API, and nothing else.
+- **The sample**: the former sample plugin's stroll, `samples/scripts/promenade.lua`, played by the tests.
+- **Rejected.**
+  - Scripts in the database, edited in the app: renaming safe, but an editor to write, and VS Code lost.
+  - A running script reloaded when its file changes: its state lost mid-activity, and a file half saved breaking a bot
+    that runs.
+
+## D109: The external plugins removed
+
+*2026-10-29, step 7. Carries out D102. Supersedes in part D19, whose `samples/` now holds example scripts.*
+
+- **Gone**: the plugin loader and its attribute, its load context and `PluginInfo` (`D3B.Core.Plugins`), the `plugins`
+  folder and `Plugins:Directory`, packing `D3B.Core`, `D3B.Bot` and the four libraries it names, CI's check of the
+  template, the `dotnet new d3b-plugin` template, and the sample plugin, its stroll written again as a script (D108).
+- **Stays**: modules (D5, D20), D3B's own, in the repository; activities (D87) and their settings (D98); the pages of
+  D3B's modules (D96), in the app's rail, a page's view model now `ModulePageViewModel`; a page that throws still shows
+  its error, tested with a page of the tests' own.
+- **Why** (D102): no package's public API to keep stable; users extend the bot with scripts, which bring no page.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
 
 | Id | Question | Settled in |
 | --- | --- | --- |
-| Q1 | Does LuaCSharp hold up for D3B's scripts: calls that await the bot's behaviors, a step cancelled by an interruption and resumed, a script's settings, errors told in the app, no access to files or processes (D102)? | Step 7 |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
