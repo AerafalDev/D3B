@@ -68,9 +68,11 @@ dotnet test                                # every test project, on Microsoft.Te
 dotnet format --verify-no-changes          # CI checks it
 dotnet run --project src/D3B.App           # the desktop app, which runs the bots' host in its process (D91); closing it disconnects the clients
 dotnet run --project src/D3B.Host          # the same host without the app, until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48); --Plugins:Directory <dir> loads plugins from elsewhere
+                                           # both keep accounts and profiles in %LOCALAPPDATA%\D3B\d3b.db, migrated before the host starts; --Storage:Path <file> names another (D100)
                                            # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
                                            # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53)
 dotnet pack -o <feed>                      # the packages plugins compile against: D3B.Bot and the five it names (D95)
+dotnet tool restore                        # then: dotnet tool run dotnet-ef migrations add <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations
 dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>; --page false for no page
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
 dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options

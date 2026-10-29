@@ -11,9 +11,9 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 2 | Game data | Done |
 | 3 | Protocol and connection | Done; Q10 at the next client update |
 | 4 | Bot run time and navigation | Done |
-| 5 | Desktop app, first version | In progress: 5a and 5b done |
+| 5 | Desktop app, first version | In progress: 5a, 5b and 5c done |
 | 6 | Harvesting and banking: first milestone | To do |
-| 7 | Lua scripting | Dropped: routes and routines are plugins (D90) |
+| 7 | Lua scripting, in place of the external plugins | To do: recommended right after 5c (D102) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
 | 9 | Fights | To do |
 | 10 | Several accounts and groups | To do |
@@ -134,7 +134,7 @@ Settles Q6 and Q11: both settled in session 5b, by D96 and D95.
 - The Avalonia app with ShadUI, which runs the bots in its process (D91): accounts and profiles, the live map with the
   bot's state and its activity, started, stopped and resumed from it (D87), logs and the protocol inspector, in French
   and English (D14).
-- Accounts and profiles stored in SQLite; Data Protection once a secret is stored (D92).
+- Accounts and profiles stored in SQLite; Data Protection once a secret is stored (D92): none is yet (D100).
 
 Five sessions, the split chosen by the owner (D92), after the owner chose the app over the host's gRPC API (D91). A
 client update before the next session gets Q10's session first (D54).
@@ -143,7 +143,7 @@ client update before the next session gets Q10's session first (D54).
 | --- | --- | --- |
 | 5a | The app with the bots in it: the bots' host in the app's process, its composition shared with `D3B.Host`, which keeps its entry point alone, and no gRPC nor `D3B.Contracts`, the owner's choice (D91); the split of step 5 (D92); the catalogue of the activities modules register, which the app starts (D93); Avalonia 12, ShadUI and Inter, dark by default, the owner's choice, the host's state and why it did not start, the bots page as a card per bot, whole, with its position, pods, kamas, pause and activity, started, stopped and resumed, after the owner turned down three panes, French and English switched live, the window read every 250 ms, and the window drawn in tests (D94); measured on a client through the app. | Done on 2026-10-29 |
 | 5b | What a plugin sees and declares: Q11 settled, `D3B.Bot` packed with the libraries it names, which a plugin references, the owner's choice (D95); Q6 settled, a module's page registered with `AddPage`, made by the app from a factory naming no UI type, given the host's services, the app's language, the plugin's own texts and the window's refresh, in a rail on the left, the owner's choice among three mockups, a failing page replaced by its error, and activities and pages named in the app's language (D96); the plugin's root module read from its metadata, so that a plugin with a page loads in a host without the app (D97); the sample plugin's stroll and page, drawn in both languages and themes; the template with an activity and a page, `--page false` without; CI packing the six packages and building both. | Done on 2026-10-29 |
-| 5c | Accounts and profiles in SQLite, EF Core and migrations, and their pages; whether Data Protection has a secret to protect. | To do |
+| 5c | Activities' settings, a class its module describes in code, the owner's choice, of every kind and of the game's values, professions, areas, sub-areas and resources, with lists, order, dependencies, conditions, sections and rules, the owner's scope (D98); accounts recorded as the relay sees them, and profiles shared by characters, a character's own preselected and started on connection when asked, the owner's choice (D99); `D3B.Storage`, SQLite through EF Core 10.0.14 and its migrations, shared by the app and `D3B.Host`, applied before the host starts, and no Data Protection, nothing kept being a secret (D100); the rail always shown, the accounts page as a card per account and the profiles page as a column unfolded in place, the owner's choices among mockups, a bot's card offering the profiles, and the language and theme remembered (D101); Lua scripts to replace the external plugins at step 7, the owner's choice (D102); drawn without a screen in both languages and themes. Not measured on a client. | Done on 2026-10-29 |
 | 5d | The live map, read from the pack by the app: cells, the character, its path, elements and NPCs. | To do |
 | 5e | Logs kept in memory and their page; the protocol inspector, a bot's game frames decoded live, the ticket hidden, or replayed from a capture. | To do |
 
@@ -154,11 +154,24 @@ them when its pods are full, controlled from the app (D16). The repository may g
 
 - Noted by the owner for later: an option to bank into the guild's chest instead, when the character's guild has one
   and the character the rights.
+- The harvesting activity's settings use D98's kinds: a profession, its resources by priority, an area and its
+  sub-areas; auto modes such as BillBot's add what they need to them, maps once 5d picks them on the map, monsters once
+  step 9 puts them in the pack.
 
 ## 7. Lua scripting
 
-Dropped: the owner wants no Lua, and routes and routines are plugins, their activities `BotActivity`s (D87, D90). The
-number stays, so that later steps keep theirs. Q1 went with it.
+Settles Q1.
+
+Back, the owner's choice (D102), after D90 had dropped it: users extend the bot with Lua scripts, in place of the
+external .NET plugins.
+
+- The plugins go: the loader, the `plugins` folder, the packages, CI's template check, the template, and the sample,
+  its stroll written again as a script.
+- Q1 first: LuaCSharp behind a `BotActivity`, a step awaiting the bot's behaviors, cancelled by an interruption and
+  resumed, a script's settings declared in a table onto D98's kinds, errors told in the app, no access to files or
+  processes, and a piece of one of the owner's scripts ported.
+- The API, from D12's namespaces and the owner's scripts, a script's `move()` and `bank()` as its steps (D87); profiles
+  name scripts as they name activities (D99).
 
 ## 8. MITM mode
 
@@ -187,5 +200,5 @@ Settles Q5.
 
 ## 13. The owner's profession scripts
 
-- The scripts in `vendor/metiers` turned into plugins, their routes, harvests and banking as activities (D87, D90), and
-  tested end to end.
+- The scripts in `vendor/metiers` adapted to D3B's Lua API (D102), their routes, harvests and banking run as activities
+  (D87), and tested end to end.

@@ -29,7 +29,8 @@ dotnet test
 dotnet run --project src/D3B.App
 ```
 
-`src/D3B.Host` runs the same bots without the app.
+`src/D3B.Host` runs the same bots without the app. Both keep the accounts their relay sees and the profiles in
+`%LOCALAPPDATA%\D3B\d3b.db` (`Storage:Path` names another file); D3B never sees a password.
 
 The host needs the data pack of the installed client's build. It looks for it in `%LOCALAPPDATA%\D3B\data`, where
 `dotnet run --file scripts/extract.cs` writes it, and otherwise downloads it from this repository's release
