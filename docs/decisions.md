@@ -3577,6 +3577,164 @@ Measured on a client of 3.7.12.12 through the app, captures on, the owner's prof
 - **Rejected.**
   - The pass in 6b: every page of the app, past what this session drew.
 
+## D144: A fight while harvesting: resumed, paused or stopped, as the profile says
+
+*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it. Builds D88, D130.*
+
+- **Measured** on the 34 captures before 6c (client.md): 4 fights. 3 the player's, the client sending its walk's
+  confirmation and a request of 49 bytes the readable protocol lacks, the attack, in one read; 1 a resource's protector
+  during 6a's activity, beginning 2 ms after the end of the character's own harvest, with no request from the client or
+  D3B, over 64.5 s later. No aggression captured; how a fight ended is not decoded, and no message read gives a fight's
+  kind: an event of 38 bytes, one `int64`, comes before each, but often elsewhere too.
+- **The kind, told by its timing**: a protector's when the fight begins right after the end of the character's own
+  harvest; an aggression's when the bot was acting and nobody attacked; the player's when the bot was paused, the player's
+  walk having paused it (D66). The journal says it, and the bot's card counts fights.
+- **A setting**, "After a fight", in three segments: resume, the default and D130's; pause, the bot paused as by the
+  player's hand, resumed from its card, its tour and counts kept; stop. Until step 9 the player fights.
+- **To measure**: an aggression, and a fight lost, where the character comes back and with how much life.
+- **Rejected.**
+  - Stopping on every fight: a protector would cost the tour.
+  - Avoiding protectors: they come at random.
+  - Giving the fight up: a fight's action, step 9's.
+
+## D145: The resources' growing back, learned by the host
+
+*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it. Builds D128, D138.*
+
+- **Measured** on the captures before 6c: no growing back seen whole, the character never staying on a map long enough.
+  Bounds alone: nettle seen grown back at most 445 s after its harvest; trout not yet 297 s after, grown back at most
+  564 s after. A harvest lasts 3 s, drinking water from a well 1.5 s. The server never says when an element will grow
+  back: it shows it once it has, and on entering a map. A bound seen on a later visit holds only from above, another
+  player having maybe harvested the element meanwhile.
+- **What the host learns**, for each resource: how long it takes, exactly when a bot stayed on the map until its element
+  grew back, else the smallest upper bound a later visit gave; kept in D3B's database, as the graphics are (D138).
+- **What a tour does with it**: a map whose wanted elements all still grow back waits until they should have; once every
+  map of the tour does, the bot waits on its map until the first should have, rather than D128's minute. A resource
+  whose growing back is not known yet keeps D128's behavior.
+- **In the app**: the tour's mini-map shows the maps growing back; the bot's card says when the next one should.
+- **To measure** through the app: exact times, and whether one resource always takes the same; if not, the longest seen.
+- **Rejected.**
+  - A table of times written by hand: 85 resources to measure, and the next build may change them.
+  - Measured alone, in client.md: a small zone would still be gone through for nothing.
+  - Learned in memory alone: learned again at every run of the app.
+
+## D146: Harvest statistics, in D3B's database and a page of their own
+
+*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it.*
+
+- **Each run kept**: the character, the profile, when it started and ended and how, the items it brought by item, each
+  profession's experience gained, the banks and the fights by kind; written at each banking and at its end, so that a
+  crash loses little. Structured, not the harvest's own: any activity may give its figures.
+- **A page, Statistics**, in the rail: by character and period (today, 7 days, everything), four figures (resources,
+  time, rate an hour, levels gained), each resource with its icon and rate, and the runs.
+- **On the bot's card**, live: each resource's rate an hour, and the experience gained.
+- **Rejected.**
+  - Live alone, nothing kept: what the owner asked to see over time would go with the app.
+  - In the profile editor: figures belong to characters as much as to profiles, and the editor is long already.
+  - Their worth in kamas: the marketplace's prices, step 11's.
+
+## D147: The guild's chest, measured first
+
+*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it. Builds D80, D129.*
+
+- **Known**: no capture opens it. JondoEmu, read for ideas (D3) and never tested against Ankama's server, has it an
+  element in banks, graphic 70671, with tabs whose rights go by rank and a new tab at guild levels 3, 7 and 11, opened as
+  a storage exchange like the bank's. The pack of 3.7.12.12 draws that graphic in 21 insides, all in the world graph.
+- **Two settings** in the banking section: where it deposits, its own chest in the bank or the guild's, and the tab.
+  The guild's chest of the nearest bank holding one takes what the bank would, no kamas; refused, for want of a guild,
+  rights or room, the character deposits in its own chest and the card says so.
+- **Measured first**, in a capture the owner makes by hand: opening the guild's chest, changing tabs, putting a resource
+  in and taking it back, and a deposit refused if one can be: the requests and events to map.
+- **Rejected.**
+  - The guild's chest chosen whenever the guild has one: the owner's harvest in the guild's pool without asking.
+  - Stopping on a refusal: the deposit has a place to go.
+
+## D148: Upkeep: resource bags opened, the character healed under a share of its life
+
+*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it.*
+
+- **Known**: item type 100, "Sac de ressources", holds 73 items of the pack, such as "Sac de blé"; the pack keeps each
+  item's type. Nothing needed is mapped: using an object, which both opening a bag and eating are, the character's life
+  and its most, and sitting.
+- **A section, Upkeep**, in the profile: a flag opening each resource bag as soon as a harvest gives one, between steps, so
+  that what it holds is banked with the rest; a share of life, off by default, under which the bot heals before its next
+  step, eating the items the profile lists in their order, else sitting until its life is whole. The card shows the life
+  above the pods.
+- **Measured** in the owner's capture of D147: opening a bag by hand, sitting, eating, the life written down before and
+  after, compared on the machine and never written in the repository.
+- **Rejected.**
+  - Healing by waiting alone: slow without food.
+  - Healing at step 9, with fights: the protectors raise it now (D144).
+
+## D149: A zone's isolated maps, left out unless the profile takes them
+
+*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it. Builds D128, D133.*
+
+- **Measured** on the pack of 3.7.12.12: 67 of the 186 sub-areas listing resources fall apart through their own maps'
+  transitions, and 588 of their 8,062 maps lie off their sub-area's main part, the part holding the most maps. From it, 54
+  are 2 to 4 changes away, 128 are 5 to 35, as 6a's journey of 12, and 416 are reached only by a teleport or a door's
+  criterion. The worst, sub-area 601: 222 maps, 141 in its main part, in 25 parts.
+- **Isolated**: a map of a sub-area off its main part, more than 4 changes from it through the world graph, teleports
+  aside (`HarvestZone.Isolated`, `MostDetour`), reckoned with the zone.
+- **Left out by default**; a flag, "Go through the isolated maps too", takes them, last in a tour, a part at a time. The
+  profile editor's mini-map shows them, dashed, and its preview counts them.
+- **Rejected.**
+  - Kept always, last: the long journey would come back each tour.
+  - Left out always: some isolated parts may be rich.
+
+## D150: Base's resources harvested as the others
+
+*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it. Settles D140.*
+
+- **Known**: 34 skills of `Base` gather 33 items, drinking water from a well, potatoes, shells and events' items among
+  them, all at level 1; no sub-area lists them; their icons are in the pack (D135). The owner's database knew 46 graphics,
+  none offering a skill of `Base`. An index of every map's graphics, 10,981 maps and 3,345 graphics, takes 564 ms.
+- **Offered** among the resources, without a profession or level (`GameReferences.IsBase`); a tile and a search say on how
+  many maps the learned graphics place one, or that it was never seen and will be learned on the way
+  (`GameReferences.PlacesOf`, `GraphicPlaces`).
+- **Placed** by the learned graphics: the sub-areas suggested for them, and those an area alone stands for, are those
+  holding a map that draws a graphic known to offer their skill.
+- **Harvested** as the others: the probable maps first, the unknown learned on the way, no level asked; "what harvesting
+  brings" banks them. "Everything each character knows" stays the professions': `Base`'s skills gather events' items too.
+- **Rejected.**
+  - The wells only.
+  - A table of wells from the maintainer's captures, in the pack: D138 rejected it.
+  - Learning at once from the owner's earlier captures: a tool more for what the first visit teaches.
+
+## D151: The client's display time, and every delay of D3B in a settings page
+
+*2026-10-29, step 6, session 6c; the owner asked for longer delays, the bots doing "anything" on small machines, then for
+a page holding every delay. Builds D77, D132.*
+
+- **Why**: D3B waits half a second after the server placed the character on a map before acting (D77), and half a second
+  for a window to show before closing it (D132), both measured on the owner's machine. On a slower one the client has not
+  drawn yet, and what D77 and D132 measured comes back: walks the client does not follow (D85), windows left open.
+- **One setting for the machine**, not a profile's: the client's display time, 0.5 s by default, up to 3 s, wherever D3B
+  waits for a map or a window. The other delays, how long D3B waits for the server's answers, a walk's arrival, a use's
+  end, a recovery, and the relay's, also become settings, each with its measured value by default and a button to restore
+  them.
+- **A page, Settings**, at the foot of the rail: the client, the delays, the captures (from the next start), the language
+  and theme (kept in the title bar too), and where the database and the pack are. Kept in `app.json`; `D3B.Host` reads the
+  same values from its configuration. 6d and 6e add their own.
+- **Rejected.**
+  - A switch for slow machines, doubling the delays: no value to choose.
+  - Measured by D3B from the client's pace: longer to make and to check.
+  - Random delays between a least and a most: see D152.
+
+## D152: The owner's harvesting settings in 6e; no human or random timings
+
+*2026-10-29, step 6, session 6c.*
+
+- **6e, chosen by the owner**: settings of harvesting and journeys, each submitted with mockups: no zaap when the
+  destination is too near; an automatic mode choosing the zone by the character's level; the highest-level resources
+  first, without leaving the others; lists of resources to take in or leave out; profiles given by default, such as the
+  automatic harvest; and what the owner adds.
+- **Asked and refused**: delays longer and "more human", then drawn at random between a least and a most. A random delay
+  helps the client in nothing, which needs only enough time to draw; it serves only to look human, to escape Ankama's
+  detection, which D2, D134 and `CLAUDE.md` keep out. The owner asked to remove the line from `CLAUDE.md`; the lead did
+  not, and will not write such timings whatever the file says. D151's delays are the client's own, measured, raised by
+  hand where a machine needs it.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
