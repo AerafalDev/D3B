@@ -4,7 +4,7 @@
   "classifications": ["D3B", "Bot", "Plugin"],
   "identity": "D3B.Plugin.CSharp",
   "name": "D3B Plugin",
-  "description": "A plugin for D3B: an assembly with a root module, loaded from the host's plugins folder, that compiles against D3B.Core.",
+  "description": "A plugin for D3B: an assembly with a root module, an activity and a page, loaded from the host's plugins folder, that compiles against the D3B.Bot package.",
   "shortName": "d3b-plugin",
   "tags": {
     "language": "C#",
@@ -18,7 +18,7 @@
       "datatype": "string",
       "isRequired": true,
       "replaces": "D3B_VERSION",
-      "description": "The version of the D3B.Core package to compile against: the oldest host the plugin runs on."
+      "description": "The version of the D3B packages to compile against: the oldest host the plugin runs on."
     },
     "PluginsDirectory": {
       "type": "parameter",
@@ -26,6 +26,22 @@
       "defaultValue": "",
       "replaces": "D3B_PLUGINS_DIRECTORY",
       "description": "A host's plugins folder. Set it and every build deploys the plugin there; leave it empty and builds do not deploy."
+    },
+    "Page": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Whether the plugin brings a page to the app's rail, an Avalonia control: then it compiles against Avalonia and CommunityToolkit.Mvvm too."
     }
-  }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!Page)",
+          "exclude": ["MyPluginPage.axaml", "MyPluginPage.axaml.cs", "MyPluginPageModel.cs"]
+        }
+      ]
+    }
+  ]
 }

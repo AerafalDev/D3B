@@ -8,6 +8,10 @@
     "PluginsDirectory": {
       "longName": "plugins-directory",
       "shortName": ""
+    },
+    "Page": {
+      "longName": "page",
+      "shortName": ""
     }
   }
 }

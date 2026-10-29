@@ -1,5 +1,8 @@
+using System.Globalization;
 using D3B.Bot.Activities;
+using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
+using D3B.Bot.Tests.Localization;
 using D3B.Core.Modules;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,7 +24,7 @@ public sealed class ActivityCatalogTests
         var catalog = host.Services.GetRequiredService<ActivityCatalog>();
 
         Assert.Equal(["test", "dependent"], catalog.All.Select(definition => definition.Id));
-        Assert.Equal(["Test", "Dependent"], catalog.All.Select(definition => definition.Name));
+        Assert.Equal(["Test", "Dependent"], catalog.All.Select(definition => definition.Name.In(CultureInfo.InvariantCulture)));
         Assert.True(catalog.TryGet("dependent", out var found));
         Assert.Same(catalog.All[1], found);
         Assert.False(catalog.TryGet("Dependent", out _));
@@ -42,6 +45,20 @@ public sealed class ActivityCatalogTests
 
         Assert.NotSame(first, second);
         Assert.Same(TimeProvider.System, first.Time);
+    }
+
+    [Fact]
+    public void AnActivityIsNamedInTheLanguageTheAppAsksFor()
+    {
+        var services = new ServiceCollection();
+
+        services.AddActivity<TestActivity>("test", LocalizedText.From(TestTexts.Resources, "Greeting"));
+
+        using var provider = services.BuildServiceProvider();
+        var definition = Assert.Single(provider.GetServices<ActivityDefinition>());
+
+        Assert.Equal("Hello", definition.Name.In(CultureInfo.GetCultureInfo("en")));
+        Assert.Equal("Bonjour", definition.Name.In(CultureInfo.GetCultureInfo("fr")));
     }
 
     [Fact]

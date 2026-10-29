@@ -1,6 +1,8 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Data;
+using D3B.Bot.Localization;
 using D3B.Bot.Network;
+using D3B.Bot.Pages;
 using D3B.Core.Modules;
 using D3B.Data;
 using D3B.Data.Maps;
@@ -13,9 +15,10 @@ namespace D3B.Bot.Runtime;
 /// <summary>The bots' run time: one actor per character a game connection chose, fed by the game it observes (D9, D65).</summary>
 /// <remarks>
 /// Registers <see cref="Bots"/>, which every module reaches its bots through, as an <see cref="IGameObserver"/> of the
-/// network module's game sessions, and the <see cref="ActivityCatalog"/> of the activities modules register with
-/// <see cref="ActivityServiceCollectionExtensions.AddActivity"/>, which the app starts. Requires the data module, whose
-/// maps behaviors walk, and the network module.
+/// network module's game sessions, the <see cref="ActivityCatalog"/> of the activities modules register with
+/// <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity}(IServiceCollection, string, LocalizedText)"/>, which the app starts, and the
+/// <see cref="PageCatalog"/> of the pages they register with <see cref="PageServiceCollectionExtensions.AddPage"/>, which
+/// the app shows. Requires the data module, whose maps behaviors walk, and the network module.
 /// </remarks>
 public sealed class BotsModule : IModule
 {
@@ -35,5 +38,6 @@ public sealed class BotsModule : IModule
             services.GetRequiredService<ILoggerFactory>()));
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
         bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
+        bot.Services.AddSingleton(services => new PageCatalog(services.GetServices<PageDefinition>()));
     }
 }

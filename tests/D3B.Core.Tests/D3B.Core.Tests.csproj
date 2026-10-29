@@ -5,21 +5,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\D3B.Bot\D3B.Bot.csproj" />
     <ProjectReference Include="..\..\src\D3B.Core\D3B.Core.csproj" />
     <ProjectReference Include="..\..\samples\D3B.Samples.Hello\D3B.Samples.Hello.csproj" ReferenceOutputAssembly="false" OutputItemType="SamplePlugin" />
   </ItemGroup>
-
-  <Target Name="CopySamplePlugin" AfterTargets="Build" Condition="'@(SamplePlugin)' != ''">
-    <PropertyGroup>
-      <_SamplePluginName>@(SamplePlugin->'%(Filename)')</_SamplePluginName>
-      <_SamplePluginDirectory>@(SamplePlugin->'%(RootDir)%(Directory)')</_SamplePluginDirectory>
-    </PropertyGroup>
-    <ItemGroup>
-      <_SamplePluginFiles Include="$(_SamplePluginDirectory)**\*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_SamplePluginFiles)"
-          DestinationFiles="@(_SamplePluginFiles->'$(OutDir)plugins\$(_SamplePluginName)\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
-  </Target>
 
 </Project>

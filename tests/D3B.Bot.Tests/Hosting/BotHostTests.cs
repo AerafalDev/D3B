@@ -1,7 +1,10 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
+using D3B.Bot.Activities;
 using D3B.Bot.Hosting;
+using D3B.Bot.Localization;
+using D3B.Bot.Pages;
 using D3B.Core.Modules;
 using D3B.Data.Releases;
 using D3B.Data.Tests.Releases;
@@ -148,6 +151,36 @@ public sealed class BotHostTests : IDisposable
         Assert.Equal(1, exitCode);
         Assert.DoesNotContain(_log.GetSnapshot(), IsStarted);
         Assert.Contains($"D3B cannot listen on {RelaySettings.DefaultAddress} on ports {port}", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheHostWithoutTheAppBuildsAPluginWithAPageAndListsWhatItBrings()
+    {
+        // The sample's page derives from Avalonia's UserControl, which this host, as D3B.Host, does not hold (D97).
+        var bot = CreateBuilder("--Plugins:Directory", Path.Combine(AppContext.BaseDirectory, "plugins"));
+
+        using var host = bot.Build();
+
+        Assert.Contains(host.Services.GetRequiredService<ActivityCatalog>().All, definition => definition.Id == "d3b.samples.hello.stroll");
+        Assert.Contains(host.Services.GetRequiredService<PageCatalog>().All, definition => definition.Id == "d3b.samples.hello");
+        Assert.DoesNotContain(AppDomain.CurrentDomain.GetAssemblies(), assembly => assembly.GetName().Name == "Avalonia.Base");
+    }
+
+    [Fact]
+    public async Task TheHostDoesNotStartWithTwoPagesOfOneId()
+    {
+        var bot = CreateBuilder();
+
+        // Registered without AddPage, which refuses a second id as the modules build: the catalogue refuses it before the host starts.
+        bot.Services.AddSingleton(new PageDefinition("page", LocalizedText.Invariant("Page"), null, _ => new object()));
+        bot.Services.AddSingleton(new PageDefinition("page", LocalizedText.Invariant("Other"), null, _ => new object()));
+
+        var start = await BotHost.StartAsync(bot, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        var failure = Assert.Single(_log.GetSnapshot(), record => record.Level is LogLevel.Critical);
+
+        Assert.Null(start.Host);
+        Assert.Equal("Two pages have the id page.", start.Failure);
+        Assert.Equal("The host does not start. Two pages have the id page.", failure.Message);
     }
 
     [Fact]

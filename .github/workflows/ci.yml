@@ -73,13 +73,25 @@ jobs:
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
           $work = Join-Path $env:RUNNER_TEMP 'template-check'
-          dotnet pack src/D3B.Core/D3B.Core.csproj --configuration Release --output "$work/feed" -p:MinVerVersionOverride=0.0.0-template
+          dotnet pack --configuration Release --output "$work/feed" -p:MinVerVersionOverride=0.0.0-template
           dotnet new nugetconfig --output $work
           dotnet nuget add source "$work/feed" --name template-check --configfile "$work/nuget.config"
           dotnet new install templates/d3b-plugin --debug:custom-hive "$work/hive"
           dotnet new d3b-plugin --name TemplatePlugin --output "$work/TemplatePlugin" --d3b-version 0.0.0-template --plugins-directory "$work/plugins" --debug:custom-hive "$work/hive"
           dotnet build "$work/TemplatePlugin"
-          if (-not (Test-Path "$work/plugins/TemplatePlugin/TemplatePlugin.dll")) { throw 'The plugin built from the template was not deployed.' }
+          $deployed = @(Get-ChildItem -Recurse -File "$work/plugins/TemplatePlugin" | ForEach-Object Name)
+          if ('TemplatePlugin.dll' -notin $deployed) { throw 'The plugin built from the template was not deployed.' }
+          $foreign = @($deployed | Where-Object { $_ -notlike 'TemplatePlugin.*' })
+          if ($foreign) { throw "The plugin's folder holds more than its own files: $($foreign -join ', ')." }
+          dotnet new d3b-plugin --name ActivityPlugin --output "$work/ActivityPlugin" --d3b-version 0.0.0-template --page false --debug:custom-hive "$work/hive"
+          dotnet build "$work/ActivityPlugin"
+          $central = ([xml](Get-Content Directory.Packages.props)).Project.ItemGroup.PackageVersion
+          $template = ([xml](Get-Content templates/d3b-plugin/MyPlugin.csproj)).Project.ItemGroup.PackageReference
+          foreach ($package in 'Avalonia', 'CommunityToolkit.Mvvm') {
+            $expected = ($central | Where-Object Include -eq $package).Version
+            $actual = ($template | Where-Object Include -eq $package).Version
+            if ($actual -ne $expected) { throw "The template compiles pages against $package $actual, the app runs $expected." }
+          }
 
       - name: Upload test results
         if: always()

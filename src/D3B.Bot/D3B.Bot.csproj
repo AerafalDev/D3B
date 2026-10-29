@@ -1,5 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>D3B.Bot</PackageId>
+    <Description>The bots' run time of D3B, a bot for Dofus 3: the state, behaviors, activities and pages a plugin writes against.</Description>
+    <PackageTags>d3b;dofus;bot;plugin</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\D3B.Core\D3B.Core.csproj" />
     <ProjectReference Include="..\D3B.Data\D3B.Data.csproj" />

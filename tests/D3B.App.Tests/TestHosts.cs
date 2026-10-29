@@ -1,8 +1,11 @@
 using D3B.App.Hosting;
 using D3B.Bot.Activities;
 using D3B.Bot.Hosting;
+using D3B.Bot.Pages;
 using D3B.Bot.Tests;
 using D3B.Bot.Tests.Runtime;
+using D3B.Core.Modules;
+using D3B.Core.Plugins;
 using D3B.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,17 +15,40 @@ namespace D3B.App.Tests;
 /// <summary>Hosts holding a test's bots, as the app's window reads them.</summary>
 internal static class TestHosts
 {
+    /// <summary>The plugins folder the build copies the sample plugin into, as a host's would hold it.</summary>
+    public static string SamplePlugins => Path.Combine(AppContext.BaseDirectory, "plugins");
+
     /// <summary>A host of the bots a test plays, with its activities, never started: the window only reads its services.</summary>
     public static IHost Of(TestPlay play, params ActivityDefinition[] activities)
     {
+        return Of(play, [], activities);
+    }
+
+    /// <summary>A host of the bots a test plays, with its pages and activities, never started.</summary>
+    public static IHost Of(TestPlay play, PageDefinition[] pages, params ActivityDefinition[] activities)
+    {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
 
-        builder.Services.AddSingleton(play.Bots);
-        builder.Services.AddSingleton(play.World);
+        Register(builder.Services, play);
         builder.Services.AddSingleton(new ActivityCatalog(activities));
-        builder.Services.AddSingleton(new ClientBuild(TestInstall.Version, null));
+        builder.Services.AddSingleton(new PageCatalog(pages));
 
         return builder.Build();
+    }
+
+    /// <summary>A host of the bots a test plays, with the plugins of a folder, each in its own load context, never started.</summary>
+    public static IHost WithPlugins(TestPlay play, string directory)
+    {
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+
+        Register(bot.Services, play);
+        bot.AddPlugins(directory);
+
+        // As the bots module lists them, from what the plugins registered.
+        bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
+        bot.Services.AddSingleton(services => new PageCatalog(services.GetServices<PageDefinition>()));
+
+        return bot.Build();
     }
 
     /// <summary>The app's runner of a host that started.</summary>
@@ -34,5 +60,12 @@ internal static class TestHosts
         await Waiting.UntilAsync(() => runner.Status is HostStatus.Running, TimeSpan.FromSeconds(10));
 
         return runner;
+    }
+
+    private static void Register(IServiceCollection services, TestPlay play)
+    {
+        services.AddSingleton(play.Bots);
+        services.AddSingleton(play.World);
+        services.AddSingleton(new ClientBuild(TestInstall.Version, null));
     }
 }

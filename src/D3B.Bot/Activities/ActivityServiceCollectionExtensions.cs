@@ -1,3 +1,4 @@
+using D3B.Bot.Localization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Activities;
@@ -5,7 +6,7 @@ namespace D3B.Bot.Activities;
 /// <summary>Registers the activities a module brings, for the app to start (D92).</summary>
 public static class ActivityServiceCollectionExtensions
 {
-    /// <summary>Registers an activity in the host's <see cref="ActivityCatalog"/>.</summary>
+    /// <summary>Registers an activity in the host's <see cref="ActivityCatalog"/>, its name the same in every language.</summary>
     /// <typeparam name="TActivity">The activity, made anew for each start with its constructor's services.</typeparam>
     /// <param name="services">The host's services.</param>
     /// <param name="id">The activity's id, unique in the host.</param>
@@ -13,6 +14,19 @@ public static class ActivityServiceCollectionExtensions
     /// <returns>The services.</returns>
     /// <exception cref="InvalidOperationException">An activity with the id is already registered.</exception>
     public static IServiceCollection AddActivity<TActivity>(this IServiceCollection services, string id, string name)
+        where TActivity : BotActivity
+    {
+        return services.AddActivity<TActivity>(id, LocalizedText.Invariant(name));
+    }
+
+    /// <summary>Registers an activity in the host's <see cref="ActivityCatalog"/>.</summary>
+    /// <typeparam name="TActivity">The activity, made anew for each start with its constructor's services.</typeparam>
+    /// <param name="services">The host's services.</param>
+    /// <param name="id">The activity's id, unique in the host.</param>
+    /// <param name="name">The activity's name, as the app shows it, in its language (D96).</param>
+    /// <returns>The services.</returns>
+    /// <exception cref="InvalidOperationException">An activity with the id is already registered.</exception>
+    public static IServiceCollection AddActivity<TActivity>(this IServiceCollection services, string id, LocalizedText name)
         where TActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(services);

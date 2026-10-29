@@ -1,4 +1,6 @@
+using D3B.Bot.Activities;
 using D3B.Bot.Data;
+using D3B.Bot.Pages;
 using D3B.Bot.Protocol;
 using D3B.Core.Modules;
 using D3B.Core.Plugins;
@@ -64,7 +66,8 @@ public static class BotHost
         {
             LogComposition(host, bot.Modules);
 
-            var failure = await PrepareDataAsync(host, cancellationToken).ConfigureAwait(false)
+            var failure = PrepareCatalogs(host)
+                ?? await PrepareDataAsync(host, cancellationToken).ConfigureAwait(false)
                 ?? await PrepareProtocolAsync(host, cancellationToken).ConfigureAwait(false)
                 ?? await StartHostAsync(host, cancellationToken).ConfigureAwait(false);
 
@@ -115,6 +118,27 @@ public static class BotHost
 
         foreach (var plugin in plugins)
             HostLog.PluginLoaded(log, plugin.Name, plugin.Version, plugin.Id, plugin.Author ?? "unknown");
+    }
+
+    private static string? PrepareCatalogs(IHost host)
+    {
+        try
+        {
+            // Before the host starts: two activities or pages sharing an id, however registered, stop it here, rather than
+            // the app that reads the catalogues later, which holds every client's connection (D91).
+            host.Services.GetService<ActivityCatalog>();
+            host.Services.GetService<PageCatalog>();
+
+            return null;
+        }
+        catch (InvalidOperationException exception)
+        {
+            var log = Logger(host);
+
+            HostLog.DoesNotStart(log, exception.Message);
+
+            return exception.Message;
+        }
     }
 
     private static async Task<string?> PrepareDataAsync(IHost host, CancellationToken cancellationToken)
