@@ -70,7 +70,7 @@ dotnet run --project src/D3B.App           # the desktop app, which runs the bot
 dotnet run --project src/D3B.Host          # the same host without the app, until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48)
                                            # both keep accounts and profiles in %LOCALAPPDATA%\D3B\d3b.db, migrated before the host starts; --Storage:Path <file> names another (D100)
                                            # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
-                                           # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53)
+                                           # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53), which the app's inspector replays (D115)
                                            # both list the Lua scripts of %LOCALAPPDATA%\D3B\scripts, read again as they change, and write d3b.lua there for completion; --Scripting:Directory <dir> names another (D108)
 dotnet tool restore                        # then: dotnet tool run dotnet-ef migrations add <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
@@ -85,5 +85,5 @@ dotnet run -c Release --project benchmarks/D3B.Network.Benchmarks   # BenchmarkD
 dotnet run -c Release --project benchmarks/D3B.Engine.Benchmarks    # world paths on the installed build's pack; D3B_PACK names another
 ```
 
-Lua scripts (D102 to D108): `src/D3B.Scripting/Definitions/d3b.lua` documents the API for VS Code's Lua extension, and a
+Lua scripts (D102 to D108), which a session to come removes (D116): `src/D3B.Scripting/Definitions/d3b.lua` documents the API for VS Code's Lua extension, and a
 test fails when it misses a hook, field or function the API has; `samples/scripts/` holds example scripts the tests play.

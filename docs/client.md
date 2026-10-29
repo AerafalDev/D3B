@@ -1040,6 +1040,23 @@ character's map and a neighbour by a scroll, started, stopped and resumed from t
 - **Closing the app** gave the client its configuration back, closed the game connection, and the app exited with 0;
   the client lost its connection to the game, as D91 says.
 
+Measured on 2026-10-29 for session 5e (D110): two game connections of a client of 3.7.12.12 through the app, 32 s and
+1 min 59 s, the scripts' folder holding the sample stroll and a script failing at its second step.
+
+- **The scripts** were listed, neither failing to read.
+- **The stroll**, started from the card with its 10 walks: 8 walks arrived, then the stop from the card ended it at
+  once, during the 9th, its request sent: 9 frames from D3B. Run whole, 10 walks arrived. Started again,
+  the player's click during its second walk sent `MapMovementCancelRequest` then `MapMovementRequest`, which paused the
+  bot; resumed from the card 8 s later, it walked from the player's cell, 213, the script's counter at its second walk,
+  and ended `Done`: 21 frames from D3B on that connection.
+- **The failing script** failed at its second step, `erreur:10: attempt to index a nil value (local 'nothing')`: the
+  chunk is named without `.lua`.
+- **Closing the app** gave the client its configuration back, then the game connection closed.
+
+The same day, for the logs and the inspector (D111 to D115), the client went through the connection phase, its
+identification answered, and never opened its game connection: the owner saw a client update that changed the protocol,
+whose files were not installed yet, the client on disk still 3.7.12.12. The pages wait for Q10's session to be measured.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

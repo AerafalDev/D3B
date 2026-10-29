@@ -32,7 +32,9 @@ and of the game's values; the accounts the relay sees and the profiles, in SQLit
 `D3B.Host` share; and the app's accounts and profiles pages, its rail always shown (step 5, session 5c); Lua scripts in
 place of the external plugins, which went: LuaCSharp behind an activity, D3B's own API, a script's settings in a table,
 the scripts of a watched folder listed as activities, with the API's definitions for completion, and an activity's error
-on the bot's card (step 7). Everything else below is the target.
+on the bot's card (step 7), which go in a session of their own (D116); each bot's journal of its actions, the host's
+problems and each bot's game frames kept in memory, and the app's logs page and protocol inspector, live or replaying a
+capture (step 5, session 5e). Everything else below is the target.
 
 ## Overview
 
@@ -187,6 +189,14 @@ client's new connection taking the bot back.
   module lists them in the `ActivityCatalog`; one is made, with the host's services and its settings, for each start.
 - **Recovery** (D89): before going on after an interruption, `Recovery.SettleAsync` lets a use and a walk end, leaves a
   dialog or exchange still open, and lets go of a walk the server holds, each wait bounded.
+- **The journal** (D112, D113), in `D3B.Bot.Journal`: each bot's last 2,000 entries (`BotActor.Journal`), written by the
+  behaviors once an action is over, with its outcome and duration: a walk asked for itself, a map change, a use, a
+  travel, banking; then the bot's connection, pause, resuming and fights, and its activity's start, interruptions,
+  unloading and end. An action begun within another (`BotContext.BeginAction`) is one deeper, and a walk made for
+  another action has no entry. Entries name the game's ids, never the protocol's messages. `RecentItems<T>` keeps them,
+  read by the app as they come.
+- **The host's problems** (D114): `HostProblems`, a logging provider, keeps the host's last 2,000 warnings and errors
+  that name no bot.
 - Every delay goes through `TimeProvider`.
 
 ## Network and protocol
@@ -277,6 +287,10 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   own (D61). `CaptureReplay` plays one into pipes, D3B's frames into a pipe of their own when asked; tests build their
   own, and `scripts/capture.cs` describes them by structure. Decoded messages come from replaying them, for the
   protocol inspector and the replay tests (D63).
+- The protocol inspector's frames (D115), in `D3B.Bot.Inspection`: `FrameRecorder`, a game observer, keeps each bot's
+  last 3,000 frames, both sides, and D3B's own requests, which observers see apart once sent (`IGameObserver.OnSent`).
+  `FrameFields` gives a readable message's fields, the ticket hidden, or the shape of one the readable protocol lacks;
+  `CaptureFrames` reads a game connection's capture of the installed build through its translation.
 
 ## Game data
 
@@ -322,7 +336,8 @@ Built at step 2 (D24 to D33):
 
 ## Desktop app
 
-Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm.
+Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
+5c and 5e (D96, D101, D111).
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
@@ -331,7 +346,7 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
 - **The window**: dark by default, light on a click; where the host stands, the language and the theme in the title
   bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by `StatusPill`, in the tone each says
   (`Tone`).
-- **The rail**, always (D101): the bots, the accounts and the profiles pages, a line once a module registered a page, then
+- **The rail**, always (D101, D111): the bots, the accounts, the profiles, the logs and the inspector pages, a line once a module registered a page, then
   the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip. A module's page (`ModulePageViewModel`) is made the first
   time it shows and kept, refreshed every 250 ms while it shows through its context (`AppPageContext`, in
   `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead (`PageFailureViewModel`), logged, and
@@ -350,14 +365,20 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   characters, and unfolded in place to edit it: its name, its activity, and its settings by section, a field per kind
   (`D3B.App.ViewModels.Settings`), checked as they change, searched by name for the game's values, saved once they
   hold.
-- **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9): the bots'
-  loops never wait for the app. Views are thin, and bind compiled.
+- **The logs page** (D111 to D114, `D3B.App.ViewModels.Logs`): every source by time, the host's problems, or a bot's
+  journal, which its card opens; filtered by tone and text, followed, copied. `JournalLines` says each entry in the app's
+  language, maps by their coordinates and sub-area, elements and skills by their names in the pack.
+- **The protocol inspector** (D111, D115, `D3B.App.ViewModels.Inspector`): a bot's frames live, frozen on demand, or a
+  capture of the game connection replayed; filtered by sender, name and whether the readable protocol read them; a frame
+  unfolded in place, the ticket hidden. Both pages look at one bot (`BotChoice`).
+- **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
+  alone: the bots' loops never wait for the app. Views are thin, and bind compiled.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
   French; the language starts as the system's, or the one the app was left in, and changes live, the views binding
   through `{l:Tr Key}`.
 - **Preferences** (`AppPreferences`): the language and the theme, remembered in `%LOCALAPPDATA%\D3B\app.json`, read before
   the window shows (D101).
-- Pages to come: the live map (5d); logs and the protocol inspector (5e) (D92).
+- Page to come: the live map (5d) (D92).
 
 ## Storage
 
@@ -379,7 +400,7 @@ Built in session 5c (D99, D100), in `D3B.Storage`, which the app and `D3B.Host` 
 ## Scripting
 
 Built at step 7 (D102 to D109), in `D3B.Scripting`: users extend the bot with Lua scripts, in place of the external
-plugins, which went.
+plugins, which went. The owner chose to remove them too, in a session of their own (D116): what follows goes then.
 
 - **The engine**: LuaCSharp 0.5.8, pure C#, its functions async (D103). A script runs in a sandbox of its own
   (`ScriptSandbox`): the base library without what reaches files or loads code, `string`, `table`, `math`, `bit32`, and
@@ -458,4 +479,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   interrupted and resumed, their errors, the sandbox, the API's answers and the protocol; their settings, the library on
   a folder of the test's own, read again as files change, the definitions checked against the API, and the sample
   stroll (D107, D108). The app's module pages are drawn with a page of the tests' own (D109).
+- A bot's journal is read after the behaviors the bots' tests play, each entry and its depth (D112); the frame recorder
+  through game sessions, D3B's requests included, and the inspector's fields and replays on captures the tests write
+  (D115); the logs and inspector pages against bots played the same way, in both languages (D111).
 - Time is controlled through `FakeTimeProvider`.

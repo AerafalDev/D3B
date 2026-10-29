@@ -14,8 +14,8 @@ Set by the project owner, not up for decision:
 
 - An open-source bot for Dofus 3 (Unity), in .NET 10.
 - Better than the existing bots, open source or sold: inspired by them, never copied.
-- Every feature is a module, assembled as in Bevy. Users extend the bot with Lua scripts (D102, the owner's change to
-  the brief's external .NET plugins).
+- Every feature is a module, assembled as in Bevy, in the repository (D116, the owner's change: the brief's external
+  .NET plugins, then the Lua scripts of D102 that replaced them, go).
 - The desktop UI is Avalonia with ShadUI.
 - The network goes through Kestrel's socket layer.
 - Game data is extracted from the official client by file-based apps in `scripts/`, as in Dofus Remastered.
@@ -2705,7 +2705,7 @@ shows always. Builds D94, D96, D99.*
 ## D102: Lua scripts replace the external .NET plugins
 
 *2026-10-29, step 5, session 5c, chosen by the owner. Supersedes D90, D95, D97, and D6, D21, D22 and D96 for external
-plugins; brings Q1 and step 7 back. Changes the brief.*
+plugins; brings Q1 and step 7 back. Changes the brief. Superseded by D116: Lua scripts go too.*
 
 The owner chose to drop the external .NET plugins for a Lua scripting system, once 5c showed what remained before the
 plugins' packages could be published: trimming the six packages' public API, about 180 types without the protocol's
@@ -2799,7 +2799,7 @@ Measured on the latest version of each of the owner's five profession scripts (`
 
 ## D105: The Lua API is D3B's own
 
-*2026-10-29, step 7, chosen by the owner, against the lead's recommendation of the family's names. Builds D87, D102.*
+*2026-10-29, step 7, chosen by the owner, against the lead's recommendation of the family's names. Builds D87, D102. Superseded by D116.*
 
 The lead recommended the names of Snowbot's and MoonBot's family (D104), so that the owner's scripts run nearly as they
 are; the owner chose an API of D3B's own. The form is the lead's, local and reversible:
@@ -2830,7 +2830,7 @@ are; the owner chose an API of D3B's own. The form is the lead's, local and reve
 ## D106: Scripts reach the protocol through D3B's readable requests
 
 *2026-10-29, step 7, the lead's recommendation, which the owner left to the lead. Frames the family's
-`developer:createMessage` and `sendMessage`.*
+`developer:createMessage` and `sendMessage`. Superseded by D116.*
 
 - `bot:send(name, fields)` sends the game server a request of D3B's readable protocol, named as its `.proto` files name
   it, whole (D55), its fields by their JSON names, in lower camel case as the rest of the API; every field is checked
@@ -2849,7 +2849,7 @@ are; the owner chose an API of D3B's own. The form is the lead's, local and reve
 
 ## D107: A script's settings, a table onto D98's kinds
 
-*2026-10-29, step 7, the form chosen by the owner. Builds D98, D99.*
+*2026-10-29, step 7, the form chosen by the owner. Builds D98, D99. Superseded by D116.*
 
 - **Declared as data**, an entry per setting in the order the app shows them, `{ key, kind, name, help, default, min,
   max, maxLength, options, required, ordered, within }`, or `{ section = ... }`; kinds `flag`, `number`, `text`,
@@ -2866,7 +2866,7 @@ are; the owner chose an API of D3B's own. The form is the lead's, local and reve
 
 ## D108: Scripts live in a watched folder, with the API's definitions
 
-*2026-10-29, step 7, the folder chosen by the owner; the definitions asked for by the owner.*
+*2026-10-29, step 7, the folder chosen by the owner; the definitions asked for by the owner. Superseded by D116.*
 
 - **Where**: `%LOCALAPPDATA%\D3B\scripts`, or `Scripting:Directory`, beside the database: every `.lua` file of it and of
   its folders is a script, but the definitions below. The scripting module (`ScriptingModule`), which the app and
@@ -2901,6 +2901,152 @@ are; the owner chose an API of D3B's own. The form is the lead's, local and reve
   D3B's modules (D96), in the app's rail, a page's view model now `ModulePageViewModel`; a page that throws still shows
   its error, tested with a page of the tests' own.
 - **Why** (D102): no package's public API to keep stable; users extend the bot with scripts, which bring no page.
+
+## D110: Lua scripts, measured through the app
+
+*2026-10-29, step 5, session 5e. Completes D103 and D108, which only the tests had measured.*
+
+Measured on a client of 3.7.12.12 through the app, in two runs, the scripts' folder holding the sample stroll,
+`promenade.lua`, and a script failing on purpose at its second step, never committed
+([client.md](client.md#the-game-from-the-app)):
+
+- **Listed**: the host read both, neither failing, and the bot's card offered them among its activities.
+- **Started from the card**, with its defaults, 10 walks: stopped from the card during its 9th walk, it ended at once,
+  `Stopped` after 8 steps; run whole, its 10 walks arrived and it ended `Done`.
+- **Interrupted by the player, then resumed**: the player's click during its second walk paused the bot, the activity
+  answering that it resumes; resumed from the card 8 s later, it went on from the cell the player had led the character
+  to, the script's counter where it was, and ended `Done`.
+- **A failing script** failed at its second step, `Failed` after 1, its error with its line, the exception whole in the
+  log.
+- **Closing the app** gave the client its configuration back and closed the game connection.
+- **Found**: the error names the script without its extension, `erreur:10:`, where D103 has `mineur.lua:3:`: LuaCSharp
+  is given the name the app shows as the chunk's. Not fixed, Lua scripts going (D116).
+- **Not measured on the client**: a script started from a profile, none being saved; what the card showed of the failure,
+  which the owner did not report, drawn without a screen in D103.
+
+## D111: The logs and the protocol inspector, two pages of the rail
+
+*2026-10-29, step 5, session 5e; the layout chosen by the owner among three mockups, the filters as the lead proposed
+them, chosen by the owner. Builds D92, D101.*
+
+- **Two pages** in the rail, after the profiles: the logs, and the protocol inspector. They look at one bot
+  (`BotChoice`): chosen on either, it is the other's. A bot's card has a journal button, beside its connection, which
+  opens the logs page on its bot.
+- **The logs page**: its sources as chips, every source by time, the host, then each bot with a dot of its status; the
+  lines' tone as a segment, every line, warnings and errors, or errors; a search through what the lines say, whatever its
+  case; "Follow", which scrolls to each new line; "Copy", the lines shown as text. A line says its time, a mark of what it
+  is in its tone, its source when every source shows, what happened, then its outcome and duration (D112); a problem of
+  the host has its whole message and exception as a tooltip (D114).
+- **The protocol inspector**: a bot's frames live, chosen among chips, or a capture of the game connection, chosen in
+  "Replay a capture…", the last written first, its folder read again as the list opens. Filters: the client's, the
+  server's and D3B's frames, a toggle each; a search through the messages' names, readable or the build's; "Hide unread",
+  off at first; "Follow"; "Freeze", live only, the frames waiting until it thaws; and clearing the list. A row says its
+  time, its sender, its message, its size, and how far the readable protocol read it: understood whole, read, or not
+  read. A frame unfolds in place, which stops following, so that it stays in view (D115).
+- **Drawn without a screen** in both languages and both themes, and looked at; the window's test reads both pages in
+  French and English and opens a bot's journal from its card.
+- **Rejected.**
+  - One page of tabs, journal, script console and frames, the bot chosen at its top: one tab at a time, when the journal
+    and the frames are read together.
+  - A drawer on the right of the bots page, opened from a card: lines and frames squeezed into a panel, the cards beside
+    it.
+  - Unread frames hidden at first: three frames of four (D58), but what is hidden is what the one mapping a build looks
+    for.
+  - Richer filters, by category of the host's log and by time.
+
+## D112: A bot's journal says its actions, not the protocol
+
+*2026-10-29, step 5, session 5e, asked for by the owner: each action, using an element, changing maps, never the
+protocol's messages.*
+
+- **Written by the behaviors** (`BotActor.Journal`, entries in `D3B.Bot.Journal`): an action once over, with its outcome
+  and how long it took by the bot's clock: a walk to a cell (`WalkEntry`), a map change, by a side, a map action, a door,
+  a zaap or leaving the haven bag (`MapChangeEntry`), a use of an element with a skill (`UseEntry`), a travel and its
+  number of changes (`TravelEntry`), banking and the stacks and kamas it put in (`BankEntry`). Then what becomes of the
+  bot, connected, disconnected, paused by the player, resumed, a fight beginning (`BotEventEntry`), and of its activity,
+  started, interrupted and what it answered, unloading, over and how, its error included (`Activity*Entry`).
+- **Actions within actions** (`BotContext.BeginAction`): an action is written once over, as deep as the actions it was
+  begun within. A travel's map changes come before it, one deeper, and the app sets them in; a walk made for another
+  action, to a map's exit or an element, has no entry. An action an interruption cuts has none either: the interruption's
+  entry says it.
+- **Ids, never words**: an entry names maps, cells, elements and skills by the game's ids; the app names them from the
+  pack in its language (`JournalLines`), a map by its coordinates, the sub-area beside them where the place is the point,
+  such as a travel's end, an element by what it is and the skill used, and by its id what the pack does not name.
+- **Rejected.**
+  - The host's log, filtered by bot: the protocol's messages and the host's English, the lines the owner turned down.
+  - Every walk, those made for another action included, set in under it: twice the lines for what the action says.
+  - No walk at all: an activity's own walks would go unseen.
+
+## D113: The logs and the frames kept in memory, always
+
+*2026-10-29, step 5, session 5e, chosen by the owner.*
+
+- **Kept in the host**, in memory, from its start, the app open on any page or none: each bot's last 2,000 journal
+  entries (`BotActor.JournalCapacity`), the host's last 2,000 problems (`HostProblems.Capacity`), and each bot's last
+  3,000 game frames, both sides and D3B's, across its connections (`FrameRecorder.Capacity`). Older ones are dropped
+  (`RecentItems<T>`), and the pages let go of what the host no longer keeps.
+- **Read as they come**: a page reads only what came since its last refresh, every 250 ms, and only while it shows.
+- **A frame costs a reference**: the game session decodes it once (D62), and the recorder keeps it.
+- **Nothing written to disk**: captures stay what records a connection (D37), and a host that stops forgets the rest.
+- **Rejected.**
+  - The inspector recording only while a button is on: what came before it was opened, such as the ticket's request and
+    the character's entering, is what one looks for.
+  - 10,000 lines and frames per bot: about 15 MB per bot, for what a capture keeps better.
+
+## D114: The host's problems on the logs page
+
+*2026-10-29, step 5, session 5e, chosen by the owner.*
+
+- **A source of its own**, "Host": what the host's log writes at the warning level or above, unless it names a bot by
+  its character, whose journal says it already (D112). `HostProblems`, an `ILoggerProvider` the bots module registers,
+  keeps them as the host writes them, in English, with the exception if any: a script that does not read, a connection
+  whose account is unknown, a relay's failure.
+- **Rejected.**
+  - No such source, the host's problems left to `D3B.Host`'s console, which the app has none of.
+  - The host's whole log, information included: the relay's every connection and the database's commands, in English.
+
+## D115: The protocol inspector
+
+*2026-10-29, step 5, session 5e. Carries out D92's 5e, with D63's replays.*
+
+- **Recorded by the host** (`FrameRecorder`, in `D3B.Bot.Inspection`), an observer of the game (D62) the bots module
+  registers: a game connection's frames are its character's once the server confirms the character the client chose, as
+  bots are tied to theirs (D65), those that came before joining them then; a connection whose account D3B does not know
+  is never a bot's, and its frames go with it.
+- **D3B's own requests** reach observers apart (`IGameObserver.OnSent`, which does nothing by default), decoded as the
+  server reads them, once sent: `OnFrame` still never shows them (D63), the bots learning what they did from the server.
+- **A frame unfolded**: a readable message's fields as protobuf's JSON names them, those it holds, at every depth, an
+  enumeration's value by name, bytes by their length, a list of scalars past 32 values counted (`FrameFields`). A message
+  the readable protocol lacks, or that does not read, shows its shape alone, its fields' numbers, wire types and lengths,
+  as `scripts/capture.cs --frames` does (D37); `WireReading` and `WireField` are public for it.
+- **The ticket is never shown**: the game connection's first request, `AuthenticationRequest`, shows it is there,
+  hidden, live as in a replay, as no log names it (D65).
+- **Replays** (`CaptureFrames`): a capture of the game connection is read whole, each side's reads framed again as the
+  relay would, D3B's frames being records of their own (D61), through the installed build's translation. A capture of
+  another build is refused, saying which, since its frames name messages only its own mapping reads; a capture cut short
+  says so.
+- **A frame's length**: `DecodedGameFrame.Length`, without its varint, which a row shows.
+- **Not measured on a client**: the client updated during the session, the measurement waits for Q10's session (D116).
+
+## D116: Lua scripts go, in a session of their own, after Q10's
+
+*2026-10-29, step 5, session 5e, chosen by the owner, against the lead's recommendation. Supersedes D102 and D105 to
+D108; D103 stays as what was measured. Changes the brief.*
+
+Once the scripts were measured through the app (D110), the owner chose to do without them. The lead recommended
+freezing them as they are, no more work on their API, and deciding again after step 6.
+
+- **What a user extends the bot with**: nothing outside the repository. Every feature is a module of D3B's own (D5,
+  D20); activities (D87), their settings (D98), profiles (D99) and the modules' pages (D96) stay.
+- **What goes**, in a session of its own: `D3B.Scripting` and its tests, the scripting module, the scripts' folder and
+  `Scripting:Directory`, `d3b.lua` and `.luarc.json`, `samples/scripts/` and its stroll, and LuaCSharp. Profiles naming
+  a script then name an activity that no longer exists, which the profiles page shows (D101).
+- **In 5e**: no script console tab on the logs page; the chunk's name D110 found is not fixed.
+- **The order**: the client updated during 5e, its protocol changing as the owner saw, so Q10's session comes first
+  (D54); the client measurement of 5e's pages comes with it, then the removal, then 5d.
+- **Rejected.**
+  - Freezing them, the lead's recommendation: an API and its definitions kept, unused.
+  - Removing them within 5e: one large task per session (D17).
 
 ## Open questions
 

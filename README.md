@@ -1,8 +1,7 @@
 # D3B
 
-An open-source bot for Dofus 3 (Unity), in .NET 10 on Windows. Every feature is a module, assembled as in Bevy, and
-users extend the bot with Lua scripts. An Avalonia desktop app runs the bots and controls them; a headless host runs them
-without it.
+An open-source bot for Dofus 3 (Unity), in .NET 10 on Windows. Every feature is a module, assembled as in Bevy. An
+Avalonia desktop app runs the bots and controls them; a headless host runs them without it.
 
 This project is not affiliated with Ankama. Dofus is a trademark of Ankama. Using a bot on the official servers breaches
 Ankama's terms of service and can get the account banned. No game asset or data is committed to this repository: the
@@ -15,8 +14,10 @@ The solution and the module system: a headless host that builds its modules, sta
 interactives and banks, with the texts they name, into a pack per client build; a tool that publishes it as a release
 asset; and a data module, whose pack the host finds on the machine or downloads, and without which it does not start.
 The network: while the host runs, official clients started from the launcher connect through its relay, which can record
-their connection phase. The bots walk, travel, use elements and bank, as activities the app starts, or Lua scripts.
-The first milestone is harvesting and banking on one account, controlled from the desktop app. See the
+their connection phase. The bots walk, travel, use elements and bank, as activities the app starts, or Lua scripts,
+which are to go. The app's logs page shows each bot's journal of its actions and the host's problems; its protocol
+inspector shows a bot's game frames decoded as they go, the login ticket hidden, or replays a capture. The first
+milestone is harvesting and banking on one account, controlled from the desktop app. See the
 [roadmap](docs/roadmap.md).
 
 ## Building
@@ -41,10 +42,13 @@ While the host runs, the `ConfigUrl` line of the installed client's `version` fi
 configuration that sends it to the host's relay, and the host gives it Ankama's back when it stops. After a crash,
 `dotnet run --file scripts/client.cs -- restore` does it, so that the client plays without D3B.
 
-A script is a `.lua` file of `%LOCALAPPDATA%\D3B\scripts` (`Scripting:Directory` names another folder): the app lists
-it as an activity as soon as it is saved, its settings edited in a profile. D3B writes `d3b.lua` there, the API's
-definitions: opened in VS Code with its Lua extension, the folder has the API's documentation and completion.
-`samples/scripts/promenade.lua` is a working example.
+Until they go (see the roadmap), a script is a `.lua` file of `%LOCALAPPDATA%\D3B\scripts` (`Scripting:Directory`
+names another folder): the app lists it as an activity as soon as it is saved, its settings edited in a profile. D3B
+writes `d3b.lua` there, the API's definitions: opened in VS Code with its Lua extension, the folder has the API's
+documentation and completion. `samples/scripts/promenade.lua` is a working example.
+
+With `--Network:Captures:Enabled true`, the relay records each connection in `%LOCALAPPDATA%\D3B\captures`, which the
+protocol inspector replays. A capture holds the account's login ticket: never share it.
 
 ## Documents
 
