@@ -8,12 +8,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\D3B.App\D3B.App.csproj" />
-    <ProjectReference Include="..\..\samples\D3B.Samples.Hello\D3B.Samples.Hello.csproj" ReferenceOutputAssembly="false" OutputItemType="SamplePlugin" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\D3B.Bot.Tests\Activities\TestActivity.cs" Link="Bot\TestActivity.cs" />
-    <Compile Include="..\D3B.Bot.Tests\Movement\TestWalks.cs" Link="Bot\TestWalks.cs" />
     <Compile Include="..\D3B.Bot.Tests\Network\FakeRelayConnection.cs" Link="Bot\FakeRelayConnection.cs" />
     <Compile Include="..\D3B.Bot.Tests\Network\TestGame.cs" Link="Bot\TestGame.cs" />
     <Compile Include="..\D3B.Bot.Tests\Runtime\TestConnection.cs" Link="Bot\TestConnection.cs" />

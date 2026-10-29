@@ -1,8 +1,8 @@
 # Architecture
 
 Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is in
-[roadmap.md](roadmap.md). Built so far: the solution, the module and plugin model in `D3B.Core`, and a host that builds
-its modules, starts and stops (step 1); the data pack format in `D3B.Data`, the tools that inspect the client, extract
+[roadmap.md](roadmap.md). Built so far: the solution, the module model in `D3B.Core`, and a host that builds its
+modules, starts and stops (step 1); the data pack format in `D3B.Data`, the tools that inspect the client, extract
 its maps, world graph and game tables with the texts they name, and publish a build's pack, and the data module, whose
 pack the host finds or downloads before it starts (step 2); the network module, whose relay takes each client's
 connection phase through D3B, with its framing measured and its captures (step 3, session 3b); the tool writing each
@@ -26,12 +26,13 @@ world, leaving the haven bag, and a walk the client does not follow settled wher
 session 4e); floors in cell paths, and activities chaining behaviors, interrupted by the player, a disconnection or a
 fight, the character recovered and taken back by the client's new connection (step 4, session 4f); the desktop app,
 which runs the bots' host in its process, with its bots page in French and English, dark by default, and the catalogue
-of the activities it starts (step 5, session 5a); what a plugin sees and declares: the `D3B.Bot` package, activities and
-pages named in the app's language, the pages in the app's rail, the root module read from a plugin's metadata, and the
-sample plugin's activity and page (step 5, session 5b); activities' settings, which their modules describe in code, of
-every kind and of the game's values; the accounts the relay sees and the profiles, in SQLite through EF Core, which the
-app and `D3B.Host` share; and the app's accounts and profiles pages, its rail always shown (step 5, session 5c).
-Everything else below is the target.
+of the activities it starts (step 5, session 5a); activities and pages named in the app's language, and the modules'
+pages in the app's rail (step 5, session 5b); activities' settings, which their modules describe in code, of every kind
+and of the game's values; the accounts the relay sees and the profiles, in SQLite through EF Core, which the app and
+`D3B.Host` share; and the app's accounts and profiles pages, its rail always shown (step 5, session 5c); Lua scripts in
+place of the external plugins, which went: LuaCSharp behind an activity, D3B's own API, a script's settings in a table,
+the scripts of a watched folder listed as activities, with the API's definitions for completion, and an activity's error
+on the bot's card (step 7). Everything else below is the target.
 
 ## Overview
 
@@ -42,9 +43,9 @@ GameAssembly.dll + metadata   ────────► mapping: schema, captu
                                                                                              │ fetched and loaded by
                                                                                              ▼
 D3B.App (Avalonia, ShadUI) ── runs in its own process (D91) ──► the bots' host: Generic Host, Kestrel
-D3B.Host: the same host, without the app                          │ BotBuilder: default modules + plugins/ (D5, D6)
+D3B.Host: the same host, without the app                          │ BotBuilder: default modules, storage, scripting (D5)
                                                                   ▼
-                                                             one async actor per bot (D9)
+%LOCALAPPDATA%\D3B\scripts\*.lua ── listed as activities ─────► one async actor per bot (D9)
                                                                   │ acts through
                                                                   ▼
 official client, one per account ──── its configuration, ──► D3B.Network: Kestrel   ────►  Ankama's connection
@@ -62,59 +63,55 @@ each step adds the references it needs.
 
 | Path | Role |
 | --- | --- |
-| `src/D3B.Core` | Modules and `BotBuilder`, plugin loading, shared abstractions. Packed (D22, D95). |
+| `src/D3B.Core` | Modules and `BotBuilder`, shared abstractions. |
 | `src/D3B.Network` | Kestrel transport, framing, codec over `IDuplexPipe`. The only project referencing `Microsoft.AspNetCore.App`, with the host. |
 | `src/D3B.Protocol` | Classes generated from the readable `.proto` files, a build's mapping, its matching and audit, and the per-build translation. |
 | `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, items, spells, monsters, interactives, texts. |
 | `src/D3B.Engine` | Pure logic with no I/O: cell and world pathfinding, line of sight, fight simulation. |
-| `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, activities and pages, the default modules, and the host's composition the app and `D3B.Host` share. What a plugin references, packed with `D3B.Core`, `D3B.Data`, `D3B.Engine`, `D3B.Network` and `D3B.Protocol`, which its API names (D95). |
+| `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, activities and their settings, pages, the default modules, and the host's composition the app and `D3B.Host` share. |
 | `src/D3B.Host` | The bots' host without the app, for measurements: its entry point alone, with the database (D91, D100). |
-| `src/D3B.Storage` | D3B's database, SQLite through EF Core and its migrations: the accounts seen and the profiles, which the app and `D3B.Host` share. Not packed: plugins do not see it (D100). |
+| `src/D3B.Storage` | D3B's database, SQLite through EF Core and its migrations: the accounts seen and the profiles, which the app and `D3B.Host` share (D100). |
+| `src/D3B.Scripting` | Lua scripts: LuaCSharp behind an activity, its sandbox, D3B's own API, a script's settings, and the library of the scripts' folder, which the app and `D3B.Host` share (D103 to D108). |
 | `src/D3B.App` | The Avalonia desktop app, which runs the bots' host in its process (D91). |
 | `scripts/` | Inspection, extraction, release and mapping tools, as file-based apps. |
-| `templates/` | The `dotnet new d3b-plugin` template, compiling against the `D3B.Bot` package: an activity and, unless `--page false`, a page (D95, D96). |
-| `samples/` | Example plugins, built with the solution and loaded by the tests: `D3B.Samples.Hello` writes an activity and a page (D96). |
+| `samples/scripts/` | Example scripts, played by the tests: `promenade.lua`, the stroll (D108). |
 | `tests/`, `benchmarks/` | One test project per `src/` project that has logic; benchmarks for the codec and pathfinding. |
 
-## Modules and plugins
+## Modules
 
-Built at step 1, in `D3B.Core` (D20, D21):
+Built at step 1, in `D3B.Core` (D20); the external plugins went at step 7 (D102, D109), users extending the bot with
+Lua scripts (Scripting, below):
 
 - A module implements `IModule.Build(BotBuilder)`. It registers services, message handlers, activities, fight
-  strategies, settings and UI pages. Routes and routines are modules too, D3B's or plugins: there is no Lua (D90).
-  `BotBuilder` wraps the Generic Host's builder and is an `IHostApplicationBuilder`: a module registers through
-  `Services`, `Configuration` and `Logging`, and `Build()` returns the `IHost`.
+  strategies, settings and UI pages. `BotBuilder` wraps the Generic Host's builder and is an `IHostApplicationBuilder`: a
+  module registers through `Services`, `Configuration` and `Logging`, and `Build()` returns the `IHost`.
 - A module is built as soon as it is added. It requires another by calling `bot.AddModule<T>()` first in its `Build`.
   Adding a module type twice builds it once.
 - A group (`IModuleGroup`) lists modules in order; whoever adds it may disable some. `DefaultModules`, in `D3B.Bot`,
   gathers the standard modules: so far the data module (D31), the protocol module (D48), the network module (D36) and
-  the bots module (D67), then, as the steps write them, world, movement, harvesting, bank. D3B's own features are modules like any other, so they can be disabled, and later replaced
-  (D20).
-- A plugin is a folder under `plugins/` holding an assembly named after it, whose one public class marked
-  `[Plugin("id")]` is its root module. It loads once into its own `AssemblyLoadContext`, which asks the host's context
-  first and is not collectible (D6). The loader finds the root module in the assembly's metadata and loads that type
-  alone, so that a plugin whose page needs Avalonia loads in a host without the app (D97). An invalid plugin, or one
-  whose modules need an assembly neither the host nor the plugin holds, stops the host from starting.
+  the bots module (D67), then, as the steps write them, world, movement, harvesting, bank. D3B's own features are
+  modules like any other, so they can be disabled, and later replaced (D20).
 - The host's composition, `BotHost` in `D3B.Bot.Hosting`, which the app and `D3B.Host` share (D91), adds
-  `DefaultModules`, then the plugins next to the executable (or under `Plugins:Directory`), logs what it built, gets the
-  pack of the installed client's build ready (Game data, below), then its protocol (Network and protocol, below), and
-  starts the host, or says why it did not (`BotHostStart`). `D3B.Host` then runs until it is stopped; the app, until
-  its window is gone.
-- A plugin compiles against the `D3B.Bot` package, which brings `D3B.Core` and the libraries its API names, with
-  `ExcludeAssets="runtime"`: its folder holds only its own files, the host providing the rest (D95). `dotnet new
-  d3b-plugin` creates one, with an activity and a page.
+  `DefaultModules`, logs what it built, gets the pack of the installed client's build ready (Game data, below), then its
+  protocol (Network and protocol, below), and starts the host, or says why it did not (`BotHostStart`). The app and
+  `D3B.Host` add the storage module (D100) and the scripting module (D108). `D3B.Host` then runs until it is stopped; the
+  app, until its window is gone.
 - A module's page (D96), registered with `AddPage` (`D3B.Bot.Pages`) and listed by the bots module in the
   `PageCatalog`, is an Avalonia control the app makes, in its process (D91), from a factory: the contract names no type
   of the UI's framework, and a host without the app never makes a page. The page gets a `PageContext`: the host's
-  services, the app's language and the plugin's texts in it (`PageTexts`), and the window's refresh.
+  services, the app's language and the module's texts in it (`PageTexts`), and the window's refresh.
 - Texts the app shows for a module, a page's title or an activity's name, are `LocalizedText`s (`D3B.Bot.Localization`):
-  the same in every language, or the module's own resources, in English and French (D96).
+  the same in every language, the module's own resources, in English and French (D96), or a script's, by language (D107).
 - An activity's settings (D98), in `D3B.Bot.Settings`: a class whose initial values are the defaults, which the module
   describes in code as it registers the activity, `AddActivity<TActivity, TSettings>(id, name, settings => ...)`, each
   property a setting of a kind, a flag, a number, a text, a choice or the game's professions, areas, sub-areas and
   resources, one or a list, with its name, bounds and help; lists ordered or not, values sought within another setting's,
-  settings shown under a condition, sections and rules. `ActivitySettings` reads and writes them as JSON and checks them,
-  with the game's values (`GameReferences`) once the pack is there; the activity receives them through its constructor.
+  settings shown under a condition, sections and rules. A script's are declared without a class, key by key
+  (`SettingValuesBuilder`, `SettingValues`, D107). `ActivitySettings` reads and writes them as JSON and checks them, with
+  the game's values (`GameReferences`) once the pack is there; the activity receives them through its constructor.
+- The activities the app starts are listed by the `ActivityCatalog`: the modules' activities, fixed once the host is
+  built, then those of its sources (`IActivitySource`), such as the scripts' folder, which come and go, its `Version`
+  changing with them (D108).
 - A module may get something ready before the host starts, such as its database, through an `IHostPreparation`: the
   first that fails stops the host, which says why (D100).
 
@@ -177,13 +174,14 @@ client's new connection taking the bot back.
   kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
   (`WorldInsides`), the bankers and their replies, and the insides the server showed holding no banker. Walking, using,
   changing maps and travelling answer `Busy` during a dialog or an exchange, which the server refuses a walk during.
-- **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module or a plugin, chooses each step
+- **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module or a script (D105), chooses each step
   from the state, a behavior's worth of work; its other hooks have defaults: when the character is full and how it is
   unloaded, what each interruption leads to, how the character is recovered. `BotActor.StartActivity` runs one at a
   time (`ActivityRun`): each step, unloading and recovery a behavior started once the bot can act, connected, placed,
   out of a fight and not paused, so the run waits, with no delay, for the player to resume the bot, the client's new
   connection to take it back (D65) or the fight to end (D88). A full character is unloaded before the next step.
-  Nothing of the activity's position is kept: the next step starts from the state.
+  Nothing of the activity's position is kept: the next step starts from the state. An activity that fails keeps its
+  error (`ActivityRun.Failure`), which the app shows (D103); one that is `IDisposable` is disposed once over.
 - **The activities the app starts** (D93): a module registers each one, by an id unique in the host and a name in the
   app's language (D96), with `AddActivity<T>`, or `AddActivity<T, TSettings>` with its settings (D98), and the bots
   module lists them in the `ActivityCatalog`; one is made, with the host's services and its settings, for each start.
@@ -334,7 +332,7 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   bar. Its icons are drawn by `Icon` from the app's own geometries, its statuses by `StatusPill`, in the tone each says
   (`Tone`).
 - **The rail**, always (D101): the bots, the accounts and the profiles pages, a line once a module registered a page, then
-  the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip. A module's page (`PluginPageViewModel`) is made the first
+  the modules' pages in the catalogue's order (D96), an icon each with its title as a tooltip. A module's page (`ModulePageViewModel`) is made the first
   time it shows and kept, refreshed every 250 ms while it shows through its context (`AppPageContext`, in
   `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead (`PageFailureViewModel`), logged, and
   the bots and the other pages go on. What a page's own code throws on the UI's thread, which nothing caught, is told by
@@ -344,7 +342,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
   connection and the player's pause, resumed from the card; where, the coordinates large and the sub-area named from the
   pack's texts; pods and kamas; what it is in the middle of; its activity, started from a profile or from the catalogue
   with its defaults (D93, D99), the character's own profile chosen, stopped, with its status, steps and last
-  interruption.
+  interruption, and the error it failed with, such as a script's with its line (D103). Its choices follow the scripts'
+  folder as it changes (D108).
 - **The accounts page** (D101): a card per account the relay saw, its subscription and when it was seen, forgotten on
   demand; its characters in rows, each with the profile it plays and whether it starts on connection.
 - **The profiles page** (D101): a column of profiles, each folded to its name, activity, settings at a glance and
@@ -379,11 +378,30 @@ Built in session 5c (D99, D100), in `D3B.Storage`, which the app and `D3B.Host` 
 
 ## Scripting
 
-The target since D102, step 7: users extend the bot with Lua scripts, in place of the external .NET plugins, which go.
-A script is one kind of `BotActivity` (D87), its steps calling the bot's behaviors through a small API made for scripts,
-from D12's namespaces and the owner's profession scripts, which step 13 adapts to it; it declares its settings in a
-table, onto D98's kinds, and profiles name it (D99). The engine is LuaCSharp, once Q1 holds. The plugin loading
-described under "Modules and plugins" is what exists until step 7 removes it.
+Built at step 7 (D102 to D109), in `D3B.Scripting`: users extend the bot with Lua scripts, in place of the external
+plugins, which went.
+
+- **The engine**: LuaCSharp 0.5.8, pure C#, its functions async (D103). A script runs in a sandbox of its own
+  (`ScriptSandbox`): the base library without what reaches files or loads code, `string`, `table`, `math`, `bit32`, and
+  of `os` its clock and dates; a platform that refuses files, the environment and an exit.
+- **A script is an activity** (`ScriptActivity`, D105): its text runs first, once per start, to define its hooks and
+  declare its settings; then the bot calls `step(bot)` for each step, chosen from the state (D87), and `isFull(bot)`,
+  `unload(bot)`, `onInterrupted(reason)` and `recover(bot, reason)` when it defines them. An interruption cancels the call
+  the script awaits, which `pcall` cannot catch; the next step starts from the state, the script's variables as they were.
+  A loop that never waits stops with the activity. A script's error fails the activity with a `ScriptException`, its line
+  in it, which the bot's card shows; what the script wrote is its console (`ScriptConsole`).
+- **The API** (`D3B.Scripting.Api`, D105, D106): the `bot` the hooks receive, fields read live (`bot.map`,
+  `bot.inventory`...) and actions that wait and answer `ok, why` (`walk`, `changeMap`, `travel`, `use`, `bank`...); the
+  readable protocol's requests sent, and its events waited for, by name and checked (`send`, `waitFor`, `request`); the
+  `log` and `game` namespaces and `print`. The `bot` is no global: a script's text cannot act.
+- **Settings** (D107): a table of entries onto D98's kinds, read without the bot (`ScriptSettings`), into
+  `SettingValues`; the script reads its values by key once its text ran, `settings.walks`.
+- **The library** (`ScriptLibrary`, D108): every `.lua` file of `%LOCALAPPDATA%\D3B\scripts`, or `Scripting:Directory`,
+  is the activity `script:` and its path, read without the bot (`ScriptReader`, 2 s at most); one that does not read is
+  listed still, its start failing with its error. The folder is watched and read again once quiet; a start takes the text
+  as last saved. The library is a source of the `ActivityCatalog`, so profiles name scripts as they name activities (D99).
+- **Definitions**: `d3b.lua`, the API as LuaCATS annotations, and `.luarc.json`, written into the folder as the host
+  starts, give VS Code's Lua extension the API's documentation and completion (`ScriptDefinitions`).
 
 ## Engine
 
@@ -436,7 +454,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   database of the test's own and the game's values of a small world, named by a pack's texts in both languages (D101).
 - Activities' settings are tested in `D3B.Bot.Tests`; the storage in `D3B.Storage.Tests`, on a database of the test's own,
   its recording and starting on connection through game connections played as the bots' tests play them (D99, D100).
-- The sample plugin is loaded from its folder, as a host loads it: by `D3B.Core`'s tests and by the host's composition
-  in `D3B.Bot`'s, whose hosts hold no Avalonia, and by the app's, which draw its page in both languages and play its
-  stroll through it (D96, D97); the build copies it into those tests' `plugins/` (`tests/Directory.Build.targets`).
+- Scripts are played as the bots' tests play activities, on the same world (D103): their calls awaiting behaviors,
+  interrupted and resumed, their errors, the sandbox, the API's answers and the protocol; their settings, the library on
+  a folder of the test's own, read again as files change, the definitions checked against the API, and the sample
+  stroll (D107, D108). The app's module pages are drawn with a page of the tests' own (D109).
 - Time is controlled through `FakeTimeProvider`.

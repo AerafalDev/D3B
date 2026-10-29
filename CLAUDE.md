@@ -63,17 +63,16 @@ These rules apply to `src/`, `tests/`, `benchmarks/` and `scripts/`.
 ## Commands
 
 ```sh
-dotnet build                               # warnings are errors; copies the sample plugin into the Core tests' plugins/
+dotnet build                               # warnings are errors
 dotnet test                                # every test project, on Microsoft.Testing.Platform
 dotnet format --verify-no-changes          # CI checks it
 dotnet run --project src/D3B.App           # the desktop app, which runs the bots' host in its process (D91); closing it disconnects the clients
-dotnet run --project src/D3B.Host          # the same host without the app, until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48); --Plugins:Directory <dir> loads plugins from elsewhere
+dotnet run --project src/D3B.Host          # the same host without the app, until Ctrl+C; needs the installed build's pack, schema and mapping, local or downloaded (D31, D32, D48)
                                            # both keep accounts and profiles in %LOCALAPPDATA%\D3B\d3b.db, migrated before the host starts; --Storage:Path <file> names another (D100)
                                            # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
                                            # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53)
-dotnet pack -o <feed>                      # the packages plugins compile against: D3B.Bot and the five it names (D95)
+                                           # both list the Lua scripts of %LOCALAPPDATA%\D3B\scripts, read again as they change, and write d3b.lua there for completion; --Scripting:Directory <dir> names another (D108)
 dotnet tool restore                        # then: dotnet tool run dotnet-ef migrations add <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations
-dotnet new install templates/d3b-plugin    # then: dotnet new d3b-plugin -n <Name> --d3b-version <version>; --page false for no page
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
 dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options
 dotnet run --file scripts/release.cs       # dry run of publishing that build's pack, schema and mapping to release client-<version>; --publish does it (D33, D50)
@@ -86,5 +85,5 @@ dotnet run -c Release --project benchmarks/D3B.Network.Benchmarks   # BenchmarkD
 dotnet run -c Release --project benchmarks/D3B.Engine.Benchmarks    # world paths on the installed build's pack; D3B_PACK names another
 ```
 
-CI also creates plugins from the template, with a page and without, and builds them against freshly packed packages:
-see the "Check the plugin template" step of `.github/workflows/ci.yml` to run it by hand.
+Lua scripts (D102 to D108): `src/D3B.Scripting/Definitions/d3b.lua` documents the API for VS Code's Lua extension, and a
+test fails when it misses a hook, field or function the API has; `samples/scripts/` holds example scripts the tests play.

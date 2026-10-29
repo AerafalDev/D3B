@@ -37,7 +37,7 @@ public abstract class PageContext
     public event EventHandler? Refreshing;
 
     /// <summary>Gets texts from resources, in the app's language, which follow it as it changes, for the page to bind to.</summary>
-    /// <param name="resources">The resources, such as the plugin's own.</param>
+    /// <param name="resources">The resources, such as the page's module's own.</param>
     /// <returns>The texts: the same each time for the same resources, which follow the language for as long as the page lives.</returns>
     public PageTexts Texts(ResourceManager resources)
     {

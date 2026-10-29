@@ -1,12 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <IsPackable>true</IsPackable>
-    <PackageId>D3B.Data</PackageId>
-    <Description>The game data of D3B, a bot for Dofus 3: the pack format and its readers, the maps, the world and the game's tables.</Description>
-    <PackageTags>d3b;dofus;bot;plugin;data</PackageTags>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="MemoryPack" />
     <PackageReference Include="ZstdSharp.Port" />

@@ -23,7 +23,8 @@ public sealed class HostRunnerTests : IDisposable
         _install.WritePack();
         _install.WriteProtocol();
 
-        var runner = new HostRunner([.. _install.Arguments, "--Plugins:Directory", Path.Combine(AppContext.BaseDirectory, "no-plugins")]);
+        // The host the app runs adds the storage and the scripts: both go to the test's own folder, never the user's.
+        var runner = new HostRunner([.. _install.Arguments, "--Storage:Path", Path.Combine(_install.Root, "d3b.db"), "--Scripting:Directory", Path.Combine(_install.Root, "scripts")]);
 
         Assert.Equal(HostStatus.Starting, runner.Status);
 
@@ -32,6 +33,7 @@ public sealed class HostRunnerTests : IDisposable
 
         Assert.Equal(HostStatus.Running, runner.Status);
         Assert.NotNull(runner.Services?.GetService<Bots>());
+        Assert.True(File.Exists(Path.Combine(_install.Root, "scripts", "d3b.lua")));
         Assert.DoesNotContain($"ConfigUrl={_install.ConfigUrl}\n", File.ReadAllText(_install.VersionFile), StringComparison.Ordinal);
 
         await runner.StopAsync().WaitAsync(_timeout, TestContext.Current.CancellationToken);
@@ -61,13 +63,13 @@ public sealed class HostRunnerTests : IDisposable
     [Fact]
     public async Task AHostThatCouldNotBeBuiltSaysWhy()
     {
-        var runner = new HostRunner(_ => throw new InvalidOperationException("Two plugins have the id sample."));
+        var runner = new HostRunner(_ => throw new InvalidOperationException("An activity with the id patrol is already registered."));
 
         runner.Start();
         await Waiting.UntilAsync(() => runner.Status is not HostStatus.Starting, _timeout);
 
         Assert.Equal(HostStatus.Failed, runner.Status);
-        Assert.Equal("Two plugins have the id sample.", runner.Failure);
+        Assert.Equal("An activity with the id patrol is already registered.", runner.Failure);
     }
 
     [Fact]

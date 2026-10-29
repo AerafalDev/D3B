@@ -81,7 +81,7 @@
     <value>Préparation de D3B</value>
   </data>
   <data name="HostStartingDetail" xml:space="preserve">
-    <value>Plugins, données du jeu et protocole du client installé. Un premier démarrage peut les télécharger.</value>
+    <value>Modules, données du jeu et protocole du client installé. Un premier démarrage peut les télécharger.</value>
   </data>
   <data name="HostStoppingTitle" xml:space="preserve">
     <value>Arrêt des bots</value>
@@ -240,7 +240,7 @@
     <value>Profil ou activité</value>
   </data>
   <data name="NoActivityAvailable" xml:space="preserve">
-    <value>Aucune activité à démarrer : les modules et les plugins en ajoutent.</value>
+    <value>Aucune activité à démarrer : les modules et les scripts en ajoutent.</value>
   </data>
   <data name="Start" xml:space="preserve">
     <value>Démarrer</value>
@@ -258,7 +258,7 @@
     <value>Cette page n'a pas pu s'afficher</value>
   </data>
   <data name="PageFailedDetail" xml:space="preserve">
-    <value>Son plugin a levé l'erreur ci-dessous. Les bots et les autres pages continuent.</value>
+    <value>Son module a levé l'erreur ci-dessous. Les bots et les autres pages continuent.</value>
   </data>
   <data name="Accounts" xml:space="preserve">
     <value>Comptes</value>

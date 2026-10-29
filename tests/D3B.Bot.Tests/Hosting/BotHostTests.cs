@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
-using D3B.Bot.Activities;
 using D3B.Bot.Hosting;
 using D3B.Bot.Localization;
 using D3B.Bot.Pages;
@@ -10,7 +9,6 @@ using D3B.Data.Releases;
 using D3B.Data.Tests.Releases;
 using D3B.Network.Relay;
 using D3B.Protocol.Mapping;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
@@ -154,19 +152,6 @@ public sealed class BotHostTests : IDisposable
     }
 
     [Fact]
-    public void TheHostWithoutTheAppBuildsAPluginWithAPageAndListsWhatItBrings()
-    {
-        // The sample's page derives from Avalonia's UserControl, which this host, as D3B.Host, does not hold (D97).
-        var bot = CreateBuilder("--Plugins:Directory", Path.Combine(AppContext.BaseDirectory, "plugins"));
-
-        using var host = bot.Build();
-
-        Assert.Contains(host.Services.GetRequiredService<ActivityCatalog>().All, definition => definition.Id == "d3b.samples.hello.stroll");
-        Assert.Contains(host.Services.GetRequiredService<PageCatalog>().All, definition => definition.Id == "d3b.samples.hello");
-        Assert.DoesNotContain(AppDomain.CurrentDomain.GetAssemblies(), assembly => assembly.GetName().Name == "Avalonia.Base");
-    }
-
-    [Fact]
     public async Task TheHostDoesNotStartWithTwoPagesOfOneId()
     {
         var bot = CreateBuilder();
@@ -209,27 +194,9 @@ public sealed class BotHostTests : IDisposable
         Assert.DoesNotContain(_log.GetSnapshot(), IsStarted);
     }
 
-    [Fact]
-    public void PluginsLiveNextToTheHostByDefault()
-    {
-        var configuration = new ConfigurationBuilder().Build();
-
-        Assert.Equal(Path.Combine(AppContext.BaseDirectory, "plugins"), BotHost.PluginsDirectory(configuration));
-    }
-
-    [Fact]
-    public void ARelativePluginsDirectoryStartsFromTheHost()
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection([new KeyValuePair<string, string?>(BotHost.PluginsDirectoryKey, "extra")])
-            .Build();
-
-        Assert.Equal(Path.Combine(AppContext.BaseDirectory, "extra"), BotHost.PluginsDirectory(configuration));
-    }
-
     private BotBuilder CreateBuilder(params string[] arguments)
     {
-        var bot = BotHost.CreateBuilder([.. _install.Arguments, "--Plugins:Directory", Path.Combine(AppContext.BaseDirectory, "no-plugins"), .. arguments]);
+        var bot = BotHost.CreateBuilder([.. _install.Arguments, .. arguments]);
 
         bot.Logging.AddProvider(new FakeLoggerProvider(_log));
 

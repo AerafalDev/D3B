@@ -288,7 +288,7 @@ public sealed class ActivitySettingsTests
     }
 
     [Fact]
-    public void APluginsRuleOrConditionThatThrowsNeverThrowsInTheApp()
+    public void AnActivitysRuleOrConditionThatThrowsNeverThrowsInTheApp()
     {
         var declared = Register(settings =>
         {

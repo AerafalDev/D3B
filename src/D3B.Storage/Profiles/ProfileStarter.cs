@@ -55,7 +55,7 @@ public sealed class ProfileStarter
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
-            // An activity a plugin wrote may fail as it is made; the bot may already run one, or be stopped with the host.
+            // An activity, a module's or a script's, may fail as it is made; the bot may already run one, or be stopped with the host.
             return new ProfileStart(null, ProfileStartFailure.NotStarted, [], exception.Message);
         }
     }

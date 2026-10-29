@@ -28,6 +28,7 @@ public sealed class ActivityRun
     private int _status = (int)ActivityStatus.Waiting;
     private int _interruption = NoInterruption;
     private int _steps;
+    private Exception? _failure;
 
     // Only the run's own sequence of behaviors reads and writes it.
     private bool _unloaded;
@@ -43,6 +44,9 @@ public sealed class ActivityRun
 
     /// <summary>Gets the number of steps the activity ran to their end.</summary>
     public int Steps => Volatile.Read(ref _steps);
+
+    /// <summary>Gets the error that made the activity fail, such as a script's (D103); none when it failed for a character still full.</summary>
+    public Exception? Failure => Volatile.Read(ref _failure);
 
     /// <summary>Gets whether the activity is over.</summary>
     public bool IsOver => _completion.Task.IsCompleted;
@@ -78,6 +82,20 @@ public sealed class ActivityRun
         var outcome = await LoopAsync().ConfigureAwait(false);
 
         BotLog.ActivityOver(_bot.Log, _bot.Key.CharacterId, Activity.Name, Steps, outcome);
+
+        // An activity holding what must be let go of, such as a script's Lua state, is done with once over.
+        if (Activity is IDisposable disposable)
+        {
+            try
+            {
+                disposable.Dispose();
+            }
+            catch (Exception exception)
+            {
+                BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
+            }
+        }
+
         SetStatus(ActivityStatus.Over);
         _completion.TrySetResult(outcome);
     }
@@ -132,6 +150,7 @@ public sealed class ActivityRun
             catch (Exception exception)
             {
                 BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
+                Volatile.Write(ref _failure, exception);
 
                 return ActivityOutcome.Failed;
             }
@@ -151,6 +170,7 @@ public sealed class ActivityRun
             catch (Exception exception)
             {
                 BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
+                Volatile.Write(ref _failure, exception);
 
                 return ActivityOutcome.Failed;
             }

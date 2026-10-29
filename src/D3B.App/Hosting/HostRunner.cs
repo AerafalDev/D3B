@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using D3B.Bot.Hosting;
+using D3B.Scripting;
 using D3B.Storage;
 using Microsoft.Extensions.Hosting;
 
@@ -37,10 +38,10 @@ internal sealed class HostRunner
     /// <summary>Gets the host's services while it runs, else <see langword="null"/>.</summary>
     public IServiceProvider? Services => Status is HostStatus.Running ? _host?.Services : null;
 
-    /// <summary>Initializes a new instance of the <see cref="HostRunner"/> class, for the default modules, the plugins and the database.</summary>
+    /// <summary>Initializes a new instance of the <see cref="HostRunner"/> class, for the default modules, the database and the scripts.</summary>
     /// <param name="args">The command-line arguments, read as the host's configuration.</param>
     public HostRunner(string[] args)
-        : this(cancellationToken => BotHost.StartAsync(BotHost.CreateBuilder(args).AddModule<StorageModule>(), cancellationToken))
+        : this(cancellationToken => BotHost.StartAsync(BotHost.CreateBuilder(args).AddModule<StorageModule>().AddModule<ScriptingModule>(), cancellationToken))
     {
     }
 
@@ -88,7 +89,7 @@ internal sealed class HostRunner
         }
         catch (Exception exception)
         {
-            // Such as a plugin that does not load (D21): the app shows why, where the headless host would stop.
+            // Such as two modules registering one id (D93): the app shows why, where the headless host would stop.
             Fail(exception.Message);
         }
     }

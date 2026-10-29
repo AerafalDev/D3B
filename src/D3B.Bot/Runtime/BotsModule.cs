@@ -38,7 +38,7 @@ public sealed class BotsModule : IModule
             services.GetRequiredService<TimeProvider>(),
             services.GetRequiredService<ILoggerFactory>()));
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
-        bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
+        bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>(), services.GetServices<IActivitySource>()));
         bot.Services.AddSingleton(services => new PageCatalog(services.GetServices<PageDefinition>()));
 
         // Read once something asks, the app's settings or a profile started: a host that starts no activity never reads them.

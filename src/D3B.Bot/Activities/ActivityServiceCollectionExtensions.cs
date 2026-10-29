@@ -62,7 +62,7 @@ public static class ActivityServiceCollectionExtensions
 
     private static IServiceCollection AddDefinition(this IServiceCollection services, ActivityDefinition definition)
     {
-        // While the modules build, so that a plugin reusing an id stops the host from starting, as an invalid plugin does (D21).
+        // While the modules build, so that a module reusing an id stops the host from starting (D93).
         if (services.Any(descriptor => descriptor.ImplementationInstance is ActivityDefinition registered && registered.Id == definition.Id))
             throw new InvalidOperationException($"An activity with the id {definition.Id} is already registered.");
 

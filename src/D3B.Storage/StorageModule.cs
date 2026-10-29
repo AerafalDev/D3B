@@ -19,7 +19,7 @@ namespace D3B.Storage;
 /// <para>
 /// It registers the <see cref="AccountBook"/>, fed by the game connections it observes, the <see cref="ProfileBook"/>,
 /// the <see cref="ProfileStarter"/> that starts a profile on a bot, and starts a character's profile on its connection,
-/// when asked. Plugins do not see it: profiles are D3B's, and only name the activities plugins register.
+/// when asked. Activities do not see it: profiles are D3B's, and only name the activities modules and scripts register.
 /// </para>
 /// </remarks>
 public sealed class StorageModule : IModule

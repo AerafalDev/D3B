@@ -13,7 +13,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 4 | Bot run time and navigation | Done |
 | 5 | Desktop app, first version | In progress: 5a, 5b and 5c done |
 | 6 | Harvesting and banking: first milestone | To do |
-| 7 | Lua scripting, in place of the external plugins | To do: recommended right after 5c (D102) |
+| 7 | Lua scripting, in place of the external plugins | Done |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
 | 9 | Fights | To do |
 | 10 | Several accounts and groups | To do |
@@ -157,21 +157,33 @@ them when its pods are full, controlled from the app (D16). The repository may g
 - The harvesting activity's settings use D98's kinds: a profession, its resources by priority, an area and its
   sub-areas; auto modes such as BillBot's add what they need to them, maps once 5d picks them on the map, monsters once
   step 9 puts them in the pack.
+- Harvesting reaches scripts too, as an action of the `bot` (D105), documented in `d3b.lua` (D108).
 
 ## 7. Lua scripting
 
-Settles Q1.
+Done on 2026-10-29, in one session, with decisions D103 to D109. Settles Q1, settled by D103.
 
 Back, the owner's choice (D102), after D90 had dropped it: users extend the bot with Lua scripts, in place of the
 external .NET plugins.
 
-- The plugins go: the loader, the `plugins` folder, the packages, CI's template check, the template, and the sample,
-  its stroll written again as a script.
-- Q1 first: LuaCSharp behind a `BotActivity`, a step awaiting the bot's behaviors, cancelled by an interruption and
-  resumed, a script's settings declared in a table onto D98's kinds, errors told in the app, no access to files or
-  processes, and a piece of one of the owner's scripts ported.
-- The API, from D12's namespaces and the owner's scripts, a script's `move()` and `bank()` as its steps (D87); profiles
-  name scripts as they name activities (D99).
+- Q1 first, a prototype: LuaCSharp 0.5.8 behind a `BotActivity`, a call awaiting the bot's behaviors, a step cancelled
+  by an interruption that `pcall` cannot catch and resumed from the state, a loop that never waits stopped, no access to
+  files or processes, errors with their line on the bot's card, and a piece of the owner's miner script ported; the
+  owner's 58 scripts compile (D103).
+- MoonBot's API among the references; what the owner's scripts call, measured: 37 functions of one family of names,
+  routes by map, settings through `dofile` (D104).
+- D3B's own API, the owner's choice against the family's names: the activity's hooks given a `bot`, its fields read live
+  and its actions answering `ok, why`, `log` and `game` (D105); the readable protocol's requests and events, by name and
+  checked (D106).
+- A script's settings declared in a table onto D98's kinds, edited in the profiles page, a profile naming a script as an
+  activity (D107).
+- The scripts of a watched folder, `%LOCALAPPDATA%\D3B\scripts`, listed as activities and read again as they change,
+  those that do not read listed with their error; `d3b.lua` and `.luarc.json` written there for VS Code's documentation
+  and completion, the owner's request (D108).
+- The plugins removed: the loader, the `plugins` folder, the packages, CI's template check, the template, and the sample
+  plugin, its stroll written again as `samples/scripts/promenade.lua` (D109).
+
+Not measured on a client: the tests play the scripts through game connections built as the relay shows them.
 
 ## 8. MITM mode
 
@@ -200,5 +212,6 @@ Settles Q5.
 
 ## 13. The owner's profession scripts
 
-- The scripts in `vendor/metiers` adapted to D3B's Lua API (D102), their routes, harvests and banking run as activities
-  (D87), and tested end to end.
+- The scripts in `vendor/metiers` written again in D3B's own Lua API (D105), what they call measured in D104: their
+  routes by map, perhaps through a helper of D3B's own, harvests and banking run as activities (D87), and tested end to
+  end.

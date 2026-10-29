@@ -3,50 +3,32 @@ using D3B.Bot.Data;
 using D3B.Bot.Pages;
 using D3B.Bot.Protocol;
 using D3B.Core.Modules;
-using D3B.Core.Plugins;
 using D3B.Data.Packs;
 using D3B.Network.Relay;
 using D3B.Protocol.Mapping;
 using D3B.Protocol.Translation;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Hosting;
 
-/// <summary>Assembles the bots' host, the default modules then the plugins, and starts it once its game data and protocol are ready.</summary>
+/// <summary>Assembles the bots' host from its modules, and starts it once its game data and protocol are ready.</summary>
 /// <remarks>
 /// The app runs this host in its own process, and <c>D3B.Host</c> runs it without the app, for measurements and tests (D91).
 /// </remarks>
 public static class BotHost
 {
-    /// <summary>The setting naming the directory plugins load from, relative to the host's executable.</summary>
-    public const string PluginsDirectoryKey = "Plugins:Directory";
-
-    /// <summary>Creates the builder of the bots' host: the default modules, then the plugins.</summary>
+    /// <summary>Creates the builder of the bots' host, with the default modules.</summary>
     /// <param name="args">The command-line arguments, read as configuration.</param>
     /// <returns>The builder, to which a caller may add modules before it starts the host.</returns>
-    /// <exception cref="PluginLoadException">A plugin is invalid.</exception>
     public static BotBuilder CreateBuilder(string[] args)
     {
         var bot = new BotBuilder(args);
 
         bot.AddModules(new DefaultModules());
-        bot.AddPlugins(PluginsDirectory(bot.Configuration));
 
         return bot;
-    }
-
-    /// <summary>Gets the directory plugins load from.</summary>
-    /// <param name="configuration">The host's configuration.</param>
-    /// <returns><c>Plugins:Directory</c>, else <c>plugins</c>, from the executable's directory.</returns>
-    public static string PluginsDirectory(IConfiguration configuration)
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-
-        // Plugins ship next to the host, so a relative path never depends on the directory the host is started from.
-        return Path.GetFullPath(configuration[PluginsDirectoryKey] ?? "plugins", AppContext.BaseDirectory);
     }
 
     /// <summary>Builds the host, gets the game data and the protocol ready, then starts it.</summary>
@@ -110,15 +92,9 @@ public static class BotHost
     private static void LogComposition(IHost host, IReadOnlyList<IModule> modules)
     {
         var log = Logger(host);
-        var plugins = host.Services.GetServices<PluginInfo>().ToList();
         var names = string.Join(", ", modules.Select(module => module.GetType().Name));
-        var directory = PluginsDirectory(host.Services.GetRequiredService<IConfiguration>());
 
         HostLog.ModulesBuilt(log, modules.Count, names);
-        HostLog.PluginsLoaded(log, plugins.Count, directory);
-
-        foreach (var plugin in plugins)
-            HostLog.PluginLoaded(log, plugin.Name, plugin.Version, plugin.Id, plugin.Author ?? "unknown");
     }
 
     private static string? PrepareCatalogs(IHost host)

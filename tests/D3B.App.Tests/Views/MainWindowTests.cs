@@ -4,11 +4,11 @@ using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D3B.App.Localization;
+using D3B.App.Tests.Pages;
 using D3B.App.ViewModels;
 using D3B.App.Views;
 using D3B.Bot.Activities;
 using D3B.Bot.Tests.Activities;
-using D3B.Bot.Tests.Movement;
 using D3B.Bot.Tests.Runtime;
 
 namespace D3B.App.Tests.Views;
@@ -88,15 +88,14 @@ public sealed class MainWindowTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheSamplePluginsPageShowsInTheRailInTheAppsLanguage()
+    public async Task AModulesPageShowsInTheRailInTheAppsLanguage()
     {
-        // The sample loads as a host loads it: from its folder, into a context of its own, sharing the app's Avalonia.
-        using var host = TestHosts.WithPlugins(_play, TestHosts.SamplePlugins);
+        using var host = TestHosts.Of(_play, [TestPage.Definition()], new ActivityDefinition("patrol", "Patrol", _ => new TestActivity()));
         var runner = await TestHosts.RunningAsync(host);
 
         await _play.EnterAsync(300);
 
-        var (titles, english, french, bots) = await OnTheUIThreadAsync(() =>
+        var (titles, english, french, shown) = await OnTheUIThreadAsync(() =>
         {
             var localizer = Localizer.Instance;
 
@@ -114,7 +113,9 @@ public sealed class MainWindowTests : IAsyncDisposable
             page.ShowCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
+            var control = Assert.Single(window.GetVisualDescendants().OfType<TestPage>());
             var english = Texts(window);
+            var shown = new List<bool> { window.GetVisualDescendants().Contains(control) };
 
             main.SwitchLanguageCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
@@ -124,74 +125,22 @@ public sealed class MainWindowTests : IAsyncDisposable
 
             main.ShowBotsCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
-
-            var bots = Texts(window);
-
+            shown.Add(window.GetVisualDescendants().Contains(control));
             localizer.Use(Localizer.English);
             window.Close();
 
-            return (titles, english, french, bots);
+            return (titles, english, french, shown);
         });
 
-        Assert.Equal(["Hello", "Bonjour"], titles);
-        Assert.Contains("Not strolling", english);
-        Assert.Contains("None yet", english);
-        Assert.Contains("Level 200", english);
-        Assert.Contains("walks arrived", english);
+        Assert.Equal(["Greetings", "Salutations"], titles);
+        Assert.Contains("Hello from a module", english);
+        Assert.Contains("1 bot in the host", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Bonjour", french);
-        Assert.Contains("Pas en promenade", french);
-        Assert.Contains("Aucune encore", french);
-        Assert.Contains("Dernière marche", french);
-        Assert.Contains("marche arrivée", french);
+        Assert.Contains("Bonjour d'un module", french);
+        Assert.Contains("1 bot dans l'hôte", french);
+        Assert.DoesNotContain("Hello from a module", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Promenade", bots);
-    }
-
-    [Fact]
-    public async Task TheSamplePluginsStrollWalksAndItsPageShowsIt()
-    {
-        using var host = TestHosts.WithPlugins(_play, TestHosts.SamplePlugins);
-        var runner = await TestHosts.RunningAsync(host);
-        var (connection, _) = await _play.EnterAsync(300);
-        var main = new MainViewModel(runner, Localizer.Instance);
-
-        await OnTheUIThreadAsync(() =>
-        {
-            Localizer.Instance.Use(Localizer.English);
-            main.Refresh();
-            Assert.Single(main.Bots.Items).StartCommand.Execute(null);
-
-            return true;
-        });
-
-        var cell = await TestWalks.WalkedAsync(_play, connection, 1);
-
-        // The stroll goes on with its next walk once the first is recorded.
-        await TestWalks.SentAsync(_play, connection, 2);
-
-        var texts = await OnTheUIThreadAsync(() =>
-        {
-            var window = new MainWindow { DataContext = main };
-
-            main.Refresh();
-            window.Show();
-            main.Pages[0].ShowCommand.Execute(null);
-            Dispatcher.UIThread.RunJobs();
-
-            var texts = Texts(window);
-
-            window.Close();
-
-            return texts;
-        });
-
-        Assert.Contains("Strolling", texts);
-        Assert.Contains("1", texts);
-        Assert.Contains("walk arrived", texts);
-        Assert.Contains($"Cell {cell}, arrived", texts);
-        Assert.Contains("This stroll", texts);
-        Assert.Contains("1 of 10", texts);
+        Assert.Equal([true, false], shown);
     }
 
     [Fact]

@@ -16,7 +16,7 @@ public static class PageServiceCollectionExtensions
     /// <exception cref="InvalidOperationException">A page with the id is already registered.</exception>
     /// <remarks>
     /// The page's types are named only in <paramref name="create"/>, never in the module's own code, so that a host without
-    /// the app, which lacks the app's UI framework, builds the module and never loads them (D97).
+    /// the app, which lacks the app's UI framework, builds the module and never loads them (D96).
     /// </remarks>
     public static IServiceCollection AddPage(this IServiceCollection services, string id, LocalizedText title, string? icon, Func<PageContext, object> create)
     {
@@ -24,7 +24,7 @@ public static class PageServiceCollectionExtensions
 
         var definition = new PageDefinition(id, title, icon, create);
 
-        // While the modules build, so that a plugin reusing an id stops the host from starting, as for activities (D93).
+        // While the modules build, so that a module reusing an id stops the host from starting, as for activities (D93).
         if (services.Any(descriptor => descriptor.ImplementationInstance is PageDefinition registered && registered.Id == id))
             throw new InvalidOperationException($"A page with the id {id} is already registered.");
 
