@@ -331,10 +331,13 @@ public sealed class HarvestActivity : BotActivity
         {
             Publish(state, GameText.Of(HarvestTexts.Text("DoingEat"), GameTextValue.Item(food.ItemId)));
 
-            switch (await context.UseObjectAsync(food.Uid, cancellationToken).ConfigureAwait(false))
+            // In one request: measured, the server eats only as much of the stack as the life lacks (D156).
+            var before = food.Quantity;
+
+            switch (await context.UseObjectsAsync(food.Uid, food.Quantity, cancellationToken).ConfigureAwait(false))
             {
                 case ObjectUseOutcome.Used:
-                    _eaten++;
+                    _eaten += Math.Max(1, before - (context.State.Inventory.TryGetValue(food.Uid, out var left) ? left.Quantity : 0));
                     break;
                 case ObjectUseOutcome.Refused:
                     // Measured: the server refuses food at full life, which it knows better than the reckoning.

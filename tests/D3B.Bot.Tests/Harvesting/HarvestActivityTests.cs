@@ -333,7 +333,8 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         connection.Server(new ObjectDeletedEvent { Uid = 51 });
         connection.Server(new InventoryWeightEvent { Weight = 100, MaxWeight = 1_000 });
 
-        Assert.Equal(new ObjectUseRequest { Uid = 50 }, await TestWalks.SentAsync(_play, connection, 2));
+        // The whole stack asked for in one request: the server eats only what the life lacks (D156).
+        Assert.Equal(new ObjectUseMultipleRequest { Uid = 50, Quantity = 3 }, await TestWalks.SentAsync(_play, connection, 2));
         connection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 50, Quantity = 2 } });
         connection.Server(new LifeRegenEndEvent { Life = 1_000, MaxLife = 1_000 });
         connection.Server(new InventoryWeightEvent { Weight = 99, MaxWeight = 1_000 });

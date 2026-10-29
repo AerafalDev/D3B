@@ -2,6 +2,7 @@ using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Network.Relay;
 using D3B.Protocol.Game;
+using Google.Protobuf;
 
 namespace D3B.Bot.Inventory;
 
@@ -22,9 +23,21 @@ public static class ObjectUse
     /// <param name="uid">The stack's own id.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How the use ended; once used, the state holds the stack's new quantity and the weight.</returns>
-    public static async Task<ObjectUseOutcome> UseObjectAsync(this BotContext context, int uid, CancellationToken cancellationToken)
+    public static Task<ObjectUseOutcome> UseObjectAsync(this BotContext context, int uid, CancellationToken cancellationToken)
+    {
+        return context.UseObjectsAsync(uid, 1, cancellationToken);
+    }
+
+    /// <summary>Uses up to a quantity of a stack's objects in one request, within a behavior, as food to heal (D156).</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="uid">The stack's own id.</param>
+    /// <param name="quantity">The most to use: measured, the server uses only as much food as the life lacks.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the use ended; once used, the state holds the stack's new quantity and the weight.</returns>
+    public static async Task<ObjectUseOutcome> UseObjectsAsync(this BotContext context, int uid, int quantity, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+        ArgumentOutOfRangeException.ThrowIfLessThan(quantity, 1);
 
         var state = context.State;
 
@@ -48,7 +61,9 @@ public static class ObjectUse
         // The weight comes last of what a use changes.
         var weighed = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is InventoryWeightEvent);
 
-        await context.SendAsync(new ObjectUseRequest { Uid = uid }, cancellationToken).ConfigureAwait(false);
+        IMessage request = quantity is 1 ? new ObjectUseRequest { Uid = uid } : new ObjectUseMultipleRequest { Uid = uid, Quantity = quantity };
+
+        await context.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
         var outcome = await answered.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) switch
         {
