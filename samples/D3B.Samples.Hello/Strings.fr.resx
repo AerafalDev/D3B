@@ -110,4 +110,16 @@
   <data name="StartHint" xml:space="preserve">
     <value>Démarrez la Promenade depuis la fiche de ce bot, dans la page Bots.</value>
   </data>
+  <data name="StrollWalks" xml:space="preserve">
+    <value>Pas</value>
+  </data>
+  <data name="StrollWalksHelp" xml:space="preserve">
+    <value>Combien de pas avant la fin de la promenade.</value>
+  </data>
+  <data name="StrollReach" xml:space="preserve">
+    <value>Portée</value>
+  </data>
+  <data name="StrollReachHelp" xml:space="preserve">
+    <value>Jusqu'où va chaque pas, en cellules.</value>
+  </data>
 </root>

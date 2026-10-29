@@ -29,7 +29,7 @@ internal static class Program
 
     private static AppBuilder BuildAvaloniaApp(HostRunner host)
     {
-        return App.Configure(AppBuilder.Configure(() => new App { Host = host }))
+        return App.Configure(AppBuilder.Configure(() => new App { Host = host, Preferences = AppPreferences.Load(AppPreferences.DefaultPath) }))
             .UsePlatformDetect()
             .LogToTrace();
     }

@@ -53,4 +53,7 @@
   <data name="BotsOther" xml:space="preserve">
     <value>{0} bots</value>
   </data>
+  <data name="StepsSetting" xml:space="preserve">
+    <value>Steps</value>
+  </data>
 </root>

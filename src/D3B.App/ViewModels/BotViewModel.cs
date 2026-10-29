@@ -5,8 +5,11 @@ using D3B.App.Localization;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
+using D3B.Bot.Settings;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Storage.Accounts;
+using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
@@ -27,16 +30,22 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly Localizer _localizer;
     private readonly GameWorld? _world;
     private readonly GameTexts? _texts;
+    private readonly ProfileBook? _profiles;
+    private readonly AccountBook? _accounts;
+    private readonly ProfileStarter? _starter;
+    private int _profilesVersion = -1;
     private ActivityRun? _startedRun;
-    private ActivityDefinition? _startedDefinition;
+    private ActivityChoiceViewModel? _startedChoice;
 
     /// <summary>Gets the bot.</summary>
     public BotActor Bot { get; }
 
-    /// <summary>Gets the activities the bot can be given, as the modules registered them.</summary>
-    public IReadOnlyList<ActivityChoiceViewModel> Activities { get; }
+    /// <summary>Gets what the bot can be given: the profiles, by name, then the activities with their defaults (D99).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActivities))]
+    public partial IReadOnlyList<ActivityChoiceViewModel> Activities { get; private set; } = [];
 
-    /// <summary>Gets whether any activity can be given.</summary>
+    /// <summary>Gets whether anything can be given.</summary>
     public bool HasActivities => Activities.Count > 0;
 
     /// <summary>Gets the character's name.</summary>
@@ -152,7 +161,7 @@ internal sealed partial class BotViewModel : ObservableObject
 
     /// <summary>Initializes a new instance of the <see cref="BotViewModel"/> class.</summary>
     /// <param name="bot">The bot.</param>
-    /// <param name="services">The host's services: the activities, and the pack's world and texts.</param>
+    /// <param name="services">The host's services: the activities, the profiles, and the pack's world and texts.</param>
     /// <param name="localizer">The app's texts.</param>
     public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer)
     {
@@ -161,20 +170,15 @@ internal sealed partial class BotViewModel : ObservableObject
         _localizer = localizer;
         _world = services.GetService<GameWorld>();
         _texts = services.GetService<GameTexts>();
-        Activities = [.. (services.GetService<ActivityCatalog>()?.All ?? []).Select(definition => new ActivityChoiceViewModel(definition, localizer.Culture))];
-        SelectedActivity = Activities.Count == 1 ? Activities[0] : null;
+        _profiles = services.GetService<ProfileBook>();
+        _accounts = services.GetService<AccountBook>();
+        _starter = services.GetService<ProfileStarter>();
+        RefreshChoices();
     }
 
-    private static string InitialsOf(string name)
+    private static bool Same(ActivityChoiceViewModel choice, ActivityChoiceViewModel other)
     {
-        var words = name.Split([' ', '-', '_'], StringSplitOptions.RemoveEmptyEntries);
-
-        return words.Length switch
-        {
-            0 => "?",
-            1 => words[0][..Math.Min(2, words[0].Length)].ToUpperInvariant(),
-            _ => string.Concat(words[0][0], words[1][0]).ToUpperInvariant(),
-        };
+        return choice.Profile is { } profile ? profile.Id == other.Profile?.Id : other.Profile is null && choice.Definition?.Id == other.Definition?.Id;
     }
 
     private static string DoingOf(CharacterState state)
@@ -230,7 +234,7 @@ internal sealed partial class BotViewModel : ObservableObject
         var state = Bot.State;
 
         Name = state.Name.Length > 0 ? state.Name : _localizer.Format("CharacterNamed", Bot.Key.CharacterId);
-        Initials = InitialsOf(Name);
+        Initials = AvatarInitials.Of(Name);
         Level = state.Level is { } level ? _localizer.Format("Level", level) : "";
         IsConnected = Bot.IsConnected;
         Connection = _localizer[IsConnected ? "Connected" : "Disconnected"];
@@ -238,6 +242,9 @@ internal sealed partial class BotViewModel : ObservableObject
         IsPaused = Bot.IsPaused;
         Doing = IsConnected ? _localizer[DoingOf(state)] : "";
         Kamas = _localizer.Format("KamasOf", state.Kamas);
+
+        if ((_profiles?.Version ?? 0) != _profilesVersion)
+            RefreshChoices();
 
         foreach (var activity in Activities)
             activity.Refresh(_localizer.Culture);
@@ -251,13 +258,56 @@ internal sealed partial class BotViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanStart))]
     private void Start()
     {
-        if (SelectedActivity?.Definition is not { } definition)
+        if (SelectedActivity is not { } choice)
             return;
+
+        if (choice.Profile is { } profile)
+            StartProfile(choice, profile);
+        else if (choice.Definition is { } definition)
+            StartActivity(choice, definition);
+
+        Refresh();
+    }
+
+    private void StartProfile(ActivityChoiceViewModel choice, Profile profile)
+    {
+        if (_starter is null)
+            return;
+
+        var start = _starter.Start(Bot, profile);
+
+        Error = start.Failure switch
+        {
+            null => null,
+            ProfileStartFailure.ActivityMissing => _localizer.Format("ProfileActivityMissing", profile.Name),
+            ProfileStartFailure.SettingsReset => _localizer.Format("ProfileToReview", profile.Name),
+            ProfileStartFailure.SettingsInvalid => _localizer.Format("ProfileInvalid", profile.Name),
+            _ => _localizer.Format("StartFailed", start.Error),
+        };
+
+        if (start.Run is { } run)
+        {
+            _startedRun = run;
+            _startedChoice = choice;
+        }
+    }
+
+    private void StartActivity(ActivityChoiceViewModel choice, ActivityDefinition definition)
+    {
+        var settings = definition.Settings.CreateDefault();
+
+        // A value the user must give has no default: such an activity runs from a profile.
+        if (definition.Settings.Check(settings, _services.GetService<GameReferences>()).Count > 0)
+        {
+            Error = _localizer.Format("ActivityNeedsProfile", choice.Name);
+
+            return;
+        }
 
         try
         {
-            _startedRun = Bot.StartActivity(definition.Create(_services));
-            _startedDefinition = definition;
+            _startedRun = Bot.StartActivity(definition.Create(_services, settings));
+            _startedChoice = choice;
             Error = null;
         }
         catch (Exception exception)
@@ -265,8 +315,34 @@ internal sealed partial class BotViewModel : ObservableObject
             // An activity a plugin wrote may fail as it is made; the bot may already run one, or be stopped with the host.
             Error = _localizer.Format("StartFailed", exception.Message);
         }
+    }
 
-        Refresh();
+    private void RefreshChoices()
+    {
+        var catalog = _services.GetService<ActivityCatalog>();
+        var culture = _localizer.Culture;
+        var selected = SelectedActivity;
+        var choices = new List<ActivityChoiceViewModel>();
+
+        _profilesVersion = _profiles?.Version ?? 0;
+
+        foreach (var profile in _profiles?.Profiles ?? [])
+        {
+            ActivityDefinition? definition = null;
+
+            catalog?.TryGet(profile.ActivityId, out definition);
+            choices.Add(new ActivityChoiceViewModel(profile, definition, culture, language => definition?.Name.In(language) ?? profile.ActivityId));
+        }
+
+        foreach (var definition in catalog?.All ?? [])
+            choices.Add(new ActivityChoiceViewModel(definition, culture, _ => definition.Settings.IsEmpty ? null : _localizer["DefaultSettings"]));
+
+        var assigned = _accounts?.Find(Bot.Key)?.ProfileId;
+
+        Activities = choices;
+        SelectedActivity = choices.FirstOrDefault(choice => selected is not null && Same(choice, selected))
+            ?? choices.FirstOrDefault(choice => assigned is not null && choice.Profile?.Id == assigned)
+            ?? (choices.Count == 1 ? choices[0] : null);
     }
 
     private bool CanStart()
@@ -356,10 +432,8 @@ internal sealed partial class BotViewModel : ObservableObject
         var (key, tone) = run.IsOver ? OutcomeOf(run.Completion.GetAwaiter().GetResult()) : StatusOf(run.Status);
         var steps = _localizer.Plural("Steps", run.Steps);
 
-        // The name the app started it under; an activity started by other code goes by its own.
-        ActivityName = run == _startedRun && _startedDefinition is { } definition
-            ? definition.Name.In(_localizer.Culture)
-            : run.Activity.Name;
+        // The name the app started it under, a profile's or an activity's; an activity started by other code goes by its own.
+        ActivityName = run == _startedRun && _startedChoice is { } choice ? choice.Name : run.Activity.Name;
         ActivityText = _localizer[key];
         ActivityTone = tone;
         ActivityDetail = run.LastInterruption is { } interruption

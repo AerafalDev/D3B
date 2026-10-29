@@ -237,7 +237,7 @@
     <value>the app stopping</value>
   </data>
   <data name="ChooseActivity" xml:space="preserve">
-    <value>Choose an activity</value>
+    <value>Profile or activity</value>
   </data>
   <data name="NoActivityAvailable" xml:space="preserve">
     <value>No activity to start yet: modules and plugins add them.</value>
@@ -259,5 +259,254 @@
   </data>
   <data name="PageFailedDetail" xml:space="preserve">
     <value>Its plugin raised the error below. The bots and the other pages go on.</value>
+  </data>
+  <data name="Accounts" xml:space="preserve">
+    <value>Accounts</value>
+  </data>
+  <data name="AccountsOne" xml:space="preserve">
+    <value>{0} account</value>
+  </data>
+  <data name="AccountsOther" xml:space="preserve">
+    <value>{0} accounts</value>
+  </data>
+  <data name="CharactersOne" xml:space="preserve">
+    <value>{0} character</value>
+  </data>
+  <data name="CharactersOther" xml:space="preserve">
+    <value>{0} characters</value>
+  </data>
+  <data name="AccountsSummary" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="AccountsHint" xml:space="preserve">
+    <value>An account shows once its client goes through D3B, which never sees its password.</value>
+  </data>
+  <data name="NoAccountTitle" xml:space="preserve">
+    <value>No account yet</value>
+  </data>
+  <data name="NoAccountDetail" xml:space="preserve">
+    <value>Start a client from the Ankama launcher while D3B runs: its account and characters show here.</value>
+  </data>
+  <data name="AccountNamed" xml:space="preserve">
+    <value>Account {0}</value>
+  </data>
+  <data name="SubscribedUntil" xml:space="preserve">
+    <value>Subscribed until {0:d}</value>
+  </data>
+  <data name="NotSubscribed" xml:space="preserve">
+    <value>Not subscribed</value>
+  </data>
+  <data name="ConnectedNow" xml:space="preserve">
+    <value>connected</value>
+  </data>
+  <data name="SeenNow" xml:space="preserve">
+    <value>Seen just now</value>
+  </data>
+  <data name="SeenMinutes" xml:space="preserve">
+    <value>Seen {0} min ago</value>
+  </data>
+  <data name="SeenHours" xml:space="preserve">
+    <value>Seen {0} h ago</value>
+  </data>
+  <data name="SeenYesterday" xml:space="preserve">
+    <value>Seen yesterday</value>
+  </data>
+  <data name="SeenDays" xml:space="preserve">
+    <value>Seen {0} days ago</value>
+  </data>
+  <data name="SeenOn" xml:space="preserve">
+    <value>Seen on {0:d}</value>
+  </data>
+  <data name="PlayedNow" xml:space="preserve">
+    <value>played just now</value>
+  </data>
+  <data name="PlayedMinutes" xml:space="preserve">
+    <value>played {0} min ago</value>
+  </data>
+  <data name="PlayedHours" xml:space="preserve">
+    <value>played {0} h ago</value>
+  </data>
+  <data name="PlayedYesterday" xml:space="preserve">
+    <value>played yesterday</value>
+  </data>
+  <data name="PlayedDays" xml:space="preserve">
+    <value>played {0} days ago</value>
+  </data>
+  <data name="PlayedOn" xml:space="preserve">
+    <value>played on {0:d}</value>
+  </data>
+  <data name="PlayedNever" xml:space="preserve">
+    <value>never played through D3B</value>
+  </data>
+  <data name="CharacterDetail" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="NoProfile" xml:space="preserve">
+    <value>No profile</value>
+  </data>
+  <data name="StartsOnConnection" xml:space="preserve">
+    <value>On connection</value>
+  </data>
+  <data name="StartsOnConnectionHint" xml:space="preserve">
+    <value>Starts its profile when its client first connects while D3B runs.</value>
+  </data>
+  <data name="Forget" xml:space="preserve">
+    <value>Forget this account</value>
+  </data>
+  <data name="ForgetConfirm" xml:space="preserve">
+    <value>Forget</value>
+  </data>
+  <data name="ForgetDetail" xml:space="preserve">
+    <value>Its characters and their profiles are forgotten until its client connects again.</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="SaveFailed" xml:space="preserve">
+    <value>Not saved: {0}</value>
+  </data>
+  <data name="StorageUnavailable" xml:space="preserve">
+    <value>D3B's database is not open: accounts and profiles are not available.</value>
+  </data>
+  <data name="Profiles" xml:space="preserve">
+    <value>Profiles</value>
+  </data>
+  <data name="ProfilesOne" xml:space="preserve">
+    <value>{0} profile</value>
+  </data>
+  <data name="ProfilesOther" xml:space="preserve">
+    <value>{0} profiles</value>
+  </data>
+  <data name="ProfiledOne" xml:space="preserve">
+    <value>{0} character has one</value>
+  </data>
+  <data name="ProfiledOther" xml:space="preserve">
+    <value>{0} characters have one</value>
+  </data>
+  <data name="ProfilesSummary" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="PlayersOne" xml:space="preserve">
+    <value>{0} character</value>
+  </data>
+  <data name="PlayersOther" xml:space="preserve">
+    <value>{0} characters</value>
+  </data>
+  <data name="NoPlayer" xml:space="preserve">
+    <value>No character</value>
+  </data>
+  <data name="NewProfile" xml:space="preserve">
+    <value>New profile</value>
+  </data>
+  <data name="NoProfileTitle" xml:space="preserve">
+    <value>No profile yet</value>
+  </data>
+  <data name="NoProfileDetail" xml:space="preserve">
+    <value>A profile is an activity and its settings, which characters share. Make one here, then give it to a character in Accounts.</value>
+  </data>
+  <data name="ProfileName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Activity" xml:space="preserve">
+    <value>Activity</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="DeleteConfirm" xml:space="preserve">
+    <value>Delete this profile? Its characters will have none.</value>
+  </data>
+  <data name="ProfileNeedsReview" xml:space="preserve">
+    <value>To review</value>
+  </data>
+  <data name="ActivityMissing" xml:space="preserve">
+    <value>Activity not found: {0}</value>
+  </data>
+  <data name="NoSetting" xml:space="preserve">
+    <value>This activity has no setting.</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>Give the profile a name</value>
+  </data>
+  <data name="NameTaken" xml:space="preserve">
+    <value>Another profile has this name</value>
+  </data>
+  <data name="AndMore" xml:space="preserve">
+    <value>{0} and {1} more</value>
+  </data>
+  <data name="NumberRange" xml:space="preserve">
+    <value>From {0} to {1}</value>
+  </data>
+  <data name="SettingRequired" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="SettingOutOfRange" xml:space="preserve">
+    <value>Between {0} and {1}</value>
+  </data>
+  <data name="SettingTooLong" xml:space="preserve">
+    <value>{0} characters at most</value>
+  </data>
+  <data name="SettingUnknown" xml:space="preserve">
+    <value>Not in the game</value>
+  </data>
+  <data name="SettingRepeated" xml:space="preserve">
+    <value>A value twice</value>
+  </data>
+  <data name="SettingNotWithin" xml:space="preserve">
+    <value>Not within “{0}”</value>
+  </data>
+  <data name="JobNamed" xml:space="preserve">
+    <value>Profession {0}</value>
+  </data>
+  <data name="AreaNamed" xml:space="preserve">
+    <value>Area {0}</value>
+  </data>
+  <data name="ResourceNamed" xml:space="preserve">
+    <value>Resource {0}</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search…</value>
+  </data>
+  <data name="AddValue" xml:space="preserve">
+    <value>Add…</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="MoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="MoveDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="NoGameData" xml:space="preserve">
+    <value>The game's data is not loaded.</value>
+  </data>
+  <data name="DefaultSettings" xml:space="preserve">
+    <value>default settings</value>
+  </data>
+  <data name="ProfileActivityMissing" xml:space="preserve">
+    <value>The activity of {0} is not loaded</value>
+  </data>
+  <data name="ProfileToReview" xml:space="preserve">
+    <value>{0} is to review in Profiles</value>
+  </data>
+  <data name="ProfileInvalid" xml:space="preserve">
+    <value>The settings of {0} do not hold: see Profiles</value>
+  </data>
+  <data name="ActivityNeedsProfile" xml:space="preserve">
+    <value>{0} needs settings: make it a profile</value>
+  </data>
+  <data name="SummaryItem" xml:space="preserve">
+    <value>{0}: {1}</value>
   </data>
 </root>

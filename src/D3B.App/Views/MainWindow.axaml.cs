@@ -24,6 +24,7 @@ internal sealed partial class MainWindow : ShadUI.Window
 
         application.RequestedThemeVariant = application.ActualThemeVariant == ThemeVariant.Dark ? ThemeVariant.Light : ThemeVariant.Dark;
         ShowThemeIcon();
+        (DataContext as MainViewModel)?.RememberTheme(application.RequestedThemeVariant == ThemeVariant.Dark);
     }
 
     private async void OnCopyFailureClick(object? sender, RoutedEventArgs e)

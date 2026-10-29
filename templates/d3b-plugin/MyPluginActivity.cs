@@ -14,6 +14,16 @@ namespace MyPlugin;
 /// </remarks>
 public sealed class MyPluginActivity : BotActivity
 {
+    private readonly MyPluginSettings _settings;
+    private int _steps;
+
+    /// <summary>Initializes a new instance of the <see cref="MyPluginActivity"/> class.</summary>
+    /// <param name="settings">Its settings, as the profile it starts from, or their defaults, say.</param>
+    public MyPluginActivity(MyPluginSettings settings)
+    {
+        _settings = settings;
+    }
+
     /// <inheritdoc/>
     public override Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
@@ -24,6 +34,6 @@ public sealed class MyPluginActivity : BotActivity
         context.Log.LogInformation("{Name} stands on cell {Cell} of map {Map}.", state.Name, state.Cell, state.MapId);
 
         // Whether the activity goes on: false once it is done.
-        return Task.FromResult(false);
+        return Task.FromResult(++_steps < _settings.Steps);
     }
 }

@@ -69,6 +69,7 @@ public static class BotHost
             var failure = PrepareCatalogs(host)
                 ?? await PrepareDataAsync(host, cancellationToken).ConfigureAwait(false)
                 ?? await PrepareProtocolAsync(host, cancellationToken).ConfigureAwait(false)
+                ?? await PrepareModulesAsync(host, cancellationToken).ConfigureAwait(false)
                 ?? await StartHostAsync(host, cancellationToken).ConfigureAwait(false);
 
             if (failure is null)
@@ -194,6 +195,23 @@ public static class BotHost
 
             return exception.Message;
         }
+    }
+
+    private static async Task<string?> PrepareModulesAsync(IHost host, CancellationToken cancellationToken)
+    {
+        foreach (var preparation in host.Services.GetServices<IHostPreparation>())
+        {
+            if (await preparation.PrepareAsync(cancellationToken).ConfigureAwait(false) is { } failure)
+            {
+                var log = Logger(host);
+
+                HostLog.DoesNotStart(log, failure);
+
+                return failure;
+            }
+        }
+
+        return null;
     }
 
     private static async Task<string?> StartHostAsync(IHost host, CancellationToken cancellationToken)

@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\D3B.Bot\D3B.Bot.csproj" />
+    <ProjectReference Include="..\D3B.Storage\D3B.Storage.csproj" />
   </ItemGroup>
 
 </Project>
