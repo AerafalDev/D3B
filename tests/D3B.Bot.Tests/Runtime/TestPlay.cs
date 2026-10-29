@@ -356,7 +356,7 @@ internal sealed class TestPlay : IAsyncDisposable
         await bot.ProcessedAsync();
 
         // The client has drawn the map: the bot's requests go at once.
-        Time.Advance(BotActor.DrawDelay);
+        Time.Advance(BotDelays.Measured.Display);
 
         return (connection, bot);
     }

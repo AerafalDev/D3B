@@ -25,7 +25,8 @@ namespace D3B.Bot.Runtime;
 /// <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity}(IServiceCollection, string, LocalizedText)"/>, which the app starts, and the
 /// <see cref="PageCatalog"/> of the pages they register with <see cref="PageServiceCollectionExtensions.AddPage"/>, which
 /// the app shows, the <see cref="GameReferences"/> the activities' settings name, and the <see cref="GraphicSkills"/> every map
-/// a bot enters teaches. Requires the data module, whose maps behaviors walk, and the network module.
+/// a bot enters teaches. The bots wait the <see cref="BotDelays"/> the configuration names, in seconds under <c>Delays</c>.
+/// Requires the data module, whose maps behaviors walk, and the network module.
 /// </remarks>
 public sealed class BotsModule : IModule
 {
@@ -37,12 +38,18 @@ public sealed class BotsModule : IModule
         bot.AddModule<DataModule>();
         bot.AddModule<NetworkModule>();
 
+        // Read as the module is built, so that a delay below its measured value stops the host before it starts (D151).
+        var delays = BotDelays.Read(bot.Configuration);
+
         bot.Services.AddSingleton(services => new Bots(
             services.GetRequiredService<GameMaps>(),
             services.GetRequiredService<GameWorld>(),
             services.GetRequiredService<GameTables>(),
             services.GetRequiredService<TimeProvider>(),
-            services.GetRequiredService<ILoggerFactory>()));
+            services.GetRequiredService<ILoggerFactory>())
+        {
+            Delays = delays,
+        });
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
 
         // Whatever the bots do, every map they enter teaches what its elements' graphics offer (D138).

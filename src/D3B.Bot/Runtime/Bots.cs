@@ -38,9 +38,17 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     private readonly Lock _lock = new();
     private readonly ConcurrentDictionary<CharacterKey, BotActor> _bots = new();
     private readonly ConcurrentDictionary<GameSession, Binding> _sessions = new();
+    private volatile BotDelays _delays = BotDelays.Measured;
 
     /// <summary>Gets every bot, those whose game connection closed included.</summary>
     public IReadOnlyCollection<BotActor> All => [.. _bots.Values];
+
+    /// <summary>Gets or sets how long every bot's behaviors wait: set, the next wait of each bot reads it, those running included (D151).</summary>
+    public BotDelays Delays
+    {
+        get => _delays;
+        set => _delays = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     /// <summary>Raised when a character's first game connection makes its bot, from the relay's read loop: a handler must be quick.</summary>
     public event EventHandler<BotActor>? Added;
@@ -126,7 +134,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         {
             if (!_bots.TryGetValue(key, out bot))
             {
-                bot = new BotActor(state, _maps, _world, _banks, _time, _logs.CreateLogger<BotActor>());
+                bot = new BotActor(state, _maps, _world, _banks, () => _delays, _time, _logs.CreateLogger<BotActor>());
                 _bots[key] = bot;
                 made = true;
             }
