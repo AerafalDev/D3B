@@ -27,6 +27,7 @@ internal sealed class CastBench
     private readonly GameMaps _maps;
     private readonly CastRules _rules;
     private readonly SpellEffects _effects;
+    private readonly EffectActions _actions;
     private readonly TextWriter? _details;
     private readonly Dictionary<long, FightMap> _fightMaps = [];
     private readonly Dictionary<(long Fighter, int Spell), int> _turnsEnded = [];
@@ -38,7 +39,8 @@ internal sealed class CastBench
         _tables = tables;
         _maps = maps;
         _rules = new CastRules(tables.Spells, tables.States);
-        _effects = new SpellEffects(tables.Spells, _rules, new EffectActions(tables.Effects));
+        _actions = new EffectActions(tables.Effects);
+        _effects = new SpellEffects(tables.Spells, _rules, _actions);
         _details = details;
     }
 
@@ -461,6 +463,30 @@ internal sealed class CastBench
 
     private void Buffs(Cast cast, IReadOnlyList<ForeseenEffect> foreseen)
     {
+        // The client's previews of buffs on the caster, which the server gives through a spell the cast triggers (D206).
+        foreach (var effect in _tables.Spells.EffectsOf(cast.Level))
+        {
+            var kind = _actions.Of(effect.EffectId).Kind;
+
+            if ((effect.Properties & SpellEffectProperties.ForClientOnly) is 0 || kind is not (EffectKind.Boost or EffectKind.Deboost or EffectKind.StateSet)
+                || !_rules.MaskOf(effect).NamesTheCaster)
+            {
+                continue;
+            }
+
+            var characteristic = _actions.Of(effect.EffectId).Characteristic;
+            var given = cast.Buffs.Where(pair => pair.Buff.TargetId == cast.Caster.Id && (pair.ActionId == effect.EffectId || (characteristic > 0 && _actions.Of(pair.ActionId).Characteristic == characteristic))).Select(pair => pair.Buff).ToList();
+
+            if (given.Count is 0)
+                _details?.WriteLine($"buff previewed, not given: spell {cast.Level.SpellId} effect {effect.EffectId} characteristic {characteristic}; given on the caster: {string.Join(", ", cast.Buffs.Where(pair => pair.Buff.TargetId == cast.Caster.Id).Select(pair => $"{pair.ActionId}/{_actions.Of(pair.ActionId).Characteristic}={pair.Buff.Value}"))}");
+            var roll = EffectFormulas.Roll(effect);
+            var outcome = given.Count is 0 ? "not given"
+                : kind is EffectKind.StateSet ? given.Any(buff => buff.Parameter == effect.Value) ? "given as previewed" : "given, another state"
+                : given.Any(buff => roll.Contains(Math.Abs(buff.Value))) ? "given as previewed" : "given, another value";
+
+            Tally.Count($"buffs previewed for the client on the caster: {kind}, {outcome}");
+        }
+
         var own = new HashSet<int>();
 
         foreach (var effect in _tables.Spells.EffectsOf(cast.Level))

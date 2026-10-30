@@ -26,6 +26,9 @@ public sealed record ImaginedFight
     /// <summary>Gets the casts the fighter playing chose this fight.</summary>
     public CastHistory History { get; init; } = CastHistory.Empty;
 
+    /// <summary>Gets the buffs the casts imagined gave, which the fighters' characteristics and states already hold, with how long each lasts.</summary>
+    public ImmutableArray<ImaginedBuff> Buffs { get; init; } = [];
+
     /// <summary>Gets the fighter playing.</summary>
     /// <exception cref="InvalidOperationException">No fighter has its id.</exception>
     public Combatant Actor => Find(ActorId) ?? throw new InvalidOperationException($"No fighter {ActorId} in the fight.");

@@ -39,6 +39,7 @@ public sealed class FightTactics
     private const int RootEnds = 3;
 
     private readonly SpellCatalog _spells;
+    private readonly SpellStateCatalog _states;
     private readonly EffectActions _actions;
 
     /// <summary>Gets the rules of a cast.</summary>
@@ -73,6 +74,7 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(monsters);
 
         _spells = spells;
+        _states = states;
         _actions = new EffectActions(effects);
         Rules = new CastRules(spells, states);
         Moves = new FightMoves(states);
@@ -115,7 +117,7 @@ public sealed class FightTactics
     /// <returns>The judge.</returns>
     public FightJudge JudgeOf(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights)
     {
-        return new FightJudge(fight, knowledge, weights, _spells, _actions, Rules, Moves);
+        return new FightJudge(fight, knowledge, weights, _spells, _actions, Rules, Moves, _states);
     }
 
     /// <summary>Gets how the fight looks for the fighter playing's side as it starts.</summary>

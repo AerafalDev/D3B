@@ -36,6 +36,29 @@ public static class EffectFormulas
         return Math.Clamp(level.CriticalHitProbability + caster.Characteristic(FightCharacteristic.CriticalHits), 0, Percent) / (double)Percent;
     }
 
+    /// <summary>Gets a fighter's characteristic as the formulas read it: a multiplier of damage or heals the server left out is 100.</summary>
+    /// <param name="fighter">The fighter.</param>
+    /// <param name="characteristic">The characteristic's id.</param>
+    /// <returns>Its value.</returns>
+    /// <remarks>
+    /// The server gives each multiplier as 100 when nothing changes it, so that one it left out changes nothing, and a boost
+    /// of one adds to 100 (D206).
+    /// </remarks>
+    public static int ValueOf(Combatant fighter, int characteristic)
+    {
+        ArgumentNullException.ThrowIfNull(fighter);
+
+        if (fighter.Characteristics.TryGetValue(characteristic, out var value))
+            return value;
+
+        return characteristic is FightCharacteristic.DealtDamageMultiplier or FightCharacteristic.DealtDamageMultiplierDistance
+            or FightCharacteristic.ReceivedDamageMultiplierDistance or FightCharacteristic.DealtDamageMultiplierSpells
+            or FightCharacteristic.ReceivedDamageMultiplierMelee or FightCharacteristic.DealtDamageMultiplierMelee
+            or FightCharacteristic.ReceivedDamageMultiplierSpells or FightCharacteristic.DealtHealMultiplier
+            ? Percent
+            : 0;
+    }
+
     /// <summary>Gets the characteristic that raises an element's damage.</summary>
     /// <param name="element">The element, resolved.</param>
     /// <returns>The characteristic's id, or 0 for none.</returns>
@@ -205,8 +228,7 @@ public static class EffectFormulas
 
     private static int Multiplier(Combatant fighter, int characteristic)
     {
-        // The server gives each of these multipliers as 100 when nothing changes it: one it left out changes nothing.
-        return fighter.Characteristics.TryGetValue(characteristic, out var value) ? value : Percent;
+        return ValueOf(fighter, characteristic);
     }
 
     private static int ElementalId(int earth, EffectElement element)

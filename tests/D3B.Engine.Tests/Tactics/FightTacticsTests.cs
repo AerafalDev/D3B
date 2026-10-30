@@ -18,19 +18,22 @@ public sealed class FightTacticsTests
     private const int Bite = 300;
     private const int Shot = 400;
     private const int Critical = 500;
+    private const int Rage = 600;
+    private const int RageEffect = 9_107;
 
     private static readonly SpellCatalog _spells = Catalog();
     private static readonly FightTactics _tactics = new(_spells, States(), new EffectCatalog(new Effect[]
     {
         new(97, 0, 0, '\0', 2, 1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(108, 0, 0, '\0', 2, 2, 0, 0, 0, 0, EffectProperties.UseInFight),
+        new(RageEffect, 0, FightCharacteristic.DealtDamageMultiplier, '+', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
     }), new MonsterCatalog(Array.Empty<Monster>(), Array.Empty<MonsterGrade>(), Array.Empty<MonsterSpell>(), Array.Empty<byte>(), Array.Empty<MonsterRatio>(), Array.Empty<MonsterRace>(), Array.Empty<MonsterRace>()));
 
     /// <summary>
     /// Spell 100, an earth blow of 10 to 12 on an enemy, 3 AP, range 1 to 4; spell 200, a fire heal of 30 on the caster,
     /// 2 AP, on its own cell; spell 300, a monster's earth bite of 25 to 30 on an enemy, 3 AP, range 1; spell 400, a monster's
     /// earth shot of 25 to 30, 3 AP, range 1 to 6, in sight; spell 500, an earth blow of 10, 30 on a critical hit, which half its
-    /// casts are, 3 AP, range 1 to 4.
+    /// casts are, 3 AP, range 1 to 4; spell 600, a rage of the caster's for 3 rounds, its damage dealt half as much again, 1 AP.
     /// </summary>
     private static SpellCatalog Catalog()
     {
@@ -43,6 +46,7 @@ public sealed class FightTacticsTests
             new SpellLevel { Id = 1300, SpellId = Bite, Grade = 1, ApCost = 3, MinRange = 1, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 2, EffectCount = 1 },
             new SpellLevel { Id = 1400, SpellId = Shot, Grade = 1, ApCost = 3, MinRange = 1, Range = 6, StatesCriterion = SpellLevel.NoCriterion, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 3, EffectCount = 1 },
             new SpellLevel { Id = 1500, SpellId = Critical, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, CriticalHitProbability = 50, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 4, EffectCount = 1, CriticalEffectCount = 1 },
+            new SpellLevel { Id = 1600, SpellId = Rage, Grade = 1, ApCost = 1, MinRange = 0, Range = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 6, EffectCount = 1 },
         ];
         SpellEffect[] effects =
         [
@@ -52,6 +56,7 @@ public sealed class FightTacticsTests
             new SpellEffect { Uid = 4, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 25, DiceSide = 30, Zone = point },
             new SpellEffect { Uid = 5, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 10, DiceSide = 10, Zone = point },
             new SpellEffect { Uid = 6, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 30, DiceSide = 30, Zone = point },
+            new SpellEffect { Uid = 7, EffectId = RageEffect, TargetMask = 2, Triggers = 1, DiceNum = 50, DiceSide = 50, Duration = 3, Zone = point },
         ];
         Spell[] spells = [.. levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 })];
 
@@ -194,5 +199,18 @@ public sealed class FightTacticsTests
         // Measured on the captures (D207): reckoning the reach alone, the threat foresaw half as much again as the enemies took.
         Assert.Equal(27.5, _tactics.JudgeOf(open, knowledge, TacticWeights.Default).Threat(open, Caster().Id));
         Assert.Equal(0, _tactics.JudgeOf(hidden, knowledge, TacticWeights.Default).Threat(hidden, Caster().Id));
+    }
+
+    [Fact]
+    public void ABoostThatLastsIsCastInALongFightAndNotInAShortOne()
+    {
+        // 6 AP: two blows now, or a rage and one blow, the rage lasting the next two turns (D206).
+        var actor = Caster() with { ActionPoints = 6, MovementPoints = 0 };
+        var (longer, knowledge) = Fight(actor, Biter(-1, Off(2, 0), life: 400) with { MaxLife = 400 });
+        var (shorter, _) = Fight(actor, Biter(-1, Off(2, 0), life: 20) with { MaxLife = 400 });
+        var raging = knowledge with { Spells = knowledge.Spells.SetItem(actor.Id, [Level(_spells, Blow), Level(_spells, Rage)]) };
+
+        Assert.Contains(Plan(longer, raging).Actions, action => action.SpellId is Rage);
+        Assert.DoesNotContain(Plan(shorter, raging).Actions, action => action.SpellId is Rage);
     }
 }

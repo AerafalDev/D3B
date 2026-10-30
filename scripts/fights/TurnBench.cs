@@ -261,7 +261,20 @@ internal sealed class TurnBench
         Tally.Count("turns: replayed");
 
         foreach (var action in turn.Played.Where(action => action.Kind is TacticActionKind.Cast))
+        {
             Tally.Count($"casts played, by what they do: {Does(action.LevelId)}");
+
+            if (Does(action.LevelId) is "boost" or "state" && _tables.Spells.TryGetLevel(action.LevelId, out var buffing))
+            {
+                foreach (var effect in _tables.Spells.EffectsOf(buffing))
+                {
+                    var does = _actions.Of(effect.EffectId);
+
+                    if (does.Kind is EffectKind.Boost or EffectKind.Deboost or EffectKind.StateSet)
+                        Tally.Count($"buffs played: {does.Kind} {(does.Kind is EffectKind.StateSet ? $"state {effect.DiceNum}" : $"characteristic {does.Characteristic}")}, {effect.Duration} rounds, mask {_tables.Spells.TargetMaskOf(effect)}, ap {buffing.ApCost}");
+                }
+            }
+        }
 
         foreach (var action in turn.Planned?.Actions.Where(action => action.Kind is TacticActionKind.Cast) ?? [])
             Tally.Count($"casts planned, by what they do: {Does(action.LevelId)}");
