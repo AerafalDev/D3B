@@ -5774,10 +5774,36 @@ the fight profile's editor not good enough. Builds D127, D159, D166, D236, D245.
   drew them all. "All" of the monsters, some 1,600, laid out at once in a panel that does not virtualize, made the picker
   stutter: it shows the first 120 that match and says how to see the others, searching or filtering
   (`GamePickerViewModel.MostShown`).
+- **And as the window narrows**, the preview, beside the settings at 320 pixels whatever the width, squeezed them until
+  their controls were cut: it stands beside them while they keep 520 pixels, under them below (`SidePanel`). The profile's
+  name, a box of 280 pixels in a row that never shrank, ran under the page's buttons: it shrinks to 128.
 - **Rejected.**
   - A scrolling row of chips: the 40 groups still unreadable.
   - Every editor rebuilt: the owner's words name the picker and the fight profile; the preview is what it lacked
     beside the harvest's.
+
+## D247: The loot's icons in the pack, and families of monsters chosen
+
+*2026-10-30, step 9, session 9g2, the owner's words as the fighting activity ran in game: the loot on the bot's card
+showed no icon, and a family of monsters should be chosen as a monster is. Builds D135, D236, D238, D246.*
+
+- **Measured** on 3.7.12.12: the client's monsters list their drops, `drops`, each an item and its chances by grade;
+  2,348 of the 5,129 monsters drop 3,513 items. Those the 1,663 monsters a hunter meets drop are 2,761, every one with its
+  icon in `Picto/Items`.
+- **In the pack**: their icons, in the items' table at its 64 pixels beside the harvests', 2,294 icons in all against
+  287; a drop's icon the client lacks is counted and left out, as a monster's picture is. The pack weighs 19.4 MB against
+  11.7, extracted in 36 s; its format stays 7, its structure unchanged and no release holding it yet, an older pack
+  drawing the loot without its icons. The drops themselves stay out (D236).
+- **Families**: a family is a monster's super race, as the bestiary groups them. The fighting activity's "Families to
+  fight", beside its monsters, attacks a group holding a monster of one of them (`ChosenMonsters`,
+  `SettingKind.MonsterFamily`); the families offered are those a hunter meets a monster of. The place chosen, the preview
+  and the sub-areas suggested count their monsters with those chosen.
+- **And**: one fight won is said in the singular on the card.
+- **Rejected.**
+  - The loot's icons at 32 pixels in a table of their own: some 5 MB less for a structure of its own, a format 8, and a
+    table the app draws at another size than the items'.
+  - A family checked as all its monsters at once in the picker: a list of a hundred monsters on the card, and a family's
+    new monster left out.
 
 ## Open questions
 
