@@ -142,7 +142,7 @@ map's elements, using them, doors and the drawing of the map; in session 4d (D79
 D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
 client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c
 (D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's
-resources; in session 9a (D179), the fight's state.
+resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D203), the bot fighting.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -260,6 +260,22 @@ resources; in session 9a (D179), the fight's state.
   its buffs (`FightBuff`), from which its states and spells' modifiers come, each ending as the turn the server named
   begins, its cooldowns, the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
   (`FightSequence`), and moves a fighter on a slide, a carry and a throw. `FightCombatants` gives the engine the fighters.
+  Since 9e (D199, D203), the character's state holds its spells as the server listed them and its transformed form's, the
+  fight's state the spells the server's context lists for the fight, and the team's options; a turn puts the fight in its
+  fighting phase, as a client that rejoins a fight gets no fight's start.
+- **The bot fights** (D198, D202), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for a fight not over
+  while the bot's switch is on (`BotActor.FightsAlone`, the host's `Fights:Alone`) or its activity fights its own
+  (`BotActivity.FightsItsFights`), the bot connected and not paused, and runs `FightPlay` once the step the fight cut is over
+  (`BotActor.RunInFightAsync`). `FightPlay`, one behavior: it waits until the server showed the character and its cells,
+  judges the odds (`FightTactics.Odds`), prudent when it would lose, closes the fight and blocks spectators, places the
+  character (`FightTactics.Place`) and says it is ready; each turn it plans (`FightTactics.Plan`) from the fight as the AI
+  imagines it (`ImaginedFights`, `CharacterSpells`), sends the plan's first walk or cast, waits for the server's answer and
+  the client's acknowledgement, plans again, and ends its turn as soon as the plan is empty. Every request waits
+  `BotDelays.FightAction` first, the owner's 0.9 s, and every wait ends with the fight. A cast the server refuses with an
+  error text, or leaves unanswered, is not cast again that fight. The player's placement, readiness, casts, walks and turn's
+  ends pause the bot (`PlayerActions`). An activity that fights its own has the fight answered once over
+  (`BotActivity.OnFightOver`, `BotActor.LastFightEnd`): harvesting resumes, pauses or stops as "After a fight" says, a lost
+  fight as "After a lost fight" says, resumed once its life is regained, three in a row ending it.
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
@@ -633,8 +649,18 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     step rounded down, as measured; `LifeRange`, a value's least and most.
   - `SpellEffects`, built once per pack: what each effect of a cast does to each fighter it reaches (`ForeseenEffect`),
     the critical effects on a critical hit, nothing drawn. A mask naming the caster reaches it outside the zone.
-  - Benchmarked on a captured fight's map: a cast foreseen in 40 µs.
-- Later: the simulator applying what is foreseen, and the AI searching with it (9e); an element not depending on line of
+  - Benchmarked on a captured fight's map: a cast foreseen in 0.69 µs, 0.66 µs into a list it reuses, its zones kept per
+    thread (`ZoneCells`), 3.7 µs cold; 40 µs before 9e (D200). An effect for the client only is never foreseen (D203).
+- The fight's AI, in `D3B.Engine.Tactics` (9e, D201), pure:
+  - `ImaginedFight`, the fighters as the AI imagines them, and `FightKnowledge`, what it knows of their spells and points.
+  - `Imagination`: what a walk and a cast do to an imagined fight, each effect at the middle of its range.
+  - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave, enemies' weighed by how
+    hard they hit, the enemies' threat by reach, the next turn's approach bounded by a kill; and once the enemies replied.
+  - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, its best sequences weighed against the
+    enemies' greedy reply; `Place`; `Odds`; `PathTo`. `TacticWeights`, `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
+  - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most; benchmarked, a turn
+    against four enemies in 1.6 ms.
+- Later: an element not depending on line of
   sight (D75).
 
 ## Fights
@@ -649,7 +675,10 @@ breeds with those the owner played for it (D191), and the casts the server refus
 The owner's aims for the AI and the fighting activity are D192. The references' ideas for each session are D181. Built in
 session 9d: what the server announces of a fight named and pinned, mapping format 10, and kept in the fight's state
 (D193), the critical hit (D194), the effects' engine (D195, in [Engine](#engine)), and the bench comparing it with the
-server's actions on every fight captured, `scripts/fights.cs` (D196).
+server's actions on every fight captured, `scripts/fights.cs` (D196). Built in session 9e: the owner's asks (D197) and
+choices (D198), the character's spells and the fight's own, mapping format 11 (D199, D203), `Foresee` for the search
+(D200), the AI (D201, in [Engine](#engine)), the bot fighting (D202, in [Bot run time](#bot-run-time)), measured on the
+fights the owner started (D203).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -662,8 +691,8 @@ server's actions on every fight captured, `scripts/fights.cs` (D196).
   against the server's answers: damage, steals, heals, critical hits and the zone's decrease; pushes, shields, AP and MP
   removed and erosion left to captures (9d, built, D195, D196).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
-  of moves and casts and thinks again after each answer of the server (9e). The simulator applies spell effects read
-  from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
+  of moves and casts and thinks again after each answer of the server (9e, built, D201, D202). The simulator applies spell
+  effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
 - The hard cases through the effects, measured one at a time (9f), and strategies as modules and profile settings, per
   breed through the effects, never per class (9g).
 
@@ -672,6 +701,11 @@ server's actions on every fight captured, `scripts/fights.cs` (D196).
 - The fight's state is tested on fights built as the captures measured them: placement, turns, every action taken, a
   summon, the end, and what the server says of a fighter it never showed (D179); buffs given, ended at their turn and
   removed, cooldowns, the casts chosen, slides, carries and throws, and the characteristics kept (D193).
+- The AI is tested on fights the tests build with a catalog of their own: an enemy one blow kills is killed, one out of range
+  walked towards then struck, a badly hurt character heals itself, nothing worth doing ends the turn, a refused cast is not
+  weighed again, a placement reaches an enemy it beats, strong enemies make the fight risky, a walk's path (D201, D203). The
+  character's spells by the list, its level, a pair and the fight's own; the fight's options and context; the player's
+  requests in a fight; a harvest's fight answered once over, a lost fight and three in a row (D198, D202).
 - The effects' formulas are tested on fighters the tests build, with the numbers the bench measured; what a cast foresees
   on a catalog of the tests' own: a blow on each enemy, less a step away, its critical effects, resistances, and a boost
   of the caster its mask names (D195). The bench itself, `scripts/fights.cs`, runs on the captures of the owner's machine.

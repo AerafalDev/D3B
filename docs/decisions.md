@@ -4751,6 +4751,186 @@ D190 (what remains).*
     and their spells' criteria, glyphs and traps, as 9f measures each;
   - a fight long enough that buffs end, so that their ends are seen in what the fighters may cast.
 
+## D197: 9e as the owner asks it
+
+*2026-10-30, step 9, session 9e, the owner's words, recorded as they asked. Builds D177, D192.*
+
+- **Asked** for the session: the placement, then each turn a search for the best sequences of walks and casts on 9c's
+  rules and 9d's effects, the effects foreseen applied to an imagined fight, thought again after each answer of the server.
+  The bot sends by itself the placement, its readiness, its casts, its walks and the turn's end; when it has nothing useful
+  left to do, or cannot act, it ends its turn at once instead of waiting for the turn's time. An autonomous AI that heals,
+  shields, places itself and chooses its spells and elements by the situation, through the effects and never per class.
+  During a harvest, a fight is played by the AI instead of the player, then the harvest resumes, pauses or stops as the
+  profile says (D144). `Foresee` made fast for the search, 40 µs a cast before. Measured on real fights the owner starts
+  against weak groups, captures kept, with D196's and Q16's.
+- **Asked** as the owner watched the AI fight (D203): fewer turns passed doing nothing, no flight that serves nothing; a
+  pace the player can follow, 0.9 s, the owner's choice; the AI cleverer still; the fight closed to other players, the
+  group's later, and to spectators.
+
+## D198: A fight judged too risky, a fight lost, and who plays the player's fights
+
+*2026-10-30, step 9, session 9e, chosen by the owner among three options each, as the lead recommended them. Builds D144.*
+
+- **Too risky**, the AI judging as the fight starts that the enemies would beat the character's side first
+  (`FightOdds`, D201): the AI fights it anyway, prudently (`TacticWeights.Prudent`: the enemies' blows feared 1.6 times,
+  its own life held three times an ally's, next turn's damage weighed less), and the log says so. In a fight against
+  monsters, giving up is a loss and fleeing does not exist: fighting never costs more. 9g's fighting activity attacks no
+  group judged too risky.
+- **Lost**: the character comes back to its save point with little life (D178). A profile's setting, "After a lost fight",
+  as "After a fight" is (D144): resume once healed, the default, the life regained to the profile's share it heals under,
+  by its food (D148) or by waiting for the regeneration (D153); pause; stop. Three lost in a row stop the activity, so
+  that it does not lose again and again.
+- **The player's own fights**, out of an activity: a switch "The AI fights" on the bot's card, off at first; on, the AI
+  plays every fight of the character. An activity that fights its own, harvesting, has them played either way
+  (`BotActivity.FightsItsFights`). The player's hand in a fight pauses the bot, and the fight is the player's (D66, D202).
+  `D3B.Host`, which has no card, reads `Fights:Alone`.
+- **Rejected.**
+  - Giving a risky fight up at once: a loss all the same, only time saved.
+  - Leaving a risky fight to the player, the bot paused: the turns pass by the timer when nobody is there.
+  - Always pausing or always stopping after a loss: a protector's loss would cost the tour.
+  - The AI on every fight with no switch: the owner playing by hand would see the AI place and ready the character
+    before acting.
+
+## D199: The character's spells, mapping format 11
+
+*2026-10-30, step 9, session 9e. Builds D178, D193. Superseded in part by D203 (the fight's own list).*
+
+- **Measured** on the 52 game connections captured before 9e: `SpellsEvent` (`hkh`, pinned), sent once as the character
+  enters the game, before its first map, 50 times, each listing 5 to 28 spells, each with its grade (`SpellItem`: the spell,
+  field 2; the grade, field 4). Of the 231 casts the characters chose, 213 were of a spell it listed, at the grade cast; the
+  18 others of a spell a level gained during the capture unlocked, which no message named, the base of its pair at the grade
+  its least level allows. So the rule (`CharacterSpells`): each spell listed at the highest grade the character's level
+  allows, and each of its breed's spells its level unlocks, the base of its pair unless the list holds the other: 231 of
+  231. At each character's first fight, the rule added no spell to the list. Spell 0, a weapon's blow, listed too, is left
+  out until the AI knows the character's weapon.
+- **Mapping format 11**: the spells, then the fight's context of spells (D203) and the fight's options (D203); 210
+  messages, 459 fields, 28 enums and 199 values audited, no failure, 13,954 bytes. The release of 3.7.12.12 needs it,
+  then a release of the app (D172), each on the owner's go.
+- **Rejected.**
+  - The spells from the breed alone: a pair's spell is the player's choice, which only the list says.
+  - The shortcuts' bar the fight's context gives: a spell may be cast that is on no shortcut.
+
+## D200: `Foresee` for the search
+
+*2026-10-30, step 9, session 9e. Builds D195.*
+
+- **Measured** with BenchmarkDotNet on 9d's bench (spell 13858 on four enemies): 39.6 µs and 11.1 KB a cast before. The
+  zone's steps were reckoned for each target and each size, the fighters' cells for each effect, the masks' groups for each
+  fighter, and the formulas allocated closures.
+- **Now**: the fighters' cells once a cast; each effect's zone once, and its decrease's steps once for all its targets; the
+  masks' kinds and groups parsed once (`TargetMask`); no closure in the formulas; a zone's cells kept per thread, for the
+  zones that depend on no fighter, 50,000 at most then all let go (`ZoneCells`); and an overload adding to the caller's
+  list. 1.5 µs and 1.2 KB a cast, 1.2 µs and nothing allocated into a list, 4.0 µs cold, its zones reckoned again; then,
+  an effect for the client only (`SpellEffectProperties.ForClientOnly`) left out (D203), 0.69 µs and 560 B, 0.66 µs into a
+  list, 3.7 µs cold.
+- **A turn planned** (`FightTacticsBenchmarks`, D201): on the same map, a character with two spells against four enemies
+  casting back, the search and the enemies' reply on its finalists, in 1.6 ms and 2.75 MB.
+
+## D201: The AI: an imagined fight, a judge, a beam search and the enemies' reply
+
+*2026-10-30, step 9, session 9e. Builds D13, D185 to D196. Settles nothing of Q5.*
+
+- **`D3B.Engine.Tactics`**, pure. `ImaginedFight`: the fighters as the engine sees them, the fighter playing, the round and
+  its casts; the others hold the AP and MP of their next turn. `FightKnowledge`: each fighter's spells, the character's
+  from the server's lists (D199, D203), a monster's and a summon's from the pack at its grade; the points each starts a turn
+  with; the character's cooldowns.
+- **`Imagination`**: a walk takes the MP and AP the path keeps, tackles included (9c); a cast spends its AP, counts in the
+  history, and applies what `Foresee` gives, each effect at the middle of its range: damage from a shield first, a fighter
+  dying at none, a steal healing half, heals to the most life, shields, pushes and pulls along their line, stopped by what
+  blocks them and hurting by the cells left, swaps, boosts and deboosts, states, kills. An effect its mask only maybe
+  selects counts half, one of a random group half, one waiting for its trigger half of its damage; a critical hit is never
+  counted on; a teleport and a summon come from the level, on a free cell.
+- **`FightJudge`**, in life: an ally's life, shields counted, concave, so that a point healed at a quarter of the life is
+  worth twice one at the most; its being alive, half its most life; the character's counted `Survival` times. An enemy's
+  life weighed by how hard it hits, and its being alive one and a half of its best turn. The threat: what each enemy may
+  take next from the ally it hurts most, if its MP and its spells' range reach it. The approach: what the character may take
+  off an enemy next turn from where it stands, never more than killing it now (D203), and a little for each cell nearer an
+  enemy it cannot reach yet. A fighter's best turn on another is reckoned once, its spells' damage through the formulas, the
+  AP shared at their limits a turn.
+- **`FightTactics.Plan`**, a beam search: from the fight as it stands, every cast of the character's spells, from where it
+  stands or from one of the two cells keeping the most MP it walks to first, on the 24 cells nearest the enemies where the
+  level's effects reach fighters, imagined and judged; the 16 best kept, then the best 8 go on to their next cast, six casts
+  deep, in 0.8 s at most. Each sequence ends on the walk judged best. The best 16 sequences found, ending the turn now among
+  them, are weighed again once each enemy replied (`Replies`, D203): each plays its next turn as greedily, walking to one of
+  the 12 cells nearest its targets, casting through the rules what lowers the side's worth most, three casts at most. The
+  plan is the best sequence once they replied; empty when ending the turn now is best, or as good.
+- **`FightTactics.Place`**: the free placement cell judged best, as a turn's end is. **`Odds`**: the turns each side takes
+  to beat the other at its best a turn (D198).
+- **Measured** by replaying every turn of the characters in the 66 fights captured: 161 of 166 turns plan a cast, 2 plan
+  nothing, none walks away from the enemies without casting; a search takes 9 ms halfway, 69 ms at 90%, 158 ms at most.
+- **Rejected.**
+  - Minimax over several turns: the enemies' turns are many and their choices the server's; one reply, greedy, on the
+  finalists alone, keeps a search within a second.
+  - Monte Carlo over the rolls: the ranges' middles suffice to choose; the rolls are the server's (D181).
+  - Weights per breed or per spell: every term is the effects', never a class's (D192).
+
+## D202: The bot fights: placement, turns, the player's hand, and harvesting
+
+*2026-10-30, step 9, session 9e. Builds D60, D66, D88, D144, D198.*
+
+- **`FightPlay`**, one behavior from the placement to the end: once the fight's map is drawn and the server showed the
+  character and its cells, it judges the odds, closes the fight and blocks spectators when the server has not (D203),
+  places the character on the cell judged best and says it is ready. Each turn it plans, sends the plan's first action,
+  waits for the server's answer and for the client's acknowledgement of its sequence, its showing it, then plans again
+  from what the server said; it ends its turn as soon as the plan is empty, 30 actions at most. Every request waits the
+  fight's pace first, `BotDelays.FightAction`, 0.9 s, the owner's choice, raised in the settings page; every wait ends with
+  the fight.
+- **Requests**: `FightPlacementPositionRequest`, `FightOptionToggleRequest`, `FightReadyRequest`,
+  `GameActionFightCastRequest`, `MapMovementRequest` with the walk's turning points, `FightTurnFinishRequest`. The client
+  follows the server's answers and acknowledges D3B's sequences as its own (D60). A cast the server refuses with an error
+  text, or leaves unanswered, is not cast again that fight, and two in a turn end it.
+- **`FightPilot`**, one per bot: while the bot's switch is on or its activity fights its own (D198), it waits for a fight not
+  over, the bot connected and not paused, then runs `FightPlay` once the step the fight cut is over
+  (`BotActor.RunInFightAsync`). A failure leaves that fight to the player.
+- **The player's hand**: the placement's move and readiness, a cast, a walk and the turn's end are the player's
+  (`PlayerActions`), the client sending by itself only its acknowledgements and its readiness for each turn: they pause the
+  bot.
+- **Harvesting** fights its own fights: the run answers the fight once it is over, as the profile says, a lost fight by
+  "After a lost fight" (`BotActivity.OnFightOver`, D198); a pause or a stop before the end would stop the AI too.
+- **Rejected.**
+  - An activity "Fight" to start for the player's fights: its waiting step is a behavior the player's walk would pause.
+  - Sending the whole plan at once: the server's answers change the fight, and a refusal would carry the rest.
+
+## D203: 9e measured on the fights the owner started, and what they taught
+
+*2026-10-30, step 9, session 9e, on the game connections the owner captured with D3B's host and app, a Xelor at level
+91 and others. Builds D197 to D202. Supersedes in part D199 (the spells cast in a fight), D200 (the client's effects).*
+
+- **Played**: 13 fights the AI played through `D3B.Host` and the app, 11 won and 2 lost; 177 casts sent, 167 cast, 2 refused
+  with an error text, 3 unanswered; 81 walks, 49 turns' ends, 12 placements, 14 readinesses; every action the client showed.
+  9 fights the player played meanwhile.
+- **What the owner saw, and what changed**:
+  - The AI spared an enemy at 14 life it could kill, then walked away: next turn's damage, unbounded, outweighed the kill.
+    The approach is now worth no more than what it would take off the enemy (D201): replayed, the owner's fight went from
+    10 turns of 19 without a cast to none.
+  - It fled when it beat its enemies, and passed: the threat's guess, by reach alone. The enemies' reply is now played on
+    the finalists (D201): replayed, no flight left.
+  - Too fast to follow: the fight's pace, measured on the player's 49 fights, 1.3 s halfway between two actions; 0.9 s, the
+    owner's choice.
+  - Placed nowhere: the fight's context came before the server showed the character; the AI now waits for it.
+  - Paused with nobody's hand: a cast killed the last enemy, the AI sent its turn's end after the fight, then waited, and the
+    player's walk out of the fight paused it. Every pace and wait now ends with the fight.
+  - Stuck in a fight rejoined: a client coming back mid-fight gets no fight's start; a turn now says the fight is fought.
+  - Transformed into a bouftou by an alteration, its own spells went unanswered: `FightSpellsContextEvent` (`juf`, pinned),
+    sent as the fight starts, lists the spells the client plays the fighter with (field 5) and the fighter (field 4): of 65,
+    64 named the character, one a turret; in the 55 fights listing the character's spells, its 300 casts were of them, at
+    their grade. `SpellsEvent` sent again as the alteration transformed the character, its field 3 its form's 2 spells. The
+    AI casts the fight's list first, then a form's, then the rule of D199.
+  - A Xelor's Refraction cast into nothing three times: its circle of damage is `ForClientOnly`, the client's preview, the
+    server dealing it through a spell its telefrag state triggers, as the owner said. Left out, the bench of D196 on the 66
+    fights captured: damage of the casts alone within 300 then 331, below 32 then 1, foreseen and not dealt 104 then 1.
+  - A Zobal's masks refused: spells whose criterion asks a mask's state, 9f's (D177).
+- **The fight's options**, the owner's ask: `FightOptionToggleRequest` (`jxf`) and `FightOptionUpdateEvent` (`jxm`), pinned.
+  As each placement starts, the server says the four options unset; the owner's lock toggled option 0, which the server kept
+  from one fight to the next, the eye option 2, answered with a text; the group's, the owner in no group, and option 3 not
+  measured. The AI sets 0 and 2 as it places the character, always for now: the owner wants both settings later, a profile's
+  or a bot's, with the group's for step 10.
+- **Refusals** (Q16): the server refuses a cast with a `TextInformationEvent` of the error kind 29 ms after the request,
+  text 175 twice; a text of the message kind, 188, came with 8 casts it made.
+- **Left**: the AI cleverer still, as the owner says: the weights measured on more fights, the enemies' reply beyond the
+  greedy, buffs and states worth what they do, summons, glyphs and the breeds' mechanisms (9f), the profile's strategies
+  (9g). D196's and Q16's captures, but the refusals above, remain to make.
+
 Settled questions leave this table, and the decision that settles one says so.
 
 | Id | Question | Settled in |
@@ -4761,4 +4941,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
 | Q15 | When D3B needs a monster's characteristics at a level its grades lack, before the server gives them, such as to choose which group to attack, does it run the client's Lua formulas, or write them in C#, checked against the client's (D182)? | The session that needs it, 9e or 9g at the latest |
-| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? | Captures the owner makes, D3B sending what the client does not, before or with 9e, with those of D196 |
+| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? It refuses with an error text, 29 ms after the request (D203); which casts, but a Zobal's masks, is left. | Captures the owner makes, the AI sending its casts (D202), with those of D196 |

@@ -43,9 +43,14 @@ cast, its range, line of sight, zones, target masks, costs, cooldowns, casts per
 a fighter walks and is tackled, every cast and walk of 49 captured fights of 11 breeds checked against them. Each bot's
 fight now keeps what the server announces, the fighters' buffs, states, spells' modifiers, cooldowns and moves, and D3B
 foresees what each cast does, damage by element, steals, heals, critical hits, boosts and states, every effect read from
-the pack: on the 49 fights, `scripts/fights.cs` replays every cast and finds 334 of 335 losses of life within what D3B
-foresaw. The player still fights. Next: an AI that searches each turn's best moves and casts, then the hard cases, then
-the blueprints. See the [roadmap](docs/roadmap.md).
+the pack: on the 66 fights captured, `scripts/fights.cs` replays every cast and finds 331 losses of life of the casts alone
+within what D3B foresaw, 1 below. And D3B fights: its AI places the character, closes the fight to others and to
+spectators, then each turn searches the best walks and casts, weighs them against the monsters' reply, sends one at a
+time at a pace the player follows and thinks again after each answer of the server, and ends its turn as soon as nothing
+is worth doing. A switch on the bot's card has it play every fight; harvesting has it play its own, then resumes, pauses
+or stops as its profile says, and after a lost fight waits for the character's life to come back. The hard cases, summons,
+glyphs and the breeds' mechanisms, come next, then the profiles' strategies and a fighting activity, then the blueprints.
+See the [roadmap](docs/roadmap.md).
 
 ## Installing
 
