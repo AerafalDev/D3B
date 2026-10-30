@@ -4931,6 +4931,36 @@ D190 (what remains).*
   greedy, buffs and states worth what they do, summons, glyphs and the breeds' mechanisms (9f), the profile's strategies
   (9g). D196's and Q16's captures, but the refusals above, remain to make.
 
+## D204: The repository's public face, its community files and the tool manifest in `.config/`
+
+*2026-10-30, between steps 9e and 9e2, a session of its own, as the owner asked it. Builds D174, and the local tools of
+D100 and D171.*
+
+- **The tool manifest** moves to `.config/dotnet-tools.json`. Microsoft Learn: `dotnet new tool-manifest` writes it
+  there, `dotnet tool install` creates it there in .NET 10 when none exists, and the SDK looks in each directory up the
+  tree for `.config/dotnet-tools.json` or `dotnet-tools.json`, stopping at a manifest with `isRoot`. The root kept one
+  more file for no gain. Checked: `dotnet tool restore`, then `dotnet-ef` and `vpk` run, `dotnet tool list` naming the
+  manifest in `.config/`. Nothing names its path but the docs: the release workflow only runs `dotnet tool restore`.
+- **The README**, rewritten for a public repository: what D3B does, what it never does (D2), its status, installing it
+  (D171 to D173), getting started, building and running from source, the tools, how it works, the docs and the license.
+  Its status is a short summary pointing to the roadmap, where it was the history of every step: a step's session now
+  changes it only when what a user sees changes.
+- **Community files**, written for D3B: `CONTRIBUTING.md` restates `CLAUDE.md`'s conventions and the rules never bent
+  (D2, D3, nothing extracted from the client, no capture); `CODE_OF_CONDUCT.md`, D3B's own on the Contributor Covenant's
+  ideas; `SECURITY.md`, naming what matters in D3B, the relay, the login tickets, the client's configuration, untrusted
+  input and the updates; issue forms for a bug and a feature, blank issues off, and a pull request template.
+- **Reports go through GitHub's private vulnerability reporting**, the security policy's and the code of conduct's,
+  since the repository publishes no e-mail address (D174). It must be enabled in the repository's settings.
+- **Found while checking the commands**: the release `client-3.7.12.12` holds mapping formats 3 to 10, and `main` reads
+  11 (D199), so `scripts/embed.cs` fails on it, and so would the release workflow at the next tag, until the build's
+  release gets mapping 11 through `scripts/release.cs`. Without captures, `scripts/mapping.cs` cannot map the build:
+  `d3b.game.AuthenticationRequest` finds no counterpart, so a contributor takes the mapping from the release.
+- **Rejected.**
+  - The Contributor Covenant as it stands: generic, where D3B's spaces need rules of their own, such as on players'
+    identities and captures.
+  - An e-mail address for reports: none is published, and GitHub's form keeps a report private without one.
+  - The manifest left at the root: it works, but `.config/` is where the SDK writes it.
+
 ## D205: 9e2 as the owner asks it
 
 *2026-10-30, step 9, session 9e2, the owner's words and choices, as the lead recommended them. Builds D197, D203.*
@@ -5137,6 +5167,8 @@ options' numbers).*
 - **What the owner saw is a breed's**: a Zobal loops on its mask of MP and shields the enemies, where its mask of damage
   would let it cast Furia: 28 of the AI's casts planned and 29 played were shields. The breeds' mechanisms are 9f's
   (D177), this one among the first.
+
+## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
 
