@@ -37,6 +37,8 @@ public sealed class FightTactics
     private const int RepliesAnEnemy = 3;
     private const int ReplyCells = 12;
     private const int RootEnds = 3;
+    private const int NextTurnCasts = 2;
+    private const int NextTurnCells = 12;
 
     private readonly SpellCatalog _spells;
     private readonly SpellStateCatalog _states;
@@ -221,15 +223,18 @@ public sealed class FightTactics
             frontier = [.. kept.OrderByDescending(pair => pair.Score).Take(limits.Width).Select(pair => pair.Node)];
         }
 
-        // The finalists in the order the search ranks them, each once the enemies replied; ending the turn now wins a tie.
+        // The finalists in the order the search ranks them, each once the enemies replied and the fighter playing played its
+        // next turn from there (D210); ending the turn now wins a tie.
         var standing = finalists[0];
         var best = standing;
         var bestScore = double.NegativeInfinity;
         var standingScore = 0.0;
+        var later = knowledge with { Cooldowns = knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
 
         foreach (var finalist in finalists.OrderByDescending(finalist => finalist.Score).Take(Finalists).Append(standing).Distinct())
         {
-            var score = judge.JudgeReplied(Replies(finalist.End, knowledge, judge));
+            var replied = Replies(finalist.End, knowledge, judge);
+            var score = judge.JudgeReplied(replied, NextTurn(replied, later, judge, limits).Gain);
 
             weighed++;
 
@@ -267,6 +272,58 @@ public sealed class FightTactics
         }
 
         return replied with { ActorId = fight.ActorId, History = fight.History };
+    }
+
+    /// <summary>Gets the fighter playing's next turn once the enemies replied, as greedily as their replies: what it adds to its side's worth.</summary>
+    /// <param name="replied">The fight once the enemies replied.</param>
+    /// <param name="knowledge">What the AI knows of the fighters, the cooldowns as they will be next turn.</param>
+    /// <param name="judge">The judge, whose <see cref="FightJudge.Standing"/> the turn raises as much as it can.</param>
+    /// <param name="limits">How far the search goes, for the cells it weighs.</param>
+    /// <returns>The fight once the turn is played, and what it added; none when nothing raises it.</returns>
+    /// <remarks>
+    /// Each cast is the one, from where the fighter stands or a cell it walks to first, that raises the worth most, through the
+    /// rules, the zones and the effects, as many fighters as it reaches; <see cref="NextTurnCasts"/> at most (D210).
+    /// </remarks>
+    public (ImaginedFight Fight, double Gain) NextTurn(ImaginedFight replied, FightKnowledge knowledge, FightJudge judge, TurnSearchLimits limits)
+    {
+        ArgumentNullException.ThrowIfNull(replied);
+        ArgumentNullException.ThrowIfNull(knowledge);
+        ArgumentNullException.ThrowIfNull(judge);
+        ArgumentNullException.ThrowIfNull(limits);
+
+        var fight = judge.NextTurnStart(replied);
+        var start = judge.Standing(fight);
+        var worth = start;
+
+        if (fight.Find(fight.ActorId) is not { IsAlive: true })
+            return (fight, 0);
+
+        for (var cast = 0; cast < NextTurnCasts; cast++)
+        {
+            ImaginedFight? found = null;
+            var bestWorth = worth + Better;
+
+            foreach (var (from, level, cell) in Casts(fight, knowledge, limits with { CellsPerLevel = Math.Min(limits.CellsPerLevel, NextTurnCells), WalksPerTarget = 1 }, null))
+            {
+                var walked = from is { } step ? Imagination.Walked(fight, step.Cell, step.Left) : fight;
+                var after = Imagination.Cast(walked, level, cell);
+                var raised = judge.Standing(after);
+
+                if (raised > bestWorth)
+                {
+                    found = after;
+                    bestWorth = raised;
+                }
+            }
+
+            if (found is null)
+                break;
+
+            fight = found;
+            worth = bestWorth;
+        }
+
+        return (fight, worth - start);
     }
 
     /// <summary>Gets the cells a walk of the fighter playing steps on to a cell, as <see cref="FightMoves.Path"/> gives them.</summary>

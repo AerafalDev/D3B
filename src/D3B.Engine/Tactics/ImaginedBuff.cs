@@ -1,6 +1,6 @@
 namespace D3B.Engine.Tactics;
 
-/// <summary>A buff a cast of the search gives a fighter: what it changes, and for how many rounds (D206).</summary>
+/// <summary>A buff a cast of the search gives a fighter: what it changes, and for how many rounds (D209).</summary>
 /// <param name="CasterId">The fighter who cast it.</param>
 /// <param name="FighterId">The fighter it changes.</param>
 /// <param name="Characteristic">The characteristic it changes, or 0 for a state.</param>

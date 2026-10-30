@@ -177,7 +177,7 @@ public sealed class FightTacticsTests
 
         var cast = _tactics.Imagination.Cast(fight, Level(_spells, Critical), Off(2, 0));
 
-        // Half the casts deal 10, half 30 (D205).
+        // Half the casts deal 10, half 30 (D207).
         Assert.Equal(30, cast.Find(-1)?.Life);
         Assert.Equal(0.5, EffectFormulas.CriticalChance(Level(_spells, Critical), Caster()));
         Assert.Equal(0.6, EffectFormulas.CriticalChance(Level(_spells, Critical), Caster() with { Characteristics = Caster().Characteristics.SetItem(FightCharacteristic.CriticalHits, 10) }));
@@ -196,7 +196,7 @@ public sealed class FightTacticsTests
             Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(Caster().Id, [Level(_spells, Blow)]).Add(shooter.Id, [Level(_spells, Shot)]),
         };
 
-        // Measured on the captures (D207): reckoning the reach alone, the threat foresaw half as much again as the enemies took.
+        // Measured on the captures (D208): reckoning the reach alone, the threat foresaw half as much again as the enemies took.
         Assert.Equal(27.5, _tactics.JudgeOf(open, knowledge, TacticWeights.Default).Threat(open, Caster().Id));
         Assert.Equal(0, _tactics.JudgeOf(hidden, knowledge, TacticWeights.Default).Threat(hidden, Caster().Id));
     }
@@ -204,7 +204,7 @@ public sealed class FightTacticsTests
     [Fact]
     public void ABoostThatLastsIsCastInALongFightAndNotInAShortOne()
     {
-        // 6 AP: two blows now, or a rage and one blow, the rage lasting the next two turns (D206).
+        // 6 AP: two blows now, or a rage and one blow, the rage lasting the next two turns (D209).
         var actor = Caster() with { ActionPoints = 6, MovementPoints = 0 };
         var (longer, knowledge) = Fight(actor, Biter(-1, Off(2, 0), life: 400) with { MaxLife = 400 });
         var (shorter, _) = Fight(actor, Biter(-1, Off(2, 0), life: 20) with { MaxLife = 400 });
@@ -212,5 +212,21 @@ public sealed class FightTacticsTests
 
         Assert.Contains(Plan(longer, raging).Actions, action => action.SpellId is Rage);
         Assert.DoesNotContain(Plan(shorter, raging).Actions, action => action.SpellId is Rage);
+    }
+
+    [Fact]
+    public void TheNextTurnStartsWithTheTurnsPointsAndCastsWhatRaisesTheWorthMost()
+    {
+        // The turn spent: no AP nor MP left, the enemy in reach of a blow from where the character stands (D210).
+        var (fight, knowledge) = Fight(Caster() with { ActionPoints = 0, MovementPoints = 0 }, Biter(-1, Off(2, 0), life: 50));
+        var turns = knowledge with { TurnPoints = knowledge.TurnPoints.Add(Caster().Id, (6, 3)) };
+        var judge = _tactics.JudgeOf(fight, turns, TacticWeights.Default);
+
+        var start = judge.NextTurnStart(fight);
+        var (next, gain) = _tactics.NextTurn(fight, turns, judge, TurnSearchLimits.Default);
+
+        Assert.Equal((6, 3, 2), (start.Actor.ActionPoints, start.Actor.MovementPoints, start.Round));
+        Assert.True(gain > 0);
+        Assert.True(next.Find(-1)?.Life < 50);
     }
 }

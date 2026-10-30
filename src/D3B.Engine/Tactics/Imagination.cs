@@ -16,10 +16,10 @@ namespace D3B.Engine.Tactics;
 /// left (<see cref="EffectFormulas.PushDamage"/>); swaps; boosts and deboosts, the AP and MP of the fighter playing at once
 /// and the others' for their next turn; states set and removed; kills. An effect its mask only maybe selects counts half,
 /// as does one of a random group, and one waiting for a trigger, such as a poison, counts half of its damage. A critical
-/// hit is weighed by its chance (D205): what the level's effects give in life, damage, heals, shields and characteristics,
+/// hit is weighed by its chance (D207): what the level's effects give in life, damage, heals, shields and characteristics,
 /// counts its share of a normal cast and of a critical hit; a push, a swap or a state, the normal cast's alone. A boost, a
 /// deboost or a state that lasts is kept with its rounds (<see cref="ImaginedFight.Buffs"/>), which the judge weighs over
-/// the turns it lasts (D206). The spells effects cast are not counted on (D195). The effects on a free cell, a teleport of the caster and a summon, come from the
+/// the turns it lasts (D209). The spells effects cast are not counted on (D195). The effects on a free cell, a teleport of the caster and a summon, come from the
 /// level itself, the foreseen effects reaching only fighters.
 /// </para>
 /// <para>Built once per pack and shared, from any thread.</para>

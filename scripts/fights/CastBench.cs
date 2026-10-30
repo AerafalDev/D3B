@@ -155,7 +155,7 @@ internal sealed class CastBench
 
                 Tally.Count($"casts chosen: {(action.Cast.Critical is FightCastCritical.Critical ? "critical" : "normal")}");
 
-                // The chance of a critical hit (D205): the level's, plus the caster's characteristic 18, by bands of ten.
+                // The chance of a critical hit (D207): the level's, plus the caster's characteristic 18, by bands of ten.
                 if (level.CriticalHitProbability > 0)
                 {
                     var chance = Math.Clamp(level.CriticalHitProbability + combatant.Characteristic(CriticalHits), 0, 100);
@@ -463,7 +463,7 @@ internal sealed class CastBench
 
     private void Buffs(Cast cast, IReadOnlyList<ForeseenEffect> foreseen)
     {
-        // The client's previews of buffs on the caster, which the server gives through a spell the cast triggers (D206).
+        // The client's previews of buffs on the caster, which the server gives through a spell the cast triggers (D209).
         foreach (var effect in _tables.Spells.EffectsOf(cast.Level))
         {
             var kind = _actions.Of(effect.EffectId).Kind;

@@ -22,7 +22,7 @@ public static class EffectFormulas
     /// <param name="caster">The caster.</param>
     /// <returns>The chance, from 0 to 1: none for a level that has no chance of one.</returns>
     /// <remarks>
-    /// Measured on the 595 casts captured of levels with a chance (D205): the level's chance plus the caster's characteristic 18,
+    /// Measured on the 595 casts captured of levels with a chance (D207): the level's chance plus the caster's characteristic 18,
     /// in percent, within 0 and 100, foresaw 43 critical hits, and the server drew 40; none of the 217 casts of monsters whose
     /// characteristic 18 is below the level's chance, and none of a level without a chance, was one.
     /// </remarks>
@@ -42,7 +42,7 @@ public static class EffectFormulas
     /// <returns>Its value.</returns>
     /// <remarks>
     /// The server gives each multiplier as 100 when nothing changes it, so that one it left out changes nothing, and a boost
-    /// of one adds to 100 (D206).
+    /// of one adds to 100 (D209).
     /// </remarks>
     public static int ValueOf(Combatant fighter, int characteristic)
     {

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
@@ -18,7 +19,7 @@ namespace D3B.Scripts.Fights;
 /// <para>
 /// At each turn's start, the AI plans from the fight as the bot would imagine it (<see cref="ImaginedFights"/>), and the turn
 /// the player or the AI played is imagined too, from the casts and walks the server announced: both are judged by the same
-/// numbers, the damage dealt, the kills and the heals foreseen, then the life the enemies' reply takes (D204).
+/// numbers, the damage dealt, the kills and the heals foreseen, then the life the enemies' reply takes (D206).
 /// </para>
 /// <para>
 /// At each turn's end, what the judge reckons is set against what came: the threat against the life the character lost
@@ -105,6 +106,14 @@ internal sealed class TurnBench
             if (turn is not null && state.Fight is { } before)
                 Observe(before, self, message, turn);
 
+            // Whom the enemies' blows took life from between two of the character's turns, as the server announced it.
+            if (ending is not null && message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.LifeLost } lost && state.Fight is { } between
+                && between.Fighters.TryGetValue(self, out var own) && between.Fighters.TryGetValue(lost.LifeLost.TargetId, out var hit) && hit.Team == own.Team
+                && between.Fighters.TryGetValue(lost.SourceId, out var source) && source.Team != own.Team)
+            {
+                Add($"enemies' blows between turns: life, on {(hit.Id == self ? "the character" : hit.SummonerId is not null ? "a summon" : "another ally")}", lost.LifeLost.Loss + (lost.LifeLost.HasShieldLoss ? lost.LifeLost.ShieldLoss : 0));
+            }
+
             state = CharacterEvents.Apply(state, RelayDirection.FromServer, message);
 
             switch (message)
@@ -116,6 +125,7 @@ internal sealed class TurnBench
                     {
                         Settle(ending, start.Fight);
                         turn.Foreseen = ending.NextTurn;
+                        turn.Searched = ending.Searched;
                     }
 
                     ending = null;
@@ -297,15 +307,35 @@ internal sealed class TurnBench
             Tally.Count($"approach: {Band(foreseen, Dealt(turn.Start, ended))}");
         }
 
+        if (turn.Searched is { } searched)
+        {
+            Add("next turn searched: foreseen as the turn before ended", searched);
+            Tally.Count($"next turn searched: {Band(searched, Dealt(turn.Start, ended))}");
+        }
+
         var endJudge = _tactics.JudgeOf(ended, turn.Knowledge, _weights);
         var self = ended.ActorId;
         var replied = _tactics.Replies(ended, turn.Knowledge, endJudge);
+
+        foreach (var ally in ended.Fighters.Where(fighter => fighter.IsAlive && fighter.Team == ended.Actor.Team))
+        {
+            if (replied.Find(ally.Id) is { } then)
+                Add($"reply's blows: life, on {(ally.Id == self ? "the character" : ally.IsSummon ? "a summon" : "another ally")}", Math.Max(0, Effective(ally) - Effective(then)));
+        }
+        var later = turn.Knowledge with { Cooldowns = turn.Knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
+        var (next, _) = _tactics.NextTurn(replied, later, endJudge, _limits);
 
         return new Ending(
             Effective(ended.Actor),
             endJudge.Threat(ended, self),
             Math.Max(0, Effective(ended.Actor) - (replied.Find(self) is { } after ? Effective(after) : 0)),
-            endJudge.NextTurnDamage(ended));
+            endJudge.NextTurnDamage(ended),
+            Dealt(replied, next));
+    }
+
+    private static int Kills(ImaginedFight start, ImaginedFight end)
+    {
+        return start.Fighters.Count(enemy => enemy.IsAlive && enemy.Team != start.Actor.Team && end.Find(enemy.Id) is { IsAlive: false });
     }
 
     private static double Dealt(ImaginedFight start, ImaginedFight end)
@@ -339,6 +369,16 @@ internal sealed class TurnBench
         Add("planned: kills foreseen", plannedKills);
         Add("planned: heals foreseen", plannedHealed);
         Add("planned: life the reply takes", Math.Max(0, plannedLost));
+
+        // Over two turns: this turn's damage, then the next turn's as the search plays it from where the reply left the fight.
+        var later = turn.Knowledge with { Cooldowns = turn.Knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
+        var (playedNext, _) = _tactics.NextTurn(playedReply, later, judge, _limits);
+        var (plannedNext, _) = _tactics.NextTurn(plannedReply, later, judge, _limits);
+
+        Add("over two turns: played, damage foreseen", playedDealt + Dealt(playedReply, playedNext));
+        Add("over two turns: planned, damage foreseen", plannedDealt + Dealt(plannedReply, plannedNext));
+        Add("over two turns: played, kills foreseen", playedKills + Kills(playedReply, playedNext));
+        Add("over two turns: planned, kills foreseen", plannedKills + Kills(plannedReply, plannedNext));
         Add("judged: played", judge.JudgeReplied(playedReply));
         Add("judged: planned", judge.JudgeReplied(plannedReply));
 
@@ -401,7 +441,9 @@ internal sealed class TurnBench
         public int WeaponBlows { get; set; }
 
         public double? Foreseen { get; set; }
+
+        public double? Searched { get; set; }
     }
 
-    private sealed record Ending(double Life, double Threat, double Replied, double NextTurn);
+    private sealed record Ending(double Life, double Threat, double Replied, double NextTurn, double Searched);
 }

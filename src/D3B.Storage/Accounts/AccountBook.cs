@@ -156,7 +156,7 @@ public sealed class AccountBook : IDisposable
             cancellationToken);
     }
 
-    /// <summary>Says whether the AI plays every fight of a character, as the switch on its bot's card was set (D206).</summary>
+    /// <summary>Says whether the AI plays every fight of a character, as the switch on its bot's card was set (D213).</summary>
     /// <param name="key">The character.</param>
     /// <param name="alone">Whether the AI plays them.</param>
     /// <param name="cancellationToken">Stops the write.</param>

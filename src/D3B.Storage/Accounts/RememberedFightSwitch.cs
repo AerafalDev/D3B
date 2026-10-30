@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace D3B.Storage.Accounts;
 
-/// <summary>Gives each bot made the switch "The AI fights" its character was left with (D206).</summary>
+/// <summary>Gives each bot made the switch "The AI fights" its character was left with (D213).</summary>
 /// <remarks>
 /// The switch is the character's, kept from one run of the host to the next: a bot made for a character whose switch was
 /// left on has the AI play its fights from its first. The host's <c>Fights:Alone</c> turns every bot's on, whatever was kept.

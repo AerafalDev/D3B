@@ -138,6 +138,17 @@ public sealed class FightPlayTests : IAsyncDisposable
         return connection.Sent[count - 1];
     }
 
+    private async Task LoggedAsync(string message)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+
+        while (!_play.Log.GetSnapshot().Any(record => record.Message == message))
+        {
+            Assert.True(DateTime.UtcNow < deadline, $"The log never said: {message}");
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+    }
+
     [Fact]
     public async Task TheAIClosesTheFightPlacesTheCharacterReadiesItCastsAndEndsItsTurn()
     {
@@ -183,9 +194,11 @@ public sealed class FightPlayTests : IAsyncDisposable
         connection.Server(new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = Monster } } } });
         await bot.ProcessedAsync();
 
+        // The behavior writes the turn's end once the server's answer reached it, on its own task, after the bot's loop handled it.
+        await LoggedAsync($"Bot {Self}: ends its turn after 2 actions");
+
         Assert.Equal(sent + 7, connection.Sent.Count);
         Assert.False(bot.IsPaused);
-        Assert.Contains(_play.Log.GetSnapshot(), record => record.Message == $"Bot {Self}: ends its turn after 2 actions");
         Assert.DoesNotContain(_play.Log.GetSnapshot(), record => record.Message.Contains("did not show", StringComparison.Ordinal));
     }
 

@@ -26,9 +26,9 @@ namespace D3B.Engine.Tactics;
 /// <para>
 /// A fighter's best turn's damage on another comes from its spells as the knowledge lists them, each effect that damages at
 /// the middle of its range through the formulas (<see cref="EffectFormulas"/>), a critical hit weighed by its chance
-/// (D205), the AP shared among them at their limits a turn; reckoned once, from where the fight starts, for every number of
+/// (D207), the AP shared among them at their limits a turn; reckoned once, from where the fight starts, for every number of
 /// AP. A spell lands on a fighter when one of the cells its caster walks to with its MP has the fighter within the level's
-/// range and, for a level that tests it, in its line of sight (D207).
+/// range and, for a level that tests it, in its line of sight (D208).
 /// </para>
 /// <para>
 /// The threat and the approach read the fighters as the search left them, their characteristics and states, so that a
@@ -36,7 +36,7 @@ namespace D3B.Engine.Tactics;
 /// casting or dealing damage deals none, one invulnerable takes none. A buff of the fighter playing's own lasts until its
 /// turn of the last round it lasts begins (D193): it counts on the enemies' turns that come first, and on the fighter
 /// playing's next turn when it lasts two rounds or more. Each round it lasts beyond, up to the rounds the fight is foreseen
-/// to last still, it is worth the damage it adds to its side's turn, or takes off the other side's (D206).
+/// to last still, it is worth the damage it adds to its side's turn, or takes off the other side's (D209).
 /// </para>
 /// </remarks>
 public sealed class FightJudge
@@ -277,7 +277,7 @@ public sealed class FightJudge
         if (!Hurts(level, caster, target))
             return 0;
 
-        // A critical hit weighed by its chance (D205), its level's critical effects if it has some.
+        // A critical hit weighed by its chance (D207), its level's critical effects if it has some.
         var chance = EffectFormulas.CriticalChance(level, caster);
         var normal = Damage(_spells.EffectsOf(level), _actions, _rules, level, caster, target, pair, critical: false);
 
@@ -401,11 +401,62 @@ public sealed class FightJudge
         return Judge(fight, threatened: false);
     }
 
+    /// <summary>Judges a fight once the enemies replied, the fighter playing's next turn searched from there rather than reckoned.</summary>
+    /// <param name="fight">The fight once they played.</param>
+    /// <param name="nextTurn">What the fighter playing's next turn, as the search imagined it from there, adds to its side's worth (<see cref="Standing"/>).</param>
+    /// <returns>Its worth for the fighter playing's side: the next turn weighed as the approach is, the approach itself where that turn finds nothing (D210).</returns>
+    public double JudgeReplied(ImaginedFight fight, double nextTurn)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+
+        var next = nextTurn > 0 ? nextTurn : Approach(fight);
+
+        return Standing(fight) + (_weights.Approach * next) + (fight.Buffs.IsEmpty ? 0 : Lasting(fight));
+    }
+
+    /// <summary>Gets what a fight is worth as it stands for the fighter playing's side: its fighters' life and being alive, less what the enemies' cost.</summary>
+    /// <param name="fight">The fight.</param>
+    /// <returns>The worth, neither the threat nor the next turn counted.</returns>
+    public double Standing(ImaginedFight fight)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+
+        var worth = 0.0;
+
+        foreach (var fighter in fight.Fighters)
+        {
+            if (!fighter.IsAlive)
+                continue;
+
+            worth += fighter.Team == _team
+                ? Weight(fighter) * (LifeWorth(Effective(fighter), fighter.MaxLife) + (AliveShare * fighter.MaxLife))
+                : -Cost(fighter, IndexOf(fighter.Id), Effective(fighter));
+        }
+
+        return worth;
+    }
+
+    /// <summary>Gets the fight as the fighter playing's next turn begins: its turn's AP and MP, the next round, and the buffs it gave for one round gone.</summary>
+    /// <param name="fight">The fight once the enemies replied.</param>
+    /// <returns>The fight its next turn starts from.</returns>
+    public ImaginedFight NextTurnStart(ImaginedFight fight)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+
+        var next = NextTurnOf(fight);
+        var (points, movement) = NextTurnPoints(fight);
+
+        if (next.Find(_actorId) is not { IsAlive: true } actor)
+            return next;
+
+        return next.With(actor with { ActionPoints = points, MovementPoints = movement }) with { ActorId = _actorId, Round = fight.Round + 1 };
+    }
+
     /// <summary>Gets the life the threat reckons the enemies may take from a fighter of the side playing before it plays again.</summary>
     /// <param name="fight">The fight, as the fighter playing's turn ends.</param>
     /// <param name="allyId">The fighter.</param>
     /// <returns>The life, unweighed; 0 for a fighter of the other side or not in the fight.</returns>
-    /// <remarks>What the bench sets against the life the fighter lost before its next turn (D204).</remarks>
+    /// <remarks>What the bench sets against the life the fighter lost before its next turn (D206).</remarks>
     public double Threat(ImaginedFight fight, long allyId)
     {
         ArgumentNullException.ThrowIfNull(fight);
@@ -430,7 +481,7 @@ public sealed class FightJudge
     /// <summary>Gets the damage the approach reckons the fighter playing may deal next turn from where it stands, on the enemy it would hurt most.</summary>
     /// <param name="fight">The fight, as the fighter playing's turn ends.</param>
     /// <returns>The damage, unweighed, never more than the enemy's life.</returns>
-    /// <remarks>What the bench sets against the damage the fighter dealt in its next turn (D204).</remarks>
+    /// <remarks>What the bench sets against the damage the fighter dealt in its next turn (D206).</remarks>
     public double NextTurnDamage(ImaginedFight fight)
     {
         ArgumentNullException.ThrowIfNull(fight);

@@ -34,7 +34,11 @@ internal static class FightsCommand
         };
         var turns = new Option<bool>("--turns")
         {
-            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D204).",
+            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206).",
+        };
+        var live = new Option<bool>("--live")
+        {
+            Description = "Counts what D3B did in the fights instead: who played each, how it ended, and what came of the AI's requests (D206).",
         };
         var command = new RootCommand("Replays the captured fights and compares what D3B.Engine foresees with what the server announced, action by action.")
         {
@@ -43,14 +47,15 @@ internal static class FightsCommand
             version,
             details,
             turns,
+            live,
         };
 
-        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(data)?.FullName ?? PackLocations.DefaultRoot, result.GetValue(version), result.GetValue(details), result.GetValue(turns)));
+        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(data)?.FullName ?? PackLocations.DefaultRoot, result.GetValue(version), result.GetValue(details), result.GetValue(turns), result.GetValue(live)));
 
         return command;
     }
 
-    private static int Run(string[] paths, string root, string? version, bool details, bool turns)
+    private static int Run(string[] paths, string root, string? version, bool details, bool turns, bool live)
     {
         var client = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ankama", "Dofus-dofus3");
         var build = version is null ? ClientBuild.Read(client) : ClientBuild.Parse(version);
@@ -86,6 +91,7 @@ internal static class FightsCommand
         var translation = ProtocolTranslation.Create(ProtocolSchema.Load(schemaPath), MappingFile.Read(mappingPath));
         var bench = new CastBench(tables, maps, details ? Console.Out : null);
         var turnBench = new TurnBench(tables, maps, TacticWeights.Default, TurnSearchLimits.Default);
+        var liveBench = new LiveBench();
         var failed = 0;
 
         Console.WriteLine($"Client {build.Version}; pack format {GamePack.FormatVersion}, mapping format {MappingFile.FormatVersion}; {files.Count} game captures");
@@ -94,6 +100,13 @@ internal static class FightsCommand
         {
             try
             {
+                if (live)
+                {
+                    liveBench.Replay(CapturedFights.Messages(translation, file));
+
+                    continue;
+                }
+
                 var messages = CapturedFights.ServerMessages(translation, file);
 
                 if (turns)
@@ -108,7 +121,9 @@ internal static class FightsCommand
             }
         }
 
-        if (turns)
+        if (live)
+            liveBench.Tally.Write(Console.Out);
+        else if (turns)
             turnBench.Write(Console.Out);
         else
             bench.Tally.Write(Console.Out);
