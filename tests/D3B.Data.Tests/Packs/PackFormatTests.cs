@@ -41,15 +41,17 @@ public sealed class PackFormatTests
         (4, "4f0e5099257dbba4ee548612249d8a5c9c9da7387fdfc765b15132d9c81fa222"),
         (5, "9de3d67e4a573c63eb675ab6c1ec13cc5e0b653014fa144c5b3de3c408867ff7"),
         (6, "1c90f607d5c45ba002152f90ea53357e25606148b2c9536c4ac1a53b1c708907"),
-        (7, "ca36363900fd8b08fd0b9aa89f4ab9f9504e302dfc50e59a18249a0f5a0e7d3d"),
+        (7, "ce9c6ec360dcce84bd518b449148b2a40d44a05a7ce6d19e618ef0780c300a6b"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
     private static readonly int[] _harvestables = [43];
+    private static readonly int[] _inhabitants = [210, 211];
     private static readonly int[] _replies = [67];
     private static readonly int[] _itemIcons = [71];
     private static readonly int[] _jobIcons = [72];
     private static readonly int[] _spellIcons = [208];
+    private static readonly int[] _monsterIcons = [212];
     private static readonly int[] _levelIds = [97, 98];
     private static readonly int[] _zoneCells = [99, 100, 101];
     private static readonly string[] _strings = ["s0", "s1", "s2", "s3", "s4"];
@@ -120,10 +122,11 @@ public sealed class PackFormatTests
             _criteria));
         Append(hash, new WorldAtlas(
             new MapPosition[] { new(25, 26, 27, 28, 29, 30, 31) },
-            new SubArea[] { new(32, 33, 34, 35, 36, true, 0, 1) },
+            new SubArea[] { new(32, 33, 34, 35, 36, true, 0, 1, 0, 2) },
             new Area[] { new(37, 38, 39) },
             new Waypoint[] { new(40, 41, 42, true) },
-            _harvestables));
+            _harvestables,
+            _inhabitants));
         Append(hash, new ItemCatalog(new Item[] { new(44, 45, 46, 47, 48, 68) }, new ItemType[] { new(49, 50, 51, 52) }));
         Append(hash, new WeaponCatalog(
             new Weapon[] { new() { ItemId = 195, TypeId = 196, ApCost = 197, MinRange = 198, Range = 199, CriticalHitProbability = 200, CriticalHitBonus = 201, MaxCastPerTurn = 3, Properties = SpellLevelProperties.CastInDiagonal, FirstEffect = 0, EffectCount = 1 } },
@@ -133,7 +136,11 @@ public sealed class PackFormatTests
         Append(hash, new JobCatalog(new Job[] { new(53, 54, 69) }, new Skill[] { new(55, 56, 57, 58, 59, 60, true) }));
         Append(hash, new InteractiveCatalog(new Interactive[] { new(61, 62) }));
         Append(hash, new BankCatalog(new Bank[] { new(63, 64) }, new Banker[] { new(65, 66, 0, 1) }, _replies));
-        Append(hash, new IconCatalog(new IconTable(2, _itemIcons, Pixels(73, 2)), new IconTable(3, _jobIcons, Pixels(74, 3)), new IconTable(4, _spellIcons, Pixels(209, 4))));
+        Append(hash, new IconCatalog(
+            new IconTable(2, _itemIcons, Pixels(73, 2)),
+            new IconTable(3, _jobIcons, Pixels(74, 3)),
+            new IconTable(4, _spellIcons, Pixels(209, 4)),
+            new IconTable(5, _monsterIcons, Pixels(213, 5))));
         Append(hash, new SpellCatalog(
             new Spell[] { new() { Id = 75, NameId = 76, TypeId = 77, Order = 78, IconId = 79, Properties = SpellProperties.BypassSummoningLimit, FirstLevel = 0, LevelCount = 2, PreviewZone = Zone(102) } },
             new SpellLevel[]

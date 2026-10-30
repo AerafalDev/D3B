@@ -139,10 +139,11 @@ public sealed class HarvestZoneTests : IAsyncDisposable
             Array.Empty<string>());
         var atlas = new WorldAtlas(
             ids.Select((id, index) => new MapPosition(id, (short)index, 0, subAreaOf[index], 1, 0, 0)).ToArray(),
-            new[] { new SubArea(forest, 0, 1, 1, SubArea.NoZaap, true, 0, 1), new SubArea(other, 0, 1, 1, SubArea.NoZaap, true, 1, 0) },
+            new[] { new SubArea(forest, 0, 1, 1, SubArea.NoZaap, true, 0, 1, 0, 0), new SubArea(other, 0, 1, 1, SubArea.NoZaap, true, 1, 0, 0, 0) },
             new[] { new Area(1, 0, 0) },
             Array.Empty<Waypoint>(),
-            new[] { TestPlay.Ash });
+            new[] { TestPlay.Ash },
+            Array.Empty<int>());
         var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [forest] };
         var zone = HarvestZone.Of(settings, atlas, graph, _play.Tables.Jobs, _play.Maps);
         var tour = new HarvestTour(new HarvestSightings(), new GraphicSkills());

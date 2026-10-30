@@ -24,7 +24,7 @@ public readonly struct Monster
     /// <summary>Gets the text naming it, by identifier.</summary>
     public int NameId { get; init; }
 
-    /// <summary>Gets the client's <c>gfxId</c>.</summary>
+    /// <summary>Gets the client's <c>gfxId</c>, which names its icon in <see cref="Icons.IconCatalog.Monsters"/>, held for the monsters a sub-area lists.</summary>
     public ushort GfxId { get; init; }
 
     /// <summary>Gets its race, in <see cref="MonsterCatalog.Races"/>.</summary>

@@ -22,11 +22,11 @@ internal static class TestReferences
 
     public static WorldAtlas Atlas()
     {
-        SubArea[] subAreas = [new(Forest, 110, Amakna, 5, SubArea.NoZaap, true, 0, 2), new(Hills, 111, Amakna, 20, SubArea.NoZaap, true, 2, 1), new(City, 120, Astrub, 1, SubArea.NoZaap, true, 3, 1)];
+        SubArea[] subAreas = [new(Forest, 110, Amakna, 5, SubArea.NoZaap, true, 0, 2, 0, 0), new(Hills, 111, Amakna, 20, SubArea.NoZaap, true, 2, 1, 0, 0), new(City, 120, Astrub, 1, SubArea.NoZaap, true, 3, 1, 0, 0)];
         Area[] areas = [new(Amakna, 101, 0), new(Astrub, 102, 0)];
         MapPosition[] positions = [new(1_001, 0, 0, Forest, 1, 0, 0), new(1_002, 1, 0, Forest, 1, 0, 0), new(1_003, 2, 0, Hills, 1, 0, 0)];
 
-        return new WorldAtlas(positions, subAreas, areas, Array.Empty<Waypoint>(), new[] { Ash, Chestnut, Chestnut, Iron });
+        return new WorldAtlas(positions, subAreas, areas, Array.Empty<Waypoint>(), new[] { Ash, Chestnut, Chestnut, Iron }, Array.Empty<int>());
     }
 
     public static JobCatalog Jobs()

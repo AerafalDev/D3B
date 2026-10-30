@@ -95,7 +95,7 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int BlowLevelId = 1_100;
     public const int SwordItemId = 6_751;
 
-    // Items' and professions' icons are 64 pixels square in a pack (D136).
+    // Items', professions' and monsters' icons are 64 pixels square in a pack (D136).
     private const int IconSize = 64;
 
     private static readonly string[] _weaponZones = ["P"];
@@ -286,7 +286,8 @@ internal sealed class TestPlay : IAsyncDisposable
             writer.Add(IconCatalog.EntryName, new IconCatalog(
                 new IconTable(IconSize, new[] { AshIconId, ChestnutIconId }, Disc(0x8B, 0xC3, 0x4A).Concat(Disc(0x9C, 0x5B, 0x2E)).ToArray()),
                 new IconTable(IconSize, new[] { LumberjackIconId }, Disc(0x3B, 0x82, 0xF6)),
-                new IconTable(48, Array.Empty<int>(), Array.Empty<byte>())));
+                new IconTable(48, Array.Empty<int>(), Array.Empty<byte>()),
+                new IconTable(IconSize, Array.Empty<int>(), Array.Empty<byte>())));
             writer.Add(SpellCatalog.EntryName, Spells());
             writer.Add(WeaponCatalog.EntryName, new WeaponCatalog(
                 new[] { new Weapon { ItemId = SwordItemId, TypeId = 6, ApCost = 3, MinRange = 1, Range = 1, CriticalHitProbability = 0, MaxCastPerTurn = 1, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 0, EffectCount = 1 } },
@@ -377,9 +378,9 @@ internal sealed class TestPlay : IAsyncDisposable
             new(InsideMapId, 4, -18, SubAreaId, -1, 0, 0),
             new(OtherInsideMapId, 4, -18, SubAreaId, -1, 0, 0),
         ];
-        SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 2)];
+        SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 2, 0, 0)];
 
-        return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, Array.Empty<Waypoint>(), new[] { Ash, Chestnut });
+        return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, Array.Empty<Waypoint>(), new[] { Ash, Chestnut }, Array.Empty<int>());
     }
 
     /// <summary>A game connection, its first request presenting a ticket the connection phase gave an account, or none.</summary>

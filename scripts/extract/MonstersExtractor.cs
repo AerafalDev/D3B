@@ -5,14 +5,18 @@ using D3B.Scripts.Unity;
 
 namespace D3B.Scripts.Extract;
 
-/// <summary>Reads the monsters, their grades, spells and characteristic ratios, and their races.</summary>
+/// <summary>Reads the monsters, their grades, spells and characteristic ratios, and their races; and the sub-areas each lists as its own.</summary>
 /// <remarks>
 /// <para>
 /// The server names a monster fighter by its monster and grade, so a fight relies on every monster's grades being its own,
 /// numbered from 1 in order, and on each spell having a grade for each of them: the extraction fails otherwise. The spells
 /// and starting spells the pack lacks are counted, not relied on yet (client.md).
 /// </para>
-/// <para>Drops, looks, animations, achievements, idols and the aggression's immunity criteria are left out.</para>
+/// <para>
+/// Drops, looks, animations, achievements, idols and the aggression's immunity criteria are left out. A monster's
+/// <c>subareas</c> are not kept: the atlas keeps the sub-areas' own lists, which the extraction holds against them
+/// (<see cref="WorldExtractor"/>).
+/// </para>
 /// </remarks>
 internal static class MonstersExtractor
 {
@@ -23,7 +27,7 @@ internal static class MonstersExtractor
         return [.. _tables.Select(table => UnityDataTable.PathOf(client, table))];
     }
 
-    public static MonsterCatalog Read(ClientInstall client, SpellCatalog spells)
+    public static (MonsterCatalog Monsters, IReadOnlySet<(int SubAreaId, int MonsterId)> SubAreas) Read(ClientInstall client, SpellCatalog spells)
     {
         try
         {
@@ -32,6 +36,7 @@ internal static class MonstersExtractor
             var monsterSpells = new List<MonsterSpell>();
             var spellGrades = new List<byte>();
             var ratios = new List<MonsterRatio>();
+            var subAreas = new HashSet<(int SubAreaId, int MonsterId)>();
 
             foreach (var record in UnityDataTable.ReadById(client, "monsters").OrderBy(record => record.Integer("id")))
             {
@@ -70,6 +75,9 @@ internal static class MonstersExtractor
                 for (var i = 0; i < monsterGrades.Count; i++)
                     grades.Add(Grade(monsterGrades[i], id, i + 1));
 
+                foreach (var subArea in record.Int32Array("subareas"))
+                    subAreas.Add((subArea, id));
+
                 for (var i = 0; i < ids.Length; i++)
                 {
                     monsterSpells.Add(new MonsterSpell(ids[i], spellGrades.Count, checked((byte)monsterGrades.Count)));
@@ -99,7 +107,7 @@ internal static class MonstersExtractor
             Console.WriteLine($"Monsters: {monsters.Count:N0}, {grades.Count:N0} grades, {monsterSpells.Count:N0} spells, {ratios.Count:N0} characteristic ratios; {races.Length:N0} races, {superRaces.Length:N0} super-races");
             Console.WriteLine($"  naming a spell the pack lacks: {missingSpells:N0} spells; a starting spell level it lacks: {missingStarts:N0} grades; a race it lacks: {missingRaces:N0} monsters; a super-race it lacks: {missingSuperRaces:N0} races");
 
-            return catalog;
+            return (catalog, subAreas);
         }
         catch (Exception exception) when (exception is ArgumentException or OverflowException)
         {

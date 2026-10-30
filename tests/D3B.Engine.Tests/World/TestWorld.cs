@@ -83,11 +83,11 @@ internal sealed class TestWorld
         var positions = maps.Select(Position).ToArray();
         SubArea[] subAreas =
         [
-            new(SubAreaId, 0, AreaId, 10, SubArea.NoZaap, true, 0, 0),
-            new(ClosedSubAreaId, 0, AreaId, 10, SubArea.NoZaap, false, 0, 0),
+            new(SubAreaId, 0, AreaId, 10, SubArea.NoZaap, true, 0, 0, 0, 0),
+            new(ClosedSubAreaId, 0, AreaId, 10, SubArea.NoZaap, false, 0, 0, 0, 0),
         ];
 
-        return new WorldAtlas(positions, subAreas, new[] { new Area(AreaId, 0, 0) }, Array.Empty<Waypoint>(), Array.Empty<int>());
+        return new WorldAtlas(positions, subAreas, new[] { new Area(AreaId, 0, 0) }, Array.Empty<Waypoint>(), Array.Empty<int>(), Array.Empty<int>());
     }
 
     public WorldPathfinder Pathfinder()
