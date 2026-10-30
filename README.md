@@ -27,9 +27,11 @@ a module, and the game's data and protocol are read from the client you have ins
   AI places the character, then each turn weighs the walks and casts, a worn sword's blow among them, against the
   monsters' reply and plays them at a pace you can follow.
 - **Fighting.** A fighting activity, made as harvesting is, tours a zone, chosen or chosen for the character's level,
-  and attacks the groups of monsters its profile allows: monsters chosen or left out, a group's size, and only those the
-  AI judges it beats; the sub-areas where the monsters chosen live come first. One AI fights for every character, whatever
-  its breed: it plays prudently a fight it judges risky, and closes the fight and refuses spectators.
+  and attacks the groups of monsters its profile allows: monsters or families of monsters chosen or left out, a group's
+  size, and only those the AI judges it beats over the fight's course; the sub-areas where the monsters chosen live come
+  first, and the profile's editor shows the zone, its monsters and the place chosen for each character. One AI fights for
+  every character, whatever its breed: it plays prudently a fight it judges risky, and closes the fight and refuses
+  spectators. The bot's card counts the fights and the loot, with its icons.
 - **The desktop app.** A card per bot, with where it is, its pods, kamas and activity; a live map of the bot's map, its
   path, elements, NPCs and fighters; the accounts, the profiles and their editor with a preview of the zone; a journal
   per bot, a protocol inspector, and the settings. Dark by default, in French and English. It installs without
