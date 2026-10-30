@@ -40,10 +40,12 @@ fighters, their life, AP and MP, the turns and the outcome with what it gained, 
 placement cells and the fighters, monsters named; the pack holds every spell, its levels and effects with the flags the
 client's code names, the states, monsters and their grades, the breeds and characteristics; and D3B knows the rules of a
 cast, its range, line of sight, zones, target masks, costs, cooldowns, casts per turn and the spells' modifiers, and how
-a fighter walks and is tackled, every cast and walk of 49 captured fights of 11 breeds checked against them; the player
-still fights. Next: the effects,
-then an AI that searches each turn's best moves and casts, then the blueprints. See the
-[roadmap](docs/roadmap.md).
+a fighter walks and is tackled, every cast and walk of 49 captured fights of 11 breeds checked against them. Each bot's
+fight now keeps what the server announces, the fighters' buffs, states, spells' modifiers, cooldowns and moves, and D3B
+foresees what each cast does, damage by element, steals, heals, critical hits, boosts and states, every effect read from
+the pack: on the 49 fights, `scripts/fights.cs` replays every cast and finds 334 of 335 losses of life within what D3B
+foresaw. The player still fights. Next: an AI that searches each turn's best moves and casts, then the hard cases, then
+the blueprints. See the [roadmap](docs/roadmap.md).
 
 ## Installing
 

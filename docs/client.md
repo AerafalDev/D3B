@@ -14,7 +14,9 @@ used ([the game, teleported](#the-game-teleported)), and its floors, fights and 
 ([the game, interrupted](#the-game-interrupted)). Its icons and its elements' graphics were measured on 2026-10-29 for
 session 6b ([Icons](#icons), [Graphics](#graphics)), and a tour foretold by them ([the game, foretold](#the-game-foretold)).
 Its fights were measured on 2026-10-30 for session 9a, on the wire ([the game, fought](#the-game-fought)) and in its tables
-([Fights' tables](#fights-tables)), which session 9b measured whole, their flags read in its code, the same day.
+([Fights' tables](#fights-tables)), which session 9b measured whole, their flags read in its code, the same day; its
+casts against D3B's rules for session 9c ([the game, cast](#the-game-cast)), and what each did against D3B's effects for
+session 9d ([the game, foreseen](#the-game-foreseen)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -43,6 +45,7 @@ dotnet run --file scripts/capture.cs -- <game captures> --messages --mapping <ma
 dotnet run --file scripts/mapping.cs                                  # pairs D3B's readable protocol with the schema, audits it, writes the mapping
 dotnet run --file scripts/mapping.cs -- --without-captures            # the same from pins and structure alone, without anchors
 dotnet run --file scripts/mapping.cs -- --pins <empty dir>            # without pins: lists, for what is left open, the messages that fit
+dotnet run --file scripts/fights.cs -- --details                      # replays the captured fights, D3B's effects against the server's actions
 ```
 
 `summary` reads headers only and takes seconds. The extraction tool fails when the client contradicts what this
@@ -1508,6 +1511,41 @@ The 40 game connections decoded through mapping 9: of 29,428 frames, 8,134 under
 carrying one of 187 messages the readable protocol lacks; none misread. The mapping pairs 192 messages, 88 by pin, 11 by
 the captures and 93 by fields, and 25 enums; 405 fields and 183 values audited, no failure; 12,783 bytes, format 9, the
 same bytes on two runs.
+
+### The game, foreseen
+
+Measured on 2026-10-30 for session 9d (D193 to D196): the 52 game connections of 3.7.12.12, 49 fights and 50,755 frames,
+decoded through mapping 10, replayed through the bot's fight state and the pack of format 5 by `scripts/fights.cs`,
+which prints counts.
+
+- **Actions named**, by the client's names of their ids: a slide (5), a carry (50) and a throw (51), a tackle (104), AP and
+  MP dodged (308, 309), a spell's buffs removed (406), all (132), one by its uid (514), beside those of 9a. A loss's
+  second field is what a shield took: with a shield up, the life lost was 0. A cast's field 8 says a critical hit, on 33
+  of the 398 casts the fighters chose; its field 1, set on 15, is something else, not measured.
+- **Buffs**, 843: each names its fighter, the spell's effect it comes from by its uid, every one in the pack, the spell
+  and its grade, its kind (a boost, a state, a spell modifier, a triggered effect), a value and a parameter, its triggers,
+  and the round and turn it ends at, the turn the place in the turns' order of the fighter playing as it was given. 113 of
+  the 125 buffs for rounds a chosen cast's own effects gave end at the cast's round plus the effect's duration. No buff's
+  end of time is announced; a removal before it is, by spell, all, or uid.
+- **Cooldowns**: the character's and its summons' spells, each with the rounds it waits: 197 of 213 counts of spells cast
+  are the interval less the caster's turns ended since, 16 one fewer, sent as the turn ended.
+- **Positions**: the 36 slides and the 298 walks start on the cell the fight's state holds their fighter on, after every
+  walk, slide, teleport, swap, carry and throw before.
+- **Rules**: of the 398 casts chosen, 392 pass with the states and modifiers the state keeps; 4 an Eliotrope cast through
+  its portals, 2 a bomb with AP the state holds spent.
+- **Damage**, of each target by element, against what D3B foresaw of the cast: of the casts alone, 334 of 335 within the
+  range, 99 of them the target's whole life, by element 84 air, 46 earth, 108 fire, 49 neutral and 47 water; the other one
+  1 more under two buffs of final damage. With the spells the effects cast, which are not foreseen: 51 within, 7 more,
+  1 less, 14 not foreseen.
+- **Heals**: 27 within, 53 foreseen on a fighter whose life was whole, which the server does not announce, 2 not
+  announced. 79 steals, each healing its caster half the life it took.
+- **Buffs a cast's own effects gave**: 20 boosts and 77 deboosts within their roll, 19 states as foreseen, 4 the states
+  of a carry, which the server sets itself; 20 went to a fighter the cast was not foreseen to reach, 12 are triggered
+  effects kept, and 314 come from the effects the cast triggered.
+- **Pushes and pulls**: 46 foreseen, 7 as far, 1 farther, 21 stopped short, 17 on a target that died first; their damage
+  9 times as foreseen, twice less.
+- **AP and MP removed**: 5 compared, 1 within with a dodge, 4 fewer.
+- **Teleports**: 3 foreseen and not announced; summons and teleports onto a cell reach no fighter, and are not compared.
 
 ## Protocol code
 
