@@ -16,9 +16,11 @@ namespace D3B.Engine.Fights;
 /// of sight (<see cref="SpellRange"/>, <see cref="LineOfSight"/>).
 /// </para>
 /// <para>
-/// Measured on the 11 fights captured (client.md): the 79 casts the fighters chose, the first of each of their sequences of
-/// a spell, pass every check, a turret's needing the state the server gave it. The 265 others are cast by effects, at the
-/// start of a fight or a turn, or by another cast, and are not checked. No capture holds a cast the server refused:
+/// Measured on the 49 fights captured (client.md), of 11 breeds and monsters: of the 396 casts the fighters chose, the first
+/// of each of their sequences of a spell, 392 pass every check, a turret's needing the state the server gave it and 4 a
+/// carrier's the state it carries in; the 4 others an Eliotrope cast through its portals, 9f's. The 581 others are cast by
+/// effects, at the start of a fight or a turn, or by another cast, and are not checked. No capture holds a cast the server
+/// refused:
 /// which check refuses what is the references' idea until one does. Not checked, as not measured: the levels' global
 /// cooldowns and casts per turn shared by a team, traps and portals on the cell, and the least character level, which
 /// the server's own list of the character's spells answers.
@@ -59,6 +61,82 @@ public sealed class CastRules
         return cells;
     }
 
+    /// <summary>Gets a level as a fighter casts it, changed by the modifiers its buffs give its spell.</summary>
+    /// <param name="level">The level.</param>
+    /// <param name="caster">The fighter casting it.</param>
+    /// <returns>The level, its ranges, cost, interval, casts and conditions changed; its other fields kept.</returns>
+    /// <remarks>
+    /// The kinds are the pack's effects 280 to 299, as their texts describe them. Measured (client.md): a Pandawa's buffs give
+    /// its carrying spell 3 more range, no taken cell and a free one; 3 casts of the captures carried a modifier of their
+    /// spell, none needing it to pass. Sums apply in order, then a set interval; nothing falls below 0, and a count with no
+    /// limit keeps none.
+    /// </remarks>
+    public static SpellLevel Modified(in SpellLevel level, Combatant caster)
+    {
+        ArgumentNullException.ThrowIfNull(caster);
+
+        if (caster.Modifiers.IsDefaultOrEmpty)
+            return level;
+
+        int least = level.MinRange, most = level.Range, cost = level.ApCost, interval = level.MinCastInterval;
+        int perTurn = level.MaxCastPerTurn, perTarget = level.MaxCastPerTarget;
+        int? set = null;
+        var properties = level.Properties;
+
+        foreach (var modifier in caster.Modifiers)
+        {
+            if (modifier.SpellId != level.SpellId)
+                continue;
+
+            switch (modifier.Kind)
+            {
+                case SpellModifierKind.MinRange: least += modifier.Value; break;
+                case SpellModifierKind.MinRangeLess: least -= modifier.Value; break;
+                case SpellModifierKind.Range: most += modifier.Value; break;
+                case SpellModifierKind.RangeLess: most -= modifier.Value; break;
+                case SpellModifierKind.RangeBoostable: properties |= SpellLevelProperties.RangeCanBeBoosted; break;
+                case SpellModifierKind.ApCost: cost -= modifier.Value; break;
+                case SpellModifierKind.ApCostMore: cost += modifier.Value; break;
+                case SpellModifierKind.Interval: interval -= modifier.Value; break;
+                case SpellModifierKind.IntervalSet: set = modifier.Value; break;
+                case SpellModifierKind.LineDisabled: properties &= ~SpellLevelProperties.CastInLine; break;
+                case SpellModifierKind.LineOfSightDisabled: properties &= ~SpellLevelProperties.CastTestLos; break;
+                case SpellModifierKind.CastsPerTurn when perTurn > 0: perTurn += modifier.Value; break;
+                case SpellModifierKind.CastsPerTarget when perTarget > 0: perTarget += modifier.Value; break;
+                case SpellModifierKind.TakenCellDisabled: properties &= ~SpellLevelProperties.NeedTakenCell; break;
+                case SpellModifierKind.FreeCellDisabled: properties &= ~SpellLevelProperties.NeedFreeCell; break;
+                case SpellModifierKind.FreeCellEnabled: properties |= SpellLevelProperties.NeedFreeCell; break;
+            }
+        }
+
+        return level with
+        {
+            MinRange = (byte)Math.Clamp(least, 0, byte.MaxValue),
+            Range = (byte)Math.Clamp(most, 0, byte.MaxValue),
+            ApCost = (short)Math.Max(cost, 0),
+            MinCastInterval = (byte)Math.Clamp(set ?? interval, 0, byte.MaxValue),
+            MaxCastPerTurn = (sbyte)Math.Clamp(perTurn, sbyte.MinValue, sbyte.MaxValue),
+            MaxCastPerTarget = (byte)Math.Clamp(perTarget, 0, byte.MaxValue),
+            Properties = properties,
+        };
+    }
+
+    private static bool Asks(Criterion? criterion, int state)
+    {
+        if (criterion is null)
+            return false;
+
+        var wanted = $"HS={state}";
+
+        foreach (var part in criterion.Text.Split(['&', '|', '(', ')'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (part == wanted)
+                return true;
+        }
+
+        return false;
+    }
+
     /// <summary>Tells whether a fighter may cast a level on a cell.</summary>
     /// <param name="map">The fight's map.</param>
     /// <param name="fighters">Every fighter of the fight, the caster among them.</param>
@@ -79,33 +157,37 @@ public sealed class CastRules
             return CastRefusal.CasterAbsent;
 
         var spellId = level.SpellId;
+        var criterion = CriterionOf(level);
 
-        if (caster.States.Any(state => Has(state, SpellStateProperties.PreventsSpellCast)))
+        var cast = Modified(level, caster);
+
+        // A state that prevents casting lets through the levels that ask for it, as a carrier throws what it carries.
+        if (caster.States.Any(state => Has(state, SpellStateProperties.PreventsSpellCast) && !Asks(criterion, state)))
             return CastRefusal.CasterCannotCast;
 
-        if (caster.ActionPoints < level.ApCost)
+        if (caster.ActionPoints < cast.ApCost)
             return CastRefusal.NotEnoughActionPoints;
 
-        if (CriterionOf(level) is { } criterion && criterion.Evaluate(new CriterionFacts { States = caster.States }) is not CriterionAnswer.True)
+        if (criterion is not null && criterion.Evaluate(new CriterionFacts { States = caster.States }) is not CriterionAnswer.True)
             return CastRefusal.StatesForbid;
 
-        if (level.InitialCooldown > 0 && round <= level.InitialCooldown)
+        if (cast.InitialCooldown > 0 && round <= cast.InitialCooldown)
             return CastRefusal.InitialCooldown;
 
-        if (level.MinCastInterval > 0 && history.LastRounds.TryGetValue(spellId, out var last) && round - last < level.MinCastInterval)
+        if (cast.MinCastInterval > 0 && history.LastRounds.TryGetValue(spellId, out var last) && round - last < cast.MinCastInterval)
             return CastRefusal.Interval;
 
-        if (level.MaxCastPerTurn > 0 && history.CastsIn(spellId, round) >= level.MaxCastPerTurn)
+        if (cast.MaxCastPerTurn > 0 && history.CastsIn(spellId, round) >= cast.MaxCastPerTurn)
             return CastRefusal.TooManyCasts;
 
-        if (HasNoSlot(fighters, caster, level))
+        if (HasNoSlot(fighters, caster, cast))
             return CastRefusal.TooManySummons;
 
         if (!map.IsWalkable(cell))
             return CastRefusal.CellNotWalkable;
 
         var occupant = fighters.FirstOrDefault(fighter => fighter.IsAlive && fighter.Cell == cell);
-        var properties = level.Properties;
+        var properties = cast.Properties;
 
         if ((properties & SpellLevelProperties.NeedFreeCell) is not 0 && occupant is not null)
             return CastRefusal.CellNotFree;
@@ -116,10 +198,10 @@ public sealed class CastRules
         if ((properties & SpellLevelProperties.NeedVisibleEntity) is not 0 && occupant is not { IsVisible: true })
             return CastRefusal.TargetNotVisible;
 
-        if (level.MaxCastPerTarget > 0 && occupant is not null && history.CastsOn(spellId, occupant.Id, round) >= level.MaxCastPerTarget)
+        if (cast.MaxCastPerTarget > 0 && occupant is not null && history.CastsOn(spellId, occupant.Id, round) >= cast.MaxCastPerTarget)
             return CastRefusal.TooManyCastsOnTarget;
 
-        if (!SpellRange.Reaches(level, caster.RangeBonus, caster.Cell, cell))
+        if (!SpellRange.Reaches(cast, caster.RangeBonus, caster.Cell, cell))
             return CastRefusal.OutOfRange;
 
         if ((properties & SpellLevelProperties.CastTestLos) is not 0 && !LineOfSight.IsClear(map, Occupied(fighters), caster.Cell, cell))
@@ -145,7 +227,7 @@ public sealed class CastRules
         if (caster.Cell is Combatant.NoCell)
             return cells;
 
-        foreach (var cell in SpellRange.Cells(level, caster.RangeBonus, caster.Cell))
+        foreach (var cell in SpellRange.Cells(Modified(level, caster), caster.RangeBonus, caster.Cell))
         {
             if (Check(map, fighters, caster, level, cell, history, round) is CastRefusal.None)
                 cells.Add(cell);
@@ -166,7 +248,9 @@ public sealed class CastRules
         ArgumentNullException.ThrowIfNull(fighters);
         ArgumentNullException.ThrowIfNull(caster);
 
-        var zone = SpellZones.Cells(effect.Zone, _spells.CellsOf(effect.Zone), map, Occupied(fighters), caster.Cell, cell);
+        // A caster on no cell, such as one carried, casts what its effects trigger from the cell cast on, with no direction.
+        var from = caster.Cell is Combatant.NoCell ? cell : caster.Cell;
+        var zone = SpellZones.Cells(effect.Zone, _spells.CellsOf(effect.Zone), map, Occupied(fighters), from, cell);
         var mask = MaskOf(effect);
         var withTheDead = effect.Zone.Shape is SpellZoneShape.WholeMapWithTheDead;
         var reached = new List<(Combatant, CriterionAnswer)>();

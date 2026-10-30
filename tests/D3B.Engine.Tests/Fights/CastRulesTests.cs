@@ -29,6 +29,56 @@ public sealed class CastRulesTests
     }
 
     [Fact]
+    public void AStateThatPreventsCastingLetsThroughTheLevelsThatAskForIt()
+    {
+        var carrier = _caster with { States = [9] };
+
+        Assert.Equal(CastRefusal.CasterCannotCast, Check(10, Off(2, 0), caster: carrier));
+        Assert.Equal(CastRefusal.None, Check(70, Off(1, 0), caster: carrier));
+        Assert.Equal(CastRefusal.StatesForbid, Check(70, Off(1, 0)));
+    }
+
+    [Fact]
+    public void ModifiersChangeTheLevelOfTheirSpellAlone()
+    {
+        var level = Level(_spells, 10);
+        var modified = CastRules.Modified(level, _caster with
+        {
+            Modifiers =
+            [
+                new(SpellModifierKind.Range, 10, 2),
+                new(SpellModifierKind.ApCost, 10, 5),
+                new(SpellModifierKind.LineOfSightDisabled, 10, 0),
+                new(SpellModifierKind.CastsPerTurn, 10, 1),
+                new(SpellModifierKind.IntervalSet, 10, 4),
+                new(SpellModifierKind.FreeCellEnabled, 10, 0),
+                new(SpellModifierKind.Range, 20, 9),
+            ],
+        });
+
+        Assert.Equal(5, modified.Range);
+        Assert.Equal(0, modified.ApCost);
+        Assert.Equal(SpellLevelProperties.NeedFreeCell, modified.Properties);
+        Assert.Equal(3, modified.MaxCastPerTurn);
+        Assert.Equal(1, modified.MaxCastPerTarget);
+        Assert.Equal(4, modified.MinCastInterval);
+        Assert.Equal(level, CastRules.Modified(level, _caster));
+    }
+
+    [Fact]
+    public void TheChecksReadTheLevelAsModified()
+    {
+        var farther = _caster with { Modifiers = [new(SpellModifierKind.Range, 10, 2)] };
+        var blind = _caster with { Modifiers = [new(SpellModifierKind.LineOfSightDisabled, 10, 0)] };
+        var free = _caster with { Modifiers = [new(SpellModifierKind.FreeCellEnabled, 50, 0), new(SpellModifierKind.TakenCellDisabled, 50, 0)] };
+
+        Assert.Equal(CastRefusal.None, Check(10, Off(5, 0), caster: farther, fighters: [farther]));
+        Assert.Equal(CastRefusal.None, Check(10, Off(3, 0), caster: blind));
+        Assert.Equal(CastRefusal.CellNotFree, Check(50, Off(2, 0), caster: free));
+        Assert.Equal(CastRefusal.TargetNotVisible, Check(50, Off(1, 0), caster: free));
+    }
+
+    [Fact]
     public void TheLevelsCriterionAsksTheCastersStates()
     {
         Assert.Equal(CastRefusal.StatesForbid, Check(30, Off(1, 0), round: 2));
@@ -105,6 +155,15 @@ public sealed class CastRulesTests
 
         Assert.Equal([_enemy, near], reached.Select(pair => pair.Fighter));
         Assert.All(reached, pair => Assert.Equal(CriterionAnswer.True, pair.Selected));
+    }
+
+    [Fact]
+    public void ACasterOnNoCellReachesFromTheCellCastOn()
+    {
+        var effect = _spells.EffectsOf(Level(_spells, 10))[0] with { Zone = Zone(SpellZoneShape.Circle, 1) };
+        var carried = _caster with { Cell = Combatant.NoCell };
+
+        Assert.Equal([_enemy], _rules.Reached(Open(), [carried, _enemy], carried, effect, Off(2, 0)).Select(pair => pair.Fighter));
     }
 
     private static CastRefusal Check(int spell, int cell, int round = 1, Combatant? caster = null, CastHistory? history = null, FightMap? map = null, Combatant[]? fighters = null)

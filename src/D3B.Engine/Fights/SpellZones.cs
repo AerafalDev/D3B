@@ -32,10 +32,12 @@ namespace D3B.Engine.Fights;
 /// </list>
 /// <para>
 /// A zone that keeps to the line of sight keeps the cells seen from its centre. The 26 shapes and their sizes are the
-/// pack's, measured (client.md); which cells each covers is the references' idea (D181), measured on the 11 fights captured
-/// for the six they cast, point, circle, line, cross, square and whole map: the 63 fighters the server said damaged lie in
-/// the zone of an effect whose mask selects them, and the 62 an effect damaging at once foresaw were all damaged. The others
-/// are not measured.
+/// pack's, measured (client.md); which cells each covers is the references' idea (D181), measured on the 49 fights captured
+/// for the 15 they cast: of 388 losses of life, 380 lie in the zone of a cast of their sequence whose mask selects the
+/// fighter, and each of point, circle, cross, square, line, line from the caster, perpendicular line, diagonal cross, cross
+/// without centre, star, diagonal perpendicular line, fork, half circle, cone and whole map explains some alone; of 343
+/// fighters an effect damaging at once foresaw, 342 lost life. Ring, outside circles, checkerboard, square without
+/// diagonals, rectangle, boomerang, diagonal line, diagonal cross without centre and the custom zones are not measured.
 /// </para>
 /// </remarks>
 public static class SpellZones

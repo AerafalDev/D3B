@@ -6,8 +6,8 @@ namespace D3B.Engine.Fights;
 /// <remarks>
 /// <para>
 /// A cell holds a fighter when the client's data marks it walkable and not <c>nonWalkableDuringFight</c>, and lets a line
-/// of sight through when it marks it <c>los</c>. Measured on the 11 fights captured (client.md): every cell of the 32 walks,
-/// and every cell the 79 casts the fighters chose were cast on, is walkable this way.
+/// of sight through when it marks it <c>los</c>. Measured on the 49 fights captured (client.md): every cell of the 298 walks,
+/// and every cell the 396 casts the fighters chose were cast on, is walkable this way.
 /// </para>
 /// <para>Built once per map and shared: nothing in it changes.</para>
 /// </remarks>

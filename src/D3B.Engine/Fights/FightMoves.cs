@@ -8,16 +8,18 @@ namespace D3B.Engine.Fights;
 /// <summary>How a fighter walks in a fight: step by step to the four cells beside it, one MP a step, tackled as it leaves its enemies.</summary>
 /// <remarks>
 /// <para>
-/// Measured on the 32 walks of the 11 fights captured (client.md): each step leads to a cell at a distance of 1, a
+/// Measured on the 298 walks of the 49 fights captured (client.md): each step leads to a cell at a distance of 1, a
 /// diagonal of the screen, that a fighter may stand on and no fighter stands on, and the server took one MP a step, the
 /// walk never longer than the MP the walker had.
 /// </para>
 /// <para>
 /// A fighter leaving a cell beside enemies that tackle is tackled: it keeps a share of its MP and AP, the product over
-/// those enemies of <c>(dodge + 2) / (2 (lock + 2))</c>, each at most 1, and loses the rest, rounded to the nearest. An
-/// enemy tackles when it lives, is seen, no state of its prevents tackling and, a monster, its monster tackles; the walker
-/// escapes when a state of its says it cannot be tackled. The formula and its rounding are the references' (D181): the one
-/// walk captured that left an enemy lost nothing, as this formula foretold; a loss needs captures of its own.
+/// those enemies of <c>(dodge + 2) / (2 (lock + 2))</c>, each at most 1, and loses the rest, rounded to the nearest, a half
+/// up. An enemy tackles when it lives, is seen, no state of its prevents tackling and, a monster, its monster tackles; the
+/// walker escapes when a state of its says it cannot be tackled. The formula is the references' idea (D181), measured on
+/// the 3 walks tackled: 3 AP and 2 MP lost of 6 and 3 kept at a half, 2 and 1 of 7 and 4 at two thirds, 1 and 1 of 2 and 4
+/// at three quarters, the half rounded up; and on 6 walks that lost nothing, leaving monsters that do not tackle or a lock
+/// their dodge outweighs. The server announces the tackle (action 104), then each loss (101 AP, 127 MP).
 /// </para>
 /// <para>Built once per pack and shared.</para>
 /// </remarks>

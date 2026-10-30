@@ -19,10 +19,11 @@ namespace D3B.Engine.Fights;
 /// <item><description>Both: the line's cells and the diagonal's.</description></item>
 /// </list>
 /// <para>
-/// Measured on the 79 casts the fighters chose in the 11 fights captured (client.md): every one lies within its level's
-/// range, one of them only once the caster's bonus boosts it, and the 13 of a level cast in line lie in line. No capture
-/// holds a level cast in diagonal: how a diagonal counts is the references' idea (D181), and
-/// <see cref="SpellLevelProperties.ProportionalDiagonal"/>, on 6 levels, the client's name.
+/// Measured on the 396 casts the fighters chose in the 49 fights captured (client.md): 392 lie within their level's range,
+/// 10 of them only once the caster's bonus boosts it, and the 78 of a level cast in line lie in line; 4 casts at a range of
+/// 1 reached the diagonal neighbour, at a distance of 2, so a diagonal counts its steps. The 4 others an Eliotrope cast
+/// through its portals, which 9f measures. No capture tells <see cref="SpellLevelProperties.ProportionalDiagonal"/>, on 6
+/// levels, from the steps: it counts the distance, as its name says.
 /// </para>
 /// </remarks>
 public static class SpellRange

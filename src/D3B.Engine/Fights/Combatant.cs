@@ -6,7 +6,8 @@ namespace D3B.Engine.Fights;
 /// <summary>A fighter as a fight's rules see it: where it stands, its team, what it has left, what it is, and its states.</summary>
 /// <remarks>
 /// The rules read it and never change it. Its characteristics are the server's, by id (client.md): AP 1, MP 23, range 19,
-/// summons 26, dodge 78 and lock 79. A value the bot does not know is left at its default, and a rule asking it says so.
+/// summons 26, dodge 78 and lock 79; its states and its spells' modifiers come from the buffs the server gives it. A value
+/// the bot does not know is left at its default, and a rule asking it says so.
 /// </remarks>
 public sealed record Combatant
 {
@@ -66,6 +67,9 @@ public sealed record Combatant
 
     /// <summary>Gets the states the fighter is in.</summary>
     public ImmutableArray<int> States { get; init; } = [];
+
+    /// <summary>Gets the changes buffs make to the fighter's spells.</summary>
+    public ImmutableArray<SpellModifier> Modifiers { get; init; } = [];
 
     /// <summary>Gets whether the fighter is a summon.</summary>
     public bool IsSummon => SummonerId is not null;
