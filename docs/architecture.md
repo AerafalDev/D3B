@@ -143,7 +143,8 @@ D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fight
 client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c
 (D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's
 resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D203), the bot fighting; in session 9e2
-(D213), the switch "The AI fights" kept for each character.
+(D213), the switch "The AI fights" kept for each character; in session 9g (D233 to D241), the strategies, which replace
+the switch, the monster groups on a map and the fighting activity.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -155,7 +156,8 @@ resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D
 - **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable snapshot of what the server said of the
   character, its name and level, map, sub-area, cell and the path it walks, the map's own interactive elements and the
   use the character is in (D75), the map's NPCs, the dialog with one and the exchange with the storage (D80), the zaaps
-  it knows, a zaap's dialog with its costs and the haven bag it is in (D83), whether it fights (D88), whether the server
+  it knows, a zaap's dialog with its costs and the haven bag it is in (D83), the map's monster groups, each its cell and
+  its monsters at their grades and levels (`MonsterGroups`, `MapMonsterGroup`, D239), whether it fights (D88), whether the server
   may still hold a walk the client did not follow (D89), inventory, kamas, weight, how full it is, and professions, and
   when its account's subscription ends, which the connection phase's identification said (D72), and its fight (D179).
   `IsBusy` gathers what makes every behavior answer `Busy`: a walk, a use, a dialog or exchange, a fight.
@@ -264,20 +266,36 @@ resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D
   Since 9e (D199, D203), the character's state holds its spells as the server listed them and its transformed form's, the
   fight's state the spells the server's context lists for the fight, and the team's options; a turn puts the fight in its
   fighting phase, as a client that rejoins a fight gets no fight's start.
-- **The bot fights** (D198, D202), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for a fight not over
-  while the bot's switch is on (`BotActor.FightsAlone`, kept for its character by the storage, D213; the host's
-  `Fights:Alone`) or its activity fights its own
-  (`BotActivity.FightsItsFights`), the bot connected and not paused, and runs `FightPlay` once the step the fight cut is over
-  (`BotActor.RunInFightAsync`). `FightPlay`, one behavior: it waits until the server showed the character and its cells,
-  judges the odds (`FightTactics.Odds`), prudent when it would lose, closes the fight and blocks spectators, places the
-  character (`FightTactics.Place`) and says it is ready; each turn it plans (`FightTactics.Plan`) from the fight as the AI
+- **The bot fights** (D198, D202, D235), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for a fight
+  not over that the AI plays (`BotActor.Fights`): every fight under the host's `Fights:Alone` (`BotActor.FightsAlone`), else
+  the running activity's own as its profile says (`BotActivity.FightsItsFights`), else, out of an activity, as the
+  character's strategy says; the bot connected and not paused. It runs `FightPlay` with the character's strategy, as
+  `IStrategySource` gives it as the fight starts, once the step the fight cut is over (`BotActor.RunInFightAsync`). `FightPlay`, one behavior: it waits until the server showed the character and its cells,
+  judges the odds (`FightTactics.Odds`), closes the fight and blocks spectators, places the character
+  (`FightTactics.Place`) and says it is ready, as the strategy says; each turn it plans (`FightTactics.Plan`) from the fight as the AI
   imagines it (`ImaginedFights`, `CharacterSpells`), sends the plan's first walk or cast, waits for the server's answer and
   the client's acknowledgement, plans again, and ends its turn as soon as the plan is empty. Every request waits
   `BotDelays.FightAction` first, the owner's 0.9 s, and every wait ends with the fight. A cast the server refuses with an
   error text, or leaves unanswered, is not cast again that fight. The player's placement, readiness, casts, walks and turn's
-  ends pause the bot (`PlayerActions`). An activity that fights its own has the fight answered once over
+  ends pause the bot (`PlayerActions`). The strategy (`StrategySettings`, D233, D234) weighs each turn
+  (`Strategies.WeightsOf`): its style's weights, prudent when the fight was judged risky or under its share of life, changed
+  by its role, its preferred spells worth a share more; it leaves out the spells it never casts and the weapon's blow when
+  the character strikes not, and places near or far from the enemies. An activity that fights its own has the fight answered once over
   (`BotActivity.OnFightOver`, `BotActor.LastFightEnd`): harvesting resumes, pauses or stops as "After a fight" says, a lost
   fight as "After a lost fight" says, resumed once its life is regained, three in a row ending it.
+- **Strategies** (D233 to D235, D240), in `D3B.Bot.Fights`: a kind of profile of its own (`ProfileKind.Strategy`), which the
+  bots module registers (`Strategies.Register`, `AddStrategy`) and `ActivityCatalog.Strategy` lists apart from its
+  `Activities`; never started. `IStrategySource` gives each character's: D3B's defaults, "Standard", in a host without a
+  database (`DefaultStrategies`), the one the database keeps for it otherwise (`StoredStrategies`, in
+  [Storage](#storage)). The bot remembers the character as its last fight's placement showed it (`BotActor.LastFighter`).
+- **Fighting** (D236, D241), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its settings
+  `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the settings allow
+  and the AI judges it beats (`GroupJudge`, the group's fight imagined from the pack's grades and `BotActor.LastFighter`),
+  and sends `AttackMonsterRequest`, measured from the group's own cell (D239); a group the server answers nothing for is left
+  for the visit. Else it travels to the nearest map of the zone left (`HuntingGround`: the sub-areas chosen, or the one
+  whose monsters are worth the most at the character's level), the tour starting again once every map was. Its fights are
+  its own, the AI playing them with the character's strategy; it counts them won and lost, banks its loot, and answers a
+  lost fight as harvesting does. Harvesting's fights are the AI's as its profile's "The AI fights" says (D235).
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
@@ -365,7 +383,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-10.binpb` (`MappingFile`, D193), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-14.binpb` (`MappingFile`, D239), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -413,18 +431,20 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 6 holds (D27, D29, D139, D182, D219):
+- A pack of format 7 holds (D27, D29, D139, D182, D219, D237, D238):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
-    of map positions, sub-areas with their resources, areas and zaaps (`WorldAtlas`), both read once by `GameWorld`;
+    of map positions, sub-areas with their resources and the monsters the client lists in them, areas and zaaps
+    (`WorldAtlas`, `MonstersOf`, D238), both read once by `GameWorld`;
   - the game tables a harvesting and banking bot uses: items and their types (`ItemCatalog`), jobs and skills
     (`JobCatalog`), interactives (`InteractiveCatalog`), banks and bankers with the replies that open the bank
     (`BankCatalog`), each read once by `GameTables`; items and jobs name their icon;
   - the weapons, each with its fight fields and effects, and the zone of each type of weapon as the client writes it
     (`WeaponCatalog`, D219), read once by `GameTables`;
-  - the icons of the items a harvest names and of the professions, 64 pixels square in raw RGBA, decoded from the client's
-    BC7 textures by the extraction tool (`IconCatalog`, D135 to D137), read once by `GameTables`;
+  - the icons of the items a harvest names and of the professions, 64 pixels square in raw RGBA, of the breeds' spells and
+    their variants, 48, and of the monsters a sub-area lists, 64, by their look, decoded from the client's BC7 textures by
+    the extraction tool (`IconCatalog`, each `IconTable` its size, D135 to D137, D237, D238), read once by `GameTables`;
   - what fights need, each read once by `GameTables`: the spells, their levels with every field and their effects, each
     with its zone, target mask and triggers as the client writes them, the spells' variants, and the Rogue's bombs and
     walls (`SpellCatalog`, in `D3B.Data.Spells`); the states (`SpellStateCatalog`); the effects, by the id spells name and
@@ -492,11 +512,11 @@ updating itself in 6f (D171 to D173).
   long it ran, what it counts with each item's icon and rate an hour, the experience gained and the fights, its warnings, and why it
   ended (D131, D141, D144, D146). What a bot meets while the app looks, its activity done, failed or still full, the
   player taking it over, a disconnection while it ran, a fight, is a toast with a way to its journal or map (D162).
-- **The accounts page** (D101): a card per account the relay saw, its subscription and when it was seen, forgotten after a
-  question; its characters in rows under columns named once, each with the profile it plays and whether it starts on
-  connection.
-- **The profiles page** (D101, D159): the profiles as cards, each with its name, activity, settings at a glance and
-  characters, edited, copied or deleted. A new profile, or a copy, is named in a dialog with its activity
+- **The accounts page** (D101, D233): a card per account the relay saw, its subscription and when it was seen, forgotten
+  after a question; its characters in rows under columns named once, each with the profile it plays, the strategy it
+  fights with, "Standard" first, and whether its profile starts on connection.
+- **The profiles page** (D101, D159, D233): the profiles as cards, each with its name, activity or strategy, settings at a
+  glance and characters, edited, copied or deleted; a strategy is never offered to start on a bot's card. A new profile, or a copy, is named in a dialog with its activity
   (`NewProfileViewModel`), then edited. The editor takes the page: its name in its header, beside its activity, cancel,
   save and a menu; its settings by section, a card each, a row per setting, its name and help left and its control right,
   a list or a zone the card's width (`D3B.App.ViewModels.Settings`), checked as they change, searched by name for the
@@ -505,7 +525,8 @@ updating itself in 6f (D171 to D173).
   the profile. Closing it with changes asks to save, discard or stay; Ctrl+S saves. A profile whose activity is gone says
   so, and is given another or deleted (D119). Resources are rows in their order, each with its icon, its profession's
   icon and level, and a mark when a character playing it lacks the level; they are chosen several at once in a dialog,
-  searched and filtered by profession (`ResourcePickerViewModel`); a sub-area setting suggested by resources lists the
+  searched and filtered by profession, as spells are by breed and monsters by super race, each with its icon
+  (`PickedGamesFieldViewModel`, `GamePickerViewModel`, D234, D236); a sub-area setting suggested by resources lists the
   sub-areas where they grow; a percentage is a bar, a short choice segments (D127, D138, D141). The professions that gather
   are chips, all of them first and without a profession last (`GatheringJobsFieldViewModel`); a list leaving resources out
   offers to exclude and warns of no level; a number says what it counts after its box; and the characters playing the
@@ -576,8 +597,10 @@ graphics in session 6b (D138); the resources' growing back and the runs in sessi
   why. Migrations are written by `dotnet-ef`, a local tool, through a design-time context.
 - **Accounts and characters** (`AccountBook`): recorded as the relay sees them (`AccountRecorder`, an observer of the game
   connections), the server's list and the character the client chooses, queued off the relay's loop; forgotten on
-  demand. Each character may play a profile, and start it on connection; and keeps the switch "The AI fights" as its
-  bot's card left it, which `RememberedFightSwitch` gives each bot made (D213).
+  demand. Each character may play a profile, and start it on connection; and fights with a strategy, a profile too, or
+  "Standard" when it has none (`KnownCharacter.StrategyId`, migration `Strategies`, which dropped D213's switch, D235).
+  `StoredStrategies`, the bots' `IStrategySource`, reads a character's strategy from the books' memory, once per save of
+  its profile (D240).
 - **Profiles** (`ProfileBook`): a name, an activity and its settings as JSON, shared by characters. The activities' presets
   are stored once as profiles as the database opens, named in the system's language, `Presets` keeping which were, so that
   one deleted never comes back (`StorePresetsAsync`, D168). `ProfileStarter`
@@ -674,7 +697,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     the bench what it measures (D206).
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, its best sequences weighed against
     the enemies' greedy reply, then the character's next turn (`NextTurn`, D210); `Place`; `Odds`; `PathTo`.
-    `TacticWeights`, measured on 69 fights (D212), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
+    `TacticWeights`, measured on 69 fights (D212), with the allies' life and the preferred spells a strategy weighs (D240),
+    `TacticPlacement`, `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
     against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229).
@@ -713,7 +737,10 @@ the captures (D218); the pack's format 6 and its weapons (D219, in [Game data](#
 asks a state (D223); the masks measured (D224); a buff's end, mapping format 13 (D225); a caster outside the zone, `C`
 alone (D226); the spells effects cast imagined, a spell's buffs taken back (D227); the judge reading the criteria on states
 (D228); measured with `scripts/fights.cs` (D229); the fights' profiles before the next mechanism, the AI's fights a harvest
-profile's option, the owner's choice (D230).
+profile's option, the owner's choice (D230). Built in session 9g: the owner's asks (D232); a strategy each character plays
+(D233), its options (D234), the fights out of an activity, the switch gone (D235), made (D240); the fighting activity's
+options (D236), made (D241); the spells' and monsters' icons and where monsters live, pack format 7 (D237, D238); the
+monster groups on a map, mapping format 14 (D239); measured with `scripts/fights.cs` (D242).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -732,7 +759,8 @@ profile's option, the owner's choice (D230).
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229); then,
   after the fights' profiles (D230), summons, bombs, glyphs, runes, telefrags, traps, portals, carrying. Strategies as
-  modules and profile settings, per breed through the effects, never per class (9g).
+  modules and profile settings, per breed through the effects, never per class: a strategy each character plays, and the
+  fighting activity, which attacks the groups its profile allows (9g, built, D233 to D241).
 
 ## Tests
 

@@ -1434,8 +1434,8 @@ Measured on 2026-10-30 for session 9a (D178 to D180): the 40 game connections of
 resources' protectors', which name the character the attacker too. By structure, timing, and values compared on the machine with the build's pack, never the actors' ids or names.
 `scripts/capture.cs --messages --frames --schema` lists them, message by message.
 
-- **The start.** The client walks to the group and sends, in one read, its walk's confirmation and the attack's request,
-  the group's id. The server destroys the context and creates a fight's, 29 to 33 ms later (D88), then sends every fighter's
+- **The start.** The client walks onto the group's own cell and sends, in one read, its walk's confirmation and the
+  attack's request, the group's id (measured in 9g, in "The game, hunted"). The server destroys the context and creates a fight's, 29 to 33 ms later (D88), then sends every fighter's
   disposition, the character's with each monster's in turn. The client asks for the fight's map, the server answers with
   the fight's start, who attacked whom, of type 4, the join, a placement of 440 to 444 tenths of a second at most, each
   fighter shown, both teams' placement cells and the turns' order.
@@ -1673,6 +1673,35 @@ print counts.
   the spells effects cast; the others a carry's, the Eliotrope's portals, the Xélor's telefrags and the Roublard's bombs.
 - **The AI.** On the Zobal's 38 turns replayed, it puts on the mask whose spells deal more and casts them, Furia in the
   psychopath's mask where the turns played cast Tortoruga on enemies 32 times, and changes mask 29 times against 9.
+
+### The game, hunted
+
+Measured on 2026-10-30 for session 9g (D237 to D239): the client 3.7.12.12's `Picto` bundles and data tables, and its 80
+game connections, with `scripts/inspect.cs` and measuring tools never committed that print counts and timings, never an
+actor's id or name.
+
+- **Spells' icons.** `Picto/Spells/spell_assets_1x.bundle` holds 3,128 textures and sprites named `sort_<iconId>`, 48
+  pixels, BC7 of one level, texels in the bundle's `.resS`; `spell_assets_2x` the same at 96; `spellstate_assets_all`
+  391 states'. The 19 breeds' spells and their variants are 862, each with an icon of its own, ids 11,556 to 15,431.
+- **Monsters' icons.** `Picto/Monsters` holds 2,397 textures at 1x, 64 pixels, BC7, named by the monster's look
+  (`gfxId`): 2,395 of the names are looks, and a name that is also a monster's id is so by chance. An archmonster shows
+  its monster's picture. The 1,663 monsters a sub-area lists, but bombs and those the bestiary hides, use 1,099.
+- **Where monsters live.** `SubAreasDataRoot.monsters` lists 3,039 pairs, 444 sub-areas and 1,681 monsters;
+  `MonstersDataRoot.subareas` holds each of them, and 266 pairs more of 36 monsters: event eggs and leprechauns, two
+  quest monsters, and a sub-area, 1037, that does not exist. `UseSummonSlot` is set on 4,655 of the 5,129 monsters.
+- **Groups on a map.** 919 roleplay maps: 326 without a group, 593 with 1 to 4, 1,801 groups in all; 640 of one monster,
+  282 of 2, 285 of 3, 183 of 4, 173 of 5, 117 of 6, 62 of 7, 59 of 8. A group is an actor of negative id, a cell, a main
+  monster and up to 7 others, each with its monster, grade and level; each of the 5,755 monsters seen is a grade of the
+  pack's at that grade's level. Its alignment is 1 on every group; the map's flag of aggressive monsters is true on 159
+  maps without one. No aggression is captured.
+- **Shown, removed, walking.** An actor shown is one actor, 1,701 times, 147 groups: 116 shown again on their cell just
+  before they leave, 31 new. An actor removed, 1,198 times, 116 groups, 97 after the player's attacks and 19 before another
+  player's fight shows on the map. A group's walk, 585 of them, is its first and last cell, 1 to 4 cells apart.
+- **The attack.** 98 attacks, 97 fights. 94 walks ended on the group's cell; twice the character stood on one, back from a
+  fight; twice the group walked as the character did: from 1 cell away the server accepted, from 3 it answered the walk
+  alone, and the client walked again and attacked 916 ms later. The attack comes within 1 ms of the walk's confirmation,
+  0.41 to 2.49 s after the walk is shown, 1.07 s halfway. Accepted, the group is shown again, removed, and the context
+  destroyed 28 to 75 ms after the attack; the fight's defender is the group, its monsters the group's.
 
 ## Protocol code
 
