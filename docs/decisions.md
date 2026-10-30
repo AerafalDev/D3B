@@ -5547,8 +5547,8 @@ D213 on the switch.*
   characters they test the AI with, attacking groups themselves. An activity's own fights follow its profile; harvesting's
   "The AI fights", checked by default.
 - **The switch** leaves the bot's card, and its column the database, by a migration. The lead said one character of
-  seven had it on (D213); a copy of the owner's database, migrated for the check, held 9 of 15 with it on, which the
-  session's report tells the owner. `D3B.Host`'s `Fights:Alone` stays, every bot's fights played, for the measures.
+  seven had it on (D213); a copy of the owner's database, migrated for the check, held 9 of 15 with it on. Told so, the
+  owner kept the migration as it is and set their database aside, to test 9g from a new one. `D3B.Host`'s `Fights:Alone` stays, every bot's fights played, for the measures.
 - **Rejected.**
   - Always the player out of an activity: the owner would test the AI from the command line alone.
   - An activity "Fight" with nothing to do but the fights the player starts: beside "Strategy", two names for one thing.
