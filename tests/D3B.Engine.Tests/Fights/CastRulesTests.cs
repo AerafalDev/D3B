@@ -66,6 +66,17 @@ public sealed class CastRulesTests
     }
 
     [Fact]
+    public void ARangeSetByAModifierOutweighsTheSums()
+    {
+        var modified = CastRules.Modified(Level(_spells, 10), _caster with
+        {
+            Modifiers = [new(SpellModifierKind.Range, 10, 2), new(SpellModifierKind.RangeSet, 10, 7), new(SpellModifierKind.MinRangeSet, 10, 2)],
+        });
+
+        Assert.Equal((2, 7), (modified.MinRange, modified.Range));
+    }
+
+    [Fact]
     public void TheChecksReadTheLevelAsModified()
     {
         var farther = _caster with { Modifiers = [new(SpellModifierKind.Range, 10, 2)] };

@@ -71,6 +71,16 @@ public sealed record Combatant
     /// <summary>Gets the changes buffs make to the fighter's spells.</summary>
     public ImmutableArray<SpellModifier> Modifiers { get; init; } = [];
 
+    /// <summary>Gets the fighter's level: a character's, or a monster's grade's.</summary>
+    public int Level { get; init; }
+
+    /// <summary>Gets the shares of the damage it receives the fighter takes, in percent, one for each buff multiplying it: effect 1163.</summary>
+    public ImmutableArray<int> ReceivedDamageShares { get; init; } = [];
+
+    /// <summary>Gets the fighter's characteristics as the server gave them, by id, which the effects' formulas read.</summary>
+    /// <remarks>Those the rules of a cast read are the properties above; a characteristic left out counts as 0.</remarks>
+    public ImmutableSortedDictionary<int, int> Characteristics { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
+
     /// <summary>Gets whether the fighter is a summon.</summary>
     public bool IsSummon => SummonerId is not null;
 
@@ -79,6 +89,14 @@ public sealed record Combatant
 
     /// <summary>Gets whether the fighter is a summon that cannot move, such as a turret.</summary>
     public bool IsStatic => IsSummon && MonsterId is not null && (MonsterProperties & MonsterProperties.CanMove) is 0;
+
+    /// <summary>Gets one of the fighter's characteristics.</summary>
+    /// <param name="id">The characteristic's id.</param>
+    /// <returns>Its value, or 0 when the server gave none.</returns>
+    public int Characteristic(int id)
+    {
+        return Characteristics.GetValueOrDefault(id);
+    }
 
     /// <summary>Tells whether the fighter is in a state.</summary>
     /// <param name="state">The state's id.</param>

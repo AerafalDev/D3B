@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using D3B.Engine.Fights;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Fights;
@@ -43,4 +45,26 @@ public sealed record Fighter
 
     /// <summary>Gets who summoned the fighter, when it is a summon.</summary>
     public long? SummonerId { get; init; }
+
+    /// <summary>Gets the fighter carrying this one, while it is carried: it stands on no cell.</summary>
+    public long? CarrierId { get; init; }
+
+    /// <summary>Gets the fighter's characteristics, by id, as the server last gave them: each its whole value.</summary>
+    public ImmutableSortedDictionary<int, int> Characteristics { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
+
+    /// <summary>Gets the fighter's buffs, in the order the server gave them.</summary>
+    public ImmutableArray<FightBuff> Buffs { get; init; } = [];
+
+    /// <summary>Gets the rounds each of the fighter's spells waits before it may be cast again, by spell, as the server last said.</summary>
+    /// <remarks>The server says it of the character and the summons it controls alone (D193).</remarks>
+    public ImmutableSortedDictionary<int, int> Cooldowns { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
+
+    /// <summary>Gets the spells the fighter chose to cast this fight, which a spell's interval and casts a turn count.</summary>
+    public CastHistory Casts { get; init; } = CastHistory.Empty;
+
+    /// <summary>Gets the states the fighter is in, from its buffs.</summary>
+    public ImmutableArray<int> States => [.. Buffs.Where(buff => buff.Kind is FightBuffKind.State).Select(buff => buff.Parameter).Distinct()];
+
+    /// <summary>Gets the changes the fighter's buffs make to its spells.</summary>
+    public ImmutableArray<SpellModifier> Modifiers => [.. Buffs.Where(buff => buff.Kind is FightBuffKind.SpellModifier && Enum.IsDefined((SpellModifierKind)buff.ActionId)).Select(buff => new SpellModifier((SpellModifierKind)buff.ActionId, buff.Value, buff.Parameter))];
 }

@@ -44,6 +44,10 @@ public sealed class TargetMask
     /// <summary>Gets the mask's text, as the client wrote it.</summary>
     public string Text { get; }
 
+    /// <summary>Gets whether the mask names the caster, <c>c</c> or <c>C</c>: it reaches the caster wherever it stands.</summary>
+    /// <remarks>Measured (D195): 16 buffs of such masks went to a caster outside its effect's zone.</remarks>
+    public bool NamesTheCaster => _tokens.Any(token => token.Kind is TokenKind.Kind && token.Letter is 'c' or 'C');
+
     private TargetMask(string text, Token[] tokens)
     {
         Text = text;

@@ -50,6 +50,12 @@ public sealed record FightState
     /// <summary>Gets whether the character may act: its turn began and the server let its client play.</summary>
     public bool IsOwnTurn { get; init; }
 
+    /// <summary>Gets the sequences the server opened and has not closed, the innermost last.</summary>
+    public ImmutableArray<FightSequence> Sequences { get; init; } = [];
+
+    /// <summary>Gets the place in the turns' order of the fighter whose turn it is, or -1 between turns.</summary>
+    public int PlayingTurn => PlayingId is { } playing ? TurnOrder.IndexOf(playing) : -1;
+
     /// <summary>Gets how the fight ended for the character, once the server sent the results.</summary>
     public FightEnd? End { get; init; }
 }

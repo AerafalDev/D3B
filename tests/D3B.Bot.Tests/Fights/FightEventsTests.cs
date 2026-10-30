@@ -365,6 +365,182 @@ public sealed class FightEventsTests
             new FightRefreshCharacterStatsEvent { FighterId = -7, Stats = new FightCharacteristics() });
 
         Assert.Equal(playing.Fight!.Fighters, unknown.Fight!.Fighters);
-        Assert.Same(playing, Apply(playing, new SequenceStartEvent { AuthorId = Monster }, new FightHumanReadyStateEvent { CharacterId = -9, Ready = true }));
+        Assert.Same(playing, Apply(playing, new FightJoinEvent { PlacementTime = 440 }, new FightHumanReadyStateEvent { CharacterId = -9, Ready = true }));
+    }
+
+    private static FightEffectsEvent Buff(long target, int uid, int action, FightBuffKind kind, int spell, int value = 0, int parameter = 0, int endTurn = 0, int endRound = -1, long source = Self)
+    {
+        return new FightEffectsEvent
+        {
+            Given = new FightBuffGiven
+            {
+                ActionId = action,
+                SourceId = source,
+                Buff = new global::D3B.Protocol.Game.FightBuff
+                {
+                    Uid = uid,
+                    TargetId = target,
+                    Kind = kind,
+                    SpellId = spell,
+                    Grade = 1,
+                    EffectUid = 400_000 + uid,
+                    Value = value,
+                    Parameter = parameter,
+                    Triggers = "I",
+                    End = new FightMoment { Turn = endTurn, Round = endRound },
+                },
+            },
+        };
+    }
+
+    private static GameActionFightEvent Cast(long caster, int spell, int cell, long target = 0)
+    {
+        return new GameActionFightEvent
+        {
+            ActionId = 300,
+            SourceId = caster,
+            Cast = new FightCast { Spell = new FightCastSpell { SpellId = spell, LevelId = 40_000 + spell }, CellId = cell, TargetId = target },
+        };
+    }
+
+    [Fact]
+    public void ABuffIsKeptOnItsFighterWhichItsStatesAndSpellsModifiersCome()
+    {
+        var buffed = Apply(
+            Playing(),
+            Buff(Self, 1, 950, FightBuffKind.State, 12_787, parameter: 3),
+            Buff(Self, 2, 281, FightBuffKind.SpellModifier, 12_787, value: 12_832, parameter: 3),
+            Buff(Monster, 1, 116, FightBuffKind.Boost, 4_195, value: 2, endTurn: 0, endRound: 2, source: Monster));
+
+        var self = buffed.Fight!.Fighters[Self];
+
+        Assert.Equal([1, 2], self.Buffs.Select(buff => buff.Uid));
+        Assert.Equal([3], self.States);
+        Assert.Equal([new Engine.Fights.SpellModifier(Engine.Fights.SpellModifierKind.Range, 12_832, 3)], self.Modifiers);
+
+        var deboost = Assert.Single(buffed.Fight.Fighters[Monster].Buffs);
+
+        Assert.Equal((Monster, 116, 2, 2, 0), (deboost.SourceId, deboost.ActionId, deboost.Value, deboost.EndRound, deboost.EndTurn));
+
+        var again = Apply(buffed, Buff(Self, 1, 950, FightBuffKind.State, 12_787, parameter: 8));
+
+        Assert.Equal([8], again.Fight!.Fighters[Self].States);
+    }
+
+    [Fact]
+    public void ABuffEndsAsTheTurnItEndsAtBeginsAndAWholeFightsNever()
+    {
+        var buffed = Apply(
+            Playing(),
+            Buff(Monster, 1, 116, FightBuffKind.Boost, 13_858, value: 2, endTurn: 0, endRound: 2),
+            Buff(Self, 2, 950, FightBuffKind.State, 13_858, parameter: 5));
+
+        var theirs = Apply(buffed, new FightTurnEndEvent { FighterId = Self }, new FightTurnEvent { FighterId = Monster, Round = 1 });
+
+        Assert.Single(theirs.Fight!.Fighters[Monster].Buffs);
+
+        var next = Apply(theirs, new FightTurnEndEvent { FighterId = Monster }, new FightNewRoundEvent { Round = 2 }, new FightTurnEvent { FighterId = Self, Round = 2 });
+
+        Assert.Empty(next.Fight!.Fighters[Monster].Buffs);
+        Assert.Equal([5], next.Fight.Fighters[Self].States);
+    }
+
+    [Fact]
+    public void BuffsGoBySpellAllTogetherOrOneByItsUidAndWithTheirFightersDeath()
+    {
+        var buffed = Apply(
+            Playing(),
+            Buff(Self, 1, 950, FightBuffKind.State, 10, parameter: 3),
+            Buff(Self, 2, 112, FightBuffKind.Boost, 20, value: 10),
+            Buff(Self, 3, 1040, FightBuffKind.Boost, 20, value: 79),
+            Buff(Monster, 1, 950, FightBuffKind.State, 10, parameter: 8));
+
+        var ofSpell = Apply(buffed, new GameActionFightEvent { ActionId = 406, SourceId = Self, BuffsRemoval = new FightBuffsRemoval { SpellId = 10, TargetId = Self } });
+
+        Assert.Equal([2, 3], ofSpell.Fight!.Fighters[Self].Buffs.Select(buff => buff.Uid));
+
+        var one = Apply(ofSpell, new GameActionFightEvent { ActionId = 514, SourceId = Self, BuffRemoval = new FightBuffRemoval { Uid = 3, TargetId = Self } });
+
+        Assert.Equal([2], one.Fight!.Fighters[Self].Buffs.Select(buff => buff.Uid));
+
+        var all = Apply(one, new GameActionFightEvent { ActionId = 132, SourceId = -1, BuffsRemoval = new FightBuffsRemoval { All = true, TargetId = Self } });
+
+        Assert.Empty(all.Fight!.Fighters[Self].Buffs);
+
+        var dead = Apply(all, new GameActionFightEvent { ActionId = 103, SourceId = Self, Death = new FightDeath { TargetId = Monster } });
+
+        Assert.Empty(dead.Fight!.Fighters[Monster].Buffs);
+    }
+
+    [Fact]
+    public void TheCastsAFighterChoseAreItsHistoryNotThoseItsEffectsCast()
+    {
+        var cast = Apply(
+            Playing(),
+            new SequenceStartEvent { Type = SequenceType.Spell, AuthorId = Self },
+            Cast(Self, 13_858, 385, Monster),
+            Cast(Self, 29_132, 385, Monster),
+            new SequenceStartEvent { Type = SequenceType.Triggered, AuthorId = Self },
+            Cast(Self, 29_162, 385),
+            new SequenceEndEvent { Type = SequenceType.Triggered, AuthorId = Self },
+            new SequenceEndEvent { Type = SequenceType.Spell, AuthorId = Self });
+
+        var history = cast.Fight!.Fighters[Self].Casts;
+
+        Assert.Equal([13_858], history.LastRounds.Keys);
+        Assert.Equal((1, 1), (history.CastsIn(13_858, 1), history.CastsOn(13_858, Monster, 1)));
+        Assert.Empty(cast.Fight.Sequences);
+
+        var theirs = Apply(cast, new SequenceStartEvent { Type = SequenceType.Spell, AuthorId = Monster }, Cast(Self, 13_858, 385));
+
+        Assert.Equal(1, theirs.Fight!.Fighters[Self].Casts.CastsIn(13_858, 1));
+        Assert.Single(theirs.Fight.Sequences);
+    }
+
+    [Fact]
+    public void TheCooldownsTheServerGivesAreKeptBySpell()
+    {
+        var cooled = Apply(
+            Playing(),
+            new RefreshCooldownEvent { FighterId = Self, Cooldowns = { new FightSpellCooldown { SpellId = 13_249, Rounds = 1 }, new FightSpellCooldown { SpellId = 373 } } });
+
+        Assert.Equal([KeyValuePair.Create(373, 0), KeyValuePair.Create(13_249, 1)], cooled.Fight!.Fighters[Self].Cooldowns.ToArray());
+    }
+
+    [Fact]
+    public void ASlideMovesItsFighterACarryTakesItOffItsCellAndAThrowLandsItWithoutTheCarrysStates()
+    {
+        var slid = Apply(Playing(), new GameActionFightEvent { ActionId = 5, SourceId = Self, Slide = new FightSlide { TargetId = Monster, FromCell = 385, ToCell = 399 } });
+
+        Assert.Equal(399, slid.Fight!.Fighters[Monster].Cell);
+
+        var carried = Apply(
+            slid,
+            new GameActionFightEvent { ActionId = 50, SourceId = Self, Carry = new FightCarry { TargetId = Monster, CellId = 399 } },
+            Buff(Self, 1, 950, FightBuffKind.State, 12_787, parameter: 3),
+            Buff(Monster, 1, 950, FightBuffKind.State, 12_787, parameter: 8),
+            Buff(Monster, 2, 950, FightBuffKind.State, 7_000, parameter: 6, source: Monster));
+
+        Assert.Equal((null, Self), (carried.Fight!.Fighters[Monster].Cell, carried.Fight.Fighters[Monster].CarrierId));
+
+        var thrown = Apply(carried, new GameActionFightEvent { ActionId = 51, SourceId = Self, Throw = new FightThrow { TargetId = Monster, CellId = 341 } });
+        var monster = thrown.Fight!.Fighters[Monster];
+
+        Assert.Equal((341, null), (monster.Cell, monster.CarrierId));
+        Assert.Equal([6], monster.States);
+        Assert.Empty(thrown.Fight.Fighters[Self].States);
+    }
+
+    [Fact]
+    public void TheCharacteristicsTheServerGivesAreKeptWhole()
+    {
+        var refreshed = Apply(
+            Playing(),
+            new FightRefreshCharacterStatsEvent { FighterId = Self, Stats = new FightCharacteristics { Characteristics = { Usable(1, 4, 2), Detailed(15, 140), Value(107, 100) } } });
+
+        var self = refreshed.Fight!.Fighters[Self];
+
+        Assert.Equal((4, 140, 100), (self.ActionPoints, self.Characteristics[15], self.Characteristics[107]));
+        Assert.Equal(3, self.Characteristics[23]);
     }
 }
