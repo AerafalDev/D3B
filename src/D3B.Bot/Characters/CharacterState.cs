@@ -13,8 +13,8 @@ namespace D3B.Bot.Characters;
 /// </para>
 /// <para>
 /// What the server has not said yet is <see langword="null"/> or empty: the map and cell until the map is named and its
-/// information sent, with the map's elements and NPCs, the inventory until its content is sent, and the zaaps the
-/// character knows until the server lists them.
+/// information sent, with the map's elements, NPCs and groups of monsters, the inventory until its content is sent, and
+/// the zaaps the character knows until the server lists them.
 /// </para>
 /// </remarks>
 public sealed record CharacterState
@@ -64,6 +64,10 @@ public sealed record CharacterState
 
     /// <summary>Gets the non-player characters of the map, by actor id, as the map's information placed them; empty until it is sent.</summary>
     public ImmutableSortedDictionary<int, MapNpc> Npcs { get; init; } = ImmutableSortedDictionary<int, MapNpc>.Empty;
+
+    /// <summary>Gets the groups of monsters of the map, by actor id, as the server placed them; empty until the map's information is sent.</summary>
+    /// <remarks>The server shows a group coming onto the map, moves it, and removes it once attacked, by the character or another player.</remarks>
+    public ImmutableSortedDictionary<long, MapMonsterGroup> MonsterGroups { get; init; } = ImmutableSortedDictionary<long, MapMonsterGroup>.Empty;
 
     /// <summary>Gets the dialog with an NPC the character is in, such as a banker's, from the server's opening it to its end.</summary>
     public NpcDialog? Dialog { get; init; }

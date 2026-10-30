@@ -12,7 +12,13 @@ import "Readable/options.proto";
 
 option csharp_namespace = "D3B.Protocol.Game";
 
-// Attacks a group of monsters: the client sends it once beside the group, in the same read as its walk's confirmation.
+// Attacks a group of monsters: the client sends it once its walk reached the group's cell, within 1 ms of the walk's
+// confirmation, 61 times in the same read. Measured on the player's 98 attacks the 80 game connections captured: 94 walks
+// ended on the group's cell, and twice, back on the map after a fight, the character stood on a group's cell and attacked
+// without walking. Twice the group walked as the character set off, 0.1 and 0.4 s before its walk was shown: from 1 cell
+// away the server started the fight; from 3, it answered nothing but the walk's confirmation, and the client walked onto
+// the group's new cell and attacked again. The server shows the group again and removes it, then destroys the context,
+// 28 to 75 ms after the attack, 29 ms halfway; the fight's defender is the group, and its monsters the group's.
 message AttackMonsterRequest {
   // No capture sets it.
   AttackOptions options_1 = 1;

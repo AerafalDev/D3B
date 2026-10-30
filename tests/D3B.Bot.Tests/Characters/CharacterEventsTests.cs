@@ -28,6 +28,21 @@ public sealed class CharacterEventsTests
         return (RelayDirection.FromClient, message);
     }
 
+    /// <summary>A group of monsters on the map, as the server describes it: its main monster, then the others.</summary>
+    private static Actor GroupActor(long actorId, int cell, GroupMonster main, params GroupMonster[] others)
+    {
+        var monsters = new MonsterGroup { Main = main };
+
+        monsters.Others.AddRange(others);
+
+        return new Actor
+        {
+            Id = actorId,
+            Disposition = new ActorDisposition { CellId = cell },
+            Information = new ActorInformation { Roleplay = new RoleplayActor { MonsterGroup = new MonsterGroupActor { Monsters = monsters } } },
+        };
+    }
+
     /// <summary>What the server sends on entering the game, in the order of the captures (client.md).</summary>
     private static (RelayDirection, IMessage)[] EnteringTheGame()
     {
@@ -108,6 +123,7 @@ public sealed class CharacterEventsTests
               "Use": null,
               "IsUsing": false,
               "Npcs": {},
+              "MonsterGroups": {},
               "Dialog": null,
               "Storage": null,
               "ZaapDialog": null,
@@ -369,6 +385,80 @@ public sealed class CharacterEventsTests
 
         Assert.Equal([new MapNpc(TestPlay.BankerActorId, TestPlay.BankerNpcId, 259), new MapNpc(-20_000, 1_088, 302)], inside.Npcs.Values);
         Assert.Empty(Apply(inside, Server(new MapCurrentEvent { MapId = TestPlay.MapId })).Npcs);
+    }
+
+    [Fact]
+    public void TheMapsMonsterGroupsAreItsGroupActorsWithTheirMonstersTheMainOneFirst()
+    {
+        var information = TestPlay.Information(300);
+
+        information.Actors.Add(GroupActor(-3, 412, new GroupMonster { MonsterId = 489, Grade = 2, Level = 24 }, new GroupMonster { MonsterId = 101, Grade = 1, Level = 18 }));
+        information.Actors.Add(GroupActor(-5, 260, new GroupMonster { MonsterId = 98, Grade = 5, Level = 12 }));
+
+        var standing = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.MapId }), Server(information));
+
+        Assert.Equal([-5L, -3L], standing.MonsterGroups.Keys);
+        Assert.Equal((-3L, 412), (standing.MonsterGroups[-3].ActorId, standing.MonsterGroups[-3].Cell));
+        Assert.Equal([new MonsterInGroup(489, 2, 24), new MonsterInGroup(101, 1, 18)], standing.MonsterGroups[-3].Monsters);
+        Assert.Equal([new MonsterInGroup(98, 5, 12)], standing.MonsterGroups[-5].Monsters);
+        Assert.Empty(standing.Npcs);
+
+        Assert.Empty(Apply(standing, Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId })).MonsterGroups);
+    }
+
+    [Fact]
+    public void AGroupShownComesOntoTheMapOrIsShownAgainAsItIs()
+    {
+        var standing = Apply(_chosen, EnteringTheGame());
+        var came = Apply(standing, Server(new MapActorShownEvent { Actors = { GroupActor(-2, 330, new GroupMonster { MonsterId = 489, Grade = 3, Level = 26 }) } }));
+
+        Assert.Equal(330, came.MonsterGroups[-2].Cell);
+        Assert.Equal([new MonsterInGroup(489, 3, 26)], came.MonsterGroups[-2].Monsters);
+
+        // The server shows a group again as it is attacked, just before removing it.
+        var again = Apply(came, Server(new MapActorShownEvent { Actors = { GroupActor(-2, 330, new GroupMonster { MonsterId = 489, Grade = 3, Level = 26 }) } }));
+
+        Assert.Equal([-2L], again.MonsterGroups.Keys);
+        Assert.Equal([new MonsterInGroup(489, 3, 26)], again.MonsterGroups[-2].Monsters);
+
+        // Another player, or the character itself, shown on the map.
+        Assert.Same(came, Apply(came, Server(new MapActorShownEvent { Actors = { new Actor { Id = 70_002, Disposition = new ActorDisposition { CellId = 120 } } } })));
+    }
+
+    [Fact]
+    public void AGroupRemovedLeavesTheMap()
+    {
+        var information = TestPlay.Information(300);
+
+        information.Actors.Add(GroupActor(-3, 412, new GroupMonster { MonsterId = 489, Grade = 2, Level = 24 }));
+        information.Actors.Add(GroupActor(-5, 260, new GroupMonster { MonsterId = 98, Grade = 5, Level = 12 }));
+
+        var standing = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.MapId }), Server(information));
+
+        Assert.Equal([-5L], Apply(standing, Server(new MapActorRemovedEvent { ActorId = -3 })).MonsterGroups.Keys);
+
+        // Another player leaves.
+        Assert.Same(standing, Apply(standing, Server(new MapActorRemovedEvent { ActorId = 70_002 })));
+    }
+
+    [Fact]
+    public void AGroupsWalkPutsItOnItsLastCell()
+    {
+        var information = TestPlay.Information(300);
+
+        information.Actors.Add(GroupActor(-3, 412, new GroupMonster { MonsterId = 489, Grade = 2, Level = 24 }));
+
+        var standing = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.MapId }), Server(information));
+
+        // The server names a group's first and last cells only.
+        var walked = Apply(standing, Server(new MapMovementEvent { ActorId = -3, Cells = { 412, 384 } }));
+
+        Assert.Equal(384, walked.MonsterGroups[-3].Cell);
+        Assert.Equal(300, walked.Cell);
+        Assert.False(walked.IsWalking);
+
+        Assert.Same(standing, Apply(standing, Server(new MapMovementEvent { ActorId = -3, Cells = { 412, 560 } })));
+        Assert.Same(standing, Apply(standing, Server(new MapMovementEvent { ActorId = -4, Cells = { 412, 384 } })));
     }
 
     [Fact]

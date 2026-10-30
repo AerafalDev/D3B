@@ -10,8 +10,8 @@ namespace D3B.Protocol.Tests.Mapping;
 public sealed class ContractAuditTests
 {
     // The readable protocol's size, which the audit checks whole: messages, fields, enums and enum values.
-    private const int ReadableMessages = 212;
-    private const int ReadableFields = 463;
+    private const int ReadableMessages = 217;
+    private const int ReadableFields = 472;
     private const int ReadableEnums = 28;
     private const int ReadableValues = 199;
 
