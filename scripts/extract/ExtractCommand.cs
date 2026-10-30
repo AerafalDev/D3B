@@ -130,12 +130,12 @@ internal static class ExtractCommand
         var atlas = WorldExtractor.ReadAtlas(client, items, jobs);
         var interactives = InteractivesExtractor.Read(client);
         var banks = BanksExtractor.Read(client, atlas, graph);
-        var icons = IconsExtractor.Read(client, items, jobs);
         var characteristics = CharacteristicsExtractor.Read(client, TextsExtractor.Held(client));
         var spells = SpellsExtractor.Read(client, effects);
         var states = StatesExtractor.Read(client, spells);
         var monsters = MonstersExtractor.Read(client, spells);
         var breeds = BreedsExtractor.Read(client, spells, characteristics);
+        var icons = IconsExtractor.Read(client, items, jobs, spells, breeds);
         var fights = new FightTables(spells, states, effects, monsters, breeds, characteristics);
 
         WorldExtractor.Check(graph, atlas, maps);

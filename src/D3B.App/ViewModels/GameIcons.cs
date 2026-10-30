@@ -38,15 +38,15 @@ internal sealed class GameIcons
         return tables is null ? null : _shared.GetValue(tables, static tables => new GameIcons(tables));
     }
 
-    private static WriteableBitmap Draw(ReadOnlyMemory<byte> pixels)
+    private static WriteableBitmap Draw(ReadOnlyMemory<byte> pixels, int size)
     {
-        var bitmap = new WriteableBitmap(new PixelSize(IconTable.Size, IconTable.Size), new Vector(96, 96), PixelFormat.Rgba8888, AlphaFormat.Unpremul);
-        var row = IconTable.Size * 4;
+        var bitmap = new WriteableBitmap(new PixelSize(size, size), new Vector(96, 96), PixelFormat.Rgba8888, AlphaFormat.Unpremul);
+        var row = size * 4;
 
         using (var buffer = bitmap.Lock())
         {
             // The bitmap's rows may be wider than the icon's: each is copied at its own stride.
-            for (var y = 0; y < IconTable.Size; y++)
+            for (var y = 0; y < size; y++)
                 Marshal.Copy(pixels.Slice(y * row, row).ToArray(), 0, buffer.Address + (y * buffer.RowBytes), row);
         }
 
@@ -56,7 +56,7 @@ internal sealed class GameIcons
     private static Bitmap? Cached(Dictionary<int, Bitmap?> bitmaps, IconTable table, int iconId)
     {
         if (!bitmaps.TryGetValue(iconId, out var bitmap))
-            bitmaps[iconId] = bitmap = table.TryGet(iconId, out var pixels) ? Draw(pixels) : null;
+            bitmaps[iconId] = bitmap = table.TryGet(iconId, out var pixels) ? Draw(pixels, table.Size) : null;
 
         return bitmap;
     }

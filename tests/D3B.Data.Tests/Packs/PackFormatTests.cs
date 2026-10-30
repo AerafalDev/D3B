@@ -41,6 +41,7 @@ public sealed class PackFormatTests
         (4, "4f0e5099257dbba4ee548612249d8a5c9c9da7387fdfc765b15132d9c81fa222"),
         (5, "9de3d67e4a573c63eb675ab6c1ec13cc5e0b653014fa144c5b3de3c408867ff7"),
         (6, "1c90f607d5c45ba002152f90ea53357e25606148b2c9536c4ac1a53b1c708907"),
+        (7, "ca36363900fd8b08fd0b9aa89f4ab9f9504e302dfc50e59a18249a0f5a0e7d3d"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -48,6 +49,7 @@ public sealed class PackFormatTests
     private static readonly int[] _replies = [67];
     private static readonly int[] _itemIcons = [71];
     private static readonly int[] _jobIcons = [72];
+    private static readonly int[] _spellIcons = [208];
     private static readonly int[] _levelIds = [97, 98];
     private static readonly int[] _zoneCells = [99, 100, 101];
     private static readonly string[] _strings = ["s0", "s1", "s2", "s3", "s4"];
@@ -131,7 +133,7 @@ public sealed class PackFormatTests
         Append(hash, new JobCatalog(new Job[] { new(53, 54, 69) }, new Skill[] { new(55, 56, 57, 58, 59, 60, true) }));
         Append(hash, new InteractiveCatalog(new Interactive[] { new(61, 62) }));
         Append(hash, new BankCatalog(new Bank[] { new(63, 64) }, new Banker[] { new(65, 66, 0, 1) }, _replies));
-        Append(hash, new IconCatalog(new IconTable(_itemIcons, Pixels(73)), new IconTable(_jobIcons, Pixels(74))));
+        Append(hash, new IconCatalog(new IconTable(2, _itemIcons, Pixels(73, 2)), new IconTable(3, _jobIcons, Pixels(74, 3)), new IconTable(4, _spellIcons, Pixels(209, 4))));
         Append(hash, new SpellCatalog(
             new Spell[] { new() { Id = 75, NameId = 76, TypeId = 77, Order = 78, IconId = 79, Properties = SpellProperties.BypassSummoningLimit, FirstLevel = 0, LevelCount = 2, PreviewZone = Zone(102) } },
             new SpellLevel[]
@@ -313,9 +315,9 @@ public sealed class PackFormatTests
         };
     }
 
-    private static byte[] Pixels(int seed)
+    private static byte[] Pixels(int seed, int size)
     {
-        return [.. Enumerable.Range(seed, IconTable.IconLength).Select(value => (byte)value)];
+        return [.. Enumerable.Range(seed, size * size * 4).Select(value => (byte)value)];
     }
 
     private static void Append<T>(IncrementalHash hash, T sample)

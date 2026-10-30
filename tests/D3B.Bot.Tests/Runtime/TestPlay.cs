@@ -95,6 +95,9 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int BlowLevelId = 1_100;
     public const int SwordItemId = 6_751;
 
+    // Items' and professions' icons are 64 pixels square in a pack (D136).
+    private const int IconSize = 64;
+
     private static readonly string[] _weaponZones = ["P"];
 
     private static readonly RelaySettings _settings = new()
@@ -239,17 +242,17 @@ internal sealed class TestPlay : IAsyncDisposable
     /// <summary>An icon of the test's own, nothing of the client's: a disc of one colour on a transparent square.</summary>
     private static byte[] Disc(byte red, byte green, byte blue)
     {
-        var pixels = new byte[IconTable.IconLength];
-        var center = (IconTable.Size - 1) / 2.0;
+        var pixels = new byte[IconSize * IconSize * 4];
+        var center = (IconSize - 1) / 2.0;
 
-        for (var y = 0; y < IconTable.Size; y++)
+        for (var y = 0; y < IconSize; y++)
         {
-            for (var x = 0; x < IconTable.Size; x++)
+            for (var x = 0; x < IconSize; x++)
             {
-                if (Math.Pow(x - center, 2) + Math.Pow(y - center, 2) > Math.Pow(IconTable.Size * 0.42, 2))
+                if (Math.Pow(x - center, 2) + Math.Pow(y - center, 2) > Math.Pow(IconSize * 0.42, 2))
                     continue;
 
-                var at = ((y * IconTable.Size) + x) * 4;
+                var at = ((y * IconSize) + x) * 4;
 
                 (pixels[at], pixels[at + 1], pixels[at + 2], pixels[at + 3]) = (red, green, blue, 255);
             }
@@ -278,8 +281,9 @@ internal sealed class TestPlay : IAsyncDisposable
             writer.Add(BankCatalog.EntryName, new BankCatalog(new[] { new Bank(2_756, MapId) }, new[] { new Banker(BankerNpcId, 0, 0, 2) }, new[] { 64_360, ChestReplyId }));
             writer.Add(ItemCatalog.EntryName, new ItemCatalog(new[] { new Item(Ash, 403, 38, 1, 5, AshIconId), new Item(Bread, 468, 33, 1, 1, 0), new Item(Chestnut, 404, 38, 20, 5, ChestnutIconId), new Item(WheatBag, 7_941, 100, 1, 1, 0) }, Array.Empty<ItemType>()));
             writer.Add(IconCatalog.EntryName, new IconCatalog(
-                new IconTable(new[] { AshIconId, ChestnutIconId }, Disc(0x8B, 0xC3, 0x4A).Concat(Disc(0x9C, 0x5B, 0x2E)).ToArray()),
-                new IconTable(new[] { LumberjackIconId }, Disc(0x3B, 0x82, 0xF6))));
+                new IconTable(IconSize, new[] { AshIconId, ChestnutIconId }, Disc(0x8B, 0xC3, 0x4A).Concat(Disc(0x9C, 0x5B, 0x2E)).ToArray()),
+                new IconTable(IconSize, new[] { LumberjackIconId }, Disc(0x3B, 0x82, 0xF6)),
+                new IconTable(48, Array.Empty<int>(), Array.Empty<byte>())));
             writer.Add(SpellCatalog.EntryName, Spells());
             writer.Add(WeaponCatalog.EntryName, new WeaponCatalog(
                 new[] { new Weapon { ItemId = SwordItemId, TypeId = 6, ApCost = 3, MinRange = 1, Range = 1, CriticalHitProbability = 0, MaxCastPerTurn = 1, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 0, EffectCount = 1 } },

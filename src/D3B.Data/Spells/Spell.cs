@@ -22,7 +22,7 @@ public readonly struct Spell
     /// <summary>Gets the client's <c>order</c>.</summary>
     public byte Order { get; init; }
 
-    /// <summary>Gets the client's <c>iconId</c>.</summary>
+    /// <summary>Gets the client's <c>iconId</c>, which <see cref="Icons.IconCatalog.Spells"/> holds for the breeds' spells and their variants, and not for the others.</summary>
     public short IconId { get; init; }
 
     /// <summary>Gets its properties.</summary>
