@@ -14,6 +14,7 @@ using D3B.App.ViewModels;
 using D3B.App.ViewModels.Maps;
 using D3B.App.Views;
 using D3B.Bot.Tests.Runtime;
+using D3B.Protocol.Game;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -69,6 +70,94 @@ public sealed class MapViewTests : IAsyncDisposable
     private static Color ColourOf(IBrush brush)
     {
         return ((ISolidColorBrush)brush).Color;
+    }
+
+    [Fact]
+    public async Task AFightIsDrawnInEachThemesPalette()
+    {
+        const int Enemy = Ground;
+        const int Red = 452;
+        const int Blue = 454;
+
+        var (connection, bot) = await _play.EnterAsync(300);
+
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(new MapCurrentEvent { MapId = TestPlay.MapId });
+        connection.Server(new FightFighterShowEvent
+        {
+            Fighter = new Actor
+            {
+                Id = TestPlay.CharacterId,
+                Disposition = new ActorDisposition { CellId = 300 },
+                Information = new ActorInformation { Fighter = new FightFighter { Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Challenger } } },
+            },
+        });
+        connection.Server(new FightFighterShowEvent
+        {
+            Fighter = new Actor
+            {
+                Id = -1,
+                Disposition = new ActorDisposition { CellId = Enemy },
+                Information = new ActorInformation { Fighter = new FightFighter { Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Defender } } },
+            },
+        });
+        connection.Server(new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { ChallengerCells = { 300, Red }, DefenderCells = { Enemy, Blue } } });
+        await bot.ProcessedAsync();
+
+        var drawn = await OnTheUIThreadAsync(() =>
+        {
+            var page = new MapViewModel(new Localizer(Localizer.English), new BotChoice());
+            var window = new Window { Width = 1100, Height = 820, Content = new MapView { DataContext = page }, RequestedThemeVariant = ThemeVariant.Dark };
+            var colours = new List<(Color Character, Color Enemy, Color Red, Color Blue, Color Walkable, Color DrawnCharacter, Color DrawnEnemy, Color DrawnRed, Color DrawnBlue)>();
+
+            page.Refresh(_host.Services);
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var canvas = window.GetVisualDescendants().OfType<MapCanvas>().Single();
+
+            foreach (var theme in new[] { ThemeVariant.Dark, ThemeVariant.Light })
+            {
+                window.RequestedThemeVariant = theme;
+                Dispatcher.UIThread.RunJobs();
+
+                var frame = window.CaptureRenderedFrame()!;
+                var palette = canvas.Palette!;
+                var layout = MapLayout.Fit(canvas.Bounds.Size);
+
+                Point At(int cell)
+                {
+                    return canvas.TranslatePoint(layout.Center(cell), window)!.Value;
+                }
+
+                colours.Add((
+                    ColourOf(palette.Character),
+                    ColourOf(palette.Enemy),
+                    ColourOf(palette.ChallengerCell),
+                    ColourOf(palette.DefenderCell),
+                    ColourOf(palette.Walkable),
+                    Pixel(frame, At(300)),
+                    Pixel(frame, At(Enemy)),
+                    Pixel(frame, At(Red)),
+                    Pixel(frame, At(Blue))));
+            }
+
+            window.Close();
+
+            return colours;
+        });
+
+        Assert.All(drawn, colour =>
+        {
+            Assert.Equal(colour.Character, colour.DrawnCharacter);
+            Assert.Equal(colour.Enemy, colour.DrawnEnemy);
+
+            // The placement cells are tinted over the ground, red and blue apart.
+            Assert.NotEqual(colour.Walkable, colour.DrawnRed);
+            Assert.NotEqual(colour.Walkable, colour.DrawnBlue);
+            Assert.NotEqual(colour.DrawnRed, colour.DrawnBlue);
+            Assert.True(colour.DrawnRed.R > colour.DrawnRed.B && colour.DrawnBlue.B > colour.DrawnBlue.R);
+        });
     }
 
     [Fact]

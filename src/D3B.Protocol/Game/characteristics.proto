@@ -24,16 +24,38 @@ message CharacterStats {
 }
 
 // A characteristic. Its value is the sum of its numbers. The character's most life is the value of characteristic 0 plus
-// that of 11, the vitality; its life, the most plus the value of 97, the life it lacks, negative, or 0 at full life.
+// that of 11, the vitality; its life, the most plus the value of 97, the life it lacks, negative, or 0 at full life. In a
+// fight, a monster's or a summon's carried 0 alone, and 1 and 23 hold every fighter's AP and MP left (D178).
 message Characteristic {
   option (d3b.readable.partial) = true;
 
-  // The characteristic's id: 0, 11 and 97 hold the life, as above; the others are not measured.
+  // The characteristic's id: 0, 11 and 97 hold the life, 1 and 23 the AP and MP, as above; the others are not measured.
   int32 id = 2;
 
   oneof kind {
+    UsableCharacteristic usable = 1;
+    CharacteristicValue value = 3;
     DetailedCharacteristic detailed = 5;
   }
+}
+
+// A characteristic spent in a fight, the character's AP and MP: what is left is the sum of numbers 1 to 6, the base in 4,
+// what was spent this turn taken off in 6, and also counted in 7.
+message UsableCharacteristic {
+  int32 number_1 = 1;
+  int32 number_2 = 2;
+  int32 number_3 = 3;
+  int32 number_4 = 4;
+  int32 number_5 = 5;
+  int32 number_6 = 6;
+  int32 spent = 7;
+}
+
+// A characteristic given whole, as a monster's or a summon's are in a fight.
+message CharacteristicValue {
+  option (d3b.readable.partial) = true;
+
+  int64 total = 2;
 }
 
 // A characteristic's numbers, from several sources: which number is which source is not measured. The life's were set in

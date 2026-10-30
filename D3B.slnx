@@ -15,6 +15,7 @@
   </Folder>
   <Folder Name="/scripts/capture/">
     <File Path="scripts/capture/CaptureCommand.cs" />
+    <File Path="scripts/capture/GameMessages.cs" />
     <File Path="scripts/capture/ProtobufShape.cs" />
     <File Path="scripts/capture/SchemaMatch.cs" />
   </Folder>

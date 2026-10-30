@@ -388,6 +388,9 @@ public sealed class BotActor : IAsyncDisposable
         if (before.Use is not null && state.Use is null && message is InteractiveUseEndedEvent)
             Volatile.Write(ref _useEndedAt, Time.GetUtcNow().UtcTicks);
 
+        if (before.Fight?.End is null && state.Fight?.End is { } end)
+            Journal.Add(new FightEndEntry(Time.GetUtcNow(), end.Outcome, end.Experience, end.Kamas, end.Items.Values.Sum()));
+
         if (side is RelayDirection.FromServer && message is LifeRegenStartEvent)
             Volatile.Write(ref _regeneratingSince, Time.GetUtcNow().UtcTicks);
 

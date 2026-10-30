@@ -156,4 +156,31 @@ public sealed class BotJournalTests
 
         Assert.Equal([BotEvent.FightBegan, BotEvent.Disconnected], AfterConnecting(bot).Select(entry => Assert.IsType<BotEventEntry>(entry).Event));
     }
+
+    [Fact]
+    public async Task AFightsEndIsWrittenOnceWithItsOutcomeAndGains()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(300);
+        var won = new FightResult
+        {
+            Outcome = FightOutcome.Won,
+            Fighter = new FightResultFighter
+            {
+                FighterId = TestPlay.CharacterId,
+                Character = new FightResultCharacter { Data = { new FightResultData { Experience = new FightExperience { Gained = 77 } } } },
+            },
+            Loot = new FightLoot { Kamas = 7, Objects = { new FightLootObjects { Objects = { new FightLootObject { ItemId = 1_984, Quantity = 2 } } } } },
+        };
+
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(new FightEndEvent { Results = { won } });
+        connection.Server(new FightEndEvent { Results = { won } });
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        await bot.ProcessedAsync();
+
+        var end = Assert.IsType<FightEndEntry>(Assert.Single(AfterConnecting(bot), entry => entry is FightEndEntry));
+
+        Assert.Equal((FightOutcome.Won, 77, 7, 2), (end.Outcome, end.Experience, end.Kamas, end.Objects));
+    }
 }

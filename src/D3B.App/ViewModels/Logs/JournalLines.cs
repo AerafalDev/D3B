@@ -10,6 +10,7 @@ using D3B.Bot.Runtime;
 using D3B.Data;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Protocol.Game;
 using D3B.Storage.Profiles;
 using Microsoft.Extensions.Logging;
 
@@ -69,6 +70,7 @@ internal sealed class JournalLines
             ActivityOverEntry over => Over(over),
             ProfileNotStartedEntry profile => (Format("JournalProfileNotStarted", profile.Profile), NotStarted(profile), Tone.Warning, LogMark.Alert),
             BotEventEntry bot => Event(bot.Event),
+            FightEndEntry end => FightEnd(end),
             _ => (entry.GetType().Name, null, Tone.Neutral, LogMark.Alert),
         };
 
@@ -160,6 +162,14 @@ internal sealed class JournalLines
             _ when over.Error is { } error => (Format("JournalActivityFailedWith", over.Activity, error), steps, Tone.Danger, LogMark.Alert),
             _ => (Format("JournalActivityFailed", over.Activity), steps, Tone.Danger, LogMark.Alert),
         };
+    }
+
+    private (string, string?, Tone, LogMark) FightEnd(FightEndEntry end)
+    {
+        var won = end.Outcome is FightOutcome.Won;
+        var gains = string.Join(Separator, Format("JournalExperience", end.Experience), Format("KamasOf", end.Kamas), _localizer.Plural("Objects", end.Objects));
+
+        return (_localizer[won ? "JournalFightWon" : "JournalFightLost"], gains, won ? Tone.Success : Tone.Danger, LogMark.Swords);
     }
 
     private string? NotStarted(ProfileNotStartedEntry profile)

@@ -29,4 +29,16 @@ internal enum MapMark
 
     /// <summary>A cell that leaves the map: the cell, tinted and outlined.</summary>
     Exit,
+
+    /// <summary>An ally in the character's fight, a summon of its team among them: a square.</summary>
+    Ally,
+
+    /// <summary>An enemy in the character's fight: a square.</summary>
+    Enemy,
+
+    /// <summary>A challengers' placement cell: the cell, tinted red (D125).</summary>
+    ChallengerCell,
+
+    /// <summary>A defenders' placement cell: the cell, tinted blue (D125).</summary>
+    DefenderCell,
 }

@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using D3B.Bot.Fights;
 using D3B.Data.Maps;
 using D3B.Engine.Maps;
 using D3B.Network.Relay;
@@ -38,7 +39,8 @@ namespace D3B.Bot.Characters;
 /// </para>
 /// <para>
 /// A fight, measured (client.md): the server replaces the roleplay's context with a fight's, then names the fight's own
-/// map; once the fight is over, it creates the roleplay's context again and names the map the fight began on (D88).
+/// map; once the fight is over, it creates the roleplay's context again and names the map the fight began on (D88). In
+/// between, <see cref="FightEvents"/> takes the fight's messages first (D179).
 /// </para>
 /// </remarks>
 public static class CharacterEvents
@@ -87,6 +89,10 @@ public static class CharacterEvents
     {
         var self = state.Key.CharacterId;
 
+        // In a fight the fight's state takes the fighters' moves, the character's among them, which no confirmation ends.
+        if (state.Fight is { } fight && FightEvents.TryApply(fight, self, message, out var fought))
+            return ReferenceEquals(fought, fight) ? state : state with { Fight = fought };
+
         return message switch
         {
             MapCurrentEvent current => state with
@@ -104,7 +110,7 @@ public static class CharacterEvents
                 HavenBagOwnerId = null,
                 IsWalkHeld = false,
             },
-            ContextCreationEvent created => state with { IsFighting = created.Context is ContextCreationEvent.Types.GameContext.Fight },
+            ContextCreationEvent created => state with { Fight = created.Context is ContextCreationEvent.Types.GameContext.Fight ? new FightState() : null },
             MapInformationEvent information when information.MapId == state.MapId => Placed(state, information),
             InteractiveElementUpdatedEvent { Element: { } element } when state.Elements.ContainsKey(element.ElementId) => state with
             {

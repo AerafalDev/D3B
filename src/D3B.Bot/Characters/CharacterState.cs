@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using D3B.Bot.Fights;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Characters;
@@ -85,9 +86,12 @@ public sealed record CharacterState
     /// <summary>Gets whether the character is in a haven bag, which the world graph does not hold: it leaves it to travel (D83).</summary>
     public bool IsInHavenBag => HavenBagOwnerId is not null;
 
-    /// <summary>Gets whether the character fights: from the server's creating a fight's context to its creating the roleplay's again (D88).</summary>
-    /// <remarks>During a fight the client walks the character with the same requests, on the fight's own map: the bot sends none.</remarks>
-    public bool IsFighting { get; init; }
+    /// <summary>Gets the character's fight: from the server's creating a fight's context to its creating the roleplay's again (D88, D179).</summary>
+    /// <remarks>During a fight the client walks the character with the same requests, on the fight's own map: the bot sends none yet.</remarks>
+    public FightState? Fight { get; init; }
+
+    /// <summary>Gets whether the character fights.</summary>
+    public bool IsFighting => Fight is not null;
 
     /// <summary>Gets whether the character is in the middle of something a behavior must not start over: a walk, a use, a dialog or exchange, or a fight.</summary>
     public bool IsBusy => IsWalking || IsUsing || IsInDialog || IsFighting;

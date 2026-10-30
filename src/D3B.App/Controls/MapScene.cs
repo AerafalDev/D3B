@@ -27,6 +27,18 @@ internal sealed record MapScene(MapData Map, IReadOnlyList<MapExit> Exits)
     /// <summary>Gets the path the character walks, every cell from the first; empty when it stands still.</summary>
     public ImmutableArray<int> Path { get; init; } = [];
 
+    /// <summary>Gets the challengers' placement cells, during a fight's placement: red, as the client shows them (D125).</summary>
+    public ImmutableArray<int> ChallengerCells { get; init; } = [];
+
+    /// <summary>Gets the defenders' placement cells, during a fight's placement: blue.</summary>
+    public ImmutableArray<int> DefenderCells { get; init; } = [];
+
+    /// <summary>Gets the cells the character's living allies stand on in its fight, its summons among them.</summary>
+    public ImmutableArray<int> Allies { get; init; } = [];
+
+    /// <summary>Gets the cells the character's living enemies stand on in its fight.</summary>
+    public ImmutableArray<int> Enemies { get; init; } = [];
+
     /// <summary>Gets what the bot's activity looks at on the map, if it says (D131).</summary>
     public MapActivity? Activity { get; init; }
 }

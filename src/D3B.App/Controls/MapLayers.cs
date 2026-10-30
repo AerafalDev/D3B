@@ -31,6 +31,9 @@ internal enum MapLayers
     /// <summary>What the bot's activity looks at: the elements it wants, the one it goes for, and the exit it heads to (D131).</summary>
     Activity = 1 << 7,
 
+    /// <summary>The character's fight: the teams' placement cells during the placement, then its allies and enemies (D125, D180).</summary>
+    Fight = 1 << 8,
+
     /// <summary>Every layer but the zones, as the page first shows them.</summary>
-    Default = Cells | Character | Elements | Npcs | Exits | Bots | Activity,
+    Default = Cells | Character | Elements | Npcs | Exits | Bots | Activity | Fight,
 }

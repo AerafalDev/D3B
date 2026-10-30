@@ -117,6 +117,7 @@ public sealed class CharacterEventsTests
               ],
               "HavenBagOwnerId": null,
               "IsInHavenBag": false,
+              "Fight": null,
               "IsFighting": false,
               "IsBusy": false,
               "Inventory": {

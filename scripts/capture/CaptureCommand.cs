@@ -3,6 +3,7 @@ using System.CommandLine;
 using D3B.Network.Captures;
 using D3B.Network.Framing;
 using D3B.Network.Relay;
+using D3B.Protocol.Mapping;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
 
@@ -26,19 +27,29 @@ internal static class CaptureCommand
         {
             Description = @"A schema scripts/schema.cs wrote, such as %LOCALAPPDATA%\D3B\data\<version>\schema-1.binpb: says which of its messages read every frame, and with --frames the type and name of every field there.",
         };
+        var messages = new Option<bool>("--messages")
+        {
+            Description = "Lists the messages a game connection's frames carry, by their type URLs, in the order and at the time they came; with --frames and --schema, the fields of each as the schema types them.",
+        };
+        var mapping = new Option<FileInfo?>("--mapping")
+        {
+            Description = @"A build's mapping, such as %LOCALAPPDATA%\D3B\data\<version>\mapping-<format>.binpb: with --messages, also names each message the readable protocol pairs.",
+        };
         var command = new RootCommand("Describes D3B's captures of relayed connections by their structure, never their content (D37).")
         {
             paths,
             frames,
             schema,
+            messages,
+            mapping,
         };
 
-        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(frames), result.GetValue(schema)?.FullName));
+        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(frames), result.GetValue(schema)?.FullName, result.GetValue(messages), result.GetValue(mapping)?.FullName));
 
         return command;
     }
 
-    private static int Run(string[] paths, bool frames, string? schemaPath)
+    private static int Run(string[] paths, bool frames, string? schemaPath, bool messages, string? mappingPath)
     {
         var files = (paths.Length is 0 ? [RelaySettings.DefaultCapturesDirectory] : paths)
             .SelectMany(path => Directory.Exists(path) ? Directory.GetFiles(path, "*" + CaptureWriter.FileExtension).Order(StringComparer.Ordinal).ToArray() : [path])
@@ -67,7 +78,24 @@ internal static class CaptureCommand
                 return 1;
             }
 
-            root = Root(Console.Out, schema, schemaPath, files);
+            if (!messages)
+                root = Root(Console.Out, schema, schemaPath, files);
+        }
+
+        Dictionary<string, string>? readable = null;
+
+        if (mappingPath is not null)
+        {
+            try
+            {
+                readable = MappingFile.Read(mappingPath).Messages.ToDictionary(pair => pair.Obfuscated, pair => pair.Readable.Replace("d3b.game.", string.Empty, StringComparison.Ordinal), StringComparer.Ordinal);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidProtocolBufferException or InvalidDataException)
+            {
+                Console.Error.WriteLine($"{mappingPath}: {exception.Message}");
+
+                return 1;
+            }
         }
 
         var exitCode = 0;
@@ -76,7 +104,10 @@ internal static class CaptureCommand
         {
             try
             {
-                Describe(Console.Out, file, frames, schema, root);
+                if (messages)
+                    DescribeMessages(Console.Out, file, frames, schema, readable);
+                else
+                    Describe(Console.Out, file, frames, schema, root);
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
@@ -174,6 +205,25 @@ internal static class CaptureCommand
 
         if (injected.Count > 0)
             DescribeSide(output, injected, "relay itself, to the server", frames, schema, root);
+    }
+
+    private static void DescribeMessages(TextWriter output, string path, bool frames, SchemaMatch? schema, IReadOnlyDictionary<string, string>? readable)
+    {
+        using var reader = CaptureReader.Open(path);
+
+        var records = reader.ReadAll().ToList();
+        var last = records.Count > 0 ? records[^1].Offset : TimeSpan.Zero;
+
+        output.WriteLine($"{Path.GetFileName(path)}: client {(reader.Header.ClientVersion.Length > 0 ? reader.Header.ClientVersion : "unknown")}, {records.Count} records over {last:hh\\:mm\\:ss\\.fff}{(reader.IsTruncated ? ", cut short" : string.Empty)}");
+
+        try
+        {
+            GameMessages.Write(output, records, schema, readable, frames);
+        }
+        catch (FrameFormatException exception)
+        {
+            output.WriteLine($"  no varint frames: {exception.Message}");
+        }
     }
 
     private static void DescribeSide(TextWriter output, List<CaptureRecord> reads, string side, bool frames, SchemaMatch? schema, MessageDescriptor? root)

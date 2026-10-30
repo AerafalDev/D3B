@@ -731,6 +731,21 @@
   <data name="JournalFight" xml:space="preserve">
     <value>Un combat a commencé</value>
   </data>
+  <data name="JournalFightWon" xml:space="preserve">
+    <value>Combat gagné</value>
+  </data>
+  <data name="JournalFightLost" xml:space="preserve">
+    <value>Combat perdu</value>
+  </data>
+  <data name="JournalExperience" xml:space="preserve">
+    <value>{0:N0} XP</value>
+  </data>
+  <data name="ObjectsOne" xml:space="preserve">
+    <value>{0:N0} objet</value>
+  </data>
+  <data name="ObjectsOther" xml:space="preserve">
+    <value>{0:N0} objets</value>
+  </data>
   <data name="JournalProfileNotStarted" xml:space="preserve">
     <value>Le profil « {0} » n'a pas démarré à la connexion</value>
   </data>
@@ -1012,6 +1027,45 @@
   </data>
   <data name="MapPathEnd" xml:space="preserve">
     <value>Fin de la marche de {0}</value>
+  </data>
+  <data name="LayerFight" xml:space="preserve">
+    <value>Combat</value>
+  </data>
+  <data name="LegendAlly" xml:space="preserve">
+    <value>Allié</value>
+  </data>
+  <data name="LegendEnemy" xml:space="preserve">
+    <value>Ennemi</value>
+  </data>
+  <data name="LegendChallengerCell" xml:space="preserve">
+    <value>Placement rouge</value>
+  </data>
+  <data name="LegendDefenderCell" xml:space="preserve">
+    <value>Placement bleu</value>
+  </data>
+  <data name="MapOwnPlacement" xml:space="preserve">
+    <value>Cellule de placement de son équipe</value>
+  </data>
+  <data name="MapEnemyPlacement" xml:space="preserve">
+    <value>Cellule de placement de l'autre équipe</value>
+  </data>
+  <data name="MapAlly" xml:space="preserve">
+    <value>Allié</value>
+  </data>
+  <data name="MapEnemy" xml:space="preserve">
+    <value>Ennemi</value>
+  </data>
+  <data name="MapSummon" xml:space="preserve">
+    <value>invocation {0}</value>
+  </data>
+  <data name="MapMonster" xml:space="preserve">
+    <value>monstre {0}, grade {1}</value>
+  </data>
+  <data name="MapCharacterFighter" xml:space="preserve">
+    <value>personnage, niveau {0}</value>
+  </data>
+  <data name="MapFighter" xml:space="preserve">
+    <value>{0} : {1}, {2}/{3} PV, {4} PA, {5} PM</value>
   </data>
   <data name="MapOtherBot" xml:space="preserve">
     <value>{0}, un autre bot</value>

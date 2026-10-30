@@ -48,6 +48,18 @@ internal sealed class MapPalette
     /// <summary>Gets or sets another bot's ring.</summary>
     public IBrush Bot { get; set; } = Brushes.Transparent;
 
+    /// <summary>Gets or sets an ally in the character's fight.</summary>
+    public IBrush Ally { get; set; } = Brushes.Transparent;
+
+    /// <summary>Gets or sets an enemy in the character's fight.</summary>
+    public IBrush Enemy { get; set; } = Brushes.Transparent;
+
+    /// <summary>Gets or sets the fill of a challengers' placement cell, red as the client's.</summary>
+    public IBrush ChallengerCell { get; set; } = Brushes.Transparent;
+
+    /// <summary>Gets or sets the fill of a defenders' placement cell, blue as the client's.</summary>
+    public IBrush DefenderCell { get; set; } = Brushes.Transparent;
+
     /// <summary>Gets or sets the fill of a stair's cell.</summary>
     public IBrush Stairs { get; set; } = Brushes.Transparent;
 
@@ -95,6 +107,10 @@ internal sealed class MapPalette
             MapMark.Unknown => Unknown,
             MapMark.Npc => Npc,
             MapMark.Bot => Bot,
+            MapMark.Ally => Ally,
+            MapMark.Enemy => Enemy,
+            MapMark.ChallengerCell => ChallengerCell,
+            MapMark.DefenderCell => DefenderCell,
             _ => Exit,
         };
     }

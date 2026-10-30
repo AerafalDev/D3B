@@ -116,6 +116,27 @@
                                         </StackPanel>
                                     </WrapPanel>
                                 </StackPanel>
+                                <StackPanel>
+                                    <CheckBox Content="{l:Tr LayerFight}" IsChecked="{Binding ShowsFight}" />
+                                    <WrapPanel Classes="Marks">
+                                        <StackPanel>
+                                            <c:MapMarkIcon Mark="Ally" />
+                                            <TextBlock Text="{l:Tr LegendAlly}" />
+                                        </StackPanel>
+                                        <StackPanel>
+                                            <c:MapMarkIcon Mark="Enemy" />
+                                            <TextBlock Text="{l:Tr LegendEnemy}" />
+                                        </StackPanel>
+                                        <StackPanel>
+                                            <c:MapMarkIcon Mark="ChallengerCell" />
+                                            <TextBlock Text="{l:Tr LegendChallengerCell}" />
+                                        </StackPanel>
+                                        <StackPanel>
+                                            <c:MapMarkIcon Mark="DefenderCell" />
+                                            <TextBlock Text="{l:Tr LegendDefenderCell}" />
+                                        </StackPanel>
+                                    </WrapPanel>
+                                </StackPanel>
                                 <CheckBox Content="{l:Tr LayerZones}" IsChecked="{Binding ShowsZones}" />
                                 <CheckBox Content="{l:Tr LayerActivity}" IsChecked="{Binding ShowsActivity}" />
                             </StackPanel>

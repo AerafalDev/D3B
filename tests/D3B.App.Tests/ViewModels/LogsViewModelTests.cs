@@ -8,6 +8,7 @@ using D3B.Bot.Journal;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
+using D3B.Protocol.Game;
 using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -88,6 +89,20 @@ public sealed class LogsViewModelTests : IAsyncDisposable
 
         Assert.Equal(["Joue par la connexion de jeu", "Le joueur a pris la main : le bot est en pause"], page.Lines.Select(line => line.Text));
         Assert.Equal(Tone.Warning, page.Lines[^1].Tone);
+    }
+
+    [Fact]
+    public async Task AFightsEndSaysItsOutcomeAndGains()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
+
+        bot.Journal.Add(new FightEndEntry(_at, FightOutcome.Won, 77, 7, 1));
+        bot.Journal.Add(new FightEndEntry(_at, FightOutcome.Lost, 0, 0, 0));
+        page.Refresh(_host.Services);
+
+        Assert.Equal(("Combat gagné", "77 XP · 7 kamas · 1 objet", Tone.Success), (page.Lines[^2].Text, page.Lines[^2].Detail, page.Lines[^2].Tone));
+        Assert.Equal(("Combat perdu", "0 XP · 0 kamas · 0 objet", Tone.Danger), (page.Lines[^1].Text, page.Lines[^1].Detail, page.Lines[^1].Tone));
     }
 
     [Fact]
