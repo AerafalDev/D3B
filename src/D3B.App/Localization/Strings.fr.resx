@@ -1059,7 +1059,10 @@
     <value>invocation {0}</value>
   </data>
   <data name="MapMonster" xml:space="preserve">
-    <value>monstre {0}, grade {1}</value>
+    <value>{0}, grade {1}</value>
+  </data>
+  <data name="MapMonsterNumber" xml:space="preserve">
+    <value>monstre {0}</value>
   </data>
   <data name="MapCharacterFighter" xml:space="preserve">
     <value>personnage, niveau {0}</value>

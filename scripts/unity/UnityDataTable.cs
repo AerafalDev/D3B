@@ -61,7 +61,7 @@ internal static class UnityDataTable
 
         foreach (var (key, record) in table)
         {
-            var id = record.Int32("id");
+            var id = record.Integer("id");
 
             if (key != id)
                 throw new InvalidDataException($"The {name} table keys record {id} as {key}.");

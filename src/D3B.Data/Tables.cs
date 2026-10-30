@@ -42,6 +42,16 @@ internal static class Tables
     /// <summary>Finds a row by its key, in rows sorted by it.</summary>
     public static bool TryFind<T>(ReadOnlySpan<T> rows, long key, Func<T, long> keyOf, out T found)
     {
+        var index = IndexOf(rows, key, keyOf);
+
+        found = index >= 0 ? rows[index] : default!;
+
+        return index >= 0;
+    }
+
+    /// <summary>Finds the index of a row by its key, in rows sorted by it, or -1.</summary>
+    public static int IndexOf<T>(ReadOnlySpan<T> rows, long key, Func<T, long> keyOf)
+    {
         int low = 0, high = rows.Length - 1;
 
         while (low <= high)
@@ -50,11 +60,7 @@ internal static class Tables
             var current = keyOf(rows[middle]);
 
             if (current == key)
-            {
-                found = rows[middle];
-
-                return true;
-            }
+                return middle;
 
             if (current < key)
                 low = middle + 1;
@@ -62,8 +68,6 @@ internal static class Tables
                 high = middle - 1;
         }
 
-        found = default!;
-
-        return false;
+        return -1;
     }
 }

@@ -94,7 +94,11 @@ internal sealed class UnityFields
                 default:
                     if (IsArray(tree, child))
                     {
-                        if (IsStructArray(tree, child))
+                        if (ItemType(tree, child) is "string")
+                            fields._values[field.Name] = reader.ReadStringArray(child);
+                        else if (ItemType(tree, child) is "float")
+                            fields._values[field.Name] = reader.ReadSingleArray(child);
+                        else if (IsStructArray(tree, child))
                             fields._values[field.Name] = ReadItems(ref reader, child, $"{owner}.{field.Name}");
                         else if (ItemType(tree, child) is "int" or "SInt32" or "unsigned int" or "UInt32")
                             fields._values[field.Name] = reader.ReadInt32Array(child);
@@ -194,6 +198,25 @@ internal sealed class UnityFields
         return _values.ContainsKey(name);
     }
 
+    /// <summary>Gets an integer of any width, signed or not, such as a key the client stores in 16 bits in one table and 32 in another.</summary>
+    public long Integer(string name)
+    {
+        if (!_values.TryGetValue(name, out var value))
+            throw new InvalidDataException($"{_owner} has no field {name}: the client changed this type, so the extractor needs updating.");
+
+        return value switch
+        {
+            int number => number,
+            uint number => number,
+            short number => number,
+            ushort number => number,
+            sbyte number => number,
+            byte number => number,
+            long number => number,
+            _ => throw new InvalidDataException($"{_owner}.{name} is a {value.GetType().Name}, where the extractor expects an integer."),
+        };
+    }
+
     public float Single(string name)
     {
         return Get<float>(name);
@@ -250,6 +273,18 @@ internal sealed class UnityFields
     public int[] Int32Array(string name)
     {
         return Get<int[]>(name);
+    }
+
+    /// <summary>Gets an array of floats.</summary>
+    public float[] SingleArray(string name)
+    {
+        return Get<float[]>(name);
+    }
+
+    /// <summary>Gets an array of strings.</summary>
+    public string[] StringArray(string name)
+    {
+        return Get<string[]>(name);
     }
 
     public string String(string name)
