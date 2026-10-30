@@ -7,9 +7,16 @@ using D3B.Bot.Settings;
 namespace D3B.App.ViewModels.Settings;
 
 /// <summary>The dialog choosing resources or monsters several at once: searched by name, filtered by profession or super race, resources its characters cannot gather yet dimmed (D159, D236).</summary>
-/// <remarks>The values checked are added in the order they were checked, after those the list holds.</remarks>
+/// <remarks>
+/// The values checked are added in the order they were checked, after those the list holds. More groups than
+/// <see cref="MostChips"/>, such as the monsters' super races, are a drop-down beside the search rather than chips, so that
+/// the dialog keeps its height (D245).
+/// </remarks>
 internal sealed partial class GamePickerViewModel : ObservableObject
 {
+    /// <summary>The most groups shown as chips: the professions that gather are 7, the monsters' super races some 40.</summary>
+    public const int MostChips = 12;
+
     private readonly Dialogs _dialogs;
     private readonly PickedGamesFieldViewModel _field;
     private readonly Localizer _localizer;
@@ -19,6 +26,20 @@ internal sealed partial class GamePickerViewModel : ObservableObject
 
     /// <summary>Gets the groups to filter by, every one first: professions or super races.</summary>
     public IReadOnlyList<FilterChipViewModel> Groups { get; }
+
+    /// <summary>Gets whether the groups are too many for chips, and shown as a drop-down.</summary>
+    public bool IsCompact => Groups.Count > MostChips;
+
+    /// <summary>Gets or sets the group the values are filtered by, as the drop-down shows it.</summary>
+    public FilterChipViewModel ChosenGroup
+    {
+        get => SelectedGroup;
+        set
+        {
+            if (value is not null && !value.IsSelected)
+                Select(value);
+        }
+    }
 
     /// <summary>Gets the values shown, by level then name.</summary>
     [ObservableProperty]
@@ -102,6 +123,7 @@ internal sealed partial class GamePickerViewModel : ObservableObject
         foreach (var other in Groups)
             other.IsSelected = other == group;
 
+        OnPropertyChanged(nameof(ChosenGroup));
         Filter();
     }
 

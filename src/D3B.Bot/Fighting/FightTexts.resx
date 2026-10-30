@@ -233,4 +233,79 @@
   <data name="CountLoot" xml:space="preserve">
     <value>{0} {1}</value>
   </data>
+  <data name="PlaceUnseen" xml:space="preserve">
+    <value>Level not seen yet</value>
+  </data>
+  <data name="PlaceNone" xml:space="preserve">
+    <value>No monster to fight at its level</value>
+  </data>
+  <data name="PlaceOne" xml:space="preserve">
+    <value>{1}, {0} map</value>
+  </data>
+  <data name="PlaceMany" xml:space="preserve">
+    <value>{1}, {0} maps</value>
+  </data>
+  <data name="FigureAutomatic" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="FigureAutomaticLabel" xml:space="preserve">
+    <value>place chosen for each character</value>
+  </data>
+  <data name="FigureNumber" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="FigureOutOf" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="FigureMapsOne" xml:space="preserve">
+    <value>map to go through</value>
+  </data>
+  <data name="FigureMapsMany" xml:space="preserve">
+    <value>maps to go through</value>
+  </data>
+  <data name="FigureChosenLiving" xml:space="preserve">
+    <value>monsters chosen living there</value>
+  </data>
+  <data name="FigureMonstersOne" xml:space="preserve">
+    <value>monster living there</value>
+  </data>
+  <data name="FigureMonstersMany" xml:space="preserve">
+    <value>monsters living there</value>
+  </data>
+  <data name="FigureLevels" xml:space="preserve">
+    <value>{0} to {1}</value>
+  </data>
+  <data name="FigureLevelsLabel" xml:space="preserve">
+    <value>levels of the monsters</value>
+  </data>
+  <data name="FigureNoLevel" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="FigureNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="FigureNoBank" xml:space="preserve">
+    <value>bank within reach on foot</value>
+  </data>
+  <data name="FigureBankOne" xml:space="preserve">
+    <value>{0} map</value>
+  </data>
+  <data name="FigureBankMany" xml:space="preserve">
+    <value>{0} maps</value>
+  </data>
+  <data name="FigureBank" xml:space="preserve">
+    <value>to the nearest bank</value>
+  </data>
+  <data name="FigureIsolatedOne" xml:space="preserve">
+    <value>isolated map, left out</value>
+  </data>
+  <data name="FigureIsolatedMany" xml:space="preserve">
+    <value>isolated maps, left out</value>
+  </data>
+  <data name="FigureIsolatedLastOne" xml:space="preserve">
+    <value>isolated map, gone through last</value>
+  </data>
+  <data name="FigureIsolatedLastMany" xml:space="preserve">
+    <value>isolated maps, gone through last</value>
+  </data>
 </root>

@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace D3B.Bot.Fighting;
 
 /// <summary>Fighting monsters, the activity made as harvesting is (D236): the groups a profile chooses, found and attacked through a zone, each fight played by the AI (D244).</summary>
-/// <remarks>Registers <see cref="FightActivity"/> as <c>fight</c>, with a preset, "Automatic fight", which D3B stores once as a profile (D168). Requires the bots module.</remarks>
+/// <remarks>Registers <see cref="FightActivity"/> as <c>fight</c>, with a preset, "Automatic fight", which D3B stores once as a profile (D168), and <see cref="FightPreviews"/>, which the app's profile editor asks (D245). Requires the bots module.</remarks>
 public sealed class FightingModule : IModule
 {
     /// <summary>The activity's id in the host's catalogue, which profiles name.</summary>
@@ -20,6 +20,7 @@ public sealed class FightingModule : IModule
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddSingleton<FightPreviews>();
         services.AddActivity<FightActivity, FightSettings>(ActivityId, FightTexts.Text("Name"), Describe);
     }
 
@@ -72,6 +73,7 @@ public sealed class FightingModule : IModule
         settings.Rule(s => s.Mode is not FightMode.Chosen || s.Monsters.Count > 0, FightTexts.Text("RuleMonsters"));
         settings.Rule(s => s.Place is FightPlace.Automatic || s.Area is not null || s.SubAreas.Count > 0, FightTexts.Text("RuleWhere"));
         settings.Rule(s => s.LeastMonsters <= s.MostMonsters, FightTexts.Text("RuleSize"));
+        settings.Preview((s, services, players) => services.GetRequiredService<FightPreviews>().Of(s, players));
 
         settings.Preset("auto", FightTexts.Text("PresetAuto"), _ => { });
     }

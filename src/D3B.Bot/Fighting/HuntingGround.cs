@@ -140,7 +140,11 @@ public sealed class HuntingGround
         return candidate.Worth > best.Worth || (candidate.Worth > 0 && candidate.Worth == best.Worth && candidate.Gap < best.Gap) ? candidate : best;
     }
 
-    private static bool Hunted(MonsterCatalog monsters, int monsterId)
+    /// <summary>Tells whether a monster is met in a map's groups, which bombs and what the bestiary hides never are.</summary>
+    /// <param name="monsters">The pack's monsters.</param>
+    /// <param name="monsterId">The monster.</param>
+    /// <returns>Whether it is.</returns>
+    internal static bool Hunted(MonsterCatalog monsters, int monsterId)
     {
         // Measured (9g): bombs and what the bestiary hides are never in a map's groups; UseSummonSlot is on most monsters.
         return monsters.TryGetMonster(monsterId, out var monster) && (monster.Properties & (MonsterProperties.UseBombSlot | MonsterProperties.HideInBestiary)) is 0;

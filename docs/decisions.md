@@ -5751,6 +5751,24 @@ committed that print counts. Builds D149, D166, D236, D238, D241.*
     leaves the choice D166's.
   - The isolated maps taken by default: the harvest leaves them out, measured far round (D149).
 
+## D246: The fight profile's editor as the harvest's, and the monsters' picker filtered by a drop-down
+
+*2026-10-30, step 9, session 9g2, the owner's words as they tried the app: the monsters' picker too big to validate, and
+the fight profile's editor not good enough. Builds D127, D159, D166, D236, D245.*
+
+- **The picker**: its filter's groups are chips up to 12, the professions that gather being 7; past them, as the
+  monsters' super races, some 40, are, a drop-down beside the search (`GamePickerViewModel.MostChips`), so that the
+  dialog keeps its height and its buttons in the window.
+- **The fight profile's preview**, as harvesting's (`FightPreviews`): the ground's mini-map, its isolated maps marked;
+  the maps to go through, the monsters living there, or the chosen of them that do, their levels, the way to the nearest
+  bank on foot (`NearestBank`, shared with harvesting's) and the isolated maps; and for each character playing the
+  profile, the sub-area the activity would choose at its level, a subscribed character's, the editor knowing no
+  subscription. The mini-map's legend names probable and empty maps only for a zone that tells them apart, a harvest's.
+- **Rejected.**
+  - A scrolling row of chips: the 40 groups still unreadable.
+  - Every editor rebuilt: the owner's words name the picker and the fight profile; the preview is what it lacked
+    beside the harvest's.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

@@ -28,12 +28,40 @@
     </UserControl.Styles>
     <StackPanel Margin="24" Spacing="16">
         <TextBlock Classes="Title" Text="{Binding Title}" />
-        <TextBox
-            AutomationProperties.Name="{l:Tr Search}"
-            PlaceholderText="{l:Tr Search}"
-            Text="{Binding Search}"
-            shadui:TextBoxAssist.Clearable="True" />
-        <ItemsControl ItemsSource="{Binding Groups}">
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBox
+                AutomationProperties.Name="{l:Tr Search}"
+                PlaceholderText="{l:Tr Search}"
+                Text="{Binding Search}"
+                shadui:TextBoxAssist.Clearable="True" />
+            <ComboBox
+                AutomationProperties.Name="{l:Tr PickerGroup}"
+                Grid.Column="1"
+                IsVisible="{Binding IsCompact}"
+                ItemsSource="{Binding Groups}"
+                Margin="12,0,0,0"
+                MaxDropDownHeight="360"
+                SelectedItem="{Binding ChosenGroup}"
+                VerticalAlignment="Stretch"
+                Width="280">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="s:FilterChipViewModel">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Image
+                                Classes="DetailIcon"
+                                IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                RenderOptions.BitmapInterpolationMode="HighQuality"
+                                Source="{Binding Icon}" />
+                            <TextBlock
+                                Text="{Binding Name}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </Grid>
+        <ItemsControl IsVisible="{Binding !IsCompact}" ItemsSource="{Binding Groups}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel />

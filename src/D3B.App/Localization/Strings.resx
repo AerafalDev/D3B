@@ -401,6 +401,9 @@
   <data name="AreaNamed" xml:space="preserve">
     <value>Area {0}</value>
   </data>
+  <data name="MonsterNamed" xml:space="preserve">
+    <value>Monster {0}</value>
+  </data>
   <data name="ResourceNamed" xml:space="preserve">
     <value>Resource {0}</value>
   </data>
@@ -1459,6 +1462,9 @@
   </data>
   <data name="ExcludeMonstersCount" xml:space="preserve">
     <value>Exclude {0}</value>
+  </data>
+  <data name="PickerGroup" xml:space="preserve">
+    <value>Group</value>
   </data>
   <data name="NoGroup" xml:space="preserve">
     <value>Others</value>

@@ -709,6 +709,7 @@
                             </Border>
                             <WrapPanel IsVisible="{Binding HasZone}">
                                 <StackPanel
+                                    IsVisible="{Binding HasForecast}"
                                     Margin="0,0,12,4"
                                     Orientation="Horizontal"
                                     Spacing="4">
@@ -720,6 +721,7 @@
                                     <TextBlock Classes="Caption Muted" Text="{l:Tr TourProbable}" />
                                 </StackPanel>
                                 <StackPanel
+                                    IsVisible="{Binding HasForecast}"
                                     Margin="0,0,12,4"
                                     Orientation="Horizontal"
                                     Spacing="4">

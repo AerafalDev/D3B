@@ -34,6 +34,7 @@ internal sealed class GameNames
             SettingKind.Area => "AreaNamed",
             SettingKind.SubArea => "SubArea",
             SettingKind.Item => "ItemNamed",
+            SettingKind.Monster => "MonsterNamed",
             _ => "ResourceNamed",
         };
 

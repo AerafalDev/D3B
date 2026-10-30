@@ -65,6 +65,10 @@ internal sealed partial class SettingsEditor : ObservableObject
     [ObservableProperty]
     public partial bool HasIsolated { get; private set; }
 
+    /// <summary>Gets whether the zone tells probable or empty maps apart, as a harvest's does, which its legend then names; a hunt's does not (D245).</summary>
+    [ObservableProperty]
+    public partial bool HasForecast { get; private set; }
+
     /// <summary>Gets the figures the activity gives of its settings.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasFigures), nameof(HasPreview))]
@@ -383,6 +387,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             ? ZoneScenes.Of(preview.Zone, atlas, tour: false, preview.LandmarkMapId, Players.FirstOrDefault(player => player.MapId is not null)?.MapId)
             : null;
         HasIsolated = Preview is not null && Preview.Zone.Any(map => map.State is ZoneMapState.Isolated);
+        HasForecast = Preview is not null && Preview.Zone.Any(map => map.State is ZoneMapState.Probable or ZoneMapState.Empty);
         Figures = Preview is null || Says is not { } says ? [] : [.. Preview.Figures.Select(figure => new FigureViewModel(says.Say(figure.Value), says.Say(figure.Label)))];
         PlayerNotes = [.. Players.Select(player => new PlayerNoteViewModel(player.Name, NoteOf(player)))];
     }

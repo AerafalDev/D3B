@@ -15,7 +15,9 @@ using D3B.Bot.Settings;
 using D3B.Bot.Tests;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data;
+using D3B.Data.Monsters;
 using D3B.Data.Tests;
+using D3B.Data.World;
 using D3B.Storage;
 using D3B.Storage.Accounts;
 using D3B.Storage.Profiles;
@@ -24,9 +26,12 @@ using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Tests.Views;
 
-/// <summary>The fighting activity as the app edits it, its monsters chosen with their icons, and the accounts page with no strategy (D236, D244).</summary>
+/// <summary>The fighting activity as the app edits it, its preview, its monsters chosen among many super races, and the accounts page with no strategy (D236, D244, D245).</summary>
 public sealed class FightViewsTests : IAsyncDisposable
 {
+    // As many super races as the client's monsters have, some 40, are too many for chips: the picker's filter is a drop-down.
+    private const int SuperRaces = GamePickerViewModel.MostChips + 2;
+
     private readonly TestPlay _play = new();
     private readonly TestGameData _game = new();
     private readonly TemporaryDirectory _directory = new();
@@ -39,6 +44,28 @@ public sealed class FightViewsTests : IAsyncDisposable
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
     {
         return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(FightViewsTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
+    }
+
+    private static GameReferences References(TestPlay play)
+    {
+        // A monster of each super race lives in the sub-area the profile hunts in.
+        var monsters = new MonsterCatalog(
+            Enumerable.Range(0, SuperRaces).Select(index => new Monster { Id = 1_000 + index, Race = (short)(100 + index), FirstGrade = index, GradeCount = 1 }).ToArray(),
+            Enumerable.Range(0, SuperRaces).Select(index => new MonsterGrade { Grade = 1, Level = (ushort)(10 * (index + 1)) }).ToArray(),
+            Array.Empty<MonsterSpell>(),
+            Array.Empty<byte>(),
+            Array.Empty<MonsterRatio>(),
+            Enumerable.Range(0, SuperRaces).Select(index => new MonsterRace(100 + index, 1 + index, 0)).ToArray(),
+            Enumerable.Range(0, SuperRaces).Select(index => new MonsterRace(1 + index, MonsterRace.NoSuperRace, 0)).ToArray());
+        var atlas = new WorldAtlas(
+            new[] { new MapPosition(TestPlay.MapId, 4, -18, TestPlay.SubAreaId, 1, 0, 0) },
+            new[] { new SubArea(TestPlay.SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 0, 0, SuperRaces) },
+            new[] { new Area(1, 0, 0) },
+            Array.Empty<Waypoint>(),
+            Array.Empty<int>(),
+            Enumerable.Range(0, SuperRaces).Select(index => 1_000 + index).ToArray());
+
+        return new GameReferences(atlas, play.Tables.Jobs, play.Tables.Items, monsters: monsters);
     }
 
     public async ValueTask DisposeAsync()
@@ -59,7 +86,7 @@ public sealed class FightViewsTests : IAsyncDisposable
         builder.Services.AddSingleton(_play.Places);
         builder.Services.AddSingleton(_game.Texts);
         builder.Services.AddSingleton(new ClientBuild(TestInstall.Version, null));
-        builder.Services.AddSingleton(new GameReferences(_play.World.Atlas, _play.Tables.Jobs, _play.Tables.Items, _play.World.Graph, monsters: _play.Tables.Monsters));
+        builder.Services.AddSingleton(References(_play));
         builder.Services.AddSingleton<TimeProvider>(_play.Time);
         FightingModule.Register(builder.Services);
         builder.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
@@ -85,7 +112,7 @@ public sealed class FightViewsTests : IAsyncDisposable
         await accounts.SeeAsync(TestPlay.Account, [(TestPlay.CharacterId, "Character", 200)], _play.Time.GetUtcNow(), ct);
 
         var runner = await TestHosts.RunningAsync(host);
-        var (englishTexts, fightTexts, accountTexts, picker) = await OnTheUIThreadAsync<(List<string>, List<string>, List<string>, bool)>(() =>
+        var (englishTexts, fightTexts, accountTexts, picker) = await OnTheUIThreadAsync<(List<string>, List<string>, List<string>, GamePickerViewModel?)>(() =>
         {
             var localizer = Localizer.Instance;
 
@@ -113,7 +140,7 @@ public sealed class FightViewsTests : IAsyncDisposable
             main.Profiles.Editing!.Editor!.Sections.SelectMany(section => section.Fields).OfType<PickedGamesFieldViewModel>().First(field => field.IsVisible).ChooseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
-            var picker = window.GetVisualDescendants().OfType<GamePickerView>().Any(view => view.IsEffectivelyVisible);
+            var picker = window.GetVisualDescendants().OfType<GamePickerView>().FirstOrDefault(view => view.IsEffectivelyVisible)?.DataContext as GamePickerViewModel;
 
             Drawings.Draw(window, "monsters-fr");
             main.Dialogs.Close();
@@ -132,7 +159,16 @@ public sealed class FightViewsTests : IAsyncDisposable
         });
 
         Assert.Contains("Monsters to fight", englishTexts);
-        Assert.True(picker);
+        Assert.Contains("maps to go through", englishTexts);
+        Assert.Contains("levels of the monsters", englishTexts);
+        Assert.NotNull(picker);
+        Assert.True(picker.IsCompact);
+        Assert.Equal(SuperRaces + 1, picker.Groups.Count);
+        Assert.Equal(SuperRaces, picker.Shown.Count);
+
+        picker.ChosenGroup = picker.Groups[3];
+
+        Assert.Equal([1_002], picker.Shown.Select(choice => (int)choice.Option.Value));
         Assert.Contains("Monstres par groupe, au moins", fightTexts);
         Assert.Contains("Seulement les groupes gagnables", fightTexts);
         Assert.Contains("Character", accountTexts);

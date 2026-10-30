@@ -1,10 +1,10 @@
+using D3B.Bot.Banks;
 using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
 using D3B.Bot.Settings;
 using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Data.World;
-using D3B.Engine.Criteria;
 using D3B.Engine.World;
 
 namespace D3B.Bot.Harvesting;
@@ -123,19 +123,6 @@ public sealed class HarvestPreviews
             + $"{settings.Place}|{settings.SafeLevel}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{settings.IsolatedMaps}|{who}|{_sightings.Count}|{_graphics.Count}";
     }
 
-    private static bool TryGetVertex(WorldGraph graph, long mapId, out int vertex)
-    {
-        for (var zone = 1; zone <= WorldVertex.MaxZone; zone++)
-        {
-            if (graph.TryGetVertex(mapId, zone, out vertex))
-                return true;
-        }
-
-        vertex = -1;
-
-        return false;
-    }
-
     /// <summary>Reckons what settings lead to.</summary>
     /// <param name="settings">The settings.</param>
     /// <param name="players">The characters that play them, as their bots last saw them, for the place the activity would choose for each (D166).</param>
@@ -234,7 +221,7 @@ public sealed class HarvestPreviews
             : new PreviewFigure(
                 GameText.Of(HarvestTexts.Text("FigureOutOf"), GameTextValue.Number(listed), GameTextValue.Number(settings.Resources.Distinct().Count())),
                 GameText.Of(HarvestTexts.Text("FigureResourcesPresent")));
-        var (bank, changes) = NearestBank(zone);
+        var (bank, changes) = NearestBank.Of(_world.Graph, _tables.Banks, _pathfinder.Value, [.. zone.Maps.Keys]);
         var figures = new List<PreviewFigure>
         {
             new(GameText.Of(HarvestTexts.Text("FigureNumber"), GameTextValue.Number(maps)), GameText.Counted(HarvestTexts.Text("FigureMapsOne"), HarvestTexts.Text("FigureMapsMany"), maps)),
@@ -261,30 +248,5 @@ public sealed class HarvestPreviews
             LandmarkMapId = bank,
             PlayerNotes = [.. notes],
         };
-    }
-
-    private (long? Bank, int Changes) NearestBank(HarvestZone zone)
-    {
-        if (zone.Maps.Count is 0)
-            return (null, 0);
-
-        var pathfinder = _pathfinder.Value;
-        var maps = zone.Maps.Keys.ToHashSet();
-        var rules = new WorldPathRules { Facts = new CriterionFacts() };
-        (long? Bank, int Changes) nearest = (null, int.MaxValue);
-
-        foreach (var bank in _tables.Banks.Banks.Span)
-        {
-            if (!TryGetVertex(_world.Graph, bank.MapId, out var vertex) || !pathfinder.TryFind(vertex, maps, rules, out var path))
-                continue;
-
-            // The bank's door is one change more, from its front into its inside.
-            var changes = path.Steps.Count + 1;
-
-            if (changes < nearest.Changes)
-                nearest = (bank.MapId, changes);
-        }
-
-        return nearest.Bank is null ? (null, 0) : nearest;
     }
 }
