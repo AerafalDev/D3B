@@ -1,0 +1,158 @@
+using D3B.Data.Spells;
+using D3B.Engine.Criteria;
+using D3B.Engine.Fights;
+using D3B.Engine.Maps;
+
+namespace D3B.Engine.Effects;
+
+/// <summary>What a cast is foreseen to do: each of its level's effects, on each fighter its zone and mask reach, through the formulas.</summary>
+/// <remarks>
+/// <para>
+/// Every effect as data (D177): the level's effects, or its critical effects on a critical hit, each read from the pack,
+/// its kind from <see cref="EffectActions"/>, the fighters it reaches from <see cref="CastRules.Reached"/>, its value from
+/// <see cref="EffectFormulas"/>. Nothing is drawn: an effect's roll stays a range, and an effect of a random group is
+/// foreseen with its group marked, so that a search weighs what may happen.
+/// </para>
+/// <para>
+/// Measured on the 49 fights captured by <c>scripts/fights.cs</c> (D195), action by action against what the server
+/// announced. Not foreseen yet: what the effects cast in turn, triggered buffs as they trigger, and the effects of
+/// <see cref="EffectKind.Other"/>.
+/// </para>
+/// <para>Built once per pack and shared, from any thread.</para>
+/// </remarks>
+public sealed class SpellEffects
+{
+    private const string AtOnce = "I";
+
+    // Zones this large reach the whole map: their damage does not decrease (D195).
+    private const int MaxDecreasingSize = 50;
+
+    private readonly SpellCatalog _spells;
+    private readonly CastRules _rules;
+    private readonly EffectActions _actions;
+
+    /// <summary>Initializes a new instance of the <see cref="SpellEffects"/> class.</summary>
+    /// <param name="spells">The pack's spells.</param>
+    /// <param name="rules">The rules of a cast, which find the fighters an effect reaches.</param>
+    /// <param name="actions">What each effect does.</param>
+    public SpellEffects(SpellCatalog spells, CastRules rules, EffectActions actions)
+    {
+        ArgumentNullException.ThrowIfNull(spells);
+        ArgumentNullException.ThrowIfNull(rules);
+        ArgumentNullException.ThrowIfNull(actions);
+
+        _spells = spells;
+        _rules = rules;
+        _actions = actions;
+    }
+
+    private static (int Base, int Damage) Boosts(Combatant caster, int spellId)
+    {
+        // A spell's buffs on its caster raise its base damage, before the characteristics, and its damage after (D195).
+        int baseBonus = 0, damage = 0;
+
+        foreach (var modifier in caster.Modifiers)
+        {
+            if (modifier.SpellId != spellId)
+                continue;
+
+            if (modifier.Kind is SpellModifierKind.BaseDamage)
+                baseBonus += modifier.Value;
+            else if (modifier.Kind is SpellModifierKind.Damage)
+                damage += modifier.Value;
+        }
+
+        return (baseBonus, damage);
+    }
+
+    private static LifeRange Value(in SpellEffect effect, EffectKind kind, EffectElement element, Combatant caster, Combatant target, int away, bool critical, int baseBonus, int damageBonus)
+    {
+        var roll = EffectFormulas.Roll(effect);
+
+        switch (kind)
+        {
+            case EffectKind.Damage or EffectKind.Steal:
+                {
+                    var dealt = EffectFormulas.Dealt(roll.Map(value => value + baseBonus), caster, element, critical).Map(value => value + damageBonus);
+                    var melee = caster.Cell is not Combatant.NoCell && target.Cell is not Combatant.NoCell && MapGeometry.Distance(caster.Cell, target.Cell) is 1;
+
+                    return EffectFormulas.Received(EffectFormulas.Decreased(dealt, effect.Zone, away), caster, target, element, melee);
+                }
+
+            case EffectKind.Heal:
+                return EffectFormulas.Decreased(EffectFormulas.Healed(roll, caster, element), effect.Zone, away);
+            case EffectKind.PercentHeal:
+                return roll.Map(value => target.MaxLife * value / 100);
+            case EffectKind.LifeShield:
+                return roll.Map(value => caster.MaxLife * value / 100);
+            case EffectKind.LevelShield:
+                return roll.Map(value => (int)Math.Round(caster.Level * value / 100.0, MidpointRounding.AwayFromZero));
+            default:
+                return roll;
+        }
+    }
+
+    /// <summary>Gets what each effect of a cast is foreseen to do to each fighter it reaches.</summary>
+    /// <param name="map">The fight's map.</param>
+    /// <param name="fighters">Every fighter of the fight, the caster among them, as they stand before the cast.</param>
+    /// <param name="caster">The caster.</param>
+    /// <param name="level">The level cast, of the pack's spells.</param>
+    /// <param name="cell">The cell cast on.</param>
+    /// <param name="critical">Whether the cast is a critical hit: its level's critical effects apply instead.</param>
+    /// <returns>The effects foreseen, in the level's order, each on each fighter it reaches.</returns>
+    public IReadOnlyList<ForeseenEffect> Foresee(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell, bool critical)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(fighters);
+        ArgumentNullException.ThrowIfNull(caster);
+
+        var foreseen = new List<ForeseenEffect>();
+        var effects = critical && level.CriticalEffectCount > 0 ? _spells.CriticalEffectsOf(level) : _spells.EffectsOf(level);
+        var (baseBonus, damageBonus) = Boosts(caster, level.SpellId);
+
+        foreach (var effect in effects)
+        {
+            var action = _actions.Of(effect.EffectId);
+            var immediate = effect.Delay is 0 && _spells.TriggersOf(effect) == AtOnce;
+            var element = EffectFormulas.Resolve(action.Element, caster);
+
+            foreach (var (target, selected) in _rules.Reached(map, fighters, caster, effect, cell))
+            {
+                var steps = Steps(effect, map, fighters, caster, cell, target);
+                var value = Value(effect, action.Kind, element, caster, target, steps, critical, baseBonus, damageBonus);
+
+                foreseen.Add(new ForeseenEffect(target.Id, effect.EffectId, action, element, value, selected is CriterionAnswer.True, effect.Random > 0, immediate));
+            }
+        }
+
+        return foreseen;
+    }
+
+    private int Steps(in SpellEffect effect, FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, int cell, Combatant target)
+    {
+        var zone = effect.Zone;
+
+        if (target.Cell is Combatant.NoCell || zone.DamageDecreaseStepPercent <= 0 || zone.Size > MaxDecreasingSize || zone.Shape is SpellZoneShape.Custom or SpellZoneShape.LineFromCaster)
+            return 0;
+
+        // Measured (D195): a target's steps away from the centre are counted as its zone counts its size, a square's
+        // diagonal one step and a circle's two: the least size of the zone's shape that reaches it, past the zone's least.
+        var occupied = default(CellSet);
+
+        foreach (var fighter in fighters)
+        {
+            if (fighter.IsAlive && fighter.Cell is not Combatant.NoCell)
+                occupied.Add(fighter.Cell);
+        }
+
+        var from = caster.Cell is Combatant.NoCell ? cell : caster.Cell;
+
+        for (var size = zone.MinSize; size <= zone.Size; size++)
+        {
+            if (SpellZones.Cells(zone with { Size = (byte)size }, _spells.CellsOf(zone), map, occupied, from, cell).Contains(target.Cell))
+                return size - zone.MinSize;
+        }
+
+        return Math.Max(0, MapGeometry.Distance(cell, target.Cell) - zone.MinSize);
+    }
+}

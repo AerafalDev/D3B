@@ -62,4 +62,10 @@ public enum SpellModifierKind
 
     /// <summary>A free cell needed: effect 299.</summary>
     FreeCellEnabled = 299,
+
+    /// <summary>The most range set: effect 2905, measured twice (D193).</summary>
+    RangeSet = 2905,
+
+    /// <summary>The least range set: effect 2906, measured twice (D193).</summary>
+    MinRangeSet = 2906,
 }

@@ -45,8 +45,10 @@ schema and mapping, and updating itself from the repository's releases, the host
 6f); the fight's protocol measured and mapped, the fight's state in the bot's, and the fight on the app's map (step 9,
 session 9a); the fight's data in the pack, format 5, its flags read in the client's code, and the monsters named on the
 map (step 9, session 9b); the rules of a cast in `D3B.Engine`, its range, line of sight, zones, target masks, conditions,
-costs and cooldowns, and walking in a fight with its tackle, checked on every cast and walk captured (step 9, session 9c).
-Everything else below is the target.
+costs and cooldowns, and walking in a fight with its tackle, checked on every cast and walk captured (step 9, session 9c);
+what the server announces of a fight named, mapping format 10, and kept in the fight's state, its buffs, states,
+modifiers, cooldowns, casts and moves, and the effects' engine in `D3B.Engine`, every effect as data and Bubble's formulas
+measured by a bench replaying every captured fight (step 9, session 9d). Everything else below is the target.
 
 ## Overview
 
@@ -87,7 +89,7 @@ each step adds the references it needs.
 | `src/D3B.Host` | The bots' host without the app, for measurements: its entry point alone, with the database (D91, D100). |
 | `src/D3B.Storage` | D3B's database, SQLite through EF Core and its migrations: the accounts seen and the profiles, which the app and `D3B.Host` share (D100). |
 | `src/D3B.App` | The Avalonia desktop app, which runs the bots' host in its process (D91). |
-| `scripts/` | Inspection, extraction, release and mapping tools, as file-based apps. |
+| `scripts/` | Inspection, extraction, release and mapping tools, and the bench of the fights' effects, as file-based apps. |
 | `tests/`, `benchmarks/` | One test project per `src/` project that has logic; benchmarks for the codec and pathfinding. |
 
 ## Modules
@@ -254,7 +256,10 @@ resources; in session 9a (D179), the fight's state.
   character's do, so that a fighter's walk, the character's among them, moves it with no path to confirm; AP and MP come from
   the characteristics alone, life from the losses and heals announced. The journal writes a fight's end once
   (`FightEndEntry`). The client acknowledges the sequences and says it is ready for each turn by itself; the bot sends
-  nothing in a fight until 9e.
+  nothing in a fight until 9e. Since 9d (D193), each fighter also holds its characteristics as the server last gave them,
+  its buffs (`FightBuff`), from which its states and spells' modifiers come, each ending as the turn the server named
+  begins, its cooldowns, the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
+  (`FightSequence`), and moves a fighter on a slide, a carry and a throw. `FightCombatants` gives the engine the fighters.
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
@@ -342,7 +347,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-9.binpb` (`MappingFile`, D178), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-10.binpb` (`MappingFile`, D193), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -620,7 +625,17 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     and the cells it walks to with what it keeps there.
   - Benchmarked on a captured fight's map: every cell a level may be cast on in 6.3 µs, a line of sight in 30 ns, an
     effect's reach in 1.5 µs, the cells a walk reaches in 1.2 µs.
-- Later: the fight simulator at step 9, using an element not depending on line of sight (D75).
+- The effects' engine, in `D3B.Engine.Effects` (9d, D195), pure, on the pack's catalogs:
+  - `EffectActions`, built once per pack: what each effect id does (`EffectKind`, `EffectAction`), its element and the
+    characteristic it changes, from the pack and D3B's table of the client's actions; `FightCharacteristic` names the
+    characteristics the formulas read.
+  - `EffectFormulas`: the roll, damage dealt and received, the zone's decrease, heals, erosion and a push's damage, each
+    step rounded down, as measured; `LifeRange`, a value's least and most.
+  - `SpellEffects`, built once per pack: what each effect of a cast does to each fighter it reaches (`ForeseenEffect`),
+    the critical effects on a critical hit, nothing drawn. A mask naming the caster reaches it outside the zone.
+  - Benchmarked on a captured fight's map: a cast foreseen in 40 µs.
+- Later: the simulator applying what is foreseen, and the AI searching with it (9e); an element not depending on line of
+  sight (D75).
 
 ## Fights
 
@@ -631,7 +646,10 @@ format 5 (D182, in [Game data](#game-data)), its flags read in the client's code
 monsters checked on the captures, and the monsters named on the map (D184). Built in session 9c: the rules of a cast and
 of a walk in `D3B.Engine` (D185 to D189, in [Engine](#engine)), checked on every cast and walk captured, 49 fights of 11
 breeds with those the owner played for it (D191), and the casts the server refuses left to captures to make (D190, Q16).
-The owner's aims for the AI and the fighting activity are D192. The references' ideas for each session are D181.
+The owner's aims for the AI and the fighting activity are D192. The references' ideas for each session are D181. Built in
+session 9d: what the server announces of a fight named and pinned, mapping format 10, and kept in the fight's state
+(D193), the critical hit (D194), the effects' engine (D195, in [Engine](#engine)), and the bench comparing it with the
+server's actions on every fight captured, `scripts/fights.cs` (D196).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -640,9 +658,9 @@ The owner's aims for the AI and the fighting activity are D192. The references' 
   the next turn. It ends with each fighter's outcome, experience and loot. The bot acts through the cast's, the walk's,
   the placement's, the readiness' and the turn's end's requests; the client sends the rest by itself.
 - In `D3B.Engine`, from the pack's catalogs: the rules of a cast, line of sight, zones, masks and conditions, and walking
-  with its tackle and the spells' modifiers (9c, built); next, the effects' engine, Bubble's formulas measured one by one
-  against the server's answers, and what the server announces that the fight's state lacks named and kept: slides,
-  carries and throws, tackles, buffs, states, modifiers and cooldowns (9d, D191).
+  with its tackle and the spells' modifiers (9c, built); the effects' engine, Bubble's formulas measured one by one
+  against the server's answers: damage, steals, heals, critical hits and the zone's decrease; pushes, shields, AP and MP
+  removed and erosion left to captures (9d, built, D195, D196).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e). The simulator applies spell effects read
   from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
@@ -652,7 +670,11 @@ The owner's aims for the AI and the fighting activity are D192. The references' 
 ## Tests
 
 - The fight's state is tested on fights built as the captures measured them: placement, turns, every action taken, a
-  summon, the end, and what the server says of a fighter it never showed (D179).
+  summon, the end, and what the server says of a fighter it never showed (D179); buffs given, ended at their turn and
+  removed, cooldowns, the casts chosen, slides, carries and throws, and the characteristics kept (D193).
+- The effects' formulas are tested on fighters the tests build, with the numbers the bench measured; what a cast foresees
+  on a catalog of the tests' own: a blow on each enemy, less a step away, its critical effects, resistances, and a boost
+  of the caster its mask names (D195). The bench itself, `scripts/fights.cs`, runs on the captures of the owner's machine.
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and
   world paths (D68, D71) and lines of sight, the same both ways and nearing their end at each cell. A fight's rules are
   tested on maps and fighters the tests build around a map's middle, with a catalog of six spells, each refusal named.

@@ -4634,15 +4634,131 @@ D190 (what remains).*
   zone and sub-area, the least and most monsters of a group, a drop sought on a monster, and every other case a profile
   should say.
 
+## D193: What the server announces of a fight, named and kept: mapping format 10
+
+*2026-10-30, step 9, session 9d, as D191 asked. Builds D178, D179, D185.*
+
+- **Measured** on the 52 game connections captured, 49 fights and 50,755 frames, by structure, by the client's names of the
+  actions' ids (D183) and by values set against the fight's state, with a measuring tool never committed and
+  `scripts/fights.cs` (D196): a slide (5: the fighter, the cell it leaves, the cell it reaches; 36, a push of several cells
+  one slide); a carry (50: the carried and its cell) and a throw (51: the thrown and the free cell it lands on); a tackle
+  (104: the enemies beside the walker); AP and MP dodged (308, 309); the buffs a spell gave removed (406: 36, 35 holding
+  some), all of a fighter's (132) and one by its uid (514: 39, each a buff held, a shield broken or a bonus spent before its
+  end). A loss's field 2 is what a shield took: with a shield up, the life lost was 0 and the field held the blow.
+- **Buffs**: `FightEffectsEvent`, 843 in the captures, each a buff with its action and source: its uid on its fighter, its
+  target, the spell's effect it comes from by its uid, every one in the pack, the spell and its grade, its kind (a boost, a
+  state, a spell modifier, a triggered effect), a value (a boost's change, the spell a modifier changes or a triggered buff
+  casts), a parameter (a state's id, a modifier's value, the effect's value on 357 states and 32 modifiers), its triggers,
+  and when it ends: a round and a turn, the place in the turns' order of the fighter playing. Of the 125 buffs for rounds
+  a chosen cast's own effects gave, 113 end at the cast's round plus the effect's duration, at the caster's turn. The
+  server announces no buff's end of time: buffs held as fights ended had ended rounds before.
+- **Cooldowns**: `RefreshCooldownEvent`, the character's and its summons' spells, each with the rounds it waits: of 213
+  counts of spells cast, 197 are the level's interval less the caster's turns ended since the cast, 16 one fewer, sent as
+  the turn ended.
+- **Mapping format 10**, `mapping-10.binpb`, 13,670 bytes, the same bytes on two runs: 205 messages, 450 fields, 27 enums
+  and 195 values audited, no failure; `FightEffectsEvent` and `RefreshCooldownEvent` pinned, the rest paired by fields; of
+  the 50,755 frames, 21,082 understood whole, 8,876 more read, none misread. The release of 3.7.12.12 needs it, then a
+  release of the app (D172), each on the owner's go.
+- **The fight's state** keeps it (`Fighter`, `FightBuff`, `FightSequence`): each fighter's characteristics, whole, as the
+  server last gave them; its buffs, from which come its states and its spells' modifiers; its cooldowns; the casts it
+  chose (`CastHistory`), the first of each of its sequences of a spell; the sequences open; who carries a fighter carried,
+  which stands on no cell. A slide and a throw move their fighter, a throw ending the carry's buffs on both, named by the
+  states the carrier gave the carried (D191). A buff goes as the turn it ends at begins, as the references count a buff
+  down at the start of the turn of the fighter playing as it was given; with its spell's removal, all, its uid, or its
+  fighter's death. Measured: the 36 slides and the 298 walks start on the cell the state holds; of the 398 casts the state
+  counts as chosen, 392 pass 9c's rules with the states and modifiers it holds, 4 an Eliotrope's through its portals and 2
+  a Rogue's bomb's, 9f's.
+- `FightCombatants` gives `D3B.Engine` the fight's fighters from the state, characteristics, states, modifiers and damage
+  shares included. Two spell modifiers setting a range, 2905 and 2906, measured twice each, join `SpellModifierKind`.
+- **Not kept yet**, as not measured: marks, portals, invisibility, what the triggered buffs do as they trigger, and the
+  buffs a dead fighter gave others: 9f's.
+- **Rejected.**
+  - Counting each buff's duration down in the state: the server says when each ends.
+
+## D194: A critical hit is the cast's field 8
+
+*2026-10-30, step 9, session 9d. Corrects what the session first named.*
+
+- **Measured**: field 8 of a cast, an enum, is set on 33 of the 398 casts the fighters chose; their 50 losses of life are
+  the level's critical effects', 47 within the range they foresee. Field 1, set on 15 casts, is no critical hit: what it
+  says is not measured, and the readable protocol leaves it out. Monsters' critical hits are marked as characters' are.
+- `FightCast.critical` reads it (`FightCastCritical`).
+- The chance of a critical hit is drawn by the server, never told: the engine foresees a cast either way (D195).
+
+## D195: The effects' engine, Bubble's formulas measured on Dofus 3
+
+*2026-10-30, step 9, session 9d, as D177 planned it. Settles Q5 in part. Builds D13, D181, D187.*
+
+- **Every effect as data** (`D3B.Engine.Effects`): `EffectActions`, built once per pack, says what each effect id does
+  (`EffectKind`): damage, a steal, damage or a heal no characteristic raises, a heal, a shield, a push or a pull, a
+  teleport, a swap, a summon, a state set, removed or disabled, a boost or a deboost of a characteristic, a spell modifier,
+  a spell cast, buffs removed, a kill. The pack gives the elements, the characteristic and its operator, and the modifiers'
+  category; D3B's table, named as the client's actions are, gives the rest, and the best and worst elements. An id it does
+  not name is `Other`, left out.
+- **Foreseen** (`SpellEffects.Foresee`): each effect of the level, its critical effects on a critical hit, on each fighter
+  `CastRules.Reached` finds, with its value through the formulas (`EffectFormulas`), a range from the least roll to the
+  most; whether its mask surely selects the fighter, whether it is drawn at random, whether it applies at once. A mask
+  naming the caster (`c`, `C`) reaches it outside the zone: 16 buffs went to a caster so. Nothing is drawn.
+- **Damage**, the references' order, each step rounded down: the roll between the dice; the spell's base damage modifiers;
+  times 100 plus the element's characteristic (strength for neutral and earth, intelligence, chance, agility) plus power,
+  in percent; plus the damage bonus, the element's and on a critical hit the critical bonus; plus the spell's damage
+  modifiers; less 10% a step away from the zone's centre, at most 4 steps, the steps counted as the zone counts its size,
+  past its least, a square's diagonal one step and a circle's two; less the target's fixed resistance, then times its
+  resistance in percent; times the multipliers of damage dealt and received, by spells, in melee or at a distance, 100 when
+  the server gives none; times the shares of the target's buffs 1163, 85% in the captures; never below 0. Measured with
+  `scripts/fights.cs` (D196), the losses of each target by element against what the cast foresaw: of the casts alone, 334
+  of 335 within, 99 of them the target's whole life; the other one more than foreseen, under two buffs of final damage, a
+  rounding not settled. With the spells the effects cast, which are not foreseen yet, 51 within, 7 more, 1 less, 14 not
+  foreseen.
+- **Heals**: the roll times 100 plus the element's characteristic, in percent, plus the heals bonus, times the heals
+  multiplier; a steal heals its caster half the life it took of each target, rounded down. Measured: 27 heals within, 53
+  foreseen on a fighter whose life was whole, which the server does not announce, 2 not announced.
+- **Buffs** a cast's own effects gave: 20 boosts and 77 deboosts within their roll, 19 states as foreseen, 4 states of a
+  carry the server sets itself.
+- **Not settled**, as too few captures say: a push's damage, the references' `(level / 2 + 32 + bonus − reduction)` a cell
+  not moved over 4, as foreseen 9 times, less twice, the pushes and pulls stopped short being 21 of 46; AP and MP removed, 1 within
+  with a dodge, 4 fewer, the dodge being drawn; shields, whose buffs the captures foresee too rarely on their target; the
+  erosion, read and never set against a loss; the effects on a cell, a summon, a teleport, a glyph or a trap, which reach
+  no fighter: 9f's.
+- **What still holds of Bubble's** (Q5): the order of damage and its roundings down, the zone's decrease, resistances
+  fixed then in percent, the multipliers, critical effects as a list of their own, steals at half, heals; not its
+  constants of caps, which no capture reached.
+- **Benchmark**: a cast foreseen on a captured fight's map, spell 13858 on four enemies, in 40 µs and 11 KB, the zone's
+  steps the most of it: 9e weighs it.
+- **Rejected.**
+  - Bubble's pipeline ported: GPL, and its bugs (D181).
+  - The rolls and the critical hit drawn in the engine: a search weighs ranges, as D181 asked.
+
+## D196: The bench of the effects, what it cannot measure, and the captures to make
+
+*2026-10-30, step 9, session 9d. Builds D177, D190. Opens nothing: Q5 and Q16 hold what is left.*
+
+- **`scripts/fights.cs`** replays the game captures through the bot's fight state, and for each cast a fighter chose sets
+  what `D3B.Engine` foresees against what the server announced until the cast's sequence closed: damage by target and
+  element, heals and steals, pushes and their damage, AP and MP removed, buffs, teleports, swaps and summons, the rules of
+  the cast, the cooldowns, and the cells the fighters move from. It prints counts; `--details` lists, for each outcome
+  the formulas do not explain, the spell and effects by id and the numbers compared, never an actor's id or name.
+- **What it cannot measure**: what the server draws, the rolls, the critical hit's chance and the dodge of AP and MP,
+  except as ranges; the effects no capture cast; what the client does not send (Q16).
+- **Captures to make**, proposed to the owner, with D190's for Q16, in fights against weak groups:
+  - pushes against a fighter and against an obstacle, at 1 and 2 cells, by characters of a known level, and pulls;
+  - shields of a fixed value, of a share of the most life and of the level, then blows on them;
+  - AP and MP removed and dodged, by spells that remove them, against monsters of known dodge;
+  - a fighter with erosion, its losses and its most life after;
+  - a heal on a wounded ally, an Eniripsa's or a Sadida's, and a heal with a heals bonus;
+  - summons and their first turn: an Osamodas's, a Sadida's dolls and infection, a Steamer's turrets;
+  - the Rogue's bombs and walls, the Huppermage's runes, the Eliotrope's portals, the Xelor's telefrags, the Zobal's masks
+    and their spells' criteria, glyphs and traps, as 9f measures each;
+  - a fight long enough that buffs end, so that their ends are seen in what the fighters may cast.
 
 Settled questions leave this table, and the decision that settles one says so.
 
 | Id | Question | Settled in |
 | --- | --- | --- |
-| Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? | Step 9 |
+| Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? Measured in 9d for damage, steals, heals, critical hits and the zone's decrease (D195); left: a push's damage, shields, AP and MP removed and their dodge, erosion, the final damage's rounding. | The captures of D196, then 9f |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
 | Q15 | When D3B needs a monster's characteristics at a level its grades lack, before the server gives them, such as to choose which group to attack, does it run the client's Lua formulas, or write them in C#, checked against the client's (D182)? | The session that needs it, 9e or 9g at the latest |
-| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? | Captures the owner makes, D3B sending what the client does not, before or with 9e |
+| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? | Captures the owner makes, D3B sending what the client does not, before or with 9e, with those of D196 |

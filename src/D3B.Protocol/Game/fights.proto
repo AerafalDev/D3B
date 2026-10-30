@@ -308,3 +308,21 @@ message FightLootObject {
   // The item's id in the client's table.
   int32 item_id = 3;
 }
+
+// A fighter's spells' cooldowns, sent to the character's client for the character and its summons. Measured (D193): a
+// spell's count goes down as each of its caster's turns ends, as 197 of the 213 counts of spells cast said; 16 were
+// one lower, sent as the turn ended.
+message RefreshCooldownEvent {
+  option (d3b.readable.partial) = true;
+
+  int64 fighter_id = 2;
+  repeated FightSpellCooldown cooldowns = 4;
+}
+
+// How many rounds a spell waits before it may be cast again: 0 once it may.
+message FightSpellCooldown {
+  option (d3b.readable.partial) = true;
+
+  int32 rounds = 2;
+  int32 spell_id = 3;
+}

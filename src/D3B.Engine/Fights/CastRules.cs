@@ -68,8 +68,8 @@ public sealed class CastRules
     /// <remarks>
     /// The kinds are the pack's effects 280 to 299, as their texts describe them. Measured (client.md): a Pandawa's buffs give
     /// its carrying spell 3 more range, no taken cell and a free one; 3 casts of the captures carried a modifier of their
-    /// spell, none needing it to pass. Sums apply in order, then a set interval; nothing falls below 0, and a count with no
-    /// limit keeps none.
+    /// spell, none needing it to pass. Sums apply in order, then a set interval or range; nothing falls below 0, and a count
+    /// with no limit keeps none.
     /// </remarks>
     public static SpellLevel Modified(in SpellLevel level, Combatant caster)
     {
@@ -80,7 +80,7 @@ public sealed class CastRules
 
         int least = level.MinRange, most = level.Range, cost = level.ApCost, interval = level.MinCastInterval;
         int perTurn = level.MaxCastPerTurn, perTarget = level.MaxCastPerTarget;
-        int? set = null;
+        int? set = null, setRange = null, setMinRange = null;
         var properties = level.Properties;
 
         foreach (var modifier in caster.Modifiers)
@@ -106,13 +106,15 @@ public sealed class CastRules
                 case SpellModifierKind.TakenCellDisabled: properties &= ~SpellLevelProperties.NeedTakenCell; break;
                 case SpellModifierKind.FreeCellDisabled: properties &= ~SpellLevelProperties.NeedFreeCell; break;
                 case SpellModifierKind.FreeCellEnabled: properties |= SpellLevelProperties.NeedFreeCell; break;
+                case SpellModifierKind.RangeSet: setRange = modifier.Value; break;
+                case SpellModifierKind.MinRangeSet: setMinRange = modifier.Value; break;
             }
         }
 
         return level with
         {
-            MinRange = (byte)Math.Clamp(least, 0, byte.MaxValue),
-            Range = (byte)Math.Clamp(most, 0, byte.MaxValue),
+            MinRange = (byte)Math.Clamp(setMinRange ?? least, 0, byte.MaxValue),
+            Range = (byte)Math.Clamp(setRange ?? most, 0, byte.MaxValue),
             ApCost = (short)Math.Max(cost, 0),
             MinCastInterval = (byte)Math.Clamp(set ?? interval, 0, byte.MaxValue),
             MaxCastPerTurn = (sbyte)Math.Clamp(perTurn, sbyte.MinValue, sbyte.MaxValue),
@@ -242,7 +244,8 @@ public sealed class CastRules
     /// <param name="caster">The caster.</param>
     /// <param name="effect">The effect, of the pack's spells.</param>
     /// <param name="cell">The cell cast on.</param>
-    /// <returns>Each fighter the effect may reach, with whether its mask selects it or cannot tell; those it does not are left out.</returns>
+    /// <returns>Each fighter the effect may reach, with whether its mask selects it or cannot tell; those it does not are left out.
+    /// A mask naming the caster reaches it wherever it stands (D195).</returns>
     public IReadOnlyList<(Combatant Fighter, CriterionAnswer Selected)> Reached(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellEffect effect, int cell)
     {
         ArgumentNullException.ThrowIfNull(fighters);
@@ -257,7 +260,9 @@ public sealed class CastRules
 
         foreach (var fighter in fighters)
         {
-            if (fighter.IsAlive ? !zone.Contains(fighter.Cell) : !withTheDead)
+            var named = fighter.Id == caster.Id && fighter.IsAlive && mask.NamesTheCaster;
+
+            if (!named && (fighter.IsAlive ? !zone.Contains(fighter.Cell) : !withTheDead))
                 continue;
 
             var selected = mask.Selects(caster, fighter, fighters);

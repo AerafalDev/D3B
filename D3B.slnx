@@ -8,6 +8,7 @@
     <File Path="scripts/client.cs" />
     <File Path="scripts/embed.cs" />
     <File Path="scripts/extract.cs" />
+    <File Path="scripts/fights.cs" />
     <File Path="scripts/inspect.cs" />
     <File Path="scripts/mapping.cs" />
     <File Path="scripts/release.cs" />
@@ -46,6 +47,12 @@
     <File Path="scripts/extract/TextsExtractor.cs" />
     <File Path="scripts/extract/WorldExtractor.cs" />
     <File Path="scripts/extract/WorldGraphReader.cs" />
+  </Folder>
+  <Folder Name="/scripts/fights/">
+    <File Path="scripts/fights/CapturedFights.cs" />
+    <File Path="scripts/fights/CastBench.cs" />
+    <File Path="scripts/fights/FightsCommand.cs" />
+    <File Path="scripts/fights/Tally.cs" />
   </Folder>
   <Folder Name="/scripts/inspect/">
     <File Path="scripts/inspect/BundleBlock.cs" />

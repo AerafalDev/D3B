@@ -58,7 +58,7 @@ public static class FightEvents
             FightStartEvent => fight with { Phase = FightPhase.Fighting, IsReady = false },
             FightTurnListEvent order => Ordered(fight, order),
             FightNewRoundEvent round => fight with { Round = round.Round },
-            FightTurnEvent turn => fight with { PlayingId = turn.FighterId, Round = turn.Round > 0 ? turn.Round : fight.Round, IsOwnTurn = false },
+            FightTurnEvent turn => Turned(fight, turn),
             FightTurnStartPlayingEvent => fight with { IsOwnTurn = fight.PlayingId == self },
             FightTurnEndEvent ended when ended.FighterId == fight.PlayingId => fight with { PlayingId = null, IsOwnTurn = false },
             FightTurnEndEvent => fight,
@@ -67,8 +67,16 @@ public static class FightEvents
             MapMovementEvent walked when walked.Cells.Count > 0 && IsCell(walked.Cells[^1]) => Moved(fight, walked.ActorId, walked.Cells[^1]),
             MapMovementEvent => fight,
             GameActionFightEvent action => Acted(fight, action),
+            FightEffectsEvent { Given.Buff: { } buff } given => Changed(fight, buff.TargetId, fighter => Buffed(fighter, given.Given, buff)),
+            FightEffectsEvent => fight,
+            RefreshCooldownEvent cooldowns => Changed(fight, cooldowns.FighterId, fighter => fighter with
+            {
+                Cooldowns = cooldowns.Cooldowns.GroupBy(cooldown => cooldown.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Rounds),
+            }),
+            SequenceStartEvent started => fight with { Sequences = fight.Sequences.Add(new FightSequence(started.Type, started.AuthorId, HasCast: false)) },
+            SequenceEndEvent => fight.Sequences.IsEmpty ? fight : fight with { Sequences = fight.Sequences.RemoveAt(fight.Sequences.Length - 1) },
             FightEndEvent end => fight with { Phase = FightPhase.Ended, PlayingId = null, IsOwnTurn = false, End = Ended(end, self) },
-            FightStartingEvent or FightJoinEvent or SequenceStartEvent or SequenceEndEvent => fight,
+            FightStartingEvent or FightJoinEvent => fight,
             _ => null,
         };
 
@@ -128,12 +136,63 @@ public static class FightEvents
         return dead with { TurnOrder = [.. entries.Select(entry => entry.FighterId)] };
     }
 
+    private static FightState Turned(FightState fight, FightTurnEvent turn)
+    {
+        var round = turn.Round > 0 ? turn.Round : fight.Round;
+        var place = fight.TurnOrder.IndexOf(turn.FighterId);
+        var turned = fight with { PlayingId = turn.FighterId, Round = round, IsOwnTurn = false };
+
+        if (place < 0)
+            return turned;
+
+        // Measured (D193): the server names no buff's end of time; a buff ends as the turn it ends at begins, as the
+        // references count a buff down at the start of the turn of the fighter playing as it was given.
+        var expired = turned.Fighters.Values.Where(fighter => fighter.Buffs.Any(buff => buff.IsOverAt(round, place))).ToList();
+
+        return expired.Aggregate(turned, (state, fighter) => Changed(state, fighter.Id, held => held with { Buffs = [.. held.Buffs.Where(buff => !buff.IsOverAt(round, place))] }));
+    }
+
+    private static Fighter Buffed(Fighter fighter, FightBuffGiven given, global::D3B.Protocol.Game.FightBuff buff)
+    {
+        var kept = new FightBuff
+        {
+            Uid = buff.Uid,
+            SourceId = given.SourceId,
+            ActionId = given.ActionId,
+            Kind = buff.Kind,
+            SpellId = buff.SpellId,
+            Grade = buff.Grade,
+            EffectUid = buff.EffectUid,
+            Value = buff.Value,
+            Parameter = buff.Parameter,
+            Triggers = buff.Triggers,
+            EndRound = buff.End is { Round: >= 0 } end ? end.Round : FightBuff.Forever,
+            EndTurn = buff.End?.Turn ?? 0,
+        };
+
+        // A buff the server gives again under its uid replaces the one it held.
+        return fighter with { Buffs = [.. fighter.Buffs.Where(held => held.Uid != kept.Uid), kept] };
+    }
+
     private static FightState Acted(FightState fight, GameActionFightEvent action)
     {
         return action.ActionCase switch
         {
+            GameActionFightEvent.ActionOneofCase.Cast => Cast(fight, action.SourceId, action.Cast),
             GameActionFightEvent.ActionOneofCase.Death => Changed(fight, action.Death.TargetId, Died),
             GameActionFightEvent.ActionOneofCase.Teleport when IsCell(action.Teleport.CellId) => Moved(fight, action.Teleport.TargetId, action.Teleport.CellId),
+            GameActionFightEvent.ActionOneofCase.Slide when IsCell(action.Slide.ToCell) => Moved(fight, action.Slide.TargetId, action.Slide.ToCell),
+            GameActionFightEvent.ActionOneofCase.Carry => Changed(fight, action.Carry.TargetId, carried => carried with { Cell = null, CarrierId = action.SourceId }),
+            GameActionFightEvent.ActionOneofCase.Throw when IsCell(action.Throw.CellId) => Thrown(fight, action.SourceId, action.Throw),
+            GameActionFightEvent.ActionOneofCase.BuffsRemoval when action.BuffsRemoval.All => Changed(fight, action.BuffsRemoval.TargetId, fighter => fighter with { Buffs = [] }),
+            GameActionFightEvent.ActionOneofCase.BuffsRemoval => Changed(fight, action.BuffsRemoval.TargetId, fighter => fighter with
+            {
+                Buffs = [.. fighter.Buffs.Where(buff => buff.SpellId != action.BuffsRemoval.SpellId)],
+            }),
+            GameActionFightEvent.ActionOneofCase.BuffRemoval when action.BuffRemoval.KindCase is FightBuffRemoval.KindOneofCase.Uid => Changed(fight, action.BuffRemoval.TargetId, fighter => fighter with
+            {
+                Buffs = [.. fighter.Buffs.Where(buff => buff.Uid != action.BuffRemoval.Uid)],
+            }),
             GameActionFightEvent.ActionOneofCase.Swap => Swapped(fight, action.SourceId, action.Swap.TargetId),
             GameActionFightEvent.ActionOneofCase.LifeLost => Changed(fight, action.LifeLost.TargetId, fighter => fighter with
             {
@@ -147,6 +206,37 @@ public static class FightEvents
             GameActionFightEvent.ActionOneofCase.Summons when action.Summons.Fighters is { } summoned => summoned.Summons.Aggregate(fight, Summoned),
             _ => fight,
         };
+    }
+
+    private static FightState Cast(FightState fight, long casterId, FightCast cast)
+    {
+        if (fight.Sequences.IsEmpty)
+            return fight;
+
+        var innermost = fight.Sequences[^1];
+        var marked = fight with { Sequences = fight.Sequences.SetItem(fight.Sequences.Length - 1, innermost with { HasCast = true }) };
+
+        // Measured (client.md): the casts a fighter chose are the first of its sequences of a spell; those its effects
+        // cast follow in the same sequence or in one they trigger, and no spell's interval or casts a turn count them.
+        if (innermost is not { Type: SequenceType.Spell, HasCast: false } || innermost.AuthorId != casterId || cast.Spell is not { } spell)
+            return marked;
+
+        long? target = cast.TargetId is not 0 ? cast.TargetId : null;
+
+        return Changed(marked, casterId, caster => caster with { Casts = caster.Casts.Cast(spell.SpellId, target, fight.Round) });
+    }
+
+    private static FightState Thrown(FightState fight, long carrierId, FightThrow thrown)
+    {
+        if (!fight.Fighters.TryGetValue(thrown.TargetId, out var carried))
+            return fight;
+
+        // Measured (D191): the throw ends the carry, the server removing none of its buffs; the carried's states from its
+        // carrier name the spells whose buffs go, on both.
+        var spells = carried.Buffs.Where(buff => buff.Kind is FightBuffKind.State && buff.SourceId == carrierId).Select(buff => buff.SpellId).ToHashSet();
+        var landed = Changed(fight, thrown.TargetId, fighter => fighter with { Cell = thrown.CellId, CarrierId = null, Buffs = [.. fighter.Buffs.Where(buff => !spells.Contains(buff.SpellId))] });
+
+        return Changed(landed, carrierId, fighter => fighter with { Buffs = [.. fighter.Buffs.Where(buff => !spells.Contains(buff.SpellId))] });
     }
 
     private static FightState Summoned(FightState fight, SummonedFighter summon)
@@ -191,7 +281,7 @@ public static class FightEvents
 
     private static Fighter Died(Fighter fighter)
     {
-        return fighter with { IsAlive = false, Life = 0, Cell = null };
+        return fighter with { IsAlive = false, Life = 0, Cell = null, CarrierId = null, Buffs = [] };
     }
 
     private static Fighter Lived(Fighter fighter, FightCharacteristics? stats)
@@ -211,10 +301,19 @@ public static class FightEvents
 
     private static Fighter Spent(Fighter fighter, FightCharacteristics stats)
     {
+        var characteristics = fighter.Characteristics.ToBuilder();
+
+        foreach (var characteristic in stats.Characteristics)
+        {
+            if (ValueOf(characteristic) is { } value)
+                characteristics[characteristic.Id] = (int)Math.Clamp(value, int.MinValue, int.MaxValue);
+        }
+
         return fighter with
         {
             ActionPoints = (int)(ValueOf(stats, ActionPoints) ?? fighter.ActionPoints),
             MovementPoints = (int)(ValueOf(stats, MovementPoints) ?? fighter.MovementPoints),
+            Characteristics = characteristics.ToImmutable(),
         };
     }
 
@@ -222,9 +321,14 @@ public static class FightEvents
     {
         var found = stats.Characteristics.FirstOrDefault(characteristic => characteristic.Id == id);
 
-        return found?.KindCase switch
+        return found is null ? null : ValueOf(found);
+    }
+
+    private static long? ValueOf(Characteristic found)
+    {
+        return found.KindCase switch
         {
-            null => null,
+            Characteristic.KindOneofCase.None => null,
             Characteristic.KindOneofCase.Usable => (long)found.Usable.Number1 + found.Usable.Number2 + found.Usable.Number3 + found.Usable.Number4 + found.Usable.Number5 + found.Usable.Number6,
             Characteristic.KindOneofCase.Value => found.Value.Total,
             Characteristic.KindOneofCase.Detailed => (long)found.Detailed.Number1 + found.Detailed.Number2 + found.Detailed.Number3 + found.Detailed.Number4 + found.Detailed.Number5 + found.Detailed.Number7,
