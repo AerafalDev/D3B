@@ -136,7 +136,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Equal(2, raised);
 
         // In the app's language, not the system's.
-        Assert.Equal(["3.0", "1.0", "0.5", "10.0", "2.0", "1.0", "30.0", "0.5", "20.0", "5.0", "5.0", "60.0"], boxes[0]);
+        Assert.Equal(["3.0", "1.0", "0.5", "10.0", "2.0", "1.0", "30.0", "0.5", "0.9", "20.0", "5.0", "5.0", "60.0"], boxes[0]);
         Assert.Equal("3,0", boxes[1][0]);
     }
 }

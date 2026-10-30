@@ -52,8 +52,10 @@ public sealed class CastRules
     {
         var cells = default(CellSet);
 
-        foreach (var fighter in fighters)
+        for (var index = 0; index < fighters.Count; index++)
         {
+            var fighter = fighters[index];
+
             if (fighter.IsAlive && fighter.Cell is not Combatant.NoCell)
                 cells.Add(fighter.Cell);
         }
@@ -249,17 +251,39 @@ public sealed class CastRules
     public IReadOnlyList<(Combatant Fighter, CriterionAnswer Selected)> Reached(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellEffect effect, int cell)
     {
         ArgumentNullException.ThrowIfNull(fighters);
+
+        var reached = new List<(Combatant, CriterionAnswer)>();
+
+        Reached(map, fighters, Occupied(fighters), caster, effect, cell, reached);
+
+        return reached;
+    }
+
+    /// <summary>Adds the fighters an effect of a level cast on a cell reaches to a list, as <see cref="Reached(FightMap, IReadOnlyList{Combatant}, Combatant, in SpellEffect, int)"/> gives them.</summary>
+    /// <param name="map">The fight's map.</param>
+    /// <param name="fighters">Every fighter of the fight, the caster among them.</param>
+    /// <param name="occupied">The cells the living fighters stand on, as <see cref="OccupiedBy"/> gives them.</param>
+    /// <param name="caster">The caster.</param>
+    /// <param name="effect">The effect, of the pack's spells.</param>
+    /// <param name="cell">The cell cast on.</param>
+    /// <param name="reached">The list the fighters reached are added to.</param>
+    /// <returns>The cells the effect's zone covers.</returns>
+    /// <remarks>A search foresees many casts on one fight: the occupied cells are reckoned once, and nothing is allocated (D200).</remarks>
+    public CellSet Reached(FightMap map, IReadOnlyList<Combatant> fighters, in CellSet occupied, Combatant caster, in SpellEffect effect, int cell, List<(Combatant Fighter, CriterionAnswer Selected)> reached)
+    {
+        ArgumentNullException.ThrowIfNull(fighters);
         ArgumentNullException.ThrowIfNull(caster);
+        ArgumentNullException.ThrowIfNull(reached);
 
         // A caster on no cell, such as one carried, casts what its effects trigger from the cell cast on, with no direction.
         var from = caster.Cell is Combatant.NoCell ? cell : caster.Cell;
-        var zone = SpellZones.Cells(effect.Zone, _spells.CellsOf(effect.Zone), map, Occupied(fighters), from, cell);
+        var zone = ZoneCells.Of(effect.Zone, _spells.CellsOf(effect.Zone), map, occupied, from, cell);
         var mask = MaskOf(effect);
         var withTheDead = effect.Zone.Shape is SpellZoneShape.WholeMapWithTheDead;
-        var reached = new List<(Combatant, CriterionAnswer)>();
 
-        foreach (var fighter in fighters)
+        for (var index = 0; index < fighters.Count; index++)
         {
+            var fighter = fighters[index];
             var named = fighter.Id == caster.Id && fighter.IsAlive && mask.NamesTheCaster;
 
             if (!named && (fighter.IsAlive ? !zone.Contains(fighter.Cell) : !withTheDead))
@@ -271,7 +295,17 @@ public sealed class CastRules
                 reached.Add((fighter, selected));
         }
 
-        return reached;
+        return zone;
+    }
+
+    /// <summary>Gets the cells the living fighters stand on, where zones stop and lines of sight are blocked.</summary>
+    /// <param name="fighters">Every fighter of the fight.</param>
+    /// <returns>Their cells.</returns>
+    public static CellSet OccupiedBy(IReadOnlyList<Combatant> fighters)
+    {
+        ArgumentNullException.ThrowIfNull(fighters);
+
+        return Occupied(fighters);
     }
 
     /// <summary>Gets an effect's target mask, parsed once.</summary>

@@ -39,19 +39,29 @@ public sealed class TargetMask
     private const string Conditions = "EeFfBbZzVvPpQq";
     private const string Alternatives = "FfBbZz";
 
-    private readonly Token[] _tokens;
+    private readonly Token[] _kinds;
+    private readonly Token[][] _groups;
+    private readonly bool _includesUnknown;
 
     /// <summary>Gets the mask's text, as the client wrote it.</summary>
     public string Text { get; }
 
     /// <summary>Gets whether the mask names the caster, <c>c</c> or <c>C</c>: it reaches the caster wherever it stands.</summary>
     /// <remarks>Measured (D195): 16 buffs of such masks went to a caster outside its effect's zone.</remarks>
-    public bool NamesTheCaster => _tokens.Any(token => token.Kind is TokenKind.Kind && token.Letter is 'c' or 'C');
+    public bool NamesTheCaster { get; }
 
     private TargetMask(string text, Token[] tokens)
     {
         Text = text;
-        _tokens = tokens;
+
+        // A search asks a mask for every fighter of every cast it weighs (D200): what it reads is grouped once here.
+        _kinds = [.. tokens.Where(token => token.Kind is TokenKind.Kind)];
+        _groups = [.. tokens.Select((token, index) => (Token: token, Index: index))
+            .Where(pair => pair.Token.Kind is not TokenKind.Kind)
+            .GroupBy(pair => Alternative(pair.Token, pair.Index))
+            .Select(group => group.Select(pair => pair.Token).ToArray())];
+        _includesUnknown = tokens.Any(token => token.Kind is TokenKind.UnknownKind);
+        NamesTheCaster = _kinds.Any(token => token.Letter is 'c' or 'C');
     }
 
     /// <summary>Reads a mask.</summary>
@@ -110,12 +120,14 @@ public sealed class TargetMask
             : (token.OnCaster, token.Letter, index);
     }
 
-    private static CriterionAnswer Any(IEnumerable<CriterionAnswer> answers)
+    private static CriterionAnswer Any(Token[] group, Combatant caster, Combatant target, IReadOnlyCollection<Combatant> fighters)
     {
         var result = CriterionAnswer.False;
 
-        foreach (var answer in answers)
+        foreach (var token in group)
         {
+            var answer = Condition(token, caster, target, fighters);
+
             if (answer is CriterionAnswer.True)
                 return answer;
 
@@ -159,7 +171,13 @@ public sealed class TargetMask
         if (fighter.MaxSummons is not { } most)
             return CriterionAnswer.Unknown;
 
-        var count = fighters.Count(other => other.IsAlive && other.SummonerId == fighter.Id && !other.IsStatic);
+        var count = 0;
+
+        foreach (var other in fighters)
+        {
+            if (other.IsAlive && other.SummonerId == fighter.Id && !other.IsStatic)
+                count++;
+        }
 
         return Of(full ? count >= most : count < most);
     }
@@ -210,11 +228,9 @@ public sealed class TargetMask
         if (answer is CriterionAnswer.False)
             return answer;
 
-        var conditions = _tokens.Select((token, index) => (Token: token, Index: index)).Where(pair => pair.Token.Kind is not TokenKind.Kind);
-
-        foreach (var group in conditions.GroupBy(pair => Alternative(pair.Token, pair.Index)))
+        foreach (var group in _groups)
         {
-            var met = Any(group.Select(pair => Condition(pair.Token, caster, target, fighters)));
+            var met = Any(group, caster, target, fighters);
 
             if (met is CriterionAnswer.False)
                 return met;
@@ -228,14 +244,20 @@ public sealed class TargetMask
 
     private CriterionAnswer Included(Combatant caster, Combatant target)
     {
-        var kinds = _tokens.Where(token => token.Kind is TokenKind.Kind).ToList();
-
         if (target.Id == caster.Id)
-            return Of(kinds.Any(token => token.Letter is 'a' or 'c' or 'C'));
+        {
+            foreach (var token in _kinds)
+            {
+                if (token.Letter is 'a' or 'c' or 'C')
+                    return CriterionAnswer.True;
+            }
+
+            return CriterionAnswer.False;
+        }
 
         var ally = target.Team == caster.Team;
 
-        foreach (var token in kinds)
+        foreach (var token in _kinds)
         {
             if (token.Letter is 'c' or 'C')
                 continue;
@@ -244,7 +266,7 @@ public sealed class TargetMask
                 return CriterionAnswer.True;
         }
 
-        return _tokens.Any(token => token.Kind is TokenKind.UnknownKind) ? CriterionAnswer.Unknown : CriterionAnswer.False;
+        return _includesUnknown ? CriterionAnswer.Unknown : CriterionAnswer.False;
     }
 
     /// <inheritdoc/>

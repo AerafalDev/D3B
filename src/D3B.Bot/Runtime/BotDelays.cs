@@ -45,6 +45,9 @@ public sealed record BotDelays
     /// <summary>The setting naming how long an activity lets pass between two of its steps.</summary>
     public const string BetweenStepsKey = "Delays:BetweenSteps";
 
+    /// <summary>The configuration's key for <see cref="FightAction"/>.</summary>
+    public const string FightActionKey = "Delays:FightAction";
+
     /// <summary>Gets the delays measured, D3B's own, which are each the least.</summary>
     public static BotDelays Measured { get; } = new();
 
@@ -61,6 +64,7 @@ public sealed record BotDelays
         BankFollow = TimeSpan.FromSeconds(10),
         Recovery = TimeSpan.FromMinutes(5),
         BetweenSteps = TimeSpan.FromSeconds(3),
+        FightAction = TimeSpan.FromSeconds(10),
     };
 
     /// <summary>Gets the client's display time: how long it takes to draw a map once the server placed the character on it, and to show a window once the server opened it (D77, D132).</summary>
@@ -98,6 +102,14 @@ public sealed record BotDelays
     /// <remarks>Measured through the app: steps sent one after another went faster than the client showed them; the client's display time, half a second, is the least.</remarks>
     public TimeSpan BetweenSteps { get; init; } = TimeSpan.FromMilliseconds(500);
 
+    /// <summary>Gets how long the fight's AI lets pass before each of its actions, its placement, its readiness and its turn's end, once the client showed what came before (D202).</summary>
+    /// <remarks>
+    /// Measured on the owner's 49 captured fights, the player's pace: 1.3 s halfway from a turn's start to its first action and
+    /// from an action shown to the next, 0.6 s before ending a turn, 1.2 s from the placement's cells to the first move. The owner,
+    /// who asked to see what the AI does, chose 0.9 s, the least: above the client's display time, below the player's median.
+    /// </remarks>
+    public TimeSpan FightAction { get; init; } = TimeSpan.FromMilliseconds(900);
+
     /// <summary>Reads the delays from a configuration, in seconds, the measured ones for what it does not set.</summary>
     /// <param name="configuration">The configuration.</param>
     /// <returns>The delays.</returns>
@@ -117,6 +129,7 @@ public sealed record BotDelays
             BankFollow = ReadDelay(configuration, BankFollowKey, Measured.BankFollow, Most.BankFollow),
             Recovery = ReadDelay(configuration, RecoveryKey, Measured.Recovery, Most.Recovery),
             BetweenSteps = ReadDelay(configuration, BetweenStepsKey, Measured.BetweenSteps, Most.BetweenSteps),
+            FightAction = ReadDelay(configuration, FightActionKey, Measured.FightAction, Most.FightAction),
         };
     }
 
@@ -135,6 +148,7 @@ public sealed record BotDelays
             [BankFollowKey] = Seconds(BankFollow, Measured.BankFollow),
             [RecoveryKey] = Seconds(Recovery, Measured.Recovery),
             [BetweenStepsKey] = Seconds(BetweenSteps, Measured.BetweenSteps),
+            [FightActionKey] = Seconds(FightAction, Measured.FightAction),
         };
     }
 

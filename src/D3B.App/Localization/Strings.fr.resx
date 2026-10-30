@@ -221,6 +221,12 @@
   <data name="Resume" xml:space="preserve">
     <value>Reprendre</value>
   </data>
+  <data name="FightsAlone" xml:space="preserve">
+    <value>L'IA combat</value>
+  </data>
+  <data name="FightsAloneHint" xml:space="preserve">
+    <value>Allumé, l'IA joue tous les combats du perso ; une activité qui combat, comme la récolte, joue les siens de toute façon. Agir en combat met le bot en pause.</value>
+  </data>
   <data name="StartFailed" xml:space="preserve">
     <value>Impossible de démarrer : {0}</value>
   </data>
@@ -1234,6 +1240,12 @@
   </data>
   <data name="DelayBetweenStepsHelp" xml:space="preserve">
     <value>Pause après chaque action, pour que le client l'affiche.</value>
+  </data>
+  <data name="DelayFightAction" xml:space="preserve">
+    <value>Entre deux actions en combat</value>
+  </data>
+  <data name="DelayFightActionHelp" xml:space="preserve">
+    <value>Pause avant chaque action de l'IA en combat, pour voir ce qu'elle fait.</value>
   </data>
   <data name="CollapseSidebar" xml:space="preserve">
     <value>Réduire la barre latérale</value>

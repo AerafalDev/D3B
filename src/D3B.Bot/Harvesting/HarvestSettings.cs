@@ -48,6 +48,9 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets what the activity does once a fight cut one of its steps (D144).</summary>
     public HarvestAfterFight AfterFight { get; set; } = HarvestAfterFight.Resume;
 
+    /// <summary>Gets or sets what the activity does once a fight the AI played is lost: resumed once the character regained <see cref="HealBelow"/> of its life, the owner's choice (D198).</summary>
+    public HarvestAfterFight AfterLostFight { get; set; } = HarvestAfterFight.Resume;
+
     /// <summary>Gets or sets whether to open each resource bag as soon as a harvest gives one, so that what it holds is banked with the rest (D148).</summary>
     public bool OpenBags { get; set; }
 

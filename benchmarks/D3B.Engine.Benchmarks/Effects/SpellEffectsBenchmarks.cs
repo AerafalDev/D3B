@@ -16,7 +16,8 @@ namespace D3B.Engine.Benchmarks.Effects;
 /// <c>D3B_PACK</c> names a pack, else the pack of the build installed where the launcher puts it. The caster stands on the
 /// walkable cell nearest the map's middle, four enemies around it with resistances; the level is spell 13858's first, a
 /// fire blow in a circle of 2 with its buffs and the spells it casts, cast on the first enemy. The AI of 9e foresees each
-/// cast it weighs.
+/// cast it weighs, into a list it reuses, its zones kept from one cast to the next (<see cref="ZoneCells"/>, D197); cold,
+/// every zone is reckoned again.
 /// </remarks>
 [MemoryDiagnoser]
 public class SpellEffectsBenchmarks
@@ -30,6 +31,7 @@ public class SpellEffectsBenchmarks
     private Combatant[] _fighters = [];
     private Combatant _caster = null!;
     private SpellLevel _level;
+    private readonly List<ForeseenEffect> _foreseen = [];
 
     private static string PackPath()
     {
@@ -76,6 +78,23 @@ public class SpellEffectsBenchmarks
     [Benchmark]
     public int ACastForeseen()
     {
+        return _effects.Foresee(_map, _fighters, _caster, _level, _fighters[1].Cell, critical: false).Count;
+    }
+
+    [Benchmark]
+    public int ACastForeseenIntoAList()
+    {
+        _foreseen.Clear();
+        _effects.Foresee(_map, _fighters, _caster, _level, _fighters[1].Cell, false, _foreseen);
+
+        return _foreseen.Count;
+    }
+
+    [Benchmark]
+    public int ACastForeseenCold()
+    {
+        ZoneCells.Clear();
+
         return _effects.Foresee(_map, _fighters, _caster, _level, _fighters[1].Cell, critical: false).Count;
     }
 }

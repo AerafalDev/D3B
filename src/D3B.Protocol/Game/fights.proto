@@ -99,6 +99,29 @@ message EntitiesDispositionEvent {
   repeated ActorDisposition dispositions = 2;
 }
 
+// Toggles an option of the character's team during the placement: the owner's clicks on the placement's buttons (D203).
+message FightOptionToggleRequest {
+  FightOption option = 1;
+}
+
+// An option of a team's fight, during the placement. Measured on the owner's clicks (D203), the lock then the eye: the lock
+// toggled 0, which the server kept from one fight to the next, the eye 2, which it answered with a text. The group's, which
+// the owner, in no group, could not set, and the other are not measured.
+enum FightOption {
+  FIGHT_OPTION_CLOSED = 0;
+  FIGHT_OPTION_VALUE_1 = 1;
+  FIGHT_OPTION_NO_SPECTATORS = 2;
+  FIGHT_OPTION_VALUE_3 = 3;
+}
+
+// A team's option is set, or no longer: the server's answer to each toggle, to every fighter of the fight.
+message FightOptionUpdateEvent {
+  option (d3b.readable.partial) = true;
+
+  bool enabled = 2;
+  FightOption option = 3;
+}
+
 // The character is ready to fight, or no longer: the fight starts once every character is.
 message FightReadyRequest {
   bool ready = 1;

@@ -221,6 +221,12 @@
   <data name="Resume" xml:space="preserve">
     <value>Resume</value>
   </data>
+  <data name="FightsAlone" xml:space="preserve">
+    <value>The AI fights</value>
+  </data>
+  <data name="FightsAloneHint" xml:space="preserve">
+    <value>On, the AI plays every fight of the character; an activity that fights, such as harvesting, plays its own anyway. Acting in a fight pauses the bot.</value>
+  </data>
   <data name="StartFailed" xml:space="preserve">
     <value>Could not start: {0}</value>
   </data>
@@ -1234,6 +1240,12 @@
   </data>
   <data name="DelayBetweenStepsHelp" xml:space="preserve">
     <value>Pause after each action, so that the client shows it.</value>
+  </data>
+  <data name="DelayFightAction" xml:space="preserve">
+    <value>Between two fight actions</value>
+  </data>
+  <data name="DelayFightActionHelp" xml:space="preserve">
+    <value>Pause before each action of the fight AI, so that you see what it does.</value>
   </data>
   <data name="CollapseSidebar" xml:space="preserve">
     <value>Collapse the sidebar</value>

@@ -98,6 +98,20 @@ internal sealed partial class BotViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ResumeCommand))]
     public partial bool IsPaused { get; private set; }
 
+    /// <summary>Gets or sets whether the AI plays every fight of the character, the switch on its card (D198).</summary>
+    public bool FightsAlone
+    {
+        get => Bot.FightsAlone;
+        set
+        {
+            if (Bot.FightsAlone == value)
+                return;
+
+            Bot.FightsAlone = value;
+            OnPropertyChanged();
+        }
+    }
+
     /// <summary>Gets the tone of what the bot is up to, for the dot on its avatar.</summary>
     [ObservableProperty]
     public partial Tone Tone { get; private set; }

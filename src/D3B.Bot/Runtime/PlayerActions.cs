@@ -19,6 +19,11 @@ namespace D3B.Bot.Runtime;
 /// the client sends its own only once the server ended the exchange, and the bot's loop sees that end first, since the
 /// relay shows the server's frames before the client gets them (D81).
 /// </para>
+/// <para>
+/// In a fight, the player's are the placement's move and readiness, a cast, a walk and the turn's end: the client sends by
+/// itself only its acknowledgements of the sequences and its readiness for the next turn (client.md), so that the player's
+/// hand in a fight the AI plays pauses the bot, and the fight is the player's (D202).
+/// </para>
 /// </remarks>
 public static class PlayerActions
 {
@@ -32,7 +37,8 @@ public static class PlayerActions
 
         return request is MapMovementRequest or MapMovementCancelRequest or MapChangeRequest or InteractiveUseRequest or NpcActionRequest
             or NpcDialogReplyRequest or ExchangeTransferFromInventoryRequest or ExchangeKamasRequest or TeleportRequest
-            or HavenBagEnterRequest
+            or HavenBagEnterRequest or FightPlacementPositionRequest or FightReadyRequest or GameActionFightCastRequest
+            or FightTurnFinishRequest
             || (request is DialogLeaveRequest && state.IsInDialog);
     }
 }

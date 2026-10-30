@@ -49,6 +49,7 @@ public sealed class CharacterEventsTests
                 Jobs = { new JobExperience { JobId = 2, Level = 111, Experience = 123_518, LevelFloor = 122_100, NextLevelFloor = 124_320 } },
             }),
             Server(new ZaapKnownListEvent { MapIds = { 191_105_026, 120_062_979 } }),
+            Server(new SpellsEvent { Spells = { new SpellItem { SpellId = 13_286, Grade = 2 }, new SpellItem { SpellId = 0, Grade = 1 } } }),
             Client(new ContextCreationRequest()),
             Server(new ContextDestroyEvent()),
             Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay }),
@@ -156,6 +157,11 @@ public sealed class CharacterEventsTests
                   ]
                 }
               },
+              "Spells": {
+                "0": 1,
+                "13286": 2
+              },
+              "TransformedSpells": {},
               "SubscriptionEnd": null
             }
             """,

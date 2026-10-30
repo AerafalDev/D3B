@@ -159,6 +159,11 @@ public static class CharacterEvents
             InventoryWeightEvent weight => state with { Weight = weight.Weight, MaxWeight = weight.MaxWeight },
             JobDescriptionEvent description => state with { Jobs = Described(state.Jobs, description) },
             JobExperiencesEvent experiences => state with { Jobs = Experienced(state.Jobs, experiences) },
+            SpellsEvent spells => state with
+            {
+                Spells = spells.Spells.GroupBy(spell => spell.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Grade),
+                TransformedSpells = spells.TransformedSpells.GroupBy(spell => spell.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Grade),
+            },
             _ => state,
         };
     }

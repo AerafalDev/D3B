@@ -219,7 +219,7 @@
     <value>After a fight</value>
   </data>
   <data name="AfterFightHelp" xml:space="preserve">
-    <value>D3B does not fight yet: you play the fight.</value>
+    <value>The AI plays the fight, then harvesting resumes, pauses or stops.</value>
   </data>
   <data name="AfterFightResume" xml:space="preserve">
     <value>Resume</value>
@@ -298,6 +298,24 @@
   </data>
   <data name="DoingOpenBag" xml:space="preserve">
     <value>Opening {0}</value>
+  </data>
+  <data name="AfterLostFight" xml:space="preserve">
+    <value>After a lost fight</value>
+  </data>
+  <data name="AfterLostFightHelp" xml:space="preserve">
+    <value>The character comes back to its save point with little life: on resuming, it first regains the share of life under which it heals, eating its food or waiting. Three fights lost in a row stop harvesting.</value>
+  </data>
+  <data name="AfterLostFightResume" xml:space="preserve">
+    <value>Resume once healed</value>
+  </data>
+  <data name="AfterLostFightPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="AfterLostFightStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="DoingRegain" xml:space="preserve">
+    <value>Regaining life after a lost fight: {0} of {1}</value>
   </data>
   <data name="DoingEat" xml:space="preserve">
     <value>Healing: eating {0}</value>
