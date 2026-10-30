@@ -110,6 +110,15 @@
   <data name="SubAreas" xml:space="preserve">
     <value>Sous-zones</value>
   </data>
+  <data name="SubAreasHelp" xml:space="preserve">
+    <value>Celles où vivent les monstres choisis d'abord.</value>
+  </data>
+  <data name="IsolatedMaps" xml:space="preserve">
+    <value>Cartes isolées</value>
+  </data>
+  <data name="IsolatedMapsHelp" xml:space="preserve">
+    <value>Joignables seulement par un long détour, parcourues en dernier.</value>
+  </data>
   <data name="ZaapSaving" xml:space="preserve">
     <value>Zaap s'il évite au moins</value>
   </data>

@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using D3B.Bot.Interactives;
+using D3B.Bot.Movement;
 using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.World;
@@ -31,9 +32,6 @@ namespace D3B.Bot.Harvesting;
 /// </remarks>
 public sealed class HarvestZone
 {
-    /// <summary>The most changes of maps a map off its sub-area's main part may lie from it, and still be gone through without asking (D149).</summary>
-    public const int MostDetour = 4;
-
     /// <summary>Gets the skills to use, by id: those gathering a resource asked for, <c>Base</c>'s included.</summary>
     public FrozenDictionary<int, HarvestTarget> Targets { get; }
 
@@ -55,7 +53,7 @@ public sealed class HarvestZone
     /// <summary>Gets the graphics of each map's interactive elements, as the pack draws them, each once.</summary>
     public FrozenDictionary<long, ImmutableArray<int>> Graphics { get; }
 
-    /// <summary>Gets the zone's maps reachable from their sub-area's main part only by leaving it, more than <see cref="MostDetour"/> changes away, teleports aside (D149).</summary>
+    /// <summary>Gets the zone's maps reachable from their sub-area's main part only by leaving it, more than <see cref="IsolatedMaps.MostDetour"/> changes away, teleports aside (D149).</summary>
     public FrozenSet<long> Isolated { get; }
 
     /// <summary>Gets whether a tour goes through the isolated maps too, last, rather than leave them out.</summary>
@@ -123,7 +121,7 @@ public sealed class HarvestZone
             maps.ToFrozenDictionary(),
             insides.ToFrozenSet(),
             graphics.ToFrozenDictionary(),
-            IsolatedOf(graph, maps),
+            IsolatedMaps.Of(graph, maps),
             settings.IsolatedMaps);
     }
 
@@ -221,123 +219,6 @@ public sealed class HarvestZone
         }
 
         return subAreas;
-    }
-
-    // Measured on the pack of 3.7.12.12: 67 of the 186 sub-areas listing resources fall apart through their own maps, and of
-    // the 588 maps off their main part, 416 are reached only by a teleport or a door's criterion, 128 by 5 to 35 changes.
-    private static FrozenSet<long> IsolatedOf(WorldGraph graph, Dictionary<long, int> maps)
-    {
-        var vertices = graph.Vertices.Span;
-        var groups = new Dictionary<int, List<int>>();
-
-        for (var vertex = 0; vertex < vertices.Length; vertex++)
-        {
-            if (!maps.TryGetValue(vertices[vertex].MapId, out var group))
-                continue;
-
-            if (!groups.TryGetValue(group, out var members))
-                groups[group] = members = [];
-
-            members.Add(vertex);
-        }
-
-        var isolated = new HashSet<long>();
-
-        foreach (var members in groups.Values)
-            isolated.UnionWith(IsolatedIn(graph, members));
-
-        return isolated.ToFrozenSet();
-    }
-
-    private static HashSet<long> IsolatedIn(WorldGraph graph, List<int> members)
-    {
-        var vertices = graph.Vertices.Span;
-        var index = new Dictionary<int, int>(members.Count);
-
-        for (var i = 0; i < members.Count; i++)
-            index[members[i]] = i;
-
-        var parent = Enumerable.Range(0, members.Count).ToArray();
-
-        int Find(int i)
-        {
-            while (parent[i] != i)
-            {
-                parent[i] = parent[parent[i]];
-                i = parent[i];
-            }
-
-            return i;
-        }
-
-        foreach (var vertex in members)
-        {
-            foreach (var edge in graph.EdgesFrom(vertex))
-            {
-                if (index.TryGetValue(edge.To, out var to))
-                    parent[Find(index[vertex])] = Find(to);
-            }
-        }
-
-        // The main part holds the most maps, the lowest map first among equals, so that the same pack gives the same part.
-        var parts = new Dictionary<int, HashSet<long>>();
-
-        for (var i = 0; i < members.Count; i++)
-        {
-            var root = Find(i);
-
-            if (!parts.TryGetValue(root, out var partMaps))
-                parts[root] = partMaps = [];
-
-            partMaps.Add(vertices[members[i]].MapId);
-        }
-
-        if (parts.Count < 2)
-            return [];
-
-        var main = parts.OrderByDescending(part => part.Value.Count).ThenBy(part => part.Value.Min()).First();
-        var distance = new Dictionary<int, int>();
-        var queue = new Queue<int>();
-
-        for (var i = 0; i < members.Count; i++)
-        {
-            if (Find(i) == main.Key)
-            {
-                distance[members[i]] = 0;
-                queue.Enqueue(members[i]);
-            }
-        }
-
-        while (queue.Count > 0)
-        {
-            var vertex = queue.Dequeue();
-
-            if (distance[vertex] >= MostDetour)
-                continue;
-
-            foreach (var edge in graph.EdgesFrom(vertex))
-            {
-                if (distance.TryAdd(edge.To, distance[vertex] + 1))
-                    queue.Enqueue(edge.To);
-            }
-        }
-
-        var reached = new HashSet<long>();
-        var off = new HashSet<long>();
-
-        foreach (var vertex in members)
-        {
-            var map = vertices[vertex].MapId;
-
-            if (distance.ContainsKey(vertex))
-                reached.Add(map);
-            else if (!main.Value.Contains(map))
-                off.Add(map);
-        }
-
-        off.ExceptWith(reached);
-
-        return off;
     }
 
     /// <summary>Foretells what a map of the zone holds, from what the host learned of its elements' graphics (D138).</summary>

@@ -318,6 +318,37 @@ public sealed class GameReferences
         return [.. found.OrderByDescending(subArea => subArea.Resources.Count).ThenBy(subArea => subArea.SubArea.Level).ThenBy(subArea => subArea.SubArea.Id)];
     }
 
+    /// <summary>Gets the sub-areas where monsters live, the most of them first, then the lowest (D245).</summary>
+    /// <param name="monsters">The monsters asked for, in order.</param>
+    /// <param name="within">The area to seek them in alone, if any.</param>
+    /// <returns>Each sub-area the client lists at least one of them in (D238), with its maps and those it holds.</returns>
+    public IReadOnlyList<SubAreaMonsters> SubAreasLiving(IReadOnlyList<int> monsters, int? within = null)
+    {
+        ArgumentNullException.ThrowIfNull(monsters);
+
+        var found = new List<SubAreaMonsters>();
+
+        foreach (var subArea in _atlas.SubAreas.Span)
+        {
+            if (within is { } area && subArea.AreaId != area)
+                continue;
+
+            var living = _atlas.MonstersOf(subArea);
+            var held = new List<int>();
+
+            foreach (var monster in monsters)
+            {
+                if (living.Contains(monster) && !held.Contains(monster))
+                    held.Add(monster);
+            }
+
+            if (held.Count > 0)
+                found.Add(new SubAreaMonsters(new GameReference(subArea.Id, subArea.NameId, subArea.Level), _maps.Value[subArea.Id].Count(), held));
+        }
+
+        return [.. found.OrderByDescending(subArea => subArea.Monsters.Count).ThenBy(subArea => subArea.SubArea.Level).ThenBy(subArea => subArea.SubArea.Id)];
+    }
+
     /// <summary>Tells whether a value of the game is within another: a sub-area within an area, a resource within a profession.</summary>
     /// <param name="kind"><see cref="SettingKind.SubArea"/> or <see cref="SettingKind.Resource"/>.</param>
     /// <param name="id">The value's id.</param>

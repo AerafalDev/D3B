@@ -110,6 +110,15 @@
   <data name="SubAreas" xml:space="preserve">
     <value>Sub-areas</value>
   </data>
+  <data name="SubAreasHelp" xml:space="preserve">
+    <value>Those where the monsters chosen live come first.</value>
+  </data>
+  <data name="IsolatedMaps" xml:space="preserve">
+    <value>Isolated maps</value>
+  </data>
+  <data name="IsolatedMapsHelp" xml:space="preserve">
+    <value>Reached only far round, gone through last.</value>
+  </data>
   <data name="ZaapSaving" xml:space="preserve">
     <value>Zaap when it saves at least</value>
   </data>

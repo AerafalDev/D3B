@@ -545,6 +545,35 @@ public sealed class ActivitySettingsTests
     }
 
     [Fact]
+    public void SubAreasMayBeSuggestedByMonstersAndNoneWhileTheyAreHidden()
+    {
+        var game = TestReferences.Game();
+        var declared = Register(settings =>
+        {
+            settings.Monsters(s => s.Resources, Text("Monsters")).VisibleWhen(s => s.UseBank);
+            settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).SuggestedBy(s => s.Resources);
+        }).Settings;
+        var byResources = Register(settings =>
+        {
+            settings.Resources(s => s.Resources, Text("Resources"));
+            settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).SuggestedBy(s => s.Resources);
+        }).Settings;
+
+        Assert.Same(declared.All[0], declared.All[1].SuggestedBy);
+        Assert.Equal(SettingKind.Monster, declared.All[1].SuggestedKind);
+        Assert.Equal(SettingKind.Resource, byResources.All[1].SuggestedKind);
+        Assert.Equal([TestReferences.Larva], declared.All[1].Suggestions(new TestSettings { Resources = [TestReferences.Larva] }, game));
+
+        // Hidden, as when the activity fights the groups at the character's level: no monster stands for every one.
+        Assert.Empty(declared.All[1].Suggestions(new TestSettings { UseBank = false, Resources = [TestReferences.Larva] }, game));
+        Assert.Throws<InvalidOperationException>(() => Register(settings =>
+        {
+            settings.Items(s => s.Resources, Text("Items"));
+            settings.SubAreas(s => s.SubAreas, Text("Sub-areas")).SuggestedBy(s => s.Resources);
+        }));
+    }
+
+    [Fact]
     public void SubAreasMayBeSuggestedByResourcesTheActivityReckonsFromItsSettings()
     {
         var game = TestReferences.Game();

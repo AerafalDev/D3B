@@ -23,8 +23,8 @@ namespace D3B.Bot.Fighting;
 /// onto the cell of the nearest group the settings allow and the AI judges it beats, and attacks it, as the client does,
 /// measured (9g): the attack from the group's own cell, which a group leaves by walking 1 to 4 cells, so that the walk is
 /// made again; a group the server answers nothing for is left for the rest of the visit. A map with no such group is gone
-/// through, and the step travels to the nearest map of the zone still to go through; once every map was, the tour starts
-/// again, the groups having come back.
+/// through, and the step travels to the nearest map of the zone still to go through, isolated maps last when the settings
+/// take them (D149, D245); once every map was, the tour starts again, the groups having come back.
 /// </para>
 /// <para>
 /// A fight is the activity's own: the AI plays it (<see cref="BotActivity.FightsItsFights"/>), then the run answers it. A
@@ -365,9 +365,13 @@ public sealed class FightActivity : BotActivity
 
         var inZone = context.State.MapId is { } current && ground.Maps.ContainsKey(current);
 
+        // Isolated maps last, once the others were gone through (D149).
+        var near = remaining.Where(map => !ground.Isolated.Contains(map)).ToHashSet();
+        var sought = near.Count > 0 ? near : remaining;
+
         Publish(GameText.Of(FightTexts.Text(inZone ? "DoingTravel" : "DoingReturn")));
 
-        switch (await context.TravelAsync(remaining, cancellationToken).ConfigureAwait(false))
+        switch (await context.TravelAsync(sought, cancellationToken).ConfigureAwait(false))
         {
             case TravelOutcome.Arrived:
                 _failedJourneys = 0;
@@ -378,7 +382,7 @@ public sealed class FightActivity : BotActivity
             default:
                 if (++_failedJourneys >= MostFailedJourneys)
                 {
-                    foreach (var map in remaining)
+                    foreach (var map in sought)
                         _unreachable.Add(map);
 
                     _failedJourneys = 0;

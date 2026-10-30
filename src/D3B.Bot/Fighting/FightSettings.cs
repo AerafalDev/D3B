@@ -31,6 +31,9 @@ public sealed class FightSettings
     /// <summary>Gets or sets the sub-areas to hunt in, of any area when no area is chosen.</summary>
     public IReadOnlyList<int> SubAreas { get; set; } = [];
 
+    /// <summary>Gets or sets whether a tour goes through the isolated maps too, last, rather than leave them out (D149, D245).</summary>
+    public bool IsolatedMaps { get; set; }
+
     /// <summary>Gets or sets how many map changes a zaap must save to be taken (D167).</summary>
     public int ZaapSaving { get; set; } = 5;
 

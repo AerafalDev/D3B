@@ -5728,6 +5728,29 @@ and D240, D235 on the fights out of an activity, and D236 and D241 where they na
   - The strategies kept, hidden, "Standard" for all: code that nobody uses, to maintain.
   - The spell setting kept for plugins: none asks for it, and its tests were the strategy's.
 
+## D245: What D241 left, made: sub-areas suggested by the monsters, isolated maps, and the place chosen on maps shown
+
+*2026-10-30, step 9, session 9g2, the owner's ask (D243), measured by the lead on the pack of 3.7.12.12 with tools never
+committed that print counts. Builds D149, D166, D236, D238, D241.*
+
+- **Suggested by the monsters**: a sub-area setting may be suggested by a monster setting as by a resource setting
+  (`SettingBuilder.SuggestedBy`, `SettingDefinition.SuggestedKind`). The fighting activity's sub-areas offer first those
+  where the monsters chosen live, the most of them first, then the lowest, each with its level, its maps and its
+  monsters (`GameReferences.SubAreasLiving`, `SubAreaMonsters`); with the monsters hidden, "Automatic", none.
+- **Isolated maps**: harvesting's reckoning, shared (`IsolatedMaps`, in `D3B.Bot.Movement`). The fighting activity's
+  ground leaves out the maps reached from their sub-area's main part only far round, unless its "Isolated maps", off by
+  default as harvesting's, takes them, travelled to last. Measured: of the 311 sub-areas listing monsters with maps the
+  world graph reaches, 9,791 maps, 83 hold isolated maps, 660 in all, 1 to 80 a sub-area and 4 halfway.
+- **The place chosen for the character, measured**: their monsters' worth alone chose a sub-area of one map shown on no
+  world map at level 10, and one of 13 maps on none, a dungeon's likely, at level 150. The activity now chooses among the
+  sub-areas holding at least 10 maps the world graph reaches on a world map (`HuntingGround.LeastMapsShown`), else the
+  richest of the others: each level from 5 to 200 gets one of 10 to 217 maps, levels 1 to 4 the only one at theirs, 9
+  maps; a basic account's characters the same sub-area of 121 maps from level 55.
+- **Rejected.**
+  - A sub-area's worth weighed by its maps: the groups a map holds are the server's, which no pack gives; the floor
+    leaves the choice D166's.
+  - The isolated maps taken by default: the harvest leaves them out, measured far round (D149).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

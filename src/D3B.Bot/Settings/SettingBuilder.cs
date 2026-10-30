@@ -78,15 +78,15 @@ public sealed class SettingBuilder<TSettings>
         return this;
     }
 
-    /// <summary>Offers first, for a sub-area setting, the sub-areas where resources of another setting grow (D127).</summary>
-    /// <param name="resources">The resources' setting, declared before, such as <c>s =&gt; s.Resources</c>.</param>
+    /// <summary>Offers first, for a sub-area setting, the sub-areas where resources of another setting grow, or its monsters live (D127, D245).</summary>
+    /// <param name="values">The resources' or monsters' setting, declared before, such as <c>s =&gt; s.Resources</c>.</param>
     /// <returns>This builder.</returns>
-    /// <exception cref="InvalidOperationException">The setting holds no sub-area, or the other is not declared before, or holds no resource.</exception>
-    public SettingBuilder<TSettings> SuggestedBy(Expression<Func<TSettings, IReadOnlyList<int>>> resources)
+    /// <exception cref="InvalidOperationException">The setting holds no sub-area, or the other is not declared before, or holds neither resources nor monsters.</exception>
+    public SettingBuilder<TSettings> SuggestedBy(Expression<Func<TSettings, IReadOnlyList<int>>> values)
     {
-        ArgumentNullException.ThrowIfNull(resources);
+        ArgumentNullException.ThrowIfNull(values);
 
-        _setting.SetSuggestedBy(_owner.Find(resources));
+        _setting.SetSuggestedBy(_owner.Find(values));
 
         return this;
     }

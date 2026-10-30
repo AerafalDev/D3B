@@ -44,7 +44,10 @@ public sealed class FightingModule : IModule
             .VisibleWhen(s => s.Place is FightPlace.Chosen);
         settings.SubAreas(s => s.SubAreas, FightTexts.Text("SubAreas"))
             .Within(s => s.Area)
+            .SuggestedBy(s => s.Monsters)
+            .Help(FightTexts.Text("SubAreasHelp"))
             .VisibleWhen(s => s.Place is FightPlace.Chosen);
+        settings.Flag(s => s.IsolatedMaps, FightTexts.Text("IsolatedMaps")).Help(FightTexts.Text("IsolatedMapsHelp"));
         settings.Number(s => s.ZaapSaving, FightTexts.Text("ZaapSaving"), 1, 30).Unit(FightTexts.Text("ZaapSavingUnit"));
 
         settings.Section(FightTexts.Text("SectionUpkeep"));

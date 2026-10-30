@@ -53,6 +53,19 @@ public sealed class GameReferencesTests
     }
 
     [Fact]
+    public void TheSubAreasWhereMonstersLiveComeTheMostFirstThenTheLowest()
+    {
+        var living = _game.SubAreasLiving([TestReferences.Larva, TestReferences.Tofu, TestReferences.Larva]);
+
+        Assert.Equal([TestReferences.Forest, TestReferences.Hills], living.Select(subArea => subArea.SubArea.Id));
+        Assert.Equal([TestReferences.Larva, TestReferences.Tofu], living[0].Monsters);
+        Assert.Equal([2, 1], living.Select(subArea => subArea.Maps));
+        Assert.Equal([TestReferences.Hills], _game.SubAreasLiving([TestReferences.Larva], TestReferences.Amakna).Skip(1).Select(subArea => subArea.SubArea.Id));
+        Assert.Empty(_game.SubAreasLiving([TestReferences.Larva], TestReferences.Astrub));
+        Assert.Empty(_game.SubAreasLiving([]));
+    }
+
+    [Fact]
     public void AResourcesSourceIsTheProfessionThatGathersItAtItsLowestLevel()
     {
         Assert.True(_game.TryGetSource(TestReferences.Chestnut, out var source));
