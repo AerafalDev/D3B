@@ -21,6 +21,8 @@ namespace D3B.Scripts.Fights;
 /// </remarks>
 internal sealed class CastBench
 {
+    private const int CriticalHits = 18;
+
     private readonly GameTables _tables;
     private readonly GameMaps _maps;
     private readonly CastRules _rules;
@@ -150,6 +152,21 @@ internal sealed class CastBench
                     _details?.WriteLine($"refused {refusal}: spell {spell.SpellId} level {spell.LevelId}, states {string.Join(",", combatant.States)}");
 
                 Tally.Count($"casts chosen: {(action.Cast.Critical is FightCastCritical.Critical ? "critical" : "normal")}");
+
+                // The chance of a critical hit (D205): the level's, plus the caster's characteristic 18, by bands of ten.
+                if (level.CriticalHitProbability > 0)
+                {
+                    var chance = Math.Clamp(level.CriticalHitProbability + combatant.Characteristic(CriticalHits), 0, 100);
+                    var band = Math.Min(chance / 10 * 10, 90);
+
+                    Tally.Count($"critical hits by the chance foreseen: {band,2}-{band + 9}%, casts");
+                    Tally.Count($"critical hits by the chance foreseen: {band,2}-{band + 9}%, critical", action.Cast.Critical is FightCastCritical.Critical ? 1 : 0);
+                    Tally.Count($"critical hits by the chance foreseen: {band,2}-{band + 9}%, chance foreseen summed", chance);
+                    Tally.Count($"critical hits by the caster's characteristic 18: {Math.Sign(combatant.Characteristic(CriticalHits)),2}, casts");
+                    Tally.Count($"critical hits by the caster's characteristic 18: {Math.Sign(combatant.Characteristic(CriticalHits)),2}, critical", action.Cast.Critical is FightCastCritical.Critical ? 1 : 0);
+                    Tally.Count($"critical hits by the caster's characteristic 18: {Math.Sign(combatant.Characteristic(CriticalHits)),2}, the level's chance summed", level.CriticalHitProbability);
+                    Tally.Count($"critical hits by the caster's characteristic 18: {Math.Sign(combatant.Characteristic(CriticalHits)),2}, the characteristic summed", combatant.Characteristic(CriticalHits));
+                }
                 open.Add(new Cast
                 {
                     Caster = combatant,

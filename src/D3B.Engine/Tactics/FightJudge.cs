@@ -17,17 +17,18 @@ namespace D3B.Engine.Tactics;
 /// playing's counted <see cref="TacticWeights.Survival"/> times.</description></item>
 /// <item><description>An enemy's life, each point weighed by how hard it hits, so that the AI turns on the dangerous ones; its
 /// being alive, one and a half of its best turn's damage, so that the AI finishes a fighter off.</description></item>
-/// <item><description>The threat: what each living enemy may take next from the ally it hits hardest, if it reaches it with its
-/// MP and its spells' range, lowering that ally's worth; a blow that would kill counts its death too.</description></item>
-/// <item><description>The approach: what the fighter playing may take off an enemy next turn from where it stands, its life
-/// and, were it killed, its being alive, never more than killing it now would; and a little of it for each cell it comes
-/// nearer an enemy it cannot reach yet.</description></item>
+/// <item><description>The threat: what each living enemy may take next from the ally it hits hardest, with the spells that
+/// land on it, lowering that ally's worth; a blow that would kill counts its death too.</description></item>
+/// <item><description>The approach: what the fighter playing may take off an enemy next turn from where it stands, with the
+/// spells that land on it, its life and, were it killed, its being alive, never more than killing it now would; and a
+/// little of it for each cell it comes nearer an enemy none lands on yet.</description></item>
 /// </list>
 /// <para>
 /// A fighter's best turn's damage on another comes from its spells as the knowledge lists them, each effect that damages at
-/// the middle of its range through the formulas (<see cref="EffectFormulas"/>), the AP shared among them at their limits a
-/// turn; reckoned once, from where the fight starts, for every number of AP. Line of sight and the cells between are left
-/// to the search, which casts.
+/// the middle of its range through the formulas (<see cref="EffectFormulas"/>), a critical hit weighed by its chance
+/// (D205), the AP shared among them at their limits a turn; reckoned once, from where the fight starts, for every number of
+/// AP. A spell lands on a fighter when one of the cells its caster walks to with its MP has the fighter within the level's
+/// range and, for a level that tests it, in its line of sight (D207).
 /// </para>
 /// </remarks>
 public sealed class FightJudge
@@ -37,11 +38,20 @@ public sealed class FightJudge
     private const double AliveShare = 0.5;
     private const double KillTurns = 1.5;
 
+    // Which of a fighter's damaging spells land is told by the bits of a number.
+    private const int Landings = 64;
+
     private readonly Combatant[] _fighters;
     private readonly long _actorId;
     private readonly int _team;
     private readonly TacticWeights _weights;
+    private readonly FightMoves _moves;
+    private readonly SpellLevel[][] _levels;
+    private readonly double[][][] _levelDamage;
     private readonly double[][][] _damage;
+    private readonly Dictionary<(int One, int Other, ulong Landing), double[]> _landingTurns = [];
+    private readonly Dictionary<(long Id, int Cell, int MovementPoints), int[]> _cells = [];
+    private readonly Dictionary<(int One, long Target, int From, int To, int MovementPoints, int Actor), ulong> _landing = [];
     private readonly int[] _range;
     private readonly bool[] _mobile;
     private readonly double[] _hardest;
@@ -56,7 +66,8 @@ public sealed class FightJudge
     /// <param name="spells">The pack's spells.</param>
     /// <param name="actions">What each effect does.</param>
     /// <param name="rules">The rules of a cast, for the effects' masks.</param>
-    public FightJudge(ImaginedFight start, FightKnowledge knowledge, TacticWeights weights, SpellCatalog spells, EffectActions actions, CastRules rules)
+    /// <param name="moves">How fighters walk, for the cells they cast from.</param>
+    public FightJudge(ImaginedFight start, FightKnowledge knowledge, TacticWeights weights, SpellCatalog spells, EffectActions actions, CastRules rules, FightMoves moves)
     {
         ArgumentNullException.ThrowIfNull(start);
         ArgumentNullException.ThrowIfNull(knowledge);
@@ -64,11 +75,15 @@ public sealed class FightJudge
         ArgumentNullException.ThrowIfNull(spells);
         ArgumentNullException.ThrowIfNull(actions);
         ArgumentNullException.ThrowIfNull(rules);
+        ArgumentNullException.ThrowIfNull(moves);
 
         _fighters = [.. start.Fighters];
         _actorId = start.ActorId;
         _team = start.Actor.Team;
         _weights = weights;
+        _moves = moves;
+        _levels = new SpellLevel[_fighters.Length][];
+        _levelDamage = new double[_fighters.Length][][];
         _damage = new double[_fighters.Length][][];
         _range = new int[_fighters.Length];
         _mobile = new bool[_fighters.Length];
@@ -82,18 +97,29 @@ public sealed class FightJudge
         for (var one = 0; one < _fighters.Length; one++)
         {
             var fighter = _fighters[one];
-            var levels = knowledge.SpellsOf(fighter.Id);
+            var levels = knowledge.SpellsOf(fighter.Id).Where(level => Damages(spells, actions, level)).Select(level => CastRules.Modified(level, fighter)).Take(Landings).ToArray();
 
+            _levels[one] = levels;
+            _levelDamage[one] = new double[_fighters.Length][];
             _damage[one] = new double[_fighters.Length][];
             _mobile[one] = !fighter.IsStatic && (fighter.MonsterId is null || (fighter.MonsterProperties & Data.Monsters.MonsterProperties.CanMove) is not 0);
-            _range[one] = Range(spells, actions, levels, fighter);
+            _range[one] = Range(levels, fighter);
 
             for (var other = 0; other < _fighters.Length; other++)
             {
-                _damage[one][other] = fighter.Team == _fighters[other].Team ? [] : BestTurns(spells, actions, rules, levels, fighter, _fighters[other]);
+                if (fighter.Team == _fighters[other].Team)
+                {
+                    _levelDamage[one][other] = [];
+                    _damage[one][other] = [];
 
-                if (_damage[one][other].Length > 0)
-                    _hardest[one] = Math.Max(_hardest[one], _damage[one][other][^1]);
+                    continue;
+                }
+
+                Combatant[] pair = [fighter, _fighters[other]];
+
+                _levelDamage[one][other] = [.. levels.Select(level => Damage(spells, actions, rules, level, fighter, _fighters[other], pair))];
+                _damage[one][other] = BestTurns(levels, _levelDamage[one][other], All(levels.Length));
+                _hardest[one] = Math.Max(_hardest[one], _damage[one][other][^1]);
             }
         }
 
@@ -114,32 +140,24 @@ public sealed class FightJudge
         return fighter.Life + Math.Max(0, fighter.Characteristic(FightCharacteristic.Shield));
     }
 
-    private static double Reaching(int distance, int reach)
-    {
-        // Within reach it lands; a cell or two beyond, the fighter may come closer meanwhile.
-        return distance <= reach ? 1 : distance == reach + 1 ? 0.5 : distance == reach + 2 ? 0.25 : 0;
-    }
-
     private static double Nearing(int distance, int reach)
     {
-        // Beyond its reach, each cell nearer still counts a little, so that the fighter playing comes to the enemies it cannot
-        // strike yet instead of waiting where it stands.
-        return distance <= reach ? 1 : 0.5 * Math.Pow(0.85, distance - reach - 1);
+        // Where no spell lands yet, each cell nearer still counts a little, so that the fighter playing comes to the enemies
+        // it cannot strike yet instead of waiting where it stands.
+        return 0.5 * Math.Pow(0.85, Math.Max(0, distance - reach - 1));
     }
 
-    private static int Range(SpellCatalog spells, EffectActions actions, IReadOnlyList<SpellLevel> levels, Combatant fighter)
+    private static ulong All(int count)
+    {
+        return count >= Landings ? ulong.MaxValue : (1UL << count) - 1;
+    }
+
+    private static int Range(SpellLevel[] levels, Combatant fighter)
     {
         var range = 0;
 
         foreach (var level in levels)
-        {
-            if (!Damages(spells, actions, level))
-                continue;
-
-            var most = level.Range + ((level.Properties & SpellLevelProperties.RangeCanBeBoosted) is not 0 ? Math.Max(0, fighter.RangeBonus) : 0);
-
-            range = Math.Max(range, most);
-        }
+            range = Math.Max(range, SpellRange.MaxRange(level, Math.Max(0, fighter.RangeBonus)));
 
         return range;
     }
@@ -155,18 +173,18 @@ public sealed class FightJudge
         return false;
     }
 
-    private static double[] BestTurns(SpellCatalog spells, EffectActions actions, CastRules rules, IReadOnlyList<SpellLevel> levels, Combatant caster, Combatant target)
+    private static double[] BestTurns(SpellLevel[] levels, double[] damages, ulong landing)
     {
-        // The best damage for each number of AP, each spell cast at most as its limits a turn and a target allow.
+        // The best damage for each number of AP, each spell that lands cast at most as its limits a turn and a target allow.
         var best = new double[MostPoints + 1];
-        Combatant[] pair = [caster, target];
 
-        foreach (var level in levels)
+        for (var index = 0; index < levels.Length; index++)
         {
-            var damage = Damage(spells, actions, rules, level, caster, target, pair);
+            var level = levels[index];
+            var damage = damages[index];
             var cost = Math.Max(1, (int)level.ApCost);
 
-            if (damage <= 0)
+            if (damage <= 0 || (landing & (1UL << index)) is 0)
                 continue;
 
             var casts = MostCasts;
@@ -189,9 +207,23 @@ public sealed class FightJudge
 
     private static double Damage(SpellCatalog spells, EffectActions actions, CastRules rules, in SpellLevel level, Combatant caster, Combatant target, Combatant[] pair)
     {
+        // A critical hit weighed by its chance (D205), its level's critical effects if it has some.
+        var chance = EffectFormulas.CriticalChance(level, caster);
+        var normal = Damage(spells.EffectsOf(level), actions, rules, level, caster, target, pair, critical: false);
+
+        if (chance <= 0)
+            return normal;
+
+        var critical = Damage(level.CriticalEffectCount > 0 ? spells.CriticalEffectsOf(level) : spells.EffectsOf(level), actions, rules, level, caster, target, pair, critical: true);
+
+        return ((1 - chance) * normal) + (chance * critical);
+    }
+
+    private static double Damage(ReadOnlySpan<SpellEffect> effects, EffectActions actions, CastRules rules, in SpellLevel level, Combatant caster, Combatant target, Combatant[] pair, bool critical)
+    {
         var total = 0.0;
 
-        foreach (var effect in spells.EffectsOf(level))
+        foreach (var effect in effects)
         {
             var action = actions.Of(effect.EffectId);
 
@@ -207,7 +239,7 @@ public sealed class FightJudge
             var element = EffectFormulas.Resolve(action.Element, caster);
             var value = action.Kind is EffectKind.FixedDamage
                 ? roll
-                : EffectFormulas.Received(EffectFormulas.Dealt(roll, caster, element, critical: false), caster, target, element, melee: level.Range <= 1);
+                : EffectFormulas.Received(EffectFormulas.Dealt(roll, caster, element, critical), caster, target, element, melee: level.Range <= 1);
             var middle = (value.Min + value.Max) / 2.0;
 
             total += selected is CriterionAnswer.True ? middle : middle / 2;
@@ -246,6 +278,63 @@ public sealed class FightJudge
     public double JudgeReplied(ImaginedFight fight)
     {
         return Judge(fight, threatened: false);
+    }
+
+    /// <summary>Gets the life the threat reckons the enemies may take from a fighter of the side playing before it plays again.</summary>
+    /// <param name="fight">The fight, as the fighter playing's turn ends.</param>
+    /// <param name="allyId">The fighter.</param>
+    /// <returns>The life, unweighed; 0 for a fighter of the other side or not in the fight.</returns>
+    /// <remarks>What the bench sets against the life the fighter lost before its next turn (D204).</remarks>
+    public double Threat(ImaginedFight fight, long allyId)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+
+        Span<double> feared = stackalloc double[fight.Fighters.Length];
+
+        foreach (var fighter in fight.Fighters)
+        {
+            if (fighter.IsAlive && fighter.Team != _team)
+                Threaten(fight, fighter, IndexOf(fighter.Id), feared);
+        }
+
+        for (var index = 0; index < fight.Fighters.Length; index++)
+        {
+            if (fight.Fighters[index].Id == allyId)
+                return feared[index];
+        }
+
+        return 0;
+    }
+
+    /// <summary>Gets the damage the approach reckons the fighter playing may deal next turn from where it stands, on the enemy it would hurt most.</summary>
+    /// <param name="fight">The fight, as the fighter playing's turn ends.</param>
+    /// <returns>The damage, unweighed, never more than the enemy's life.</returns>
+    /// <remarks>What the bench sets against the damage the fighter dealt in its next turn (D204).</remarks>
+    public double NextTurnDamage(ImaginedFight fight)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+
+        var actor = fight.Find(_actorId);
+        var known = IndexOf(_actorId);
+
+        if (actor is not { IsAlive: true } || actor.Cell is Combatant.NoCell || known < 0)
+            return 0;
+
+        var best = 0.0;
+
+        foreach (var enemy in fight.Fighters)
+        {
+            var target = IndexOf(enemy.Id);
+
+            if (!enemy.IsAlive || enemy.Team == _team || enemy.Cell is Combatant.NoCell || target < 0 || _damage[known][target].Length is 0)
+                continue;
+
+            var (damage, share) = NextTurn(fight, actor, known, enemy, target);
+
+            best = Math.Max(best, Math.Min(damage, Effective(enemy)) * share);
+        }
+
+        return best;
     }
 
     /// <summary>Gets what the fighter playing's side is worth alone: its fighters' life and their being alive, as <see cref="Judge(ImaginedFight)"/> counts them.</summary>
@@ -331,14 +420,13 @@ public sealed class FightJudge
 
     private void Threaten(ImaginedFight fight, Combatant enemy, int known, Span<double> feared)
     {
-        if (known < 0 || enemy.Cell is Combatant.NoCell)
+        if (known < 0 || enemy.Cell is Combatant.NoCell || _levels[known].Length is 0)
             return;
 
-        var reach = _range[known] + (_mobile[known] ? Math.Max(0, enemy.MovementPoints) : 0);
         var best = 0.0;
         var hit = -1;
 
-        // An enemy hits one fighter: the one it hurts most of those it reaches.
+        // An enemy hits one fighter: the one it hurts most of those its spells land on from where it walks.
         for (var index = 0; index < fight.Fighters.Length; index++)
         {
             var ally = fight.Fighters[index];
@@ -351,7 +439,12 @@ public sealed class FightJudge
             if (target < 0 || _damage[known][target].Length is 0)
                 continue;
 
-            var damage = _damage[known][target][Math.Clamp(enemy.ActionPoints, 0, MostPoints)] * Reaching(MapGeometry.Distance(enemy.Cell, ally.Cell), reach);
+            var landing = Lands(fight, enemy, known, ally, Math.Max(0, enemy.MovementPoints));
+
+            if (landing is 0)
+                continue;
+
+            var damage = LandingTurns(known, target, landing)[Math.Clamp(enemy.ActionPoints, 0, MostPoints)];
 
             if (damage > best)
             {
@@ -372,7 +465,6 @@ public sealed class FightJudge
         if (actor is not { IsAlive: true } || actor.Cell is Combatant.NoCell || known < 0)
             return 0;
 
-        var reach = _range[known] + (_mobile[known] ? _actorTurnMovement : 0);
         var best = 0.0;
 
         foreach (var enemy in fight.Fighters)
@@ -388,13 +480,99 @@ public sealed class FightJudge
             // Measured live (D203): next turn's damage unbounded outweighed a kill now, so that the AI spared a fighter at 14
             // life it could kill. It is worth what it would take off the enemy's cost, the kill's included, and never more.
             var life = Effective(enemy);
-            var damage = Math.Min(_damage[known][target][_actorTurnPoints], life);
+            var (next, share) = NextTurn(fight, actor, known, enemy, target);
+            var damage = Math.Min(next, life);
             var taken = Cost(enemy, target, life) - (damage >= life ? 0 : Cost(enemy, target, life - damage));
 
-            best = Math.Max(best, taken * Nearing(MapGeometry.Distance(actor.Cell, enemy.Cell), reach));
+            best = Math.Max(best, taken * share);
         }
 
         return best;
+    }
+
+    private (double Damage, double Share) NextTurn(ImaginedFight fight, Combatant actor, int known, Combatant enemy, int target)
+    {
+        // Next turn the fighter playing walks with its turn's MP and casts with its turn's AP, the spells that land then.
+        var landing = Lands(fight, actor, known, enemy, _mobile[known] ? _actorTurnMovement : 0);
+
+        if (landing is not 0)
+            return (LandingTurns(known, target, landing)[_actorTurnPoints], 1);
+
+        var reach = _range[known] + (_mobile[known] ? _actorTurnMovement : 0);
+
+        return (_damage[known][target][_actorTurnPoints], Nearing(MapGeometry.Distance(actor.Cell, enemy.Cell), reach));
+    }
+
+    private double[] LandingTurns(int one, int other, ulong landing)
+    {
+        if (landing == All(_levels[one].Length))
+            return _damage[one][other];
+
+        if (!_landingTurns.TryGetValue((one, other, landing), out var turns))
+            _landingTurns[(one, other, landing)] = turns = BestTurns(_levels[one], _levelDamage[one][other], landing);
+
+        return turns;
+    }
+
+    private ulong Lands(ImaginedFight fight, Combatant attacker, int one, Combatant target, int movementPoints)
+    {
+        // Which of the attacker's damaging spells land on the target from a cell it walks to: within range, and in sight for
+        // a level that tests it. The attacker leaves its cell; the fighter playing's stands where the fight has it.
+        var levels = _levels[one];
+        var actorCell = fight.Find(_actorId)?.Cell ?? Combatant.NoCell;
+        var key = (one, target.Id, attacker.Cell, target.Cell, movementPoints, actorCell);
+
+        if (levels.Length is 0 || attacker.Cell is Combatant.NoCell || target.Cell is Combatant.NoCell)
+            return 0;
+
+        if (_landing.TryGetValue(key, out var landing))
+            return landing;
+
+        var cells = CellsOf(fight, attacker, one, movementPoints);
+        var occupied = CastRules.OccupiedBy(fight.Fighters);
+
+        occupied.Remove(attacker.Cell);
+
+        for (var index = 0; index < levels.Length; index++)
+        {
+            var level = levels[index];
+            var sight = (level.Properties & SpellLevelProperties.CastTestLos) is not 0;
+
+            foreach (var cell in cells)
+            {
+                if (cell == target.Cell || !SpellRange.Reaches(level, attacker.RangeBonus, cell, target.Cell))
+                    continue;
+
+                if (sight && !LineOfSight.IsClear(fight.Map, occupied, cell, target.Cell))
+                    continue;
+
+                landing |= 1UL << index;
+
+                break;
+            }
+        }
+
+        _landing[key] = landing;
+
+        return landing;
+    }
+
+    private int[] CellsOf(ImaginedFight fight, Combatant walker, int one, int movementPoints)
+    {
+        if (!_mobile[one] || movementPoints <= 0)
+            return [walker.Cell];
+
+        var key = (walker.Id, walker.Cell, movementPoints);
+
+        if (_cells.TryGetValue(key, out var cells))
+            return cells;
+
+        // An enemy's walk is reckoned once wherever the fighter playing stands, which the search moves many times: without it.
+        IReadOnlyList<Combatant> fighters = walker.Id == _actorId ? fight.Fighters : [.. fight.Fighters.Where(fighter => fighter.Id != _actorId)];
+
+        _cells[key] = cells = [.. _moves.Reachable(fight.Map, fighters, walker with { MovementPoints = movementPoints }).Keys];
+
+        return cells;
     }
 
     private int IndexOf(long id)

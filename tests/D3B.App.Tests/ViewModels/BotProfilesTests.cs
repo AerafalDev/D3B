@@ -123,4 +123,28 @@ public sealed class BotProfilesTests : IAsyncDisposable
         Assert.Null(bot.Activity);
         Assert.Equal(["Old is to review in Profiles", "The activity of Gone is gone", "The settings of Empty do not hold: see Profiles"], errors);
     }
+
+    [Fact]
+    public async Task TheSwitchOnACardIsKeptForItsCharacter()
+    {
+        await _store.OpenedAsync();
+        await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Character", 200));
+
+        var (_, bot) = await _store.Play.EnterAsync(300);
+        var page = new BotsViewModel(_localizer);
+
+        page.Refresh(_store.Host.Services);
+
+        var item = Assert.Single(page.Items);
+
+        item.FightsAlone = true;
+
+        Assert.True(bot.FightsAlone);
+        await Waiting.UntilAsync(() => _store.Accounts.Find(TestPlay.Key)?.FightsAlone is true, TimeSpan.FromSeconds(10));
+
+        item.FightsAlone = false;
+
+        await Waiting.UntilAsync(() => _store.Accounts.Find(TestPlay.Key)?.FightsAlone is false, TimeSpan.FromSeconds(10));
+        Assert.False(bot.FightsAlone);
+    }
 }

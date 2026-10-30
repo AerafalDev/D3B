@@ -54,6 +54,7 @@ public sealed class StorageModule : IModule
         services.AddSingleton<IGameObserver>(provider => provider.GetRequiredService<AccountRecorder>());
         services.AddHostedService(provider => provider.GetRequiredService<AccountRecorder>());
         services.AddHostedService<StartOnConnection>();
+        services.AddHostedService<RememberedFightSwitch>();
         services.AddSingleton<IHostPreparation, StoragePreparation>();
     }
 

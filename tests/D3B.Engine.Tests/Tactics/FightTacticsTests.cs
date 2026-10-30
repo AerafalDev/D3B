@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using D3B.Data.Effects;
 using D3B.Data.Monsters;
 using D3B.Data.Spells;
+using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
 using D3B.Engine.Tactics;
@@ -15,6 +16,8 @@ public sealed class FightTacticsTests
     private const int Blow = 100;
     private const int Heal = 200;
     private const int Bite = 300;
+    private const int Shot = 400;
+    private const int Critical = 500;
 
     private static readonly SpellCatalog _spells = Catalog();
     private static readonly FightTactics _tactics = new(_spells, States(), new EffectCatalog(new Effect[]
@@ -25,7 +28,9 @@ public sealed class FightTacticsTests
 
     /// <summary>
     /// Spell 100, an earth blow of 10 to 12 on an enemy, 3 AP, range 1 to 4; spell 200, a fire heal of 30 on the caster,
-    /// 2 AP, on its own cell; spell 300, a monster's earth bite of 25 to 30 on an enemy, 3 AP, range 1.
+    /// 2 AP, on its own cell; spell 300, a monster's earth bite of 25 to 30 on an enemy, 3 AP, range 1; spell 400, a monster's
+    /// earth shot of 25 to 30, 3 AP, range 1 to 6, in sight; spell 500, an earth blow of 10, 30 on a critical hit, which half its
+    /// casts are, 3 AP, range 1 to 4.
     /// </summary>
     private static SpellCatalog Catalog()
     {
@@ -36,12 +41,17 @@ public sealed class FightTacticsTests
             new SpellLevel { Id = 1100, SpellId = Blow, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 0, EffectCount = 1 },
             new SpellLevel { Id = 1200, SpellId = Heal, Grade = 1, ApCost = 2, MinRange = 0, Range = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 1, EffectCount = 1 },
             new SpellLevel { Id = 1300, SpellId = Bite, Grade = 1, ApCost = 3, MinRange = 1, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 2, EffectCount = 1 },
+            new SpellLevel { Id = 1400, SpellId = Shot, Grade = 1, ApCost = 3, MinRange = 1, Range = 6, StatesCriterion = SpellLevel.NoCriterion, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 3, EffectCount = 1 },
+            new SpellLevel { Id = 1500, SpellId = Critical, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, CriticalHitProbability = 50, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 4, EffectCount = 1, CriticalEffectCount = 1 },
         ];
         SpellEffect[] effects =
         [
             new SpellEffect { Uid = 1, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 10, DiceSide = 12, Zone = point },
             new SpellEffect { Uid = 2, EffectId = 108, TargetMask = 2, Triggers = 1, DiceNum = 30, DiceSide = 30, Zone = point },
             new SpellEffect { Uid = 3, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 25, DiceSide = 30, Zone = point },
+            new SpellEffect { Uid = 4, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 25, DiceSide = 30, Zone = point },
+            new SpellEffect { Uid = 5, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 10, DiceSide = 10, Zone = point },
+            new SpellEffect { Uid = 6, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 30, DiceSide = 30, Zone = point },
         ];
         Spell[] spells = [.. levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 })];
 
@@ -153,5 +163,36 @@ public sealed class FightTacticsTests
 
         Assert.Equal([Middle, Off(1, 0), Off(2, 0), Off(3, 0)], path);
         Assert.Empty(_tactics.PathTo(fight, Off(4, 0)));
+    }
+
+    [Fact]
+    public void ACriticalHitCountsTheShareOfTheCastsItsChanceGivesIt()
+    {
+        var (fight, _) = Fight(Caster(), Biter(-1, Off(2, 0)));
+
+        var cast = _tactics.Imagination.Cast(fight, Level(_spells, Critical), Off(2, 0));
+
+        // Half the casts deal 10, half 30 (D205).
+        Assert.Equal(30, cast.Find(-1)?.Life);
+        Assert.Equal(0.5, EffectFormulas.CriticalChance(Level(_spells, Critical), Caster()));
+        Assert.Equal(0.6, EffectFormulas.CriticalChance(Level(_spells, Critical), Caster() with { Characteristics = Caster().Characteristics.SetItem(FightCharacteristic.CriticalHits, 10) }));
+        Assert.Equal(0, EffectFormulas.CriticalChance(Level(_spells, Critical), Caster() with { Characteristics = Caster().Characteristics.SetItem(FightCharacteristic.CriticalHits, -60) }));
+        Assert.Equal(0, EffectFormulas.CriticalChance(Level(_spells, Blow), Caster()));
+    }
+
+    [Fact]
+    public void AnEnemyWhoseSpellNeedsItsSightThreatensNothingAPillarHides()
+    {
+        var shooter = Biter(-1, Off(4, 0)) with { MovementPoints = 0 };
+        var open = new ImaginedFight { Map = Open(), Fighters = [Caster(), shooter], ActorId = Caster().Id, Round = 1 };
+        var hidden = open with { Map = WithPillars(Off(2, 0)) };
+        var knowledge = new FightKnowledge
+        {
+            Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(Caster().Id, [Level(_spells, Blow)]).Add(shooter.Id, [Level(_spells, Shot)]),
+        };
+
+        // Measured on the captures (D207): reckoning the reach alone, the threat foresaw half as much again as the enemies took.
+        Assert.Equal(27.5, _tactics.JudgeOf(open, knowledge, TacticWeights.Default).Threat(open, Caster().Id));
+        Assert.Equal(0, _tactics.JudgeOf(hidden, knowledge, TacticWeights.Default).Threat(hidden, Caster().Id));
     }
 }

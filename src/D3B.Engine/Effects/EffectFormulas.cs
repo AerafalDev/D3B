@@ -17,6 +17,25 @@ public static class EffectFormulas
 {
     private const int Percent = 100;
 
+    /// <summary>Gets the chance of a cast being a critical hit, which the server draws and never tells.</summary>
+    /// <param name="level">The level cast.</param>
+    /// <param name="caster">The caster.</param>
+    /// <returns>The chance, from 0 to 1: none for a level that has no chance of one.</returns>
+    /// <remarks>
+    /// Measured on the 595 casts captured of levels with a chance (D205): the level's chance plus the caster's characteristic 18,
+    /// in percent, within 0 and 100, foresaw 43 critical hits, and the server drew 40; none of the 217 casts of monsters whose
+    /// characteristic 18 is below the level's chance, and none of a level without a chance, was one.
+    /// </remarks>
+    public static double CriticalChance(in SpellLevel level, Combatant caster)
+    {
+        ArgumentNullException.ThrowIfNull(caster);
+
+        if (level.CriticalHitProbability <= 0)
+            return 0;
+
+        return Math.Clamp(level.CriticalHitProbability + caster.Characteristic(FightCharacteristic.CriticalHits), 0, Percent) / (double)Percent;
+    }
+
     /// <summary>Gets the characteristic that raises an element's damage.</summary>
     /// <param name="element">The element, resolved.</param>
     /// <returns>The characteristic's id, or 0 for none.</returns>

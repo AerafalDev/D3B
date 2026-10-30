@@ -16,8 +16,10 @@ namespace D3B.Engine.Tactics;
 /// left (<see cref="EffectFormulas.PushDamage"/>); swaps; boosts and deboosts, the AP and MP of the fighter playing at once
 /// and the others' for their next turn; states set and removed; kills. An effect its mask only maybe selects counts half,
 /// as does one of a random group, and one waiting for a trigger, such as a poison, counts half of its damage. A critical
-/// hit is never counted on, nor the spells effects cast (D195). The effects on a free cell, a teleport of the caster and a
-/// summon, come from the level itself, the foreseen effects reaching only fighters.
+/// hit is weighed by its chance (D205): what the level's effects give in life, damage, heals, shields and characteristics,
+/// counts its share of a normal cast and of a critical hit; a push, a swap or a state, the normal cast's alone. The spells
+/// effects cast are not counted on (D195). The effects on a free cell, a teleport of the caster and a summon, come from the
+/// level itself, the foreseen effects reaching only fighters.
 /// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
 /// </remarks>
@@ -66,9 +68,9 @@ public sealed class Imagination
         return fight.With(fight.Actor with { Cell = cell, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints });
     }
 
-    private static int Expected(in ForeseenEffect effect)
+    private static int Expected(in ForeseenEffect effect, double share)
     {
-        var middle = (effect.Value.Min + effect.Value.Max) / 2.0;
+        var middle = (effect.Value.Min + effect.Value.Max) / 2.0 * share;
 
         if (!effect.IsCertain)
             middle *= Maybe;
@@ -77,6 +79,13 @@ public sealed class Imagination
             middle *= Maybe;
 
         return (int)Math.Round(middle, MidpointRounding.AwayFromZero);
+    }
+
+    private static bool InLife(EffectKind kind)
+    {
+        // What a critical hit changes by its numbers: the rest, a push or a state, is the normal cast's.
+        return kind is EffectKind.Damage or EffectKind.FixedDamage or EffectKind.Steal or EffectKind.Heal or EffectKind.FixedHeal or EffectKind.PercentHeal
+            or EffectKind.Shield or EffectKind.LifeShield or EffectKind.LevelShield or EffectKind.Boost or EffectKind.Deboost;
     }
 
     private static int IndexOf(List<Combatant> fighters, long id)
@@ -163,9 +172,15 @@ public sealed class Imagination
         var cost = CastRules.Modified(level, caster).ApCost;
         var target = fight.On(cell);
         var foreseen = _foreseen ??= [];
+        var chance = EffectFormulas.CriticalChance(level, caster);
 
         foreseen.Clear();
         _effects.Foresee(fight.Map, fight.Fighters, caster, level, cell, false, foreseen);
+
+        var normal = foreseen.Count;
+
+        if (chance > 0)
+            _effects.Foresee(fight.Map, fight.Fighters, caster, level, cell, true, foreseen);
 
         var fighters = new List<Combatant>(fight.Fighters.Length + 1);
 
@@ -175,8 +190,16 @@ public sealed class Imagination
 
         fighters[casterIndex] = caster with { ActionPoints = Math.Max(0, caster.ActionPoints - cost) };
 
-        foreach (var effect in foreseen)
-            Apply(fight.Map, fighters, casterIndex, effect, cell);
+        for (var index = 0; index < foreseen.Count; index++)
+        {
+            var effect = foreseen[index];
+            var critical = index >= normal;
+
+            if (critical && !InLife(effect.Action.Kind))
+                continue;
+
+            Apply(fight.Map, fighters, casterIndex, effect, cell, critical ? chance : InLife(effect.Action.Kind) ? 1 - chance : 1);
+        }
 
         foreseen.Clear();
         OnCell(fight.Map, fighters, casterIndex, level, cell);
@@ -188,7 +211,7 @@ public sealed class Imagination
         };
     }
 
-    private static void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell)
+    private static void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell, double share)
     {
         var index = IndexOf(fighters, effect.TargetId);
 
@@ -196,7 +219,7 @@ public sealed class Imagination
             return;
 
         var target = fighters[index];
-        var value = Expected(effect);
+        var value = Expected(effect, share);
 
         if (!effect.IsImmediate)
         {

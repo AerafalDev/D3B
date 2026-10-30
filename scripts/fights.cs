@@ -6,6 +6,7 @@
 #:include fights/CastBench.cs
 #:include fights/FightsCommand.cs
 #:include fights/Tally.cs
+#:include fights/TurnBench.cs
 
 using System.Globalization;
 using D3B.Scripts.Fights;
@@ -15,7 +16,9 @@ using D3B.Scripts.Fights;
 // damage by element, steals, heals, shields, pushes and their damage, AP and MP removed, teleports, swaps, summons,
 // states and buffs, the rules of each cast, and the spells' cooldowns. It prints counts, never a value of the fights: a
 // capture holds an account's login ticket, and what this tool prints may go into docs/client.md.
-// Usage: dotnet run --file scripts/fights.cs -- [<file or directory>...] [--data <dir>] [--details]; --help describes
+// With --turns, it replays every turn the characters played through the fight's AI instead, its plan against the turn
+// played and what its judge foresaw against what came (D204).
+// Usage: dotnet run --file scripts/fights.cs -- [<file or directory>...] [--data <dir>] [--details] [--turns]; --help describes
 // the options.
 // Exit code: 0 once every capture was read; 1 when one could not be; 2 when the pack, the schema, the mapping or the
 // captures are missing.

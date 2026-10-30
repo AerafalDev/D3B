@@ -156,6 +156,20 @@ public sealed class AccountBook : IDisposable
             cancellationToken);
     }
 
+    /// <summary>Says whether the AI plays every fight of a character, as the switch on its bot's card was set (D206).</summary>
+    /// <param name="key">The character.</param>
+    /// <param name="alone">Whether the AI plays them.</param>
+    /// <param name="cancellationToken">Stops the write.</param>
+    /// <returns>A task that completes once saved.</returns>
+    public Task SetFightsAloneAsync(CharacterKey key, bool alone, CancellationToken cancellationToken)
+    {
+        return WriteAsync(
+            context => context.Characters
+                .Where(character => character.AccountId == key.AccountId && character.Id == key.CharacterId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(character => character.FightsAlone, alone), cancellationToken),
+            cancellationToken);
+    }
+
     /// <summary>Forgets an account and its characters, until its client lists them again.</summary>
     /// <param name="accountId">The account's id.</param>
     /// <param name="cancellationToken">Stops the write.</param>

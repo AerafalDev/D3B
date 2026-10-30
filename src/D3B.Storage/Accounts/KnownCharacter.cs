@@ -26,6 +26,9 @@ public sealed class KnownCharacter
     /// <summary>Gets whether the character's profile starts once its client first connects while the host runs.</summary>
     public bool StartsOnConnection { get; init; }
 
+    /// <summary>Gets whether the AI plays every fight of the character, as the switch on its bot's card was left (D198, D206).</summary>
+    public bool FightsAlone { get; init; }
+
     /// <summary>Gets who the character is, as its bot names it (D65).</summary>
     public CharacterKey Key => new(AccountId, Id);
 }

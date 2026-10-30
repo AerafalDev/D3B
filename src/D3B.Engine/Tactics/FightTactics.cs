@@ -115,7 +115,7 @@ public sealed class FightTactics
     /// <returns>The judge.</returns>
     public FightJudge JudgeOf(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights)
     {
-        return new FightJudge(fight, knowledge, weights, _spells, _actions, Rules);
+        return new FightJudge(fight, knowledge, weights, _spells, _actions, Rules, Moves);
     }
 
     /// <summary>Gets how the fight looks for the fighter playing's side as it starts.</summary>
