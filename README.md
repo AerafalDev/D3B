@@ -3,6 +3,7 @@
 [![CI](https://github.com/AerafalDev/D3B/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AerafalDev/D3B/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/AerafalDev/D3B?label=release)](https://github.com/AerafalDev/D3B/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.com/invite/6A6Vw9Mn24)
 
 An open-source bot for Dofus 3, Ankama's Unity client, written in C# on .NET 10 for Windows. D3B plays your character
 through the official client: it harvests, banks and fights, and a desktop app shows what each bot does. Every feature is
@@ -222,7 +223,8 @@ flowchart LR
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: it covers the conventions the build
 enforces and what can never be committed. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md). To
-report a vulnerability, follow the [security policy](SECURITY.md) rather than opening an issue.
+report a vulnerability, follow the [security policy](SECURITY.md) rather than opening an issue. To talk about D3B, join
+its [Discord](https://discord.com/invite/6A6Vw9Mn24).
 
 ## License
 
