@@ -208,6 +208,9 @@ public sealed class WorldTravelTests
 
         Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
         Assert.Single(connection.Sent, request => request is TeleportRequest);
+
+        // The next journeys teleport from that map no more (D248).
+        Assert.Equal([TestPlay.NorthMapId], bot.NoTeleportFrom);
     }
 
     [Fact]

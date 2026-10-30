@@ -927,4 +927,74 @@ public sealed class FightJudge
 
         return new FightOdds(ours > 0 ? theirLife / ours : double.PositiveInfinity, theirs > 0 ? ourLife / theirs : double.PositiveInfinity);
     }
+
+    /// <summary>Gets how the fight looks over its course: the enemies die one after another, each dealing its blows only while it lives (D249).</summary>
+    /// <param name="fight">The fight.</param>
+    /// <param name="knowledge">The points each fighter starts its turn with.</param>
+    /// <returns>The odds: the turns the fighter playing's side takes to beat every enemy, and the turns until the enemies alive have taken its side's life, if they ever do.</returns>
+    /// <remarks>
+    /// <see cref="Odds"/> has every enemy strike every turn, which a group of eight never does once its first members die:
+    /// the owner's attacks on 54 groups the fighter was known for, 25 judged so too risky, were won 21 times. The enemies
+    /// fall in the order that costs the side the least life, the most damage for their life first.
+    /// </remarks>
+    public FightOdds OddsOverTheFight(ImaginedFight fight, FightKnowledge knowledge)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+        ArgumentNullException.ThrowIfNull(knowledge);
+
+        double ours = 0, ourLife = 0;
+        var enemies = new List<(double Damage, double Life)>();
+
+        foreach (var fighter in fight.Fighters)
+        {
+            if (!fighter.IsAlive)
+                continue;
+
+            var known = IndexOf(fighter.Id);
+            var points = knowledge.TurnPoints.TryGetValue(fighter.Id, out var turn) ? turn.ActionPoints : fighter.ActionPoints;
+            var best = 0.0;
+
+            for (var other = 0; known >= 0 && other < _fighters.Length; other++)
+            {
+                if (_damage[known][other].Length > 0 && fight.Find(_fighters[other].Id) is { IsAlive: true })
+                    best = Math.Max(best, _damage[known][other][Math.Clamp(points, 0, MostPoints)]);
+            }
+
+            if (fighter.Team == _team)
+            {
+                ours += best;
+                ourLife += Effective(fighter);
+            }
+            else
+            {
+                enemies.Add((best, Math.Max(1, Effective(fighter))));
+            }
+        }
+
+        if (ours <= 0)
+        {
+            var theirs = enemies.Sum(enemy => enemy.Damage);
+
+            return new FightOdds(double.PositiveInfinity, theirs > 0 ? ourLife / theirs : double.PositiveInfinity);
+        }
+
+        enemies.Sort((a, b) => (b.Damage / b.Life).CompareTo(a.Damage / a.Life));
+
+        var rate = enemies.Sum(enemy => enemy.Damage);
+        double time = 0, taken = 0, lost = double.PositiveInfinity;
+
+        foreach (var (damage, life) in enemies)
+        {
+            var span = life / ours;
+
+            if (double.IsPositiveInfinity(lost) && rate > 0 && taken + (rate * span) >= ourLife)
+                lost = time + ((ourLife - taken) / rate);
+
+            taken += rate * span;
+            time += span;
+            rate -= damage;
+        }
+
+        return new FightOdds(time, lost);
+    }
 }

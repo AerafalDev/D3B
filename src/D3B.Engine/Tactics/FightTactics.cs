@@ -145,6 +145,15 @@ public sealed class FightTactics
         return JudgeOf(fight, knowledge, TacticWeights.Default).Odds(fight, knowledge);
     }
 
+    /// <summary>Gets how the fight looks for the fighter playing's side over its course, the enemies dying one after another (<see cref="FightJudge.OddsOverTheFight"/>, D249).</summary>
+    /// <param name="fight">The fight.</param>
+    /// <param name="knowledge">What the AI knows of the fighters.</param>
+    /// <returns>The odds.</returns>
+    public FightOdds OddsOverTheFight(ImaginedFight fight, FightKnowledge knowledge)
+    {
+        return JudgeOf(fight, knowledge, TacticWeights.Default).OddsOverTheFight(fight, knowledge);
+    }
+
     /// <summary>Chooses where the fighter playing stands as the fight starts, among its team's placement cells.</summary>
     /// <param name="fight">The fight as placed now.</param>
     /// <param name="cells">The team's placement cells.</param>

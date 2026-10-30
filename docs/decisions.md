@@ -5808,6 +5808,65 @@ showed no icon, and a family of monsters should be chosen as a monster is. Build
   - A family checked as all its monsters at once in the picker: a list of a hundred monsters on the card, and a family's
     new monster left out.
 
+## D248: Every interactive transition of the world graph followed, a refused teleport remembered, and NPCs' ways not yet
+
+*2026-10-30, step 9, session 9g2, what the owner's Sadida showed in game: stuck in Incarnam, every profile failing at once
+with "No map of the zone can be reached"; the owner asked whether the ways that need an NPC are handled, and to look at
+how BillBot does it. Builds D73, D76, D83, D84.*
+
+- **Measured** on its capture: in Incarnam, D3B asked a teleport from the map nine times; the server refused each, text
+  416, though the pack's flag (bit 3) lets 147 of Incarnam's 163 maps teleport. A journey that fails at its teleport
+  goes on foot, and found no way: the next journeys tried the teleport again, three journeys failed, and the activity
+  gave the zone up.
+- **The way on foot**, measured on the graph: from the Sadida's map, every transition followed, criteria aside, 77 maps
+  of Incarnam are reached and no other area's; the room whose doors lead to five areas, Astrub's among them, has no way
+  in but doors with quests' criteria. The way out is an NPC's dialog, which the client's graph does not hold: 3.7.12.12's
+  transitions are scrolls, scrolls with an action, map actions and interactive elements. BillBot, read for the owner,
+  leaves Incarnam the same way, by a case of its own: the NPC "Portail vers Astrub" on its map, two replies matched by
+  their text; it handles no other NPC's way but two dungeons'.
+- **Made**: the pathfinder follows every interactive transition of the graph, the doors' and some 300 of 50 other
+  skills, stairs, portals and "go to"s, used as a door is, their criteria strict, a use that fails banned for the journey
+  (D76's doors alone before); a teleport the server refuses from a map is never asked from it again for the bot's life
+  (`WorldPathRules.NoTeleportFrom`, `BotActor.NoTeleportFrom`). Neither measured in game yet.
+- **Not made**: the ways through an NPC's dialog, Incarnam's portal first, the next session's (D250).
+
+## D249: A group judged over the fight's course, and only the hopeless turned away
+
+*2026-10-30, step 9, session 9g2, the owner's words in game: the bot takes almost only small groups where it could beat
+big ones, and should be much laxer. Builds D198, D236, D241.*
+
+- **Measured** with `scripts/fights.cs --live` on the 98 attacks the owner made by hand and those D3B made: of the 54
+  groups the character was known for, the owner won 50; the judge of D241, every enemy striking every turn
+  (`FightTactics.Odds`), turned 25 away, 21 of them won.
+- **Over the fight's course** (`FightTactics.OddsOverTheFight`): the enemies die one after another, the most damage for
+  their life first, each striking only while it lives; the judge's damage a turn and life as before.
+- **Turned away**: a group the AI expects to take the character's life in under a quarter of the turns it needs to beat
+  the group (`GroupJudge`), measured: 13 of the 54, 11 of them won, against 25. The ratio tells the losses apart badly: 2
+  of the 4 losses fell among the groups judged won first. "Only winnable groups" unchecked attacks every group the
+  settings allow; "Monsters per group, at least" aims at big ones.
+- **Unchanged**: the fight's own prudence as it starts (D198) keeps `Odds`.
+- **Rejected**: the judge removed by default: a lost fight costs the regeneration and three stop the activity (D198),
+  and the judge's error is measured on a player's fights, not yet on the AI's big ones.
+
+## D250: 9g2 measured in game, and what it leaves
+
+*2026-10-30, step 9, session 9g2, on the 9 game connections the owner captured with the app as the fighting activity ran
+on five characters of two accounts, breeds Sadida, Zobal, Eliotrope, Enutrof and Xelor, levels 45 to 150. Builds D241 to
+D249.*
+
+- **Hunted**: 22 attacks sent, 22 accepted, each after one walk onto the group's cell, none made again; 22 fights, the
+  AI's, won; from a fight's end to the next attack 6.2 s halfway, 34 s at 90 %, the healing and the journeys within; an
+  attack's fight starting 0.58 s after it halfway.
+- **Fought**: 106 casts sent, every one cast, none unanswered nor refused; 56 turns, none without a cast or a walk; 2
+  sword's blows struck.
+- **What the owner saw, made**: strategies gone, one AI (D244); the monsters' picker, the fight profile's preview and its
+  layout in a narrow window (D246); the loot's icons and families of monsters (D247); the ways out of Incarnam and
+  refused teleports (D248); big groups (D249).
+- **Left, for the next sessions**: the ways through an NPC's dialog, Incarnam's portal first; the Zobal's masks, which
+  the AI puts on at its turn's end for the next turn rather than first to cast their spells, its earth Zobal casting
+  Furia 3 times in 11 turns; every item's icon, 11,755 against 2,294, which the owner asked for and whose size is the
+  owner's choice.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

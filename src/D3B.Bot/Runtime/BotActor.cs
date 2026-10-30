@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Threading.Channels;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
@@ -66,6 +67,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile ActivityRun? _activity;
     private volatile FightEnd? _lastFightEnd;
     private volatile Fighter? _lastFighter;
+    private ImmutableHashSet<long> _noTeleportFrom = [];
     private int _fightsBegun;
     private int _lastEndedFight;
     private long _placedAt;
@@ -100,6 +102,9 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>Gets the character as the placement of its last fight showed it, whole, its characteristics the server's, if it fought since the bot was made.</summary>
     /// <remarks>What the fighting activity judges a group with before attacking it (D236).</remarks>
     public Fighter? LastFighter => _lastFighter;
+
+    /// <summary>Gets the maps the server refused the character a teleport from since the bot was made, whatever their flag says (D248).</summary>
+    public IReadOnlySet<long> NoTeleportFrom => Volatile.Read(ref _noTeleportFrom);
 
     /// <summary>Gets how many fights began since the bot was made: the last one's number.</summary>
     public int FightsBegun => Volatile.Read(ref _fightsBegun);
@@ -195,6 +200,13 @@ public sealed class BotActor : IAsyncDisposable
     }
 
     /// <summary>Pauses the bot as the player's hand does, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
+    /// <summary>Remembers that the server refused the character a teleport from a map, so that no journey teleports from it again (D248).</summary>
+    /// <param name="mapId">The map.</param>
+    internal void RefuseTeleportFrom(long mapId)
+    {
+        ImmutableInterlocked.Update(ref _noTeleportFrom, (maps, map) => maps.Add(map), mapId);
+    }
+
     internal void Pause()
     {
         Post(new Pausing());

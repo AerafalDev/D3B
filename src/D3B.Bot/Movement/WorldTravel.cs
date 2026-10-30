@@ -77,7 +77,7 @@ public static class WorldTravel
 
         var state = context.State;
 
-        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = state.KnownZaaps, Kamas = state.Kamas, TeleportChanges = context.TeleportChanges };
+        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = state.KnownZaaps, Kamas = state.Kamas, TeleportChanges = context.TeleportChanges, NoTeleportFrom = context.NoTeleportFrom };
     }
 
     /// <summary>Gets what a character's criteria are answered on, from its state.</summary>
@@ -156,11 +156,20 @@ public static class WorldTravel
                     break;
                 case MapChangeOutcome.Busy or MapChangeOutcome.NotPlaced:
                     return Over(context, context.State, TravelOutcome.Failed, changes);
-                default:
+                case var failed:
                     if (step.IsTeleport)
+                    {
                         teleports = false;
+
+                        // Measured (D248): Incarnam's maps carry the flag, and the server refuses a teleport from them, text 416;
+                        // the next journeys tried it again, and failed as many times.
+                        if (failed is MapChangeOutcome.Refused)
+                            context.RefuseTeleportFrom(mapId);
+                    }
                     else
+                    {
                         banned.Add(step.TransitionIndex);
+                    }
 
                     if (++failures >= MostFailures)
                         return Over(context, context.State, TravelOutcome.Failed, changes);

@@ -23,6 +23,9 @@ public sealed record WorldPathRules
     /// <summary>Gets the maps of the zaaps the character knows, which it may teleport to; none, the default, keeps the path from teleporting.</summary>
     public IReadOnlySet<long> KnownZaaps { get; init; } = FrozenSet<long>.Empty;
 
+    /// <summary>Gets the maps the server refused a teleport from, whatever their flag says (<see cref="Data.World.MapPosition.AllowsTeleport"/>): no teleport is taken from them (D248).</summary>
+    public IReadOnlySet<long> NoTeleportFrom { get; init; } = FrozenSet<long>.Empty;
+
     /// <summary>Gets the kamas the character carries, which must cover a teleport's cost (<see cref="WorldPathfinder.TeleportCost"/>).</summary>
     public long Kamas { get; init; }
 

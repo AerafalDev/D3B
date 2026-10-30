@@ -10,9 +10,9 @@ namespace D3B.Engine.World;
 /// <remarks>
 /// <para>
 /// A vertex is a zone of a map, the cells of which reach one another (D27). The search follows scrolls, scrolls with an
-/// action, map actions and doors, the interactive transitions used with <see cref="DoorSkillId"/>; the other interactive
-/// transitions are left out. A transition is followed only when its criterion is met (D71): what the character cannot be
-/// sure of closes it. A sub-area the client closes to accounts without a subscription is entered only by a subscribed
+/// action, map actions and every interactive transition, a door used with <see cref="DoorSkillId"/> as stairs, a portal or
+/// a "go to" with their own skills (D248). A transition is followed only when its criterion is met (D71): what the
+/// character cannot be sure of closes it. A sub-area the client closes to accounts without a subscription is entered only by a subscribed
 /// account.
 /// </para>
 /// <para>
@@ -116,8 +116,9 @@ public sealed class WorldPathfinder
 
     private static bool IsFollowed(WorldTransition transition)
     {
-        return transition.Type is WorldTransitionType.Scroll or WorldTransitionType.ScrollAction or WorldTransitionType.MapAction
-            || (transition.Type is WorldTransitionType.Interactive && transition.SkillId == DoorSkillId);
+        // Measured on 3.7.12.12 (D248): beside the 5,237 doors, some 300 transitions of 50 other skills are stairs,
+        // portals and "go to"s, used as a door is.
+        return transition.Type is WorldTransitionType.Scroll or WorldTransitionType.ScrollAction or WorldTransitionType.MapAction or WorldTransitionType.Interactive;
     }
 
     private static int SourceOf(ReadOnlySpan<WorldEdge> edges, int transition)
@@ -207,7 +208,7 @@ public sealed class WorldPathfinder
                 open.Enqueue(edge.To, cost);
             }
 
-            if (teleportedFrom is not null && zaaps.Count > 0 && _positions[vertex] is { AllowsTeleport: true } place)
+            if (teleportedFrom is not null && zaaps.Count > 0 && _positions[vertex] is { AllowsTeleport: true } place && !rules.NoTeleportFrom.Contains(vertices[vertex].MapId))
             {
                 var cost = costs[vertex] + (ChangeCost * rules.TeleportChanges) + 1;
 

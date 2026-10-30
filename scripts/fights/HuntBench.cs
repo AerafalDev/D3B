@@ -146,6 +146,7 @@ internal sealed class HuntBench
                     };
 
                     Tally.Count($"attacked groups: {done.Who}, judged {done.Judged}, {outcome}");
+                    Tally.Count($"attacked groups by odds: {done.Who}, {done.Bucket}, {outcome}");
 
                     if (done.Who is Bot)
                     {
@@ -187,7 +188,7 @@ internal sealed class HuntBench
             Tally.Count($"attacks by sub-area: {who}, in sub-area {subArea}");
 
         if (!state.MonsterGroups.TryGetValue(groupId, out var group))
-            return new Attack(who, offset, "on a group unseen");
+            return new Attack(who, offset, "on a group unseen", "unseen");
 
         Tally.Count($"attacked groups: {who}, of {group.Monsters.Length} monsters");
 
@@ -195,12 +196,22 @@ internal sealed class HuntBench
             Tally.Count($"attacked groups: {who}, a monster above the character's level");
 
         if (state.MapId is not { } mapId || !_maps.TryGet(mapId, out var data))
-            return new Attack(who, offset, "without its map");
+            return new Attack(who, offset, "without its map", "without its map");
 
         var beats = GroupJudge.Beats(group, state, self, FightMap.Of(data), _tables, _tactics);
+        var ratio = GroupJudge.OddsOf(group, state, self, FightMap.Of(data), _tables, _tactics) is { } odds ? odds.TurnsToLose / odds.TurnsToWin : (double?)null;
+        var bucket = ratio switch
+        {
+            null => "by levels",
+            < 0.25 => "losing under a quarter of the turns to win",
+            < 0.5 => "losing under half",
+            < 0.75 => "losing under three quarters",
+            < 1 => "losing before winning",
+            _ => "winning first",
+        };
 
-        return new Attack(who, offset, (self is null ? "by levels " : "") + (beats ? "winnable" : "risky"));
+        return new Attack(who, offset, (self is null ? "by levels " : "") + (beats ? "winnable" : "risky"), bucket);
     }
 
-    private sealed record Attack(string Who, TimeSpan Offset, string Judged);
+    private sealed record Attack(string Who, TimeSpan Offset, string Judged, string Bucket);
 }

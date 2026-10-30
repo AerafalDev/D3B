@@ -160,13 +160,15 @@ public sealed class WorldPathfinderTests
     }
 
     [Fact]
-    public void ADoorIsFollowedButNoOtherInteractive()
+    public void ADoorIsFollowedAndEveryOtherInteractiveAsADoorIs()
     {
-        var pathfinder = new TestWorld().Interactive(1, 2, 288).Interactive(1, 3, 300, skill: 459).Pathfinder();
+        // Stairs, portals and "go to"s have skills of their own, used as a door's is (D248).
+        var pathfinder = new TestWorld().Interactive(1, 2, 288).Interactive(1, 3, 300, skill: 469).Pathfinder();
 
         Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 2 }, _subscribed, out var path));
         Assert.Equal(WorldTransitionType.Interactive, Assert.Single(path.Steps).Transition.Type);
-        Assert.False(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 3 }, _subscribed, out _));
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 3 }, _subscribed, out var portal));
+        Assert.Equal(469, Assert.Single(portal.Steps).Transition.SkillId);
     }
 
     [Fact]
@@ -456,6 +458,15 @@ public sealed class WorldPathfinderTests
         Assert.Equal(Vertex(pathfinder, 1), step.From);
         Assert.Equal(Vertex(pathfinder, 9), step.To);
         Assert.Empty(pathfinder.ExitCells(MapOf(EdgeCells()), step, _subscribed));
+    }
+
+    [Fact]
+    public void NoTeleportIsTakenFromAMapTheServerRefusedOneFrom()
+    {
+        var pathfinder = Grid().Pathfinder();
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(0, 9) with { NoTeleportFrom = new HashSet<long> { 1 } }, out var path));
+        Assert.DoesNotContain(path.Steps, step => step.IsTeleport && step.From == Vertex(pathfinder, 1));
     }
 
     [Fact]
