@@ -28,11 +28,13 @@ public static class GroupJudge
     /// <param name="settings">The activity's settings.</param>
     /// <param name="group">The group.</param>
     /// <param name="level">The character's level.</param>
+    /// <param name="monsters">The pack's monsters, which give a monster's family (D247).</param>
     /// <returns>Whether they allow it.</returns>
-    public static bool Allows(FightSettings settings, MapMonsterGroup group, int level)
+    public static bool Allows(FightSettings settings, MapMonsterGroup group, int level, MonsterCatalog monsters)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(monsters);
 
         var size = group.Monsters.Length;
 
@@ -43,7 +45,7 @@ public static class GroupJudge
             return false;
 
         return settings.Mode is FightMode.Chosen
-            ? group.Monsters.Any(monster => settings.Monsters.Contains(monster.MonsterId))
+            ? group.Monsters.Any(monster => ChosenMonsters.Holds(settings, monsters, monster.MonsterId))
             : group.Monsters.All(monster => monster.Level <= level);
     }
 

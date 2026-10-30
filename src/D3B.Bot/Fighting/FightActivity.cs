@@ -293,7 +293,7 @@ public sealed class FightActivity : BotActivity
         // The nearest first: the shortest walk, before the group walks on.
         foreach (var group in state.MonsterGroups.Values.OrderBy(group => group.Cell is { } cell ? Engine.Maps.MapGeometry.Distance(here, cell) : int.MaxValue))
         {
-            if (_skipped.Contains(group.ActorId) || !GroupJudge.Allows(_settings, group, level))
+            if (_skipped.Contains(group.ActorId) || !GroupJudge.Allows(_settings, group, level, _tables.Monsters))
                 continue;
 
             if (!_settings.OnlyWinnable)
@@ -483,8 +483,8 @@ public sealed class FightActivity : BotActivity
     {
         return
         [
-            new ActivityCount(GameText.Of(FightTexts.Text("CountWon"), GameTextValue.Number(_won))),
-            new ActivityCount(GameText.Of(FightTexts.Text("CountLost"), GameTextValue.Number(_lost))),
+            new ActivityCount(GameText.Counted(FightTexts.Text("CountWonOne"), FightTexts.Text("CountWonMany"), _won)),
+            new ActivityCount(GameText.Counted(FightTexts.Text("CountLostOne"), FightTexts.Text("CountLostMany"), _lost)),
             .. _loot.OrderByDescending(pair => pair.Value).Select(pair => new ActivityCount(GameText.Of(FightTexts.Text("CountLoot"), GameTextValue.Number(pair.Value), GameTextValue.Item(pair.Key)), pair.Key)),
         ];
     }

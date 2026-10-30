@@ -95,7 +95,6 @@ public sealed class HuntingGround
     private static int? Best(FightSettings settings, WorldAtlas atlas, WorldGraph graph, MonsterCatalog monsters, int level, bool subscribed)
     {
         var excluded = settings.Excluded.ToHashSet();
-        var chosen = settings.Mode is FightMode.Chosen ? settings.Monsters.ToHashSet() : null;
         var shown = new Dictionary<int, int>();
 
         // Measured on 3.7.12.12 (9g2): their monsters' worth alone chose a sub-area of one map at level 10, and one of 13 maps
@@ -119,7 +118,7 @@ public sealed class HuntingGround
 
             foreach (var monster in atlas.MonstersOf(subArea))
             {
-                if (!excluded.Contains(monster) && (chosen is null || chosen.Contains(monster)) && Hunted(monsters, monster))
+                if (!excluded.Contains(monster) && (settings.Mode is not FightMode.Chosen || ChosenMonsters.Holds(settings, monsters, monster)) && Hunted(monsters, monster))
                     worth += WorthOf(monsters, monster, level);
             }
 

@@ -211,6 +211,15 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return Add(property, SettingKind.Monster, true, name);
     }
 
+    /// <summary>Declares several families of monsters, each once (D247).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Families</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> MonsterFamilies(Expression<Func<TSettings, IReadOnlyList<int>>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.MonsterFamily, true, name);
+    }
+
     /// <summary>Declares a rule the settings hold together, such as a minimum below a maximum.</summary>
     /// <param name="holds">Tells whether the settings hold it; it must be quick.</param>
     /// <param name="message">What the app says when they do not.</param>

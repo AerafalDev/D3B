@@ -15,8 +15,8 @@ using D3B.Scripts.Unity;
 namespace D3B.Scripts.Extract;
 
 /// <summary>
-/// Reads the icons of the items a harvest names, of the professions, of the classes' spells and of the monsters a hunter
-/// meets, decoded from the client's BC7 textures (D135, D136).
+/// Reads the icons of the items a harvest names or a hunter's monsters drop, of the professions, of the classes' spells and
+/// of the monsters a hunter meets, decoded from the client's BC7 textures (D135, D136, D247).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -24,7 +24,8 @@ namespace D3B.Scripts.Extract;
 /// per icon, named by the icon's identifier, a spell's after <c>sort_</c>, a monster's its <c>gfxId</c>, in a bundle per
 /// scale. Items' icons are 64 pixels at 1x, professions' at 2x, spells' 48 at 1x, monsters' 64 at 1x: each kind's table
 /// has its own <see cref="IconTable.Size"/>. The extractor keeps the icons of the items the sub-areas list as harvestable
-/// and of those a skill gathers, Base's included, every profession's (client.md), those of the breeds' spells and of both
+/// and of those a skill gathers, Base's included, every profession's (client.md), of the items the monsters a hunter meets
+/// drop, which a fight's loot shows (D247), those of the breeds' spells and of both
 /// spells of every variant, the spells every character has included, and those of the monsters the sub-areas list, but
 /// bombs and the monsters hidden from the bestiary.
 /// </para>
@@ -33,8 +34,9 @@ namespace D3B.Scripts.Extract;
 /// sprite's rectangle covers it whole, an items' sprite drawing it through a mesh trimmed to its opaque texels. The
 /// extraction fails on anything else, rather than keep an icon cut or upside down. It fails too on an item's, a
 /// profession's or a spell's icon the bundle lacks: the pack is made once a build by its maintainer, who should hear of
-/// it then, rather than the app drawing a neutral square nobody notices. A monster's it lacks is counted and left out:
-/// 4 monsters of client 3.7.12.12 have no picture, a new one may come before its picture, and a hunt needs none.
+/// it then, rather than the app drawing a neutral square nobody notices. A monster's it lacks, or a drop's, is counted and
+/// left out: 4 monsters of client 3.7.12.12 have no picture, a new one may come before its picture, and a hunt needs none
+/// as a fight's loot needs none.
 /// </para>
 /// </remarks>
 internal static class IconsExtractor
@@ -128,18 +130,47 @@ internal static class IconsExtractor
                 monsterIcons.Add(monster.GfxId);
         }
 
+        var dropped = Dropped(client, met, items);
+        var dropIcons = new SortedSet<int>(dropped.Select(id => items.TryGetItem(id, out var item) ? item.IconId : 0).Where(icon => icon > 0));
+        var (itemTable, itemsLacking) = Decode(ItemsBundle(client), string.Empty, ItemSize, [.. itemIcons, .. dropIcons]);
+
+        if (itemsLacking.Where(itemIcons.Contains).ToList() is { Count: > 0 } harvestLacking)
+            throw new InvalidDataException($"{Path.GetFileName(ItemsBundle(client))} lacks {Missing(harvestLacking)}.");
+
         var (monsterTable, lacking) = Decode(MonstersBundle(client), string.Empty, MonsterSize, monsterIcons);
         var unpictured = met.Where(id => monsters.TryGetMonster(id, out var monster) && lacking.Contains(monster.GfxId)).ToList();
         var catalog = new IconCatalog(
-            Whole(ItemsBundle(client), string.Empty, ItemSize, itemIcons, Missing),
+            itemTable,
             Whole(JobsBundle(client), string.Empty, JobSize, jobIcons, Missing),
             Whole(SpellsBundle(client), "sort_", SpellSize, spellIcons, ids => MissingSpells(ids, spells, breeds, classSpells)),
             monsterTable);
 
-        Console.WriteLine($"Icons: {catalog.Items.Count:N0} of the {named.Count:N0} items a harvest names, {catalog.Jobs.Count:N0} of the professions, {catalog.Spells.Count:N0} of the {classSpells.Count:N0} spells of the breeds and their variants");
+        Console.WriteLine($"Icons: {catalog.Items.Count:N0} of the items a harvest names, {named.Count:N0}, and of the {dropped.Count:N0} its monsters drop, {itemsLacking.Count:N0} lacking; {catalog.Jobs.Count:N0} of the professions, {catalog.Spells.Count:N0} of the {classSpells.Count:N0} spells of the breeds and their variants");
         Console.WriteLine($"  {catalog.Monsters.Count:N0} pictures of the {met.Count:N0} monsters a hunter meets; monsters whose picture the client lacks, drawn without: {unpictured.Count:N0}{(unpictured.Count > 0 ? $" ({List(unpictured)})" : string.Empty)}");
 
         return catalog;
+    }
+
+    // What the monsters a hunter meets drop, as the client's monsters list it: a fight's loot, which the bot's card counts (D247).
+    private static SortedSet<int> Dropped(ClientInstall client, SortedSet<int> met, ItemCatalog items)
+    {
+        var dropped = new SortedSet<int>();
+
+        foreach (var record in UnityDataTable.ReadById(client, "monsters"))
+        {
+            if (!met.Contains((int)record.Integer("id")) || !record.Has("drops"))
+                continue;
+
+            foreach (var drop in record.Items("drops"))
+            {
+                var id = (int)drop.Integer("objectId");
+
+                if (items.TryGetItem(id, out _))
+                    dropped.Add(id);
+            }
+        }
+
+        return dropped;
     }
 
     private static SortedSet<int> ClassSpells(SpellCatalog spells, BreedCatalog breeds)

@@ -31,6 +31,9 @@ public sealed class FightingModule : IModule
         settings.Monsters(s => s.Monsters, FightTexts.Text("Monsters"))
             .Help(FightTexts.Text("MonstersHelp"))
             .VisibleWhen(s => s.Mode is FightMode.Chosen);
+        settings.MonsterFamilies(s => s.Families, FightTexts.Text("Families"))
+            .Help(FightTexts.Text("FamiliesHelp"))
+            .VisibleWhen(s => s.Mode is FightMode.Chosen);
         settings.Monsters(s => s.Excluded, FightTexts.Text("Excluded"))
             .Excluding()
             .Help(FightTexts.Text("ExcludedHelp"));
@@ -45,7 +48,7 @@ public sealed class FightingModule : IModule
             .VisibleWhen(s => s.Place is FightPlace.Chosen);
         settings.SubAreas(s => s.SubAreas, FightTexts.Text("SubAreas"))
             .Within(s => s.Area)
-            .SuggestedBy(s => s.Monsters)
+            .SuggestedByMonsters(ChosenIn)
             .Help(FightTexts.Text("SubAreasHelp"))
             .VisibleWhen(s => s.Place is FightPlace.Chosen);
         settings.Flag(s => s.IsolatedMaps, FightTexts.Text("IsolatedMaps")).Help(FightTexts.Text("IsolatedMapsHelp"));
@@ -70,12 +73,21 @@ public sealed class FightingModule : IModule
         settings.Choice(s => s.AfterLostFight, FightTexts.Text("AfterLostFight"), after => FightTexts.Text($"AfterLostFight{after}"))
             .Help(FightTexts.Text("AfterLostFightHelp"));
 
-        settings.Rule(s => s.Mode is not FightMode.Chosen || s.Monsters.Count > 0, FightTexts.Text("RuleMonsters"));
+        settings.Rule(s => s.Mode is not FightMode.Chosen || ChosenMonsters.Any(s), FightTexts.Text("RuleMonsters"));
         settings.Rule(s => s.Place is FightPlace.Automatic || s.Area is not null || s.SubAreas.Count > 0, FightTexts.Text("RuleWhere"));
         settings.Rule(s => s.LeastMonsters <= s.MostMonsters, FightTexts.Text("RuleSize"));
         settings.Preview((s, services, players) => services.GetRequiredService<FightPreviews>().Of(s, players));
 
         settings.Preset("auto", FightTexts.Text("PresetAuto"), _ => { });
+    }
+
+    private static IReadOnlyList<int> ChosenIn(FightSettings settings, GameReferences game)
+    {
+        // The monsters chosen and those of the families chosen, whose sub-areas come first; none while the groups are the character's level's.
+        if (settings.Mode is not FightMode.Chosen)
+            return [];
+
+        return [.. settings.Monsters.Concat(settings.Families.SelectMany(family => game.Options(SettingKind.Monster, family).Select(monster => monster.Id))).Distinct()];
     }
 
     /// <inheritdoc/>

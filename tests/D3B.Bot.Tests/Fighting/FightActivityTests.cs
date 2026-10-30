@@ -61,13 +61,35 @@ public sealed class FightActivityTests : IAsyncDisposable
         var automatic = new FightSettings { LeastMonsters = 2, MostMonsters = 3, Excluded = [Bouftou] };
         var chosen = new FightSettings { Mode = FightMode.Chosen, Monsters = [Larva] };
 
-        Assert.True(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Larva, 30)), level: 30));
-        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Larva, 31)), level: 30));
-        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20)), level: 30));
-        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Bouftou, 10)), level: 30));
-        Assert.False(GroupJudge.Allows(automatic, Group(null, (Larva, 20), (Larva, 20)), level: 30));
-        Assert.True(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 90), (Larva, 90)), level: 30));
-        Assert.False(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 10)), level: 30));
+        Assert.True(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Larva, 30)), level: 30, _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Larva, 31)), level: 30, _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20)), level: 30, _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Bouftou, 10)), level: 30, _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(automatic, Group(null, (Larva, 20), (Larva, 20)), level: 30, _play.Tables.Monsters));
+        Assert.True(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 90), (Larva, 90)), level: 30, _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 10)), level: 30, _play.Tables.Monsters));
+    }
+
+    [Fact]
+    public void AGroupHoldingAMonsterOfAFamilyChosenIsAttackedAsOneHoldingAMonsterChosen()
+    {
+        // The bouftou is of family 1, the larva of family 2, through their races.
+        var monsters = new MonsterCatalog(
+            new Monster[] { new() { Id = Bouftou, Race = 10, FirstGrade = 0, GradeCount = 1 }, new() { Id = Larva, Race = 20, FirstGrade = 1, GradeCount = 1 } },
+            new MonsterGrade[] { new() { Grade = 1, Level = 10 }, new() { Grade = 1, Level = 10 } },
+            Array.Empty<MonsterSpell>(),
+            Array.Empty<byte>(),
+            Array.Empty<MonsterRatio>(),
+            new[] { new MonsterRace(10, 1, 0), new MonsterRace(20, 2, 0) },
+            new[] { new MonsterRace(1, MonsterRace.NoSuperRace, 0), new MonsterRace(2, MonsterRace.NoSuperRace, 0) });
+        var family = new FightSettings { Mode = FightMode.Chosen, Families = [2] };
+
+        Assert.Equal(2, ChosenMonsters.FamilyOf(monsters, Larva));
+        Assert.Null(ChosenMonsters.FamilyOf(monsters, 7));
+        Assert.True(ChosenMonsters.Any(family));
+        Assert.False(ChosenMonsters.Any(new FightSettings { Mode = FightMode.Chosen }));
+        Assert.True(GroupJudge.Allows(family, Group(GroupCell, (Bouftou, 10), (Larva, 10)), level: 30, monsters));
+        Assert.False(GroupJudge.Allows(family, Group(GroupCell, (Bouftou, 10)), level: 30, monsters));
     }
 
     [Fact]
@@ -237,6 +259,7 @@ public sealed class FightActivityTests : IAsyncDisposable
 
         // Three lost in a row stop it, as harvesting (D198).
         Assert.Equal(InterruptionResponse.Stop, activity.OnFightOver(Ended(FightOutcome.Lost), InterruptionResponse.Resume));
-        Assert.Equal(["1 fights won", "3 fights lost"], activity.Report!.Counts.Select(count => string.Format(System.Globalization.CultureInfo.InvariantCulture, count.Text.Format.In(System.Globalization.CultureInfo.InvariantCulture), [.. count.Text.Values.Select(value => value.Text ?? value.Id.ToString(System.Globalization.CultureInfo.InvariantCulture))])));
+        // Counted: one fight won, three lost.
+        Assert.Equal(["1 fight won", "3 fights lost"], activity.Report!.Counts.Select(count => string.Format(System.Globalization.CultureInfo.InvariantCulture, (count.Text.Many is { } many && count.Text.Count != 1 ? many : count.Text.Format).In(System.Globalization.CultureInfo.InvariantCulture), [.. count.Text.Values.Select(value => value.Text ?? value.Id.ToString(System.Globalization.CultureInfo.InvariantCulture))])));
     }
 }

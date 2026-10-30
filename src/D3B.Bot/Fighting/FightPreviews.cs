@@ -42,7 +42,7 @@ public sealed class FightPreviews
     {
         var who = string.Join(';', players.Select(player => $"{player.Name}:{player.Level}"));
 
-        return $"{settings.Mode}|{string.Join(',', settings.Monsters)}|{string.Join(',', settings.Excluded)}|{settings.Place}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{settings.IsolatedMaps}|{who}";
+        return $"{settings.Mode}|{string.Join(',', settings.Monsters)}|{string.Join(',', settings.Families)}|{string.Join(',', settings.Excluded)}|{settings.Place}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{settings.IsolatedMaps}|{who}";
     }
 
     /// <summary>Reckons what settings lead to.</summary>
@@ -149,7 +149,7 @@ public sealed class FightPreviews
             new(GameText.Of(FightTexts.Text("FigureNumber"), GameTextValue.Number(maps)), GameText.Counted(FightTexts.Text("FigureMapsOne"), FightTexts.Text("FigureMapsMany"), maps)),
             settings.Mode is FightMode.Chosen
                 ? new(
-                    GameText.Of(FightTexts.Text("FigureOutOf"), GameTextValue.Number(hunted.Count), GameTextValue.Number(settings.Monsters.Distinct().Count())),
+                    GameText.Of(FightTexts.Text("FigureOutOf"), GameTextValue.Number(hunted.Count), GameTextValue.Number(Chosen(settings).Count)),
                     GameText.Of(FightTexts.Text("FigureChosenLiving")))
                 : new(
                     GameText.Of(FightTexts.Text("FigureNumber"), GameTextValue.Number(hunted.Count)),
@@ -184,6 +184,23 @@ public sealed class FightPreviews
         };
     }
 
+    private HashSet<int> Chosen(FightSettings settings)
+    {
+        // Those named, and those of the families named a hunter meets (D247).
+        var chosen = settings.Monsters.ToHashSet();
+
+        if (settings.Families.Count > 0)
+        {
+            foreach (var id in _world.Atlas.Monsters.Span)
+            {
+                if (ChosenMonsters.Holds(settings, _tables.Monsters, id) && HuntingGround.Hunted(_tables.Monsters, id))
+                    chosen.Add(id);
+            }
+        }
+
+        return chosen;
+    }
+
     private int? LevelOfChosen(FightSettings settings)
     {
         // The highest of their grades: each monster chosen is worth whole there, and no sub-area above it is chosen (D245).
@@ -192,7 +209,7 @@ public sealed class FightPreviews
 
         int? highest = null;
 
-        foreach (var id in settings.Monsters)
+        foreach (var id in Chosen(settings))
         {
             if (!_tables.Monsters.TryGetMonster(id, out var monster))
                 continue;
@@ -208,7 +225,6 @@ public sealed class FightPreviews
     {
         // The monsters the activity attacks a group for in the ground: those chosen, else every one living there, none left out.
         var excluded = settings.Excluded.ToHashSet();
-        var chosen = settings.Mode is FightMode.Chosen ? settings.Monsters.ToHashSet() : null;
         var hunted = new HashSet<int>();
 
         foreach (var id in ground.SubAreas)
@@ -218,7 +234,7 @@ public sealed class FightPreviews
 
             foreach (var monster in _world.Atlas.MonstersOf(subArea))
             {
-                if (!excluded.Contains(monster) && (chosen is null || chosen.Contains(monster)) && HuntingGround.Hunted(_tables.Monsters, monster))
+                if (!excluded.Contains(monster) && (settings.Mode is not FightMode.Chosen || ChosenMonsters.Holds(settings, _tables.Monsters, monster)) && HuntingGround.Hunted(_tables.Monsters, monster))
                     hunted.Add(monster);
             }
         }

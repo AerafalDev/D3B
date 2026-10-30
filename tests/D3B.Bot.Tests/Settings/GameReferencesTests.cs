@@ -2,6 +2,7 @@ using D3B.Bot.Interactives;
 using D3B.Bot.Settings;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.Jobs;
+using D3B.Data.Monsters;
 
 namespace D3B.Bot.Tests.Settings;
 
@@ -63,6 +64,26 @@ public sealed class GameReferencesTests
         Assert.Equal([TestReferences.Hills], _game.SubAreasLiving([TestReferences.Larva], TestReferences.Amakna).Skip(1).Select(subArea => subArea.SubArea.Id));
         Assert.Empty(_game.SubAreasLiving([TestReferences.Larva], TestReferences.Astrub));
         Assert.Empty(_game.SubAreasLiving([]));
+    }
+
+    [Fact]
+    public void TheFamiliesOfferedAreThoseAHunterMeetsAMonsterOf()
+    {
+        // Tofus are of family 1, larvae of family 2; family 3's monsters live nowhere.
+        var monsters = new MonsterCatalog(
+            new Monster[] { new() { Id = TestReferences.Tofu, Race = 10, FirstGrade = 0, GradeCount = 1 }, new() { Id = TestReferences.Larva, Race = 20, FirstGrade = 1, GradeCount = 1 } },
+            new MonsterGrade[] { new() { Grade = 1, Level = 5 }, new() { Grade = 1, Level = 10 } },
+            Array.Empty<MonsterSpell>(),
+            Array.Empty<byte>(),
+            Array.Empty<MonsterRatio>(),
+            new[] { new MonsterRace(10, 1, 0), new MonsterRace(20, 2, 0) },
+            new[] { new MonsterRace(1, MonsterRace.NoSuperRace, 101), new MonsterRace(2, MonsterRace.NoSuperRace, 102), new MonsterRace(3, MonsterRace.NoSuperRace, 103) });
+        var game = new GameReferences(TestReferences.Atlas(), TestReferences.Jobs(), TestReferences.Items(), monsters: monsters);
+
+        Assert.Equal([new(1, 101, null), new GameReference(2, 102, null)], game.Options(SettingKind.MonsterFamily));
+        Assert.True(game.Exists(SettingKind.MonsterFamily, 2));
+        Assert.False(game.Exists(SettingKind.MonsterFamily, 3));
+        Assert.Equal([TestReferences.Larva], game.Options(SettingKind.Monster, 2).Select(monster => monster.Id));
     }
 
     [Fact]

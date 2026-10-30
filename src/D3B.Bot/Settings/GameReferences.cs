@@ -38,6 +38,7 @@ public sealed class GameReferences
     private readonly Lazy<ILookup<int, long>> _maps;
     private readonly Lazy<Dictionary<long, int>> _subAreaOf;
     private readonly Lazy<IReadOnlyList<GameReference>> _superRaces;
+    private readonly Lazy<IReadOnlyList<GameReference>> _families;
     private readonly Lazy<Dictionary<int, int>> _superRaceOfMonster;
     private readonly Lazy<IReadOnlyList<GameReference>> _monsters;
 
@@ -93,6 +94,9 @@ public sealed class GameReferences
         _superRaces = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. monsters.SuperRaces.ToArray().Select(race => new GameReference(race.Id, race.NameId, null))]);
         _superRaceOfMonster = new Lazy<Dictionary<int, int>>(() => SuperRacesOfMonsters(monsters, atlas));
         _monsters = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. _superRaceOfMonster.Value.Keys.Order().Select(id => MonsterOf(monsters, id))]);
+
+        // A family a hunter meets a monster of: some super races are a quest's, an event's or a dungeon's boss alone (D247).
+        _families = new Lazy<IReadOnlyList<GameReference>>(() => [.. _superRaces.Value.Where(race => _superRaceOfMonster.Value.ContainsValue(race.Id))]);
 
         // Base's own resources have no profession, so no level (D150).
         _resources = new Lazy<IReadOnlyList<GameReference>>(() => [.. _resourcesByJob.Value
@@ -184,6 +188,7 @@ public sealed class GameReferences
             (SettingKind.Resource, null) => _resources.Value,
             (SettingKind.Resource, { } job) => [.. _resourcesByJob.Value[job]],
             (SettingKind.Item, _) => _items.Value,
+            (SettingKind.MonsterFamily, _) => _families.Value,
             (SettingKind.Monster, null) => _monsters.Value,
             (SettingKind.Monster, { } superRace) => [.. _monsters.Value.Where(monster => _superRaceOfMonster.Value[monster.Id] == superRace)],
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "The kind names nothing of the game's."),
@@ -204,6 +209,7 @@ public sealed class GameReferences
             SettingKind.Resource => _resources.Value.Any(resource => resource.Id == id),
             SettingKind.Item => _itemTypes.Value.ContainsKey(id),
             SettingKind.Monster => _superRaceOfMonster.Value.ContainsKey(id),
+            SettingKind.MonsterFamily => _families.Value.Any(family => family.Id == id),
             _ => false,
         };
     }

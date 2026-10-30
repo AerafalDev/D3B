@@ -719,13 +719,55 @@
             </Border>
         </DataTemplate>
         <DataTemplate x:DataType="s:SettingsEditor">
-            <DockPanel>
-                <StackPanel
-                    DockPanel.Dock="Right"
-                    IsVisible="{Binding HasPreview}"
-                    Margin="24,0,0,0"
-                    Spacing="16"
-                    Width="320">
+            <c:SidePanel
+                MinMainWidth="520"
+                SideWidth="320"
+                Spacing="24">
+                <StackPanel Spacing="16">
+                    <TextBlock
+                        Classes="Muted"
+                        IsVisible="{Binding IsEmpty}"
+                        Text="{l:Tr NoSetting}" />
+                    <Border
+                        Classes="Banner Danger"
+                        IsVisible="{Binding HasRuleProblems}"
+                        Padding="16,12">
+                        <TextBlock Text="{Binding Rules}" TextWrapping="Wrap" />
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding Sections}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="16" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.Styles>
+                            <Style Selector="ContentPresenter" x:DataType="s:SettingSectionViewModel">
+                                <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+                            </Style>
+                        </ItemsControl.Styles>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="s:SettingSectionViewModel">
+                                <Border Classes="Card">
+                                    <StackPanel>
+                                        <TextBlock
+                                            Classes="Title"
+                                            IsVisible="{Binding HasTitle}"
+                                            Margin="0,0,0,4"
+                                            Text="{Binding Title}" />
+                                        <ItemsControl Classes="Rows" ItemsSource="{Binding Fields}">
+                                            <ItemsControl.Styles>
+                                                <Style Selector="ContentPresenter" x:DataType="s:SettingFieldViewModel">
+                                                    <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+                                                </Style>
+                                            </ItemsControl.Styles>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+                <StackPanel IsVisible="{Binding HasPreview}" Spacing="16">
                     <Border Classes="Card">
                         <StackPanel Spacing="12">
                             <TextBlock Classes="Title" Text="{l:Tr Preview}" />
@@ -846,51 +888,7 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
-                <StackPanel Spacing="16">
-                    <TextBlock
-                        Classes="Muted"
-                        IsVisible="{Binding IsEmpty}"
-                        Text="{l:Tr NoSetting}" />
-                    <Border
-                        Classes="Banner Danger"
-                        IsVisible="{Binding HasRuleProblems}"
-                        Padding="16,12">
-                        <TextBlock Text="{Binding Rules}" TextWrapping="Wrap" />
-                    </Border>
-                    <ItemsControl ItemsSource="{Binding Sections}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Spacing="16" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.Styles>
-                            <Style Selector="ContentPresenter" x:DataType="s:SettingSectionViewModel">
-                                <Setter Property="IsVisible" Value="{Binding IsVisible}" />
-                            </Style>
-                        </ItemsControl.Styles>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="s:SettingSectionViewModel">
-                                <Border Classes="Card">
-                                    <StackPanel>
-                                        <TextBlock
-                                            Classes="Title"
-                                            IsVisible="{Binding HasTitle}"
-                                            Margin="0,0,0,4"
-                                            Text="{Binding Title}" />
-                                        <ItemsControl Classes="Rows" ItemsSource="{Binding Fields}">
-                                            <ItemsControl.Styles>
-                                                <Style Selector="ContentPresenter" x:DataType="s:SettingFieldViewModel">
-                                                    <Setter Property="IsVisible" Value="{Binding IsVisible}" />
-                                                </Style>
-                                            </ItemsControl.Styles>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </DockPanel>
+            </c:SidePanel>
         </DataTemplate>
     </UserControl.DataTemplates>
     <Panel>
@@ -1028,7 +1026,18 @@
                         </c:AppPage.KeyBindings>
                         <c:AppPage.Header>
                             <StackPanel Spacing="4">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition
+                                            MaxWidth="288"
+                                            MinWidth="128"
+                                            Width="1000*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
                                     <Button
                                         AutomationProperties.Name="{l:Tr Back}"
                                         Classes="Ghost IconButton"
@@ -1041,19 +1050,24 @@
                                         AutomationProperties.Name="{l:Tr ProfileName}"
                                         FontSize="16"
                                         FontWeight="SemiBold"
+                                        Grid.Column="1"
+                                        Margin="8,0,0,0"
                                         MaxLength="60"
                                         PlaceholderText="{l:Tr ProfileName}"
                                         Text="{Binding EditName}"
-                                        VerticalAlignment="Center"
-                                        Width="280" />
+                                        VerticalAlignment="Center" />
                                     <c:StatusPill
                                         Classes="Plain"
+                                        Grid.Column="2"
                                         IsVisible="{Binding !IsActivityMissing}"
+                                        Margin="8,0,0,0"
                                         Text="{Binding EditActivity.Name, FallbackValue=''}" />
                                     <ComboBox
                                         AutomationProperties.Name="{l:Tr Activity}"
+                                        Grid.Column="3"
                                         IsVisible="{Binding IsActivityMissing}"
                                         ItemsSource="{Binding Activities}"
+                                        Margin="8,0,0,0"
                                         PlaceholderText="{l:Tr ChooseActivity}"
                                         SelectedItem="{Binding EditActivity}"
                                         VerticalAlignment="Center"
@@ -1065,10 +1079,12 @@
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
                                     <c:StatusPill
+                                        Grid.Column="4"
                                         IsVisible="{Binding IsDirty}"
+                                        Margin="8,0,0,0"
                                         Text="{l:Tr Unsaved}"
                                         Tone="Warning" />
-                                </StackPanel>
+                                </Grid>
                                 <TextBlock
                                     Classes="Problem"
                                     IsVisible="{Binding HasNameProblem}"

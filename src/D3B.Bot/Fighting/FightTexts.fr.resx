@@ -51,7 +51,7 @@
     <value>Monstres</value>
   </data>
   <data name="ModeHelp" xml:space="preserve">
-    <value>Automatique : les groupes au niveau du perso. Choisis : un groupe qui contient l'un des monstres.</value>
+    <value>Automatique : les groupes au niveau du perso. Choisis : un groupe qui contient l'un des monstres, ou un monstre de l'une des familles.</value>
   </data>
   <data name="ModeAutomatic" xml:space="preserve">
     <value>Automatique</value>
@@ -174,7 +174,7 @@
     <value>Arrêter</value>
   </data>
   <data name="RuleMonsters" xml:space="preserve">
-    <value>Choisis au moins un monstre.</value>
+    <value>Choisis au moins un monstre ou une famille.</value>
   </data>
   <data name="RuleWhere" xml:space="preserve">
     <value>Choisis une zone ou des sous-zones.</value>
@@ -215,10 +215,16 @@
   <data name="DoingRegain" xml:space="preserve">
     <value>Regagne sa vie après un combat perdu : {0} sur {1}</value>
   </data>
-  <data name="CountWon" xml:space="preserve">
+  <data name="CountWonOne" xml:space="preserve">
+    <value>{0} combat gagné</value>
+  </data>
+  <data name="CountWonMany" xml:space="preserve">
     <value>{0} combats gagnés</value>
   </data>
-  <data name="CountLost" xml:space="preserve">
+  <data name="CountLostOne" xml:space="preserve">
+    <value>{0} combat perdu</value>
+  </data>
+  <data name="CountLostMany" xml:space="preserve">
     <value>{0} combats perdus</value>
   </data>
   <data name="FailNowhere" xml:space="preserve">
@@ -316,5 +322,11 @@
   </data>
   <data name="FigureForLevelLabel" xml:space="preserve">
     <value>le lieu pour un perso du niveau des monstres</value>
+  </data>
+  <data name="Families" xml:space="preserve">
+    <value>Familles à combattre</value>
+  </data>
+  <data name="FamiliesHelp" xml:space="preserve">
+    <value>Un groupe est attaqué s'il contient un monstre de l'une d'elles, comme s'il contient un monstre choisi.</value>
   </data>
 </root>

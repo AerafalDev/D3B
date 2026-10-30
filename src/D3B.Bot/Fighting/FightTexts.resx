@@ -51,7 +51,7 @@
     <value>Monsters</value>
   </data>
   <data name="ModeHelp" xml:space="preserve">
-    <value>Automatic: the groups at the character's level. Chosen: a group holding one of the monsters.</value>
+    <value>Automatic: the groups at the character's level. Chosen: a group holding one of the monsters, or a monster of one of the families.</value>
   </data>
   <data name="ModeAutomatic" xml:space="preserve">
     <value>Automatic</value>
@@ -174,7 +174,7 @@
     <value>Stop</value>
   </data>
   <data name="RuleMonsters" xml:space="preserve">
-    <value>Choose at least one monster.</value>
+    <value>Choose at least one monster or one family.</value>
   </data>
   <data name="RuleWhere" xml:space="preserve">
     <value>Choose an area or sub-areas.</value>
@@ -215,10 +215,16 @@
   <data name="DoingRegain" xml:space="preserve">
     <value>Regains its life after a lost fight: {0} of {1}</value>
   </data>
-  <data name="CountWon" xml:space="preserve">
+  <data name="CountWonOne" xml:space="preserve">
+    <value>{0} fight won</value>
+  </data>
+  <data name="CountWonMany" xml:space="preserve">
     <value>{0} fights won</value>
   </data>
-  <data name="CountLost" xml:space="preserve">
+  <data name="CountLostOne" xml:space="preserve">
+    <value>{0} fight lost</value>
+  </data>
+  <data name="CountLostMany" xml:space="preserve">
     <value>{0} fights lost</value>
   </data>
   <data name="FailNowhere" xml:space="preserve">
@@ -316,5 +322,11 @@
   </data>
   <data name="FigureForLevelLabel" xml:space="preserve">
     <value>the place for a character of the monsters' level</value>
+  </data>
+  <data name="Families" xml:space="preserve">
+    <value>Families to fight</value>
+  </data>
+  <data name="FamiliesHelp" xml:space="preserve">
+    <value>A group is attacked when it holds a monster of one of them, as one holding a monster chosen.</value>
   </data>
 </root>

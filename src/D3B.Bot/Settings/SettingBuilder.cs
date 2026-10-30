@@ -99,7 +99,20 @@ public sealed class SettingBuilder<TSettings>
     {
         ArgumentNullException.ThrowIfNull(resources);
 
-        _setting.SetSuggesting((settings, game) => resources((TSettings)settings, game));
+        _setting.SetSuggesting((settings, game) => resources((TSettings)settings, game), SettingKind.Resource);
+
+        return this;
+    }
+
+    /// <summary>Offers first, for a sub-area setting, the sub-areas where monsters the activity reckons from its settings live, such as those of a family chosen (D247).</summary>
+    /// <param name="monsters">Reckons the monsters from the settings and the game's values; it must be quick.</param>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting holds no sub-area.</exception>
+    public SettingBuilder<TSettings> SuggestedByMonsters(Func<TSettings, GameReferences, IReadOnlyList<int>> monsters)
+    {
+        ArgumentNullException.ThrowIfNull(monsters);
+
+        _setting.SetSuggesting((settings, game) => monsters((TSettings)settings, game), SettingKind.Monster);
 
         return this;
     }
