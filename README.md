@@ -1,126 +1,224 @@
 # D3B
 
-An open-source bot for Dofus 3 (Unity), in .NET 10 on Windows. Every feature is a module, assembled as in Bevy. An
-Avalonia desktop app runs the bots and controls them; a headless host runs them without it.
+[![CI](https://github.com/AerafalDev/D3B/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AerafalDev/D3B/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/AerafalDev/D3B?label=release)](https://github.com/AerafalDev/D3B/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-This project is not affiliated with Ankama. Dofus is a trademark of Ankama. Using a bot on the official servers breaches
-Ankama's terms of service and can get the account banned. No game asset or data is committed to this repository: the
-data packs extracted from the official client ship as release assets, and `scripts/extract.cs` makes them from a local
-client.
+An open-source bot for Dofus 3, Ankama's Unity client, written in C# on .NET 10 for Windows. D3B plays your character
+through the official client: it harvests, banks and fights, and a desktop app shows what each bot does. Every feature is
+a module, and the game's data and protocol are read from the client you have installed.
+
+> [!WARNING]
+> D3B is not affiliated with, endorsed by or supported by Ankama. Dofus is a trademark of Ankama. Using a bot on the
+> official servers breaches Ankama's terms of use and can get the account banned. You use D3B at your own risk.
+
+## What it does
+
+- **Harvesting and banking.** A bot tours a zone and harvests the resources its profile names, by profession or as a
+  list, then banks them when its pods are full, in the bank or the guild's chest. It chooses the sub-area by each
+  character's levels, takes a zaap only when it saves enough maps, learns where resources grow and how long they take
+  to grow back, eats to heal, opens resource bags, and handles the fights it meets on the way. Six profiles come ready:
+  an automatic harvest and one per profession. Every run is kept, and a statistics page says what the runs brought.
+- **Fights.** D3B follows a fight from the protocol: the fighters, their life, AP and MP, buffs, states and cooldowns. It
+  knows the rules of a cast (range, line of sight, zones, target masks, costs, cooldowns) and of a walk with its tackle,
+  and foresees what each cast does from the game's data, checked against every cast of the fights captured so far. Its
+  AI places the character, then each turn weighs the walks and casts against the monsters' reply and plays them at a
+  pace you can follow.
+- **The desktop app.** A card per bot, with where it is, its pods, kamas and activity; a live map of the bot's map, its
+  path, elements, NPCs and fighters; the accounts, the profiles and their editor with a preview of the zone; a journal
+  per bot, a protocol inspector, and the settings. Dark by default, in French and English. It installs without
+  administrator rights and updates itself from this repository's releases.
+
+D3B injects nothing into the client and never sees a password. The client you start from Ankama's launcher logs in as
+usual; while D3B runs, one line of the client's `version` file sends it through a relay on your machine, and when D3B
+stops, that line goes back to Ankama's.
+
+## What D3B never does
+
+These are out of scope for good, in the code, its modules and its documentation ([D2](docs/decisions.md#d2-what-d3b-never-contains)):
+
+- evading Ankama's detection: simulated mistakes, timings shaped to avoid bans, forged hardware identifiers;
+- creating accounts in bulk;
+- automating subscriptions or payments;
+- disabling or bypassing Ankama Shield;
+- one proxy per account to hide multi-accounting.
+
+Pull requests that add any of these are closed.
 
 ## Status
 
-The solution and the module system: a headless host that builds its modules, starts and stops. The game data: tools that inspect the official client and extract its maps, world graph, items, jobs,
-interactives, banks, the icons of resources and professions, and what fights need, spells, effects, states, monsters,
-breeds and characteristics, with the texts they name, into a pack per client build; a tool that publishes it as a release
-asset; and a data module, whose pack the host finds on the machine or beside the published app, and without which it does not start.
-The network: while the host runs, official clients started from the launcher connect through its relay, which can record
-their connection phase. The bots walk, travel, use elements and bank. The first milestone is reached: a bot harvests a
-profile's resources tour by tour through its zone and banks them when its pods are full, started from the app or when its
-client connects, its card and map saying what it does; the profile editor suggests the sub-areas where the resources grow
-and draws the zone. The resources and professions show their icons, from the pack, on the profiles, the bots' cards and
-the map; every map a bot enters teaches which graphics are which resource, kept from one run to the next, so that a tour
-goes first to the maps likely holding its resources. A harvest also takes resources no profession gathers, such as a well's
-water, found by those graphics; leaves out a zone's maps reached only far round unless asked; learns how long each
-resource takes to grow back and waits for it; tells a protector's fight from an aggression and resumes, pauses or stops
-after it; opens resource bags; heals by eating under a share of life; and may deposit in the guild's chest. Each run is
-kept, and a statistics page says what the runs brought. Mods will be made as blueprints after it. The app's map page draws a
-bot's map from the pack as its character moves, with its path, elements, NPCs and exits, and says what a cell holds;
-its logs page shows each bot's journal of its actions and the host's problems; its protocol inspector shows a bot's game
-frames decoded as they go, the login ticket hidden, or replays a capture; its settings page holds the client's display
-time and D3B's other delays, which a slow machine raises, and the time between two actions, the captures, the language
-and the theme. The app was redesigned page by page: a sidebar, one scale of sizes, Lucide's icons, short texts with their help in
-tooltips, the profile editor on a page of its own beside its zone's preview, dialogs and toasts. A harvest takes its
-resources by profession, some left out, the highest level first if asked, or as a list; chooses its place by each
-character's levels, the sub-area richest in what it can harvest and not above its level; takes a zaap only when it saves
-enough maps; and six profiles are given, an automatic harvest and one per profession. The app is published with an
-installer, ships the data of the client build it was made for, and updates itself from this repository's releases.
-Fights are under way: D3B reads a fight's protocol, measured on the official client, keeps each bot's fight, its
-fighters, their life, AP and MP, the turns and the outcome with what it gained, and the map page draws the teams'
-placement cells and the fighters, monsters named; the pack holds every spell, its levels and effects with the flags the
-client's code names, the states, monsters and their grades, the breeds and characteristics; and D3B knows the rules of a
-cast, its range, line of sight, zones, target masks, costs, cooldowns, casts per turn and the spells' modifiers, and how
-a fighter walks and is tackled, every cast and walk of 49 captured fights of 11 breeds checked against them. Each bot's
-fight now keeps what the server announces, the fighters' buffs, states, spells' modifiers, cooldowns and moves, and D3B
-foresees what each cast does, damage by element, steals, heals, critical hits, boosts and states, every effect read from
-the pack: on the 66 fights captured, `scripts/fights.cs` replays every cast and finds 331 losses of life of the casts alone
-within what D3B foresaw, 1 below. And D3B fights: its AI places the character, closes the fight to others and to
-spectators, then each turn searches the best walks and casts, weighs them against the monsters' reply, sends one at a
-time at a pace the player follows and thinks again after each answer of the server, and ends its turn as soon as nothing
-is worth doing. A switch on the bot's card has it play every fight; harvesting has it play its own, then resumes, pauses
-or stops as its profile says, and after a lost fight waits for the character's life to come back. The hard cases, summons,
-glyphs and the breeds' mechanisms, come next, then the profiles' strategies and a fighting activity, then the blueprints.
-See the [roadmap](docs/roadmap.md).
+D3B is young and changes fast: settings, data formats and the app may change from one version to the next. The first
+milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them is on `main`, not yet in
+a release, and summons, glyphs, the breeds' mechanisms and a fighting activity come next. Then several accounts
+and groups, blueprint mods edited in the app, the marketplace and crafting. The [roadmap](docs/roadmap.md) has the steps
+in order.
 
-## Installing
+## Install
 
-Download `D3B.App-win-Setup.exe` from the latest release `v<version>` of this repository, on Windows 10 or 11 with the
-official Dofus 3 client installed by Ankama's launcher, and run it. It installs D3B for the current user, without
-administrator rights, in `%LOCALAPPDATA%\D3B.App`, with a shortcut on the desktop and in the Start menu. The installer is
-not signed: Windows SmartScreen may say it protected the PC; *More info*, then *Run anyway*, installs it.
+1. On Windows 10 or 11, install Dofus 3 with Ankama's launcher.
+2. Download `D3B.App-win-Setup.exe` from the [latest release](https://github.com/AerafalDev/D3B/releases/latest) and run
+   it. It installs D3B for the current user in `%LOCALAPPDATA%\D3B.App`, with a shortcut on the desktop and in the Start
+   menu. The installer is not signed yet: if Windows SmartScreen stops it, choose *More info*, then *Run anyway*.
+   A portable zip is in the same release.
 
-Each version of D3B ships the data of one client build, extracted from the official client: its maps, items and texts,
-and the mapping of its protocol. When Ankama updates the client, D3B says it does not know that build yet; the version of
-D3B for it comes out afterwards, and D3B installs it. D3B checks for a newer version as it starts, downloads it, and
-installs it when you restart it from its banner or close it. Its settings page shows its version and the client build it
-ships.
+Each version of D3B ships the data of one client build, extracted from the official client: its maps, items, spells and
+texts, and the mapping of its protocol. When Ankama updates the client, D3B says it does not know that build yet; the
+version of D3B for it comes out afterwards. D3B checks for a new version when it starts, downloads it, and installs it
+when you restart it from its banner or close it. Its settings page shows its version and the client build it ships.
 
 D3B keeps its database, settings and captures in `%LOCALAPPDATA%\D3B`. Uninstalling it from Windows' settings removes the
 app and keeps that folder.
 
-## Building
+## Getting started
 
-Requires the .NET 10 SDK pinned in `global.json`, on Windows.
+1. Start D3B, and wait until it says it runs for your client's build.
+2. Start Dofus from Ankama's launcher, log in and choose a character. Its card shows on the bots page.
+3. Choose a profile on the card, one of those given or your own from the profiles page, and start it. The bot can also
+   start its profile as soon as its client connects; that is set per character on the accounts page.
+4. Take the character back at any time by playing it: the bot pauses, and you resume it from its card.
 
-```sh
-dotnet build
-dotnet test
-dotnet run --project src/D3B.App
+Start D3B before the game: a client started while D3B is closed plays without it. If D3B ever crashes, the client cannot
+connect until D3B runs again: start D3B and close it, which gives the client Ankama's configuration back, or run
+`dotnet run --file scripts/client.cs -- restore` from a clone of this repository.
+
+On a slow machine, the client may not have drawn a map or shown a window when a bot acts: raise the client's display
+time on the settings page, 0.5 s by default, up to 3 s. Every other delay is there too, each measured by default.
+
+## Build from source
+
+You need Windows, Git and the .NET 10 SDK pinned in [`global.json`](global.json) (10.0.403 or a later 10.0 SDK). The
+official client is needed to run the bots, not to build or test.
+
+```powershell
+git clone https://github.com/AerafalDev/D3B.git
+cd D3B
+dotnet build                          # warnings are errors
+dotnet test                           # every test project, on Microsoft.Testing.Platform
+dotnet format --verify-no-changes     # CI checks it
 ```
 
-`src/D3B.Host` runs the same bots without the app. Both keep the accounts their relay sees and the profiles in
-`%LOCALAPPDATA%\D3B\d3b.db` (`Storage:Path` names another file); D3B never sees a password.
+### Run
 
-The host needs the data pack, the schema and the mapping of the installed client's build. It looks for them in
-`%LOCALAPPDATA%\D3B\data`, where `dotnet run --file scripts/extract.cs`, `scripts/schema.cs` and `scripts/mapping.cs`
-write them, then beside the published app. Run from the repository, the app finds them only on this machine: extract and
-map the build, or take its files from the release `client-<version>` with `dotnet run --file scripts/embed.cs --
---client-version <version> --output %LOCALAPPDATA%\D3B\data`.
+```powershell
+dotnet run --project src/D3B.App      # the desktop app, which runs the bots' host in its process
+dotnet run --project src/D3B.Host     # the same host without the app, until Ctrl+C
+```
 
-The release workflow publishes the app when a tag `v<version>` is pushed. To build the same installer on this machine,
-in PowerShell:
+The host needs the data pack, the protocol schema and the mapping of the installed client's build, in the formats the
+code reads. It looks for them in `%LOCALAPPDATA%\D3B\data`, then beside the published app. Run from source, take them
+from the build's release `client-<version>`, with the [GitHub CLI](https://cli.github.com) signed in:
+
+```powershell
+dotnet run --file scripts/embed.cs -- --client-version 3.7.12.12 --output "$env:LOCALAPPDATA\D3B\data"
+```
+
+The tool checks the files, and says so when the release lacks a format your checkout reads, as happens while a format
+change on `main` waits for its upload. When Ankama updates the client, the maintainer extracts and maps the new build
+with the tools below, then publishes its release; mapping a build also needs captures of it.
+
+Both the app and the host keep the accounts their relay sees, and the profiles, in `%LOCALAPPDATA%\D3B\d3b.db`. Options
+are configuration keys, given on the command line:
+
+| Option | Effect |
+| --- | --- |
+| `--Storage:Path <file>` | Uses another database file. |
+| `--Network:Captures:Enabled true` | Records each connection in `%LOCALAPPDATA%\D3B\captures`, which the app's protocol inspector replays. A capture holds the account's login ticket: never share one. |
+| `--Fights:Alone true` | Has the AI play every fight, as the switch on a bot's card does in the app. |
+| `--Delays:Display 1.5` | The client's display time, in seconds; the other delays are under `Delays:` too. |
+
+### Tools
+
+The tools are [file-based apps](https://learn.microsoft.com/dotnet/core/sdk/file-based-apps) in `scripts/`, run with
+`dotnet run --file scripts/<tool>.cs`; `-- --help` lists each one's options. By default they read the client installed
+in `%LOCALAPPDATA%\Ankama\Dofus-dofus3` and write under `%LOCALAPPDATA%\D3B`.
+
+| Tool | What it does |
+| --- | --- |
+| `inspect.cs` | Describes the installed client: its versions, bundles, objects and texts. |
+| `extract.cs` | Extracts the client's game data into the pack of its build. |
+| `schema.cs` | Reads the client's obfuscated protocol schema from its code. |
+| `mapping.cs` | Matches D3B's readable `.proto` files with that schema and writes the build's mapping. |
+| `embed.cs` | Puts a build's pack, schema and mapping beside the published app, or in a folder of your choice. |
+| `release.cs` | Publishes a build's pack, schema and mapping to its release; a dry run without `--publish`. |
+| `client.cs` | Says which configuration the client reads, Ankama's or D3B's; `restore` gives it Ankama's back. |
+| `capture.cs` | Describes the captures by their structure, never their content. |
+| `fights.cs` | Replays the captured fights and compares what D3B foresees of each cast with what the server did. |
+
+The repository's local tools, `dotnet-ef` for the database's migrations and Velopack's `vpk` for the installer, are
+pinned in [`.config/dotnet-tools.json`](.config/dotnet-tools.json):
+
+```powershell
+dotnet tool restore
+dotnet tool run dotnet-ef migrations add <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations
+```
+
+### Build the installer
+
+Pushing a tag `v<version>` runs the [release workflow](.github/workflows/release.yml), which builds, tests and publishes
+the app. The same installer, built on your machine in PowerShell:
 
 ```powershell
 dotnet tool restore
 dotnet publish src/D3B.App -c Release -r win-x64 --self-contained -o publish -p:MinVerVersionOverride=0.1.0
-dotnet run --file scripts/embed.cs -- --client-version 3.7.12.12 --output publish/data --packs $env:LOCALAPPDATA\D3B\data
-dotnet vpk pack --packId D3B.App --packVersion 0.1.0 --packDir publish --mainExe D3B.App.exe --packTitle D3B -o releases
+dotnet run --file scripts/embed.cs -- --client-version 3.7.12.12 --output publish/data --packs "$env:LOCALAPPDATA\D3B\data"
+dotnet tool run vpk pack --packId D3B.App --packVersion 0.1.0 --packDir publish --mainExe D3B.App.exe --packTitle D3B -o releases
 ```
 
-An installed app started with `--Updates:Source <folder>` takes its updates from a folder of releases packed so.
+An installed app started with `--Updates:Source <folder>` takes its updates from a folder of releases packed this way.
 
-While the host runs, the `ConfigUrl` line of the installed client's `version` file names a copy of the client's
-configuration that sends it to the host's relay, and the host gives it Ankama's back when it stops. After a crash,
-`dotnet run --file scripts/client.cs -- restore` does it, so that the client plays without D3B.
+## How it works
 
-With `--Network:Captures:Enabled true`, or the switch on the app's settings page, the relay records each connection in
-`%LOCALAPPDATA%\D3B\captures`, which the protocol inspector replays. A capture holds the account's login ticket: never
-share it.
+```mermaid
+flowchart LR
+    launcher["Ankama's launcher"] --> client["Official Dofus 3 client"]
+    client <-->|game protocol| relay
+    subgraph d3b ["D3B, on your machine"]
+        relay["Relay on a loopback address"] <--> bots["Bots, one actor per character"]
+        data[("Pack, schema and mapping of the client's build")] --> bots
+        bots <--> app["Desktop app"]
+    end
+    relay <--> servers["Ankama's servers"]
+```
 
-On a slow machine, the client may not have drawn a map or shown a window when a bot acts: raise the client's display
-time on the settings page, 0.5 s by default, up to 3 s. Every other delay is there too, each measured by default and
-only raised. The app keeps them in `%LOCALAPPDATA%\D3B\app.json`; `src/D3B.Host` reads the same values from its
-configuration, in seconds, such as `--Delays:Display 1.5`.
+- **Modules.** Every feature is a module that registers its services, activities, settings and pages, assembled as in
+  Bevy. The default modules bring the data, the protocol, the network, the bots and harvesting.
+- **Network.** While D3B runs, the client's configuration sends it to a relay on Kestrel. The relay forwards the
+  client's frames, decodes the game's messages through the build's mapping, and slips the bots' requests in between the
+  client's frames.
+- **Game data.** File-based apps read the client's Unity bundles and code into a pack per build, compressed with zstd,
+  and a mapping from the build's obfuscated protocol to readable `.proto` files. Nothing extracted from the client is
+  committed; packs and mappings ship as release assets.
+- **Bots.** Each character a client plays is an async actor fed by the game it observes. Pathfinding, the rules of a
+  fight and its effects live in `D3B.Engine`, pure code with no I/O.
 
-## Documents
+| Project | Role |
+| --- | --- |
+| `src/D3B.Core` | Modules and `BotBuilder`, on the .NET Generic Host. |
+| `src/D3B.Network` | The relay: Kestrel's transport, framing and codec, and the captures. |
+| `src/D3B.Protocol` | The readable protocol, a build's mapping and the translation through it. |
+| `src/D3B.Data` | The pack's format and readers: maps, world graph, items, spells, monsters, texts. |
+| `src/D3B.Engine` | Pathfinding, line of sight, the rules of a fight, its effects and the AI's search. |
+| `src/D3B.Bot` | The bots' run time: state, behaviors, activities, settings, and the host both apps share. |
+| `src/D3B.Storage` | The database, SQLite through EF Core: accounts, profiles and runs. |
+| `src/D3B.App` | The Avalonia desktop app. |
+| `src/D3B.Host` | The host without the app. |
+
+## Documentation
 
 | Document | Content |
 | --- | --- |
-| [docs/decisions.md](docs/decisions.md) | The brief, every decision with its reasons, the open questions. |
-| [docs/architecture.md](docs/architecture.md) | Where the bot is going: projects, modules, runtime, protocol, data, UI. |
-| [docs/roadmap.md](docs/roadmap.md) | The steps in order, and the next one. |
+| [docs/decisions.md](docs/decisions.md) | The brief, every decision with its reasons and what it rejected, and the open questions. |
+| [docs/architecture.md](docs/architecture.md) | How D3B is built: projects, modules, run time, protocol, data, app, fights. |
+| [docs/roadmap.md](docs/roadmap.md) | The steps in order, what each one did, and the next one. |
 | [docs/client.md](docs/client.md) | What the official client holds that D3B uses, measured. |
+
+## Contributing
+
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: it covers the conventions the build
+enforces and what can never be committed. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md). To
+report a vulnerability, follow the [security policy](SECURITY.md) rather than opening an issue.
 
 ## License
 
-[MIT](LICENSE). The app's icons are Lucide's, under its own license: see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+D3B is released under the [MIT license](LICENSE). The app ships third-party components under their own licenses, listed
+in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

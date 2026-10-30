@@ -47,6 +47,8 @@ The repository is the only memory between sessions: never assume an earlier sess
   code pulled in through `#:include` from a lowercase folder (`scripts/unity/` for what several tools share),
   `#:package` without a version (central package management), and `#:property PublishAot=false` when a package is not
   AOT-compatible. Every script file is listed in the solution, so that it shows in the IDE.
+- `CONTRIBUTING.md` restates these conventions and the C# style below for outside contributors, and the README the
+  commands below for users: a change here changes them too (D204).
 
 ## C# style
 
@@ -72,7 +74,7 @@ dotnet run --project src/D3B.Host          # the same host without the app, unti
                                            # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
                                            # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53), which the app's inspector replays (D115)
                                            # --Fights:Alone true has the AI play every fight of the bots, as the switch on a bot's card does in the app (D198)
-dotnet tool restore                        # then: dotnet tool run dotnet-ef migrations add <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations
+dotnet tool restore                        # the local tools of .config/dotnet-tools.json (D204); then: dotnet tool run dotnet-ef migrations add <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
 dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options
 dotnet run --file scripts/release.cs       # dry run of publishing that build's pack, schema and mapping to release client-<version>; --publish does it (D33, D50)
