@@ -5446,6 +5446,42 @@ the bot's card).*
   fight closed and spectators refused, among them; what becomes of the player's own fights out of an activity, which
   the card's switch had the AI play (D198), and of the switch kept in the database (D213), each asked of the owner.
 
+## D231: The owner's logo as the app's icon
+
+*2026-10-30, between steps 9f and 9g, a session of its own, as the owner asked it; the small frames chosen by the owner,
+as the lead recommended them. Builds D171.*
+
+- **What**: the owner's logo, a green egg and its swirl above the white letters "D3B", is the icon of the window, of
+  `D3B.App.exe` and of the installer. In `src/D3B.App/Assets/`: `d3b.ico`, frames of 16, 24, 32, 48, 64, 128 and 256
+  pixels, and `d3b.png`, its frame of 256.
+- **Where**: `Window.Icon` names the `.ico`, from which Avalonia's Win32 backend takes a small and a big icon, the
+  taskbar and Alt+Tab showing them. ShadUI draws its own title bar, so the `.png` replaces Lucide's bot in its
+  `LogoContent`, 20 pixels as the scale's largest icon (D159). `ApplicationIcon` puts the `.ico` in the executable,
+  which Explorer and the shortcuts show. `vpk pack --icon` gives it to the package, in the release workflow and in the
+  README's command.
+- **Made once**, from the owner's PNG of 1314 by 1197, by a throwaway file-based app on SkiaSharp, Avalonia's own from
+  the NuGet cache, outside the repository: the logo cut to its opaque bounds, 1106 by 1062, and centred in a transparent
+  square of 1106; each frame the mean of the pixels it covers, weighed by how much of them it covers, in premultiplied
+  alpha so that no edge darkens; the frames of 16, 24 and 32 sharpened by an unsharp mask of 3 by 3, amount 0.8; the
+  frames under 256 as 32-bit bitmaps with their mask, the 256 as PNG, as Windows' own icons.
+- **Checked**: WPF's `IconBitmapDecoder` reads the seven frames; the icons Windows takes from the built and the
+  published `D3B.App.exe`, and from a `D3B.App-win-Setup.exe` packed by vpk 1.2.161 with `--icon`, are the logo at 16,
+  32, 48 and 256; the app running, `WM_GETICON` gives its window a small icon of 16 and a big one of 24, and the title
+  bar and the taskbar show the logo. The views' tests count the pack's icons in the window's content, the title bar's
+  logo outside it.
+- **Legibility, looked at** on dark and light backgrounds, magnified and at their size: "D3B" reads at 32 once
+  sharpened, is guessed at 24, and is lost at 16, where the green egg over a white band still tells the app apart.
+- **The owner chose** the whole logo at every size, its small frames sharpened, among three: that, the frames reduced as
+  they are, and a simpler drawing of the owner's for the small frames.
+- **Rejected.**
+  - The egg alone in the small frames, cut from the logo: the letters hide its lower half, so a crop is half an egg, its
+    swirl cut. A whole egg is a drawing of its own, which the owner may give later.
+  - The letters alone: twice as wide as high, they would be some 7 pixels high at 16.
+  - The frames reduced without sharpening: "D3B" softer at 24 and 32.
+  - A tool in `scripts/` making the frames: a tool for what is done once, whose package pinned centrally would pin
+    Avalonia's SkiaSharp too (`CentralPackageTransitivePinningEnabled`).
+  - A PNG as `Window.Icon`: one image scaled to every size Windows asks for, where the `.ico` gives each its frame.
+
 ## D232: 9g as the owner asks it
 
 *2026-10-30, step 9, session 9g, the owner's words, recorded as they asked. Builds D192, D230. D231 is the app's icon, a
@@ -5647,6 +5683,7 @@ in game.*
 - **Benchmarked**, BenchmarkDotNet in its process: a turn planned against four enemies in 2.6 ms and 4.79 MB, against 3.1
   ms and 4.79 MB in 9f.
 - **Not measured**: the other strategies on the captures, and the fighting activity, which no capture holds.
+||||||| 3285a40
 
 ## Open questions
 

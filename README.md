@@ -167,7 +167,7 @@ the app. The same installer, built on your machine in PowerShell:
 dotnet tool restore
 dotnet publish src/D3B.App -c Release -r win-x64 --self-contained -o publish -p:MinVerVersionOverride=0.1.0
 dotnet run --file scripts/embed.cs -- --client-version 3.7.12.12 --output publish/data --packs "$env:LOCALAPPDATA\D3B\data"
-dotnet tool run vpk pack --packId D3B.App --packVersion 0.1.0 --packDir publish --mainExe D3B.App.exe --packTitle D3B -o releases
+dotnet tool run vpk pack --packId D3B.App --packVersion 0.1.0 --packDir publish --mainExe D3B.App.exe --packTitle D3B --icon src/D3B.App/Assets/d3b.ico -o releases
 ```
 
 An installed app started with `--Updates:Source <folder>` takes its updates from a folder of releases packed this way.
