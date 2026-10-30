@@ -46,6 +46,8 @@ dotnet run --file scripts/mapping.cs                                  # pairs D3
 dotnet run --file scripts/mapping.cs -- --without-captures            # the same from pins and structure alone, without anchors
 dotnet run --file scripts/mapping.cs -- --pins <empty dir>            # without pins: lists, for what is left open, the messages that fit
 dotnet run --file scripts/fights.cs -- --details                      # replays the captured fights, D3B's effects against the server's actions
+dotnet run --file scripts/fights.cs -- --turns                        # replays every turn the characters played through the AI, its foresight against what came
+dotnet run --file scripts/fights.cs -- --live                         # what D3B did in the fights: who played each, how it ended, its requests
 ```
 
 `summary` reads headers only and takes seconds. The extraction tool fails when the client contradicts what this
@@ -1547,6 +1549,30 @@ which prints counts.
 - **AP and MP removed**: 5 compared, 1 within with a dodge, 4 fewer.
 - **Teleports**: 3 foreseen and not announced; summons and teleports onto a cell reach no fighter, and are not compared.
 
+### The game, weighed
+
+Measured on 2026-10-30 for session 9e2 (D205 to D214): the 61 game connections of 3.7.12.12 before 9e2 and 9 the owner
+captured by hand for it, 77 fights, replayed with `scripts/fights.cs`, `--turns` and `--live`, which print counts.
+
+- **Critical hits.** A cast's chance of one is its level's plus the caster's characteristic 18, in percent, within 0 and
+  100: of 726 casts of levels with a chance, 64 foreseen and 57 drawn; none of the 217 casts of monsters whose
+  characteristic 18 is below the level's chance, nor of a level without a chance. A monster's characteristic 18 is often
+  negative.
+- **The enemies' blows between two of the character's turns**: on the 61 captures, 4,710 of the character's life and 231
+  of its summons'; on the owner's 9e2 fights, 1,866 and 1,102. The reply D3B imagines takes 4,745 and 262, then 1,623
+  and 1,083; its foresight off by 1,377 on 84 turns, each turn's rolls and the monsters' choices. The monsters cast one
+  or two spells a turn.
+- **The client's previews of buffs.** Effects for the client only that boost or set a state on the caster: of 26 on the
+  captures, 1 boost and 1 state given as previewed, 24 not, among them all of spell 14574's 3 rounds of damage and
+  heals, whose server gives the caster nothing.
+- **The owner's 9e2 fights**, by hand, characters of level 20 to 150 and their summons: of the casts alone, 91 losses
+  within what D3B foresaw, 13 within capped, 4 below; pushes 9 as far as foreseen and 11 stopped short, pulls 5 and 3; a
+  push's damage 8 times as foreseen and 3 none as foreseen; heals on a wounded ally 8 within and 2 capped; steals 7;
+  swaps 4; AP and MP removed 1 and 4 below. Of 208 casts chosen, 197 pass D3B's rules; the server let through 8 cast for
+  want of AP by a breed whose spells' cost falls with a state it gathers, states 2484 on, 2 out of range by a breed
+  whose states 3737, 7021 and 7022 change its spells, and 1 beyond the summons.
+- **Weapons.** None of the 180 turns of the characters captured holds a weapon's blow.
+
 ### The game, fought by D3B
 
 Measured on 2026-10-30 for session 9e (D197 to D203): the game connections the owner captured with D3B's host and app while
@@ -1559,8 +1585,9 @@ the AI played, 13 fights, a Xelor at level 91 among the characters, and the 66 f
   spells the client plays it with: in the 55 fights it listed the character's, its 300 casts were of them, at their grade.
   Spell 0 is a weapon's blow.
 - **The fight's options.** As each placement starts, the server says four options unset, `FightOptionUpdateEvent`, twice
-  each time one changes; a toggle, `FightOptionToggleRequest`, answered 30 ms later. The lock is option 0, kept from one
-  fight to the next; the eye, refusing spectators, option 2, answered with a text of the message kind.
+  each time one changes; a toggle, `FightOptionToggleRequest`, answered 30 ms later. Measured again for 9e2 (D216), the
+  owner watching the AI: option 0 refuses spectators, answered with text 40 of the message kind, and is kept from one
+  fight to the next; option 2 closes the fight, answered with text 95. 9e's first reading had them the other way round.
 - **D3B's requests.** 177 casts sent, 167 cast; 81 walks, 49 turns' ends, 12 placements, 14 readinesses, 2 options set.
   The client acknowledged D3B's sequences as its own and said it was ready for each turn by itself. A client that rejoins a
   fight under way, its connection back, gets the fight's start, its join and its fighters synchronized, then the turn: no
@@ -1574,6 +1601,9 @@ the AI played, 13 fights, a Xelor at level 91 among the characters, and the 66 f
   foreseen but never dealt on 1, against 300, 32 and 104 before.
 - **The player's pace**, on the 49 fights the owner played: 1.3 s halfway from a turn's start to the first action and from
   an action shown to the next, 0.6 s before ending a turn, 1.2 s from the placement's cells to the first move.
+- **9e2's fights**, 17 the AI played for 9 breeds (D216): 16 won; 180 casts sent, 176 cast, 4 refused with text 175; 5
+  of the character's 81 turns with nothing done; every character's 54 characteristics given at its first turn, one of
+  level 150 with none of the four elements'.
 
 ## Protocol code
 

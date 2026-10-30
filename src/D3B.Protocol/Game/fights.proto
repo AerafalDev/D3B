@@ -104,13 +104,14 @@ message FightOptionToggleRequest {
   FightOption option = 1;
 }
 
-// An option of a team's fight, during the placement. Measured on the owner's clicks (D203), the lock then the eye: the lock
-// toggled 0, which the server kept from one fight to the next, the eye 2, which it answered with a text. The group's, which
-// the owner, in no group, could not set, and the other are not measured.
+// An option of a team's fight, during the placement. Measured (D203, corrected by D216): the owner saw the AI's first
+// toggle, 0, refuse spectators, the server answering with text 40, and its second, 2, close the fight, with text 95; the
+// server keeps 0 from one fight to the next. The group's, which the owner, in no group, could not set, and the other are
+// not measured.
 enum FightOption {
-  FIGHT_OPTION_CLOSED = 0;
+  FIGHT_OPTION_NO_SPECTATORS = 0;
   FIGHT_OPTION_VALUE_1 = 1;
-  FIGHT_OPTION_NO_SPECTATORS = 2;
+  FIGHT_OPTION_CLOSED = 2;
   FIGHT_OPTION_VALUE_3 = 3;
 }
 

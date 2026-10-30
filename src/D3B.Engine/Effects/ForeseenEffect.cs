@@ -9,4 +9,5 @@ namespace D3B.Engine.Effects;
 /// <param name="IsCertain">Whether its mask surely selects the fighter, not only maybe (D187).</param>
 /// <param name="IsRandom">Whether it belongs to a group the server draws at random, so that it may not apply.</param>
 /// <param name="IsImmediate">Whether it applies at once, its trigger <c>I</c> and no delay; otherwise it is a buff waiting for its trigger.</param>
-public readonly record struct ForeseenEffect(long TargetId, int EffectId, EffectAction Action, EffectElement Element, LifeRange Value, bool IsCertain, bool IsRandom, bool IsImmediate);
+/// <param name="Duration">The rounds a buff it gives lasts, its caster's turn of the last one ending it (D193); 0 for none, -1 for the whole fight.</param>
+public readonly record struct ForeseenEffect(long TargetId, int EffectId, EffectAction Action, EffectElement Element, LifeRange Value, bool IsCertain, bool IsRandom, bool IsImmediate, int Duration);

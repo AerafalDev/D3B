@@ -17,6 +17,48 @@ public static class EffectFormulas
 {
     private const int Percent = 100;
 
+    /// <summary>Gets the chance of a cast being a critical hit, which the server draws and never tells.</summary>
+    /// <param name="level">The level cast.</param>
+    /// <param name="caster">The caster.</param>
+    /// <returns>The chance, from 0 to 1: none for a level that has no chance of one.</returns>
+    /// <remarks>
+    /// Measured on the 595 casts captured of levels with a chance (D207): the level's chance plus the caster's characteristic 18,
+    /// in percent, within 0 and 100, foresaw 43 critical hits, and the server drew 40; none of the 217 casts of monsters whose
+    /// characteristic 18 is below the level's chance, and none of a level without a chance, was one.
+    /// </remarks>
+    public static double CriticalChance(in SpellLevel level, Combatant caster)
+    {
+        ArgumentNullException.ThrowIfNull(caster);
+
+        if (level.CriticalHitProbability <= 0)
+            return 0;
+
+        return Math.Clamp(level.CriticalHitProbability + caster.Characteristic(FightCharacteristic.CriticalHits), 0, Percent) / (double)Percent;
+    }
+
+    /// <summary>Gets a fighter's characteristic as the formulas read it: a multiplier of damage or heals the server left out is 100.</summary>
+    /// <param name="fighter">The fighter.</param>
+    /// <param name="characteristic">The characteristic's id.</param>
+    /// <returns>Its value.</returns>
+    /// <remarks>
+    /// The server gives each multiplier as 100 when nothing changes it, so that one it left out changes nothing, and a boost
+    /// of one adds to 100 (D209).
+    /// </remarks>
+    public static int ValueOf(Combatant fighter, int characteristic)
+    {
+        ArgumentNullException.ThrowIfNull(fighter);
+
+        if (fighter.Characteristics.TryGetValue(characteristic, out var value))
+            return value;
+
+        return characteristic is FightCharacteristic.DealtDamageMultiplier or FightCharacteristic.DealtDamageMultiplierDistance
+            or FightCharacteristic.ReceivedDamageMultiplierDistance or FightCharacteristic.DealtDamageMultiplierSpells
+            or FightCharacteristic.ReceivedDamageMultiplierMelee or FightCharacteristic.DealtDamageMultiplierMelee
+            or FightCharacteristic.ReceivedDamageMultiplierSpells or FightCharacteristic.DealtHealMultiplier
+            ? Percent
+            : 0;
+    }
+
     /// <summary>Gets the characteristic that raises an element's damage.</summary>
     /// <param name="element">The element, resolved.</param>
     /// <returns>The characteristic's id, or 0 for none.</returns>
@@ -186,8 +228,7 @@ public static class EffectFormulas
 
     private static int Multiplier(Combatant fighter, int characteristic)
     {
-        // The server gives each of these multipliers as 100 when nothing changes it: one it left out changes nothing.
-        return fighter.Characteristics.TryGetValue(characteristic, out var value) ? value : Percent;
+        return ValueOf(fighter, characteristic);
     }
 
     private static int ElementalId(int earth, EffectElement element)

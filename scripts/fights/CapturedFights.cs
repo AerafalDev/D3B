@@ -37,6 +37,37 @@ internal static class CapturedFights
         return messages;
     }
 
+    /// <summary>Gets every message of a game connection, the client's, the server's and those D3B sent itself, in the order the relay read them.</summary>
+    /// <remarks>Each side is read apart, a stream of frames, then merged by the time of the record that made each whole, the client's first on a tie.</remarks>
+    public static List<(CaptureRecordKind Kind, IMessage Message)> Messages(ProtocolTranslation translation, string path)
+    {
+        var frames = new List<(TimeSpan Offset, CaptureRecordKind Kind, IMessage Message)>();
+
+        using var reader = CaptureReader.Open(path);
+        var records = reader.ReadAll().ToList();
+
+        foreach (var kind in new[] { CaptureRecordKind.FromClient, CaptureRecordKind.FromServer, CaptureRecordKind.Injected })
+        {
+            var pending = new List<byte>();
+
+            foreach (var record in records.Where(record => record.Kind == kind))
+            {
+                pending.AddRange(record.Data.Span);
+                var sequence = new SequenceReader<byte>(new ReadOnlySequence<byte>(pending.ToArray()));
+
+                while (FrameReader.TryReadFrame(ref sequence, out var frame))
+                {
+                    if (translation.DecodeGame(frame) is { IsRead: true, Content: { } content })
+                        frames.Add((record.Offset, kind, content));
+                }
+
+                pending.RemoveRange(0, (int)sequence.Consumed);
+            }
+        }
+
+        return [.. frames.OrderBy(frame => frame.Offset).ThenBy(frame => frame.Kind is CaptureRecordKind.FromServer ? 1 : 0).Select(frame => (frame.Kind, frame.Message))];
+    }
+
     /// <summary>Gets, for each fight's start in the messages, the character the server lets play: the client's own fighter.</summary>
     public static Dictionary<int, long> Characters(List<IMessage> messages)
     {

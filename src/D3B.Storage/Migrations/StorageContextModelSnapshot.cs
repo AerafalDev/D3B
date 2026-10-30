@@ -52,6 +52,9 @@ namespace D3B.Storage.Migrations
                     b.Property<long>("Id")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("FightsAlone")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTimeOffset?>("LastPlayed")
                         .HasColumnType("TEXT");
 

@@ -18,6 +18,9 @@ public static class FightCharacteristic
     /// <summary>Damage added to every blow.</summary>
     public const int AllDamageBonus = 16;
 
+    /// <summary>Critical hits, in percent added to a level's chance of one; a monster's is often negative (D207).</summary>
+    public const int CriticalHits = 18;
+
     /// <summary>Power, a percentage added to every element's characteristic.</summary>
     public const int Power = 25;
 

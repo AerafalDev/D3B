@@ -52,7 +52,9 @@
     <File Path="scripts/fights/CapturedFights.cs" />
     <File Path="scripts/fights/CastBench.cs" />
     <File Path="scripts/fights/FightsCommand.cs" />
+    <File Path="scripts/fights/LiveBench.cs" />
     <File Path="scripts/fights/Tally.cs" />
+    <File Path="scripts/fights/TurnBench.cs" />
   </Folder>
   <Folder Name="/scripts/inspect/">
     <File Path="scripts/inspect/BundleBlock.cs" />

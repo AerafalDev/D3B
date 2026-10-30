@@ -2,6 +2,7 @@ using System.CommandLine;
 using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Data.Packs;
+using D3B.Engine.Tactics;
 using D3B.Network.Captures;
 using D3B.Network.Relay;
 using D3B.Protocol.Mapping;
@@ -31,20 +32,30 @@ internal static class FightsCommand
         {
             Description = "Also lists, for each outcome the formulas do not explain, the spells and effects it came from, by id.",
         };
+        var turns = new Option<bool>("--turns")
+        {
+            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206).",
+        };
+        var live = new Option<bool>("--live")
+        {
+            Description = "Counts what D3B did in the fights instead: who played each, how it ended, and what came of the AI's requests (D206).",
+        };
         var command = new RootCommand("Replays the captured fights and compares what D3B.Engine foresees with what the server announced, action by action.")
         {
             paths,
             data,
             version,
             details,
+            turns,
+            live,
         };
 
-        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(data)?.FullName ?? PackLocations.DefaultRoot, result.GetValue(version), result.GetValue(details)));
+        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(data)?.FullName ?? PackLocations.DefaultRoot, result.GetValue(version), result.GetValue(details), result.GetValue(turns), result.GetValue(live)));
 
         return command;
     }
 
-    private static int Run(string[] paths, string root, string? version, bool details)
+    private static int Run(string[] paths, string root, string? version, bool details, bool turns, bool live)
     {
         var client = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ankama", "Dofus-dofus3");
         var build = version is null ? ClientBuild.Read(client) : ClientBuild.Parse(version);
@@ -79,6 +90,8 @@ internal static class FightsCommand
         var maps = new GameMaps(pack);
         var translation = ProtocolTranslation.Create(ProtocolSchema.Load(schemaPath), MappingFile.Read(mappingPath));
         var bench = new CastBench(tables, maps, details ? Console.Out : null);
+        var turnBench = new TurnBench(tables, maps, TacticWeights.Default, TurnSearchLimits.Default);
+        var liveBench = new LiveBench();
         var failed = 0;
 
         Console.WriteLine($"Client {build.Version}; pack format {GamePack.FormatVersion}, mapping format {MappingFile.FormatVersion}; {files.Count} game captures");
@@ -87,7 +100,19 @@ internal static class FightsCommand
         {
             try
             {
-                bench.Replay(CapturedFights.ServerMessages(translation, file));
+                if (live)
+                {
+                    liveBench.Replay(CapturedFights.Messages(translation, file));
+
+                    continue;
+                }
+
+                var messages = CapturedFights.ServerMessages(translation, file);
+
+                if (turns)
+                    turnBench.Replay(messages);
+                else
+                    bench.Replay(messages);
             }
             catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException)
             {
@@ -96,7 +121,12 @@ internal static class FightsCommand
             }
         }
 
-        bench.Tally.Write(Console.Out);
+        if (live)
+            liveBench.Tally.Write(Console.Out);
+        else if (turns)
+            turnBench.Write(Console.Out);
+        else
+            bench.Tally.Write(Console.Out);
 
         return failed > 0 ? 1 : 0;
     }

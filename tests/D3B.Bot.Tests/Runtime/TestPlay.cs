@@ -5,11 +5,15 @@ using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Network;
 using D3B.Data;
 using D3B.Data.Banks;
+using D3B.Data.Breeds;
+using D3B.Data.Effects;
 using D3B.Data.Icons;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.Maps;
+using D3B.Data.Monsters;
 using D3B.Data.Packs;
+using D3B.Data.Spells;
 using D3B.Data.Tests;
 using D3B.Data.World;
 using D3B.Engine.Maps;
@@ -40,7 +44,8 @@ namespace D3B.Bot.Tests.Runtime;
 /// none, and the other inside holds no NPC. A character teleports from the three maps outside; <see cref="EastMapId"/>
 /// holds a zaap, as Astrub's does, and <see cref="HavenBagMapId"/>, which the pack lacks, is a haven bag. Every map is of
 /// <see cref="SubAreaId"/>, which lists <see cref="Ash"/>, which the tree's skill gathers, and <see cref="Chestnut"/>,
-/// which a lumberjack gathers from level 20.
+/// which a lumberjack gathers from level 20. The pack's fight data holds one spell, <see cref="BlowSpellId"/>, an earth blow
+/// of 10 to 12 on an enemy for 3 AP at a range of 1 to 4, and the two effects of the tactics' tests; no monster, breed or state.
 /// </remarks>
 internal sealed class TestPlay : IAsyncDisposable
 {
@@ -85,6 +90,8 @@ internal sealed class TestPlay : IAsyncDisposable
     public const long AccountId = 7;
     public const uint TeleportFlag = 1 << 3;
     public const long CharacterId = 70_001;
+    public const int BlowSpellId = 100;
+    public const int BlowLevelId = 1_100;
 
     private static readonly RelaySettings _settings = new()
     {
@@ -269,6 +276,15 @@ internal sealed class TestPlay : IAsyncDisposable
             writer.Add(IconCatalog.EntryName, new IconCatalog(
                 new IconTable(new[] { AshIconId, ChestnutIconId }, Disc(0x8B, 0xC3, 0x4A).Concat(Disc(0x9C, 0x5B, 0x2E)).ToArray()),
                 new IconTable(new[] { LumberjackIconId }, Disc(0x3B, 0x82, 0xF6))));
+            writer.Add(SpellCatalog.EntryName, Spells());
+            writer.Add(SpellStateCatalog.EntryName, new SpellStateCatalog(Array.Empty<SpellState>(), ReadOnlyMemory<int>.Empty));
+            writer.Add(EffectCatalog.EntryName, new EffectCatalog(new Effect[]
+            {
+                new(97, 0, 0, '\0', 2, 1, 0, 0, 0, 0, EffectProperties.UseInFight),
+                new(108, 0, 0, '\0', 2, 2, 0, 0, 0, 0, EffectProperties.UseInFight),
+            }));
+            writer.Add(MonsterCatalog.EntryName, new MonsterCatalog(Array.Empty<Monster>(), Array.Empty<MonsterGrade>(), Array.Empty<MonsterSpell>(), Array.Empty<byte>(), Array.Empty<MonsterRatio>(), Array.Empty<MonsterRace>(), Array.Empty<MonsterRace>()));
+            writer.Add(BreedCatalog.EntryName, new BreedCatalog(Array.Empty<Breed>(), Array.Empty<int>(), Array.Empty<BreedRole>(), Array.Empty<BreedRoleValue>(), Array.Empty<BreedStatCost>()));
             writer.Add(JobCatalog.EntryName, new JobCatalog(
                 new[] { new Job(Job.Base, 0, Job.NoIcon), new Job(Lumberjack, 202, LumberjackIconId) },
                 new[] { new Skill(ChestnutSkillId, 0, Lumberjack, Chestnut, 20, 1, false), new Skill(TreeSkillId, 0, Lumberjack, Ash, 1, 1, false), new Skill(WorldPathfinder.DoorSkillId, 0, Job.Base, Skill.NoItem, 0, 1, false) }));
@@ -276,6 +292,29 @@ internal sealed class TestPlay : IAsyncDisposable
         }
 
         return stream.ToArray();
+    }
+
+    private static SpellCatalog Spells()
+    {
+        SpellLevel[] levels = [new SpellLevel { Id = BlowLevelId, SpellId = BlowSpellId, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 0, EffectCount = 1 }];
+        SpellEffect[] effects =
+        [
+            new SpellEffect
+            {
+                Uid = 1,
+                EffectId = 97,
+                TargetMask = 0,
+                Triggers = 1,
+                DiceNum = 10,
+                DiceSide = 12,
+                Zone = new SpellZone { Shape = SpellZoneShape.Point, Size = 1, DamageDecreaseStepPercent = 10, MaxDamageDecreaseApplyCount = 4, ForcedDirection = -1 },
+            },
+        ];
+        Spell[] spells = [new Spell { Id = BlowSpellId, NameId = BlowSpellId, FirstLevel = 0, LevelCount = 1 }];
+        int[] levelIds = [BlowLevelId];
+        string[] strings = ["A", "I", "a"];
+
+        return new SpellCatalog(spells, levels, levelIds, effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings, Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
     }
 
     private static MapCell Walkable(int cell)

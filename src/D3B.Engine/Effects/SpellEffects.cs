@@ -161,7 +161,7 @@ public sealed class SpellEffects
                 var (target, selected) = reached[index];
                 var value = Value(effect, action.Kind, element, caster, target, steps[index], critical, baseBonus, damageBonus);
 
-                foreseen.Add(new ForeseenEffect(target.Id, effect.EffectId, action, element, value, selected is CriterionAnswer.True, effect.Random > 0, immediate));
+                foreseen.Add(new ForeseenEffect(target.Id, effect.EffectId, action, element, value, selected is CriterionAnswer.True, effect.Random > 0, immediate, effect.Duration));
             }
         }
 

@@ -16,8 +16,11 @@ namespace D3B.Engine.Tactics;
 /// left (<see cref="EffectFormulas.PushDamage"/>); swaps; boosts and deboosts, the AP and MP of the fighter playing at once
 /// and the others' for their next turn; states set and removed; kills. An effect its mask only maybe selects counts half,
 /// as does one of a random group, and one waiting for a trigger, such as a poison, counts half of its damage. A critical
-/// hit is never counted on, nor the spells effects cast (D195). The effects on a free cell, a teleport of the caster and a
-/// summon, come from the level itself, the foreseen effects reaching only fighters.
+/// hit is weighed by its chance (D207): what the level's effects give in life, damage, heals, shields and characteristics,
+/// counts its share of a normal cast and of a critical hit; a push, a swap or a state, the normal cast's alone. A boost, a
+/// deboost or a state that lasts is kept with its rounds (<see cref="ImaginedFight.Buffs"/>), which the judge weighs over
+/// the turns it lasts (D209). The spells effects cast are not counted on (D195). The effects on a free cell, a teleport of the caster and a summon, come from the
+/// level itself, the foreseen effects reaching only fighters.
 /// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
 /// </remarks>
@@ -66,9 +69,9 @@ public sealed class Imagination
         return fight.With(fight.Actor with { Cell = cell, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints });
     }
 
-    private static int Expected(in ForeseenEffect effect)
+    private static int Expected(in ForeseenEffect effect, double share)
     {
-        var middle = (effect.Value.Min + effect.Value.Max) / 2.0;
+        var middle = (effect.Value.Min + effect.Value.Max) / 2.0 * share;
 
         if (!effect.IsCertain)
             middle *= Maybe;
@@ -77,6 +80,13 @@ public sealed class Imagination
             middle *= Maybe;
 
         return (int)Math.Round(middle, MidpointRounding.AwayFromZero);
+    }
+
+    private static bool InLife(EffectKind kind)
+    {
+        // What a critical hit changes by its numbers: the rest, a push or a state, is the normal cast's.
+        return kind is EffectKind.Damage or EffectKind.FixedDamage or EffectKind.Steal or EffectKind.Heal or EffectKind.FixedHeal or EffectKind.PercentHeal
+            or EffectKind.Shield or EffectKind.LifeShield or EffectKind.LevelShield or EffectKind.Boost or EffectKind.Deboost;
     }
 
     private static int IndexOf(List<Combatant> fighters, long id)
@@ -133,7 +143,7 @@ public sealed class Imagination
                 return target with { MovementPoints = Math.Max(0, target.MovementPoints + change) };
         }
 
-        var value = target.Characteristic(characteristic) + change;
+        var value = EffectFormulas.ValueOf(target, characteristic) + change;
         var changed = target with { Characteristics = target.Characteristics.SetItem(characteristic, value) };
 
         return characteristic switch
@@ -163,11 +173,18 @@ public sealed class Imagination
         var cost = CastRules.Modified(level, caster).ApCost;
         var target = fight.On(cell);
         var foreseen = _foreseen ??= [];
+        var chance = EffectFormulas.CriticalChance(level, caster);
 
         foreseen.Clear();
         _effects.Foresee(fight.Map, fight.Fighters, caster, level, cell, false, foreseen);
 
+        var normal = foreseen.Count;
+
+        if (chance > 0)
+            _effects.Foresee(fight.Map, fight.Fighters, caster, level, cell, true, foreseen);
+
         var fighters = new List<Combatant>(fight.Fighters.Length + 1);
+        var buffs = new List<ImaginedBuff>();
 
         fighters.AddRange(fight.Fighters);
 
@@ -175,8 +192,16 @@ public sealed class Imagination
 
         fighters[casterIndex] = caster with { ActionPoints = Math.Max(0, caster.ActionPoints - cost) };
 
-        foreach (var effect in foreseen)
-            Apply(fight.Map, fighters, casterIndex, effect, cell);
+        for (var index = 0; index < foreseen.Count; index++)
+        {
+            var effect = foreseen[index];
+            var critical = index >= normal;
+
+            if (critical && !InLife(effect.Action.Kind))
+                continue;
+
+            Apply(fight.Map, fighters, casterIndex, effect, cell, critical ? chance : InLife(effect.Action.Kind) ? 1 - chance : 1, buffs);
+        }
 
         foreseen.Clear();
         OnCell(fight.Map, fighters, casterIndex, level, cell);
@@ -185,10 +210,11 @@ public sealed class Imagination
         {
             Fighters = [.. fighters],
             History = fight.History.Cast(level.SpellId, target?.Id, fight.Round),
+            Buffs = buffs.Count is 0 ? fight.Buffs : fight.Buffs.AddRange(buffs),
         };
     }
 
-    private static void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell)
+    private static void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell, double share, List<ImaginedBuff> buffs)
     {
         var index = IndexOf(fighters, effect.TargetId);
 
@@ -196,7 +222,7 @@ public sealed class Imagination
             return;
 
         var target = fighters[index];
-        var value = Expected(effect);
+        var value = Expected(effect, share);
 
         if (!effect.IsImmediate)
         {
@@ -240,12 +266,15 @@ public sealed class Imagination
 
             case EffectKind.Boost when effect.Action.Characteristic > 0:
                 fighters[index] = Changed(target, effect.Action.Characteristic, value);
+                Lasting(buffs, fighters[casterIndex], target, effect, effect.Action.Characteristic, value);
                 break;
             case EffectKind.Deboost when effect.Action.Characteristic > 0:
                 fighters[index] = Changed(target, effect.Action.Characteristic, -value);
+                Lasting(buffs, fighters[casterIndex], target, effect, effect.Action.Characteristic, -value);
                 break;
             case EffectKind.StateSet when !target.HasState(effect.Value.Min):
                 fighters[index] = target with { States = target.States.Add(effect.Value.Min) };
+                Lasting(buffs, fighters[casterIndex], target, effect, 0, effect.Value.Min);
                 break;
             case EffectKind.StateRemoved:
                 fighters[index] = target with { States = target.States.Remove(effect.Value.Min) };
@@ -254,6 +283,12 @@ public sealed class Imagination
                 fighters[index] = target with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };
                 break;
         }
+    }
+
+    private static void Lasting(List<ImaginedBuff> buffs, Combatant caster, Combatant target, in ForeseenEffect effect, int characteristic, int change)
+    {
+        if (effect.Duration is not 0 && change is not 0)
+            buffs.Add(new ImaginedBuff(caster.Id, target.Id, characteristic, change, effect.Duration));
     }
 
     private static void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away)
