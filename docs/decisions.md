@@ -5792,7 +5792,7 @@ showed no icon, and a family of monsters should be chosen as a monster is. Build
   icon in `Picto/Items`.
 - **In the pack**: their icons, in the items' table at its 64 pixels beside the harvests', 2,294 icons in all against
   287; a drop's icon the client lacks is counted and left out, as a monster's picture is. The pack weighs 19.4 MB against
-  11.7, extracted in 36 s; its format stays 7, its structure unchanged and no release holding it yet, an older pack
+  11.7, extracted in 36 s, two extractions alike; its format stays 7, its structure unchanged and no release holding it yet, an older pack
   drawing the loot without its icons. The drops themselves stay out (D236).
 - **Families**: a family is a monster's super race, as the bestiary groups them. The fighting activity's "Families to
   fight", beside its monsters, attacks a group holding a monster of one of them (`ChosenMonsters`,
