@@ -73,7 +73,7 @@ dotnet run --project src/D3B.Host          # the same host without the app, unti
                                            # both keep accounts and profiles in %LOCALAPPDATA%\D3B\d3b.db, migrated before the host starts; --Storage:Path <file> names another (D100)
                                            # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
                                            # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53), which the app's inspector replays (D115)
-                                           # --Fights:Alone true has the AI play every fight of the bots, as the switch on a bot's card does in the app (D198)
+                                           # --Fights:Alone true has the AI play every fight of the bots, whatever their activity and strategy say (D235)
 dotnet tool restore                        # the local tools of .config/dotnet-tools.json (D204); then: dotnet tool run dotnet-ef migrations add <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations
 dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
 dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options

@@ -10,7 +10,7 @@ internal sealed partial class GatheringJobsFieldViewModel : SettingFieldViewMode
 {
     /// <summary>Gets the chips: all the professions first, then each, <c>Base</c> last as "without a profession".</summary>
     [ObservableProperty]
-    public partial IReadOnlyList<JobFilterViewModel> Chips { get; private set; } = [];
+    public partial IReadOnlyList<FilterChipViewModel> Chips { get; private set; } = [];
 
     /// <inheritdoc/>
     public override bool IsWide => true;
@@ -39,20 +39,20 @@ internal sealed partial class GatheringJobsFieldViewModel : SettingFieldViewMode
 
     private void Name()
     {
-        var chips = new List<JobFilterViewModel> { new(null, Editor.Localizer["AllJobs"], null, Toggle) };
+        var chips = new List<FilterChipViewModel> { new(null, Editor.Localizer["AllJobs"], null, Toggle) };
 
         foreach (var job in Editor.Game?.GatheringJobs ?? [])
         {
             if (job.Id == Job.Base)
             {
-                chips.Add(new JobFilterViewModel(job.Id, Editor.Localizer["NoJob"], null, Toggle) { IsBase = true });
+                chips.Add(new FilterChipViewModel(job.Id, Editor.Localizer["NoJob"], null, Toggle) { IsBase = true });
 
                 continue;
             }
 
             var option = Editor.JobOption(job.Id);
 
-            chips.Add(new JobFilterViewModel(job.Id, option.Name, option.Icon, Toggle));
+            chips.Add(new FilterChipViewModel(job.Id, option.Name, option.Icon, Toggle));
         }
 
         Chips = chips;
@@ -70,7 +70,7 @@ internal sealed partial class GatheringJobsFieldViewModel : SettingFieldViewMode
         Chips[0].IsSelected = professions.Count > 0 && professions.All(chip => chip.IsSelected);
     }
 
-    private void Toggle(JobFilterViewModel chip)
+    private void Toggle(FilterChipViewModel chip)
     {
         var chosen = Definition.GetValues(Draft).Cast<int>().ToHashSet();
 

@@ -20,6 +20,8 @@ internal static class TestTables
     private static readonly string[] _weaponZones = ["P", "X1,0,10,1"];
     private static readonly int[] _itemIcons = [34_009, 38_017];
     private static readonly int[] _jobIcons = [1];
+    private static readonly int[] _spellIcons = [11_556];
+    private static readonly int[] _monsterIcons = [1];
     private static readonly int[] _levelIds = [1001, 1002, 2001];
     private static readonly int[] _zoneCells = [10, 11];
     private static readonly string[] _strings = ["a,A", "I", "HS!4", "C", ""];
@@ -65,12 +67,19 @@ internal static class TestTables
         return new InteractiveCatalog(new Interactive[] { new(1, 5001), new(16, 5002) });
     }
 
-    /// <summary>Wheat's and ash wood's icons, every pixel 1 and 2; the lumberjack's, every pixel 3.</summary>
+    /// <summary>
+    /// Wheat's and ash wood's icons, every pixel 1 and 2; the lumberjack's, every pixel 3; a monster's, every pixel 5; at 64
+    /// pixels. A spell's, every pixel 4, at 48.
+    /// </summary>
     public static IconCatalog Icons()
     {
+        const int Large = 64 * 64 * 4;
+
         return new IconCatalog(
-            new IconTable(_itemIcons, Enumerable.Repeat((byte)1, IconTable.IconLength).Concat(Enumerable.Repeat((byte)2, IconTable.IconLength)).ToArray()),
-            new IconTable(_jobIcons, Enumerable.Repeat((byte)3, IconTable.IconLength).ToArray()));
+            new IconTable(64, _itemIcons, Enumerable.Repeat((byte)1, Large).Concat(Enumerable.Repeat((byte)2, Large)).ToArray()),
+            new IconTable(64, _jobIcons, Enumerable.Repeat((byte)3, Large).ToArray()),
+            new IconTable(48, _spellIcons, Enumerable.Repeat((byte)4, 48 * 48 * 4).ToArray()),
+            new IconTable(64, _monsterIcons, Enumerable.Repeat((byte)5, Large).ToArray()));
     }
 
     /// <summary>One bank; banker 100 has two chest replies, banker 6394 one.</summary>

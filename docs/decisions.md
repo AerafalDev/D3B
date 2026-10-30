@@ -5446,6 +5446,245 @@ the bot's card).*
   fight closed and spectators refused, among them; what becomes of the player's own fights out of an activity, which
   the card's switch had the AI play (D198), and of the switch kept in the database (D213), each asked of the owner.
 
+## D231: The owner's logo as the app's icon
+
+*2026-10-30, between steps 9f and 9g, a session of its own, as the owner asked it; the small frames chosen by the owner,
+as the lead recommended them. Builds D171.*
+
+- **What**: the owner's logo, a green egg and its swirl above the white letters "D3B", is the icon of the window, of
+  `D3B.App.exe` and of the installer. In `src/D3B.App/Assets/`: `d3b.ico`, frames of 16, 24, 32, 48, 64, 128 and 256
+  pixels, and `d3b.png`, its frame of 256.
+- **Where**: `Window.Icon` names the `.ico`, from which Avalonia's Win32 backend takes a small and a big icon, the
+  taskbar and Alt+Tab showing them. ShadUI draws its own title bar, so the `.png` replaces Lucide's bot in its
+  `LogoContent`, 20 pixels as the scale's largest icon (D159). `ApplicationIcon` puts the `.ico` in the executable,
+  which Explorer and the shortcuts show. `vpk pack --icon` gives it to the package, in the release workflow and in the
+  README's command.
+- **Made once**, from the owner's PNG of 1314 by 1197, by a throwaway file-based app on SkiaSharp, Avalonia's own from
+  the NuGet cache, outside the repository: the logo cut to its opaque bounds, 1106 by 1062, and centred in a transparent
+  square of 1106; each frame the mean of the pixels it covers, weighed by how much of them it covers, in premultiplied
+  alpha so that no edge darkens; the frames of 16, 24 and 32 sharpened by an unsharp mask of 3 by 3, amount 0.8; the
+  frames under 256 as 32-bit bitmaps with their mask, the 256 as PNG, as Windows' own icons.
+- **Checked**: WPF's `IconBitmapDecoder` reads the seven frames; the icons Windows takes from the built and the
+  published `D3B.App.exe`, and from a `D3B.App-win-Setup.exe` packed by vpk 1.2.161 with `--icon`, are the logo at 16,
+  32, 48 and 256; the app running, `WM_GETICON` gives its window a small icon of 16 and a big one of 24, and the title
+  bar and the taskbar show the logo. The views' tests count the pack's icons in the window's content, the title bar's
+  logo outside it.
+- **Legibility, looked at** on dark and light backgrounds, magnified and at their size: "D3B" reads at 32 once
+  sharpened, is guessed at 24, and is lost at 16, where the green egg over a white band still tells the app apart.
+- **The owner chose** the whole logo at every size, its small frames sharpened, among three: that, the frames reduced as
+  they are, and a simpler drawing of the owner's for the small frames.
+- **Rejected.**
+  - The egg alone in the small frames, cut from the logo: the letters hide its lower half, so a crop is half an egg, its
+    swirl cut. A whole egg is a drawing of its own, which the owner may give later.
+  - The letters alone: twice as wide as high, they would be some 7 pixels high at 16.
+  - The frames reduced without sharpening: "D3B" softer at 24 and 32.
+  - A tool in `scripts/` making the frames: a tool for what is done once, whose package pinned centrally would pin
+    Avalonia's SkiaSharp too (`CentralPackageTransitivePinningEnabled`).
+  - A PNG as `Window.Icon`: one image scaled to every size Windows asks for, where the `.ico` gives each its frame.
+
+## D232: 9g as the owner asks it
+
+*2026-10-30, step 9, session 9g, the owner's words, recorded as they asked. Builds D192, D230. D231 is the app's icon, a
+session of its own.*
+
+- **Asked** for the session: the fights' profiles made as the harvest's, with many useful options, among them the AI's
+  weights and prudence, spells preferred or left out, a role, the fight closed and spectators refused, and what follows a
+  lost fight; "the AI fights" in the harvest profile, an option checked by default, instead of the switch on the bot's
+  card, and what becomes of the fights out of an activity and of the switch kept in the database; the AI measured with
+  the default settings on `scripts/fights.cs`, its bench, `--turns` and `--live`, nothing regressing.
+- **Asked** as the session ran: the spells' icons in the pack, as the resources' are (D135), since the profiles choose
+  spells; and, in the same session, the fighting activity made as the harvest is: a monster or a group of monsters
+  focused, an area or a sub-area, the bot finding the groups by itself and attacking them.
+
+## D233: A fight's strategy, a profile of its own that each character plays
+
+*2026-10-30, step 9, session 9g, chosen by the owner among three options, as the lead recommended it; the name the owner's
+choice among the lead's. Builds D99, D168.*
+
+- **A strategy** is a profile of a kind of its own on the profiles page, edited, copied and given presets as an activity's
+  are, never started: how a character fights. Each character plays one, chosen on the accounts page beside its activity's
+  profile, "Standard", D3B's defaults, when none is chosen; the AI fights every fight it plays for the character with it.
+  An activity's profile says whether the AI plays its fights, and what follows a fight and a lost fight.
+- **Why**: spells and a role are a breed's and a character's; a character fights the same way whatever it does; groups,
+  at step 10, ask a role of each character.
+- **Named** "Strategy" (« Stratégie »), so that it is not mistaken for the fighting activity, "Fight" (« Combat »).
+- **Rejected.**
+  - A strategy chosen in each activity's profile: one profile shared by breeds mixes their spells, a role means nothing
+    there, and no profile answers a fight out of an activity.
+  - Both, the character's overridden by an activity's: the most flexible, the most complex; it can come later over this.
+
+## D234: A strategy's options
+
+*2026-10-30, step 9, session 9g, the lead's list, kept by the owner, who asked for the spells' icons (D232). Builds D198,
+D203, D212, D216.*
+
+- **Strategy**: a role, attacker by default, healer, the allies' life twice as dear and heals and shields first, or
+  protector, the allies dearer, its own life less, closer to the enemies; a style, prudent, balanced by default, or
+  offensive, the judge's three weights; prudent when the fight is judged too risky, on by default as D198 has it; prudent
+  under a share of life, off by default, 30 %.
+- **Spells**: spells preferred, each worth a quarter more than what it brings, a cast that brings nothing never made worth
+  making; spells left out, never cast; the weapon's blow, on by default (D220).
+- **Placement**: automatic by default, as the AI judges it, near the enemies or far from them.
+- **The fight**: closed and spectators refused, both on by default (D216).
+- **Presets**, stored once (D168): "Prudent", "Offensive", "Healer" and "Protector"; "Standard" is D3B's defaults.
+- **Elsewhere**: what follows a fight and a lost fight stays the activity's (D233); the pace, 0.9 s, the machine's
+  settings page; a fight closed to all but the group, step 10; which groups to attack, the fighting activity's.
+- **Rejected.**
+  - The weights as numbers: unreadable, the style sums them up.
+  - A search's length: no search reaches its 800 ms, 374 ms at most (D229).
+  - A target first: the judge kills already (D203).
+  - Giving a fight up: D198.
+  - The game's 8 roles, placement and hindering among them, which the AI does not play apart yet.
+
+## D235: The fights out of an activity, a strategy's option; the switch gone from the card and the database
+
+*2026-10-30, step 9, session 9g, chosen by the owner among three options, as the lead recommended it. Supersedes D198 and
+D213 on the switch.*
+
+- **Measured** in the code: the player's hand pauses a bot only during its behavior (D66), so the switch had the AI take
+  the fights of a character the owner played by hand too, as soon as one began.
+- **A strategy's option**, "The AI plays the fights out of an activity", off in "Standard": a strategy the owner gives the
+  characters they test the AI with, attacking groups themselves. An activity's own fights follow its profile; harvesting's
+  "The AI fights", checked by default.
+- **The switch** leaves the bot's card, and its column the database, by a migration. The lead said one character of
+  seven had it on (D213); a copy of the owner's database, migrated for the check, held 9 of 15 with it on. Told so, the
+  owner kept the migration as it is and set their database aside, to test 9g from a new one. `D3B.Host`'s `Fights:Alone` stays, every bot's fights played, for the measures.
+- **Rejected.**
+  - Always the player out of an activity: the owner would test the AI from the command line alone.
+  - An activity "Fight" with nothing to do but the fights the player starts: beside "Strategy", two names for one thing.
+
+## D236: The fighting activity's options, and the monsters' icons at 64 pixels
+
+*2026-10-30, step 9, session 9g, the lead's list, kept by the owner, who chose the monsters' icons at their 64 pixels.
+Builds D127, D144, D148, D149, D165 to D168, D192, D198.*
+
+- **What**: automatic, the groups at the character's level, by default, or monsters chosen, a group attacked when it holds
+  one of them; monsters left out, a group holding one never attacked; a group of 1 to 8 monsters; only the groups the AI
+  judges it wins, on by default, as D198 has it.
+- **Where**: automatic, the sub-area holding the most monsters at the character's level, as D166 chooses a harvest's, by
+  default, or chosen, an area and sub-areas suggested by the monsters chosen; isolated maps and zaaps as harvesting's.
+- **Upkeep**: healing under 70 % by default, by the profile's food, else by waiting; banking full, the loot, as
+  harvesting's.
+- **After a lost fight**: resumed once healed by default, paused or stopped, three in a row ending the activity (D198).
+- **A preset**, "Automatic fight". The activity fights with each character's strategy (D233).
+- **In the pack**, format 7: the monsters' icons at 64 pixels and where the monsters live, beside the spells' icons.
+- **Later**: a drop sought (D192), the pack holding no drops; aggressive monsters.
+
+## D237: The breeds' spells' icons in the pack, format 7
+
+*2026-10-30, step 9, session 9g, the owner's ask (D232), measured by the lead and a delegated agent. Builds D135 to D139.*
+
+- **Measured** on 3.7.12.12: `Picto/Spells` holds 3,128 icons at 1x, 48 pixels, and the same at 2x, 96, BC7 of one level
+  as the items' are, each texture and sprite named `sort_<iconId>`; the 19 breeds' spells and both spells of every variant
+  are 862 spells with 862 icons, none missing.
+- **In the pack**: those 862 at their 48 pixels, raw RGBA (D136), a third table of `IconCatalog`, keyed by `Spell.IconId`;
+  `IconTable` carries its own size, items and professions staying at 64. An icon missing fails the extraction, naming
+  the spells by breed, as the items' do.
+- **Measured**: 1.16 MB more in the pack, the icons' entry 1.74 MB compressed and 10.3 MB read in 45 ms, the spells' bundle
+  decoded in 0.36 s; two extractions give the same SHA-256; a dozen icons looked at, upright and whole.
+- **Rejected.**
+  - The 2x icons, 96 pixels: four times the bytes, drawn at 24 to 32 pixels.
+  - Every spell's icon, the monsters' among them: 3,128, which no setting chooses.
+
+## D238: The monsters' icons and the sub-areas they live in, format 7
+
+*2026-10-30, step 9, session 9g, the owner's choice of 64 pixels (D236), measured by a delegated agent. Builds D27, D182,
+D237.*
+
+- **Icons**: `Picto/Monsters` names its 2,397 textures of 64 pixels by the monster's look, `Monster.GfxId`, not its id: an
+  archmonster shows its monster's picture. The pack keeps the pictures of the 1,663 monsters a sub-area lists, but bombs
+  and those the bestiary hides, 1,099 pictures, a fourth table of `IconCatalog` keyed by gfx; a picture missing is
+  skipped and counted, the client lacking 4 of monsters met nowhere.
+- **Where monsters live**: the client's sub-areas list 3,039 pairs, 444 sub-areas and 1,681 monsters; the monsters' own
+  lists add 266 pairs of 36 monsters, events' eggs and leprechauns, two quest monsters and a sub-area that does not
+  exist, left out. `WorldAtlas.MonstersOf(SubArea)` gives a sub-area's, its slice of `WorldAtlas.Monsters`.
+- **Measured**: `UseSummonSlot` is set on 4,655 of 5,129 monsters, 1,650 of the 1,716 a sub-area lists: it says what a
+  monster does once summoned, never that it is met only so. The pack is 11,748,845 bytes, against 7,452,604 at format 6;
+  the icons' entry 4.87 MB compressed, read in about 110 ms the first time an icon is drawn; extracted in 23 to 30 s,
+  two extractions alike.
+- **The release** of 3.7.12.12 needs `data-7.pack`, then the app's, each on the owner's go.
+
+## D239: The monster groups on a map, mapping format 14
+
+*2026-10-30, step 9, session 9g, measured by a delegated agent on the 80 game connections of 3.7.12.12. Settles Q15.*
+
+- **Measured**: 919 roleplay maps, 593 with groups, 1,801 groups of 1 to 8 monsters, 640 of one; each a negative id, a
+  cell, a main monster and up to 7 others, each with its monster, grade and level. Every one of the 5,755 monsters seen is
+  a grade of the pack's monster at that grade's level: a group's fight is imagined from the pack alone, which settles
+  Q15 for choosing a group.
+- **Named and pinned**: `RoleplayActor.monster_group` and its monsters; `MapActorShownEvent` (`jns`), one actor shown,
+  1,701 times, 147 groups, 116 of them shown again just before they leave; `MapActorRemovedEvent` (`kjz`), 1,198 times,
+  116 groups; a group walks 1 to 4 cells, its path its first and last cell. Mapping format 14: 217 messages, 472 fields;
+  55,385 frames of 102,323 understood whole, against 54,187.
+- **The attack**: 98 the client sent, 97 fights; the walk ended on the group's own cell 94 times, the character stood on
+  it twice, and once the group had walked 1 cell, accepted. From 3 cells away the server answered nothing but the walk,
+  and the client walked again and attacked 0.9 s later. The fight's defender is the group, its monsters the group's.
+- **Not measurable**: an aggressive group, the group's alignment (1 on every group), the map's flag of aggressive
+  monsters, true on 159 maps without groups.
+- `CharacterState.MonsterGroups` keeps them (`MapMonsterGroup`, `MonsterInGroup`), from the map's information, the actors
+  shown and removed, and their walks; a new map empties them.
+
+## D240: The strategies made
+
+*2026-10-30, step 9, session 9g. Makes D233 to D235.*
+
+- **A kind of profile** (`ProfileKind.Strategy`), registered by the bots module with `AddStrategy`, listed by
+  `ActivityCatalog.Strategy` beside its `Activities`, edited as any profile, its kind named "Type" in the dialog making
+  one; never started, by the card or `ProfileStarter`. Four presets stored once: "Prudent", "Offensive", "Healer", far
+  from the enemies, and "Protector", near them.
+- **Each character's**: `KnownCharacter.StrategyId`, set on the accounts page, null for "Standard"; deleting a strategy
+  leaves its characters with Standard. Migration `Strategies` drops `FightsAlone` and adds the column with its
+  reference by SQLite's own `ALTER TABLE`, measured: EF rebuilds a SQLite table to drop a column or add a foreign key,
+  outside the migration's transaction, which it warns of. Checked on a copy of the owner's database, its 15 characters
+  kept.
+- **Played**: `IStrategySource` gives a character's, D3B's database's (`StoredStrategies`, read from the books' memory,
+  once per save) or the defaults; `FightPilot` reads it as a fight starts, `BotActor.Fights` says who plays: the host's
+  `Fights:Alone`, else the running activity's own fights, else the strategy's fights out of an activity.
+- **The weights**: the style's, Standard's D212's, Prudent D198's, Offensive the threat at 0.8, next turn's damage at 1
+  and the character's life at 1.5; prudent when risky or under its share of life; a healer holds its allies' life twice
+  as dear (`TacticWeights.Allies`) and next turn's damage at 0.6 of its style's, a protector its allies' at 1.5, its own
+  at 0.6 and next turn's damage at 1.25. A preferred spell's cast adds a quarter of what it raises the judge's worth by,
+  carried by the sequence to its end and its reply; spells left out and the weapon, the character's alone
+  (`FightKnowledge.Without`); a placement near or far by the nearest enemy's distance first (`TacticPlacement`).
+- **In the app**: the card's switch gone; the accounts page a column "Strategy"; spells and monsters chosen as the
+  resources are, in one picker filtered by breed or super race, with their icons (`SettingKind.Spell`, `Monster`).
+- **Harvesting**: "The AI fights", checked by default; unchecked, the fight is the player's and the harvest waits as before
+  9e, "After a lost fight" hidden.
+
+## D241: The fighting activity made, to measure in game
+
+*2026-10-30, step 9, session 9g. Makes D236.*
+
+- **`FightActivity`**, registered as `fight` by `FightingModule`, a default module. Each step heals under its share, then,
+  on a map of the zone, walks onto the cell of the nearest group the settings allow and the AI judges it beats, and sends
+  the attack, the walk made again while the group walks off, three times at most; a group the server answers nothing
+  for, within the answer's delay, is left for the visit. A map without one is gone through, and the step travels to the
+  nearest map left; once every map was, the tour starts again, the place chosen again.
+- **Judged** (`GroupJudge`): a group within its size, none of its monsters left out, one chosen or none above the
+  character's level; then, when only the groups it beats are asked, the odds of D198 on a fight imagined from the
+  pack's grades, their life, points, characteristics and spells, and the character as its last fight's placement
+  showed it (`BotActor.LastFighter`), at its life now. Before its first fight, by levels alone.
+- **The place** (`HuntingGround`): the sub-areas chosen, an area's own with monsters, or the one whose monsters are worth
+  the most at the character's level, each 20 levels below halving a monster's worth, none above it, the sub-area's level
+  not above the character's, a basic account's sub-areas alone when unsubscribed; its maps the world graph reaches.
+- **Its fights**: the AI plays them with the character's strategy; won and lost counted on the card, with the loot,
+  banked when full; a lost fight answered as harvesting's is (D198).
+- **Left**: measuring it in game, the first attacks D3B sends; a sub-area's suggestion by the monsters chosen; isolated
+  maps, which D236 listed; aggressive monsters and a drop sought (D236).
+
+## D242: 9g measured with `scripts/fights.cs`
+
+*2026-10-30, step 9, session 9g, on the 80 game connections of 3.7.12.12, pack format 7 and mapping format 14. No fight
+in game.*
+
+- **With Standard**, the defaults: the bench and `--live` print what they printed before the session, line for line;
+  `--turns` the same plans, judgements and foresight on its 255 turns and 338 searches, the searches 69 ms halfway, 171 ms
+  at 90 % and 402 ms at most, against 66, 177 and 388.
+- **Benchmarked**, BenchmarkDotNet in its process: a turn planned against four enemies in 2.6 ms and 4.79 MB, against 3.1
+  ms and 4.79 MB in 9f.
+- **Not measured**: the other strategies on the captures, and the fighting activity, which no capture holds.
+||||||| 3285a40
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -5457,5 +5696,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
-| Q15 | When D3B needs a monster's characteristics at a level its grades lack, before the server gives them, such as to choose which group to attack, does it run the client's Lua formulas, or write them in C#, checked against the client's (D182)? | The session that needs it, 9e or 9g at the latest |
 | Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? It refuses with an error text, 29 ms after the request (D203); which casts, but a Zobal's masks, is left. It allowed 11 casts the rules refuse, each a breed's mechanism: spells whose cost or range a gathered state changes, and summons (D214). The Zobal's 6 refused were the masks' states the bot kept, whose end it did not read (D224, D225). | Captures the owner makes, the AI sending its casts (D202), with those of D196; the breeds' mechanisms in 9f |

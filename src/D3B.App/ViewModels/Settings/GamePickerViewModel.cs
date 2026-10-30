@@ -6,24 +6,24 @@ using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>The dialog choosing resources several at once: searched by name, filtered by profession, those its characters cannot gather yet dimmed (D159).</summary>
-/// <remarks>The resources checked are added in the order they were checked, after those the list holds.</remarks>
-internal sealed partial class ResourcePickerViewModel : ObservableObject
+/// <summary>The dialog choosing resources, spells or monsters several at once: searched by name, filtered by profession, breed or super race, resources its characters cannot gather yet dimmed (D159, D234, D236).</summary>
+/// <remarks>The values checked are added in the order they were checked, after those the list holds.</remarks>
+internal sealed partial class GamePickerViewModel : ObservableObject
 {
     private readonly Dialogs _dialogs;
-    private readonly ResourcesFieldViewModel _field;
+    private readonly PickedGamesFieldViewModel _field;
     private readonly Localizer _localizer;
-    private readonly IReadOnlyList<ResourceChoiceViewModel> _all;
-    private readonly List<ResourceChoiceViewModel> _checked = [];
+    private readonly IReadOnlyList<GameChoiceViewModel> _all;
+    private readonly List<GameChoiceViewModel> _checked = [];
     private readonly string _add;
 
-    /// <summary>Gets the professions to filter by, every one first.</summary>
-    public IReadOnlyList<JobFilterViewModel> Jobs { get; }
+    /// <summary>Gets the groups to filter by, every one first: professions, breeds or super races.</summary>
+    public IReadOnlyList<FilterChipViewModel> Groups { get; }
 
-    /// <summary>Gets the resources shown, by level then name.</summary>
+    /// <summary>Gets the values shown, by level then name.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
-    public partial IReadOnlyList<ResourceChoiceViewModel> Shown { get; private set; } = [];
+    public partial IReadOnlyList<GameChoiceViewModel> Shown { get; private set; } = [];
 
     /// <summary>Gets or sets what the name searched holds.</summary>
     [ObservableProperty]
@@ -33,7 +33,7 @@ internal sealed partial class ResourcePickerViewModel : ObservableObject
     [ObservableProperty]
     public partial string AddText { get; private set; } = "";
 
-    /// <summary>Gets whether a resource is checked.</summary>
+    /// <summary>Gets whether a value is checked.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(AddCommand))]
     public partial bool HasChecked { get; private set; }
@@ -41,25 +41,25 @@ internal sealed partial class ResourcePickerViewModel : ObservableObject
     /// <summary>Gets the dialog's title.</summary>
     public string Title { get; }
 
-    /// <summary>Gets whether no resource matches.</summary>
+    /// <summary>Gets whether no value matches.</summary>
     public bool IsEmpty => Shown.Count == 0;
 
-    private JobFilterViewModel SelectedJob => Jobs.First(job => job.IsSelected);
+    private FilterChipViewModel SelectedGroup => Groups.First(group => group.IsSelected);
 
-    /// <summary>Initializes a new instance of the <see cref="ResourcePickerViewModel"/> class.</summary>
+    /// <summary>Initializes a new instance of the <see cref="GamePickerViewModel"/> class.</summary>
     /// <param name="dialogs">The window's dialogs, which it closes.</param>
     /// <param name="field">The list it adds to.</param>
     /// <param name="editor">The editor the list belongs to.</param>
-    /// <param name="offered">The resources the list does not hold yet.</param>
-    public ResourcePickerViewModel(Dialogs dialogs, ResourcesFieldViewModel field, SettingsEditor editor, IReadOnlyList<OptionViewModel> offered)
+    /// <param name="offered">The values the list does not hold yet.</param>
+    public GamePickerViewModel(Dialogs dialogs, PickedGamesFieldViewModel field, SettingsEditor editor, IReadOnlyList<OptionViewModel> offered)
     {
         _dialogs = dialogs;
         _field = field;
         _localizer = editor.Localizer;
-        _add = field.Definition.IsExcluding ? "ExcludeResources" : "AddResources";
+        _add = field.ChooseKey;
         Title = _localizer[_add];
 
-        var game = editor.Game;
+        var kind = field.Definition.Kind;
         var compare = StringComparer.Create(editor.Localizer.Culture, CompareOptions.IgnoreCase);
 
         _all =
@@ -68,56 +68,56 @@ internal sealed partial class ResourcePickerViewModel : ObservableObject
                 .Select(option =>
                 {
                     var id = (int)option.Value;
-                    ResourceSource? source = game is not null && game.TryGetSource(id, out var found) ? found : null;
+                    var (group, level) = editor.GroupOf(kind, id);
 
-                    return new ResourceChoiceViewModel(option, source?.JobId, source?.Level, editor.MissingLevelOf(id) is not null, OnChecked);
+                    return new GameChoiceViewModel(option, group, level, kind is SettingKind.Resource && editor.MissingLevelOf(id) is not null, OnChecked);
                 })
                 .OrderBy(choice => choice.Level ?? 0)
                 .ThenBy(choice => choice.Option.Name, compare),
         ];
 
-        var jobs = new List<JobFilterViewModel> { new(null, editor.Localizer["AllJobs"], null, Select) { IsSelected = true } };
+        var groups = new List<FilterChipViewModel> { new(null, editor.Localizer["AllJobs"], null, Select) { IsSelected = true } };
 
-        foreach (var jobId in _all.Select(choice => choice.JobId).Distinct().OrderBy(id => id is null))
+        foreach (var groupId in _all.Select(choice => choice.GroupId).Distinct().OrderBy(id => id is null).ThenBy(id => id))
         {
-            if (jobId is { } id)
+            if (groupId is { } id)
             {
-                var job = editor.JobOption(id);
+                var group = editor.GroupOption(kind, id);
 
-                jobs.Add(new JobFilterViewModel(id, job.Name, job.Icon, Select));
+                groups.Add(new FilterChipViewModel(id, group.Name, group.Icon, Select));
             }
             else
             {
-                jobs.Add(new JobFilterViewModel(null, editor.Localizer["NoJob"], null, Select) { IsBase = true });
+                groups.Add(new FilterChipViewModel(null, editor.Localizer[kind is SettingKind.Resource ? "NoJob" : "NoGroup"], null, Select) { IsBase = true });
             }
         }
 
-        Jobs = jobs;
+        Groups = groups;
         AddText = editor.Localizer[_add];
         Filter();
     }
 
-    private void Select(JobFilterViewModel job)
+    private void Select(FilterChipViewModel group)
     {
-        foreach (var other in Jobs)
-            other.IsSelected = other == job;
+        foreach (var other in Groups)
+            other.IsSelected = other == group;
 
         Filter();
     }
 
     private void Filter()
     {
-        var job = SelectedJob;
+        var group = SelectedGroup;
         var search = Search?.Trim() ?? "";
 
         Shown =
         [
-            .. _all.Where(choice => (job.Id is null && !job.IsBase) || (job.IsBase ? choice.JobId is null : choice.JobId == job.Id))
+            .. _all.Where(choice => (group.Id is null && !group.IsBase) || (group.IsBase ? choice.GroupId is null : choice.GroupId == group.Id))
                 .Where(choice => search.Length == 0 || choice.Option.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)),
         ];
     }
 
-    private void OnChecked(ResourceChoiceViewModel choice)
+    private void OnChecked(GameChoiceViewModel choice)
     {
         if (choice.IsChecked)
             _checked.Add(choice);

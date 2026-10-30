@@ -69,7 +69,7 @@ jobs:
         run: dotnet vpk download github --repoUrl "https://github.com/$env:GITHUB_REPOSITORY" --token $env:GH_TOKEN -o releases
 
       - name: Pack
-        run: dotnet vpk pack --packId D3B.App --packVersion $env:VERSION --packDir publish --mainExe D3B.App.exe --packTitle D3B --packAuthors Aerafal -o releases
+        run: dotnet vpk pack --packId D3B.App --packVersion $env:VERSION --packDir publish --mainExe D3B.App.exe --packTitle D3B --packAuthors Aerafal --icon src/D3B.App/Assets/d3b.ico -o releases
 
       - name: Upload
         env:

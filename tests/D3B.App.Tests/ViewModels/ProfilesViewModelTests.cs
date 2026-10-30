@@ -275,16 +275,16 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         page.Refresh(_store.Host.Services);
         page.Items[0].EditCommand.Execute(null);
 
-        var resources = Field<ResourcesFieldViewModel>(page.Items[0], "Resources");
+        var resources = Field<PickedGamesFieldViewModel>(page.Items[0], "Resources");
 
         Assert.True(resources.CanChoose);
 
         resources.ChooseCommand.Execute(null);
 
-        var picker = Assert.IsType<ResourcePickerViewModel>(page.Dialogs.Current);
+        var picker = Assert.IsType<GamePickerViewModel>(page.Dialogs.Current);
 
         // Within the profession chosen, by the level it gathers them from.
-        Assert.Equal(["All", "Lumberjack"], picker.Jobs.Select(job => job.Name));
+        Assert.Equal(["All", "Lumberjack"], picker.Groups.Select(job => job.Name));
         Assert.Equal(["Ash", "Chestnut"], picker.Shown.Select(choice => choice.Option.Name));
         Assert.False(picker.AddCommand.CanExecute(null));
 
@@ -292,7 +292,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
 
         Assert.Equal(["Chestnut"], picker.Shown.Select(choice => choice.Option.Name));
 
-        picker.Jobs[1].ChooseCommand.Execute(null);
+        picker.Groups[1].ChooseCommand.Execute(null);
         picker.Search = "";
         picker.Shown[1].IsChecked = true;
         picker.Shown[0].IsChecked = true;

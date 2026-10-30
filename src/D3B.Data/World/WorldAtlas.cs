@@ -2,7 +2,7 @@ using MemoryPack;
 
 namespace D3B.Data.World;
 
-/// <summary>Where maps lie in the world: their positions, the sub-areas and areas they belong to, and the zaaps.</summary>
+/// <summary>Where maps lie in the world: their positions, the sub-areas and areas they belong to, and the zaaps; what grows and lives in each sub-area.</summary>
 /// <remarks>
 /// Each table is sorted by identifier and found by binary search. The client's tables do not cover every map: about
 /// 2,300 maps of client 3.7.12.12 have no position (client.md). Loaded once and shared: nothing in it changes.
@@ -32,27 +32,39 @@ public sealed partial class WorldAtlas
     /// </remarks>
     public ReadOnlyMemory<int> Harvestables { get; }
 
+    /// <summary>Gets the monsters of every sub-area, by monster: each sub-area's together, ascending, in the order of the sub-areas.</summary>
+    /// <remarks>
+    /// The client's <c>monsters</c> of a sub-area, every one a monster of <see cref="D3B.Data.Monsters.MonsterCatalog"/>.
+    /// The monsters' own <c>subareas</c> list every one of these pairs, and more: monsters of events and quests, such as
+    /// Pwâk eggs and leprechauns, which no sub-area lists and the atlas leaves out. Bosses, archmonsters and monsters hidden
+    /// from the bestiary are kept: their flags tell them apart.
+    /// </remarks>
+    public ReadOnlyMemory<int> Monsters { get; }
+
     /// <summary>Initializes a new instance of the <see cref="WorldAtlas"/> class.</summary>
     /// <param name="positions">The maps' positions, in strictly ascending order of map.</param>
-    /// <param name="subAreas">The sub-areas, in strictly ascending order of identifier, each naming its own resources.</param>
+    /// <param name="subAreas">The sub-areas, in strictly ascending order of identifier, each naming its own resources and monsters.</param>
     /// <param name="areas">The areas, in strictly ascending order of identifier.</param>
     /// <param name="waypoints">The zaaps, in strictly ascending order of identifier.</param>
     /// <param name="harvestables">The sub-areas' resources, each sub-area's together and in the order of the sub-areas, with nothing between.</param>
-    /// <exception cref="ArgumentException">A table is not in strictly ascending order, or the sub-areas' resources do not follow one another.</exception>
+    /// <param name="monsters">The sub-areas' monsters, each sub-area's together and in the order of the sub-areas, with nothing between.</param>
+    /// <exception cref="ArgumentException">A table is not in strictly ascending order, or the sub-areas' resources or monsters do not follow one another.</exception>
     [MemoryPackConstructor]
-    public WorldAtlas(ReadOnlyMemory<MapPosition> positions, ReadOnlyMemory<SubArea> subAreas, ReadOnlyMemory<Area> areas, ReadOnlyMemory<Waypoint> waypoints, ReadOnlyMemory<int> harvestables)
+    public WorldAtlas(ReadOnlyMemory<MapPosition> positions, ReadOnlyMemory<SubArea> subAreas, ReadOnlyMemory<Area> areas, ReadOnlyMemory<Waypoint> waypoints, ReadOnlyMemory<int> harvestables, ReadOnlyMemory<int> monsters)
     {
         Tables.CheckAscending(positions.Span, static position => position.MapId, nameof(positions));
         Tables.CheckAscending(subAreas.Span, static subArea => subArea.Id, nameof(subAreas));
         Tables.CheckAscending(areas.Span, static area => area.Id, nameof(areas));
         Tables.CheckAscending(waypoints.Span, static waypoint => waypoint.Id, nameof(waypoints));
         Tables.CheckSlices(subAreas.Span, static subArea => (subArea.FirstHarvestable, subArea.HarvestableCount), harvestables.Length, nameof(harvestables));
+        Tables.CheckSlices(subAreas.Span, static subArea => (subArea.FirstMonster, subArea.MonsterCount), monsters.Length, nameof(monsters));
 
         Positions = positions;
         SubAreas = subAreas;
         Areas = areas;
         Waypoints = waypoints;
         Harvestables = harvestables;
+        Monsters = monsters;
     }
 
     /// <summary>Finds where a map lies.</summary>
@@ -97,5 +109,13 @@ public sealed partial class WorldAtlas
     public ReadOnlySpan<int> HarvestablesOf(SubArea subArea)
     {
         return Harvestables.Span.Slice(subArea.FirstHarvestable, subArea.HarvestableCount);
+    }
+
+    /// <summary>Gets the monsters that live in a sub-area.</summary>
+    /// <param name="subArea">A sub-area of the atlas.</param>
+    /// <returns>Its monsters, by identifier, in ascending order.</returns>
+    public ReadOnlySpan<int> MonstersOf(SubArea subArea)
+    {
+        return Monsters.Span.Slice(subArea.FirstMonster, subArea.MonsterCount);
     }
 }

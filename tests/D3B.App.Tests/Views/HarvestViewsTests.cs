@@ -39,9 +39,10 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         return [.. root.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text).OfType<string>().Where(text => text.Length > 0)];
     }
 
-    private static int Icons(Visual root)
+    private static int Icons(Window window)
     {
-        return root.GetVisualDescendants().OfType<Image>().Count(image => image.IsEffectivelyVisible && image.Source is not null);
+        // The pages' icons, the pack's: the title bar's logo is the window's own, outside its content (D231).
+        return ((Visual)window.Content!).GetVisualDescendants().OfType<Image>().Count(image => image.IsEffectivelyVisible && image.Source is not null);
     }
 
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
@@ -127,9 +128,9 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             // Its dialogs, over the editor: resources chosen several at once, a question, a new profile.
             var editing = main.Profiles.Editing!;
 
-            editing.Editor!.Sections.SelectMany(section => section.Fields).OfType<ResourcesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
+            editing.Editor!.Sections.SelectMany(section => section.Fields).OfType<PickedGamesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
-            dialogs.Add(window.GetVisualDescendants().OfType<ResourcePickerView>().Any(view => view.IsEffectivelyVisible));
+            dialogs.Add(window.GetVisualDescendants().OfType<GamePickerView>().Any(view => view.IsEffectivelyVisible));
             Drawings.Draw(window, "picker-fr");
             main.Dialogs.Close();
             editing.AskDeleteCommand.Execute(null);
@@ -236,7 +237,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             var french = Texts(window);
 
             Drawings.Draw(window, "profession-fr");
-            editor.Sections.SelectMany(section => section.Fields).OfType<ResourcesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
+            editor.Sections.SelectMany(section => section.Fields).OfType<PickedGamesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
             var picker = Texts(window);

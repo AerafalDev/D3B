@@ -2,12 +2,13 @@ using AssetsTools.NET.Extra;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.Maps;
+using D3B.Data.Monsters;
 using D3B.Data.World;
 using D3B.Scripts.Unity;
 
 namespace D3B.Scripts.Extract;
 
-/// <summary>Reads the world: the client's world graph, and the tables of the atlas (positions, sub-areas and their resources, areas, zaaps).</summary>
+/// <summary>Reads the world: the client's world graph, and the tables of the atlas (positions, sub-areas and their resources and monsters, areas, zaaps).</summary>
 /// <remarks>
 /// <see cref="Check"/> then holds the graph and the atlas against the maps, so that a client changing what the fields
 /// mean, such as which bits of a cell's <c>linkedZone</c> name its zone, fails the extraction (client.md).
@@ -64,7 +65,7 @@ internal static class WorldExtractor
         throw new InvalidDataException($"{path} holds no world graph.");
     }
 
-    public static WorldAtlas ReadAtlas(ClientInstall client, ItemCatalog items, JobCatalog jobs)
+    public static WorldAtlas ReadAtlas(ClientInstall client, ItemCatalog items, JobCatalog jobs, MonsterCatalog monsters, IReadOnlySet<(int SubAreaId, int MonsterId)> monsterSubAreas)
     {
         try
         {
@@ -85,7 +86,7 @@ internal static class WorldExtractor
                     throw new InvalidDataException($"The maps' information keys map {position.MapId} as {key}.");
             }
 
-            var (subAreas, harvestables) = ReadSubAreas(client, items, jobs);
+            var (subAreas, harvestables, inhabitants) = ReadSubAreas(client, items, jobs, monsters, monsterSubAreas);
             var areas = UnityDataTable.Read(client, "areas").Select(row => new Area(
                 row.Record.Int32("id"),
                 row.Record.Int32("nameId"),
@@ -100,7 +101,8 @@ internal static class WorldExtractor
                 subAreas,
                 areas.OrderBy(area => area.Id).ToArray(),
                 waypoints.OrderBy(waypoint => waypoint.Id).ToArray(),
-                harvestables);
+                harvestables,
+                inhabitants);
 
             Console.WriteLine($"Atlas: {atlas.Positions.Length:N0} map positions, {atlas.SubAreas.Length:N0} sub-areas, {atlas.Areas.Length:N0} areas, {atlas.Waypoints.Length:N0} zaaps");
 
@@ -112,12 +114,19 @@ internal static class WorldExtractor
         }
     }
 
-    /// <summary>Reads the sub-areas, in ascending order, each with the resources professions gather there.</summary>
+    /// <summary>Reads the sub-areas, in ascending order, each with the resources professions gather there and the monsters that live there.</summary>
     /// <remarks>
+    /// <para>
     /// A sub-area's <c>harvestables</c> lists items: those a profession's skill gathers, and what harvesting may bring
     /// besides, such as loot boxes, which are no resource to look for there and are left out.
+    /// </para>
+    /// <para>
+    /// A sub-area's <c>monsters</c> are kept whole. A monster's own <c>subareas</c> name every such pair in client
+    /// 3.7.12.12, and 266 more, of 36 monsters of events and quests, such as Pwâk eggs and leprechauns, whom no sub-area
+    /// lists: they are counted and left out, so that a hunt does not choose a sub-area for a monster an event brings.
+    /// </para>
     /// </remarks>
-    private static (SubArea[] SubAreas, int[] Harvestables) ReadSubAreas(ClientInstall client, ItemCatalog items, JobCatalog jobs)
+    private static (SubArea[] SubAreas, int[] Harvestables, int[] Monsters) ReadSubAreas(ClientInstall client, ItemCatalog items, JobCatalog jobs, MonsterCatalog monsters, IReadOnlySet<(int SubAreaId, int MonsterId)> monsterSubAreas)
     {
         var resources = new HashSet<int>();
 
@@ -130,6 +139,8 @@ internal static class WorldExtractor
         var records = UnityDataTable.ReadById(client, "subareas").OrderBy(record => record.Int32("id")).ToList();
         var subAreas = new SubArea[records.Count];
         var harvestables = new List<int>();
+        var inhabitants = new List<int>();
+        var pairs = new HashSet<(int SubAreaId, int MonsterId)>();
         var listed = 0;
 
         for (var i = 0; i < records.Count; i++)
@@ -145,6 +156,15 @@ internal static class WorldExtractor
             }
 
             var kept = harvestable.Where(resources.Contains).Distinct().Order().ToArray();
+            var living = record.Int32Array("monsters").Distinct().Order().ToArray();
+
+            foreach (var monster in living)
+            {
+                if (!monsters.TryGetMonster(monster, out _))
+                    throw new InvalidDataException($"Sub-area {id} lists monster {monster}, which is no monster of the client.");
+
+                pairs.Add((id, monster));
+            }
 
             listed += harvestable.Length;
             subAreas[i] = new SubArea(
@@ -155,13 +175,19 @@ internal static class WorldExtractor
                 ZaapOf(id, record.Int32("associatedZaapMapId")),
                 record.Boolean("basicAccountAllowed"),
                 harvestables.Count,
-                kept.Length);
+                kept.Length,
+                inhabitants.Count,
+                living.Length);
             harvestables.AddRange(kept);
+            inhabitants.AddRange(living);
         }
 
-        Console.WriteLine($"Harvestables: {listed:N0} listed, {harvestables.Count:N0} of them resources of a profession");
+        var unlisted = monsterSubAreas.Where(pair => !pairs.Contains(pair)).ToList();
 
-        return (subAreas, [.. harvestables]);
+        Console.WriteLine($"Harvestables: {listed:N0} listed, {harvestables.Count:N0} of them resources of a profession");
+        Console.WriteLine($"Inhabitants: {pairs.Count:N0} pairs, {subAreas.Count(subArea => subArea.MonsterCount > 0):N0} sub-areas, {inhabitants.Distinct().Count():N0} monsters; a monster's own sub-areas add {unlisted.Count:N0} pairs of {unlisted.Select(pair => pair.MonsterId).Distinct().Count():N0} monsters, left out, and lack {pairs.Count(pair => !monsterSubAreas.Contains(pair)):N0}");
+
+        return (subAreas, [.. harvestables], [.. inhabitants]);
     }
 
     private static long ZaapOf(int subAreaId, int mapId)

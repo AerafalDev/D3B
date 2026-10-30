@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Strategy</value>
+  </data>
+  <data name="SectionStrategy" xml:space="preserve">
+    <value>Strategy</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="RoleHelp" xml:space="preserve">
+    <value>A healer holds its allies' life twice as dear and heals and shields first; a protector holds them dearer and its own life less, closer to the enemies. Alone, the role changes little.</value>
+  </data>
+  <data name="RoleAttacker" xml:space="preserve">
+    <value>Attacker</value>
+  </data>
+  <data name="RoleHealer" xml:space="preserve">
+    <value>Healer</value>
+  </data>
+  <data name="RoleProtector" xml:space="preserve">
+    <value>Protector</value>
+  </data>
+  <data name="Style" xml:space="preserve">
+    <value>Style</value>
+  </data>
+  <data name="StyleHelp" xml:space="preserve">
+    <value>How much the AI fears the enemies' blows and holds its own life against the damage it deals.</value>
+  </data>
+  <data name="StylePrudent" xml:space="preserve">
+    <value>Prudent</value>
+  </data>
+  <data name="StyleBalanced" xml:space="preserve">
+    <value>Balanced</value>
+  </data>
+  <data name="StyleOffensive" xml:space="preserve">
+    <value>Offensive</value>
+  </data>
+  <data name="PrudentWhenRisky" xml:space="preserve">
+    <value>Prudent when the fight is risky</value>
+  </data>
+  <data name="PrudentWhenRiskyHelp" xml:space="preserve">
+    <value>As the fight starts, the AI judges whether the enemies would beat its side first; if so, it plays prudently.</value>
+  </data>
+  <data name="PrudentUnder" xml:space="preserve">
+    <value>Prudent under a share of life</value>
+  </data>
+  <data name="PrudentBelow" xml:space="preserve">
+    <value>Life under</value>
+  </data>
+  <data name="SectionSpells" xml:space="preserve">
+    <value>Spells</value>
+  </data>
+  <data name="Preferred" xml:space="preserve">
+    <value>Preferred spells</value>
+  </data>
+  <data name="PreferredHelp" xml:space="preserve">
+    <value>A preferred spell is worth a quarter more than what it brings: never cast where it brings nothing. Each character uses its own.</value>
+  </data>
+  <data name="Excluded" xml:space="preserve">
+    <value>Spells left out</value>
+  </data>
+  <data name="ExcludedHelp" xml:space="preserve">
+    <value>Never cast.</value>
+  </data>
+  <data name="Weapon" xml:space="preserve">
+    <value>Strike with the weapon</value>
+  </data>
+  <data name="SectionPlacement" xml:space="preserve">
+    <value>Placement</value>
+  </data>
+  <data name="Placement" xml:space="preserve">
+    <value>Placement</value>
+  </data>
+  <data name="PlacementHelp" xml:space="preserve">
+    <value>Automatic: the AI weighs the enemies' threat against the damage it may deal. Near or far: the nearest enemy's distance first, then the AI.</value>
+  </data>
+  <data name="PlacementAutomatic" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="PlacementNear" xml:space="preserve">
+    <value>Near the enemies</value>
+  </data>
+  <data name="PlacementFar" xml:space="preserve">
+    <value>Far from the enemies</value>
+  </data>
+  <data name="SectionFight" xml:space="preserve">
+    <value>The fight</value>
+  </data>
+  <data name="Closed" xml:space="preserve">
+    <value>Close the fight</value>
+  </data>
+  <data name="ClosedHelp" xml:space="preserve">
+    <value>No other player joins it.</value>
+  </data>
+  <data name="NoSpectators" xml:space="preserve">
+    <value>Refuse spectators</value>
+  </data>
+  <data name="OutOfActivity" xml:space="preserve">
+    <value>The AI plays the fights out of an activity</value>
+  </data>
+  <data name="OutOfActivityHelp" xml:space="preserve">
+    <value>Such as a fight you start yourself, the bot doing nothing. An activity's own fights follow its profile.</value>
+  </data>
+  <data name="PresetPrudent" xml:space="preserve">
+    <value>Prudent</value>
+  </data>
+  <data name="PresetOffensive" xml:space="preserve">
+    <value>Offensive</value>
+  </data>
+  <data name="PresetHealer" xml:space="preserve">
+    <value>Healer</value>
+  </data>
+  <data name="PresetProtector" xml:space="preserve">
+    <value>Protector</value>
+  </data>
+</root>

@@ -4,12 +4,12 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>A profession the resources' dialog filters by, every one, or none for <c>Base</c>'s resources (D150).</summary>
-internal sealed partial class JobFilterViewModel : ObservableObject
+/// <summary>A chip a list filters by: a profession, or none for <c>Base</c>'s resources (D150), a breed (D234), a super race (D236), or every one.</summary>
+internal sealed partial class FilterChipViewModel : ObservableObject
 {
-    private readonly Action<JobFilterViewModel> _select;
+    private readonly Action<FilterChipViewModel> _select;
 
-    /// <summary>Gets the profession, or <see langword="null"/> for every one and for none.</summary>
+    /// <summary>Gets the profession, breed or super race, or <see langword="null"/> for every one and for none.</summary>
     public int? Id { get; }
 
     /// <summary>Gets its name.</summary>
@@ -18,19 +18,19 @@ internal sealed partial class JobFilterViewModel : ObservableObject
     /// <summary>Gets its icon, when the pack keeps one.</summary>
     public IImage? Icon { get; }
 
-    /// <summary>Gets or sets whether it stands for the resources of no profession, <c>Base</c>'s.</summary>
+    /// <summary>Gets or sets whether it stands for the values of no group, such as <c>Base</c>'s resources.</summary>
     public bool IsBase { get; init; }
 
     /// <summary>Gets or sets whether it is the filter chosen.</summary>
     [ObservableProperty]
     public partial bool IsSelected { get; set; }
 
-    /// <summary>Initializes a new instance of the <see cref="JobFilterViewModel"/> class.</summary>
-    /// <param name="id">The profession, or <see langword="null"/>.</param>
+    /// <summary>Initializes a new instance of the <see cref="FilterChipViewModel"/> class.</summary>
+    /// <param name="id">The profession, breed or super race, or <see langword="null"/>.</param>
     /// <param name="name">Its name.</param>
     /// <param name="icon">Its icon, or <see langword="null"/>.</param>
     /// <param name="select">Chooses it.</param>
-    public JobFilterViewModel(int? id, string name, IImage? icon, Action<JobFilterViewModel> select)
+    public FilterChipViewModel(int? id, string name, IImage? icon, Action<FilterChipViewModel> select)
     {
         Id = id;
         Name = name;

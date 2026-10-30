@@ -17,13 +17,18 @@ a module, and the game's data and protocol are read from the client you have ins
 - **Harvesting and banking.** A bot tours a zone and harvests the resources its profile names, by profession or as a
   list, then banks them when its pods are full, in the bank or the guild's chest. It chooses the sub-area by each
   character's levels, takes a zaap only when it saves enough maps, learns where resources grow and how long they take
-  to grow back, eats to heal, opens resource bags, and handles the fights it meets on the way. Six profiles come ready:
+  to grow back, eats to heal, opens resource bags, and has the AI fight the fights it meets on the way, or leaves them to
+  you, as its profile says. Six profiles come ready:
   an automatic harvest and one per profession. Every run is kept, and a statistics page says what the runs brought.
 - **Fights.** D3B follows a fight from the protocol: the fighters, their life, AP and MP, buffs, states and cooldowns. It
   knows the rules of a cast (range, line of sight, zones, target masks, costs, cooldowns) and of a walk with its tackle,
   and foresees what each cast does from the game's data, checked against every cast of the fights captured so far. Its
   AI places the character, then each turn weighs the walks and casts, a worn sword's blow among them, against the
   monsters' reply and plays them at a pace you can follow.
+- **Fighting and strategies.** A fighting activity, made as harvesting is, tours a zone, chosen or chosen for the
+  character's level, and attacks the groups of monsters its profile allows: monsters chosen or left out, a group's size,
+  and only those the AI judges it beats. Each character fights with its strategy, a profile of its own: a role, a style,
+  prudence, spells preferred or left out with their icons, its placement, the fight closed and spectators refused.
 - **The desktop app.** A card per bot, with where it is, its pods, kamas and activity; a live map of the bot's map, its
   path, elements, NPCs and fighters; the accounts, the profiles and their editor with a preview of the zone; a journal
   per bot, a protocol inspector, and the settings. Dark by default, in French and English. It installs without
@@ -48,9 +53,9 @@ Pull requests that add any of these are closed.
 ## Status
 
 D3B is young and changes fast: settings, data formats and the app may change from one version to the next. The first
-milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them, reading the states
-the breeds' spells ask, such as the Zobal's masks, is on `main`, not yet in a release; the fights' profiles, summons,
-glyphs, the other breeds' mechanisms and a fighting activity come next. Then several accounts
+milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them, the strategies and the
+fighting activity are on `main`, not yet in a release, the activity still to be measured in game; summons, glyphs and
+the other breeds' mechanisms come next. Then several accounts
 and groups, blueprint mods edited in the app, the marketplace and crafting. The [roadmap](docs/roadmap.md) has the steps
 in order.
 
@@ -124,7 +129,7 @@ are configuration keys, given on the command line:
 | --- | --- |
 | `--Storage:Path <file>` | Uses another database file. |
 | `--Network:Captures:Enabled true` | Records each connection in `%LOCALAPPDATA%\D3B\captures`, which the app's protocol inspector replays. A capture holds the account's login ticket: never share one. |
-| `--Fights:Alone true` | Has the AI play every fight, as the switch on a bot's card does in the app. |
+| `--Fights:Alone true` | Has the AI play every fight of the bots, whatever their activity and strategy say. |
 | `--Delays:Display 1.5` | The client's display time, in seconds; the other delays are under `Delays:` too. |
 
 ### Tools
@@ -162,7 +167,7 @@ the app. The same installer, built on your machine in PowerShell:
 dotnet tool restore
 dotnet publish src/D3B.App -c Release -r win-x64 --self-contained -o publish -p:MinVerVersionOverride=0.1.0
 dotnet run --file scripts/embed.cs -- --client-version 3.7.12.12 --output publish/data --packs "$env:LOCALAPPDATA\D3B\data"
-dotnet tool run vpk pack --packId D3B.App --packVersion 0.1.0 --packDir publish --mainExe D3B.App.exe --packTitle D3B -o releases
+dotnet tool run vpk pack --packId D3B.App --packVersion 0.1.0 --packDir publish --mainExe D3B.App.exe --packTitle D3B --icon src/D3B.App/Assets/d3b.ico -o releases
 ```
 
 An installed app started with `--Updates:Source <folder>` takes its updates from a folder of releases packed this way.

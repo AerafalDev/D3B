@@ -47,7 +47,8 @@ message MapMovementEvent {
   option (d3b.readable.partial) = true;
 
   // Every cell of the path, from the first, without directions: measured on paths D3B sent, whose turning points the
-  // server filled in (D60).
+  // server filled in (D60). A group of monsters' path is only its first cell, where the group stood, and its last, 1 to 4
+  // apart: measured on the 585 walks of groups the 80 game connections captured hold.
   repeated int32 cells = 1;
 
   int64 actor_id = 4;

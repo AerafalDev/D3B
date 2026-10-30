@@ -16,7 +16,7 @@ public sealed class GamePack : IDisposable
 {
     /// <summary>The format this version of D3B writes and reads. A pack of any other format is rejected.</summary>
     /// <remarks>It changes whenever a pack written before would be misread: a new layout, or a changed entry type.</remarks>
-    public const int FormatVersion = 6;
+    public const int FormatVersion = 7;
 
     private readonly SafeFileHandle _file;
     private readonly string _path;

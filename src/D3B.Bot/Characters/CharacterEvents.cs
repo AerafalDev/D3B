@@ -38,6 +38,11 @@ namespace D3B.Bot.Characters;
 /// leaving or travelling ends. The map's information says when the map is a haven bag, and whose.
 /// </para>
 /// <para>
+/// Groups of monsters, measured on the 80 game connections captured: the map's information lists them, the server shows
+/// a group coming onto the map, gives a group's walk as its first and last cells only, and removes a group attacked, by
+/// the character or another player, after showing it again as it was.
+/// </para>
+/// <para>
 /// A fight, measured (client.md): the server replaces the roleplay's context with a fight's, then names the fight's own
 /// map; once the fight is over, it creates the roleplay's context again and names the map the fight began on (D88). In
 /// between, <see cref="FightEvents"/> takes the fight's messages first (D179).
@@ -104,6 +109,7 @@ public static class CharacterEvents
                 Elements = ImmutableSortedDictionary<int, MapElement>.Empty,
                 Use = null,
                 Npcs = ImmutableSortedDictionary<int, MapNpc>.Empty,
+                MonsterGroups = ImmutableSortedDictionary<long, MapMonsterGroup>.Empty,
                 Dialog = null,
                 Storage = null,
                 ZaapDialog = null,
@@ -123,6 +129,16 @@ public static class CharacterEvents
             InteractiveUsedEvent used when used.ActorId == self && used.Duration > 0 => state with { Use = new CurrentUse(used.ElementId, used.SkillId) },
             InteractiveUseEndedEvent ended when state.Use == new CurrentUse(ended.ElementId, ended.SkillId) => state with { Use = null },
             MapMovementEvent movement when movement.ActorId == self && movement.Cells.Count > 0 && movement.Cells.All(IsCell) => state with { Path = [.. movement.Cells], IsWalkHeld = false },
+            // A group's walk names only its first and last cells, and the client attacks it where it stops.
+            MapMovementEvent movement when movement.Cells.Count > 0 && IsCell(movement.Cells[^1]) && state.MonsterGroups.TryGetValue(movement.ActorId, out var walker) => state with
+            {
+                MonsterGroups = state.MonsterGroups.SetItem(walker.ActorId, walker with { Cell = movement.Cells[^1] }),
+            },
+            MapActorShownEvent shown when shown.Actors.Any(IsMonsterGroup) => state with
+            {
+                MonsterGroups = state.MonsterGroups.SetItems(shown.Actors.Where(IsMonsterGroup).Select(actor => KeyValuePair.Create(actor.Id, Group(actor)))),
+            },
+            MapActorRemovedEvent removed when state.MonsterGroups.ContainsKey(removed.ActorId) => state with { MonsterGroups = state.MonsterGroups.Remove(removed.ActorId) },
             MapMovementConfirmResponse when state.IsWalking => state with { Cell = state.Path[^1], Path = [] },
             MapMovementConfirmResponse => state with { IsWalkHeld = false },
             MapMovementRefusedEvent refused => state with
@@ -190,9 +206,39 @@ public static class CharacterEvents
             .Select(actor => new MapNpc((int)actor.Id, actor.Information.Roleplay.Npc.NpcId, actor.Disposition is { HasCellId: true } at && IsCell(at.CellId) ? at.CellId : null))
             .ToImmutableSortedDictionary(npc => npc.ActorId, npc => npc);
 
+        var groups = information.Actors.Where(IsMonsterGroup).Aggregate(
+            ImmutableSortedDictionary<long, MapMonsterGroup>.Empty,
+            (groups, actor) => groups.SetItem(actor.Id, Group(actor)));
+
         var owner = information.PlaceCase is MapInformationEvent.PlaceOneofCase.HavenBag ? information.HavenBag.Owner?.Id : null;
 
-        return state with { SubAreaId = information.SubAreaId, Cell = cell, Elements = elements, Npcs = npcs, HavenBagOwnerId = owner };
+        return state with { SubAreaId = information.SubAreaId, Cell = cell, Elements = elements, Npcs = npcs, MonsterGroups = groups, HavenBagOwnerId = owner };
+    }
+
+    private static bool IsMonsterGroup(Actor actor)
+    {
+        return actor.Id < 0 && actor.Information?.Roleplay?.MonsterGroup is not null;
+    }
+
+    private static MapMonsterGroup Group(Actor actor)
+    {
+        var monsters = actor.Information.Roleplay.MonsterGroup.Monsters;
+        var cell = actor.Disposition is { HasCellId: true } at && IsCell(at.CellId) ? at.CellId : (int?)null;
+        var members = ImmutableArray.CreateBuilder<MonsterInGroup>();
+
+        // The fight against a group had its main monster and its others, none more, in each of the 97 fights measured.
+        if (monsters?.Main is { } main)
+            members.Add(Member(main));
+
+        if (monsters is not null)
+            members.AddRange(monsters.Others.Select(Member));
+
+        return new MapMonsterGroup(actor.Id, cell, members.ToImmutable());
+    }
+
+    private static MonsterInGroup Member(GroupMonster monster)
+    {
+        return new MonsterInGroup(monster.MonsterId, monster.Grade, monster.Level);
     }
 
     private static CharacterState Lived(CharacterState state, CharacterStats stats)

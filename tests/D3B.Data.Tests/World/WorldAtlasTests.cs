@@ -6,6 +6,7 @@ namespace D3B.Data.Tests.World;
 public sealed class WorldAtlasTests : IDisposable
 {
     private static readonly int[] _harvestables = [289, 303, 400];
+    private static readonly int[] _monsters = [31, 34];
 
     private readonly TemporaryDirectory _directory = new();
 
@@ -44,6 +45,17 @@ public sealed class WorldAtlasTests : IDisposable
     }
 
     [Fact]
+    public void ASubAreaListsItsMonsters()
+    {
+        var atlas = TestWorld.Atlas();
+
+        Assert.True(atlas.TryGetSubArea(10, out var forest));
+        Assert.True(atlas.TryGetSubArea(11, out var field));
+        Assert.Equal([47], atlas.MonstersOf(forest).ToArray());
+        Assert.Equal([31, 34], atlas.MonstersOf(field).ToArray());
+    }
+
+    [Fact]
     public void ATableOutOfOrderIsRejected()
     {
         Assert.Throws<ArgumentException>(() => new WorldAtlas(
@@ -51,20 +63,29 @@ public sealed class WorldAtlasTests : IDisposable
             ReadOnlyMemory<SubArea>.Empty,
             ReadOnlyMemory<Area>.Empty,
             ReadOnlyMemory<Waypoint>.Empty,
+            ReadOnlyMemory<int>.Empty,
             ReadOnlyMemory<int>.Empty));
         Assert.Throws<ArgumentException>(() => new WorldAtlas(
             ReadOnlyMemory<MapPosition>.Empty,
             ReadOnlyMemory<SubArea>.Empty,
             new Area[] { new(1, 1, 0), new(1, 2, 0) },
             ReadOnlyMemory<Waypoint>.Empty,
+            ReadOnlyMemory<int>.Empty,
             ReadOnlyMemory<int>.Empty));
     }
 
     [Fact]
     public void ResourcesThatDoNotFollowOneAnotherAreRejected()
     {
-        Assert.Throws<ArgumentException>(() => Atlas(new(10, 1, 1, 1, SubArea.NoZaap, false, 0, 2), new(11, 1, 1, 1, SubArea.NoZaap, false, 1, 1)));
-        Assert.Throws<ArgumentException>(() => Atlas(new(10, 1, 1, 1, SubArea.NoZaap, false, 0, 1), new(11, 1, 1, 1, SubArea.NoZaap, false, 1, 1)));
+        Assert.Throws<ArgumentException>(() => Atlas(new(10, 1, 1, 1, SubArea.NoZaap, false, 0, 2, 0, 1), new(11, 1, 1, 1, SubArea.NoZaap, false, 1, 1, 1, 1)));
+        Assert.Throws<ArgumentException>(() => Atlas(new(10, 1, 1, 1, SubArea.NoZaap, false, 0, 1, 0, 1), new(11, 1, 1, 1, SubArea.NoZaap, false, 1, 1, 1, 1)));
+    }
+
+    [Fact]
+    public void MonstersThatDoNotFollowOneAnotherAreRejected()
+    {
+        Assert.Throws<ArgumentException>(() => Atlas(new(10, 1, 1, 1, SubArea.NoZaap, false, 0, 1, 0, 2), new(11, 1, 1, 1, SubArea.NoZaap, false, 1, 2, 1, 1)));
+        Assert.Throws<ArgumentException>(() => Atlas(new(10, 1, 1, 1, SubArea.NoZaap, false, 0, 1, 0, 1), new(11, 1, 1, 1, SubArea.NoZaap, false, 1, 2, 1, 0)));
     }
 
     [Fact]
@@ -81,11 +102,12 @@ public sealed class WorldAtlasTests : IDisposable
         Assert.Equal(atlas.Areas.ToArray(), read.Areas.ToArray());
         Assert.Equal(atlas.Waypoints.ToArray(), read.Waypoints.ToArray());
         Assert.Equal(atlas.Harvestables.ToArray(), read.Harvestables.ToArray());
+        Assert.Equal(atlas.Monsters.ToArray(), read.Monsters.ToArray());
     }
 
-    /// <summary>An atlas of two sub-areas and three resources.</summary>
+    /// <summary>An atlas of two sub-areas, three resources and two monsters.</summary>
     private static WorldAtlas Atlas(SubArea first, SubArea second)
     {
-        return new WorldAtlas(ReadOnlyMemory<MapPosition>.Empty, new[] { first, second }, ReadOnlyMemory<Area>.Empty, ReadOnlyMemory<Waypoint>.Empty, _harvestables);
+        return new WorldAtlas(ReadOnlyMemory<MapPosition>.Empty, new[] { first, second }, ReadOnlyMemory<Area>.Empty, ReadOnlyMemory<Waypoint>.Empty, _harvestables, _monsters);
     }
 }

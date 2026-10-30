@@ -1,7 +1,7 @@
 <UserControl
-    x:Class="D3B.App.Views.ResourcePickerView"
+    x:Class="D3B.App.Views.GamePickerView"
     x:ClassModifier="internal"
-    x:DataType="s:ResourcePickerViewModel"
+    x:DataType="s:GamePickerViewModel"
     xmlns="https://github.com/avaloniaui"
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
@@ -33,14 +33,14 @@
             PlaceholderText="{l:Tr Search}"
             Text="{Binding Search}"
             shadui:TextBoxAssist.Clearable="True" />
-        <ItemsControl ItemsSource="{Binding Jobs}">
+        <ItemsControl ItemsSource="{Binding Groups}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="s:JobFilterViewModel">
+                <DataTemplate x:DataType="s:FilterChipViewModel">
                     <Button
                         Classes="Outline"
                         Classes.Selected="{Binding IsSelected}"
@@ -82,7 +82,7 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="s:ResourceChoiceViewModel">
+                        <DataTemplate x:DataType="s:GameChoiceViewModel">
                             <Border Classes="Choice" Classes.TooHigh="{Binding IsTooHigh}">
                                 <CheckBox Classes="Choice" IsChecked="{Binding IsChecked}">
                                     <Grid ColumnDefinitions="Auto,*,Auto" Margin="4,0,0,0">

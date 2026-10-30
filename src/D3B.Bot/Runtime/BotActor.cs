@@ -65,6 +65,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile bool _fightsAlone;
     private volatile ActivityRun? _activity;
     private volatile FightEnd? _lastFightEnd;
+    private volatile Fighter? _lastFighter;
     private int _fightsBegun;
     private int _lastEndedFight;
     private long _placedAt;
@@ -86,8 +87,7 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>Gets whether a behavior runs.</summary>
     public bool IsActing => _acting;
 
-    /// <summary>Gets or sets whether the AI plays every fight of the character, the switch on its card, off at first (D198).</summary>
-    /// <remarks>An activity that fights its own fights, such as harvesting, has them played either way (<see cref="BotActivity.FightsItsFights"/>).</remarks>
+    /// <summary>Gets or sets whether the AI plays every fight of the character, whatever its activity and strategy say, off at first: the host's <c>Fights:Alone</c>, for the measures (D235).</summary>
     public bool FightsAlone
     {
         get => _fightsAlone;
@@ -97,14 +97,28 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>Gets how the character's last fight ended, once the server said, if it ever did.</summary>
     public FightEnd? LastFightEnd => _lastFightEnd;
 
+    /// <summary>Gets the character as the placement of its last fight showed it, whole, its characteristics the server's, if it fought since the bot was made.</summary>
+    /// <remarks>What the fighting activity judges a group with before attacking it (D236).</remarks>
+    public Fighter? LastFighter => _lastFighter;
+
     /// <summary>Gets how many fights began since the bot was made: the last one's number.</summary>
     public int FightsBegun => Volatile.Read(ref _fightsBegun);
 
     /// <summary>Gets the number of the fight <see cref="LastFightEnd"/> ended, as <see cref="FightsBegun"/> counted it.</summary>
     public int LastEndedFight => Volatile.Read(ref _lastEndedFight);
 
-    /// <summary>Gets whether the AI plays the character's fights now: its switch is on, or its activity fights its own (D198).</summary>
-    public bool Fights => _fightsAlone || _activity is { IsOver: false, Activity.FightsItsFights: true };
+    /// <summary>Gets the activity running, until it is over.</summary>
+    private BotActivity? Running => _activity is { IsOver: false } run ? run.Activity : null;
+
+    /// <summary>Tells whether the AI plays the character's fights now: the host's switch, else its activity's own fights as its profile says, else, out of an activity, as its strategy says (D235).</summary>
+    /// <param name="strategy">The character's strategy.</param>
+    /// <returns>Whether the AI plays them.</returns>
+    public bool Fights(StrategySettings strategy)
+    {
+        ArgumentNullException.ThrowIfNull(strategy);
+
+        return _fightsAlone || (Running is { } activity ? activity.FightsItsFights : strategy.OutOfActivity);
+    }
 
     /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
     public ActivityRun? Activity => _activity;
@@ -416,6 +430,9 @@ public sealed class BotActor : IAsyncDisposable
         var state = CharacterEvents.Apply(before, side, message);
 
         _state = state;
+
+        if (state.Fight is { Phase: FightPhase.Placement } placing && placing.Fighters.TryGetValue(Key.CharacterId, out var shown) && shown.MaxLife > 0)
+            _lastFighter = shown;
 
         if (before.Use is not null && state.Use is null && message is InteractiveUseEndedEvent)
             Volatile.Write(ref _useEndedAt, Time.GetUtcNow().UtcTicks);

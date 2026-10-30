@@ -296,7 +296,7 @@
                     Text="{Binding Problem}" />
             </StackPanel>
         </DataTemplate>
-        <DataTemplate x:DataType="s:ResourcesFieldViewModel">
+        <DataTemplate x:DataType="s:PickedGamesFieldViewModel">
             <StackPanel Spacing="8">
                 <Grid ColumnDefinitions="*,Auto" MinHeight="32">
                     <StackPanel Classes="FieldName">
@@ -447,7 +447,7 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="s:JobFilterViewModel">
+                        <DataTemplate x:DataType="s:FilterChipViewModel">
                             <Button
                                 AutomationProperties.Name="{Binding Name}"
                                 Classes="Outline"

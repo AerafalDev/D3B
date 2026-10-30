@@ -25,7 +25,10 @@ message MapInformationEvent {
   option (d3b.readable.partial) = true;
 
   repeated StatedElement stated_elements = 2;
+
+  // Everyone on the map: the character, other players, NPCs and groups of monsters.
   repeated Actor actors = 3;
+
   repeated InteractiveElement interactive_elements = 7;
   int64 map_id = 10;
   int32 sub_area_id = 12;
@@ -34,6 +37,22 @@ message MapInformationEvent {
   oneof place {
     HavenBagInformation haven_bag = 6;
   }
+}
+
+// An actor comes onto the map, or is shown again: one actor each time, in the 1,701 the 80 game connections captured
+// hold, 1,354 other players, 199 the character itself, 147 groups of monsters and 1 NPC. A group attacked is shown again
+// as it was, then removed (MapActorRemovedEvent), 27 to 75 ms after the player's attack, as the server starts the fight:
+// 116 times, 97 of them the player's attacks. 31 groups came onto a map so.
+message MapActorShownEvent {
+  option (d3b.readable.partial) = true;
+
+  repeated Actor actors = 1;
+}
+
+// An actor leaves the map: another player, or a group of monsters attacked, by the player or by another. Measured: 1,198
+// in the 80 game connections captured, 116 of them groups, none in a fight.
+message MapActorRemovedEvent {
+  int64 actor_id = 1;
 }
 
 // An interactive element of the map, and the skills it offers: which interactive it is, the server says, not the

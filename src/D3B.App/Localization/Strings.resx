@@ -221,12 +221,6 @@
   <data name="Resume" xml:space="preserve">
     <value>Resume</value>
   </data>
-  <data name="FightsAlone" xml:space="preserve">
-    <value>The AI fights</value>
-  </data>
-  <data name="FightsAloneHint" xml:space="preserve">
-    <value>On, the AI plays every fight of the character; an activity that fights, such as harvesting, plays its own anyway. Acting in a fight pauses the bot.</value>
-  </data>
   <data name="StartFailed" xml:space="preserve">
     <value>Could not start: {0}</value>
   </data>
@@ -1453,5 +1447,44 @@
   </data>
   <data name="AboutUpdate" xml:space="preserve">
     <value>Update</value>
+  </data>
+  <data name="AddSpells" xml:space="preserve">
+    <value>Add spells</value>
+  </data>
+  <data name="AddSpellsCount" xml:space="preserve">
+    <value>Add {0}</value>
+  </data>
+  <data name="ExcludeSpells" xml:space="preserve">
+    <value>Exclude spells</value>
+  </data>
+  <data name="ExcludeSpellsCount" xml:space="preserve">
+    <value>Exclude {0}</value>
+  </data>
+  <data name="AddMonsters" xml:space="preserve">
+    <value>Add monsters</value>
+  </data>
+  <data name="AddMonstersCount" xml:space="preserve">
+    <value>Add {0}</value>
+  </data>
+  <data name="ExcludeMonsters" xml:space="preserve">
+    <value>Exclude monsters</value>
+  </data>
+  <data name="ExcludeMonstersCount" xml:space="preserve">
+    <value>Exclude {0}</value>
+  </data>
+  <data name="NoGroup" xml:space="preserve">
+    <value>Others</value>
+  </data>
+  <data name="Strategy" xml:space="preserve">
+    <value>Strategy</value>
+  </data>
+  <data name="StrategyHint" xml:space="preserve">
+    <value>How the AI fights the character's fights. Edited on the profiles page.</value>
+  </data>
+  <data name="StrategyStandard" xml:space="preserve">
+    <value>Standard</value>
+  </data>
+  <data name="ProfileType" xml:space="preserve">
+    <value>Type</value>
   </data>
 </root>

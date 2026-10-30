@@ -1,4 +1,5 @@
 using D3B.Bot.Activities;
+using D3B.Bot.Fights;
 using D3B.Bot.Hosting;
 using D3B.Bot.Localization;
 using D3B.Bot.Tests.Activities;
@@ -41,7 +42,7 @@ internal sealed class TestStorage : IAsyncDisposable
 
     public ProfileStarter Starter => _services.GetRequiredService<ProfileStarter>();
 
-    public TestStorage(string? path = null)
+    public TestStorage(string? path = null, bool strategies = false)
     {
         Settings = new StorageSettings { Path = path ?? _directory.Combine("data", "d3b.db") };
 
@@ -59,6 +60,9 @@ internal sealed class TestStorage : IAsyncDisposable
         [
             new ActivityDefinition(PlainActivityId, "Plain", _ => new TestActivity()),
             SettingsDefinition(),
+
+            // The strategy's presets would be stored as profiles, which most tests count.
+            .. strategies ? [StrategyDefinition()] : Array.Empty<ActivityDefinition>(),
         ]));
         _services = services.BuildServiceProvider();
     }
@@ -73,6 +77,15 @@ internal sealed class TestStorage : IAsyncDisposable
             settings.Job(s => s.Job, LocalizedText.Invariant("Job"));
             settings.Resources(s => s.Resources, LocalizedText.Invariant("Resources")).Within(s => s.Job);
         });
+
+        return services.Select(descriptor => descriptor.ImplementationInstance).OfType<ActivityDefinition>().Single();
+    }
+
+    public static ActivityDefinition StrategyDefinition()
+    {
+        var services = new ServiceCollection();
+
+        Strategies.Register(services);
 
         return services.Select(descriptor => descriptor.ImplementationInstance).OfType<ActivityDefinition>().Single();
     }

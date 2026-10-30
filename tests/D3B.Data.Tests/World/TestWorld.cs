@@ -6,6 +6,7 @@ internal static class TestWorld
 {
     private static readonly string[] _criteria = ["PO>1", "Qf=1234"];
     private static readonly int[] _harvestables = [289, 303];
+    private static readonly int[] _monsters = [47, 31, 34];
 
     /// <summary>Map 100 has two zones; zone 1 scrolls east to 200, zone 2 takes a door to 300, which scrolls back to 100.</summary>
     public static WorldGraph Graph()
@@ -23,14 +24,15 @@ internal static class TestWorld
         return new WorldGraph(vertices, edges, transitions, _criteria);
     }
 
-    /// <summary>Sub-area 10 grows wheat and ash, sub-area 11 nothing.</summary>
+    /// <summary>Sub-area 10 grows wheat and ash, where abraknydes live; sub-area 11 grows nothing, where blue and green larvae live.</summary>
     public static WorldAtlas Atlas()
     {
         return new WorldAtlas(
             new MapPosition[] { new(100, 4, -18, 10, 1, 7001, 0x0400_0000), new(200, 5, -18, 10, 1, 7002, 0), new(300, 0, 0, 11, -1, 7003, 0) },
-            new SubArea[] { new(10, 8001, 1, 20, 100, false, 0, 2), new(11, 8002, 1, 30, SubArea.NoZaap, true, 2, 0) },
+            new SubArea[] { new(10, 8001, 1, 20, 100, false, 0, 2, 0, 1), new(11, 8002, 1, 30, SubArea.NoZaap, true, 2, 0, 1, 2) },
             new Area[] { new(1, 9001, 0) },
             new Waypoint[] { new(5, 100, 10, true) },
-            _harvestables);
+            _harvestables,
+            _monsters);
     }
 }

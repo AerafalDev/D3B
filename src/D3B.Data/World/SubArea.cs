@@ -2,8 +2,11 @@ using System.Runtime.InteropServices;
 
 namespace D3B.Data.World;
 
-/// <summary>A sub-area of the world, from the client's <c>SubAreasDataRoot</c>: what a bot needs to travel to it and harvest there.</summary>
-/// <remarks>Unmanaged and packed, as <see cref="WorldVertex"/>. Its resources are a slice of <see cref="WorldAtlas.Harvestables"/>.</remarks>
+/// <summary>A sub-area of the world, from the client's <c>SubAreasDataRoot</c>: what a bot needs to travel to it, harvest and hunt there.</summary>
+/// <remarks>
+/// Unmanaged and packed, as <see cref="WorldVertex"/>. Its resources and its monsters are slices of
+/// <see cref="WorldAtlas.Harvestables"/> and <see cref="WorldAtlas.Monsters"/>.
+/// </remarks>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly struct SubArea
 {
@@ -34,6 +37,12 @@ public readonly struct SubArea
     /// <summary>Gets how many resources it has, 0 for most sub-areas.</summary>
     public int HarvestableCount { get; }
 
+    /// <summary>Gets the index of its first monster in <see cref="WorldAtlas.Monsters"/>.</summary>
+    public int FirstMonster { get; }
+
+    /// <summary>Gets how many monsters live there, 0 for a sub-area without any, such as a town's.</summary>
+    public int MonsterCount { get; }
+
     /// <summary>Initializes a new instance of the <see cref="SubArea"/> struct.</summary>
     /// <param name="id">Its identifier.</param>
     /// <param name="nameId">The text naming it.</param>
@@ -43,11 +52,15 @@ public readonly struct SubArea
     /// <param name="basicAccountAllowed">Whether an account without a subscription may enter it.</param>
     /// <param name="firstHarvestable">The index of its first resource.</param>
     /// <param name="harvestableCount">How many resources it has.</param>
-    /// <exception cref="ArgumentOutOfRangeException">The index or the count of its resources is negative.</exception>
-    public SubArea(int id, int nameId, int areaId, int level, long associatedZaapMapId, bool basicAccountAllowed, int firstHarvestable, int harvestableCount)
+    /// <param name="firstMonster">The index of its first monster.</param>
+    /// <param name="monsterCount">How many monsters live there.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The index or the count of its resources or of its monsters is negative.</exception>
+    public SubArea(int id, int nameId, int areaId, int level, long associatedZaapMapId, bool basicAccountAllowed, int firstHarvestable, int harvestableCount, int firstMonster, int monsterCount)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(firstHarvestable);
         ArgumentOutOfRangeException.ThrowIfNegative(harvestableCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(firstMonster);
+        ArgumentOutOfRangeException.ThrowIfNegative(monsterCount);
 
         Id = id;
         NameId = nameId;
@@ -57,5 +70,7 @@ public readonly struct SubArea
         BasicAccountAllowed = basicAccountAllowed;
         FirstHarvestable = firstHarvestable;
         HarvestableCount = harvestableCount;
+        FirstMonster = firstMonster;
+        MonsterCount = monsterCount;
     }
 }

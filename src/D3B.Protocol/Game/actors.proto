@@ -1,5 +1,6 @@
 // Who stands on a map, in the roleplay or in a fight: the map's actors, and a fight's fighters, with where each stands and
-// what it is. Fighters measured on 3.7.12.12's captures of fights, the player attacking monsters (D178).
+// what it is. Fighters measured on 3.7.12.12's captures of fights, the player attacking monsters (D178); groups of
+// monsters on the 80 game connections captured, session 9g.
 syntax = "proto3";
 
 package d3b.game;
@@ -11,8 +12,9 @@ option csharp_namespace = "D3B.Protocol.Game";
 
 // Someone on the map: the character itself, another player, an NPC or a group of monsters; in a fight, a fighter.
 message Actor {
-  // The character's own id, as the character choice gave it, for the character itself; negative for an NPC. In a fight,
-  // the fighter's: a character's own id, or for a monster or a summon a small negative number, -1 first.
+  // The character's own id, as the character choice gave it, for the character itself; negative for an NPC or a group of
+  // monsters. In a fight, the fighter's: a character's own id, or for a monster or a summon a small negative number, -1
+  // first.
   int64 id = 1;
 
   ActorDisposition disposition = 2;
@@ -46,6 +48,7 @@ message RoleplayActor {
   oneof kind {
     NamedActor named = 3;
     NpcActor npc = 4;
+    MonsterGroupActor monster_group = 5;
   }
 }
 
@@ -62,6 +65,39 @@ message NpcActor {
 
   // The NPC's id in the client's tables, as the references read it: the one number every NPC captured sets.
   int32 npc_id = 7;
+}
+
+// A group of monsters on a roleplay map, which a player attacks by its actor id. Measured on the 80 game connections of
+// 3.7.12.12: 1,801 groups in 919 maps' information, 0 to 4 a map, and 147 shown later; each with a negative id and a cell,
+// and its monsters. Its two other fields set are left out: an int32, negative on every group, and an enum, the same value
+// on every group, the alignment as the references name it.
+message MonsterGroupActor {
+  option (d3b.readable.partial) = true;
+
+  MonsterGroup monsters = 6;
+}
+
+// A group's monsters: its main monster, then the others. Measured on the 97 fights the player's attacks started: the
+// fight's monsters were these, with the same ids, grades and levels, none more. The references' alternatives by the number of
+// players, set on 3 groups, are left out.
+message MonsterGroup {
+  option (d3b.readable.partial) = true;
+
+  // 0 to 7 in the captures.
+  repeated GroupMonster others = 3;
+
+  GroupMonster main = 4;
+}
+
+// A monster of a group: each of the 5,755 captured is a grade of a monster of the pack, at that grade's level.
+message GroupMonster {
+  option (d3b.readable.partial) = true;
+
+  int32 grade = 2;
+  int32 level = 4;
+
+  // The monster's id in the client's table, as a fighter's.
+  int32 monster_id = 5;
 }
 
 // A fighter: a character, a monster or a summon.

@@ -21,7 +21,7 @@ public sealed class ZoneScenesTests
             new(6, 30, 0, 12, 1, 0, 0),
         ];
 
-        return new WorldAtlas(positions, Array.Empty<SubArea>(), Array.Empty<Area>(), Array.Empty<Waypoint>(), Array.Empty<int>());
+        return new WorldAtlas(positions, Array.Empty<SubArea>(), Array.Empty<Area>(), Array.Empty<Waypoint>(), Array.Empty<int>(), Array.Empty<int>());
     }
 
     [Fact]

@@ -96,7 +96,9 @@
     { "readable": "d3b.game.SpellsEvent", "obfuscated": "hkh" },
     { "readable": "d3b.game.FightSpellsContextEvent", "obfuscated": "juf" },
     { "readable": "d3b.game.FightOptionToggleRequest", "obfuscated": "jxf" },
-    { "readable": "d3b.game.FightOptionUpdateEvent", "obfuscated": "jxm" }
+    { "readable": "d3b.game.FightOptionUpdateEvent", "obfuscated": "jxm" },
+    { "readable": "d3b.game.MapActorShownEvent", "obfuscated": "jns" },
+    { "readable": "d3b.game.MapActorRemovedEvent", "obfuscated": "kjz" }
   ],
   "enums": []
 }

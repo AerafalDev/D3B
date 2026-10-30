@@ -277,8 +277,8 @@ public sealed class SettingDefinition
     {
         ThrowIfFrozen();
 
-        if (Kind is not SettingKind.Resource || !IsList)
-            throw new InvalidOperationException($"The setting {Key} is no list of resources: only one leaves resources out.");
+        if (Kind is not (SettingKind.Resource or SettingKind.Spell or SettingKind.Monster) || !IsList)
+            throw new InvalidOperationException($"The setting {Key} is no list of resources, spells or monsters: only one leaves them out.");
 
         IsExcluding = true;
     }
@@ -473,7 +473,7 @@ public sealed class SettingDefinition
             (SettingKind.Text, null) => "",
             (SettingKind.Text, string) => value,
             (SettingKind.Choice, not null) when _enum!.IsInstanceOfType(value) => value,
-            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item, null or int) => value,
+            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Spell or SettingKind.Monster, null or int) => value,
             _ => throw new ArgumentException($"The setting {Key} does not hold {value ?? "nothing"}.", nameof(value)),
         };
     }
@@ -499,10 +499,10 @@ public sealed class SettingDefinition
             case SettingKind.Choice when ChoiceOf(node) is { } choice:
                 return (new(choice), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item when node is null:
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Spell or SettingKind.Monster when node is null:
                 return (new(null), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item when node is JsonValue id && id.TryGetValue<int>(out var game):
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Spell or SettingKind.Monster when node is JsonValue id && id.TryGetValue<int>(out var game):
                 return (new(game), true);
 
             default:

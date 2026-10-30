@@ -70,6 +70,12 @@ public sealed class GameTablesTests : IDisposable
         Assert.Equal(TestTables.Icons().Items.Pixels.ToArray(), tables.Icons.Items.Pixels.ToArray());
         Assert.Equal(TestTables.Icons().Jobs.Ids.ToArray(), tables.Icons.Jobs.Ids.ToArray());
         Assert.Equal(TestTables.Icons().Jobs.Pixels.ToArray(), tables.Icons.Jobs.Pixels.ToArray());
+        Assert.Equal(48, tables.Icons.Spells.Size);
+        Assert.Equal(TestTables.Icons().Spells.Ids.ToArray(), tables.Icons.Spells.Ids.ToArray());
+        Assert.Equal(TestTables.Icons().Spells.Pixels.ToArray(), tables.Icons.Spells.Pixels.ToArray());
+        Assert.Equal(64, tables.Icons.Monsters.Size);
+        Assert.Equal(TestTables.Icons().Monsters.Ids.ToArray(), tables.Icons.Monsters.Ids.ToArray());
+        Assert.Equal(TestTables.Icons().Monsters.Pixels.ToArray(), tables.Icons.Monsters.Pixels.ToArray());
         Assert.Equal(TestTables.Spells().Spells.ToArray(), tables.Spells.Spells.ToArray());
         Assert.Equal(TestTables.Spells().Levels.ToArray(), tables.Spells.Levels.ToArray());
         Assert.Equal(TestTables.Spells().Effects.ToArray(), tables.Spells.Effects.ToArray());

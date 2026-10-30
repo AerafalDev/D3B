@@ -1,5 +1,6 @@
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Journal;
 using D3B.Data.Maps;
 using D3B.Engine.World;
@@ -45,6 +46,9 @@ public sealed class BotContext
 
     /// <summary>Gets the character's life now, its regeneration since the server said it reckoned (D153); <see langword="null"/> while the server has not said it.</summary>
     public int? Life => _bot.LifeAt(Time.GetUtcNow());
+
+    /// <summary>Gets the character as the placement of its last fight showed it, if it fought since the bot was made (D236).</summary>
+    public Fighter? LastFighter => _bot.LastFighter;
 
     /// <summary>Gets how long behaviors wait now: the client's display time, the server's answers and the rest, which the user may raise (D151).</summary>
     public BotDelays Delays => _bot.Delays;

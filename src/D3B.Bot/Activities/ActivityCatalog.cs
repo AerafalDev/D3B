@@ -2,14 +2,20 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace D3B.Bot.Activities;
 
-/// <summary>The activities the host's modules registered, which the app starts on bots (D92).</summary>
+/// <summary>The activities the host's modules registered, which the app starts on bots (D92), and the fight's strategy, which characters play (D233).</summary>
 /// <remarks>Registered by the bots module, from every <see cref="ActivityDefinition"/> in the services, in the order they were registered.</remarks>
 public sealed class ActivityCatalog
 {
     private readonly Dictionary<string, ActivityDefinition> _byId = new(StringComparer.Ordinal);
 
-    /// <summary>Gets every activity, in the order the modules registered them.</summary>
+    /// <summary>Gets every kind of profile, activities and the strategy, in the order the modules registered them.</summary>
     public IReadOnlyList<ActivityDefinition> All { get; }
+
+    /// <summary>Gets the activities alone, which the app starts on bots.</summary>
+    public IReadOnlyList<ActivityDefinition> Activities { get; }
+
+    /// <summary>Gets the fight's strategy, if a module registered it.</summary>
+    public ActivityDefinition? Strategy { get; }
 
     /// <summary>Initializes a new instance of the <see cref="ActivityCatalog"/> class.</summary>
     /// <param name="definitions">The activities.</param>
@@ -19,6 +25,8 @@ public sealed class ActivityCatalog
         ArgumentNullException.ThrowIfNull(definitions);
 
         All = [.. definitions];
+        Activities = [.. All.Where(definition => definition.Kind is ProfileKind.Activity)];
+        Strategy = All.FirstOrDefault(definition => definition.Kind is ProfileKind.Strategy);
 
         foreach (var definition in All)
         {

@@ -23,9 +23,9 @@
                 Text="{Binding NameProblem}" />
         </StackPanel>
         <StackPanel Spacing="8">
-            <TextBlock Classes="Label" Text="{l:Tr Activity}" />
+            <TextBlock Classes="Label" Text="{l:Tr ProfileType}" />
             <ComboBox
-                AutomationProperties.Name="{l:Tr Activity}"
+                AutomationProperties.Name="{l:Tr ProfileType}"
                 HorizontalAlignment="Stretch"
                 IsEnabled="{Binding !IsCopy}"
                 ItemsSource="{Binding Activities}"
