@@ -5867,6 +5867,21 @@ D249.*
   Furia 3 times in 11 turns; every item's icon, 11,755 against 2,294, which the owner asked for and whose size is the
   owner's choice.
 
+## D251: A banker who opens no bank where he stands, refused there
+
+*2026-10-30, after release 0.3.0, what a friend of the owner met in game: banking in Sarakech, the bot entered the wrong
+building of the bank's map and talked to the wrong NPC, again and again, the owner's words; a blocking bug, to publish
+again. Builds D29, D79, D80.*
+
+- **Measured** on the friend's capture: Sarakech's bank, in front of map 173278211, has three insides at its coordinates.
+  In the port's, the NPC 3597 stands, whom the pack names a banker; his question there offers one reply, none of the
+  bank's. D3B took him for the bank's banker, left the dialog, talked to him again three times, and gave the banking up:
+  a map holding a banker's NPC counted as the bank's whatever his question offered.
+- **Made**: a banker's question offering none of the bank's replies refuses his map for the host's run
+  (`BankDirectory.Refuse`): no banker is found there any more, and its inside is no longer sought, so that the next
+  banking goes to the bank's nearest other inside.
+- **Not measured in game yet**: which of Sarakech's two other insides holds the bank.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

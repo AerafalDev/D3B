@@ -19,12 +19,18 @@ namespace D3B.Bot.Banks;
 /// A bot that enters an inside tells what it saw (<see cref="Seen"/>): one where no banker stands is no longer sought by any
 /// bot of the host, until it is seen holding one. Nothing is kept from one run of the host to the next.
 /// </para>
+/// <para>
+/// A banker's NPC may stand where he opens no bank: Sarakech's bank has three insides, and in its port's the banker's NPC
+/// asks a question none of whose replies opens the bank, measured (D251). Such a map is refused for the host's run
+/// (<see cref="Refuse"/>): no banker is found there, and its inside is sought no more, however its NPCs are seen.
+/// </para>
 /// </remarks>
 public sealed class BankDirectory
 {
     private readonly BankCatalog _catalog;
     private readonly FrozenSet<long> _insides;
     private readonly ConcurrentDictionary<long, bool> _bankers = new();
+    private readonly ConcurrentDictionary<long, bool> _refused = new();
 
     /// <summary>Gets the insides of every bank, whether a banker stands there or not.</summary>
     public IReadOnlySet<long> Insides => _insides;
@@ -61,7 +67,15 @@ public sealed class BankDirectory
     public void Seen(long mapId, bool banker)
     {
         if (_insides.Contains(mapId))
-            _bankers[mapId] = banker;
+            _bankers[mapId] = banker && !_refused.ContainsKey(mapId);
+    }
+
+    /// <summary>Remembers that a banker's question on a map offered none of the replies that open the bank: no banker is found there any more (D251).</summary>
+    /// <param name="mapId">The map the banker stands on.</param>
+    public void Refuse(long mapId)
+    {
+        _refused[mapId] = true;
+        Seen(mapId, banker: false);
     }
 
     /// <summary>Finds a banker among the NPCs of the character's map.</summary>
@@ -73,7 +87,9 @@ public sealed class BankDirectory
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        foreach (var candidate in state.Npcs.Values)
+        var refused = state.MapId is { } mapId && _refused.ContainsKey(mapId);
+
+        foreach (var candidate in refused ? [] : state.Npcs.Values)
         {
             if (_catalog.TryGetBanker(candidate.NpcId, out banker))
             {

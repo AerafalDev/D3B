@@ -203,7 +203,8 @@ fight's course.
 - **Banking** (D79, D80): `Banking`, in `D3B.Bot.Banks`, goes where a banker stands, the nearest bank's inside still
   sought, talks to him, gives the reply of his the question offers, puts the stacks asked for in by one request and the
   kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
-  (`WorldInsides`), the bankers and their replies, and the insides the server showed holding no banker. Walking, using,
+  (`WorldInsides`), the bankers and their replies, the insides the server showed holding no banker, and the maps where a
+  banker's question offered none of the bank's replies, refused for the run (D251). Walking, using,
   changing maps and travelling answer `Busy` during a dialog or an exchange, which the server refuses a walk during.
 - **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module, chooses each step
   from the state, a behavior's worth of work; its other hooks have defaults: when the character is full and how it is
