@@ -2,10 +2,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Network;
 using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Data.World;
+using D3B.Engine.Tactics;
 using D3B.Engine.World;
 using D3B.Network.Relay;
 using D3B.Protocol.Game;
@@ -32,13 +34,17 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     private readonly GameMaps _maps;
     private readonly Lazy<WorldPathfinder> _world;
     private readonly Lazy<BankDirectory> _banks;
+    private readonly Lazy<FightTactics> _tactics;
+    private readonly GameTables _tables;
     private readonly TimeProvider _time;
     private readonly ILoggerFactory _logs;
     private readonly ILogger _log;
     private readonly Lock _lock = new();
     private readonly ConcurrentDictionary<CharacterKey, BotActor> _bots = new();
     private readonly ConcurrentDictionary<GameSession, Binding> _sessions = new();
+    private readonly ConcurrentDictionary<CharacterKey, FightPilot> _pilots = new();
     private volatile BotDelays _delays = BotDelays.Measured;
+    private volatile bool _fightsAlone;
 
     /// <summary>Gets every bot, those whose game connection closed included.</summary>
     public IReadOnlyCollection<BotActor> All => [.. _bots.Values];
@@ -48,6 +54,13 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     {
         get => _delays;
         set => _delays = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    /// <summary>Gets or sets whether the AI plays every fight of the bots made from now on, as their switch does (D198): the host's <c>Fights:Alone</c>.</summary>
+    public bool FightsAlone
+    {
+        get => _fightsAlone;
+        set => _fightsAlone = value;
     }
 
     /// <summary>Raised when a character's first game connection makes its bot, from the relay's read loop: a handler must be quick.</summary>
@@ -72,6 +85,10 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
 
         // One per host, so that what a bot learns of the insides serves every other (D79).
         _banks = new Lazy<BankDirectory>(() => new BankDirectory(tables.Banks, world.Graph, world.Atlas), LazyThreadSafetyMode.ExecutionAndPublication);
+
+        // One per host, built at the first fight: its catalogs are the pack's, shared by every bot's AI (D201).
+        _tactics = new Lazy<FightTactics>(() => new FightTactics(tables), LazyThreadSafetyMode.ExecutionAndPublication);
+        _tables = tables;
         _time = time;
         _logs = logs;
         _log = logs.CreateLogger<Bots>();
@@ -92,6 +109,9 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     {
         foreach (var bot in _bots.Values)
             await bot.DisposeAsync().ConfigureAwait(false);
+
+        foreach (var pilot in _pilots.Values)
+            await pilot.Run.ConfigureAwait(false);
     }
 
     void IGameObserver.OnSessionStarted(GameSession session)
@@ -134,8 +154,9 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         {
             if (!_bots.TryGetValue(key, out bot))
             {
-                bot = new BotActor(state, _maps, _world, _banks, () => _delays, _time, _logs.CreateLogger<BotActor>());
+                bot = new BotActor(state, _maps, _world, _banks, () => _delays, _time, _logs.CreateLogger<BotActor>()) { FightsAlone = _fightsAlone };
                 _bots[key] = bot;
+                _pilots[key] = new FightPilot(bot, _tactics, _tables);
                 made = true;
             }
         }

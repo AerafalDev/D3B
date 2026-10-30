@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Journal;
 using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
@@ -214,12 +215,46 @@ public sealed class ActivityRun
             BotLog.ActivityInterrupted(_bot.Log, _bot.Key.CharacterId, Activity.Name, cut, response);
             _bot.Journal.Add(new ActivityInterruptedEntry(_bot.Time.GetUtcNow(), Activity.Name, cut, response, note));
 
+            // A fight the AI plays for the activity is answered once over: paused or stopped before, the AI would stop too.
+            if (cut is Interruption.Fight && Activity.FightsItsFights)
+            {
+                try
+                {
+                    response = Activity.OnFightOver(await FoughtAsync().ConfigureAwait(false), response);
+                }
+                catch (OperationCanceledException) when (_stop.IsCancellationRequested)
+                {
+                    return ActivityOutcome.Stopped;
+                }
+                catch (ObjectDisposedException exception) when (exception.ObjectName == typeof(BotActor).FullName)
+                {
+                    return ActivityOutcome.Stopped;
+                }
+                catch (Exception exception)
+                {
+                    BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
+                    Volatile.Write(ref _failure, exception);
+
+                    return ActivityOutcome.Failed;
+                }
+            }
+
             if (response is InterruptionResponse.Stop)
                 return ActivityOutcome.Stopped;
 
             if (response is InterruptionResponse.Pause)
                 _bot.Pause();
         }
+    }
+
+    private async Task<FightEnd?> FoughtAsync()
+    {
+        // The fight that cut the step, counted as its context came: it may be over already, a short one, and its end is kept.
+        var fight = _bot.FightsBegun;
+
+        await _bot.WaitUntilAsync(bot => bot.State.Fight is not { Phase: not FightPhase.Ended } || !bot.IsConnected || bot.FightsBegun != fight, _stop.Token).ConfigureAwait(false);
+
+        return _bot.LastEndedFight == fight ? _bot.LastFightEnd : null;
     }
 
     private async Task<bool> RecoverAsync(BotContext context, Interruption reason, CancellationToken cancellationToken)

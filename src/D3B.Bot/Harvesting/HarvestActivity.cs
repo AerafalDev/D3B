@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Interactives;
 using D3B.Bot.Inventory;
 using D3B.Bot.Localization;
@@ -13,6 +14,7 @@ using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.World;
 using D3B.Engine.Maps;
+using D3B.Protocol.Game;
 
 namespace D3B.Bot.Harvesting;
 
@@ -34,6 +36,13 @@ namespace D3B.Bot.Harvesting;
 /// </remarks>
 public sealed class HarvestActivity : BotActivity
 {
+    private const int MostLostInARow = 3;
+
+    // Tenths of a second a life point takes, when the server did not say: as measured in every capture (D153).
+    private const int RegainPoll = 5;
+
+    private static readonly TimeSpan _regainStep = TimeSpan.FromSeconds(10);
+
     private const int MostFailedJourneys = 3;
     private const int MostBankings = 3;
 
@@ -78,6 +87,8 @@ public sealed class HarvestActivity : BotActivity
     private string? _chestWarning;
     private FightKind? _fight;
     private int? _fightItem;
+    private int _lostInARow;
+    private bool _regaining;
 
     /// <summary>Gets the item types offered as food: breads, measured to heal, and drinks, fish, meat, sweets and potions (D148, D153).</summary>
     public static IReadOnlyList<int> FoodTypes { get; } = [12, 33, 37, 42, 49, 69, 79, 339];
@@ -93,6 +104,10 @@ public sealed class HarvestActivity : BotActivity
 
     /// <inheritdoc/>
     public override int TeleportChanges => _settings.ZaapSaving;
+
+    /// <inheritdoc/>
+    /// <remarks>The AI plays a protector's fight and an aggression instead of the player, then the settings answer it (D144, D198).</remarks>
+    public override bool FightsItsFights => true;
 
     /// <summary>Initializes a new instance of the <see cref="HarvestActivity"/> class.</summary>
     /// <param name="settings">What to harvest, where, and when to bank.</param>
@@ -279,6 +294,48 @@ public sealed class HarvestActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// A fight lost, the character comes back to its save point with little life (D178): the activity answers it as its
+    /// settings say, resumed once it regained its share of life, the owner's choice; three lost in a row stop it, so that it
+    /// does not lose again and again (D198).
+    /// </remarks>
+    public override InterruptionResponse OnFightOver(FightEnd? ending, InterruptionResponse response)
+    {
+        if (ending is not { Outcome: FightOutcome.Lost })
+        {
+            _lostInARow = 0;
+
+            return response;
+        }
+
+        _lostInARow++;
+        _regaining = true;
+
+        if (_lostInARow >= MostLostInARow)
+            return InterruptionResponse.Stop;
+
+        return _settings.AfterLostFight switch
+        {
+            HarvestAfterFight.Pause => InterruptionResponse.Pause,
+            HarvestAfterFight.Stop => InterruptionResponse.Stop,
+            _ => InterruptionResponse.Resume,
+        };
+    }
+
+    /// <inheritdoc/>
+    public override async Task RecoverAsync(BotContext context, Interruption reason, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        await Recovery.SettleAsync(context, cancellationToken).ConfigureAwait(false);
+
+        if (_regaining)
+            await RegainAsync(context, cancellationToken).ConfigureAwait(false);
+
+        _regaining = false;
+    }
+
+    /// <inheritdoc/>
     public override GameText? Describe(Interruption reason)
     {
         return (reason, _fight, _fightItem) switch
@@ -288,6 +345,26 @@ public sealed class HarvestActivity : BotActivity
             (Interruption.Fight, FightKind.Aggression, _) => GameText.Of(HarvestTexts.Text("NoteAggression")),
             _ => null,
         };
+    }
+
+    private async Task RegainAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        // Food the profile carries heals at the next step (D148); else the life regenerates, a point each interval (D153).
+        var state = context.State;
+
+        if (_settings.Heal && _settings.Food.Any(item => StackOf(state, stack => stack.ItemId == item) is not null))
+            return;
+
+        for (var life = context.Life; life is { } now && state.MaxLife is { } most && now * 100L < (long)_settings.HealBelow * most; life = context.Life)
+        {
+            Publish(state, GameText.Of(HarvestTexts.Text("DoingRegain"), GameTextValue.Number(now), GameTextValue.Number(most)));
+
+            var interval = TimeSpan.FromMilliseconds(100 * (state.LifeRegenInterval ?? RegainPoll));
+            var missing = (((long)_settings.HealBelow * most) + 99) / 100 - now;
+
+            await Task.Delay(TimeSpan.FromTicks(Math.Min(interval.Ticks * Math.Max(1, missing), _regainStep.Ticks)), context.Time, cancellationToken).ConfigureAwait(false);
+            state = context.State;
+        }
     }
 
     private ActivityException StillFull(CharacterState state)

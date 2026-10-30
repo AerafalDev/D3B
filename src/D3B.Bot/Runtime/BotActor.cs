@@ -2,6 +2,7 @@ using System.Threading.Channels;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Journal;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
@@ -61,7 +62,11 @@ public sealed class BotActor : IAsyncDisposable
     private volatile bool _connected;
     private volatile bool _paused;
     private volatile bool _acting;
+    private volatile bool _fightsAlone;
     private volatile ActivityRun? _activity;
+    private volatile FightEnd? _lastFightEnd;
+    private int _fightsBegun;
+    private int _lastEndedFight;
     private long _placedAt;
     private long _useEndedAt = NeverEnded;
     private long _regeneratingSince = NeverEnded;
@@ -80,6 +85,26 @@ public sealed class BotActor : IAsyncDisposable
 
     /// <summary>Gets whether a behavior runs.</summary>
     public bool IsActing => _acting;
+
+    /// <summary>Gets or sets whether the AI plays every fight of the character, the switch on its card, off at first (D198).</summary>
+    /// <remarks>An activity that fights its own fights, such as harvesting, has them played either way (<see cref="BotActivity.FightsItsFights"/>).</remarks>
+    public bool FightsAlone
+    {
+        get => _fightsAlone;
+        set => _fightsAlone = value;
+    }
+
+    /// <summary>Gets how the character's last fight ended, once the server said, if it ever did.</summary>
+    public FightEnd? LastFightEnd => _lastFightEnd;
+
+    /// <summary>Gets how many fights began since the bot was made: the last one's number.</summary>
+    public int FightsBegun => Volatile.Read(ref _fightsBegun);
+
+    /// <summary>Gets the number of the fight <see cref="LastFightEnd"/> ended, as <see cref="FightsBegun"/> counted it.</summary>
+    public int LastEndedFight => Volatile.Read(ref _lastEndedFight);
+
+    /// <summary>Gets whether the AI plays the character's fights now: its switch is on, or its activity fights its own (D198).</summary>
+    public bool Fights => _fightsAlone || _activity is { IsOver: false, Activity.FightsItsFights: true };
 
     /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
     public ActivityRun? Activity => _activity;
@@ -132,7 +157,7 @@ public sealed class BotActor : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(behavior);
 
-        return RunBehaviorAsync(behavior, waits: false, cancellationToken);
+        return RunBehaviorAsync(behavior, Readiness.Now, cancellationToken);
     }
 
     /// <summary>Lets the bot act again after the player took the character over.</summary>
@@ -228,7 +253,14 @@ public sealed class BotActor : IAsyncDisposable
     /// <remarks>An activity's steps go this way, so that one waits, without a delay, for the client to come back, the player to resume the bot, or a fight to end.</remarks>
     internal Task<T> RunWhenReadyAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, CancellationToken cancellationToken)
     {
-        return RunBehaviorAsync(behavior, waits: true, cancellationToken);
+        return RunBehaviorAsync(behavior, Readiness.OutOfFight, cancellationToken);
+    }
+
+    /// <summary>Runs a behavior once the bot can act in a fight: a game connection plays the character, in a fight not over, the player has not taken it over, and no behavior runs.</summary>
+    /// <remarks>The AI's fight goes this way (D202): a step a fight cut ends first, and the player's hand in the fight interrupts it.</remarks>
+    internal Task<T> RunInFightAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, CancellationToken cancellationToken)
+    {
+        return RunBehaviorAsync(behavior, Readiness.InFight, cancellationToken);
     }
 
     internal void Attach(GameSession session, CharacterState state)
@@ -278,14 +310,14 @@ public sealed class BotActor : IAsyncDisposable
         return expectation;
     }
 
-    private async Task<T> RunBehaviorAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, bool waits, CancellationToken cancellationToken)
+    private async Task<T> RunBehaviorAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, Readiness readiness, CancellationToken cancellationToken)
     {
         var started = new TaskCompletionSource<RunningBehavior>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // A start that waits may be cancelled before the bot can act; the loop then never starts it (OnStarting).
-        using var registration = waits ? cancellationToken.Register(() => started.TrySetCanceled(cancellationToken)) : default;
+        using var registration = readiness is not Readiness.Now ? cancellationToken.Register(() => started.TrySetCanceled(cancellationToken)) : default;
 
-        var posted = _inbox.Writer.TryWrite(new Starting(started, waits, cancellationToken));
+        var posted = _inbox.Writer.TryWrite(new Starting(started, readiness, cancellationToken));
 
         ObjectDisposedException.ThrowIf(!posted, this);
 
@@ -389,7 +421,11 @@ public sealed class BotActor : IAsyncDisposable
             Volatile.Write(ref _useEndedAt, Time.GetUtcNow().UtcTicks);
 
         if (before.Fight?.End is null && state.Fight?.End is { } end)
+        {
+            _lastFightEnd = end;
+            Volatile.Write(ref _lastEndedFight, Volatile.Read(ref _fightsBegun));
             Journal.Add(new FightEndEntry(Time.GetUtcNow(), end.Outcome, end.Experience, end.Kamas, end.Items.Values.Sum()));
+        }
 
         if (side is RelayDirection.FromServer && message is LifeRegenStartEvent)
             Volatile.Write(ref _regeneratingSince, Time.GetUtcNow().UtcTicks);
@@ -411,6 +447,7 @@ public sealed class BotActor : IAsyncDisposable
 
         if (side is RelayDirection.FromServer && message is ContextCreationEvent { Context: ContextCreationEvent.Types.GameContext.Fight })
         {
+            Interlocked.Increment(ref _fightsBegun);
             Write(BotEvent.FightBegan);
 
             // The client walks the character in a fight with the requests a behavior sends out of one: none may go on (D88).
@@ -439,9 +476,9 @@ public sealed class BotActor : IAsyncDisposable
     {
         var started = starting.Started;
 
-        if (starting.Waits)
+        if (starting.Readiness is not Readiness.Now)
         {
-            if (CanAct())
+            if (CanAct(starting.Readiness))
                 Start(starting);
             else if (!started.Task.IsCompleted)
                 _parked.Add(starting);
@@ -480,9 +517,14 @@ public sealed class BotActor : IAsyncDisposable
         _acting = true;
     }
 
-    private bool CanAct()
+    private bool CanAct(Readiness readiness)
     {
-        return _session is not null && !_paused && _behavior is null && _state is { MapId: not null, Cell: not null, IsFighting: false };
+        if (_session is null || _paused || _behavior is not null)
+            return false;
+
+        return readiness is Readiness.InFight
+            ? _state.Fight is { Phase: not FightPhase.Ended }
+            : _state is { MapId: not null, Cell: not null, IsFighting: false };
     }
 
     private void Wake()
@@ -494,13 +536,15 @@ public sealed class BotActor : IAsyncDisposable
         _waiters.RemoveAll(waiter => waiter.IsDone);
         _parked.RemoveAll(starting => starting.Started.Task.IsCompleted);
 
-        // The first parked start takes the bot once it can act; the others wait for the behavior it starts to finish.
-        if (_parked.Count > 0 && CanAct())
-        {
-            var first = _parked[0];
+        // The first parked start that can take the bot does; the others wait for the behavior it starts to finish.
+        var first = _parked.FindIndex(starting => CanAct(starting.Readiness));
 
-            _parked.RemoveAt(0);
-            Start(first);
+        if (first >= 0)
+        {
+            var starting = _parked[first];
+
+            _parked.RemoveAt(first);
+            Start(starting);
         }
     }
 
@@ -604,7 +648,7 @@ public sealed class BotActor : IAsyncDisposable
 
     private sealed record Expecting(GameExpectation Expectation) : Input;
 
-    private sealed record Starting(TaskCompletionSource<RunningBehavior> Started, bool Waits, CancellationToken CancellationToken) : Input;
+    private sealed record Starting(TaskCompletionSource<RunningBehavior> Started, Readiness Readiness, CancellationToken CancellationToken) : Input;
 
     private sealed record Waiting(Waiter Waiter) : Input;
 
@@ -623,6 +667,19 @@ public sealed class BotActor : IAsyncDisposable
     private sealed record Settling(TaskCompletionSource Settled) : Input;
 
     private sealed record Processing(TaskCompletionSource Processed) : Input;
+
+    /// <summary>When a behavior may start.</summary>
+    private enum Readiness
+    {
+        /// <summary>Now, or never: it fails when the bot cannot act.</summary>
+        Now,
+
+        /// <summary>Once the bot can act on a map, out of a fight.</summary>
+        OutOfFight,
+
+        /// <summary>Once the bot can act in a fight not over.</summary>
+        InFight,
+    }
 
     /// <summary>A condition someone waits for, tried by the bot's loop.</summary>
     private sealed class Waiter

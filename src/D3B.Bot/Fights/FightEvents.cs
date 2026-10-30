@@ -59,7 +59,7 @@ public static class FightEvents
             FightTurnListEvent order => Ordered(fight, order),
             FightNewRoundEvent round => fight with { Round = round.Round },
             FightTurnEvent turn => Turned(fight, turn),
-            FightTurnStartPlayingEvent => fight with { IsOwnTurn = fight.PlayingId == self },
+            FightTurnStartPlayingEvent => fight with { Phase = FightPhase.Fighting, IsOwnTurn = fight.PlayingId == self },
             FightTurnEndEvent ended when ended.FighterId == fight.PlayingId => fight with { PlayingId = null, IsOwnTurn = false },
             FightTurnEndEvent => fight,
             FightRefreshCharacterStatsEvent { Stats: { } stats } refreshed => Changed(fight, refreshed.FighterId, fighter => Spent(fighter, stats)),
@@ -76,6 +76,12 @@ public static class FightEvents
             SequenceStartEvent started => fight with { Sequences = fight.Sequences.Add(new FightSequence(started.Type, started.AuthorId, HasCast: false)) },
             SequenceEndEvent => fight.Sequences.IsEmpty ? fight : fight with { Sequences = fight.Sequences.RemoveAt(fight.Sequences.Length - 1) },
             FightEndEvent end => fight with { Phase = FightPhase.Ended, PlayingId = null, IsOwnTurn = false, End = Ended(end, self) },
+            FightSpellsContextEvent context when context.FighterId == self && context.Spells.Count > 0 => fight with
+            {
+                Spells = context.Spells.GroupBy(spell => spell.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Grade),
+            },
+            FightSpellsContextEvent => fight,
+            FightOptionUpdateEvent update => fight with { Options = fight.Options.SetItem(update.Option, update.Enabled) },
             FightStartingEvent or FightJoinEvent => fight,
             _ => null,
         };
@@ -138,9 +144,10 @@ public static class FightEvents
 
     private static FightState Turned(FightState fight, FightTurnEvent turn)
     {
+        // Measured live (D203): a client joining a fight under way, its connection come back, gets no fight's start: a turn says it.
         var round = turn.Round > 0 ? turn.Round : fight.Round;
         var place = fight.TurnOrder.IndexOf(turn.FighterId);
-        var turned = fight with { PlayingId = turn.FighterId, Round = round, IsOwnTurn = false };
+        var turned = fight with { Phase = FightPhase.Fighting, PlayingId = turn.FighterId, Round = round, IsOwnTurn = false };
 
         if (place < 0)
             return turned;

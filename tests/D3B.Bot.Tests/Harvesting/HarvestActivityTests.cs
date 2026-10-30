@@ -1,6 +1,8 @@
+using System.Collections.Immutable;
 using System.Globalization;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Journal;
@@ -290,6 +292,14 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         var fighting = await ReportedAsync(activity, report => Say(report.Doing) == "A protector attacked: waiting for the fight's end");
 
         Assert.Contains("1 fight, protectors 1", fighting.Counts.Select(count => Say(count.Text)));
+
+        // The AI plays the fight first: the profile's answer comes once it is over (D198).
+        await bot.ProcessedAsync();
+        Assert.False(bot.IsPaused);
+
+        connection.Server(Ended(FightOutcome.Won));
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
         await WaitForAsync(() => bot.IsPaused);
 
         var interrupted = bot.Journal.All().OfType<ActivityInterruptedEntry>().Single();
@@ -314,10 +324,47 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         await connection.SentAsync(1);
         connection.Server(new ContextDestroyEvent());
         connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        await bot.ProcessedAsync();
+
+        Assert.False(run.IsOver);
+
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
 
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
         Assert.Equal("an aggression", Say(bot.Journal.All().OfType<ActivityInterruptedEntry>().Single().Note!));
         Assert.False(bot.IsPaused);
+    }
+
+    [Fact]
+    public async Task ALostFightIsAnsweredAsTheProfileSaysAndThreeInARowEndTheActivity()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], AfterLostFight = HarvestAfterFight.Pause });
+        var run = bot.StartActivity(activity);
+
+        await connection.SentAsync(1);
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(Ended(FightOutcome.Lost));
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        await WaitForAsync(() => bot.IsPaused);
+
+        Assert.Equal(InterruptionResponse.Resume, bot.Journal.All().OfType<ActivityInterruptedEntry>().Single().Response);
+        Assert.Equal(InterruptionResponse.Pause, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
+        Assert.Equal(InterruptionResponse.Stop, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
+        Assert.Equal(InterruptionResponse.Resume, activity.OnFightOver(new FightEnd(FightOutcome.Won, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
+        Assert.False(run.IsOver);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    private static FightEndEvent Ended(FightOutcome outcome)
+    {
+        return new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = TestPlay.CharacterId }, Outcome = outcome } } };
     }
 
     [Fact]

@@ -90,7 +90,11 @@
     { "readable": "d3b.game.GameActionAcknowledgementRequest", "obfuscated": "jst" },
     { "readable": "d3b.game.GameActionFightEvent", "obfuscated": "jsq" },
     { "readable": "d3b.game.FightEffectsEvent", "obfuscated": "juh" },
-    { "readable": "d3b.game.RefreshCooldownEvent", "obfuscated": "jti" }
+    { "readable": "d3b.game.RefreshCooldownEvent", "obfuscated": "jti" },
+    { "readable": "d3b.game.SpellsEvent", "obfuscated": "hkh" },
+    { "readable": "d3b.game.FightSpellsContextEvent", "obfuscated": "juf" },
+    { "readable": "d3b.game.FightOptionToggleRequest", "obfuscated": "jxf" },
+    { "readable": "d3b.game.FightOptionUpdateEvent", "obfuscated": "jxm" }
   ],
   "enums": []
 }

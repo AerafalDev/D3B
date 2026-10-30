@@ -56,6 +56,13 @@ public sealed record FightState
     /// <summary>Gets the place in the turns' order of the fighter whose turn it is, or -1 between turns.</summary>
     public int PlayingTurn => PlayingId is { } playing ? TurnOrder.IndexOf(playing) : -1;
 
+    /// <summary>Gets the spells the client plays the character with in this fight, each with its grade, by spell, as the server's context listed them (D203).</summary>
+    /// <remarks>Measured: in the 55 fights whose context listed the character's spells, its 300 casts were of them, at their grade; a transformed character's are its form's.</remarks>
+    public ImmutableSortedDictionary<int, int> Spells { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
+
+    /// <summary>Gets the options of the character's team's fight the server said are set, or not, by option (D203).</summary>
+    public ImmutableSortedDictionary<FightOption, bool> Options { get; init; } = ImmutableSortedDictionary<FightOption, bool>.Empty;
+
     /// <summary>Gets how the fight ended for the character, once the server sent the results.</summary>
     public FightEnd? End { get; init; }
 }

@@ -28,6 +28,7 @@ public sealed class BotDelaysTests
         Assert.Equal(TimeSpan.FromSeconds(2), measured.UseEnd);
         Assert.Equal(TimeSpan.FromSeconds(1), measured.BankFollow);
         Assert.Equal(TimeSpan.FromSeconds(30), measured.Recovery);
+        Assert.Equal(TimeSpan.FromMilliseconds(900), measured.FightAction);
         Assert.Equal(TimeSpan.FromSeconds(3), BotDelays.Most.Display);
         Assert.Equal(TimeSpan.FromSeconds(3.5), measured.Confirmation(5));
         Assert.Equal(measured, BotDelays.Read(Configuration()));
@@ -37,10 +38,11 @@ public sealed class BotDelaysTests
     [Fact]
     public void DelaysAreReadInSecondsAndReadBackFromTheirConfiguration()
     {
-        var delays = BotDelays.Read(Configuration((BotDelays.DisplayKey, "1.5"), (BotDelays.RecoveryKey, "60"), (BotDelays.AnswerKey, "")));
+        var delays = BotDelays.Read(Configuration((BotDelays.DisplayKey, "1.5"), (BotDelays.RecoveryKey, "60"), (BotDelays.AnswerKey, ""), (BotDelays.FightActionKey, "2")));
         var configuration = delays.ToConfiguration();
 
-        Assert.Equal(BotDelays.Measured with { Display = TimeSpan.FromSeconds(1.5), Recovery = TimeSpan.FromSeconds(60) }, delays);
+        Assert.Equal(BotDelays.Measured with { Display = TimeSpan.FromSeconds(1.5), Recovery = TimeSpan.FromSeconds(60), FightAction = TimeSpan.FromSeconds(2) }, delays);
+        Assert.Equal("2", configuration[BotDelays.FightActionKey]);
         Assert.Equal("1.5", configuration[BotDelays.DisplayKey]);
         Assert.Equal("60", configuration[BotDelays.RecoveryKey]);
         Assert.Null(configuration[BotDelays.AnswerKey]);
@@ -54,6 +56,7 @@ public sealed class BotDelaysTests
     [InlineData(BotDelays.AnswerKey, "00:00:05")]
     [InlineData(BotDelays.RecoveryKey, "NaN")]
     [InlineData(BotDelays.WalkStepKey, "1e400")]
+    [InlineData(BotDelays.FightActionKey, "0.5")]
     public void ADelayBelowItsMeasuredValueOrAboveItsMostIsRefused(string key, string value)
     {
         var exception = Assert.Throws<InvalidOperationException>(() => BotDelays.Read(Configuration((key, value))));

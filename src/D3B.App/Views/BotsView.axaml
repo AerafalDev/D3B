@@ -63,6 +63,25 @@
                                                 </StackPanel>
                                             </Button>
                                         </Grid>
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <c:Icon Data="{StaticResource IconSwords}" VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Classes="Label"
+                                                Grid.Column="1"
+                                                Margin="8,0,12,0"
+                                                Text="{l:Tr FightsAlone}"
+                                                TextTrimming="CharacterEllipsis"
+                                                ToolTip.Tip="{l:Tr FightsAloneHint}"
+                                                VerticalAlignment="Center" />
+                                            <ToggleSwitch
+                                                AutomationProperties.Name="{l:Tr FightsAlone}"
+                                                Grid.Column="2"
+                                                IsChecked="{Binding FightsAlone}"
+                                                OffContent=""
+                                                OnContent=""
+                                                ToolTip.Tip="{l:Tr FightsAloneHint}"
+                                                VerticalAlignment="Center" />
+                                        </Grid>
                                         <StackPanel IsVisible="{Binding HasRun}" Spacing="8">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
                                                 <TextBlock

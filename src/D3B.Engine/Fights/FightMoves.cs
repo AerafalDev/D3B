@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using D3B.Data.Maps;
 using D3B.Data.Monsters;
 using D3B.Data.Spells;
@@ -98,14 +99,48 @@ public sealed class FightMoves
     /// <returns>Each cell it reaches, its own first, with the points left by the path that keeps the most MP, then AP.</returns>
     public IReadOnlyDictionary<int, (int MovementPoints, int ActionPoints)> Reachable(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker)
     {
+        var reached = new Dictionary<int, (int MovementPoints, int ActionPoints)>();
+
+        Explore(map, fighters, walker, reached, previous: null);
+
+        return reached;
+    }
+
+    /// <summary>Gets the path a fighter walks to a cell, the one <see cref="Reachable"/> keeps.</summary>
+    /// <param name="map">The fight's map.</param>
+    /// <param name="fighters">Every fighter of the fight, the walker among them.</param>
+    /// <param name="walker">The fighter walking, on a cell.</param>
+    /// <param name="cell">The cell it walks to.</param>
+    /// <returns>Every cell of the path, the walker's first and the cell last; empty when it does not reach the cell.</returns>
+    /// <remarks>A walk in a fight names every cell it steps on, one MP each (client.md), so that the bot sends this path's turning points.</remarks>
+    public ImmutableArray<int> Path(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker, int cell)
+    {
+        var reached = new Dictionary<int, (int MovementPoints, int ActionPoints)>();
+        var previous = new Dictionary<int, int>();
+
+        Explore(map, fighters, walker, reached, previous);
+
+        if (!reached.ContainsKey(cell))
+            return [];
+
+        var path = new List<int> { cell };
+
+        for (var step = cell; previous.TryGetValue(step, out var before); step = before)
+            path.Add(before);
+
+        path.Reverse();
+
+        return [.. path];
+    }
+
+    private void Explore(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker, Dictionary<int, (int MovementPoints, int ActionPoints)> reached, Dictionary<int, int>? previous)
+    {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(fighters);
         ArgumentNullException.ThrowIfNull(walker);
 
-        var reached = new Dictionary<int, (int MovementPoints, int ActionPoints)>();
-
         if (walker.Cell is Combatant.NoCell)
-            return reached;
+            return;
 
         var blocked = default(CellSet);
 
@@ -149,11 +184,11 @@ public sealed class FightMoves
                     continue;
 
                 reached[next] = (leftMp, leftAp);
+                previous?.Remove(next);
+                previous?.Add(next, cell);
                 queue.Enqueue(next, (-leftMp, -leftAp));
             }
         }
-
-        return reached;
     }
 
     private bool Has(int state, SpellStateProperties property)

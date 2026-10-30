@@ -1,4 +1,5 @@
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 
@@ -37,6 +38,10 @@ public abstract class BotActivity
     /// <remarks>1 by default: a zaap as soon as it saves a change, as before.</remarks>
     public virtual int TeleportChanges => 1;
 
+    /// <summary>Gets whether the AI plays the fights that cut the activity's steps, then the activity answers them once over (D198, D202).</summary>
+    /// <remarks>None by default: the player plays them, as before step 9, unless the bot's switch has the AI play every fight.</remarks>
+    public virtual bool FightsItsFights => false;
+
     /// <summary>Runs the next step, chosen from the character's state now.</summary>
     /// <param name="context">The step's behavior context.</param>
     /// <param name="cancellationToken">The step's token: an interruption or the activity's stop cancels it.</param>
@@ -73,6 +78,16 @@ public abstract class BotActivity
     public virtual InterruptionResponse OnInterrupted(Interruption reason)
     {
         return InterruptionResponse.Resume;
+    }
+
+    /// <summary>Tells what a fight the AI played for the activity leads to, once over (D198, D202).</summary>
+    /// <param name="ending">How the fight ended for the character, or null when it ended unsaid, such as the connection closing.</param>
+    /// <param name="response">What <see cref="OnInterrupted"/> answered as the fight cut the step.</param>
+    /// <returns>That answer, by default.</returns>
+    /// <remarks>Asked only of an activity that fights its own fights (<see cref="FightsItsFights"/>): the run waits for the fight's end before it pauses or stops.</remarks>
+    public virtual InterruptionResponse OnFightOver(FightEnd? ending, InterruptionResponse response)
+    {
+        return response;
     }
 
     /// <summary>Says what an interruption was, for the bot's journal, once <see cref="OnInterrupted"/> answered it, such as a fight's kind (D144).</summary>

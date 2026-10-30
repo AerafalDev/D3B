@@ -124,6 +124,13 @@ public sealed record CharacterState
     /// <summary>Gets the character's professions, by id.</summary>
     public ImmutableSortedDictionary<int, CharacterJob> Jobs { get; init; } = ImmutableSortedDictionary<int, CharacterJob>.Empty;
 
+    /// <summary>Gets the spells the server listed as the character entered the game, each with its grade, by spell (D199).</summary>
+    /// <remarks>The server lists them once: those a level gained since unlocks, and the grades it raises, come from the pack (<see cref="Fights.CharacterSpells"/>).</remarks>
+    public ImmutableSortedDictionary<int, int> Spells { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
+
+    /// <summary>Gets the only spells the character casts while an alteration transforms it, such as into a bouftou, by spell; empty untransformed (D203).</summary>
+    public ImmutableSortedDictionary<int, int> TransformedSpells { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
+
     /// <summary>Gets when the account's subscription ends, as the connection phase's identification said, or <see langword="null"/> when it gave no date (D72).</summary>
     public DateTimeOffset? SubscriptionEnd { get; init; }
 

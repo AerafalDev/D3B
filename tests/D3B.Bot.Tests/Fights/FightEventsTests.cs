@@ -498,6 +498,29 @@ public sealed class FightEventsTests
     }
 
     [Fact]
+    public void TheFightsContextGivesTheSpellsTheCharacterCastsAndNoneOfASummons()
+    {
+        var listed = Apply(
+            Playing(),
+            new FightSpellsContextEvent { FighterId = Self, Spells = { new SpellItem { SpellId = 8_703, Grade = 1 }, new SpellItem { SpellId = 202, Grade = 2 } } },
+            new FightSpellsContextEvent { FighterId = Monster, Spells = { new SpellItem { SpellId = 5, Grade = 1 } } });
+
+        Assert.Equal([KeyValuePair.Create(202, 2), KeyValuePair.Create(8_703, 1)], listed.Fight!.Spells.ToArray());
+    }
+
+    [Fact]
+    public void TheTeamsOptionsAreKeptAsTheServerSaysThem()
+    {
+        var closed = Apply(
+            Placed(),
+            new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = false },
+            new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = false },
+            new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
+
+        Assert.Equal([KeyValuePair.Create(FightOption.Closed, true), KeyValuePair.Create(FightOption.NoSpectators, false)], closed.Fight!.Options.ToArray());
+    }
+
+    [Fact]
     public void TheCooldownsTheServerGivesAreKeptBySpell()
     {
         var cooled = Apply(

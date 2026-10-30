@@ -1547,6 +1547,34 @@ which prints counts.
 - **AP and MP removed**: 5 compared, 1 within with a dodge, 4 fewer.
 - **Teleports**: 3 foreseen and not announced; summons and teleports onto a cell reach no fighter, and are not compared.
 
+### The game, fought by D3B
+
+Measured on 2026-10-30 for session 9e (D197 to D203): the game connections the owner captured with D3B's host and app while
+the AI played, 13 fights, a Xelor at level 91 among the characters, and the 66 fights captured in all, replayed with
+`scripts/fights.cs` and tools never committed that print counts.
+
+- **The character's spells.** `SpellsEvent` lists them as the character enters the game, each with its grade; the server
+  sends it again as an alteration transforms the character, its third field the form's spells, 2 for a bouftou. As each
+  fight starts, `FightSpellsContextEvent` names a fighter, the character's own in 64 of 65, a turret once, and lists the
+  spells the client plays it with: in the 55 fights it listed the character's, its 300 casts were of them, at their grade.
+  Spell 0 is a weapon's blow.
+- **The fight's options.** As each placement starts, the server says four options unset, `FightOptionUpdateEvent`, twice
+  each time one changes; a toggle, `FightOptionToggleRequest`, answered 30 ms later. The lock is option 0, kept from one
+  fight to the next; the eye, refusing spectators, option 2, answered with a text of the message kind.
+- **D3B's requests.** 177 casts sent, 167 cast; 81 walks, 49 turns' ends, 12 placements, 14 readinesses, 2 options set.
+  The client acknowledged D3B's sequences as its own and said it was ready for each turn by itself. A client that rejoins a
+  fight under way, its connection back, gets the fight's start, its join and its fighters synchronized, then the turn: no
+  `FightStartEvent`.
+- **Refusals.** The server refuses a cast with a `TextInformationEvent` of the error kind, 29 ms after the request, text 175
+  twice, and nothing else; a Zobal's spells asking a mask's state were refused so. A text of the message kind, 188, came with
+  8 casts it made.
+- **The client's previews.** Effects flagged `ForClientOnly` are what the client previews, never what the server does: a
+  Xelor's Refraction shows a circle of damage the server dealt on none of 16 casts, dealing it through a spell its telefrag
+  state triggers. Left out of what D3B foresees, the bench's damage of the casts alone is within on 331, below on 1, and
+  foreseen but never dealt on 1, against 300, 32 and 104 before.
+- **The player's pace**, on the 49 fights the owner played: 1.3 s halfway from a turn's start to the first action and from
+  an action shown to the next, 0.6 s before ending a turn, 1.2 s from the placement's cells to the first move.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

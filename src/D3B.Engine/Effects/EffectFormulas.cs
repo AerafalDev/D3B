@@ -43,10 +43,9 @@ public static class EffectFormulas
         if (element is not (EffectElement.Best or EffectElement.Worst))
             return element;
 
-        EffectElement[] elements = [EffectElement.Earth, EffectElement.Fire, EffectElement.Water, EffectElement.Air];
-        var found = elements[0];
+        var found = EffectElement.Earth;
 
-        foreach (var candidate in elements.AsSpan(1))
+        foreach (var candidate in (ReadOnlySpan<EffectElement>)[EffectElement.Fire, EffectElement.Water, EffectElement.Air])
         {
             var value = caster.Characteristic(CharacteristicOf(candidate));
             var held = caster.Characteristic(CharacteristicOf(found));
@@ -83,7 +82,7 @@ public static class EffectFormulas
         var bonus = caster.Characteristic(FightCharacteristic.AllDamageBonus) + caster.Characteristic(ElementalId(FightCharacteristic.EarthDamageBonus, element))
             + (critical ? caster.Characteristic(FightCharacteristic.CriticalDamageBonus) : 0);
 
-        return roll.Map(value => (value * raise / Percent) + bonus);
+        return new LifeRange((roll.Min * raise / Percent) + bonus, (roll.Max * raise / Percent) + bonus);
     }
 
     /// <summary>Gets damage lowered by a zone's decrease away from its centre.</summary>
@@ -99,7 +98,7 @@ public static class EffectFormulas
         var steps = zone.MaxDamageDecreaseApplyCount > 0 ? Math.Min(away, zone.MaxDamageDecreaseApplyCount) : away;
         var kept = Math.Max(0, Percent - (steps * zone.DamageDecreaseStepPercent));
 
-        return damage.Map(value => value * kept / Percent);
+        return new LifeRange(damage.Min * kept / Percent, damage.Max * kept / Percent);
     }
 
     /// <summary>Gets the damage a target receives of what a caster dealt.</summary>
@@ -116,28 +115,30 @@ public static class EffectFormulas
 
         var reduction = target.Characteristic(ElementalId(FightCharacteristic.EarthReduction, element));
         var resisted = Percent - target.Characteristic(ElementalId(FightCharacteristic.EarthResistPercent, element));
-        int[] multipliers =
-        [
-            Multiplier(caster, FightCharacteristic.DealtDamageMultiplier),
-            Multiplier(caster, FightCharacteristic.DealtDamageMultiplierSpells),
-            Multiplier(caster, melee ? FightCharacteristic.DealtDamageMultiplierMelee : FightCharacteristic.DealtDamageMultiplierDistance),
-            Multiplier(target, FightCharacteristic.ReceivedDamageMultiplierSpells),
-            Multiplier(target, melee ? FightCharacteristic.ReceivedDamageMultiplierMelee : FightCharacteristic.ReceivedDamageMultiplierDistance),
-        ];
+        var dealtMultiplier = Multiplier(caster, FightCharacteristic.DealtDamageMultiplier);
+        var spells = Multiplier(caster, FightCharacteristic.DealtDamageMultiplierSpells);
+        var reach = Multiplier(caster, melee ? FightCharacteristic.DealtDamageMultiplierMelee : FightCharacteristic.DealtDamageMultiplierDistance);
+        var receivedSpells = Multiplier(target, FightCharacteristic.ReceivedDamageMultiplierSpells);
+        var receivedReach = Multiplier(target, melee ? FightCharacteristic.ReceivedDamageMultiplierMelee : FightCharacteristic.ReceivedDamageMultiplierDistance);
 
-        return dealt.Map(value =>
+        return new LifeRange(Receive(dealt.Min), Receive(dealt.Max));
+
+        int Receive(int value)
         {
             var received = Math.Max(0, (value - reduction) * resisted / Percent);
 
-            foreach (var multiplier in multipliers)
-                received = received * multiplier / Percent;
+            received = received * dealtMultiplier / Percent;
+            received = received * spells / Percent;
+            received = received * reach / Percent;
+            received = received * receivedSpells / Percent;
+            received = received * receivedReach / Percent;
 
             // Measured (D195): a buff multiplying the damage its fighter receives, 85% in the captures, applies last.
             foreach (var share in target.ReceivedDamageShares)
                 received = received * share / Percent;
 
             return Math.Max(0, received);
-        });
+        }
     }
 
     /// <summary>Gets the heal a caster gives before its target's missing life caps it.</summary>
@@ -153,7 +154,7 @@ public static class EffectFormulas
         var bonus = caster.Characteristic(FightCharacteristic.HealBonus);
         var multiplier = Multiplier(caster, FightCharacteristic.DealtHealMultiplier);
 
-        return roll.Map(value => ((value * raise / Percent) + bonus) * multiplier / Percent);
+        return new LifeRange(((roll.Min * raise / Percent) + bonus) * multiplier / Percent, ((roll.Max * raise / Percent) + bonus) * multiplier / Percent);
     }
 
     /// <summary>Gets the part of a loss of life lost for the rest of the fight.</summary>

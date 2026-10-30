@@ -219,7 +219,7 @@
     <value>Après un combat</value>
   </data>
   <data name="AfterFightHelp" xml:space="preserve">
-    <value>D3B ne combat pas encore : tu joues le combat.</value>
+    <value>L'IA joue le combat, puis la récolte reprend, se met en pause ou s'arrête.</value>
   </data>
   <data name="AfterFightResume" xml:space="preserve">
     <value>Reprendre</value>
@@ -298,6 +298,24 @@
   </data>
   <data name="DoingOpenBag" xml:space="preserve">
     <value>Ouvre : {0}</value>
+  </data>
+  <data name="AfterLostFight" xml:space="preserve">
+    <value>Après un combat perdu</value>
+  </data>
+  <data name="AfterLostFightHelp" xml:space="preserve">
+    <value>Le perso revient à son point de sauvegarde avec peu de vie : en reprenant, il regagne d'abord la part de vie sous laquelle il se soigne, en mangeant ou en attendant. Trois combats perdus d'affilée arrêtent la récolte.</value>
+  </data>
+  <data name="AfterLostFightResume" xml:space="preserve">
+    <value>Reprendre une fois soigné</value>
+  </data>
+  <data name="AfterLostFightPause" xml:space="preserve">
+    <value>Mettre en pause</value>
+  </data>
+  <data name="AfterLostFightStop" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="DoingRegain" xml:space="preserve">
+    <value>Regagne sa vie après un combat perdu : {0} sur {1}</value>
   </data>
   <data name="DoingEat" xml:space="preserve">
     <value>Se soigne : mange {0}</value>
