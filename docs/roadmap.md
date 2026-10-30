@@ -15,7 +15,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 6 | Harvesting and banking: first milestone | Milestone reached in 6a; icons and learned graphics in 6b; what 6a left in 6c; the app redesigned in 6d; the owner's settings in 6e; the app published in 6f |
 | 7 | Mods: Lua scripting, then blueprints | Lua done, then removed (D119); blueprints to do, after step 9 (D117, D169) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
-| 9 | Fights | In progress, before the blueprints (D169): 9a done; 9b next |
+| 9 | Fights | In progress, before the blueprints (D169): 9a and 9b done; 9c next |
 | 10 | Several accounts and groups | To do |
 | 11 | Marketplace and crafting | To do |
 | 12 | Treasure hunts and dungeons | To do |
@@ -233,8 +233,8 @@ it grows. A client update before a session gets Q10's session first.
 | Session | Content | Status |
 | --- | --- | --- |
 | 9a | The split of step 9 (D177); the fight's protocol measured on captures the owner made, named and pinned, mapping format 9, and `scripts/capture.cs --messages` to measure it (D178); the fight's state in the bot, its fighters, turns and end, and the journal saying the end (D179); the placement cells, the server's, and the fighters on the app's map, settling D125 (D180). | Done on 2026-10-30 |
-| 9b | The fight's data in the pack, format 5: spells and spell levels, their flags read from the client's code, effects, states, monsters and grades with the client's formulas, breeds, characteristics, the Rogue's bombs and walls, spells' variants and pairs; the cast's level and the loot's monsters checked against it; then a release of 3.7.12.12 on the owner's go. | Next |
-| 9c | The rules of a cast in `D3B.Engine`: line of sight, ranges, zones, target masks, every condition of a spell, cooldowns, moving in a fight with tackle and dodge; checked on captures, D3B accepting and refusing the casts the server did. | To do |
+| 9b | The fight's data in the pack, format 5: spells and spell levels, their flags read from the client's code, effects, states, monsters and grades with the client's formulas, breeds, characteristics, the Rogue's bombs and walls, spells' variants and pairs; the cast's level and the loot's monsters checked against it; then a release of 3.7.12.12 on the owner's go. Done: format 5 (D182), the flags from the client's code (D183), the checks and the monsters named on the map (D184), the references read again (D181); the pairs the owner meant are variants, the client's pairs its custom mode's, left out; the formulas kept, not run (Q15). | Done on 2026-10-30; the release on the owner's go |
+| 9c | The rules of a cast in `D3B.Engine`: line of sight, ranges, zones, target masks, every condition of a spell, cooldowns, moving in a fight with tackle and dodge; checked on captures, D3B accepting and refusing the casts the server did. | Next |
 | 9d | The effects' engine: each effect as data, Bubble's formulas measured one by one (Q5), a bench comparing what D3B foresees with what the server answered, action by action. | To do |
 | 9e | The AI, playable: placement, then each turn a search for the best sequences of moves and casts, thought again after each answer of the server; the bot fights alone, and harvesting fights instead of pausing (D144). | To do |
 | 9f | The hard cases, one mechanism at a time, each measured: summons, which the bot plays and which play alone as spells and their variants say, such as "Maîtrise des invocations" against "Liberté des invocations", the Steamer's turrets controlled from their third evolution, the Rogue's bombs, the Feca's glyphs, the Huppermage's runes, the Xelor's telefrags, the Zobal's masks, traps and invisibility, portals, carrying, sacrifice, shared damage. | To do |

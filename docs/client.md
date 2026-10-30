@@ -14,7 +14,7 @@ used ([the game, teleported](#the-game-teleported)), and its floors, fights and 
 ([the game, interrupted](#the-game-interrupted)). Its icons and its elements' graphics were measured on 2026-10-29 for
 session 6b ([Icons](#icons), [Graphics](#graphics)), and a tour foretold by them ([the game, foretold](#the-game-foretold)).
 Its fights were measured on 2026-10-30 for session 9a, on the wire ([the game, fought](#the-game-fought)) and in its tables
-([Fights' tables](#fights-tables)).
+([Fights' tables](#fights-tables)), which session 9b measured whole, their flags read in its code, the same day.
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -258,7 +258,8 @@ What the world tables hold, as the pack keeps them (D27, D29):
   everywhere, not kept. `m_flags` sets 27 of its 32 bits, bit 26 on every map, and the pack keeps the value as it is.
   Bit 3 lets a character teleport from the map, and bit 2 opens the haven bag, measured
   ([the game, teleported](#the-game-teleported)); the other bits are not. BillBot reads it as Dofus 2's map
-  capabilities, bit 2 letting one teleport to the map and bit 3 from it.
+  capabilities, bit 2 letting one teleport to the map and bit 3 from it, as the client's code names them
+  ([Fights' tables](#fights-tables)).
 - **Sub-areas.** 34 of the 567 allow accounts without a subscription (`basicAccountAllowed`). `associatedZaapMapId`
   names a zaap's map on 329 and is 0 on the other 238. `level` from 0 to 200. `harvestables` lists items on 190
   sub-areas ([Harvestables](#harvestables)). Every map a sub-area lists names that sub-area back.
@@ -274,7 +275,7 @@ What the world tables hold, as the pack keeps them (D27, D29):
 a text in French and English. `typeId`, a `UInt16`, names 229 of the 236 types; one test item names type 264, which the
 client lacks. `level`, a `UInt8`, from 0 to 200. `realWeight`, a `UInt16`, is the weight of one item in pods: 26
 values from 0 to 20,000, 0 or 1 on 77% of items. `m_flags`, a `UInt16`, sets bits 0 to 11, bit 10 on 96% of items;
-which bit means what is not measured. `iconId` names the item's icon ([Icons](#icons)): 11,756 distinct over the items.
+which bit means what is not measured, the client's code naming bit 10 saleable ([Fights' tables](#fights-tables)). `iconId` names the item's icon ([Icons](#icons)): 11,756 distinct over the items.
 The pack keeps the id, name, type, level, weight and icon, 17 bytes an item; effects, recipes, drops, criteria and
 `m_flags` are left out (D29, D139).
 
@@ -347,28 +348,110 @@ holds two bankers, NPCs 520 and 522; the server places them, with no NPC in the 
 
 ### Fights' tables
 
-Measured on 2026-10-30 for session 9a, not in the pack yet: 9b extracts them (D177). By layout and count, with
-`scripts/inspect.cs -- layout <bundle> <root> --references`.
+Laid out on 2026-10-30 for session 9a with `scripts/inspect.cs -- layout <bundle> <root> --references`, measured for
+session 9b with a measuring tool never committed, the flags and names read in the client's code (D183). The pack holds
+them from format 5 (D182).
 
-| Root | Records | Holds |
-| --- | --- | --- |
-| `SpellsDataRoot` | 17,006 | A spell's name, type, levels, scripts of its animations, and its preview zone |
-| `SpellLevelsDataRoot` | 34,320 | A level's grade, AP, ranges, critical chance, stacks, casts per turn and target, global ones, interval, initial and global cooldowns, the least level, a criterion on states, flags in 16 bits, effects and critical effects, preview zones |
-| `EffectsDataRoot` | 884 | An effect's characteristic and its operator, category, element, whether it boosts, is active and used in fights, its priority and power rate, its opposite |
-| `SpellStatesDataRoot` | 6,377 | A state's flags: it prevents casts or fights, it is silent, its bearer cannot be moved, pushed, swapped, tackled or tackle, deal damage or be healed, is invulnerable, in melee or at range |
-| `MonstersDataRoot` | 5,129 | A monster's grades, each with its level, life, AP, MP, characteristics, damage bonuses, resistances fixed and in percent, dodges, tackle, initiative, experience and starting spell; its spells and their grades, drops, sub-areas, aggression, ratios of characteristics and souls |
-| `BreedsDataRoot` | 19 | A breed's points per characteristic, spells and roles |
-| `CharacteristicsDataRoot` | 123 | A characteristic's keyword, category and scaling formula |
-| `SpellTypesDataRoot`, `SpellVariantsDataRoot`, `SpellPairsDataRoot` | 3,274, 431, 644 | Spells' types, variants and pairs |
-| `SpellBombsDataRoot`, `SpellBombWallsDataRoot` | 10, 8 | The Rogue's bombs and the walls between them |
-| `LuaFormulasDataRoot` | 38 | Formulas in Lua: a monster's characteristics and life by level, experience by level, a group's bonus, and others of guilds, alliances and seasons |
-| `SpellScriptsDataRoot` | 14,934 | Spells' animations, not their effects |
+| Root | Records | Holds | In the pack |
+| --- | ---: | --- | --- |
+| `SpellsDataRoot` | 17,006 | A spell's name, type, flags, levels, scripts of its animations, and its preview zone | All but its description, type and scripts |
+| `SpellLevelsDataRoot` | 34,320 | A level's grade, AP, ranges, critical chance, stacks, casts per turn and target, global ones, interval, initial and global cooldowns, the least level, a criterion on states, flags in 16 bits, effects and critical effects, preview zones | Every field, but the 69 levels of no spell |
+| `EffectsDataRoot` | 884 | An effect's characteristic and its operator, category, element, whether it boosts, is active and used in fights, its priority and power rate, its opposite | Those fields and its description |
+| `SpellStatesDataRoot` | 6,377 | A state's flags, effects and spell level | All but its icon |
+| `MonstersDataRoot` | 5,129 | A monster's flags, race, grades, spells and their grades, characteristic ratios, drops, sub-areas, aggression, souls | All but its drops, looks, sub-areas, achievements and aggression's criterion |
+| `MonsterRacesDataRoot`, `MonsterSuperRacesDataRoot` | 265, 35 | Races and their super-races | Their names |
+| `BreedsDataRoot`, `BreedRolesDataRoot` | 19, 8 | A breed's points per characteristic, spells and roles; the roles | All but looks and descriptions |
+| `CharacteristicsDataRoot` | 123 | A characteristic's keyword, category and scaling formula | All but its asset |
+| `SpellVariantsDataRoot` | 431 | A spell and its variant, of a breed | All |
+| `SpellPairsDataRoot` | 644 | The custom mode's pairs: a name, a description, an icon | No |
+| `SpellBombsDataRoot`, `SpellBombWallsDataRoot` | 10, 8 | The Rogue's bombs and the walls between them | All |
+| `LuaFormulasDataRoot` | 38 | Formulas in Lua: a monster's characteristics and experience by level, experience tables, a group's bonus, and others of guilds, alliances and seasons | The 4 characteristics name |
+| `SpellTypesDataRoot`, `SpellScriptsDataRoot` | 3,274, 14,934 | Spells' types, named by texts their records write as text; spells' animations | No |
 
-An effect of a spell level holds its effect's id, its order, a target id and a target mask as text, a duration, a random
-weight and group, a modifier, whether it is dispellable, a delay, triggers as text, an element, its spell, the trigger's
-duration, dice, a value, and a zone: cells, a shape and two parameters as numbers, where Dofus 2 had text, a decrease of
-damage by step and its most steps, whether it stops at a target, a forced direction, whether it takes in the carried, and
-whether only cells in line of sight. The levels' flags' meaning lies in the client's code, which 9b reads.
+**Flags**, as the client's code names each bit, with how many records set it:
+
+- A spell's `m_flags`, `SpellFlags`: verbose cast 14,719, bypassing the summons' limit 20, always triggering spells 359,
+  hiding the cast's conditions 1,674.
+- A level's 16-bit `m_flags`, `SpellLevelFlags`, bits 0 to 13: cast in line 3,276, in diagonal 262, testing the line of
+  sight 11,339, needing a free cell 2,117, a taken cell 1,879, a cell with no trap 219, range boosted 4,628, effects
+  hidden 8, hidden 1, animation played 28,455, needing a fighter seen 18, a cell with no portal 42, no projection through
+  portals 11, proportional diagonal 6. The getters of the level's booleans read the same bits.
+- An effect's 8-bit `m_flags`, `EffectInstanceFlags`: visible in the tooltip 90,913, among the buffs 91,624, in the
+  fight's log 90,491, on the ground 99,107, the client's alone 6,360, its ground mark visible 126,319, to allies only 2;
+  `trigger`, bit 5, on none.
+- A monster's `m_flags`, `MonsterFlags`, bits 0 to 18: a summon slot 4,655, a bomb slot 8, boss 204, mini-boss 306, quest
+  monster 2,839, fast animations 617, plays 4,925, tackles 4,770, is pushed 4,840, switches position 4,851, is switched
+  with 5,031, is carried 4,758, uses portals 4,839, idols disabled 0, race's values 102, soul not captured 3,395, hidden
+  in the bestiary 48, moves 4,735, controlled by the fight's owner 52.
+- Also named there, not in the pack: items' `ItemFlags`, bit 10, on 96% of items ([Items](#items)), being saleable;
+  maps' `MapInformationFlags`, bits 0 to 20 the map's capabilities and 21 to 28 others, bit 2 allowing to teleport to the
+  map and bit 3 from it ([Data tables](#data-tables)).
+
+**Spells.** Ids 0 to 33,348; 17,005 named, one naming text 0. 10,521 have one level, at most 35; every spell's levels
+are the spell's, grades 1 to their count in order. 69 levels name a spell the client lacks, and no spell lists them. 504
+spells have a preview zone, which lists no cell. The animations' scripts are set on 11,213 spells, their parameters on
+none; 3,982 have an administrator's name.
+
+**Levels.** Ids 1,001 to 87,625. AP from 0 to 7,222, the least range 0 to 16, the most 0 to 63; a critical chance on
+9,984 levels, -1 to 252; stacks -1 to 70, casts a turn -1 to 63, a target 0 to 63, global casts a turn 0 to 6 and a
+target 0 or 1; the interval 0 to 63, 63 on 193 levels; initial and global cooldowns -1 to 63; the least level 0 to 1,001.
+The criterion on states is set on 2,411 levels, 435 distinct, of `HS=` and `HS!` and a state joined by `&` and `|`;
+`ignorePrisonGlyph` on 58. Effects 1 to 465 a level, critical effects on 10,006 levels, up to 73; preview zones on 317
+levels, 469, each two zones and two masks.
+
+**Effects of a level.** 126,767, 25,381 critical, 126,306 kept. Each names an effect of `EffectsDataRoot` by its
+`actionId`, which the client's code types by its `ActionId` enum of 1,029 named actions; 408 are a spell's. The base
+effect, target and modifier are 0 on every one, `displayZero` false, and the spell its level's. Target masks, 12,413
+distinct, are letters and numbers joined by `,`, such as `a,A` or `*E` and a state, 71 kinds of token; triggers, 815
+distinct, codes joined by `|`, `I` on 114,432; durations -1 to 59; a random weight on 9,296 effects, in groups up to 144;
+dispel 1, 2 or 3; delays up to 63; elements -1 to 5. The dice name ids for some effects: a summon (181) a monster and its
+grade, 4,821 of 4,825 a monster the client holds; an effect casting a spell (1160, 792 and others) the spell and its
+grade; setting, removing and disabling a state (950 to 952) the state. Masks, criteria and these effects name a state
+67,396 times, 94 lacking.
+
+**Zones.** A shape, a character the client's code names (`SpellZoneShape`, 29 shapes), 26 on effects: `P` 86,233, `C`
+13,386, `a` 6,975, `X` 5,936, `;` 3,955, the others fewer. `param1` is the size and `param2` the least size, as the
+code's getters read them. Damage decreases 10% a step on 123,695 zones, over 4 steps at most on 124,027; the zone stops
+at a target on 274, is forced in a direction on 236, takes in the carried on 86,548, keeps to the line of sight on 268.
+12,717 effects' zones list cells, up to 161, 19,823 in all in the pack.
+
+**Effects.** 884, ids 0 to 4,076: a characteristic on 213, changed by `+`, `-` or `/` on 383; categories 0 to 9; an
+element on 118; boost on 251, active on 172, used in fights on 31; an opposite on 146, every one held; a description on
+857, 27 none. The client's `effectId`, -1 on 486, is not measured and not kept.
+
+**States.** 6,377, ids 0 to 7,362, every one named: silent 3,030, the turns shown 165, invulnerable 26, cannot be pushed
+25 or moved 22, cannot tackle 19 or be tackled 17, cannot switch position 18, invulnerable in melee or at range 14 each,
+prevents fights 13, incurable 9, prevents casts 5, deals no damage 5, main state 5. Effects on 3,142 states, 3,301,
+number 16 on 3,031; a spell level on 206, 2 the client lacks.
+
+**Monsters.** Ids 31 to 8,388, held in 16 bits; 1 to 20 grades, 5 on 4,031, 26,821 in all, numbered from 1 in order,
+each naming its monster; levels 1 to 2,400; a starting spell, a spell level, on 10,163 grades, 6 the client lacks; the
+bonus a summon takes on 277 grades of 105 monsters. 14,469 spells, up to 40 a monster, 37 the client lacks; each with a
+text of pairs, the spell's grade and the monster grade's level, one per grade on 13,407, and 1,062 with more pairs, of no
+level. Characteristic ratios on 4,970 monsters, ten pairs each, a characteristic and a ratio, for the ten
+characteristics a formula scales; `scaleGradeRef` 1 to 11, 5 on 4,303.
+
+**Lua formulas.** 38: a monster's experience, the scaling of its characteristics, a level's cap, experience tables, a
+group's bonus, and guilds', alliances' and seasons'. Each declares its parameters, such as `monster_level`, `stat_ratio`,
+`stat_base` and `monster_grade_level`, and returns `main()`. Characteristics name four: life and vitality one, strength,
+wisdom, chance, agility, intelligence and damage in percent another, MP and range one each; AP none. Written again in
+the measuring tool, at each grade's level with the monster's ratio, they give the grade's life on 20,639 of 26,339 grades,
+its vitality on 26,170, its strength on 5,878, chance 5,775, wisdom 2,603, damage in percent 41: the grades hold values
+of their own, which the server gives a fighter ([the game, fought](#the-game-fought)).
+
+**Breeds.** 19, ids 1 to 18 and 20, each named by a text its `shortNameId` writes as text; 22 spells each, every one in
+a variant of the breed's; points per characteristic as pairs of a threshold and a cost, 4 for strength, intelligence,
+chance and agility, 1 for vitality and wisdom; 8 roles each.
+
+**Variants and pairs.** 431 variants, two spells each, every spell held, none in two: 22 for each breed, and 13 of breed
+19, which `BreedsDataRoot` lacks, the spells every character has, *Maîtrise des Invocations* and *Liberté des
+Invocations* among them, variant 481. The 644 pairs name and illustrate the custom mode's: `CustomModeBreedSpellsDataRoot`
+names 79 of them by breed, `ForgettableSpellsDataRoot` none, and no pair names a spell.
+
+**Bombs and walls.** 10 bombs, keyed by monster: 7 are monsters, whose spells and walls the client holds; the other 3
+name 9 spells and 2 walls it lacks. 8 walls, each a spell, 7 held.
+
+**Characteristics.** 123, ids -1 to 199; ten scaled by a formula; 121 named, one naming a text the client lacks.
 
 ## Texts
 
@@ -410,23 +493,27 @@ same name at 100 pixels per unit, named by the icon's identifier, which items an
 
 ## The pack of 3.7.12.12
 
-Format 4 (D139): 5,382,920 bytes, 17,731 entries, extracted in about 18 s on 16 threads, 13 s of which read the client.
+Format 5 (D182): 7,432,757 bytes, 17,737 entries, extracted in about 22 s on 16 threads, 14 s of which read the client.
 Two extractions give the same SHA-256. The pack records the extractor's version, so another build of the extractor writes
-other bytes: 5,382,928 from a build before the session's commit. Format 3 (D29, D30) was 4,670,325 bytes, 4,670,336 from
-session 2d's extractor (D33).
+other bytes. Format 4 (D139) was 5,382,920 bytes; format 3 (D29, D30) 4,670,325, 4,670,336 from session 2d's extractor
+(D33).
 
 | Entries | Serialized | Compressed, zstd 19 |
 | --- | ---: | ---: |
-| `texts/fr`, `texts/en` | 1.73 MB | 0.41 MB |
+| `texts/fr`, `texts/en` | 3.37 MB, 1.73 in format 4 | 0.81 MB, 0.41 in format 4 |
 | 17,722 `maps/<id>` | 90.7 MB, about 5.1 KB a map | 3.82 MB, 3.72 in format 3 |
+| `spells/catalog` | 10.24 MB | 1.29 MB |
+| `monsters/catalog` | 6.38 MB | 0.33 MB |
 | `world/graph` | 1.42 MB | 0.25 MB |
 | `world/atlas` | 0.41 MB | 0.06 MB |
 | `items/catalog` | 0.37 MB | 0.13 MB |
 | `icons/catalog` | 2.33 MB | 0.58 MB |
+| `spells/states`, `effects/catalog`, `breeds/catalog`, `characteristics/catalog` | 0.18 MB | 0.04 MB |
 | `jobs/catalog`, `interactives/catalog`, `banks/catalog` | 13 KB | 4 KB |
 
-Opening it reads the index in about 8 ms. The icons read in 15 ms. A map reads in about 7 µs, the graph in 4 ms, the atlas and the items in
-about 1 ms each, a language's texts in 6 ms, the other tables in under 0.2 ms.
+Opening it reads the index in about 8 ms. The icons read in 15 ms, the spells in 30 ms, the monsters in 12 ms. A map reads
+in about 7 µs, the graph in 4 ms, the atlas and the items in about 1 ms each, a language's texts in 6 ms, the other tables
+in under 1 ms.
 
 **Dictionary, measured again.** Maps are now 80% of the pack. A zstd dictionary trained on them, deterministic and in
 1.9 s, saves at best 0.45 MB with 16 KiB (3.27 MB of maps and dictionary instead of 3.72), 0.41 MB with 64 KiB and 0.35
@@ -1363,6 +1450,10 @@ resources' protectors', which name the character the attacker too. By structure,
   the harvest travelled back to its zone.
 - **No capture holds** an aggression, a push that moved a fighter, a mark, a state, an invisible fighter, or a fighter
   carried.
+- **Against the pack**, measured for session 9b (D184): the 344 casts name a level of their spell by its id, 52 spells at
+  grades 1 to 6; the 54 monster fighters, of 17 monsters, a grade of their monster at its level, with its life, AP and
+  MP; the 6 summons a grade of theirs; 14 of the 16 groups of loot a monster of the pack, the other 2 monster 0, one
+  object each that no monster dropped.
 
 The 40 game connections decoded through mapping 9: of 29,428 frames, 8,134 understood whole, 5,219 more read, and 16,075
 carrying one of 187 messages the readable protocol lacks; none misread. The mapping pairs 192 messages, 88 by pin, 11 by

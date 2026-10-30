@@ -11,8 +11,9 @@ client.
 ## Status
 
 The solution and the module system: a headless host that builds its modules, starts and stops. The game data: tools that inspect the official client and extract its maps, world graph, items, jobs,
-interactives, banks and the icons of resources and professions, with the texts they name, into a pack per client build; a tool that publishes it as a release
-asset; and a data module, whose pack the host finds on the machine or downloads, and without which it does not start.
+interactives, banks, the icons of resources and professions, and what fights need, spells, effects, states, monsters,
+breeds and characteristics, with the texts they name, into a pack per client build; a tool that publishes it as a release
+asset; and a data module, whose pack the host finds on the machine or beside the published app, and without which it does not start.
 The network: while the host runs, official clients started from the launcher connect through its relay, which can record
 their connection phase. The bots walk, travel, use elements and bank. The first milestone is reached: a bot harvests a
 profile's resources tour by tour through its zone and banks them when its pods are full, started from the app or when its
@@ -36,8 +37,10 @@ enough maps; and six profiles are given, an automatic harvest and one per profes
 installer, ships the data of the client build it was made for, and updates itself from this repository's releases.
 Fights are under way: D3B reads a fight's protocol, measured on the official client, keeps each bot's fight, its
 fighters, their life, AP and MP, the turns and the outcome with what it gained, and the map page draws the teams'
-placement cells and the fighters; the player still fights. Next: the spells and monsters in the data, the rules of a
-cast and the effects, then an AI that searches each turn's best moves and casts, then the blueprints. See the
+placement cells and the fighters, monsters named; the pack holds every spell, its levels and effects with the flags the
+client's code names, the states, monsters and their grades, the breeds and characteristics; the player still fights.
+Next: the rules of a cast and the effects, then an AI that searches each turn's best moves and casts, then the
+blueprints. See the
 [roadmap](docs/roadmap.md).
 
 ## Installing

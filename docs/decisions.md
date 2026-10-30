@@ -4341,6 +4341,123 @@ D31's and D48's downloads.*
 - **Rejected.**
   - The placement cells kept after the placement: the fight's start makes them meaningless.
 
+## D181: What the references give step 9, read again for 9b
+
+*2026-10-30, step 9, session 9b, as the owner asked. Builds D3, D13, D177.*
+
+Read for ideas, never copied (D3): every formula and id of Dofus 2 is measured on Dofus 3 before use (Q5).
+
+- **Bubble's emulator** (`bubble-emu-v2-develop`) runs its fights on `Bubble.DamageCalculation`, a port of the Dofus 2
+  client's damage preview, fed by an adapter from its tables. What it gives:
+  - *9c*: the order of a cast's checks (turn, cell, AP, free, taken or seen cell, trap, portal, states and their criterion,
+    summons left, cooldowns, casts per turn and target, range and line of sight); ranges as a diamond, a cross or
+    diagonals; line of sight traced cell to cell and cached; target masks as an inclusion pass, uppercase enemies and
+    lowercase allies, then conditions that must all hold, those on the caster marked `*`, breeds, monsters and sidekicks
+    OR-ed by kind; tackle as a product over the tacklers of `(evade + 2) / (2 (block + 2))`, AP and MP lost at each cell
+    left.
+  - *9d*: effects dispatched on their id; a cast's non-random effects, then one random group drawn by weight; damage as
+    the roll times `(100 + power + characteristic) / 100` plus fixed bonuses, then the zone's decrease, the target's fixed
+    then percent resistances, reflects, shared damage, the dealt and received multipliers, shields, steal and sacrifice;
+    heals and pushes' damage likewise; triggers by codes (`TB`, `TE`, `D`, `DA`, `EON`) making an effect a buff; states
+    read by the numbers of their effects (invulnerable, incurable, pacifist, no push).
+  - *9e*: its monsters' AI, which tries every reachable cell and target cell, simulates each cast and scores it; greedy,
+    one action at a time.
+  - *9f*: summons from an effect's dice, a monster and its grade, at the summoner's level with its bonus; bombs chaining,
+    and walls between bombs of a kind; portals projecting a cast; telefrags as a swap; glyphs, traps and runes as marks of
+    a zone and a spell; carrying as two states.
+  - *Its faults*, to avoid: chance drawn inside the engine, contexts copied shallowly and buffs mutated, constants of
+    Dofus 2 (bombs, turrets, walls, portals, resistance caps, erosion), and bugs: the AP and MP dodge reading the
+    attacker's, the received distance multiplier reading a dealt one, a spell's damage bonus counted twice.
+- **BubbleBot** (`Bubble.D3.Bot-main`) reads the datacenter by hand, its flags those of an older client, which the
+  client's code confirms (D183); its AI casts in a fixed order through the same port, never updates its fighters from the
+  server's actions, refuses every spell with a criterion on states, and leaves bombs, walls and summons out.
+- **BillBot** found its spell levels' flags by statistics against Dofus 2's tables, chooses greedily by damage over AP,
+  and finds life steal and invulnerability by French texts and fixed state ids.
+- **What 9b took**: the tables to keep, the fields that matter, and the questions to measure: which level a cast names,
+  how a monster's spells are graded, what a grade's values are, what variants and pairs are. The answers are D182 to D184.
+- **Rejected.**
+  - Porting the damage preview: GPL, Dofus 2's, and built for one preview, not for a search over many states (D13).
+
+## D182: The fight's data in the pack, format 5
+
+*2026-10-30, step 9, session 9b, as D177 planned it. Builds D25, D29, D139.*
+
+`GamePack.FormatVersion` is 5. Six entries, each a catalog read once by `GameTables`, measured in
+[client.md](client.md#fights-tables):
+
+- `spells/catalog` (`SpellCatalog`): the spells and their levels, every field of a level's, its flags with the client's
+  bits (D183); each level's effects then its critical effects, each with its effect, order, target mask, duration, random
+  weight and group, dispel, delay, triggers, element, dice and value, flags and zone; the zones' shape, sizes, decrease,
+  stop, direction, carried and line of sight, and the cells some list; the levels' preview zones; spells' variants; the
+  Rogue's bombs and walls. Masks, triggers and criteria are text as the client writes them, held once each: 9c and 9d
+  parse them.
+- `spells/states` (`SpellStateCatalog`): the states, their booleans as one set of flags, their effects' numbers.
+- `effects/catalog` (`EffectCatalog`): the effects, by the id spells name and the server announces, with their
+  characteristic and operator, category, element and flags.
+- `monsters/catalog` (`MonsterCatalog`): the monsters, their flags with the client's bits, grades with every
+  characteristic and the bonus a summon takes, spells with their grade at each of the monster's grades, the
+  characteristic ratios, races and super-races.
+- `breeds/catalog` (`BreedCatalog`): the breeds, their spells, roles and characteristics' costs.
+- `characteristics/catalog` (`CharacteristicCatalog`): the characteristics with their keywords, and the four Lua formulas
+  that scale a monster's to a level, as the client writes them.
+- **Texts**: the names of spells, states, monsters, races, breeds, roles and characteristics, and the effects'
+  descriptions, in French and English: 56,227 texts per language instead of 26,411.
+- **The extraction fails** when what a fight relies on breaks: a spell's levels not its own by grade from 1, an effect
+  the client lacks, a monster's grades not its own in order, a spell without a grade for each, a variant not of two
+  spells, a breed's spell in no variant of its own, a flag's bit or a zone's shape the client's code does not name, a field
+  left out for being constant that is set. What a fight does not rely on yet is counted: the 69 levels of no spell, left
+  out; spells, starting spells, states and monsters named and missing; bombs naming no monster.
+- **Left out**: spells' descriptions, animation scripts and types; monsters' drops, looks, animations and aggression
+  criteria; effects' icons and tooltips; the client's `SpellPairsDataRoot`, whose 644 pairs belong to the custom mode,
+  named by its breeds' spells and by no spell. The spells the owner calls a pair, such as *Maîtrise des Invocations* and
+  *Liberté des Invocations*, are a variant, 481, of the spells every character has, breed 19, which the breeds lack.
+- **The formulas are kept, not run.** The server gave each of the 54 monster fighters captured its grade's level, life,
+  AP and MP, so a fight needs no formula; at each grade's level they give the grade's life on 78% of grades and its other
+  characteristics on 22% at most: the grades are values of their own, and the formulas scale a monster to a level its
+  grades lack. Running them waits for the session that needs it (Q15).
+- **Measured** on 3.7.12.12: 7,432,757 bytes against 5,382,920, 17,737 entries, extracted in 22 s, two extractions giving
+  the same SHA-256; the spells 1.29 MB compressed, 10.24 MB read in 30 ms; the monsters 0.33 MB, read in 12 ms; the texts
+  0.4 MB more. `PackFormatTests` records format 5's layout.
+- **Release**: `data-5.pack` goes to the release `client-3.7.12.12` beside the others, extracted again from this
+  session's merged commit, through `scripts/release.cs --publish`, then a release of the app embedding it (D172), each on
+  the owner's go.
+- **Rejected.**
+  - Each effect as a class holding its texts: 126,306 objects to build, where packed structs are copied, and masks
+    repeated thousands of times.
+  - The formulas written in C# now: the client's, rewritten, would drift from the client's at an update, unseen.
+  - Every table in one entry, or one entry per spell: a catalog per domain, read whole in milliseconds (D29).
+
+## D183: The flags and names read from the client's code
+
+*2026-10-30, step 9, session 9b, as the owner asked, with the reverse-engineering skill.*
+
+- **How**: the client's IL2CPP code, opened with Cpp2IL as `scripts/schema.cs` does (D40), in a measuring tool never
+  committed. Each record's `m_flags` is typed by an enum of the client's, `SpellFlags`, `SpellLevelFlags`,
+  `EffectInstanceFlags` and `MonsterFlags`, whose values name its bits; the getters of the records' booleans read the same
+  bits, checked on the spell levels' 14, from `castInLine`, bit 0, to `proportionalDiagonal`, bit 13. The references named
+  the same bits but the newest: `proportionalDiagonal`, `canMove`, `canBeControlledByFightOwner` and the ground marks'.
+- **What D3B keeps**: its own enums of the bits, named as the client names them, as the readable protocol is D3B's own
+  (D42): `SpellProperties`, `SpellLevelProperties`, `SpellEffectProperties`, `MonsterProperties`, and
+  `SpellStateProperties`, `EffectProperties` for booleans the client stores apart. The extraction fails on a bit they
+  lack, so that a client adding one is read again in its code.
+- **Also named there**, measured and recorded in client.md: the zones' shapes, each a character, and what the zones'
+  parameters are; the 1,029 actions an effect's id names, 408 of them a spell's effect; the items' and the maps' flags.
+- **Rejected.**
+  - The bits found by statistics, as BillBot did: a bit set on few levels, such as `hidden`, once, cannot be told apart.
+  - The client's enum of actions copied into D3B: what 9d handles, it names in its own words, measured.
+
+## D184: The cast's level and the fighters' and loot's monsters, checked; monsters named on the map
+
+*2026-10-30, step 9, session 9b. Settles D178's level of a cast and D180's monsters named by their ids.*
+
+- **Checked** on the 40 game connections captured, decoded through mapping 9 and read against the pack of format 5, with
+  a measuring tool never committed: the 344 casts name a level of their spell, which the spell's grade finds again, 52
+  spells at grades 1 to 6; the 54 monster fighters, of 17 monsters, name a grade of their monster at its level, with its
+  life, AP and MP, and a name in both languages; the 6 summons a grade of theirs; of the 16 groups of loot, 14 name a
+  monster of the pack, and 2 monster 0, one object each that no monster dropped.
+- `fight_actions.proto` says the cast's `level_id` is its level, no longer likely.
+- **The map page** names a monster fighter by its monster's name in the app's language, its id when the pack lacks it.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -4352,3 +4469,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
+| Q15 | When D3B needs a monster's characteristics at a level its grades lack, before the server gives them, such as to choose which group to attack, does it run the client's Lua formulas, or write them in C#, checked against the client's (D182)? | The session that needs it, 9e or 9g at the latest |
