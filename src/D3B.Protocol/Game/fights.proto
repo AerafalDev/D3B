@@ -237,10 +237,11 @@ message FightTurnEndEvent {
   int64 fighter_id = 2;
 }
 
-// Ends the character's turn before its time: the player's click, in the captures.
+// Ends the character's turn before its time: the player's click, D3B's, or the client's own (D252).
 message FightTurnFinishRequest {
-  // No capture sets it.
-  bool flag_1 = 1;
+  // Set when the client ends the turn by itself, as it did along its inactivity popup, measured on a friend's capture:
+  // 5 in the captures, none of the player's 170 clicks nor D3B's 146.
+  bool automatic = 1;
 }
 
 // A fighter's characteristics changed: after a cast or a step, the AP or MP left; as a turn begins, those it starts with.

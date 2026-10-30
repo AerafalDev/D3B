@@ -24,6 +24,10 @@ namespace D3B.Bot.Runtime;
 /// itself only its acknowledgements of the sequences and its readiness for the next turn (client.md), so that the player's
 /// hand in a fight the AI plays pauses the bot, and the fight is the player's (D202).
 /// </para>
+/// <para>
+/// The client also ends a turn by itself, along its inactivity popup, and marks that end as its own: it cut the AI's
+/// turn and paused the bot, though no one touched the client, measured on a friend's capture (D252).
+/// </para>
 /// </remarks>
 public static class PlayerActions
 {
@@ -38,7 +42,7 @@ public static class PlayerActions
         return request is MapMovementRequest or MapMovementCancelRequest or MapChangeRequest or InteractiveUseRequest or NpcActionRequest
             or NpcDialogReplyRequest or ExchangeTransferFromInventoryRequest or ExchangeKamasRequest or TeleportRequest
             or HavenBagEnterRequest or FightPlacementPositionRequest or FightReadyRequest or GameActionFightCastRequest
-            or FightTurnFinishRequest
+            or FightTurnFinishRequest { Automatic: false }
             || (request is DialogLeaveRequest && state.IsInDialog);
     }
 }

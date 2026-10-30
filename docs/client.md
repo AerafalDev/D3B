@@ -1726,6 +1726,12 @@ activity ran on five characters of two accounts, the pack of 3.7.12.12 and its c
   them, has no other way in than doors behind quests' criteria. The graph's transitions are scrolls, scrolls with an
   action, map actions and interactive elements: the doors' skill on 5,237, and some 300 of 50 other skills, stairs,
   portals and "go to"s. No NPC's way is in it.
+- **The client's own turn's end** (D252), on the activity's game connection a friend of the owner captured, 8 min 43 s,
+  one fight, the client showing its inactivity popup and no one touching it, the owner's words: the client ended 4 of
+  the character's turns by itself, `FightTurnFinishRequest` with its first field set. Two cut the AI's turn, 0.8 s after
+  a walk and 0.75 s after a cast; two ended a turn 1.7 and 2.7 s after its start, the bot paused. In the owner's
+  captures, the 170 turns' ends sent by hand and D3B's 146 leave the field unset; one more end sets it, 130 ms after
+  `FightIsTurnReadyEvent`, in a fight the AI played. With the bot paused and no one playing, a turn ran its 60 s.
 
 ## Protocol code
 

@@ -283,7 +283,8 @@ fight's course.
   waits for the server's answer and the client's acknowledgement, plans again, and ends its turn as soon as the plan is
   empty. Every request waits `BotDelays.FightAction` first, the owner's 0.9 s, and every wait ends with the fight. A cast
   the server refuses with an error text, or leaves unanswered, is not cast again that fight. The player's placement,
-  readiness, casts, walks and turn's ends pause the bot (`PlayerActions`). An activity that fights its own has the fight
+  readiness, casts, walks and turn's ends pause the bot (`PlayerActions`), not a turn's end the client marks as its own
+  (D252). An activity that fights its own has the fight
   answered once over (`BotActivity.OnFightOver`, `BotActor.LastFightEnd`): harvesting resumes, pauses or stops as "After a
   fight" says, a lost fight as "After a lost fight" says, resumed once its life is regained, three in a row ending it. The
   bot remembers the character as its last fight's placement showed it (`BotActor.LastFighter`). The strategies of 9g, a

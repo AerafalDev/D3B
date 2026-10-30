@@ -214,6 +214,50 @@ public sealed class FightPlayTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ATurnTheClientEndsByItselfLeavesTheAIPlayingTheNextOne()
+    {
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+        var sent = connection.Sent.Count;
+
+        bot.FightsAlone = true;
+        Placement(connection, near, monster);
+        await SentAsync(connection, sent + 1);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
+        await SentAsync(connection, sent + 2);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        await SentAsync(connection, sent + 3);
+        connection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = Self, CellId = near } } });
+        await SentAsync(connection, sent + 4);
+        connection.Server(new FightHumanReadyStateEvent { CharacterId = Self, Ready = true });
+
+        connection.Server(new FightStartEvent());
+        connection.Server(new FightNewRoundEvent { Round = 1 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnStartPlayingEvent());
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+        Cast(connection, monster, apLeft: 3, actionId: 1);
+
+        // As in a friend's capture (D252): the client ends the AI's turn by itself, though no one touched it.
+        connection.Client(new FightTurnFinishRequest { Automatic = true });
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+        connection.Server(new FightTurnEvent { FighterId = Monster, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnEndEvent { FighterId = Monster });
+        connection.Server(new FightNewRoundEvent { Round = 2 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 2 });
+        connection.Server(new FightRefreshCharacterStatsEvent { FighterId = Self, Stats = new FightCharacteristics { Characteristics = { Usable(1, 6), Usable(23, 0) } } });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        var next = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (next.SpellId, next.CellId));
+        Assert.False(bot.IsPaused);
+        connection.Server(new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = Monster } } } });
+        await bot.ProcessedAsync();
+    }
+
+    [Fact]
     public async Task AWornSwordIsStruckAsSpellZeroBesideTheSpell()
     {
         var (connection, bot) = await _play.EnterAsync(Far);
