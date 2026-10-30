@@ -320,6 +320,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             SettingKind.Job => (Icons?.Job(reference.Id), null),
             SettingKind.Item => (Icons?.Item(reference.Id), null),
             SettingKind.Spell => (Icons?.Spell(reference.Id), null),
+            SettingKind.Monster => (Icons?.Monster(reference.Id), null),
             _ => (null, null),
         };
 

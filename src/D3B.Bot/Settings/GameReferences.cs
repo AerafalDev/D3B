@@ -17,8 +17,8 @@ namespace D3B.Bot.Settings;
 /// those only skills of <c>Base</c> gather, such as drinking water from a well, with no level (D150).
 /// </para>
 /// <para>
-/// Spells are the breeds' and their variants', each of its breed (D234); monsters those a bestiary shows, but bombs, each
-/// of its super race and at its first grade's level (D236).
+/// Spells are the breeds' and their variants', each of its breed (D234); monsters those a sub-area lists, but bombs and
+/// those the bestiary hides, each of its super race and at its first grade's level (D236).
 /// </para>
 /// <para>Each list is read once, then shared: the pack does not change while the host runs.</para>
 /// </remarks>
@@ -106,7 +106,7 @@ public sealed class GameReferences
         _breedOfSpell = new Lazy<Dictionary<int, int>>(() => BreedsOfSpells(spells, breeds));
         _spells = new Lazy<IReadOnlyList<GameReference>>(() => spells is null ? [] : [.. _breedOfSpell.Value.Keys.Order().Select(id => new GameReference(id, spells.TryGetSpell(id, out var spell) ? spell.NameId : 0, null))]);
         _superRaces = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. monsters.SuperRaces.ToArray().Select(race => new GameReference(race.Id, race.NameId, null))]);
-        _superRaceOfMonster = new Lazy<Dictionary<int, int>>(() => SuperRacesOfMonsters(monsters));
+        _superRaceOfMonster = new Lazy<Dictionary<int, int>>(() => SuperRacesOfMonsters(monsters, atlas));
         _monsters = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. _superRaceOfMonster.Value.Keys.Order().Select(id => MonsterOf(monsters, id))]);
 
         // Base's own resources have no profession, so no level (D150).
@@ -143,15 +143,21 @@ public sealed class GameReferences
         return found;
     }
 
-    private static Dictionary<int, int> SuperRacesOfMonsters(MonsterCatalog? monsters)
+    private static Dictionary<int, int> SuperRacesOfMonsters(MonsterCatalog? monsters, WorldAtlas atlas)
     {
         var found = new Dictionary<int, int>();
 
         if (monsters is null)
             return found;
 
+        // A monster no sub-area lists is never met on a map: an event's, a quest's, a dungeon's boss (D236).
+        var living = atlas.Monsters.ToArray().ToHashSet();
+
         foreach (var monster in monsters.Monsters.Span)
         {
+            if (!living.Contains(monster.Id))
+                continue;
+
             // Bombs and what the bestiary hides are never met on a map's groups; UseSummonSlot is set on most monsters, met or not.
             if (monster.GradeCount == 0 || (monster.Properties & (MonsterProperties.UseBombSlot | MonsterProperties.HideInBestiary)) is not 0)
                 continue;
