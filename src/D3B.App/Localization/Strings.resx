@@ -1463,6 +1463,9 @@
   <data name="ExcludeMonstersCount" xml:space="preserve">
     <value>Exclude {0}</value>
   </data>
+  <data name="PickerMore" xml:space="preserve">
+    <value>The first {0} of {1}: search a name or filter to see the others.</value>
+  </data>
   <data name="PickerGroup" xml:space="preserve">
     <value>Group</value>
   </data>

@@ -17,6 +17,9 @@ internal sealed partial class GamePickerViewModel : ObservableObject
     /// <summary>The most groups shown as chips: the professions that gather are 7, the monsters' super races some 40.</summary>
     public const int MostChips = 12;
 
+    /// <summary>The most values shown at once: the dialog lays every one out, and "All" of the monsters is some 1,600 (D246).</summary>
+    public const int MostShown = 120;
+
     private readonly Dialogs _dialogs;
     private readonly PickedGamesFieldViewModel _field;
     private readonly Localizer _localizer;
@@ -64,6 +67,14 @@ internal sealed partial class GamePickerViewModel : ObservableObject
 
     /// <summary>Gets whether no value matches.</summary>
     public bool IsEmpty => Shown.Count == 0;
+
+    /// <summary>Gets whether more values match than are shown.</summary>
+    [ObservableProperty]
+    public partial bool HasMore { get; private set; }
+
+    /// <summary>Gets what the dialog says of the values it does not show, and how to see them.</summary>
+    [ObservableProperty]
+    public partial string MoreText { get; private set; } = "";
 
     private FilterChipViewModel SelectedGroup => Groups.First(group => group.IsSelected);
 
@@ -132,11 +143,15 @@ internal sealed partial class GamePickerViewModel : ObservableObject
         var group = SelectedGroup;
         var search = Search?.Trim() ?? "";
 
-        Shown =
+        List<GameChoiceViewModel> matching =
         [
             .. _all.Where(choice => (group.Id is null && !group.IsBase) || (group.IsBase ? choice.GroupId is null : choice.GroupId == group.Id))
                 .Where(choice => search.Length == 0 || choice.Option.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)),
         ];
+
+        Shown = matching.Count > MostShown ? matching[..MostShown] : matching;
+        HasMore = matching.Count > MostShown;
+        MoreText = HasMore ? _localizer.Format("PickerMore", MostShown, matching.Count) : "";
     }
 
     private void OnChecked(GameChoiceViewModel choice)

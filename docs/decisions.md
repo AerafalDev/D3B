@@ -5769,6 +5769,11 @@ the fight profile's editor not good enough. Builds D127, D159, D166, D236, D245.
   their grades', and the preview draws the place at it, saying so; else the activity says why no zone shows
   (`SettingsPreview.Message`), as harvesting's does too, and the app's own word is "Choose what and where". The rows' names
   wrap beside their controls in a narrow window, where they ran under them (`DockPanel.FieldName`).
+- **And**: the monsters' pictures, a whole body on 64 pixels, are drawn at 36 beside a name, items and professions
+  staying at 24 (`OptionViewModel.PortraitSize`); every option's icon is drawn once first shown, where opening the picker
+  drew them all. "All" of the monsters, some 1,600, laid out at once in a panel that does not virtualize, made the picker
+  stutter: it shows the first 120 that match and says how to see the others, searching or filtering
+  (`GamePickerViewModel.MostShown`).
 - **Rejected.**
   - A scrolling row of chips: the 40 groups still unreadable.
   - Every editor rebuilt: the owner's words name the picker and the fight profile; the preview is what it lacked

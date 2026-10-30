@@ -366,9 +366,9 @@
                                         Classes="ItemIcon"
                                         Classes.HasIcon="{Binding Option.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
                                         Grid.Column="1"
-                                        Height="24"
+                                        Height="{Binding Option.IconSize}"
                                         Margin="0,0,12,0"
-                                        Width="24">
+                                        Width="{Binding Option.IconSize}">
                                         <Image RenderOptions.BitmapInterpolationMode="HighQuality" Source="{Binding Option.Icon}" />
                                     </Border>
                                     <StackPanel
@@ -666,10 +666,10 @@
                         Classes="ItemIcon"
                         Classes.HasIcon="{Binding Option.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
                         Grid.Column="1"
-                        Height="24"
+                        Height="{Binding Option.IconSize}"
                         IsVisible="{Binding Option.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
                         Margin="0,0,12,0"
-                        Width="24">
+                        Width="{Binding Option.IconSize}">
                         <Image RenderOptions.BitmapInterpolationMode="HighQuality" Source="{Binding Option.Icon}" />
                     </Border>
                     <StackPanel

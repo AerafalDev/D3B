@@ -117,9 +117,9 @@
                                         <Border
                                             Classes="ItemIcon"
                                             Classes.HasIcon="{Binding Option.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                            Height="24"
+                                            Height="{Binding Option.IconSize}"
                                             Margin="0,0,8,0"
-                                            Width="24">
+                                            Width="{Binding Option.IconSize}">
                                             <Image RenderOptions.BitmapInterpolationMode="HighQuality" Source="{Binding Option.Icon}" />
                                         </Border>
                                         <TextBlock
@@ -142,19 +142,29 @@
                 </ItemsControl>
             </Panel>
         </ScrollViewer>
-        <StackPanel
-            HorizontalAlignment="Right"
-            Orientation="Horizontal"
-            Spacing="8">
-            <Button
-                Classes="Outline"
-                Command="{Binding CancelCommand}"
-                Content="{l:Tr Cancel}" />
-            <Button
-                Classes="Primary"
-                Command="{Binding AddCommand}"
-                Content="{Binding AddText}"
-                IsDefault="True" />
-        </StackPanel>
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBlock
+                Classes="Caption Muted"
+                IsVisible="{Binding HasMore}"
+                Margin="0,0,16,0"
+                Text="{Binding MoreText}"
+                TextWrapping="Wrap"
+                VerticalAlignment="Center" />
+            <StackPanel
+                Grid.Column="1"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Classes="Outline"
+                    Command="{Binding CancelCommand}"
+                    Content="{l:Tr Cancel}" />
+                <Button
+                    Classes="Primary"
+                    Command="{Binding AddCommand}"
+                    Content="{Binding AddText}"
+                    IsDefault="True" />
+            </StackPanel>
+        </Grid>
     </StackPanel>
 </UserControl>

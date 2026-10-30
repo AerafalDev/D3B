@@ -32,6 +32,9 @@ public sealed class FightViewsTests : IAsyncDisposable
     // As many super races as the client's monsters have, some 40, are too many for chips: the picker's filter is a drop-down.
     private const int SuperRaces = GamePickerViewModel.MostChips + 2;
 
+    // More monsters than the picker shows at once, as "All" of the client's: some 1,600.
+    private const int Monsters = GamePickerViewModel.MostShown + 10;
+
     private readonly TestPlay _play = new();
     private readonly TestGameData _game = new();
     private readonly TemporaryDirectory _directory = new();
@@ -48,10 +51,10 @@ public sealed class FightViewsTests : IAsyncDisposable
 
     private static GameReferences References(TestPlay play)
     {
-        // A monster of each super race lives in the sub-area the profile hunts in.
+        // Monsters of every super race, in turn, live in the sub-area the profile hunts in.
         var monsters = new MonsterCatalog(
-            Enumerable.Range(0, SuperRaces).Select(index => new Monster { Id = 1_000 + index, Race = (short)(100 + index), FirstGrade = index, GradeCount = 1 }).ToArray(),
-            Enumerable.Range(0, SuperRaces).Select(index => new MonsterGrade { Grade = 1, Level = (ushort)(10 * (index + 1)) }).ToArray(),
+            Enumerable.Range(0, Monsters).Select(index => new Monster { Id = 1_000 + index, Race = (short)(100 + (index % SuperRaces)), FirstGrade = index, GradeCount = 1 }).ToArray(),
+            Enumerable.Range(0, Monsters).Select(index => new MonsterGrade { Grade = 1, Level = (ushort)(1 + index) }).ToArray(),
             Array.Empty<MonsterSpell>(),
             Array.Empty<byte>(),
             Array.Empty<MonsterRatio>(),
@@ -59,11 +62,11 @@ public sealed class FightViewsTests : IAsyncDisposable
             Enumerable.Range(0, SuperRaces).Select(index => new MonsterRace(1 + index, MonsterRace.NoSuperRace, 0)).ToArray());
         var atlas = new WorldAtlas(
             new[] { new MapPosition(TestPlay.MapId, 4, -18, TestPlay.SubAreaId, 1, 0, 0) },
-            new[] { new SubArea(TestPlay.SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 0, 0, SuperRaces) },
+            new[] { new SubArea(TestPlay.SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 0, 0, Monsters) },
             new[] { new Area(1, 0, 0) },
             Array.Empty<Waypoint>(),
             Array.Empty<int>(),
-            Enumerable.Range(0, SuperRaces).Select(index => 1_000 + index).ToArray());
+            Enumerable.Range(0, Monsters).Select(index => 1_000 + index).ToArray());
 
         return new GameReferences(atlas, play.Tables.Jobs, play.Tables.Items, monsters: monsters);
     }
@@ -173,11 +176,15 @@ public sealed class FightViewsTests : IAsyncDisposable
         Assert.NotNull(picker);
         Assert.True(picker.IsCompact);
         Assert.Equal(SuperRaces + 1, picker.Groups.Count);
-        Assert.Equal(SuperRaces, picker.Shown.Count);
+        Assert.Equal(GamePickerViewModel.MostShown, picker.Shown.Count);
+        Assert.True(picker.HasMore);
+        Assert.Equal($"Les {GamePickerViewModel.MostShown} premiers sur {Monsters} : cherche un nom ou filtre pour voir les autres.", picker.MoreText);
+        Assert.Equal(OptionViewModel.PortraitSize, picker.Shown[0].Option.IconSize);
 
         picker.ChosenGroup = picker.Groups[3];
 
-        Assert.Equal([1_002], picker.Shown.Select(choice => (int)choice.Option.Value));
+        Assert.Equal(Enumerable.Range(0, Monsters).Where(index => index % SuperRaces == 2).Select(index => 1_000 + index), picker.Shown.Select(choice => (int)choice.Option.Value));
+        Assert.False(picker.HasMore);
         Assert.Contains("Monstres par groupe, au moins", fightTexts);
         Assert.Contains("Seulement les groupes gagnables", fightTexts);
         Assert.Contains("Character", accountTexts);

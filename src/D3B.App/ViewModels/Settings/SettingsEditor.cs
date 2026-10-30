@@ -1,4 +1,5 @@
 using System.Globalization;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls;
 using D3B.App.Localization;
@@ -321,17 +322,23 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     private OptionViewModel Option(SettingKind kind, GameReference reference)
     {
-        // A resource shows its icon, and its profession's beside the detail naming it; a profession its own.
-        var (icon, detailIcon) = kind switch
+        // A resource shows its icon, and its profession's beside the detail naming it; a profession its own; a monster its
+        // picture, larger. Each is drawn once first shown, on the UI's thread as the icons ask.
+        var id = reference.Id;
+        var icons = Icons;
+        Func<IImage?>? icon = kind switch
         {
-            SettingKind.Resource => (Icons?.Item(reference.Id), Game is not null && Game.TryGetSource(reference.Id, out var source) ? Icons?.Job(source.JobId) : null),
-            SettingKind.Job => (Icons?.Job(reference.Id), null),
-            SettingKind.Item => (Icons?.Item(reference.Id), null),
-            SettingKind.Monster => (Icons?.Monster(reference.Id), null),
-            _ => (null, null),
+            SettingKind.Resource or SettingKind.Item => () => icons?.Item(id),
+            SettingKind.Job => () => icons?.Job(id),
+            SettingKind.Monster => () => icons?.Monster(id),
+            _ => null,
         };
+        var detailIcon = kind is SettingKind.Resource && Game is not null && Game.TryGetSource(id, out var source) ? icons?.Job(source.JobId) : null;
 
-        return new OptionViewModel(reference.Id, Names.Name(kind, reference), DetailOf(kind, reference), icon, detailIcon);
+        return new OptionViewModel(id, Names.Name(kind, reference), DetailOf(kind, reference), icon, detailIcon)
+        {
+            IconSize = kind is SettingKind.Monster ? OptionViewModel.PortraitSize : OptionViewModel.ItemIconSize,
+        };
     }
 
     /// <summary>Names a profession, with its icon, in the app's language.</summary>
