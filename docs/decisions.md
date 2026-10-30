@@ -4212,6 +4212,135 @@ D31's and D48's downloads.*
 - **Not measured yet**: an install from the release on GitHub, which waits for the steps of D174, and a client the app does
   not ship, which the tests cover.
 
+## D176: The release v0.1.0 checked, installed from GitHub
+
+*2026-10-29, step 9, session 9a, the owner verifying on the owner's machine. Settles D175's install from the release.*
+
+- **Published** on 2026-10-29 by the release workflow on the tag `v0.1.0` (D171): the run green, the files of 3.7.12.12
+  embedded and audited (D172), Setup.exe 82 MB, the release marked latest.
+- **Installed** from that release on GitHub on the owner's machine, the data the tools wrote, the database and the app's
+  settings set aside: the host ran for 3.7.12.12 on the files the app ships.
+- **Updates** (D173): the settings page said up to date through the GitHub source, which skips the release
+  `client-3.7.12.12`, without the app's packages.
+- **Played**: a profile, with the owner's client: found good.
+
+## D177: Step 9 in seven sessions, from the protocol up
+
+*2026-10-29, step 9, session 9a, chosen by the owner, as the lead recommended it. Builds D169.*
+
+- **Asked** by the owner: a fight AI complete and clever, handling every case and every criterion of a spell; Bubble's
+  emulator and BillBot read closely; the client's data used, its monsters, spells and characteristics; the breeds' own
+  mechanisms taken in, such as the Zobal's masks, the Steamer's turrets, the Rogue's bombs, the Xelor's telefrags, the
+  Huppermage's runes, the Feca's glyphs and summons.
+- **Read** in `vendor/` (D3), for ideas: Bubble's emulator holds a damage calculation ported from Dofus 2's client, with
+  every check before a cast, target masks, zones, triggers, formulas, line of sight, tackle, portals, bombs, telefrags and
+  carrying; BubbleBot reuses it under a thin fight layer, choosing one action at a time, its state never updated from the
+  actions the server announces, its AI racing the network's thread; BillBot chooses greedily, finds life steal by a French
+  word, and never sees invulnerability. None searches sequences of actions or thinks again after the server's answers.
+- **Measured** in the client (client.md): 17,006 spells and 34,320 spell levels, their effects carrying masks, triggers and
+  zones; 884 effects, 6,377 states, 5,129 monsters with their grades, 19 breeds, 123 characteristics, the Rogue's bombs and
+  walls, spells' variants and pairs, and 38 formulas in Lua, among them the monsters' characteristics and experience.
+- **The sessions**, each layer measured before the next:
+  - **9a**, the fight's protocol measured on captures made with the owner: the start, placement and its cells (D125),
+    fighters, turns, sequences and what the client sends by itself, moves, casts, the actions the server announces, the
+    end and its gains; named and pinned, mapping format 9; the fight's state in the bot; the placement cells and the
+    fighters on the app's map. The player still fights.
+  - **9b**, the fight's data in the pack, format 5: spells and levels, their flags read from the client's code, effects,
+    states, monsters and grades with their formulas, breeds, characteristics, bombs and walls, variants.
+  - **9c**, the rules of a cast in `D3B.Engine`: line of sight, ranges, zones, target masks, every condition of a spell,
+    moving in a fight with tackle and dodge; checked on captures, D3B accepting and refusing the casts the server did.
+  - **9d**, the effects' engine: each effect as data, Bubble's formulas measured one by one (Q5), a bench comparing what
+    D3B foresees with what the server answered, action by action.
+  - **9e**, the AI, playable: placement, then each turn a search for the best sequences of moves and casts, thought again
+    after each answer of the server; the bot fights alone, and harvesting fights instead of pausing (D144).
+  - **9f**, the hard cases, one mechanism at a time, each measured: summons, the Steamer's turrets among them, the Rogue's
+    bombs, the Feca's glyphs, the Huppermage's runes, the Xelor's telefrags, the Zobal's masks, traps and invisibility,
+    portals, carrying, sacrifice, shared damage. Among them, as the owner said, which summon the bot plays and which plays
+    alone: a spell and its variant decide it, such as "Maîtrise des invocations", which gives the summons' control, and
+    "Liberté des invocations", which lets them play alone, and a Steamer's turret plays alone until its third evolution.
+  - **9g**, strategies: the profile's settings, a role, prudence, spells preferred or left out, and the AI tried on many
+    fights, per breed through the effects.
+- **Every spell through its effects**, never per class (D169); a session may split in two as it grows, as 6c did.
+- **Rejected.**
+  - A vertical slice, a bot fighting from 9b with direct damage alone: seen sooner, but its AI built on a partial simulator
+    and remade.
+  - The hard cases before the AI: a complete simulator first, but no fight of the bot's before the step's end.
+
+## D178: The fight's protocol, measured: mapping format 9
+
+*2026-10-30, step 9, session 9a, on captures the owner made ([client.md](client.md#the-game-fought)).*
+
+- **Measured** on the 40 game connections of 3.7.12.12 captured, 11 fights among them, 4 the owner's with a Steamer for this
+  session and 7 earlier, a Xelor's among them: 9 the player's attacks and 2 resources' protectors', 8 won and 3 lost. By structure, timing, and values
+  compared on the machine, with a measuring tool never committed; nothing written down but counts.
+- **Named and pinned** for 3.7.12.12 (D54), in `actors.proto`, `fights.proto` and `fight_actions.proto`: the attack's request;
+  the fight's start and join; the placement's cells, request, dispositions and readiness; the fight's start; its fighters,
+  shown and synchronized, each a character with its breed and level or a monster with its id, grade and level, its team,
+  life, AP and MP; the turns' order, rounds, each turn's start, the client's being let to play, the server asking whether
+  the client is ready, the client's answer, the turn's end and the request ending it; the characteristics refreshed; the
+  sequences and the client's acknowledgement; the cast's request; the action announced, as a cast, AP or MP spent, life lost
+  or healed, a teleport, a swap, a summon or a death; and the end, with each fighter's outcome, experience and loot. The
+  map's actors moved to `actors.proto`, which the fighters extend; a characteristic reads its usable and whole forms too.
+- **Names**: the references' where measured (D56). BillBot's mapping names this build's obfuscated messages and fields, its
+  very names: a hint, each pairing checked on the captures. Its nested fields often mislead here: the placement's lists
+  are the other way round, a loss's life lies where it names a permanent loss, its heal is what it calls a detection, its
+  teleport what it calls a dodge, and the experience's floors are shuffled. The names here are what the captures measured;
+  what no capture set is neutral or left out.
+- **A fight lost**, D144's measure: 3 of the player's attacks. The server says a text, 34, and names another map than the
+  fight began on, the same twice, from which the harvest travelled back to its zone (D130). A protector's fight names the
+  character its attacker, as an attack does: the kind stays told by its timing (D144).
+- **What the client does by itself**, measured: it acknowledges the character's sequences that nest in none, 120 of 124,
+  and says it is ready for each turn, 49 times, 3 ms to 3.5 s after the server asked; in a fight it never confirms a walk.
+  D3B sends none of these: as for walks (D60), the client follows the server.
+- **`scripts/capture.cs --messages`** lists the messages a game connection's frames carry by their type URLs, in their order
+  and at their time, with `--mapping` the readable names, with `--frames --schema` their fields: the tool to measure fights
+  again, never a value.
+- **Mapping.** The readable protocol holds 192 messages, 405 fields, 25 enums and 183 values. `MappingFile.FormatVersion` is
+  9, `mapping-9.binpb`, 12,783 bytes, the same bytes on two runs, audited without failure; the 40 game connections, 29,428
+  frames, decode through it, 8,134 understood whole and 5,219 more read, none misread. The release of 3.7.12.12 needs it,
+  which the release tool publishes once the owner says so (D50); then a release of the app, whose files come from it (D172).
+- **Rejected.**
+  - BillBot's mapping taken as it stands: wrong on the fields measured.
+  - Every action of the fight's event named now: the captures set 12 of its 36; the others wait for the sessions measuring
+    them, 9d and 9f.
+
+## D179: The fight's state, in the character's
+
+*2026-10-30, step 9, session 9a. Builds D88.*
+
+- **`FightState`**, in `D3B.Bot.Fights`, is part of the character's snapshot (`CharacterState.Fight`), from the fight's
+  context to the roleplay's: the phase, placement, fighting or ended; the character's team and both teams' placement cells;
+  whether the character said it is ready; the fighters, each with its team, cell, life and most life, AP and MP, level,
+  breed or monster and grade, and summoner; the turns' order, the round, whose turn it is and whether the character may act;
+  the end, its outcome, experience, kamas and objects. `IsFighting` is now whether there is one.
+- **`FightEvents`**, pure functions as the character's (D9), take the fight's messages; `CharacterEvents` hands them each
+  fight message first, so that the character's walk in a fight moves its fighter and leaves no path to confirm.
+- **AP and MP** come from the characteristics alone, which the server gives after each cast and step and as each turn
+  begins: the spending it also announces comes before or after them, and would be counted twice. **Life** comes from the
+  losses and heals announced, a permanent loss lowering the most; the characteristics carry it only as a fighter is shown.
+- **The journal** writes the fight's end once, its outcome and gains (`FightEndEntry`), which the logs page says.
+- **Not taken yet**: the actions no capture set (pushes, marks, states, invisibility, carrying), the spells' cooldowns, and
+  the summons the player controls, each for the session measuring it; the bot sends nothing in a fight until 9e. Measured
+  once, for 9f: as each fight starts the server gives the client the character's spells as the context it plays in; it says
+  a turret just summoned is not controlled, and once the turret evolved, it gave the client the turret's context before its
+  turn.
+- **Rejected.**
+  - The fight kept apart from the character's state, in the actor: two snapshots to keep in step, where one is replaced
+    whole.
+
+## D180: The placement cells and the fighters on the map
+
+*2026-10-30, step 9, session 9a, as D125 planned it. Settles D125.*
+
+- **The cells are the server's**: of the 11 fights' maps, all in the pack, none holds a cell flagged red or blue, and the 8
+  or 12 cells each team got were all walkable. The pack's flags stay Dofus 2's.
+- **The map page** draws a layer of its own, "Combat": during the placement the challengers' cells in red and the
+  defenders' in blue, as the client shows them, over the ground; then the character on its fighter's cell, its allies and
+  enemies as squares of their colours, the dead left out. A cell under the pointer names the fighter on it, its side, what
+  it is, its life, AP and MP, and whose placement cell it is. Monsters are named by their ids until 9b puts them in the pack.
+- **Rejected.**
+  - The placement cells kept after the placement: the fight's start makes them meaningless.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

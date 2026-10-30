@@ -42,7 +42,8 @@ back learned and kept, and each run kept for a statistics page (step 6, session 
 6d); the harvest's resources by profession, its place chosen by each character's levels, zaaps only when they save enough
 maps, and profiles given (step 6, session 6e); the app published by CI with Velopack, shipping its client build's pack,
 schema and mapping, and updating itself from the repository's releases, the host downloading nothing (step 6, session
-6f). Everything else below is the target.
+6f); the fight's protocol measured and mapped, the fight's state in the bot's, and the fight on the app's map (step 9,
+session 9a). Everything else below is the target.
 
 ## Overview
 
@@ -136,7 +137,7 @@ map's elements, using them, doors and the drawing of the map; in session 4d (D79
 D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
 client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c
 (D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's
-resources.
+resources; in session 9a (D179), the fight's state.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -150,8 +151,8 @@ resources.
   use the character is in (D75), the map's NPCs, the dialog with one and the exchange with the storage (D80), the zaaps
   it knows, a zaap's dialog with its costs and the haven bag it is in (D83), whether it fights (D88), whether the server
   may still hold a walk the client did not follow (D89), inventory, kamas, weight, how full it is, and professions, and
-  when its account's subscription ends, which the connection phase's identification said (D72). `IsBusy` gathers what
-  makes every behavior answer `Busy`: a walk, a use, a dialog or exchange, a fight.
+  when its account's subscription ends, which the connection phase's identification said (D72), and its fight (D179).
+  `IsBusy` gathers what makes every behavior answer `Busy`: a walk, a use, a dialog or exchange, a fight.
   `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
 - **Behaviors** are async methods given a `BotContext`, the state, the pack's maps, world paths and banks, the clock and
   the game connection to send through, and run one at a time by `BotActor.RunAsync`. A request waits until the client
@@ -242,6 +243,15 @@ resources.
   halving a resource's worth, not above the character's level (`HarvestPlace`, `AutomaticPlace`, D166), its name before
   the tour on the card; a zaap only when it saves the profile's number of maps, 5 by default (`HarvestSettings.ZaapSaving`,
   D167). The module reads a profile stored before as it harvested, and gives six presets (D168).
+- **Fights** (D179), in `D3B.Bot.Fights`: the character's state holds its fight (`CharacterState.Fight`, `FightState`) from
+  the fight's context to the roleplay's: its phase, the character's team and both teams' placement cells, whether the
+  character is ready, the fighters by id (`Fighter`: team, cell, life and most life, AP and MP, level, breed or monster and
+  grade, summoner), the turns' order, the round, whose turn it is and whether the character may act, and how the fight
+  ended for it and what it gained (`FightEnd`). `FightEvents`, pure functions, take every fight message before the
+  character's do, so that a fighter's walk, the character's among them, moves it with no path to confirm; AP and MP come from
+  the characteristics alone, life from the losses and heals announced. The journal writes a fight's end once
+  (`FightEndEntry`). The client acknowledges the sequences and says it is ready for each turn by itself; the bot sends
+  nothing in a fight until 9e.
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
@@ -316,7 +326,8 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
 - The obfuscated schema, built in session 3c (D39, D40): `scripts/schema.cs` reads the installed build's protocol from
   its IL2CPP code with Cpp2IL, its structure from the metadata and the encoding of every field from the machine code,
   and writes it as a `FileDescriptorSet` beside the build's pack, `schema-1.binpb`. `scripts/capture.cs --schema` reads
-  captures with it, field by field.
+  captures with it, field by field; with `--messages`, the game's frames by the messages their type URLs name, in order
+  and with their time, `--mapping` naming the readable ones (D178).
 - The readable protocol, built in session 3d for the connection phase (D42) and in session 3g for the game's first
   messages (D55, D56): `.proto` files of our own in `src/D3B.Protocol/Connection/` and `src/D3B.Protocol/Game/`, which
   Grpc.Tools compiles into Google.Protobuf classes at build. Their numbers are 3.7.12.12's wire's; the game's are likely
@@ -328,7 +339,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-8.binpb` (`MappingFile`, D156), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-9.binpb` (`MappingFile`, D178), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -488,10 +499,12 @@ updating itself in 6f (D171 to D173).
   bot (`BotChoice`), each chosen in the same selector.
 - **The map page** (D120 to D122, `D3B.App.ViewModels.Maps`): the bot's map drawn from the pack as its character moves,
   which its card opens. `MapCanvas`, in `D3B.App.Controls`, draws a scene flat in the theme's palette (`MapPalette`), a
-  map's fixed geometries built once, in seven layers toggled in a menu that shows each one's marks, the legend (D162): the cells, the character and its path, the elements by
-  what the server says of them, the NPCs, the exits from the world graph (`MapExits`), the other bots, and the zones and
-  stairs; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
-  bag's and a fight's maps are drawn as the others; a resource by its icon, faded once harvested (D141). A running
+  map's fixed geometries built once, in layers toggled in a menu that shows each one's marks, the legend (D162): the cells, the character and its path, the elements by
+  what the server says of them, the NPCs, the exits from the world graph (`MapExits`), the other bots, the zones and
+  stairs, and the fight; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
+  bag's and a fight's maps are drawn as the others; in a fight, the Fight layer tints the teams' placement cells red and
+  blue during the placement, the server's (D180), then draws the character on its fighter's cell and its allies and
+  enemies as squares, each described under the pointer with its life, AP and MP; a resource by its icon, faded once harvested (D141). A running
   activity's report adds a line, an Activity layer ringing the elements it wants and the one it goes for and marking the
   exit it heads to, and its tour's mini-map, gone through, probable, to see, without a resource, growing back and isolated
   (D131, D138, D145, D149).
@@ -583,12 +596,29 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 
 ## Fights
 
-- A fight is decided by simulating candidate actions and scoring them (D13). The simulator applies spell effects read
+Step 9, in seven sessions, each layer measured before the next (D177). Built in session 9a: the fight's protocol, named
+and pinned in `actors.proto`, `fights.proto` and `fight_actions.proto` (D178); the fight's state in the bot's (D179, in
+[Bot run time](#bot-run-time)); the fight on the app's map (D180).
+
+- The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
+  every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
+  character's client play, frames every action in nested sequences, and announces what each did by the effect's id: casts,
+  AP and MP spent, life lost and healed, teleports, swaps, summons and deaths; it asks the client whether it is ready for
+  the next turn. It ends with each fighter's outcome, experience and loot. The bot acts through the cast's, the walk's,
+  the placement's, the readiness' and the turn's end's requests; the client sends the rest by itself.
+- Next, in `D3B.Data` and `D3B.Engine`: the spells, effects, states and monsters in the pack (9b); the rules of a cast,
+  line of sight, zones, masks and conditions (9c); the effects' engine, Bubble's formulas measured one by one against the
+  server's answers (9d).
+- A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
+  of moves and casts and thinks again after each answer of the server (9e). The simulator applies spell effects read
   from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
-- Strategies, per class or per build, are modules.
+- The hard cases through the effects, measured one at a time (9f), and strategies as modules and profile settings, per
+  breed through the effects, never per class (9g).
 
 ## Tests
 
+- The fight's state is tested on fights built as the captures measured them: placement, turns, every action taken, a
+  summon, the end, and what the server says of a fighter it never showed (D179).
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and
   world paths (D68, D71), and later line of sight.
 - Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay.
@@ -615,8 +645,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   changes and deleted, an account forgotten, resources chosen several at once, what a bot met said once; every icon is
   parsed within its grid (D161); every page and the profile editor's dialogs are drawn without a screen in both languages
   and themes, and looked at (D159, D162).
-- The map page against bots played the same way: its scene, exits, elements, NPCs, other bots, a fight's and a missing
-  map, and what a cell holds, in both languages; its drawing without a screen, a pixel of each mark checked in each
+- The map page against bots played the same way: its scene, exits, elements, NPCs, other bots, a fight's placement and
+  fighters, a fight's and a missing map, and what a cell holds, in both languages; its drawing without a screen, a pixel of each mark checked in each
   theme's palette and the cell under the pointer described; its layout's cells found back from their centres (D120 to
   D122).
 - Time is controlled through `FakeTimeProvider`.

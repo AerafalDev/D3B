@@ -33,8 +33,12 @@ tooltips, the profile editor on a page of its own beside its zone's preview, dia
 resources by profession, some left out, the highest level first if asked, or as a list; chooses its place by each
 character's levels, the sub-area richest in what it can harvest and not above its level; takes a zaap only when it saves
 enough maps; and six profiles are given, an automatic harvest and one per profession. The app is published with an
-installer, ships the data of the client build it was made for, and updates itself from this repository's releases. Next:
-fights and their AI, then the blueprints. See the [roadmap](docs/roadmap.md).
+installer, ships the data of the client build it was made for, and updates itself from this repository's releases.
+Fights are under way: D3B reads a fight's protocol, measured on the official client, keeps each bot's fight, its
+fighters, their life, AP and MP, the turns and the outcome with what it gained, and the map page draws the teams'
+placement cells and the fighters; the player still fights. Next: the spells and monsters in the data, the rules of a
+cast and the effects, then an AI that searches each turn's best moves and casts, then the blueprints. See the
+[roadmap](docs/roadmap.md).
 
 ## Installing
 

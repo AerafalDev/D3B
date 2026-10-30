@@ -13,6 +13,8 @@ travelled from map to map ([the game, between maps](#the-game-between-maps)), it
 used ([the game, teleported](#the-game-teleported)), and its floors, fights and disconnections met by an activity
 ([the game, interrupted](#the-game-interrupted)). Its icons and its elements' graphics were measured on 2026-10-29 for
 session 6b ([Icons](#icons), [Graphics](#graphics)), and a tour foretold by them ([the game, foretold](#the-game-foretold)).
+Its fights were measured on 2026-10-30 for session 9a, on the wire ([the game, fought](#the-game-fought)) and in its tables
+([Fights' tables](#fights-tables)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -37,6 +39,7 @@ dotnet run --file scripts/client.cs                                   # which co
 dotnet run --file scripts/capture.cs -- --frames                      # the captures' reads, frames and protobuf shapes, D3B's own frames apart, no value
 dotnet run --file scripts/schema.cs -- --proto <dir>                  # the protocol's obfuscated schema, counted, and as .proto text
 dotnet run --file scripts/capture.cs -- --frames --schema <schema>    # which message of the schema reads the captures, field by field
+dotnet run --file scripts/capture.cs -- <game captures> --messages --mapping <mapping> --frames --schema <schema>  # the game's messages in order, named, field by field
 dotnet run --file scripts/mapping.cs                                  # pairs D3B's readable protocol with the schema, audits it, writes the mapping
 dotnet run --file scripts/mapping.cs -- --without-captures            # the same from pins and structure alone, without anchors
 dotnet run --file scripts/mapping.cs -- --pins <empty dir>            # without pins: lists, for what is left open, the messages that fit
@@ -341,6 +344,31 @@ lead to 1 to 5 maps, 16 in all at the bank's coordinates on no world map, and 2 
 one bank. 7 banks have one inside a door without criterion leads into, 3 have two; quests close the doors of 3 more: at
 Astrub, one door element leads to the bank and to such an inside, the criterion choosing. The bank of Astrub's inside
 holds two bankers, NPCs 520 and 522; the server places them, with no NPC in the client's data for that map.
+
+### Fights' tables
+
+Measured on 2026-10-30 for session 9a, not in the pack yet: 9b extracts them (D177). By layout and count, with
+`scripts/inspect.cs -- layout <bundle> <root> --references`.
+
+| Root | Records | Holds |
+| --- | --- | --- |
+| `SpellsDataRoot` | 17,006 | A spell's name, type, levels, scripts of its animations, and its preview zone |
+| `SpellLevelsDataRoot` | 34,320 | A level's grade, AP, ranges, critical chance, stacks, casts per turn and target, global ones, interval, initial and global cooldowns, the least level, a criterion on states, flags in 16 bits, effects and critical effects, preview zones |
+| `EffectsDataRoot` | 884 | An effect's characteristic and its operator, category, element, whether it boosts, is active and used in fights, its priority and power rate, its opposite |
+| `SpellStatesDataRoot` | 6,377 | A state's flags: it prevents casts or fights, it is silent, its bearer cannot be moved, pushed, swapped, tackled or tackle, deal damage or be healed, is invulnerable, in melee or at range |
+| `MonstersDataRoot` | 5,129 | A monster's grades, each with its level, life, AP, MP, characteristics, damage bonuses, resistances fixed and in percent, dodges, tackle, initiative, experience and starting spell; its spells and their grades, drops, sub-areas, aggression, ratios of characteristics and souls |
+| `BreedsDataRoot` | 19 | A breed's points per characteristic, spells and roles |
+| `CharacteristicsDataRoot` | 123 | A characteristic's keyword, category and scaling formula |
+| `SpellTypesDataRoot`, `SpellVariantsDataRoot`, `SpellPairsDataRoot` | 3,274, 431, 644 | Spells' types, variants and pairs |
+| `SpellBombsDataRoot`, `SpellBombWallsDataRoot` | 10, 8 | The Rogue's bombs and the walls between them |
+| `LuaFormulasDataRoot` | 38 | Formulas in Lua: a monster's characteristics and life by level, experience by level, a group's bonus, and others of guilds, alliances and seasons |
+| `SpellScriptsDataRoot` | 14,934 | Spells' animations, not their effects |
+
+An effect of a spell level holds its effect's id, its order, a target id and a target mask as text, a duration, a random
+weight and group, a modifier, whether it is dispellable, a delay, triggers as text, an element, its spell, the trigger's
+duration, dice, a value, and a zone: cells, a shape and two parameters as numbers, where Dofus 2 had text, a decrease of
+damage by step and its most steps, whether it stops at a target, a forced direction, whether it takes in the carried, and
+whether only cells in line of sight. The levels' flags' meaning lies in the client's code, which 9b reads.
 
 ## Texts
 
@@ -1287,6 +1315,59 @@ With `ObjectUseMultipleRequest` (D156): 132 messages paired, 62 by pin, 11 by th
 among them; 132 messages, 270 fields, 19 enums and 147 values audited, no failure and no note; the mapping 9,150 bytes,
 format 8, the same bytes on two runs; the 37 game connections, of 26,090 frames, 5,219 understood whole, 4,164 more read,
 and 16,707 carrying one of 206 messages the readable protocol lacks; none misread.
+
+### The game, fought
+
+Measured on 2026-10-30 for session 9a (D178 to D180): the 40 game connections of 3.7.12.12 captured, 11 fights among them,
+4 the owner played with a Steamer for this session and 7 earlier, a Xelor's among them: 9 the player's attacks and 2
+resources' protectors', which name the character the attacker too. By structure, timing, and values compared on the machine with the build's pack, never the actors' ids or names.
+`scripts/capture.cs --messages --frames --schema` lists them, message by message.
+
+- **The start.** The client walks to the group and sends, in one read, its walk's confirmation and the attack's request,
+  the group's id. The server destroys the context and creates a fight's, 29 to 33 ms later (D88), then sends every fighter's
+  disposition, the character's with each monster's in turn. The client asks for the fight's map, the server answers with
+  the fight's start, who attacked whom, of type 4, the join, a placement of 440 to 444 tenths of a second at most, each
+  fighter shown, both teams' placement cells and the turns' order.
+- **Placement.** 8 or 12 cells a team; the attacking character, of team 0, stands on its list's first, the monsters, of team
+  1, on theirs. The server's list for team 0 is the second, its other the first; the 15 cells the player moved to were all
+  in it, each of the 14 requests answered with every fighter's disposition 28 to 33 ms later. The 11 fights' maps are in the pack, and
+  none holds a cell flagged red or blue (D180). The client sends its readiness; the server answers whose, then starts the
+  fight within the same millisecond.
+- **The fighters.** A character with its breed and level, a monster with its id, grade and level, each with its team,
+  whether it lives, and its characteristics: a character's AP and MP usable, its base in one number and what it spent this
+  turn taken off in another, its life 0 plus 11 as out of fights; a monster's whole values, 0 alone of the life's. Monsters and
+  summons have ids from -1 down.
+- **Turns.** As the fight starts, the server gives the character's spells as the context the client plays in, and the
+  first round. Each turn it names the fighter and the turn's length: 300 and 340 tenths for the two characters, 290 for a
+  monster, 150 for a summon, 10 for a dead fighter, whose turn passes at once; to the character's client alone it then lets
+  it play. It gives each fighter's AP and MP as its turn begins. It asks the client whether it is ready for the next turn,
+  49 times: the client answered ready each time, 3 ms to 3.5 s later, 0.6 s halfway. The player ended turns early 16 times.
+- **Sequences.** 466 in the captures, nested: a spell's (0), a weapon's (1, once), what an action triggers (3), a walk (4),
+  a turn's start (6) and end (7), and the spells every fighter casts as the fight starts (8). The client acknowledged 120
+  of the 124 sequences of the character's that nest in none, never a nested one, and 17 of other fighters' spells.
+- **Actions.** Each by the effect's id: 344 casts, 1 weapon's blow, 80 AP spent and 32 MP spent, 64 losses of life from
+  93 to 100 by element, 1 a push's and 1 of effect 2828, 19 heals, 9 teleports, 15 swaps, 23 deaths, 6 summons, 4 changes of
+  look, and 17 actions of 4 other kinds, not named. A walk in a fight is a walk's request and event, framed in a sequence of its own with the MP it spent, and
+  the client never confirms it. A loss names its element, 0 neutral to 4 air, -1 for a push's, the life lost, a monster's
+  whole life when one blow killed it, and the part of it lost for the fight. A teleport's cell is where the fighter's next
+  walk starts. A death is followed by the turns' order, the dead fighter kept in it, marked.
+- **Summons.** A Steamer's turrets, each with its monster's id and grade, its characteristics, its summoner, and its id and
+  cell in a position of its own. The server said each turret just summoned was not controlled; a turret was summoned again
+  under another monster's id, its own id the same; in the last fight, the server gave the client a turret's context before
+  the turret's turn, which the owner says a third evolution makes controlled (D177).
+- **The end.** The last death, the client's readiness, then the objects and kamas gained, the characteristics, the
+  experience, and the results: each fighter's outcome, 2 won and 0 lost, the character's level, its experience between
+  its level's floor and the next's, and what the fight gave, and its loot, objects grouped by the monster they came from,
+  and kamas. Then the roleplay's context and the map the fight began on. The character won 8 fights and lost 3, all three
+  the player's attacks: after each loss, a text, 34, and another map than the fight began on, the same twice, from which
+  the harvest travelled back to its zone.
+- **No capture holds** an aggression, a push that moved a fighter, a mark, a state, an invisible fighter, or a fighter
+  carried.
+
+The 40 game connections decoded through mapping 9: of 29,428 frames, 8,134 understood whole, 5,219 more read, and 16,075
+carrying one of 187 messages the readable protocol lacks; none misread. The mapping pairs 192 messages, 88 by pin, 11 by
+the captures and 93 by fields, and 25 enums; 405 fields and 183 values audited, no failure; 12,783 bytes, format 9, the
+same bytes on two runs.
 
 ## Protocol code
 
