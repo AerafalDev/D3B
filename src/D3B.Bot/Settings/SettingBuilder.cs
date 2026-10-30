@@ -78,15 +78,15 @@ public sealed class SettingBuilder<TSettings>
         return this;
     }
 
-    /// <summary>Offers first, for a sub-area setting, the sub-areas where resources of another setting grow (D127).</summary>
-    /// <param name="resources">The resources' setting, declared before, such as <c>s =&gt; s.Resources</c>.</param>
+    /// <summary>Offers first, for a sub-area setting, the sub-areas where resources of another setting grow, or its monsters live (D127, D245).</summary>
+    /// <param name="values">The resources' or monsters' setting, declared before, such as <c>s =&gt; s.Resources</c>.</param>
     /// <returns>This builder.</returns>
-    /// <exception cref="InvalidOperationException">The setting holds no sub-area, or the other is not declared before, or holds no resource.</exception>
-    public SettingBuilder<TSettings> SuggestedBy(Expression<Func<TSettings, IReadOnlyList<int>>> resources)
+    /// <exception cref="InvalidOperationException">The setting holds no sub-area, or the other is not declared before, or holds neither resources nor monsters.</exception>
+    public SettingBuilder<TSettings> SuggestedBy(Expression<Func<TSettings, IReadOnlyList<int>>> values)
     {
-        ArgumentNullException.ThrowIfNull(resources);
+        ArgumentNullException.ThrowIfNull(values);
 
-        _setting.SetSuggestedBy(_owner.Find(resources));
+        _setting.SetSuggestedBy(_owner.Find(values));
 
         return this;
     }
@@ -99,7 +99,20 @@ public sealed class SettingBuilder<TSettings>
     {
         ArgumentNullException.ThrowIfNull(resources);
 
-        _setting.SetSuggesting((settings, game) => resources((TSettings)settings, game));
+        _setting.SetSuggesting((settings, game) => resources((TSettings)settings, game), SettingKind.Resource);
+
+        return this;
+    }
+
+    /// <summary>Offers first, for a sub-area setting, the sub-areas where monsters the activity reckons from its settings live, such as those of a family chosen (D247).</summary>
+    /// <param name="monsters">Reckons the monsters from the settings and the game's values; it must be quick.</param>
+    /// <returns>This builder.</returns>
+    /// <exception cref="InvalidOperationException">The setting holds no sub-area.</exception>
+    public SettingBuilder<TSettings> SuggestedByMonsters(Func<TSettings, GameReferences, IReadOnlyList<int>> monsters)
+    {
+        ArgumentNullException.ThrowIfNull(monsters);
+
+        _setting.SetSuggesting((settings, game) => monsters((TSettings)settings, game), SettingKind.Monster);
 
         return this;
     }
@@ -116,7 +129,7 @@ public sealed class SettingBuilder<TSettings>
 
     /// <summary>Makes a list of resources those to leave out: the app offers to exclude rather than add, and warns of no level lacking (D165).</summary>
     /// <returns>This builder.</returns>
-    /// <exception cref="InvalidOperationException">The setting is no list of resources, spells or monsters.</exception>
+    /// <exception cref="InvalidOperationException">The setting is no list of resources or monsters.</exception>
     public SettingBuilder<TSettings> Excluding()
     {
         _setting.SetExcluding();

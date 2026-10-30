@@ -1,10 +1,8 @@
 using System.Collections.Frozen;
 using D3B.Bot.Interactives;
-using D3B.Data.Breeds;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.Monsters;
-using D3B.Data.Spells;
 using D3B.Data.World;
 
 namespace D3B.Bot.Settings;
@@ -17,8 +15,8 @@ namespace D3B.Bot.Settings;
 /// those only skills of <c>Base</c> gather, such as drinking water from a well, with no level (D150).
 /// </para>
 /// <para>
-/// Spells are the breeds' and their variants', each of its breed (D234); monsters those a sub-area lists, but bombs and
-/// those the bestiary hides, each of its super race and at its first grade's level (D236).
+/// Monsters are those a sub-area lists, but bombs and those the bestiary hides, each of its super race and at its first
+/// grade's level (D236).
 /// </para>
 /// <para>Each list is read once, then shared: the pack does not change while the host runs.</para>
 /// </remarks>
@@ -39,18 +37,15 @@ public sealed class GameReferences
     private readonly Lazy<FrozenDictionary<int, FrozenSet<int>>> _baseSkills;
     private readonly Lazy<ILookup<int, long>> _maps;
     private readonly Lazy<Dictionary<long, int>> _subAreaOf;
-    private readonly Lazy<IReadOnlyList<GameReference>> _breeds;
-    private readonly Lazy<Dictionary<int, int>> _breedOfSpell;
-    private readonly Lazy<IReadOnlyList<GameReference>> _spells;
     private readonly Lazy<IReadOnlyList<GameReference>> _superRaces;
+    private readonly Lazy<IReadOnlyList<GameReference>> _families;
+    private readonly Lazy<Dictionary<int, int>> _familyOfMonster;
+    private readonly Lazy<Dictionary<int, int>> _superRaceOfFamily;
     private readonly Lazy<Dictionary<int, int>> _superRaceOfMonster;
     private readonly Lazy<IReadOnlyList<GameReference>> _monsters;
 
     /// <summary>Gets the professions whose skills gather a resource, <c>Base</c> last, whose resources no profession needs (D150, D165).</summary>
     public IReadOnlyList<GameReference> GatheringJobs => _gathering.Value;
-
-    /// <summary>Gets the breeds, whose spells a spell setting offers (D234).</summary>
-    public IReadOnlyList<GameReference> Breeds => _breeds.Value;
 
     /// <summary>Gets the monsters' super races, whose monsters a monster setting offers (D236).</summary>
     public IReadOnlyList<GameReference> SuperRaces => _superRaces.Value;
@@ -62,8 +57,6 @@ public sealed class GameReferences
     /// <param name="graph">The world graph, which says the maps a character may travel to; without it, every map of the atlas counts.</param>
     /// <param name="places">Where each graphic is drawn, which places the resources no sub-area lists (D150); without it, they are placed nowhere.</param>
     /// <param name="graphics">What the host learned of the graphics, with <paramref name="places"/>.</param>
-    /// <param name="spells">The spells, which the breeds name; without them, no spell is offered.</param>
-    /// <param name="breeds">The breeds and their spells.</param>
     /// <param name="monsters">The monsters and their races; without them, no monster is offered.</param>
     public GameReferences(
         WorldAtlas atlas,
@@ -72,8 +65,6 @@ public sealed class GameReferences
         WorldGraph? graph = null,
         GraphicPlaces? places = null,
         GraphicSkills? graphics = null,
-        SpellCatalog? spells = null,
-        BreedCatalog? breeds = null,
         MonsterCatalog? monsters = null)
     {
         ArgumentNullException.ThrowIfNull(atlas);
@@ -102,12 +93,19 @@ public sealed class GameReferences
         _resourcesByJob = new Lazy<ILookup<int, GameReference>>(() => ResourcesByJob(jobs, items));
         _items = new Lazy<IReadOnlyList<GameReference>>(() => [.. items.Items.ToArray().Select(item => new GameReference(item.Id, item.NameId, item.Level))]);
         _itemTypes = new Lazy<Dictionary<int, int>>(() => items.Items.ToArray().ToDictionary(item => item.Id, item => (int)item.TypeId));
-        _breeds = new Lazy<IReadOnlyList<GameReference>>(() => breeds is null ? [] : [.. breeds.Breeds.ToArray().Select(breed => new GameReference(breed.Id, breed.NameId, null))]);
-        _breedOfSpell = new Lazy<Dictionary<int, int>>(() => BreedsOfSpells(spells, breeds));
-        _spells = new Lazy<IReadOnlyList<GameReference>>(() => spells is null ? [] : [.. _breedOfSpell.Value.Keys.Order().Select(id => new GameReference(id, spells.TryGetSpell(id, out var spell) ? spell.NameId : 0, null))]);
         _superRaces = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. monsters.SuperRaces.ToArray().Select(race => new GameReference(race.Id, race.NameId, null))]);
         _superRaceOfMonster = new Lazy<Dictionary<int, int>>(() => SuperRacesOfMonsters(monsters, atlas));
         _monsters = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. _superRaceOfMonster.Value.Keys.Order().Select(id => MonsterOf(monsters, id))]);
+
+        // A family, a race, a hunter meets a monster of: 208 of the client's 265, measured on 3.7.12.12 (D247).
+        _familyOfMonster = new Lazy<Dictionary<int, int>>(() => monsters is null ? [] : _superRaceOfMonster.Value.Keys.ToDictionary(id => id, id => monsters.TryGetMonster(id, out var monster) ? (int)monster.Race : 0));
+        _superRaceOfFamily = new Lazy<Dictionary<int, int>>(() => monsters is null ? [] : monsters.Races.ToArray().ToDictionary(race => race.Id, race => race.SuperRaceId));
+        _families = new Lazy<IReadOnlyList<GameReference>>(() =>
+        {
+            var met = _familyOfMonster.Value.Values.ToHashSet();
+
+            return monsters is null ? [] : [.. monsters.Races.ToArray().Where(race => met.Contains(race.Id)).Select(race => new GameReference(race.Id, race.NameId, null))];
+        });
 
         // Base's own resources have no profession, so no level (D150).
         _resources = new Lazy<IReadOnlyList<GameReference>>(() => [.. _resourcesByJob.Value
@@ -116,31 +114,6 @@ public sealed class GameReferences
             .Select(resource => resource.MinBy(gathered => gathered.Level))
             .Concat(_baseSkills.Value.Keys.Select(item => new GameReference(item, items.TryGetItem(item, out var found) ? found.NameId : 0, null)))
             .OrderBy(resource => resource.Id)]);
-    }
-
-    private static Dictionary<int, int> BreedsOfSpells(SpellCatalog? spells, BreedCatalog? breeds)
-    {
-        var found = new Dictionary<int, int>();
-
-        if (spells is null || breeds is null)
-            return found;
-
-        foreach (var breed in breeds.Breeds.Span)
-        {
-            foreach (var spell in breeds.SpellsOf(breed))
-                found.TryAdd(spell, breed.Id);
-        }
-
-        // A variant is its breed's, as the spell it replaces is.
-        foreach (var variant in spells.Variants.Span)
-        {
-            found.TryAdd(variant.SpellId, variant.BreedId);
-            found.TryAdd(variant.VariantSpellId, variant.BreedId);
-        }
-
-        found.Remove(0);
-
-        return found;
     }
 
     private static Dictionary<int, int> SuperRacesOfMonsters(MonsterCatalog? monsters, WorldAtlas atlas)
@@ -209,8 +182,8 @@ public sealed class GameReferences
     }
 
     /// <summary>Gets the values a setting of a kind offers.</summary>
-    /// <param name="kind">A kind of the game, such as <see cref="SettingKind.SubArea"/> or <see cref="SettingKind.Spell"/>.</param>
-    /// <param name="within">The area of the sub-areas, the profession of the resources, the breed of the spells or the super race of the monsters, to offer those within it alone.</param>
+    /// <param name="kind">A kind of the game, such as <see cref="SettingKind.SubArea"/> or <see cref="SettingKind.Monster"/>.</param>
+    /// <param name="within">The area of the sub-areas, the profession of the resources or the super race of the monsters, to offer those within it alone.</param>
     /// <returns>The values; a profession's resources by the level it gathers them from.</returns>
     /// <exception cref="ArgumentOutOfRangeException">The kind is none of the game's.</exception>
     public IReadOnlyList<GameReference> Options(SettingKind kind, int? within = null)
@@ -224,8 +197,7 @@ public sealed class GameReferences
             (SettingKind.Resource, null) => _resources.Value,
             (SettingKind.Resource, { } job) => [.. _resourcesByJob.Value[job]],
             (SettingKind.Item, _) => _items.Value,
-            (SettingKind.Spell, null) => _spells.Value,
-            (SettingKind.Spell, { } breed) => [.. _spells.Value.Where(spell => _breedOfSpell.Value[spell.Id] == breed)],
+            (SettingKind.MonsterFamily, _) => _families.Value,
             (SettingKind.Monster, null) => _monsters.Value,
             (SettingKind.Monster, { } superRace) => [.. _monsters.Value.Where(monster => _superRaceOfMonster.Value[monster.Id] == superRace)],
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "The kind names nothing of the game's."),
@@ -245,8 +217,8 @@ public sealed class GameReferences
             SettingKind.SubArea => _atlas.TryGetSubArea(id, out _),
             SettingKind.Resource => _resources.Value.Any(resource => resource.Id == id),
             SettingKind.Item => _itemTypes.Value.ContainsKey(id),
-            SettingKind.Spell => _breedOfSpell.Value.ContainsKey(id),
             SettingKind.Monster => _superRaceOfMonster.Value.ContainsKey(id),
+            SettingKind.MonsterFamily => _families.Value.Any(family => family.Id == id),
             _ => false,
         };
     }
@@ -268,13 +240,21 @@ public sealed class GameReferences
         return _sources.Value.TryGetValue(resource, out source);
     }
 
-    /// <summary>Finds the breed whose spell, or a variant of one, a spell is (D234).</summary>
-    /// <param name="spell">The spell.</param>
-    /// <param name="breed">Its breed.</param>
-    /// <returns>Whether a breed casts it.</returns>
-    public bool TryGetBreed(int spell, out int breed)
+    /// <summary>Gets the monsters of a family a hunter meets (D247).</summary>
+    /// <param name="family">The family, a race.</param>
+    /// <returns>Its monsters, by id.</returns>
+    public IReadOnlyList<int> MonstersOfFamily(int family)
     {
-        return _breedOfSpell.Value.TryGetValue(spell, out breed);
+        return [.. _familyOfMonster.Value.Where(pair => pair.Value == family).Select(pair => pair.Key).Order()];
+    }
+
+    /// <summary>Finds the super race a family belongs to, which names where its monsters come from (D247).</summary>
+    /// <param name="family">The family, a race.</param>
+    /// <param name="superRace">Its super race.</param>
+    /// <returns>Whether the family is one of the game's.</returns>
+    public bool TryGetSuperRaceOfFamily(int family, out int superRace)
+    {
+        return _superRaceOfFamily.Value.TryGetValue(family, out superRace);
     }
 
     /// <summary>Finds a monster's super race (D236).</summary>
@@ -368,6 +348,37 @@ public sealed class GameReferences
         }
 
         return [.. found.OrderByDescending(subArea => subArea.Resources.Count).ThenBy(subArea => subArea.SubArea.Level).ThenBy(subArea => subArea.SubArea.Id)];
+    }
+
+    /// <summary>Gets the sub-areas where monsters live, the most of them first, then the lowest (D245).</summary>
+    /// <param name="monsters">The monsters asked for, in order.</param>
+    /// <param name="within">The area to seek them in alone, if any.</param>
+    /// <returns>Each sub-area the client lists at least one of them in (D238), with its maps and those it holds.</returns>
+    public IReadOnlyList<SubAreaMonsters> SubAreasLiving(IReadOnlyList<int> monsters, int? within = null)
+    {
+        ArgumentNullException.ThrowIfNull(monsters);
+
+        var found = new List<SubAreaMonsters>();
+
+        foreach (var subArea in _atlas.SubAreas.Span)
+        {
+            if (within is { } area && subArea.AreaId != area)
+                continue;
+
+            var living = _atlas.MonstersOf(subArea);
+            var held = new List<int>();
+
+            foreach (var monster in monsters)
+            {
+                if (living.Contains(monster) && !held.Contains(monster))
+                    held.Add(monster);
+            }
+
+            if (held.Count > 0)
+                found.Add(new SubAreaMonsters(new GameReference(subArea.Id, subArea.NameId, subArea.Level), _maps.Value[subArea.Id].Count(), held));
+        }
+
+        return [.. found.OrderByDescending(subArea => subArea.Monsters.Count).ThenBy(subArea => subArea.SubArea.Level).ThenBy(subArea => subArea.SubArea.Id)];
     }
 
     /// <summary>Tells whether a value of the game is within another: a sub-area within an area, a resource within a profession.</summary>

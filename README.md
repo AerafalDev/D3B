@@ -3,6 +3,7 @@
 [![CI](https://github.com/AerafalDev/D3B/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AerafalDev/D3B/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/AerafalDev/D3B?label=release)](https://github.com/AerafalDev/D3B/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.com/invite/6A6Vw9Mn24)
 
 An open-source bot for Dofus 3, Ankama's Unity client, written in C# on .NET 10 for Windows. D3B plays your character
 through the official client: it harvests, banks and fights, and a desktop app shows what each bot does. Every feature is
@@ -25,10 +26,12 @@ a module, and the game's data and protocol are read from the client you have ins
   and foresees what each cast does from the game's data, checked against every cast of the fights captured so far. Its
   AI places the character, then each turn weighs the walks and casts, a worn sword's blow among them, against the
   monsters' reply and plays them at a pace you can follow.
-- **Fighting and strategies.** A fighting activity, made as harvesting is, tours a zone, chosen or chosen for the
-  character's level, and attacks the groups of monsters its profile allows: monsters chosen or left out, a group's size,
-  and only those the AI judges it beats. Each character fights with its strategy, a profile of its own: a role, a style,
-  prudence, spells preferred or left out with their icons, its placement, the fight closed and spectators refused.
+- **Fighting.** A fighting activity, made as harvesting is, tours a zone, chosen or chosen for the character's level,
+  and attacks the groups of monsters its profile allows: monsters or families of monsters chosen or left out, a group's
+  size, and only those the AI judges it beats over the fight's course; the sub-areas where the monsters chosen live come
+  first, and the profile's editor shows the zone, its monsters and the place chosen for each character. One AI fights for
+  every character, whatever its breed: it plays prudently a fight it judges risky, and closes the fight and refuses
+  spectators. The bot's card counts the fights and the loot, with its icons.
 - **The desktop app.** A card per bot, with where it is, its pods, kamas and activity; a live map of the bot's map, its
   path, elements, NPCs and fighters; the accounts, the profiles and their editor with a preview of the zone; a journal
   per bot, a protocol inspector, and the settings. Dark by default, in French and English. It installs without
@@ -53,9 +56,9 @@ Pull requests that add any of these are closed.
 ## Status
 
 D3B is young and changes fast: settings, data formats and the app may change from one version to the next. The first
-milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them, the strategies and the
-fighting activity are on `main`, not yet in a release, the activity still to be measured in game; summons, glyphs and
-the other breeds' mechanisms come next. Then several accounts
+milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them and the fighting activity
+are on `main`, not yet in a release, the activity being measured in game; summons, glyphs and the other breeds'
+mechanisms come next, so that the AI plays every breed whole. Then several accounts
 and groups, blueprint mods edited in the app, the marketplace and crafting. The [roadmap](docs/roadmap.md) has the steps
 in order.
 
@@ -129,7 +132,7 @@ are configuration keys, given on the command line:
 | --- | --- |
 | `--Storage:Path <file>` | Uses another database file. |
 | `--Network:Captures:Enabled true` | Records each connection in `%LOCALAPPDATA%\D3B\captures`, which the app's protocol inspector replays. A capture holds the account's login ticket: never share one. |
-| `--Fights:Alone true` | Has the AI play every fight of the bots, whatever their activity and strategy say. |
+| `--Fights:Alone true` | Has the AI play every fight of the bots, the player's own included, whatever their activity says. |
 | `--Delays:Display 1.5` | The client's display time, in seconds; the other delays are under `Delays:` too. |
 
 ### Tools
@@ -222,7 +225,8 @@ flowchart LR
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: it covers the conventions the build
 enforces and what can never be committed. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md). To
-report a vulnerability, follow the [security policy](SECURITY.md) rather than opening an issue.
+report a vulnerability, follow the [security policy](SECURITY.md) rather than opening an issue. To talk about D3B, join
+its [Discord](https://discord.com/invite/6A6Vw9Mn24).
 
 ## License
 

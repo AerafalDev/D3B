@@ -60,27 +60,6 @@ public static class ActivityServiceCollectionExtensions
         return services.AddDefinition(new ActivityDefinition(id, name, builder.Build(), (provider, settings) => ActivatorUtilities.CreateInstance<TActivity>(provider, settings!)));
     }
 
-    /// <summary>Registers the fight's strategy, a kind of profile never started, which each character plays (D233).</summary>
-    /// <typeparam name="TSettings">The strategy's settings, their initial values the defaults.</typeparam>
-    /// <param name="services">The host's services.</param>
-    /// <param name="id">Its id, unique in the host.</param>
-    /// <param name="name">Its name, as the app shows it, in its language.</param>
-    /// <param name="describe">Declares each setting.</param>
-    /// <returns>The services.</returns>
-    /// <exception cref="InvalidOperationException">A kind of profile with the id is already registered, or the default settings do not hold.</exception>
-    public static IServiceCollection AddStrategy<TSettings>(this IServiceCollection services, string id, LocalizedText name, Action<ActivitySettingsBuilder<TSettings>> describe)
-        where TSettings : class, new()
-    {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(describe);
-
-        var builder = new ActivitySettingsBuilder<TSettings>();
-
-        describe(builder);
-
-        return services.AddDefinition(new ActivityDefinition(id, name, builder.Build(), ProfileKind.Strategy));
-    }
-
     private static IServiceCollection AddDefinition(this IServiceCollection services, ActivityDefinition definition)
     {
         // While the modules build, so that a module reusing an id stops the host from starting (D93).

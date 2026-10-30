@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using D3B.Bot.Activities;
+using D3B.Bot.Localization;
 
 namespace D3B.Bot.Settings;
 
@@ -18,4 +19,7 @@ public sealed record SettingsPreview
 
     /// <summary>Gets what the settings lead to for each character that plays them, such as the zone chosen for its levels (D166).</summary>
     public ImmutableArray<PreviewPlayerNote> PlayerNotes { get; init; } = [];
+
+    /// <summary>Gets what the app says in the zone's place while the settings lead to none, such as a place chosen at each character's level and no character to choose it for (D246).</summary>
+    public GameText? Message { get; init; }
 }

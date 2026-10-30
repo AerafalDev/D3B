@@ -95,6 +95,9 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int BlowLevelId = 1_100;
     public const int SwordItemId = 6_751;
 
+    // The one monster of the world, living in its sub-area, its grades from level 10 to 14.
+    public const int LarvaId = 489;
+
     // Items', professions' and monsters' icons are 64 pixels square in a pack (D136).
     private const int IconSize = 64;
 
@@ -138,9 +141,6 @@ internal sealed class TestPlay : IAsyncDisposable
 
     public Bots Bots { get; }
 
-    /// <summary>Gets the strategy every character plays, D3B's defaults until a test sets another (D233).</summary>
-    public TestStrategies Strategies { get; } = new();
-
     public TestPlay(params int[] blocked)
         : this([], blocked)
     {
@@ -159,7 +159,7 @@ internal sealed class TestPlay : IAsyncDisposable
         Places = new GraphicPlaces(_pack, World);
         _logs = LoggerFactory.Create(logging => logging.AddProvider(new FakeLoggerProvider(Log)).SetMinimumLevel(LogLevel.Debug));
         // The wait between two steps is a test's own to ask for: the others drive their steps by the server's answers alone.
-        Bots = new Bots(Maps, World, Tables, Time, _logs, Strategies) { Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.Zero } };
+        Bots = new Bots(Maps, World, Tables, Time, _logs) { Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.Zero } };
         _accounts = new GameAccounts(_settings.SelectionLifetime, Time);
         _decoder = new RelayDecoder(Translation, new GameServerSelections(_settings, Time), _accounts, [Bots, .. observers], _logs);
     }
@@ -300,7 +300,14 @@ internal sealed class TestPlay : IAsyncDisposable
                 new(97, 0, 0, '\0', 2, 1, 0, 0, 0, 0, EffectProperties.UseInFight),
                 new(108, 0, 0, '\0', 2, 2, 0, 0, 0, 0, EffectProperties.UseInFight),
             }));
-            writer.Add(MonsterCatalog.EntryName, new MonsterCatalog(Array.Empty<Monster>(), Array.Empty<MonsterGrade>(), Array.Empty<MonsterSpell>(), Array.Empty<byte>(), Array.Empty<MonsterRatio>(), Array.Empty<MonsterRace>(), Array.Empty<MonsterRace>()));
+            writer.Add(MonsterCatalog.EntryName, new MonsterCatalog(
+                new[] { new Monster { Id = LarvaId, FirstGrade = 0, GradeCount = 2 } },
+                new[] { new MonsterGrade { Grade = 1, Level = 10 }, new MonsterGrade { Grade = 2, Level = 14 } },
+                Array.Empty<MonsterSpell>(),
+                Array.Empty<byte>(),
+                Array.Empty<MonsterRatio>(),
+                Array.Empty<MonsterRace>(),
+                Array.Empty<MonsterRace>()));
             writer.Add(BreedCatalog.EntryName, new BreedCatalog(Array.Empty<Breed>(), Array.Empty<int>(), Array.Empty<BreedRole>(), Array.Empty<BreedRoleValue>(), Array.Empty<BreedStatCost>()));
             writer.Add(JobCatalog.EntryName, new JobCatalog(
                 new[] { new Job(Job.Base, 0, Job.NoIcon), new Job(Lumberjack, 202, LumberjackIconId) },
@@ -378,9 +385,9 @@ internal sealed class TestPlay : IAsyncDisposable
             new(InsideMapId, 4, -18, SubAreaId, -1, 0, 0),
             new(OtherInsideMapId, 4, -18, SubAreaId, -1, 0, 0),
         ];
-        SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 2, 0, 0)];
+        SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 2, 0, 1)];
 
-        return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, Array.Empty<Waypoint>(), new[] { Ash, Chestnut }, Array.Empty<int>());
+        return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, Array.Empty<Waypoint>(), new[] { Ash, Chestnut }, new[] { LarvaId });
     }
 
     /// <summary>A game connection, its first request presenting a ticket the connection phase gave an account, or none.</summary>

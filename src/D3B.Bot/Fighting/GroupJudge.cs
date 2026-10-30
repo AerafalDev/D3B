@@ -24,15 +24,21 @@ public static class GroupJudge
     // The character imagined beside the group: the odds weigh no position, only who reaches whom in a turn.
     private const long Self = 1;
 
+    // Measured on the owner's 54 groups the character was known for (D249): of the 13 the group would beat it in under a
+    // quarter of the turns it needs, 11 were won; of the 20 under the turns it needs, 17. Only the first are turned away.
+    private const double Margin = 0.25;
+
     /// <summary>Tells whether the settings allow attacking a group.</summary>
     /// <param name="settings">The activity's settings.</param>
     /// <param name="group">The group.</param>
     /// <param name="level">The character's level.</param>
+    /// <param name="monsters">The pack's monsters, which give a monster's family (D247).</param>
     /// <returns>Whether they allow it.</returns>
-    public static bool Allows(FightSettings settings, MapMonsterGroup group, int level)
+    public static bool Allows(FightSettings settings, MapMonsterGroup group, int level, MonsterCatalog monsters)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(monsters);
 
         var size = group.Monsters.Length;
 
@@ -43,11 +49,11 @@ public static class GroupJudge
             return false;
 
         return settings.Mode is FightMode.Chosen
-            ? group.Monsters.Any(monster => settings.Monsters.Contains(monster.MonsterId))
+            ? group.Monsters.Any(monster => ChosenMonsters.Holds(settings, monsters, monster.MonsterId))
             : group.Monsters.All(monster => monster.Level <= level);
     }
 
-    /// <summary>Tells whether the AI expects the character to beat a group: the turns it takes to beat the group fewer than the group's to beat it.</summary>
+    /// <summary>Tells whether the AI expects the character to beat a group: the group would not take its life in under a quarter of the turns it takes to beat the group, over the fight's course (D249).</summary>
     /// <param name="group">The group.</param>
     /// <param name="state">The character's state, out of a fight.</param>
     /// <param name="self">The character as its last fight's placement showed it, or <see langword="null"/> before any.</param>
@@ -59,17 +65,35 @@ public static class GroupJudge
     {
         ArgumentNullException.ThrowIfNull(group);
         ArgumentNullException.ThrowIfNull(state);
+
+        return OddsOf(group, state, self, map, tables, tactics) is { } odds
+            ? odds.TurnsToLose >= odds.TurnsToWin * Margin
+            : group.Monsters.All(monster => monster.Level <= (state.Level ?? 0));
+    }
+
+    /// <summary>Gets the odds the AI gives the character against a group, over the fight's course (D249).</summary>
+    /// <param name="group">The group.</param>
+    /// <param name="state">The character's state, out of a fight.</param>
+    /// <param name="self">The character as its last fight's placement showed it, or <see langword="null"/> before any.</param>
+    /// <param name="map">The map the group stands on.</param>
+    /// <param name="tables">The pack's game tables.</param>
+    /// <param name="tactics">The fight's AI.</param>
+    /// <returns>The odds, or <see langword="null"/> when the group is judged by levels: before the character's first fight, or on a map too small to imagine it.</returns>
+    public static FightOdds? OddsOf(MapMonsterGroup group, CharacterState state, Fighter? self, FightMap map, GameTables tables, FightTactics tactics)
+    {
+        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(tables);
         ArgumentNullException.ThrowIfNull(tactics);
 
         if (self is null || state.Level is not { } level)
-            return group.Monsters.All(monster => monster.Level <= (state.Level ?? 0));
+            return null;
 
         var cells = Cells(map, group.Monsters.Length + 1);
 
         if (cells.Count <= group.Monsters.Length)
-            return group.Monsters.All(monster => monster.Level <= level);
+            return null;
 
         var life = state.Life is { } now && state.MaxLife is { } most ? (now, most) : (self.MaxLife, self.MaxLife);
         var character = FightCombatants.Of(self with { Id = Self, Team = FightTeam.Challenger, Cell = cells[0], IsAlive = true, Buffs = [], Life = life.Item1, MaxLife = life.Item2 }, tables.Monsters);
@@ -87,7 +111,7 @@ public static class GroupJudge
             var id = -1L - index;
 
             if (!tables.Monsters.TryGetMonster(monster.MonsterId, out var found) || !tables.Monsters.TryGetGrade(monster.MonsterId, monster.Grade, out var grade))
-                return false;
+                return new FightOdds(double.PositiveInfinity, 0);
 
             var combatant = Imagined(id, cells[index + 1], found, grade);
 
@@ -99,7 +123,8 @@ public static class GroupJudge
         var fight = new ImaginedFight { Map = map, Fighters = fighters.ToImmutable(), ActorId = Self, Round = 1 };
         var knowledge = new FightKnowledge { Spells = spells.ToImmutable(), TurnPoints = points.ToImmutable() };
 
-        return !tactics.Odds(fight, knowledge).IsRisky;
+        // Over the fight's course, the group's members dying one after another, rather than all striking every turn (D249).
+        return tactics.OddsOverTheFight(fight, knowledge);
     }
 
     private static List<int> Cells(FightMap map, int count)

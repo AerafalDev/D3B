@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>A value the dialog offers, a resource, a spell or a monster: its name and icon, its group and level, checked or not.</summary>
+/// <summary>A value the dialog offers, a resource or a monster: its name and icon, its group and level, checked or not.</summary>
 internal sealed partial class GameChoiceViewModel : ObservableObject
 {
     private readonly Action<GameChoiceViewModel> _checked;
@@ -10,7 +10,7 @@ internal sealed partial class GameChoiceViewModel : ObservableObject
     /// <summary>Gets the value.</summary>
     public OptionViewModel Option { get; }
 
-    /// <summary>Gets its group: the profession that gathers a resource, or <see langword="null"/> for one of <c>Base</c>'s (D150); a spell's breed; a monster's super race.</summary>
+    /// <summary>Gets its group: the profession that gathers a resource, or <see langword="null"/> for one of <c>Base</c>'s (D150); a monster's super race.</summary>
     public int? GroupId { get; }
 
     /// <summary>Gets its level, a resource's its profession gathers it from, a monster's its first grade's, if it has one.</summary>

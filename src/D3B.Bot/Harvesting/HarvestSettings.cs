@@ -45,7 +45,7 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets where what goes to the bank is deposited (D147).</summary>
     public HarvestDepositPlace DepositTo { get; set; } = HarvestDepositPlace.OwnChest;
 
-    /// <summary>Gets or sets whether the AI plays the fights the harvest meets, with the character's strategy; else the player does (D235).</summary>
+    /// <summary>Gets or sets whether the AI plays the fights the harvest meets; else the player does (D235).</summary>
     public bool AiFights { get; set; } = true;
 
     /// <summary>Gets or sets what the activity does once a fight cut one of its steps (D144).</summary>

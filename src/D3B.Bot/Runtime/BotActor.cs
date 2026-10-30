@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Threading.Channels;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
@@ -66,6 +67,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile ActivityRun? _activity;
     private volatile FightEnd? _lastFightEnd;
     private volatile Fighter? _lastFighter;
+    private ImmutableHashSet<long> _noTeleportFrom = [];
     private int _fightsBegun;
     private int _lastEndedFight;
     private long _placedAt;
@@ -87,7 +89,7 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>Gets whether a behavior runs.</summary>
     public bool IsActing => _acting;
 
-    /// <summary>Gets or sets whether the AI plays every fight of the character, whatever its activity and strategy say, off at first: the host's <c>Fights:Alone</c>, for the measures (D235).</summary>
+    /// <summary>Gets or sets whether the AI plays every fight of the character, whatever its activity says, off at first: the host's <c>Fights:Alone</c>, for the measures (D235, D244).</summary>
     public bool FightsAlone
     {
         get => _fightsAlone;
@@ -101,24 +103,17 @@ public sealed class BotActor : IAsyncDisposable
     /// <remarks>What the fighting activity judges a group with before attacking it (D236).</remarks>
     public Fighter? LastFighter => _lastFighter;
 
+    /// <summary>Gets the maps the server refused the character a teleport from since the bot was made, whatever their flag says (D248).</summary>
+    public IReadOnlySet<long> NoTeleportFrom => Volatile.Read(ref _noTeleportFrom);
+
     /// <summary>Gets how many fights began since the bot was made: the last one's number.</summary>
     public int FightsBegun => Volatile.Read(ref _fightsBegun);
 
     /// <summary>Gets the number of the fight <see cref="LastFightEnd"/> ended, as <see cref="FightsBegun"/> counted it.</summary>
     public int LastEndedFight => Volatile.Read(ref _lastEndedFight);
 
-    /// <summary>Gets the activity running, until it is over.</summary>
-    private BotActivity? Running => _activity is { IsOver: false } run ? run.Activity : null;
-
-    /// <summary>Tells whether the AI plays the character's fights now: the host's switch, else its activity's own fights as its profile says, else, out of an activity, as its strategy says (D235).</summary>
-    /// <param name="strategy">The character's strategy.</param>
-    /// <returns>Whether the AI plays them.</returns>
-    public bool Fights(StrategySettings strategy)
-    {
-        ArgumentNullException.ThrowIfNull(strategy);
-
-        return _fightsAlone || (Running is { } activity ? activity.FightsItsFights : strategy.OutOfActivity);
-    }
+    /// <summary>Gets whether the AI plays the character's fights now: the host's switch, or its activity's own fights as its profile says; out of an activity, the fights are the player's (D235, D244).</summary>
+    public bool Fights => _fightsAlone || _activity is { IsOver: false, Activity.FightsItsFights: true };
 
     /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
     public ActivityRun? Activity => _activity;
@@ -205,6 +200,13 @@ public sealed class BotActor : IAsyncDisposable
     }
 
     /// <summary>Pauses the bot as the player's hand does, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
+    /// <summary>Remembers that the server refused the character a teleport from a map, so that no journey teleports from it again (D248).</summary>
+    /// <param name="mapId">The map.</param>
+    internal void RefuseTeleportFrom(long mapId)
+    {
+        ImmutableInterlocked.Update(ref _noTeleportFrom, (maps, map) => maps.Add(map), mapId);
+    }
+
     internal void Pause()
     {
         Post(new Pausing());

@@ -4,7 +4,7 @@ using D3B.Storage.Accounts;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>A character on its account's card: who, when it last played, the profile it plays, the strategy it fights with and whether its profile starts on connection (D99, D233).</summary>
+/// <summary>A character on its account's card: who, when it last played, the profile it plays and whether it starts on connection (D99).</summary>
 internal sealed partial class CharacterRowViewModel : ObservableObject
 {
     private readonly AccountsViewModel _page;
@@ -22,9 +22,6 @@ internal sealed partial class CharacterRowViewModel : ObservableObject
     /// <summary>Gets the profiles it may play, none first.</summary>
     public IReadOnlyList<ProfileOptionViewModel> Profiles { get; }
 
-    /// <summary>Gets the strategies it may fight with, "Standard", D3B's defaults, first.</summary>
-    public IReadOnlyList<ProfileOptionViewModel> Strategies { get; }
-
     /// <summary>Gets its level, and whether its bot plays it now, or when it last played.</summary>
     [ObservableProperty]
     public partial string Detail { get; private set; } = "";
@@ -38,10 +35,6 @@ internal sealed partial class CharacterRowViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasProfile))]
     public partial ProfileOptionViewModel? SelectedProfile { get; set; }
 
-    /// <summary>Gets or sets the strategy it fights with.</summary>
-    [ObservableProperty]
-    public partial ProfileOptionViewModel? SelectedStrategy { get; set; }
-
     /// <summary>Gets or sets whether its profile starts once its client first connects while D3B runs.</summary>
     [ObservableProperty]
     public partial bool StartsOnConnection { get; set; }
@@ -53,18 +46,15 @@ internal sealed partial class CharacterRowViewModel : ObservableObject
     /// <param name="page">The accounts page.</param>
     /// <param name="character">The character, as recorded.</param>
     /// <param name="profiles">The profiles it may play, none first.</param>
-    /// <param name="strategies">The strategies it may fight with, "Standard" first.</param>
-    public CharacterRowViewModel(AccountsViewModel page, KnownCharacter character, IReadOnlyList<ProfileOptionViewModel> profiles, IReadOnlyList<ProfileOptionViewModel> strategies)
+    public CharacterRowViewModel(AccountsViewModel page, KnownCharacter character, IReadOnlyList<ProfileOptionViewModel> profiles)
     {
         _page = page;
         Character = character;
         Name = character.Name.Length > 0 ? character.Name : page.Localizer.Format("CharacterNamed", character.Id);
         Initials = AvatarInitials.Of(Name);
         Profiles = profiles;
-        Strategies = strategies;
         _reading = true;
         SelectedProfile = profiles.FirstOrDefault(profile => profile.Id == character.ProfileId) ?? profiles[0];
-        SelectedStrategy = strategies.FirstOrDefault(strategy => strategy.Id == character.StrategyId) ?? strategies[0];
         StartsOnConnection = character.StartsOnConnection;
         _reading = false;
     }
@@ -87,12 +77,6 @@ internal sealed partial class CharacterRowViewModel : ObservableObject
     {
         if (!_reading && value is not null)
             _ = _page.WriteAsync(books => books.AssignAsync(Character.Key, value.Id, CancellationToken.None));
-    }
-
-    partial void OnSelectedStrategyChanged(ProfileOptionViewModel? value)
-    {
-        if (!_reading && value is not null)
-            _ = _page.WriteAsync(books => books.SetStrategyAsync(Character.Key, value.Id, CancellationToken.None));
     }
 
     partial void OnStartsOnConnectionChanged(bool value)

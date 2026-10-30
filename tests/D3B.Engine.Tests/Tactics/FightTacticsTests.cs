@@ -150,6 +150,22 @@ public sealed class FightTacticsTests
     }
 
     [Fact]
+    public void OverTheFightEachEnemyStrikesOnlyWhileItLives()
+    {
+        // Six weak biters: every one striking every turn takes the character's life before it beats them; over the fight,
+        // each dying in turn, the character outlasts them (D249).
+        var biters = Enumerable.Range(1, 6).Select(index => Biter(-index, Off(3 + index, 0), life: 20)).ToArray();
+        var (fight, knowledge) = Fight(Caster() with { Life = 600, MaxLife = 600 }, biters);
+        var still = _tactics.Odds(fight, knowledge);
+        var over = _tactics.OddsOverTheFight(fight, knowledge);
+
+        Assert.Equal(still.TurnsToWin, over.TurnsToWin, 6);
+        Assert.True(over.TurnsToLose > still.TurnsToLose);
+        Assert.True(still.IsRisky);
+        Assert.False(over.IsRisky);
+    }
+
+    [Fact]
     public void EnemiesThatHitHarderThanTheCharacterMakeTheFightRisky()
     {
         var (weak, weakKnowledge) = Fight(Caster(), Biter(-1, Off(4, 0), life: 20));

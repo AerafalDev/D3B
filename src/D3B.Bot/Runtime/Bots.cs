@@ -35,7 +35,6 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     private readonly Lazy<WorldPathfinder> _world;
     private readonly Lazy<BankDirectory> _banks;
     private readonly Lazy<FightTactics> _tactics;
-    private readonly IStrategySource _strategies;
     private readonly GameTables _tables;
     private readonly TimeProvider _time;
     private readonly ILoggerFactory _logs;
@@ -57,7 +56,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         set => _delays = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    /// <summary>Gets or sets whether the AI plays every fight of the bots made from now on, whatever their activity and strategy say: the host's <c>Fights:Alone</c> (D198, D235).</summary>
+    /// <summary>Gets or sets whether the AI plays every fight of the bots made from now on, whatever their activity says: the host's <c>Fights:Alone</c> (D198, D235, D244).</summary>
     public bool FightsAlone
     {
         get => _fightsAlone;
@@ -73,8 +72,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     /// <param name="tables">The game tables of that pack: its banks are read when a bot first banks.</param>
     /// <param name="time">The clock every bot's delays go through.</param>
     /// <param name="logs">The host's logs.</param>
-    /// <param name="strategies">The strategy each character plays, D3B's defaults for every one when none is given (D233).</param>
-    public Bots(GameMaps maps, GameWorld world, GameTables tables, TimeProvider time, ILoggerFactory logs, IStrategySource? strategies = null)
+    public Bots(GameMaps maps, GameWorld world, GameTables tables, TimeProvider time, ILoggerFactory logs)
     {
         ArgumentNullException.ThrowIfNull(maps);
         ArgumentNullException.ThrowIfNull(world);
@@ -91,7 +89,6 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         // One per host, built at the first fight: its catalogs are the pack's, shared by every bot's AI (D201).
         _tactics = new Lazy<FightTactics>(() => new FightTactics(tables), LazyThreadSafetyMode.ExecutionAndPublication);
         _tables = tables;
-        _strategies = strategies ?? new DefaultStrategies();
         _time = time;
         _logs = logs;
         _log = logs.CreateLogger<Bots>();
@@ -159,7 +156,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
             {
                 bot = new BotActor(state, _maps, _world, _banks, () => _delays, _time, _logs.CreateLogger<BotActor>()) { FightsAlone = _fightsAlone };
                 _bots[key] = bot;
-                _pilots[key] = new FightPilot(bot, _tactics, _tables, _strategies);
+                _pilots[key] = new FightPilot(bot, _tactics, _tables);
                 made = true;
             }
         }

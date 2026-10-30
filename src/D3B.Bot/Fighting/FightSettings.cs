@@ -1,7 +1,7 @@
 namespace D3B.Bot.Fighting;
 
 /// <summary>The fighting activity's settings: which groups it attacks, where, its upkeep and its bank (D236).</summary>
-/// <remarks>How the character fights is its strategy's, the profile it plays apart (D233).</remarks>
+/// <remarks>How the character fights is the AI's alone, the same for every character, as it judges each fight (D244).</remarks>
 public sealed class FightSettings
 {
     /// <summary>Gets or sets which groups to attack: those at the character's level, or those holding a monster chosen.</summary>
@@ -9,6 +9,9 @@ public sealed class FightSettings
 
     /// <summary>Gets or sets the monsters a group is attacked for, by id, when they are chosen.</summary>
     public IReadOnlyList<int> Monsters { get; set; } = [];
+
+    /// <summary>Gets or sets the families a group is attacked for a monster of, by their race's id, when they are chosen (D247).</summary>
+    public IReadOnlyList<int> Families { get; set; } = [];
 
     /// <summary>Gets or sets the monsters a group is never attacked with, by id.</summary>
     public IReadOnlyList<int> Excluded { get; set; } = [];
@@ -30,6 +33,9 @@ public sealed class FightSettings
 
     /// <summary>Gets or sets the sub-areas to hunt in, of any area when no area is chosen.</summary>
     public IReadOnlyList<int> SubAreas { get; set; } = [];
+
+    /// <summary>Gets or sets whether a tour goes through the isolated maps too, last, rather than leave them out (D149, D245).</summary>
+    public bool IsolatedMaps { get; set; }
 
     /// <summary>Gets or sets how many map changes a zaap must save to be taken (D167).</summary>
     public int ZaapSaving { get; set; } = 5;

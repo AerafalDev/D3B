@@ -7,8 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Fighting;
 
-/// <summary>Fighting monsters, the activity made as harvesting is (D236): the groups a profile chooses, found and attacked through a zone, each fight played by the AI with the character's strategy (D233).</summary>
-/// <remarks>Registers <see cref="FightActivity"/> as <c>fight</c>, with a preset, "Automatic fight", which D3B stores once as a profile (D168). Requires the bots module.</remarks>
+/// <summary>Fighting monsters, the activity made as harvesting is (D236): the groups a profile chooses, found and attacked through a zone, each fight played by the AI (D244).</summary>
+/// <remarks>Registers <see cref="FightActivity"/> as <c>fight</c>, with a preset, "Automatic fight", which D3B stores once as a profile (D168), and <see cref="FightPreviews"/>, which the app's profile editor asks (D245). Requires the bots module.</remarks>
 public sealed class FightingModule : IModule
 {
     /// <summary>The activity's id in the host's catalogue, which profiles name.</summary>
@@ -20,6 +20,7 @@ public sealed class FightingModule : IModule
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddSingleton<FightPreviews>();
         services.AddActivity<FightActivity, FightSettings>(ActivityId, FightTexts.Text("Name"), Describe);
     }
 
@@ -29,6 +30,9 @@ public sealed class FightingModule : IModule
         settings.Choice(s => s.Mode, FightTexts.Text("Mode"), mode => FightTexts.Text($"Mode{mode}")).Help(FightTexts.Text("ModeHelp"));
         settings.Monsters(s => s.Monsters, FightTexts.Text("Monsters"))
             .Help(FightTexts.Text("MonstersHelp"))
+            .VisibleWhen(s => s.Mode is FightMode.Chosen);
+        settings.MonsterFamilies(s => s.Families, FightTexts.Text("Families"))
+            .Help(FightTexts.Text("FamiliesHelp"))
             .VisibleWhen(s => s.Mode is FightMode.Chosen);
         settings.Monsters(s => s.Excluded, FightTexts.Text("Excluded"))
             .Excluding()
@@ -44,7 +48,10 @@ public sealed class FightingModule : IModule
             .VisibleWhen(s => s.Place is FightPlace.Chosen);
         settings.SubAreas(s => s.SubAreas, FightTexts.Text("SubAreas"))
             .Within(s => s.Area)
+            .SuggestedByMonsters(ChosenIn)
+            .Help(FightTexts.Text("SubAreasHelp"))
             .VisibleWhen(s => s.Place is FightPlace.Chosen);
+        settings.Flag(s => s.IsolatedMaps, FightTexts.Text("IsolatedMaps")).Help(FightTexts.Text("IsolatedMapsHelp"));
         settings.Number(s => s.ZaapSaving, FightTexts.Text("ZaapSaving"), 1, 30).Unit(FightTexts.Text("ZaapSavingUnit"));
 
         settings.Section(FightTexts.Text("SectionUpkeep"));
@@ -66,11 +73,21 @@ public sealed class FightingModule : IModule
         settings.Choice(s => s.AfterLostFight, FightTexts.Text("AfterLostFight"), after => FightTexts.Text($"AfterLostFight{after}"))
             .Help(FightTexts.Text("AfterLostFightHelp"));
 
-        settings.Rule(s => s.Mode is not FightMode.Chosen || s.Monsters.Count > 0, FightTexts.Text("RuleMonsters"));
+        settings.Rule(s => s.Mode is not FightMode.Chosen || ChosenMonsters.Any(s), FightTexts.Text("RuleMonsters"));
         settings.Rule(s => s.Place is FightPlace.Automatic || s.Area is not null || s.SubAreas.Count > 0, FightTexts.Text("RuleWhere"));
         settings.Rule(s => s.LeastMonsters <= s.MostMonsters, FightTexts.Text("RuleSize"));
+        settings.Preview((s, services, players) => services.GetRequiredService<FightPreviews>().Of(s, players));
 
         settings.Preset("auto", FightTexts.Text("PresetAuto"), _ => { });
+    }
+
+    private static IReadOnlyList<int> ChosenIn(FightSettings settings, GameReferences game)
+    {
+        // The monsters chosen and those of the families chosen, whose sub-areas come first; none while the groups are the character's level's.
+        if (settings.Mode is not FightMode.Chosen)
+            return [];
+
+        return [.. settings.Monsters.Concat(settings.Families.SelectMany(game.MonstersOfFamily)).Distinct()];
     }
 
     /// <inheritdoc/>

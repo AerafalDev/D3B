@@ -1703,6 +1703,30 @@ actor's id or name.
   0.41 to 2.49 s after the walk is shown, 1.07 s halfway. Accepted, the group is shown again, removed, and the context
   destroyed 28 to 75 ms after the attack; the fight's defender is the group, its monsters the group's.
 
+### The game, hunted by D3B
+
+Measured on 2026-10-30 for session 9g2 (D243 to D250): the 9 game connections the owner captured as D3B's fighting
+activity ran on five characters of two accounts, the pack of 3.7.12.12 and its client's data tables, with
+`scripts/fights.cs --live` and measuring tools never committed that print counts, never an actor's id or name.
+
+- **The hunt.** 22 attacks sent, 22 accepted, the fight starting 0.58 s after the attack halfway, each after a single
+  walk onto the group's cell; 22 fights won. From a fight's end to the next attack, 6.2 s halfway and 34 s at 90 %.
+- **The AI.** 106 casts sent, every one cast; 56 turns, none without a cast or a walk. An earth Zobal's 11 turns: its
+  masks put on at the turn's end, once taken off again at once, Furia cast 3 times, after the psychopath's mask put on
+  at the end of the turn before.
+- **The groups judged.** Of the 54 groups the owner attacked by hand with the character known, 50 won; every enemy
+  striking every turn, the judge turned 25 away, 21 of them won; over the fight's course, 13, 11 won (D249).
+- **Drops.** The client's monsters list their drops, `drops`, `temporisDrops` and `globalDrops`, a drop its item and its
+  chances by grade: 2,348 of 5,129 monsters drop 3,513 items, those a hunter meets 2,761, every one with its icon. The
+  pack's items are 21,554, their icons 11,755.
+- **Families.** 265 races in 35 super races; a hunter meets a monster of 208 races. The animalades are a race of 4.
+- **Incarnam.** 147 of its 163 maps carry the flag that lets a character teleport from a map; the server refused a
+  teleport from one of them nine times, text 416. Following every transition of the graph but those with a criterion, a
+  map of Incarnam reaches 77 of its maps and no other area's: the room whose doors lead to five areas, Astrub's among
+  them, has no other way in than doors behind quests' criteria. The graph's transitions are scrolls, scrolls with an
+  action, map actions and interactive elements: the doors' skill on 5,237, and some 300 of 50 other skills, stairs,
+  portals and "go to"s. No NPC's way is in it.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

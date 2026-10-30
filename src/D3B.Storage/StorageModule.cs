@@ -1,4 +1,3 @@
-using D3B.Bot.Fights;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Hosting;
 using D3B.Bot.Interactives;
@@ -55,7 +54,6 @@ public sealed class StorageModule : IModule
         services.AddSingleton<IGameObserver>(provider => provider.GetRequiredService<AccountRecorder>());
         services.AddHostedService(provider => provider.GetRequiredService<AccountRecorder>());
         services.AddHostedService<StartOnConnection>();
-        services.AddSingleton<IStrategySource, StoredStrategies>();
         services.AddSingleton<IHostPreparation, StoragePreparation>();
     }
 

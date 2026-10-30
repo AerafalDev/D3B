@@ -6,10 +6,20 @@ using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>The dialog choosing resources, spells or monsters several at once: searched by name, filtered by profession, breed or super race, resources its characters cannot gather yet dimmed (D159, D234, D236).</summary>
-/// <remarks>The values checked are added in the order they were checked, after those the list holds.</remarks>
+/// <summary>The dialog choosing resources or monsters several at once: searched by name, filtered by profession or super race, resources its characters cannot gather yet dimmed (D159, D236).</summary>
+/// <remarks>
+/// The values checked are added in the order they were checked, after those the list holds. More groups than
+/// <see cref="MostChips"/>, such as the monsters' super races, are a drop-down beside the search rather than chips, so that
+/// the dialog keeps its height (D245).
+/// </remarks>
 internal sealed partial class GamePickerViewModel : ObservableObject
 {
+    /// <summary>The most groups shown as chips: the professions that gather are 7, the monsters' super races some 40.</summary>
+    public const int MostChips = 12;
+
+    /// <summary>The most values shown at once: the dialog lays every one out, and "All" of the monsters is some 1,600 (D246).</summary>
+    public const int MostShown = 120;
+
     private readonly Dialogs _dialogs;
     private readonly PickedGamesFieldViewModel _field;
     private readonly Localizer _localizer;
@@ -17,8 +27,22 @@ internal sealed partial class GamePickerViewModel : ObservableObject
     private readonly List<GameChoiceViewModel> _checked = [];
     private readonly string _add;
 
-    /// <summary>Gets the groups to filter by, every one first: professions, breeds or super races.</summary>
+    /// <summary>Gets the groups to filter by, every one first: professions or super races.</summary>
     public IReadOnlyList<FilterChipViewModel> Groups { get; }
+
+    /// <summary>Gets whether the groups are too many for chips, and shown as a drop-down.</summary>
+    public bool IsCompact => Groups.Count > MostChips;
+
+    /// <summary>Gets or sets the group the values are filtered by, as the drop-down shows it.</summary>
+    public FilterChipViewModel ChosenGroup
+    {
+        get => SelectedGroup;
+        set
+        {
+            if (value is not null && !value.IsSelected)
+                Select(value);
+        }
+    }
 
     /// <summary>Gets the values shown, by level then name.</summary>
     [ObservableProperty]
@@ -43,6 +67,14 @@ internal sealed partial class GamePickerViewModel : ObservableObject
 
     /// <summary>Gets whether no value matches.</summary>
     public bool IsEmpty => Shown.Count == 0;
+
+    /// <summary>Gets whether more values match than are shown.</summary>
+    [ObservableProperty]
+    public partial bool HasMore { get; private set; }
+
+    /// <summary>Gets what the dialog says of the values it does not show, and how to see them.</summary>
+    [ObservableProperty]
+    public partial string MoreText { get; private set; } = "";
 
     private FilterChipViewModel SelectedGroup => Groups.First(group => group.IsSelected);
 
@@ -102,6 +134,7 @@ internal sealed partial class GamePickerViewModel : ObservableObject
         foreach (var other in Groups)
             other.IsSelected = other == group;
 
+        OnPropertyChanged(nameof(ChosenGroup));
         Filter();
     }
 
@@ -110,11 +143,15 @@ internal sealed partial class GamePickerViewModel : ObservableObject
         var group = SelectedGroup;
         var search = Search?.Trim() ?? "";
 
-        Shown =
+        List<GameChoiceViewModel> matching =
         [
             .. _all.Where(choice => (group.Id is null && !group.IsBase) || (group.IsBase ? choice.GroupId is null : choice.GroupId == group.Id))
                 .Where(choice => search.Length == 0 || choice.Option.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)),
         ];
+
+        Shown = matching.Count > MostShown ? matching[..MostShown] : matching;
+        HasMore = matching.Count > MostShown;
+        MoreText = HasMore ? _localizer.Format("PickerMore", MostShown, matching.Count) : "";
     }
 
     private void OnChecked(GameChoiceViewModel choice)

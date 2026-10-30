@@ -18,6 +18,7 @@ public sealed class SettingDefinition
     private readonly Type? _enum;
     private Func<object, bool>? _visibleWhen;
     private Func<object, GameReferences, IReadOnlyList<int>>? _suggesting;
+    private SettingKind _suggestingKind = SettingKind.Resource;
     private bool _frozen;
 
     /// <summary>Gets the setting's key: its property's name, under which its value is stored.</summary>
@@ -62,11 +63,14 @@ public sealed class SettingDefinition
     /// <summary>Gets the setting a value of the game is sought within, such as the area of a sub-area, or the profession of a resource.</summary>
     public SettingDefinition? Within { get; private set; }
 
-    /// <summary>Gets the resources whose sub-areas a sub-area setting offers first, those where they grow (D127).</summary>
+    /// <summary>Gets the resources or monsters whose sub-areas a sub-area setting offers first, those where they grow or live (D127, D245).</summary>
     public SettingDefinition? SuggestedBy { get; private set; }
 
-    /// <summary>Gets whether a sub-area setting offers first the sub-areas where some resources grow: those of a resource setting, or those the activity reckons from its settings (D127, D165).</summary>
+    /// <summary>Gets whether a sub-area setting offers first the sub-areas where some resources grow or some monsters live: those of a resource or monster setting, or those the activity reckons from its settings (D127, D165, D245, D247).</summary>
     public bool IsSuggested => SuggestedBy is not null || _suggesting is not null;
+
+    /// <summary>Gets what a sub-area setting's <see cref="Suggestions"/> are: resources, or monsters (D245).</summary>
+    public SettingKind SuggestedKind => SuggestedBy?.Kind ?? _suggestingKind;
 
     /// <summary>Gets whether a profession setting offers the professions whose skills gather a resource alone, <c>Base</c> among them (D165).</summary>
     public bool IsGathering { get; private set; }
@@ -240,27 +244,28 @@ public sealed class SettingDefinition
         Within = parent;
     }
 
-    internal void SetSuggestedBy(SettingDefinition resources)
+    internal void SetSuggestedBy(SettingDefinition values)
     {
         ThrowIfFrozen();
 
         if (Kind is not SettingKind.SubArea)
-            throw new InvalidOperationException($"The setting {Key} is suggested by nothing: only sub-areas are, by resources.");
+            throw new InvalidOperationException($"The setting {Key} is suggested by nothing: only sub-areas are, by resources or monsters.");
 
-        if (resources.Kind is not SettingKind.Resource)
-            throw new InvalidOperationException($"The setting {Key} is suggested by resources, which {resources.Key} is not.");
+        if (values.Kind is not (SettingKind.Resource or SettingKind.Monster))
+            throw new InvalidOperationException($"The setting {Key} is suggested by resources or monsters, which {values.Key} is not.");
 
-        SuggestedBy = resources;
+        SuggestedBy = values;
     }
 
-    internal void SetSuggesting(Func<object, GameReferences, IReadOnlyList<int>> resources)
+    internal void SetSuggesting(Func<object, GameReferences, IReadOnlyList<int>> values, SettingKind kind)
     {
         ThrowIfFrozen();
 
         if (Kind is not SettingKind.SubArea)
-            throw new InvalidOperationException($"The setting {Key} is suggested by nothing: only sub-areas are, by resources.");
+            throw new InvalidOperationException($"The setting {Key} is suggested by nothing: only sub-areas are, by resources or monsters.");
 
-        _suggesting = resources;
+        _suggesting = values;
+        _suggestingKind = kind;
     }
 
     internal void SetUnit(LocalizedText unit)
@@ -277,8 +282,8 @@ public sealed class SettingDefinition
     {
         ThrowIfFrozen();
 
-        if (Kind is not (SettingKind.Resource or SettingKind.Spell or SettingKind.Monster) || !IsList)
-            throw new InvalidOperationException($"The setting {Key} is no list of resources, spells or monsters: only one leaves them out.");
+        if (Kind is not (SettingKind.Resource or SettingKind.Monster) || !IsList)
+            throw new InvalidOperationException($"The setting {Key} is no list of resources or monsters: only one leaves them out.");
 
         IsExcluding = true;
     }
@@ -293,12 +298,13 @@ public sealed class SettingDefinition
         IsGathering = true;
     }
 
-    /// <summary>Gets the resources whose sub-areas a sub-area setting offers first (<see cref="IsSuggested"/>).</summary>
+    /// <summary>Gets the resources or monsters whose sub-areas a sub-area setting offers first (<see cref="IsSuggested"/>, <see cref="SuggestedKind"/>).</summary>
     /// <param name="settings">The activity's settings.</param>
     /// <param name="game">The game's values.</param>
     /// <returns>
-    /// Those the activity reckons, or the resource setting's while it shows, every resource the game has while it is hidden,
-    /// as when the activity harvests by profession; none when the setting is suggested by nothing, or the reckoning throws.
+    /// Those the activity reckons, or the resource or monster setting's while it shows; while it is hidden, every resource
+    /// the game has, as when the activity harvests by profession, and no monster, as when the activity fights the groups at
+    /// the character's level; none when the setting is suggested by nothing, or the reckoning throws.
     /// </returns>
     public IReadOnlyList<int> Suggestions(object settings, GameReferences game)
     {
@@ -321,7 +327,10 @@ public sealed class SettingDefinition
         if (SuggestedBy is not { } by)
             return [];
 
-        return by.IsVisible(settings) ? [.. by.GetValues(settings).Cast<int>()] : [.. game.Options(SettingKind.Resource).Select(resource => resource.Id)];
+        if (by.IsVisible(settings))
+            return [.. by.GetValues(settings).Cast<int>()];
+
+        return by.Kind is SettingKind.Monster ? [] : [.. game.Options(SettingKind.Resource).Select(resource => resource.Id)];
     }
 
     internal void SetPercent()
@@ -473,7 +482,7 @@ public sealed class SettingDefinition
             (SettingKind.Text, null) => "",
             (SettingKind.Text, string) => value,
             (SettingKind.Choice, not null) when _enum!.IsInstanceOfType(value) => value,
-            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Spell or SettingKind.Monster, null or int) => value,
+            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily, null or int) => value,
             _ => throw new ArgumentException($"The setting {Key} does not hold {value ?? "nothing"}.", nameof(value)),
         };
     }
@@ -499,10 +508,10 @@ public sealed class SettingDefinition
             case SettingKind.Choice when ChoiceOf(node) is { } choice:
                 return (new(choice), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Spell or SettingKind.Monster when node is null:
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily when node is null:
                 return (new(null), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Spell or SettingKind.Monster when node is JsonValue id && id.TryGetValue<int>(out var game):
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily when node is JsonValue id && id.TryGetValue<int>(out var game):
                 return (new(game), true);
 
             default:

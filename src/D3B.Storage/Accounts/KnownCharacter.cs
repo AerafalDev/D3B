@@ -26,9 +26,6 @@ public sealed class KnownCharacter
     /// <summary>Gets whether the character's profile starts once its client first connects while the host runs.</summary>
     public bool StartsOnConnection { get; init; }
 
-    /// <summary>Gets the id of the strategy the character fights with, or <see langword="null"/> for D3B's defaults, "Standard" (D233).</summary>
-    public int? StrategyId { get; init; }
-
     /// <summary>Gets who the character is, as its bot names it (D65).</summary>
     public CharacterKey Key => new(AccountId, Id);
 }

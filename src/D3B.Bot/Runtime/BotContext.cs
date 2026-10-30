@@ -53,6 +53,16 @@ public sealed class BotContext
     /// <summary>Gets how long behaviors wait now: the client's display time, the server's answers and the rest, which the user may raise (D151).</summary>
     public BotDelays Delays => _bot.Delays;
 
+    /// <summary>Gets the maps the server refused the character a teleport from, which no journey teleports from again (D248).</summary>
+    public IReadOnlySet<long> NoTeleportFrom => _bot.NoTeleportFrom;
+
+    /// <summary>Remembers that the server refused a teleport from a map, whatever its flag says (D248).</summary>
+    /// <param name="mapId">The map.</param>
+    public void RefuseTeleportFrom(long mapId)
+    {
+        _bot.RefuseTeleportFrom(mapId);
+    }
+
     /// <summary>Gets how many map changes a teleport counts as on a journey: as the running activity says, 1 without one (D167).</summary>
     public int TeleportChanges => _bot.Activity?.Activity.TeleportChanges ?? 1;
 

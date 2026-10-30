@@ -2,6 +2,7 @@ using D3B.Bot.Interactives;
 using D3B.Bot.Settings;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.Jobs;
+using D3B.Data.Monsters;
 
 namespace D3B.Bot.Tests.Settings;
 
@@ -50,6 +51,42 @@ public sealed class GameReferencesTests
         Assert.Equal([2, 1], holding.Select(subArea => subArea.Maps));
         Assert.Empty(_game.SubAreasHolding([TestReferences.Ash], TestReferences.Astrub));
         Assert.Equal([1_001L, 1_002L], _game.MapsOf(TestReferences.Forest));
+    }
+
+    [Fact]
+    public void TheSubAreasWhereMonstersLiveComeTheMostFirstThenTheLowest()
+    {
+        var living = _game.SubAreasLiving([TestReferences.Larva, TestReferences.Tofu, TestReferences.Larva]);
+
+        Assert.Equal([TestReferences.Forest, TestReferences.Hills], living.Select(subArea => subArea.SubArea.Id));
+        Assert.Equal([TestReferences.Larva, TestReferences.Tofu], living[0].Monsters);
+        Assert.Equal([2, 1], living.Select(subArea => subArea.Maps));
+        Assert.Equal([TestReferences.Hills], _game.SubAreasLiving([TestReferences.Larva], TestReferences.Amakna).Skip(1).Select(subArea => subArea.SubArea.Id));
+        Assert.Empty(_game.SubAreasLiving([TestReferences.Larva], TestReferences.Astrub));
+        Assert.Empty(_game.SubAreasLiving([]));
+    }
+
+    [Fact]
+    public void TheFamiliesOfferedAreThoseAHunterMeetsAMonsterOf()
+    {
+        // Tofus are of family 10, larvae of family 20, of super races 1 and 2; family 30's monsters live nowhere.
+        var monsters = new MonsterCatalog(
+            new Monster[] { new() { Id = TestReferences.Tofu, Race = 10, FirstGrade = 0, GradeCount = 1 }, new() { Id = TestReferences.Larva, Race = 20, FirstGrade = 1, GradeCount = 1 } },
+            new MonsterGrade[] { new() { Grade = 1, Level = 5 }, new() { Grade = 1, Level = 10 } },
+            Array.Empty<MonsterSpell>(),
+            Array.Empty<byte>(),
+            Array.Empty<MonsterRatio>(),
+            new[] { new MonsterRace(10, 1, 110), new MonsterRace(20, 2, 120), new MonsterRace(30, 2, 130) },
+            new[] { new MonsterRace(1, MonsterRace.NoSuperRace, 101), new MonsterRace(2, MonsterRace.NoSuperRace, 102) });
+        var game = new GameReferences(TestReferences.Atlas(), TestReferences.Jobs(), TestReferences.Items(), monsters: monsters);
+
+        Assert.Equal([new(10, 110, null), new GameReference(20, 120, null)], game.Options(SettingKind.MonsterFamily));
+        Assert.True(game.Exists(SettingKind.MonsterFamily, 20));
+        Assert.False(game.Exists(SettingKind.MonsterFamily, 30));
+        Assert.Equal([TestReferences.Larva], game.MonstersOfFamily(20));
+        Assert.True(game.TryGetSuperRaceOfFamily(20, out var superRace));
+        Assert.Equal(2, superRace);
+        Assert.Equal([TestReferences.Larva], game.Options(SettingKind.Monster, 2).Select(monster => monster.Id));
     }
 
     [Fact]

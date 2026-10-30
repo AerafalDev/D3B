@@ -16,15 +16,15 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Fighting;
 
-/// <summary>Fighting: the groups of monsters the settings allow found map after map through a zone and attacked, the AI playing each fight with the character's strategy (D233, D236).</summary>
+/// <summary>Fighting: the groups of monsters the settings allow found map after map through a zone and attacked, the AI playing each fight (D236, D244).</summary>
 /// <remarks>
 /// <para>
 /// Each step is chosen from the state (D87). Healed first under its share of life, on a map of the zone the character walks
 /// onto the cell of the nearest group the settings allow and the AI judges it beats, and attacks it, as the client does,
 /// measured (9g): the attack from the group's own cell, which a group leaves by walking 1 to 4 cells, so that the walk is
 /// made again; a group the server answers nothing for is left for the rest of the visit. A map with no such group is gone
-/// through, and the step travels to the nearest map of the zone still to go through; once every map was, the tour starts
-/// again, the groups having come back.
+/// through, and the step travels to the nearest map of the zone still to go through, isolated maps last when the settings
+/// take them (D149, D245); once every map was, the tour starts again, the groups having come back.
 /// </para>
 /// <para>
 /// A fight is the activity's own: the AI plays it (<see cref="BotActivity.FightsItsFights"/>), then the run answers it. A
@@ -293,7 +293,7 @@ public sealed class FightActivity : BotActivity
         // The nearest first: the shortest walk, before the group walks on.
         foreach (var group in state.MonsterGroups.Values.OrderBy(group => group.Cell is { } cell ? Engine.Maps.MapGeometry.Distance(here, cell) : int.MaxValue))
         {
-            if (_skipped.Contains(group.ActorId) || !GroupJudge.Allows(_settings, group, level))
+            if (_skipped.Contains(group.ActorId) || !GroupJudge.Allows(_settings, group, level, _tables.Monsters))
                 continue;
 
             if (!_settings.OnlyWinnable)
@@ -365,9 +365,13 @@ public sealed class FightActivity : BotActivity
 
         var inZone = context.State.MapId is { } current && ground.Maps.ContainsKey(current);
 
+        // Isolated maps last, once the others were gone through (D149).
+        var near = remaining.Where(map => !ground.Isolated.Contains(map)).ToHashSet();
+        var sought = near.Count > 0 ? near : remaining;
+
         Publish(GameText.Of(FightTexts.Text(inZone ? "DoingTravel" : "DoingReturn")));
 
-        switch (await context.TravelAsync(remaining, cancellationToken).ConfigureAwait(false))
+        switch (await context.TravelAsync(sought, cancellationToken).ConfigureAwait(false))
         {
             case TravelOutcome.Arrived:
                 _failedJourneys = 0;
@@ -378,7 +382,7 @@ public sealed class FightActivity : BotActivity
             default:
                 if (++_failedJourneys >= MostFailedJourneys)
                 {
-                    foreach (var map in remaining)
+                    foreach (var map in sought)
                         _unreachable.Add(map);
 
                     _failedJourneys = 0;
@@ -479,8 +483,8 @@ public sealed class FightActivity : BotActivity
     {
         return
         [
-            new ActivityCount(GameText.Of(FightTexts.Text("CountWon"), GameTextValue.Number(_won))),
-            new ActivityCount(GameText.Of(FightTexts.Text("CountLost"), GameTextValue.Number(_lost))),
+            new ActivityCount(GameText.Counted(FightTexts.Text("CountWonOne"), FightTexts.Text("CountWonMany"), _won)),
+            new ActivityCount(GameText.Counted(FightTexts.Text("CountLostOne"), FightTexts.Text("CountLostMany"), _lost)),
             .. _loot.OrderByDescending(pair => pair.Value).Select(pair => new ActivityCount(GameText.Of(FightTexts.Text("CountLoot"), GameTextValue.Number(pair.Value), GameTextValue.Item(pair.Key)), pair.Key)),
         ];
     }

@@ -5683,7 +5683,189 @@ in game.*
 - **Benchmarked**, BenchmarkDotNet in its process: a turn planned against four enemies in 2.6 ms and 4.79 MB, against 3.1
   ms and 4.79 MB in 9f.
 - **Not measured**: the other strategies on the captures, and the fighting activity, which no capture holds.
-||||||| 3285a40
+
+## D243: 9g2 as the owner asks it
+
+*2026-10-30, step 9, session 9g2, the owner's words, recorded as they asked. Builds D232, D241, D242.*
+
+- **Asked** for the session: the fighting activity and the strategies measured in game, the owner running "Automatic
+  fight" and a profile of monsters chosen on characters of several breeds, with "Standard", then "Healer" and "Prudent",
+  the app recording the captures; measured on them with `scripts/fights.cs --live` and what tools it needs, the attacks
+  sent, accepted or unanswered, the walks made again, the groups judged winnable against the fights won or lost, the
+  sub-area chosen, the healing and the bank, and what the game shows fixed; then what D241 left that serves, the
+  sub-areas suggested by the monsters chosen and isolated maps, and the styles and roles measured on `--turns`.
+- **Asked** as the session ran: a Discord badge in the README, linking the project's server; and no strategy at all, one
+  generic AI that uses every breed's potential and farms fast, complete and clever, every spell and every breed's
+  mechanism (D244).
+
+## D244: The strategies removed, one AI for every character
+
+*2026-10-30, step 9, session 9g2, chosen by the owner among two options, as the lead recommended it. Supersedes D233, D234
+and D240, D235 on the fights out of an activity, and D236 and D241 where they name a strategy.*
+
+- **Removed**: the strategy, a kind of profile (`ProfileKind`, `AddStrategy`, `ActivityCatalog.Strategy`), its settings,
+  presets and texts, `IStrategySource`, `DefaultStrategies` and `StoredStrategies`, the accounts page's column, and
+  `KnownCharacter.StrategyId`, by migration `NoStrategy`, which deletes the strategies' profiles and presets first. The
+  engine is as before 9g: no placement near or far (`TacticPlacement`), no allies' weight, no spell preferred, no
+  fighter's spells left out. "Standard" played as the AI did before 9g (D242): nothing the AI plays changes.
+- **What the AI does, every fight**: prudent when it judges the fight too risky as it starts (D198); the fight closed,
+  then spectators refused (D216); its sword's blow when it is worth it (D220); placed where the judge says.
+- **Out of an activity**, the fights are the player's again; `Fights:Alone` has the AI play every one, for the measures.
+  Harvesting's "The AI fights" and the fighting activity's own fights stay as D235 and D241 have them.
+- **The spell setting** (`SettingKind.Spell`), its picker by breed and the spells' icons drawn in the app go with the
+  strategy, their only user. The spells' icons stay in the pack's format 7, which no release holds yet, rather than a
+  format 8 for 1.16 MB; nothing reads them now.
+- **Measured**: SQLite drops a column whose reference is its own, once its index is dropped, inside the migration's
+  transaction; what the `Strategies` migration's way down says is not so. Checked with EF's own SQLite on a copy of a
+  database of 6f migrated to `Strategies`, a character given a strategy: the column, its index and its reference gone,
+  its profile and preset deleted, the integrity and the references whole, down and up again.
+- **A complete AI**: what it lacks for every breed is 9f's other mechanisms, summons, bombs, glyphs, runes, telefrags,
+  traps and invisibility, portals, carrying, sacrifice, shared damage, and the other kinds of weapon; one or two a
+  session, each captured, imagined, searched and measured. At step 10, a character's role in a group is the AI's to
+  judge, from its breed and the fight. Farming fast is the fighting activity's: the pace, the groups, the healing and the
+  journeys, measured in game.
+- **Rejected.**
+  - The strategies kept, hidden, "Standard" for all: code that nobody uses, to maintain.
+  - The spell setting kept for plugins: none asks for it, and its tests were the strategy's.
+
+## D245: What D241 left, made: sub-areas suggested by the monsters, isolated maps, and the place chosen on maps shown
+
+*2026-10-30, step 9, session 9g2, the owner's ask (D243), measured by the lead on the pack of 3.7.12.12 with tools never
+committed that print counts. Builds D149, D166, D236, D238, D241.*
+
+- **Suggested by the monsters**: a sub-area setting may be suggested by a monster setting as by a resource setting
+  (`SettingBuilder.SuggestedBy`, `SettingDefinition.SuggestedKind`). The fighting activity's sub-areas offer first those
+  where the monsters chosen live, the most of them first, then the lowest, each with its level, its maps and its
+  monsters (`GameReferences.SubAreasLiving`, `SubAreaMonsters`); with the monsters hidden, "Automatic", none.
+- **Isolated maps**: harvesting's reckoning, shared (`IsolatedMaps`, in `D3B.Bot.Movement`). The fighting activity's
+  ground leaves out the maps reached from their sub-area's main part only far round, unless its "Isolated maps", off by
+  default as harvesting's, takes them, travelled to last. Measured: of the 311 sub-areas listing monsters with maps the
+  world graph reaches, 9,791 maps, 83 hold isolated maps, 660 in all, 1 to 80 a sub-area and 4 halfway.
+- **The place chosen for the character, measured**: their monsters' worth alone chose a sub-area of one map shown on no
+  world map at level 10, and one of 13 maps on none, a dungeon's likely, at level 150. The activity now chooses among the
+  sub-areas holding at least 10 maps the world graph reaches on a world map (`HuntingGround.LeastMapsShown`), else the
+  richest of the others: each level from 5 to 200 gets one of 10 to 217 maps, levels 1 to 4 the only one at theirs, 9
+  maps; a basic account's characters the same sub-area of 121 maps from level 55.
+- **Rejected.**
+  - A sub-area's worth weighed by its maps: the groups a map holds are the server's, which no pack gives; the floor
+    leaves the choice D166's.
+  - The isolated maps taken by default: the harvest leaves them out, measured far round (D149).
+
+## D246: The fight profile's editor as the harvest's, and the monsters' picker filtered by a drop-down
+
+*2026-10-30, step 9, session 9g2, the owner's words as they tried the app: the monsters' picker too big to validate, and
+the fight profile's editor not good enough. Builds D127, D159, D166, D236, D245.*
+
+- **The picker**: its filter's groups are chips up to 12, the professions that gather being 7; past them, as the
+  monsters' super races, some 40, are, a drop-down beside the search (`GamePickerViewModel.MostChips`), so that the
+  dialog keeps its height and its buttons in the window.
+- **The fight profile's preview**, as harvesting's (`FightPreviews`): the ground's mini-map, its isolated maps marked;
+  the maps to go through, the monsters living there, or the chosen of them that do, their levels, the way to the nearest
+  bank on foot (`NearestBank`, shared with harvesting's) and the isolated maps; and for each character playing the
+  profile, the sub-area the activity would choose at its level, a subscribed character's, the editor knowing no
+  subscription. The mini-map's legend names probable and empty maps only for a zone that tells them apart, a harvest's.
+- **Then, as the owner tried it**: a profile no character plays yet, its place automatic, drew a lonely "Auto" and the
+  harvest's "Choose resources and a place". With no character's level known, the monsters chosen give one, the highest of
+  their grades', and the preview draws the place at it, saying so; else the activity says why no zone shows
+  (`SettingsPreview.Message`), as harvesting's does too, and the app's own word is "Choose what and where". The rows' names
+  wrap beside their controls in a narrow window, where they ran under them (`DockPanel.FieldName`).
+- **And**: the monsters' pictures, a whole body on 64 pixels, are drawn at 36 beside a name, items and professions
+  staying at 24 (`OptionViewModel.PortraitSize`); every option's icon is drawn once first shown, where opening the picker
+  drew them all. "All" of the monsters, some 1,600, laid out at once in a panel that does not virtualize, made the picker
+  stutter: it shows the first 120 that match and says how to see the others, searching or filtering
+  (`GamePickerViewModel.MostShown`).
+- **And as the window narrows**, the preview, beside the settings at 320 pixels whatever the width, squeezed them until
+  their controls were cut: it stands beside them while they keep 520 pixels, under them below (`SidePanel`). The profile's
+  name, a box of 280 pixels in a row that never shrank, ran under the page's buttons: it shrinks to 128.
+- **Rejected.**
+  - A scrolling row of chips: the 40 groups still unreadable.
+  - Every editor rebuilt: the owner's words name the picker and the fight profile; the preview is what it lacked
+    beside the harvest's.
+
+## D247: The loot's icons in the pack, and families of monsters chosen
+
+*2026-10-30, step 9, session 9g2, the owner's words as the fighting activity ran in game: the loot on the bot's card
+showed no icon, and a family of monsters should be chosen as a monster is. Builds D135, D236, D238, D246.*
+
+- **Measured** on 3.7.12.12: the client's monsters list their drops, `drops`, each an item and its chances by grade;
+  2,348 of the 5,129 monsters drop 3,513 items. Those the 1,663 monsters a hunter meets drop are 2,761, every one with its
+  icon in `Picto/Items`.
+- **In the pack**: their icons, in the items' table at its 64 pixels beside the harvests', 2,294 icons in all against
+  287; a drop's icon the client lacks is counted and left out, as a monster's picture is. The pack weighs 19.4 MB against
+  11.7, extracted in 36 s, two extractions alike; its format stays 7, its structure unchanged and no release holding it yet, an older pack
+  drawing the loot without its icons. The drops themselves stay out (D236).
+- **Families**: a family is a monster's race, as a player names them, the bouftous or the animalades; its super race, the
+  picker's filter, groups races by where they live. The fighting activity's "Families to fight", beside its monsters,
+  attacks a group holding a monster of one of them (`ChosenMonsters`, `SettingKind.MonsterFamily`); each is offered with
+  its super race beside it. Measured on 3.7.12.12: 265 races, 208 a hunter meets a monster of, which are offered, in 35
+  super races; the animalades a race of 4 monsters. The place chosen, the preview and the sub-areas suggested count their
+  monsters with those chosen. The super races, first offered as the families, were not what the owner meant: a family
+  the owner sought, the animalades, was a race.
+- **And**: one fight won is said in the singular on the card.
+- **Rejected.**
+  - The loot's icons at 32 pixels in a table of their own: some 5 MB less for a structure of its own, a format 8, and a
+    table the app draws at another size than the items'.
+  - A family checked as all its monsters at once in the picker: a list of a hundred monsters on the card, and a family's
+    new monster left out.
+
+## D248: Every interactive transition of the world graph followed, a refused teleport remembered, and NPCs' ways not yet
+
+*2026-10-30, step 9, session 9g2, what the owner's Sadida showed in game: stuck in Incarnam, every profile failing at once
+with "No map of the zone can be reached"; the owner asked whether the ways that need an NPC are handled, and to look at
+how BillBot does it. Builds D73, D76, D83, D84.*
+
+- **Measured** on its capture: in Incarnam, D3B asked a teleport from the map nine times; the server refused each, text
+  416, though the pack's flag (bit 3) lets 147 of Incarnam's 163 maps teleport. A journey that fails at its teleport
+  goes on foot, and found no way: the next journeys tried the teleport again, three journeys failed, and the activity
+  gave the zone up.
+- **The way on foot**, measured on the graph: from the Sadida's map, every transition followed, criteria aside, 77 maps
+  of Incarnam are reached and no other area's; the room whose doors lead to five areas, Astrub's among them, has no way
+  in but doors with quests' criteria. The way out is an NPC's dialog, which the client's graph does not hold: 3.7.12.12's
+  transitions are scrolls, scrolls with an action, map actions and interactive elements. BillBot, read for the owner,
+  leaves Incarnam the same way, by a case of its own: the NPC "Portail vers Astrub" on its map, two replies matched by
+  their text; it handles no other NPC's way but two dungeons'.
+- **Made**: the pathfinder follows every interactive transition of the graph, the doors' and some 300 of 50 other
+  skills, stairs, portals and "go to"s, used as a door is, their criteria strict, a use that fails banned for the journey
+  (D76's doors alone before); a teleport the server refuses from a map is never asked from it again for the bot's life
+  (`WorldPathRules.NoTeleportFrom`, `BotActor.NoTeleportFrom`). Neither measured in game yet.
+- **Not made**: the ways through an NPC's dialog, Incarnam's portal first, the next session's (D250).
+
+## D249: A group judged over the fight's course, and only the hopeless turned away
+
+*2026-10-30, step 9, session 9g2, the owner's words in game: the bot takes almost only small groups where it could beat
+big ones, and should be much laxer. Builds D198, D236, D241.*
+
+- **Measured** with `scripts/fights.cs --live` on the 98 attacks the owner made by hand and those D3B made: of the 54
+  groups the character was known for, the owner won 50; the judge of D241, every enemy striking every turn
+  (`FightTactics.Odds`), turned 25 away, 21 of them won.
+- **Over the fight's course** (`FightTactics.OddsOverTheFight`): the enemies die one after another, the most damage for
+  their life first, each striking only while it lives; the judge's damage a turn and life as before.
+- **Turned away**: a group the AI expects to take the character's life in under a quarter of the turns it needs to beat
+  the group (`GroupJudge`), measured: 13 of the 54, 11 of them won, against 25. The ratio tells the losses apart badly: 2
+  of the 4 losses fell among the groups judged won first. "Only winnable groups" unchecked attacks every group the
+  settings allow; "Monsters per group, at least" aims at big ones.
+- **Unchanged**: the fight's own prudence as it starts (D198) keeps `Odds`.
+- **Rejected**: the judge removed by default: a lost fight costs the regeneration and three stop the activity (D198),
+  and the judge's error is measured on a player's fights, not yet on the AI's big ones.
+
+## D250: 9g2 measured in game, and what it leaves
+
+*2026-10-30, step 9, session 9g2, on the 9 game connections the owner captured with the app as the fighting activity ran
+on five characters of two accounts, breeds Sadida, Zobal, Eliotrope, Enutrof and Xelor, levels 45 to 150. Builds D241 to
+D249.*
+
+- **Hunted**: 22 attacks sent, 22 accepted, each after one walk onto the group's cell, none made again; 22 fights, the
+  AI's, won; from a fight's end to the next attack 6.2 s halfway, 34 s at 90 %, the healing and the journeys within; an
+  attack's fight starting 0.58 s after it halfway.
+- **Fought**: 106 casts sent, every one cast, none unanswered nor refused; 56 turns, none without a cast or a walk; 2
+  sword's blows struck.
+- **What the owner saw, made**: strategies gone, one AI (D244); the monsters' picker, the fight profile's preview and its
+  layout in a narrow window (D246); the loot's icons and families of monsters (D247); the ways out of Incarnam and
+  refused teleports (D248); big groups (D249).
+- **Left, for the next sessions**: the ways through an NPC's dialog, Incarnam's portal first; the Zobal's masks, which
+  the AI puts on at its turn's end for the next turn rather than first to cast their spells, its earth Zobal casting
+  Furia 3 times in 11 turns; every item's icon, 11,755 against 2,294, which the owner asked for and whose size is the
+  owner's choice.
 
 ## Open questions
 

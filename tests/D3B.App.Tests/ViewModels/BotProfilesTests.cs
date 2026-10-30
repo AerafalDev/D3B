@@ -1,6 +1,5 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
-using D3B.Bot.Fights;
 using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
@@ -123,27 +122,5 @@ public sealed class BotProfilesTests : IAsyncDisposable
 
         Assert.Null(bot.Activity);
         Assert.Equal(["Old is to review in Profiles", "The activity of Gone is gone", "The settings of Empty do not hold: see Profiles"], errors);
-    }
-
-    [Fact]
-    public async Task ACardOffersNoStrategyToStart()
-    {
-        await _store.OpenedAsync();
-
-        var ct = TestContext.Current.CancellationToken;
-
-        await _store.Profiles.SaveAsync(0, "Another", TestStore.StrollId, "{}", ct);
-        await _store.Profiles.SaveAsync(0, "Testing the AI", Strategies.ProfileId, "{}", ct);
-        await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Character", 200));
-        await _store.Play.EnterAsync(300);
-
-        var page = new BotsViewModel(_localizer);
-
-        page.Refresh(_store.Host.Services);
-
-        var item = Assert.Single(page.Items);
-
-        Assert.DoesNotContain(item.Activities, choice => choice.Name == "Testing the AI" || choice.Name == "Strategy");
-        Assert.Contains(item.Activities, choice => choice.Name == "Another");
     }
 }

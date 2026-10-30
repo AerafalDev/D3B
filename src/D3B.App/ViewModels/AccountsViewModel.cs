@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Localization;
-using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Storage.Accounts;
 using D3B.Storage.Profiles;
@@ -121,10 +120,7 @@ internal sealed partial class AccountsViewModel : ObservableObject
         _accountsVersion = accounts.Version;
         _profilesVersion = _profiles?.Version ?? 0;
 
-        // A strategy is fought with, never played as an activity (D233).
-        var all = _profiles?.Profiles ?? [];
-        List<ProfileOptionViewModel> profiles = [new(null, Localizer["NoProfile"]), .. all.Where(profile => profile.ActivityId != Strategies.ProfileId).Select(profile => new ProfileOptionViewModel(profile.Id, profile.Name))];
-        List<ProfileOptionViewModel> strategies = [new(null, Localizer["StrategyStandard"]), .. all.Where(profile => profile.ActivityId == Strategies.ProfileId).Select(profile => new ProfileOptionViewModel(profile.Id, profile.Name))];
+        List<ProfileOptionViewModel> profiles = [new(null, Localizer["NoProfile"]), .. (_profiles?.Profiles ?? []).Select(profile => new ProfileOptionViewModel(profile.Id, profile.Name))];
 
         Items.Clear();
 
@@ -132,7 +128,7 @@ internal sealed partial class AccountsViewModel : ObservableObject
         {
             var characters = accounts.Characters
                 .Where(character => character.AccountId == account.Id)
-                .Select(character => new CharacterRowViewModel(this, character, profiles, strategies))
+                .Select(character => new CharacterRowViewModel(this, character, profiles))
                 .ToList();
 
             Items.Add(new AccountViewModel(this, account, characters));

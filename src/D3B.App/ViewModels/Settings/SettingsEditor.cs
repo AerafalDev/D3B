@@ -1,10 +1,12 @@
 using System.Globalization;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Activities;
 using D3B.Bot.Settings;
 using D3B.Data;
+using D3B.Data.Monsters;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,6 +66,14 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets whether the zone holds isolated maps, which its legend then names (D149).</summary>
     [ObservableProperty]
     public partial bool HasIsolated { get; private set; }
+
+    /// <summary>Gets whether the zone tells probable or empty maps apart, as a harvest's does, which its legend then names; a hunt's does not (D245).</summary>
+    [ObservableProperty]
+    public partial bool HasForecast { get; private set; }
+
+    /// <summary>Gets what the zone's place says while no zone is drawn: the activity's word, or that the settings lack what and where (D246).</summary>
+    [ObservableProperty]
+    public partial string NoZoneText { get; private set; } = "";
 
     /// <summary>Gets the figures the activity gives of its settings.</summary>
     [ObservableProperty]
@@ -313,18 +323,23 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     private OptionViewModel Option(SettingKind kind, GameReference reference)
     {
-        // A resource shows its icon, and its profession's beside the detail naming it; a profession its own.
-        var (icon, detailIcon) = kind switch
+        // A resource shows its icon, and its profession's beside the detail naming it; a profession its own; a monster its
+        // picture, larger. Each is drawn once first shown, on the UI's thread as the icons ask.
+        var id = reference.Id;
+        var icons = Icons;
+        Func<IImage?>? icon = kind switch
         {
-            SettingKind.Resource => (Icons?.Item(reference.Id), Game is not null && Game.TryGetSource(reference.Id, out var source) ? Icons?.Job(source.JobId) : null),
-            SettingKind.Job => (Icons?.Job(reference.Id), null),
-            SettingKind.Item => (Icons?.Item(reference.Id), null),
-            SettingKind.Spell => (Icons?.Spell(reference.Id), null),
-            SettingKind.Monster => (Icons?.Monster(reference.Id), null),
-            _ => (null, null),
+            SettingKind.Resource or SettingKind.Item => () => icons?.Item(id),
+            SettingKind.Job => () => icons?.Job(id),
+            SettingKind.Monster => () => icons?.Monster(id),
+            _ => null,
         };
+        var detailIcon = kind is SettingKind.Resource && Game is not null && Game.TryGetSource(id, out var source) ? icons?.Job(source.JobId) : null;
 
-        return new OptionViewModel(reference.Id, Names.Name(kind, reference), DetailOf(kind, reference), icon, detailIcon);
+        return new OptionViewModel(id, Names.Name(kind, reference), DetailOf(kind, reference), icon, detailIcon)
+        {
+            IconSize = kind is SettingKind.Monster ? OptionViewModel.PortraitSize : OptionViewModel.ItemIconSize,
+        };
     }
 
     /// <summary>Names a profession, with its icon, in the app's language.</summary>
@@ -335,7 +350,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         return Option(SettingKind.Job, JobOf(jobId));
     }
 
-    /// <summary>Gets the group a value of a list is filtered by, and its level: a resource's profession, a spell's breed, a monster's super race.</summary>
+    /// <summary>Gets the group a value of a list is filtered by, and its level: a resource's profession or a monster's super race.</summary>
     /// <param name="kind">The list's kind.</param>
     /// <param name="id">The value.</param>
     /// <returns>Its group, or <see langword="null"/> for a resource of <c>Base</c>'s or a value of none, and its level, if it has one.</returns>
@@ -347,13 +362,12 @@ internal sealed partial class SettingsEditor : ObservableObject
         return kind switch
         {
             SettingKind.Resource when Game.TryGetSource(id, out var source) => (source.JobId, source.Level),
-            SettingKind.Spell when Game.TryGetBreed(id, out var breed) => (breed, null),
             SettingKind.Monster when Game.TryGetSuperRace(id, out var superRace) => (superRace is 0 ? null : superRace, ReferenceOf(kind, id).Level),
             _ => (null, null),
         };
     }
 
-    /// <summary>Names a group a list is filtered by, with its icon: a profession, a breed or a super race.</summary>
+    /// <summary>Names a group a list is filtered by, with its icon: a profession or a super race.</summary>
     /// <param name="kind">The list's kind.</param>
     /// <param name="groupId">The group.</param>
     /// <returns>It, named.</returns>
@@ -361,7 +375,6 @@ internal sealed partial class SettingsEditor : ObservableObject
     {
         var groups = kind switch
         {
-            SettingKind.Spell => Game?.Breeds,
             SettingKind.Monster => Game?.SuperRaces,
             _ => null,
         };
@@ -386,7 +399,9 @@ internal sealed partial class SettingsEditor : ObservableObject
             ? ZoneScenes.Of(preview.Zone, atlas, tour: false, preview.LandmarkMapId, Players.FirstOrDefault(player => player.MapId is not null)?.MapId)
             : null;
         HasIsolated = Preview is not null && Preview.Zone.Any(map => map.State is ZoneMapState.Isolated);
+        HasForecast = Preview is not null && Preview.Zone.Any(map => map.State is ZoneMapState.Probable or ZoneMapState.Empty);
         Figures = Preview is null || Says is not { } says ? [] : [.. Preview.Figures.Select(figure => new FigureViewModel(says.Say(figure.Value), says.Say(figure.Label)))];
+        NoZoneText = Preview?.Message is { } message && Says is { } saying ? saying.Say(message) : Localizer["ZoneNothingYet"];
         PlayerNotes = [.. Players.Select(player => new PlayerNoteViewModel(player.Name, NoteOf(player)))];
     }
 
@@ -407,11 +422,11 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     private string? DetailOf(SettingKind kind, GameReference reference)
     {
-        // A resource of any profession says whose it is, its level beside; a spell its breed.
+        // A resource of any profession says whose it is, its level beside; a family of monsters where they come from.
         return kind switch
         {
             SettingKind.Resource => SourceOf(reference.Id) ?? Names.Detail(reference),
-            SettingKind.Spell when Game is not null && Game.TryGetBreed(reference.Id, out var breed) => GroupOption(kind, breed).Name,
+            SettingKind.MonsterFamily when Game is not null && Game.TryGetSuperRaceOfFamily(reference.Id, out var superRace) && superRace is not MonsterRace.NoSuperRace => GroupOption(SettingKind.Monster, superRace).Name,
             _ => Names.Detail(reference),
         };
     }
@@ -425,7 +440,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),
             (SettingKind.Choice, false) => new ChoiceFieldViewModel(setting, this),
             (SettingKind.Choice, true) => new ChoicesFieldViewModel(setting, this),
-            (SettingKind.Resource or SettingKind.Spell or SettingKind.Monster, true) => new PickedGamesFieldViewModel(setting, this),
+            (SettingKind.Resource or SettingKind.Monster, true) => new PickedGamesFieldViewModel(setting, this),
             (SettingKind.Job, true) when setting.IsGathering => new GatheringJobsFieldViewModel(setting, this),
             (SettingKind.SubArea, true) when setting.IsSuggested => new SubAreasFieldViewModel(setting, this),
             (_, false) => new GameFieldViewModel(setting, this),
