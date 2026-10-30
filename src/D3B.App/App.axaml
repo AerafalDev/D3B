@@ -15,11 +15,15 @@
                     <Color x:Key="TourGrowingColor">#A78BFA</Color>
                     <c:MapPalette
                         x:Key="MapPalette"
+                        Ally="#2DD4BF"
                         Bot="#FAFAFA"
+                        ChallengerCell="#66EF4444"
                         Character="#3B82F6"
                         CharacterRing="#DBEAFE"
+                        DefenderCell="#663B82F6"
                         Door="#F59E0B"
                         Element="#A78BFA"
+                        Enemy="#F87171"
                         Exit="#38BDF8"
                         ExitFill="#4738BDF8"
                         Grid="#2A2A30"
@@ -41,11 +45,15 @@
                     <Color x:Key="TourGrowingColor">#7C3AED</Color>
                     <c:MapPalette
                         x:Key="MapPalette"
+                        Ally="#0D9488"
                         Bot="#18181B"
+                        ChallengerCell="#55DC2626"
                         Character="#2563EB"
                         CharacterRing="#FFFFFF"
+                        DefenderCell="#552563EB"
                         Door="#D97706"
                         Element="#7C3AED"
+                        Enemy="#DC2626"
                         Exit="#0284C7"
                         ExitFill="#2E0EA5E9"
                         Grid="#E4E4E7"

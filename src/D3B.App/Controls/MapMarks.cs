@@ -37,6 +37,12 @@ internal static class MapMarks
             case MapMark.Bot:
                 context.DrawEllipse(null, new Pen(brush, 2), center, radius * 1.3, radius * 1.3);
                 break;
+            case MapMark.Ally or MapMark.Enemy:
+                context.DrawRectangle(brush, null, new Rect(center.X - (radius * 1.1), center.Y - (radius * 1.1), radius * 2.2, radius * 2.2), radius * 0.4, radius * 0.4);
+                break;
+            case MapMark.ChallengerCell or MapMark.DefenderCell:
+                context.DrawGeometry(brush, null, Diamond(center, cellHeight, cellHeight / 2));
+                break;
             default:
                 context.DrawGeometry(palette.ExitFill, new Pen(palette.Exit, 1), Diamond(center, cellHeight, cellHeight / 2));
                 break;

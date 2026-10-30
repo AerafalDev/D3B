@@ -8,12 +8,14 @@ using D3B.App.Localization;
 using D3B.App.ViewModels.Logs;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Engine.Maps;
+using D3B.Protocol.Game;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Maps;
@@ -130,6 +132,10 @@ internal sealed partial class MapViewModel : ObservableObject
     /// <summary>Gets or sets whether what the bot's activity looks at shows (D131).</summary>
     [ObservableProperty]
     public partial bool ShowsActivity { get; set; } = true;
+
+    /// <summary>Gets or sets whether the map shows the character's fight: the placement cells, its allies and enemies.</summary>
+    [ObservableProperty]
+    public partial bool ShowsFight { get; set; } = true;
 
     /// <summary>Gets what the bot's activity says it does, and how far it is, if it runs one that says (D131).</summary>
     [ObservableProperty]
@@ -290,6 +296,11 @@ internal sealed partial class MapViewModel : ObservableObject
         RefreshLayers();
     }
 
+    partial void OnShowsFightChanged(bool value)
+    {
+        RefreshLayers();
+    }
+
     partial void OnHoveredCellChanged(int? value)
     {
         Describe();
@@ -307,6 +318,7 @@ internal sealed partial class MapViewModel : ObservableObject
         layers |= ShowsBots ? MapLayers.Bots : MapLayers.None;
         layers |= ShowsZones ? MapLayers.Zones : MapLayers.None;
         layers |= ShowsActivity ? MapLayers.Activity : MapLayers.None;
+        layers |= ShowsFight ? MapLayers.Fight : MapLayers.None;
         Layers = layers;
     }
 
@@ -476,6 +488,9 @@ internal sealed partial class MapViewModel : ObservableObject
 
         var elements = ElementsOf(map, state);
 
+        if (state.Fight is { } fight)
+            return FightSceneOf(map, state, fight, elements);
+
         return new MapScene(map, _exits)
         {
             Elements = elements,
@@ -484,6 +499,25 @@ internal sealed partial class MapViewModel : ObservableObject
             Character = state.Cell is { } cell && IsCell(cell) ? cell : null,
             Path = [.. state.Path.Where(IsCell)],
             Activity = focus is not null && focus.MapId == mapId ? ActivityOf(focus, elements) : null,
+        };
+    }
+
+    private MapScene FightSceneOf(MapData map, CharacterState state, FightState fight, ImmutableArray<MapElementMark> elements)
+    {
+        var self = state.Key.CharacterId;
+        var placing = fight.Phase is FightPhase.Placement;
+        var others = fight.Fighters.Values.Where(fighter => fighter.Id != self && fighter.IsAlive && fighter.Cell is { } cell && IsCell(cell)).ToList();
+
+        // The character stands on its fighter's cell: the client walks it on the fight's map with no path to confirm.
+        return new MapScene(map, _exits)
+        {
+            Elements = elements,
+            Bots = [.. _others.Select(other => other.Cell)],
+            Character = fight.Fighters.GetValueOrDefault(self)?.Cell is { } own && IsCell(own) ? own : null,
+            ChallengerCells = placing ? [.. fight.ChallengerCells.Where(IsCell)] : [],
+            DefenderCells = placing ? [.. fight.DefenderCells.Where(IsCell)] : [],
+            Allies = [.. others.Where(fighter => fighter.Team == fight.Team).Select(fighter => fighter.Cell!.Value)],
+            Enemies = [.. others.Where(fighter => fighter.Team != fight.Team).Select(fighter => fighter.Cell!.Value)],
         };
     }
 
@@ -577,6 +611,15 @@ internal sealed partial class MapViewModel : ObservableObject
         foreach (var other in _others.Where(other => other.Cell == cell))
             yield return _localizer.Format("MapOtherBot", other.Name);
 
+        if (state.Fight is { } fight)
+        {
+            foreach (var fighter in fight.Fighters.Values.Where(fighter => fighter.IsAlive && fighter.Cell == cell && fighter.Id != state.Key.CharacterId))
+                yield return FighterSaid(fighter, fight);
+
+            if (scene.ChallengerCells.Contains(cell) || scene.DefenderCells.Contains(cell))
+                yield return _localizer[scene.ChallengerCells.Contains(cell) == (fight.Team is FightTeam.Challenger) ? "MapOwnPlacement" : "MapEnemyPlacement"];
+        }
+
         foreach (var element in scene.Elements.Where(element => element.Cell == cell && element.Mark is not MapMark.Door))
             yield return ElementSaid(element, state.Elements.GetValueOrDefault(element.ElementId));
 
@@ -585,6 +628,19 @@ internal sealed partial class MapViewModel : ObservableObject
 
         foreach (var exit in scene.Exits.Where(exit => exit.Cells.Contains(cell)))
             yield return ExitSaid(exit, state);
+    }
+
+    private string FighterSaid(Fighter fighter, FightState fight)
+    {
+        var side = _localizer[fighter.Team == fight.Team ? "MapAlly" : "MapEnemy"];
+        var who = fighter switch
+        {
+            { MonsterId: { } monster, SummonerId: not null } => _localizer.Format("MapSummon", monster),
+            { MonsterId: { } monster } => _localizer.Format("MapMonster", monster, fighter.Grade ?? 0),
+            _ => _localizer.Format("MapCharacterFighter", fighter.Level ?? 0),
+        };
+
+        return _localizer.Format("MapFighter", side, who, fighter.Life, fighter.MaxLife, fighter.ActionPoints, fighter.MovementPoints);
     }
 
     private string ElementSaid(MapElementMark element, MapElement? described)

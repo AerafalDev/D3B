@@ -15,7 +15,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 6 | Harvesting and banking: first milestone | Milestone reached in 6a; icons and learned graphics in 6b; what 6a left in 6c; the app redesigned in 6d; the owner's settings in 6e; the app published in 6f |
 | 7 | Mods: Lua scripting, then blueprints | Lua done, then removed (D119); blueprints to do, after step 9 (D117, D169) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
-| 9 | Fights | Next, before the blueprints (D169) |
+| 9 | Fights | In progress, before the blueprints (D169): 9a done; 9b next |
 | 10 | Several accounts and groups | To do |
 | 11 | Marketplace and crafting | To do |
 | 12 | Treasure hunts and dungeons | To do |
@@ -175,7 +175,7 @@ Done on 2026-10-29, with 6f last. Next: step 9.
 | 6c | What 6a leaves: fights while harvesting, protectors and aggressions; the resources' growing back, measured; harvest statistics; the guild's chest; the owner's options, resource bags and healing, each a request and an event to map; maps reachable only far round in a zone (D133); harvesting Base's resources, wells among them, found by the graphics learned (D140); then the owner's call on making the repository public (D4). Done: a fight resumed, paused or stopped, as the profile says (D144); the growing back learned by the host (D145); statistics in the database and a page (D146); the guild's chest, measured first (D147); bags and healing (D148); isolated maps left out unless taken (D149); Base's resources as the others (D150); the client's display time and every delay in a settings page (D151); the owner's settings in 6e, no random timings (D152); upkeep and the guild's chest measured, mapping 7 (D153); checked through the app, the time between two actions (D154); 6d a redesign (D155); the multiple use, mapping 8 (D156); checked again, good (D157); the repository public once the app ships with its data, in 6f (D158). | Done on 2026-10-29 |
 | 6d | A redesign of the app's interface, mockups first, page by page, the profile editor first: less text, one scale of spacing and sizes, ShadUI's components where they fit, the owner listing what to improve (D143, D155). Done: the survey of every page, the editor on a page of its own with its preview beside, one scale for the app, dialogs and toasts, chosen by the owner among mockups (D159); the resources by profession or by list, modelled, made in 6e (D160); Lucide's icons (D161); the sidebar, one bot selector, the map's layers as a menu, texts rewritten short, what a bot meets toasted (D162); the old and the new no longer mixed, one text size, one height, one empty state (D163); checked through the app, good (D164). | Done on 2026-10-29 |
 | 6e | The owner's settings of harvesting and journeys: no zaap when the destination is too near, an automatic mode choosing the zone by level, the highest-level resources first, resources to take in or leave out, profiles given by default, and what the owner adds (D152); the resources by profession, left out and ordered, or by list, as D160 models them, in the harvest's card 6d drew. Done: the resources by profession as chips, those left out, the nearest or the highest level first, or a list, the stored profiles read as they were, D98 grown with what an earlier version stored, the professions that gather, a list leaving out, suggestions the activity reckons and a number's unit (D165); the place the activity chooses, the sub-area richest in what each character can harvest at its levels, not above its level, said on the card and for each character in the preview (D166); a zaap only when it saves 5 maps, every journey of the activity (D167); six profiles given, stored once (D168); after 6e, 6f, then fights and their AI, then blueprints (D169); checked through the app, good (D170). | Done on 2026-10-29 |
-| 6f | The app published with its data pack, schema and mapping, updating itself from the repository's releases; then the repository public on the owner's go (D158). Done: the app published by CI with Velopack on a tag `v<version>`, self-contained, installed per user in its own folder, unsigned, its notices shipped (D171); the client build's pack, schema and mapping shipped beside it, `scripts/embed.cs` taking them from the build's release, the host looking on this machine then among the app's own and downloading nothing, the token gone, the owner's choice against the lead's (D172); the update checked as the app starts, downloaded, and installed on a restart from the window's banner or on closing, the client the app does not ship said with the update, the settings page saying the version (D173); the repository public at the session's end, each step on the owner's go, the history checked (D174); checked on the owner's machine, installed, updated to 0.1.1 and uninstalled, good (D175). | Done on 2026-10-29 |
+| 6f | The app published with its data pack, schema and mapping, updating itself from the repository's releases; then the repository public on the owner's go (D158). Done: the app published by CI with Velopack on a tag `v<version>`, self-contained, installed per user in its own folder, unsigned, its notices shipped (D171); the client build's pack, schema and mapping shipped beside it, `scripts/embed.cs` taking them from the build's release, the host looking on this machine then among the app's own and downloading nothing, the token gone, the owner's choice against the lead's (D172); the update checked as the app starts, downloaded, and installed on a restart from the window's banner or on closing, the client the app does not ship said with the update, the settings page saying the version (D173); the repository public at the session's end, each step on the owner's go, the history checked (D174); checked on the owner's machine, installed, updated to 0.1.1 and uninstalled, good (D175); the release v0.1.0 checked, installed from GitHub, good (D176). | Done on 2026-10-29 |
 
 ## 7. Mods: Lua scripting, then blueprints
 
@@ -220,15 +220,25 @@ Dropped: MITM is D3B's only mode (D23), built at step 3. The number stays, so th
 
 ## 9. Fights
 
-Settles Q5. Next, before step 7's blueprints, the owner's choice (D169): a clever and complete AI, which thinks
-again as the fight changes, in several sessions settled at the step's start with measures.
+Settles Q5. Before step 7's blueprints, the owner's choice (D169): a clever and complete AI, which thinks again as the
+fight changes, handling every case and every criterion of a spell, through effects as data, measured case by case.
+
+Seven sessions, the split chosen by the owner, each layer measured before the next (D177). A session may split in two as
+it grows. A client update before a session gets Q10's session first.
 
 - The fight simulator in `D3B.Engine`, from spell effects in the game data, and strategies as modules (D13).
-- Strategies for every breed, a large effort the owner noted: the references in `vendor/` give ideas for each, to be
-  done better and thought through, never copied (D3).
-- Placement, turns, line of sight, spell choice, end of fight, and fights as interruptions of other activities.
-- The placement cells the server gives when a fight begins, its message mapped and measured, marked on the app's map
-  in a fight, the owner's request (D125).
+- Every breed's spells through their effects, never per class: the references in `vendor/` give ideas, never code (D3).
+- Fights as interruptions of other activities, then fought by them: harvesting fights instead of pausing (D144).
+
+| Session | Content | Status |
+| --- | --- | --- |
+| 9a | The split of step 9 (D177); the fight's protocol measured on captures the owner made, named and pinned, mapping format 9, and `scripts/capture.cs --messages` to measure it (D178); the fight's state in the bot, its fighters, turns and end, and the journal saying the end (D179); the placement cells, the server's, and the fighters on the app's map, settling D125 (D180). | Done on 2026-10-30 |
+| 9b | The fight's data in the pack, format 5: spells and spell levels, their flags read from the client's code, effects, states, monsters and grades with the client's formulas, breeds, characteristics, the Rogue's bombs and walls, spells' variants and pairs; the cast's level and the loot's monsters checked against it; then a release of 3.7.12.12 on the owner's go. | Next |
+| 9c | The rules of a cast in `D3B.Engine`: line of sight, ranges, zones, target masks, every condition of a spell, cooldowns, moving in a fight with tackle and dodge; checked on captures, D3B accepting and refusing the casts the server did. | To do |
+| 9d | The effects' engine: each effect as data, Bubble's formulas measured one by one (Q5), a bench comparing what D3B foresees with what the server answered, action by action. | To do |
+| 9e | The AI, playable: placement, then each turn a search for the best sequences of moves and casts, thought again after each answer of the server; the bot fights alone, and harvesting fights instead of pausing (D144). | To do |
+| 9f | The hard cases, one mechanism at a time, each measured: summons, which the bot plays and which play alone as spells and their variants say, such as "Maîtrise des invocations" against "Liberté des invocations", the Steamer's turrets controlled from their third evolution, the Rogue's bombs, the Feca's glyphs, the Huppermage's runes, the Xelor's telefrags, the Zobal's masks, traps and invisibility, portals, carrying, sacrifice, shared damage. | To do |
+| 9g | Strategies: the profile's settings, a role, prudence, spells preferred or left out, and the AI tried on many fights, per breed through the effects. | To do |
 
 ## 10. Several accounts and groups
 

@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package d3b.game;
 
+import "Game/actors.proto";
 import "Game/havenbags.proto";
 import "Readable/options.proto";
 
@@ -33,56 +34,6 @@ message MapInformationEvent {
   oneof place {
     HavenBagInformation haven_bag = 6;
   }
-}
-
-// Someone on the map: the character itself, another player, an NPC or a group of monsters.
-message Actor {
-  // The character's own id, as the character choice gave it, for the character itself; negative for an NPC.
-  int64 id = 1;
-
-  ActorDisposition disposition = 2;
-  ActorInformation information = 3;
-}
-
-// Where an actor stands.
-message ActorDisposition {
-  option (d3b.readable.partial) = true;
-
-  optional int32 cell_id = 3;
-}
-
-// What an actor is.
-message ActorInformation {
-  option (d3b.readable.partial) = true;
-
-  oneof kind {
-    RoleplayActor roleplay = 1;
-  }
-}
-
-// An actor out of a fight.
-message RoleplayActor {
-  option (d3b.readable.partial) = true;
-
-  oneof kind {
-    NamedActor named = 3;
-    NpcActor npc = 4;
-  }
-}
-
-// A player's character, or another actor with a name.
-message NamedActor {
-  option (d3b.readable.partial) = true;
-
-  string name = 5;
-}
-
-// A non-player character.
-message NpcActor {
-  option (d3b.readable.partial) = true;
-
-  // The NPC's id in the client's tables, as the references read it: the one number every NPC captured sets.
-  int32 npc_id = 7;
 }
 
 // An interactive element of the map, and the skills it offers: which interactive it is, the server says, not the

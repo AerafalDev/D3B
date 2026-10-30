@@ -31,6 +31,7 @@ public static class ReadableProtocol
         AuthenticationReflection.Descriptor,
         CharactersReflection.Descriptor,
         ContextReflection.Descriptor,
+        ActorsReflection.Descriptor,
         MapsReflection.Descriptor,
         MovementReflection.Descriptor,
         InteractivesReflection.Descriptor,
@@ -42,6 +43,8 @@ public static class ReadableProtocol
         TeleportationReflection.Descriptor,
         HavenbagsReflection.Descriptor,
         TextsReflection.Descriptor,
+        FightsReflection.Descriptor,
+        FightActionsReflection.Descriptor,
     ];
 
     /// <summary>Gets, for each readable package, the file of a build's schema its messages are looked for in.</summary>

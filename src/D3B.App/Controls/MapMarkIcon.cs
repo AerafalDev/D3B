@@ -53,6 +53,6 @@ internal sealed class MapMarkIcon : Control
             return;
         }
 
-        MapMarks.Draw(context, palette, Mark, center, Mark is MapMark.Exit ? Bounds.Height * 0.75 : Bounds.Height);
+        MapMarks.Draw(context, palette, Mark, center, Mark is MapMark.Exit or MapMark.ChallengerCell or MapMark.DefenderCell ? Bounds.Height * 0.75 : Bounds.Height);
     }
 }

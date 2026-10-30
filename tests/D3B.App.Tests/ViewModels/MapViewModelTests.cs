@@ -56,6 +56,30 @@ public sealed class MapViewModelTests : IAsyncDisposable
         return [page.HoverTitle, page.HoverDetail, .. page.HoverItems];
     }
 
+    private static Actor Fighter(long id, int cell, FightTeam team, int? monsterId = null)
+    {
+        var fighter = new FightFighter
+        {
+            Spawn = new FighterSpawn { Alive = true, Team = team },
+            Stats = new FightCharacteristics
+            {
+                Characteristics =
+                {
+                    new Characteristic { Id = 0, Value = new CharacteristicValue { Total = 21 } },
+                    new Characteristic { Id = 1, Value = new CharacteristicValue { Total = 2 } },
+                    new Characteristic { Id = 23, Value = new CharacteristicValue { Total = 3 } },
+                },
+            },
+        };
+
+        if (monsterId is { } monster)
+            fighter.Ai = new AiFighter { Monster = new MonsterFighter { MonsterId = monster, Grade = 3, Level = 3 } };
+        else
+            fighter.Named = new NamedFighter { Character = new FighterCharacter { BreedId = 15, Level = 18 } };
+
+        return new Actor { Id = id, Disposition = new ActorDisposition { CellId = cell }, Information = new ActorInformation { Fighter = fighter } };
+    }
+
     private MapViewModel Page(Localizer localizer, BotChoice? choice = null)
     {
         var page = new MapViewModel(localizer, choice ?? new BotChoice());
@@ -210,6 +234,48 @@ public sealed class MapViewModelTests : IAsyncDisposable
         page.Refresh(_host.Services);
 
         Assert.Equal(("4,-18", TestPlay.MapId, 300), (page.Coordinates, page.Scene!.Map.Id, page.Scene.Character));
+    }
+
+    [Fact]
+    public async Task AFightsPlacementShowsTheTeamsCellsThenItsFightersAlone()
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+        var page = Page(_french);
+
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(new MapCurrentEvent { MapId = TestPlay.EastMapId });
+        connection.Server(new FightFighterShowEvent { Fighter = Fighter(TestPlay.CharacterId, 314, FightTeam.Challenger) });
+        connection.Server(new FightFighterShowEvent { Fighter = Fighter(-1, 385, FightTeam.Defender, 3_271) });
+        connection.Server(new FightFighterShowEvent { Fighter = Fighter(-2, 345, FightTeam.Challenger, 5_836) });
+        connection.Server(new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { ChallengerCells = { 314, 300 }, DefenderCells = { 385, 371 } } });
+        await bot.ProcessedAsync();
+        page.Refresh(_host.Services);
+
+        var placing = page.Scene!;
+
+        Assert.Equal([314, 300], placing.ChallengerCells);
+        Assert.Equal([385, 371], placing.DefenderCells);
+        Assert.Equal(314, placing.Character);
+        Assert.Equal([385], placing.Enemies);
+        Assert.Equal([345], placing.Allies);
+        Assert.Contains("Ennemi : monstre 3271, grade 3, 21/21 PV, 2 PA, 3 PM", Hover(page, 385));
+        Assert.Contains("Cellule de placement de l'autre équipe", Hover(page, 385));
+        Assert.Contains("Cellule de placement de son équipe", Hover(page, 300));
+
+        connection.Server(new FightStartEvent());
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 314, 328 } });
+        connection.Server(new GameActionFightEvent { ActionId = 103, SourceId = TestPlay.CharacterId, Death = new FightDeath { TargetId = -1 } });
+        await bot.ProcessedAsync();
+        page.Refresh(_host.Services);
+
+        Assert.Empty(page.Scene!.ChallengerCells);
+        Assert.Empty(page.Scene.DefenderCells);
+        Assert.Empty(page.Scene.Enemies);
+        Assert.Equal(328, page.Scene.Character);
+
+        page.ShowsFight = false;
+
+        Assert.Equal(MapLayers.Default & ~MapLayers.Fight, page.Layers);
     }
 
     [Fact]

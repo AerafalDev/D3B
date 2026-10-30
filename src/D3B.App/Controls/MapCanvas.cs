@@ -193,6 +193,15 @@ internal sealed class MapCanvas : Control
         if (layers.HasFlag(MapLayers.Cells))
             context.DrawGeometry(palette.Obstacle, null, _obstacles!);
 
+        if (layers.HasFlag(MapLayers.Fight))
+        {
+            foreach (var cell in scene.ChallengerCells)
+                MapMarks.Draw(context, palette, MapMark.ChallengerCell, layout.Center(cell), height);
+
+            foreach (var cell in scene.DefenderCells)
+                MapMarks.Draw(context, palette, MapMark.DefenderCell, layout.Center(cell), height);
+        }
+
         if (layers.HasFlag(MapLayers.Exits))
         {
             context.DrawGeometry(palette.ExitFill, new Pen(palette.Exit, 1), _exits!);
@@ -225,6 +234,15 @@ internal sealed class MapCanvas : Control
         {
             foreach (var cell in scene.Bots)
                 MapMarks.Draw(context, palette, MapMark.Bot, layout.Center(cell), height);
+        }
+
+        if (layers.HasFlag(MapLayers.Fight))
+        {
+            foreach (var cell in scene.Allies)
+                MapMarks.Draw(context, palette, MapMark.Ally, layout.Center(cell), height);
+
+            foreach (var cell in scene.Enemies)
+                MapMarks.Draw(context, palette, MapMark.Enemy, layout.Center(cell), height);
         }
 
         if (layers.HasFlag(MapLayers.Character))

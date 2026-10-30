@@ -1,0 +1,222 @@
+// What fighters do in a fight: the requests that act, the sequences the server frames each action in, and the actions it
+// announces. Measured on 3.7.12.12's captures of 11 fights, by structure, timing, and values compared on the machine,
+// never written down (D178). The references name several of these fields otherwise, in this build: the names here are
+// what the captures measured.
+syntax = "proto3";
+
+package d3b.game;
+
+import "Game/actors.proto";
+import "Readable/options.proto";
+
+option csharp_namespace = "D3B.Protocol.Game";
+
+// Casts a spell on a cell, during the character's turn.
+message GameActionFightCastRequest {
+  int32 spell_id = 1;
+  int32 cell_id = 2;
+}
+
+// The server frames what follows a request, or what a turn or a fight's start triggers, in a sequence: its start, the
+// actions, then its end. Sequences nest.
+message SequenceStartEvent {
+  SequenceType type = 1;
+  int64 author_id = 2;
+}
+
+// A sequence ends. Measured, the client acknowledged 120 of the 124 sequences of the character's that nest in none, and no
+// nested one, with their action ids, once it showed them; and 17 of other fighters' spells.
+message SequenceEndEvent {
+  option (d3b.readable.partial) = true;
+
+  // A number the client's acknowledgement repeats.
+  int32 action_id = 2;
+
+  SequenceType type = 3;
+  int64 author_id = 4;
+}
+
+// What a sequence frames, measured by what each held.
+enum SequenceType {
+  SEQUENCE_TYPE_SPELL = 0;
+
+  // The one weapon's blow captured.
+  SEQUENCE_TYPE_WEAPON = 1;
+
+  SEQUENCE_TYPE_VALUE_2 = 2;
+
+  // What an action triggers, such as the AP or MP it spends.
+  SEQUENCE_TYPE_TRIGGERED = 3;
+
+  SEQUENCE_TYPE_MOVE = 4;
+  SEQUENCE_TYPE_VALUE_5 = 5;
+  SEQUENCE_TYPE_TURN_START = 6;
+  SEQUENCE_TYPE_TURN_END = 7;
+
+  // The spells cast as the fight starts, by every fighter.
+  SEQUENCE_TYPE_FIGHT_START = 8;
+
+  SEQUENCE_TYPE_VALUE_9 = 9;
+  SEQUENCE_TYPE_VALUE_10 = 10;
+}
+
+// The client has shown a sequence: it sends it by itself, as it confirms a walk out of fights.
+message GameActionAcknowledgementRequest {
+  // No capture sets it.
+  int64 number_1 = 1;
+
+  // The sequence's, as its end gave it.
+  int32 action_id = 2;
+
+  bool valid = 3;
+}
+
+// An action in a fight: who did it, its kind by the effect's id, and what it did.
+message GameActionFightEvent {
+  option (d3b.readable.partial) = true;
+
+  // The action, by the id of the effect it is in the client's table when it is one: 300 a spell cast, 303 a weapon's
+  // blow, 102 AP spent, 129 MP spent, 4 a teleport, 8 a swap, 93 to 100 damage, 80 a push's, 103 a death, 108, 2999 and
+  // 3001 life healed, 181 and 1011 a summon.
+  int32 action_id = 22;
+
+  // Who did it: the caster, or the fighter whose step or turn it is.
+  int64 source_id = 36;
+
+  oneof action {
+    FightCast cast = 2;
+    FightDeath death = 3;
+    FightSwap swap = 4;
+    FightSummons summons = 12;
+    FightPointsVariation points = 13;
+    FightTeleport teleport = 20;
+    FightLifeLost life_lost = 37;
+    FightLifeGained life_gained = 39;
+  }
+}
+
+// A spell cast: the first action of its sequence.
+message FightCast {
+  option (d3b.readable.partial) = true;
+
+  oneof kind {
+    FightCastSpell spell = 2;
+  }
+
+  int32 cell_id = 5;
+
+  // The fighter on the cell, when one stands there.
+  int64 target_id = 6;
+}
+
+// The spell cast.
+message FightCastSpell {
+  option (d3b.readable.partial) = true;
+
+  // A number that follows the spell, a level of it in the client's table likely: 9b measures it.
+  int32 level_id = 1;
+
+  int32 spell_id = 2;
+}
+
+// A fighter died.
+message FightDeath {
+  option (d3b.readable.partial) = true;
+
+  int64 target_id = 2;
+}
+
+// The source and its target swapped their cells.
+message FightSwap {
+  option (d3b.readable.partial) = true;
+
+  int64 target_id = 1;
+}
+
+// AP or MP spent or lost, as the action's id says.
+message FightPointsVariation {
+  option (d3b.readable.partial) = true;
+
+  // Negative for points spent.
+  int32 delta = 2;
+
+  int64 target_id = 3;
+}
+
+// A fighter teleported: the cell is where its next walk starts.
+message FightTeleport {
+  int32 cell_id = 1;
+  int64 target_id = 2;
+}
+
+// A fighter lost life.
+message FightLifeLost {
+  option (d3b.readable.partial) = true;
+
+  // Life lost for the rest of the fight, a part of the loss.
+  int32 permanent_loss = 1;
+
+  // The damage's element, as the action's id: 0 neutral, 1 earth, 2 fire, 3 water, 4 air, -1 a push's.
+  int32 element = 4;
+
+  int64 target_id = 5;
+
+  // The life lost: a monster's whole life when one blow killed it, in the captures.
+  int32 loss = 6;
+}
+
+// A fighter healed.
+message FightLifeGained {
+  option (d3b.readable.partial) = true;
+
+  int64 target_id = 2;
+  int32 amount = 4;
+}
+
+// Fighters summoned: a Steamer's turrets, in the captures.
+message FightSummons {
+  option (d3b.readable.partial) = true;
+
+  oneof kind {
+    SummonedFighters fighters = 2;
+  }
+}
+
+// The fighters summoned.
+message SummonedFighters {
+  option (d3b.readable.partial) = true;
+
+  repeated SummonedFighter summons = 1;
+}
+
+// A fighter summoned: what it is, its characteristics, and where it stands.
+message SummonedFighter {
+  option (d3b.readable.partial) = true;
+
+  SummonedEntity entity = 1;
+  FightCharacteristics stats = 2;
+
+  // The summon's id and cell: one in the captures.
+  repeated FighterSpawn positions = 5;
+}
+
+// What was summoned.
+message SummonedEntity {
+  option (d3b.readable.partial) = true;
+
+  oneof kind {
+    SummonedMonster monster = 3;
+  }
+}
+
+// A monster summoned.
+message SummonedMonster {
+  option (d3b.readable.partial) = true;
+
+  oneof grade_or_level {
+    int32 grade = 1;
+  }
+
+  // The monster's id in the client's table.
+  int32 monster_id = 5;
+}
