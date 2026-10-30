@@ -5,6 +5,7 @@
 #:include fights/CapturedFights.cs
 #:include fights/CastBench.cs
 #:include fights/FightsCommand.cs
+#:include fights/HuntBench.cs
 #:include fights/LiveBench.cs
 #:include fights/Tally.cs
 #:include fights/TurnBench.cs
@@ -19,7 +20,9 @@ using D3B.Scripts.Fights;
 // capture holds an account's login ticket, and what this tool prints may go into docs/client.md.
 // With --turns, it replays every turn the characters played through the fight's AI instead, its plan against the turn
 // played and what its judge foresaw against what came (D206); with --live, it counts what D3B did in the fights, who played
-// each, how it ended and what came of the AI's requests (D206).
+// each, how it ended and what came of the AI's requests (D206), then the attacks on monster groups, D3B's and the player's,
+// the walks before each, the server's answer, the group as the AI judged it against the fight's outcome, and the pace
+// between D3B's fights (D245).
 // Usage: dotnet run --file scripts/fights.cs -- [<file or directory>...] [--data <dir>] [--details] [--turns] [--live]; --help describes
 // the options.
 // Exit code: 0 once every capture was read; 1 when one could not be; 2 when the pack, the schema, the mapping or the

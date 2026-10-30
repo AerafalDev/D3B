@@ -38,8 +38,14 @@ internal static class CapturedFights
     }
 
     /// <summary>Gets every message of a game connection, the client's, the server's and those D3B sent itself, in the order the relay read them.</summary>
-    /// <remarks>Each side is read apart, a stream of frames, then merged by the time of the record that made each whole, the client's first on a tie.</remarks>
     public static List<(CaptureRecordKind Kind, IMessage Message)> Messages(ProtocolTranslation translation, string path)
+    {
+        return [.. TimedMessages(translation, path).Select(message => (message.Kind, message.Message))];
+    }
+
+    /// <summary>Gets every message of a game connection, as <see cref="Messages"/> does, with the time into the capture of the record that made each whole.</summary>
+    /// <remarks>Each side is read apart, a stream of frames, then merged by the time of the record that made each whole, the client's first on a tie.</remarks>
+    public static List<(TimeSpan Offset, CaptureRecordKind Kind, IMessage Message)> TimedMessages(ProtocolTranslation translation, string path)
     {
         var frames = new List<(TimeSpan Offset, CaptureRecordKind Kind, IMessage Message)>();
 
@@ -65,7 +71,7 @@ internal static class CapturedFights
             }
         }
 
-        return [.. frames.OrderBy(frame => frame.Offset).ThenBy(frame => frame.Kind is CaptureRecordKind.FromServer ? 1 : 0).Select(frame => (frame.Kind, frame.Message))];
+        return [.. frames.OrderBy(frame => frame.Offset).ThenBy(frame => frame.Kind is CaptureRecordKind.FromServer ? 1 : 0)];
     }
 
     /// <summary>Gets, for each fight's start in the messages, the character the server lets play: the client's own fighter.</summary>

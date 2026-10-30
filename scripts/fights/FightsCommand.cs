@@ -92,6 +92,7 @@ internal static class FightsCommand
         var bench = new CastBench(tables, maps, details ? Console.Out : null);
         var turnBench = new TurnBench(tables, maps, TacticWeights.Default, TurnSearchLimits.Default);
         var liveBench = new LiveBench();
+        var huntBench = live ? new HuntBench(tables, maps) : null;
         var failed = 0;
 
         Console.WriteLine($"Client {build.Version}; pack format {GamePack.FormatVersion}, mapping format {MappingFile.FormatVersion}; {files.Count} game captures");
@@ -102,7 +103,10 @@ internal static class FightsCommand
             {
                 if (live)
                 {
-                    liveBench.Replay(CapturedFights.Messages(translation, file));
+                    var timed = CapturedFights.TimedMessages(translation, file);
+
+                    liveBench.Replay([.. timed.Select(message => (message.Kind, message.Message))]);
+                    huntBench!.Replay(timed);
 
                     continue;
                 }
@@ -122,7 +126,10 @@ internal static class FightsCommand
         }
 
         if (live)
+        {
             liveBench.Tally.Write(Console.Out);
+            huntBench!.Write(Console.Out);
+        }
         else if (turns)
             turnBench.Write(Console.Out);
         else
