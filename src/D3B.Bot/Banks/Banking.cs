@@ -270,8 +270,17 @@ public static class Banking
                 return BankOutcome.Refused;
         }
 
-        if (context.State.Dialog is not { } dialog || !context.Banks.TryFindReply(banker, dialog, out var reply))
+        if (context.State.Dialog is not { } dialog)
             return BankOutcome.Refused;
+
+        if (!context.Banks.TryFindReply(banker, dialog, out var reply))
+        {
+            // Measured in Sarakech's port (D251): the banker's NPC stands there for another part, and the next banking seeks
+            // the bank's other insides rather than ask him again.
+            context.Banks.Refuse(mapId);
+
+            return BankOutcome.Refused;
+        }
 
         // The client shows the dialog before the reply closes it.
         await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);

@@ -194,6 +194,10 @@ public sealed class BankingTests
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
 
         Assert.Equal(BankOutcome.Refused, await opening);
+
+        // The banker's NPC stands there for another part, as in Sarakech's port (D251): the bank is sought elsewhere.
+        Assert.DoesNotContain(TestPlay.InsideMapId, bot.Banks.Sought());
+        Assert.False(bot.Banks.TryFindBanker(bot.State, out _, out _));
     }
 
     [Fact]

@@ -37,6 +37,17 @@ public sealed class BankDirectoryTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AMapRefusedHoldsNoBankerHoweverItsNpcsAreSeen()
+    {
+        var banks = Directory();
+
+        banks.Refuse(TestPlay.OtherInsideMapId);
+        banks.Seen(TestPlay.OtherInsideMapId, banker: true);
+
+        Assert.Equal([TestPlay.InsideMapId], banks.Sought());
+    }
+
+    [Fact]
     public void TheBankerIsTheNpcThePackNamesSoAndHisReplyTheOneTheQuestionOffers()
     {
         var banks = Directory();
