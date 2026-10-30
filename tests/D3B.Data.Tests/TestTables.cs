@@ -17,6 +17,7 @@ internal static class TestTables
     public const int Bomb = 3112;
 
     private static readonly int[] _replies = [259, 5422, 63_535];
+    private static readonly string[] _weaponZones = ["P", "X1,0,10,1"];
     private static readonly int[] _itemIcons = [34_009, 38_017];
     private static readonly int[] _jobIcons = [1];
     private static readonly int[] _levelIds = [1001, 1002, 2001];
@@ -35,6 +36,20 @@ internal static class TestTables
         return new ItemCatalog(
             new Item[] { new(289, 1001, 34, 1, 1, 34_009), new(303, 1002, 38, 1, 1, 38_017), new(34_569, 1003, 264, 0, 0, 0) },
             new ItemType[] { new(34, 2001, 9, 2), new(38, 2002, 9, 2) });
+    }
+
+    /// <summary>A sword striking earth damage and giving strength, and a hammer, as client 3.7.12.12 holds them.</summary>
+    public static WeaponCatalog Weapons()
+    {
+        return new WeaponCatalog(
+            new Weapon[]
+            {
+                new() { ItemId = 6751, TypeId = 6, ApCost = 4, MinRange = 1, Range = 1, CriticalHitProbability = 30, CriticalHitBonus = 10, MaxCastPerTurn = 1, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 0, EffectCount = 2 },
+                new() { ItemId = 7000, TypeId = 7, ApCost = 5, MinRange = 1, Range = 1, CriticalHitProbability = 25, CriticalHitBonus = 5, MaxCastPerTurn = 1, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 2, EffectCount = 1 },
+            },
+            new WeaponEffect[] { new() { EffectId = 97, DiceNum = 16, DiceSide = 25 }, new() { EffectId = 118, DiceNum = 21, DiceSide = 30 }, new() { EffectId = 100, DiceNum = 10, DiceSide = 20 } },
+            new WeaponType[] { new() { Id = 6, Zone = 0 }, new() { Id = 7, Zone = 1 } },
+            _weaponZones);
     }
 
     /// <summary>The lumberjack cuts ash; using a zaap belongs to no profession.</summary>

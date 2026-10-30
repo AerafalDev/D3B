@@ -64,6 +64,7 @@ public sealed class FightJudge
     private readonly TacticWeights _weights;
     private readonly FightMoves _moves;
     private readonly SpellCatalog _spells;
+    private readonly WeaponBlows _blows;
     private readonly EffectActions _actions;
     private readonly CastRules _rules;
     private readonly SpellStateCatalog _states;
@@ -88,17 +89,17 @@ public sealed class FightJudge
     /// <param name="start">The fight.</param>
     /// <param name="knowledge">What the AI knows of the fighters' spells and points.</param>
     /// <param name="weights">The weights.</param>
-    /// <param name="spells">The pack's spells.</param>
+    /// <param name="blows">The pack's spells and the weapons' blows.</param>
     /// <param name="actions">What each effect does.</param>
     /// <param name="rules">The rules of a cast, for the effects' masks.</param>
     /// <param name="moves">How fighters walk, for the cells they cast from.</param>
     /// <param name="states">The pack's states, for what each does.</param>
-    public FightJudge(ImaginedFight start, FightKnowledge knowledge, TacticWeights weights, SpellCatalog spells, EffectActions actions, CastRules rules, FightMoves moves, SpellStateCatalog states)
+    public FightJudge(ImaginedFight start, FightKnowledge knowledge, TacticWeights weights, WeaponBlows blows, EffectActions actions, CastRules rules, FightMoves moves, SpellStateCatalog states)
     {
         ArgumentNullException.ThrowIfNull(start);
         ArgumentNullException.ThrowIfNull(knowledge);
         ArgumentNullException.ThrowIfNull(weights);
-        ArgumentNullException.ThrowIfNull(spells);
+        ArgumentNullException.ThrowIfNull(blows);
         ArgumentNullException.ThrowIfNull(actions);
         ArgumentNullException.ThrowIfNull(rules);
         ArgumentNullException.ThrowIfNull(moves);
@@ -109,7 +110,8 @@ public sealed class FightJudge
         _team = start.Actor.Team;
         _weights = weights;
         _moves = moves;
-        _spells = spells;
+        _spells = blows.Spells;
+        _blows = blows;
         _actions = actions;
         _rules = rules;
         _states = states;
@@ -129,7 +131,7 @@ public sealed class FightJudge
         for (var one = 0; one < _fighters.Length; one++)
         {
             var fighter = _fighters[one];
-            var levels = knowledge.SpellsOf(fighter.Id).Where(level => Damages(spells, actions, level)).Select(level => CastRules.Modified(level, fighter)).Take(Landings).ToArray();
+            var levels = knowledge.SpellsOf(fighter.Id).Where(level => Damages(_spells, actions, level)).Select(level => CastRules.Modified(level, fighter)).Take(Landings).ToArray();
 
             _levels[one] = levels;
             _levelDamage[one] = new double[_fighters.Length][];
@@ -279,12 +281,14 @@ public sealed class FightJudge
 
         // A critical hit weighed by its chance (D207), its level's critical effects if it has some.
         var chance = EffectFormulas.CriticalChance(level, caster);
-        var normal = Damage(_spells.EffectsOf(level), _actions, _rules, level, caster, target, pair, critical: false);
+        // A weapon's blow deals a weapon's damage, its critical hit adding the weapon's bonus (D220).
+        int? weaponBonus = WeaponBlows.IsBlow(level) ? _blows.CriticalBonusOf(level) : null;
+        var normal = Damage(_spells.EffectsOf(level), _actions, _rules, level, caster, target, pair, critical: false, weaponBonus);
 
         if (chance <= 0)
             return normal;
 
-        var critical = Damage(level.CriticalEffectCount > 0 ? _spells.CriticalEffectsOf(level) : _spells.EffectsOf(level), _actions, _rules, level, caster, target, pair, critical: true);
+        var critical = Damage(level.CriticalEffectCount > 0 ? _spells.CriticalEffectsOf(level) : _spells.EffectsOf(level), _actions, _rules, level, caster, target, pair, critical: true, weaponBonus);
 
         return ((1 - chance) * normal) + (chance * critical);
     }
@@ -340,7 +344,7 @@ public sealed class FightJudge
         return turns;
     }
 
-    private static double Damage(ReadOnlySpan<SpellEffect> effects, EffectActions actions, CastRules rules, in SpellLevel level, Combatant caster, Combatant target, Combatant[] pair, bool critical)
+    private static double Damage(ReadOnlySpan<SpellEffect> effects, EffectActions actions, CastRules rules, in SpellLevel level, Combatant caster, Combatant target, Combatant[] pair, bool critical, int? weaponBonus)
     {
         var total = 0.0;
 
@@ -358,9 +362,10 @@ public sealed class FightJudge
 
             var roll = EffectFormulas.Roll(effect);
             var element = EffectFormulas.Resolve(action.Element, caster);
+            var dealt = weaponBonus is { } bonus ? EffectFormulas.DealtByWeapon(roll, caster, element, critical, bonus) : EffectFormulas.Dealt(roll, caster, element, critical);
             var value = action.Kind is EffectKind.FixedDamage
                 ? roll
-                : EffectFormulas.Received(EffectFormulas.Dealt(roll, caster, element, critical), caster, target, element, melee: level.Range <= 1);
+                : EffectFormulas.Received(dealt, caster, target, element, melee: level.Range <= 1, weapon: weaponBonus is not null);
             var middle = (value.Min + value.Max) / 2.0;
 
             total += selected is CriterionAnswer.True ? middle : middle / 2;

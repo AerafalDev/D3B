@@ -27,6 +27,7 @@ public sealed class GameTablesTests : IDisposable
         using var pack = TestPacks.Open(_directory, TestPacks.Write(writer =>
         {
             writer.Add(ItemCatalog.EntryName, TestTables.Items());
+            writer.Add(WeaponCatalog.EntryName, TestTables.Weapons());
             writer.Add(JobCatalog.EntryName, TestTables.Jobs());
             writer.Add(InteractiveCatalog.EntryName, TestTables.Interactives());
             writer.Add(BankCatalog.EntryName, TestTables.Banks());
@@ -42,6 +43,7 @@ public sealed class GameTablesTests : IDisposable
         var tables = new GameTables(pack);
 
         Assert.Same(tables.Items, tables.Items);
+        Assert.Same(tables.Weapons, tables.Weapons);
         Assert.Same(tables.Jobs, tables.Jobs);
         Assert.Same(tables.Interactives, tables.Interactives);
         Assert.Same(tables.Banks, tables.Banks);
@@ -54,6 +56,10 @@ public sealed class GameTablesTests : IDisposable
         Assert.Same(tables.Characteristics, tables.Characteristics);
         Assert.Equal(TestTables.Items().Items.ToArray(), tables.Items.Items.ToArray());
         Assert.Equal(TestTables.Items().Types.ToArray(), tables.Items.Types.ToArray());
+        Assert.Equal(TestTables.Weapons().Weapons.ToArray(), tables.Weapons.Weapons.ToArray());
+        Assert.Equal(TestTables.Weapons().Effects.ToArray(), tables.Weapons.Effects.ToArray());
+        Assert.Equal(TestTables.Weapons().Types.ToArray(), tables.Weapons.Types.ToArray());
+        Assert.Equal(TestTables.Weapons().Zones.ToArray(), tables.Weapons.Zones.ToArray());
         Assert.Equal(TestTables.Jobs().Jobs.ToArray(), tables.Jobs.Jobs.ToArray());
         Assert.Equal(TestTables.Jobs().Skills.ToArray(), tables.Jobs.Skills.ToArray());
         Assert.Equal(TestTables.Interactives().Interactives.ToArray(), tables.Interactives.Interactives.ToArray());
@@ -89,6 +95,7 @@ public sealed class GameTablesTests : IDisposable
 
         Assert.Throws<KeyNotFoundException>(() => tables.Items);
         Assert.Throws<KeyNotFoundException>(() => tables.Items);
+        Assert.Throws<KeyNotFoundException>(() => tables.Weapons);
         Assert.Throws<KeyNotFoundException>(() => tables.Jobs);
         Assert.Throws<KeyNotFoundException>(() => tables.Interactives);
         Assert.Throws<KeyNotFoundException>(() => tables.Banks);

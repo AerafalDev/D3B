@@ -413,7 +413,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 5 holds (D27, D29, D139, D182):
+- A pack of format 6 holds (D27, D29, D139, D182, D219):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -421,6 +421,8 @@ Built at step 2 (D24 to D33):
   - the game tables a harvesting and banking bot uses: items and their types (`ItemCatalog`), jobs and skills
     (`JobCatalog`), interactives (`InteractiveCatalog`), banks and bankers with the replies that open the bank
     (`BankCatalog`), each read once by `GameTables`; items and jobs name their icon;
+  - the weapons, each with its fight fields and effects, and the zone of each type of weapon as the client writes it
+    (`WeaponCatalog`, D219), read once by `GameTables`;
   - the icons of the items a harvest names and of the professions, 64 pixels square in raw RGBA, decoded from the client's
     BC7 textures by the extraction tool (`IconCatalog`, D135 to D137), read once by `GameTables`;
   - what fights need, each read once by `GameTables`: the spells, their levels with every field and their effects, each
@@ -671,6 +673,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
     against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216).
+- The weapons' blows, in `D3B.Engine.Fights` (9e3, D220): `WeaponBlows`, each sword's blow a level of spell 0, the
+  punch's with the sword's fields and its effects used in fights, after the pack's levels in one catalog the rules, the
+  effects and the AI share (`SpellCatalog.WithLevels`); `EffectFormulas.DealtByWeapon` and the weapons' multipliers,
+  the references' order. The other kinds of weapon wait for blows of theirs.
 - Later: an element not depending on line of
   sight (D75).
 
@@ -695,7 +701,10 @@ replayed (`scripts/fights.cs --turns` and `--live`, D206), a critical hit weighe
 measured (D211, D212), the switch "The AI fights" kept for each character and the fight played end to end in the tests
 (D213), the owner's fights for D196 and Q16 measured (D214); the weapon's blow left to a session of its own (D215);
 measured on the fights the AI played, the options' numbers corrected so that it closes the fight before refusing
-spectators (D216).
+spectators (D216). Built in session 9e3: the owner's asks and choices, swords only (D217); the weapon's blow measured on
+the captures (D218); the pack's format 6 and its weapons (D219, in [Game data](#game-data)); the blow as a level of spell 0
+(D220, in [Engine](#engine)); the worn weapon, mapping format 12, and the bot striking its sword (D221); measured with
+`scripts/fights.cs` (D222).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -723,11 +732,13 @@ spectators (D216).
   range walked towards then struck, a badly hurt character heals itself, nothing worth doing ends the turn, a refused
   cast is not weighed again, a placement reaches an enemy it beats, strong enemies make the fight risky, a walk's path
   (D201, D203); a critical hit's share and chance, an enemy a pillar hides threatening nothing, a lasting rage cast in a
-  long fight and not in a short one, the next turn's start and search (D207 to D210). The character's spells by the
+  long fight and not in a short one, the next turn's start and search (D207 to D210). A sword's blow as a level of spell
+  0, foreseen with the weapons' formulas, struck when it does more for its AP than the spell, and not otherwise (D220). The character's spells by the
   list, its level, a pair and the fight's own; the fight's options and context; the player's requests in a fight; a
   harvest's fight answered once over, a lost fight and three in a row (D198, D202). A fight is played end to end through
   `TestPlay`, whose pack carries a spell: the AI closes it, places the character, readies it, casts and ends its turn;
-  without the switch it sends nothing; the player's hand pauses it (D213). The switch is kept and given back by the
+  without the switch it sends nothing; the player's hand pauses it (D213); a worn sword is struck as spell 0 beside the
+  spell, its weapon's sequence shown (D221). The switch is kept and given back by the
   storage, and saved from the card.
 - The effects' formulas are tested on fighters the tests build, with the numbers the bench measured; what a cast foresees
   on a catalog of the tests' own: a blow on each enemy, less a step away, its critical effects, resistances, and a boost

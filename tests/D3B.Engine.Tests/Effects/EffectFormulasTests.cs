@@ -37,6 +37,28 @@ public sealed class EffectFormulasTests
     }
 
     [Fact]
+    public void AWeaponsBlowIsRaisedByWeaponsPowerThenItsMasteryItsCriticalHitAddingTheWeaponsBonus()
+    {
+        var caster = Fighter((FightCharacteristic.Strength, 100), (FightCharacteristic.WeaponPower, 20), (FightCharacteristic.AllDamageBonus, 4), (FightCharacteristic.CriticalDamageBonus, 2), (FightCharacteristic.WeaponMastery, 50));
+
+        // 16 to 25 raised by 220%, 35 to 55, plus 4; then half as much again by the mastery.
+        Assert.Equal(new LifeRange(58, 88), EffectFormulas.DealtByWeapon(new LifeRange(16, 25), caster, EffectElement.Earth, critical: false, criticalBonus: 10));
+        Assert.Equal(new LifeRange(76, 106), EffectFormulas.DealtByWeapon(new LifeRange(16, 25), caster, EffectElement.Earth, critical: true, criticalBonus: 10));
+        Assert.Equal(new LifeRange(36, 54), EffectFormulas.Dealt(new LifeRange(16, 25), caster, EffectElement.Earth, critical: false));
+    }
+
+    [Fact]
+    public void AWeaponsBlowTakesTheWeaponsMultipliersAndNotTheSpells()
+    {
+        var caster = Fighter((FightCharacteristic.DealtDamageMultiplierWeapons, 150), (FightCharacteristic.DealtDamageMultiplierSpells, 200));
+        var target = Fighter((FightCharacteristic.ReceivedDamageMultiplierWeapons, 50), (FightCharacteristic.ReceivedDamageMultiplierSpells, 300));
+
+        Assert.Equal(new LifeRange(30, 37), EffectFormulas.Received(new LifeRange(40, 50), caster, target, EffectElement.Earth, melee: true, weapon: true));
+        Assert.Equal(new LifeRange(240, 300), EffectFormulas.Received(new LifeRange(40, 50), caster, target, EffectElement.Earth, melee: true, weapon: false));
+        Assert.Equal(new LifeRange(40, 50), EffectFormulas.Received(new LifeRange(40, 50), Fighter(), Fighter(), EffectElement.Earth, melee: true, weapon: true));
+    }
+
+    [Fact]
     public void AZoneTakesItsStepOffForEachStepAwayAsManyAsItAllows()
     {
         Assert.Equal(new LifeRange(50, 60), EffectFormulas.Decreased(new LifeRange(50, 60), Zone(), 0));

@@ -127,6 +127,33 @@ public sealed partial class SpellCatalog
             throw new ArgumentException($"The {name} name text {index}, where there are {strings}.", name);
     }
 
+    /// <summary>Gets a catalog holding these spells and more levels, which no spell lists: such as the weapons' blows <c>D3B.Engine</c> makes of spell 0.</summary>
+    /// <param name="levels">The levels, in strictly ascending order of identifier and above every level of the catalog, each naming its effects in <paramref name="effects"/> from its first, and no preview zone.</param>
+    /// <param name="effects">Their effects, each level's together and in the order of the levels, naming the catalog's texts and listing no cell.</param>
+    /// <returns>A new catalog, every array copied once: the levels follow the catalog's, and their effects the catalog's.</returns>
+    /// <exception cref="ArgumentException">A level is not above the catalog's, or its effects do not follow, or name a text the catalog lacks.</exception>
+    public SpellCatalog WithLevels(ReadOnlySpan<SpellLevel> levels, ReadOnlySpan<SpellEffect> effects)
+    {
+        var allLevels = new SpellLevel[Levels.Length + levels.Length];
+        var allEffects = new SpellEffect[Effects.Length + effects.Length];
+
+        Levels.Span.CopyTo(allLevels);
+        Effects.Span.CopyTo(allEffects);
+        effects.CopyTo(allEffects.AsSpan(Effects.Length));
+
+        for (var index = 0; index < levels.Length; index++)
+        {
+            allLevels[Levels.Length + index] = levels[index] with
+            {
+                FirstEffect = levels[index].FirstEffect + Effects.Length,
+                FirstPreviewZone = PreviewZones.Length,
+                PreviewZoneCount = 0,
+            };
+        }
+
+        return new SpellCatalog(Spells, allLevels, LevelIds, allEffects, PreviewZones, ZoneCells, Strings, Variants, Bombs, BombWalls);
+    }
+
     /// <summary>Finds a spell.</summary>
     /// <param name="id">Its identifier.</param>
     /// <param name="spell">The spell, when found.</param>

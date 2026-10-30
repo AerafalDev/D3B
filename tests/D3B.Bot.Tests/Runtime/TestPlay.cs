@@ -45,7 +45,8 @@ namespace D3B.Bot.Tests.Runtime;
 /// holds a zaap, as Astrub's does, and <see cref="HavenBagMapId"/>, which the pack lacks, is a haven bag. Every map is of
 /// <see cref="SubAreaId"/>, which lists <see cref="Ash"/>, which the tree's skill gathers, and <see cref="Chestnut"/>,
 /// which a lumberjack gathers from level 20. The pack's fight data holds one spell, <see cref="BlowSpellId"/>, an earth blow
-/// of 10 to 12 on an enemy for 3 AP at a range of 1 to 4, and the two effects of the tactics' tests; no monster, breed or state.
+/// of 10 to 12 on an enemy for 3 AP at a range of 1 to 4, spell 0's punch, a sword, <see cref="SwordItemId"/>, striking
+/// earth 20 to 25 for 3 AP once a turn, and the two effects of the tactics' tests; no monster, breed or state.
 /// </remarks>
 internal sealed class TestPlay : IAsyncDisposable
 {
@@ -92,6 +93,9 @@ internal sealed class TestPlay : IAsyncDisposable
     public const long CharacterId = 70_001;
     public const int BlowSpellId = 100;
     public const int BlowLevelId = 1_100;
+    public const int SwordItemId = 6_751;
+
+    private static readonly string[] _weaponZones = ["P"];
 
     private static readonly RelaySettings _settings = new()
     {
@@ -277,6 +281,11 @@ internal sealed class TestPlay : IAsyncDisposable
                 new IconTable(new[] { AshIconId, ChestnutIconId }, Disc(0x8B, 0xC3, 0x4A).Concat(Disc(0x9C, 0x5B, 0x2E)).ToArray()),
                 new IconTable(new[] { LumberjackIconId }, Disc(0x3B, 0x82, 0xF6))));
             writer.Add(SpellCatalog.EntryName, Spells());
+            writer.Add(WeaponCatalog.EntryName, new WeaponCatalog(
+                new[] { new Weapon { ItemId = SwordItemId, TypeId = 6, ApCost = 3, MinRange = 1, Range = 1, CriticalHitProbability = 0, MaxCastPerTurn = 1, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 0, EffectCount = 1 } },
+                new[] { new WeaponEffect { EffectId = 97, DiceNum = 20, DiceSide = 25 } },
+                new[] { new WeaponType { Id = 6, Zone = 0 } },
+                _weaponZones));
             writer.Add(SpellStateCatalog.EntryName, new SpellStateCatalog(Array.Empty<SpellState>(), ReadOnlyMemory<int>.Empty));
             writer.Add(EffectCatalog.EntryName, new EffectCatalog(new Effect[]
             {
@@ -296,23 +305,20 @@ internal sealed class TestPlay : IAsyncDisposable
 
     private static SpellCatalog Spells()
     {
-        SpellLevel[] levels = [new SpellLevel { Id = BlowLevelId, SpellId = BlowSpellId, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 0, EffectCount = 1 }];
+        var point = new SpellZone { Shape = SpellZoneShape.Point, Size = 1, DamageDecreaseStepPercent = 10, MaxDamageDecreaseApplyCount = 4, ForcedDirection = -1 };
+        SpellLevel[] levels =
+        [
+            new SpellLevel { Id = BlowLevelId, SpellId = BlowSpellId, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 0, EffectCount = 1 },
+            new SpellLevel { Id = 10_461, SpellId = 0, Grade = 1, ApCost = 3, MinRange = 1, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 1, EffectCount = 1 },
+        ];
         SpellEffect[] effects =
         [
-            new SpellEffect
-            {
-                Uid = 1,
-                EffectId = 97,
-                TargetMask = 0,
-                Triggers = 1,
-                DiceNum = 10,
-                DiceSide = 12,
-                Zone = new SpellZone { Shape = SpellZoneShape.Point, Size = 1, DamageDecreaseStepPercent = 10, MaxDamageDecreaseApplyCount = 4, ForcedDirection = -1 },
-            },
+            new SpellEffect { Uid = 1, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 10, DiceSide = 12, Zone = point },
+            new SpellEffect { Uid = 2, EffectId = 97, TargetMask = 3, Triggers = 1, DiceNum = 6, DiceSide = 7, Zone = point },
         ];
-        Spell[] spells = [new Spell { Id = BlowSpellId, NameId = BlowSpellId, FirstLevel = 0, LevelCount = 1 }];
-        int[] levelIds = [BlowLevelId];
-        string[] strings = ["A", "I", "a"];
+        Spell[] spells = [new Spell { Id = 0, NameId = 1, FirstLevel = 0, LevelCount = 1 }, new Spell { Id = BlowSpellId, NameId = BlowSpellId, FirstLevel = 1, LevelCount = 1 }];
+        int[] levelIds = [10_461, BlowLevelId];
+        string[] strings = ["A", "I", "a", "a,A"];
 
         return new SpellCatalog(spells, levels, levelIds, effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings, Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
     }

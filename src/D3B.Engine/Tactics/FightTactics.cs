@@ -44,6 +44,9 @@ public sealed class FightTactics
     private readonly SpellStateCatalog _states;
     private readonly EffectActions _actions;
 
+    /// <summary>Gets the pack's spells and the weapons' blows, which the AI casts as spells' levels (D220).</summary>
+    public WeaponBlows Blows { get; }
+
     /// <summary>Gets the rules of a cast.</summary>
     public CastRules Rules { get; }
 
@@ -59,29 +62,40 @@ public sealed class FightTactics
     /// <summary>Initializes a new instance of the <see cref="FightTactics"/> class.</summary>
     /// <param name="tables">The pack's game tables.</param>
     public FightTactics(GameTables tables)
-        : this((tables ?? throw new ArgumentNullException(nameof(tables))).Spells, tables.States, tables.Effects, tables.Monsters)
+        : this(new WeaponBlows((tables ?? throw new ArgumentNullException(nameof(tables))).Spells, tables.Weapons, tables.Effects), tables.States, tables.Effects, tables.Monsters)
     {
     }
 
-    /// <summary>Initializes a new instance of the <see cref="FightTactics"/> class, from the pack's catalogs.</summary>
+    /// <summary>Initializes a new instance of the <see cref="FightTactics"/> class, from the pack's catalogs, with no weapon's blow.</summary>
     /// <param name="spells">The spells.</param>
     /// <param name="states">The states.</param>
     /// <param name="effects">The effects.</param>
     /// <param name="monsters">The monsters, for summons.</param>
     public FightTactics(SpellCatalog spells, SpellStateCatalog states, EffectCatalog effects, MonsterCatalog monsters)
+        : this(new WeaponBlows(spells), states, effects, monsters)
     {
-        ArgumentNullException.ThrowIfNull(spells);
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="FightTactics"/> class, from the pack's catalogs and the weapons' blows.</summary>
+    /// <param name="blows">The spells and the weapons' blows.</param>
+    /// <param name="states">The states.</param>
+    /// <param name="effects">The effects.</param>
+    /// <param name="monsters">The monsters, for summons.</param>
+    public FightTactics(WeaponBlows blows, SpellStateCatalog states, EffectCatalog effects, MonsterCatalog monsters)
+    {
+        ArgumentNullException.ThrowIfNull(blows);
         ArgumentNullException.ThrowIfNull(states);
         ArgumentNullException.ThrowIfNull(effects);
         ArgumentNullException.ThrowIfNull(monsters);
 
-        _spells = spells;
+        Blows = blows;
+        _spells = blows.Spells;
         _states = states;
         _actions = new EffectActions(effects);
-        Rules = new CastRules(spells, states);
+        Rules = new CastRules(_spells, states);
         Moves = new FightMoves(states);
-        Effects = new SpellEffects(spells, Rules, _actions);
-        Imagination = new Imagination(spells, monsters, _actions, Effects);
+        Effects = new SpellEffects(blows, Rules, _actions);
+        Imagination = new Imagination(_spells, monsters, _actions, Effects);
     }
 
     private static long Signature(ImaginedFight fight)
@@ -119,7 +133,7 @@ public sealed class FightTactics
     /// <returns>The judge.</returns>
     public FightJudge JudgeOf(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights)
     {
-        return new FightJudge(fight, knowledge, weights, _spells, _actions, Rules, Moves, _states);
+        return new FightJudge(fight, knowledge, weights, Blows, _actions, Rules, Moves, _states);
     }
 
     /// <summary>Gets how the fight looks for the fighter playing's side as it starts.</summary>

@@ -105,7 +105,7 @@ internal sealed class TurnBench
             var self = state.Key.CharacterId;
 
             if (turn is not null && state.Fight is { } before)
-                Observe(before, self, message, turn);
+                Observe(before, self, message, turn, state.Weapon is { } weapon && _tactics.Blows.TryGetBlow(weapon.ItemId, out var blow) ? blow : null);
 
             // Whom the enemies' blows took life from between two of the character's turns, as the server announced it.
             if (ending is not null && message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.LifeLost } lost && state.Fight is { } between
@@ -180,7 +180,7 @@ internal sealed class TurnBench
         if (!_fightMaps.TryGetValue(mapId, out var map))
             _fightMaps[mapId] = map = FightMap.Of(data);
 
-        return ImaginedFights.Of(state, map, _tables, turnPoints);
+        return ImaginedFights.Of(state, map, _tables, _tactics.Blows, turnPoints);
     }
 
     private void Plan(Turn turn)
@@ -196,7 +196,7 @@ internal sealed class TurnBench
         Tally.Count($"plans: {(plan.IsEmpty ? "nothing" : casts is 0 ? "walks only" : "casts")}");
     }
 
-    private static void Observe(FightState fight, long self, IMessage message, Turn turn)
+    private static void Observe(FightState fight, long self, IMessage message, Turn turn, SpellLevel? blow)
     {
         switch (message)
         {
@@ -204,6 +204,13 @@ internal sealed class TurnBench
                 // A cast the character chose is the first of its sequence of a spell (client.md); the others its effects cast.
                 if (fight.Sequences is [.., { Type: SequenceType.Spell, HasCast: false } innermost] && innermost.AuthorId == self)
                     turn.Played.Add(TacticAction.Cast(spell.SpellId, spell.LevelId, action.Cast.CellId));
+
+                break;
+
+            case GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast, Cast.Spell: null } struck when struck.SourceId == self && blow is { } level:
+                // A weapon's blow names no spell (D218): it is the worn weapon's, when D3B strikes that weapon's.
+                if (fight.Sequences is [.., { Type: SequenceType.Weapon, HasCast: false } inner] && inner.AuthorId == self)
+                    turn.Played.Add(TacticAction.Cast(WeaponBlows.SpellId, level.Id, struck.Cast.CellId));
 
                 break;
 
@@ -222,10 +229,10 @@ internal sealed class TurnBench
     private string Does(int levelId)
     {
         // What a cast mostly does, the first of these its level's effects do.
-        if (!_tables.Spells.TryGetLevel(levelId, out var level))
+        if (!_tactics.Blows.Spells.TryGetLevel(levelId, out var level))
             return "level unknown";
 
-        var kinds = _tables.Spells.EffectsOf(level).ToArray().Select(effect => _actions.Of(effect.EffectId).Kind).ToHashSet();
+        var kinds = _tactics.Blows.Spells.EffectsOf(level).ToArray().Select(effect => _actions.Of(effect.EffectId).Kind).ToHashSet();
 
         return kinds.Overlaps([EffectKind.Damage, EffectKind.Steal, EffectKind.FixedDamage]) ? "damage"
             : kinds.Overlaps([EffectKind.Heal, EffectKind.FixedHeal, EffectKind.PercentHeal]) ? "heal"
@@ -254,7 +261,7 @@ internal sealed class TurnBench
 
     private EffectElement? ElementOf(in SpellLevel level, Combatant caster)
     {
-        foreach (var effect in _tables.Spells.EffectsOf(level))
+        foreach (var effect in _tactics.Blows.Spells.EffectsOf(level))
         {
             var action = _actions.Of(effect.EffectId);
 
@@ -279,7 +286,7 @@ internal sealed class TurnBench
         {
             var actor = fight.Actor;
 
-            if (action.Kind is TacticActionKind.Cast && _tables.Spells.TryGetLevel(action.LevelId, out var chosen) && ElementOf(chosen, actor) is { } element)
+            if (action.Kind is TacticActionKind.Cast && _tactics.Blows.Spells.TryGetLevel(action.LevelId, out var chosen) && ElementOf(chosen, actor) is { } element)
             {
                 var best = BestElement(actor);
                 var dealt = Dealt(fight, _tactics.Imagination.Cast(fight, chosen, action.Cell));
@@ -322,7 +329,7 @@ internal sealed class TurnBench
 
                 fight = Imagination.Walked(fight, action.Cell, left);
             }
-            else if (_tables.Spells.TryGetLevel(action.LevelId, out var level))
+            else if (_tactics.Blows.Spells.TryGetLevel(action.LevelId, out var level))
             {
                 fight = _tactics.Imagination.Cast(fight, level, action.Cell);
             }
@@ -343,14 +350,14 @@ internal sealed class TurnBench
         {
             Tally.Count($"casts played, by what they do: {Does(action.LevelId)}");
 
-            if (Does(action.LevelId) is "boost" or "state" && _tables.Spells.TryGetLevel(action.LevelId, out var buffing))
+            if (Does(action.LevelId) is "boost" or "state" && _tactics.Blows.Spells.TryGetLevel(action.LevelId, out var buffing))
             {
-                foreach (var effect in _tables.Spells.EffectsOf(buffing))
+                foreach (var effect in _tactics.Blows.Spells.EffectsOf(buffing))
                 {
                     var does = _actions.Of(effect.EffectId);
 
                     if (does.Kind is EffectKind.Boost or EffectKind.Deboost or EffectKind.StateSet)
-                        Tally.Count($"buffs played: {does.Kind} {(does.Kind is EffectKind.StateSet ? $"state {effect.DiceNum}" : $"characteristic {does.Characteristic}")}, {effect.Duration} rounds, mask {_tables.Spells.TargetMaskOf(effect)}, ap {buffing.ApCost}");
+                        Tally.Count($"buffs played: {does.Kind} {(does.Kind is EffectKind.StateSet ? $"state {effect.DiceNum}" : $"characteristic {does.Characteristic}")}, {effect.Duration} rounds, mask {_tactics.Blows.Spells.TargetMaskOf(effect)}, ap {buffing.ApCost}");
                 }
             }
         }
@@ -358,8 +365,17 @@ internal sealed class TurnBench
         foreach (var action in turn.Planned?.Actions.Where(action => action.Kind is TacticActionKind.Cast) ?? [])
             Tally.Count($"casts planned, by what they do: {Does(action.LevelId)}");
 
+        // The weapon's blow, weighed as a spell's (D217): those the turns played, those the plans hold, and the turns whose
+        // character could strike its sword's.
         if (turn.WeaponBlows > 0)
             Tally.Count("turns: with a weapon's blow", turn.WeaponBlows);
+
+        if (turn.Knowledge.SpellsOf(turn.Start.ActorId).Any(level => WeaponBlows.IsBlow(level)))
+        {
+            Tally.Count("weapon's blow: turns of a character with a sword D3B strikes");
+            Tally.Count("weapon's blow: blows played", turn.Played.Count(action => action.Kind is TacticActionKind.Cast && action.SpellId is WeaponBlows.SpellId));
+            Tally.Count("weapon's blow: blows planned", turn.Planned?.Actions.Count(action => action.Kind is TacticActionKind.Cast && action.SpellId is WeaponBlows.SpellId) ?? 0);
+        }
 
         Compare(turn, judge, played, planned);
         Elements(turn, turn.Played, "played");

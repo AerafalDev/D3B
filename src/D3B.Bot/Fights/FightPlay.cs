@@ -69,7 +69,7 @@ public static class FightPlay
 
             map = map?.Id == mapId ? map : FightMap.Of(data);
 
-            if (!judged && ImaginedFights.Of(state, map, tables, null) is { } start)
+            if (!judged && ImaginedFights.Of(state, map, tables, tactics.Blows, null) is { } start)
             {
                 var odds = tactics.Odds(start.Fight, start.Knowledge);
 
@@ -142,7 +142,7 @@ public static class FightPlay
     {
         var self = context.State.Key.CharacterId;
 
-        if (ImaginedFights.Of(context.State, map, tables, null) is not { } imagined || context.State.Fight is not { } fight)
+        if (ImaginedFights.Of(context.State, map, tables, tactics.Blows, null) is not { } imagined || context.State.Fight is not { } fight)
             return;
 
         foreach (var option in _closing)
@@ -193,7 +193,7 @@ public static class FightPlay
             // What the server answered last is whole once its sequences closed.
             await context.WaitUntilAsync(state => state.Fight is not { Sequences.IsEmpty: false }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
 
-            if (context.State.Fight is not { IsOwnTurn: true } || ImaginedFights.Of(context.State, map, tables, turnPoints) is not { } imagined)
+            if (context.State.Fight is not { IsOwnTurn: true } || ImaginedFights.Of(context.State, map, tables, tactics.Blows, turnPoints) is not { } imagined)
                 return;
 
             if (refusedSpells.Count > 0)
@@ -268,7 +268,9 @@ public static class FightPlay
     private static async Task<bool> CastAsync(BotContext context, TacticAction action, CancellationToken cancellationToken)
     {
         var self = context.State.Key.CharacterId;
-        var shown = Shown(context, self, SequenceType.Spell);
+
+        // Measured (D218): the server frames a weapon's blow in a sequence of its own, which the client acknowledges as a spell's.
+        var shown = Shown(context, self, action.SpellId is WeaponBlows.SpellId ? SequenceType.Weapon : SequenceType.Spell);
         // Measured live (D203): the server refuses a cast with an error text, 29 ms after the request, and nothing else.
         var cast = context.Expect((side, message, _) => side is RelayDirection.FromServer
             && (message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast, SourceId: var source } && source == self

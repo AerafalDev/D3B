@@ -284,6 +284,19 @@ which bit means what is not measured, the client's code naming bit 10 saleable (
 The pack keeps the id, name, type, level, weight and icon, 17 bytes an item; effects, recipes, drops, criteria and
 `m_flags` are left out (D29, D139).
 
+**Weapons**, measured for session 9e3 (D218, D219), kept from format 6 in their own entry: 769 of 13 types, each of super
+type 2, the only types of it. A weapon names its effects by reference, in the table's registry. AP 4 on 386, 3 on 201, 5
+on 110, 2 to 7 on 763, and 0, 1, 10, 20 and 42 on the others; the least range 1 on 603, 0 to 20; the most 1 on 483, 0 to
+23; 270 cast in line, 77 in diagonal, every one testing the line of sight; a critical chance of 30 on 438, 0 to 100, its
+bonus 0 to 30; once a turn on 611, twice on 148, 3 times on 7, no limit on 3. Their 6,637 effects, 0 to 21 a weapon,
+are a blow's damage, steals, heals and AP or MP removed, 1,311 of effects used in fights, and the characteristics the
+weapon gives; 2 name effect 205, which the client lacks. Every other field of a weapon's effect is the same on all: no
+mask, no trigger, no duration, no draw, an element of -1, flags 15, a circle of 1 as zone; the zone a blow hits is its
+type's `rawZone`: `P`, the cell struck, for 8 types and 479 weapons, the 126 swords among them; `T1,10,1` the 94 staffs,
+`X1,0,10,1` the 99 hammers, `V1,10,2` the 61 shovels, `U1,10,1` the 16 scythes, `L3,10,3` the 20 lances. How the client
+reads the numbers is not measured. Of the 126 swords, 122 do something in a fight, 76 one effect, mostly damage or a
+steal of one element.
+
 Item types: `superTypeId` takes 25 values, the ids of `ItemSuperTypesDataRoot`, which names none of them; `categoryId`
 from 0 to 5, 2 on 78 types. The pack keeps both as they are.
 
@@ -501,8 +514,9 @@ same name at 100 pixels per unit, named by the icon's identifier, which items an
 
 ## The pack of 3.7.12.12
 
-Format 5 (D182): 7,432,757 bytes, 17,737 entries, extracted in about 22 s on 16 threads, 14 s of which read the client.
-Two extractions give the same SHA-256. The pack records the extractor's version, so another build of the extractor writes
+Format 6 (D219): 7,452,604 bytes, 17,738 entries, the weapons' 110 KB serialized and about 20 KB compressed, read in
+under 10 ms; extracted in about 22 s. Format 5 (D182): 7,432,757 bytes, 17,737 entries, extracted in about 22 s on 16
+threads, 14 s of which read the client. Two extractions give the same SHA-256. The pack records the extractor's version, so another build of the extractor writes
 other bytes. Format 4 (D139) was 5,382,920 bytes; format 3 (D29, D30) 4,670,325, 4,670,336 from session 2d's extractor
 (D33).
 
@@ -515,6 +529,7 @@ other bytes. Format 4 (D139) was 5,382,920 bytes; format 3 (D29, D30) 4,670,325,
 | `world/graph` | 1.42 MB | 0.25 MB |
 | `world/atlas` | 0.41 MB | 0.06 MB |
 | `items/catalog` | 0.37 MB | 0.13 MB |
+| `items/weapons`, format 6 | 0.11 MB | about 0.02 MB |
 | `icons/catalog` | 2.33 MB | 0.58 MB |
 | `spells/states`, `effects/catalog`, `breeds/catalog`, `characteristics/catalog` | 0.18 MB | 0.04 MB |
 | `jobs/catalog`, `interactives/catalog`, `banks/catalog` | 13 KB | 4 KB |
@@ -1604,6 +1619,28 @@ the AI played, 13 fights, a Xelor at level 91 among the characters, and the 66 f
 - **9e2's fights**, 17 the AI played for 9 breeds (D216): 16 won; 180 casts sent, 176 cast, 4 refused with text 175; 5
   of the character's 81 turns with nothing done; every character's 54 characteristics given at its first turn, one of
   level 150 with none of the four elements'.
+
+### The game, struck
+
+Measured on 2026-10-30 for session 9e3 (D217 to D222): the 80 game connections of 3.7.12.12, 100 fights, with
+`scripts/fights.cs` and measuring tools never committed that print counts. They hold 2 weapon's blows, both a sword's.
+
+- **The blow.** The client asks for spell 0 on a cell, `GameActionFightCastRequest` with its spell left out. The server
+  answers 28 and 29 ms later with a sequence of type 1, a weapon's, its first action 303: a cast naming the cell and the
+  fighter on it, no spell, no level, no critical field. Then the AP the sword costs, 3 and 4, spent, and its effects: a
+  neutral steal of 5 to 6 took 5 and healed its caster 2, an earth blow of 16 to 25 took 8, the target's whole life. The
+  client acknowledged both sequences. D3B's rules accept both, and its foresight holds them, the steal's heal too.
+- **The worn weapon.** Position 1 of the inventory: of 75 inventories, the 63 with a weapon worn held it there, 45 a bow,
+  18 a sword, and nothing else was there. Each other position, 0 and 2 to 15, held objects of one super type. A stack
+  carries its own effects, its field 7, each an action and its dice; the 6 weapons worn rolled as their item does.
+- **Equipping.** `ObjectMovementEvent` moves a stack to a position: 2 in the captures, a pet taken off to 63, and one
+  worn at 8 after the client's `ito`, its uid, quantity and position. No weapon changed.
+- **Spell 0.** Every list of the character's own spells names it at grade 1, 77 as it entered the game and 96 as a fight
+  started; the 16 of a form or a turret do not. Its level is the punch: 3 AP, range 1, neutral 6 to 7, 9 to 10 critical.
+- **The weapons' characteristics.** On the 358 turns of the characters captured, 122 and 142, the damage weapons deal and
+  receive, were 100, and the server never gave 103, the weapons' power, nor 31, the weapon mastery.
+- **The AI.** On the 109 turns replayed of a character wearing a sword D3B strikes, it planned 8 blows; the players
+  struck none in those turns.
 
 ## Protocol code
 

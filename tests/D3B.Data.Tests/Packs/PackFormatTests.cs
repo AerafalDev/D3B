@@ -40,6 +40,7 @@ public sealed class PackFormatTests
         (3, "94032ad3554bc9df362222810fcb95534e53d56997b1dc1a839ac598dde39ede"),
         (4, "4f0e5099257dbba4ee548612249d8a5c9c9da7387fdfc765b15132d9c81fa222"),
         (5, "9de3d67e4a573c63eb675ab6c1ec13cc5e0b653014fa144c5b3de3c408867ff7"),
+        (6, "1c90f607d5c45ba002152f90ea53357e25606148b2c9536c4ac1a53b1c708907"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -56,6 +57,7 @@ public sealed class PackFormatTests
     private static readonly string[] _keywords = ["k185"];
     private static readonly int[] _formulaIds = [186];
     private static readonly string[] _formulas = ["f187"];
+    private static readonly string[] _weaponZones = ["z203"];
 
     [Fact]
     public void TheLastRecordedFormatIsTheCurrentOne()
@@ -121,6 +123,11 @@ public sealed class PackFormatTests
             new Waypoint[] { new(40, 41, 42, true) },
             _harvestables));
         Append(hash, new ItemCatalog(new Item[] { new(44, 45, 46, 47, 48, 68) }, new ItemType[] { new(49, 50, 51, 52) }));
+        Append(hash, new WeaponCatalog(
+            new Weapon[] { new() { ItemId = 195, TypeId = 196, ApCost = 197, MinRange = 198, Range = 199, CriticalHitProbability = 200, CriticalHitBonus = 201, MaxCastPerTurn = 3, Properties = SpellLevelProperties.CastInDiagonal, FirstEffect = 0, EffectCount = 1 } },
+            new WeaponEffect[] { new() { EffectId = 202, DiceNum = 204, DiceSide = 205, Value = 206 } },
+            new WeaponType[] { new() { Id = 207, Zone = 0 } },
+            _weaponZones));
         Append(hash, new JobCatalog(new Job[] { new(53, 54, 69) }, new Skill[] { new(55, 56, 57, 58, 59, 60, true) }));
         Append(hash, new InteractiveCatalog(new Interactive[] { new(61, 62) }));
         Append(hash, new BankCatalog(new Bank[] { new(63, 64) }, new Banker[] { new(65, 66, 0, 1) }, _replies));

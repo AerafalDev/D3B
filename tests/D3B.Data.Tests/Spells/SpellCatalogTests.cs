@@ -101,6 +101,24 @@ public sealed class SpellCatalogTests
         Assert.Throws<ArgumentException>(() => With(catalog, effects: effects));
     }
 
+    [Fact]
+    public void LevelsNoSpellListsFollowTheCatalogsWithTheirEffects()
+    {
+        var catalog = TestTables.Spells();
+        var blow = catalog.Effects.Span[0] with { EffectId = 97, DiceNum = 16, DiceSide = 25 };
+        var extended = catalog.WithLevels(
+            [new SpellLevel { Id = 1_006_751, SpellId = 0, Grade = 1, ApCost = 4, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 0, EffectCount = 1 }],
+            [blow]);
+
+        Assert.True(extended.TryGetLevel(1_006_751, out var level));
+        Assert.Equal([blow], extended.EffectsOf(level).ToArray());
+        Assert.Equal(catalog.Levels.Length + 1, extended.Levels.Length);
+        Assert.Equal(catalog.EffectsOf(TestLevel(catalog, 1001)).ToArray(), extended.EffectsOf(TestLevel(extended, 1001)).ToArray());
+        Assert.Equal(catalog.LevelIds.ToArray(), extended.LevelIds.ToArray());
+        Assert.False(catalog.TryGetLevel(1_006_751, out _));
+        Assert.Throws<ArgumentException>(() => catalog.WithLevels([new SpellLevel { Id = 1001, StatesCriterion = SpellLevel.NoCriterion }], []));
+    }
+
     private static SpellLevel TestLevel(SpellCatalog catalog, int id)
     {
         Assert.True(catalog.TryGetLevel(id, out var level));

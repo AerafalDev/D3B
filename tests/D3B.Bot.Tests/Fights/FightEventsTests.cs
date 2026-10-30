@@ -473,6 +473,26 @@ public sealed class FightEventsTests
     }
 
     [Fact]
+    public void AWeaponsBlowIsACastOfSpellZeroInTheHistory()
+    {
+        // Measured (D218): the blow is the first action of a sequence of its own, a cast naming no spell.
+        var blow = new GameActionFightEvent { ActionId = 303, SourceId = Self, Cast = new FightCast { CellId = 288, TargetId = Monster } };
+        var struck = Apply(
+            Playing(),
+            new SequenceStartEvent { Type = SequenceType.Weapon, AuthorId = Self },
+            blow,
+            new SequenceEndEvent { Type = SequenceType.Weapon, AuthorId = Self });
+        var history = struck.Fight!.Fighters[Self].Casts;
+
+        Assert.Equal((1, 1), (history.CastsIn(0, 1), history.CastsOn(0, Monster, 1)));
+        Assert.Empty(struck.Fight.Sequences);
+
+        var unnamed = Apply(Playing(), new SequenceStartEvent { Type = SequenceType.Spell, AuthorId = Self }, blow);
+
+        Assert.Empty(unnamed.Fight!.Fighters[Self].Casts.LastRounds);
+    }
+
+    [Fact]
     public void TheCastsAFighterChoseAreItsHistoryNotThoseItsEffectsCast()
     {
         var cast = Apply(

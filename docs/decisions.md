@@ -5168,13 +5168,132 @@ options' numbers).*
   would let it cast Furia: 28 of the AI's casts planned and 29 played were shields. The breeds' mechanisms are 9f's
   (D177), this one among the first.
 
+## D217: 9e3 as the owner asks it
+
+*2026-10-30, step 9, session 9e3, the owner's words and choices. Builds D215.*
+
+- **Asked**: the weapon's blow, measured first on the blows the owner captured with several kinds of weapon: what the
+  server announces, where the worn weapon is in the inventory, what the cast's request sends; the pack's format 6, the
+  769 weapons with their AP, ranges, line and diagonal, line of sight, critical chance and bonus, casts a turn, effects
+  and their type's zone; the character's worn weapon; the blow as a level the AI casts, measured with
+  `scripts/fights.cs`; then real fights.
+- **Found**: the captures hold 2 blows, both a sword's, those of 9a and 9c (D178, D191); none was captured since 9e2.
+- **Chosen by the owner**: swords only for now, the owner having few weapons to strike with; no fight in game for this
+  session, the branch pushed and its pull request opened at once. As the owner said, a weapon's blow pays off at very
+  high level only: the AI weighs it as it weighs a spell, by what it foresees for its AP, never forcing it.
+- **Rejected.**
+  - The 13 kinds of weapon at once: their zones and their decrease are measured on no blow.
+
+## D218: The weapon's blow, measured on the captures
+
+*2026-10-30, step 9, session 9e3, on the 80 game connections of 3.7.12.12 captured, with measuring tools never
+committed that print counts.*
+
+- **The request**: `GameActionFightCastRequest` naming spell 0, whose field proto3 leaves out, and the cell struck.
+- **The server**, 28 and 29 ms later: a sequence of type 1, a weapon's, its first action 303, a cast naming no spell, no
+  level and no critical field, the cell and the fighter on it; then the AP the weapon costs spent, 3 and 4, and what its
+  effects did: a sword's neutral steal of 5 to 6 took 5 and healed its caster 2, a sword's earth blow of 16 to 25 took
+  8, the target's whole life. The client acknowledged both sequences as it does a spell's.
+- **The worn weapon**: of the 75 inventories the server sent as the character entered the game, the 63 holding a
+  weapon worn held it at position 1, 45 a bow and 18 a sword, and position 1 held nothing else; each other position, 0
+  and 2 to 15, held objects of one super type. A stack carries its own
+  effects (its field 7, each an action and its dice): the 6 weapons worn, 5 swords and a bow, rolled as their item does,
+  so that the pack's weapon is the blow's.
+- **Equipping**: `ObjectMovementEvent` (`iqn`, as BillBot names it), a stack's uid and its new position: 2 in the
+  captures, a pet taken off to 63 as another came, and worn at 8 after the client's request (`ito`). No weapon changed
+  in the captures.
+- **Spell 0 in the lists**: every list of the character's own spells names it, 77 as it entered the game and 96 as a
+  fight started; the 16 lists of a form or a turret do not. Its own level is the punch: 3 AP, range 1, neutral 6 to 7,
+  9 to 10 on a critical hit, a chance of 5.
+- **The weapons' characteristics**: the pack names 122 and 142 "Armes (%)", the damage weapons deal and receive where a
+  spell's are 123 and 141, 103 "Bonus de puissance pour les armes" and 31 "Maîtrise d'arme". On the 358 turns of the
+  characters captured, 122 and 142 were 100 and the server never gave 103 nor 31.
+
+## D219: The pack's format 6, the weapons
+
+*2026-10-30, step 9, session 9e3. Builds D29, D182.*
+
+- **`WeaponCatalog`**, in `D3B.Data.Items`, its own entry (`items/weapons`), read once by `GameTables.Weapons`: each
+  weapon of the client's `WeaponData` by its item, its type, AP, least and most range, line, diagonal and line of sight as
+  a level's bits, critical chance and bonus, casts a turn, and its effects as a slice, each an effect and its dice and
+  value; the types of super type 2, each with its zone as the client writes it (`rawZone`), kept as text until blows of
+  each shape are measured. `ItemCatalog` is unchanged.
+- **Measured**: 769 weapons of 13 types, 6 zones: the cell struck (`P`) for 8 types and 479 weapons, `T1,10,1` the 94
+  staffs, `X1,0,10,1` the 99 hammers, `V1,10,2` the 61 shovels, `U1,10,1` the 16 scythes, `L3,10,3` the 20 lances. AP 2
+  to 7 on 763; ranges 0 to 20 and 0 to 23; 270 in line, 77 in diagonal, every one testing the line of sight; a chance of
+  30 on 438, 0 to 100; a bonus of 0 to 30; once a turn on 611, twice on 148. 6,637 effects, 1,311 used in fights, 2
+  naming effect 205, which the client lacks, kept and counted. Every other field of a weapon's effect is the same on all,
+  a circle of 1 its zone, which is not the blow's: the extractor fails when one changes.
+- **Read** through `UnityDataTable.ReadByIdWithReferences`: a weapon names its effects by reference, which only the
+  table's registry holds. The items' table is read once for both catalogs.
+- **The pack**: 7,452,604 bytes, 19,946 more than format 5, the same bytes on two extractions; its layout recorded in
+  `PackFormatTests`. The release of 3.7.12.12 needs it and mapping 12 (D221), then a release of the app (D172), each on
+  the owner's go.
+
+## D220: The weapon's blow as a level of spell 0
+
+*2026-10-30, step 9, session 9e3. Builds D185, D195, D201, D207. Settles nothing of Q5.*
+
+- **`WeaponBlows`**, in `D3B.Engine.Fights`, built once per pack: each sword's blow a level of spell 0, the punch's with
+  the sword's fields, its AP, ranges, line, diagonal and line of sight, critical chance and casts a turn, and as effects
+  those of the sword's the server uses in fights, rolled as the sword rolls them, reaching what the punch reaches: the
+  cell struck and any fighter there. 122 blows, the 126 swords but the 4 that do nothing in a fight. Its levels follow
+  the pack's, from id 1,000,000, which no cast names (`SpellCatalog.WithLevels`): the rules, the effects, the imagination
+  and the judge share one catalog, the pack's spells and the blows, copied once, 14 ms and 8.7 MiB.
+- **The damage**, the references' order (D181), the damage calculation the Dofus 2 client ran, which Bubble ported: a
+  level of spell 0 deals a weapon's damage (`EffectFormulas.DealtByWeapon`), raised by the weapons' power too, a critical
+  hit adding the weapon's bonus to the fixed bonuses, then the weapon mastery in percent; the multipliers of weapons,
+  122 and 142, take the place of the spells'. A critical blow's effects are the normal ones. On the characters
+  captured, only the critical bonus is left to measure (D218).
+- **The AI** weighs a blow as a spell (D217): `FightTactics.Blows`; tested, a strong sword is struck beside the spell,
+  a weak one leaves its AP to the spell.
+- **Rejected.**
+  - The blows written into the pack's spells: the pack holds the client's data, and a rule to correct would need a new
+    pack and a release.
+  - The worn object's own effects read from the protocol: equal to its item's on the 6 weapons worn, a mapping to make
+    for nothing measured.
+  - The other kinds of weapon now: their zones' text is read by no measured rule (D217).
+
+## D221: The bot strikes with its sword: mapping format 12
+
+*2026-10-30, step 9, session 9e3. Builds D199, D202, D203. Supersedes in part D199 (spell 0 left out).*
+
+- **The worn weapon**: the stack at position 1 (`InventoryItem.Weapon`, `CharacterState.Weapon`), kept as the server
+  moves it, `ObjectMovementEvent` named and pinned for 3.7.12.12.
+- **Mapping format 12**: 211 messages, 461 fields, 28 enums and 199 values audited, no failure, 14,015 bytes; the 80
+  game connections, 102,323 frames, decode through it, 53,016 understood whole, 17,631 more read, none misread.
+- **The cast's history** counts a weapon's blow as spell 0's, the first action of a weapon's sequence, so that its casts a
+  turn hold.
+- **The character's spells** (`CharacterSpells.InFight`): the worn sword's blow when the list the AI casts from names
+  spell 0, its own, the fight's or a form's; a form's names none. The punch is never cast, unmeasured.
+- **`FightPlay`** sends spell 0 on the cell and waits for the weapon's sequence to be shown; tested end to end through
+  `TestPlay`, whose pack carries the punch and a sword: the AI strikes the sword and casts its spell, each once.
+
+## D222: 9e3 measured with `scripts/fights.cs`
+
+*2026-10-30, step 9, session 9e3, on the 80 game connections of 3.7.12.12 captured, 100 fights. No fight in game, the
+owner's choice (D217).*
+
+- **The bench**: the 2 blows captured, both a sword's D3B strikes: the rules accept both, the AP spent are the sword's,
+  the damage falls within what D3B foresaw once and within capped by the target's life once, and the steal's heal
+  within.
+- **`--turns`**: 255 turns, 338 searches; on the 109 turns of a character wearing a sword D3B strikes, the AI planned 8
+  blows, and the players struck none. Against the same AI without the blows, on the same turns: this turn's damage
+  foreseen 46,834 against 47,075, kills 307 against 303, heals 11,517 against 11,741, the reply taking 7,168 of the
+  character's life against 7,379; over two turns 78,748 damage against 78,985 and 532 kills against 531. A search 64 ms
+  halfway, 221 ms at 90%, 666 ms at most, against 62, 177 and 485. The sword rarely pays: as the owner said (D217). The
+  2 blows captured fall in turns the replay does not reach, as D215 found.
+- **`--live`** counts the blows D3B sent and the server announced: none, no fight of the AI's having had a sword.
+- **Left**, for captures to make: a critical blow and the weapon's bonus, the other kinds of weapon and their zones, a
+  weapon changed and struck in one session, and the AI's blows in real fights.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
 
 | Id | Question | Settled in |
 | --- | --- | --- |
-| Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? Measured in 9d for damage, steals, heals, critical hits and the zone's decrease (D195), in 9e2 for a critical hit's chance (D207) and a push's damage (D214); left: shields, AP and MP removed and their dodge, erosion, the final damage's rounding. | The captures of D196 left (D214), then 9f |
+| Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? Measured in 9d for damage, steals, heals, critical hits and the zone's decrease (D195), in 9e2 for a critical hit's chance (D207) and a push's damage (D214), in 9e3 for a sword's blow (D222); left: shields, AP and MP removed and their dodge, erosion, the final damage's rounding, a weapon's critical bonus, power and mastery (D220). | The captures of D196 left (D214), then 9f |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |

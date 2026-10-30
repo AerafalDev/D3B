@@ -22,8 +22,8 @@ a module, and the game's data and protocol are read from the client you have ins
 - **Fights.** D3B follows a fight from the protocol: the fighters, their life, AP and MP, buffs, states and cooldowns. It
   knows the rules of a cast (range, line of sight, zones, target masks, costs, cooldowns) and of a walk with its tackle,
   and foresees what each cast does from the game's data, checked against every cast of the fights captured so far. Its
-  AI places the character, then each turn weighs the walks and casts against the monsters' reply and plays them at a
-  pace you can follow.
+  AI places the character, then each turn weighs the walks and casts, a worn sword's blow among them, against the
+  monsters' reply and plays them at a pace you can follow.
 - **The desktop app.** A card per bot, with where it is, its pods, kamas and activity; a live map of the bot's map, its
   path, elements, NPCs and fighters; the accounts, the profiles and their editor with a preview of the zone; a journal
   per bot, a protocol inspector, and the settings. Dark by default, in French and English. It installs without
