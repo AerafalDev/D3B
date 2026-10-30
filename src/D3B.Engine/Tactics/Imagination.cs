@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using D3B.Data.Monsters;
 using D3B.Data.Spells;
 using D3B.Engine.Effects;
@@ -14,13 +15,20 @@ namespace D3B.Engine.Tactics;
 /// range: damage taken from a shield first, then from life, a fighter dying at none; a steal healing its caster half; heals
 /// up to the most life; shields; pushes and pulls along their line, stopped by what blocks them and hurting by the cells
 /// left (<see cref="EffectFormulas.PushDamage"/>); swaps; boosts and deboosts, the AP and MP of the fighter playing at once
-/// and the others' for their next turn; states set and removed; kills. An effect its mask only maybe selects counts half,
-/// as does one of a random group, and one waiting for a trigger, such as a poison, counts half of its damage. A critical
-/// hit is weighed by its chance (D207): what the level's effects give in life, damage, heals, shields and characteristics,
-/// counts its share of a normal cast and of a critical hit; a push, a swap or a state, the normal cast's alone. A boost, a
-/// deboost or a state that lasts is kept with its rounds (<see cref="ImaginedFight.Buffs"/>), which the judge weighs over
-/// the turns it lasts (D209). The spells effects cast are not counted on (D195). The effects on a free cell, a teleport of the caster and a summon, come from the
-/// level itself, the foreseen effects reaching only fighters.
+/// and the others' for their next turn; states set and removed; a spell's buffs dispelled; kills. An effect its mask only
+/// maybe selects counts half, as does one of a random group, and one waiting for a trigger, such as a poison, counts half of
+/// its damage. A critical hit is weighed by its chance (D207): what the level's effects give in life, damage, heals, shields
+/// and characteristics, counts its share of a normal cast and of a critical hit; a push, a swap or a state, the normal
+/// cast's alone. A boost, a deboost or a state that lasts is kept with its rounds (<see cref="ImaginedFight.Buffs"/>), which
+/// the judge weighs over the turns it lasts (D209), and held by its fighter (<see cref="Combatant.Buffs"/>): one past its
+/// level's stacks replaces the oldest of its spell and effect, as the server does (D227). The effects on a free cell, a
+/// teleport of the caster and a summon, come from the level itself, the foreseen effects reaching only fighters.
+/// </para>
+/// <para>
+/// A spell an effect casts at once on a fighter its mask surely selects is cast in turn, by whom and where
+/// <see cref="EffectActions.CasterOf"/> says, its effects foreseen on the fight as the effects before left it, as deep as
+/// a Zobal's masks chain them (D227): a mask takes the other masks' states off, puts its own on, then dispels the other
+/// masks' buffs, each step reading the states the step before left. Such a spell's own critical hit is not weighed.
 /// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
 /// </remarks>
@@ -28,11 +36,15 @@ public sealed class Imagination
 {
     private const double Maybe = 0.5;
 
+    // Measured (D224): a Zobal's mask casts the spell that takes the masks' states off, which casts the grade that does it,
+    // three deep; a spell casting itself stops here.
+    private const int MostCastDepth = 4;
+
     // Summons the search imagines take ids no server gives: the server's are small negative numbers (client.md).
     private const long FirstImaginedSummon = -100_000;
 
     [ThreadStatic]
-    private static List<ForeseenEffect>? _foreseen;
+    private static List<ForeseenEffect>[]? _foreseen;
 
     private readonly SpellCatalog _spells;
     private readonly MonsterCatalog _monsters;
@@ -172,25 +184,71 @@ public sealed class Imagination
         var caster = fight.Actor;
         var cost = CastRules.Modified(level, caster).ApCost;
         var target = fight.On(cell);
-        var foreseen = _foreseen ??= [];
-        var chance = EffectFormulas.CriticalChance(level, caster);
-
-        foreseen.Clear();
-        _effects.Foresee(fight.Map, fight.Fighters, caster, level, cell, false, foreseen);
-
-        var normal = foreseen.Count;
-
-        if (chance > 0)
-            _effects.Foresee(fight.Map, fight.Fighters, caster, level, cell, true, foreseen);
-
         var fighters = new List<Combatant>(fight.Fighters.Length + 1);
         var buffs = new List<ImaginedBuff>();
+        var kept = fight.Buffs;
 
         fighters.AddRange(fight.Fighters);
 
         var casterIndex = IndexOf(fighters, caster.Id);
 
         fighters[casterIndex] = caster with { ActionPoints = Math.Max(0, caster.ActionPoints - cost) };
+        Effects(fight.Map, fighters, casterIndex, level, cell, EffectFormulas.CriticalChance(level, caster), buffs, ref kept, 0);
+        OnCell(fight.Map, fighters, casterIndex, level, cell);
+
+        return fight with
+        {
+            Fighters = [.. fighters],
+            History = fight.History.Cast(level.SpellId, target?.Id, fight.Round),
+            Buffs = buffs.Count is 0 ? kept : kept.AddRange(buffs),
+        };
+    }
+
+    private static List<ForeseenEffect> Foreseen(int depth)
+    {
+        // A spell an effect casts is foreseen while its caster's effects are still applied: a list for each depth.
+        var lists = _foreseen ??= new List<ForeseenEffect>[MostCastDepth + 1];
+
+        return lists[depth] ??= [];
+    }
+
+    private static Combatant Held(Combatant target, in SpellLevel level, in ForeseenEffect effect, int value)
+    {
+        return effect.Duration is 0 ? target : target with { Buffs = target.Buffs.Add(new HeldBuff(level.SpellId, effect.EffectId, value)) };
+    }
+
+    private static void Forget(List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, long fighterId, int spellId, int characteristic, int change)
+    {
+        // The search's lasting buffs of a spell on a fighter go with what took them back, an earlier cast's as this one's.
+        bool Matches(ImaginedBuff buff)
+        {
+            return buff.FighterId == fighterId && (spellId is 0 || buff.SpellId == spellId) && buff.Characteristic == characteristic && buff.Change == change;
+        }
+
+        buffs.RemoveAll(Matches);
+
+        if (kept.Any(Matches))
+            kept = kept.RemoveAll(Matches);
+    }
+
+    private static void Lasting(List<ImaginedBuff> buffs, Combatant caster, Combatant target, in ForeseenEffect effect, int characteristic, int change, int spellId)
+    {
+        if (effect.Duration is not 0 && change is not 0)
+            buffs.Add(new ImaginedBuff(caster.Id, target.Id, characteristic, change, effect.Duration, spellId));
+    }
+
+    private void Effects(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell, double chance, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, int depth)
+    {
+        var foreseen = Foreseen(depth);
+        var caster = fighters[casterIndex];
+
+        foreseen.Clear();
+        _effects.Foresee(map, fighters, caster, level, cell, false, foreseen);
+
+        var normal = foreseen.Count;
+
+        if (chance > 0)
+            _effects.Foresee(map, fighters, caster, level, cell, true, foreseen);
 
         for (var index = 0; index < foreseen.Count; index++)
         {
@@ -200,21 +258,40 @@ public sealed class Imagination
             if (critical && !InLife(effect.Action.Kind))
                 continue;
 
-            Apply(fight.Map, fighters, casterIndex, effect, cell, critical ? chance : InLife(effect.Action.Kind) ? 1 - chance : 1, buffs);
+            if (effect.Action.Kind is EffectKind.CastSpell)
+                CastBy(map, fighters, casterIndex, effect, cell, buffs, ref kept, depth);
+            else
+                Apply(map, fighters, casterIndex, effect, cell, critical ? chance : InLife(effect.Action.Kind) ? 1 - chance : 1, level, buffs, ref kept);
         }
 
         foreseen.Clear();
-        OnCell(fight.Map, fighters, casterIndex, level, cell);
-
-        return fight with
-        {
-            Fighters = [.. fighters],
-            History = fight.History.Cast(level.SpellId, target?.Id, fight.Round),
-            Buffs = buffs.Count is 0 ? fight.Buffs : fight.Buffs.AddRange(buffs),
-        };
     }
 
-    private static void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell, double share, List<ImaginedBuff> buffs)
+    private void CastBy(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, int depth)
+    {
+        // A spell cast at once on a fighter the mask surely selects; one a trigger waits for, drawn, or only maybe cast is not.
+        if (!effect.IsImmediate || !effect.IsCertain || effect.IsRandom || depth >= MostCastDepth)
+            return;
+
+        var targetIndex = IndexOf(fighters, effect.TargetId);
+
+        if (targetIndex < 0 || !fighters[targetIndex].IsAlive || !_spells.TryGetLevel(effect.Value.Min, effect.Grade, out var level))
+            return;
+
+        var who = EffectActions.CasterOf(effect.EffectId);
+        var by = who is SpellCaster.TargetOnItself or SpellCaster.TargetOnCell or SpellCaster.TargetOnCaster ? targetIndex : casterIndex;
+        var at = who switch
+        {
+            SpellCaster.TargetOnItself or SpellCaster.CasterOnTarget => fighters[targetIndex].Cell,
+            SpellCaster.TargetOnCell or SpellCaster.CasterOnCell => cell,
+            _ => fighters[casterIndex].Cell,
+        };
+
+        if (fighters[by].IsAlive)
+            Effects(map, fighters, by, level, at is Combatant.NoCell ? cell : at, 0, buffs, ref kept, depth + 1);
+    }
+
+    private void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell, double share, in SpellLevel level, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
     {
         var index = IndexOf(fighters, effect.TargetId);
 
@@ -265,19 +342,22 @@ public sealed class Imagination
                 }
 
             case EffectKind.Boost when effect.Action.Characteristic > 0:
-                fighters[index] = Changed(target, effect.Action.Characteristic, value);
-                Lasting(buffs, fighters[casterIndex], target, effect, effect.Action.Characteristic, value);
+                fighters[index] = Held(Changed(Stacked(target, level, effect, buffs, ref kept), effect.Action.Characteristic, value), level, effect, value);
+                Lasting(buffs, fighters[casterIndex], target, effect, effect.Action.Characteristic, value, level.SpellId);
                 break;
             case EffectKind.Deboost when effect.Action.Characteristic > 0:
-                fighters[index] = Changed(target, effect.Action.Characteristic, -value);
-                Lasting(buffs, fighters[casterIndex], target, effect, effect.Action.Characteristic, -value);
+                fighters[index] = Held(Changed(Stacked(target, level, effect, buffs, ref kept), effect.Action.Characteristic, -value), level, effect, value);
+                Lasting(buffs, fighters[casterIndex], target, effect, effect.Action.Characteristic, -value, level.SpellId);
                 break;
             case EffectKind.StateSet when !target.HasState(effect.Value.Min):
-                fighters[index] = target with { States = target.States.Add(effect.Value.Min) };
-                Lasting(buffs, fighters[casterIndex], target, effect, 0, effect.Value.Min);
+                fighters[index] = Held(target with { States = target.States.Add(effect.Value.Min) }, level, effect, effect.Value.Min);
+                Lasting(buffs, fighters[casterIndex], target, effect, 0, effect.Value.Min, level.SpellId);
                 break;
-            case EffectKind.StateRemoved:
-                fighters[index] = target with { States = target.States.Remove(effect.Value.Min) };
+            case EffectKind.StateRemoved when target.HasState(effect.Value.Min):
+                fighters[index] = Unstated(target, effect.Value.Min, buffs, ref kept);
+                break;
+            case EffectKind.DispelSpell:
+                fighters[index] = Dispelled(target, effect.Value.Min, buffs, ref kept);
                 break;
             case EffectKind.Kill:
                 fighters[index] = target with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };
@@ -285,10 +365,71 @@ public sealed class Imagination
         }
     }
 
-    private static void Lasting(List<ImaginedBuff> buffs, Combatant caster, Combatant target, in ForeseenEffect effect, int characteristic, int change)
+    private Combatant Stacked(Combatant target, in SpellLevel level, in ForeseenEffect effect, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
     {
-        if (effect.Duration is not 0 && change is not 0)
-            buffs.Add(new ImaginedBuff(caster.Id, target.Id, characteristic, change, effect.Duration));
+        // Measured (D224): a mask cast again, of 1 stack, had the server end its earlier boosts before giving them anew.
+        if (effect.Duration is 0 || level.MaxStack <= 0)
+            return target;
+
+        var count = 0;
+        var oldest = -1;
+
+        for (var index = 0; index < target.Buffs.Length; index++)
+        {
+            if (target.Buffs[index].SpellId == level.SpellId && target.Buffs[index].EffectId == effect.EffectId && count++ is 0)
+                oldest = index;
+        }
+
+        if (count < level.MaxStack)
+            return target;
+
+        var held = target.Buffs[oldest];
+
+        Forget(buffs, ref kept, target.Id, level.SpellId, effect.Action.Characteristic, effect.Action.Kind is EffectKind.Deboost ? -held.Value : held.Value);
+
+        return Undone(target, held) with { Buffs = target.Buffs.RemoveAt(oldest) };
+    }
+
+    private Combatant Unstated(Combatant target, int state, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
+    {
+        Forget(buffs, ref kept, target.Id, 0, 0, state);
+
+        return target with
+        {
+            States = target.States.Remove(state),
+            Buffs = target.Buffs.RemoveAll(held => held.Value == state && _actions.Of(held.EffectId).Kind is EffectKind.StateSet),
+        };
+    }
+
+    private Combatant Dispelled(Combatant target, int spellId, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
+    {
+        // Measured (D224): a Zobal's new mask dispels the old one's buffs, whose states and characteristics go with them.
+        var dispelled = target;
+
+        foreach (var held in target.Buffs)
+        {
+            if (held.SpellId == spellId)
+                dispelled = Undone(dispelled, held);
+        }
+
+        foreach (var buff in buffs.Concat(kept).Where(buff => buff.FighterId == target.Id && buff.SpellId == spellId).ToList())
+            Forget(buffs, ref kept, target.Id, spellId, buff.Characteristic, buff.Change);
+
+        return ReferenceEquals(dispelled, target) ? target : dispelled with { Buffs = target.Buffs.RemoveAll(held => held.SpellId == spellId) };
+    }
+
+    private Combatant Undone(Combatant target, HeldBuff held)
+    {
+        var action = _actions.Of(held.EffectId);
+
+        return action.Kind switch
+        {
+            EffectKind.Boost when action.Characteristic > 0 => Changed(target, action.Characteristic, -held.Value),
+            EffectKind.Deboost when action.Characteristic > 0 => Changed(target, action.Characteristic, held.Value),
+            EffectKind.StateSet when !target.Buffs.Any(other => other != held && other.Value == held.Value && _actions.Of(other.EffectId).Kind is EffectKind.StateSet) => target with { States = target.States.Remove(held.Value) },
+            EffectKind.SpellModifier => target with { Modifiers = target.Modifiers.Remove(new SpellModifier((SpellModifierKind)held.EffectId, held.Value, held.Parameter)) },
+            _ => target,
+        };
     }
 
     private static void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away)

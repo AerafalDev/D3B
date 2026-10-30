@@ -6,8 +6,8 @@ namespace D3B.Engine.Fights;
 /// <summary>A fighter as a fight's rules see it: where it stands, its team, what it has left, what it is, and its states.</summary>
 /// <remarks>
 /// The rules read it and never change it. Its characteristics are the server's, by id (client.md): AP 1, MP 23, range 19,
-/// summons 26, dodge 78 and lock 79; its states and its spells' modifiers come from the buffs the server gives it. A value
-/// the bot does not know is left at its default, and a rule asking it says so.
+/// summons 26, dodge 78 and lock 79; its states, its spells' modifiers and the buffs it holds come from the buffs the server
+/// gives it. A value the bot does not know is left at its default, and a rule asking it says so.
 /// </remarks>
 public sealed record Combatant
 {
@@ -70,6 +70,13 @@ public sealed record Combatant
 
     /// <summary>Gets the changes buffs make to the fighter's spells.</summary>
     public ImmutableArray<SpellModifier> Modifiers { get; init; } = [];
+
+    /// <summary>Gets the boosts, deboosts, states and spell modifiers the fighter holds, by the spell that gave each, oldest first.</summary>
+    /// <remarks>
+    /// Its characteristics, states and modifiers already hold what they do: these say which spell to take them back from
+    /// when an effect dispels it, or another buff of it replaces one past its level's stacks (D227).
+    /// </remarks>
+    public ImmutableArray<HeldBuff> Buffs { get; init; } = [];
 
     /// <summary>Gets the fighter's level: a character's, or a monster's grade's.</summary>
     public int Level { get; init; }

@@ -15,8 +15,8 @@ namespace D3B.Engine.Effects;
 /// </para>
 /// <para>
 /// Measured on the 49 fights captured by <c>scripts/fights.cs</c> (D195), action by action against what the server
-/// announced. Not foreseen yet: what the effects cast in turn, triggered buffs as they trigger, and the effects of
-/// <see cref="EffectKind.Other"/>.
+/// announced. Not foreseen here: what the effects cast in turn, which the AI's imagination casts after the effects before
+/// them (D227); triggered buffs as they trigger, and the effects of <see cref="EffectKind.Other"/>.
 /// </para>
 /// <para>
 /// Built once per pack and shared, from any thread. A search foresees thousands of casts a turn (D200): the fighters' cells
@@ -176,7 +176,9 @@ public sealed class SpellEffects
                 var (target, selected) = reached[index];
                 var value = Value(effect, action.Kind, element, caster, target, steps[index], critical, baseBonus, damageBonus, weaponBonus);
 
-                foreseen.Add(new ForeseenEffect(target.Id, effect.EffectId, action, element, value, selected is CriterionAnswer.True, effect.Random > 0, immediate, effect.Duration));
+                var grade = action.Kind is EffectKind.CastSpell ? Math.Max(1, effect.DiceSide) : 0;
+
+                foreseen.Add(new ForeseenEffect(target.Id, effect.EffectId, action, element, value, selected is CriterionAnswer.True, effect.Random > 0, immediate, effect.Duration, grade));
             }
         }
 

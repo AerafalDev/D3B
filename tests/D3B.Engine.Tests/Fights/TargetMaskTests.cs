@@ -23,6 +23,15 @@ public sealed class TargetMaskTests
     }
 
     [Fact]
+    public void AnUppercaseCNamesTheCasterWhereverItStandsAndALowercaseOneInTheZoneOnly()
+    {
+        Assert.True(TargetMask.Parse("C").NamesTheCaster);
+        Assert.True(TargetMask.Parse("C,E98").NamesTheCaster);
+        Assert.False(TargetMask.Parse("l,m,c").NamesTheCaster);
+        Assert.Equal([_caster, _ally], Selected("l,m,c"));
+    }
+
+    [Fact]
     public void KindsSelectCharactersMonstersAndSummons()
     {
         Assert.Equal([_ally], Selected("h,H"));

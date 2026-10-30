@@ -338,6 +338,56 @@ internal sealed class TurnBench
         return fight;
     }
 
+    private static bool Idle(ImaginedFight before, ImaginedFight after)
+    {
+        if (after.Fighters.Length != before.Fighters.Length || after.Buffs.Length != before.Buffs.Length)
+            return false;
+
+        for (var index = 0; index < before.Fighters.Length; index++)
+        {
+            var was = before.Fighters[index];
+            var now = after.Fighters[index];
+
+            if ((now.Id == before.ActorId ? now with { ActionPoints = was.ActionPoints } : now) != was)
+                return false;
+        }
+
+        return true;
+    }
+
+    private void States(ImaginedFight fight, IEnumerable<TacticAction> actions, string whose)
+    {
+        // The casts asking a state, those changing the character's states, as a Zobal's masks do, and those the engine
+        // foresees doing nothing but spend AP, as a Zobal's shield cast on an enemy did (D226, D229).
+        foreach (var action in actions)
+        {
+            if (!fight.Actor.IsAlive)
+                break;
+
+            if (action.Kind is TacticActionKind.Walk || !_tactics.Blows.Spells.TryGetLevel(action.LevelId, out var level))
+            {
+                fight = Act(fight, [action]);
+
+                continue;
+            }
+
+            var after = _tactics.Imagination.Cast(fight, level, action.Cell);
+
+            var breed = fight.Actor.BreedId is { } id ? $"breed {id}" : "breed unknown";
+
+            if (level.StatesCriterion is not SpellLevel.NoCriterion)
+                Tally.Count($"states: casts {whose}, of a level asking a state, {breed}");
+
+            if (!after.Actor.States.ToHashSet().SetEquals(fight.Actor.States))
+                Tally.Count($"states: casts {whose}, changing the character's states, {breed}");
+
+            if (Idle(fight, after))
+                Tally.Count($"states: casts {whose}, foreseen to do nothing but spend AP, {breed}");
+
+            fight = after;
+        }
+    }
+
     private Ending Finish(Turn turn, CharacterState state)
     {
         var judge = _tactics.JudgeOf(turn.Start, turn.Knowledge, _weights);
@@ -364,6 +414,11 @@ internal sealed class TurnBench
 
         foreach (var action in turn.Planned?.Actions.Where(action => action.Kind is TacticActionKind.Cast) ?? [])
             Tally.Count($"casts planned, by what they do: {Does(action.LevelId)}");
+
+        States(turn.Start, turn.Played, "played");
+
+        if (turn.Planned is { } planning)
+            States(turn.Start, planning.Actions, "planned");
 
         // The weapon's blow, weighed as a spell's (D217): those the turns played, those the plans hold, and the turns whose
         // character could strike its sword's.

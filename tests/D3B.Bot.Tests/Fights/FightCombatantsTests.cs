@@ -18,7 +18,7 @@ public sealed class FightCombatantsTests
         ReadOnlyMemory<MonsterRace>.Empty);
 
     [Fact]
-    public void AFighterGivesTheEngineItsCellCharacteristicsStatesModifiersAndDamageShares()
+    public void AFighterGivesTheEngineItsCellCharacteristicsStatesModifiersBuffsAndDamageShares()
     {
         var fighter = new Fighter
         {
@@ -34,9 +34,10 @@ public sealed class FightCombatantsTests
             Characteristics = ImmutableSortedDictionary<int, int>.Empty.Add(19, 2).Add(26, 3).Add(78, 4).Add(79, 5).Add(15, 140),
             Buffs =
             [
-                new Bot.Fights.FightBuff { Uid = 1, ActionId = 950, Kind = FightBuffKind.State, Parameter = 3 },
-                new Bot.Fights.FightBuff { Uid = 2, ActionId = 281, Kind = FightBuffKind.SpellModifier, Value = 12_832, Parameter = 3 },
+                new Bot.Fights.FightBuff { Uid = 1, ActionId = 950, Kind = FightBuffKind.State, SpellId = 12_787, Parameter = 3 },
+                new Bot.Fights.FightBuff { Uid = 2, ActionId = 281, Kind = FightBuffKind.SpellModifier, SpellId = 12_787, Value = 12_832, Parameter = 3 },
                 new Bot.Fights.FightBuff { Uid = 3, ActionId = 1163, Kind = FightBuffKind.Triggered, Value = 85 },
+                new Bot.Fights.FightBuff { Uid = 4, ActionId = 111, Kind = FightBuffKind.Boost, SpellId = 13_386, Value = 1 },
             ],
         };
 
@@ -46,6 +47,7 @@ public sealed class FightCombatantsTests
         Assert.Equal((2, 3, 4, 5, 140), (combatant.RangeBonus, combatant.MaxSummons, combatant.Dodge, combatant.Lock, combatant.Characteristic(15)));
         Assert.Equal([3], combatant.States);
         Assert.Equal([new SpellModifier(SpellModifierKind.Range, 12_832, 3)], combatant.Modifiers);
+        Assert.Equal([new HeldBuff(12_787, 950, 3), new HeldBuff(12_787, 281, 12_832, 3), new HeldBuff(13_386, 111, 1)], combatant.Buffs);
         Assert.Equal([85], combatant.ReceivedDamageShares);
         Assert.True(combatant.IsCharacter);
     }

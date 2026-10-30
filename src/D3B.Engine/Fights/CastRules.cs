@@ -165,14 +165,13 @@ public sealed class CastRules
 
         var cast = Modified(level, caster);
 
-        // A state that prevents casting lets through the levels that ask for it, as a carrier throws what it carries.
-        if (caster.States.Any(state => Has(state, SpellStateProperties.PreventsSpellCast) && !Asks(criterion, state)))
+        if (Prevented(caster, criterion))
             return CastRefusal.CasterCannotCast;
 
         if (caster.ActionPoints < cast.ApCost)
             return CastRefusal.NotEnoughActionPoints;
 
-        if (criterion is not null && criterion.Evaluate(new CriterionFacts { States = caster.States }) is not CriterionAnswer.True)
+        if (!Holds(criterion, caster))
             return CastRefusal.StatesForbid;
 
         if (cast.InitialCooldown > 0 && round <= cast.InitialCooldown)
@@ -212,6 +211,23 @@ public sealed class CastRules
             return CastRefusal.NoLineOfSight;
 
         return CastRefusal.None;
+    }
+
+    /// <summary>Tells whether a fighter's states let it cast a level, wherever and whenever.</summary>
+    /// <param name="level">The level, of the pack's spells.</param>
+    /// <param name="caster">The fighter.</param>
+    /// <returns>Whether none of its states prevents casting but those the level asks for, and the level's criterion on states holds.</returns>
+    /// <remarks>
+    /// What a judge of a fight reads of a fighter's spells (D228): a Zobal casts those of the mask it wears, each asking the
+    /// mask's state (D224), so that a mask is worth the spells it lets the Zobal cast.
+    /// </remarks>
+    public bool StatesAllow(in SpellLevel level, Combatant caster)
+    {
+        ArgumentNullException.ThrowIfNull(caster);
+
+        var criterion = CriterionOf(level);
+
+        return !Prevented(caster, criterion) && Holds(criterion, caster);
     }
 
     /// <summary>Gets the cells a fighter may cast a level on.</summary>
@@ -314,6 +330,23 @@ public sealed class CastRules
     public TargetMask MaskOf(in SpellEffect effect)
     {
         return _masks.GetOrAdd(effect.TargetMask, static (index, spells) => TargetMask.Parse(spells.Strings.Span[index]), _spells);
+    }
+
+    private static bool Holds(Criterion? criterion, Combatant caster)
+    {
+        return criterion is null || criterion.Evaluate(new CriterionFacts { States = caster.States }) is CriterionAnswer.True;
+    }
+
+    private bool Prevented(Combatant caster, Criterion? criterion)
+    {
+        // A state that prevents casting lets through the levels that ask for it, as a carrier throws what it carries.
+        foreach (var state in caster.States)
+        {
+            if (Has(state, SpellStateProperties.PreventsSpellCast) && !Asks(criterion, state))
+                return true;
+        }
+
+        return false;
     }
 
     private bool Has(int state, SpellStateProperties property)
