@@ -11,7 +11,7 @@ namespace D3B.Storage.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // EF rebuilds a SQLite table to drop a column or add a foreign key, outside the migration's transaction; SQLite
-            // drops a plain column and adds one with its reference itself, inside it (D235).
+            // drops a plain column and adds one with its reference itself, inside it (D240).
             migrationBuilder.Sql("ALTER TABLE \"Characters\" DROP COLUMN \"FightsAlone\";");
             migrationBuilder.Sql("ALTER TABLE \"Characters\" ADD COLUMN \"StrategyId\" INTEGER NULL REFERENCES \"Profiles\" (\"Id\") ON DELETE SET NULL;");
 
