@@ -4226,7 +4226,8 @@ D31's and D48's downloads.*
 
 ## D177: Step 9 in seven sessions, from the protocol up
 
-*2026-10-29, step 9, session 9a, chosen by the owner, as the lead recommended it. Builds D169.*
+*2026-10-29, step 9, session 9a, chosen by the owner, as the lead recommended it. Builds D169. Superseded in part by
+D230 (9f's mechanisms after the fights' profiles).*
 
 - **Asked** by the owner: a fight AI complete and clever, handling every case and every criterion of a spell; Bubble's
   emulator and BillBot read closely; the client's data used, its monsters, spells and characteristics; the breeds' own
@@ -4636,7 +4637,8 @@ D190 (what remains).*
 
 ## D193: What the server announces of a fight, named and kept: mapping format 10
 
-*2026-10-30, step 9, session 9d, as D191 asked. Builds D178, D179, D185.*
+*2026-10-30, step 9, session 9d, as D191 asked. Builds D178, D179, D185. Superseded in part by D225 (a buff's end
+announced).*
 
 - **Measured** on the 52 game connections captured, 49 fights and 50,755 frames, by structure, by the client's names of the
   actions' ids (D183) and by values set against the fight's state, with a measuring tool never committed and
@@ -4687,7 +4689,8 @@ D190 (what remains).*
 
 ## D195: The effects' engine, Bubble's formulas measured on Dofus 3
 
-*2026-10-30, step 9, session 9d, as D177 planned it. Settles Q5 in part. Builds D13, D181, D187.*
+*2026-10-30, step 9, session 9d, as D177 planned it. Settles Q5 in part. Builds D13, D181, D187. Superseded in part by
+D226 (a mask naming the caster) and D227 (the spells effects cast).*
 
 - **Every effect as data** (`D3B.Engine.Effects`): `EffectActions`, built once per pack, says what each effect id does
   (`EffectKind`): damage, a steal, damage or a heal no characteristic raises, a heal, a shield, a push or a pull, a
@@ -4769,7 +4772,8 @@ D190 (what remains).*
 
 ## D198: A fight judged too risky, a fight lost, and who plays the player's fights
 
-*2026-10-30, step 9, session 9e, chosen by the owner among three options each, as the lead recommended them. Builds D144.*
+*2026-10-30, step 9, session 9e, chosen by the owner among three options each, as the lead recommended them. Builds
+D144. Superseded in part by D230 (the switch on the bot's card).*
 
 - **Too risky**, the AI judging as the fight starts that the enemies would beat the character's side first
   (`FightOdds`, D201): the AI fights it anyway, prudently (`TacticWeights.Prudent`: the enemies' blows feared 1.6 times,
@@ -5093,7 +5097,8 @@ approach).*
 
 ## D213: The switch "The AI fights" kept for each character, and the fight played end to end in the tests
 
-*2026-10-30, step 9, session 9e2, as the owner asked. Builds D198, D202.*
+*2026-10-30, step 9, session 9e2, as the owner asked. Builds D198, D202. Superseded in part by D230 (the switch on the
+bot's card).*
 
 - **Kept** in the database (`KnownCharacter.FightsAlone`, migration `FightSwitch`): the card saves it as it is set
   (`AccountBook.SetFightsAloneAsync`), a failure said in a toast; a bot made for a character whose switch was left on
@@ -5287,6 +5292,160 @@ owner's choice (D217).*
 - **Left**, for captures to make: a critical blow and the weapon's bonus, the other kinds of weapon and their zones, a
   weapon changed and struck in one session, and the AI's blows in real fights.
 
+## D223: 9f as the owner asks it
+
+*2026-10-30, step 9, session 9f, the owner's words and choices. Builds D177, D216.*
+
+- **Asked**: the hard cases, the Zobal's masks first: measured on the owner's captures, which states the server sets,
+  when, and what each mask changes of the spells, their cost, range and effects; then the rules of a cast, the effects
+  and the AI taking them in, mechanism by mechanism, measured blow by blow with `scripts/fights.cs`, its bench, `--turns`
+  and `--live`; the captures missing said before the next mechanism.
+- **Added by the owner as the session ran**: many spells work through criteria, so every spell whose criterion asks a
+  state is measured and taken in, not the Zobal's alone; Bubble's emulator and BubbleBot read for every breed and effect,
+  for ideas (D3).
+- **Measured in the pack**: of the 836 spells and variants of the 19 breeds, 132 have a criterion on states, asking 43
+  states, 27 of which the breed's own spells set, directly or through a spell an effect casts: the Forgelance 41 spells
+  (armed and disarmed, Éclipse), the Zobal 32 (its masks), the Pandawa 16 (carried, drunk and sober), the Féca 10 (its
+  glyphs), the Ouginak 8 (its rage and beast form), and fewer for the Ecaflip, Xélor, Sacrieur, Roublard, Eliotrope,
+  Eniripsa, Osamodas, Iop, Crâ, Steamer and Huppermage, most of them forbidding state 7, *Pesanteur*. The Enutrof, the
+  Sram and the Sadida have none.
+- **So**: one mechanism, a fighter's states, as the server sets and ends them and as the spells' effects set and end them
+  through the spells they cast, read by the rules, the effects and the AI alike; the Zobal's masks measure it first, as
+  the only breed whose captures hold every step.
+
+## D224: The Zobal's masks, measured
+
+*2026-10-30, step 9, session 9f, on the pack of format 6 and the 80 game connections of 3.7.12.12, 6 fights of a Zobal
+among them, 38 of its turns, with measuring tools never committed that print counts.*
+
+- **The states**: 98 *Intrépide*, 99 *Psychopathe*, 100 *Pleutre*, one a mask, two mask spells each, a spell and its
+  variant: 13386 and 13409 for 98, 13388 and 13414 for 99, 13387 and 13406 for 100. Spell 18633, *Le Masque du Zobal*,
+  sets 98 for the whole fight as each fight starts: 6 times in 6 fights.
+- **A mask, as the pack writes it and the server played it 14 times** (13386 once, 13387 seven times, 13388 six): 1 AP on
+  the Zobal's cell, every other round, of 1 stack. It casts, by effect 2794 on itself, spell 18634, whose grade 1 casts,
+  by 792, its grade 2, 3 or 4 for the state worn, which sets the old mask's cooldown to 1 and casts grade 5: the three
+  states taken off where worn (`C,E98` and so on), two spells' cooldowns lowered by 1. The mask then sets its own state for
+  the whole fight, casts 18636, which dispels (406) the buffs of every mask whose state the Zobal is not in (`C,*e98` and
+  so on), and 18637, its look; then its boosts, on the Zobal for the whole fight and on its allies in a cross for 2
+  rounds: 1 AP for *Intrépide*, 1 MP and 20 to 40 dodge for *Pleutre*, 7 to 10% of melee damage and 10 to 20 lock for
+  *Psychopathe*; then a spell of its summon's.
+- **What the server announces**: the casts of each step, the new state's buff, the boosts, and the end of the old
+  state's and boosts' buffs by their uid in a message D3B did not read, `juu` (D225). A mask cast again, its state worn,
+  had the server end its earlier boosts before giving them anew: 4 of the 14.
+- **What a mask changes of the spells**: which the Zobal may cast, not their cost or range. 32 of its 44 spells and
+  variants ask a mask's state, 16 *Intrépide*'s, 11 *Psychopathe*'s and 12 *Pleutre*'s, some of two; no mask gives a
+  spell modifier. Two spells deal otherwise by the mask worn, through their effects' masks on the caster's state:
+  *Carnavalo*, its shield, damage or push larger in the matching mask, and *Transfiguration*; none was cast in the
+  captures.
+- **The refusals of D203**: the 6 casts of the AI's the server refused with text 175 asked state 98, the Zobal wearing
+  99 or 100: the bot's state still held 98, its buff's end unread. Read (D225), the 6 criteria fail and the 38 other
+  casts the AI asked with a mask's criterion hold, all cast; the client's 59 such casts of all breeds hold too.
+- **Rejected.**
+  - The masks written as a Zobal's rule, a state per mask and the spells it opens: every breed's states work so (D223),
+    and the pack says it, effect by effect (D169).
+
+## D225: A buff's end: mapping format 13
+
+*2026-10-30, step 9, session 9f. Builds D193. Supersedes in part D193 (no buff's end announced).*
+
+- **`FightBuffEndEvent`** (`juu`, pinned): a buff's uid and its fighter, two of its four fields, with no action of its
+  own. Of the 1,171 the captures hold: 334 as a turn started, on buffs the fight's state had let go at their end; 184 on
+  buffs already gone, dispelled by spell or ended by their action; and 653 the state held, 270 boosts, 267 states, 64
+  spell modifiers and 52 triggered effects, in a spell's sequence or what it triggered. The fight's state lets the buff go.
+- **Mapping format 13**: 212 messages, 463 fields, 28 enums and 199 values audited, no failure, 14,064 bytes; the 80
+  game connections, 102,323 frames, decode through it, 54,187 understood whole, against 53,016 with format 12, 17,631
+  more read, none misread. The release of 3.7.12.12 needs it, on the owner's go (D172).
+
+## D226: A caster outside the zone: `C` alone
+
+*2026-10-30, step 9, session 9f. Supersedes in part D195 (a mask naming the caster).*
+
+- **Measured**: 32 casts of an effect of mask `c` without `C` with the caster outside its zone, such as a Zobal's
+  Tortoruga, a shield of mask `l,m,c` cast on an enemy at 4 cells or more: none buffed the caster. The references read
+  `C` alone outside the zone (D181), and D195's 16 buffs to a caster outside its zone were of `C`.
+- **So**: `TargetMask.NamesTheCaster` is `C`'s; `c` names the caster in the zone. This was the loop the owner saw in
+  9e2 (D216): the AI foresaw each Tortoruga on an enemy shielding the Zobal, which it never did, and cast it 32 times.
+  Replayed, the AI plans 1 cast doing nothing on the Zobal's 38 turns, against the 32 the turns played.
+
+## D227: The spells effects cast, imagined, and a spell's buffs taken back
+
+*2026-10-30, step 9, session 9f. Builds D195, D201, D209. Supersedes in part D195 (the spells effects cast not counted
+on).*
+
+- **The spells an effect casts at once** (`Imagination`): of the pack's levels, 792 casts at once 6,423 times, 1160 4,881,
+  2160 944, 1017 426, 2960 383, 2792 348, 2794 234 and others fewer. A spell an effect casts at once, on a fighter its
+  mask surely selects, is cast in turn, by whom and where the client's action says, as the references read them
+  (`SpellCaster`, `EffectActions.CasterOf`): 792 and its kin by the fighter reached on itself, 1160 and 2160 by the caster
+  on it, 2794 by the fighter reached on the cell cast on, 2960 by the caster there, 1017 by the fighter reached on the
+  caster, 1019 by the caster on itself. Its effects are foreseen on the fight as the effects before left it, so that each
+  step reads the states the step before set or ended, four deep at most, as a Zobal's mask chains three. Its own critical
+  hit is not weighed; one a trigger waits for, one drawn, or one a mask only maybe selects is not cast.
+- **States ended** (951) and **a spell's buffs dispelled** (406): a fighter holds its buffs by the spell that gave each
+  (`Combatant.Buffs`, `HeldBuff`), as the server gave them or as the search's casts did; a dispel takes back what each
+  gave, a characteristic, a state no other buff gives, a spell modifier, and the search's lasting buffs of it
+  (`ImaginedBuff.SpellId`). A buff past its level's stacks replaces the oldest of its spell and effect on the fighter, as
+  the server did for a mask cast again.
+- **Measured** on every cast the fighters chose (D229): the 20 states the Zobal's 10 changes of mask set and ended, as
+  foreseen.
+- **Rejected.**
+  - The spells effects cast foreseen in `SpellEffects`, which the bench reads, on the fight before the cast: a mask's
+    dispel reads the caster's state before the mask sets its own, and would take the new mask's buffs instead of the
+    old.
+  - A table of each breed's switching spells: the effects say it (D169).
+
+## D228: The judge reads the criteria on states
+
+*2026-10-30, step 9, session 9f. Builds D201, D209.*
+
+- **`CastRules.StatesAllow`**: whether a fighter's states let it cast a level, none preventing casts but those the level
+  asks, and its criterion on states holding, wherever and whenever; `Check` reads the same.
+- **`FightJudge`**: a spell its states forbid deals nothing in the threat, the approach, the next turn and a buff's worth
+  over its rounds. A mask's state is so worth the damage of the spells it lets the Zobal cast more than the others, and
+  an enemy's threat counts the spells its states let it cast.
+- **Replayed** on the Zobal's 38 turns: the AI puts on *Psychopathe* and casts Furia where the turns played cast
+  Tortoruga on enemies, and changes mask 29 times in its plans against 9 in the turns played, at a turn's end for the next
+  turn's AP or MP too.
+
+## D229: 9f's states measured with `scripts/fights.cs`
+
+*2026-10-30, step 9, session 9f, on the 80 game connections of 3.7.12.12, 100 fights. No fight in game: no new capture.*
+
+- **The bench** counts, for each cast a fighter chose, the states each living fighter holds once its sequence ended
+  against those the AI imagines (`Imagination`), and the life it took, imagined and announced; and the casts of a mask
+  naming the caster in its zone only with the caster outside (D226). The rest of the bench is unchanged: 1,197 of 1,229
+  casts pass the rules, the 32 others the Eliotrope's portals, the Steamer's traps, the Roublard's bombs and a summon.
+- **States**: of the 244 states the casts whose effects cast spells at once set or ended on living fighters, the AI
+  foresees 111, against 24 without the spells effects cast: 83 set and 28 ended as foreseen, the 20 of the Zobal's masks
+  among them; 98 set and 35 ended it did not foresee: a carry's states, which the server sets itself (D195), the
+  Eliotrope's portals, the Xélor's telefrags, whose masks ask what the fight's state does not tell (`T`), and the
+  Roublard's bombs, the mechanisms to come; 4 foreseen and not so. Of the casts casting none, 30 states ended on others
+  the AI did not foresee, the Eliotrope's portals going, and 5 set.
+- **Life a cast took**: of the 382 casts casting spells at once, 36,503 imagined against 39,327 announced, where the AI
+  without the spells effects cast imagined 36,218; of the 847 casting none, 22,973 against 27,202.
+- **`--turns`**: 255 turns, 338 searches, 67 ms halfway, 173 ms at 90%, 374 ms at most, against 84, 245 and 681 before
+  9f. Shields planned 19 against 37; casts planned doing nothing but spend AP 6, against 118 in the turns played, 32 of
+  them the Zobal's; the life the casts played were foreseen to heal or shield 5,328 against 9,240, the Tortorugas' shields
+  gone (D226). The
+  spells effects cast add 4,775 of heals and shields to what the plans foresee, 11,815 against 7,040 without them, and
+  change the damage foreseen by less than half a percent, the searches as long.
+- **Benchmarked**, BenchmarkDotNet in its process: a turn planned against four enemies in 3.1 ms and 4.79 MB, against 3.1
+  ms and 6.5 MB in 9e2; a cast foreseen in 0.72 µs, 0.67 µs into a list, 3.6 µs cold, as before.
+- **`--live`**: no fight of the AI's since 9e2.
+
+## D230: The fights' profiles before the next mechanism, and the AI's fights a harvest profile's option
+
+*2026-10-30, step 9, session 9f, the owner's choice. Supersedes in part D177 (9f before 9g), D198 and D213 (the switch on
+the bot's card).*
+
+- **Asked by the owner** as 9f ran: before the next breed's mechanism, the fights' profiles, made as the harvest's are,
+  with many useful options; and the AI fighting the fights a harvest meets set in the harvest's profile, an option
+  checked by default, instead of the switch on the bot's card.
+- **So**: the next session makes the fights' profiles, 9g's settings (D192, D203), and moves the switch into the harvest
+  profile; the hard cases go on after it, one mechanism a session.
+- **Left to that session**: which options, the AI's weights and prudence, spells preferred or left out, a role, the
+  fight closed and spectators refused, among them; what becomes of the player's own fights out of an activity, which
+  the card's switch had the AI play (D198), and of the switch kept in the database (D213), each asked of the owner.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -5299,4 +5458,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
 | Q15 | When D3B needs a monster's characteristics at a level its grades lack, before the server gives them, such as to choose which group to attack, does it run the client's Lua formulas, or write them in C#, checked against the client's (D182)? | The session that needs it, 9e or 9g at the latest |
-| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? It refuses with an error text, 29 ms after the request (D203); which casts, but a Zobal's masks, is left. It allowed 11 casts the rules refuse, each a breed's mechanism: spells whose cost or range a gathered state changes, and summons (D214). | Captures the owner makes, the AI sending its casts (D202), with those of D196; the breeds' mechanisms in 9f |
+| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? It refuses with an error text, 29 ms after the request (D203); which casts, but a Zobal's masks, is left. It allowed 11 casts the rules refuse, each a breed's mechanism: spells whose cost or range a gathered state changes, and summons (D214). The Zobal's 6 refused were the masks' states the bot kept, whose end it did not read (D224, D225). | Captures the owner makes, the AI sending its casts (D202), with those of D196; the breeds' mechanisms in 9f |

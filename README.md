@@ -48,8 +48,9 @@ Pull requests that add any of these are closed.
 ## Status
 
 D3B is young and changes fast: settings, data formats and the app may change from one version to the next. The first
-milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them is on `main`, not yet in
-a release, and summons, glyphs, the breeds' mechanisms and a fighting activity come next. Then several accounts
+milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them, reading the states
+the breeds' spells ask, such as the Zobal's masks, is on `main`, not yet in a release; the fights' profiles, summons,
+glyphs, the other breeds' mechanisms and a fighting activity come next. Then several accounts
 and groups, blueprint mods edited in the app, the marketplace and crafting. The [roadmap](docs/roadmap.md) has the steps
 in order.
 
