@@ -24,6 +24,9 @@ public static class FightCharacteristic
     /// <summary>Power, a percentage added to every element's characteristic.</summary>
     public const int Power = 25;
 
+    /// <summary>The client's "Maîtrise d'arme": a weapon's blow raised by it, in percent, once its bonuses are added.</summary>
+    public const int WeaponMastery = 31;
+
     /// <summary>Heals added to every heal.</summary>
     public const int HealBonus = 49;
 
@@ -51,6 +54,9 @@ public static class FightCharacteristic
     /// <summary>The shield's points.</summary>
     public const int Shield = 96;
 
+    /// <summary>The client's "Bonus de puissance pour les armes": a percentage added to a weapon's blow as power is.</summary>
+    public const int WeaponPower = 103;
+
     /// <summary>The damage dealt, in percent of itself: 100 when nothing changes it.</summary>
     public const int DealtDamageMultiplier = 107;
 
@@ -59,6 +65,9 @@ public static class FightCharacteristic
 
     /// <summary>The damage received from a distance, in percent of itself.</summary>
     public const int ReceivedDamageMultiplierDistance = 121;
+
+    /// <summary>The damage dealt by weapons, in percent of itself.</summary>
+    public const int DealtDamageMultiplierWeapons = 122;
 
     /// <summary>The damage dealt by spells, in percent of itself.</summary>
     public const int DealtDamageMultiplierSpells = 123;
@@ -71,6 +80,9 @@ public static class FightCharacteristic
 
     /// <summary>The damage received from spells, in percent of itself.</summary>
     public const int ReceivedDamageMultiplierSpells = 141;
+
+    /// <summary>The damage received from weapons, in percent of itself.</summary>
+    public const int ReceivedDamageMultiplierWeapons = 142;
 
     /// <summary>The heals dealt, in percent of themselves.</summary>
     public const int DealtHealMultiplier = 143;

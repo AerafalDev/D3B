@@ -123,6 +123,17 @@ public sealed class FightPlayTests : IAsyncDisposable
         connection.Client(new GameActionAcknowledgementRequest { ActionId = actionId, Valid = true });
     }
 
+    private static void Struck(TestConnection connection, int cell, int apLeft, int actionId)
+    {
+        // As the server answered the blows captured (D218): a sequence of its own, the blow naming no spell.
+        connection.Server(new SequenceStartEvent { Type = SequenceType.Weapon, AuthorId = Self });
+        connection.Server(new GameActionFightEvent { ActionId = 303, SourceId = Self, Cast = new FightCast { CellId = cell, TargetId = Monster } });
+        connection.Server(new GameActionFightEvent { ActionId = 97, SourceId = Self, LifeLost = new FightLifeLost { TargetId = Monster, Loss = 22, Element = 1 } });
+        connection.Server(new FightRefreshCharacterStatsEvent { FighterId = Self, Stats = new FightCharacteristics { Characteristics = { Usable(1, apLeft, spent: 6 - apLeft), Usable(23, 0) } } });
+        connection.Server(new SequenceEndEvent { ActionId = actionId, Type = SequenceType.Weapon, AuthorId = Self });
+        connection.Client(new GameActionAcknowledgementRequest { ActionId = actionId, Valid = true });
+    }
+
     private async Task<IMessage> SentAsync(TestConnection connection, int count)
     {
         // The AI waits the client's display and the fight's pace before each request: the clock moves until it sent.
@@ -199,6 +210,73 @@ public sealed class FightPlayTests : IAsyncDisposable
 
         Assert.Equal(sent + 7, connection.Sent.Count);
         Assert.False(bot.IsPaused);
+        Assert.DoesNotContain(_play.Log.GetSnapshot(), record => record.Message.Contains("did not show", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AWornSwordIsStruckAsSpellZeroBesideTheSpell()
+    {
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -1, 0);
+        var sent = connection.Sent.Count;
+
+        connection.Server(new ObjectAddedEvent { Object = new InventoryObject { Item = new ObjectItem { Uid = 77, ItemId = TestPlay.SwordItemId, Quantity = 1 }, Position = 1 } });
+        bot.FightsAlone = true;
+
+        foreach (var message in new IMessage[]
+        {
+            new ContextDestroyEvent(),
+            new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight },
+            new MapCurrentEvent { MapId = TestPlay.MapId },
+            new FightStartingEvent { AttackerId = Self, DefenderId = -20_004, Type = FightType.Monsters },
+            new FightJoinEvent { PlacementTime = 440 },
+            new FightFighterShowEvent { Fighter = Character(Far) },
+            new FightFighterShowEvent { Fighter = MonsterActor(monster) },
+            new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { DefenderCells = { monster }, ChallengerCells = { Far, near } } },
+            new FightSpellsContextEvent { FighterId = Self, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 }, new SpellItem { SpellId = 0, Grade = 1 } } },
+            Order(),
+            new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true },
+            new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true },
+        })
+        {
+            connection.Server(message);
+        }
+
+        var placed = Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 1));
+
+        Assert.Equal(near, placed.CellId);
+        connection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = Self, CellId = near } } });
+        Assert.IsType<FightReadyRequest>(await SentAsync(connection, sent + 2));
+        connection.Server(new FightHumanReadyStateEvent { CharacterId = Self, Ready = true });
+        connection.Server(new FightStartEvent());
+        connection.Server(new FightNewRoundEvent { Round = 1 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        // The sword's blow and the spell, each once, in the order the AI chose; the blow's sequence is a weapon's.
+        var spells = new List<int>();
+
+        for (var cast = 1; cast <= 2; cast++)
+        {
+            var request = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 2 + cast));
+
+            Assert.Equal(monster, request.CellId);
+            spells.Add(request.SpellId);
+
+            if (request.SpellId is 0)
+                Struck(connection, monster, apLeft: 6 - (3 * cast), actionId: cast);
+            else
+                Cast(connection, monster, apLeft: 6 - (3 * cast), actionId: cast);
+        }
+
+        Assert.Equal([0, TestPlay.BlowSpellId], spells.Order());
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 5));
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+        connection.Server(new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = Monster } } } });
+        await bot.ProcessedAsync();
+        await LoggedAsync($"Bot {Self}: ends its turn after 2 actions");
+
         Assert.DoesNotContain(_play.Log.GetSnapshot(), record => record.Message.Contains("did not show", StringComparison.Ordinal));
     }
 

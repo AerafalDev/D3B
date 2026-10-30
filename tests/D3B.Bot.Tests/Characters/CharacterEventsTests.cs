@@ -137,6 +137,13 @@ public sealed class CharacterEventsTests
                   "IsWorn": true
                 }
               },
+              "Weapon": {
+                "Uid": 30,
+                "ItemId": 2400,
+                "Quantity": 1,
+                "Position": 1,
+                "IsWorn": true
+              },
               "Kamas": 12500,
               "Life": null,
               "MaxLife": null,
@@ -260,6 +267,24 @@ public sealed class CharacterEventsTests
             changed.Inventory.Values);
         Assert.Equal(11_000, changed.Kamas);
         Assert.Equal(812, changed.Weight);
+    }
+
+    [Fact]
+    public void AStackWornOrTakenOffMovesAndTheWeaponIsTheOneWornAtItsPosition()
+    {
+        var standing = Apply(_chosen, EnteringTheGame());
+
+        Assert.Equal(30, standing.Weapon?.Uid);
+
+        var takenOff = Apply(standing, Server(new ObjectMovementEvent { Uid = 30, Position = InventoryItem.NotWorn }), Server(new ObjectMovementEvent { Uid = 999, Position = 8 }));
+
+        Assert.Null(takenOff.Weapon);
+        Assert.False(takenOff.Inventory.ContainsKey(999));
+
+        var worn = Apply(takenOff, Server(new ObjectMovementEvent { Uid = 12, Position = InventoryItem.Weapon }));
+
+        Assert.Equal(new InventoryItem(12, 303, 40, InventoryItem.Weapon), worn.Inventory[12]);
+        Assert.Equal(worn.Inventory[12], worn.Weapon);
     }
 
     [Fact]

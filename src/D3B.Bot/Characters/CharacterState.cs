@@ -99,6 +99,9 @@ public sealed record CharacterState
     /// <summary>Gets the stacks the character carries, by their own id.</summary>
     public ImmutableSortedDictionary<int, InventoryItem> Inventory { get; init; } = ImmutableSortedDictionary<int, InventoryItem>.Empty;
 
+    /// <summary>Gets the weapon the character wears, the stack at <see cref="InventoryItem.Weapon"/>, or null for none.</summary>
+    public InventoryItem? Weapon => Inventory.Values.FirstOrDefault(item => item.Position is InventoryItem.Weapon);
+
     /// <summary>Gets the kamas the character carries.</summary>
     public long Kamas { get; init; }
 

@@ -37,6 +37,7 @@ public sealed class SpellEffects
     private readonly SpellCatalog _spells;
     private readonly CastRules _rules;
     private readonly EffectActions _actions;
+    private readonly WeaponBlows? _blows;
 
     /// <summary>Initializes a new instance of the <see cref="SpellEffects"/> class.</summary>
     /// <param name="spells">The pack's spells.</param>
@@ -51,6 +52,16 @@ public sealed class SpellEffects
         _spells = spells;
         _rules = rules;
         _actions = actions;
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="SpellEffects"/> class that foresees the weapons' blows too.</summary>
+    /// <param name="blows">The pack's spells and the weapons' blows.</param>
+    /// <param name="rules">The rules of a cast, built on the blows' spells.</param>
+    /// <param name="actions">What each effect does.</param>
+    public SpellEffects(WeaponBlows blows, CastRules rules, EffectActions actions)
+        : this((blows ?? throw new ArgumentNullException(nameof(blows))).Spells, rules, actions)
+    {
+        _blows = blows;
     }
 
     private static (int Base, int Damage) Boosts(Combatant caster, int spellId)
@@ -72,7 +83,7 @@ public sealed class SpellEffects
         return (baseBonus, damage);
     }
 
-    private static LifeRange Value(in SpellEffect effect, EffectKind kind, EffectElement element, Combatant caster, Combatant target, int away, bool critical, int baseBonus, int damageBonus)
+    private static LifeRange Value(in SpellEffect effect, EffectKind kind, EffectElement element, Combatant caster, Combatant target, int away, bool critical, int baseBonus, int damageBonus, int? weaponBonus)
     {
         var roll = EffectFormulas.Roll(effect);
 
@@ -80,10 +91,11 @@ public sealed class SpellEffects
         {
             case EffectKind.Damage or EffectKind.Steal:
                 {
-                    var dealt = EffectFormulas.Dealt(roll + new LifeRange(baseBonus, baseBonus), caster, element, critical) + new LifeRange(damageBonus, damageBonus);
+                    var boosted = roll + new LifeRange(baseBonus, baseBonus);
+                    var dealt = (weaponBonus is { } bonus ? EffectFormulas.DealtByWeapon(boosted, caster, element, critical, bonus) : EffectFormulas.Dealt(boosted, caster, element, critical)) + new LifeRange(damageBonus, damageBonus);
                     var melee = caster.Cell is not Combatant.NoCell && target.Cell is not Combatant.NoCell && MapGeometry.Distance(caster.Cell, target.Cell) is 1;
 
-                    return EffectFormulas.Received(EffectFormulas.Decreased(dealt, effect.Zone, away), caster, target, element, melee);
+                    return EffectFormulas.Received(EffectFormulas.Decreased(dealt, effect.Zone, away), caster, target, element, melee, weaponBonus is not null);
                 }
 
             case EffectKind.Heal:
@@ -133,6 +145,9 @@ public sealed class SpellEffects
 
         var effects = critical && level.CriticalEffectCount > 0 ? _spells.CriticalEffectsOf(level) : _spells.EffectsOf(level);
         var (baseBonus, damageBonus) = Boosts(caster, level.SpellId);
+
+        // A weapon's blow deals a weapon's damage, its critical hit adding the weapon's bonus (D220).
+        int? weaponBonus = WeaponBlows.IsBlow(level) ? _blows?.CriticalBonusOf(level) ?? 0 : null;
         var occupied = CastRules.OccupiedBy(fighters);
         var reached = _reached ??= [];
         Span<int> steps = fighters.Count <= 64 ? stackalloc int[fighters.Count] : new int[fighters.Count];
@@ -159,7 +174,7 @@ public sealed class SpellEffects
             for (var index = 0; index < reached.Count; index++)
             {
                 var (target, selected) = reached[index];
-                var value = Value(effect, action.Kind, element, caster, target, steps[index], critical, baseBonus, damageBonus);
+                var value = Value(effect, action.Kind, element, caster, target, steps[index], critical, baseBonus, damageBonus, weaponBonus);
 
                 foreseen.Add(new ForeseenEffect(target.Id, effect.EffectId, action, element, value, selected is CriterionAnswer.True, effect.Random > 0, immediate, effect.Duration));
             }

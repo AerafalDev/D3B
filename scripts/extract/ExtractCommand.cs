@@ -124,13 +124,13 @@ internal static class ExtractCommand
         var reading = Stopwatch.StartNew();
         var maps = MapsExtractor.Read(client);
         var graph = WorldExtractor.ReadGraph(client);
-        var items = ItemsExtractor.Read(client);
+        var effects = EffectsExtractor.Read(client);
+        var (items, weapons) = ItemsExtractor.Read(client, effects);
         var jobs = JobsExtractor.Read(client, items);
         var atlas = WorldExtractor.ReadAtlas(client, items, jobs);
         var interactives = InteractivesExtractor.Read(client);
         var banks = BanksExtractor.Read(client, atlas, graph);
         var icons = IconsExtractor.Read(client, items, jobs);
-        var effects = EffectsExtractor.Read(client);
         var characteristics = CharacteristicsExtractor.Read(client, TextsExtractor.Held(client));
         var spells = SpellsExtractor.Read(client, effects);
         var states = StatesExtractor.Read(client, spells);
@@ -167,6 +167,7 @@ internal static class ExtractCommand
             writer.Add(WorldAtlas.EntryName, atlas);
             writer.Add(WorldGraph.EntryName, graph);
             writer.Add(ItemCatalog.EntryName, items);
+            writer.Add(WeaponCatalog.EntryName, weapons);
             writer.Add(JobCatalog.EntryName, jobs);
             writer.Add(InteractiveCatalog.EntryName, interactives);
             writer.Add(BankCatalog.EntryName, banks);

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using D3B.Data.Maps;
+using D3B.Engine.Fights;
 using D3B.Protocol.Game;
 using Google.Protobuf;
 
@@ -224,13 +225,21 @@ public static class FightEvents
         var marked = fight with { Sequences = fight.Sequences.SetItem(fight.Sequences.Length - 1, innermost with { HasCast = true }) };
 
         // Measured (client.md): the casts a fighter chose are the first of its sequences of a spell; those its effects
-        // cast follow in the same sequence or in one they trigger, and no spell's interval or casts a turn count them.
-        if (innermost is not { Type: SequenceType.Spell, HasCast: false } || innermost.AuthorId != casterId || cast.Spell is not { } spell)
+        // cast follow in the same sequence or in one they trigger, and no spell's interval or casts a turn count them. A
+        // weapon's blow is the first of a sequence of its own, naming no spell (D218): spell 0's, whose casts a turn count it.
+        int? spellId = innermost switch
+        {
+            { Type: SequenceType.Spell } when cast.Spell is { } spell => spell.SpellId,
+            { Type: SequenceType.Weapon } => WeaponBlows.SpellId,
+            _ => null,
+        };
+
+        if (innermost.HasCast || innermost.AuthorId != casterId || spellId is null)
             return marked;
 
         long? target = cast.TargetId is not 0 ? cast.TargetId : null;
 
-        return Changed(marked, casterId, caster => caster with { Casts = caster.Casts.Cast(spell.SpellId, target, fight.Round) });
+        return Changed(marked, casterId, caster => caster with { Casts = caster.Casts.Cast(spellId.Value, target, fight.Round) });
     }
 
     private static FightState Thrown(FightState fight, long carrierId, FightThrow thrown)

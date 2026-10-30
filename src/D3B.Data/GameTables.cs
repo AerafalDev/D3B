@@ -16,6 +16,7 @@ namespace D3B.Data;
 public sealed class GameTables
 {
     private readonly Lazy<ItemCatalog> _items;
+    private readonly Lazy<WeaponCatalog> _weapons;
     private readonly Lazy<JobCatalog> _jobs;
     private readonly Lazy<InteractiveCatalog> _interactives;
     private readonly Lazy<BankCatalog> _banks;
@@ -31,6 +32,11 @@ public sealed class GameTables
     /// <exception cref="KeyNotFoundException">The pack holds no items.</exception>
     /// <exception cref="PackFormatException">Their entry is damaged.</exception>
     public ItemCatalog Items => _items.Value;
+
+    /// <summary>Gets the weapons, their effects and the zones of their types.</summary>
+    /// <exception cref="KeyNotFoundException">The pack holds no weapons.</exception>
+    /// <exception cref="PackFormatException">Their entry is damaged.</exception>
+    public WeaponCatalog Weapons => _weapons.Value;
 
     /// <summary>Gets the jobs and the skills.</summary>
     /// <exception cref="KeyNotFoundException">The pack holds no jobs.</exception>
@@ -90,6 +96,7 @@ public sealed class GameTables
 
         // Publication only: a failed read is not remembered, so that a later call reads again.
         _items = new Lazy<ItemCatalog>(() => pack.Read<ItemCatalog>(ItemCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
+        _weapons = new Lazy<WeaponCatalog>(() => pack.Read<WeaponCatalog>(WeaponCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _jobs = new Lazy<JobCatalog>(() => pack.Read<JobCatalog>(JobCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _interactives = new Lazy<InteractiveCatalog>(() => pack.Read<InteractiveCatalog>(InteractiveCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _banks = new Lazy<BankCatalog>(() => pack.Read<BankCatalog>(BankCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);

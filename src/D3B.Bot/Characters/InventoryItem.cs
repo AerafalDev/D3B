@@ -10,6 +10,9 @@ public sealed record InventoryItem(int Uid, int ItemId, int Quantity, int Positi
     /// <summary>The position of a stack that is not worn, as every stack obtained or put in the bank is, in the captures.</summary>
     public const int NotWorn = 63;
 
+    /// <summary>The position of the weapon worn: of the 75 inventories captured, the 63 holding a worn weapon held it there, and nothing else (D218).</summary>
+    public const int Weapon = 1;
+
     /// <summary>Gets whether the stack is worn: the inventory lists the worn objects first, one of each, at other positions.</summary>
     public bool IsWorn => Position != NotWorn;
 }

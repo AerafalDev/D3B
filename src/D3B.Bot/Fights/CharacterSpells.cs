@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using D3B.Bot.Characters;
 using D3B.Data.Breeds;
 using D3B.Data.Spells;
+using D3B.Engine.Fights;
 
 namespace D3B.Bot.Fights;
 
@@ -12,12 +13,12 @@ namespace D3B.Bot.Fights;
 /// message the readable protocol names. Of the 231 casts the characters chose, 213 were of a spell the list held at the
 /// grade cast, and 18 of a spell a level gained during the capture unlocked, the base of its pair at the grade its least
 /// level allows: 231 of 231 as this rule has it. At each character's first fight, the rule added no spell to the list.
-/// The list holds spell 0 too, a weapon's blow, whose costs and effects are the weapon's: it is left out until the AI knows
-/// the character's weapon.
+/// The list holds spell 0 too, a weapon's blow, whose costs and effects are the weapon's: in a fight, the worn weapon's
+/// blow when D3B strikes it, a sword's (D221); never the spell's own level, the punch, unmeasured.
 /// </remarks>
 public static class CharacterSpells
 {
-    private const int WeaponBlow = 0;
+    private const int WeaponBlow = WeaponBlows.SpellId;
 
     /// <summary>Gets the spells' levels a character may cast.</summary>
     /// <param name="listed">The spells the server listed, each with its grade, by spell.</param>
@@ -68,23 +69,30 @@ public static class CharacterSpells
     /// <param name="character">The character's state.</param>
     /// <param name="fight">Its fight.</param>
     /// <param name="self">Its own fighter.</param>
-    /// <param name="spells">The pack's spells.</param>
+    /// <param name="blows">The pack's spells and the weapons' blows.</param>
     /// <param name="breeds">The pack's breeds.</param>
-    /// <returns>The fight's context's spells when the server listed them; else a transformed character's form's; else its own.</returns>
-    /// <remarks>Measured live (D203): transformed into a bouftou by an alteration, the character's own spells went unanswered.</remarks>
-    public static ImmutableArray<SpellLevel> InFight(CharacterState character, FightState fight, Fighter self, SpellCatalog spells, BreedCatalog breeds)
+    /// <returns>The fight's context's spells when the server listed them; else a transformed character's form's; else its own;
+    /// and the worn weapon's blow when the list names spell 0 and D3B strikes that weapon's.</returns>
+    /// <remarks>
+    /// Measured live (D203): transformed into a bouftou by an alteration, the character's own spells went unanswered.
+    /// Measured on the captures (D218): every list of the character's own spells named spell 0, 77 as it entered the game and
+    /// 96 as a fight started, where a form's and a turret's, 16 lists, did not.
+    /// </remarks>
+    public static ImmutableArray<SpellLevel> InFight(CharacterState character, FightState fight, Fighter self, WeaponBlows blows, BreedCatalog breeds)
     {
         ArgumentNullException.ThrowIfNull(character);
         ArgumentNullException.ThrowIfNull(fight);
         ArgumentNullException.ThrowIfNull(self);
+        ArgumentNullException.ThrowIfNull(blows);
 
-        if (!fight.Spells.IsEmpty)
-            return Of(fight.Spells, null, 0, spells, breeds);
+        var (listed, levels) = !fight.Spells.IsEmpty ? (fight.Spells, Of(fight.Spells, null, 0, blows.Spells, breeds))
+            : !character.TransformedSpells.IsEmpty ? (character.TransformedSpells, Of(character.TransformedSpells, null, 0, blows.Spells, breeds))
+            : (character.Spells, Of(character.Spells, self.BreedId, self.Level ?? character.Level ?? 1, blows.Spells, breeds));
 
-        if (!character.TransformedSpells.IsEmpty)
-            return Of(character.TransformedSpells, null, 0, spells, breeds);
+        if (listed.ContainsKey(WeaponBlow) && character.Weapon is { } weapon && blows.TryGetBlow(weapon.ItemId, out var blow))
+            levels = levels.Add(blow);
 
-        return Of(character.Spells, self.BreedId, self.Level ?? character.Level ?? 1, spells, breeds);
+        return levels;
     }
 
     private static int GradeAt(SpellCatalog spells, int spellId, int level)

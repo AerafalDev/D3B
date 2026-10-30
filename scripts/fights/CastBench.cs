@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Data;
 using D3B.Data.Maps;
@@ -6,6 +7,7 @@ using D3B.Data.Spells;
 using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
+using D3B.Network.Relay;
 using D3B.Protocol.Game;
 using Google.Protobuf;
 using FightBuff = D3B.Protocol.Game.FightBuff;
@@ -25,6 +27,7 @@ internal sealed class CastBench
 
     private readonly GameTables _tables;
     private readonly GameMaps _maps;
+    private readonly WeaponBlows _blows;
     private readonly CastRules _rules;
     private readonly SpellEffects _effects;
     private readonly EffectActions _actions;
@@ -38,9 +41,10 @@ internal sealed class CastBench
     {
         _tables = tables;
         _maps = maps;
-        _rules = new CastRules(tables.Spells, tables.States);
+        _blows = new WeaponBlows(tables.Spells, tables.Weapons, tables.Effects);
+        _rules = new CastRules(_blows.Spells, tables.States);
         _actions = new EffectActions(tables.Effects);
-        _effects = new SpellEffects(tables.Spells, _rules, _actions);
+        _effects = new SpellEffects(_blows, _rules, _actions);
         _details = details;
     }
 
@@ -72,11 +76,18 @@ internal sealed class CastBench
         var open = new List<Cast>();
         var levels = new Dictionary<(long Fighter, int Spell), SpellLevel>();
         FightState? fight = null;
+        CharacterState? character = null;
         long self = 0, mapId = 0;
 
         for (var index = 0; index < messages.Count; index++)
         {
             var message = messages[index];
+
+            // The character's state, for the weapon it wears (D218).
+            if (message is CharacterSelectionEvent { Success.Character: { } chosen })
+                character = CharacterState.Chosen(new CharacterKey(0, chosen.Id), chosen);
+            else if (character is not null)
+                character = CharacterEvents.Apply(character, RelayDirection.FromServer, message);
 
             if (message is MapCurrentEvent current)
                 mapId = current.MapId;
@@ -93,7 +104,7 @@ internal sealed class CastBench
             if (fight is null)
                 continue;
 
-            Before(fight, message, mapId, open, levels);
+            Before(fight, message, mapId, open, levels, character);
             FightEvents.TryApply(fight, self, message, out fight);
 
             if (message is SequenceEndEvent)
@@ -110,7 +121,7 @@ internal sealed class CastBench
         }
     }
 
-    private void Before(FightState fight, IMessage message, long mapId, List<Cast> open, Dictionary<(long, int), SpellLevel> levels)
+    private void Before(FightState fight, IMessage message, long mapId, List<Cast> open, Dictionary<(long, int), SpellLevel> levels, CharacterState? character)
     {
         // Where the state holds each fighter, set against where the server says it moves from: a slide's first cell and a
         // walk's, after every move the state follows.
@@ -122,9 +133,11 @@ internal sealed class CastBench
 
         switch (message)
         {
-            case GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast } action when action.Cast.Spell is { } spell:
+            case GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast } action when action.Cast.Spell is not null
+                || fight.Sequences is [.., { Type: SequenceType.Weapon, HasCast: false }]:
             {
-                var chosen = fight.Sequences is [.., { Type: SequenceType.Spell, HasCast: false } innermost] && innermost.AuthorId == action.SourceId;
+                var struck = action.Cast.Spell is null;
+                var chosen = fight.Sequences is [.., { Type: SequenceType.Spell or SequenceType.Weapon, HasCast: false } innermost] && innermost.AuthorId == action.SourceId;
 
                 if (!chosen)
                 {
@@ -134,15 +147,35 @@ internal sealed class CastBench
                     break;
                 }
 
-                if (!_tables.Spells.TryGetLevel(spell.LevelId, out var level) || !fight.Fighters.TryGetValue(action.SourceId, out var caster))
+                SpellLevel level;
+
+                if (struck)
+                {
+                    // A weapon's blow names no spell nor level (D218): the worn weapon's blow, when D3B strikes that weapon's.
+                    var weapon = action.SourceId == character?.Key.CharacterId ? character.Weapon : null;
+                    var kind = weapon is null ? "no weapon worn" : _tables.Weapons.TryGetWeapon(weapon.ItemId, out var held) ? $"a weapon of type {held.TypeId}" : "an item that is no weapon";
+
+                    Tally.Count($"weapon's blows: struck with {kind}");
+
+                    if (weapon is null || !_blows.TryGetBlow(weapon.ItemId, out level))
+                        break;
+                }
+                else if (!_blows.Spells.TryGetLevel(action.Cast.Spell!.LevelId, out level))
                 {
                     Tally.Count("casts: level or caster unknown");
 
                     break;
                 }
 
-                levels[(action.SourceId, spell.SpellId)] = level;
-                _turnsEnded[(action.SourceId, spell.SpellId)] = 0;
+                if (!fight.Fighters.TryGetValue(action.SourceId, out var caster))
+                {
+                    Tally.Count("casts: level or caster unknown");
+
+                    break;
+                }
+
+                levels[(action.SourceId, level.SpellId)] = level;
+                _turnsEnded[(action.SourceId, level.SpellId)] = 0;
                 var map = MapOf(mapId);
                 var fighters = FightCombatants.Of(fight, _tables.Monsters);
                 var combatant = fighters.First(fighter => fighter.Id == action.SourceId);
@@ -151,7 +184,13 @@ internal sealed class CastBench
                 Tally.Count($"rules of the casts chosen: {(refusal is CastRefusal.None ? "accepted" : $"refused, {refusal}")}");
 
                 if (refusal is not CastRefusal.None)
-                    _details?.WriteLine($"refused {refusal}: spell {spell.SpellId} level {spell.LevelId}, states {string.Join(",", combatant.States)}");
+                    _details?.WriteLine($"refused {refusal}: spell {level.SpellId} level {level.Id}, states {string.Join(",", combatant.States)}");
+
+                if (struck)
+                {
+                    Tally.Count($"weapon's blows: the rules {(refusal is CastRefusal.None ? "accept" : $"refuse, {refusal}")}");
+                    Tally.Count($"weapon's blows: {(action.Cast.Critical is FightCastCritical.Critical ? "critical" : "normal")}");
+                }
 
                 Tally.Count($"casts chosen: {(action.Cast.Critical is FightCastCritical.Critical ? "critical" : "normal")}");
 
@@ -247,6 +286,14 @@ internal sealed class CastBench
         var foreseen = _effects.Foresee(cast.Map, cast.Fighters, cast.Caster, cast.Level, cast.Cell, cast.Critical);
         var alone = cast.TriggeredCasts is 0 ? "alone" : "with the casts it triggered";
 
+        if (WeaponBlows.IsBlow(cast.Level))
+        {
+            var spent = -cast.Actions.Where(action => action.ActionId is 102 && action.ActionCase is GameActionFightEvent.ActionOneofCase.Points && action.Points.TargetId == cast.Caster.Id).Sum(action => action.Points.Delta);
+
+            Tally.Count($"weapon's blows: AP spent {(spent == cast.Level.ApCost ? "as the weapon costs" : $"off by {spent - cast.Level.ApCost}")}");
+            alone = "a weapon's blow";
+        }
+
         Damage(cast, foreseen, alone);
         Heals(cast, foreseen, alone);
         Pushes(cast, foreseen);
@@ -318,8 +365,8 @@ internal sealed class CastBench
         var target = cast.Fighters.First(fighter => fighter.Id == targetId);
         var stat = EffectFormulas.CharacteristicOf(element);
         var offset = element is EffectElement.Neutral ? 4 : (int)element - 1;
-        var rolls = string.Join(" ", _tables.Spells.EffectsOf(cast.Level).ToArray().Where(effect => foreseen.Any(found => found.TargetId == targetId && found.EffectId == effect.EffectId && found.Element == element))
-            .Select(effect => $"e{effect.EffectId}:{effect.DiceNum}-{effect.DiceSide}/{(char)effect.Zone.Shape}{effect.Zone.Size},{effect.Zone.MinSize},{effect.Zone.DamageDecreaseStepPercent}x{effect.Zone.MaxDamageDecreaseApplyCount} r{effect.Random} g{effect.Group} t{_tables.Spells.TriggersOf(effect)}"));
+        var rolls = string.Join(" ", _blows.Spells.EffectsOf(cast.Level).ToArray().Where(effect => foreseen.Any(found => found.TargetId == targetId && found.EffectId == effect.EffectId && found.Element == element))
+            .Select(effect => $"e{effect.EffectId}:{effect.DiceNum}-{effect.DiceSide}/{(char)effect.Zone.Shape}{effect.Zone.Size},{effect.Zone.MinSize},{effect.Zone.DamageDecreaseStepPercent}x{effect.Zone.MaxDamageDecreaseApplyCount} r{effect.Random} g{effect.Group} t{_blows.Spells.TriggersOf(effect)}"));
         var changed = string.Join(",", caster.Characteristics.Where(pair => pair.Key is >= 100 and <= 160 && pair.Value is not 100 and not 0).Select(pair => $"{pair.Key}={pair.Value}"));
         var targetChanged = string.Join(",", target.Characteristics.Where(pair => pair.Key is >= 100 and <= 160 && pair.Value is not 100 and not 0).Select(pair => $"{pair.Key}={pair.Value}"));
 
@@ -464,7 +511,7 @@ internal sealed class CastBench
     private void Buffs(Cast cast, IReadOnlyList<ForeseenEffect> foreseen)
     {
         // The client's previews of buffs on the caster, which the server gives through a spell the cast triggers (D209).
-        foreach (var effect in _tables.Spells.EffectsOf(cast.Level))
+        foreach (var effect in _blows.Spells.EffectsOf(cast.Level))
         {
             var kind = _actions.Of(effect.EffectId).Kind;
 
@@ -489,10 +536,10 @@ internal sealed class CastBench
 
         var own = new HashSet<int>();
 
-        foreach (var effect in _tables.Spells.EffectsOf(cast.Level))
+        foreach (var effect in _blows.Spells.EffectsOf(cast.Level))
             own.Add(effect.Uid);
 
-        foreach (var effect in _tables.Spells.CriticalEffectsOf(cast.Level))
+        foreach (var effect in _blows.Spells.CriticalEffectsOf(cast.Level))
             own.Add(effect.Uid);
 
         foreach (var (actionId, buff) in cast.Buffs)
@@ -509,7 +556,7 @@ internal sealed class CastBench
             if (matching.Count is 0)
             {
                 Tally.Count("buffs: of the level's effects, target not foreseen");
-                _details?.WriteLine($"buff target not foreseen: spell {cast.Level.SpellId} level {cast.Level.Id} effect {actionId}, mask {_tables.Spells.TargetMaskOf(SourceOf(cast.Level, buff.EffectUid))}, target {(buff.TargetId == cast.Caster.Id ? "the caster" : "another")}");
+                _details?.WriteLine($"buff target not foreseen: spell {cast.Level.SpellId} level {cast.Level.Id} effect {actionId}, mask {_blows.Spells.TargetMaskOf(SourceOf(cast.Level, buff.EffectUid))}, target {(buff.TargetId == cast.Caster.Id ? "the caster" : "another")}");
 
                 continue;
             }
@@ -550,13 +597,13 @@ internal sealed class CastBench
 
     private SpellEffect SourceOf(in SpellLevel level, int uid)
     {
-        foreach (var effect in _tables.Spells.EffectsOf(level))
+        foreach (var effect in _blows.Spells.EffectsOf(level))
         {
             if (effect.Uid == uid)
                 return effect;
         }
 
-        foreach (var effect in _tables.Spells.CriticalEffectsOf(level))
+        foreach (var effect in _blows.Spells.CriticalEffectsOf(level))
         {
             if (effect.Uid == uid)
                 return effect;
@@ -583,7 +630,7 @@ internal sealed class CastBench
 
     private int EffectUidOf(in SpellLevel level, int effectId)
     {
-        foreach (var effect in _tables.Spells.EffectsOf(level))
+        foreach (var effect in _blows.Spells.EffectsOf(level))
         {
             if (effect.EffectId == effectId)
                 return effect.Uid;

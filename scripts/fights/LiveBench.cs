@@ -116,6 +116,13 @@ internal sealed class LiveBench
             if (message is GameActionFightCastRequest)
                 fight.Pending = true;
 
+            // A weapon's blow is spell 0, which the AI strikes with a sword it wears (D221).
+            if (message is GameActionFightCastRequest { SpellId: 0 })
+            {
+                fight.Blows++;
+                fight.Striking = true;
+            }
+
             return;
         }
 
@@ -134,7 +141,9 @@ internal sealed class LiveBench
         if (message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast } cast && cast.SourceId == self)
         {
             fight.Cast++;
+            fight.Struck += fight.Striking && cast.ActionId is 303 ? 1 : 0;
             fight.Pending = false;
+            fight.Striking = false;
         }
         else if (message is TextInformationEvent { Type: TextInformationType.Error } refusal)
         {
@@ -171,6 +180,8 @@ internal sealed class LiveBench
         Tally.Count("the AI's fights: turns with no cast nor walk", fight.Idle);
         Tally.Count("the AI's fights: casts the server announced", fight.Cast);
         Tally.Count("the AI's fights: casts unanswered", fight.Unanswered);
+        Tally.Count("the AI's fights: weapon's blows sent", fight.Blows);
+        Tally.Count("the AI's fights: weapon's blows the server announced", fight.Struck);
         Tally.Count("the AI's fights: the player's requests", fight.Hand);
         Tally.Count("the AI's fights: the client's readiness for a turn", fight.ClientReady);
 
@@ -199,6 +210,12 @@ internal sealed class LiveBench
         public int Cast { get; set; }
 
         public int Unanswered { get; set; }
+
+        public int Blows { get; set; }
+
+        public int Struck { get; set; }
+
+        public bool Striking { get; set; }
 
         public int Hand { get; set; }
 

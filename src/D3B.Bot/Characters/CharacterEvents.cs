@@ -152,6 +152,10 @@ public static class CharacterEvents
             },
             ObjectsDeletedEvent deleted => state with { Inventory = state.Inventory.RemoveRange(deleted.Uids) },
             ObjectDeletedEvent deleted => state with { Inventory = state.Inventory.Remove(deleted.Uid) },
+            ObjectMovementEvent moved when state.Inventory.TryGetValue(moved.Uid, out var stack) => state with
+            {
+                Inventory = state.Inventory.SetItem(moved.Uid, stack with { Position = moved.Position }),
+            },
             CharacterStatsEvent { Stats: { } stats } => Lived(state, stats),
             LifeRegenEndEvent ended => state with { Life = ended.Life, MaxLife = ended.MaxLife, LifeRegenInterval = null },
             LifeRegenStartEvent started => state with { LifeRegenInterval = started.Interval > 0 ? started.Interval : null },

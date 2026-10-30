@@ -72,6 +72,13 @@ message ObjectDeletedEvent {
   int32 uid = 1;
 }
 
+// A stack worn, or taken off, at a new position: what the player's equipping moved, measured on the 2 the captures hold,
+// a pet worn at 8 and taken off to 63 (D221). A weapon is worn at position 1.
+message ObjectMovementEvent {
+  int32 uid = 1;
+  int32 position = 3;
+}
+
 // Uses one object of a stack, as eating or opening a resource bag does. Food heals: the server ends the life's
 // regeneration, starts it again, then sends the stack's new quantity, a text, the characteristics holding the new life and
 // the weight; at full life, a text alone, and nothing is used. A bag gives what it holds, a stack added to or a new one,

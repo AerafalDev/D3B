@@ -55,6 +55,7 @@ public static class EffectFormulas
             or FightCharacteristic.ReceivedDamageMultiplierDistance or FightCharacteristic.DealtDamageMultiplierSpells
             or FightCharacteristic.ReceivedDamageMultiplierMelee or FightCharacteristic.DealtDamageMultiplierMelee
             or FightCharacteristic.ReceivedDamageMultiplierSpells or FightCharacteristic.DealtHealMultiplier
+            or FightCharacteristic.DealtDamageMultiplierWeapons or FightCharacteristic.ReceivedDamageMultiplierWeapons
             ? Percent
             : 0;
     }
@@ -127,6 +128,32 @@ public static class EffectFormulas
         return new LifeRange((roll.Min * raise / Percent) + bonus, (roll.Max * raise / Percent) + bonus);
     }
 
+    /// <summary>Gets the damage a weapon's blow deals before its target and the zone take any off.</summary>
+    /// <param name="roll">The effect's roll, its base damage modifiers added.</param>
+    /// <param name="caster">The caster.</param>
+    /// <param name="element">The element, resolved.</param>
+    /// <param name="critical">Whether the blow is a critical hit.</param>
+    /// <param name="criticalBonus">What the weapon's critical hit adds, its <c>criticalHitBonus</c>.</param>
+    /// <returns>The damage: the roll raised by the element's characteristic, power and weapons' power, in percent, then the
+    /// fixed bonuses, the weapon's critical bonus among them on a critical hit, then the weapon mastery, in percent.</returns>
+    /// <remarks>
+    /// The references' order (D181): the damage calculation the Dofus 2 client ran, which Bubble ported, raises a weapon's
+    /// blow by weapons' power where a spell's has none, adds the weapon's critical bonus to the fixed bonuses, and raises
+    /// the whole by the weapon mastery. Measured on the characters captured (D218): weapons' power and mastery 0 on each, so
+    /// that the critical bonus is left to measure.
+    /// </remarks>
+    public static LifeRange DealtByWeapon(LifeRange roll, Combatant caster, EffectElement element, bool critical, int criticalBonus)
+    {
+        ArgumentNullException.ThrowIfNull(caster);
+
+        var raise = Math.Max(0, Percent + caster.Characteristic(CharacteristicOf(element)) + caster.Characteristic(FightCharacteristic.Power) + caster.Characteristic(FightCharacteristic.WeaponPower));
+        var bonus = caster.Characteristic(FightCharacteristic.AllDamageBonus) + caster.Characteristic(ElementalId(FightCharacteristic.EarthDamageBonus, element))
+            + (critical ? caster.Characteristic(FightCharacteristic.CriticalDamageBonus) + criticalBonus : 0);
+        var mastery = Math.Max(0, Percent + caster.Characteristic(FightCharacteristic.WeaponMastery));
+
+        return new LifeRange(((roll.Min * raise / Percent) + bonus) * mastery / Percent, ((roll.Max * raise / Percent) + bonus) * mastery / Percent);
+    }
+
     /// <summary>Gets damage lowered by a zone's decrease away from its centre.</summary>
     /// <param name="damage">The damage.</param>
     /// <param name="zone">The effect's zone.</param>
@@ -152,15 +179,28 @@ public static class EffectFormulas
     /// <returns>The damage less the target's fixed resistance, then its resistance in percent, then the multipliers.</returns>
     public static LifeRange Received(LifeRange dealt, Combatant caster, Combatant target, EffectElement element, bool melee)
     {
+        return Received(dealt, caster, target, element, melee, weapon: false);
+    }
+
+    /// <summary>Gets the damage a target receives of what a caster dealt, by a spell or by a weapon's blow.</summary>
+    /// <param name="dealt">The damage dealt, the zone's decrease taken off.</param>
+    /// <param name="caster">The caster.</param>
+    /// <param name="target">The target.</param>
+    /// <param name="element">The element, resolved.</param>
+    /// <param name="melee">Whether the caster stands beside the target.</param>
+    /// <param name="weapon">Whether a weapon's blow dealt it: the multipliers of weapons apply, where a spell's are those of spells (D220).</param>
+    /// <returns>The damage less the target's fixed resistance, then its resistance in percent, then the multipliers.</returns>
+    public static LifeRange Received(LifeRange dealt, Combatant caster, Combatant target, EffectElement element, bool melee, bool weapon)
+    {
         ArgumentNullException.ThrowIfNull(caster);
         ArgumentNullException.ThrowIfNull(target);
 
         var reduction = target.Characteristic(ElementalId(FightCharacteristic.EarthReduction, element));
         var resisted = Percent - target.Characteristic(ElementalId(FightCharacteristic.EarthResistPercent, element));
         var dealtMultiplier = Multiplier(caster, FightCharacteristic.DealtDamageMultiplier);
-        var spells = Multiplier(caster, FightCharacteristic.DealtDamageMultiplierSpells);
+        var spells = Multiplier(caster, weapon ? FightCharacteristic.DealtDamageMultiplierWeapons : FightCharacteristic.DealtDamageMultiplierSpells);
         var reach = Multiplier(caster, melee ? FightCharacteristic.DealtDamageMultiplierMelee : FightCharacteristic.DealtDamageMultiplierDistance);
-        var receivedSpells = Multiplier(target, FightCharacteristic.ReceivedDamageMultiplierSpells);
+        var receivedSpells = Multiplier(target, weapon ? FightCharacteristic.ReceivedDamageMultiplierWeapons : FightCharacteristic.ReceivedDamageMultiplierSpells);
         var receivedReach = Multiplier(target, melee ? FightCharacteristic.ReceivedDamageMultiplierMelee : FightCharacteristic.ReceivedDamageMultiplierDistance);
 
         return new LifeRange(Receive(dealt.Min), Receive(dealt.Max));
