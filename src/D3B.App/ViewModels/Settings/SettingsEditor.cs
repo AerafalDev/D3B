@@ -69,6 +69,10 @@ internal sealed partial class SettingsEditor : ObservableObject
     [ObservableProperty]
     public partial bool HasForecast { get; private set; }
 
+    /// <summary>Gets what the zone's place says while no zone is drawn: the activity's word, or that the settings lack what and where (D246).</summary>
+    [ObservableProperty]
+    public partial string NoZoneText { get; private set; } = "";
+
     /// <summary>Gets the figures the activity gives of its settings.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasFigures), nameof(HasPreview))]
@@ -389,6 +393,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         HasIsolated = Preview is not null && Preview.Zone.Any(map => map.State is ZoneMapState.Isolated);
         HasForecast = Preview is not null && Preview.Zone.Any(map => map.State is ZoneMapState.Probable or ZoneMapState.Empty);
         Figures = Preview is null || Says is not { } says ? [] : [.. Preview.Figures.Select(figure => new FigureViewModel(says.Say(figure.Value), says.Say(figure.Label)))];
+        NoZoneText = Preview?.Message is { } message && Says is { } saying ? saying.Say(message) : Localizer["ZoneNothingYet"];
         PlayerNotes = [.. Players.Select(player => new PlayerNoteViewModel(player.Name, NoteOf(player)))];
     }
 

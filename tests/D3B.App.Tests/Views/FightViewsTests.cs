@@ -137,6 +137,15 @@ public sealed class FightViewsTests : IAsyncDisposable
             var fightTexts = Texts(window);
 
             Drawings.Draw(window, "fight-fr");
+
+            // As narrow as the owner's window, the sidebar folded: the settings and the preview side by side still.
+            window.Width = 1040;
+            window.Height = 900;
+            Dispatcher.UIThread.RunJobs();
+            Drawings.Draw(window, "fight-narrow-fr");
+            window.Width = 1280;
+            window.Height = 1800;
+            Dispatcher.UIThread.RunJobs();
             main.Profiles.Editing!.Editor!.Sections.SelectMany(section => section.Fields).OfType<PickedGamesFieldViewModel>().First(field => field.IsVisible).ChooseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 

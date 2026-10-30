@@ -308,4 +308,13 @@
   <data name="FigureIsolatedLastMany" xml:space="preserve">
     <value>isolated maps, gone through last</value>
   </data>
+  <data name="MessageAutomatic" xml:space="preserve">
+    <value>The place is chosen at the level of each character playing this profile: give it to one, on the Accounts page, to see it.</value>
+  </data>
+  <data name="FigureForLevel" xml:space="preserve">
+    <value>Level {0}</value>
+  </data>
+  <data name="FigureForLevelLabel" xml:space="preserve">
+    <value>the place for a character of the monsters' level</value>
+  </data>
 </root>

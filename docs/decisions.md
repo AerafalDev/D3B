@@ -5764,6 +5764,11 @@ the fight profile's editor not good enough. Builds D127, D159, D166, D236, D245.
   bank on foot (`NearestBank`, shared with harvesting's) and the isolated maps; and for each character playing the
   profile, the sub-area the activity would choose at its level, a subscribed character's, the editor knowing no
   subscription. The mini-map's legend names probable and empty maps only for a zone that tells them apart, a harvest's.
+- **Then, as the owner tried it**: a profile no character plays yet, its place automatic, drew a lonely "Auto" and the
+  harvest's "Choose resources and a place". With no character's level known, the monsters chosen give one, the highest of
+  their grades', and the preview draws the place at it, saying so; else the activity says why no zone shows
+  (`SettingsPreview.Message`), as harvesting's does too, and the app's own word is "Choose what and where". The rows' names
+  wrap beside their controls in a narrow window, where they ran under them (`DockPanel.FieldName`).
 - **Rejected.**
   - A scrolling row of chips: the 40 groups still unreadable.
   - Every editor rebuilt: the owner's words name the picker and the fight profile; the preview is what it lacked

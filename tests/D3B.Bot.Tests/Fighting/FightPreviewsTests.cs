@@ -30,17 +30,17 @@ public sealed class FightPreviewsTests : IAsyncDisposable
     public void ThePreviewCountsTheGroundsMapsItsMonstersAndTheWayToTheNearestBank()
     {
         var previews = new FightPreviews(_play.World, _play.Tables);
-        var settings = new FightSettings { Mode = FightMode.Chosen, Monsters = [489], Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId] };
+        var settings = new FightSettings { Mode = FightMode.Chosen, Monsters = [TestPlay.LarvaId, 9_999], Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId] };
         var preview = previews.Of(settings)!;
         var ground = HuntingGround.Of(settings, _play.World.Atlas, _play.World.Graph, _play.Tables.Monsters, 1, subscribed: true);
 
-        // The test's world lists no monster in its sub-area.
         Assert.Equal(
-            [$"{ground.Maps.Count}: maps to go through", "0 of 1: monsters chosen living there", "—: levels of the monsters", "1 map: to the nearest bank"],
+            [$"{ground.Maps.Count}: maps to go through", "1 of 2: monsters chosen living there", "10 to 14: levels of the monsters", "1 map: to the nearest bank"],
             preview.Figures.Select(figure => $"{Say(figure.Value)}: {Say(figure.Label)}"));
         Assert.Equal(ground.Maps.Keys.Order(), preview.Zone.Select(map => map.MapId).Order());
         Assert.All(preview.Zone, map => Assert.Equal(ZoneMapState.ToVisit, map.State));
         Assert.Equal(TestPlay.MapId, preview.LandmarkMapId);
+        Assert.Null(preview.Message);
         Assert.Same(preview, previews.Of(settings));
         Assert.Null(previews.Of(new FightSettings { Place = FightPlace.Chosen, Area = 404 }));
     }
@@ -49,12 +49,30 @@ public sealed class FightPreviewsTests : IAsyncDisposable
     public void ThePlaceTheActivityChoosesIsSaidForEachCharacterByItsLevel()
     {
         var previews = new FightPreviews(_play.World, _play.Tables);
-        PreviewPlayer[] players = [new("Ortie", 20, new Dictionary<int, int>(), null), new("Unseen", 0, new Dictionary<int, int>(), null)];
+        PreviewPlayer[] players = [new("Ortie", 20, new Dictionary<int, int>(), null), new("Unseen", 0, new Dictionary<int, int>(), null), new("Novice", 5, new Dictionary<int, int>(), null)];
         var preview = previews.Of(new FightSettings(), players)!;
+        var ground = HuntingGround.Of(new FightSettings(), _play.World.Atlas, _play.World.Graph, _play.Tables.Monsters, 20, subscribed: true);
 
-        // No sub-area of the test's world lists a monster: the place is chosen for none.
-        Assert.Equal(["Ortie: No monster to fight at its level", "Unseen: Level not seen yet"], preview.PlayerNotes.Select(note => $"{note.Name}: {Say(note.Note)}"));
-        Assert.Equal(["Auto: place chosen for each character"], preview.Figures.Select(figure => $"{Say(figure.Value)}: {Say(figure.Label)}"));
-        Assert.Empty(preview.Zone);
+        // The larvae's sub-area, of fewer maps than the activity asks, is still the only one (D245); none at level 5, below it.
+        Assert.Equal(
+            [$"Ortie: {TestPlay.SubAreaId}, {ground.Maps.Count} maps", "Unseen: Level not seen yet", "Novice: No monster to fight at its level"],
+            preview.PlayerNotes.Select(note => $"{note.Name}: {Say(note.Note)}"));
+        Assert.Equal($"{ground.Maps.Count}: maps to go through", $"{Say(preview.Figures[0].Value)}: {Say(preview.Figures[0].Label)}");
+        Assert.NotEmpty(preview.Zone);
+    }
+
+    [Fact]
+    public void WithNoCharactersLevelTheMonstersChosenShowThePlaceAtTheirLevelElseTheAppIsToldWhy()
+    {
+        var previews = new FightPreviews(_play.World, _play.Tables);
+        var chosen = previews.Of(new FightSettings { Mode = FightMode.Chosen, Monsters = [TestPlay.LarvaId] })!;
+        var automatic = previews.Of(new FightSettings(), [new PreviewPlayer("Unseen", 0, new Dictionary<int, int>(), null)])!;
+
+        Assert.Equal("Level 14: the place for a character of the monsters' level", $"{Say(chosen.Figures[0].Value)}: {Say(chosen.Figures[0].Label)}");
+        Assert.NotEmpty(chosen.Zone);
+        Assert.Null(chosen.Message);
+        Assert.Equal(["Auto: place chosen for each character"], automatic.Figures.Select(figure => $"{Say(figure.Value)}: {Say(figure.Label)}"));
+        Assert.Empty(automatic.Zone);
+        Assert.StartsWith("The place is chosen at the level of each character", Say(automatic.Message!), StringComparison.Ordinal);
     }
 }

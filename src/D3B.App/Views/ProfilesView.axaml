@@ -21,9 +21,12 @@
         <Style Selector="Border.Item.Warned">
             <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}" />
         </Style>
-        <Style Selector="StackPanel.FieldName">
-            <Setter Property="Orientation" Value="Horizontal" />
-            <Setter Property="Spacing" Value="4" />
+        <Style Selector="DockPanel.FieldName">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="DockPanel.FieldName > c|Icon">
+            <Setter Property="Margin" Value="4,0,0,0" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="Border.ZoneMap">
@@ -36,17 +39,18 @@
         <DataTemplate x:DataType="s:FlagFieldViewModel">
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto" MinHeight="32">
-                    <StackPanel Classes="FieldName">
+                    <DockPanel Classes="FieldName">
+                        <c:Icon
+                            Classes="Help"
+                            Data="{StaticResource IconInfo}"
+                            DockPanel.Dock="Right"
+                            IsVisible="{Binding HasHelp}"
+                            ToolTip.Tip="{Binding Help}" />
                         <TextBlock
                             Classes="Label"
                             Text="{Binding Label}"
                             TextWrapping="Wrap" />
-                        <c:Icon
-                            Classes="Help"
-                            Data="{StaticResource IconInfo}"
-                            IsVisible="{Binding HasHelp}"
-                            ToolTip.Tip="{Binding Help}" />
-                    </StackPanel>
+                    </DockPanel>
                     <ToggleSwitch
                         AutomationProperties.Name="{Binding Label}"
                         Grid.Column="1"
@@ -64,14 +68,18 @@
         <DataTemplate x:DataType="s:NumberFieldViewModel">
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto" MinHeight="32">
-                    <StackPanel Classes="FieldName">
-                        <TextBlock Classes="Label" Text="{Binding Label}" />
+                    <DockPanel Classes="FieldName">
                         <c:Icon
                             Classes="Help"
                             Data="{StaticResource IconInfo}"
+                            DockPanel.Dock="Right"
                             IsVisible="{Binding HasHelp}"
                             ToolTip.Tip="{Binding Help}" />
-                    </StackPanel>
+                        <TextBlock
+                            Classes="Label"
+                            Text="{Binding Label}"
+                            TextWrapping="Wrap" />
+                    </DockPanel>
                     <StackPanel
                         Grid.Column="1"
                         IsVisible="{Binding IsPercent}"
@@ -126,14 +134,18 @@
         <DataTemplate x:DataType="s:TextFieldViewModel">
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Classes="FieldName">
-                        <TextBlock Classes="Label" Text="{Binding Label}" />
+                    <DockPanel Classes="FieldName">
                         <c:Icon
                             Classes="Help"
                             Data="{StaticResource IconInfo}"
+                            DockPanel.Dock="Right"
                             IsVisible="{Binding HasHelp}"
                             ToolTip.Tip="{Binding Help}" />
-                    </StackPanel>
+                        <TextBlock
+                            Classes="Label"
+                            Text="{Binding Label}"
+                            TextWrapping="Wrap" />
+                    </DockPanel>
                     <TextBox
                         AutomationProperties.Name="{Binding Label}"
                         Grid.Column="1"
@@ -151,14 +163,18 @@
         <DataTemplate x:DataType="s:ChoiceFieldViewModel">
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto" MinHeight="32">
-                    <StackPanel Classes="FieldName">
-                        <TextBlock Classes="Label" Text="{Binding Label}" />
+                    <DockPanel Classes="FieldName">
                         <c:Icon
                             Classes="Help"
                             Data="{StaticResource IconInfo}"
+                            DockPanel.Dock="Right"
                             IsVisible="{Binding HasHelp}"
                             ToolTip.Tip="{Binding Help}" />
-                    </StackPanel>
+                        <TextBlock
+                            Classes="Label"
+                            Text="{Binding Label}"
+                            TextWrapping="Wrap" />
+                    </DockPanel>
                     <Border
                         Classes="Segmented"
                         Grid.Column="1"
@@ -204,14 +220,18 @@
         </DataTemplate>
         <DataTemplate x:DataType="s:ChoicesFieldViewModel">
             <StackPanel Spacing="8">
-                <StackPanel Classes="FieldName">
-                    <TextBlock Classes="Label" Text="{Binding Label}" />
+                <DockPanel Classes="FieldName">
                     <c:Icon
                         Classes="Help"
                         Data="{StaticResource IconInfo}"
+                        DockPanel.Dock="Right"
                         IsVisible="{Binding HasHelp}"
                         ToolTip.Tip="{Binding Help}" />
-                </StackPanel>
+                    <TextBlock
+                        Classes="Label"
+                        Text="{Binding Label}"
+                        TextWrapping="Wrap" />
+                </DockPanel>
                 <ItemsControl IsVisible="{Binding !IsEmpty}" ItemsSource="{Binding Items}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -239,14 +259,18 @@
         <DataTemplate x:DataType="s:GameFieldViewModel">
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Classes="FieldName">
-                        <TextBlock Classes="Label" Text="{Binding Label}" />
+                    <DockPanel Classes="FieldName">
                         <c:Icon
                             Classes="Help"
                             Data="{StaticResource IconInfo}"
+                            DockPanel.Dock="Right"
                             IsVisible="{Binding HasHelp}"
                             ToolTip.Tip="{Binding Help}" />
-                    </StackPanel>
+                        <TextBlock
+                            Classes="Label"
+                            Text="{Binding Label}"
+                            TextWrapping="Wrap" />
+                    </DockPanel>
                     <Grid
                         ColumnDefinitions="*,Auto"
                         Grid.Column="1"
@@ -299,14 +323,18 @@
         <DataTemplate x:DataType="s:PickedGamesFieldViewModel">
             <StackPanel Spacing="8">
                 <Grid ColumnDefinitions="*,Auto" MinHeight="32">
-                    <StackPanel Classes="FieldName">
-                        <TextBlock Classes="Label" Text="{Binding Label}" />
+                    <DockPanel Classes="FieldName">
                         <c:Icon
                             Classes="Help"
                             Data="{StaticResource IconInfo}"
+                            DockPanel.Dock="Right"
                             IsVisible="{Binding HasHelp}"
                             ToolTip.Tip="{Binding Help}" />
-                    </StackPanel>
+                        <TextBlock
+                            Classes="Label"
+                            Text="{Binding Label}"
+                            TextWrapping="Wrap" />
+                    </DockPanel>
                     <Button
                         Classes="Outline"
                         Command="{Binding ChooseCommand}"
@@ -431,14 +459,18 @@
         <DataTemplate x:DataType="s:GatheringJobsFieldViewModel">
             <StackPanel Spacing="8">
                 <Grid MinHeight="32">
-                    <StackPanel Classes="FieldName">
-                        <TextBlock Classes="Label" Text="{Binding Label}" />
+                    <DockPanel Classes="FieldName">
                         <c:Icon
                             Classes="Help"
                             Data="{StaticResource IconInfo}"
+                            DockPanel.Dock="Right"
                             IsVisible="{Binding HasHelp}"
                             ToolTip.Tip="{Binding Help}" />
-                    </StackPanel>
+                        <TextBlock
+                            Classes="Label"
+                            Text="{Binding Label}"
+                            TextWrapping="Wrap" />
+                    </DockPanel>
                 </Grid>
                 <ItemsControl ItemsSource="{Binding Chips}" Margin="0,0,0,-8">
                     <ItemsControl.ItemsPanel>
@@ -480,14 +512,18 @@
         </DataTemplate>
         <DataTemplate x:DataType="s:SubAreasFieldViewModel">
             <StackPanel Spacing="8">
-                <StackPanel Classes="FieldName">
-                    <TextBlock Classes="Label" Text="{Binding Label}" />
+                <DockPanel Classes="FieldName">
                     <c:Icon
                         Classes="Help"
                         Data="{StaticResource IconInfo}"
+                        DockPanel.Dock="Right"
                         IsVisible="{Binding HasHelp}"
                         ToolTip.Tip="{Binding Help}" />
-                </StackPanel>
+                    <TextBlock
+                        Classes="Label"
+                        Text="{Binding Label}"
+                        TextWrapping="Wrap" />
+                </DockPanel>
                 <ItemsControl ItemsSource="{Binding Suggestions}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -553,14 +589,18 @@
         </DataTemplate>
         <DataTemplate x:DataType="s:GamesFieldViewModel">
             <StackPanel Spacing="8">
-                <StackPanel Classes="FieldName">
-                    <TextBlock Classes="Label" Text="{Binding Label}" />
+                <DockPanel Classes="FieldName">
                     <c:Icon
                         Classes="Help"
                         Data="{StaticResource IconInfo}"
+                        DockPanel.Dock="Right"
                         IsVisible="{Binding HasHelp}"
                         ToolTip.Tip="{Binding Help}" />
-                </StackPanel>
+                    <TextBlock
+                        Classes="Label"
+                        Text="{Binding Label}"
+                        TextWrapping="Wrap" />
+                </DockPanel>
                 <ItemsControl IsVisible="{Binding !IsEmpty}" ItemsSource="{Binding Items}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -702,7 +742,7 @@
                                 <TextBlock
                                     Classes="Caption Muted"
                                     HorizontalAlignment="Center"
-                                    Text="{l:Tr ZoneNothingYet}"
+                                    Text="{Binding NoZoneText}"
                                     TextAlignment="Center"
                                     TextWrapping="Wrap"
                                     VerticalAlignment="Center" />

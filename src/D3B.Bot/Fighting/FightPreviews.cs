@@ -12,8 +12,9 @@ namespace D3B.Bot.Fighting;
 /// <remarks>
 /// One per host, as harvesting's (D127). When the activity chooses the place, each character playing the settings is told
 /// the sub-area it would hunt in now, by its level as its bot last saw it, the first one's drawn; the editor knows a
-/// character's level and not its account's subscription, so the place is a subscribed character's. The last preview is
-/// kept for the same settings and characters.
+/// character's level and not its account's subscription, so the place is a subscribed character's. With no character's
+/// level known, the monsters chosen give one, the highest of their grades', at which the place is drawn (D246). The last
+/// preview is kept for the same settings and characters.
 /// </remarks>
 public sealed class FightPreviews
 {
@@ -78,6 +79,7 @@ public sealed class FightPreviews
         var monsters = _tables.Monsters;
         var notes = new List<PreviewPlayerNote>();
         HuntingGround? ground = null;
+        int? forLevel = null;
 
         if (settings.Place is FightPlace.Automatic)
         {
@@ -103,12 +105,24 @@ public sealed class FightPreviews
                 ground ??= chosen;
             }
 
+            if (ground is null && !players.Any(player => player.Level > 0) && LevelOfChosen(settings) is { } level)
+            {
+                var shown = HuntingGround.Of(settings, atlas, _world.Graph, monsters, level, subscribed: true);
+
+                if (shown.SubAreas.Count > 0 && shown.Maps.Count > 0)
+                {
+                    ground = shown;
+                    forLevel = level;
+                }
+            }
+
             if (ground is null)
             {
                 return new SettingsPreview
                 {
                     Figures = [new PreviewFigure(GameText.Of(FightTexts.Text("FigureAutomatic")), GameText.Of(FightTexts.Text("FigureAutomaticLabel")))],
                     PlayerNotes = [.. notes],
+                    Message = GameText.Of(FightTexts.Text("MessageAutomatic")),
                 };
             }
         }
@@ -125,8 +139,13 @@ public sealed class FightPreviews
         var maps = ground.Maps.Count;
         var left = ground.Isolated.Count(map => !ground.Maps.ContainsKey(map));
         var (bank, changes) = NearestBank.Of(_world.Graph, _tables.Banks, _pathfinder.Value, [.. ground.Maps.Keys]);
-        var figures = new List<PreviewFigure>
-        {
+        var figures = new List<PreviewFigure>();
+
+        if (forLevel is { } at)
+            figures.Add(new(GameText.Of(FightTexts.Text("FigureForLevel"), GameTextValue.Number(at)), GameText.Of(FightTexts.Text("FigureForLevelLabel"))));
+
+        figures.AddRange(
+        [
             new(GameText.Of(FightTexts.Text("FigureNumber"), GameTextValue.Number(maps)), GameText.Counted(FightTexts.Text("FigureMapsOne"), FightTexts.Text("FigureMapsMany"), maps)),
             settings.Mode is FightMode.Chosen
                 ? new(
@@ -139,7 +158,7 @@ public sealed class FightPreviews
             bank is null
                 ? new(GameText.Of(FightTexts.Text("FigureNone")), GameText.Of(FightTexts.Text("FigureNoBank")))
                 : new(GameText.Counted(FightTexts.Text("FigureBankOne"), FightTexts.Text("FigureBankMany"), changes), GameText.Of(FightTexts.Text("FigureBank"))),
-        };
+        ]);
 
         if (ground.Isolated.Count > 0)
         {
@@ -163,6 +182,26 @@ public sealed class FightPreviews
             LandmarkMapId = bank,
             PlayerNotes = [.. notes],
         };
+    }
+
+    private int? LevelOfChosen(FightSettings settings)
+    {
+        // The highest of their grades: each monster chosen is worth whole there, and no sub-area above it is chosen (D245).
+        if (settings.Mode is not FightMode.Chosen)
+            return null;
+
+        int? highest = null;
+
+        foreach (var id in settings.Monsters)
+        {
+            if (!_tables.Monsters.TryGetMonster(id, out var monster))
+                continue;
+
+            foreach (var grade in _tables.Monsters.GradesOf(monster))
+                highest = Math.Max(highest ?? grade.Level, grade.Level);
+        }
+
+        return highest is { } level ? Math.Min(level, 200) : null;
     }
 
     private HashSet<int> HuntedIn(FightSettings settings, HuntingGround ground)

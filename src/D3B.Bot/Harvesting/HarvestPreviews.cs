@@ -198,6 +198,7 @@ public sealed class HarvestPreviews
                 {
                     Figures = [new PreviewFigure(GameText.Of(HarvestTexts.Text("FigureAutomatic")), GameText.Of(HarvestTexts.Text("FigureAutomaticLabel")))],
                     PlayerNotes = [.. notes],
+                    Message = GameText.Of(HarvestTexts.Text("MessageAutomatic")),
                 };
             }
         }

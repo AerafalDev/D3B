@@ -308,4 +308,13 @@
   <data name="FigureIsolatedLastMany" xml:space="preserve">
     <value>cartes isolées, parcourues en dernier</value>
   </data>
+  <data name="MessageAutomatic" xml:space="preserve">
+    <value>Le lieu se choisit au niveau de chaque perso qui joue ce profil : donne-le à un perso, page Comptes, pour le voir.</value>
+  </data>
+  <data name="FigureForLevel" xml:space="preserve">
+    <value>Niv. {0}</value>
+  </data>
+  <data name="FigureForLevelLabel" xml:space="preserve">
+    <value>le lieu pour un perso du niveau des monstres</value>
+  </data>
 </root>

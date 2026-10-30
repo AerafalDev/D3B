@@ -1143,7 +1143,7 @@
     <value>Ajouter une ressource</value>
   </data>
   <data name="ZoneNothingYet" xml:space="preserve">
-    <value>Choisis des ressources et un lieu.</value>
+    <value>Choisis quoi et où pour voir la zone.</value>
   </data>
   <data name="ZoneSearch" xml:space="preserve">
     <value>Autre sous-zone</value>
