@@ -123,4 +123,16 @@ public sealed class CriterionTests
         Assert.True(criterion.IsRead);
         Assert.Equal("(Qa=610|Qf=610)", criterion.Text);
     }
+
+    [Fact]
+    public void AStatesCriterionAsksTheFightersStates()
+    {
+        var states = new CriterionFacts { States = [7, 135] };
+
+        Assert.Equal(CriterionAnswer.True, Answer("HS=135", states));
+        Assert.Equal(CriterionAnswer.False, Answer("HS!7&HS!97&HS!6", states));
+        Assert.Equal(CriterionAnswer.True, Answer("HS=3|(HS=7&HS!6)", states));
+        Assert.Equal(CriterionAnswer.True, Answer("HS!7", new CriterionFacts { States = [] }));
+        Assert.Equal(CriterionAnswer.Unknown, Answer("HS!7", new CriterionFacts()));
+    }
 }

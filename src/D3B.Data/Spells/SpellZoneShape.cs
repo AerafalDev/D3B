@@ -1,7 +1,7 @@
 namespace D3B.Data.Spells;
 
 /// <summary>The shape of a spell's zone, the client's <c>SpellZoneShape</c>: each value is the character the client's zones are written with.</summary>
-/// <remarks>Named as the client's code names them; how each covers the cells is 9c's to measure (client.md).</remarks>
+/// <remarks>Named as the client's code names them; the cells each covers are <c>D3B.Engine</c>'s <c>SpellZones</c> (D187).</remarks>
 public enum SpellZoneShape : byte
 {
     /// <summary>No zone: 0, on a spell's preview zone when it has none.</summary>

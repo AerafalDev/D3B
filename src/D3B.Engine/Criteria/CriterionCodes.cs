@@ -18,6 +18,8 @@ namespace D3B.Engine.Criteria;
 /// <item><term><c>PZ</c></term><description>The account subscribed, 1, or not, 0.</description></item>
 /// <item><term><c>Pm</c>, <c>PB</c>, <c>Po</c></term><description>The map, sub-area or area the character acts on.</description></item>
 /// <item><term><c>PC</c></term><description>The cell it acts from (<see cref="CriterionFacts.Cell"/>).</description></item>
+/// <item><term><c>HS</c></term><description>A fighter's state: <c>HS=state</c> in it, <c>HS!state</c> not; the only code of the spell levels'
+/// criteria (client.md).</description></item>
 /// </list>
 /// </remarks>
 internal static class CriterionCodes
@@ -34,6 +36,7 @@ internal static class CriterionCodes
             "PB" => Compare(facts.SubAreaId, comparison, arguments),
             "Po" => Compare(facts.AreaId, comparison, arguments),
             "PC" => facts.Cell is { } cell ? Compare(cell, comparison, arguments) : AnyCell(comparison, arguments),
+            "HS" => InState(facts.States, comparison, arguments),
             _ => CriterionAnswer.Unknown,
         };
     }
@@ -73,6 +76,19 @@ internal static class CriterionCodes
         {
             '=' => Of(count > 0),
             '!' => Of(count is 0),
+            _ => CriterionAnswer.Unknown,
+        };
+    }
+
+    private static CriterionAnswer InState(IReadOnlyCollection<int>? states, char comparison, IReadOnlyList<string> arguments)
+    {
+        if (states is null || arguments.Count is not 1 || !TryParse(arguments[0], out var state))
+            return CriterionAnswer.Unknown;
+
+        return comparison switch
+        {
+            '=' => Of(states.Contains((int)state)),
+            '!' => Of(!states.Contains((int)state)),
             _ => CriterionAnswer.Unknown,
         };
     }

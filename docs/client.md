@@ -409,11 +409,14 @@ grade, 4,821 of 4,825 a monster the client holds; an effect casting a spell (116
 grade; setting, removing and disabling a state (950 to 952) the state. Masks, criteria and these effects name a state
 67,396 times, 94 lacking.
 
-**Zones.** A shape, a character the client's code names (`SpellZoneShape`, 29 shapes), 26 on effects: `P` 86,233, `C`
+**Zones.** A shape, a character the client's code names (`SpellZoneShape`, 29 shapes), 26 on effects, its cells covered
+as `SpellZones` reads them (D187); the client's code names a class for 14 of them, its methods obfuscated: `P` 86,233, `C`
 13,386, `a` 6,975, `X` 5,936, `;` 3,955, the others fewer. `param1` is the size and `param2` the least size, as the
 code's getters read them. Damage decreases 10% a step on 123,695 zones, over 4 steps at most on 124,027; the zone stops
 at a target on 274, is forced in a direction on 236, takes in the carried on 86,548, keeps to the line of sight on 268.
-12,717 effects' zones list cells, up to 161, 19,823 in all in the pack.
+12,717 effects' zones list cells, up to 161, 19,823 in all in the pack: a custom zone's, 3,955, cells of a map by their
+ids, 1 to 559; a whole map's, 8,758, one number, 1. `LineFromCaster` sets `param1` to 0 to 5 and `param2` to 0 to 63,
+1 and 63 on 160 of its 322: the first and the count of its cells from the caster, the other way round.
 
 **Effects.** 884, ids 0 to 4,076: a characteristic on 213, changed by `+`, `-` or `/` on 383; categories 0 to 9; an
 element on 118; boost on 251, active on 172, used in fights on 31; an opposite on 146, every one held; a description on
@@ -1454,6 +1457,36 @@ resources' protectors', which name the character the attacker too. By structure,
   grades 1 to 6; the 54 monster fighters, of 17 monsters, a grade of their monster at its level, with its life, AP and
   MP; the 6 summons a grade of theirs; 14 of the 16 groups of loot a monster of the pack, the other 2 monster 0, one
   object each that no monster dropped.
+
+### The game, cast
+
+Measured on 2026-10-30 for session 9c (D185 to D190): the 11 fights of the 40 game connections, replayed through the bot's
+fight state and the pack of format 5, each cast and walk checked against `D3B.Engine`'s rules, with a measuring tool never
+committed that prints counts.
+
+- **Casts chosen and cast by effects.** Of the 344 casts, 79 are the first cast of a sequence of a spell (0) the caster
+  authored: the casts the fighters chose, 50 the character's and 29 monsters' and summons'. The other 265 are cast by effects: at the fight's start, in its sequence (8); at a turn's start, in what it
+  triggers (3); or after the first within a cast's sequence, as a passive answers it, such as the character's spells
+  cast on itself whose AP it never pays. One weapon's blow is a sequence of its own (1).
+- **The rules** accept the 79: each within its level's range, one only once the caster's range bonus, characteristic 19,
+  boosts it; the 13 of a level cast in line in line; the 53 testing the line of sight, 40 with cells between, unblocked by
+  the cells' data or a fighter, 2 of them past a corner beside a cell that blocks; every cell cast on walkable in a fight;
+  9 needing a free cell on a free one, 5 a taken one on a fighter; the AP each costs at most what the caster had; 65
+  limited a turn and 39 a target, 12 with an interval, one cast again after it, one with an initial cooldown, all within;
+  5 with a criterion on states met, one, a turret's `HS=135`, by the state the server gave it just before.
+- **Zones and masks.** The six shapes the chosen casts' effects use, point, circle, line, cross, square and whole map: the
+  63 times a chosen cast took life from a fighter, the fighter lay in the zone of one of its effects whose mask selects
+  it, and the 62 fighters an effect damaging at once foresaw all lost life. A heal may go to the caster, a steal's, and spell 24576
+  teleports its caster to the cell cast on: what an effect does to whom is 9d's.
+- **Walks.** The 32 walks of the fighters, each a list of every cell: every step to a cell at a distance of 1, walkable in
+  a fight and free, the server taking one MP a step, the walk within the walker's MP. One left an enemy, its walker's dodge,
+  characteristic 78, 40 against the character's lock, 79, at 0: it lost nothing, as the tackle's formula says.
+- **States and cooldowns.** Two events the readable protocol lacks carry them, as BillBot's mapping names them:
+  `FightEffectsEvent`, 24 in the turret's fight, a buff on a fighter, its action, 950 for a state set, its source, and in
+  the buff the state, its target, its spell and its triggers; `RefreshCooldownEvent`, 28, a fighter and, per spell, its
+  cooldown in turns. Read raw by the measuring tool, never written down; 9d names them.
+- **No refusal.** The client never sends a cast or a walk its own rules refuse: no capture holds the server refusing one,
+  so what D3B refuses is measured only where the server accepted (Q16).
 
 The 40 game connections decoded through mapping 9: of 29,428 frames, 8,134 understood whole, 5,219 more read, and 16,075
 carrying one of 187 messages the readable protocol lacks; none misread. The mapping pairs 192 messages, 88 by pin, 11 by

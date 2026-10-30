@@ -4458,6 +4458,126 @@ Read for ideas, never copied (D3): every formula and id of Dofus 2 is measured o
 - `fight_actions.proto` says the cast's `level_id` is its level, no longer likely.
 - **The map page** names a monster fighter by its monster's name in the app's language, its id when the pack lacks it.
 
+## D185: 9c's rules in `D3B.Engine`, pure, measured on every cast and walk captured
+
+*2026-10-30, step 9, session 9c, as D177 planned it. Builds D13, D68, D181.*
+
+- **Asked** by the owner: the rules of a cast in `D3B.Engine`, from the pack of format 5, each measured on Dofus 3 (Q5),
+  what cannot be measured said; then D3B accepting the 344 casts the server made. The release of `data-5.pack` (D182)
+  was put to the owner first, who said not yet.
+- **Pure.** The rules read a fight as `Combatant`s, the engine's view of a fighter (its team, cell, AP, MP, range, lock,
+  dodge, life, summons, breed or monster and its properties, summoner, states), a `FightMap` built once per map, and a
+  fighter's `CastHistory`; they change nothing, keep nothing, and are built once per pack (`CastRules`, `FightMoves`).
+  The bot's fight state (D179) does not feed them yet: 9e's AI does, once 9d gives it the states and cooldowns.
+- **Measured** on the 11 fights of the 40 game connections, replayed through the bot's `FightEvents` and the pack, with a
+  measuring tool never committed, printing counts only ([client.md](client.md#the-game-cast)). The 344 casts are 79 the
+  fighters chose, each the first cast of a sequence of a spell of their own, and 265 that effects cast, at a fight's or
+  a turn's start or within another cast, which no rule of a cast checks; one weapon's blow is not a spell's. The 79 pass
+  every rule; so do the 32 walks.
+- **States and cooldowns** come from two events the readable protocol lacks, `FightEffectsEvent` and
+  `RefreshCooldownEvent` as BillBot's mapping names them: the first gives a fighter a state as action 950, which a
+  turret's criterion `HS=135` needed. The measuring tool read them raw; 9d names them, with the buffs they carry, mapping
+  format 10, and the fight's state keeps them.
+- **Rejected.**
+  - Reading the client's code for the rules: it is obfuscated, its zones' classes named but their methods not, and no
+    decompiler of native code is installed on this machine; the 11 fights decide what they cast, and the rest stays the
+    references' idea, said so.
+  - Naming the states' and cooldowns' messages in this session: their buffs are 9d's, and the raw read sufficed to measure.
+  - The rules on the bot's `Fighter`: the engine stays below the bot (D13), and an AI's search builds fighters it imagines.
+
+## D186: Range and line of sight
+
+*2026-10-30, step 9, session 9c.*
+
+- **Range** (`SpellRange`): on the map's coordinates, between the level's least and most, the most boosted by the caster's
+  range, characteristic 19, when the level says so, never below the least nor 0; a diamond, or the caster's row and
+  column in line, or its diagonals in diagonal steps, counted as the distance when proportional. Measured: the 79 casts lie
+  within, one only once boosted, the 13 cast in line in line. No capture casts in diagonal.
+- **Line of sight** (`LineOfSight`): the cells the line between the two cells' centres enters, on the coordinates, counted
+  in integers so that a line and its reverse agree; through a corner it enters the cell across, and only touches the two
+  beside, which do not block. A cell between blocks when its data lets no sight through or a fighter stands on it; the
+  ends never do, nor a point beyond the map. Measured: 53 casts test it, 40 with cells between, none blocked; 2 pass a
+  corner beside a cell that blocks, which the server let through.
+- **The cell cast on** must be walkable in a fight, `mov` and not `nonWalkableDuringFight` (`FightMap`): every cell cast
+  on and walked through in the captures is.
+- **Benchmark**: on a captured fight's map, every cell a level may be cast on in 6.3 µs, a line of sight across the map
+  in 30 ns.
+- **Rejected.**
+  - The Dofus 2 client's sweep, which keeps a cell's answer from a farther line and so depends on the order the cells are
+    tried: one cell, one line, the same both ways. Whether the server agrees where they differ is Q16's.
+
+## D187: Zones and target masks
+
+*2026-10-30, step 9, session 9c.*
+
+- **Zones** (`SpellZones`): the 26 shapes the effects use, the pack's sizes as the client's getters read them, centred on
+  the cell cast on, directed from the caster: along the axis it lies farthest on, or a diagonal when exactly on one,
+  unless the zone forces a direction of the map. `LineFromCaster` starts at the caster, from `param1` on for `param2`
+  cells, its two numbers read the other way, as its 1 and 63 say; it stops at the first fighter when the zone stops at
+  its target. A zone keeping to the line of sight keeps what its centre sees; a custom zone lists cells of the map.
+  Measured on the six shapes cast, point, circle, line, cross, square and whole map: the 63 fighters damaged lie in the
+  zone of an effect whose mask selects them, and the 62 an effect damaging at once foresaw were all damaged. The others
+  are the references' idea and the client's names; boomerang, checkerboard, the complex circle, the diagonal lines and
+  the rectangle least certain.
+- **Masks** (`TargetMask`): parsed once, answered on three values as criteria are (D71): kinds include, uppercase enemies
+  and lowercase allies, the caster by `a`, `c` or `C`; conditions must all hold, a monster, a breed or the caster's kinds
+  among several being alternatives. What the fight's state does not tell, a fighter carried, a portal, a teleport, the
+  triggering target, and the tokens Dofus 3 added (`Atq`, `Def`, `Sce`, `PB`, `PR`, `AP`, `MP`, `u`, `x`), is unknown.
+- **The criterion on states**, `HS=` and `HS!` joined by `&`, `|` and parentheses, the only code of the levels' 2,409
+  criteria, is answered by `Criterion` (D71) on a fighter's states, `CriterionFacts.States`.
+- **Heals and teleports** a cast caused are not checked against its zone: a steal heals its caster, and 24576 teleports
+  its; what each effect does is 9d's.
+
+## D188: A cast's conditions, costs and cooldowns
+
+*2026-10-30, step 9, session 9c.*
+
+- **The checks**, in order (`CastRules.Check`, `CastRefusal`): the caster lives on a cell; no state of its prevents
+  casting; it has the AP; the level's states criterion holds; its first cast waits `InitialCooldown` rounds;
+  `MinCastInterval` rounds pass between two casts; no more than `MaxCastPerTurn` a turn; a level summoning, by effect 181
+  or 1011, leaves a summon's slot, characteristic 26, unless its spell bypasses the limit; the cell is walkable, free or
+  taken as asked, its fighter seen when asked, cast on no more than `MaxCastPerTarget` this turn; then the range and the
+  line of sight. `CastRules.Targets` gives the cells allowed, `CastRules.Reached` the fighters each effect reaches.
+- **History** (`CastHistory`): each spell's last round, and this turn's casts and casts on each target, a new round
+  starting the turn's counts again; only the casts a fighter chose count.
+- **Measured**: of the 79 casts, 65 are limited a turn, 39 a target, 12 have an interval, one cast again after it, one an
+  initial cooldown, 9 need a free cell, 5 a taken one, 5 a states criterion, one met by the state the server gave.
+- **Not checked, as not measured**: the levels' global cooldowns and casts shared by a team; traps and portals on the
+  cell, which the fight's state does not hold yet; the character's least level, which the server's own list of its
+  spells answers (D179).
+
+## D189: Walking in a fight, and tackle
+
+*2026-10-30, step 9, session 9c.*
+
+- **Measured** on the 32 walks: each step leads to one of the four cells at a distance of 1, walkable in a fight, no
+  fighter on it, one MP a step, the walk no longer than the MP the walker had (`FightMoves.Steps`, `Reachable`).
+- **Tackle** (`FightMoves.KeptLeaving`, `Lost`): leaving a cell beside enemies that tackle, a fighter keeps the product
+  over them of `(dodge + 2) / (2 (lock + 2))`, each at most 1, of its MP and AP, and loses the rest, rounded to the
+  nearest, half away from zero; an enemy tackles when it lives, is seen, has no state preventing it and, a monster, its
+  monster tackles. Dodge is characteristic 78 and lock 79. The one walk captured that left an enemy kept everything,
+  dodge 40 against lock 0, as the formula says; a loss was never captured.
+- `Reachable` keeps, for each cell, the path leaving the most MP, then AP, a tackle never taking more from more points.
+- **Benchmark**: the cells a fighter with 6 MP walks to among four enemies in 1.2 µs.
+
+## D190: The casts the server refuses, captures to make
+
+*2026-10-30, step 9, session 9c. Opens Q16.*
+
+The captures hold no refusal: the client never sends a cast its own rules refuse, nor a walk. What D3B refuses, the
+server may accept: D3B's rules are as strict as measured, not proven exact. To measure the refusals, D3B would send what
+the client does not, as it sends its requests between the client's (D61), in a fight the owner plays against a weak
+group, each request answered by the server's refusal or its cast:
+
+- a cast just out of range, then just in range with the range bonus, then in diagonal for a level cast in diagonal;
+- a cast through a fighter and through an obstacle, and past corners beside each;
+- a cast on a free cell for a level needing a taken one, and the reverse;
+- a cast beyond the casts a turn and a target, and before its interval;
+- a walk away from a monster that tackles, its MP and AP lost noted, and a walk through a fighter.
+
+It needs a measuring mode that sends a request the owner chose, which 9e's sending of casts makes, or a small tool before
+it; the owner decides when (Q16).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -4470,3 +4590,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
 | Q15 | When D3B needs a monster's characteristics at a level its grades lack, before the server gives them, such as to choose which group to attack, does it run the client's Lua formulas, or write them in C#, checked against the client's (D182)? | The session that needs it, 9e or 9g at the latest |
+| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner, a diagonal range, the zones no capture cast, a tackle's loss and its rounding (D190)? | Captures the owner makes, D3B sending what the client does not, before or with 9e |

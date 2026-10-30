@@ -44,7 +44,9 @@ maps, and profiles given (step 6, session 6e); the app published by CI with Velo
 schema and mapping, and updating itself from the repository's releases, the host downloading nothing (step 6, session
 6f); the fight's protocol measured and mapped, the fight's state in the bot's, and the fight on the app's map (step 9,
 session 9a); the fight's data in the pack, format 5, its flags read in the client's code, and the monsters named on the
-map (step 9, session 9b). Everything else below is the target.
+map (step 9, session 9b); the rules of a cast in `D3B.Engine`, its range, line of sight, zones, target masks, conditions,
+costs and cooldowns, and walking in a fight with its tackle, checked on every cast and walk captured (step 9, session 9c).
+Everything else below is the target.
 
 ## Overview
 
@@ -600,7 +602,23 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   zaap of every map it knows one on whose cost it carries (`TeleportCost`), one change like the others (D83). It gives
   the cells each map is left from (`ExitCells`), a door's around its element. Built once per pack and shared; a search
   keeps its state in its own arrays, and takes under 0.7 ms (`benchmarks/D3B.Engine.Benchmarks`).
-- Later: line of sight and the fight simulator at step 9, using an element not depending on line of sight (D75).
+- The rules of a fight, in `D3B.Engine.Fights` (9c, D185 to D190), pure, on the pack's catalogs (D182):
+  - `Combatant`, a fighter as the rules see it: team, cell, AP, MP, range, lock, dodge, life, summons, breed or monster
+    and its properties, summoner, states. `CellSet`, a set of a map's cells as 560 bits, which the rules pass around
+    without allocating. `FightMap`, a map's cells walkable in a fight and letting sight through, built once per map.
+  - `SpellRange`: the cells a level reaches from its caster's, a diamond, a line or diagonals, its most boosted by the
+    caster's range. `LineOfSight`: the cells between two cells, a corner touching only, none blocking by its data or a
+    fighter, the same both ways.
+  - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster.
+    `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter.
+  - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
+    in the order the checks run, from its `CastHistory`; the cells it may cast on; the fighters each effect reaches.
+    The level's criterion on states is a `Criterion` answering `HS` on `CriterionFacts.States`.
+  - `FightMoves`, built once per pack: the four cells a fighter steps to, the share of its MP and AP a tackle leaves it,
+    and the cells it walks to with what it keeps there.
+  - Benchmarked on a captured fight's map: every cell a level may be cast on in 6.3 µs, a line of sight in 30 ns, an
+    effect's reach in 1.5 µs, the cells a walk reaches in 1.2 µs.
+- Later: the fight simulator at step 9, using an element not depending on line of sight (D75).
 
 ## Fights
 
@@ -608,8 +626,9 @@ Step 9, in seven sessions, each layer measured before the next (D177). Built in 
 and pinned in `actors.proto`, `fights.proto` and `fight_actions.proto` (D178); the fight's state in the bot's (D179, in
 [Bot run time](#bot-run-time)); the fight on the app's map (D180). Built in session 9b: the fight's data in the pack,
 format 5 (D182, in [Game data](#game-data)), its flags read in the client's code (D183), the cast's level and the
-monsters checked on the captures, and the monsters named on the map (D184). The references' ideas for each session are
-D181.
+monsters checked on the captures, and the monsters named on the map (D184). Built in session 9c: the rules of a cast and
+of a walk in `D3B.Engine` (D185 to D189, in [Engine](#engine)), checked on every cast and walk captured, and the casts the
+server refuses left to captures to make (D190, Q16). The references' ideas for each session are D181.
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -617,8 +636,9 @@ D181.
   AP and MP spent, life lost and healed, teleports, swaps, summons and deaths; it asks the client whether it is ready for
   the next turn. It ends with each fighter's outcome, experience and loot. The bot acts through the cast's, the walk's,
   the placement's, the readiness' and the turn's end's requests; the client sends the rest by itself.
-- Next, in `D3B.Engine`, from the pack's catalogs: the rules of a cast, line of sight, zones, masks and conditions (9c);
-  the effects' engine, Bubble's formulas measured one by one against the server's answers (9d).
+- In `D3B.Engine`, from the pack's catalogs: the rules of a cast, line of sight, zones, masks and conditions, and walking
+  with its tackle (9c, built); next, the effects' engine, Bubble's formulas measured one by one against the server's
+  answers, and the states and cooldowns the server gives, named (9d).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e). The simulator applies spell effects read
   from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
@@ -630,7 +650,8 @@ D181.
 - The fight's state is tested on fights built as the captures measured them: placement, turns, every action taken, a
   summon, the end, and what the server says of a fighter it never showed (D179).
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and
-  world paths (D68, D71), and later line of sight.
+  world paths (D68, D71) and lines of sight, the same both ways and nearing their end at each cell. A fight's rules are
+  tested on maps and fighters the tests build around a map's middle, with a catalog of six spells, each refusal named.
 - Recorded sessions replay through an in-memory `Pipe` (`CaptureReplay`, D37); tests build the sessions they replay.
   Decoded frames are compared with the messages a test built (D49); bot states with snapshots the test holds, serialized
   as indented JSON (D70).
