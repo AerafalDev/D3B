@@ -73,7 +73,7 @@ public sealed class FightActivityTests : IAsyncDisposable
     [Fact]
     public void AGroupHoldingAMonsterOfAFamilyChosenIsAttackedAsOneHoldingAMonsterChosen()
     {
-        // The bouftou is of family 1, the larva of family 2, through their races.
+        // The bouftou is of family 10, the larva of family 20: their races, which super races 1 and 2 group.
         var monsters = new MonsterCatalog(
             new Monster[] { new() { Id = Bouftou, Race = 10, FirstGrade = 0, GradeCount = 1 }, new() { Id = Larva, Race = 20, FirstGrade = 1, GradeCount = 1 } },
             new MonsterGrade[] { new() { Grade = 1, Level = 10 }, new() { Grade = 1, Level = 10 } },
@@ -82,9 +82,9 @@ public sealed class FightActivityTests : IAsyncDisposable
             Array.Empty<MonsterRatio>(),
             new[] { new MonsterRace(10, 1, 0), new MonsterRace(20, 2, 0) },
             new[] { new MonsterRace(1, MonsterRace.NoSuperRace, 0), new MonsterRace(2, MonsterRace.NoSuperRace, 0) });
-        var family = new FightSettings { Mode = FightMode.Chosen, Families = [2] };
+        var family = new FightSettings { Mode = FightMode.Chosen, Families = [20] };
 
-        Assert.Equal(2, ChosenMonsters.FamilyOf(monsters, Larva));
+        Assert.Equal(20, ChosenMonsters.FamilyOf(monsters, Larva));
         Assert.Null(ChosenMonsters.FamilyOf(monsters, 7));
         Assert.True(ChosenMonsters.Any(family));
         Assert.False(ChosenMonsters.Any(new FightSettings { Mode = FightMode.Chosen }));

@@ -69,20 +69,23 @@ public sealed class GameReferencesTests
     [Fact]
     public void TheFamiliesOfferedAreThoseAHunterMeetsAMonsterOf()
     {
-        // Tofus are of family 1, larvae of family 2; family 3's monsters live nowhere.
+        // Tofus are of family 10, larvae of family 20, of super races 1 and 2; family 30's monsters live nowhere.
         var monsters = new MonsterCatalog(
             new Monster[] { new() { Id = TestReferences.Tofu, Race = 10, FirstGrade = 0, GradeCount = 1 }, new() { Id = TestReferences.Larva, Race = 20, FirstGrade = 1, GradeCount = 1 } },
             new MonsterGrade[] { new() { Grade = 1, Level = 5 }, new() { Grade = 1, Level = 10 } },
             Array.Empty<MonsterSpell>(),
             Array.Empty<byte>(),
             Array.Empty<MonsterRatio>(),
-            new[] { new MonsterRace(10, 1, 0), new MonsterRace(20, 2, 0) },
-            new[] { new MonsterRace(1, MonsterRace.NoSuperRace, 101), new MonsterRace(2, MonsterRace.NoSuperRace, 102), new MonsterRace(3, MonsterRace.NoSuperRace, 103) });
+            new[] { new MonsterRace(10, 1, 110), new MonsterRace(20, 2, 120), new MonsterRace(30, 2, 130) },
+            new[] { new MonsterRace(1, MonsterRace.NoSuperRace, 101), new MonsterRace(2, MonsterRace.NoSuperRace, 102) });
         var game = new GameReferences(TestReferences.Atlas(), TestReferences.Jobs(), TestReferences.Items(), monsters: monsters);
 
-        Assert.Equal([new(1, 101, null), new GameReference(2, 102, null)], game.Options(SettingKind.MonsterFamily));
-        Assert.True(game.Exists(SettingKind.MonsterFamily, 2));
-        Assert.False(game.Exists(SettingKind.MonsterFamily, 3));
+        Assert.Equal([new(10, 110, null), new GameReference(20, 120, null)], game.Options(SettingKind.MonsterFamily));
+        Assert.True(game.Exists(SettingKind.MonsterFamily, 20));
+        Assert.False(game.Exists(SettingKind.MonsterFamily, 30));
+        Assert.Equal([TestReferences.Larva], game.MonstersOfFamily(20));
+        Assert.True(game.TryGetSuperRaceOfFamily(20, out var superRace));
+        Assert.Equal(2, superRace);
         Assert.Equal([TestReferences.Larva], game.Options(SettingKind.Monster, 2).Select(monster => monster.Id));
     }
 

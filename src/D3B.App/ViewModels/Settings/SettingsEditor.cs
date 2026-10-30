@@ -6,6 +6,7 @@ using D3B.App.Localization;
 using D3B.Bot.Activities;
 using D3B.Bot.Settings;
 using D3B.Data;
+using D3B.Data.Monsters;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
@@ -421,10 +422,11 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     private string? DetailOf(SettingKind kind, GameReference reference)
     {
-        // A resource of any profession says whose it is, its level beside.
+        // A resource of any profession says whose it is, its level beside; a family of monsters where they come from.
         return kind switch
         {
             SettingKind.Resource => SourceOf(reference.Id) ?? Names.Detail(reference),
+            SettingKind.MonsterFamily when Game is not null && Game.TryGetSuperRaceOfFamily(reference.Id, out var superRace) && superRace is not MonsterRace.NoSuperRace => GroupOption(SettingKind.Monster, superRace).Name,
             _ => Names.Detail(reference),
         };
     }

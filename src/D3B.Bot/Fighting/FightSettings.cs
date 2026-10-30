@@ -10,7 +10,7 @@ public sealed class FightSettings
     /// <summary>Gets or sets the monsters a group is attacked for, by id, when they are chosen.</summary>
     public IReadOnlyList<int> Monsters { get; set; } = [];
 
-    /// <summary>Gets or sets the families a group is attacked for a monster of, by their super race's id, when they are chosen (D247).</summary>
+    /// <summary>Gets or sets the families a group is attacked for a monster of, by their race's id, when they are chosen (D247).</summary>
     public IReadOnlyList<int> Families { get; set; } = [];
 
     /// <summary>Gets or sets the monsters a group is never attacked with, by id.</summary>

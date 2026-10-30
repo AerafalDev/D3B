@@ -37,6 +37,6 @@ public enum SettingKind
     /// <summary>A monster of the game, by its id, which may be sought within a super race (D236).</summary>
     Monster,
 
-    /// <summary>A family of monsters, a super race as the bestiary groups them, by its id (D247).</summary>
+    /// <summary>A family of monsters, a race as the bestiary names them, such as the bouftous, by its id; its super race groups it (D247).</summary>
     MonsterFamily,
 }

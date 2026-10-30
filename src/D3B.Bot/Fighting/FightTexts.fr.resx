@@ -327,6 +327,6 @@
     <value>Familles à combattre</value>
   </data>
   <data name="FamiliesHelp" xml:space="preserve">
-    <value>Un groupe est attaqué s'il contient un monstre de l'une d'elles, comme s'il contient un monstre choisi.</value>
+    <value>Comme les bouftous : un groupe est attaqué s'il contient un monstre de l'une d'elles, comme s'il contient un monstre choisi.</value>
   </data>
 </root>

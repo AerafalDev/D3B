@@ -327,6 +327,6 @@
     <value>Families to fight</value>
   </data>
   <data name="FamiliesHelp" xml:space="preserve">
-    <value>A group is attacked when it holds a monster of one of them, as one holding a monster chosen.</value>
+    <value>Such as the bouftous: a group is attacked when it holds a monster of one of them, as one holding a monster chosen.</value>
   </data>
 </root>

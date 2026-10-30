@@ -87,7 +87,7 @@ public sealed class FightingModule : IModule
         if (settings.Mode is not FightMode.Chosen)
             return [];
 
-        return [.. settings.Monsters.Concat(settings.Families.SelectMany(family => game.Options(SettingKind.Monster, family).Select(monster => monster.Id))).Distinct()];
+        return [.. settings.Monsters.Concat(settings.Families.SelectMany(game.MonstersOfFamily)).Distinct()];
     }
 
     /// <inheritdoc/>

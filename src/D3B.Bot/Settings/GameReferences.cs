@@ -39,6 +39,8 @@ public sealed class GameReferences
     private readonly Lazy<Dictionary<long, int>> _subAreaOf;
     private readonly Lazy<IReadOnlyList<GameReference>> _superRaces;
     private readonly Lazy<IReadOnlyList<GameReference>> _families;
+    private readonly Lazy<Dictionary<int, int>> _familyOfMonster;
+    private readonly Lazy<Dictionary<int, int>> _superRaceOfFamily;
     private readonly Lazy<Dictionary<int, int>> _superRaceOfMonster;
     private readonly Lazy<IReadOnlyList<GameReference>> _monsters;
 
@@ -95,8 +97,15 @@ public sealed class GameReferences
         _superRaceOfMonster = new Lazy<Dictionary<int, int>>(() => SuperRacesOfMonsters(monsters, atlas));
         _monsters = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. _superRaceOfMonster.Value.Keys.Order().Select(id => MonsterOf(monsters, id))]);
 
-        // A family a hunter meets a monster of: some super races are a quest's, an event's or a dungeon's boss alone (D247).
-        _families = new Lazy<IReadOnlyList<GameReference>>(() => [.. _superRaces.Value.Where(race => _superRaceOfMonster.Value.ContainsValue(race.Id))]);
+        // A family, a race, a hunter meets a monster of: 208 of the client's 265, measured on 3.7.12.12 (D247).
+        _familyOfMonster = new Lazy<Dictionary<int, int>>(() => monsters is null ? [] : _superRaceOfMonster.Value.Keys.ToDictionary(id => id, id => monsters.TryGetMonster(id, out var monster) ? (int)monster.Race : 0));
+        _superRaceOfFamily = new Lazy<Dictionary<int, int>>(() => monsters is null ? [] : monsters.Races.ToArray().ToDictionary(race => race.Id, race => race.SuperRaceId));
+        _families = new Lazy<IReadOnlyList<GameReference>>(() =>
+        {
+            var met = _familyOfMonster.Value.Values.ToHashSet();
+
+            return monsters is null ? [] : [.. monsters.Races.ToArray().Where(race => met.Contains(race.Id)).Select(race => new GameReference(race.Id, race.NameId, null))];
+        });
 
         // Base's own resources have no profession, so no level (D150).
         _resources = new Lazy<IReadOnlyList<GameReference>>(() => [.. _resourcesByJob.Value
@@ -229,6 +238,23 @@ public sealed class GameReferences
     public bool TryGetSource(int resource, out ResourceSource source)
     {
         return _sources.Value.TryGetValue(resource, out source);
+    }
+
+    /// <summary>Gets the monsters of a family a hunter meets (D247).</summary>
+    /// <param name="family">The family, a race.</param>
+    /// <returns>Its monsters, by id.</returns>
+    public IReadOnlyList<int> MonstersOfFamily(int family)
+    {
+        return [.. _familyOfMonster.Value.Where(pair => pair.Value == family).Select(pair => pair.Key).Order()];
+    }
+
+    /// <summary>Finds the super race a family belongs to, which names where its monsters come from (D247).</summary>
+    /// <param name="family">The family, a race.</param>
+    /// <param name="superRace">Its super race.</param>
+    /// <returns>Whether the family is one of the game's.</returns>
+    public bool TryGetSuperRaceOfFamily(int family, out int superRace)
+    {
+        return _superRaceOfFamily.Value.TryGetValue(family, out superRace);
     }
 
     /// <summary>Finds a monster's super race (D236).</summary>

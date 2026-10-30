@@ -5794,10 +5794,13 @@ showed no icon, and a family of monsters should be chosen as a monster is. Build
   287; a drop's icon the client lacks is counted and left out, as a monster's picture is. The pack weighs 19.4 MB against
   11.7, extracted in 36 s, two extractions alike; its format stays 7, its structure unchanged and no release holding it yet, an older pack
   drawing the loot without its icons. The drops themselves stay out (D236).
-- **Families**: a family is a monster's super race, as the bestiary groups them. The fighting activity's "Families to
-  fight", beside its monsters, attacks a group holding a monster of one of them (`ChosenMonsters`,
-  `SettingKind.MonsterFamily`); the families offered are those a hunter meets a monster of. The place chosen, the preview
-  and the sub-areas suggested count their monsters with those chosen.
+- **Families**: a family is a monster's race, as a player names them, the bouftous or the animalades; its super race, the
+  picker's filter, groups races by where they live. The fighting activity's "Families to fight", beside its monsters,
+  attacks a group holding a monster of one of them (`ChosenMonsters`, `SettingKind.MonsterFamily`); each is offered with
+  its super race beside it. Measured on 3.7.12.12: 265 races, 208 a hunter meets a monster of, which are offered, in 35
+  super races; the animalades a race of 4 monsters. The place chosen, the preview and the sub-areas suggested count their
+  monsters with those chosen. The super races, first offered as the families, were not what the owner meant: a family
+  the owner sought, the animalades, was a race.
 - **And**: one fight won is said in the singular on the card.
 - **Rejected.**
   - The loot's icons at 32 pixels in a table of their own: some 5 MB less for a structure of its own, a format 8, and a
