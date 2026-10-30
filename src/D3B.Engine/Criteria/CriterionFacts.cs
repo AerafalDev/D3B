@@ -1,6 +1,6 @@
 namespace D3B.Engine.Criteria;
 
-/// <summary>What a bot knows that a criterion may ask: the character's level, objects, professions and subscription, and where it acts from.</summary>
+/// <summary>What a bot knows that a criterion may ask: the character's level, objects, professions and subscription, where it acts from, and a fighter's states.</summary>
 /// <remarks>
 /// A fact left <see langword="null"/> is not known, and a condition asking it answers <see cref="CriterionAnswer.Unknown"/>,
 /// but for <see cref="Cell"/>, which a bot chooses: see there.
@@ -34,4 +34,7 @@ public sealed record CriterionFacts
     /// counts as met, and the cell is chosen on the map among those where the whole criterion is (client.md).
     /// </remarks>
     public int? Cell { get; init; }
+
+    /// <summary>Gets the states a fighter is in, which a spell level's criterion asks of its caster (<c>HS</c>).</summary>
+    public IReadOnlyCollection<int>? States { get; init; }
 }

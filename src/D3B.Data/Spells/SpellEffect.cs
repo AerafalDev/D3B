@@ -7,7 +7,7 @@ namespace D3B.Data.Spells;
 /// <para>
 /// The effect itself is <see cref="EffectId"/>, an effect of <see cref="Effects.EffectCatalog"/>: the client calls it the
 /// action, and the server announces what happens in a fight by the same id (D178). Its target mask and triggers are text,
-/// held once in <see cref="SpellCatalog.Strings"/>, as they come: 9c and 9d read them.
+/// held once in <see cref="SpellCatalog.Strings"/>, as they come: <c>D3B.Engine</c> parses the masks (D187), and 9d the triggers.
 /// </para>
 /// <para>
 /// The dice are also ids, as the effect says: a monster and its grade for a summon, a spell and its grade for an effect

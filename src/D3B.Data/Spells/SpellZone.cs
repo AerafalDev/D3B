@@ -4,9 +4,10 @@ namespace D3B.Data.Spells;
 
 /// <summary>The cells an effect reaches around the cell a spell is cast on, from the client's <c>SpellZoneDescr</c>.</summary>
 /// <remarks>
-/// Dofus 2 wrote a zone as text; Dofus 3 holds its parts as numbers, kept as they are. Which cells a shape covers, and
-/// how damage decreases away from its centre, is 9c's to measure. Unmanaged and packed: its cells, listed for
-/// <see cref="SpellZoneShape.Custom"/> zones and a few others, are a slice of <see cref="SpellCatalog.ZoneCells"/>.
+/// Dofus 2 wrote a zone as text; Dofus 3 holds its parts as numbers, kept as they are. Which cells a shape covers is
+/// <c>D3B.Engine</c>'s <c>SpellZones</c> (D187), and how damage decreases away from its centre 9d's. Unmanaged and packed:
+/// its cells, listed for <see cref="SpellZoneShape.Custom"/> zones and the whole map's, are a slice of
+/// <see cref="SpellCatalog.ZoneCells"/>.
 /// </remarks>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly struct SpellZone
