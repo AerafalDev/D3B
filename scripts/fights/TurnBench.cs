@@ -4,6 +4,7 @@ using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Data;
 using D3B.Data.Maps;
+using D3B.Data.Spells;
 using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
@@ -237,6 +238,74 @@ internal sealed class TurnBench
             : "other";
     }
 
+    private static EffectElement BestElement(Combatant caster)
+    {
+        // The element its characteristics raise most: strength earth's, intelligence fire's, chance water's, agility air's.
+        (EffectElement Element, int Characteristic)[] elements =
+        [
+            (EffectElement.Earth, FightCharacteristic.Strength),
+            (EffectElement.Fire, FightCharacteristic.Intelligence),
+            (EffectElement.Water, FightCharacteristic.Chance),
+            (EffectElement.Air, FightCharacteristic.Agility),
+        ];
+
+        return elements.MaxBy(pair => caster.Characteristic(pair.Characteristic)).Element;
+    }
+
+    private EffectElement? ElementOf(in SpellLevel level, Combatant caster)
+    {
+        foreach (var effect in _tables.Spells.EffectsOf(level))
+        {
+            var action = _actions.Of(effect.EffectId);
+
+            if (action.Kind is EffectKind.Damage or EffectKind.Steal && (effect.Properties & SpellEffectProperties.ForClientOnly) is 0)
+            {
+                var element = EffectFormulas.Resolve(action.Element, caster);
+
+                return element is EffectElement.Neutral ? EffectElement.Earth : element;
+            }
+        }
+
+        return null;
+    }
+
+    private void Elements(Turn turn, IEnumerable<TacticAction> actions, string whose)
+    {
+        // Whether each blow is of the element the caster's characteristics raise most, and when not, whether the engine
+        // foresaw a blow of that element, from where the caster stood on the same cell, dealing more.
+        var fight = turn.Start;
+
+        foreach (var action in actions)
+        {
+            var actor = fight.Actor;
+
+            if (action.Kind is TacticActionKind.Cast && _tables.Spells.TryGetLevel(action.LevelId, out var chosen) && ElementOf(chosen, actor) is { } element)
+            {
+                var best = BestElement(actor);
+                var dealt = Dealt(fight, _tactics.Imagination.Cast(fight, chosen, action.Cell));
+                var outcome = "in the element its characteristics raise most";
+
+                if (element != best)
+                {
+                    var alternatives = turn.Knowledge.SpellsOf(actor.Id)
+                        .Where(level => level.Id != chosen.Id && ElementOf(level, actor) == best && actor.ActionPoints >= CastRules.Modified(level, actor).ApCost
+                            && _tactics.Rules.Check(fight.Map, fight.Fighters, actor, level, action.Cell, fight.History, fight.Round) is CastRefusal.None)
+                        .Select(level => Dealt(fight, _tactics.Imagination.Cast(fight, level, action.Cell)) / Math.Max(1, (int)CastRules.Modified(level, actor).ApCost))
+                        .ToList();
+                    var perPoint = dealt / Math.Max(1, (int)CastRules.Modified(chosen, actor).ApCost);
+
+                    outcome = alternatives.Count is 0 ? "in another, none of that element castable there"
+                        : alternatives.Max() > perPoint + 0.5 ? "in another, one of that element foreseen dealing more a point"
+                        : "in another, those of that element foreseen dealing no more a point";
+                }
+
+                Tally.Count($"blows {whose}: {outcome}");
+            }
+
+            fight = Act(fight, [action]);
+        }
+    }
+
     private ImaginedFight Act(ImaginedFight fight, IEnumerable<TacticAction> actions)
     {
         foreach (var action in actions)
@@ -293,6 +362,10 @@ internal sealed class TurnBench
             Tally.Count("turns: with a weapon's blow", turn.WeaponBlows);
 
         Compare(turn, judge, played, planned);
+        Elements(turn, turn.Played, "played");
+
+        if (turn.Planned is { } elementsPlanned)
+            Elements(turn, elementsPlanned.Actions, "planned");
 
         // What the judge reckons from where the turn really ended, against what came before the character's next turn.
         var ended = Imagined(state, turn.Points) is { } real ? real.Fight : played;

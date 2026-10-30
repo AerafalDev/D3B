@@ -142,7 +142,8 @@ map's elements, using them, doors and the drawing of the map; in session 4d (D79
 D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
 client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c
 (D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's
-resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D203), the bot fighting.
+resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D203), the bot fighting; in session 9e2
+(D213), the switch "The AI fights" kept for each character.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -264,7 +265,8 @@ resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D
   fight's state the spells the server's context lists for the fight, and the team's options; a turn puts the fight in its
   fighting phase, as a client that rejoins a fight gets no fight's start.
 - **The bot fights** (D198, D202), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for a fight not over
-  while the bot's switch is on (`BotActor.FightsAlone`, the host's `Fights:Alone`) or its activity fights its own
+  while the bot's switch is on (`BotActor.FightsAlone`, kept for its character by the storage, D213; the host's
+  `Fights:Alone`) or its activity fights its own
   (`BotActivity.FightsItsFights`), the bot connected and not paused, and runs `FightPlay` once the step the fight cut is over
   (`BotActor.RunInFightAsync`). `FightPlay`, one behavior: it waits until the server showed the character and its cells,
   judges the odds (`FightTactics.Odds`), prudent when it would lose, closes the fight and blocks spectators, places the
@@ -572,7 +574,8 @@ graphics in session 6b (D138); the resources' growing back and the runs in sessi
   why. Migrations are written by `dotnet-ef`, a local tool, through a design-time context.
 - **Accounts and characters** (`AccountBook`): recorded as the relay sees them (`AccountRecorder`, an observer of the game
   connections), the server's list and the character the client chooses, queued off the relay's loop; forgotten on
-  demand. Each character may play a profile, and start it on connection.
+  demand. Each character may play a profile, and start it on connection; and keeps the switch "The AI fights" as its
+  bot's card left it, which `RememberedFightSwitch` gives each bot made (D213).
 - **Profiles** (`ProfileBook`): a name, an activity and its settings as JSON, shared by characters. The activities' presets
   are stored once as profiles as the database opens, named in the system's language, `Presets` keeping which were, so that
   one deleted never comes back (`StorePresetsAsync`, D168). `ProfileStarter`
@@ -651,15 +654,23 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     the critical effects on a critical hit, nothing drawn. A mask naming the caster reaches it outside the zone.
   - Benchmarked on a captured fight's map: a cast foreseen in 0.69 µs, 0.66 µs into a list it reuses, its zones kept per
     thread (`ZoneCells`), 3.7 µs cold; 40 µs before 9e (D200). An effect for the client only is never foreseen (D203).
-- The fight's AI, in `D3B.Engine.Tactics` (9e, D201), pure:
-  - `ImaginedFight`, the fighters as the AI imagines them, and `FightKnowledge`, what it knows of their spells and points.
-  - `Imagination`: what a walk and a cast do to an imagined fight, each effect at the middle of its range.
+- The fight's AI, in `D3B.Engine.Tactics` (9e, D201; 9e2, D205 to D212), pure:
+  - `ImaginedFight`, the fighters as the AI imagines them and the buffs its casts gave (`ImaginedBuff`, their rounds),
+    and `FightKnowledge`, what it knows of their spells and points.
+  - `Imagination`: what a walk and a cast do to an imagined fight, each effect at the middle of its range, a critical
+    hit weighed by its chance (`EffectFormulas.CriticalChance`, D207), each lasting buff kept with its rounds (D209).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave, enemies' weighed by how
-    hard they hit, the enemies' threat by reach, the next turn's approach bounded by a kill; and once the enemies replied.
-  - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, its best sequences weighed against the
-    enemies' greedy reply; `Place`; `Odds`; `PathTo`. `TacticWeights`, `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
-  - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most; benchmarked, a turn
-    against four enemies in 1.6 ms.
+    hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
+    range and in sight (D208), bounded by a kill; the fighters read as the search left them, states that prevent casting
+    or damage and invulnerability included, a buff worth what it does over the rounds it lasts (D209); once the enemies
+    replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
+    the bench what it measures (D206).
+  - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, its best sequences weighed against
+    the enemies' greedy reply, then the character's next turn (`NextTurn`, D210); `Place`; `Odds`; `PathTo`.
+    `TacticWeights`, measured on 69 fights (D212), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
+  - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
+    of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
+    against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216).
 - Later: an element not depending on line of
   sight (D75).
 
@@ -678,7 +689,13 @@ session 9d: what the server announces of a fight named and pinned, mapping forma
 server's actions on every fight captured, `scripts/fights.cs` (D196). Built in session 9e: the owner's asks (D197) and
 choices (D198), the character's spells and the fight's own, mapping format 11 (D199, D203), `Foresee` for the search
 (D200), the AI (D201, in [Engine](#engine)), the bot fighting (D202, in [Bot run time](#bot-run-time)), measured on the
-fights the owner started (D203).
+fights the owner started (D203). Built in session 9e2: the owner's asks and choices (D205), the turns and the fights
+replayed (`scripts/fights.cs --turns` and `--live`, D206), a critical hit weighed (D207), line of sight in the threat
+(D208), buffs and states over the rounds they last (D209), the next turn searched (D210), the reply and the weights
+measured (D211, D212), the switch "The AI fights" kept for each character and the fight played end to end in the tests
+(D213), the owner's fights for D196 and Q16 measured (D214); the weapon's blow left to a session of its own (D215);
+measured on the fights the AI played, the options' numbers corrected so that it closes the fight before refusing
+spectators (D216).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -691,7 +708,8 @@ fights the owner started (D203).
   against the server's answers: damage, steals, heals, critical hits and the zone's decrease; pushes, shields, AP and MP
   removed and erosion left to captures (9d, built, D195, D196).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
-  of moves and casts and thinks again after each answer of the server (9e, built, D201, D202). The simulator applies spell
+  of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
+  the captures turn by turn (9e2, D206 to D212). The simulator applies spell
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
 - The hard cases through the effects, measured one at a time (9f), and strategies as modules and profile settings, per
   breed through the effects, never per class (9g).
@@ -701,11 +719,16 @@ fights the owner started (D203).
 - The fight's state is tested on fights built as the captures measured them: placement, turns, every action taken, a
   summon, the end, and what the server says of a fighter it never showed (D179); buffs given, ended at their turn and
   removed, cooldowns, the casts chosen, slides, carries and throws, and the characteristics kept (D193).
-- The AI is tested on fights the tests build with a catalog of their own: an enemy one blow kills is killed, one out of range
-  walked towards then struck, a badly hurt character heals itself, nothing worth doing ends the turn, a refused cast is not
-  weighed again, a placement reaches an enemy it beats, strong enemies make the fight risky, a walk's path (D201, D203). The
-  character's spells by the list, its level, a pair and the fight's own; the fight's options and context; the player's
-  requests in a fight; a harvest's fight answered once over, a lost fight and three in a row (D198, D202).
+- The AI is tested on fights the tests build with a catalog of their own: an enemy one blow kills is killed, one out of
+  range walked towards then struck, a badly hurt character heals itself, nothing worth doing ends the turn, a refused
+  cast is not weighed again, a placement reaches an enemy it beats, strong enemies make the fight risky, a walk's path
+  (D201, D203); a critical hit's share and chance, an enemy a pillar hides threatening nothing, a lasting rage cast in a
+  long fight and not in a short one, the next turn's start and search (D207 to D210). The character's spells by the
+  list, its level, a pair and the fight's own; the fight's options and context; the player's requests in a fight; a
+  harvest's fight answered once over, a lost fight and three in a row (D198, D202). A fight is played end to end through
+  `TestPlay`, whose pack carries a spell: the AI closes it, places the character, readies it, casts and ends its turn;
+  without the switch it sends nothing; the player's hand pauses it (D213). The switch is kept and given back by the
+  storage, and saved from the card.
 - The effects' formulas are tested on fighters the tests build, with the numbers the bench measured; what a cast foresees
   on a catalog of the tests' own: a blow on each enemy, less a step away, its critical effects, resistances, and a boost
   of the caster its mask names (D195). The bench itself, `scripts/fights.cs`, runs on the captures of the owner's machine.

@@ -85,6 +85,7 @@ dotnet run --file scripts/capture.cs       # describes the captures by structure
 dotnet run --file scripts/schema.cs        # writes the installed build's obfuscated protocol schema beside its pack; --proto <dir> as .proto text
 dotnet run --file scripts/mapping.cs       # matches the readable .proto files with that schema, audits, writes the build's mapping beside it
 dotnet run --file scripts/fights.cs        # replays the captured fights: what D3B.Engine foresees of each cast against the server's actions (D196); --details
+                                           # --turns replays each turn the characters played through the AI, its foresight against what came; --live counts what D3B did (D206)
 dotnet run -c Release --project benchmarks/D3B.Network.Benchmarks   # BenchmarkDotNet; --filter '*' runs them all
 dotnet run -c Release --project benchmarks/D3B.Engine.Benchmarks    # world paths, a fight's rules, its effects and the AI's turn on the installed build's pack; D3B_PACK names another
 ```

@@ -30,7 +30,7 @@ public static class FightPlay
     private const int MostActionsATurn = 30;
     private const int MostRefusedATurn = 2;
 
-    // The owner's ask (D203): the AI's fight is closed to other players and to spectators.
+    // The owner's ask (D203, D216): the AI's fight is closed to other players, then to spectators.
     private static readonly FightOption[] _closing = [FightOption.Closed, FightOption.NoSpectators];
 
     private static readonly TimeSpan _placementWait = TimeSpan.FromSeconds(45);

@@ -517,7 +517,7 @@ public sealed class FightEventsTests
             new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = false },
             new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
 
-        Assert.Equal([KeyValuePair.Create(FightOption.Closed, true), KeyValuePair.Create(FightOption.NoSpectators, false)], closed.Fight!.Options.ToArray());
+        Assert.Equal([KeyValuePair.Create(FightOption.NoSpectators, false), KeyValuePair.Create(FightOption.Closed, true)], closed.Fight!.Options.ToArray());
     }
 
     [Fact]

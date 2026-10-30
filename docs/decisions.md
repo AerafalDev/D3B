@@ -4931,14 +4931,221 @@ D190 (what remains).*
   greedy, buffs and states worth what they do, summons, glyphs and the breeds' mechanisms (9f), the profile's strategies
   (9g). D196's and Q16's captures, but the refusals above, remain to make.
 
+## D205: 9e2 as the owner asks it
+
+*2026-10-30, step 9, session 9e2, the owner's words and choices, as the lead recommended them. Builds D197, D203.*
+
+- **Asked**: the AI of 9e cleverer, measured fight by fight on the owner's: the judge's weights measured on more fights,
+  the enemies' reply beyond the greedy, buffs and states worth what they do over several turns, critical hits weighed,
+  line of sight in the threat, positions over two turns, the weapon's blow; `FightPlay` and the pilot tested end to end
+  in `TestPlay` on a pack that carries spells; the switch "The AI fights" kept for each character. Each change of the
+  judgement proposed to the owner first, measured on the captures by replaying the turns, then tried in real fights.
+- **Chosen by the owner**: the six changes of the judgement in this order, critical hits, line of sight, buffs and
+  states, two turns, the reply, the weights, each measured on the replays and kept only when the measure says so; real
+  fights once the first three are in, then at the end; the weapon's blow in this session, with the pack's format 6 it
+  needs.
+
+## D206: The turns and the fights replayed: `scripts/fights.cs --turns` and `--live`
+
+*2026-10-30, step 9, session 9e2. Builds D196, D201. Supersedes the tools of D201 and D203 never committed.*
+
+- **`--turns`** replays every turn a character played in the captures through the AI, from the fight as the bot would
+  imagine it (`ImaginedFights`): the AI's plan against the turn played, both imagined and judged by the same numbers
+  (the damage, kills and heals foreseen, the life the enemies' reply takes, the damage over two turns); and from where
+  each turn really ended, what the judge reckons against what came: the threat (`FightJudge.Threat`) and the reply
+  against the life the character lost before its next turn, the approach (`FightJudge.NextTurnDamage`) and the next turn
+  searched (D210) against the damage it dealt in that turn, whom the enemies' blows took life from, the casts played and
+  planned by what they do, the buffs played, and how long each search took.
+- **`--live`** counts what D3B did in the fights: a fight is the AI's when D3B sent a request of the fight's itself (an
+  injected frame), and the player's otherwise; how each ended, the character's turns and those with nothing done, the
+  casts the server announced, refused by their text or left unanswered, D3B's requests by kind, the player's hand.
+  Measured on 9e's captures: the 13 fights of D203, 11 won and 2 lost.
+- Both print counts and sums, never a value of one fight, as the bench does (D196); `CastBench` also measures the chance
+  of a critical hit (D207) and the client's previews of buffs (D209).
+- **The base**, 9e's AI on the 61 captures of 3.7.12.12 before 9e2, 145 turns: its plans foresaw more damage than the
+  turn played on 120, 32,380 against 22,069, the server dealing 25,925 on those turns; the threat foresaw 6,916 lost
+  where the character lost 4,639, off by 2,918 summed, 35 turns foreseen with none lost; the reply 4,558, off by 1,315;
+  the approach 12,260 where it dealt 14,112. Its plans cast 312 damage, 2 boosts, no heal, 5 summons; the turns played
+  262 damage, 13 boosts, 12 heals, 19 summons. A search took 21 ms halfway, 159 ms at most.
+
+## D207: A critical hit weighed by its chance
+
+*2026-10-30, step 9, session 9e2. Supersedes in part D201 (a critical hit never counted on). Settles Q5 for the chance.*
+
+- **Measured** on the 595 casts captured of levels with a chance of one, then on 131 more the owner played for 9e2: the
+  chance is the level's plus the caster's characteristic 18, in percent, within 0 and 100
+  (`EffectFormulas.CriticalChance`). It foresaw 43 critical hits, then 21, and the server drew 40, then 17; none of the
+  217 casts of monsters whose characteristic 18 is below the level's chance was one, nor any cast of a level without a
+  chance.
+- **The imagination** counts what a cast gives in life, damage, heals, shields and characteristics as its share of a
+  normal cast and of a critical hit, the level's critical effects where it has some; a push, a swap or a state is the
+  normal cast's alone. The judge's best turns weigh it the same.
+- **Replayed**: the damage foreseen of the turns played from 22,069 to 22,102, as many blows already take their target's
+  whole life; the threat 5% higher. Little, and right.
+
+## D208: Line of sight in the threat and the approach
+
+*2026-10-30, step 9, session 9e2, as proposed to the owner. Supersedes in part D201 (the threat by reach).*
+
+- **A spell lands** on a fighter when one of the cells its caster walks to with its MP has the fighter within the
+  level's range and, for a level that tests it, in its line of sight; the threat counts each enemy's best turn with the
+  spells that land on the ally it hurts most, the approach the fighter playing's with its next turn's MP and AP. An
+  enemy's walk is reckoned once wherever the fighter playing stands, which the search moves many times: without it.
+  `FightJudge` keeps the damaging levels, the damage of each, the cells walked to and what lands, once per search.
+- **Replayed** on the 61 captures: the threat from 7,278 foreseen to 5,048, where the character lost 4,639; off by 3,224
+  then 1,841; 35 turns foreseen with none lost then 8, 20 over twice then 12, 2 lost with none foreseen then 7. On the
+  69 captures with the owner's 9e2 fights, 6,642 foreseen where 6,882 were lost. A search 25 ms halfway, 184 ms at most.
+- **Rejected.**
+  - A share of the blow for an enemy a cell or two beyond what lands, as the reach was weighed: off by 1,932, and 18
+    turns foreseen with none lost.
+
+## D209: Buffs and states worth what they do over the rounds they last
+
+*2026-10-30, step 9, session 9e2, as proposed to the owner. Builds D193, D201.*
+
+- **The imagination keeps each buff** a cast gives with its rounds (`ImaginedBuff`, `ImaginedFight.Buffs`, the effect's
+  duration in `ForeseenEffect`): a boost, a deboost, a state.
+- **The judge reads the fighters as the search left them**: the threat and the approach reckon each pair's damage from
+  their characteristics and states as they stand, from the start's tables when nothing changed them, a state that
+  prevents casting or dealing damage dealing none, one invulnerable, or at that range, taking none. A buff of the
+  character's lasts until its turn of the last round begins (D193): it counts on the enemies' turns that come first, and
+  on the character's next turn when it lasts two rounds or more. Each round it lasts beyond, up to the rounds the fight
+  is foreseen to last still (its odds, 4 at most), it is worth the damage it adds to the character's side's turn, a
+  point as an enemy's life costs it, or takes off the other side's, as the threat weighs it.
+- **A multiplier the server left out is 100** (`EffectFormulas.ValueOf`): a boost of one adds to 100.
+- **Measured**: the 13 boosts the owner cast in the captures, 7 of them spell 14574's damage and heals for 3 rounds. Its
+  boosts are the client's previews (`ForClientOnly`): on its 8 casts the server gave the caster no buff (`CastBench`,
+  the client's previews of buffs on the caster: 16 not given), its effect a breed's mechanism, 9f's. The other boosts
+  were few; the replays plan 5 to 6. Tested: a rage that costs a blow now is cast in a long fight and not in a short
+  one.
+
+## D210: Positions over two turns: the next turn searched
+
+*2026-10-30, step 9, session 9e2, as proposed to the owner. Supersedes in part D201 (the finalists judged by the
+approach).*
+
+- **Each finalist**, once the enemies replied, has the character's next turn played from there
+  (`FightTactics.NextTurn`): its turn's AP and MP, those its buffs lasting add, the next round, the cooldowns one round
+  less, the buffs of one round gone (`FightJudge.NextTurnStart`); two casts at most, each the one, from where it stands
+  or a cell it walks to first, that raises the side's worth most (`FightJudge.Standing`), through the rules, the zones
+  and the effects, as many fighters as it reaches. Its gain is weighed as the approach is; the approach where it finds
+  nothing.
+- **Replayed** on the 61 captures, against the same AI without it: over two turns 48,193 damage foreseen and 343 kills
+  against 46,599 and 330, the reply taking 3,328 against 2,949; the next turn searched foresaw 11,869 where the
+  character dealt 14,112, 2 under half against the approach's 11. A search 56 ms halfway, 422 ms at most, the next turn
+  weighing 12 cells a level and one walk a cell.
+
+## D211: The enemies' reply beyond the greedy, measured: no gain
+
+*2026-10-30, step 9, session 9e2. Keeps D201's reply.*
+
+- **Measured**: each enemy's three casts searched three wide rather than one at a time gave the same replies, to the
+  life, on the 145 turns: the monsters of these fights cast one or two spells a turn. Whom they hit is as the reply
+  foresees: between two of the character's turns, the enemies took 4,710 of the character's life and 231 of its
+  summons', the reply 4,745 and 262; on the owner's 9e2 fights, 1,866 and 1,102, the reply 1,623 and 1,083. What is
+  left, off by 1,377 on 84 turns, is each turn's: the rolls, the critical hits and what the server's monsters choose.
+- **Rejected.**
+  - The wider reply: as good, slower.
+
+## D212: The judge's weights, measured on 69 fights
+
+*2026-10-30, step 9, session 9e2. Keeps D198's and D203's weights.*
+
+- **Measured** on the 69 captures, the owner's 9e2 fights among them, by replaying the turns with one weight changed at
+  a time, against the defaults (the threat 1, the approach 0.8, the character's life 2): over two turns 58,472 damage
+  foreseen, 411 kills, the reply taking 4,745 of the character's life. The threat at 0.9: 401 more damage, 2 more kills,
+  135 more life lost; at 1.2: 554 less, 2 fewer, 2 more lost. The approach at 0.6: 799 less, 2 fewer, 14 less lost. The
+  character's life at 3: 2,343 less damage, 7 fewer kills, 91 less lost.
+- **So**: the defaults stand where the measure puts them. Fearing the threat more takes damage off and spares no life;
+  holding the character's life dearer spares 2% of it for 4% of the damage, which the prudent weights keep for a fight
+  judged too risky (D198). The threat's own foresight is unbiased on the 69 fights (D208), so no weight corrects it.
+- **Left**: the prudent weights, no capture holding a fight judged too risky; measured as the owner's fights bring some.
+
+## D213: The switch "The AI fights" kept for each character, and the fight played end to end in the tests
+
+*2026-10-30, step 9, session 9e2, as the owner asked. Builds D198, D202.*
+
+- **Kept** in the database (`KnownCharacter.FightsAlone`, migration `FightSwitch`): the card saves it as it is set
+  (`AccountBook.SetFightsAloneAsync`), a failure said in a toast; a bot made for a character whose switch was left on
+  has the AI play its fights from its first (`RememberedFightSwitch`); the host's `Fights:Alone` turns every bot's on.
+  Checked on the owner's machine: set on one character of seven, it was there at the app's next start.
+- **`TestPlay`'s pack** carries a spell, an earth blow, its effects and empty states, monsters and breeds;
+  `FightPlayTests` plays a fight as the captures measured it: the AI closes the fight and blocks spectators, places the
+  character on the cell it reaches the monster from, says it is ready, casts twice on its turn, the client acknowledging
+  each, then ends its turn; without the switch nothing is sent; the player's placement pauses the bot.
+
+## D214: The owner's fights for D196 and Q16, measured
+
+*2026-10-30, step 9, session 9e2, on 9 game connections the owner captured by hand with their characters, 8 fights, 35
+of the characters' turns, characters of level 20 to 150 and their summons. Builds D195, D196. Settles Q5 in part.*
+
+- **Damage** of the casts alone: 91 within what D3B foresaw, 13 within capped by the target's life, 4 below, 1 dealt and
+  not foreseen; with the spells the effects cast, which are not foreseen yet, 38 dealt and not foreseen (9f).
+- **Pushes and pulls**: 9 pushes as far as foreseen, 11 stopped short, 3 on a target dead first; 5 pulls as far, 3
+  short. **A push's damage**: 8 as foreseen and 3 none as foreseen, after 9 of 11 in 9d: the references' formula holds
+  (Q5).
+- **Heals** on a wounded ally: 8 within, 2 within capped by its missing life, 6 on a fighter whose life was whole, 1 not
+  healed. **Steals**: 7, each life taken as foreseen. **Swaps**: 4 as foreseen.
+- **AP and MP removed**: 1 AP and 4 MP below what was foreseen, 3 and 8 removed by the spells the effects cast: the
+  dodge, which the server draws, left a range to weigh (Q5).
+- **Critical hits**: 17 of 131 casts with a chance, 21 foreseen (D207).
+- **The rules** (Q16): of 208 casts chosen, 197 pass; the server let 11 through that D3B's rules refuse: 8 for want of
+  AP, of a breed whose spells' cost falls with a state it gathers (states 2484 on), 2 out of range and 1 beyond the
+  summons, of breeds whose spells a state changes. Each a breed's mechanism, 9f's, which the spells' modifiers do not
+  carry yet.
+- **The client's previews of buffs** (D209): of 10 on the caster, 1 boost and 1 state given as previewed, 8 not.
+- **Not captured yet**: a shield and the blows on it, erosion, a fight long enough for buffs to end; a weapon's blow
+  (D215).
+
+## D215: The weapon's blow in a session of its own
+
+*2026-10-30, step 9, session 9e2, chosen by the owner, as the lead recommended it. Supersedes in part D205.*
+
+- **Measured**: none of the 180 turns of the characters captured holds a weapon's blow; the AI cannot be measured on
+  one.
+- **So**: the weapon's blow gets a session of its own, once the owner captured blows with several kinds of weapon: the
+  pack's format 6, the 769 weapons with their AP, ranges, critical chance and bonus, casts a turn, effects and their
+  type's zone (client.md); the character's worn weapon from its inventory, its position measured; spell 0 as a level the
+  AI casts, measured blow by blow; then a release of 3.7.12.12 and of the app on the owner's go.
+- **Rejected.**
+  - The weapon now, its formulas unmeasured on Dofus 3: a pack's format and a release for what no capture checks.
+
+## D216: 9e2 measured on the fights the AI played, and what the owner saw
+
+*2026-10-30, step 9, session 9e2, on 10 game connections the owner captured with the app while the AI played every one
+of their characters on their accounts, 9 breeds, levels 20 to 150. Builds D205 to D215. Supersedes in part D203 (the
+options' numbers).*
+
+- **Played** (`scripts/fights.cs --live`): 17 fights the AI played, 16 won and 1 lost, against 11 won and 2 lost in 9e;
+  180 casts sent, 176 cast, 4 refused with text 175, none unanswered; 92 walks, 62 turns' ends, 16 placements, 17
+  readinesses, 18 options set; of the character's 81 turns, 5 with nothing cast nor walked, against 11 of 62 in 9e.
+- **Replayed** (`--turns`, 71 turns): the reply foresaw 1,841 of the enemies' blows on the character where they took
+  1,660; a search 86 ms halfway, 403 ms at most. Benchmarked, a turn planned against four enemies in 3.1 ms and 6.5 MB,
+  against 1.6 ms and 2.75 MB in 9e, BenchmarkDotNet run in its process as other sessions' worktrees hold the project
+  too.
+- **The options' numbers were the other way round**: the owner saw the AI refuse spectators first and close the fight
+  second, where it sent option 0 then option 2. Option 0 refuses spectators, the server answering with text 40, and
+  option 2 closes the fight, with text 95, as Dofus 2 numbered them; `FightOption` names them so, the mapping pairing
+  their numbers unchanged. The AI now closes the fight first, then refuses spectators, as the owner asked; both to be
+  the profile's or the bot's settings in 9g (D203).
+- **The element of a blow**, which the owner saw not always that of the character's highest characteristic: of the 116
+  blows the AI cast, 59 were of it; 48 of another where no spell of it could be cast on that cell or none was foreseen
+  dealing more a point of AP, the target's resistances, the range and the AP left deciding; 2 in a sequence dealing more
+  in all, 1 as a spell's casts a turn allowed, and 6 of a character of level 150 whose four elements' characteristics
+  are 0, every element alike. The formulas read the characteristics as the server gives them, every character's 54 at
+  its first turn, and the damage of the casts alone fell within what D3B foresaw 226 times of 229.
+- **What the owner saw is a breed's**: a Zobal loops on its mask of MP and shields the enemies, where its mask of damage
+  would let it cast Furia: 28 of the AI's casts planned and 29 played were shields. The breeds' mechanisms are 9f's
+  (D177), this one among the first.
+
 Settled questions leave this table, and the decision that settles one says so.
 
 | Id | Question | Settled in |
 | --- | --- | --- |
-| Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? Measured in 9d for damage, steals, heals, critical hits and the zone's decrease (D195); left: a push's damage, shields, AP and MP removed and their dodge, erosion, the final damage's rounding. | The captures of D196, then 9f |
+| Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? Measured in 9d for damage, steals, heals, critical hits and the zone's decrease (D195), in 9e2 for a critical hit's chance (D207) and a push's damage (D214); left: shields, AP and MP removed and their dodge, erosion, the final damage's rounding. | The captures of D196 left (D214), then 9f |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
 | Q15 | When D3B needs a monster's characteristics at a level its grades lack, before the server gives them, such as to choose which group to attack, does it run the client's Lua formulas, or write them in C#, checked against the client's (D182)? | The session that needs it, 9e or 9g at the latest |
-| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? It refuses with an error text, 29 ms after the request (D203); which casts, but a Zobal's masks, is left. | Captures the owner makes, the AI sending its casts (D202), with those of D196 |
+| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? It refuses with an error text, 29 ms after the request (D203); which casts, but a Zobal's masks, is left. It allowed 11 casts the rules refuse, each a breed's mechanism: spells whose cost or range a gathered state changes, and summons (D214). | Captures the owner makes, the AI sending its casts (D202), with those of D196; the breeds' mechanisms in 9f |

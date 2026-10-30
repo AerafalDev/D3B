@@ -47,8 +47,11 @@ the pack: on the 66 fights captured, `scripts/fights.cs` replays every cast and 
 within what D3B foresaw, 1 below. And D3B fights: its AI places the character, closes the fight to others and to
 spectators, then each turn searches the best walks and casts, weighs them against the monsters' reply, sends one at a
 time at a pace the player follows and thinks again after each answer of the server, and ends its turn as soon as nothing
-is worth doing. A switch on the bot's card has it play every fight; harvesting has it play its own, then resumes, pauses
-or stops as its profile says, and after a lost fight waits for the character's life to come back. The hard cases, summons,
+is worth doing. Its judgement is measured turn by turn on the owner's fights: it weighs critical hits, fears only the
+blows that land in sight, values a buff over the rounds it lasts, and looks at its next turn from where the monsters'
+reply leaves it. A switch on the bot's card, kept for each character, has it play every fight; harvesting has it play its
+own, then resumes, pauses or stops as its profile says, and after a lost fight waits for the character's life to come
+back. The hard cases, summons,
 glyphs and the breeds' mechanisms, come next, then the profiles' strategies and a fighting activity, then the blueprints.
 See the [roadmap](docs/roadmap.md).
 

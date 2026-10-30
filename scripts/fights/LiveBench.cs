@@ -43,7 +43,25 @@ internal sealed class LiveBench
                 if (fight is not null && OfTheFight(message))
                     Request(fight, kind, message);
 
+                // The fight's options D3B set, in the order it set them, and what the server answered each (D216).
+                if (fight is not null && message is FightOptionToggleRequest toggle)
+                {
+                    fight.Toggled++;
+                    fight.Toggling = toggle.Option;
+                    Tally.Count($"options toggled: {(kind is CaptureRecordKind.Injected ? "by D3B" : "by the client")}, {Ordinal(fight.Toggled)} {toggle.Option}");
+                }
+
                 continue;
+            }
+
+            if (fight?.Toggling is { } option)
+            {
+                if (message is FightOptionUpdateEvent update)
+                    Tally.Count($"options toggled: {option} answered, option {update.Option} {(update.Enabled ? "set" : "unset")}");
+                else if (message is TextInformationEvent text)
+                    Tally.Count($"options toggled: {option} answered, text {text.TextId} of the {text.Type} kind");
+                else if (message is not FightOptionUpdateEvent)
+                    fight.Toggling = null;
             }
 
             if (message is FightStartingEvent)
@@ -74,6 +92,16 @@ internal sealed class LiveBench
                 fight = null;
             }
         }
+    }
+
+    private static string Ordinal(int count)
+    {
+        return count switch
+        {
+            1 => "first",
+            2 => "second",
+            _ => "later",
+        };
     }
 
     private static void Request(Fight fight, CaptureRecordKind kind, IMessage message)
@@ -181,5 +209,9 @@ internal sealed class LiveBench
         public int? Breed { get; set; }
 
         public int? Life { get; set; }
+
+        public int Toggled { get; set; }
+
+        public FightOption? Toggling { get; set; }
     }
 }
