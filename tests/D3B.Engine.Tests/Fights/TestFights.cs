@@ -78,12 +78,12 @@ internal static class TestFights
     /// Spells 10 to 60 of grade 1, levels 1010 to 1060, each with one effect in a point: 10 tests the line of sight at a
     /// range of 1 to 3, twice a turn and once a target; 20 needs a free cell, its range 5 boosted; 30 needs its caster in
     /// state 5, waits a round and every other round; 40 summons on a free cell; 50 needs a taken cell, seen; 60 is cast in
-    /// line or diagonal.
+    /// line or diagonal; 70 needs its caster in state 9, which prevents casting.
     /// </summary>
     public static SpellCatalog Spells()
     {
         var point = Zone(SpellZoneShape.Point);
-        string[] strings = ["a,A", "I", "HS=5"];
+        string[] strings = ["a,A", "I", "HS=5", "HS=9"];
 
         SpellLevel Level(int spell, int index, SpellLevelProperties properties)
         {
@@ -110,6 +110,7 @@ internal static class TestFights
             Level(40, 3, SpellLevelProperties.NeedFreeCell),
             Level(50, 4, SpellLevelProperties.NeedTakenCell | SpellLevelProperties.NeedVisibleEntity),
             Level(60, 5, SpellLevelProperties.CastInLine | SpellLevelProperties.CastInDiagonal),
+            Level(70, 6, SpellLevelProperties.None) with { StatesCriterion = 3 },
         };
 
         var spells = levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 }).ToArray();

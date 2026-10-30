@@ -4578,7 +4578,62 @@ group, each request answered by the server's refusal or its cast:
 It needs a measuring mode that sends a request the owner chose, which 9e's sending of casts makes, or a small tool before
 it; the owner decides when (Q16).
 
-## Open questions
+## D191: 9c measured again on 38 fights the owner played for it
+
+*2026-10-30, step 9, session 9c, on 12 game connections the owner captured with D3B after D190, 11 breeds among them.
+Supersedes in part D186 (the diagonal), D188 (the states preventing casts, the modifiers), D189 (the tackle measured) and
+D190 (what remains).*
+
+- **The fights**: 49 in all with the 11 of D185, 396 casts the fighters chose, 581 their effects cast, 2 weapon's blows,
+  298 walks; Steamer, Xélor, Iop, Eliotrope, Zobal, Roublard, Pandawa, Crâ, Osamodas, Forgelance and Sadida, at low
+  levels, and their monsters and summons. The measuring tool, never committed, follows what the readable protocol does
+  not name yet, read raw: slides (action 5), a carry and a throw (50, 51), a tackle and its losses (104, 101, 127), the
+  removal of a spell's buffs (406) and of all (132), and the buffs of `FightEffectsEvent` with the spell that gave each.
+- **Casts**: 392 of the 396 pass the rules; the 4 others an Eliotrope cast beyond their range through its portals, which
+  9f measures (D177). 286 test the line of sight, 199 with cells between, none blocked, 44 past a corner beside a cell
+  that blocks.
+- **Diagonals**: 4 casts at a range of 1 reached the diagonal neighbour, at a distance of 2: a diagonal counts its steps,
+  as D186 took from the references. No capture tells a proportional diagonal from the steps.
+- **A state preventing casts lets through the levels asking for it**: a Pandawa carrying is in state 3, *Porteur*, which
+  the pack says prevents casting, and threw what it carried 4 times, by levels whose criterion asks `HS=3`. `CastRules`
+  so refuses a caster in such a state only for a level whose criterion does not ask for it, as Dofus 2's client did. The
+  throw ends the carry without the server removing its states: the carried and carrier states go with it.
+- **Spell modifiers** (`SpellModifier`, `SpellModifierKind`, `Combatant.Modifiers`, `CastRules.Modified`): buffs of the
+  pack's effects 280 to 299, each naming a spell and a value, change its least and most range, whether it may be boosted,
+  its AP cost, its interval or set it, its line, its line of sight, its casts a turn and a target, and the free or taken
+  cell it needs. The rules read the level as modified. Measured: a Pandawa's buffs give its carrying spell 3 more range,
+  no taken cell and a free one; 3 casts carried a modifier of their spell, none needing it. Those on damage, heals and
+  critical hits are 9d's.
+- **Zones**: of 388 losses of life, 380 lie in the zone of a cast of their sequence, the one chosen or one its effects
+  triggered, whose mask selects the fighter; 4 others a mask of portals leaves unknown, 1 a fighter carried, 3 come with
+  an Osamodas's summons or a spell triggered whose caster the tool did not place. 15 shapes explain losses alone: point
+  161, cross 74, circle 41, perpendicular line 16, diagonal cross 13, line 11, square 10, cross without centre 7, fork 4,
+  star 3, diagonal perpendicular line 3, line from the caster 2, half circle 2, cone 1, with the whole map. Of 343 fighters
+  an effect damaging at once foresaw, 342 lost life. Not measured: ring, outside circles, checkerboard, square without
+  diagonals, rectangle, boomerang, diagonal line, diagonal cross without centre, custom zones.
+- **Tackle**, measured on the 3 walks tackled: the server announces the tackle, then each characteristic lowered, then
+  each loss. 3 AP and 2 MP lost of 6 and 3 at a share kept of a half, 2 and 1 of 7 and 4 at two thirds, 1 and 1 of 2 and
+  4 at three quarters: the formula of D189 and its rounding to the nearest, a half up. 6 walks leaving enemies lost
+  nothing: monsters whose monster does not tackle, a state, a dodge outweighing the lock.
+- **Walks**: the 298 step to cells at a distance of 1, walkable in a fight and free, one MP a step.
+- **A caster on no cell**, one carried whose effects cast, reaches from the cell cast on (`CastRules.Reached`): the tool
+  found it throwing.
+- **What 9d takes from this**: the bot's fight state needs the slides, carries and throws, the tackles and the losses, the
+  buffs, states and modifiers, and their removal, named in the readable protocol, so that the rules read what the server
+  said; mapping format 10.
+
+## D192: The fight's AI and the fighting activity, as the owner asks them
+
+*2026-10-30, step 9, session 9c, the owner's words, for 9e and 9g. Builds D13, D144, D177.*
+
+- **An AI autonomous and clever**, reacting to each situation, through the spells' effects and never per class unless a
+  class needs it: it heals itself and its allies when it should, shields, moves cleverly, uses the right spells, prefers
+  those of the elements its characteristics favour, and casts a strong zone spell where many monsters stand in it. Every
+  case is to be taken into account (D177).
+- **The fighting activity**, once the AI fights, made as the harvest is (D127, D160, D166): which monster to fight, the
+  zone and sub-area, the least and most monsters of a group, a drop sought on a monster, and every other case a profile
+  should say.
+
 
 Settled questions leave this table, and the decision that settles one says so.
 
@@ -4590,4 +4645,4 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
 | Q15 | When D3B needs a monster's characteristics at a level its grades lack, before the server gives them, such as to choose which group to attack, does it run the client's Lua formulas, or write them in C#, checked against the client's (D182)? | The session that needs it, 9e or 9g at the latest |
-| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner, a diagonal range, the zones no capture cast, a tackle's loss and its rounding (D190)? | Captures the owner makes, D3B sending what the client does not, before or with 9e |
+| Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? | Captures the owner makes, D3B sending what the client does not, before or with 9e |

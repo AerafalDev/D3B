@@ -612,8 +612,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster.
     `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter.
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
-    in the order the checks run, from its `CastHistory`; the cells it may cast on; the fighters each effect reaches.
-    The level's criterion on states is a `Criterion` answering `HS` on `CriterionFacts.States`.
+    in the order the checks run, from its `CastHistory`, the level as the caster's spell modifiers change it
+    (`SpellModifier`, `CastRules.Modified`); the cells it may cast on; the fighters each effect reaches. The level's
+    criterion on states is a `Criterion` answering `HS` on `CriterionFacts.States`; a state preventing casts lets through
+    the levels asking for it (D191).
   - `FightMoves`, built once per pack: the four cells a fighter steps to, the share of its MP and AP a tackle leaves it,
     and the cells it walks to with what it keeps there.
   - Benchmarked on a captured fight's map: every cell a level may be cast on in 6.3 µs, a line of sight in 30 ns, an
@@ -627,8 +629,9 @@ and pinned in `actors.proto`, `fights.proto` and `fight_actions.proto` (D178); t
 [Bot run time](#bot-run-time)); the fight on the app's map (D180). Built in session 9b: the fight's data in the pack,
 format 5 (D182, in [Game data](#game-data)), its flags read in the client's code (D183), the cast's level and the
 monsters checked on the captures, and the monsters named on the map (D184). Built in session 9c: the rules of a cast and
-of a walk in `D3B.Engine` (D185 to D189, in [Engine](#engine)), checked on every cast and walk captured, and the casts the
-server refuses left to captures to make (D190, Q16). The references' ideas for each session are D181.
+of a walk in `D3B.Engine` (D185 to D189, in [Engine](#engine)), checked on every cast and walk captured, 49 fights of 11
+breeds with those the owner played for it (D191), and the casts the server refuses left to captures to make (D190, Q16).
+The owner's aims for the AI and the fighting activity are D192. The references' ideas for each session are D181.
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -637,8 +640,9 @@ server refuses left to captures to make (D190, Q16). The references' ideas for e
   the next turn. It ends with each fighter's outcome, experience and loot. The bot acts through the cast's, the walk's,
   the placement's, the readiness' and the turn's end's requests; the client sends the rest by itself.
 - In `D3B.Engine`, from the pack's catalogs: the rules of a cast, line of sight, zones, masks and conditions, and walking
-  with its tackle (9c, built); next, the effects' engine, Bubble's formulas measured one by one against the server's
-  answers, and the states and cooldowns the server gives, named (9d).
+  with its tackle and the spells' modifiers (9c, built); next, the effects' engine, Bubble's formulas measured one by one
+  against the server's answers, and what the server announces that the fight's state lacks named and kept: slides,
+  carries and throws, tackles, buffs, states, modifiers and cooldowns (9d, D191).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e). The simulator applies spell effects read
   from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.

@@ -39,8 +39,9 @@ Fights are under way: D3B reads a fight's protocol, measured on the official cli
 fighters, their life, AP and MP, the turns and the outcome with what it gained, and the map page draws the teams'
 placement cells and the fighters, monsters named; the pack holds every spell, its levels and effects with the flags the
 client's code names, the states, monsters and their grades, the breeds and characteristics; and D3B knows the rules of a
-cast, its range, line of sight, zones, target masks, costs, cooldowns and casts per turn, and how a fighter walks and is
-tackled, every cast and walk of the captured fights checked against them; the player still fights. Next: the effects,
+cast, its range, line of sight, zones, target masks, costs, cooldowns, casts per turn and the spells' modifiers, and how
+a fighter walks and is tackled, every cast and walk of 49 captured fights of 11 breeds checked against them; the player
+still fights. Next: the effects,
 then an AI that searches each turn's best moves and casts, then the blueprints. See the
 [roadmap](docs/roadmap.md).
 

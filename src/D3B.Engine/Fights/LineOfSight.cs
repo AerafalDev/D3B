@@ -17,10 +17,10 @@ namespace D3B.Engine.Fights;
 /// integers, so that a line and its reverse pass over the same cells.
 /// </para>
 /// <para>
-/// Measured on the 11 fights captured (client.md): of the 79 casts the fighters chose, 53 test the line of sight, 40 of them
-/// with cells between, and none has a cell between that blocks; 2 pass a corner beside a cell that blocks, which the server
-/// let through. The idea of the traversal is the references' (D181); that the server refuses what blocks needs casts it
-/// refused, which no capture holds.
+/// Measured on the 49 fights captured (client.md): of the 396 casts the fighters chose, 286 test the line of sight, 199 of
+/// them with cells between, and none has a cell between that blocks; 44 pass a corner beside a cell that blocks, which the
+/// server let through. The idea of the traversal is the references' (D181); that the server refuses what blocks needs casts
+/// it refused, which no capture holds.
 /// </para>
 /// </remarks>
 public static class LineOfSight
