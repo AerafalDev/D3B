@@ -68,14 +68,9 @@ namespace D3B.Storage.Migrations
                     b.Property<bool>("StartsOnConnection")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("StrategyId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("AccountId", "Id");
 
                     b.HasIndex("ProfileId");
-
-                    b.HasIndex("StrategyId");
 
                     b.ToTable("Characters", (string)null);
                 });
@@ -228,11 +223,6 @@ namespace D3B.Storage.Migrations
                     b.HasOne("D3B.Storage.Profiles.Profile", null)
                         .WithMany()
                         .HasForeignKey("ProfileId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("D3B.Storage.Profiles.Profile", null)
-                        .WithMany()
-                        .HasForeignKey("StrategyId")
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 #pragma warning restore 612, 618

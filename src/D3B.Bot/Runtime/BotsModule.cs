@@ -1,6 +1,5 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Data;
-using D3B.Bot.Fights;
 using D3B.Bot.Hosting;
 using D3B.Bot.Inspection;
 using D3B.Bot.Interactives;
@@ -48,18 +47,13 @@ public sealed class BotsModule : IModule
             services.GetRequiredService<GameWorld>(),
             services.GetRequiredService<GameTables>(),
             services.GetRequiredService<TimeProvider>(),
-            services.GetRequiredService<ILoggerFactory>(),
-            services.GetRequiredService<IStrategySource>())
+            services.GetRequiredService<ILoggerFactory>())
         {
             Delays = delays,
 
-            // Measuring the AI on fights the player starts, every bot's, whatever its strategy says (D198, D235).
+            // Measuring the AI on fights the player starts, through D3B.Host, which has no card to switch it on (D198, D244).
             FightsAlone = bot.Configuration.GetValue<bool>("Fights:Alone"),
         });
-
-        // D3B's defaults for every character, until D3B's database gives each its own (D233).
-        bot.Services.TryAddSingleton<IStrategySource, DefaultStrategies>();
-        Strategies.Register(bot.Services);
         bot.Services.AddSingleton<IGameObserver>(services => services.GetRequiredService<Bots>());
 
         // Whatever the bots do, every map they enter teaches what its elements' graphics offer (D138).
@@ -90,8 +84,6 @@ public sealed class BotsModule : IModule
                 world.Graph,
                 services.GetRequiredService<GraphicPlaces>(),
                 services.GetRequiredService<GraphicSkills>(),
-                tables.Spells,
-                tables.Breeds,
                 tables.Monsters);
         });
     }

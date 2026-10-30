@@ -456,6 +456,6 @@
     <value>The AI fights</value>
   </data>
   <data name="AiFightsHelp" xml:space="preserve">
-    <value>The AI plays a protector's fight or an aggression with the character's strategy; unchecked, you play it.</value>
+    <value>The AI plays a protector's fight or an aggression; unchecked, you play it.</value>
   </data>
 </root>

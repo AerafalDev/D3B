@@ -5683,7 +5683,50 @@ in game.*
 - **Benchmarked**, BenchmarkDotNet in its process: a turn planned against four enemies in 2.6 ms and 4.79 MB, against 3.1
   ms and 4.79 MB in 9f.
 - **Not measured**: the other strategies on the captures, and the fighting activity, which no capture holds.
-||||||| 3285a40
+
+## D243: 9g2 as the owner asks it
+
+*2026-10-30, step 9, session 9g2, the owner's words, recorded as they asked. Builds D232, D241, D242.*
+
+- **Asked** for the session: the fighting activity and the strategies measured in game, the owner running "Automatic
+  fight" and a profile of monsters chosen on characters of several breeds, with "Standard", then "Healer" and "Prudent",
+  the app recording the captures; measured on them with `scripts/fights.cs --live` and what tools it needs, the attacks
+  sent, accepted or unanswered, the walks made again, the groups judged winnable against the fights won or lost, the
+  sub-area chosen, the healing and the bank, and what the game shows fixed; then what D241 left that serves, the
+  sub-areas suggested by the monsters chosen and isolated maps, and the styles and roles measured on `--turns`.
+- **Asked** as the session ran: a Discord badge in the README, linking the project's server; and no strategy at all, one
+  generic AI that uses every breed's potential and farms fast, complete and clever, every spell and every breed's
+  mechanism (D244).
+
+## D244: The strategies removed, one AI for every character
+
+*2026-10-30, step 9, session 9g2, chosen by the owner among two options, as the lead recommended it. Supersedes D233, D234
+and D240, D235 on the fights out of an activity, and D236 and D241 where they name a strategy.*
+
+- **Removed**: the strategy, a kind of profile (`ProfileKind`, `AddStrategy`, `ActivityCatalog.Strategy`), its settings,
+  presets and texts, `IStrategySource`, `DefaultStrategies` and `StoredStrategies`, the accounts page's column, and
+  `KnownCharacter.StrategyId`, by migration `NoStrategy`, which deletes the strategies' profiles and presets first. The
+  engine is as before 9g: no placement near or far (`TacticPlacement`), no allies' weight, no spell preferred, no
+  fighter's spells left out. "Standard" played as the AI did before 9g (D242): nothing the AI plays changes.
+- **What the AI does, every fight**: prudent when it judges the fight too risky as it starts (D198); the fight closed,
+  then spectators refused (D216); its sword's blow when it is worth it (D220); placed where the judge says.
+- **Out of an activity**, the fights are the player's again; `Fights:Alone` has the AI play every one, for the measures.
+  Harvesting's "The AI fights" and the fighting activity's own fights stay as D235 and D241 have them.
+- **The spell setting** (`SettingKind.Spell`), its picker by breed and the spells' icons drawn in the app go with the
+  strategy, their only user. The spells' icons stay in the pack's format 7, which no release holds yet, rather than a
+  format 8 for 1.16 MB; nothing reads them now.
+- **Measured**: SQLite drops a column whose reference is its own, once its index is dropped, inside the migration's
+  transaction; what the `Strategies` migration's way down says is not so. Checked with EF's own SQLite on a copy of a
+  database of 6f migrated to `Strategies`, a character given a strategy: the column, its index and its reference gone,
+  its profile and preset deleted, the integrity and the references whole, down and up again.
+- **A complete AI**: what it lacks for every breed is 9f's other mechanisms, summons, bombs, glyphs, runes, telefrags,
+  traps and invisibility, portals, carrying, sacrifice, shared damage, and the other kinds of weapon; one or two a
+  session, each captured, imagined, searched and measured. At step 10, a character's role in a group is the AI's to
+  judge, from its breed and the fight. Farming fast is the fighting activity's: the pace, the groups, the healing and the
+  journeys, measured in game.
+- **Rejected.**
+  - The strategies kept, hidden, "Standard" for all: code that nobody uses, to maintain.
+  - The spell setting kept for plugins: none asks for it, and its tests were the strategy's.
 
 ## Open questions
 

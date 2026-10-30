@@ -10,7 +10,7 @@ using D3B.Data.Packs;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The pack's icons as bitmaps the views draw: an item's, a profession's, a breed's spell's and a monster's, each made once (D135, D136, D234, D236).</summary>
+/// <summary>The pack's icons as bitmaps the views draw: an item's, a profession's and a monster's, each made once (D135, D136, D236).</summary>
 /// <remarks>
 /// One per pack, which every view model shares, made on the UI's thread as views first ask. An item the pack keeps no
 /// icon for, or a pack without icons, gives none, and the view keeps its neutral square.
@@ -22,7 +22,6 @@ internal sealed class GameIcons
     private readonly GameTables _tables;
     private readonly Dictionary<int, Bitmap?> _items = [];
     private readonly Dictionary<int, Bitmap?> _jobs = [];
-    private readonly Dictionary<int, Bitmap?> _spells = [];
     private readonly Dictionary<int, Bitmap?> _monsters = [];
     private IconCatalog? _catalog;
     private bool _read;
@@ -77,14 +76,6 @@ internal sealed class GameIcons
     public IImage? Job(int jobId)
     {
         return Catalog() is { } catalog && _tables.Jobs.TryGetJob(jobId, out var job) ? Cached(_jobs, catalog.Jobs, job.IconId) : null;
-    }
-
-    /// <summary>Gets a spell's icon.</summary>
-    /// <param name="spellId">The spell.</param>
-    /// <returns>Its icon, or <see langword="null"/> when the pack keeps none of it, as for a monster's spell.</returns>
-    public IImage? Spell(int spellId)
-    {
-        return Catalog() is { } catalog && _tables.Spells.TryGetSpell(spellId, out var spell) ? Cached(_spells, catalog.Spells, spell.IconId) : null;
     }
 
     /// <summary>Gets a monster's icon, its look's, which monsters share (D236).</summary>

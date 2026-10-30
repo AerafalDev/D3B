@@ -1,4 +1,3 @@
-using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using D3B.Engine.Maps;
@@ -282,24 +281,7 @@ public sealed class FightPlayTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task AStrategyPlayingTheFightsOutOfAnActivityHasTheAIPlaceTheCharacterTheFightLeftOpen()
-    {
-        var (connection, _) = await _play.EnterAsync(Far);
-        var monster = Beside(Far, 8, 0);
-        var near = Beside(monster, -3, 0);
-        var sent = connection.Sent.Count;
-
-        _play.Strategies.Settings = new StrategySettings { OutOfActivity = true, Closed = false, NoSpectators = false };
-        Placement(connection, near, monster);
-
-        // The strategy toggles neither option (D234): the placement is the AI's first request.
-        var placed = Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 1));
-
-        Assert.Equal((near, Self), (placed.CellId, placed.FighterId));
-    }
-
-    [Fact]
-    public async Task WithStandardOutOfAnActivityTheBotLeavesTheFightToThePlayer()
+    public async Task OutOfAnActivityTheBotLeavesTheFightToThePlayer()
     {
         var (connection, bot) = await _play.EnterAsync(Far);
         var monster = Beside(Far, 8, 0);

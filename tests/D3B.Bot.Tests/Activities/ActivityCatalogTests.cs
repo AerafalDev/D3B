@@ -23,11 +23,8 @@ public sealed class ActivityCatalogTests
         using var host = bot.Build();
         var catalog = host.Services.GetRequiredService<ActivityCatalog>();
 
-        // The bots module brings the fight's strategy, a kind of profile never started, after the activities (D233).
-        Assert.Equal(["test", "dependent", "strategy"], catalog.All.Select(definition => definition.Id));
-        Assert.Equal(["test", "dependent"], catalog.Activities.Select(definition => definition.Id));
-        Assert.Equal(["Test", "Dependent"], catalog.Activities.Select(definition => definition.Name.In(CultureInfo.InvariantCulture)));
-        Assert.Equal(ProfileKind.Strategy, catalog.Strategy?.Kind);
+        Assert.Equal(["test", "dependent"], catalog.All.Select(definition => definition.Id));
+        Assert.Equal(["Test", "Dependent"], catalog.All.Select(definition => definition.Name.In(CultureInfo.InvariantCulture)));
         Assert.True(catalog.TryGet("dependent", out var found));
         Assert.Same(catalog.All[1], found);
         Assert.False(catalog.TryGet("Dependent", out _));

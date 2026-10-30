@@ -4,15 +4,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Activities;
 
-/// <summary>A kind of profile: an activity the app can start on a bot, its id, its name, its settings, and how one is made (D87, D92, D98); or a fight's strategy, which is never started (D233).</summary>
+/// <summary>An activity the app can start on a bot: its id, its name, its settings, and how one is made (D87, D92, D98).</summary>
 /// <remarks>
-/// A module registers an activity with <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity}(IServiceCollection, string, LocalizedText)"/>,
-/// or with <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity, TSettings}"/> when it has settings, and the
-/// strategy with <see cref="ActivityServiceCollectionExtensions.AddStrategy{TSettings}"/>; <see cref="ActivityCatalog"/> lists them.
+/// A module registers it with <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity}(IServiceCollection, string, LocalizedText)"/>,
+/// or with <see cref="ActivityServiceCollectionExtensions.AddActivity{TActivity, TSettings}"/> when it has settings;
+/// <see cref="ActivityCatalog"/> lists them.
 /// </remarks>
 public sealed class ActivityDefinition
 {
-    private readonly Func<IServiceProvider, object?, BotActivity>? _create;
+    private readonly Func<IServiceProvider, object?, BotActivity> _create;
 
     /// <summary>Gets the activity's id, unique in the host.</summary>
     public string Id { get; }
@@ -22,9 +22,6 @@ public sealed class ActivityDefinition
 
     /// <summary>Gets the settings the activity declares, <see cref="ActivitySettings.None"/> when it has none.</summary>
     public ActivitySettings Settings { get; }
-
-    /// <summary>Gets what its profiles are: an activity's, or the strategy's.</summary>
-    public ProfileKind Kind { get; }
 
     /// <summary>Initializes a new instance of the <see cref="ActivityDefinition"/> class, its name the same in every language.</summary>
     /// <param name="id">The activity's id, unique in the host.</param>
@@ -59,29 +56,7 @@ public sealed class ActivityDefinition
         Id = id;
         Name = name;
         Settings = settings;
-        Kind = ProfileKind.Activity;
         _create = create;
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="ActivityDefinition"/> class, for a kind of profile that is never started, such as the strategy (D233).</summary>
-    /// <param name="id">Its id, unique in the host.</param>
-    /// <param name="name">Its name, as the app shows it, in its language.</param>
-    /// <param name="settings">The settings its profiles hold.</param>
-    /// <param name="kind">What its profiles are, never <see cref="ProfileKind.Activity"/>.</param>
-    /// <exception cref="ArgumentException">The kind is an activity's, which has a way to be made.</exception>
-    public ActivityDefinition(string id, LocalizedText name, ActivitySettings settings, ProfileKind kind)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(id);
-        ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(settings);
-
-        if (kind is ProfileKind.Activity)
-            throw new ArgumentException("An activity is made: give the constructor that makes it.", nameof(kind));
-
-        Id = id;
-        Name = name;
-        Settings = settings;
-        Kind = kind;
     }
 
     private static Func<IServiceProvider, object?, BotActivity> Created(Func<IServiceProvider, BotActivity> create)
@@ -104,13 +79,9 @@ public sealed class ActivityDefinition
     /// <param name="settings">The activity's settings, an instance of <see cref="ActivitySettings.Type"/>, or <see langword="null"/> when it has none.</param>
     /// <returns>A new activity: one activity runs on one bot, once.</returns>
     /// <exception cref="ArgumentException">The settings are not the activity's.</exception>
-    /// <exception cref="InvalidOperationException">The profile is no activity's, such as a strategy's.</exception>
     public BotActivity Create(IServiceProvider services, object? settings)
     {
         ArgumentNullException.ThrowIfNull(services);
-
-        if (_create is null)
-            throw new InvalidOperationException($"{Id} is a {Kind}, never started.");
 
         if (Settings.Type is { } type ? !type.IsInstanceOfType(settings) : settings is not null)
             throw new ArgumentException($"The settings of {Id} are a {Settings.Type?.Name ?? "nothing"}.", nameof(settings));

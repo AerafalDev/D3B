@@ -36,8 +36,7 @@ public sealed class ProfileStarter
         ArgumentNullException.ThrowIfNull(bot);
         ArgumentNullException.ThrowIfNull(profile);
 
-        // A strategy is played by characters, never started (D233).
-        if (!_catalog.TryGet(profile.ActivityId, out var definition) || definition.Kind is not ProfileKind.Activity)
+        if (!_catalog.TryGet(profile.ActivityId, out var definition))
             return new ProfileStart(null, ProfileStartFailure.ActivityMissing, [], null);
 
         var reading = definition.Settings.Read(profile.Settings);

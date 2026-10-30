@@ -3,7 +3,7 @@ using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>Resources, spells or monsters, in their order, chosen several at once in a dialog (D159, D234, D236): a resource with its profession and level, and a warning when a character playing the profile lacks it (D127).</summary>
+/// <summary>Resources or monsters, in their order, chosen several at once in a dialog (D159, D236): a resource with its profession and level, and a warning when a character playing the profile lacks it (D127).</summary>
 internal sealed partial class PickedGamesFieldViewModel : GamesFieldViewModel
 {
     /// <inheritdoc/>
@@ -23,10 +23,9 @@ internal sealed partial class PickedGamesFieldViewModel : GamesFieldViewModel
     /// <summary>Gets what choosing does: adding them, or leaving them out (D165).</summary>
     public string ChooseText => Editor.Localizer[ChooseKey];
 
-    /// <summary>Gets the key of what choosing says, such as <c>AddSpells</c> or <c>ExcludeResources</c>, its count's the same with <c>Count</c> after.</summary>
+    /// <summary>Gets the key of what choosing says, such as <c>AddMonsters</c> or <c>ExcludeResources</c>, its count's the same with <c>Count</c> after.</summary>
     public string ChooseKey => (Definition.IsExcluding ? "Exclude" : "Add") + Definition.Kind switch
     {
-        SettingKind.Spell => "Spells",
         SettingKind.Monster => "Monsters",
         _ => "Resources",
     };
@@ -41,7 +40,7 @@ internal sealed partial class PickedGamesFieldViewModel : GamesFieldViewModel
     /// <inheritdoc/>
     protected override string? WarningOf(object value)
     {
-        // A resource left out is never harvested: no level it asks is lacking; spells and monsters ask none.
+        // A resource left out is never harvested: no level it asks is lacking; monsters ask none.
         return Definition.IsExcluding || Definition.Kind is not SettingKind.Resource ? null : Editor.MissingLevelOf((int)value);
     }
 

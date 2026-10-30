@@ -319,7 +319,6 @@ internal sealed partial class SettingsEditor : ObservableObject
             SettingKind.Resource => (Icons?.Item(reference.Id), Game is not null && Game.TryGetSource(reference.Id, out var source) ? Icons?.Job(source.JobId) : null),
             SettingKind.Job => (Icons?.Job(reference.Id), null),
             SettingKind.Item => (Icons?.Item(reference.Id), null),
-            SettingKind.Spell => (Icons?.Spell(reference.Id), null),
             SettingKind.Monster => (Icons?.Monster(reference.Id), null),
             _ => (null, null),
         };
@@ -335,7 +334,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         return Option(SettingKind.Job, JobOf(jobId));
     }
 
-    /// <summary>Gets the group a value of a list is filtered by, and its level: a resource's profession, a spell's breed, a monster's super race.</summary>
+    /// <summary>Gets the group a value of a list is filtered by, and its level: a resource's profession or a monster's super race.</summary>
     /// <param name="kind">The list's kind.</param>
     /// <param name="id">The value.</param>
     /// <returns>Its group, or <see langword="null"/> for a resource of <c>Base</c>'s or a value of none, and its level, if it has one.</returns>
@@ -347,13 +346,12 @@ internal sealed partial class SettingsEditor : ObservableObject
         return kind switch
         {
             SettingKind.Resource when Game.TryGetSource(id, out var source) => (source.JobId, source.Level),
-            SettingKind.Spell when Game.TryGetBreed(id, out var breed) => (breed, null),
             SettingKind.Monster when Game.TryGetSuperRace(id, out var superRace) => (superRace is 0 ? null : superRace, ReferenceOf(kind, id).Level),
             _ => (null, null),
         };
     }
 
-    /// <summary>Names a group a list is filtered by, with its icon: a profession, a breed or a super race.</summary>
+    /// <summary>Names a group a list is filtered by, with its icon: a profession or a super race.</summary>
     /// <param name="kind">The list's kind.</param>
     /// <param name="groupId">The group.</param>
     /// <returns>It, named.</returns>
@@ -361,7 +359,6 @@ internal sealed partial class SettingsEditor : ObservableObject
     {
         var groups = kind switch
         {
-            SettingKind.Spell => Game?.Breeds,
             SettingKind.Monster => Game?.SuperRaces,
             _ => null,
         };
@@ -407,11 +404,10 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     private string? DetailOf(SettingKind kind, GameReference reference)
     {
-        // A resource of any profession says whose it is, its level beside; a spell its breed.
+        // A resource of any profession says whose it is, its level beside.
         return kind switch
         {
             SettingKind.Resource => SourceOf(reference.Id) ?? Names.Detail(reference),
-            SettingKind.Spell when Game is not null && Game.TryGetBreed(reference.Id, out var breed) => GroupOption(kind, breed).Name,
             _ => Names.Detail(reference),
         };
     }
@@ -425,7 +421,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),
             (SettingKind.Choice, false) => new ChoiceFieldViewModel(setting, this),
             (SettingKind.Choice, true) => new ChoicesFieldViewModel(setting, this),
-            (SettingKind.Resource or SettingKind.Spell or SettingKind.Monster, true) => new PickedGamesFieldViewModel(setting, this),
+            (SettingKind.Resource or SettingKind.Monster, true) => new PickedGamesFieldViewModel(setting, this),
             (SettingKind.Job, true) when setting.IsGathering => new GatheringJobsFieldViewModel(setting, this),
             (SettingKind.SubArea, true) when setting.IsSuggested => new SubAreasFieldViewModel(setting, this),
             (_, false) => new GameFieldViewModel(setting, this),

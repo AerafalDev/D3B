@@ -34,9 +34,6 @@ public enum SettingKind
     /// <summary>An item of the game, by its id, which the setting may restrict to some types, such as food (D148).</summary>
     Item,
 
-    /// <summary>A spell a breed casts, its variants included, by its id, which may be sought within a breed (D234).</summary>
-    Spell,
-
     /// <summary>A monster of the game, by its id, which may be sought within a super race (D236).</summary>
     Monster,
 }

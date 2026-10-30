@@ -1,7 +1,7 @@
 namespace D3B.Bot.Fighting;
 
 /// <summary>The fighting activity's settings: which groups it attacks, where, its upkeep and its bank (D236).</summary>
-/// <remarks>How the character fights is its strategy's, the profile it plays apart (D233).</remarks>
+/// <remarks>How the character fights is the AI's alone, the same for every character, as it judges each fight (D244).</remarks>
 public sealed class FightSettings
 {
     /// <summary>Gets or sets which groups to attack: those at the character's level, or those holding a monster chosen.</summary>

@@ -156,20 +156,6 @@ public sealed class AccountBook : IDisposable
             cancellationToken);
     }
 
-    /// <summary>Gives a character the strategy it fights with, or D3B's defaults (D233).</summary>
-    /// <param name="key">The character.</param>
-    /// <param name="strategyId">The strategy's profile id, or <see langword="null"/> for D3B's defaults, "Standard".</param>
-    /// <param name="cancellationToken">Stops the write.</param>
-    /// <returns>A task that completes once saved.</returns>
-    public Task SetStrategyAsync(CharacterKey key, int? strategyId, CancellationToken cancellationToken)
-    {
-        return WriteAsync(
-            context => context.Characters
-                .Where(character => character.AccountId == key.AccountId && character.Id == key.CharacterId)
-                .ExecuteUpdateAsync(setters => setters.SetProperty(character => character.StrategyId, strategyId), cancellationToken),
-            cancellationToken);
-    }
-
     /// <summary>Forgets an account and its characters, until its client lists them again.</summary>
     /// <param name="accountId">The account's id.</param>
     /// <param name="cancellationToken">Stops the write.</param>

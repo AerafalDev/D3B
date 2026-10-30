@@ -6,7 +6,7 @@ using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>The dialog choosing resources, spells or monsters several at once: searched by name, filtered by profession, breed or super race, resources its characters cannot gather yet dimmed (D159, D234, D236).</summary>
+/// <summary>The dialog choosing resources or monsters several at once: searched by name, filtered by profession or super race, resources its characters cannot gather yet dimmed (D159, D236).</summary>
 /// <remarks>The values checked are added in the order they were checked, after those the list holds.</remarks>
 internal sealed partial class GamePickerViewModel : ObservableObject
 {
@@ -17,7 +17,7 @@ internal sealed partial class GamePickerViewModel : ObservableObject
     private readonly List<GameChoiceViewModel> _checked = [];
     private readonly string _add;
 
-    /// <summary>Gets the groups to filter by, every one first: professions, breeds or super races.</summary>
+    /// <summary>Gets the groups to filter by, every one first: professions or super races.</summary>
     public IReadOnlyList<FilterChipViewModel> Groups { get; }
 
     /// <summary>Gets the values shown, by level then name.</summary>

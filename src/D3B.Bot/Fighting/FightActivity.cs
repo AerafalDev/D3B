@@ -16,7 +16,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Fighting;
 
-/// <summary>Fighting: the groups of monsters the settings allow found map after map through a zone and attacked, the AI playing each fight with the character's strategy (D233, D236).</summary>
+/// <summary>Fighting: the groups of monsters the settings allow found map after map through a zone and attacked, the AI playing each fight (D236, D244).</summary>
 /// <remarks>
 /// <para>
 /// Each step is chosen from the state (D87). Healed first under its share of life, on a map of the zone the character walks

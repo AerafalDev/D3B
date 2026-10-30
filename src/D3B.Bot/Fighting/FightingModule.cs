@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Fighting;
 
-/// <summary>Fighting monsters, the activity made as harvesting is (D236): the groups a profile chooses, found and attacked through a zone, each fight played by the AI with the character's strategy (D233).</summary>
+/// <summary>Fighting monsters, the activity made as harvesting is (D236): the groups a profile chooses, found and attacked through a zone, each fight played by the AI (D244).</summary>
 /// <remarks>Registers <see cref="FightActivity"/> as <c>fight</c>, with a preset, "Automatic fight", which D3B stores once as a profile (D168). Requires the bots module.</remarks>
 public sealed class FightingModule : IModule
 {

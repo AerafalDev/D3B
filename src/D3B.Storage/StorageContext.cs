@@ -92,10 +92,9 @@ public sealed class StorageContext : DbContext
             character.HasKey(known => new { known.AccountId, known.Id });
             character.Ignore(known => known.Key);
 
-            // Forgetting an account forgets its characters; deleting a profile, or a strategy, leaves its characters without one.
+            // Forgetting an account forgets its characters; deleting a profile leaves its characters without one.
             character.HasOne<KnownAccount>().WithMany().HasForeignKey(known => known.AccountId).OnDelete(DeleteBehavior.Cascade);
             character.HasOne<Profile>().WithMany().HasForeignKey(known => known.ProfileId).OnDelete(DeleteBehavior.SetNull);
-            character.HasOne<Profile>().WithMany().HasForeignKey(known => known.StrategyId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

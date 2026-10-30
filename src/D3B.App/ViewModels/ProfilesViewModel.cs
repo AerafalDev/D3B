@@ -126,12 +126,12 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         return _catalog is not null && _catalog.TryGet(id, out var definition) ? definition : null;
     }
 
-    /// <summary>Gets the characters that play a profile, or fight with it, a strategy (D233).</summary>
+    /// <summary>Gets the characters that play a profile.</summary>
     /// <param name="id">The profile's id.</param>
     /// <returns>The characters.</returns>
     public IReadOnlyList<KnownCharacter> PlayersOf(int id)
     {
-        return [.. (Accounts?.Characters ?? []).Where(character => character.ProfileId == id || character.StrategyId == id)];
+        return [.. (Accounts?.Characters ?? []).Where(character => character.ProfileId == id)];
     }
 
     /// <summary>Gets the characters that play a profile, with their levels and their map, as their bots last saw them.</summary>

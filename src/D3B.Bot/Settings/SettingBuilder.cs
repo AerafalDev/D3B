@@ -116,7 +116,7 @@ public sealed class SettingBuilder<TSettings>
 
     /// <summary>Makes a list of resources those to leave out: the app offers to exclude rather than add, and warns of no level lacking (D165).</summary>
     /// <returns>This builder.</returns>
-    /// <exception cref="InvalidOperationException">The setting is no list of resources, spells or monsters.</exception>
+    /// <exception cref="InvalidOperationException">The setting is no list of resources or monsters.</exception>
     public SettingBuilder<TSettings> Excluding()
     {
         _setting.SetExcluding();

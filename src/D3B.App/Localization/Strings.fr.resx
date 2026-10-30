@@ -1448,18 +1448,6 @@
   <data name="AboutUpdate" xml:space="preserve">
     <value>Mise à jour</value>
   </data>
-  <data name="AddSpells" xml:space="preserve">
-    <value>Ajouter des sorts</value>
-  </data>
-  <data name="AddSpellsCount" xml:space="preserve">
-    <value>Ajouter {0}</value>
-  </data>
-  <data name="ExcludeSpells" xml:space="preserve">
-    <value>Exclure des sorts</value>
-  </data>
-  <data name="ExcludeSpellsCount" xml:space="preserve">
-    <value>Exclure {0}</value>
-  </data>
   <data name="AddMonsters" xml:space="preserve">
     <value>Ajouter des monstres</value>
   </data>
@@ -1474,17 +1462,5 @@
   </data>
   <data name="NoGroup" xml:space="preserve">
     <value>Autres</value>
-  </data>
-  <data name="Strategy" xml:space="preserve">
-    <value>Stratégie</value>
-  </data>
-  <data name="StrategyHint" xml:space="preserve">
-    <value>Comment l'IA joue les combats du perso. Se modifie sur la page Profils.</value>
-  </data>
-  <data name="StrategyStandard" xml:space="preserve">
-    <value>Standard</value>
-  </data>
-  <data name="ProfileType" xml:space="preserve">
-    <value>Type</value>
   </data>
 </root>

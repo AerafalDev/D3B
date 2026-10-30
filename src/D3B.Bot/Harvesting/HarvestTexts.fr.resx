@@ -456,6 +456,6 @@
     <value>L'IA combat</value>
   </data>
   <data name="AiFightsHelp" xml:space="preserve">
-    <value>L'IA joue le combat d'un protecteur ou d'une agression avec la stratégie du perso ; décoché, c'est toi qui le joues.</value>
+    <value>L'IA joue le combat d'un protecteur ou d'une agression ; décoché, c'est toi qui le joues.</value>
   </data>
 </root>

@@ -87,7 +87,7 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>Gets whether a behavior runs.</summary>
     public bool IsActing => _acting;
 
-    /// <summary>Gets or sets whether the AI plays every fight of the character, whatever its activity and strategy say, off at first: the host's <c>Fights:Alone</c>, for the measures (D235).</summary>
+    /// <summary>Gets or sets whether the AI plays every fight of the character, whatever its activity says, off at first: the host's <c>Fights:Alone</c>, for the measures (D235, D244).</summary>
     public bool FightsAlone
     {
         get => _fightsAlone;
@@ -107,18 +107,8 @@ public sealed class BotActor : IAsyncDisposable
     /// <summary>Gets the number of the fight <see cref="LastFightEnd"/> ended, as <see cref="FightsBegun"/> counted it.</summary>
     public int LastEndedFight => Volatile.Read(ref _lastEndedFight);
 
-    /// <summary>Gets the activity running, until it is over.</summary>
-    private BotActivity? Running => _activity is { IsOver: false } run ? run.Activity : null;
-
-    /// <summary>Tells whether the AI plays the character's fights now: the host's switch, else its activity's own fights as its profile says, else, out of an activity, as its strategy says (D235).</summary>
-    /// <param name="strategy">The character's strategy.</param>
-    /// <returns>Whether the AI plays them.</returns>
-    public bool Fights(StrategySettings strategy)
-    {
-        ArgumentNullException.ThrowIfNull(strategy);
-
-        return _fightsAlone || (Running is { } activity ? activity.FightsItsFights : strategy.OutOfActivity);
-    }
+    /// <summary>Gets whether the AI plays the character's fights now: the host's switch, or its activity's own fights as its profile says; out of an activity, the fights are the player's (D235, D244).</summary>
+    public bool Fights => _fightsAlone || _activity is { IsOver: false, Activity.FightsItsFights: true };
 
     /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
     public ActivityRun? Activity => _activity;

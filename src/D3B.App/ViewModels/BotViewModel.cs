@@ -5,7 +5,6 @@ using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
-using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
 using D3B.Data;
@@ -422,14 +421,11 @@ internal sealed partial class BotViewModel : ObservableObject
         {
             ActivityDefinition? definition = null;
 
-            // A strategy is a character's, never started on its card (D233).
-            if (profile.ActivityId == Strategies.ProfileId || (catalog?.TryGet(profile.ActivityId, out definition) is true && definition.Kind is not ProfileKind.Activity))
-                continue;
-
+            catalog?.TryGet(profile.ActivityId, out definition);
             choices.Add(new ActivityChoiceViewModel(profile, definition, culture, language => definition?.Name.In(language) ?? _localizer.Format("ActivityMissing", profile.ActivityId)));
         }
 
-        foreach (var definition in catalog?.Activities ?? [])
+        foreach (var definition in catalog?.All ?? [])
             choices.Add(new ActivityChoiceViewModel(definition, culture, _ => definition.Settings.IsEmpty ? null : _localizer["DefaultSettings"]));
 
         var assigned = _accounts?.Find(Bot.Key)?.ProfileId;
@@ -439,7 +435,6 @@ internal sealed partial class BotViewModel : ObservableObject
             ?? choices.FirstOrDefault(choice => assigned is not null && choice.Profile?.Id == assigned)
             ?? (choices.Count == 1 ? choices[0] : null);
     }
-
 
     private bool CanStart()
     {

@@ -596,7 +596,7 @@ public sealed class FightJudge
 
     private double Weight(Combatant ally)
     {
-        return ally.Id == _actorId ? _weights.Survival : ally.IsSummon ? 0.3 : _weights.Allies;
+        return ally.Id == _actorId ? _weights.Survival : ally.IsSummon ? 0.3 : 1;
     }
 
     private void Threaten(ImaginedFight fight, Combatant enemy, int known, Span<double> feared)

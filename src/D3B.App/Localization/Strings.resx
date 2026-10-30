@@ -1448,18 +1448,6 @@
   <data name="AboutUpdate" xml:space="preserve">
     <value>Update</value>
   </data>
-  <data name="AddSpells" xml:space="preserve">
-    <value>Add spells</value>
-  </data>
-  <data name="AddSpellsCount" xml:space="preserve">
-    <value>Add {0}</value>
-  </data>
-  <data name="ExcludeSpells" xml:space="preserve">
-    <value>Exclude spells</value>
-  </data>
-  <data name="ExcludeSpellsCount" xml:space="preserve">
-    <value>Exclude {0}</value>
-  </data>
   <data name="AddMonsters" xml:space="preserve">
     <value>Add monsters</value>
   </data>
@@ -1474,17 +1462,5 @@
   </data>
   <data name="NoGroup" xml:space="preserve">
     <value>Others</value>
-  </data>
-  <data name="Strategy" xml:space="preserve">
-    <value>Strategy</value>
-  </data>
-  <data name="StrategyHint" xml:space="preserve">
-    <value>How the AI fights the character's fights. Edited on the profiles page.</value>
-  </data>
-  <data name="StrategyStandard" xml:space="preserve">
-    <value>Standard</value>
-  </data>
-  <data name="ProfileType" xml:space="preserve">
-    <value>Type</value>
   </data>
 </root>
