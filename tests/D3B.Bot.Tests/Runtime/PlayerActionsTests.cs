@@ -23,6 +23,7 @@ public sealed class PlayerActionsTests
     {
         new GameActionAcknowledgementRequest { ActionId = 3 },
         new FightTurnReadyRequest { Ready = true },
+        new FightTurnFinishRequest { Automatic = true },
     };
 
     [Theory]
@@ -34,7 +35,7 @@ public sealed class PlayerActionsTests
 
     [Theory]
     [MemberData(nameof(TheClientsInAFight))]
-    public void TheAcknowledgementsAndTheReadinessForATurnAreTheClientsOwn(IMessage request)
+    public void TheAcknowledgementsTheReadinessForATurnAndATurnsEndItMarksAreTheClientsOwn(IMessage request)
     {
         Assert.False(PlayerActions.Starts(_state, request));
     }

@@ -5882,6 +5882,21 @@ again. Builds D29, D79, D80.*
   banking goes to the bank's nearest other inside.
 - **Not measured in game yet**: which of Sarakech's two other insides holds the bank.
 
+## D252: A turn's end the client marks as its own, not the player's hand
+
+*2026-10-30, after release 0.3.1, what the owner and a friend met in game: in a fight, the client's inactivity popup
+showed and the bot paused, though no one had touched the client, the owner's words. Builds D66, D202.*
+
+- **Measured** on the friend's capture (client.md): the client ended 4 of the character's turns by itself,
+  `FightTurnFinishRequest` with its first field set, which none of the 170 turns' ends the owner sent by hand nor D3B's
+  146 sets. D3B counted every turn's end the client sent as the player's hand (`PlayerActions`): two of them cut the
+  AI's turn and paused the bot, and a turn after ran its 60 s, no one playing.
+- **Made**: a turn's end the client marks as its own is not the player's, and the field is named `automatic`; the
+  mapping pairs fields by number, so that the published mapping 14 still reads it. The AI's turn cut, it plays the next
+  one. A turn's end by hand still pauses the bot.
+- **Left**: while its popup shows, the client may still end the AI's turns by itself. Keeping the popup away would mean
+  feigning a player at the client, too near what D2 puts out of scope. When the client shows it is not measured.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
