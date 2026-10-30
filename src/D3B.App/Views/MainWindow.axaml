@@ -3,6 +3,7 @@
     x:ClassModifier="internal"
     x:DataType="vm:MainViewModel"
     FontSize="14"
+    Icon="/Assets/d3b.ico"
     Title="D3B"
     TitleFontWeight="SemiBold"
     Width="1240"
@@ -18,10 +19,13 @@
     xmlns:vm="clr-namespace:D3B.App.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <shadui:Window.LogoContent>
-        <c:Icon
-            Data="{StaticResource IconBot}"
+        <Image
+            Height="20"
             Margin="12,0,0,0"
-            VerticalAlignment="Center" />
+            RenderOptions.BitmapInterpolationMode="HighQuality"
+            Source="/Assets/d3b.png"
+            VerticalAlignment="Center"
+            Width="20" />
     </shadui:Window.LogoContent>
     <shadui:Window.RightWindowTitleBarContent>
         <c:StatusPill

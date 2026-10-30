@@ -39,9 +39,10 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         return [.. root.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text).OfType<string>().Where(text => text.Length > 0)];
     }
 
-    private static int Icons(Visual root)
+    private static int Icons(Window window)
     {
-        return root.GetVisualDescendants().OfType<Image>().Count(image => image.IsEffectivelyVisible && image.Source is not null);
+        // The pages' icons, the pack's: the title bar's logo is the window's own, outside its content (D231).
+        return ((Visual)window.Content!).GetVisualDescendants().OfType<Image>().Count(image => image.IsEffectivelyVisible && image.Source is not null);
     }
 
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)

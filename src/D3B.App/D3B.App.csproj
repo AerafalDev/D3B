@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <NeutralLanguage>en</NeutralLanguage>
+    <ApplicationIcon>Assets\d3b.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ClientVersion>3.7.12.12</ClientVersion>
   </PropertyGroup>
@@ -18,6 +19,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\D3B.Storage\D3B.Storage.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
   <ItemGroup>
