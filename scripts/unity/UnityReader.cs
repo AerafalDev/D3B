@@ -282,6 +282,50 @@ internal ref struct UnityReader
         return values;
     }
 
+    /// <summary>Reads an array, or a vector, of floats.</summary>
+    public float[] ReadSingleArray(int node)
+    {
+        var array = _tree.ArrayOf(node);
+        var item = _tree[_tree[array].Children[1]];
+
+        if (item.Type is not "float")
+            throw _tree.Unexpected(node, "an array of floats");
+
+        var values = new float[Count(4)];
+
+        for (var i = 0; i < values.Length; i++)
+            values[i] = BinaryPrimitives.ReadSingleLittleEndian(Take(4));
+
+        AlignAfter(array);
+
+        if (array != node)
+            AlignAfter(node);
+
+        return values;
+    }
+
+    /// <summary>Reads an array, or a vector, of strings.</summary>
+    public string[] ReadStringArray(int node)
+    {
+        var array = _tree.ArrayOf(node);
+        var item = _tree[array].Children[1];
+
+        if (_tree[item].Type is not "string")
+            throw _tree.Unexpected(node, "an array of strings");
+
+        var values = new string[Count(4)];
+
+        for (var i = 0; i < values.Length; i++)
+            values[i] = ReadString(item);
+
+        AlignAfter(array);
+
+        if (array != node)
+            AlignAfter(node);
+
+        return values;
+    }
+
     /// <summary>Reads an array, or a vector, of signed or unsigned 64-bit integers, such as the keys of a dictionary.</summary>
     public long[] ReadInt64Array(int node)
     {

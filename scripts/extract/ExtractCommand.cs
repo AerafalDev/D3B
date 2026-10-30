@@ -4,12 +4,17 @@ using System.Reflection;
 using System.Security.Cryptography;
 using D3B.Data;
 using D3B.Data.Banks;
+using D3B.Data.Breeds;
+using D3B.Data.Characteristics;
+using D3B.Data.Effects;
 using D3B.Data.Icons;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.Maps;
+using D3B.Data.Monsters;
 using D3B.Data.Packs;
+using D3B.Data.Spells;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Scripts.Unity;
@@ -95,6 +100,12 @@ internal static class ExtractCommand
             .Concat(InteractivesExtractor.Inputs(client))
             .Concat(BanksExtractor.Inputs(client))
             .Concat(IconsExtractor.Inputs(client))
+            .Concat(EffectsExtractor.Inputs(client))
+            .Concat(CharacteristicsExtractor.Inputs(client))
+            .Concat(SpellsExtractor.Inputs(client))
+            .Concat(StatesExtractor.Inputs(client))
+            .Concat(MonstersExtractor.Inputs(client))
+            .Concat(BreedsExtractor.Inputs(client))
             .Distinct(StringComparer.OrdinalIgnoreCase);
         var fingerprint = InputFingerprint.Compute(client, manifest, inputs);
         var extractor = typeof(GamePack).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
@@ -119,10 +130,17 @@ internal static class ExtractCommand
         var interactives = InteractivesExtractor.Read(client);
         var banks = BanksExtractor.Read(client, atlas, graph);
         var icons = IconsExtractor.Read(client, items, jobs);
+        var effects = EffectsExtractor.Read(client);
+        var characteristics = CharacteristicsExtractor.Read(client, TextsExtractor.Held(client));
+        var spells = SpellsExtractor.Read(client, effects);
+        var states = StatesExtractor.Read(client, spells);
+        var monsters = MonstersExtractor.Read(client, spells);
+        var breeds = BreedsExtractor.Read(client, spells, characteristics);
+        var fights = new FightTables(spells, states, effects, monsters, breeds, characteristics);
 
         WorldExtractor.Check(graph, atlas, maps);
 
-        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks));
+        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks, fights));
 
         Console.WriteLine($"Read in {reading.Elapsed.TotalSeconds:F1} s");
 
@@ -153,6 +171,12 @@ internal static class ExtractCommand
             writer.Add(InteractiveCatalog.EntryName, interactives);
             writer.Add(BankCatalog.EntryName, banks);
             writer.Add(IconCatalog.EntryName, icons);
+            writer.Add(SpellCatalog.EntryName, spells);
+            writer.Add(SpellStateCatalog.EntryName, states);
+            writer.Add(EffectCatalog.EntryName, effects);
+            writer.Add(MonsterCatalog.EntryName, monsters);
+            writer.Add(BreedCatalog.EntryName, breeds);
+            writer.Add(CharacteristicCatalog.EntryName, characteristics);
 
             foreach (var map in maps)
                 writer.Add(MapData.EntryName(map.Id), map);

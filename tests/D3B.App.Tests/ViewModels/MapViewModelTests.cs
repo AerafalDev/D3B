@@ -245,7 +245,7 @@ public sealed class MapViewModelTests : IAsyncDisposable
         connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
         connection.Server(new MapCurrentEvent { MapId = TestPlay.EastMapId });
         connection.Server(new FightFighterShowEvent { Fighter = Fighter(TestPlay.CharacterId, 314, FightTeam.Challenger) });
-        connection.Server(new FightFighterShowEvent { Fighter = Fighter(-1, 385, FightTeam.Defender, 3_271) });
+        connection.Server(new FightFighterShowEvent { Fighter = Fighter(-1, 385, FightTeam.Defender, TestGameData.Gobball) });
         connection.Server(new FightFighterShowEvent { Fighter = Fighter(-2, 345, FightTeam.Challenger, 5_836) });
         connection.Server(new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { ChallengerCells = { 314, 300 }, DefenderCells = { 385, 371 } } });
         await bot.ProcessedAsync();
@@ -258,7 +258,8 @@ public sealed class MapViewModelTests : IAsyncDisposable
         Assert.Equal(314, placing.Character);
         Assert.Equal([385], placing.Enemies);
         Assert.Equal([345], placing.Allies);
-        Assert.Contains("Ennemi : monstre 3271, grade 3, 21/21 PV, 2 PA, 3 PM", Hover(page, 385));
+        Assert.Contains("Ennemi : Bouftou, grade 3, 21/21 PV, 2 PA, 3 PM", Hover(page, 385));
+        Assert.Contains("Allié : monstre 5836, grade 3, 21/21 PV, 2 PA, 3 PM", Hover(page, 345));
         Assert.Contains("Cellule de placement de l'autre équipe", Hover(page, 385));
         Assert.Contains("Cellule de placement de son équipe", Hover(page, 300));
 

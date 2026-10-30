@@ -113,7 +113,7 @@ message FightCast {
 message FightCastSpell {
   option (d3b.readable.partial) = true;
 
-  // A number that follows the spell, a level of it in the client's table likely: 9b measures it.
+  // The spell's level, by its id in the client's table: on each of the 344 casts captured, a level of the spell (D184).
   int32 level_id = 1;
 
   int32 spell_id = 2;

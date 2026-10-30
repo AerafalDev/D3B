@@ -5,7 +5,7 @@ using D3B.Data.World;
 
 namespace D3B.App.ViewModels.Maps;
 
-/// <summary>What the map page names from the pack in the app's language: places, sub-areas, elements, skills and bankers (D121).</summary>
+/// <summary>What the map page names from the pack in the app's language: places, sub-areas, elements, skills, bankers and monsters (D121).</summary>
 /// <remarks>Each name falls back on its id when the pack's texts or tables do not hold it, as the journal's do (D112).</remarks>
 internal sealed class MapNames
 {
@@ -18,7 +18,7 @@ internal sealed class MapNames
     /// <param name="localizer">The app's texts.</param>
     /// <param name="world">The pack's world, for the maps' coordinates and sub-areas.</param>
     /// <param name="texts">The pack's texts.</param>
-    /// <param name="tables">The pack's tables, for the elements, skills and bankers.</param>
+    /// <param name="tables">The pack's tables, for the elements, skills, bankers and monsters.</param>
     public MapNames(Localizer localizer, GameWorld? world, GameTexts? texts, GameTables? tables)
     {
         _localizer = localizer;
@@ -87,6 +87,16 @@ internal sealed class MapNames
     public int? Gathered(int skillId)
     {
         return _tables is not null && _tables.Jobs.TryGetSkill(skillId, out var skill) && skill.GatheredItemId > 0 ? skill.GatheredItemId : null;
+    }
+
+    /// <summary>Names a monster, such as a fighter the server names by it.</summary>
+    /// <param name="monsterId">The monster.</param>
+    /// <returns>Its name, or its id.</returns>
+    public string Monster(int monsterId)
+    {
+        return _tables is not null && _texts is not null && _tables.Monsters.TryGetMonster(monsterId, out var monster) && _texts.TryGet(_localizer.GameLanguage, monster.NameId, out var name)
+            ? name
+            : _localizer.Format("MapMonsterNumber", monsterId);
     }
 
     /// <summary>Names a non-player character: a banker by the pack's name, any other by its id.</summary>

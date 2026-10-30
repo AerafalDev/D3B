@@ -32,8 +32,26 @@ internal static class TextsExtractor
         return I18nFile.Read(path);
     }
 
+    /// <summary>Gets the texts every language holds, for a table that names a text the client lacks.</summary>
+    public static IReadOnlySet<int> Held(ClientInstall client)
+    {
+        HashSet<int>? held = null;
+
+        foreach (var language in TextLanguages.All)
+        {
+            var ids = Open(client, language).Texts.Select(text => text.Id);
+
+            if (held is null)
+                held = [.. ids];
+            else
+                held.IntersectWith(ids);
+        }
+
+        return held ?? [];
+    }
+
     /// <summary>Gets the texts the tables name.</summary>
-    public static IReadOnlySet<int> Named(WorldAtlas atlas, ItemCatalog items, JobCatalog jobs, InteractiveCatalog interactives, BankCatalog banks)
+    public static IReadOnlySet<int> Named(WorldAtlas atlas, ItemCatalog items, JobCatalog jobs, InteractiveCatalog interactives, BankCatalog banks, FightTables fights)
     {
         var named = new HashSet<int>();
 
@@ -64,7 +82,10 @@ internal static class TextsExtractor
         foreach (var banker in banks.Bankers.Span)
             named.Add(banker.NameId);
 
-        // 12,274 maps of client 3.7.12.12 name text 0, which no text file holds: they have no name.
+        named.UnionWith(fights.Named());
+
+        // 12,274 maps of client 3.7.12.12 name text 0, which no text file holds, and so do a spell, 27 effects and two
+        // characteristics: they have no name.
         named.Remove(0);
 
         return named;

@@ -635,8 +635,8 @@ internal sealed partial class MapViewModel : ObservableObject
         var side = _localizer[fighter.Team == fight.Team ? "MapAlly" : "MapEnemy"];
         var who = fighter switch
         {
-            { MonsterId: { } monster, SummonerId: not null } => _localizer.Format("MapSummon", monster),
-            { MonsterId: { } monster } => _localizer.Format("MapMonster", monster, fighter.Grade ?? 0),
+            { MonsterId: { } monster, SummonerId: not null } => _localizer.Format("MapSummon", _names!.Monster(monster)),
+            { MonsterId: { } monster } => _localizer.Format("MapMonster", _names!.Monster(monster), fighter.Grade ?? 0),
             _ => _localizer.Format("MapCharacterFighter", fighter.Level ?? 0),
         };
 

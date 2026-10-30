@@ -6,6 +6,7 @@ using D3B.Data;
 using D3B.Data.Banks;
 using D3B.Data.Interactives;
 using D3B.Data.Jobs;
+using D3B.Data.Monsters;
 using D3B.Data.Packs;
 using D3B.Data.Tests;
 using D3B.Data.Texts;
@@ -15,10 +16,13 @@ namespace D3B.App.Tests;
 /// <summary>The game's values of a small world, named in French and English by a pack's texts, as the app's pickers read them.</summary>
 /// <remarks>
 /// Its tables name what the map of <see cref="TestPlay"/> holds, as the map page names it: the tree and the door its
-/// server describes, the tree's skill, which gathers, the door's, and the banker.
+/// server describes, the tree's skill, which gathers, the door's, the banker, and a monster its fights meet.
 /// </remarks>
 internal sealed class TestGameData : IDisposable
 {
+    /// <summary>A monster the pack names.</summary>
+    public const int Gobball = 3_271;
+
     private static readonly (int Id, string French, string English)[] _names =
     [
         (101, "Amakna", "Amakna"),
@@ -36,6 +40,7 @@ internal sealed class TestGameData : IDisposable
         (503, "Couper", "Cut"),
         (504, "Entrer", "Enter"),
         (505, "Banquier", "Banker"),
+        (506, "Bouftou", "Gobball"),
     ];
 
     private readonly TemporaryDirectory _directory = new();
@@ -62,6 +67,14 @@ internal sealed class TestGameData : IDisposable
                 new[] { new Job(Job.Base, 200, Job.NoIcon), new Job(TestReferences.Lumberjack, 202, 1) },
                 new[] { new Skill(TestPlay.TreeSkillId, 503, TestReferences.Lumberjack, 289, 1, 1, false), new Skill(184, 504, Job.Base, Skill.NoItem, 0, 1, false) }));
             writer.Add(BankCatalog.EntryName, new BankCatalog(Array.Empty<Bank>(), new[] { new Banker(TestPlay.BankerNpcId, 505, 0, 1) }, new[] { TestPlay.ChestReplyId }));
+            writer.Add(MonsterCatalog.EntryName, new MonsterCatalog(
+                new[] { new Monster { Id = Gobball, NameId = 506 } },
+                ReadOnlyMemory<MonsterGrade>.Empty,
+                ReadOnlyMemory<MonsterSpell>.Empty,
+                ReadOnlyMemory<byte>.Empty,
+                ReadOnlyMemory<MonsterRatio>.Empty,
+                ReadOnlyMemory<MonsterRace>.Empty,
+                ReadOnlyMemory<MonsterRace>.Empty));
             writer.Complete();
         }
 

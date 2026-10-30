@@ -43,7 +43,8 @@ back learned and kept, and each run kept for a statistics page (step 6, session 
 maps, and profiles given (step 6, session 6e); the app published by CI with Velopack, shipping its client build's pack,
 schema and mapping, and updating itself from the repository's releases, the host downloading nothing (step 6, session
 6f); the fight's protocol measured and mapped, the fight's state in the bot's, and the fight on the app's map (step 9,
-session 9a). Everything else below is the target.
+session 9a); the fight's data in the pack, format 5, its flags read in the client's code, and the monsters named on the
+map (step 9, session 9b). Everything else below is the target.
 
 ## Overview
 
@@ -387,7 +388,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 4 holds (D27, D29, D139):
+- A pack of format 5 holds (D27, D29, D139, D182):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -397,6 +398,13 @@ Built at step 2 (D24 to D33):
     (`BankCatalog`), each read once by `GameTables`; items and jobs name their icon;
   - the icons of the items a harvest names and of the professions, 64 pixels square in raw RGBA, decoded from the client's
     BC7 textures by the extraction tool (`IconCatalog`, D135 to D137), read once by `GameTables`;
+  - what fights need, each read once by `GameTables`: the spells, their levels with every field and their effects, each
+    with its zone, target mask and triggers as the client writes them, the spells' variants, and the Rogue's bombs and
+    walls (`SpellCatalog`, in `D3B.Data.Spells`); the states (`SpellStateCatalog`); the effects, by the id spells name and
+    the server announces (`EffectCatalog`); the monsters, their grades, spells by grade, characteristic ratios and races
+    (`MonsterCatalog`); the breeds, their spells, roles and costs (`BreedCatalog`); the characteristics and the Lua
+    formulas scaling a monster's, kept and not run (`CharacteristicCatalog`). Their flags have the bits the client's code
+    gives them, in D3B's own enums (D183). A cast names its level by id, a monster fighter its monster and grade (D184);
   - in French and English, the texts these name (`GameTexts`).
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
@@ -504,7 +512,7 @@ updating itself in 6f (D171 to D173).
   stairs, and the fight; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
   bag's and a fight's maps are drawn as the others; in a fight, the Fight layer tints the teams' placement cells red and
   blue during the placement, the server's (D180), then draws the character on its fighter's cell and its allies and
-  enemies as squares, each described under the pointer with its life, AP and MP; a resource by its icon, faded once harvested (D141). A running
+  enemies as squares, each described under the pointer with its life, AP and MP, a monster by its name (D184); a resource by its icon, faded once harvested (D141). A running
   activity's report adds a line, an Activity layer ringing the elements it wants and the one it goes for and marking the
   exit it heads to, and its tour's mini-map, gone through, probable, to see, without a resource, growing back and isolated
   (D131, D138, D145, D149).
@@ -598,7 +606,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 
 Step 9, in seven sessions, each layer measured before the next (D177). Built in session 9a: the fight's protocol, named
 and pinned in `actors.proto`, `fights.proto` and `fight_actions.proto` (D178); the fight's state in the bot's (D179, in
-[Bot run time](#bot-run-time)); the fight on the app's map (D180).
+[Bot run time](#bot-run-time)); the fight on the app's map (D180). Built in session 9b: the fight's data in the pack,
+format 5 (D182, in [Game data](#game-data)), its flags read in the client's code (D183), the cast's level and the
+monsters checked on the captures, and the monsters named on the map (D184). The references' ideas for each session are
+D181.
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -606,9 +617,8 @@ and pinned in `actors.proto`, `fights.proto` and `fight_actions.proto` (D178); t
   AP and MP spent, life lost and healed, teleports, swaps, summons and deaths; it asks the client whether it is ready for
   the next turn. It ends with each fighter's outcome, experience and loot. The bot acts through the cast's, the walk's,
   the placement's, the readiness' and the turn's end's requests; the client sends the rest by itself.
-- Next, in `D3B.Data` and `D3B.Engine`: the spells, effects, states and monsters in the pack (9b); the rules of a cast,
-  line of sight, zones, masks and conditions (9c); the effects' engine, Bubble's formulas measured one by one against the
-  server's answers (9d).
+- Next, in `D3B.Engine`, from the pack's catalogs: the rules of a cast, line of sight, zones, masks and conditions (9c);
+  the effects' engine, Bubble's formulas measured one by one against the server's answers (9d).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e). The simulator applies spell effects read
   from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.

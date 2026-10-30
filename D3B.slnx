@@ -27,8 +27,12 @@
   </Folder>
   <Folder Name="/scripts/extract/">
     <File Path="scripts/extract/BanksExtractor.cs" />
+    <File Path="scripts/extract/BreedsExtractor.cs" />
+    <File Path="scripts/extract/CharacteristicsExtractor.cs" />
     <File Path="scripts/extract/ClientMapLayout.cs" />
+    <File Path="scripts/extract/EffectsExtractor.cs" />
     <File Path="scripts/extract/ExtractCommand.cs" />
+    <File Path="scripts/extract/FightTables.cs" />
     <File Path="scripts/extract/IconsExtractor.cs" />
     <File Path="scripts/extract/InputFingerprint.cs" />
     <File Path="scripts/extract/InteractivesExtractor.cs" />
@@ -36,6 +40,9 @@
     <File Path="scripts/extract/JobsExtractor.cs" />
     <File Path="scripts/extract/MapReader.cs" />
     <File Path="scripts/extract/MapsExtractor.cs" />
+    <File Path="scripts/extract/MonstersExtractor.cs" />
+    <File Path="scripts/extract/SpellsExtractor.cs" />
+    <File Path="scripts/extract/StatesExtractor.cs" />
     <File Path="scripts/extract/TextsExtractor.cs" />
     <File Path="scripts/extract/WorldExtractor.cs" />
     <File Path="scripts/extract/WorldGraphReader.cs" />
