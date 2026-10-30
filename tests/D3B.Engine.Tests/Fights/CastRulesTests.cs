@@ -39,6 +39,16 @@ public sealed class CastRulesTests
     }
 
     [Fact]
+    public void TheStatesLetACasterCastALevelWhenItsCriterionHoldsAndNoStatePreventsIt()
+    {
+        Assert.False(_rules.StatesAllow(Level(_spells, 30), _caster));
+        Assert.True(_rules.StatesAllow(Level(_spells, 30), _caster with { States = [5] }));
+        Assert.False(_rules.StatesAllow(Level(_spells, 10), _caster with { States = [9] }));
+        Assert.True(_rules.StatesAllow(Level(_spells, 70), _caster with { States = [9] }));
+        Assert.True(_rules.StatesAllow(Level(_spells, 10), _caster with { ActionPoints = 0 }));
+    }
+
+    [Fact]
     public void ModifiersChangeTheLevelOfTheirSpellAlone()
     {
         var level = Level(_spells, 10);

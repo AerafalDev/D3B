@@ -8,8 +8,9 @@ namespace D3B.Engine.Effects;
 /// <para>
 /// The pack says the element of damage, steals and heals, the characteristic a boost changes and how, and the category of
 /// a spell's modifiers (D182). D3B adds what the pack leaves to the client's code: which id damages, steals, heals,
-/// shields, pushes, teleports, summons, sets a state or casts a spell, named as the client's actions are (D183) and
-/// measured on the fights captured where cast (client.md); the best and worst elements, which the pack gives no element.
+/// shields, pushes, teleports, summons, sets a state or casts a spell, and who casts that spell where, named as the client's
+/// actions are (D183) and measured on the fights captured where cast (client.md); the best and worst elements, which the
+/// pack gives no element.
 /// </para>
 /// <para>Built once per pack and shared: nothing in it changes.</para>
 /// </remarks>
@@ -63,12 +64,38 @@ public sealed class EffectActions
         [951] = new(EffectKind.StateRemoved, EffectElement.None, 0),
         [952] = new(EffectKind.StateDisabled, EffectElement.None, 0),
         [792] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [793] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [1017] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [1018] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [1019] = new(EffectKind.CastSpell, EffectElement.None, 0),
         [1160] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [2017] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [2160] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [2792] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [2793] = new(EffectKind.CastSpell, EffectElement.None, 0),
         [2794] = new(EffectKind.CastSpell, EffectElement.None, 0),
         [2795] = new(EffectKind.CastSpell, EffectElement.None, 0),
+        [2960] = new(EffectKind.CastSpell, EffectElement.None, 0),
         [406] = new(EffectKind.DispelSpell, EffectElement.None, 0),
         [132] = new(EffectKind.Dispel, EffectElement.None, 0),
         [141] = new(EffectKind.Kill, EffectElement.None, 0),
+    }.ToFrozenDictionary();
+
+    private static readonly FrozenDictionary<int, SpellCaster> _casters = new Dictionary<int, SpellCaster>
+    {
+        [792] = SpellCaster.TargetOnItself,
+        [793] = SpellCaster.TargetOnItself,
+        [2792] = SpellCaster.TargetOnItself,
+        [2793] = SpellCaster.TargetOnItself,
+        [1160] = SpellCaster.CasterOnTarget,
+        [2160] = SpellCaster.CasterOnTarget,
+        [1018] = SpellCaster.CasterOnTarget,
+        [2794] = SpellCaster.TargetOnCell,
+        [2795] = SpellCaster.TargetOnCell,
+        [2960] = SpellCaster.CasterOnCell,
+        [1017] = SpellCaster.TargetOnCaster,
+        [2017] = SpellCaster.TargetOnCaster,
+        [1019] = SpellCaster.CasterOnItself,
     }.ToFrozenDictionary();
 
     private readonly FrozenDictionary<int, EffectAction> _actions;
@@ -107,5 +134,17 @@ public sealed class EffectActions
     public EffectAction Of(int effectId)
     {
         return _actions.TryGetValue(effectId, out var action) ? action : _other;
+    }
+
+    /// <summary>Gets who casts the spell an effect of <see cref="EffectKind.CastSpell"/> casts, and where.</summary>
+    /// <param name="effectId">The effect, by the id spells name.</param>
+    /// <returns>Who casts it and on which cell; the fighter reached on its own cell for an id that casts no spell.</returns>
+    /// <remarks>
+    /// The spell and its grade are the effect's dice (client.md). Measured (D224): a Zobal's mask casts, by 2794 on itself,
+    /// the spell that takes its other masks' states off, which casts on itself, by 792, the grades that do it.
+    /// </remarks>
+    public static SpellCaster CasterOf(int effectId)
+    {
+        return _casters.GetValueOrDefault(effectId, SpellCaster.TargetOnItself);
     }
 }

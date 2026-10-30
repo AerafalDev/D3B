@@ -13,7 +13,7 @@ namespace D3B.Engine.Fights;
 /// </para>
 /// <list type="table">
 /// <item><term><c>a</c>, <c>A</c></term><description>Every ally, the caster among them; every enemy. <c>g</c>: every ally but the caster.</description></item>
-/// <item><term><c>c</c>, <c>C</c></term><description>The caster.</description></item>
+/// <item><term><c>c</c>, <c>C</c></term><description>The caster in the zone; the caster wherever it stands.</description></item>
 /// <item><term><c>h</c>, <c>H</c>; <c>l</c>, <c>L</c></term><description>Characters, no summon; characters and sidekicks.</description></item>
 /// <item><term><c>m</c>, <c>M</c></term><description>Monsters, no summon.</description></item>
 /// <item><term><c>j</c>, <c>J</c>; <c>i</c>, <c>I</c>; <c>s</c>, <c>S</c></term><description>Summons; those that move; those that do not.</description></item>
@@ -46,8 +46,12 @@ public sealed class TargetMask
     /// <summary>Gets the mask's text, as the client wrote it.</summary>
     public string Text { get; }
 
-    /// <summary>Gets whether the mask names the caster, <c>c</c> or <c>C</c>: it reaches the caster wherever it stands.</summary>
-    /// <remarks>Measured (D195): 16 buffs of such masks went to a caster outside its effect's zone.</remarks>
+    /// <summary>Gets whether the mask names the caster wherever it stands, <c>C</c>; <c>c</c> names it in the zone only.</summary>
+    /// <remarks>
+    /// Measured (D195): 16 buffs of such masks went to a caster outside its effect's zone. Of the 32 casts captured of an
+    /// effect of mask <c>c</c> without <c>C</c>, the caster outside its zone, such as a Zobal's Tortoruga of mask
+    /// <c>l,m,c</c> on an enemy, none buffed the caster (D226), as the references read <c>C</c> alone outside the zone.
+    /// </remarks>
     public bool NamesTheCaster { get; }
 
     private TargetMask(string text, Token[] tokens)
@@ -61,7 +65,7 @@ public sealed class TargetMask
             .GroupBy(pair => Alternative(pair.Token, pair.Index))
             .Select(group => group.Select(pair => pair.Token).ToArray())];
         _includesUnknown = tokens.Any(token => token.Kind is TokenKind.UnknownKind);
-        NamesTheCaster = _kinds.Any(token => token.Letter is 'c' or 'C');
+        NamesTheCaster = _kinds.Any(token => token.Letter is 'C');
     }
 
     /// <summary>Reads a mask.</summary>

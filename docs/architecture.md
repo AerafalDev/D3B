@@ -259,7 +259,7 @@ resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D
   (`FightEndEntry`). The client acknowledges the sequences and says it is ready for each turn by itself; the bot sends
   nothing in a fight until 9e. Since 9d (D193), each fighter also holds its characteristics as the server last gave them,
   its buffs (`FightBuff`), from which its states and spells' modifiers come, each ending as the turn the server named
-  begins, its cooldowns, the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
+  begins or as the server ends it (`FightBuffEndEvent`, D225), its cooldowns, the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
   (`FightSequence`), and moves a fighter on a slide, a carry and a throw. `FightCombatants` gives the engine the fighters.
   Since 9e (D199, D203), the character's state holds its spells as the server listed them and its transformed form's, the
   fight's state the spells the server's context lists for the fight, and the team's options; a turn puts the fight in its
@@ -630,26 +630,28 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   keeps its state in its own arrays, and takes under 0.7 ms (`benchmarks/D3B.Engine.Benchmarks`).
 - The rules of a fight, in `D3B.Engine.Fights` (9c, D185 to D190), pure, on the pack's catalogs (D182):
   - `Combatant`, a fighter as the rules see it: team, cell, AP, MP, range, lock, dodge, life, summons, breed or monster
-    and its properties, summoner, states. `CellSet`, a set of a map's cells as 560 bits, which the rules pass around
+    and its properties, summoner, states, and the buffs it holds by the spell that gave each (`HeldBuff`, D227). `CellSet`, a set of a map's cells as 560 bits, which the rules pass around
     without allocating. `FightMap`, a map's cells walkable in a fight and letting sight through, built once per map.
   - `SpellRange`: the cells a level reaches from its caster's, a diamond, a line or diagonals, its most boosted by the
     caster's range. `LineOfSight`: the cells between two cells, a corner touching only, none blocking by its data or a
     fighter, the same both ways.
   - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster.
-    `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter.
+    `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
+    caster wherever it stands, `c` in the zone only (D226).
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
     in the order the checks run, from its `CastHistory`, the level as the caster's spell modifiers change it
     (`SpellModifier`, `CastRules.Modified`); the cells it may cast on; the fighters each effect reaches. The level's
     criterion on states is a `Criterion` answering `HS` on `CriterionFacts.States`; a state preventing casts lets through
-    the levels asking for it (D191).
+    the levels asking for it (D191). `StatesAllow` says whether the states let a fighter cast a level at all, which the
+    judge reads (D228).
   - `FightMoves`, built once per pack: the four cells a fighter steps to, the share of its MP and AP a tackle leaves it,
     and the cells it walks to with what it keeps there.
   - Benchmarked on a captured fight's map: every cell a level may be cast on in 6.3 µs, a line of sight in 30 ns, an
     effect's reach in 1.5 µs, the cells a walk reaches in 1.2 µs.
 - The effects' engine, in `D3B.Engine.Effects` (9d, D195), pure, on the pack's catalogs:
   - `EffectActions`, built once per pack: what each effect id does (`EffectKind`, `EffectAction`), its element and the
-    characteristic it changes, from the pack and D3B's table of the client's actions; `FightCharacteristic` names the
-    characteristics the formulas read.
+    characteristic it changes, from the pack and D3B's table of the client's actions, and who casts the spell an effect
+    casts, where (`SpellCaster`, D227); `FightCharacteristic` names the characteristics the formulas read.
   - `EffectFormulas`: the roll, damage dealt and received, the zone's decrease, heals, erosion and a push's damage, each
     step rounded down, as measured; `LifeRange`, a value's least and most.
   - `SpellEffects`, built once per pack: what each effect of a cast does to each fighter it reaches (`ForeseenEffect`),
@@ -660,11 +662,14 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `ImaginedFight`, the fighters as the AI imagines them and the buffs its casts gave (`ImaginedBuff`, their rounds),
     and `FightKnowledge`, what it knows of their spells and points.
   - `Imagination`: what a walk and a cast do to an imagined fight, each effect at the middle of its range, a critical
-    hit weighed by its chance (`EffectFormulas.CriticalChance`, D207), each lasting buff kept with its rounds (D209).
+    hit weighed by its chance (`EffectFormulas.CriticalChance`, D207), each lasting buff kept with its rounds (D209); the
+    spells its effects cast at once cast in turn on the fight as the effects before left it, states ended, a spell's
+    buffs dispelled and a buff past its stacks replacing the oldest, as a Zobal's masks do (D227).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave, enemies' weighed by how
     hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
     range and in sight (D208), bounded by a kill; the fighters read as the search left them, states that prevent casting
-    or damage and invulnerability included, a buff worth what it does over the rounds it lasts (D209); once the enemies
+    or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
+    over the rounds it lasts (D209); once the enemies
     replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206).
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, its best sequences weighed against
@@ -672,7 +677,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     `TacticWeights`, measured on 69 fights (D212), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
-    against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216).
+    against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229).
 - The weapons' blows, in `D3B.Engine.Fights` (9e3, D220): `WeaponBlows`, each sword's blow a level of spell 0, the
   punch's with the sword's fields and its effects used in fights, after the pack's levels in one catalog the rules, the
   effects and the AI share (`SpellCatalog.WithLevels`); `EffectFormulas.DealtByWeapon` and the weapons' multipliers,
@@ -704,7 +709,11 @@ measured on the fights the AI played, the options' numbers corrected so that it 
 spectators (D216). Built in session 9e3: the owner's asks and choices, swords only (D217); the weapon's blow measured on
 the captures (D218); the pack's format 6 and its weapons (D219, in [Game data](#game-data)); the blow as a level of spell 0
 (D220, in [Engine](#engine)); the worn weapon, mapping format 12, and the bot striking its sword (D221); measured with
-`scripts/fights.cs` (D222).
+`scripts/fights.cs` (D222). Built in session 9f: the owner's asks, the Zobal's masks first, then every spell whose criterion
+asks a state (D223); the masks measured (D224); a buff's end, mapping format 13 (D225); a caster outside the zone, `C`
+alone (D226); the spells effects cast imagined, a spell's buffs taken back (D227); the judge reading the criteria on states
+(D228); measured with `scripts/fights.cs` (D229); the fights' profiles before the next mechanism, the AI's fights a harvest
+profile's option, the owner's choice (D230).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -720,20 +729,26 @@ the captures (D218); the pack's format 6 and its weapons (D219, in [Game data](#
   of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
   the captures turn by turn (9e2, D206 to D212). The simulator applies spell
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
-- The hard cases through the effects, measured one at a time (9f), and strategies as modules and profile settings, per
-  breed through the effects, never per class (9g).
+- The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
+  and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229); then,
+  after the fights' profiles (D230), summons, bombs, glyphs, runes, telefrags, traps, portals, carrying. Strategies as
+  modules and profile settings, per breed through the effects, never per class (9g).
 
 ## Tests
 
 - The fight's state is tested on fights built as the captures measured them: placement, turns, every action taken, a
   summon, the end, and what the server says of a fighter it never showed (D179); buffs given, ended at their turn and
-  removed, cooldowns, the casts chosen, slides, carries and throws, and the characteristics kept (D193).
+  removed, cooldowns, the casts chosen, slides, carries and throws, and the characteristics kept (D193); a mask's state
+  ended by the server as another is put on (D225).
 - The AI is tested on fights the tests build with a catalog of their own: an enemy one blow kills is killed, one out of
   range walked towards then struck, a badly hurt character heals itself, nothing worth doing ends the turn, a refused
   cast is not weighed again, a placement reaches an enemy it beats, strong enemies make the fight risky, a walk's path
   (D201, D203); a critical hit's share and chance, an enemy a pillar hides threatening nothing, a lasting rage cast in a
   long fight and not in a short one, the next turn's start and search (D207 to D210). A sword's blow as a level of spell
-  0, foreseen with the weapons' formulas, struck when it does more for its AP than the spell, and not otherwise (D220). The character's spells by the
+  0, foreseen with the weapons' formulas, struck when it does more for its AP than the spell, and not otherwise (D220). A
+  Zobal's masks as the pack makes them: one taking the other's state off, putting its own on and dispelling the other's
+  boost, one cast again replacing its boost, the AI putting on the mask whose spells deal more, and a shield of `c` not
+  cast on an enemy (D224 to D228). The character's spells by the
   list, its level, a pair and the fight's own; the fight's options and context; the player's requests in a fight; a
   harvest's fight answered once over, a lost fight and three in a row (D198, D202). A fight is played end to end through
   `TestPlay`, whose pack carries a spell: the AI closes it, places the character, readies it, casts and ends its turn;

@@ -473,6 +473,24 @@ public sealed class FightEventsTests
     }
 
     [Fact]
+    public void AMasksStateGoesWhenTheServerEndsItsBuffAndAnotherTakesItsPlace()
+    {
+        var masked = Apply(
+            Playing(),
+            Buff(Self, 1, 950, FightBuffKind.State, 18_633, parameter: 98),
+            Buff(Monster, 1, 950, FightBuffKind.State, 10, parameter: 8));
+
+        var changed = Apply(
+            masked,
+            new FightBuffEndEvent { Uid = 1, TargetId = Self },
+            Buff(Self, 2, 950, FightBuffKind.State, 13_388, parameter: 99),
+            new FightBuffEndEvent { Uid = 7, TargetId = Self });
+
+        Assert.Equal([99], changed.Fight!.Fighters[Self].States);
+        Assert.Equal([8], changed.Fight.Fighters[Monster].States);
+    }
+
+    [Fact]
     public void AWeaponsBlowIsACastOfSpellZeroInTheHistory()
     {
         // Measured (D218): the blow is the first action of a sequence of its own, a cast naming no spell.

@@ -71,7 +71,7 @@ public enum EffectKind
     /// <summary>A change to one of the target's spells: the pack's effects of category 3.</summary>
     SpellModifier,
 
-    /// <summary>A spell cast by the effect, its id and grade in the dice: 792, 1160, 2794 and 2795.</summary>
+    /// <summary>A spell cast by the effect, its id and grade in the dice, by the caster or the fighter reached (<see cref="SpellCaster"/>): 792, 793, 1017 to 1019, 1160, 2017, 2160, 2792 to 2795 and 2960.</summary>
     CastSpell,
 
     /// <summary>The buffs a spell gave removed: 406.</summary>

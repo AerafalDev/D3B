@@ -7,6 +7,7 @@ using D3B.Data.Spells;
 using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
+using D3B.Engine.Tactics;
 using D3B.Network.Relay;
 using D3B.Protocol.Game;
 using Google.Protobuf;
@@ -31,6 +32,7 @@ internal sealed class CastBench
     private readonly CastRules _rules;
     private readonly SpellEffects _effects;
     private readonly EffectActions _actions;
+    private readonly Imagination _imagination;
     private readonly TextWriter? _details;
     private readonly Dictionary<long, FightMap> _fightMaps = [];
     private readonly Dictionary<(long Fighter, int Spell), int> _turnsEnded = [];
@@ -45,6 +47,7 @@ internal sealed class CastBench
         _rules = new CastRules(_blows.Spells, tables.States);
         _actions = new EffectActions(tables.Effects);
         _effects = new SpellEffects(_blows, _rules, _actions);
+        _imagination = new Imagination(_blows.Spells, tables.Monsters, _actions, _effects);
         _details = details;
     }
 
@@ -111,7 +114,7 @@ internal sealed class CastBench
             {
                 foreach (var ended in open.Where(cast => fight.Sequences.Length < cast.Depth).ToList())
                 {
-                    Settle(ended);
+                    Settle(ended, fight);
                     open.Remove(ended);
                 }
             }
@@ -281,7 +284,7 @@ internal sealed class CastBench
         return map;
     }
 
-    private void Settle(Cast cast)
+    private void Settle(Cast cast, FightState after)
     {
         var foreseen = _effects.Foresee(cast.Map, cast.Fighters, cast.Caster, cast.Level, cast.Cell, cast.Critical);
         var alone = cast.TriggeredCasts is 0 ? "alone" : "with the casts it triggered";
@@ -294,6 +297,7 @@ internal sealed class CastBench
             alone = "a weapon's blow";
         }
 
+        States(cast, after);
         Damage(cast, foreseen, alone);
         Heals(cast, foreseen, alone);
         Pushes(cast, foreseen);
@@ -508,8 +512,90 @@ internal sealed class CastBench
         }
     }
 
+    private bool CastsSpells(in SpellLevel level)
+    {
+        foreach (var effect in _blows.Spells.EffectsOf(level))
+        {
+            if (_actions.Of(effect.EffectId).Kind is EffectKind.CastSpell && effect.Delay is 0 && (effect.Properties & SpellEffectProperties.ForClientOnly) is 0 && _blows.Spells.TriggersOf(effect) == "I")
+                return true;
+        }
+
+        return false;
+    }
+
+    private void States(Cast cast, FightState after)
+    {
+        // The states each fighter holds once the cast's sequence ended, against those the AI imagines the cast leaves, set and
+        // removed by its effects and the spells they cast at once (D229); and the life the cast took, imagined and announced.
+        var imagined = _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty }, cast.Level, cast.Cell);
+        var casts = CastsSpells(cast.Level) ? "casting spells at once" : "casting none";
+        int lostImagined = 0, lostAnnounced = 0;
+
+        foreach (var before in cast.Fighters)
+        {
+            if (!after.Fighters.TryGetValue(before.Id, out var now) || imagined.Find(before.Id) is not { } thought)
+                continue;
+
+            lostImagined += Math.Max(0, before.Life - thought.Life);
+            lostAnnounced += Math.Max(0, cast.Lives[before.Id].Life - now.Life);
+
+            // A fighter that died lost its buffs with its life.
+            if (!now.IsAlive)
+                continue;
+
+            var was = before.States.ToHashSet();
+            var held = now.States.ToHashSet();
+            var foreseen = thought.States.ToHashSet();
+            var who = before.Id == cast.Caster.Id ? "the caster" : "another fighter";
+
+            foreach (var state in was.Union(held).Union(foreseen))
+            {
+                var outcome = (was.Contains(state), held.Contains(state), foreseen.Contains(state)) switch
+                {
+                    (false, true, true) => "set as foreseen",
+                    (false, true, false) => "set, not foreseen",
+                    (false, false, true) => "foreseen set, not set",
+                    (true, false, false) => "removed as foreseen",
+                    (true, false, true) => "removed, not foreseen",
+                    (true, true, false) => "foreseen removed, kept",
+                    _ => null,
+                };
+
+                if (outcome is null)
+                    continue;
+
+                Tally.Count($"states a cast changed, {who}, {casts}: {outcome}");
+
+                if (outcome is not ("set as foreseen" or "removed as foreseen"))
+                    _details?.WriteLine($"state {state} {outcome}: spell {cast.Level.SpellId} level {cast.Level.Id}, {who}, {casts}");
+            }
+        }
+
+        Tally.Count($"life a cast took, {casts}: casts");
+        Tally.Count($"life a cast took, {casts}: imagined", lostImagined);
+        Tally.Count($"life a cast took, {casts}: announced", lostAnnounced);
+    }
+
     private void Buffs(Cast cast, IReadOnlyList<ForeseenEffect> foreseen)
     {
+        // A mask naming the caster in the zone only, c, with the caster outside it: the server buffs it or not (D226).
+        foreach (var effect in _blows.Spells.EffectsOf(cast.Level))
+        {
+            var mask = _blows.Spells.TargetMaskOf(effect).Split(',');
+
+            if (!mask.Contains("c") || mask.Contains("C") || _actions.Of(effect.EffectId).Kind is not (EffectKind.Boost or EffectKind.Deboost or EffectKind.StateSet or EffectKind.Shield or EffectKind.LifeShield or EffectKind.LevelShield))
+                continue;
+
+            var zone = ZoneCells.Of(effect.Zone, _blows.Spells.CellsOf(effect.Zone), cast.Map, CastRules.OccupiedBy(cast.Fighters), cast.Caster.Cell, cast.Cell);
+
+            if (zone.Contains(cast.Caster.Cell))
+                continue;
+
+            var buffed = cast.Buffs.Any(pair => pair.Buff.TargetId == cast.Caster.Id && pair.Buff.EffectUid == effect.Uid);
+
+            Tally.Count($"a mask naming the caster in its zone only, the caster outside: {(buffed ? "buffed" : "not buffed")}");
+        }
+
         // The client's previews of buffs on the caster, which the server gives through a spell the cast triggers (D209).
         foreach (var effect in _blows.Spells.EffectsOf(cast.Level))
         {

@@ -295,10 +295,14 @@ public sealed class FightJudge
 
     private bool Hurts(in SpellLevel level, Combatant caster, Combatant target)
     {
-        // What the states say of a blow: a caster that casts or deals nothing, a target that takes nothing, or not at this range.
+        // What the states say of a blow: a caster that casts or deals nothing, a level its states forbid, such as a Zobal's
+        // spell of another mask (D228), a target that takes nothing, or not at this range.
+        if (!_rules.StatesAllow(level, caster))
+            return false;
+
         foreach (var state in caster.States)
         {
-            if (_states.TryGetState(state, out var found) && (found.Properties & (SpellStateProperties.PreventsSpellCast | SpellStateProperties.CantDealDamage)) is not 0)
+            if (_states.TryGetState(state, out var found) && (found.Properties & SpellStateProperties.CantDealDamage) is not 0)
                 return false;
         }
 

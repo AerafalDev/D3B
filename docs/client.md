@@ -16,7 +16,8 @@ session 6b ([Icons](#icons), [Graphics](#graphics)), and a tour foretold by them
 Its fights were measured on 2026-10-30 for session 9a, on the wire ([the game, fought](#the-game-fought)) and in its tables
 ([Fights' tables](#fights-tables)), which session 9b measured whole, their flags read in its code, the same day; its
 casts against D3B's rules for session 9c ([the game, cast](#the-game-cast)), and what each did against D3B's effects for
-session 9d ([the game, foreseen](#the-game-foreseen)).
+session 9d ([the game, foreseen](#the-game-foreseen)), and the states its spells ask for session 9f
+([the game, masked](#the-game-masked)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -1641,6 +1642,37 @@ Measured on 2026-10-30 for session 9e3 (D217 to D222): the 80 game connections o
   receive, were 100, and the server never gave 103, the weapons' power, nor 31, the weapon mastery.
 - **The AI.** On the 109 turns replayed of a character wearing a sword D3B strikes, it planned 8 blows; the players
   struck none in those turns.
+
+### The game, masked
+
+Measured on 2026-10-30 for session 9f (D223 to D229): the pack of format 6 and the 80 game connections of 3.7.12.12, 100
+fights, 6 of a Zobal and 38 of its turns, with `scripts/fights.cs`, `--turns`, and measuring tools never committed that
+print counts.
+
+- **Spells asking a state.** Of the 836 spells and variants of the 19 breeds, 132 have a criterion on states, asking 43
+  states, 27 of which the breed's own spells set, directly or through a spell an effect casts. The Forgelance has 41, the
+  Zobal 32, the Pandawa 16, the Féca 10, the Ouginak 8; the Enutrof, the Sram and the Sadida none. Most of the others
+  forbid state 7, *Pesanteur*. In the captures, 106 casts the fighters chose asked a state, 64 a Zobal's, 21 a Pandawa's,
+  7 a Forgelance's, and every one held the state its criterion asks.
+- **The Zobal's masks.** States 98, 99 and 100, a mask each, two mask spells each, a spell and its variant. Spell 18633
+  sets 98 as each fight starts. A mask, 1 AP every other round, casts the spell taking the three states off where worn,
+  through two more of its grades, sets its own state for the whole fight, dispels the buffs of the masks whose state the
+  Zobal is not in, changes the Zobal's look, then gives its boosts: AP, MP and dodge, or melee damage and lock. 14 masks
+  were cast, 4 of them the mask worn, whose boosts the server ended before giving them anew. 32 of the Zobal's 44 spells
+  ask a mask's state; no mask changes a spell's cost or range; two spells deal otherwise by the mask worn, cast in no
+  capture.
+- **A buff's end.** `juu`, a buff's uid and its fighter, with no action: 1,171 in the captures, 334 as a turn started on
+  buffs already over, 184 on buffs already gone, and 653 ending a boost, a state, a spell modifier or a triggered effect
+  the fight's state held, the state of a Zobal's old mask among them. Unread, the bot kept the old mask's state: the AI's
+  6 casts the server refused with text 175 (D203) asked it. Read, through mapping format 13, they fail their criterion,
+  and the 38 other casts the AI asked with a mask's criterion hold.
+- **The caster outside the zone.** 32 casts of an effect whose mask names the caster with `c` and not `C`, the caster
+  outside the effect's zone, a Zobal's Tortoruga on an enemy among them: none buffed the caster.
+- **The states a cast changes**, against what the AI imagines: of the 244 the casts whose effects cast spells at once
+  set or ended on living fighters, 111 foreseen, the 20 of the Zobal's 10 changes of mask among them, against 24 without
+  the spells effects cast; the others a carry's, the Eliotrope's portals, the Xélor's telefrags and the Roublard's bombs.
+- **The AI.** On the Zobal's 38 turns replayed, it puts on the mask whose spells deal more and casts them, Furia in the
+  psychopath's mask where the turns played cast Tortoruga on enemies 32 times, and changes mask 29 times against 9.
 
 ## Protocol code
 

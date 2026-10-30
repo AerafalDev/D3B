@@ -302,10 +302,19 @@ message SummonedMonster {
 
 // A buff a fighter got: a characteristic changed, a state, a change to one of its spells, or an effect waiting for its
 // trigger. Measured on the 49 fights captured, 843 buffs: each names the spell's effect it comes from, which the pack
-// holds, the spell and its grade. The server announces no buff's end of time: the buff says when it ends, and the
-// fight's state lets it go then (D193).
+// holds, the spell and its grade. The buff says when it ends, and the fight's state lets it go then (D193); its end
+// before is announced (FightBuffEndEvent).
 message FightEffectsEvent {
   FightBuffGiven given = 1;
+}
+
+// A buff ended, by the uid the server gave it on its fighter, with no action of its own: a state an effect removes, such
+// as a Zobal's mask as another is put on, a spell's buffs dispelled or replaced, or its time over as a turn starts.
+// Measured on the 80 game connections of 3.7.12.12 (D225): 1,171, of which 334 as a turn started, on buffs the fight's
+// state had let go at their end, and the others in a spell's sequence or what it triggered.
+message FightBuffEndEvent {
+  int32 uid = 1;
+  int64 target_id = 2;
 }
 
 // The buff, its action and who gave it.

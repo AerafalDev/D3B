@@ -70,6 +70,9 @@ public static class FightEvents
             GameActionFightEvent action => Acted(fight, action),
             FightEffectsEvent { Given.Buff: { } buff } given => Changed(fight, buff.TargetId, fighter => Buffed(fighter, given.Given, buff)),
             FightEffectsEvent => fight,
+
+            // Measured (D224): the state of a Zobal's mask goes so as another is put on, which the server then checks.
+            FightBuffEndEvent ended => Changed(fight, ended.TargetId, fighter => fighter with { Buffs = [.. fighter.Buffs.Where(buff => buff.Uid != ended.Uid)] }),
             RefreshCooldownEvent cooldowns => Changed(fight, cooldowns.FighterId, fighter => fighter with
             {
                 Cooldowns = cooldowns.Cooldowns.GroupBy(cooldown => cooldown.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Rounds),

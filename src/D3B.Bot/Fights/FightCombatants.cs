@@ -1,13 +1,15 @@
 using System.Collections.Immutable;
 using D3B.Data.Monsters;
 using D3B.Engine.Fights;
+using D3B.Protocol.Game;
 
 namespace D3B.Bot.Fights;
 
 /// <summary>The fight's fighters as <c>D3B.Engine</c>'s rules and effects see them, from what the server said of each.</summary>
 /// <remarks>
 /// The bot's fight state feeds the engine (D13, D185): each fighter's cell, team, AP and MP, life, characteristics as the
-/// server gave them, states and spells' modifiers from its buffs, and for a monster its properties from the pack.
+/// server gave them, states and spells' modifiers from its buffs and those buffs by the spell that gave each, and for a
+/// monster its properties from the pack.
 /// </remarks>
 public static class FightCombatants
 {
@@ -61,9 +63,16 @@ public static class FightCombatants
             SummonerId = fighter.SummonerId,
             States = fighter.States,
             Modifiers = fighter.Modifiers,
+            Buffs = [.. fighter.Buffs.Where(buff => buff.Kind is FightBuffKind.Boost or FightBuffKind.State or FightBuffKind.SpellModifier).Select(Held)],
             ReceivedDamageShares = [.. fighter.Buffs.Where(buff => buff.ActionId is MultiplyReceivedDamage).Select(buff => buff.Value)],
             Level = fighter.Level ?? 0,
             Characteristics = characteristics,
         };
+    }
+
+    private static HeldBuff Held(FightBuff buff)
+    {
+        // A state's buff names its state by its parameter (D193).
+        return buff.Kind is FightBuffKind.State ? new HeldBuff(buff.SpellId, buff.ActionId, buff.Parameter) : new HeldBuff(buff.SpellId, buff.ActionId, buff.Value, buff.Parameter);
     }
 }
