@@ -219,7 +219,7 @@
     <value>Après un combat</value>
   </data>
   <data name="AfterFightHelp" xml:space="preserve">
-    <value>L'IA joue le combat, puis la récolte reprend, se met en pause ou s'arrête.</value>
+    <value>Une fois le combat fini, la récolte reprend, se met en pause ou s'arrête.</value>
   </data>
   <data name="AfterFightResume" xml:space="preserve">
     <value>Reprendre</value>
@@ -451,5 +451,11 @@
   </data>
   <data name="PresetFisherman" xml:space="preserve">
     <value>Pêcheur auto</value>
+  </data>
+  <data name="AiFights" xml:space="preserve">
+    <value>L'IA combat</value>
+  </data>
+  <data name="AiFightsHelp" xml:space="preserve">
+    <value>L'IA joue le combat d'un protecteur ou d'une agression avec la stratégie du perso ; décoché, c'est toi qui le joues.</value>
   </data>
 </root>

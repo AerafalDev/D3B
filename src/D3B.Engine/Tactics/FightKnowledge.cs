@@ -33,6 +33,19 @@ public sealed record FightKnowledge
         return this with { Spells = Spells.ToImmutableDictionary(pair => pair.Key, pair => pair.Value.RemoveAll(level => spellIds.Contains(level.SpellId))) };
     }
 
+    /// <summary>Gets what is known, one fighter's spells but some left out, such as those its strategy never casts (D234).</summary>
+    /// <param name="fighterId">The fighter.</param>
+    /// <param name="spellIds">Its spells left out.</param>
+    /// <returns>The knowledge without them.</returns>
+    public FightKnowledge Without(long fighterId, IReadOnlySet<int> spellIds)
+    {
+        ArgumentNullException.ThrowIfNull(spellIds);
+
+        return spellIds.Count == 0 || !Spells.TryGetValue(fighterId, out var spells)
+            ? this
+            : this with { Spells = Spells.SetItem(fighterId, spells.RemoveAll(level => spellIds.Contains(level.SpellId))) };
+    }
+
     /// <summary>Gets the spells a fighter may cast.</summary>
     /// <param name="fighterId">The fighter.</param>
     /// <returns>Its spells' levels, none when not known.</returns>

@@ -12,8 +12,6 @@ using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Storage.Accounts;
 using D3B.Storage.Profiles;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
@@ -99,21 +97,6 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ResumeCommand))]
     public partial bool IsPaused { get; private set; }
-
-    /// <summary>Gets or sets whether the AI plays every fight of the character, the switch on its card (D198), kept for the character (D213).</summary>
-    public bool FightsAlone
-    {
-        get => Bot.FightsAlone;
-        set
-        {
-            if (Bot.FightsAlone == value)
-                return;
-
-            Bot.FightsAlone = value;
-            OnPropertyChanged();
-            _ = SaveFightsAloneAsync(value);
-        }
-    }
 
     /// <summary>Gets the tone of what the bot is up to, for the dot on its avatar.</summary>
     [ObservableProperty]
@@ -438,11 +421,14 @@ internal sealed partial class BotViewModel : ObservableObject
         {
             ActivityDefinition? definition = null;
 
-            catalog?.TryGet(profile.ActivityId, out definition);
+            // A strategy is a character's, never started on its card (D233).
+            if (catalog?.TryGet(profile.ActivityId, out definition) is true && definition.Kind is not ProfileKind.Activity)
+                continue;
+
             choices.Add(new ActivityChoiceViewModel(profile, definition, culture, language => definition?.Name.In(language) ?? _localizer.Format("ActivityMissing", profile.ActivityId)));
         }
 
-        foreach (var definition in catalog?.All ?? [])
+        foreach (var definition in catalog?.Activities ?? [])
             choices.Add(new ActivityChoiceViewModel(definition, culture, _ => definition.Settings.IsEmpty ? null : _localizer["DefaultSettings"]));
 
         var assigned = _accounts?.Find(Bot.Key)?.ProfileId;
@@ -453,21 +439,6 @@ internal sealed partial class BotViewModel : ObservableObject
             ?? (choices.Count == 1 ? choices[0] : null);
     }
 
-    private async Task SaveFightsAloneAsync(bool alone)
-    {
-        if (_accounts is null)
-            return;
-
-        try
-        {
-            await _accounts.SetFightsAloneAsync(Bot.Key, alone, CancellationToken.None).ConfigureAwait(true);
-        }
-        catch (Exception exception) when (exception is DbUpdateException or SqliteException or InvalidOperationException)
-        {
-            // The switch holds for this run; only keeping it failed, which the app says.
-            _toasts?.Show(new Toast(_localizer.Format("SaveFailed", exception.GetBaseException().Message), Tone.Danger));
-        }
-    }
 
     private bool CanStart()
     {

@@ -202,6 +202,24 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return Add(property, SettingKind.Item, true, name);
     }
 
+    /// <summary>Declares several spells the breeds cast, each once, of any breed (D234).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Preferred</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> Spells(Expression<Func<TSettings, IReadOnlyList<int>>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.Spell, true, name);
+    }
+
+    /// <summary>Declares several monsters, each once (D236).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Monsters</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> Monsters(Expression<Func<TSettings, IReadOnlyList<int>>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.Monster, true, name);
+    }
+
     /// <summary>Declares a rule the settings hold together, such as a minimum below a maximum.</summary>
     /// <param name="holds">Tells whether the settings hold it; it must be quick.</param>
     /// <param name="message">What the app says when they do not.</param>

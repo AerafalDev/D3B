@@ -319,6 +319,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             SettingKind.Resource => (Icons?.Item(reference.Id), Game is not null && Game.TryGetSource(reference.Id, out var source) ? Icons?.Job(source.JobId) : null),
             SettingKind.Job => (Icons?.Job(reference.Id), null),
             SettingKind.Item => (Icons?.Item(reference.Id), null),
+            SettingKind.Spell => (Icons?.Spell(reference.Id), null),
             _ => (null, null),
         };
 
@@ -331,6 +332,45 @@ internal sealed partial class SettingsEditor : ObservableObject
     public OptionViewModel JobOption(int jobId)
     {
         return Option(SettingKind.Job, JobOf(jobId));
+    }
+
+    /// <summary>Gets the group a value of a list is filtered by, and its level: a resource's profession, a spell's breed, a monster's super race.</summary>
+    /// <param name="kind">The list's kind.</param>
+    /// <param name="id">The value.</param>
+    /// <returns>Its group, or <see langword="null"/> for a resource of <c>Base</c>'s or a value of none, and its level, if it has one.</returns>
+    public (int? Group, int? Level) GroupOf(SettingKind kind, int id)
+    {
+        if (Game is null)
+            return (null, null);
+
+        return kind switch
+        {
+            SettingKind.Resource when Game.TryGetSource(id, out var source) => (source.JobId, source.Level),
+            SettingKind.Spell when Game.TryGetBreed(id, out var breed) => (breed, null),
+            SettingKind.Monster when Game.TryGetSuperRace(id, out var superRace) => (superRace is 0 ? null : superRace, ReferenceOf(kind, id).Level),
+            _ => (null, null),
+        };
+    }
+
+    /// <summary>Names a group a list is filtered by, with its icon: a profession, a breed or a super race.</summary>
+    /// <param name="kind">The list's kind.</param>
+    /// <param name="groupId">The group.</param>
+    /// <returns>It, named.</returns>
+    public OptionViewModel GroupOption(SettingKind kind, int groupId)
+    {
+        var groups = kind switch
+        {
+            SettingKind.Spell => Game?.Breeds,
+            SettingKind.Monster => Game?.SuperRaces,
+            _ => null,
+        };
+
+        if (groups is null)
+            return JobOption(groupId);
+
+        var group = groups.FirstOrDefault(reference => reference.Id == groupId);
+
+        return new OptionViewModel(groupId, Names.Name(kind, group.NameId == 0 ? new GameReference(groupId, 0, null) : group), null, null, null);
     }
 
     private void ShowPreview()
@@ -354,6 +394,11 @@ internal sealed partial class SettingsEditor : ObservableObject
         return Preview?.PlayerNotes.FirstOrDefault(note => note.Name == player.Name) is { } note && Says is { } says ? says.Say(note.Note) : null;
     }
 
+    private GameReference ReferenceOf(SettingKind kind, int id)
+    {
+        return Game?.Options(kind).FirstOrDefault(option => option.Id == id) ?? new GameReference(id, 0, null);
+    }
+
     private GameReference JobOf(int jobId)
     {
         return Game?.Options(SettingKind.Job).FirstOrDefault(job => job.Id == jobId) ?? new GameReference(jobId, 0, null);
@@ -361,8 +406,13 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     private string? DetailOf(SettingKind kind, GameReference reference)
     {
-        // A resource of any profession says whose it is, its level beside.
-        return kind is SettingKind.Resource ? SourceOf(reference.Id) ?? Names.Detail(reference) : Names.Detail(reference);
+        // A resource of any profession says whose it is, its level beside; a spell its breed.
+        return kind switch
+        {
+            SettingKind.Resource => SourceOf(reference.Id) ?? Names.Detail(reference),
+            SettingKind.Spell when Game is not null && Game.TryGetBreed(reference.Id, out var breed) => GroupOption(kind, breed).Name,
+            _ => Names.Detail(reference),
+        };
     }
 
     private SettingFieldViewModel Create(SettingDefinition setting)
@@ -374,7 +424,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),
             (SettingKind.Choice, false) => new ChoiceFieldViewModel(setting, this),
             (SettingKind.Choice, true) => new ChoicesFieldViewModel(setting, this),
-            (SettingKind.Resource, true) => new ResourcesFieldViewModel(setting, this),
+            (SettingKind.Resource or SettingKind.Spell or SettingKind.Monster, true) => new PickedGamesFieldViewModel(setting, this),
             (SettingKind.Job, true) when setting.IsGathering => new GatheringJobsFieldViewModel(setting, this),
             (SettingKind.SubArea, true) when setting.IsSuggested => new SubAreasFieldViewModel(setting, this),
             (_, false) => new GameFieldViewModel(setting, this),

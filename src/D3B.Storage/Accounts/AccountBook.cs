@@ -156,17 +156,17 @@ public sealed class AccountBook : IDisposable
             cancellationToken);
     }
 
-    /// <summary>Says whether the AI plays every fight of a character, as the switch on its bot's card was set (D213).</summary>
+    /// <summary>Gives a character the strategy it fights with, or D3B's defaults (D233).</summary>
     /// <param name="key">The character.</param>
-    /// <param name="alone">Whether the AI plays them.</param>
+    /// <param name="strategyId">The strategy's profile id, or <see langword="null"/> for D3B's defaults, "Standard".</param>
     /// <param name="cancellationToken">Stops the write.</param>
     /// <returns>A task that completes once saved.</returns>
-    public Task SetFightsAloneAsync(CharacterKey key, bool alone, CancellationToken cancellationToken)
+    public Task SetStrategyAsync(CharacterKey key, int? strategyId, CancellationToken cancellationToken)
     {
         return WriteAsync(
             context => context.Characters
                 .Where(character => character.AccountId == key.AccountId && character.Id == key.CharacterId)
-                .ExecuteUpdateAsync(setters => setters.SetProperty(character => character.FightsAlone, alone), cancellationToken),
+                .ExecuteUpdateAsync(setters => setters.SetProperty(character => character.StrategyId, strategyId), cancellationToken),
             cancellationToken);
     }
 

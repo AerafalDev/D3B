@@ -127,9 +127,9 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             // Its dialogs, over the editor: resources chosen several at once, a question, a new profile.
             var editing = main.Profiles.Editing!;
 
-            editing.Editor!.Sections.SelectMany(section => section.Fields).OfType<ResourcesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
+            editing.Editor!.Sections.SelectMany(section => section.Fields).OfType<PickedGamesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
-            dialogs.Add(window.GetVisualDescendants().OfType<ResourcePickerView>().Any(view => view.IsEffectivelyVisible));
+            dialogs.Add(window.GetVisualDescendants().OfType<GamePickerView>().Any(view => view.IsEffectivelyVisible));
             Drawings.Draw(window, "picker-fr");
             main.Dialogs.Close();
             editing.AskDeleteCommand.Execute(null);
@@ -236,7 +236,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             var french = Texts(window);
 
             Drawings.Draw(window, "profession-fr");
-            editor.Sections.SelectMany(section => section.Fields).OfType<ResourcesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
+            editor.Sections.SelectMany(section => section.Fields).OfType<PickedGamesFieldViewModel>().Single(field => field.IsVisible).ChooseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
             var picker = Texts(window);

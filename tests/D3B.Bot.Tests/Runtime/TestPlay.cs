@@ -138,6 +138,9 @@ internal sealed class TestPlay : IAsyncDisposable
 
     public Bots Bots { get; }
 
+    /// <summary>Gets the strategy every character plays, D3B's defaults until a test sets another (D233).</summary>
+    public TestStrategies Strategies { get; } = new();
+
     public TestPlay(params int[] blocked)
         : this([], blocked)
     {
@@ -156,7 +159,7 @@ internal sealed class TestPlay : IAsyncDisposable
         Places = new GraphicPlaces(_pack, World);
         _logs = LoggerFactory.Create(logging => logging.AddProvider(new FakeLoggerProvider(Log)).SetMinimumLevel(LogLevel.Debug));
         // The wait between two steps is a test's own to ask for: the others drive their steps by the server's answers alone.
-        Bots = new Bots(Maps, World, Tables, Time, _logs) { Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.Zero } };
+        Bots = new Bots(Maps, World, Tables, Time, _logs, Strategies) { Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.Zero } };
         _accounts = new GameAccounts(_settings.SelectionLifetime, Time);
         _decoder = new RelayDecoder(Translation, new GameServerSelections(_settings, Time), _accounts, [Bots, .. observers], _logs);
     }

@@ -16,7 +16,8 @@ namespace D3B.Bot.Fights;
 /// The bot sends every request the player would, the client following the server's answers as after its own (D60): the
 /// placement's cell, its readiness, then each turn its walks and casts, one at a time, and the turn's end. Once the fight's
 /// map is drawn, its display time, it judges the fight's odds, prudent when it would lose (D198), places the character on
-/// the cell the AI judges best and says it is ready. Each turn it searches the best sequence (<see cref="FightTactics.Plan"/>),
+/// the cell the AI judges best and says it is ready. The character's strategy weighs each turn, prudent under its share of
+/// life, leaves its spells out, and says the fight's options and where the character stands (D234). Each turn it searches the best sequence (<see cref="FightTactics.Plan"/>),
 /// sends its first action, waits for the server's answer and the client's showing it, and searches again from what the
 /// server said; it ends its turn at once when nothing is worth doing, instead of waiting for the turn's time.
 /// </para>
@@ -30,9 +31,6 @@ public static class FightPlay
     private const int MostActionsATurn = 30;
     private const int MostRefusedATurn = 2;
 
-    // The owner's ask (D203, D216): the AI's fight is closed to other players, then to spectators.
-    private static readonly FightOption[] _closing = [FightOption.Closed, FightOption.NoSpectators];
-
     private static readonly TimeSpan _placementWait = TimeSpan.FromSeconds(45);
     private static readonly TimeSpan _turnWait = TimeSpan.FromMinutes(5);
 
@@ -40,16 +38,19 @@ public static class FightPlay
     /// <param name="context">The behavior's context, in a fight.</param>
     /// <param name="tactics">The fight's AI.</param>
     /// <param name="tables">The pack's game tables.</param>
+    /// <param name="strategy">The character's strategy.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How the fight ended for the character, once the server said; null when it ended unsaid.</returns>
-    public static async Task<FightEnd?> PlayAsync(BotContext context, FightTactics tactics, GameTables tables, CancellationToken cancellationToken)
+    public static async Task<FightEnd?> PlayAsync(BotContext context, FightTactics tactics, GameTables tables, StrategySettings strategy, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(tactics);
         ArgumentNullException.ThrowIfNull(tables);
+        ArgumentNullException.ThrowIfNull(strategy);
 
         var self = context.State.Key.CharacterId;
-        var weights = TacticWeights.Default;
+        var leftOut = Strategies.LeftOut(strategy);
+        var risky = false;
         var judged = false;
         var refused = new HashSet<int>();
         FightMap? map = null;
@@ -73,7 +74,7 @@ public static class FightPlay
             {
                 var odds = tactics.Odds(start.Fight, start.Knowledge);
 
-                weights = odds.IsRisky ? TacticWeights.Prudent : TacticWeights.Default;
+                risky = odds.IsRisky;
                 judged = true;
                 FightLog.Judged(context.Log, self, odds.TurnsToWin, odds.TurnsToLose, odds.IsRisky);
             }
@@ -89,7 +90,7 @@ public static class FightPlay
                 }
 
                 if (!fight.IsReady)
-                    await PlaceAsync(context, tactics, tables, map, weights, cancellationToken).ConfigureAwait(false);
+                    await PlaceAsync(context, tactics, tables, map, strategy, Strategies.WeightsOf(strategy, risky, LifeOf(fight, self)), cancellationToken).ConfigureAwait(false);
 
                 await context.WaitUntilAsync(next => next.Fight is not { Phase: FightPhase.Placement }, _placementWait, cancellationToken).ConfigureAwait(false);
 
@@ -103,7 +104,7 @@ public static class FightPlay
                 continue;
             }
 
-            await PlayTurnAsync(context, tactics, tables, map, weights, refused, cancellationToken).ConfigureAwait(false);
+            await PlayTurnAsync(context, tactics, tables, map, Strategies.WeightsOf(strategy, risky, LifeOf(fight, self)), leftOut, refused, cancellationToken).ConfigureAwait(false);
             await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -128,6 +129,21 @@ public static class FightPlay
         return state.Fight is not { Phase: not FightPhase.Ended };
     }
 
+    private static double LifeOf(FightState fight, long self)
+    {
+        return fight.Fighters.TryGetValue(self, out var own) && own.MaxLife > 0 ? (double)own.Life / own.MaxLife : 1;
+    }
+
+    private static IEnumerable<FightOption> Closing(StrategySettings strategy)
+    {
+        // The owner's ask (D203, D216): the AI's fight is closed to other players, then to spectators, as the strategy says (D234).
+        if (strategy.Closed)
+            yield return FightOption.Closed;
+
+        if (strategy.NoSpectators)
+            yield return FightOption.NoSpectators;
+    }
+
     private static async Task<bool> PacedAsync(BotContext context, Func<FightState, bool> still, CancellationToken cancellationToken)
     {
         // The player's pace, so that the player sees each action (D202). Measured live (D203): a fight may end meanwhile, the
@@ -138,14 +154,14 @@ public static class FightPlay
         return context.State.Fight is { Phase: not FightPhase.Ended } fight && still(fight);
     }
 
-    private static async Task PlaceAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, CancellationToken cancellationToken)
+    private static async Task PlaceAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, StrategySettings strategy, TacticWeights weights, CancellationToken cancellationToken)
     {
         var self = context.State.Key.CharacterId;
 
         if (ImaginedFights.Of(context.State, map, tables, tactics.Blows, null) is not { } imagined || context.State.Fight is not { } fight)
             return;
 
-        foreach (var option in _closing)
+        foreach (var option in Closing(strategy))
         {
             if (context.State.Fight?.Options.GetValueOrDefault(option) is true || !await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
                 continue;
@@ -156,7 +172,7 @@ public static class FightPlay
             await set.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
         }
 
-        var cell = tactics.Place(imagined.Fight, fight.OwnCells, imagined.Knowledge, weights);
+        var cell = tactics.Place(imagined.Fight, fight.OwnCells, imagined.Knowledge, weights, Strategies.PlacementOf(strategy));
 
         if (!await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
             return;
@@ -180,7 +196,7 @@ public static class FightPlay
         await ready.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, HashSet<int> refusedSpells, CancellationToken cancellationToken)
+    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, IReadOnlySet<int> leftOut, HashSet<int> refusedSpells, CancellationToken cancellationToken)
     {
         var self = context.State.Key.CharacterId;
         var refused = new HashSet<(int SpellId, int Cell)>();
@@ -198,6 +214,8 @@ public static class FightPlay
 
             if (refusedSpells.Count > 0)
                 imagined = (imagined.Fight, imagined.Knowledge.Without(refusedSpells));
+
+            imagined = (imagined.Fight, imagined.Knowledge.Without(self, leftOut));
 
             var plan = tactics.Plan(imagined.Fight, imagined.Knowledge, weights, TurnSearchLimits.Default, refused);
 

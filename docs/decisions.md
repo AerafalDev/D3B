@@ -5446,6 +5446,93 @@ the bot's card).*
   fight closed and spectators refused, among them; what becomes of the player's own fights out of an activity, which
   the card's switch had the AI play (D198), and of the switch kept in the database (D213), each asked of the owner.
 
+## D232: 9g as the owner asks it
+
+*2026-10-30, step 9, session 9g, the owner's words, recorded as they asked. Builds D192, D230. D231 is the app's icon, a
+session of its own.*
+
+- **Asked** for the session: the fights' profiles made as the harvest's, with many useful options, among them the AI's
+  weights and prudence, spells preferred or left out, a role, the fight closed and spectators refused, and what follows a
+  lost fight; "the AI fights" in the harvest profile, an option checked by default, instead of the switch on the bot's
+  card, and what becomes of the fights out of an activity and of the switch kept in the database; the AI measured with
+  the default settings on `scripts/fights.cs`, its bench, `--turns` and `--live`, nothing regressing.
+- **Asked** as the session ran: the spells' icons in the pack, as the resources' are (D135), since the profiles choose
+  spells; and, in the same session, the fighting activity made as the harvest is: a monster or a group of monsters
+  focused, an area or a sub-area, the bot finding the groups by itself and attacking them.
+
+## D233: A fight's strategy, a profile of its own that each character plays
+
+*2026-10-30, step 9, session 9g, chosen by the owner among three options, as the lead recommended it; the name the owner's
+choice among the lead's. Builds D99, D168.*
+
+- **A strategy** is a profile of a kind of its own on the profiles page, edited, copied and given presets as an activity's
+  are, never started: how a character fights. Each character plays one, chosen on the accounts page beside its activity's
+  profile, "Standard", D3B's defaults, when none is chosen; the AI fights every fight it plays for the character with it.
+  An activity's profile says whether the AI plays its fights, and what follows a fight and a lost fight.
+- **Why**: spells and a role are a breed's and a character's; a character fights the same way whatever it does; groups,
+  at step 10, ask a role of each character.
+- **Named** "Strategy" (« Stratégie »), so that it is not mistaken for the fighting activity, "Fight" (« Combat »).
+- **Rejected.**
+  - A strategy chosen in each activity's profile: one profile shared by breeds mixes their spells, a role means nothing
+    there, and no profile answers a fight out of an activity.
+  - Both, the character's overridden by an activity's: the most flexible, the most complex; it can come later over this.
+
+## D234: A strategy's options
+
+*2026-10-30, step 9, session 9g, the lead's list, kept by the owner, who asked for the spells' icons (D232). Builds D198,
+D203, D212, D216.*
+
+- **Strategy**: a role, attacker by default, healer, the allies' life twice as dear and heals and shields first, or
+  protector, the allies dearer, its own life less, closer to the enemies; a style, prudent, balanced by default, or
+  offensive, the judge's three weights; prudent when the fight is judged too risky, on by default as D198 has it; prudent
+  under a share of life, off by default, 30 %.
+- **Spells**: spells preferred, each worth a quarter more than what it brings, a cast that brings nothing never made worth
+  making; spells left out, never cast; the weapon's blow, on by default (D220).
+- **Placement**: automatic by default, as the AI judges it, near the enemies or far from them.
+- **The fight**: closed and spectators refused, both on by default (D216).
+- **Presets**, stored once (D168): "Prudent", "Offensive", "Healer" and "Protector"; "Standard" is D3B's defaults.
+- **Elsewhere**: what follows a fight and a lost fight stays the activity's (D233); the pace, 0.9 s, the machine's
+  settings page; a fight closed to all but the group, step 10; which groups to attack, the fighting activity's.
+- **Rejected.**
+  - The weights as numbers: unreadable, the style sums them up.
+  - A search's length: no search reaches its 800 ms, 374 ms at most (D229).
+  - A target first: the judge kills already (D203).
+  - Giving a fight up: D198.
+  - The game's 8 roles, placement and hindering among them, which the AI does not play apart yet.
+
+## D235: The fights out of an activity, a strategy's option; the switch gone from the card and the database
+
+*2026-10-30, step 9, session 9g, chosen by the owner among three options, as the lead recommended it. Supersedes D198 and
+D213 on the switch.*
+
+- **Measured** in the code: the player's hand pauses a bot only during its behavior (D66), so the switch had the AI take
+  the fights of a character the owner played by hand too, as soon as one began.
+- **A strategy's option**, "The AI plays the fights out of an activity", off in "Standard": a strategy the owner gives the
+  characters they test the AI with, attacking groups themselves. An activity's own fights follow its profile; harvesting's
+  "The AI fights", checked by default.
+- **The switch** leaves the bot's card, and its column the database, by a migration: one character of seven had it on
+  (D213). `D3B.Host`'s `Fights:Alone` stays, every bot's fights played, for the measures.
+- **Rejected.**
+  - Always the player out of an activity: the owner would test the AI from the command line alone.
+  - An activity "Fight" with nothing to do but the fights the player starts: beside "Strategy", two names for one thing.
+
+## D236: The fighting activity's options, and the monsters' icons at 64 pixels
+
+*2026-10-30, step 9, session 9g, the lead's list, kept by the owner, who chose the monsters' icons at their 64 pixels.
+Builds D127, D144, D148, D149, D165 to D168, D192, D198.*
+
+- **What**: automatic, the groups at the character's level, by default, or monsters chosen, a group attacked when it holds
+  one of them; monsters left out, a group holding one never attacked; a group of 1 to 8 monsters; only the groups the AI
+  judges it wins, on by default, as D198 has it.
+- **Where**: automatic, the sub-area holding the most monsters at the character's level, as D166 chooses a harvest's, by
+  default, or chosen, an area and sub-areas suggested by the monsters chosen; isolated maps and zaaps as harvesting's.
+- **Upkeep**: healing under 70 % by default, by the profile's food, else by waiting; banking full, the loot, as
+  harvesting's.
+- **After a lost fight**: resumed once healed by default, paused or stopped, three in a row ending the activity (D198).
+- **A preset**, "Automatic fight". The activity fights with each character's strategy (D233).
+- **In the pack**, format 7: the monsters' icons at 64 pixels and where the monsters live, beside the spells' icons.
+- **Later**: a drop sought (D192), the pack holding no drops; aggressive monsters.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

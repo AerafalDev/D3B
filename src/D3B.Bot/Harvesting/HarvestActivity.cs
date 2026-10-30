@@ -106,8 +106,8 @@ public sealed class HarvestActivity : BotActivity
     public override int TeleportChanges => _settings.ZaapSaving;
 
     /// <inheritdoc/>
-    /// <remarks>The AI plays a protector's fight and an aggression instead of the player, then the settings answer it (D144, D198).</remarks>
-    public override bool FightsItsFights => true;
+    /// <remarks>The AI plays a protector's fight and an aggression instead of the player, as the profile says, then the settings answer it (D144, D198, D235).</remarks>
+    public override bool FightsItsFights => _settings.AiFights;
 
     /// <summary>Initializes a new instance of the <see cref="HarvestActivity"/> class.</summary>
     /// <param name="settings">What to harvest, where, and when to bank.</param>

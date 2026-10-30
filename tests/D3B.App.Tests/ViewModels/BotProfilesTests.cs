@@ -1,5 +1,6 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.Bot.Fights;
 using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
@@ -125,26 +126,24 @@ public sealed class BotProfilesTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheSwitchOnACardIsKeptForItsCharacter()
+    public async Task ACardOffersNoStrategyToStart()
     {
         await _store.OpenedAsync();
-        await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Character", 200));
 
-        var (_, bot) = await _store.Play.EnterAsync(300);
+        var ct = TestContext.Current.CancellationToken;
+
+        await _store.Profiles.SaveAsync(0, "Another", TestStore.StrollId, "{}", ct);
+        await _store.Profiles.SaveAsync(0, "Testing the AI", Strategies.ProfileId, "{}", ct);
+        await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Character", 200));
+        await _store.Play.EnterAsync(300);
+
         var page = new BotsViewModel(_localizer);
 
         page.Refresh(_store.Host.Services);
 
         var item = Assert.Single(page.Items);
 
-        item.FightsAlone = true;
-
-        Assert.True(bot.FightsAlone);
-        await Waiting.UntilAsync(() => _store.Accounts.Find(TestPlay.Key)?.FightsAlone is true, TimeSpan.FromSeconds(10));
-
-        item.FightsAlone = false;
-
-        await Waiting.UntilAsync(() => _store.Accounts.Find(TestPlay.Key)?.FightsAlone is false, TimeSpan.FromSeconds(10));
-        Assert.False(bot.FightsAlone);
+        Assert.DoesNotContain(item.Activities, choice => choice.Name == "Testing the AI" || choice.Name == "Strategy");
+        Assert.Contains(item.Activities, choice => choice.Name == "Another");
     }
 }

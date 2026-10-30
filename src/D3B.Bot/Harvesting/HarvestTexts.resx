@@ -219,7 +219,7 @@
     <value>After a fight</value>
   </data>
   <data name="AfterFightHelp" xml:space="preserve">
-    <value>The AI plays the fight, then harvesting resumes, pauses or stops.</value>
+    <value>Once the fight is over, harvesting resumes, pauses or stops.</value>
   </data>
   <data name="AfterFightResume" xml:space="preserve">
     <value>Resume</value>
@@ -451,5 +451,11 @@
   </data>
   <data name="PresetFisherman" xml:space="preserve">
     <value>Auto fisherman</value>
+  </data>
+  <data name="AiFights" xml:space="preserve">
+    <value>The AI fights</value>
+  </data>
+  <data name="AiFightsHelp" xml:space="preserve">
+    <value>The AI plays a protector's fight or an aggression with the character's strategy; unchecked, you play it.</value>
   </data>
 </root>

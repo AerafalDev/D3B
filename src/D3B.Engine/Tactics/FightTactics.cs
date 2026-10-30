@@ -126,6 +126,23 @@ public sealed class FightTactics
         return nearest;
     }
 
+    private static int Distance(ImaginedFight fight, int team, int cell, TacticPlacement placement)
+    {
+        // What a placement minimizes first: nothing as the judge places, the nearest enemy's distance near them, its opposite far.
+        return placement switch
+        {
+            TacticPlacement.NearEnemies => Nearest(fight, team, cell),
+            TacticPlacement.FarFromEnemies => -Nearest(fight, team, cell),
+            _ => 0,
+        };
+    }
+
+    private static double Preference(TacticWeights weights, int spellId, double gain)
+    {
+        // Worth more only what it brings: a preferred spell never makes a useless cast worth making.
+        return gain > 0 && weights.Preferred.Contains(spellId) ? weights.Preference * gain : 0;
+    }
+
     /// <summary>Gets a judge of a fight as it stands, which a search and a placement share.</summary>
     /// <param name="fight">The fight.</param>
     /// <param name="knowledge">What the AI knows of the fighters.</param>
@@ -150,9 +167,10 @@ public sealed class FightTactics
     /// <param name="cells">The team's placement cells.</param>
     /// <param name="knowledge">What the AI knows of the fighters.</param>
     /// <param name="weights">The weights.</param>
+    /// <param name="placement">Where the fighter prefers to stand: as the judge says, or nearest or farthest from the enemies, the judge deciding a tie (D234).</param>
     /// <returns>The cell judged best, the fighter's own on a tie; its own when no other is free.</returns>
     /// <remarks>Each free cell judged as a turn's end is (<see cref="FightJudge"/>): the enemies' threat there against the damage it may deal from there.</remarks>
-    public int Place(ImaginedFight fight, IEnumerable<int> cells, FightKnowledge knowledge, TacticWeights weights)
+    public int Place(ImaginedFight fight, IEnumerable<int> cells, FightKnowledge knowledge, TacticWeights weights, TacticPlacement placement = TacticPlacement.Judged)
     {
         ArgumentNullException.ThrowIfNull(fight);
         ArgumentNullException.ThrowIfNull(cells);
@@ -161,6 +179,7 @@ public sealed class FightTactics
         var actor = fight.Actor;
         var best = actor.Cell;
         var bestScore = judge.Judge(fight);
+        var bestDistance = Distance(fight, actor.Team, actor.Cell, placement);
 
         foreach (var cell in cells)
         {
@@ -168,11 +187,13 @@ public sealed class FightTactics
                 continue;
 
             var score = judge.Judge(fight.With(actor with { Cell = cell }));
+            var distance = Distance(fight, actor.Team, cell, placement);
 
-            if (score > bestScore + Better)
+            if (distance < bestDistance || (distance == bestDistance && score > bestScore + Better))
             {
                 best = cell;
                 bestScore = score;
+                bestDistance = distance;
             }
         }
 
@@ -196,7 +217,7 @@ public sealed class FightTactics
         var clock = Stopwatch.StartNew();
         var judge = JudgeOf(fight, knowledge, weights);
         var weighed = 1;
-        var root = new Node(fight, [], judge.Judge(fight));
+        var root = new Node(fight, [], judge.Judge(fight), 0);
         var finalists = new List<Finalist>();
         List<Node> frontier = [root];
 
@@ -219,8 +240,10 @@ public sealed class FightTactics
                     ImmutableArray<TacticAction> actions = from is { } walk
                         ? [.. node.Actions, TacticAction.Walk(walk.Cell), TacticAction.Cast(level.SpellId, level.Id, cell)]
                         : [.. node.Actions, TacticAction.Cast(level.SpellId, level.Id, cell)];
+                    var judged = judge.Judge(cast);
+                    var bonus = node.Bonus + Preference(weights, level.SpellId, judged + node.Bonus - node.Score);
 
-                    children.Add(new Node(cast, actions, judge.Judge(cast)));
+                    children.Add(new Node(cast, actions, judged + bonus, bonus));
                     weighed++;
                 }
             }
@@ -248,7 +271,7 @@ public sealed class FightTactics
         foreach (var finalist in finalists.OrderByDescending(finalist => finalist.Score).Take(Finalists).Append(standing).Distinct())
         {
             var replied = Replies(finalist.End, knowledge, judge);
-            var score = judge.JudgeReplied(replied, NextTurn(replied, later, judge, limits).Gain);
+            var score = judge.JudgeReplied(replied, NextTurn(replied, later, judge, limits).Gain) + finalist.Bonus;
 
             weighed++;
 
@@ -355,7 +378,7 @@ public sealed class FightTactics
     {
         // Ending where the fighter stands comes first, so that a tie keeps it there and no walk is sent.
         var actor = node.Fight.Actor;
-        List<Finalist> ends = [new Finalist(node.Actions, node.Fight, node.Score)];
+        List<Finalist> ends = [new Finalist(node.Actions, node.Fight, node.Score, node.Bonus)];
 
         if (actor.MovementPoints > 0 && actor.Cell is not Combatant.NoCell)
         {
@@ -365,12 +388,12 @@ public sealed class FightTactics
                     continue;
 
                 var walked = Imagination.Walked(node.Fight, cell, left);
-                var score = judge.Judge(walked);
+                var score = judge.Judge(walked) + node.Bonus;
 
                 weighed++;
 
                 if (score > node.Score + Better)
-                    ends.Add(new Finalist([.. node.Actions, TacticAction.Walk(cell)], walked, score));
+                    ends.Add(new Finalist([.. node.Actions, TacticAction.Walk(cell)], walked, score, node.Bonus));
             }
         }
 
@@ -541,7 +564,8 @@ public sealed class FightTactics
     }
 
 
-    private sealed record Node(ImaginedFight Fight, ImmutableArray<TacticAction> Actions, double Score);
+    // A sequence's bonus is what its preferred spells' casts are worth more (D234), carried to its end and its reply.
+    private sealed record Node(ImaginedFight Fight, ImmutableArray<TacticAction> Actions, double Score, double Bonus);
 
-    private sealed record Finalist(ImmutableArray<TacticAction> Actions, ImaginedFight End, double Score);
+    private sealed record Finalist(ImmutableArray<TacticAction> Actions, ImaginedFight End, double Score, double Bonus);
 }

@@ -1,6 +1,7 @@
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.Bot.Fights;
 using D3B.Bot.Network;
 using D3B.Bot.Tests.Runtime;
 
@@ -65,6 +66,43 @@ public sealed class AccountsViewModelTests : IAsyncDisposable
         page.Refresh(_store.Host.Services);
 
         Assert.Equal("Vu il y a 3 j", page.Items[1].Seen);
+    }
+
+    [Fact]
+    public async Task ACharacterIsGivenAStrategyApartFromItsProfile()
+    {
+        await _store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+
+        await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", ct);
+
+        var testing = await _store.Profiles.SaveAsync(0, "Testing the AI", Strategies.ProfileId, "{}", ct);
+
+        await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Character", 200));
+
+        var page = new AccountsViewModel(_localizer, new Dialogs());
+
+        page.Refresh(_store.Host.Services);
+
+        var row = page.Items[0].Characters[0];
+
+        Assert.DoesNotContain(row.Profiles, profile => profile.Name == "Testing the AI");
+        Assert.Equal("Standard", row.Strategies[0].Name);
+        Assert.Contains(row.Strategies, strategy => strategy.Name == "Testing the AI");
+        Assert.DoesNotContain(row.Strategies, strategy => strategy.Name == "Stroll");
+        Assert.Equal("Standard", row.SelectedStrategy?.Name);
+
+        var version = _store.Accounts.Version;
+
+        row.SelectedStrategy = row.Strategies.Single(strategy => strategy.Name == "Testing the AI");
+        await Waiting.UntilAsync(() => _store.Accounts.Version > version, TimeSpan.FromSeconds(10));
+
+        Assert.Equal(testing.Id, _store.Accounts.Find(TestPlay.Key)?.StrategyId);
+
+        page.Refresh(_store.Host.Services);
+
+        Assert.Equal("Testing the AI", page.Items[0].Characters[0].SelectedStrategy?.Name);
     }
 
     [Fact]

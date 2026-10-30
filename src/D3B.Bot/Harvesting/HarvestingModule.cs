@@ -105,10 +105,12 @@ public sealed class HarvestingModule : IModule
             .VisibleWhen(s => s.Heal);
 
         settings.Section(HarvestTexts.Text("SectionFight"));
+        settings.Flag(s => s.AiFights, HarvestTexts.Text("AiFights")).Help(HarvestTexts.Text("AiFightsHelp"));
         settings.Choice(s => s.AfterFight, HarvestTexts.Text("AfterFight"), after => HarvestTexts.Text($"AfterFight{after}"))
             .Help(HarvestTexts.Text("AfterFightHelp"));
         settings.Choice(s => s.AfterLostFight, HarvestTexts.Text("AfterLostFight"), after => HarvestTexts.Text($"AfterLostFight{after}"))
-            .Help(HarvestTexts.Text("AfterLostFightHelp"));
+            .Help(HarvestTexts.Text("AfterLostFightHelp"))
+            .VisibleWhen(s => s.AiFights);
 
         settings.Rule(s => s.Mode is not HarvestMode.ByProfession || s.Jobs.Count > 0, HarvestTexts.Text("RuleJobs"));
         settings.Rule(s => s.Mode is not HarvestMode.List || s.Resources.Count > 0, HarvestTexts.Text("RuleWhat"));

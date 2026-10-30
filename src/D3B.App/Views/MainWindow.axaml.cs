@@ -15,7 +15,7 @@ internal sealed partial class MainWindow : ShadUI.Window
 {
     private readonly DialogManager _dialogManager = new DialogManager()
         .Register<QuestionView, QuestionViewModel>()
-        .Register<ResourcePickerView, ResourcePickerViewModel>()
+        .Register<GamePickerView, GamePickerViewModel>()
         .Register<NewProfileView, NewProfileViewModel>();
 
     private readonly ToastManager _toastManager = new();
@@ -90,7 +90,7 @@ internal sealed partial class MainWindow : ShadUI.Window
             case QuestionViewModel question:
                 _dialogManager.CreateDialog(question).WithMaxWidth(440).Show();
                 break;
-            case ResourcePickerViewModel picker:
+            case GamePickerViewModel picker:
                 _dialogManager.CreateDialog(picker).WithMinWidth(560).WithMaxWidth(720).Show();
                 break;
             case NewProfileViewModel profile:
