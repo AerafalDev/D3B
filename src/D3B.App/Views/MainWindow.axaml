@@ -46,6 +46,7 @@
             CurrentRoute="{Binding CurrentRoute}"
             Expanded="{Binding IsSidebarExpanded}"
             MinWidth="56"
+            Padding="8,0"
             Width="200">
             <StackPanel Margin="0,8" Spacing="4">
                 <shadui:SidebarItem
@@ -126,7 +127,7 @@
                         <c:Icon Data="{StaticResource IconInspector}" />
                     </shadui:SidebarItem.Icon>
                 </shadui:SidebarItem>
-                <Separator IsVisible="{Binding HasPages}" Margin="12,4" />
+                <Separator IsVisible="{Binding HasPages}" Margin="4,4" />
                 <ItemsControl ItemsSource="{Binding Pages}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -162,10 +163,8 @@
                     </shadui:SidebarItem>
                     <Button
                         AutomationProperties.Name="{Binding SidebarToggleText}"
-                        Classes="Ghost IconButton"
+                        Classes="Ghost IconButton RailToggle"
                         Command="{Binding ToggleSidebarCommand}"
-                        HorizontalAlignment="Left"
-                        Margin="8,0"
                         ToolTip.Tip="{Binding SidebarToggleText}">
                         <c:Icon Data="{Binding SidebarToggleIcon, Converter={x:Static c:IconOf.Instance}}" />
                     </Button>
