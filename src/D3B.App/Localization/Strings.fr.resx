@@ -671,6 +671,9 @@
   <data name="JournalMapAction" xml:space="preserve">
     <value>Change de carte : {0} → {1}, par une action de carte</value>
   </data>
+  <data name="JournalNpcWay" xml:space="preserve">
+    <value>Passe par le dialogue d'un PNJ : {0} → {1}</value>
+  </data>
   <data name="JournalDoor" xml:space="preserve">
     <value>Passe une porte : {0} → {1}</value>
   </data>

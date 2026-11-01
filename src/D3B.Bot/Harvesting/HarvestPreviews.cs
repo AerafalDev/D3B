@@ -1,6 +1,7 @@
 using D3B.Bot.Banks;
 using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
+using D3B.Bot.Movement;
 using D3B.Bot.Settings;
 using D3B.Data;
 using D3B.Data.Maps;
@@ -59,7 +60,7 @@ public sealed class HarvestPreviews
         _sightings = sightings;
         _graphics = graphics;
         _places = places;
-        _pathfinder = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas), LazyThreadSafetyMode.ExecutionAndPublication);
+        _pathfinder = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas, NpcWays.Measured), LazyThreadSafetyMode.ExecutionAndPublication);
         _reachable = new Lazy<HashSet<int>>(() => ReachableSubAreas(world, tables), LazyThreadSafetyMode.ExecutionAndPublication);
     }
 

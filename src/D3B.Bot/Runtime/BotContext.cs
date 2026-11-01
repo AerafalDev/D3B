@@ -56,11 +56,21 @@ public sealed class BotContext
     /// <summary>Gets the maps the server refused the character a teleport from, which no journey teleports from again (D248).</summary>
     public IReadOnlySet<long> NoTeleportFrom => _bot.NoTeleportFrom;
 
+    /// <summary>Gets the NPCs' ways the character was refused, which no journey takes again (D253).</summary>
+    public IReadOnlySet<int> NoNpcWays => _bot.NoNpcWays;
+
     /// <summary>Remembers that the server refused a teleport from a map, whatever its flag says (D248).</summary>
     /// <param name="mapId">The map.</param>
     public void RefuseTeleportFrom(long mapId)
     {
         _bot.RefuseTeleportFrom(mapId);
+    }
+
+    /// <summary>Remembers that an NPC's dialog did not offer the character its way (D253).</summary>
+    /// <param name="way">The way, by index in <see cref="WorldPathfinder.NpcWays"/>.</param>
+    public void RefuseNpcWay(int way)
+    {
+        _bot.RefuseNpcWay(way);
     }
 
     /// <summary>Gets how many map changes a teleport counts as on a journey: as the running activity says, 1 without one (D167).</summary>

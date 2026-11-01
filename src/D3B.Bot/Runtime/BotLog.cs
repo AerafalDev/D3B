@@ -46,6 +46,9 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: teleports from map {From} to the zaap of map {To}")]
     public static partial void Teleporting(ILogger logger, long character, long from, long to);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: leaves map {From} for map {To} through the dialog of NPC {Npc}")]
+    public static partial void TalkingThrough(ILogger logger, long character, long from, long to, int npc);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: leaves the haven bag of {Owner}")]
     public static partial void LeavingHavenBag(ILogger logger, long character, long owner);
 

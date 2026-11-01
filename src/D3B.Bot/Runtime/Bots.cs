@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
+using D3B.Bot.Movement;
 using D3B.Bot.Network;
 using D3B.Data;
 using D3B.Data.Maps;
@@ -72,16 +73,30 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     /// <param name="tables">The game tables of that pack: its banks are read when a bot first banks.</param>
     /// <param name="time">The clock every bot's delays go through.</param>
     /// <param name="logs">The host's logs.</param>
+    /// <remarks>Journeys go through the NPCs' ways measured in game (<see cref="NpcWays.Measured"/>, D253).</remarks>
     public Bots(GameMaps maps, GameWorld world, GameTables tables, TimeProvider time, ILoggerFactory logs)
+        : this(maps, world, tables, time, logs, NpcWays.Measured)
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="Bots"/> class, whose journeys go through other NPCs' ways.</summary>
+    /// <param name="maps">The maps of the installed build's pack, which behaviors walk.</param>
+    /// <param name="world">The world of that pack, which behaviors travel: its graph is read when a bot first travels.</param>
+    /// <param name="tables">The game tables of that pack: its banks are read when a bot first banks.</param>
+    /// <param name="time">The clock every bot's delays go through.</param>
+    /// <param name="logs">The host's logs.</param>
+    /// <param name="npcWays">The NPCs' ways journeys may go through (D253).</param>
+    public Bots(GameMaps maps, GameWorld world, GameTables tables, TimeProvider time, ILoggerFactory logs, IReadOnlyList<NpcWay> npcWays)
     {
         ArgumentNullException.ThrowIfNull(maps);
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tables);
         ArgumentNullException.ThrowIfNull(time);
         ArgumentNullException.ThrowIfNull(logs);
+        ArgumentNullException.ThrowIfNull(npcWays);
 
         _maps = maps;
-        _world = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas), LazyThreadSafetyMode.PublicationOnly);
+        _world = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas, npcWays), LazyThreadSafetyMode.PublicationOnly);
 
         // One per host, so that what a bot learns of the insides serves every other (D79).
         _banks = new Lazy<BankDirectory>(() => new BankDirectory(tables.Banks, world.Graph, world.Atlas), LazyThreadSafetyMode.ExecutionAndPublication);

@@ -39,4 +39,17 @@ public sealed class PlayerActionsTests
     {
         Assert.False(PlayerActions.Starts(_state, request));
     }
+
+    [Fact]
+    public void LeavingADialogIsThePlayersButADialogWhoseQuestionOffersNoReplyWhichTheClientClosesItself()
+    {
+        var asked = _state with { Dialog = new NpcDialog(-20_000) { MessageId = 30_638, Replies = [36_977, 36_978] } };
+        var farewell = _state with { Dialog = new NpcDialog(-20_000) { MessageId = 30_636 } };
+
+        Assert.True(PlayerActions.Starts(asked, new DialogLeaveRequest()));
+        Assert.True(PlayerActions.Starts(_state with { Dialog = new NpcDialog(-20_000) }, new DialogLeaveRequest()));
+        Assert.False(PlayerActions.Starts(farewell, new DialogLeaveRequest()));
+        Assert.True(PlayerActions.Starts(farewell with { Storage = new OpenStorage(0) }, new DialogLeaveRequest()));
+        Assert.False(PlayerActions.Starts(_state, new DialogLeaveRequest()));
+    }
 }

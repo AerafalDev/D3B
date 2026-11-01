@@ -23,7 +23,11 @@ namespace D3B.Engine.World;
 /// character lands there not being measured.
 /// </para>
 /// <para>
-/// Every map change costs the same, a teleport too: the character walks across a map or the server moves it, then the
+/// It also goes through the NPCs' dialogs it is given (<see cref="NpcWays"/>), which the graph does not hold either, such as
+/// the portal out of Incarnam (D253): from any vertex of the NPC's map to the only vertex of the map the dialog leads to.
+/// </para>
+/// <para>
+/// Every map change costs the same, a teleport and an NPC's dialog too: the character walks across a map or the server moves it, then the
 /// client loads the next, a few seconds either way (client.md), so the quickest path is the one with the fewest. A
 /// teleport may count as more (<see cref="WorldPathRules.TeleportChanges"/>), so that a zaap is taken only when it saves
 /// that many changes, and paid only then; one that saves nothing is never taken (D167). Dijkstra's search, with no estimate: map actions and teleports lead anywhere, so no distance between maps bounds what
@@ -52,6 +56,8 @@ public sealed class WorldPathfinder
     private readonly bool[] _basic;
     private readonly MapPosition?[] _positions;
     private readonly Dictionary<long, int> _onlyVertices;
+    private readonly Dictionary<long, List<int>> _npcWaysFrom;
+    private readonly int[] _npcWayTo;
 
     /// <summary>Gets the world graph the paths go through.</summary>
     public WorldGraph Graph { get; }
@@ -59,13 +65,26 @@ public sealed class WorldPathfinder
     /// <summary>Gets the atlas the paths are placed on: each map's coordinates and sub-area.</summary>
     public WorldAtlas Atlas { get; }
 
-    /// <summary>Initializes a new instance of the <see cref="WorldPathfinder"/> class.</summary>
+    /// <summary>Gets the NPCs' ways the paths may go through, a step naming one by its index here (<see cref="WorldStep.NpcWay"/>).</summary>
+    public IReadOnlyList<NpcWay> NpcWays { get; }
+
+    /// <summary>Initializes a new instance of the <see cref="WorldPathfinder"/> class, with no NPC's way.</summary>
     /// <param name="graph">The world graph.</param>
     /// <param name="atlas">The atlas giving each map its sub-area, and each sub-area its area and whether accounts without a subscription enter it.</param>
     public WorldPathfinder(WorldGraph graph, WorldAtlas atlas)
+        : this(graph, atlas, [])
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="WorldPathfinder"/> class.</summary>
+    /// <param name="graph">The world graph.</param>
+    /// <param name="atlas">The atlas giving each map its sub-area, and each sub-area its area and whether accounts without a subscription enter it.</param>
+    /// <param name="npcWays">The NPCs' ways the paths may go through: one whose map the graph lacks, or that leads to a map without a vertex or with several, is never taken.</param>
+    public WorldPathfinder(WorldGraph graph, WorldAtlas atlas, IReadOnlyList<NpcWay> npcWays)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(atlas);
+        ArgumentNullException.ThrowIfNull(npcWays);
 
         var vertices = graph.Vertices.Span;
 
@@ -93,6 +112,26 @@ public sealed class WorldPathfinder
 
             // A second vertex of the map leaves it with no only vertex.
             _onlyVertices[vertices[i].MapId] = _onlyVertices.ContainsKey(vertices[i].MapId) ? NoVertex : i;
+        }
+
+        NpcWays = [.. npcWays];
+        _npcWaysFrom = [];
+        _npcWayTo = new int[NpcWays.Count];
+
+        for (var i = 0; i < NpcWays.Count; i++)
+        {
+            var way = NpcWays[i];
+
+            // Where the dialog lands the character on a map of several zones is not measured, as for a zaap.
+            _npcWayTo[i] = _onlyVertices.TryGetValue(way.ToMapId, out var to) ? to : NoVertex;
+
+            if (_npcWayTo[i] is NoVertex || !graph.Contains(way.MapId))
+                continue;
+
+            if (!_npcWaysFrom.TryGetValue(way.MapId, out var ways))
+                _npcWaysFrom[way.MapId] = ways = [];
+
+            ways.Add(i);
         }
     }
 
@@ -171,7 +210,9 @@ public sealed class WorldPathfinder
         var closed = new bool[vertices.Length];
         var open = new PriorityQueue<int, int>();
         var zaaps = ZaapsOf(rules);
-        var teleportedFrom = zaaps.Count > 0 ? new int[vertices.Length] : null;
+
+        // Where a teleport or an NPC's way was taken from, which no edge says.
+        var origins = zaaps.Count > 0 || _npcWaysFrom.Count > 0 ? new int[vertices.Length] : null;
         var reached = -1;
 
         Array.Fill(costs, int.MaxValue);
@@ -208,7 +249,25 @@ public sealed class WorldPathfinder
                 open.Enqueue(edge.To, cost);
             }
 
-            if (teleportedFrom is not null && zaaps.Count > 0 && _positions[vertex] is { AllowsTeleport: true } place && !rules.NoTeleportFrom.Contains(vertices[vertex].MapId))
+            if (_npcWaysFrom.TryGetValue(vertices[vertex].MapId, out var ways))
+            {
+                foreach (var way in ways)
+                {
+                    var to = _npcWayTo[way];
+                    var index = WorldStep.OfNpcWay(way);
+                    var cost = costs[vertex] + ChangeCost;
+
+                    if (closed[to] || cost >= costs[to] || !MayEnter(to, rules.Facts) || rules.Banned.Contains(index) || rules.NoNpcWays.Contains(way))
+                        continue;
+
+                    costs[to] = cost;
+                    through[to] = index;
+                    origins![to] = vertex;
+                    open.Enqueue(to, cost);
+                }
+            }
+
+            if (origins is not null && zaaps.Count > 0 && _positions[vertex] is { AllowsTeleport: true } place && !rules.NoTeleportFrom.Contains(vertices[vertex].MapId))
             {
                 var cost = costs[vertex] + (ChangeCost * rules.TeleportChanges) + 1;
 
@@ -226,7 +285,7 @@ public sealed class WorldPathfinder
 
                         costs[zaap] = cost;
                         through[zaap] = WorldStep.Teleport;
-                        teleportedFrom[zaap] = vertex;
+                        origins[zaap] = vertex;
                         open.Enqueue(zaap, cost);
                     }
 
@@ -236,7 +295,7 @@ public sealed class WorldPathfinder
             }
         }
 
-        path = reached < 0 ? null : PathTo(from, reached, through, teleportedFrom);
+        path = reached < 0 ? null : PathTo(from, reached, through, origins);
 
         return path is not null;
     }
@@ -245,7 +304,7 @@ public sealed class WorldPathfinder
     /// <param name="map">The step's map.</param>
     /// <param name="step">The step.</param>
     /// <param name="rules">What the character may follow: a criterion on the cell is answered for each.</param>
-    /// <returns>The cells, none when no cell meets the transition's criterion, nor for a teleport, which leaves from where the character stands.</returns>
+    /// <returns>The cells, none when no cell meets the transition's criterion, nor for a teleport or an NPC's way, which leave from where the character stands.</returns>
     /// <remarks>
     /// <para>
     /// A map action is left from its own cell. A door is used from the cells the client uses an element from
@@ -267,7 +326,7 @@ public sealed class WorldPathfinder
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(rules);
 
-        if (step.IsTeleport)
+        if (step.IsTeleport || step.IsNpcWay)
             return [];
 
         var cells = map.Cells.Span;
@@ -411,7 +470,7 @@ public sealed class WorldPathfinder
         return true;
     }
 
-    private WorldPath PathTo(int from, int to, int[] through, int[]? teleportedFrom)
+    private WorldPath PathTo(int from, int to, int[] through, int[]? origins)
     {
         var steps = new List<WorldStep>();
         var transitions = Graph.Transitions.Span;
@@ -421,11 +480,11 @@ public sealed class WorldPathfinder
         {
             var index = through[vertex];
 
-            if (index is WorldStep.Teleport)
+            if (index <= WorldStep.Teleport)
             {
-                var origin = teleportedFrom![vertex];
+                var origin = origins![vertex];
 
-                steps.Add(new WorldStep(origin, vertex, WorldStep.Teleport, default));
+                steps.Add(new WorldStep(origin, vertex, index, default));
                 vertex = origin;
 
                 continue;

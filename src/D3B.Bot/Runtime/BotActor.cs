@@ -68,6 +68,7 @@ public sealed class BotActor : IAsyncDisposable
     private volatile FightEnd? _lastFightEnd;
     private volatile Fighter? _lastFighter;
     private ImmutableHashSet<long> _noTeleportFrom = [];
+    private ImmutableHashSet<int> _noNpcWays = [];
     private int _fightsBegun;
     private int _lastEndedFight;
     private long _placedAt;
@@ -105,6 +106,9 @@ public sealed class BotActor : IAsyncDisposable
 
     /// <summary>Gets the maps the server refused the character a teleport from since the bot was made, whatever their flag says (D248).</summary>
     public IReadOnlySet<long> NoTeleportFrom => Volatile.Read(ref _noTeleportFrom);
+
+    /// <summary>Gets the NPCs' ways the character was refused since the bot was made, by index in <see cref="WorldPathfinder.NpcWays"/> (D253).</summary>
+    public IReadOnlySet<int> NoNpcWays => Volatile.Read(ref _noNpcWays);
 
     /// <summary>Gets how many fights began since the bot was made: the last one's number.</summary>
     public int FightsBegun => Volatile.Read(ref _fightsBegun);
@@ -199,7 +203,6 @@ public sealed class BotActor : IAsyncDisposable
         return (int)Math.Clamp(life + Math.Max(0, points), 0, most);
     }
 
-    /// <summary>Pauses the bot as the player's hand does, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
     /// <summary>Remembers that the server refused the character a teleport from a map, so that no journey teleports from it again (D248).</summary>
     /// <param name="mapId">The map.</param>
     internal void RefuseTeleportFrom(long mapId)
@@ -207,6 +210,14 @@ public sealed class BotActor : IAsyncDisposable
         ImmutableInterlocked.Update(ref _noTeleportFrom, (maps, map) => maps.Add(map), mapId);
     }
 
+    /// <summary>Remembers that an NPC's dialog did not offer the character its way, so that no journey takes it again (D253).</summary>
+    /// <param name="way">The way, by index in <see cref="WorldPathfinder.NpcWays"/>.</param>
+    internal void RefuseNpcWay(int way)
+    {
+        ImmutableInterlocked.Update(ref _noNpcWays, (ways, refused) => ways.Add(refused), way);
+    }
+
+    /// <summary>Pauses the bot as the player's hand does, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
     internal void Pause()
     {
         Post(new Pausing());

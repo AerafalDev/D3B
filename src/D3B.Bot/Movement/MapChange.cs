@@ -1,6 +1,7 @@
 using D3B.Bot.Interactives;
 using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
+using D3B.Data.Banks;
 using D3B.Data.Maps;
 using D3B.Data.World;
 using D3B.Engine.Maps;
@@ -39,9 +40,20 @@ namespace D3B.Bot.Movement;
 /// walk or a dialog, or to a map the character knows no zaap on; one it cannot pay is not measured. Leaving the haven bag
 /// is the request entering it, which takes the character back to the map it entered it from (D83).
 /// </para>
+/// <para>
+/// An NPC's way (D253) is talked to from where the character stands, as a banker is (D80): the server opens the dialog and
+/// asks its question 28 ms after, then each reply 28 to 34 ms after; the reply that leads on ends the dialog and names the
+/// new map in the same millisecond, and the client asks what is on it 0.85 s later, as after a scroll (client.md). Each
+/// reply waits the client's display time first, so that the client shows the question before the reply closes it (D132).
+/// A question offering none of the way's replies is left, the way refused. The portal moves a character of level 92 as
+/// soon as it is talked to, then asks on the new map a question offering no reply, which the client closes by itself.
+/// </para>
 /// </remarks>
 public static class MapChange
 {
+    // The portal out of Incarnam asks two questions; a dialog asking more than this is going round.
+    private const int MostQuestions = 5;
+
     /// <summary>Follows one step of a path through the world, as the bot's behavior.</summary>
     /// <param name="bot">The bot.</param>
     /// <param name="step">The step, leaving the vertex the character stands in.</param>
@@ -72,6 +84,7 @@ public static class MapChange
         var from = context.State.MapId ?? 0;
         var destination = context.World.Graph.Vertices.Span[step.To].MapId;
         var kind = step.IsTeleport ? MapChangeKind.Zaap
+            : step.IsNpcWay ? MapChangeKind.Npc
             : step.Transition.Type switch
             {
                 WorldTransitionType.MapAction => MapChangeKind.MapAction,
@@ -126,6 +139,13 @@ public static class MapChange
         {
             BotLog.Teleporting(context.Log, state.Key.CharacterId, mapId, destination);
             outcome = await TeleportAsync(context, mapId, destination, cancellationToken).ConfigureAwait(false);
+        }
+        else if (step.IsNpcWay)
+        {
+            var way = world.NpcWays[step.NpcWay];
+
+            BotLog.TalkingThrough(context.Log, state.Key.CharacterId, mapId, destination, way.NpcId);
+            outcome = await ThroughNpcAsync(context, mapId, way, cancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -267,6 +287,87 @@ public static class MapChange
             TextInformationEvent => MapChangeOutcome.Refused,
             _ => await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false),
         };
+    }
+
+    private static async Task<MapChangeOutcome> ThroughNpcAsync(BotContext context, long mapId, NpcWay way, CancellationToken cancellationToken)
+    {
+        // The server places the NPCs of a map with it: one it did not place cannot be talked to.
+        if (context.State.Npcs.Values.FirstOrDefault(npc => npc.NpcId == way.NpcId) is not { } npc)
+            return MapChangeOutcome.NoPath;
+
+        var (current, placed) = ExpectNewMap(context, mapId);
+        var asked = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is NpcDialogQuestionEvent or NpcActionErrorEvent or MapCurrentEvent);
+
+        await context.SendAsync(new NpcActionRequest { Action = Banker.TalkAction, MapId = mapId, NpcActorId = npc.ActorId }, cancellationToken).ConfigureAwait(false);
+
+        switch (await asked.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false))
+        {
+            case null:
+                return MapChangeOutcome.NoAnswer;
+            case NpcActionErrorEvent:
+                return MapChangeOutcome.Refused;
+            case MapCurrentEvent:
+                // Measured (D253): Incarnam's portal moves a character of level 92 as it is talked to, no question asked.
+                return await ArrivedAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
+        }
+
+        for (var questions = 1; ; questions++)
+        {
+            if (context.State.Dialog is not { } dialog)
+                return MapChangeOutcome.NoAnswer;
+
+            var offered = dialog.Replies.Where(way.Replies.Contains).ToList();
+
+            // The client shows the question before the reply or the leaving closes it.
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
+            if (offered.Count is 0 || questions > MostQuestions)
+            {
+                await LeaveDialogAsync(context, cancellationToken).ConfigureAwait(false);
+
+                return offered.Count is 0 ? MapChangeOutcome.Refused : MapChangeOutcome.NoAnswer;
+            }
+
+            var answered = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is NpcDialogQuestionEvent or DialogLeaveEvent or MapCurrentEvent);
+
+            await context.SendAsync(new NpcDialogReplyRequest { ReplyId = offered[0] }, cancellationToken).ConfigureAwait(false);
+
+            switch (await answered.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false))
+            {
+                case null:
+                    return MapChangeOutcome.NoAnswer;
+                case NpcDialogQuestionEvent:
+                    continue;
+            }
+
+            // The dialog over, the new map comes in the same millisecond; a dialog over that names none times out there.
+            return await ArrivedAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task<MapChangeOutcome> ArrivedAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)
+    {
+        var outcome = await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
+
+        // The portal then asks on the new map a question offering no reply, which the client closes by itself 2 to 9 ms
+        // after (D253); one it left open would keep the character busy.
+        if (context.State is { Dialog: { MessageId: not null, Replies.IsEmpty: true }, Storage: null, ZaapDialog: null })
+        {
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
+            if (context.State.IsInDialog)
+                await LeaveDialogAsync(context, cancellationToken).ConfigureAwait(false);
+        }
+
+        return outcome;
+    }
+
+    private static async Task LeaveDialogAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        var left = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is DialogLeaveEvent);
+
+        await context.SendAsync(new DialogLeaveRequest(), cancellationToken).ConfigureAwait(false);
+        await left.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<MapChangeOutcome> NewMapAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)

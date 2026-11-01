@@ -17,7 +17,8 @@ namespace D3B.Bot.Runtime;
 /// client sends when the player gives a new path during one (client.md). A request to leave is the player's while the
 /// character is in a dialog or an exchange, as when the player closes the banker's dialog, the bank or a zaap's list:
 /// the client sends its own only once the server ended the exchange, and the bot's loop sees that end first, since the
-/// relay shows the server's frames before the client gets them (D81).
+/// relay shows the server's frames before the client gets them (D81). It also closes by itself a dialog whose question
+/// offers no reply, a few milliseconds after it, which is not the player's either (D253).
 /// </para>
 /// <para>
 /// In a fight, the player's are the placement's move and readiness, a cast, a walk and the turn's end: the client sends by
@@ -43,6 +44,13 @@ public static class PlayerActions
             or NpcDialogReplyRequest or ExchangeTransferFromInventoryRequest or ExchangeKamasRequest or TeleportRequest
             or HavenBagEnterRequest or FightPlacementPositionRequest or FightReadyRequest or GameActionFightCastRequest
             or FightTurnFinishRequest { Automatic: false }
-            || (request is DialogLeaveRequest && state.IsInDialog);
+            || (request is DialogLeaveRequest && state.IsInDialog && !OffersNoReply(state));
+    }
+
+    private static bool OffersNoReply(CharacterState state)
+    {
+        // Measured (D253): Incarnam's portal moves a character of level 92 at once, then asks on the new map a question
+        // offering no reply, which the client closes 2 to 9 ms after, by itself.
+        return state is { Dialog: { MessageId: not null, Replies.IsEmpty: true }, Storage: null, ZaapDialog: null };
     }
 }

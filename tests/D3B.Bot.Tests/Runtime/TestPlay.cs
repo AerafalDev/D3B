@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using D3B.Bot.Characters;
 using D3B.Bot.Interactives;
 using D3B.Bot.Network;
@@ -61,6 +62,11 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int BankerActorId = -20_001;
     public const int ChestReplyId = 64_361;
     public const int OtherReplyId = 64_362;
+    public const int WayNpcId = 1_088;
+    public const int WayActorId = -20_000;
+    public const int WayReplyId = 36_979;
+    public const int WayLastReplyId = 36_977;
+    public const int StayReplyId = 36_978;
     public const int ActionCell = 409;
     public const int NorthActionCell = 200;
     public const int TreeElementId = 514_662;
@@ -148,6 +154,11 @@ internal sealed class TestPlay : IAsyncDisposable
 
     /// <summary>A play whose game connections other observers see too, after the bots.</summary>
     public TestPlay(IReadOnlyList<IGameObserver> observers, params int[] blocked)
+        : this(observers, [], blocked)
+    {
+    }
+
+    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked)
     {
         var path = _directory.Combine("data-3.pack");
 
@@ -159,9 +170,15 @@ internal sealed class TestPlay : IAsyncDisposable
         Places = new GraphicPlaces(_pack, World);
         _logs = LoggerFactory.Create(logging => logging.AddProvider(new FakeLoggerProvider(Log)).SetMinimumLevel(LogLevel.Debug));
         // The wait between two steps is a test's own to ask for: the others drive their steps by the server's answers alone.
-        Bots = new Bots(Maps, World, Tables, Time, _logs) { Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.Zero } };
+        Bots = new Bots(Maps, World, Tables, Time, _logs, npcWays) { Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.Zero } };
         _accounts = new GameAccounts(_settings.SelectionLifetime, Time);
         _decoder = new RelayDecoder(Translation, new GameServerSelections(_settings, Time), _accounts, [Bots, .. observers], _logs);
+    }
+
+    /// <summary>A play whose journeys go through an NPC's way: the NPC who is no banker, in <see cref="InsideMapId"/>, leads to <see cref="NorthMapId"/> by <see cref="WayReplyId"/> then <see cref="WayLastReplyId"/> (D253).</summary>
+    public static TestPlay ThroughAnNpc()
+    {
+        return new TestPlay([], [new NpcWay(InsideMapId, WayNpcId, new[] { WayReplyId, WayLastReplyId }.ToFrozenSet(), NorthMapId)], []);
     }
 
     /// <summary>The character as the server's confirmation of the choice describes it.</summary>
@@ -192,7 +209,7 @@ internal sealed class TestPlay : IAsyncDisposable
 
         if (mapId is InsideMapId)
         {
-            information.Actors.Add(Npc(-20_000, 1_088, 302));
+            information.Actors.Add(Npc(WayActorId, WayNpcId, 302));
             information.Actors.Add(Npc(BankerActorId, BankerNpcId, 259));
         }
 

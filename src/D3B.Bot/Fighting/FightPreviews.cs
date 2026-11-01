@@ -1,6 +1,7 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Localization;
+using D3B.Bot.Movement;
 using D3B.Bot.Settings;
 using D3B.Data;
 using D3B.Data.World;
@@ -35,7 +36,7 @@ public sealed class FightPreviews
 
         _world = world;
         _tables = tables;
-        _pathfinder = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas), LazyThreadSafetyMode.ExecutionAndPublication);
+        _pathfinder = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas, NpcWays.Measured), LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
     private static string KeyOf(FightSettings settings, IReadOnlyList<PreviewPlayer> players)

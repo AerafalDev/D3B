@@ -147,7 +147,7 @@ resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D
 the switch, the monster groups on a map and the fighting activity; in session 9g2 (D244 to D249), the strategies removed,
 one AI for every character, the fighting activity's sub-areas suggested by its monsters, isolated maps, place, preview
 and families of monsters, every interactive transition followed, refused teleports remembered, and groups judged over the
-fight's course.
+fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarnam's portal first.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -175,7 +175,8 @@ fight's course.
   behavior for its own state, with a delay (`BotContext.WaitUntilAsync`).
 - **The player wins** (D66): a request the player sends that acts on the character (`PlayerActions`) interrupts the bot's
   behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's:
-  a request to leave is the player's only while the character is in a dialog or an exchange (D81).
+  a request to leave is the player's only while the character is in a dialog or an exchange (D81), but for a dialog whose
+  question offers no reply, which the client closes by itself (D253).
 - **Walking on a map** (D69): `MapWalk`, in `D3B.Bot.Movement`, finds the path in the pack's cells, sends its turning
   points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
   ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character
@@ -191,11 +192,16 @@ fight's course.
   new map, then for what is on it, which the client asks for. The server answers nothing to a change it refuses, which
   ends after its delay, and refuses a door's use with an event. A teleport (D83) is one request from where the character
   stands, refused with an error text (D84); `MapChange.LeaveHavenBagAsync` leaves the character's haven bag, back to the
-  map it was entered from.
+  map it was entered from. An NPC's way (D253) talks to the NPC from where the character stands, waits the client's display
+  time before each reply, gives the offered reply that leads on, and waits for the new map, which comes with the dialog's
+  end or as the NPC is talked to; a question offering none of the way's replies is left, the way refused, and one offering
+  no reply that the client leaves open on the new map is left by the bot.
 - **Travelling** (D74): `WorldTravel` finds the path to the maps sought, follows its first step, and finds it again from
   where the character stands, until it arrives. A change that fails leaves its transition out of the journey, which
   fails after three, or when it goes on too long; a teleport that fails leaves every teleport out, and one the server
-  refuses from a map is never asked from it again for the bot's life (`BotActor.NoTeleportFrom`, D248). A journey from the
+  refuses from a map is never asked from it again for the bot's life (`BotActor.NoTeleportFrom`, D248), nor an NPC's way
+  whose dialog offered none of its replies (`BotActor.NoNpcWays`, D253). The bots' pathfinder goes through the ways
+  through an NPC's dialog measured in game (`NpcWays.Measured`), which `Bots` gives it. A journey from the
   character's haven bag leaves it first. The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
   on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83). A teleport counts as as many map changes as
   the running activity says (`BotActivity.TeleportChanges`, `WorldPathRules.TeleportChanges`), so that a zaap is taken only
@@ -660,8 +666,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - `WorldPathfinder`, in `D3B.Engine.World`: Dijkstra's over the world graph's vertices, a zone of a map each, through
   scrolls, scrolls with an action, map actions and every interactive transition, doors, stairs, portals and "go to"s,
   whose criteria are met (`WorldPathRules`, D248), each change costing the same, to the nearest of several maps; sub-areas
-  closed to accounts without a subscription are entered by subscribed ones only. The ways through an NPC's dialog, which
-  the client's graph does not hold, Incarnam's way out among them, are not followed yet (D248). A subscribed character
+  closed to accounts without a subscription are entered by subscribed ones only. It goes through the ways through an NPC's
+  dialog it is given (`NpcWay`), which the client's graph does not hold, Incarnam's portal among them: from any vertex of
+  the NPC's map to the only vertex of the map it leads to, one change as a scroll is, a step naming it below a teleport's
+  index (`WorldStep.IsNpcWay`), a way refused left out (`WorldPathRules.NoNpcWays`, D253). A subscribed character
   also teleports, from every map the server lets it teleport from and has not refused a teleport from, to the
   zaap of every map it knows one on whose cost it carries (`TeleportCost`), one change like the others (D83). It gives
   the cells each map is left from (`ExitCells`), a door's around its element. Built once per pack and shared; a search

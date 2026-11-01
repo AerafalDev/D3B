@@ -90,9 +90,9 @@ internal sealed class TestWorld
         return new WorldAtlas(positions, subAreas, new[] { new Area(AreaId, 0, 0) }, Array.Empty<Waypoint>(), Array.Empty<int>(), Array.Empty<int>());
     }
 
-    public WorldPathfinder Pathfinder()
+    public WorldPathfinder Pathfinder(params NpcWay[] npcWays)
     {
-        return new WorldPathfinder(Graph(), Atlas());
+        return new WorldPathfinder(Graph(), Atlas(), npcWays);
     }
 
     private MapPosition Position(long map)

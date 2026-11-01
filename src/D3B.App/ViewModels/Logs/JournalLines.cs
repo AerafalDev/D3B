@@ -101,6 +101,7 @@ internal sealed class JournalLines
             MapChangeKind.HavenBag => _localizer["JournalLeaveHavenBag"],
             MapChangeKind.Door => Format("JournalDoor", from, to),
             MapChangeKind.MapAction => Format("JournalMapAction", from, to),
+            MapChangeKind.Npc => Format("JournalNpcWay", from, to),
             _ => Side(change.From, change.To) is { } side ? Format("JournalScroll", from, to, side) : Format("JournalMapChange", from, to),
         };
         var mark = change.Kind switch

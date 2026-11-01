@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using CsCheck;
 using D3B.Data.Maps;
 using D3B.Data.World;
@@ -556,5 +557,91 @@ public sealed class WorldPathfinderTests
         Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, Teleporting(0, 9), out var path));
 
         Assert.DoesNotContain(path.Steps, step => step.IsTeleport);
+    }
+
+    // Maps 10 and 11 hold together, and nothing of the graph leads from them to the grid: an NPC's dialog on 11 leads to 1,
+    // as Incarnam's portal leads to Astrub (D253).
+    private static WorldPathfinder Island(params NpcWay[] ways)
+    {
+        return Grid().Scroll(10, 11, East).Scroll(11, 10, West).Pathfinder(ways);
+    }
+
+    private static NpcWay WayOf(long from, long to)
+    {
+        return new NpcWay(from, 4398, new HashSet<int> { 36977 }.ToFrozenSet(), to);
+    }
+
+    [Fact]
+    public void AnNpcsWayLeadsWhereTheGraphHoldsNone()
+    {
+        var pathfinder = Island(WayOf(11, 1));
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 10), new HashSet<long> { 9 }, _subscribed, out var path));
+
+        Assert.Equal([10, 11, 1], Maps(pathfinder, path)[..3]);
+        Assert.Equal(6, path.Steps.Count);
+
+        var step = path.Steps[1];
+
+        Assert.True(step.IsNpcWay);
+        Assert.False(step.IsTeleport);
+        Assert.Equal(0, step.NpcWay);
+        Assert.Equal(Vertex(pathfinder, 11), step.From);
+        Assert.Equal(Vertex(pathfinder, 1), step.To);
+        Assert.Empty(pathfinder.ExitCells(MapOf(EdgeCells()), step, _subscribed));
+        Assert.False(Island().TryFind(Vertex(pathfinder, 10), new HashSet<long> { 9 }, _subscribed, out _));
+    }
+
+    [Fact]
+    public void AnNpcsWayCostsAMapChangeAsAScrollDoes()
+    {
+        var pathfinder = Grid().Pathfinder(WayOf(1, 9));
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 9 }, _subscribed, out var through));
+        Assert.True(Assert.Single(through.Steps).IsNpcWay);
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 1), new HashSet<long> { 2 }, _subscribed, out var walked));
+        Assert.False(Assert.Single(walked.Steps).IsNpcWay);
+    }
+
+    [Fact]
+    public void AnNpcsWayBannedOrRefusedIsNotTaken()
+    {
+        var pathfinder = Island(WayOf(11, 1));
+        var from = Vertex(pathfinder, 10);
+        HashSet<long> sought = [9];
+
+        Assert.False(pathfinder.TryFind(from, sought, _subscribed with { Banned = new HashSet<int> { WorldStep.OfNpcWay(0) } }, out _));
+        Assert.False(pathfinder.TryFind(from, sought, _subscribed with { NoNpcWays = new HashSet<int> { 0 } }, out _));
+        Assert.True(pathfinder.TryFind(from, sought, _subscribed with { NoNpcWays = new HashSet<int> { 1 } }, out _));
+    }
+
+    [Fact]
+    public void AnNpcsWayToAMapOfSeveralZonesOrOffTheGraphIsNeverTaken()
+    {
+        // Where the dialog lands the character on such a map is not measured.
+        var pathfinder = Grid().Scroll(10, 11, East).Scroll(11, 10, West).Scroll(6, 9, South, toZone: 2)
+            .Pathfinder(WayOf(11, 9), WayOf(11, 99), WayOf(98, 1));
+
+        Assert.False(pathfinder.TryFind(Vertex(pathfinder, 10), new HashSet<long> { 9, 1 }, _subscribed, out _));
+        Assert.Equal(3, pathfinder.NpcWays.Count);
+    }
+
+    [Fact]
+    public void AnNpcsWayIntoASubAreaClosedToAccountsWithoutASubscriptionIsTakenOnlyWhenSubscribed()
+    {
+        var pathfinder = Grid().Map(1, TestWorld.ClosedSubAreaId).Scroll(10, 11, East).Scroll(11, 10, West).Pathfinder(WayOf(11, 1));
+
+        Assert.True(pathfinder.TryFind(Vertex(pathfinder, 10), new HashSet<long> { 1 }, _subscribed, out _));
+        Assert.False(pathfinder.TryFind(Vertex(pathfinder, 10), new HashSet<long> { 1 }, new WorldPathRules { Facts = new CriterionFacts { Subscribed = false } }, out _));
+    }
+
+    [Fact]
+    public void AnNpcsWayIsNamedByAnIndexBelowATeleports()
+    {
+        Assert.Equal(WorldStep.FirstNpcWay, WorldStep.OfNpcWay(0));
+        Assert.Equal(3, new WorldStep(0, 1, WorldStep.OfNpcWay(3), default).NpcWay);
+        Assert.False(new WorldStep(0, 1, WorldStep.Teleport, default).IsNpcWay);
+        Assert.False(new WorldStep(0, 1, 0, default).IsNpcWay);
+        Assert.Throws<ArgumentOutOfRangeException>(() => WorldStep.OfNpcWay(-1));
     }
 }

@@ -17,4 +17,7 @@ public enum MapChangeKind
 
     /// <summary>By leaving the haven bag, back to the map it was entered from.</summary>
     HavenBag,
+
+    /// <summary>Through an NPC's dialog, such as Incarnam's portal (D253).</summary>
+    Npc,
 }

@@ -17,7 +17,8 @@ Its fights were measured on 2026-10-30 for session 9a, on the wire ([the game, f
 ([Fights' tables](#fights-tables)), which session 9b measured whole, their flags read in its code, the same day; its
 casts against D3B's rules for session 9c ([the game, cast](#the-game-cast)), and what each did against D3B's effects for
 session 9d ([the game, foreseen](#the-game-foreseen)), and the states its spells ask for session 9f
-([the game, masked](#the-game-masked)).
+([the game, masked](#the-game-masked)). Its NPCs' dialogs and transports were measured on 2026-11-01 for session 9g3
+([the game, through an NPC](#the-game-through-an-npc)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -1725,13 +1726,41 @@ activity ran on five characters of two accounts, the pack of 3.7.12.12 and its c
   map of Incarnam reaches 77 of its maps and no other area's: the room whose doors lead to five areas, Astrub's among
   them, has no other way in than doors behind quests' criteria. The graph's transitions are scrolls, scrolls with an
   action, map actions and interactive elements: the doors' skill on 5,237, and some 300 of 50 other skills, stairs,
-  portals and "go to"s. No NPC's way is in it.
+  portals and "go to"s. No NPC's way is in it: the portal is followed since D253 ([the game, through an
+  NPC](#the-game-through-an-npc)).
 - **The client's own turn's end** (D252), on the activity's game connection a friend of the owner captured, 8 min 43 s,
   one fight, the client showing its inactivity popup and no one touching it, the owner's words: the client ended 4 of
   the character's turns by itself, `FightTurnFinishRequest` with its first field set. Two cut the AI's turn, 0.8 s after
   a walk and 0.75 s after a cast; two ended a turn 1.7 and 2.7 s after its start, the bot paused. In the owner's
   captures, the 170 turns' ends sent by hand and D3B's 146 leave the field unset; one more end sets it, 130 ms after
   `FightIsTurnReadyEvent`, in a fight the AI played. With the bot paused and no one playing, a turn ran its 60 s.
+
+### The game, through an NPC
+
+Measured on 2026-11-01 for session 9g3 (D253, D254): the client 3.7.12.12's NPC and hint tables, then 4 game connections,
+two of the owner by hand with a new character of level 1, through its start and Incarnam's portal, two of D3B taking the
+portal three times with a character of level 92, with `scripts/inspect.cs` and measuring tools never committed that print counts, timings and the client's ids,
+never an actor's id or name.
+
+- **What the data holds.** An NPC's `dialogMessages` and `dialogReplies` are pairs, an id and its text; its `dialogData`
+  places a message's bubble and mood. Nothing says what a reply does, nor where it leads. `NpcMessagesDataRoot`, 55,129
+  messages, holds a text's key, its parameters, skin, bubble and mood. No table places an NPC on a map: the server does,
+  with the map's information.
+- **Transports.** The world map's hints of category 9, Transports, are 189: 45 zaaps, boats, carriers, drills, carts,
+  bells and portals, each on a map; they name the place they lead to, never an NPC. "Portail vers Astrub" stands on
+  map 153880835, in Incarnam, where the server places NPC 4398 of that name and Maître Anemo; "Portail vers Incarnam" on
+  map 191106048, in Astrub, whose way to Incarnam is two doors of the graph, through map 192416776. Of 6,472 NPCs, 17 are
+  named portals; 6357, 6358 and 7240 speak of a dimension, and 7421 leads to merchants by level.
+- **Incarnam's portal, level 1.** Action 3 on NPC 4398: the dialog and question 30637 in the same millisecond, 29 ms
+  after, offering reply 36979 alone; that reply, question 30638 28 to 34 ms after, offering 36977 and 36978. 36978 ends
+  the dialog, type 1. 36977 ends it 29 ms after, with two texts of the message kind and the new map, 192416776, in the
+  same millisecond; the client asks what is on it 0.85 s later. The player replied 0.9 to 1.6 s after each question.
+- **Incarnam's portal, level 92.** Action 3 on NPC 4398: the new map, 192416776, 28 to 30 ms after, then in the same
+  millisecond a dialog on the new map and question 30636 offering no reply; the client sends a request to leave 2 to 9
+  ms after by itself, which the server answers 29 to 231 ms later, then asks what is on the map. Taken three times: twice
+  before D253, the bot paused by that leaving, once after, the bot walking on 0.5 s after the map's information.
+- **Reached.** From Incarnam's arrival, every transition followed whose criterion a character of level 1 with nothing
+  meets: 77 maps of the graph without the portal; with it, 530 without a subscription and 5,420 with one.
 
 ## Protocol code
 
