@@ -5897,6 +5897,62 @@ showed and the bot paused, though no one had touched the client, the owner's wor
 - **Left**: while its popup shows, the client may still end the AI's turns by itself. Keeping the popup away would mean
   feigning a player at the client, too near what D2 puts out of scope. When the client shows it is not measured.
 
+## D253: The ways through an NPC's dialog, measured, known by their ids, Incarnam's portal first
+
+*2026-11-01, step 9, session 9g3, the owner's ask: a character in Incarnam must leave it, and the journey through the
+world must go through an NPC's dialog, Incarnam's portal first, the harvest and the fights leaving Incarnam; measured on
+captures the owner made, BillBot read for the owner, and the client's data searched for what would know these NPCs and
+their replies without a text written in the code. Builds D73, D80, D81, D248.*
+
+- **The client's data, measured** on 3.7.12.12: an NPC holds its messages and replies, each reply its id and its text,
+  and `dialogData`, which places its bubble and mood; nothing says what a reply does or where it leads, and no table
+  places an NPC on a map but the world map's hints. The 189 hints of category 9, Transports, name places, boats, zaaps,
+  portals and carts, never an NPC; one, "Portail vers Astrub", stands on map 153880835, the map BillBot names, where the
+  server places NPC 4398, of the same name. What a dialog does only the server knows.
+- **Measured by hand**, a character of level 1 (client.md): NPC 4398, talked to with action 3, asks question 30637,
+  offering reply 36979 alone, then question 30638, offering 36977 to leave and 36978 to stay; 36977 ends the dialog and
+  the server moves the character to map 192416776, Astrub's temple, in the same millisecond, 29 ms after the reply.
+  Astrub's way back to Incarnam is two doors, which the graph holds.
+- **Measured through D3B**, a character of level 92: the portal moves it as soon as it is talked to, no question asked,
+  then opens on the new map a dialog whose question, 30636, offers no reply, which the client closes by itself 2 to 9 ms
+  after. D3B took that leaving for the player's hand (D81) and paused the bot.
+- **Made**: a way through an NPC's dialog is data the code holds, measured, by the client's ids: the NPC's map, the NPC,
+  the replies that lead on whichever question offers them, and the map it leads to (`NpcWay`, `NpcWays.Measured`).
+  No text is matched, as BillBot's patterns are: the server names the NPC on the map and lists each question's replies by
+  their ids. `WorldPathfinder` goes through the ways it is given, from any vertex of the NPC's map to the only vertex of
+  the map it leads to, one change as a scroll is, a way to a map of several zones never taken as a zaap's
+  (`WorldStep.IsNpcWay`, `WorldStep.OfNpcWay`). `MapChange` talks to the NPC from where the character stands, as to a
+  banker, waits the client's display time before each reply (D132), gives the offered reply that leads on, and waits
+  for the new map, whether it comes with the dialog's end or as the NPC is talked to; a question offering none of the
+  way's replies is left, and the way refused for the bot's life (`BotActor.NoNpcWays`, `WorldPathRules.NoNpcWays`), as a
+  teleport the server refused (D248). A question offering no reply that the client leaves open on the new map is left
+  by the bot. The client's leaving of a dialog whose question offers no reply is not the player's (`PlayerActions`).
+  The journal says it (`MapChangeKind.Npc`).
+- **Reached**, on the pack of 3.7.12.12 from Incarnam's arrival, level 1 and no item: 77 maps without the portal, 530
+  with it without a subscription, 5,420 with one; Astrub's bank in 12 changes. The harvest, the fights, the bank and the
+  editor's previews take the ways, every journey going through the pathfinder.
+- **Not made**: no other way. The other portals, 6357, 6358 and 7240, speak of a dimension; the boats, carts and
+  bells of the hints name no NPC, no map and no destination measured, and some cost kamas. Each is a way to measure in
+  game, then one line of `NpcWays.Measured`. BillBot's replies 36982 then 36980, which the portal may offer at another
+  level, are in the way, not measured.
+- **Rejected.**
+  - The NPCs and their replies extracted into the pack, known by their French texts as the bankers are (D29): a format
+    and a release for replies the code still could not choose, and destinations the data does not hold.
+  - A case of its own for Incarnam, as BillBot's: the pathfinder would not know the way, and the activities would still
+    find no map of a zone outside Incarnam.
+
+## D254: 9g3 measured in game, and what it leaves
+
+*2026-11-01, step 9, session 9g3, on the 4 game connections the owner captured, two by hand on a character of level 1,
+two through D3B on a character of level 92, which took the portal three times. Builds D248 to D253.*
+
+- **Incarnam left by the bot**: walked to the portal, talked to it, moved to Astrub, the client closing the question
+  without reply, the bot walking on 0.5 s after the map's information, not paused; the bot also went back into Incarnam
+  by Astrub's two doors.
+- **Not measured in game**: the interactive transitions of skills other than the doors' (D248), none on the journeys
+  captured; a teleport refused from Incarnam, none asked; big groups (D249); which of Sarakech's insides holds the bank
+  (D251); the client's inactivity popup without a pause (D252).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
