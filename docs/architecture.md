@@ -718,13 +718,15 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     over the rounds it lasts (D209); once the enemies
     replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206).
-  - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, its best sequences weighed against
-    the enemies' greedy reply, then the character's next turn (`NextTurn`, D210); `Place`; `Odds`; `OddsOverTheFight`,
-    the enemies dying one after another (D249); `PathTo`.
+  - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
+    sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
+    (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
+    turn (`NextTurn`, D210); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
-    against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229).
+    against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229), 2.83 ms and
+    4.81 MB (9g4, D255); on 452 searches of 94 captures, 90 ms halfway, 538 ms at most (9g4).
 - The weapons' blows, in `D3B.Engine.Fights` (9e3, D220): `WeaponBlows`, each sword's blow a level of spell 0, the
   punch's with the sword's fields and its effects used in fights, after the pack's levels in one catalog the rules, the
   effects and the AI share (`SpellCatalog.WithLevels`); `EffectFormulas.DealtByWeapon` and the weapons' multipliers,
@@ -765,7 +767,9 @@ profile's option, the owner's choice (D230). Built in session 9g: the owner's as
 options (D236), made (D241); the spells' and monsters' icons and where monsters live, pack format 7 (D237, D238); the
 monster groups on a map, mapping format 14 (D239); measured with `scripts/fights.cs` (D242). Built in session 9g2: the
 owner's asks (D243); the strategies removed, one AI for every character (D244); the fighting activity's sub-areas
-suggested by its monsters, its isolated maps and its place among sub-areas of maps shown (D245).
+suggested by its monsters, its isolated maps and its place among sub-areas of maps shown (D245). Built in session 9g4: a
+change of the character's states kept in the turn's search, the Zobal's masks put on first to cast their spells (D255, in
+[Engine](#engine)), and what the owner met in game, left to the next session (D256).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the

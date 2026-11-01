@@ -5953,6 +5953,69 @@ two through D3B on a character of level 92, which took the portal three times. B
   captured; a teleport refused from Incarnam, none asked; big groups (D249); which of Sarakech's insides holds the bank
   (D251); the client's inactivity popup without a pause (D252).
 
+## D255: A change of the fighter's states kept in the turn's search
+
+*2026-11-01, step 9, session 9g4, what the owner saw in 9g2 (D250): the AI puts the Zobal's masks on at its turn's end
+for the next turn rather than first to cast their spells, its earth Zobal casting Furia 3 times in 11 turns. Measured on
+the 94 game connections of 3.7.12.12, 323 turns replayed, 36 of a Zobal in three captures, 12 of them the AI's own of 9g2.
+Builds D201, D228.*
+
+- **The Zobal's spells, as the pack writes them**: a mask 1 AP; Furia, earth, 3 AP, three a turn, at range 3, in
+  *Psychopathe* (99); Catalepsie, an earth steal, and Plastron, a shield, in *Intrépide* (98); Martelo and Apathie, earth,
+  in *Pleutre* (100). An earth Zobal has an earth spell in each mask: Furia's count alone says little.
+- **Measured** with `scripts/fights.cs --turns`, which now tells a change of the character's states by its place among
+  the turn's casts: the plans put the mask on last 14 times, first 13, between two casts 5. The same turns searched six
+  times as wide, 48 sequences a step for 20 s, found a plan the judge rates higher in 18 of the 30 turns of two of the
+  captures, nearly always the mask first then its spells, such as the psychopath's mask and two Furias where the plan
+  struck its weapon alone.
+- **Why**: each step of the beam keeps its best sequences only (D201). A mask deals nothing as it is put on, and the
+  spells it opens count only a cast later, so that every sequence starting with it fell out of the beam at the first step,
+  behind the blows of the mask worn; once those were cast, the mask came last with the AP left.
+- **Made**: each step keeps, beside its best sequences, the best one of each set of states the fighter playing holds that
+  they leave out (`FightTactics.WithEachStates`), through the effects, whatever the breed. On the Zobal's 36 turns, the
+  plans are judged 29,149 against 26,260, the search six times as wide 30,981; the mask is put on first 26 times, last 5.
+  On the 323 turns: the plans judged 490,979 against 485,081, the damage foreseen over two turns 124,523 against 125,872,
+  the heals and shields 19,239 against 15,236; a search 90 ms halfway and 256 ms at 90% against 80 and 216, 538 ms at
+  most; benchmarked, in its process, a turn planned against four enemies in 2.83 ms and 4.81 MB against 2.85 ms and
+  4.79 MB. The earth Zobal's plans put the brave mask on first more often and cast Catalepsie and Plastron, which the
+  judge rates higher: Furia is planned 18 times against 31.
+- **Not made**:
+  - The sequences told apart by the fighters' states too (`Signature`), as two masks of one cost leave the fight alike
+    but for them: measured, no plan changed.
+  - Measured in game: the owner could not capture in this session.
+- **Seen, left**: on a fight made for a test, the judge rates killing the last enemy, one that strikes nothing, under
+  leaving it a few points of life with the next turn's damage to come: its being alive weighs its blows, none. An enemy
+  that strikes, as every monster does, is not so.
+- **Rejected.**
+  - A wider beam for every search: 6 times as wide takes seconds, and the turn's 30 s are shared by the searches after
+    each answer of the server (D201).
+  - A case of the Zobal's own, its masks first: every breed's states work through the effects (D223, D224).
+
+## D256: 9g4 measured, without the game, and what the owner met
+
+*2026-11-01, step 9, session 9g4, the owner's words in game during the session, measured on the captures of 9g2 and 9g3
+with measuring tools never committed that print counts. Builds D236, D241, D148, D145, D250, D254.*
+
+- **Not measured in game**, the owner unable to capture: what D254 left, the interactive transitions other than doors, a
+  teleport refused, big groups, Sarakech's bank and the inactivity popup; and the Zobal's masks of D255.
+- **The hunt, slow where monsters abound**, the owner's words: of the 36 attacks of D3B's after a fight of its own, most
+  came 2 to 15 s after it; four after 34, 49, 95 and 95 s, the bot crossing 12, 9, 37 and 21 maps, most holding groups
+  the settings of "Combat automatique" allow and the judge beats; one after 245 s, as the owner made a profile. The
+  fighting activity looks for a group as its step starts on a map of its zone only, then journeys to the nearest map of
+  the tour still to go through: the maps a journey crosses, those already gone through, isolated ones and others'
+  sub-areas, are never looked at, so that the bot walks to and fro past groups it would attack to reach the tour's last
+  maps. The settings of the captures are not known; the owner's own case was not captured.
+- **Healing without food**, the owner's words: with the share of life set and no item chosen, the bot should eat what the
+  inventory holds. The pack knows an item's type, not its effects: of the types the profile offers as food, potions hold
+  recall potions too, so that eating anything could teleport the character.
+- **Healing, slow**, the owner's words: nearly whole, the bot does not go on. Read in the code: without food, it waits the
+  time its whole life takes to come back, 5 minutes when the server gave no interval, without looking at its life again,
+  and heals to its most.
+- **Harvesting, resources left**, the owner's words: the bot waits for resources to grow back without counting from when
+  they were harvested, and goes through maps leaving what could be harvested. Not read yet.
+- **For the next session**, the owner's choice: these four, measured on captures of the owner's cases, then the
+  measures in game of D254 and D255.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

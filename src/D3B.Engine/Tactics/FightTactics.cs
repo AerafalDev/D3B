@@ -113,6 +113,43 @@ public sealed class FightTactics
         return hash.ToHashCode();
     }
 
+    /// <summary>Gets the best of a search's ranked sequences, and beside them the best of each set of states the fighter playing holds that they leave out.</summary>
+    /// <typeparam name="T">A sequence.</typeparam>
+    /// <param name="ranked">The sequences, the best first.</param>
+    /// <param name="fighterOf">The fighter playing, as a sequence leaves it.</param>
+    /// <param name="most">How many of the best are kept.</param>
+    /// <returns>The <paramref name="most"/> best, then the best sequence of each other set of states, in their rank.</returns>
+    internal static List<T> WithEachStates<T>(IReadOnlyList<T> ranked, Func<T, Combatant> fighterOf, int most)
+    {
+        ArgumentNullException.ThrowIfNull(ranked);
+        ArgumentNullException.ThrowIfNull(fighterOf);
+
+        // Measured on a Zobal's 36 turns (D255): a mask deals nothing as it is put on, and the spells it opens count only a
+        // cast later, so that the best sequences crowded out every one starting with it and the AI put it on last, for the
+        // next turn. Kept beside them, the plans were judged 29,149 against 26,260, and a search six times as wide 30,981.
+        var kept = ranked.Take(most).ToList();
+        var states = kept.Select(item => StatesOf(fighterOf(item))).ToHashSet();
+
+        foreach (var item in ranked.Skip(most))
+        {
+            if (states.Add(StatesOf(fighterOf(item))))
+                kept.Add(item);
+        }
+
+        return kept;
+    }
+
+    private static long StatesOf(Combatant fighter)
+    {
+        // Whatever order the states came in: a sum of each state's mix, and how many.
+        var sum = 0L;
+
+        foreach (var state in fighter.States)
+            sum = unchecked(sum + ((long)state * -7046029254386353131L));
+
+        return unchecked(sum + fighter.States.Length);
+    }
+
     private static int Nearest(ImaginedFight fight, int team, int cell)
     {
         var nearest = int.MaxValue;
@@ -237,13 +274,13 @@ public sealed class FightTactics
             var seen = new HashSet<long>();
             var kept = new List<(Node Node, double Score)>();
 
-            foreach (var child in children.OrderByDescending(child => child.Score).Take(limits.Width * 2))
+            foreach (var child in WithEachStates(children.OrderByDescending(child => child.Score).ToList(), child => child.Fight.Actor, limits.Width * 2))
             {
                 if (seen.Add(Signature(child.Fight)))
                     kept.Add((child, Ends(child, judge, finalists, 1, ref weighed)));
             }
 
-            frontier = [.. kept.OrderByDescending(pair => pair.Score).Take(limits.Width).Select(pair => pair.Node)];
+            frontier = [.. WithEachStates(kept.OrderByDescending(pair => pair.Score).ToList(), pair => pair.Node.Fight.Actor, limits.Width).Select(pair => pair.Node)];
         }
 
         // The finalists in the order the search ranks them, each once the enemies replied and the fighter playing played its

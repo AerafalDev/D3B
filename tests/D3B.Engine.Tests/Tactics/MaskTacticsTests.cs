@@ -164,6 +164,35 @@ public sealed class MaskTacticsTests
     }
 
     [Fact]
+    public void TheSearchKeepsBesideItsBestSequencesTheBestOfEachStatesTheyLeaveOut()
+    {
+        // The masks put on deal nothing yet and rank after the blows of the mask worn (D255).
+        Combatant[] ranked =
+        [
+            Caster() with { States = [98] },
+            Caster() with { States = [98] },
+            Caster() with { States = [99] },
+            Caster() with { States = [98] },
+            Caster() with { States = [100] },
+            Caster() with { States = [99] },
+        ];
+
+        var kept = FightTactics.WithEachStates(ranked, fighter => fighter, 2);
+
+        Assert.Equal([ranked[0], ranked[1], ranked[2], ranked[4]], kept);
+    }
+
+    [Fact]
+    public void TheSameStatesInAnotherOrderAreNotKeptAgain()
+    {
+        Combatant[] ranked = [Caster() with { States = [98, 7] }, Caster() with { States = [7, 98] }, Caster() with { States = [7] }];
+
+        var kept = FightTactics.WithEachStates(ranked, fighter => fighter, 1);
+
+        Assert.Equal([ranked[0], ranked[2]], kept);
+    }
+
+    [Fact]
     public void AShieldOfTheCasterInItsZoneOnlyIsNotCastOnAnEnemy()
     {
         var zobal = Caster() with { ActionPoints = 3, MovementPoints = 0 };
