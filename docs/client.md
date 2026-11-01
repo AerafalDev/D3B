@@ -1674,6 +1674,10 @@ print counts.
   the spells effects cast; the others a carry's, the Eliotrope's portals, the Xélor's telefrags and the Roublard's bombs.
 - **The AI.** On the Zobal's 38 turns replayed, it puts on the mask whose spells deal more and casts them, Furia in the
   psychopath's mask where the turns played cast Tortoruga on enemies 32 times, and changes mask 29 times against 9.
+- **The Zobal's spells by mask**, read again on 2026-11-01 for session 9g4 (D255): a mask costs 1 AP; Furia, earth, 3 AP,
+  three a turn, at range 3, asks *Psychopathe* (99); Catalepsie, an earth steal, and Plastron, a shield, *Intrépide* (98);
+  Martelo and Apathie, earth, *Pleutre* (100). Each mask holds an earth spell. On the 36 turns of a Zobal in the 94 game
+  connections, the plans put the mask on last 14 times and first 13; with the search of D255, last 5 times and first 26.
 
 ### The game, hunted
 
