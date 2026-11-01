@@ -13,7 +13,7 @@ namespace D3B.Bot.Movement;
 /// After each change, the path is found again from where the character stands: a scroll with an action may send it
 /// elsewhere, two zones of a map may share an edge, and a search costs under a millisecond (D71). A change that fails
 /// leaves its transition out of the rest of the journey, as its criterion may not be met for reasons the bot cannot know;
-/// a teleport that fails leaves every teleport out (D83).
+/// a teleport that fails leaves every teleport out (D83). An NPC's way is followed as a transition is (D253).
 /// </para>
 /// <para>
 /// A character in its haven bag, which the world graph does not hold, leaves it first, back to where it entered it (D83).
@@ -69,7 +69,8 @@ public static class WorldTravel
     /// <param name="context">The behavior's context.</param>
     /// <returns>
     /// The rules, with what the character's criteria are answered on (<see cref="FactsOf"/>), the zaaps it knows, the kamas it
-    /// carries and what a teleport counts as for the running activity (D167).
+    /// carries, what a teleport counts as for the running activity (D167), and the teleports and NPCs' ways it was refused
+    /// (D248, D253).
     /// </returns>
     public static WorldPathRules RulesOf(BotContext context)
     {
@@ -77,7 +78,7 @@ public static class WorldTravel
 
         var state = context.State;
 
-        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = state.KnownZaaps, Kamas = state.Kamas, TeleportChanges = context.TeleportChanges, NoTeleportFrom = context.NoTeleportFrom };
+        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = state.KnownZaaps, Kamas = state.Kamas, TeleportChanges = context.TeleportChanges, NoTeleportFrom = context.NoTeleportFrom, NoNpcWays = context.NoNpcWays };
     }
 
     /// <summary>Gets what a character's criteria are answered on, from its state.</summary>
@@ -169,6 +170,11 @@ public static class WorldTravel
                     else
                     {
                         banned.Add(step.TransitionIndex);
+
+                        // A dialog that offers none of its way's replies, such as one asking for a quest first, would offer
+                        // none the next time either.
+                        if (step.IsNpcWay && failed is MapChangeOutcome.Refused)
+                            context.RefuseNpcWay(step.NpcWay);
                     }
 
                     if (++failures >= MostFailures)

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using D3B.Bot.Characters;
+using D3B.Bot.Journal;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
@@ -233,5 +234,119 @@ public sealed class WorldTravelTests
         Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
         Assert.False(bot.State.IsInHavenBag);
         Assert.Single(connection.Sent);
+    }
+
+    [Fact]
+    public async Task AJourneyGoesThroughAnNpcsDialog()
+    {
+        // As Incarnam's portal (D253): from the inside, only the NPC's dialog leads north, a question then another.
+        await using var play = TestPlay.ThroughAnNpc();
+        var (connection, bot) = await play.EnterAsync(300, TestPlay.InsideMapId);
+        var journey = bot.TravelAsync(TestPlay.NorthMapId, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestWalks.SentAsync(play, connection, 1));
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId });
+        connection.Server(new NpcDialogQuestionEvent { MessageId = 30_637, Replies = { new NpcReply { ReplyId = TestPlay.WayReplyId } } });
+
+        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.WayReplyId }, await TestWalks.SentAsync(play, connection, 2));
+        connection.Server(new NpcDialogQuestionEvent
+        {
+            MessageId = 30_638,
+            Replies = { new NpcReply { ReplyId = TestPlay.WayLastReplyId }, new NpcReply { ReplyId = TestPlay.StayReplyId } },
+        });
+
+        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.WayLastReplyId }, await TestWalks.SentAsync(play, connection, 3));
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        TestWalks.Arrive(connection, TestPlay.NorthMapId, 300);
+
+        Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.Equal(3, connection.Sent.Count);
+        Assert.Empty(bot.NoNpcWays);
+
+        var change = Assert.Single(bot.Journal.All().OfType<MapChangeEntry>());
+
+        Assert.Equal((TestPlay.InsideMapId, (long?)TestPlay.NorthMapId, MapChangeKind.Npc, MapChangeOutcome.Changed), (change.From, change.Reached, change.Kind, change.Outcome));
+    }
+
+    [Fact]
+    public async Task AnNpcsDialogOfferingNoneOfItsWaysRepliesIsLeftAndTheWayRefusedForTheBotsLife()
+    {
+        // As a portal asking to talk to someone else first: the dialog is left, and no journey asks the NPC again.
+        await using var play = TestPlay.ThroughAnNpc();
+        var (connection, bot) = await play.EnterAsync(300, TestPlay.InsideMapId);
+        var journey = bot.TravelAsync(TestPlay.NorthMapId, TestContext.Current.CancellationToken);
+
+        Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(play, connection, 1));
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId });
+        connection.Server(new NpcDialogQuestionEvent { MessageId = 30_636, Replies = { new NpcReply { ReplyId = TestPlay.StayReplyId } } });
+
+        Assert.IsType<DialogLeaveRequest>(await TestWalks.SentAsync(play, connection, 2));
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+
+        Assert.Equal(TravelOutcome.NoPath, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.Equal([0], bot.NoNpcWays);
+        Assert.Equal(TravelOutcome.NoPath, await bot.TravelAsync(TestPlay.NorthMapId, TestContext.Current.CancellationToken));
+        Assert.Equal(2, connection.Sent.Count);
+    }
+
+    [Fact]
+    public async Task AnNpcTheServerDidNotPlaceIsNotTalkedTo()
+    {
+        await using var play = TestPlay.ThroughAnNpc();
+        var (connection, bot) = await play.EnterAsync(300, TestPlay.InsideMapId);
+        var information = TestPlay.Information(300, TestPlay.InsideMapId);
+
+        information.Actors.Remove(information.Actors.Single(actor => actor.Id == TestPlay.WayActorId));
+        connection.Server(information);
+        await bot.ProcessedAsync();
+
+        Assert.Equal(TravelOutcome.NoPath, await bot.TravelAsync(TestPlay.NorthMapId, TestContext.Current.CancellationToken));
+        Assert.Empty(connection.Sent);
+        Assert.Empty(bot.NoNpcWays);
+    }
+
+    [Fact]
+    public async Task AnNpcWhoMovesTheCharacterAtOnceIsFollowedAndTheQuestionWithoutReplyLeftToTheClient()
+    {
+        // As Incarnam's portal for a character of level 92 (D253): the move as it is talked to, then on the new map a
+        // question offering no reply, which the client closes by itself; the bot goes on, not paused.
+        await using var play = TestPlay.ThroughAnNpc();
+        var (connection, bot) = await play.EnterAsync(300, TestPlay.InsideMapId);
+        var journey = bot.TravelAsync(TestPlay.NorthMapId, TestContext.Current.CancellationToken);
+
+        Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(play, connection, 1));
+        connection.Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId });
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.NorthMapId, NpcActorId = -20_005 });
+        connection.Server(new NpcDialogQuestionEvent { MessageId = 30_636 });
+        connection.Client(new DialogLeaveRequest());
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        connection.Client(new MapInformationRequest { MapId = TestPlay.NorthMapId });
+        connection.Server(TestPlay.Information(300, TestPlay.NorthMapId));
+
+        Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.False(bot.IsPaused);
+        Assert.Single(connection.Sent);
+        Assert.Empty(bot.NoNpcWays);
+    }
+
+    [Fact]
+    public async Task AQuestionWithoutReplyTheClientLeavesOpenOnTheNewMapIsLeft()
+    {
+        await using var play = TestPlay.ThroughAnNpc();
+        var (connection, bot) = await play.EnterAsync(300, TestPlay.InsideMapId);
+        var journey = bot.TravelAsync(TestPlay.NorthMapId, TestContext.Current.CancellationToken);
+
+        Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(play, connection, 1));
+        connection.Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId });
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.NorthMapId, NpcActorId = -20_005 });
+        connection.Server(new NpcDialogQuestionEvent { MessageId = 30_636 });
+        connection.Client(new MapInformationRequest { MapId = TestPlay.NorthMapId });
+        connection.Server(TestPlay.Information(300, TestPlay.NorthMapId));
+
+        Assert.IsType<DialogLeaveRequest>(await TestWalks.SentAsync(play, connection, 2));
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+
+        Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.False(bot.State.IsInDialog);
     }
 }

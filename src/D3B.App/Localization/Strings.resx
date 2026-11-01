@@ -671,6 +671,9 @@
   <data name="JournalMapAction" xml:space="preserve">
     <value>Changes map: {0} → {1}, by a map action</value>
   </data>
+  <data name="JournalNpcWay" xml:space="preserve">
+    <value>Goes through an NPC's dialog: {0} → {1}</value>
+  </data>
   <data name="JournalDoor" xml:space="preserve">
     <value>Goes through a door: {0} → {1}</value>
   </data>
