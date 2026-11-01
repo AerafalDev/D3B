@@ -358,7 +358,13 @@ internal sealed class TurnBench
     private void States(ImaginedFight fight, IEnumerable<TacticAction> actions, string whose)
     {
         // The casts asking a state, those changing the character's states, as a Zobal's masks do, and those the engine
-        // foresees doing nothing but spend AP, as a Zobal's shield cast on an enemy did (D226, D229).
+        // foresees doing nothing but spend AP, as a Zobal's shield cast on an enemy did (D226, D229). A change of the
+        // character's states is told by its place among the turn's casts, and by the casts after it that ask a state it
+        // set: a mask put on first to cast its spells, or last for the next turn (D250).
+        var casts = actions.Count(action => action.Kind is TacticActionKind.Cast);
+        var index = -1;
+        var set = new HashSet<int>();
+
         foreach (var action in actions)
         {
             if (!fight.Actor.IsAlive)
@@ -375,11 +381,23 @@ internal sealed class TurnBench
 
             var breed = fight.Actor.BreedId is { } id ? $"breed {id}" : "breed unknown";
 
+            index++;
+
             if (level.StatesCriterion is not SpellLevel.NoCriterion)
+            {
                 Tally.Count($"states: casts {whose}, of a level asking a state, {breed}");
+                Tally.Count($"states: casts {whose} asking a state, by spell, {breed}, spell {level.SpellId}");
+
+                if (set.Count > 0 && _tactics.Rules.StatesAllow(level, after.Actor) && !_tactics.Rules.StatesAllow(level, fight.Actor with { States = [.. fight.Actor.States.Except(set)] }))
+                    Tally.Count($"states: casts {whose}, of a level asking a state the turn's change set, {breed}");
+            }
 
             if (!after.Actor.States.ToHashSet().SetEquals(fight.Actor.States))
+            {
                 Tally.Count($"states: casts {whose}, changing the character's states, {breed}");
+                Tally.Count($"states: changes {whose} of the character's states, {(casts is 1 ? "the turn's only cast" : index is 0 ? "the turn's first cast" : index == casts - 1 ? "the turn's last cast" : "between casts")}, {breed}");
+                set.UnionWith(after.Actor.States.Except(fight.Actor.States));
+            }
 
             if (Idle(fight, after))
                 Tally.Count($"states: casts {whose}, foreseen to do nothing but spend AP, {breed}");
