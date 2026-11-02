@@ -1845,6 +1845,57 @@ never committed that print counts and the client's ids, never an actor's id or n
     the character knew 32 zaaps, not that one, and the bot teleported to it 70 s later.
   - *A protector*: a fight 0.7 s after a harvest ended, in the Routes Rocailleuses.
 
+### The game, summoned
+
+Measured on 2026-11-02 for session 9f2 (D268 to D273): the 100 game connections of 3.7.12.12, 166 fights, its pack of
+format 8, with `scripts/fights.cs` and measuring tools never committed that print counts and the client's ids, never an
+actor's id or name. No capture was made for the session: those the owner makes are to come.
+
+- **The summons captured.** 57, 52 by the character and 5 by monsters, of 15 monsters: a Roublard's bombs (3112 to 3114)
+  and Roublabot (3120), a Steamer's turrets (5835, 5836), a Sadida's tree (5894) and dolls (5896, 5901), a Xélor's
+  Synchro (3958) and its slave (5144), an Iop's (5130), an Enutrof's (5830, 5834), a Pandawa's (5844), and two monsters'
+  (3271, 5232). Each names its monster and grade, the effect's dice, and its summoner.
+- **Their characteristics**, each set against its monster's grade and its summoner's as the fight's state held them:
+  - the life, 57 of 57: the grade's life, raised by a hundredth a level of a character summoning, plus its vitality,
+    plus the share the grade's bonus names of the summoner's characteristic 0, its base life, which a character holds at
+    50 and 5 a level: 60% of 505 at level 91, 303; 180% of 140 at level 18, 252; 200% of 800 at level 150, 1,600;
+  - strength, intelligence, chance and agility, 57 of 57 each: the grade's, raised by a hundredth a level of a character
+    summoning (200 agility at level 150, 500), plus the bonus's share of the summoner's (a bomb copies its Roublard's);
+  - every other characteristic but one, 57 of 57 each: the grade's plus the bonus's share of the summoner's, the damage
+    bonuses of each element, the power, the critical hits, the resistances; the vitality given apart, 11; a Steamer's
+    turret 5835 was given no damage bonus 3 times its bonus names;
+  - the AP the grade's, 57; the MP too, 47, the 10 others -1 in the grade and 0 given;
+  - the dodge, 78, a tenth of the agility plus the grade's; the lock, 79, the same, never below 0, the grades of turrets
+    and dolls holding -500 to -5,000; the dodge of AP and MP removed, 27 and 28, a tenth of the wisdom, which the server
+    does not give, plus the bonus's share of the summoner's;
+  - a monster's summons, by monsters of levels 7 and 30, their grade's characteristics, not raised.
+- **The turns' order.** 103 orders the server gave after a summon: 78 put it right after its summoner, the 25 others two
+  or three places after, behind the summons that came later. 53 of the summons' turns, of 150 tenths: 28 in the round
+  they were summoned, right after their summoner's.
+- **Who plays them.** The server let the client play 20 summons' turns, of 6 monsters: the Xélor's slave 5144, a
+  Roublabot 3120 and a Sadida's doll 5901, summoned by effects 1011 and 2796, a summon controlled; a Sadida's doll 5896
+  and two Steamer's turrets, 5835 and 5836. The pack says why:
+  - spell 18646, *Maîtrise des invocations*, and 22312, cast by the character for 1 AP, put it in state 2131, cast
+    18647, which casts 18648 on each of its summons in neither state 2132 nor 2133, and 18649 on itself; cast again, they
+    dispel 21976, 18646 and 18649;
+  - 18648, which every summon casts as it comes (32 casts captured), puts the summon in state 2132,
+    *Invocation maîtrisable*, for the 35 monsters its mask names, a Sadida's dolls among them, else in 2133;
+  - 18649 gives the character's summons in state 2132 effect 2027, control, and state 2130;
+  - of the 19 breeds' spells and variants, 112 summon at their highest grade: 181 on 79, 1011, a slave, on 14, the
+    Eniripsa's 8 among them, 405 and 2796, which replace a summon, on 12 and 2, 1008, a bomb, on 8, 180, a double, on 2,
+    1097, an illusion, on 1.
+- **A summon the client plays.** Its turn begins as the character's does, `FightTurnEvent` then
+  `FightTurnStartPlayingEvent` to the client alone; the player cast with `GameActionFightCastRequest` 25 times, walked
+  with `MapMovementRequest` 10 times and ended 19 turns with `FightTurnFinishRequest`, the requests the character's turns
+  send, naming no fighter: the server took each as the summon's, 25 casts and 9 walks of the summon, its sequences its
+  own. No `FightSpellsContextEvent` named a summon.
+- **Whom the enemies hit.** On 136 enemies' turns while a summon of the character's lived, the enemies took 1,627 life
+  from summons and 2,295 from the character. Of the 73 turns that hit something with the summon nearer the enemy than
+  the character, 45 hit the summon; of the 20 with the summon farther, none.
+- **Heals and critical damage out of fights** (D263): of the characters captured, the Xélor of levels 91 and 92 alone holds
+  any, 28 heals and -3 critical damage; of its 501 casts, none foreseen otherwise with them, none a heal nor a critical
+  hit they change.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

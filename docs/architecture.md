@@ -224,7 +224,8 @@ seen so.
   unloaded, what each interruption leads to, how the character is recovered. `BotActor.StartActivity` runs one at a
   time (`ActivityRun`): each step, unloading and recovery a behavior started once the bot can act, connected, placed,
   out of a fight and not paused, so the run waits, with no delay, for the player to resume the bot, the client's new
-  connection to take it back (D65) or the fight to end (D88). A full character is unloaded before the next step.
+  connection to take it back (D65) or the fight to end (D88); a fight begun between two steps, which cut none, is the
+  activity's as one that cut a step (D273). A full character is unloaded before the next step.
   Nothing of the activity's position is kept: the next step starts from the state. An activity that fails keeps its
   error (`ActivityRun.Failure`), which the app shows (D103); one that is `IDisposable` is disposed once over.
 - **The activities the app starts** (D93): a module registers each one, by an id unique in the host and a name in the
@@ -251,7 +252,8 @@ seen so.
   and placed by the graphics learned (`GameReferences.IsBase`, `PlacesOf`; `GraphicPlaces`, an index of every map's
   graphics built once, D150); a sub-area's maps reached only far round from its main part are isolated and left out
   unless the settings take them, last (`HarvestZone.Isolated`, D149). A fight that cuts a step is a protector's when it
-  begins within a second of the character's own use ending (`BotContext.UseEndedAt`), else an aggression; the activity
+  began within a second of the character's own use ending (`BotContext.UseEndedAt`, `FightBeganAt`, D273), else an
+  aggression; the activity
   then resumes, pauses the bot (`InterruptionResponse.Pause`, `BotActor.Pause`) or stops, as its settings say, and the
   journal names the kind (`BotActivity.Describe`, D144). `Regrowths`, one per host, learns how long each resource takes to
   grow back from every map a bot is on (`RegrowthLearner`): whole when a bot stayed on the map, else a bound from above on
@@ -298,7 +300,9 @@ seen so.
   (`FightTactics.Place`) and says it is ready; each turn it plans (`FightTactics.Plan`) from the fight as the AI imagines
   it (`ImaginedFights`, `CharacterSpells`), its sword's blow among its casts (D220), sends the plan's first walk or cast,
   waits for the server's answer and the client's acknowledgement, plans again, and ends its turn as soon as the plan is
-  empty. Every request waits `BotDelays.FightAction` first, the owner's 0.9 s, and every wait ends with the fight. A cast
+  empty. A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
+  spells its grade's (`FightState.IsOwnTurn`, D271). Every request waits `BotDelays.FightAction` first, the owner's
+  0.9 s, and every wait ends with the fight. A cast
   the server refuses with an error text, or leaves unanswered, is not cast again that fight. The player's placement,
   readiness, casts, walks and turn's ends pause the bot (`PlayerActions`), not a turn's end the client marks as its own
   (D252). An activity that fights its own has the fight
@@ -690,8 +694,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   the cells each map is left from (`ExitCells`), a door's around its element. Built once per pack and shared; a search
   keeps its state in its own arrays, and takes under 0.7 ms (`benchmarks/D3B.Engine.Benchmarks`).
 - The rules of a fight, in `D3B.Engine.Fights` (9c, D185 to D190), pure, on the pack's catalogs (D182):
-  - `Combatant`, a fighter as the rules see it: team, cell, AP, MP, range, lock, dodge, life, summons, breed or monster
-    and its properties, summoner, states, and the buffs it holds by the spell that gave each (`HeldBuff`, D227). `CellSet`, a set of a map's cells as 560 bits, which the rules pass around
+  - `Combatant`, a fighter as the rules see it: team, cell, AP, MP, range, lock, dodge, life, summons, breed or monster,
+    its grade and properties, summoner, states, and the buffs it holds by the spell that gave each (`HeldBuff`, D227). `CellSet`, a set of a map's cells as 560 bits, which the rules pass around
     without allocating. `FightMap`, a map's cells walkable in a fight and letting sight through, built once per map.
   - `SpellRange`: the cells a level reaches from its caster's, a diamond, a line or diagonals, its most boosted by the
     caster's range. `LineOfSight`: the cells between two cells, a corner touching only, none blocking by its data or a
@@ -733,6 +737,12 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     over the rounds it lasts (D209); once the enemies
     replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206).
+  - `Summons`, in `D3B.Engine.Fights`: the fighter a summon brings, from its monster's grade and its summoner's
+    characteristics, as the server makes it (D269); `MonsterSpells`, the levels a monster casts at a grade. A summon the
+    search brings is judged as one of the fighters the judge starts with: its life a tenth of an ally's, its being alive
+    its turn's damage, and the blow it strikes next, before the enemies (`FightJudge`, D270); an enemy that would hit it
+    hits it half the time. In the reply the character's summons that play strike first, the latest first; of summons drawn
+    at random the likeliest alone comes.
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
@@ -790,7 +800,10 @@ map of its zone holding a group it attacks (D259), all in [Bot run time](#bot-ru
 nothing to change (D261). Built in session 9g6: a group judged from the characteristics the server gives out of fights,
 before the first fight too (D263), the harvest's automatic place leaving out the isolated maps (D264), every item's icon at
 32 pixels (D265), the boat to Sarakech (D266), a group no less risky than one lost to turned away (D267), in [Bot run
-time](#bot-run-time) and [Game data](#game-data).
+time](#bot-run-time) and [Game data](#game-data). Built in session 9f2: the owner's asks (D268); summons measured,
+their characteristics, turns and control (D269); brought, judged and replying in the AI (D270, in [Engine](#engine)); the
+summons the client controls played (D271); the heals and critical damage out of fights measured, not taken (D272); a fight
+begun between two steps the activity's (D273), in [Bot run time](#bot-run-time).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -807,9 +820,9 @@ time](#bot-run-time) and [Game data](#game-data).
   the captures turn by turn (9e2, D206 to D212). The simulator applies spell
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
-  and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229); then,
-  after the fights' profiles (D230), summons, bombs, glyphs, runes, telefrags, traps, portals, carrying: one AI for every
-  breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
+  and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
+  summons, those the AI brings and those the client controls (built, D269 to D271); then bombs, glyphs, runes,
+  telefrags, traps, portals, carrying: one AI for every breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
   allows (9g, built, D236 to D241, D245).
 
 ## Tests
@@ -817,7 +830,7 @@ time](#bot-run-time) and [Game data](#game-data).
 - The fight's state is tested on fights built as the captures measured them: placement, turns, every action taken, a
   summon, the end, and what the server says of a fighter it never showed (D179); buffs given, ended at their turn and
   removed, cooldowns, the casts chosen, slides, carries and throws, and the characteristics kept (D193); a mask's state
-  ended by the server as another is put on (D225).
+  ended by the server as another is put on (D225); the turn of a summon the client controls, the client's to play (D271).
 - The AI is tested on fights the tests build with a catalog of their own: an enemy one blow kills is killed, one out of
   range walked towards then struck, a badly hurt character heals itself, nothing worth doing ends the turn, a refused
   cast is not weighed again, a placement reaches an enemy it beats, strong enemies make the fight risky, a walk's path
@@ -826,7 +839,8 @@ time](#bot-run-time) and [Game data](#game-data).
   0, foreseen with the weapons' formulas, struck when it does more for its AP than the spell, and not otherwise (D220). A
   Zobal's masks as the pack makes them: one taking the other's state off, putting its own on and dispelling the other's
   boost, one cast again replacing its boost, the AI putting on the mask whose spells deal more, and a shield of `c` not
-  cast on an enemy (D224 to D228). The character's spells by the
+  cast on an enemy (D224 to D228). A summon's characteristics from its grade and its summoner, a summon brought with them,
+  striking right after its summoner in the reply, and judged by the blow it strikes next (D269, D270). The character's spells by the
   list, its level, a pair and the fight's own; the fight's options and context; the player's requests in a fight; a
   harvest's fight answered once over, a lost fight and three in a row (D198, D202). A fight is played end to end through
   `TestPlay`, whose pack carries a spell: the AI closes it, places the character, readies it, casts and ends its turn;
@@ -845,7 +859,7 @@ time](#bot-run-time) and [Game data](#game-data).
 - Bots are tested through game connections driven as the relay shows them, on a pack of five maps, the world between
   them, a door leading into two insides, a tree and a bank, with the bots' loop waited for and the clock moved (D67);
   activities through one whose steps wait for the server, interrupted by the player, a closed connection and a fight
-  (D87).
+  (D87), and a fight begun between two steps (D273).
 - Replays with injection (D63): a game session a test built is replayed through the relay, read by a game session whose
   observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
 - The app's view models are tested against bots played as the bots' tests play them, and its window drawn without a

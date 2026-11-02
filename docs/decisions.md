@@ -6232,6 +6232,114 @@ D266.*
 - **Rejected.** The margin raised from a quarter to a half: it would also have left 10 of those 14 groups, all won,
   against the laxer judge the owner asked for (D249).
 
+## D268: 9f2 as the owner asks it
+
+*2026-11-02, step 9, session 9f2, the owner's words. Builds D223, D244, D263, D266.*
+
+- **Asked**: summons, those the character plays and those that play alone, as their spells and variants say, measured
+  on captures the owner makes, imagined in `D3B.Engine`, searched by the AI and measured with `scripts/fights.cs`; then
+  what 9g6 left: the heals (49) and critical damage (86) the server never gives in a fight, measured on what the AI
+  foresees, taken out of fights if it counts (D263); the protectors' count of a harvest's statistics, 0 though a
+  protector fought (D266); with the owner in game if it comes: an aggression, stairs and portals, the journey after a
+  refused teleport, the inactivity popup.
+- **Added by the owner as the session ran**: Bubble-Bot, Bubble-Emu and BillBot read for ideas (D3). Bubble-Emu models
+  summons whole, their characteristics, limit, turns and control; Bubble-Bot leaves its summons stubbed and casts none;
+  BillBot casts one Sacrieur summon. Their formulas were measured on the captures before any was taken.
+- **So**: the 100 game connections captured hold 57 summons, 20 of their turns the client played: the session measures
+  and builds on them, and the captures the owner makes, an Osamodas's and "Maîtrise des invocations" on and off, measure
+  it again.
+
+## D269: Summons measured: characteristics, turns and control
+
+*2026-11-02, step 9, session 9f2, on the 100 game connections of 3.7.12.12 and the pack of format 8 (client.md, "The game,
+summoned").*
+
+- **Characteristics**: a summon's life is its grade's, raised by a hundredth a level of a character summoning, plus its
+  vitality and the share its grade's bonus names of its summoner's base life, characteristic 0, 50 and 5 a level for a
+  character; strength, intelligence, chance, agility and wisdom the grade's so raised, plus the bonus's share of the
+  summoner's; every other characteristic the grade's plus that share; AP and range the grade's, MP too but never below
+  0; dodge a tenth of the agility plus the grade's, lock the same never below 0; the dodge of AP and MP removed a tenth
+  of the wisdom plus the share of the summoner's. Of the 57: life, AP and MP 57, and 1,992 of 1,995 other
+  characteristics, the 3 others a turret's damage bonus the server did not give. A monster's summons are not raised.
+  Bubble-Emu's formula, read, adds the share; it raises no characteristic but the life.
+- **Turns**: a summon plays right after its summoner, the latest first, from the round it comes (78 of 103 orders right
+  after, the others behind later summons).
+- **Control**: the server lets the client play a summon of 1011 or 2796, a slave, and those "Maîtrise des invocations"
+  controls: the spell puts the character in state 2131 and gives control (2027) and state 2130 to its summons that the
+  spell each casts as it comes, 18648, put in state 2132, 35 monsters, a Sadida's dolls among them. 20 turns of 6
+  monsters. The client sends the character's requests for it, the server takes them as the summon's.
+- **Whom enemies hit**: while a summon of the character's lived, 1,627 life went to summons and 2,295 to the character;
+  a summon nearer the enemy drew 45 of 73 turns that hit.
+- **Rejected.** A table of each breed's summons: the pack's effects and states say it (D169).
+
+## D270: Summons in the AI: brought, judged and replying
+
+*2026-11-02, step 9, session 9f2, measured with `scripts/fights.cs` on the 100 game connections, 387 turns of the
+characters and 20 of controlled summons. Builds D201, D206, D210, D269. Supersedes in part D201 (a summon's life as an
+ally's) and D195 (a summon of the grade alone).*
+
+- **Brought**: `Summons.Of`, the fighter a summon brings, as D269 measured it; `Combatant.Grade`; `MonsterSpells`, a
+  monster's levels at a grade. Of summons drawn at random, such as a Xélor's spell 373, 80 and 20 in a hundred, the
+  likeliest alone comes, where both came.
+- **Judged**: the judge starts with the summons its fighter's spells bring, so that one the search brings has its damage
+  and threat (`FightJudge`); a summon's life is worth nothing of itself, its being alive one and a half of its turn's
+  damage with its own AP, as an enemy's, and the blow it strikes next, before the enemies, weighed as the approach is
+  (`Strike`); an enemy that would hit a summon hits it half the time, the ally it hurts most of the others the other
+  half; a summon playing protects its summoner.
+- **Replying**: the character's summons that play strike first in the reply, the latest first, as greedily as the
+  enemies, on any fighter, then the enemies.
+- **Measured**, the turns played against the AI's plans, before and after: summons planned 9 and 71, the players' 42;
+  damage the plans foresee 86,641 and 77,887, with 1,610 the summons deal in the reply; over two turns 146,668 and 137,605,
+  the turns played 120,561; the life the reply takes 16,336 and 15,507; kills 399 and 355. The 71: a Xélor's 373, 48, a
+  Steamer's turrets, 17, decoys dealing nothing 6. Controlled summons' 20 turns: 20 casts planned dealing 532, 23 played
+  dealing 542. Searches 92 ms halfway, 837 ms at most, against 86 and 645, each run beside another; a turn planned in
+  2.79 ms and 4.9 MB, as in 9g4.
+- **Rejected**, measured:
+  - A summon's life as an ally's, at 0.3 and half of it alive: 369 summons planned, decoys first, the damage foreseen
+    falling to 57,189.
+  - Its being alive by its damage at 24 AP, the judge's table's end: a Xélor's three summons of one turn judged worth
+    1,286, against 517 by their own AP.
+  - Its life at a tenth: 201 summons, decoys first, 71,102 damage foreseen.
+  - The enemy hitting the summon it hurts most and nothing else: the character spared whole by any decoy, against the
+    41% of the life the captures saw summons take.
+- **Left**: a summon replacing another (405, 2796), a double (180) and an illusion (1097) are not imagined; a bomb's
+  explosion, the Roublard's, waits for the bombs; which summons the client will control is not foreseen, both kinds
+  replying the same.
+
+## D271: The bot plays the summons the client controls
+
+*2026-11-02, step 9, session 9f2. Builds D202, D269.*
+
+- **Made**: the fight's state lets the client play a summon of the character's whose turn the server lets the client
+  play (`FightState.IsOwnTurn`); the fight is imagined from the summon's view, its spells its grade's, its cooldowns and
+  casts its own (`ImaginedFights`), and `FightPlay` plays its turn with the requests it sends for the character, the
+  summon's casts waited for. Before, the bot left such a turn to its 15 s.
+- **Measured** on the 20 turns the player played: the AI plans 20 casts foreseen to deal 532, the player cast 23 dealing
+  542 as the AI imagines them; not measured in game.
+
+## D272: Heals and critical damage out of fights, not taken
+
+*2026-11-02, step 9, session 9f2, on the 100 game connections. Settles D263's "left".*
+
+- **Measured**: of the characters captured, the Xélor of levels 91 and 92 alone holds any heals (28) or critical damage
+  (-3) out of fights. Its 501 casts foreseen with them: no damage nor heal otherwise than without; none of its casts a
+  heal or a critical hit they change. `scripts/fights.cs` foresees the character's casts both ways.
+- **So**: nothing taken, the fight's characteristics alone, until a capture shows a difference.
+
+## D273: A fight begun between two steps is the activity's
+
+*2026-11-02, step 9, session 9f2, the owner's ask: the protectors' count of D266's harvest was 0, a protector having
+fought. Builds D144, D146.*
+
+- **Measured** (client.md): the protector's fight of D266 began 0.7 s after the harvest ended, so once the step that
+  harvested was over and before the next began: no behavior ran, no step was cut, and the activity never knew the fight,
+  neither counting it nor answering it as its settings say, a lost one included.
+- **Made**: a step that starts after a fight began since the run last knew of one is cut by it as one that began during
+  a step (`ActivityRun`); a protector's is told by when the fight began, within a second of the use's end
+  (`BotContext.FightBeganAt`), no more by when the activity hears of it.
+- **Checked**: a test plays a fight begun between two steps, answered then recovered; without the change, the activity
+  is told of nothing. Not measured in game.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
