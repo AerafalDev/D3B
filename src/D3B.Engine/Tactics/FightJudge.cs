@@ -30,7 +30,11 @@ namespace D3B.Engine.Tactics;
 /// summoner's spells bring when the judge starts. A summon playing protects its summoner as the character
 /// protects itself.</description></item>
 /// <item><description>A bomb of the side playing: what its explosion would take off the enemies about it as they stand, its
-/// combo a level up as the next turn starts, weighed as the approach is (9f3).</description></item>
+/// combo a level up as the next turn starts, weighed as the approach is (9f3). The bombs' explosions on an enemy are summed
+/// and never worth more than its life, its kill counted once, since one Détonateur sets their chain off (9f4).</description></item>
+/// <item><description>A mark of a side struck as a turn begins, a glyph or a bombs' wall, on a fighter of the other: what it
+/// takes off an enemy as its next turn begins, as sure as a blow struck now, or what it takes from an ally, as the threat
+/// is (9f4).</description></item>
 /// </list>
 /// <para>
 /// A fighter's best turn's damage on another comes from its spells as the knowledge lists them, each effect that damages at
@@ -89,6 +93,7 @@ public sealed class FightJudge
     private readonly SpellStateCatalog _states;
     private readonly Bombs? _bombs;
     private readonly SpellEffects? _effects;
+    private readonly Imagination? _imagination;
     private readonly int[] _signatures;
     private readonly Dictionary<(int One, int Other, int Attacker, int Target), double[]> _changedDamage = [];
     private readonly Dictionary<(int One, int Other, int Attacker, int Target, ulong Landing), double[]> _changedTurns = [];
@@ -118,7 +123,8 @@ public sealed class FightJudge
     /// <param name="summons">The summons the fighter playing's spells may bring, each with the levels it casts, which the search imagines as it casts them.</param>
     /// <param name="bombs">The Rogue's bombs, whose explosions a bomb alive is worth; none counted when null.</param>
     /// <param name="effects">What casts are foreseen to do, a bomb's explosion among them.</param>
-    public FightJudge(ImaginedFight start, FightKnowledge knowledge, TacticWeights weights, WeaponBlows blows, EffectActions actions, CastRules rules, FightMoves moves, SpellStateCatalog states, IReadOnlyList<(Combatant Summon, ImmutableArray<SpellLevel> Levels)> summons, Bombs? bombs = null, SpellEffects? effects = null)
+    /// <param name="imagination">What actions do, for the marks that strike a fighter as its turn begins; none counted when null.</param>
+    public FightJudge(ImaginedFight start, FightKnowledge knowledge, TacticWeights weights, WeaponBlows blows, EffectActions actions, CastRules rules, FightMoves moves, SpellStateCatalog states, IReadOnlyList<(Combatant Summon, ImmutableArray<SpellLevel> Levels)> summons, Bombs? bombs = null, SpellEffects? effects = null, Imagination? imagination = null)
     {
         ArgumentNullException.ThrowIfNull(start);
         ArgumentNullException.ThrowIfNull(knowledge);
@@ -145,6 +151,7 @@ public sealed class FightJudge
         _states = states;
         _bombs = bombs;
         _effects = effects;
+        _imagination = imagination;
         _signatures = [.. _fighters.Select(Signature)];
         _levels = new SpellLevel[_fighters.Length][];
         _levelDamage = new double[_fighters.Length][][];
@@ -576,6 +583,7 @@ public sealed class FightJudge
 
         var worth = 0.0;
         Span<double> feared = stackalloc double[fight.Fighters.Length];
+        Span<double> blasted = stackalloc double[fight.Fighters.Length];
 
         for (var index = 0; index < fight.Fighters.Length; index++)
         {
@@ -591,7 +599,10 @@ public sealed class FightJudge
                 worth += AllyWorth(fighter, Effective(fighter));
 
                 if (threatened && fighter.Id != _actorId && fighter.IsSummon)
-                    worth += _weights.Approach * (Strike(fight, fighter, known) + Blast(fight, fighter));
+                {
+                    worth += _weights.Approach * Strike(fight, fighter, known);
+                    Blast(fight, fighter, blasted);
+                }
 
                 continue;
             }
@@ -601,6 +612,11 @@ public sealed class FightJudge
             if (threatened)
                 Threaten(fight, fighter, known, feared);
         }
+
+        Span<double> sure = stackalloc double[fight.Fighters.Length];
+
+        if (threatened)
+            worth += Promised(fight, sure, feared);
 
         for (var index = 0; index < fight.Fighters.Length; index++)
         {
@@ -619,7 +635,7 @@ public sealed class FightJudge
             worth -= _weights.Threat * loss;
         }
 
-        return worth + (_weights.Approach * Approach(fight)) + (fight.Buffs.IsEmpty ? 0 : Lasting(fight));
+        return worth + (_weights.Approach * Approach(fight, blasted, sure)) + (fight.Buffs.IsEmpty ? 0 : Lasting(fight));
     }
 
     private double Cost(Combatant enemy, int known, double life)
@@ -725,63 +741,148 @@ public sealed class FightJudge
 
     private double Approach(ImaginedFight fight)
     {
+        return Approach(fight, [], []);
+    }
+
+    private double Approach(ImaginedFight fight, ReadOnlySpan<double> blasted, ReadOnlySpan<double> sure)
+    {
         fight = NextTurnOf(fight);
 
         var actor = fight.Find(_actorId);
         var known = IndexOf(_actorId);
-
-        if (actor is not { IsAlive: true } || actor.Cell is Combatant.NoCell || known < 0)
-            return 0;
-
+        var alive = actor is { IsAlive: true } && actor.Cell is not Combatant.NoCell && known >= 0;
         var best = 0.0;
+        var bombs = 0.0;
 
-        foreach (var enemy in fight.Fighters)
+        for (var index = 0; index < fight.Fighters.Length; index++)
         {
+            var enemy = fight.Fighters[index];
+
             if (!enemy.IsAlive || enemy.Team == _team || enemy.Cell is Combatant.NoCell)
                 continue;
 
             var target = IndexOf(enemy);
+            var life = Effective(enemy) - (index < sure.Length ? sure[index] : 0);
+            var blast = index < blasted.Length ? Math.Min(blasted[index], Math.Max(0, life)) : 0;
 
-            if (target < 0 || _damage[known][target].Length is 0)
+            if (life <= 0)
+                continue;
+
+            // The bombs' explosions are next turn's too, a Détonateur's: with the blows that land on the enemy they never take
+            // more than its life, its kill counted once (9f4).
+            var blown = Taken(enemy, target, life, blast);
+
+            bombs += blown;
+
+            if (!alive || target < 0 || _damage[known][target].Length is 0)
                 continue;
 
             // Measured live (D203): next turn's damage unbounded outweighed a kill now, so that the AI spared a fighter at 14
             // life it could kill. It is worth what it would take off the enemy's cost, the kill's included, and never more.
-            var life = Effective(enemy);
-            var (next, share) = NextTurn(fight, actor, known, enemy, target);
-            var damage = Math.Min(next, life);
-            var taken = Cost(enemy, target, life) - (damage >= life ? 0 : Cost(enemy, target, life - damage));
+            var (next, share) = NextTurn(fight, actor!, known, enemy, target);
+            var taken = blast > 0 ? Taken(enemy, target, life, Math.Min((next * share) + blast, life)) - blown : Taken(enemy, target, life, Math.Min(next, life)) * share;
 
-            best = Math.Max(best, taken * share);
+            best = Math.Max(best, taken);
         }
 
-        return best;
+        return bombs + best;
     }
 
-    private double Blast(ImaginedFight fight, Combatant bomb)
+    private void Blast(ImaginedFight fight, Combatant bomb, Span<double> blasted)
     {
         if (_bombs is null || _effects is null || bomb.Cell is Combatant.NoCell || !_bombs.IsBomb(bomb, out var kind)
             || !_bombs.TryGetLevel(kind.ExplosionSpellId, bomb.Grade ?? 1, out var level))
         {
-            return 0;
+            return;
         }
 
         var raised = bomb with { Characteristics = bomb.Characteristics.SetItem(FightCharacteristic.BombComboBonus, Bombs.ComboOf(bomb) + NextCombo) };
-        var worth = 0.0;
 
         foreach (var effect in _effects.Foresee(fight.Map, fight.Fighters, raised, level, bomb.Cell, false))
         {
-            if (effect.Action.Kind is not (EffectKind.Damage or EffectKind.FixedDamage) || !effect.IsCertain || fight.Find(effect.TargetId) is not { IsAlive: true } enemy || enemy.Team == _team)
+            if (effect.Action.Kind is not (EffectKind.Damage or EffectKind.FixedDamage) || !effect.IsCertain)
                 continue;
 
-            var target = IndexOf(enemy);
-            var life = Effective(enemy);
-            var damage = Math.Min((effect.Value.Min + effect.Value.Max) / 2.0, life);
+            for (var index = 0; index < fight.Fighters.Length; index++)
+            {
+                if (fight.Fighters[index] is { IsAlive: true } enemy && enemy.Id == effect.TargetId && enemy.Team != _team)
+                    blasted[index] += (effect.Value.Min + effect.Value.Max) / 2.0;
+            }
+        }
+    }
 
-            worth += Cost(enemy, target, life) - (damage >= life ? 0 : Cost(enemy, target, life - damage));
+    private double Promised(ImaginedFight fight, Span<double> sure, Span<double> feared)
+    {
+        // The marks on an enemy strike it as its turn begins, as sure as a blow now; those on an ally are feared as the
+        // enemies' blows are.
+        var worth = 0.0;
+
+        for (var index = 0; index < fight.Fighters.Length; index++)
+        {
+            var fighter = fight.Fighters[index];
+
+            if (!fighter.IsAlive || fighter.Cell is Combatant.NoCell)
+                continue;
+
+            var marked = Marked(fight, fighter);
+
+            if (fighter.Team == _team)
+            {
+                feared[index] += marked;
+
+                continue;
+            }
+
+            if (marked <= 0)
+                continue;
+
+            var life = Effective(fighter);
+
+            sure[index] = Math.Min(marked, life);
+            worth += Taken(fighter, IndexOf(fighter), life, sure[index]);
         }
 
         return worth;
+    }
+
+    private double Taken(Combatant enemy, int known, double life, double damage)
+    {
+        if (damage <= 0)
+            return 0;
+
+        return Cost(enemy, known, life) - (damage >= life ? 0 : Cost(enemy, known, life - damage));
+    }
+
+    private double Marked(ImaginedFight fight, Combatant fighter)
+    {
+        // What the marks of the other side covering its cell take from a fighter as its next turn begins: a glyph, or a wall
+        // of the other side's bombs.
+        if (_imagination is null || !StruckThere(fight, fighter))
+            return 0;
+
+        var struck = _imagination.TurnStarted(fight, fighter.Id, int.MinValue).Find(fighter.Id);
+
+        return struck is null ? 0 : Math.Max(0, Effective(fighter) - Effective(struck));
+    }
+
+    private bool StruckThere(ImaginedFight fight, Combatant fighter)
+    {
+        foreach (var mark in fight.Marks)
+        {
+            if (mark.Kind is CellMarkKind.TurnStart && mark.Team != fighter.Team && mark.Covers(fighter.Cell))
+                return true;
+        }
+
+        if (_bombs is null || fighter.IsSummon && _bombs.IsBomb(fighter, out _))
+            return false;
+
+        foreach (var other in fight.Fighters)
+        {
+            if (other.IsAlive && other.Team != fighter.Team && other.IsSummon && _bombs.IsBomb(other, out _))
+                return true;
+        }
+
+        return false;
     }
 
     private double Strike(ImaginedFight fight, Combatant summon, int known)

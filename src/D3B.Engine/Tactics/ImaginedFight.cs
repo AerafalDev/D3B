@@ -29,6 +29,9 @@ public sealed record ImaginedFight
     /// <summary>Gets the buffs the casts imagined gave, which the fighters' characteristics and states already hold, with how long each lasts.</summary>
     public ImmutableArray<ImaginedBuff> Buffs { get; init; } = [];
 
+    /// <summary>Gets the marks on the fight's cells, glyphs and traps, the server's and those the casts imagined set.</summary>
+    public ImmutableArray<CellMark> Marks { get; init; } = [];
+
     /// <summary>Gets the fighter playing.</summary>
     /// <exception cref="InvalidOperationException">No fighter has its id.</exception>
     public Combatant Actor => Find(ActorId) ?? throw new InvalidOperationException($"No fighter {ActorId} in the fight.");

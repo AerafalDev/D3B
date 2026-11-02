@@ -288,8 +288,10 @@ seen so.
   begins or as the server ends it (`FightBuffEndEvent`, D225), its cooldowns, the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
   (`FightSequence`), and moves a fighter on a slide, a carry and a throw. `FightCombatants` gives the engine the fighters.
   Since 9e (D199, D203), the character's state holds its spells as the server listed them and its transformed form's, the
-  fight's state the spells the server's context lists for the fight, and the team's options; a turn puts the fight in its
-  fighting phase, as a client that rejoins a fight gets no fight's start.
+  fight's state the spells the server's context lists for the fight, the character's own and not a summon's it controls
+  (D279), and the team's options; a turn puts the fight in its fighting phase, as a client that rejoins a fight gets no
+  fight's start. Since 9f4 (D279), the fight's state holds the marks on the cells as the server sets and takes them back,
+  glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine.
 - **The bot fights** (D198, D202, D235, D244), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for
   a fight not over that the AI plays (`BotActor.Fights`): every fight under the host's `Fights:Alone`
   (`BotActor.FightsAlone`), else the running activity's own as its profile says (`BotActivity.FightsItsFights`); out of an
@@ -415,7 +417,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-14.binpb` (`MappingFile`, D239), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-15.binpb` (`MappingFile`, D279), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -749,6 +751,17 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     its turn's damage, and the blow it strikes next, before the enemies (`FightJudge`, D270); an enemy that would hit it
     hits it half the time. In the reply the character's summons that play strike first, the latest first; of summons drawn
     at random the likeliest alone comes.
+  - `Glyphs`, `CellMark` and `CellMarkKind`, in `D3B.Engine.Fights` (D280): the marks the pack's effects set on the cells of
+    a zone, a glyph struck as a turn begins (401) or ends (402), a glyph-aura (1091), a trap (400), their spell, grade
+    and end; the imagined fight's marks, the server's and those the casts set (`ImaginedFight.Marks`).
+    `Imagination.TurnStarted` takes back an author's marks whose time is out and strikes a fighter with the glyphs and
+    bombs' walls on its cell, its spell on that fighter alone and whole; `TurnEnded` with the glyphs of 402; a glyph-aura
+    strikes who it covers as it comes and who a cast or a walk brings into it. The reply begins and ends each fighter's
+    turn so, and the fighter playing's next turn begins so; the judge counts a side's marks on the other's fighters, sure
+    on an enemy, feared on an ally, and the bombs' promise on an enemy with the approach, its kill once (D281). A summon
+    casts its grade's starting spell, a spell modifier is imagined, and a fighter's death takes back the buffs it gave
+    (`HeldBuff.CasterId`, D282). Pushes and pulls go along the farthest axis, the cast's way for a line across it, never
+    moving a fighter `CastRules.CanBePushed` refuses nor one the mask only maybe selects (D283).
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
@@ -812,7 +825,12 @@ summons the client controls played (D271); the heals and critical damage out of 
 begun between two steps the activity's (D273), in [Bot run time](#bot-run-time). Built in session 9f3: the owner's asks
 and every breed's mechanisms to come (D274); every fight's placement cells kept with the map fought on and the one left (D275, in [Storage](#storage));
 the Roublard's bombs measured (D276), then set off with their chain and combos, their walls striking through every move,
-their slots and their worth in the AI (D277, in [Engine](#engine)).
+their slots and their worth in the AI (D277, in [Engine](#engine)). Built in session 9f4: the owner's asks, the Roublard
+measured whole before another breed (D278); a summon's spells kept apart and the marks read, mapping format 15 (D279, in
+[Bot run time](#bot-run-time)); glyphs, walls and the marks as a turn begins and ends (D280), the bombs' promise counted
+once (D281), a bomb's starting spell and the buffs a fighter gave taken back as it dies (D282), pushes and pulls as the
+server moves them (D283), all in [Engine](#engine); measured with `scripts/fights.cs` (D284); a wall striking a fighter
+once as it comes from outside, a Botte harmless, measured on the owner's second Roublard capture (D285).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -831,7 +849,8 @@ their slots and their worth in the AI (D277, in [Engine](#engine)).
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
   summons, those the AI brings and those the client controls (built, D269 to D271); the Roublard's bombs, their chains,
-  combos and walls, every move that brings a fighter into a wall counted (built, D276, D277); then glyphs, runes,
+  combos and walls, every move that brings a fighter into a wall counted (built, D276, D277); the marks on the cells,
+  glyphs and walls struck as a turn begins and ends, the Féca's to measure in game (built, D280); then runes,
   telefrags, traps, portals, carrying, each taken in through every move that brings fighters into it (D277): one AI for every breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
   allows (9g, built, D236 to D241, D245).
 
@@ -853,7 +872,12 @@ their slots and their worth in the AI (D277, in [Engine](#engine)).
   striking right after its summoner in the reply, and judged by the blow it strikes next (D269, D270). A Rogue's bombs: set
 off with the bombs their chain reaches, their combos summed; a wall striking the enemy it comes onto, a push stopped on a
 wall, a push to a cell through one; a bomb thrown on a fighter casting its instant spell; their slots; a bomb near an
-enemy judged worth more (D276, D277). The character's spells by the
+enemy judged worth more (D276, D277); a wall striking an enemy whose turn begins on it, a bomb's starting spell raising its
+kind's spell an AP while it lives, a push along a line across the cast going the cast's way, none moving a monster the pack
+keeps from being pushed, and two bombs about an enemy promising its kill once (D280 to D283). Glyphs set by a cast, striking
+the fighter whose turn begins or ends in them alone, an aura striking who a push brings into it, the reply and the judge
+counting them (D280). A mark kept and taken back as the server says, and a summon's spells list left out of the
+character's (D279). The character's spells by the
   list, its level, a pair and the fight's own; the fight's options and context; the player's requests in a fight; a
   harvest's fight answered once over, a lost fight and three in a row (D198, D202). A fight is played end to end through
   `TestPlay`, whose pack carries a spell: the AI closes it, places the character, readies it, casts and ends its turn;

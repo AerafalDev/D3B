@@ -20,6 +20,9 @@ public sealed class BombTacticsTests
     private const int Explosion = 31;
     private const int Instant = 32;
     private const int Wall = 33;
+    private const int Lighting = 34;
+    private const int Bombard = 35;
+    private const int Boot = 36;
 
     private static readonly SpellCatalog _spells = Catalog();
 
@@ -28,10 +31,12 @@ public sealed class BombTacticsTests
         new(5, 0, 0, '\0', 2, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(99, 0, 0, '\0', 0, 2, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(141, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
+        new(296, 0, 0, '\0', 3, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(783, 0, 0, '/', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(1008, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(1009, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(1027, 0, 0, '+', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
+        new(1103, 0, 0, '\0', 2, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
     }), Monsters());
 
     /// <summary>
@@ -39,11 +44,12 @@ public sealed class BombTacticsTests
     /// enemy 3 cells; 13 pushes the first fighter in line to the cell cast on. The bomb's chain reaction sets off its
     /// summoner's bombs in a circle of 2, its explosion deals 10 fire to enemies in a circle of 2 and kills it, its instant
     /// spell 15, its wall 20, the wall between two of them in a line 1 to 7 cells apart. Its circles leave out their centre, as
-    /// the pack's.
+    /// the pack's. As it comes, it casts its starting spell, which gives its summoner a buff raising spell 10 by 1 AP, as
+    /// a Roublard's Allumage. Spell 35 pushes 1 cell the fighters on a line across the cast, as a Bombarde; 36 pushes 3 cells with no damage, as a Botte.
     /// </summary>
     private static SpellCatalog Catalog()
     {
-        string[] strings = ["A", "a", "I", "C", "a,A"];
+        string[] strings = ["A", "a", "I", "C", "a,A", "h,P"];
         var point = Zone(SpellZoneShape.Point);
         var circle = Zone(SpellZoneShape.Circle, 2, 1);
         SpellLevel[] levels =
@@ -56,6 +62,9 @@ public sealed class BombTacticsTests
             new SpellLevel { Id = 1031, SpellId = Explosion, Grade = 1, ApCost = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 5, EffectCount = 2 },
             new SpellLevel { Id = 1032, SpellId = Instant, Grade = 1, ApCost = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 7, EffectCount = 1 },
             new SpellLevel { Id = 1033, SpellId = Wall, Grade = 1, ApCost = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 8, EffectCount = 1 },
+            new SpellLevel { Id = 1034, SpellId = Lighting, Grade = 1, ApCost = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 9, EffectCount = 1 },
+            new SpellLevel { Id = 1035, SpellId = Bombard, Grade = 1, ApCost = 3, MinRange = 1, Range = 6, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 10, EffectCount = 1 },
+            new SpellLevel { Id = 1036, SpellId = Boot, Grade = 1, ApCost = 2, MinRange = 1, Range = 6, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 11, EffectCount = 1 },
         ];
         SpellEffect[] effects =
         [
@@ -68,6 +77,9 @@ public sealed class BombTacticsTests
             new SpellEffect { Uid = 7, EffectId = 141, TargetMask = 3, Triggers = 2, DiceNum = 1, Zone = point },
             new SpellEffect { Uid = 8, EffectId = 99, TargetMask = 0, Triggers = 2, DiceNum = 15, DiceSide = 15, Zone = point },
             new SpellEffect { Uid = 9, EffectId = 99, TargetMask = 0, Triggers = 2, DiceNum = 20, DiceSide = 20, Zone = point },
+            new SpellEffect { Uid = 10, EffectId = 296, TargetMask = 5, Triggers = 2, Duration = -1, DiceNum = Throw, Value = 1, Zone = Zone(SpellZoneShape.WholeMap) },
+            new SpellEffect { Uid = 11, EffectId = 5, TargetMask = 0, Triggers = 2, DiceNum = 1, Zone = Zone(SpellZoneShape.PerpendicularLine, 1) },
+            new SpellEffect { Uid = 12, EffectId = 1103, TargetMask = 0, Triggers = 2, DiceNum = 3, Zone = Zone(SpellZoneShape.Point) },
         ];
         Spell[] spells = [.. levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 })];
 
@@ -78,7 +90,7 @@ public sealed class BombTacticsTests
     /// <summary>Bomb 3112, which neither plays nor moves, in a bomb's slot.</summary>
     private static MonsterCatalog Monsters()
     {
-        var grade = new MonsterGrade { Grade = 1, Level = 1, Characteristics = new MonsterCharacteristics { Vitality = 10 } };
+        var grade = new MonsterGrade { Grade = 1, Level = 1, StartingSpellLevelId = 1034, Characteristics = new MonsterCharacteristics { Vitality = 10 } };
         var monster = new Monster { Id = Bomb, Properties = MonsterProperties.UseBombSlot | MonsterProperties.CanBePushed, FirstGrade = 0, GradeCount = 1 };
 
         return new MonsterCatalog(new[] { monster }, new[] { grade }, Array.Empty<MonsterSpell>(), Array.Empty<byte>(), Array.Empty<MonsterRatio>(), Array.Empty<MonsterRace>(), Array.Empty<MonsterRace>());
@@ -142,6 +154,51 @@ public sealed class BombTacticsTests
     }
 
     [Fact]
+    public void APushAlongALineAcrossTheCastGoesTheWayItWasCast()
+    {
+        // Measured (9f4): a Bombarde pushed the fighters on its line from the caster towards the cell cast on, 6 of 6.
+        var enemy = Enemy(-1, Off(3, 1)) with { Life = 100 };
+
+        var after = _tactics.Imagination.Cast(Fight(enemy), Level(_spells, Bombard), Off(3, 0));
+
+        Assert.Equal(Off(4, 1), after.Find(enemy.Id)!.Cell);
+    }
+
+    [Fact]
+    public void AFighterMovedFromAWallOntoAnotherWallCellIsNotStruckAgain()
+    {
+        // Measured (9f4): a monster a Botte moved from a wall's cell onto another was struck by nothing, 3 times.
+        var enemy = Enemy(-1, Off(3, 0)) with { Life = 100 };
+        var fight = Fight(BombAt(-10, Off(2, 0)), BombAt(-11, Off(5, 0)), enemy);
+
+        var after = _tactics.Imagination.Cast(fight, Level(_spells, Push), Off(3, 0));
+
+        Assert.Equal((Off(4, 0), 100), (after.Find(enemy.Id)!.Cell, after.Find(enemy.Id)!.Life));
+    }
+
+    [Fact]
+    public void APushWithoutDamageHurtsNoFighterItStopsShort()
+    {
+        var enemy = Enemy(-1, Off(1, 0)) with { Life = 100 };
+        var blocker = Enemy(-2, Off(3, 0)) with { Life = 100 };
+
+        var after = _tactics.Imagination.Cast(Fight(enemy, blocker), Level(_spells, Boot), Off(1, 0));
+
+        Assert.Equal((Off(2, 0), 100), (after.Find(enemy.Id)!.Cell, after.Find(enemy.Id)!.Life));
+    }
+
+    [Fact]
+    public void APushMovesNoMonsterThePackKeepsFromBeingPushed()
+    {
+        // Measured (9f4): the server moved none of the targets the pack or their states keep from being pushed.
+        var enemy = Enemy(-1, Off(1, 0)) with { Life = 100, MonsterProperties = MonsterProperties.CanMove };
+
+        var after = _tactics.Imagination.Cast(Fight(enemy), Level(_spells, Push), Off(1, 0));
+
+        Assert.Equal((Off(1, 0), 100), (after.Find(enemy.Id)!.Cell, after.Find(enemy.Id)!.Life));
+    }
+
+    [Fact]
     public void APushToACellTakesTheFirstFighterInLineThereThroughAWall()
     {
         var enemy = Enemy(-1, Off(1, 0)) with { Life = 100 };
@@ -184,5 +241,51 @@ public sealed class BombTacticsTests
         var far = _tactics.Imagination.Cast(start, Level(_spells, Throw), Off(-5, 0));
 
         Assert.True(judge.Judge(near) > judge.Judge(far));
+    }
+
+    [Fact]
+    public void ABombRaisesItsKindsSpellByAnAPWhileItLives()
+    {
+        // Measured (9f4): each bomb's starting spell gave its Roublard a buff of effect 296 on its kind's spell, which the
+        // server took back as the bomb died.
+        var enemy = Enemy(-1, Off(5, 0)) with { Life = 100 };
+        var fight = Fight(enemy);
+
+        var thrown = _tactics.Imagination.Cast(fight, Level(_spells, Throw), Off(4, 0));
+        var bomb = thrown.Fighters.Single(fighter => fighter.MonsterId == Bomb);
+
+        Assert.Equal(3, CastRules.Modified(Level(_spells, Throw), thrown.Actor).ApCost);
+
+        var set = _tactics.Imagination.Cast(thrown, Level(_spells, Detonator), bomb.Cell);
+
+        Assert.False(set.Find(bomb.Id)!.IsAlive);
+        Assert.Equal(2, CastRules.Modified(Level(_spells, Throw), set.Actor).ApCost);
+    }
+
+    [Fact]
+    public void AWallStrikesTheEnemyWhoseTurnBeginsOnIt()
+    {
+        // Measured (9f4): a monster whose turn began on a wall took its spell again, before its turn's own effects.
+        var enemy = Enemy(-1, Off(3, 0)) with { Life = 100 };
+        var fight = Fight(BombAt(-10, Off(2, 0)), BombAt(-11, Off(4, 0)), enemy);
+
+        Assert.Equal(80, _tactics.Imagination.TurnStarted(fight, enemy.Id, 2).Find(enemy.Id)!.Life);
+        Assert.Equal(100, _tactics.Imagination.TurnStarted(fight, 1, 2).Find(enemy.Id)!.Life);
+    }
+
+    [Fact]
+    public void TheBombsAboutAnEnemyPromiseItsKillOnceSoThatKillingItNowIsWorthMore()
+    {
+        // Measured (9f4): with two bombs about the last enemy, each worth its kill, keeping them was judged worth more than the
+        // Détonateur that won the fight.
+        var enemy = Enemy(-1, Off(4, 2)) with { Life = 15 };
+        var start = Fight(BombAt(-10, Off(4, 1), 20), BombAt(-11, Off(5, 2), 20), enemy);
+        var knowledge = new FightKnowledge { Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(1, [Level(_spells, Detonator)]).Add(enemy.Id, []) };
+        var judge = _tactics.JudgeOf(start, knowledge, TacticWeights.Default);
+
+        var set = _tactics.Imagination.Cast(start, Level(_spells, Detonator), Off(4, 1));
+
+        Assert.False(set.Find(enemy.Id)!.IsAlive);
+        Assert.True(judge.Judge(set) > judge.Judge(start));
     }
 }

@@ -1950,6 +1950,53 @@ None of the 3,424 cells is flagged `red` or `blue` in the pack. Ankama's protoco
 a map's fight map and its placement cells, which no capture was looked for in: the client likely asks for it as the
 player turns the fight map's preview on, which the owner never did.
 
+### The game, marked
+
+Measured on 2026-11-02 for session 9f4 (D278 to D285): the 101 game connections of 3.7.12.12, a Roublard's 6 fights of
+the owner's among them, its pack of format 8 and mapping format 15, with `scripts/fights.cs` and measuring tools never
+committed that print fighters by aliases, never an actor's id or name.
+
+- **A summon's spells.** `FightSpellsContextEvent` names the character whose client plays the fighter in field 4 and the
+  fighter whose spells it lists in field 6: the character on 167 of the 182 lists, a summon the client controls on 15,
+  such as a Roublabot, each sent as it came. D3B read field 4 alone, so that a Roublabot's 4 spells took the place of its
+  Roublard's 14 until the fight ended: 21 turns passed without a cast in the owner's sixth fight, a bomb beside the last
+  enemy.
+- **Marks.** The server sets a mark with the action of the effect that set it, 400 a trap, 401 a glyph or a bombs' wall,
+  1091 a glyph-aura, 1181 a portal, its payload `FightMarkSet` (field 9 of `GameActionFightEvent`); 306 and 307 are a mark striking a fighter, as it came into it and as
+  its turn began in it (field 21); 310 takes one back by its id (field 30). A mark names its author and team, its type
+  (0 a glyph, 1 a trap, 2 a bombs' wall, 3 a portal, of an enum of 7), the cell it was cast on, its cells, those of its
+  zone a fighter may stand on, the spell that set it, the spell it casts and that spell's grade (unset for a wall, which
+  casts the wall's spell), when it was set and when it goes, by round and turn, and its id. Of 88 marks: 22 glyphs by
+  401, 6 glyph-auras by 1091, 28 traps, all monsters'; 21 walls; 11 portals by 1181. A trap its enemies do not see names
+  cell -1.
+- **Glyphs.** On 5 casts of a monster's *Gare aux Glyphes* (10241, four glyphs a cast, of grades 2 to 5, a point, a
+  cross and rings of 2 and 3 cells) and 2 of *Particules Spirituelles* (5868): as a fighter's turn began on one, before
+  its turn's own sequence, the server struck it in a sequence of type 2, its glyph-and-trap sequence, action 307, then
+  the glyph's spell, cast by its author, its effects on that fighter alone and whole, with no zone's decrease: 42, 39 and
+  39 on the character from three rings, 296 life in all on the 6 turns' starts struck, 297 imagined, its mask sparing the monsters of the author's side that it struck all the same.
+  A glyph went, 310, as its author's turn of the round its end names began, after the glyphs struck that author: set in
+  round 2 for 2 rounds, gone as round 4's turn began. No walk onto a glyph or a glyph-aura struck the walker, 37 of them.
+- **Walls.** A bombs' wall struck a monster whose turn began on it, 307, 2 times, as a glyph does: 11 at the turn's start
+  against 21 as a push had left it there, its Roublard out of *La Ruse du Roublard*'s state by then. The one walk through
+  a wall cell was its Roublard's own, which nothing struck. No enemy walked through one. A monster a Botte moved from a
+  wall's cell onto another wall's was struck by nothing, 3 times, in the owner's second Roublard capture; a Botte's pushes
+  (effect 1103, "without damage") hurt no one they stopped short.
+- **A bomb's starting spell.** Each bomb casts its grade's starting spell, *Allumage* (13468), as it comes: through spell
+  20509, a buff of effect 296 on its summoner, its kind's spell 1 AP dearer while the bomb lives, which the server takes
+  back as it dies: the Roublard's buffs of 296 rose with the bombs that came and fell with those that died, a chain's
+  every bomb with it.
+- **Pushes and pulls.** Against the cell D3B imagines, the server's slides ended there for 138 of 154 pushes and 79 of
+  86 pulls whose target lived, against 116 and 57 at the session's start, once D3B moved them as the server did: a
+  fighter out of line went along the axis it stood farthest along, across only when as far along both, the 21 pulls of
+  one cell that went elsewhere all so; a Bombarde's and an Espingole's pushes, along a line across the cast, went the way
+  it was cast, from the caster to the cell cast on, 6 of 6; 4 characters a state keeps from being moved did not move; a
+  Botte's push its mask only maybe selected, of another Roublard's bombs, moved no one. 15 pushes still stop short of the
+  cell imagined, 6 of them a Pulsar's moving no monster, which the pack lets be pushed.
+- **The fight map's preview.** The client asks for it with `FightMapRequest`, which names nothing, and the server answers
+  `FightMapInformationResponse`, in this build `jvk`: two `int64`, the placement cells (`lfp`, `PlacementCells`) and a
+  third `int64`. No capture holds them: which `int64` is the map and which the map fought on is left to the owner's
+  capture with the preview on.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

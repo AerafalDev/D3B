@@ -27,7 +27,8 @@ namespace D3B.Engine.Tactics;
 /// enemy plays its next turn in the imagined fight, as greedily as the search plays, walking where its spells reach the
 /// fighter playing's side through the rules, line of sight and tackle included, and casting what lowers that side's worth
 /// most, until nothing does. The plan is the sequence whose fight is best once they replied, the threat's guess left
-/// for the search's own ranking.
+/// for the search's own ranking. Each fighter's turn in the reply begins and ends with the marks on its cell striking it,
+/// the fighter playing's own next turn beginning so too (9f4).
 /// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
 /// </remarks>
@@ -63,6 +64,9 @@ public sealed class FightTactics
 
     /// <summary>Gets the Rogue's bombs, their explosions and walls.</summary>
     public Bombs Bombs { get; }
+
+    /// <summary>Gets the marks spells set on cells, glyphs and traps.</summary>
+    public Glyphs Glyphs { get; }
 
     /// <summary>Gets what actions do to an imagined fight.</summary>
     public Imagination Imagination { get; }
@@ -108,7 +112,8 @@ public sealed class FightTactics
         Moves = new FightMoves(states);
         Effects = new SpellEffects(blows, Rules, _actions);
         Bombs = new Bombs(_spells, Rules);
-        Imagination = new Imagination(_spells, monsters, _actions, Effects, Bombs);
+        Glyphs = new Glyphs(_spells);
+        Imagination = new Imagination(_spells, monsters, _actions, Effects, Bombs, Glyphs, Rules);
         MonsterSpells = new MonsterSpells(_spells, monsters);
     }
 
@@ -187,7 +192,7 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(fight);
         ArgumentNullException.ThrowIfNull(knowledge);
 
-        return new FightJudge(fight, knowledge, weights, Blows, _actions, Rules, Moves, _states, SummonsOf(fight, knowledge), Bombs, Effects);
+        return new FightJudge(fight, knowledge, weights, Blows, _actions, Rules, Moves, _states, SummonsOf(fight, knowledge), Bombs, Effects, Imagination);
     }
 
     /// <summary>Gets the levels a fighter casts: as the knowledge lists them, else, for a summon the search brought, its monster's at its grade.</summary>
@@ -383,20 +388,25 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(judge);
 
         var team = fight.Actor.Team;
-        var replied = fight;
+        var replied = Imagination.TurnEnded(fight, fight.ActorId);
 
         // Measured (9f2): a summon plays right after its summoner, the latest summoned first, so before the enemies.
         foreach (var summon in fight.Fighters.Where(fighter => fighter.SummonerId == fight.ActorId && (fighter.MonsterProperties & MonsterProperties.CanPlay) is not 0).OrderBy(fighter => fighter.Id))
         {
             if (summon.IsAlive && summon.Cell is not Combatant.NoCell)
-                replied = Reply(replied, summon.Id, SpellsOf(replied, summon, knowledge), view => -judge.Standing(view), strikesOnly: false);
+                replied = Played(replied, summon.Id, fight.Round, view => Reply(view, summon.Id, SpellsOf(view, summon, knowledge), other => -judge.Standing(other), strikesOnly: false));
         }
 
+        // An enemy's turn in the reply is taken as the next round's for its marks' time, as most enemies play before the
+        // fighter playing's next turn.
         foreach (var enemy in fight.Fighters)
         {
             if (enemy.IsAlive && enemy.Team != team && enemy.Cell is not Combatant.NoCell)
-                replied = Reply(replied, enemy.Id, knowledge.SpellsOf(enemy.Id), judge.AlliesWorth, strikesOnly: true);
+                replied = Played(replied, enemy.Id, fight.Round + 1, view => Reply(view, enemy.Id, knowledge.SpellsOf(enemy.Id), judge.AlliesWorth, strikesOnly: true));
         }
+
+        // The fighter playing's next turn begins with the marks on its cell striking it, before it plays (9f4).
+        replied = Imagination.TurnStarted(replied with { ActorId = fight.ActorId }, fight.ActorId, fight.Round + 1);
 
         return replied with { ActorId = fight.ActorId, History = fight.History };
     }
@@ -492,6 +502,17 @@ public sealed class FightTactics
         finalists.AddRange(kept);
 
         return kept.Max(end => end.Score);
+    }
+
+    private ImaginedFight Played(ImaginedFight fight, long fighterId, int round, Func<ImaginedFight, ImaginedFight> turn)
+    {
+        // A turn begins and ends with the marks on the fighter's cell striking it, which may kill it before it plays.
+        var started = Imagination.TurnStarted(fight, fighterId, round);
+
+        if (started.Find(fighterId) is not { IsAlive: true })
+            return started;
+
+        return Imagination.TurnEnded(turn(started), fighterId);
     }
 
     private ImaginedFight Reply(ImaginedFight fight, long fighterId, ImmutableArray<SpellLevel> levels, Func<ImaginedFight, double> worth, bool strikesOnly)

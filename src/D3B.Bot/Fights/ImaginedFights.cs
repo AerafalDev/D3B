@@ -4,6 +4,7 @@ using D3B.Data;
 using D3B.Data.Spells;
 using D3B.Engine.Fights;
 using D3B.Engine.Tactics;
+using D3B.Protocol.Game;
 
 namespace D3B.Bot.Fights;
 
@@ -14,7 +15,8 @@ namespace D3B.Bot.Fights;
 /// character's cooldowns from the server (D193). Every fighter but the one playing holds the AP and MP it starts its next
 /// turn with: a monster's grade's, else what the server last gave it; the one playing holds what it has left, and starts its
 /// turns with what it had as its last began. The one playing is the character, or a summon of its the client plays (9f2),
-/// with its own cooldowns and casts.
+/// with its own cooldowns and casts. The glyphs and traps on the cells are the server's, each striking as the spell that set
+/// it says (9f4); a bombs' wall is the bombs' own, which the engine finds again from them.
 /// </remarks>
 public static class ImaginedFights
 {
@@ -81,6 +83,7 @@ public static class ImaginedFights
             ActorId = actor.Id,
             Round = fight.Round,
             History = actor.Casts,
+            Marks = MarksOf(fight, new Glyphs(blows.Spells)),
         };
         var knowledge = new FightKnowledge
         {
@@ -90,5 +93,29 @@ public static class ImaginedFights
         };
 
         return (imagined, knowledge);
+    }
+
+    /// <summary>Gets the glyphs and traps on a fight's cells as the engine sees them, each striking as the spell that set it says.</summary>
+    /// <param name="fight">The fight's state.</param>
+    /// <param name="glyphs">The marks the pack's spells set.</param>
+    /// <returns>The marks; a bombs' wall, which the engine finds from the bombs, and a trap the character does not see left out.</returns>
+    public static ImmutableArray<CellMark> MarksOf(FightState fight, Glyphs glyphs)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+        ArgumentNullException.ThrowIfNull(glyphs);
+
+        var marks = ImmutableArray.CreateBuilder<CellMark>(fight.Marks.Count);
+
+        foreach (var mark in fight.Marks.Values)
+        {
+            if (mark.Type is FightMarkType.Wall || mark.Centre < 0)
+                continue;
+
+            var kind = mark.Type is FightMarkType.Trap ? CellMarkKind.Trap : glyphs.KindOf(mark.SetterId, mark.SpellId);
+
+            marks.Add(new CellMark(mark.Id, mark.AuthorId, (int)mark.Team, kind, mark.SpellId, mark.Grade, mark.Centre, mark.Cells, mark.EndRound));
+        }
+
+        return marks.DrainToImmutable();
     }
 }

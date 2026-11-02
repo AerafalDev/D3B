@@ -6457,6 +6457,157 @@ D276.*
   - The combos counted bomb by bomb: 25..28 foreseen against 51.
   - A wall raised by its bombs' combos summed, as Bubble-Emu lends them: 31 foreseen against 21.
 
+## D278: 9f4 as the owner asks it
+
+*2026-11-02, step 9, session 9f4, the owner's words. Builds D274, D277.*
+
+- **Asked**: the owner's new captures measured, an Osamodas with "Maîtrise des invocations" off then on, a Roublard whose
+  fights the AI plays with `Fights:Alone`, the fight map's preview on, for the summons' formula and control, the bombs the
+  bot plays and `FightMapInformationResponse`; what 9f3 left, walls at a turn's start, walks across them, the bombs'
+  starting spell, the pushes the server stops short; then the Féca's glyphs, measured, imagined through every move
+  (D277), searched by the AI and measured; with the owner in game if it comes, D273, an aggression, stairs and portals,
+  the inactivity popup.
+- **Added by the owner as the session ran**: the Roublard plays badly, building few walls and putting few monsters in
+  them, and in its last turns passed its turn again and again doing nothing; then: before another breed, the Roublard
+  measured working well.
+- **So**: of the captures, only the Roublard's was made, 6 fights, 5 the AI's; the session measures and mends the
+  Roublard first, glyphs coming through the marks every breed shares, and leaves the Féca's glyphs, the Osamodas and the
+  preview to captures the owner makes.
+
+## D279: A summon's spells kept apart, and the marks read: mapping format 15
+
+*2026-11-02, step 9, session 9f4. Supersedes in part D271 (no list naming a summon) and D225 (mapping format 13 then 14).*
+
+- **Measured**: `FightSpellsContextEvent`'s field 4 names the character whose client plays the fighter, its field 6, which
+  the readable protocol lacked, the fighter whose spells it lists: a summon the client controls on 15 of the
+  182 lists captured, each sent as the summon came. D3B took every list for the character's, so that from a
+  Roublabot's coming its Roublard held the Roublabot's 4 spells: in the owner's sixth fight it passed 21 turns, a bomb of
+  combo 360 beside the last enemy, at 53 life. Every turn after a controlled summon came since 9f2 was so.
+- **Made**: field 4 is `character_id`, field 6 `fighter_id`; the fight's state takes a list as the character's when field 6
+  names it (`FightEvents`). The marks, `FightMarkSet` (401, 400), `FightMarkStruck` (306, 307) and `FightMarkRemoved`
+  (310), with `FightMark`, `FightMarkedCell` and `FightMarkType` (client.md, "The game, marked"), kept by the fight's state
+  (`FightState.Marks`, `GroundMark`).
+- **Mapping format 15**: 222 messages, 492 fields, 29 enums and 206 values audited, no failure, 14,687 bytes; the 101 game
+  connections, 173,439 frames, decode through it, 94,517 understood whole, none misread. The release of 3.7.12.12 needs it,
+  on the owner's go (D172).
+- **`FightMapInformationResponse`**, in this build `jvk`, two `int64`, the placement cells and a third `int64`, which the
+  client asks for with the empty `FightMapRequest`: not mapped, no capture holding it to tell its fields apart.
+
+## D280: Glyphs, walls and the marks as a turn begins and ends
+
+*2026-11-02, step 9, session 9f4, on the 101 game connections. Builds D195, D276, D277.*
+
+- **Measured** (client.md): a glyph of 401 strikes a fighter whose turn begins in it, before its turn's own sequence, its
+  spell cast by its author, its effects on that fighter alone and whole, with no zone's decrease; a glyph goes as its
+  author's turn of the round its end names begins. A walk onto a glyph struck no one, 37 times. A bombs' wall strikes as a
+  glyph does a fighter whose turn begins on it, 2 times. The one walk through a wall was its Roublard's, struck by
+  nothing.
+- **Made**: `Glyphs`, the marks the pack's effects set (401 as a turn begins, 402 as it ends, 1091 a glyph-aura, 400 a
+  trap); `CellMark`, `CellMarkKind`, `ImaginedFight.Marks`, the server's glyphs and traps (`ImaginedFights.MarksOf`) and
+  those the casts imagined set. `Imagination.TurnStarted` takes back the author's marks whose time is out after they
+  strike, then strikes the fighter with the glyphs and bombs' walls on its cell; `TurnEnded` with the glyphs of 402; a
+  glyph-aura strikes the fighters it covers as it comes and one a cast or a walk brings into it. The reply begins and ends
+  each fighter's turn so, the fighter playing's next turn beginning so too; the judge counts the marks of a side on a
+  fighter of the other as its turn will begin, as sure as a blow now on an enemy, feared on an ally.
+- **Measured with `scripts/fights.cs`**, marks at a turn's start: 6 turns' starts, the marks struck as many as imagined
+  every time, 12, the life 296 announced against 297 imagined, all 6 within a tenth.
+- **Rejected**: the glyph's spell cast on its middle with its zone's decrease, as the references cast it (D3): 86
+  foreseen against 120 on three rings.
+- **Left**: the Féca's glyphs, which no capture holds, measured in game; a glyph-aura's buffs taken back as a fighter leaves
+  it; traps and portals, the Sram's and the Eliotrope's sessions'.
+
+## D281: The bombs' promise counted once, and a kill now worth more
+
+*2026-11-02, step 9, session 9f4, measured on the owner's Roublard. Supersedes in part D277 (each bomb weighed alone).*
+
+- **Measured**: in the owner's fifth fight, two bombs about the last enemy, at 51 life, each weighed its kill, so that
+  keeping them was judged worth more than the Détonateur that won the fight, which the search left out of its finalists;
+  in the sixth, once the Roublard held its spells again, the approach and the bombs each counted the last enemy's kill.
+- **Made**: the bombs' explosions on an enemy are summed, with what the approach foresees of the fighter playing's next
+  turn on it, and never take more than its life, its kill counted once, weighed as the approach is
+  (`FightJudge.Approach`); the marks' sure blows come first.
+- **Checked**: a test sets two bombs off to kill the last enemy, judged above keeping them; both of the owner's turns now
+  plan the Détonateur.
+
+## D282: A bomb's starting spell, and the buffs a fighter gave taken back as it dies
+
+*2026-11-02, step 9, session 9f4. Settles D277's "left" on the starting spell.*
+
+- **Measured**: every bomb casts its grade's starting spell, *Allumage*, as it comes, which gives its summoner through
+  spell 20509 a buff of effect 296, its kind's spell 1 AP dearer; the server takes it back as the bomb dies, a chain's
+  every bomb with it.
+- **Made**: a summon the search brings casts its grade's starting spell; a spell modifier's effect is imagined, the spell
+  it changes its first die and its value the effect's; each buff held names who gave it (`HeldBuff.CasterId`, the
+  server's source for its own), and the buffs a fighter gave go as it dies (`Imagination`).
+- **Measured with `scripts/fights.cs`**: on the Roublard's 74 turns, bombs planned 45 then 37, the second of a kind paying
+  its AP.
+
+## D283: Pushes and pulls as the server moves them
+
+*2026-11-02, step 9, session 9f4, on the 101 game connections, the cell where each target ended against the one D3B
+imagines. Settles D277's "left" on the pushes stopped short. Builds D214.*
+
+- **Measured**: of the 154 pushes and 86 pulls whose target lived, a fighter out of line with what pushed or pulled it
+  went along the axis it stood farthest along, across only when as far along both, where D3B went across always; a
+  Bombarde's and an Espingole's pushes, along a line across the cast, went the way it was cast, from the caster to the
+  cell cast on, 6 of 6; 4 characters a state keeps from being moved, and monsters the pack does not let be pushed, did not
+  move; a Botte's push the mask only maybe selects, of another Roublard's bombs, moved no one, where D3B rounded its half
+  to a cell.
+- **Made**: `Imagination` slides along the farthest axis, the way of the cast for a line across it; no push or pull moves
+  a fighter `CastRules.CanBePushed` refuses, nor one its mask only maybe selects.
+- **Measured**: on the cell imagined, pushes 116 then 138 of 154, pulls 57 then 79 of 86, none past it now. "Stopped
+  short" counts the cells the effect names, not those imagined: 78 pushes, most against what D3B already foresaw blocking.
+- **Left**: 15 pushes stop short of the cell imagined, a Pulsar's 6 among them moving no monster the pack lets be pushed.
+
+## D284: 9f4 measured with `scripts/fights.cs`
+
+*2026-11-02, step 9, session 9f4, against `main` at the session's start, each run alone.*
+
+- **The Roublard's 74 turns**, the owner's 4 captures of one: plans casting 66 then 83, empty 13 then 0; damage the plans
+  foresee 6,910 then 8,669, over two turns 12,204 then 13,006; kills 40 then 77; the life the reply takes 680 then 399;
+  Détonateurs planned 18 then 28, played 8; enemies on a wall as the turn ends, planned 6, played 2; searches 161 then 140
+  ms halfway, 476 then 419 at most.
+- **Every capture's 429 turns**, against `main`: plans empty 21 then 5; damage the plans foresee 80,532 then 82,027, over
+  two turns 140,958 then 142,738; kills 371 then 408; the life the reply takes 15,777 then 15,054; searches 102 then 109
+  ms halfway, 669 then 694 at most; the marks and the pushes as D280 and D283 say.
+- **Not measured in game**: the owner's next fights of the Roublard with `Fights:Alone` measure it, before another breed,
+  as the owner asks.
+
+## D285: The owner's second Roublard capture: walls struck once, Botte harmless, the search kept
+
+*2026-11-02, step 9, session 9f4, the owner's ask: the Roublard throws its bombs on the enemies instead of pushing and
+pulling them into its walls. On the owner's capture of 4 fights the AI played, 19 turns, then the Roublard's 5 captures,
+89 turns. Builds D277, D280.*
+
+- **Measured**: of the casts with walls standing, D3B imagined 1,167 life lost against 811 announced: a monster a Botte
+  moved from a wall's cell onto another wall's was struck by nothing, 3 times, where D3B struck it again for 96 to 111;
+  and a Botte's pushes, "without damage" (effect 1103), hurt no one they stopped short, where D3B foresaw a push's damage.
+  Both overvalued pushing a monster about the walls.
+- **Made**: a fighter that stood on a wall's cell before a cast or a walk is not struck by a wall after it; effect 1103
+  hurts no one it stops. Imagined then 788 against 811.
+- **The bombs on the enemies**: replayed with these, the AI's plans on the owner's 19 turns throw a bomb on an enemy on 3
+  turns, where it foresees more than any other way; with every bomb on an enemy refused, it plans the same on 14 turns,
+  worse on those 2 of the 3 it threw so, and better on 3, a sequence its search had left out. Kept: 32 finalists
+  and, beside the best sequences, the best of each layout of the enemies, judged the 89 turns' plans 99,849 against
+  100,303, the searches 225 ms halfway against 139.
+- **Measured** on the 89 turns: enemies on a wall as the turn ends, planned 8, played 4; wall cells as the turn ends,
+  planned 15, played 27; Détonateurs planned 38, played 13.
+- **Left**: a wall's spell on an ally, its masks' conditions on states, not measured; the search's misses, a wider search
+  costing more than it finds; the Roublard measured in game again.
+
+## D286: Walls and glyphs worth the rounds they strike, the owner's observation
+
+*2026-11-02, step 9, session 9f4, the owner's words: walls pay more against big enemies. Builds D209, D280, D285.*
+
+- **The owner**: against enemies of much life, a Roublard gains more by walling them than by throwing its bombs on them.
+- **Why, in the AI's terms**: a fight against such enemies lasts several rounds, and a wall strikes an enemy on it at each
+  of its turns' starts while its bombs' combos rise, a glyph for the rounds it lasts; the judge counts a mark's blow at the
+  next turn's start alone and the bombs' explosion a level up, where a buff is weighed over the rounds the fight is
+  foreseen to last (D209). Against small enemies a blow now kills, and the fight ends before a wall pays.
+- **So**: the next session weighs a mark, a wall while its bombs live, a glyph for its rounds, over the rounds the fight
+  is foreseen to last, as a buff is, the enemy kept there as likely as the measures say, and measures it on the Roublard's
+  captures and in game against big enemies, before the Féca's glyphs, which it serves too.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

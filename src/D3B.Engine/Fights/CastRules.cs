@@ -216,6 +216,26 @@ public sealed class CastRules
         return CastRefusal.None;
     }
 
+    /// <summary>Tells whether a push or a pull moves a fighter: a monster the pack says may be pushed, and no fighter in a state that keeps it from being moved or pushed.</summary>
+    /// <param name="fighter">The fighter.</param>
+    /// <returns>Whether it moves.</returns>
+    /// <remarks>Measured (9f4): of the pushes and pulls the server answered with no slide where D3B foresaw one, the targets.</remarks>
+    public bool CanBePushed(Combatant fighter)
+    {
+        ArgumentNullException.ThrowIfNull(fighter);
+
+        if (fighter.MonsterId is not null && (fighter.MonsterProperties & MonsterProperties.CanBePushed) is 0)
+            return false;
+
+        foreach (var state in fighter.States)
+        {
+            if (Has(state, SpellStateProperties.CantBeMoved) || Has(state, SpellStateProperties.CantBePushed))
+                return false;
+        }
+
+        return true;
+    }
+
     /// <summary>Tells whether a fighter's states let it cast a level, wherever and whenever.</summary>
     /// <param name="level">The level, of the pack's spells.</param>
     /// <param name="caster">The fighter.</param>

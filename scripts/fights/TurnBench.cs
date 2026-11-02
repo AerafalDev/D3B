@@ -490,6 +490,28 @@ internal sealed class TurnBench
                 Tally.Count($"bombs: summoned, {what}", casts.Count(action => _tactics.Blows.Spells.TryGetLevel(action.LevelId, out var level) && _tactics.Blows.Spells.EffectsOf(level).ToArray().Any(effect => effect.EffectId is 1008)));
                 Tally.Count($"bombs: set off, {what}", casts.Count(action => Does(action.LevelId) is "detonate"));
             }
+
+            // Its walls as the turn ends, and the enemies on them, whom they strike again as their turns begin (9f4).
+            foreach (var (end, what) in new (ImaginedFight End, string What)[] { (played, "played"), (planned, "planned") })
+            {
+                var walls = new List<BombWallCell>();
+
+                _tactics.Bombs.Walls(end.Map, end.Fighters, walls);
+                Tally.Count($"bombs: wall cells as the turn ends, {what}", walls.Count);
+                Tally.Count($"bombs: enemies on a wall as the turn ends, {what}", end.Fighters.Count(fighter => fighter.IsAlive && fighter.Team != end.Actor.Team && walls.Exists(wall => wall.Cell == fighter.Cell)));
+            }
+        }
+
+        // The glyphs as the turn ends, and the enemies in those that strike as their turns begin (9f4).
+        foreach (var (end, what) in new (ImaginedFight End, string What)[] { (played, "played"), (planned, "planned") })
+        {
+            var own = end.Marks.Where(mark => mark.AuthorId == turn.Start.ActorId && !turn.Start.Marks.Contains(mark)).ToList();
+
+            if (own.Count is 0)
+                continue;
+
+            Tally.Count($"glyphs: set, breed {turn.Start.Actor.BreedId}, {what}", own.Count);
+            Tally.Count($"glyphs: enemies in one striking as their turn begins, {what}", end.Fighters.Count(fighter => fighter.IsAlive && fighter.Team != end.Actor.Team && own.Exists(mark => mark.Kind is CellMarkKind.TurnStart && mark.Covers(fighter.Cell))));
         }
 
         States(turn.Start, turn.Played, "played");

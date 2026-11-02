@@ -74,6 +74,6 @@ public static class FightCombatants
     private static HeldBuff Held(FightBuff buff)
     {
         // A state's buff names its state by its parameter (D193).
-        return buff.Kind is FightBuffKind.State ? new HeldBuff(buff.SpellId, buff.ActionId, buff.Parameter) : new HeldBuff(buff.SpellId, buff.ActionId, buff.Value, buff.Parameter);
+        return buff.Kind is FightBuffKind.State ? new HeldBuff(buff.SpellId, buff.ActionId, buff.Parameter, CasterId: buff.SourceId) : new HeldBuff(buff.SpellId, buff.ActionId, buff.Value, buff.Parameter, buff.SourceId);
     }
 }

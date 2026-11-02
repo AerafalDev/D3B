@@ -78,7 +78,9 @@ message GameActionFightEvent {
   // The action, by the id of the effect it is in the client's table when it is one: 300 a spell cast, 303 a weapon's
   // blow, 102 AP spent, 129 MP spent, 101 AP and 127 MP lost, 120 AP won, 4 a teleport, 5 a slide, 8 a swap, 50 a carry,
   // 51 a throw, 91 to 100, 2822 and 2828 damage, 80 a push's, 103 a death, 104 a tackle, 108 and 2998 to 3001 life
-  // healed, 181, 1008 and 1011 a summon, 308 and 309 AP and MP dodged, 406 a spell's buffs removed, 132 all, 514 one.
+  // healed, 181, 1008 and 1011 a summon, 308 and 309 AP and MP dodged, 406 a spell's buffs removed, 132 all, 514 one;
+  // 400 a trap set, 401 a glyph or a bombs' wall, 306 a mark struck as a fighter came into it, 307 one struck as a
+  // fighter's turn began in it, 310 a mark gone (9f4).
   int32 action_id = 22;
 
   // Who did it: the caster, or the fighter whose step or turn it is.
@@ -100,7 +102,80 @@ message GameActionFightEvent {
     FightBuffRemoval buff_removal = 31;
     FightLifeLost life_lost = 37;
     FightLifeGained life_gained = 39;
+    FightMarkSet mark_set = 9;
+    FightMarkStruck mark_struck = 21;
+    FightMarkRemoved mark_removed = 30;
   }
+}
+
+// A mark set on the ground: a glyph, a trap or a bombs' wall.
+message FightMarkSet {
+  FightMark mark = 1;
+}
+
+// A mark on cells, which casts its spell on a fighter there as its turn begins or ends, or as it comes into it, as the
+// effect that set it says. Measured on 43 marks of the 101 game connections of 3.7.12.12 (9f4).
+message FightMark {
+  option (d3b.readable.partial) = true;
+
+  FightTeam team = 1;
+
+  // The cell the mark was cast on, its zone's middle: -1 for a trap its enemies do not see.
+  int32 impact_cell = 3;
+
+  FightMarkType type = 4;
+  int64 author_id = 6;
+  repeated FightMarkedCell cells = 7;
+
+  // The spell that set the mark.
+  int32 spell_id = 11;
+
+  // The grade of the spell the mark casts; unset for a bombs' wall, which casts the wall's spell.
+  int32 grade = 13;
+
+  // When it goes: the round, and its author's turn, as which the server takes it back.
+  FightMoment end = 14;
+
+  // The spell the mark casts, as the effect's dice name it; unset for a bombs' wall.
+  int32 cast_spell_id = 15;
+
+  // The mark's id in the fight, which the server names it by as it strikes and goes.
+  int32 mark_id = 17;
+}
+
+// A cell of a mark, those of its zone the map lets fighters stand on.
+message FightMarkedCell {
+  option (d3b.readable.partial) = true;
+
+  int32 cell_id = 4;
+}
+
+// A mark struck a fighter: as it came into it, or as its turn began in it, as the action's id says.
+message FightMarkStruck {
+  option (d3b.readable.partial) = true;
+
+  // The mark's cell its impact names, its zone's middle.
+  int32 impact_cell = 1;
+
+  int32 mark_id = 2;
+  int64 fighter_id = 4;
+}
+
+// A mark went: its time was out, or a spell took it back.
+message FightMarkRemoved {
+  int32 mark_id = 1;
+}
+
+// What a mark is. Measured: the monsters' glyphs 0, the monsters' traps 1, a Roublard's bombs' walls 2, an Eliotrope's
+// portals 3, set by effect 1181.
+enum FightMarkType {
+  FIGHT_MARK_TYPE_GLYPH = 0;
+  FIGHT_MARK_TYPE_TRAP = 1;
+  FIGHT_MARK_TYPE_WALL = 2;
+  FIGHT_MARK_TYPE_PORTAL = 3;
+  FIGHT_MARK_TYPE_VALUE_4 = 4;
+  FIGHT_MARK_TYPE_VALUE_5 = 5;
+  FIGHT_MARK_TYPE_VALUE_6 = 6;
 }
 
 // A fighter slid from a cell to another, pushed, pulled or moved by an effect, with no MP spent: a push of several cells
