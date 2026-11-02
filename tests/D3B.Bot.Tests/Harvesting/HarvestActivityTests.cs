@@ -414,4 +414,49 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         run.Stop();
         await run.Completion;
     }
+
+    [Fact]
+    public async Task WithNoFoodChosenTheCharacterEatsWhatOnlyHealsTheSmallestHealFirst()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new InventoryContentEvent
+        {
+            Objects =
+            {
+                new InventoryObject { Item = new ObjectItem { Uid = 52, ItemId = TestPlay.ClassPotion, Quantity = 1 }, Position = InventoryItem.NotWorn },
+                new InventoryObject { Item = new ObjectItem { Uid = 53, ItemId = TestPlay.Loaf, Quantity = 2 }, Position = InventoryItem.NotWorn },
+                new InventoryObject { Item = new ObjectItem { Uid = 50, ItemId = TestPlay.Bread, Quantity = 3 }, Position = InventoryItem.NotWorn },
+            },
+        });
+        connection.Server(new LifeRegenEndEvent { Life = 300, MaxLife = 1_000 });
+        await bot.ProcessedAsync();
+
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], Heal = true, HealBelow = 50 });
+        var run = bot.StartActivity(activity);
+
+        // The bread heals less than the loaf; the potion, whose use does more than heal, is never eaten.
+        Assert.Equal(new ObjectUseMultipleRequest { Uid = 50, Quantity = 3 }, await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new ObjectDeletedEvent { Uid = 50 });
+        connection.Server(new LifeRegenEndEvent { Life = 336, MaxLife = 1_000 });
+
+        Assert.Equal(new ObjectUseMultipleRequest { Uid = 53, Quantity = 2 }, await TestWalks.SentAsync(_play, connection, 2));
+        connection.Server(new ObjectDeletedEvent { Uid = 53 });
+        connection.Server(new LifeRegenEndEvent { Life = 416, MaxLife = 1_000 });
+
+        // Nothing left that heals: the life regenerates, the potion left alone.
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+
+        while (activity.Report is not { } report || !Say(report.Doing).StartsWith("Waiting for its life to regenerate", StringComparison.Ordinal))
+        {
+            Assert.True(DateTime.UtcNow < deadline, $"The activity still says {(activity.Report is { } last ? Say(last.Doing) : "nothing")}.");
+            _play.Time.Advance(TimeSpan.FromMilliseconds(100));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        Assert.DoesNotContain(connection.Sent, message => message is ObjectUseRequest { Uid: 52 } or ObjectUseMultipleRequest { Uid: 52 });
+
+        run.Stop();
+        await run.Completion;
+    }
 }

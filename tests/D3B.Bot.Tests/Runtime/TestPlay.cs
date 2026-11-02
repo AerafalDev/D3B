@@ -79,6 +79,8 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int Chestnut = 473;
     public const int Bread = 468;
     public const int WheatBag = 7_941;
+    public const int Loaf = 1_737;
+    public const int ClassPotion = 16_147;
     public const int AshIconId = 38_017;
     public const int ChestnutIconId = 38_086;
     public const int LumberjackIconId = 1;
@@ -299,7 +301,7 @@ internal sealed class TestPlay : IAsyncDisposable
             writer.Add(WorldGraph.EntryName, Graph());
             writer.Add(WorldAtlas.EntryName, Atlas());
             writer.Add(BankCatalog.EntryName, new BankCatalog(new[] { new Bank(2_756, MapId) }, new[] { new Banker(BankerNpcId, 0, 0, 2) }, new[] { 64_360, ChestReplyId }));
-            writer.Add(ItemCatalog.EntryName, new ItemCatalog(new[] { new Item(Ash, 403, 38, 1, 5, AshIconId), new Item(Bread, 468, 33, 1, 1, 0), new Item(Chestnut, 404, 38, 20, 5, ChestnutIconId), new Item(WheatBag, 7_941, 100, 1, 1, 0) }, Array.Empty<ItemType>()));
+            writer.Add(ItemCatalog.EntryName, new ItemCatalog(new[] { new Item(Ash, 403, 38, 1, 5, AshIconId), new Item(Bread, 468, 33, 1, 1, 0, 12, 12), new Item(Chestnut, 404, 38, 20, 5, ChestnutIconId), new Item(Loaf, 1_737, 33, 110, 1, 0, 30, 40), new Item(WheatBag, 7_941, 100, 1, 1, 0), new Item(ClassPotion, 16_147, 12, 1, 1, 0) }, Array.Empty<ItemType>()));
             writer.Add(IconCatalog.EntryName, new IconCatalog(
                 new IconTable(IconSize, new[] { AshIconId, ChestnutIconId }, Disc(0x8B, 0xC3, 0x4A).Concat(Disc(0x9C, 0x5B, 0x2E)).ToArray()),
                 new IconTable(IconSize, new[] { LumberjackIconId }, Disc(0x3B, 0x82, 0xF6)),
