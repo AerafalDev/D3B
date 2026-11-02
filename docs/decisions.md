@@ -6340,6 +6340,123 @@ fought. Builds D144, D146.*
 - **Checked**: a test plays a fight begun between two steps, answered then recovered; without the change, the activity
   is told of nothing. Not measured in game.
 
+## D274: 9f3 as the owner asks it
+
+*2026-11-02, step 9, session 9f3, the owner's words. Builds D244, D268.*
+
+- **Asked**: the summons measured in game on captures the owner makes, an Osamodas's and "Maîtrise des invocations" off
+  then on, and fights the AI plays with `Fights:Alone`: the formula and the control on those breeds, the summons' turns
+  the bot plays, how often the AI summons against what the owner does, with `scripts/fights.cs --turns` and `--live`;
+  then the Roublard's bombs, their explosion, walls and limit, measured, imagined, searched by the AI and measured; with
+  the owner in game if it comes: D273's protectors, an aggression, stairs and portals, the journey after a refused
+  teleport, the inactivity popup.
+- **Added by the owner as the session ran**:
+  - Bubble-Bot and Bubble-Emu read for the fights' AI (D3): Bubble-Bot leaves the bombs out, every Roublard spell banned
+    from its AI; Bubble-Emu sets a chain off depth first through the chain reaction spell's 1009, sums the chain's
+    combos into one multiplier, rebuilds the walls after every effect, stops pushes on them and lends a wall's bombs'
+    combo to the summoner as it strikes.
+  - What every breed's AI must take in, each mechanism in its session: spells by states, by triggers and by conditions;
+    the Eniripsa's paint, the Ouginak's prey and form, the Féca's glyphs, the Enutrof's and summons' procs, the Sram's
+    traps, their networks and invisibility, the Forgelance's zones, the Zobal's masks, the Pandawa's tanking, the Sadida's
+    infection, the Osamodas's summons, the Steamer's turrets and the spells tied to them, the Huppermage's runes, the
+    Ecaflip's cards, the Roublard's bombs, the Eliotrope's portals and redirections, the Xélor's telefrags, dial and
+    Synchro.
+  - A mechanism is taken in with every way fighters come into it: pushes, pulls, teleports, swaps, walks, and what a
+    summon such as a Roublabot does, never the mechanism's own effect alone (D277).
+  - Every fight's map and placement cells kept, at once, in the database or a file (D275).
+- **So**: the owner's summon captures were not made in the session, so the summons stay as D269 to D271 measured them;
+  the bombs are measured on the 5 fights of a Roublard the 100 game connections hold.
+
+## D275: Every fight's placement cells kept, with the map fought on and the one left
+
+*2026-11-02, step 9, session 9f3, the owner's ask and columns, the database the lead's choice among the two the owner
+named. Builds D88, D138, D145, D180.*
+
+- **Measured** on the 100 game connections: as a fight begins, the server destroys the roleplay's context, creates the
+  fight's and names the map fought on, before the fight's start (D88 saw it twice). Of the 163 fights both maps are known
+  of, 107 were fought on another map than the one left, 56 on it; the 89 maps fought on are all the pack's and the
+  atlas's, 145 in the sub-area of the map left; 32 of the 65 maps left led to more than one. The 163 fights gave 159 sets
+  of placement cells; of the 35 maps fought on more than once, 2 gave one set every time. None of the 3,424 placement
+  cells is flagged red or blue in the pack, whose flags stay Dofus 2's (D180): the server draws a fight's map and cells,
+  and nothing in the pack tells a map fights may begin on from another.
+- **Made**: `FightPlacements`, taught by `FightPlacementLearner` from every fight any bot begins, whoever starts it: the
+  map left, the one the character was on as the roleplay's context was destroyed, its area, sub-area and coordinates from
+  the atlas; the map fought on, the one the server names last before the cells; the first cells it gives once the fight
+  starts, counted once a fight. Kept by `PlacementRecorder` in `d3b.db`, table `Placements`, migration `Placements`, in
+  the owner's columns: `FromMapId`, `FromAreaId`, `FromSubAreaId`, `PosX`, `PosY`, `MapId`, `RedCells` (the
+  challengers'), `BlueCells` (the defenders'), in ascending order, then how many fights began so, the first and the last
+  time; one row a map left, map fought on and set of cells.
+- **A lead, not taken yet**: Ankama's protocol (`vendor/dofus-unity-proto-main`) has a `FightMapInformationResponse`, a
+  map, its fight map and its placement cells, which the client likely asks for when the player turns on the fight map's
+  preview, never on in the captures. A capture with the preview on would tell whether it gives the map a fight from a
+  map would be fought on, and its cells, before any fight. Astria, read for it, holds 5 maps and the client's red and blue
+  flags only.
+- **Rejected.**
+  - One set a map, the latest: 159 sets for 163 fights.
+  - The map fought on alone: the owner wants to know where fights come from, and 107 of 163 were fought elsewhere.
+  - A JSON file beside the database: the host's learned facts live in the database (D138, D145), which the host already
+    reads before it starts.
+
+## D276: The Roublard's bombs, measured
+
+*2026-11-02, step 9, session 9f3, on the 5 fights of a Roublard of level 45 in the 100 game connections of 3.7.12.12, 17
+bombs, 6 Détonateurs, 12 explosions and 5 wall hits, with measuring tools never committed that print fighters by
+aliases; and the pack of format 8. Builds D182, D227, D269.*
+
+- **The pack**: 10 bombs keyed by monster, 4 a Roublard's (3112 Explobombe, 3113 Tornabombe, 3114 Bombe à Eau, 5161
+  Sismobombe), each naming its explosion, chain reaction, instant spell and wall; their walls linear, 1 to 7 hops. A bomb
+  takes a bomb's slot; the characters hold characteristic 93, *Nombre max d'invocations de bombes*, 3; 94 is *Bonus de
+  combo de bombe*, which effect 1027 gives, the pack naming no characteristic for it.
+- **Set off**: Détonateur raises the bomb's combo a level (spell 20497), gives its AP back (effect 120, 1 AP), then sets it
+  off (1009); the bomb casts its explosion at its grade, then the bombs its chain reaction's 1009 reaches explode in turn,
+  depth first: a circle of 2 for any bomb of its summoner's, a cross of 7 for those of its kind. Each explosion kills its
+  bomb. The bombs set off as derived on every Détonateur but one, whose fight ended with the third bomb's last enemy dead.
+- **Combo**: each bomb comes in state *Combo I* and rises a level as its summoner's turn begins and when a Détonateur
+  reaches it, its buff of 1027 then giving 20 a level past the first. An explosion's damage, raised by the characteristics
+  as any spell's, is raised again by the chain's combos summed: 51 and 39 announced against 25..28 and 19..21 without
+  them, the chain's combos 60 and 40.
+- **Walls**: on every cell between two bombs of a kind and a summoner in a line, as near as the hops allow, no bomb of
+  that kind between; the server marked 12 such cells as bombs came and took 11 back as they went or moved, all as derived,
+  3 of each a wall it built again whole. A fighter a wall came onto took its spell, cast by the summoner, 3 times; one a
+  push left on a wall, 2 times, each push stopping on the wall's first cell; a bomb pushed went through. 38 walks crossed
+  no wall. A wall's damage is raised by its bombs' combos: on the one hit of two bombs of unlike combos, 40 and 80, by
+  their half, the sum and the larger foreseeing too much.
+- **A bomb on a fighter**: thrown on a taken cell, no bomb comes, its caster casting the bomb's instant spell there.
+- **The Roublabot's Poussette** (effect 783, *Pousse jusqu'à la case visée*): the first fighter in line from the caster
+  pushed to the cell cast on, which D3B did not foresee.
+
+## D277: The bombs in the AI: set off, walled, every move counted, judged
+
+*2026-11-02, step 9, session 9f3, measured with `scripts/fights.cs` on the 100 game connections. Builds D201, D227, D270,
+D276.*
+
+- **Made**: `Bombs`, the pack's bombs, their chains, combos and walls; effect 1009 as `EffectKind.Detonate`, 1027 a
+  boost of characteristic 94, 120 a boost of AP, 783 `EffectKind.PushToCell`; `EffectFormulas.Dealt` raised by
+  characteristic 94. `Imagination` sets a bomb off with its chain, their combos summed; casts the instant spell of a bomb
+  thrown on a fighter; stops a push on a wall; pushes the first fighter in line to the cell of a 783; and, after every
+  cast and walk, casts a wall's spell on each fighter left on a wall, whether the wall came or the fighter did, raised by
+  its bombs' combos halved. `CastRules` gives bombs their own slots, characteristic 93. The judge weighs a bomb alive by
+  what its explosion would take off the enemies about it, its combo a level up, as the approach weighs the next turn's
+  blows; the search tries a bomb on an enemy's cell too.
+- **The principle, the owner's**: a mechanism is taken in through every move that brings fighters into it, a push, a
+  pull, a push to a cell, a teleport, a swap, a walk, a bomb moved, a summon's spells such as a Roublabot's; the walls
+  read the fighters as every action leaves them, so that the next mechanism's moves count without more.
+- **Measured**, against the session's start:
+  - the Détonateurs' targets: 3 killed as imagined, 5 within a tenth, 450 life imagined against 434 announced;
+  - the wall hits: the 5 within a tenth or killed as imagined; the Roublabot's push into a wall, 38 announced, imagined
+    0 before, killed now;
+  - the Roublard's 32 turns: the damage the AI foresees of the turns played 3,012 against 2,499, 3,507 announced; its
+    plans' 5,273 against 4,466, over two turns 9,034 against 8,288; bombs planned 31, played 17; Détonateurs planned 8,
+    played 5;
+  - the 387 turns of every capture: nothing changed but the Roublard's spells, cast by cast; searches 104 ms halfway, 294
+    ms at 90% and 666 ms at most, against 85, 285 and 511 at the session's start, each run alone.
+- **Left**: a wall struck at the start of a turn and walks across a wall, not measured, not imagined, nor the bombs' own
+  starting spell, which raises the next bomb's AP by 1 (the server's state holds it once cast); the pushes the server
+  stopped short where D3B foresaw them go on, such as a Pulsar's, D214's push model, every breed's.
+- **Rejected.**
+  - The combos counted bomb by bomb: 25..28 foreseen against 51.
+  - A wall raised by its bombs' combos summed, as Bubble-Emu lends them: 31 foreseen against 21.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
