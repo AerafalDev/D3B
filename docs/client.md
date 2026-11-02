@@ -1833,6 +1833,17 @@ never committed that print counts and the client's ids, never an actor's id or n
 - **Items' icons** (D265). The pack's 21,554 items name 11,755 icons, of which `item_assets_1x` holds 11,751: two of 60
   pixels in BC7, one of 62 in RGBA32, the others 64 in BC7. Kept at 64, the pack would weigh 53.5 MB and the icons 192 MB
   once read; at 48, 43.8 and 108; at 32, 26.9 and 48. The app draws an item at 16, 24 or 32 pixels.
+- **In game** (D266), a game connection of 26 minutes, a character of level 92, the app built from 9g6's branch:
+  - *The boat to Sarakech*: NPC 3464 on map 68422145, the Port de Madrestam, talked to with action 3, asks question
+    25721 in the same millisecond, offering 30858 and 30860; 30858, 1.1 s later, ends the dialog with a text 46 of the
+    message kind and the new map, 173277701, Sarakech's port, in the same millisecond. No kamas taken.
+  - *Sarakech's bank*: NPC 3597, whom the pack names a banker, stands on the port's maps outside and in; outside, his
+    question 25061 offers no reply; in the inside of map 173938178, 12 NPCs, it offers 31543. The bank is in map
+    173937154, through a door of 173278211: NPC 3516, question 26002 offering 31177 and 31178; 31177 opens the bank with a
+    text 20, as Astrub's banker's does.
+  - *A zaap learned*: walking onto the zaap's map of the Dunes des ossements, 173278210, a text 24 of the message kind;
+    the character knew 32 zaaps, not that one, and the bot teleported to it 70 s later.
+  - *A protector*: a fight 0.7 s after a harvest ended, in the Routes Rocailleuses.
 
 ## Protocol code
 

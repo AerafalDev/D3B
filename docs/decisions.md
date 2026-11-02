@@ -6189,6 +6189,34 @@ Builds D135, D136, D247.*
   - 64 or 48 pixels: twice to four times the bytes for pictures drawn at 24.
   - Two tables, the harvest's and the loot's at 64: a size the app would draw no better.
 
+## D266: 9g6 measured in game, the boat to Sarakech, and what it leaves
+
+*2026-11-02, step 9, session 9g6, on the game connection the owner captured with the app built from the session's
+branch, 26 minutes, a character of level 92 running three profiles the lead made for the measures. Builds D251, D253,
+D262, D263, D264.*
+
+- **The profiles**, added to the owner's database at the owner's ask, the database saved before: harvesting in the
+  Routes Rocailleuses, whose maps 49 transitions of other skills than doors join; a hunt in the Dunes des ossements,
+  banking its loot at 50 % of the pods; iron in Incarnam's mine, banking at 50 %. The lead advised loading the character
+  over 50 %; what it carried was neither loot nor harvest, so that the hunt stopped once banked, "still full", three
+  times, as D129 has it.
+- **Sarakech**: the hunt failed as it started, from Incarnam's mine. Measured with the pathfinder on the capture: without
+  Sarakech's zaap, no way led there. The owner took the boat by hand: NPC 3464 in the Port de Madrestam, question 25721,
+  reply 30858, the character moved to Sarakech's port in the same millisecond, no kamas taken. **Made**: that way is one
+  line of `NpcWays.Measured`; from the mine, a journey of 15 steps then.
+- **Sarakech's bank** (D251): the bot talked to NPC 3597 outside, whose question offered no reply, then in the inside of
+  12 NPCs, offering one reply, none of the bank's, each refused; the third inside, map 173937154, holds the banker, NPC
+  3516, question 26002, reply 31177 opening the bank. D251 works; two talks lost, about 15 s.
+- **The judge** (D263): two attacks on groups of 4 in the Dunes des ossements, each judged winnable, the group taking
+  the character's life in under half the turns it needs, both lost, one after the other. On every capture, that share
+  holds 14 groups, 4 lost.
+- **Harvesting** in the Routes Rocailleuses, 12 minutes: 748 resources, a protector's fight won; the session's journeys
+  took 116 changes of maps and 22 doors, none of the other skills' transitions. The mine's profile, full from that
+  harvest, banked at La Cuirasse first, then harvested 47 iron. A teleport from the mine was accepted as the capture
+  began, 1,250 kamas; none refused.
+- **Not measured**: an aggression, none met; the transitions other than doors; the journey after a refused teleport;
+  the inactivity popup, which no turn's end the client marked as its own showed.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
