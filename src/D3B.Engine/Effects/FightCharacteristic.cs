@@ -51,6 +51,9 @@ public static class FightCharacteristic
     /// <summary>Earth's damage bonus; fire, water, air and neutral follow, 89 to 92.</summary>
     public const int EarthDamageBonus = 88;
 
+    /// <summary>The client's "Bonus de combo de bombe": what an explosion's damage is raised by, in percent (9f3).</summary>
+    public const int BombComboBonus = 94;
+
     /// <summary>The shield's points.</summary>
     public const int Shield = 96;
 

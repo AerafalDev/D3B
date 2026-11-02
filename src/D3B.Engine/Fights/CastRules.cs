@@ -29,6 +29,9 @@ namespace D3B.Engine.Fights;
 /// </remarks>
 public sealed class CastRules
 {
+    private const int BombSummon = 1008;
+    private const int MaxBombs = 93;
+
     private static readonly int[] _summons = [181, 1011];
 
     private readonly SpellCatalog _spells;
@@ -364,18 +367,25 @@ public sealed class CastRules
 
     private bool HasNoSlot(IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level)
     {
-        if (caster.MaxSummons is not { } most)
-            return false;
-
         if (_spells.TryGetSpell(level.SpellId, out var spell) && (spell.Properties & SpellProperties.BypassSummoningLimit) is not 0)
             return false;
 
-        var summons = false;
+        bool summons = false, bombs = false;
 
         foreach (var effect in _spells.EffectsOf(level))
+        {
             summons |= _summons.Contains(effect.EffectId);
+            bombs |= effect.EffectId is BombSummon;
+        }
 
-        if (!summons)
+        // A Rogue's bombs have their own slots, as many as its characteristic 93 says: 3 on every character captured (9f3).
+        if (bombs && caster.Characteristic(MaxBombs) is > 0 and var mostBombs
+            && fighters.Count(fighter => fighter.IsAlive && fighter.SummonerId == caster.Id && (fighter.MonsterProperties & MonsterProperties.UseBombSlot) is not 0) >= mostBombs)
+        {
+            return true;
+        }
+
+        if (!summons || caster.MaxSummons is not { } most)
             return false;
 
         var count = fighters.Count(fighter => fighter.IsAlive && fighter.SummonerId == caster.Id && (fighter.MonsterProperties & MonsterProperties.UseSummonSlot) is not 0);

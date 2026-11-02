@@ -36,6 +36,7 @@ internal sealed class CastBench
     private readonly CastRules _rules;
     private readonly SpellEffects _effects;
     private readonly EffectActions _actions;
+    private readonly Bombs _bombs;
     private readonly Imagination _imagination;
     private readonly TextWriter? _details;
     private readonly Dictionary<long, FightMap> _fightMaps = [];
@@ -51,7 +52,8 @@ internal sealed class CastBench
         _rules = new CastRules(_blows.Spells, tables.States);
         _actions = new EffectActions(tables.Effects);
         _effects = new SpellEffects(_blows, _rules, _actions);
-        _imagination = new Imagination(_blows.Spells, tables.Monsters, _actions, _effects);
+        _bombs = new Bombs(_blows.Spells, _rules);
+        _imagination = new Imagination(_blows.Spells, tables.Monsters, _actions, _effects, _bombs);
         _details = details;
     }
 
@@ -611,8 +613,12 @@ internal sealed class CastBench
             if (!after.Fighters.TryGetValue(before.Id, out var now) || imagined.Find(before.Id) is not { } thought)
                 continue;
 
-            lostImagined += Math.Max(0, before.Life - thought.Life);
-            lostAnnounced += Math.Max(0, cast.Lives[before.Id].Life - now.Life);
+            // A bomb dies of its explosion with its life whole in the fight's state, which the imagined fight empties (9f3).
+            if (!_bombs.IsBomb(before, out _))
+            {
+                lostImagined += Math.Max(0, before.Life - thought.Life);
+                lostAnnounced += Math.Max(0, cast.Lives[before.Id].Life - now.Life);
+            }
 
             // A fighter that died lost its buffs with its life.
             if (!now.IsAlive)
@@ -646,9 +652,61 @@ internal sealed class CastBench
             }
         }
 
+        Bombs(cast, after, imagined);
         Tally.Count($"life a cast took, {casts}: casts");
         Tally.Count($"life a cast took, {casts}: imagined", lostImagined);
         Tally.Count($"life a cast took, {casts}: announced", lostAnnounced);
+    }
+
+    private void Bombs(Cast cast, FightState after, ImaginedFight imagined)
+    {
+        // With bombs on the field (9f3): the bombs each cast set off, imagined and announced, and the life every other fighter
+        // lost, imagined from the explosions, their combo and the walls, and announced.
+        if (!_bombs.Any(cast.Fighters) && !cast.Fighters.Any(fighter => fighter.Id == cast.Caster.Id && fighter.BreedId is 13))
+            return;
+
+        var exploded = cast.Fighters.Where(fighter => fighter.IsAlive && _bombs.IsBomb(fighter, out _)).ToList();
+        var announced = exploded.Where(bomb => !after.Fighters.TryGetValue(bomb.Id, out var now) || !now.IsAlive).Select(bomb => bomb.Id).ToHashSet();
+        var thought = exploded.Where(bomb => imagined.Find(bomb.Id) is not { IsAlive: true }).Select(bomb => bomb.Id).ToHashSet();
+
+        if (announced.Count > 0 || thought.Count > 0)
+        {
+            var by = _bombs.IsBomb(cast.Caster, out _) ? "a bomb's explosion, alone" : $"spell {cast.Level.SpellId}";
+
+            Tally.Count($"bombs: the bombs a cast set off, {by}: {(announced.SetEquals(thought) ? "as imagined" : announced.IsSupersetOf(thought) ? "more than imagined" : "otherwise")}");
+
+            if (!announced.SetEquals(thought))
+                _details?.WriteLine($"bombs set off: {by}, announced [{string.Join(",", exploded.Where(bomb => announced.Contains(bomb.Id)).Select(bomb => $"{bomb.MonsterId}@{bomb.Cell}"))}] imagined [{string.Join(",", exploded.Where(bomb => thought.Contains(bomb.Id)).Select(bomb => $"{bomb.MonsterId}@{bomb.Cell}"))}] of [{string.Join(",", exploded.Select(bomb => $"{bomb.MonsterId}@{bomb.Cell}"))}], cast on {cast.Cell}");
+        }
+
+        var walls = new List<BombWallCell>();
+
+        _bombs.Walls(cast.Map, cast.Fighters, walls);
+        Tally.Count($"bombs: casts with {(walls.Count > 0 ? "walls" : "no wall")}, {(announced.Count > 0 ? "setting bombs off" : "setting none off")}");
+
+        foreach (var before in cast.Fighters)
+        {
+            if (!before.IsAlive || _bombs.IsBomb(before, out _) || !after.Fighters.TryGetValue(before.Id, out var now) || imagined.Find(before.Id) is not { } foreseen)
+                continue;
+
+            var lost = Math.Max(0, cast.Lives[before.Id].Life - now.Life);
+            var thoughtLost = Math.Max(0, before.Life - foreseen.Life);
+
+            if (lost is 0 && thoughtLost is 0)
+                continue;
+
+            var outcome = !now.IsAlive && thoughtLost >= lost ? "killed, as imagined"
+                : Math.Abs(lost - thoughtLost) <= Math.Max(2, lost / 10) ? "within a tenth"
+                : thoughtLost < lost ? "less imagined" : "more imagined";
+            var what = _bombs.IsBomb(cast.Caster, out _) ? "a bomb's explosion, alone" : announced.Count > 0 ? $"spell {cast.Level.SpellId} setting bombs off" : walls.Count > 0 ? "with walls" : "no wall, none set off";
+
+            Tally.Count($"bombs: a fighter's loss, {what}: {outcome}");
+            Tally.Count($"bombs: a fighter's loss, {what}: announced", lost);
+            Tally.Count($"bombs: a fighter's loss, {what}: imagined", thoughtLost);
+
+            if (outcome is "less imagined" or "more imagined")
+                _details?.WriteLine($"bombs: spell {cast.Level.SpellId} level {cast.Level.Id}, {what}, lost {lost} against {thoughtLost} imagined, {(before.Id == cast.Caster.Id ? "the caster" : before.Team == cast.Caster.Team ? "an ally" : "an enemy")}, set off {announced.Count} imagined {thought.Count}, walls {walls.Count} [{string.Join(",", walls.Select(wall => $"{wall.Cell}+{wall.Combo}"))}], from {before.Cell} to {(now.IsAlive ? now.Cell : -1)} imagined {foreseen.Cell}");
+        }
     }
 
     private void Buffs(Cast cast, IReadOnlyList<ForeseenEffect> foreseen)

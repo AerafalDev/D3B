@@ -30,6 +30,12 @@ namespace D3B.Engine.Tactics;
 /// a Zobal's masks chain them (D227): a mask takes the other masks' states off, puts its own on, then dispels the other
 /// masks' buffs, each step reading the states the step before left. Such a spell's own critical hit is not weighed.
 /// </para>
+/// <para>
+/// A Rogue's bombs (<see cref="Bombs"/>, 9f3): a bomb set off explodes with the bombs its chain reaches, each raised by their
+/// combos summed; a bomb thrown on a fighter casts its instant spell there; a wall casts its spell on any fighter a cast or
+/// a walk leaves on it, whether the wall came or the fighter did, and a push stops on the first wall cell it meets. Every
+/// move counts, a push, a pull, a push to a cell, a teleport, a swap, a walk or a bomb moved.
+/// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
 /// </remarks>
 public sealed class Imagination
@@ -50,35 +56,27 @@ public sealed class Imagination
     private readonly MonsterCatalog _monsters;
     private readonly EffectActions _actions;
     private readonly SpellEffects _effects;
+    private readonly Bombs _bombs;
 
     /// <summary>Initializes a new instance of the <see cref="Imagination"/> class.</summary>
     /// <param name="spells">The pack's spells.</param>
     /// <param name="monsters">The pack's monsters, for summons.</param>
     /// <param name="actions">What each effect does.</param>
     /// <param name="effects">What casts are foreseen to do.</param>
-    public Imagination(SpellCatalog spells, MonsterCatalog monsters, EffectActions actions, SpellEffects effects)
+    /// <param name="bombs">The Rogue's bombs, their explosions and walls.</param>
+    public Imagination(SpellCatalog spells, MonsterCatalog monsters, EffectActions actions, SpellEffects effects, Bombs bombs)
     {
         ArgumentNullException.ThrowIfNull(spells);
         ArgumentNullException.ThrowIfNull(monsters);
         ArgumentNullException.ThrowIfNull(actions);
         ArgumentNullException.ThrowIfNull(effects);
+        ArgumentNullException.ThrowIfNull(bombs);
 
         _spells = spells;
         _monsters = monsters;
         _actions = actions;
         _effects = effects;
-    }
-
-    /// <summary>Gets the fight once the fighter playing walked to a cell it reaches.</summary>
-    /// <param name="fight">The fight before.</param>
-    /// <param name="cell">The cell, among those <see cref="FightMoves.Reachable"/> gives.</param>
-    /// <param name="left">The MP and AP it keeps there.</param>
-    /// <returns>The fight after the walk.</returns>
-    public static ImaginedFight Walked(ImaginedFight fight, int cell, (int MovementPoints, int ActionPoints) left)
-    {
-        ArgumentNullException.ThrowIfNull(fight);
-
-        return fight.With(fight.Actor with { Cell = cell, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints });
+        _bombs = bombs;
     }
 
     private static int Expected(in ForeseenEffect effect, double share)
@@ -172,6 +170,29 @@ public sealed class Imagination
         return (Math.Sign(to.X - from.X), Math.Sign(to.Y - from.Y));
     }
 
+    /// <summary>Gets the fight once the fighter playing walked to a cell it reaches.</summary>
+    /// <param name="fight">The fight before.</param>
+    /// <param name="cell">The cell, among those <see cref="FightMoves.Reachable"/> gives.</param>
+    /// <param name="left">The MP and AP it keeps there.</param>
+    /// <returns>The fight after the walk, a bombs' wall it ends on cast on it.</returns>
+    public ImaginedFight Walked(ImaginedFight fight, int cell, (int MovementPoints, int ActionPoints) left)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+
+        var walked = fight.With(fight.Actor with { Cell = cell, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints });
+
+        if (!_bombs.Any(walked.Fighters))
+            return walked;
+
+        var fighters = new List<Combatant>(walked.Fighters);
+        var buffs = new List<ImaginedBuff>();
+        var kept = walked.Buffs;
+
+        Walled(walked.Map, fighters, fight.Fighters, buffs, ref kept);
+
+        return walked with { Fighters = [.. fighters], Buffs = buffs.Count is 0 ? kept : kept.AddRange(buffs) };
+    }
+
     /// <summary>Gets the fight once the fighter playing cast a level on a cell, which the rules allow.</summary>
     /// <param name="fight">The fight before.</param>
     /// <param name="level">The level, of the pack's spells.</param>
@@ -194,7 +215,8 @@ public sealed class Imagination
 
         fighters[casterIndex] = caster with { ActionPoints = Math.Max(0, caster.ActionPoints - cost) };
         Effects(fight.Map, fighters, casterIndex, level, cell, EffectFormulas.CriticalChance(level, caster), buffs, ref kept, 0);
-        OnCell(fight.Map, fighters, casterIndex, level, cell);
+        OnCell(fight.Map, fighters, casterIndex, level, cell, buffs, ref kept);
+        Walled(fight.Map, fighters, fight.Fighters, buffs, ref kept);
 
         return fight with
         {
@@ -260,6 +282,8 @@ public sealed class Imagination
 
             if (effect.Action.Kind is EffectKind.CastSpell)
                 CastBy(map, fighters, casterIndex, effect, cell, buffs, ref kept, depth);
+            else if (effect.Action.Kind is EffectKind.Detonate)
+                Detonate(map, fighters, effect, buffs, ref kept, depth);
             else
                 Apply(map, fighters, casterIndex, effect, cell, critical ? chance : InLife(effect.Action.Kind) ? 1 - chance : 1, level, buffs, ref kept);
         }
@@ -289,6 +313,83 @@ public sealed class Imagination
 
         if (fighters[by].IsAlive)
             Effects(map, fighters, by, level, at is Combatant.NoCell ? cell : at, 0, buffs, ref kept, depth + 1);
+    }
+
+    private void Detonate(FightMap map, List<Combatant> fighters, in ForeseenEffect effect, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, int depth)
+    {
+        // A bomb surely set off at once explodes, then the bombs its chain reaction reaches, each raised by the combos of all.
+        if (!effect.IsImmediate || !effect.IsCertain || effect.IsRandom || depth >= MostCastDepth)
+            return;
+
+        var chain = new List<int>();
+
+        _bombs.Chain(map, fighters, IndexOf(fighters, effect.TargetId), chain);
+
+        var combo = 0;
+
+        foreach (var index in chain)
+            combo += Bombs.ComboOf(fighters[index]);
+
+        foreach (var index in chain)
+        {
+            var bomb = fighters[index];
+
+            if (!bomb.IsAlive || !_bombs.IsBomb(bomb, out var kind) || !_bombs.TryGetLevel(kind.ExplosionSpellId, bomb.Grade ?? 1, out var level))
+                continue;
+
+            fighters[index] = bomb with { Characteristics = bomb.Characteristics.SetItem(FightCharacteristic.BombComboBonus, combo) };
+            Effects(map, fighters, index, level, bomb.Cell, 0, buffs, ref kept, depth + 1);
+
+            // Measured (9f3): every bomb that exploded died of it, as its explosion's last effects say.
+            if (fighters[index].IsAlive)
+                fighters[index] = fighters[index] with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };
+        }
+    }
+
+    private void Walled(FightMap map, List<Combatant> fighters, ImmutableArray<Combatant> before, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
+    {
+        // Measured (9f3): a wall cast its spell on the fighter it came onto as a bomb came, and on those a push left on it. So
+        // it does here on any fighter a cast or a walk left on a wall: a wall that came, or a cell of one the fighter came to.
+        if (!_bombs.Any(fighters))
+            return;
+
+        var walls = new List<BombWallCell>();
+
+        _bombs.Walls(map, fighters, walls);
+
+        if (walls.Count is 0)
+            return;
+
+        var earlier = new List<BombWallCell>();
+
+        _bombs.Walls(map, before, earlier);
+
+        for (var index = 0; index < fighters.Count; index++)
+        {
+            var fighter = fighters[index];
+            var at = fighter.IsAlive && fighter.Cell is not Combatant.NoCell && !_bombs.IsBomb(fighter, out _) ? walls.FindIndex(wall => wall.Cell == fighter.Cell) : -1;
+
+            if (at < 0)
+                continue;
+
+            var was = before.FirstOrDefault(other => other.Id == fighter.Id);
+
+            if (was is not null && was.Cell == fighter.Cell && earlier.Exists(wall => wall.Cell == fighter.Cell))
+                continue;
+
+            var wall = walls[at];
+            var summoner = IndexOf(fighters, wall.SummonerId);
+
+            if (summoner < 0 || !fighters[summoner].IsAlive || !_bombs.TryGetLevel(wall.SpellId, wall.Grade, out var level))
+                continue;
+
+            // The references lend a wall's bombs' combo to their summoner as it strikes (D3), as an explosion's raises it.
+            var combo = fighters[summoner].Characteristic(FightCharacteristic.BombComboBonus);
+
+            fighters[summoner] = fighters[summoner] with { Characteristics = fighters[summoner].Characteristics.SetItem(FightCharacteristic.BombComboBonus, combo + wall.Combo) };
+            Effects(map, fighters, summoner, level, fighter.Cell, 0, buffs, ref kept, 1);
+            fighters[summoner] = fighters[summoner] with { Characteristics = fighters[summoner].Characteristics.SetItem(FightCharacteristic.BombComboBonus, combo) };
+        }
     }
 
     private void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell, double share, in SpellLevel level, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
@@ -432,13 +533,19 @@ public sealed class Imagination
         };
     }
 
-    private static void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away)
+    private void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away, bool upTo = false)
     {
         var target = fighters[index];
         var caster = fighters[casterIndex];
 
         if (!target.IsAlive || target.Cell is Combatant.NoCell || cells <= 0)
             return;
+
+        // Measured (9f3): the 2 pushes that met a bombs' wall stopped on its first cell; a bomb pushed went through.
+        List<BombWallCell>? walls = null;
+
+        if (_bombs.Any(fighters) && !_bombs.IsBomb(target, out _))
+            _bombs.Walls(map, fighters, walls = []);
 
         var at = MapGeometry.PointOf(target.Cell);
         var origin = target.Cell == cell && caster.Cell is not Combatant.NoCell ? MapGeometry.PointOf(caster.Cell) : MapGeometry.PointOf(cell);
@@ -454,23 +561,26 @@ public sealed class Imagination
         {
             var next = new MapPoint(MapGeometry.PointOf(position).X + x, MapGeometry.PointOf(position).Y + y);
 
-            // A pull stops beside the cell it pulls towards; anything else stops it short.
-            if (!MapGeometry.TryGetCell(next, out var nextCell) || !IsFree(map, fighters, nextCell) || (!away && nextCell == cell))
+            // A pull stops beside the cell it pulls towards, a push to a cell on it; anything else stops it short.
+            if (!MapGeometry.TryGetCell(next, out var nextCell) || !IsFree(map, fighters, nextCell) || (!away && !upTo && nextCell == cell))
                 break;
 
             position = nextCell;
             moved++;
+
+            if (walls is not null && walls.Exists(wall => wall.Cell == nextCell))
+                break;
         }
 
         target = target with { Cell = position };
 
-        if (away && moved < cells)
+        if (away && moved < cells && walls?.Exists(wall => wall.Cell == position) is not true)
             target = Hurt(target, EffectFormulas.PushDamage(cells - moved, caster, caster.Level, target));
 
         fighters[index] = target;
     }
 
-    private void OnCell(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell)
+    private void OnCell(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
     {
         // Of summons drawn at random, such as a Xélor's 80 and 20 in a hundred, the likeliest alone comes (9f2).
         var drawn = 0f;
@@ -485,7 +595,19 @@ public sealed class Imagination
         {
             var kind = _actions.Of(effect.EffectId).Kind;
 
-            if (effect.Delay is not 0 || (effect.Properties & SpellEffectProperties.ForClientOnly) is not 0 || !IsFree(map, fighters, cell))
+            if (effect.Delay is not 0 || (effect.Properties & SpellEffectProperties.ForClientOnly) is not 0)
+                continue;
+
+            // Measured (9f3): a bomb cast on a fighter does not come, its caster casting the bomb's instant spell there instead.
+            if (kind is EffectKind.Summon && !IsFree(map, fighters, cell) && _spells.TryGetBomb(effect.DiceNum, out var bomb)
+                && _bombs.TryGetLevel(bomb.InstantSpellId, effect.DiceSide, out var instant))
+            {
+                Effects(map, fighters, casterIndex, instant, cell, 0, buffs, ref kept, 1);
+
+                continue;
+            }
+
+            if (!IsFree(map, fighters, cell))
                 continue;
 
             if (kind is EffectKind.Summon && effect.Random < drawn)
@@ -493,8 +615,41 @@ public sealed class Imagination
 
             if (kind is EffectKind.Teleport)
                 fighters[casterIndex] = fighters[casterIndex] with { Cell = cell };
+            else if (kind is EffectKind.PushToCell)
+                PushedTo(map, fighters, casterIndex, cell);
             else if (kind is EffectKind.Summon && Summoned(fighters, fighters[casterIndex], effect, cell) is { } summoned)
                 fighters.Add(summoned);
+        }
+    }
+
+    private void PushedTo(FightMap map, List<Combatant> fighters, int casterIndex, int cell)
+    {
+        // Measured (9f3): a Roublabot's Poussette, cast in line on a free cell, pushed the first fighter on that line to it.
+        var caster = fighters[casterIndex];
+
+        if (caster.Cell is Combatant.NoCell || caster.Cell == cell)
+            return;
+
+        var from = MapGeometry.PointOf(caster.Cell);
+        var to = MapGeometry.PointOf(cell);
+        var (x, y) = Towards(from, to);
+
+        if (x is not 0 && y is not 0)
+            return;
+
+        for (var step = 1; step < MapGeometry.Distance(caster.Cell, cell); step++)
+        {
+            if (!MapGeometry.TryGetCell(new MapPoint(from.X + (x * step), from.Y + (y * step)), out var on))
+                return;
+
+            var index = fighters.FindIndex(fighter => fighter.IsAlive && fighter.Cell == on);
+
+            if (index >= 0)
+            {
+                Slide(map, fighters, casterIndex, index, cell, MapGeometry.Distance(on, cell), away: false, upTo: true);
+
+                return;
+            }
         }
     }
 

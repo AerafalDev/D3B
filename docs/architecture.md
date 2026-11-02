@@ -629,7 +629,8 @@ updating itself in 6f (D171 to D173).
 ## Storage
 
 Built in session 5c (D99, D100), in `D3B.Storage`, which the app and `D3B.Host` add to the host's composition; the maps'
-graphics in session 6b (D138); the resources' growing back and the runs in session 6c (D145, D146).
+graphics in session 6b (D138); the resources' growing back and the runs in session 6c (D145, D146); the fights' placement
+cells in session 9f3 (D275).
 
 - **The database**: SQLite through EF Core, in `%LOCALAPPDATA%\D3B\d3b.db` or `Storage:Path`, its migrations applied
   before the host starts (`StoragePreparation`, an `IHostPreparation`); one that does not open stops the host, which says
@@ -649,6 +650,11 @@ graphics in session 6b (D138); the resources' growing back and the runs in sessi
   client's build.
 - **The resources' growing back** (`RegrowthRecorder`, D145): `Regrowths` by skill, the longest seen whole, how many and the
   least bound, read back before the host starts and written as the bots learn, as the graphics are.
+- **The fights' placement cells** (`PlacementRecorder`, D275): `FightPlacements`, taught by `FightPlacementLearner` from
+  every fight any bot begins, one row a map left, map fought on and set of cells: the map left, its area, sub-area and
+  coordinates, the map fought on, the challengers' cells (red) and the defenders' (blue), how many fights began so and
+  when the first and last did, read back before the host starts and written as the bots see fights begin, as the
+  graphics are.
 - **Runs** (`RunRecorder`, `RunBook`, D146): each activity's run, its character, profile, times and outcome, the items it
   brought, the experience its character gained and its banks and fights; the recorder looks at the bots every 5 s and
   writes a run as it begins, banks, once a minute while its figures change, and once over. The book reads them back after
@@ -803,7 +809,10 @@ before the first fight too (D263), the harvest's automatic place leaving out the
 time](#bot-run-time) and [Game data](#game-data). Built in session 9f2: the owner's asks (D268); summons measured,
 their characteristics, turns and control (D269); brought, judged and replying in the AI (D270, in [Engine](#engine)); the
 summons the client controls played (D271); the heals and critical damage out of fights measured, not taken (D272); a fight
-begun between two steps the activity's (D273), in [Bot run time](#bot-run-time).
+begun between two steps the activity's (D273), in [Bot run time](#bot-run-time). Built in session 9f3: the owner's asks
+and every breed's mechanisms to come (D274); every fight's placement cells kept with the map fought on and the one left (D275, in [Storage](#storage));
+the Roublard's bombs measured (D276), then set off with their chain and combos, their walls striking through every move,
+their slots and their worth in the AI (D277, in [Engine](#engine)).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -821,8 +830,9 @@ begun between two steps the activity's (D273), in [Bot run time](#bot-run-time).
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
-  summons, those the AI brings and those the client controls (built, D269 to D271); then bombs, glyphs, runes,
-  telefrags, traps, portals, carrying: one AI for every breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
+  summons, those the AI brings and those the client controls (built, D269 to D271); the Roublard's bombs, their chains,
+  combos and walls, every move that brings a fighter into a wall counted (built, D276, D277); then glyphs, runes,
+  telefrags, traps, portals, carrying, each taken in through every move that brings fighters into it (D277): one AI for every breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
   allows (9g, built, D236 to D241, D245).
 
 ## Tests
@@ -840,7 +850,10 @@ begun between two steps the activity's (D273), in [Bot run time](#bot-run-time).
   Zobal's masks as the pack makes them: one taking the other's state off, putting its own on and dispelling the other's
   boost, one cast again replacing its boost, the AI putting on the mask whose spells deal more, and a shield of `c` not
   cast on an enemy (D224 to D228). A summon's characteristics from its grade and its summoner, a summon brought with them,
-  striking right after its summoner in the reply, and judged by the blow it strikes next (D269, D270). The character's spells by the
+  striking right after its summoner in the reply, and judged by the blow it strikes next (D269, D270). A Rogue's bombs: set
+off with the bombs their chain reaches, their combos summed; a wall striking the enemy it comes onto, a push stopped on a
+wall, a push to a cell through one; a bomb thrown on a fighter casting its instant spell; their slots; a bomb near an
+enemy judged worth more (D276, D277). The character's spells by the
   list, its level, a pair and the fight's own; the fight's options and context; the player's requests in a fight; a
   harvest's fight answered once over, a lost fight and three in a row (D198, D202). A fight is played end to end through
   `TestPlay`, whose pack carries a spell: the AI closes it, places the character, readies it, casts and ends its turn;

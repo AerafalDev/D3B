@@ -82,4 +82,10 @@ public enum EffectKind
 
     /// <summary>The target killed: 141.</summary>
     Kill,
+
+    /// <summary>A bomb set off, the bombs its chain reaction reaches after it: 1009 (<see cref="Fights.Bombs"/>).</summary>
+    Detonate,
+
+    /// <summary>The first fighter in line from the caster pushed to the cell cast on: 783, a Roublabot's.</summary>
+    PushToCell,
 }

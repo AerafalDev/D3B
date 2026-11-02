@@ -59,8 +59,8 @@ D3B is young and changes fast: settings, data formats and the app may change fro
 milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them and the fighting activity
 are in release 0.3.0, measured in game on five breeds. Journeys go through an NPC's dialog where the world's graph has no
 way, Incarnam's portal to Astrub and the boat to Sarakech, so that a character in Incarnam leaves it. The AI summons, and
-plays the summons the character controls; next come the bombs, glyphs and the other breeds' mechanisms, so that the AI
-plays every breed whole. Then several accounts and groups, blueprint mods edited in the app, the marketplace and
+plays the summons the character controls, and a Roublard's bombs, their chains and walls; next come glyphs and the other
+breeds' mechanisms, so that the AI plays every breed whole. Then several accounts and groups, blueprint mods edited in the app, the marketplace and
 crafting. The
 [roadmap](docs/roadmap.md) has the steps in order.
 
@@ -127,7 +127,8 @@ The tool checks the files, and says so when the release lacks a format your chec
 change on `main` waits for its upload. When Ankama updates the client, the maintainer extracts and maps the new build
 with the tools below, then publishes its release; mapping a build also needs captures of it.
 
-Both the app and the host keep the accounts their relay sees, and the profiles, in `%LOCALAPPDATA%\D3B\d3b.db`. Options
+Both the app and the host keep the accounts their relay sees, the profiles, and the placement cells of every fight their
+bots see begin with the map fought on and the one left, in `%LOCALAPPDATA%\D3B\d3b.db`. Options
 are configuration keys, given on the command line:
 
 | Option | Effect |
@@ -210,7 +211,7 @@ flowchart LR
 | `src/D3B.Data` | The pack's format and readers: maps, world graph, items, spells, monsters, texts. |
 | `src/D3B.Engine` | Pathfinding, line of sight, the rules of a fight, its effects and the AI's search. |
 | `src/D3B.Bot` | The bots' run time: state, behaviors, activities, settings, and the host both apps share. |
-| `src/D3B.Storage` | The database, SQLite through EF Core: accounts, profiles and runs. |
+| `src/D3B.Storage` | The database, SQLite through EF Core: accounts, profiles, runs and what the bots learn. |
 | `src/D3B.App` | The Avalonia desktop app. |
 | `src/D3B.Host` | The host without the app. |
 

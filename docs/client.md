@@ -19,7 +19,9 @@ casts against D3B's rules for session 9c ([the game, cast](#the-game-cast)), and
 session 9d ([the game, foreseen](#the-game-foreseen)), and the states its spells ask for session 9f
 ([the game, masked](#the-game-masked)). Its NPCs' dialogs and transports were measured on 2026-11-01 for session 9g3
 ([the game, through an NPC](#the-game-through-an-npc)). What its items heal, the walks it does not follow and a hunt's
-journeys were measured on 2026-11-02 for session 9g5 ([the game, kept on its way](#the-game-kept-on-its-way)).
+journeys were measured on 2026-11-02 for session 9g5 ([the game, kept on its way](#the-game-kept-on-its-way)), its
+summons for session 9f2 ([the game, summoned](#the-game-summoned)), and its bombs and fights' placement cells for session
+9f3 ([the game, bombed](#the-game-bombed), [the game, placed](#the-game-placed)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -1895,6 +1897,58 @@ actor's id or name. No capture was made for the session: those the owner makes a
 - **Heals and critical damage out of fights** (D263): of the characters captured, the Xélor of levels 91 and 92 alone holds
   any, 28 heals and -3 critical damage; of its 501 casts, none foreseen otherwise with them, none a heal nor a critical
   hit they change.
+
+### The game, bombed
+
+Measured on 2026-11-02 for session 9f3 (D274 to D277): the 5 fights of a Roublard of level 45 in the 100 game connections
+of 3.7.12.12, its pack of format 8, with `scripts/fights.cs` and measuring tools never committed that print each fighter
+by an alias, never an actor's id or name.
+
+- **The pack's bombs.** `SpellBombsDataRoot` keys 10 bombs by monster; 4 are a Roublard's spells' (3112 to 3114, 5161),
+  3 a Germildiou's, 3 name spells the client lacks. Each names its explosion, its chain reaction, its instant spell and
+  its wall; a Roublard's walls are linear, 1 to 7 hops, a Germildiou's not. `comboCoeff` is 100 on one bomb the client
+  lacks and 0 on the others. The bombs' monsters take a bomb's slot (`MonsterFlags` bit 2), grade 1 at 3, 0 AP and MP,
+  their characteristics their summoner's whole, their life 90% of its base life. Characteristic 93 is *Nombre max
+  d'invocations de bombes*, 3 on every character captured; 94 *Bonus de combo de bombe*.
+- **What came.** 17 bombs summoned by the bomb spells (effect 1008), each casting as it came its grade's starting spell,
+  *Allumage*: a spell modifier of effect 296 on its summoner raising the bomb spell's AP by 1, and *Combo I* on itself.
+  A bomb spell cast on a fighter summons nothing: the Roublard cast the bomb's instant spell there, 1 time.
+- **Combo.** As the Roublard's turn begins, *La Ruse du Roublard* casts *Combo* (20497) on each of its bombs, which moves
+  it a state up, *Combo I* to *Combo XV* (2484 to 2753), and casts spell 20500 at the level reached, past the first: a
+  buff of effect 1027, 20 a level, and of 1060, the bomb's size, the server ending the level before's. A Détonateur casts
+  the same on its bomb before it sets it off.
+- **Set off.** 6 Détonateurs (13432) on a bomb: the combo raised, 1 AP given back (effect 120, *Rembourse PA*), then
+  effect 1009, *Déclenche une bombe*. The bomb casts its explosion (13455, 13462, 13467) on its cell, in a sequence of its
+  own, kills itself (141), and the Roublard casts 23515 on it, *Kaboom*'s states. Then the bombs its chain reaction's 1009
+  reaches explode, each in its sequence, depth first: a circle of 2 around the bomb for any bomb of its summoner's, a
+  cross of 7 for those of its kind. 12 explosions: the chain as derived on 5 Détonateurs, the sixth's fight ending with
+  its last enemy at the second bomb, before the third. The server never announces the chain reaction spell.
+- **The damage.** An explosion's damage, the bomb's characteristics raising it as any caster's, is raised again by the
+  combos of every bomb the chain sets off, summed: 51 and 39 announced against 25..28 and 19..21 without, the two bombs'
+  combos 60 and 40; on a chain of one bomb of combo 20, 30, 36, 27 and 32 against 25..28, 30..33, 22..24 and 27..29.
+- **Walls.** The server marks a wall's cells by action 401 and takes them back by 310, with no readable payload: 12 and
+  11, each on a cell between two bombs of a kind and a summoner standing in a line, as near as the hops allow, no bomb of
+  that kind between them; 3 of each a wall built again whole as a bomb out of it exploded. Action 306 is a wall striking:
+  its spell, cast by the Roublard on the fighter's cell (*Mur de Feu* 13458 and its kin, stronger while the Roublard is in
+  *La Ruse du Roublard*'s state 2483), 3 times as a wall came onto a fighter and 2 after a push left one on a wall, the
+  push stopping on the wall's first cell; a bomb pushed went through 3 wall cells. 38 walks while walls stood crossed
+  none. On the one hit of two bombs of combos 40 and 80, 21 against 14 without a combo, 19.6 to 22.4 with their half.
+- **The Roublabot.** Summoned once (effect 1011, 3120), it pulled a monster with *Aspirateur* (13452) then pushed it with
+  *Poussette* (13451), effect 783, *Pousse jusqu'à la case visée*: the first fighter in line from it pushed to the cell
+  cast on, there onto a wall, which struck it for 38.
+
+### The game, placed
+
+Measured on 2026-11-02 for session 9f3 (D275), on the 100 game connections. As a fight begins, the server destroys the
+roleplay's context (`ContextDestroyEvent`), creates the fight's (`ContextCreationEvent`), names the map fought on
+(`MapCurrentEvent`), then starts the fight (`FightStartingEvent`) and gives the placement cells
+(`FightPlacementPossiblePositionsEvent`), the challengers' and the defenders'. Of the 163 fights both maps are known of,
+107 were fought on another map than the one left, 56 on it; the 89 maps fought on are all the pack's and the atlas's, 145
+in the sub-area of the map left; 32 of the 65 maps left led to more than one, 28 maps fought on were reached from more
+than one. The 163 fights gave 159 sets of cells; of the 35 maps fought on more than once, 2 gave one set every time.
+None of the 3,424 cells is flagged `red` or `blue` in the pack. Ankama's protocol names a `FightMapInformationResponse`,
+a map's fight map and its placement cells, which no capture was looked for in: the client likely asks for it as the
+player turns the fight map's preview on, which the owner never did.
 
 ## Protocol code
 

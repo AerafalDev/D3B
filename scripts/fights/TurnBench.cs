@@ -257,6 +257,7 @@ internal sealed class TurnBench
         var kinds = _tactics.Blows.Spells.EffectsOf(level).ToArray().Select(effect => _actions.Of(effect.EffectId).Kind).ToHashSet();
 
         return kinds.Overlaps([EffectKind.Damage, EffectKind.Steal, EffectKind.FixedDamage]) ? "damage"
+            : kinds.Contains(EffectKind.Detonate) ? "detonate"
             : kinds.Overlaps([EffectKind.Heal, EffectKind.FixedHeal, EffectKind.PercentHeal]) ? "heal"
             : kinds.Overlaps([EffectKind.Shield, EffectKind.LifeShield, EffectKind.LevelShield]) ? "shield"
             : kinds.Contains(EffectKind.Summon) ? "summon"
@@ -349,7 +350,7 @@ internal sealed class TurnBench
                 var reachable = _tactics.Moves.Reachable(fight.Map, fight.Fighters, actor);
                 var left = reachable.TryGetValue(action.Cell, out var kept) ? kept : (Math.Max(0, actor.MovementPoints - MapGeometry.Distance(actor.Cell, action.Cell)), actor.ActionPoints);
 
-                fight = Imagination.Walked(fight, action.Cell, left);
+                fight = _tactics.Imagination.Walked(fight, action.Cell, left);
             }
             else if (_tactics.Blows.Spells.TryGetLevel(action.LevelId, out var level))
             {
@@ -476,6 +477,20 @@ internal sealed class TurnBench
 
         foreach (var action in turn.Played.Where(action => action.Kind is TacticActionKind.Cast && Does(action.LevelId) is "summon"))
             Tally.Count($"summons played: breed {turn.Start.Actor.BreedId}, spell {action.SpellId}");
+
+        // A Rogue's turns (9f3): the bombs it summoned and set off, played and planned.
+        if (turn.Start.Actor.BreedId is 13)
+        {
+            Tally.Count("bombs: a Roublard's turns");
+
+            foreach (var (actions, what) in new (IReadOnlyList<TacticAction> Actions, string What)[] { (turn.Played, "played"), (turn.Planned?.Actions ?? [], "planned") })
+            {
+                var casts = actions.Where(action => action.Kind is TacticActionKind.Cast).ToList();
+
+                Tally.Count($"bombs: summoned, {what}", casts.Count(action => _tactics.Blows.Spells.TryGetLevel(action.LevelId, out var level) && _tactics.Blows.Spells.EffectsOf(level).ToArray().Any(effect => effect.EffectId is 1008)));
+                Tally.Count($"bombs: set off, {what}", casts.Count(action => Does(action.LevelId) is "detonate"));
+            }
+        }
 
         States(turn.Start, turn.Played, "played");
 

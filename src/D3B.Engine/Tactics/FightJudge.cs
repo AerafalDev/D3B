@@ -29,6 +29,8 @@ namespace D3B.Engine.Tactics;
 /// the time, the ally it hurts most of the others the other half (D270). One the search brings is judged as the one its
 /// summoner's spells bring when the judge starts. A summon playing protects its summoner as the character
 /// protects itself.</description></item>
+/// <item><description>A bomb of the side playing: what its explosion would take off the enemies about it as they stand, its
+/// combo a level up as the next turn starts, weighed as the approach is (9f3).</description></item>
 /// </list>
 /// <para>
 /// A fighter's best turn's damage on another comes from its spells as the knowledge lists them, each effect that damages at
@@ -52,6 +54,9 @@ public sealed class FightJudge
     private const int MostCasts = 6;
     private const double AliveShare = 0.5;
     private const double KillTurns = 1.5;
+
+    // Measured (9f3): every bomb's combo rose a level, 20, as its summoner's turn began.
+    private const int NextCombo = 20;
 
     // A summon's life is worth nothing of itself: what it shields its side from is in the threat, what it deals in its being
     // alive. Measured (D270): worth a tenth of an ally's, the AI planned 201 summons on the turns its players summoned 42,
@@ -82,6 +87,8 @@ public sealed class FightJudge
     private readonly EffectActions _actions;
     private readonly CastRules _rules;
     private readonly SpellStateCatalog _states;
+    private readonly Bombs? _bombs;
+    private readonly SpellEffects? _effects;
     private readonly int[] _signatures;
     private readonly Dictionary<(int One, int Other, int Attacker, int Target), double[]> _changedDamage = [];
     private readonly Dictionary<(int One, int Other, int Attacker, int Target, ulong Landing), double[]> _changedTurns = [];
@@ -109,7 +116,9 @@ public sealed class FightJudge
     /// <param name="moves">How fighters walk, for the cells they cast from.</param>
     /// <param name="states">The pack's states, for what each does.</param>
     /// <param name="summons">The summons the fighter playing's spells may bring, each with the levels it casts, which the search imagines as it casts them.</param>
-    public FightJudge(ImaginedFight start, FightKnowledge knowledge, TacticWeights weights, WeaponBlows blows, EffectActions actions, CastRules rules, FightMoves moves, SpellStateCatalog states, IReadOnlyList<(Combatant Summon, ImmutableArray<SpellLevel> Levels)> summons)
+    /// <param name="bombs">The Rogue's bombs, whose explosions a bomb alive is worth; none counted when null.</param>
+    /// <param name="effects">What casts are foreseen to do, a bomb's explosion among them.</param>
+    public FightJudge(ImaginedFight start, FightKnowledge knowledge, TacticWeights weights, WeaponBlows blows, EffectActions actions, CastRules rules, FightMoves moves, SpellStateCatalog states, IReadOnlyList<(Combatant Summon, ImmutableArray<SpellLevel> Levels)> summons, Bombs? bombs = null, SpellEffects? effects = null)
     {
         ArgumentNullException.ThrowIfNull(start);
         ArgumentNullException.ThrowIfNull(knowledge);
@@ -134,6 +143,8 @@ public sealed class FightJudge
         _actions = actions;
         _rules = rules;
         _states = states;
+        _bombs = bombs;
+        _effects = effects;
         _signatures = [.. _fighters.Select(Signature)];
         _levels = new SpellLevel[_fighters.Length][];
         _levelDamage = new double[_fighters.Length][][];
@@ -580,7 +591,7 @@ public sealed class FightJudge
                 worth += AllyWorth(fighter, Effective(fighter));
 
                 if (threatened && fighter.Id != _actorId && fighter.IsSummon)
-                    worth += _weights.Approach * Strike(fight, fighter, known);
+                    worth += _weights.Approach * (Strike(fight, fighter, known) + Blast(fight, fighter));
 
                 continue;
             }
@@ -745,6 +756,32 @@ public sealed class FightJudge
         }
 
         return best;
+    }
+
+    private double Blast(ImaginedFight fight, Combatant bomb)
+    {
+        if (_bombs is null || _effects is null || bomb.Cell is Combatant.NoCell || !_bombs.IsBomb(bomb, out var kind)
+            || !_bombs.TryGetLevel(kind.ExplosionSpellId, bomb.Grade ?? 1, out var level))
+        {
+            return 0;
+        }
+
+        var raised = bomb with { Characteristics = bomb.Characteristics.SetItem(FightCharacteristic.BombComboBonus, Bombs.ComboOf(bomb) + NextCombo) };
+        var worth = 0.0;
+
+        foreach (var effect in _effects.Foresee(fight.Map, fight.Fighters, raised, level, bomb.Cell, false))
+        {
+            if (effect.Action.Kind is not (EffectKind.Damage or EffectKind.FixedDamage) || !effect.IsCertain || fight.Find(effect.TargetId) is not { IsAlive: true } enemy || enemy.Team == _team)
+                continue;
+
+            var target = IndexOf(enemy);
+            var life = Effective(enemy);
+            var damage = Math.Min((effect.Value.Min + effect.Value.Max) / 2.0, life);
+
+            worth += Cost(enemy, target, life) - (damage >= life ? 0 : Cost(enemy, target, life - damage));
+        }
+
+        return worth;
     }
 
     private double Strike(ImaginedFight fight, Combatant summon, int known)
