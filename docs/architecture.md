@@ -829,7 +829,8 @@ their slots and their worth in the AI (D277, in [Engine](#engine)). Built in ses
 measured whole before another breed (D278); a summon's spells kept apart and the marks read, mapping format 15 (D279, in
 [Bot run time](#bot-run-time)); glyphs, walls and the marks as a turn begins and ends (D280), the bombs' promise counted
 once (D281), a bomb's starting spell and the buffs a fighter gave taken back as it dies (D282), pushes and pulls as the
-server moves them (D283), all in [Engine](#engine); measured with `scripts/fights.cs` (D284).
+server moves them (D283), all in [Engine](#engine); measured with `scripts/fights.cs` (D284); a wall striking a fighter
+once as it comes from outside, a Botte harmless, measured on the owner's second Roublard capture (D285).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the

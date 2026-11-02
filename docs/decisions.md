@@ -6573,6 +6573,28 @@ imagines. Settles D277's "left" on the pushes stopped short. Builds D214.*
 - **Not measured in game**: the owner's next fights of the Roublard with `Fights:Alone` measure it, before another breed,
   as the owner asks.
 
+## D285: The owner's second Roublard capture: walls struck once, Botte harmless, the search kept
+
+*2026-11-02, step 9, session 9f4, the owner's ask: the Roublard throws its bombs on the enemies instead of pushing and
+pulling them into its walls. On the owner's capture of 4 fights the AI played, 19 turns, then the Roublard's 5 captures,
+89 turns. Builds D277, D280.*
+
+- **Measured**: of the casts with walls standing, D3B imagined 1,167 life lost against 811 announced: a monster a Botte
+  moved from a wall's cell onto another wall's was struck by nothing, 3 times, where D3B struck it again for 96 to 111;
+  and a Botte's pushes, "without damage" (effect 1103), hurt no one they stopped short, where D3B foresaw a push's damage.
+  Both overvalued pushing a monster about the walls.
+- **Made**: a fighter that stood on a wall's cell before a cast or a walk is not struck by a wall after it; effect 1103
+  hurts no one it stops. Imagined then 788 against 811.
+- **The bombs on the enemies**: replayed with these, the AI's plans on the owner's 19 turns throw a bomb on an enemy on 3
+  turns, where it foresees more than any other way; with every bomb on an enemy refused, it plans the same on 14 turns,
+  worse on those 2 of the 3 it threw so, and better on 3, a sequence its search had left out. Kept: 32 finalists
+  and, beside the best sequences, the best of each layout of the enemies, judged the 89 turns' plans 99,849 against
+  100,303, the searches 225 ms halfway against 139.
+- **Measured** on the 89 turns: enemies on a wall as the turn ends, planned 8, played 4; wall cells as the turn ends,
+  planned 15, played 27; Détonateurs planned 38, played 13.
+- **Left**: a wall's spell on an ally, its masks' conditions on states, not measured; the search's misses, a wider search
+  costing more than it finds; the Roublard measured in game again.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

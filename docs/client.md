@@ -1952,7 +1952,7 @@ player turns the fight map's preview on, which the owner never did.
 
 ### The game, marked
 
-Measured on 2026-11-02 for session 9f4 (D278 to D284): the 101 game connections of 3.7.12.12, a Roublard's 6 fights of
+Measured on 2026-11-02 for session 9f4 (D278 to D285): the 101 game connections of 3.7.12.12, a Roublard's 6 fights of
 the owner's among them, its pack of format 8 and mapping format 15, with `scripts/fights.cs` and measuring tools never
 committed that print fighters by aliases, never an actor's id or name.
 
@@ -1978,7 +1978,9 @@ committed that print fighters by aliases, never an actor's id or name.
   round 2 for 2 rounds, gone as round 4's turn began. No walk onto a glyph or a glyph-aura struck the walker, 37 of them.
 - **Walls.** A bombs' wall struck a monster whose turn began on it, 307, 2 times, as a glyph does: 11 at the turn's start
   against 21 as a push had left it there, its Roublard out of *La Ruse du Roublard*'s state by then. The one walk through
-  a wall cell was its Roublard's own, which nothing struck. No enemy walked through one.
+  a wall cell was its Roublard's own, which nothing struck. No enemy walked through one. A monster a Botte moved from a
+  wall's cell onto another wall's was struck by nothing, 3 times, in the owner's second Roublard capture; a Botte's pushes
+  (effect 1103, "without damage") hurt no one they stopped short.
 - **A bomb's starting spell.** Each bomb casts its grade's starting spell, *Allumage* (13468), as it comes: through spell
   20509, a buff of effect 296 on its summoner, its kind's spell 1 AP dearer while the bomb lives, which the server takes
   back as it dies: the Roublard's buffs of 296 rose with the bombs that came and fell with those that died, a chain's
