@@ -2410,7 +2410,7 @@ register activities.*
 *2026-10-29, step 5, session 5a; dark by default, chosen by the owner, who asked for a real effort on the interface,
 then for a page more practical and pleasant than three panes, its design left to the lead. Builds D14. The theme and the
 language are remembered since D101. Superseded in part by D161 and D162: Lucide's icons, the sidebar, and the
-language and the theme on the settings page alone.*
+language and the theme on the settings page alone. Its bots page superseded by D295 and D309, once 7c makes them.*
 
 - **The stack** (D15): Avalonia 12.1.4, ShadUI 0.2.4, CommunityToolkit.Mvvm 8.4.2, and Avalonia.Fonts.Inter 12.1.4,
   Inter being the typeface ShadUI's design comes from, the same on every machine. Avalonia's packages ShadUI brings are
@@ -2623,7 +2623,7 @@ D93 left an activity's settings to 5b and 5c, and 5b did not write them.
 
 ## D99: Accounts seen, reusable profiles, a character's own
 
-*2026-10-29, step 5, session 5c; the profile chosen by the owner. Builds D23, D65, D87.*
+*2026-10-29, step 5, session 5c; the profile chosen by the owner. Builds D23, D65, D87. Its profiles superseded by D300 and D304, once 7b makes them.*
 
 - **An account is never added by hand**: D3B sees no password (D23). It comes the first time its client lists its
   characters through D3B: the identification gives its id, nickname, tag and subscription (D72), the server's list each
@@ -3068,7 +3068,7 @@ freezing them as they are, no more work on their API, and deciding again after s
 
 *2026-10-29, the session removing the Lua scripts, chosen by the owner, the step's place as the lead recommended it.
 Supersedes D116's "nothing outside the repository" for mods. Changes the brief. Opens Q13. Its place amended by D169:
-after the fights of step 9.*
+after the fights of step 9. Q13 settled by D296 to D298 and D305.*
 
 Asked which activity D3B keeps without Lua (D118), the owner answered that mods will be made in blueprint style: graphs
 of nodes, edited on a canvas in the app. The references the owner gave, read for their look and ergonomics only (D3),
@@ -3629,7 +3629,7 @@ Measured on a client of 3.7.12.12 through the app, captures on, the owner's prof
 
 ## D146: Harvest statistics, in D3B's database and a page of their own
 
-*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it.*
+*2026-10-29, step 6, session 6c, chosen by the owner among mockups, as the lead recommended it. Its runs and page superseded by D295 and D304, once step 7 makes them.*
 
 - **Each run kept**: the character, the profile, when it started and ended and how, the items it brought by item, each
   profession's experience gained, the banks and the fights by kind; written at each banking and at its end, so that a
@@ -3898,7 +3898,7 @@ with D152's settings. Amends D127's settings and D152. Made by D165.*
 ## D161: Lucide's icons, as the app's geometries
 
 *2026-10-29, step 6, session 6d, asked by the owner. Supersedes D94's icons of the app's own drawing, and keeps its
-rejection of an icon font.*
+rejection of an icon font. Superseded by D305: IntelliJ's icons, once 7c makes it.*
 
 - **What**: the 74 icons the app draws are Lucide's 1.64.0, read from its SVG files and written as path geometries in
   `Themes/Icons.axaml`, each element a path: a circle, a rectangle or a line becomes the arcs and lines that draw it. The
@@ -3916,7 +3916,8 @@ rejection of an icon font.*
 
 *2026-10-29, step 6, session 6d, the lead's choices, within D159's mockups the owner chose. Supersedes D94's language and
 theme in the title bar, D101's unfolded editor, D111's and D120's chips choosing a bot, D121's layers as toggles beside
-the map and its legend under it, and D151's language and theme kept in the title bar too.*
+the map and its legend under it, and D151's language and theme kept in the title bar too. Its sidebar superseded by D295, once 7c
+makes it.*
 
 - **A page of the app** is an `AppPage`: its title, or a header of its own, its actions on the right, its content, with the
   same margins and the window's width up to 1,200 pixels. A page whose lists keep their own scroll, the map, the logs and
@@ -4052,7 +4053,7 @@ when the destination is too near". Amends D83's "every map change costs the same
 ## D168: Profiles given by default, stored once
 
 *2026-10-29, step 6, session 6e; chosen by the owner among mockups, as the lead recommended it. Makes D152's profiles
-given by default.*
+given by default. Superseded by D303 and D304: behaviors given, once 7b makes them.*
 
 - **An activity gives presets** (`ActivitySettingsBuilder.Preset`), checked whole when it registers, rules included. The
   harvest gives six, each by profession, the highest level first, the place automatic: "Automatic harvest", the five
@@ -5701,7 +5702,7 @@ in game.*
 ## D244: The strategies removed, one AI for every character
 
 *2026-10-30, step 9, session 9g2, chosen by the owner among two options, as the lead recommended it. Supersedes D233, D234
-and D240, D235 on the fights out of an activity, and D236 and D241 where they name a strategy.*
+and D240, D235 on the fights out of an activity, and D236 and D241 where they name a strategy. Superseded in part by D301: spells preferred and left out come back as preferences.*
 
 - **Removed**: the strategy, a kind of profile (`ProfileKind`, `AddStrategy`, `ActivityCatalog.Strategy`), its settings,
   presets and texts, `IStrategySource`, `DefaultStrategies` and `StoredStrategies`, the accounts page's column, and
@@ -6725,6 +6726,353 @@ wall's spell on an ally.*
   largest change since the app was made; "very complete" is reached feature by feature, each tested, the stored profiles
   migrated, never lost.
 
+## D293: Release 0.4.0, before the studio
+
+*2026-11-02, step 7, session 7a, the owner's ask: no release would come soon once step 7 begins.*
+
+- **The client's release** `client-3.7.12.12` got `data-8.pack`, 26,870,528 bytes, and `mapping-15.binpb`, 14,687 bytes,
+  with their hashes, which `main` reads and it lacked, by `scripts/release.cs --publish` after its dry run.
+- **The app's release** `v0.4.0`, tagged on `main` at the merge of 9f5's pull request: the release workflow green in 4
+  minutes, `D3B 0.4.0` marked latest, Setup.exe 105 MB, its full and delta packages and the portable zip. The README left as
+  it was.
+
+## D294: What session 7a's research found
+
+*2026-11-02, step 7, session 7a, research the owner asked for, taken very far before any choice (D292). The references
+read for ideas, never code (D3).*
+
+- **Graph editors.** Unreal's Blueprints run wires of execution whose latent nodes, a delay or a walk, keep where the graph
+  is: a position, what D87 turned down, broken by every fight, disconnection or hand of the player. Unreal's StateTree
+  chooses states by priority from the root, each with its conditions of entry, keeps its transitions on the parents and
+  records a trace to step through; Unreal's behavior trees abort a lower branch when a higher one's condition comes true.
+  Node-RED's subflows and Houdini's digital assets make a graph a node whose parameters are promoted: a profile as a graph
+  with settings. n8n keeps each run with every node's input and output, and reopens a failed one in the editor; Blender
+  shows a socket's last value under the pointer and a node's warnings on its title; ComfyUI keeps a graph's layout apart
+  from its logic. Godot 4 removed its general visual language, used by 0.5% of its users, and kept its visual shaders:
+  graphs of the domain's own nodes are the ones used.
+- **Games' AI and bots.** Machines of states wired by hand overload past some 10 to 30 states; a history state resumes
+  from memory, the opposite of D87. Combining is the norm: a state that chooses the routine, then rules per map. Every
+  Dofus bot read (Ankabot, Snowbot, Frigost, MoonBot) has a `move()` whose table of maps is read again on each map,
+  `bank()` past a share of pods, a fight's turn apart; RuneLite's Quest Helper derives its step from a value of the game,
+  the cleanest step chosen from the state. No MMO bot has a node editor whose reception is documented.
+- **`vendor/`.** The owner's scripts in `metiers`: 26 distinct of 58 files, five professions, hub and spoke from the haven
+  bag through a zaap to a route and back, routes by a profession's levels, seven banks' routes, 823 doors and 502 custom
+  steps; MoonBot's 714 functions, its group modes and controllers; BillBot's behaviors recovered before acting; Bubble's
+  trajet, a zone of maps walked at random; bubble-emu's 79 kinds of criteria, a vocabulary of conditions.
+- **Engines and IDEs.** RPG Maker's event pages, the highest whose conditions hold active, and Creation Kit's AI packages,
+  the first whose conditions and schedule hold, choose from the state as D87 does; Warcraft III's and StarCraft II's
+  triggers, events, conditions and actions as sentences of typed values chosen from lists, are what players who never
+  programmed wrote whole games with. Unity's assets referenced by a stable id, its prefab variants whose overrides show
+  bold and revert; Godot's resources shared or made unique; Unreal's Simulate beside Play; Tiled's and LDtk's brushes and
+  worlds; Strava's routes, points placed and the way between them found; recorders that keep meaning, not clicks; strings
+  to paste with a version, as Factorio's and WeakAuras'; Search Everywhere, find references, a problems panel.
+- **Avalonia's canvases**, checked on GitHub and NuGet: Nodify.Avalonia 2.0.0, a port of one author for Avalonia 12;
+  NodifyAvalonia 6.6, Avalonia 11 only; NodeEditorAvalonia 12.0.0, a diagram editor. None has typed wires, a live
+  highlight, undo on the model or automation peers. Avalonia 12.1.5 is current, the repository on 12.1.4.
+- **What the app models** (the code at e272cc9): a profile is a name, an activity's id and its settings as JSON; two
+  activities, harvesting and fighting, and seven presets; no journey, route or hunt as an object; settings' rules,
+  conditions and previews C# delegates; `AddPage` unused; the profiles' view the largest, 1,132 lines.
+
+## D295: The app becomes one studio, as a game engine or an IDE
+
+*2026-11-02, step 7, session 7a, the owner's words and choices, as the lead recommended them. Builds D292. Supersedes, once
+7c makes it, D94's bots page, D101's and D162's sidebar of pages, and D111, D120 and D146 as pages of their own.*
+
+- **The owner's vision**: like a game engine or an IDE, routes recorded and reused in a node, behaviors made, a path picked
+  by maps' ids or on the mini-map rendered, clicking maps or holding to draw it, and many such tools.
+- **The whole app is the studio**: one window, no pages. Panels that fold, the editor able to take the whole window: the
+  explorer on the left, the editor in the centre in tabs, the inspector on the right, the bots and the journal at the
+  bottom. The owner had turned three panes down for the bots page (D94); for a studio, the owner chose panels.
+- **The scene**: accounts and characters are the explorer's first entries, each character under its account, as the
+  objects of a scene: a profile or a planning dropped on it, played, paused and stopped from it, its inspector its live
+  state. They stay in the database, the machine's and never shared (D99).
+- **What the owner finds wrong today**: too much a dashboard, too much going from page to page to follow one bot, too
+  little control over where to go and what to do, too little seen of what a bot does and why. The owner plays 3 to 8
+  characters at once.
+- **Who writes behaviors**: everyone, beginners included.
+- **Rejected.**
+  - A studio beside the app's pages: the navigation the owner finds too much stays.
+  - The bots first and the studio apart: the same.
+  - Panels that dock anywhere, float and save layouts: the most supple, the most to make and the busiest.
+  - The editor whole with the rest as overlays: the least a dashboard, but the bots out of sight.
+
+## D296: The project: assets in a folder, one file each, referenced by a stable id
+
+*2026-11-02, step 7, session 7a; the folder chosen by the owner, as the lead recommended it, the kinds of assets from the
+owner's answers.*
+
+- **A project** is a folder, `%LOCALAPPDATA%\D3B\studio` by default: one JSON file per asset, which carries a stable id
+  apart from its name, its kind, its format's version and, when it names maps, the client build whose ids they are. An
+  asset references another by its id, so that renaming breaks nothing and "used by" and "uses" are exact.
+- **The kinds**:
+  - a **route**: maps in order, each with its actions, the maps between them found (D299);
+  - a **zone**: a set of maps, areas and sub-areas, some left out, that D3B goes through its own way, as harvesting does;
+  - a **list**: resources, monsters or items, ordered or not;
+  - a **behavior**: a graph (D297), which declares its public settings;
+  - a **profile**: a behavior and only the values it changes (D300);
+  - a **planning**: for a character, which profile when, and when to stop;
+  - **fight preferences** (D301).
+- **Behaviors given**, harvesting by profession and hunting, shipped with the app read only, copied to be changed; a
+  behavior is itself a node in another, its public settings its node's.
+- **The database** keeps what is learned, the graphics, growing back and placements, and the accounts and characters.
+- **Rejected.**
+  - Assets in the database, as profiles are: one place, but nothing versioned or read outside the app.
+  - Both, the database mirrored to files: two truths to keep agreeing.
+  - References by name or path: Unity's lost ids and Unreal's redirectors.
+
+## D297: A behavior: priority states over short actions, run as one activity, resumed from the state
+
+*2026-11-02, step 7, session 7a; two levels chosen by the owner, as the lead recommended it; how actions resume and states
+change the lead's. Settles Q13 with D296, D298 and D305. Builds D87, D98.*
+
+- **Above, a tree of states by priority**, as RPG Maker's pages and Unreal's StateTree: each state has conditions of
+  entry and may hold states; D3B chooses from the root the first whose conditions hold, down to a leaf. A layer
+  **Always** above holds the rules that keep the character safe: full, unload; low life, heal; a fight over, what to do;
+  what `IsFull`, `UnloadAsync`, `OnFightOver` and `OnInterrupted` say today.
+- **In a leaf, short actions in order**, with branches on conditions, variables and waits.
+- **No position kept** (D87): an action is a goal the state says is reached or not, being on a map, the inventory
+  deposited, so that a leaf entered again passes what is already true; an action the state says nothing of, talking to an
+  NPC and giving replies, plays whole and is played again if cut.
+- **When the state changes**: the choice is made again at each step's end and on events, a map changed, a fight over, full,
+  a new connection, resumed, a time reached, a variable changed; a state marked urgent cuts the step running, as an
+  interruption does (D9).
+- **One activity runs any behavior**: each step it chooses the leaf from the state, then plays a step of it; an
+  activity's node delegates to today's activity, its step, report and statistics. Interruptions stay D9's; a behavior is
+  checked and compiled once before it runs, no reflection at each step.
+- **The activities as nodes** (D87): harvesting and hunting stay whole nodes with their settings (D98), ready to use, the
+  owner's choice; opened, their version in small nodes shows, to copy.
+- **Rejected.**
+  - States and conditions alone, no branch nor variable inside: too little for the owner's scenarios.
+  - A blueprint whole, wires of execution, loops and functions: a position kept, resuming fragile (D87, D294).
+  - Harvesting and hunting only small nodes: the ready-made would go; only whole nodes: nothing to learn from or copy.
+
+## D298: Nodes declared by the modules, sentences of typed values; their conditions, events and variables
+
+*2026-11-02, step 7, session 7a; the scenarios and the low-level nodes chosen by the owner, the variables left to the
+lead.*
+
+- **A kind of node** is declared in C# by a module of the repository, with a sentence, its typed values chosen and never
+  typed, a short help and an example, as Warcraft III's triggers are. Mods are graphs; no code of a user runs (D116).
+- **The owner's scenarios**, all four: activities chained, routes made by hand, a planning and hours, reactions and rules.
+- **Activities**: harvest, hunt, follow a route, bank, heal, use objects.
+- **Actions**: walk to a cell, use an element or a door, change maps by an exit, travel, a zaap, the haven bag; talk to an
+  NPC and give replies, buy and sell from one; use, equip, unequip or drop an item; wait, set a variable, warn with a
+  toast, pause, stop, disconnect. And what else serves, the lead's call.
+- **Conditions**, pure reads of the state joined by and, or and not: pods, life, levels, a profession's level, an item's
+  quantity, kamas, a map, a zone, on the route, the hour, the day, the run's length, the last fight, variables.
+- **Events**: a map changed, a fight begun or over, won or lost, a level gained, an item received, full, a connection
+  lost or new, the player's hand, a time reached; those the protocol does not read yet are measured, then mapped.
+- **Variables**, typed, of three scopes said in the open: the run, by default; the character, kept in the database; shared
+  by bots, for step 10's groups.
+- **Groups** in the model now, roles of leader and follower, waiting for the others, one at a time; nothing made before
+  step 10, the owner's choice.
+- **Out of scope** (D2): pausing when a moderator speaks, an example the lead had given, is evading detection.
+- **Rejected.**
+  - Nodes a user writes in code: the language D116 removed.
+  - Free text for values: what makes graphs fail for beginners.
+
+## D299: Routes and zones, built on the world's map
+
+*2026-11-02, step 7, session 7a; the ways to build and what a route does chosen by the owner; the anchors the lead's,
+from D294's research.*
+
+- **Built** by clicking and painting on the world's mini-map, by recording while the player plays, and by typing maps'
+  ids or coordinates, the owner's choice; no import of SnowBot's scripts.
+- **The maps clicked are anchors**, the truth; the maps between two are found by the world's path, drawn dashed, found
+  again when an anchor moves, pinned to become anchors. Holding and dragging adds an anchor when the map is a neighbour
+  by a real exit, else the path fills the gap, red when there is none.
+- **Recording** keeps what happened, a map left for another by an exit, a door, a zaap, the haven bag or an NPC, and what
+  was done on it; simplifying keeps the maps that count.
+- **Maps that share coordinates**, insides, undergrounds, the haven bag: a mark on the square, a choice on a click, and a
+  layer per world; an anchor keeps a map's id, never coordinates.
+- **What a route does**: going through alone, the behavior deciding what to do; or actions on each map, harvest a list,
+  fight a filter, a door, an exit forced by its direction or cell, wait, an NPC, a zaap, the haven bag. A loop, one way,
+  or there and back; a map out of reach passed or failing. A cell is picked on the map's own cells (D121).
+- **Zones** beside routes: a set of maps D3B goes through its own way.
+
+## D300: Profiles, variants of a behavior
+
+*2026-11-02, step 7, session 7a, chosen by the owner, as the lead recommended it. Supersedes D99's profile, once 7b makes
+it.*
+
+- A profile is a behavior and only the values it changes; the rest follows the behavior as it changes. What it changes
+  shows bold with a bar in the margin, reverted one by one or all; before a shared behavior is changed, the profiles it
+  touches are shown, Creation Kit's trap of shared changes spreading unseen (D294).
+- **Rejected.**
+  - Copies apart: the behavior's improvements never reach them.
+  - No profile, behaviors played as they are: a behavior copied for each configuration.
+
+## D301: Fights: the one AI, with preferences
+
+*2026-11-02, step 7, session 7a, chosen by the owner against the lead's recommendation. Supersedes D244 in part: its
+spells preferred and left out come back, as preferences.*
+
+- The AI plays every turn (D244); the behavior decides around it, which groups, before and after, prudence; and fight
+  preferences, an asset, say spells favoured or avoided, placement and a target first, which the AI respects as weights.
+  Made at 7h.
+- **Rejected.**
+  - The graph around the AI alone, the lead's recommendation: what D244 kept.
+  - Turns as graphs, as the Lua bots' `fightManagement`: the AI would be bypassed, and with it 9's measures.
+
+## D302: Debugging: live, step by step, the history, a simulation
+
+*2026-11-02, step 7, session 7a, chosen by the owner.*
+
+- **Live** on a bot: the path chosen lit, the condition that failed with its value under the pointer, the variables.
+- **Step by step**: a breakpoint on a node pauses the bot before it, as the player's hand does (D66); a step lets one
+  action through.
+- **The history**: each run keeps its decisions, scrolled through after.
+- **A simulation without the game**, on the pack: the route drawn, the maps reached, the zaaps needed, the levels, the time.
+- Problems in a panel, said with how to fix them: a map out of reach, a zaap the character lacks, a level too low.
+
+## D303: Sharing: files, behaviors given, a gallery later
+
+*2026-11-02, step 7, session 7a, chosen by the owner, who asked for something viable and practical.*
+
+- Files exported and imported, an asset with what it uses and the client build its maps' ids are of, shown before it is
+  imported; behaviors, routes and profiles given with the app and updated with it; a gallery in the app, later, of what
+  others published.
+- **Rejected**: a string to paste, which the owner did not take.
+
+## D304: Starting from zero: profiles, presets and runs dropped
+
+*2026-11-02, step 7, session 7a, chosen by the owner against the lead's recommendation. Supersedes D99's profiles, D146's
+runs and D168's presets, once 7b migrates the database.*
+
+- 7b's migration drops the profiles, the presets stored and the runs; the accounts, characters, graphics, growing back and
+  placements stay. A character's profile and its start on connection point at a profile asset.
+- **Rejected**: every profile made a variant of the behaviors given, and the runs kept, the lead's recommendation; the
+  runs kept alone.
+
+## D305: The studio's look: a dark creation tool, ShadUI themed again, IntelliJ's icons, Inter, a canvas of D3B's own
+
+*2026-11-02, step 7, session 7a, chosen by the owner, as the lead recommended it but the icons, the owner's ask. Supersedes
+D161's Lucide icons, once 7c makes it.*
+
+- **The direction**: a dark creation tool, as Blender, Unreal or Rider, sober: a deep dark, clean contrasts, colour kept for
+  types and states, dense and readable.
+- **ShadUI** stays (D14), themed D3B's own way: palette, density, radii, a tool's compact controls; the canvas, the map
+  and the panels D3B's own controls.
+- **Icons**: the IntelliJ Platform's, from `intellij-icons.jetbrains.design`, the owner's choice for their many an IDE
+  needs. Most of their SVG files carry an Apache 2.0 notice, as JetBrains says: only those are taken, checked file by
+  file, the license written whole into `THIRD-PARTY-NOTICES.md`; JetBrains' products' logos, their trademarks, never.
+- **Inter** stays.
+- **The canvas** is D3B's own, Nodify read for its ideas (D3): typed wires, the live highlight, automation peers and the
+  theme, none of which a library has (D294).
+- **Mockups** in HTML, interactive, first the editor, then the app around it.
+- **Beginners**, left to the lead: behaviors given, nodes as sentences, a short help and an example on each, problems that
+  say how to fix them; wizards later.
+- **Rejected.**
+  - Dofus's colours and matters, and a minimal look as Linear's: the owner's choice.
+  - ShadUI as it is, too much the web; leaving ShadUI, a change of the brief.
+  - Nodify.Avalonia, one author and its AOT issue open; a spike first.
+
+## D306: Step 7 in sessions, the studio before the breeds
+
+*2026-11-02, step 7, session 7a, the owner giving it as many sessions as it needs, in slices that each serve. Amends D292:
+the breeds come back after step 7.*
+
+| Session | Content |
+| --- | --- |
+| 7a | Research, questions, the model and the mockups, no code (D294 to D306). |
+| 7b | The model and its run time: assets in files, behaviors, nodes, conditions, events, variables, the activity that runs a behavior, profiles as variants, the migration from zero. |
+| 7c | The studio's shell: ShadUI themed, IntelliJ's icons, the panels, the explorer and its scene, the inspector, the search, the bots, journal, map and inspector as panels. |
+| 7d | Routes and zones on the world's map, recording while playing included. |
+| 7e | The canvas of behaviors. |
+| 7f | The low-level nodes, conditions, events and the planning. |
+| 7g | Debugging: live, step by step, the history and the simulation. |
+| 7h | Fight preferences in the AI (D301). |
+| 7i | Sharing (D303). |
+
+## D307: A behavior drawn as its states in a stack, the chosen state's actions on a canvas
+
+*2026-11-02, step 7, session 7a, chosen by the owner among three mockups, as the lead recommended it. Builds D297, D305.*
+
+- **The mockups**, the same behavior three ways, in the studio's frame: A, the states stacked by priority under the layer
+  Always, the chosen state's actions as sentences in a list, no wire; B, one canvas, the root, states and actions joined by
+  typed wires, a minimap; C, A's stack on the left and B's canvas for the chosen state's actions.
+- **C**: the stack shows at a glance the rule that holds everything, the first state true wins and resumes from the state;
+  a canvas of one state's actions stays small and readable, and gives the blueprints' feel the owner wants.
+- **The owner's word**: the mockups give a direction; many things are to make far better in their sessions, the world's
+  map first (D308).
+- **Rejected.**
+  - A: the most readable for beginners, but no canvas for the actions.
+  - B: the most an engine's, but the priority hidden among wires, a pitfall the research named (D294), and spaghetti.
+
+## D308: The world's map drawn from the client's own images
+
+*2026-11-02, step 7, session 7a, the owner's ask. Supersedes D127's mini-map of squares from the atlas, once 7d makes it.*
+
+- The route and zone editor, and every view of the world, draw the world's map from the official client's own images,
+  not squares; a map's own cells keep D122 until a session says otherwise.
+- **Measured** on 3.7.12.12 with `scripts/inspect.cs bundles`: the world maps' images are one bundle,
+  `Content/Picto/Worldmaps/worldmap_assets_.bundle`, 520.4 MiB on disk, 891.0 MiB decompressed, beside the tables of
+  world maps, areas and sub-areas client.md names (`worldMap`, `worldmapId`, `customWorldMapId`, `hasWorldMap`).
+- **How**, at 7d: extracted into the pack at the sizes the studio draws, never committed and shipped in the build's release
+  (D10, D24), as the icons are (D135); which images, their tiles, zoom levels and the pack's size measured first.
+- **Rejected**: the squares from the atlas of D127's mini-map, drawn by D3B: too poor for an editor the owner wants to
+  use every day.
+
+## D309: The characters as a party's frames, each opened in a tab of its own
+
+*2026-11-02, step 7, session 7a, chosen by the owner among three mockups, as the lead recommended it. Builds D295.
+Supersedes D94's bots page of cards, once 7c makes it.*
+
+- **The mockups**, the studio around the editor (D307): A, a card per character in the bottom panel; B, a party's frames,
+  a column always shown on the window's left as in an MMO, each character's initial, name, level, a dot of its connection,
+  pause or fight, its life and pods as bars and what it does; C, a tab Scene of tiles, each with its map live.
+- **B**: the 3 to 8 characters the owner plays stay in sight while editing, with no going from page to page, and the
+  column is a game's party, not a dashboard's cards. The explorer then holds the assets alone; the plannings follow the
+  party in its column.
+- **A character opens in its tab**, from its frame: its map live, the profile it plays and its controls, its figures, the
+  state of its behavior lit, and its last decisions. The bottom panel keeps the trace, problems, journal, protocol and
+  statistics; the inspector, a character's profile, planning, start on connection, fight preferences and variables.
+- **Rejected.**
+  - A: in sight only with the bottom panel open, sharing it with the trace and problems; the most cards.
+  - C: in sight only on its tab; kept as a view to add later beside B.
+
+## D310: The studio clean, never a catch-all
+
+*2026-11-02, step 7, session 7a, the owner's ask; the rules the lead's. Builds D155, D159, D163, D305.*
+
+- **Asked**: the studio clean at the least, never a catch-all, which the app was found to be before 6d (D155). The mockups
+  showed everything at once to be judged; the studio does not.
+- **Rules**, held by every session of step 7:
+  - **What the task needs, nothing more**: the party's frames, the editor and the inspector shown; the explorer folded once
+    an asset is open, the bottom panel folded until asked for or a problem comes; an empty inspector folds.
+  - **Each thing in one place**: a character's state in its frame, its detail in its tab, never both in full; no control
+    repeated on a page or across panels (D163).
+  - **A toolbar of few things**: play, pause and stop for the character chosen, and the search; the rest in menus and the
+    search's commands.
+  - **Few borders, few colours**: surfaces set things apart; colour kept for types and states (D305); one scale (D159).
+  - **Short texts**: help in tooltips, numbers with their unit, no sentence where a word does (D159).
+- **Checked** in 7c on the shell, its mockups first, with the owner.
+
+## D311: The blueprints as beautiful and as practical as Unreal's
+
+*2026-11-02, step 7, session 7a, the owner's ask: a large effort on them. Builds D305, D307, D310. Amends D306: the canvas
+takes two sessions.*
+
+- **What "as practical as Unreal's Blueprints" means here**, read for ergonomics (D3), each in the canvas of 7e:
+  - **Adding**: a search on a right click or Space, filtered by the pin a wire is dragged from, only the nodes that fit;
+    favourites and the last used first; a node dropped where the wire was let go, wired.
+  - **Wiring**: pins typed and coloured by type, a wire refused where the types differ with the reason said; Ctrl and drag
+    moves a pin's wires, Alt and a click breaks them; reroute dots on a double click; wires curved, never crossing a node's
+    title.
+  - **Arranging**: snapping to a grid, aligning and spreading the selection by keys, straightening a wire; comment boxes that
+    carry their nodes, coloured; collapsing a selection into a behavior of its own, its wires become its pins (D296).
+  - **Moving around**: zoom from far to near, a node simpler far away; fit to the selection or the graph; a minimap;
+    bookmarks; search in the behavior; breadcrumbs inside nested behaviors.
+  - **Editing**: undo and redo of every change, copy and paste as text between behaviors, duplicate, a node's values
+    edited in place or in the inspector; a node disabled rather than deleted.
+  - **Running**: the path played lit and flowing on the wires live (D302), a breakpoint on a node, a pin's last value
+    under the pointer, a node's warnings on its title, a problem's click leading to its node.
+- **Beautiful**: nodes as a tool's cards, their header the kind's colour, sentences readable at a glance, wires that flow
+  as the bot plays, motion short and quiet, in D310's clean frame; each detail drawn and checked on the canvas, mockups
+  first.
+- **Two sessions**: 7e, the canvas's core, the view, nodes, wires, selection, adding, undo and the stack of states; 7e2,
+  arranging, comments, collapsing, the minimap, bookmarks, the live flow and the polish, checked with the owner.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -6734,6 +7082,5 @@ Settled questions leave this table, and the decision that settles one says so.
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? Measured in 9d for damage, steals, heals, critical hits and the zone's decrease (D195), in 9e2 for a critical hit's chance (D207) and a push's damage (D214), in 9e3 for a sword's blow (D222); left: shields, AP and MP removed and their dodge, erosion, the final damage's rounding, a weapon's critical bonus, power and mastery (D220). | The captures of D196 left (D214), then 9f |
 | Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
-| Q13 | What is a blueprint mod: who writes it, where it lives, what a node is over D3B's behaviors and state, how a graph runs as an activity, interrupted and resumed from the state, its settings, and which canvas in Avalonia (D117)? | Step 7 |
 | Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
 | Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? It refuses with an error text, 29 ms after the request (D203); which casts, but a Zobal's masks, is left. It allowed 11 casts the rules refuse, each a breed's mechanism: spells whose cost or range a gathered state changes, and summons (D214). The Zobal's 6 refused were the masks' states the bot kept, whose end it did not read (D224, D225). | Captures the owner makes, the AI sending its casts (D202), with those of D196; the breeds' mechanisms in 9f |

@@ -59,11 +59,10 @@ D3B is young and changes fast: settings, data formats and the app may change fro
 milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them and the fighting activity
 are in release 0.3.0, measured in game on five breeds. Journeys go through an NPC's dialog where the world's graph has no
 way, Incarnam's portal to Astrub and the boat to Sarakech, so that a character in Incarnam leaves it. The AI summons, and
-plays the summons the character controls, a Roublard's bombs, their chains and walls, and the glyphs on the cells; next
-come the Roublard measured in game, the Féca's glyphs and the other breeds' mechanisms, so that the AI plays every breed
-whole. Then several accounts and groups, blueprint mods edited in the app, the marketplace and
-crafting. The
-[roadmap](docs/roadmap.md) has the steps in order.
+plays the summons the character controls, a Roublard's bombs, their chains and walls, and the glyphs on the cells. Next,
+the whole app becomes a studio, as a game engine or an IDE: routes drawn on the world's map, behaviors edited as
+blueprints and played by the characters, profiles as their variants. Then the other breeds' mechanisms, several accounts
+and groups, the marketplace and crafting. The [roadmap](docs/roadmap.md) has the steps in order.
 
 ## Install
 
