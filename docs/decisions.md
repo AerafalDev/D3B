@@ -6217,6 +6217,21 @@ D262, D263, D264.*
 - **Not measured**: an aggression, none met; the transitions other than doors; the journey after a refused teleport;
   the inactivity popup, which no turn's end the client marked as its own showed.
 
+## D267: After a lost fight, the hunt turns away a group no less risky, the owner's choice
+
+*2026-11-02, step 9, session 9g6, chosen by the owner among two options, as the lead recommended it. Builds D198, D249,
+D266.*
+
+- **Measured** (D266): the two groups of 4 lost one after the other in the Dunes des ossements were each to take the
+  character's life in 0.463 of the turns it needed to beat them, over the quarter D249 turns away. On every capture,
+  the groups between a quarter and a half are 14, 4 lost.
+- **Made**: the fighting activity keeps the odds of the group it attacks; a fight lost against it keeps, for the run,
+  the greatest such share (`GroupJudge.Share`), and the judge turns away a group whose share is no greater
+  (`GroupJudge.Winnable`), the quarter of D249 still standing. A fight it did not attack, a protector's or an
+  aggression, or a group judged by levels, teaches nothing. On the capture, the second group would have been left.
+- **Rejected.** The margin raised from a quarter to a half: it would also have left 10 of those 14 groups, all won,
+  against the laxer judge the owner asked for (D249).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

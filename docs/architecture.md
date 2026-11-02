@@ -311,7 +311,8 @@ seen so.
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), and the AI judges it beats
   (`GroupJudge`, the group's fight imagined from the pack's grades and the character from its characteristics out of
   fights, its breed the one whose spells the server listed, before its first fight too, over its course, only a group
-  that would beat the character four times faster turned away, D249, D263),
+  that would beat the character four times faster turned away, D249, D263, and after a fight lost against a group it
+  attacked, for the run, a group no less risky, D267),
   and sends `AttackMonsterRequest`, measured from the group's own cell (D239); a group the server answers nothing for is left
   for the visit. Else it travels to the nearest map of the zone left, stopping on the first map of the zone on its way
   that holds such a group, gone through or not (D259), isolated maps last when the settings take them
@@ -788,7 +789,8 @@ inventory holds, pack format 8 (D257), the regeneration back to the share (D258)
 map of its zone holding a group it attacks (D259), all in [Bot run time](#bot-run-time); the masks measured in game,
 nothing to change (D261). Built in session 9g6: a group judged from the characteristics the server gives out of fights,
 before the first fight too (D263), the harvest's automatic place leaving out the isolated maps (D264), every item's icon at
-32 pixels (D265), in [Bot run time](#bot-run-time) and [Game data](#game-data).
+32 pixels (D265), the boat to Sarakech (D266), a group no less risky than one lost to turned away (D267), in [Bot run
+time](#bot-run-time) and [Game data](#game-data).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
