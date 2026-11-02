@@ -61,6 +61,9 @@ public sealed class FightTactics
     /// <summary>Gets what casts are foreseen to do.</summary>
     public SpellEffects Effects { get; }
 
+    /// <summary>Gets the Rogue's bombs, their explosions and walls.</summary>
+    public Bombs Bombs { get; }
+
     /// <summary>Gets what actions do to an imagined fight.</summary>
     public Imagination Imagination { get; }
 
@@ -104,7 +107,8 @@ public sealed class FightTactics
         Rules = new CastRules(_spells, states);
         Moves = new FightMoves(states);
         Effects = new SpellEffects(blows, Rules, _actions);
-        Imagination = new Imagination(_spells, monsters, _actions, Effects);
+        Bombs = new Bombs(_spells, Rules);
+        Imagination = new Imagination(_spells, monsters, _actions, Effects, Bombs);
         MonsterSpells = new MonsterSpells(_spells, monsters);
     }
 
@@ -183,7 +187,7 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(fight);
         ArgumentNullException.ThrowIfNull(knowledge);
 
-        return new FightJudge(fight, knowledge, weights, Blows, _actions, Rules, Moves, _states, SummonsOf(fight, knowledge));
+        return new FightJudge(fight, knowledge, weights, Blows, _actions, Rules, Moves, _states, SummonsOf(fight, knowledge), Bombs, Effects);
     }
 
     /// <summary>Gets the levels a fighter casts: as the knowledge lists them, else, for a summon the search brought, its monster's at its grade.</summary>
@@ -614,12 +618,14 @@ public sealed class FightTactics
         var actor = fight.Actor;
         var radius = 0;
         var free = (level.Properties & SpellLevelProperties.NeedFreeCell) is not 0;
+        var bomb = false;
 
         foreach (var effect in _spells.EffectsOf(level))
         {
             var kind = _actions.Of(effect.EffectId).Kind;
 
             free |= kind is EffectKind.Summon or EffectKind.Teleport;
+            bomb |= kind is EffectKind.Summon && _spells.TryGetBomb(effect.DiceNum, out _);
             radius = Math.Max(radius, effect.Zone.Shape switch
             {
                 SpellZoneShape.Point or SpellZoneShape.None or SpellZoneShape.Custom => 0,
@@ -634,6 +640,10 @@ public sealed class FightTactics
         {
             if (!fighter.IsAlive || fighter.Cell is Combatant.NoCell)
                 continue;
+
+            // A bomb cast on an enemy casts the bomb's instant spell there (9f3).
+            if (bomb && fighter.Team != actor.Team)
+                cells.Add(fighter.Cell);
 
             // A free cell is sought beside a fighter, an enemy to strike or come near, an ally to stand by.
             var around = free ? Math.Max(1, radius) : radius;

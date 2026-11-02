@@ -125,7 +125,10 @@ public static class EffectFormulas
         var bonus = caster.Characteristic(FightCharacteristic.AllDamageBonus) + caster.Characteristic(ElementalId(FightCharacteristic.EarthDamageBonus, element))
             + (critical ? caster.Characteristic(FightCharacteristic.CriticalDamageBonus) : 0);
 
-        return new LifeRange((roll.Min * raise / Percent) + bonus, (roll.Max * raise / Percent) + bonus);
+        // Measured (9f3): an explosion's damage, raised and its bonuses added, is raised again by the combo of the bombs set off.
+        var combo = Math.Max(0, Percent + caster.Characteristic(FightCharacteristic.BombComboBonus));
+
+        return new LifeRange(((roll.Min * raise / Percent) + bonus) * combo / Percent, ((roll.Max * raise / Percent) + bonus) * combo / Percent);
     }
 
     /// <summary>Gets the damage a weapon's blow deals before its target and the zone take any off.</summary>

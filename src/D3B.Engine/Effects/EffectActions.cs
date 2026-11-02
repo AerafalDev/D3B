@@ -79,6 +79,12 @@ public sealed class EffectActions
         [406] = new(EffectKind.DispelSpell, EffectElement.None, 0),
         [132] = new(EffectKind.Dispel, EffectElement.None, 0),
         [141] = new(EffectKind.Kill, EffectElement.None, 0),
+        [1009] = new(EffectKind.Detonate, EffectElement.None, 0),
+        [783] = new(EffectKind.PushToCell, EffectElement.None, 0),
+
+        // The pack names no characteristic for these, its texts do (9f3): a bomb's combo, characteristic 94, and AP given back.
+        [1027] = new(EffectKind.Boost, EffectElement.None, FightCharacteristic.BombComboBonus),
+        [120] = new(EffectKind.Boost, EffectElement.None, 1),
     }.ToFrozenDictionary();
 
     private static readonly FrozenDictionary<int, SpellCaster> _casters = new Dictionary<int, SpellCaster>
