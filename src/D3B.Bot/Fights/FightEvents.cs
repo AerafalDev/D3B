@@ -61,7 +61,7 @@ public static class FightEvents
             FightTurnListEvent order => Ordered(fight, order),
             FightNewRoundEvent round => fight with { Round = round.Round },
             FightTurnEvent turn => Turned(fight, turn),
-            FightTurnStartPlayingEvent => fight with { Phase = FightPhase.Fighting, IsOwnTurn = fight.PlayingId == self },
+            FightTurnStartPlayingEvent => fight with { Phase = FightPhase.Fighting, IsOwnTurn = Controls(fight, self) },
             FightTurnEndEvent ended when ended.FighterId == fight.PlayingId => fight with { PlayingId = null, IsOwnTurn = false },
             FightTurnEndEvent => fight,
             FightRefreshCharacterStatsEvent { Stats: { } stats } refreshed => Changed(fight, refreshed.FighterId, fighter => Spent(fighter, stats)),
@@ -137,6 +137,13 @@ public static class FightEvents
             Fighters = fight.Fighters.SetItem(actor.Id, fighter),
             Team = actor.Id == self && shown.Spawn is { } spawn ? spawn.Team : fight.Team,
         };
+    }
+
+    private static bool Controls(FightState fight, long self)
+    {
+        // Measured (9f2): the server lets the client play a summon of the character's it controls, as it lets the character
+        // play, and takes the same requests for it.
+        return fight.PlayingId is { } playing && (playing == self || fight.Fighters.GetValueOrDefault(playing)?.SummonerId == self);
     }
 
     private static FightState Ordered(FightState fight, FightTurnListEvent order)

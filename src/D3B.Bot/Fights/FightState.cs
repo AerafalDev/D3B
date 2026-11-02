@@ -47,7 +47,7 @@ public sealed record FightState
     /// <summary>Gets the fighter whose turn it is, from its turn's start to its end.</summary>
     public long? PlayingId { get; init; }
 
-    /// <summary>Gets whether the character may act: its turn began and the server let its client play.</summary>
+    /// <summary>Gets whether the client may act: the turn of the character, or of a summon it controls, began and the server let the client play (<see cref="PlayingId"/>).</summary>
     public bool IsOwnTurn { get; init; }
 
     /// <summary>Gets the sequences the server opened and has not closed, the innermost last.</summary>

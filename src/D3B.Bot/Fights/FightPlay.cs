@@ -18,7 +18,8 @@ namespace D3B.Bot.Fights;
 /// map is drawn, its display time, it judges the fight's odds, prudent when it would lose (D198), places the character on
 /// the cell the AI judges best and says it is ready. Each turn it searches the best sequence (<see cref="FightTactics.Plan"/>),
 /// sends its first action, waits for the server's answer and the client's showing it, and searches again from what the
-/// server said; it ends its turn at once when nothing is worth doing, instead of waiting for the turn's time.
+/// server said; it ends its turn at once when nothing is worth doing, instead of waiting for the turn's time. A summon the
+/// client controls plays its turns the same, with the same requests, which the server takes as the summon's (9f2).
 /// </para>
 /// <para>
 /// A cast the server does not answer within its delay counts as refused, and is not weighed again this turn; a walk not
@@ -182,7 +183,8 @@ public static class FightPlay
 
     private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, HashSet<int> refusedSpells, CancellationToken cancellationToken)
     {
-        var self = context.State.Key.CharacterId;
+        // The character's turn, or a summon's it controls.
+        var self = context.State.Fight?.PlayingId ?? context.State.Key.CharacterId;
         var refused = new HashSet<(int SpellId, int Cell)>();
         var refusals = 0;
         var acted = 0;
@@ -216,7 +218,7 @@ public static class FightPlay
                 if (!await WalkAsync(context, tactics, imagined.Fight, action.Cell, cancellationToken).ConfigureAwait(false))
                     break;
             }
-            else if (!await CastAsync(context, action, cancellationToken).ConfigureAwait(false))
+            else if (!await CastAsync(context, self, action, cancellationToken).ConfigureAwait(false))
             {
                 // Measured live (D203): a spell the server leaves unanswered, such as a transformed character's own, is
                 // refused again on every cell: it is not cast again this fight, and refusals end the turn.
@@ -265,10 +267,8 @@ public static class FightPlay
         return true;
     }
 
-    private static async Task<bool> CastAsync(BotContext context, TacticAction action, CancellationToken cancellationToken)
+    private static async Task<bool> CastAsync(BotContext context, long self, TacticAction action, CancellationToken cancellationToken)
     {
-        var self = context.State.Key.CharacterId;
-
         // Measured (D218): the server frames a weapon's blow in a sequence of its own, which the client acknowledges as a spell's.
         var shown = Shown(context, self, action.SpellId is WeaponBlows.SpellId ? SequenceType.Weapon : SequenceType.Spell);
         // Measured live (D203): the server refuses a cast with an error text, 29 ms after the request, and nothing else.

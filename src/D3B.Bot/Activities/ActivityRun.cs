@@ -40,6 +40,7 @@ public sealed class ActivityRun
     // Only the run's own sequence of behaviors reads and writes them.
     private bool _unloaded;
     private bool _stillFull;
+    private int _fightsSeen;
 
     /// <summary>Gets the activity.</summary>
     public BotActivity Activity { get; }
@@ -134,6 +135,8 @@ public sealed class ActivityRun
     {
         Interruption? interrupted = null;
 
+        _fightsSeen = _bot.FightsBegun;
+
         while (true)
         {
             Interruption cut;
@@ -191,6 +194,7 @@ public sealed class ActivityRun
             }
 
             interrupted = cut;
+            _fightsSeen = _bot.FightsBegun;
             Volatile.Write(ref _interruption, (int)cut);
 
             // An unloading cut short is no unloading: the next step tries it again.
@@ -267,6 +271,12 @@ public sealed class ActivityRun
 
     private async Task<Next> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
+        // A protector attacks 2 ms after the harvest's end (D144), once the step that harvested is over and before the next
+        // begins, so that no step was cut and the activity neither counted nor answered the fight (D266): a fight begun
+        // between steps is the activity's as one that cut a step.
+        if (_bot.FightsBegun != _fightsSeen)
+            throw new BotInterruptedException(Interruption.Fight);
+
         var state = context.State;
 
         if (Activity.IsFull(state))

@@ -11,9 +11,10 @@ namespace D3B.Bot.Fights;
 /// <remarks>
 /// The fighters come from the fight's state (<see cref="FightCombatants"/>). The character's spells come from the server's
 /// list and its level, its worn sword's blow among them (<see cref="CharacterSpells"/>), a monster's and a summon's from the pack at its grade; the
-/// character's cooldowns from the server (D193). Every fighter but the character holds the AP and MP it starts its next
-/// turn with: a monster's grade's, else what the server last gave it; the character holds what it has left, and starts its
-/// turns with what it had as its last began.
+/// character's cooldowns from the server (D193). Every fighter but the one playing holds the AP and MP it starts its next
+/// turn with: a monster's grade's, else what the server last gave it; the one playing holds what it has left, and starts its
+/// turns with what it had as its last began. The one playing is the character, or a summon of its the client plays (9f2),
+/// with its own cooldowns and casts.
 /// </remarks>
 public static class ImaginedFights
 {
@@ -22,7 +23,7 @@ public static class ImaginedFights
     /// <param name="map">The fight's map.</param>
     /// <param name="tables">The pack's game tables.</param>
     /// <param name="blows">The pack's spells and the weapons' blows, which the AI's levels are of.</param>
-    /// <param name="turnPoints">The AP and MP the character started its last turn with, when it played one.</param>
+    /// <param name="turnPoints">The AP and MP the one playing started its turn with, when it plays one.</param>
     /// <returns>The fight and what the AI knows of it; null out of a fight, or when the server has not shown the character.</returns>
     public static (ImaginedFight Fight, FightKnowledge Knowledge)? Of(CharacterState character, FightMap map, GameTables tables, WeaponBlows blows, (int ActionPoints, int MovementPoints)? turnPoints)
     {
@@ -34,6 +35,7 @@ public static class ImaginedFights
         if (character.Fight is not { } fight || !fight.Fighters.TryGetValue(character.Key.CharacterId, out var self))
             return null;
 
+        var actor = fight is { IsOwnTurn: true, PlayingId: { } playing } && fight.Fighters.TryGetValue(playing, out var played) ? played : self;
         var spells = ImmutableDictionary.CreateBuilder<long, ImmutableArray<SpellLevel>>();
         var points = ImmutableDictionary.CreateBuilder<long, (int ActionPoints, int MovementPoints)>();
         var fighters = ImmutableArray.CreateBuilder<Combatant>(fight.Fighters.Count);
@@ -45,7 +47,7 @@ public static class ImaginedFights
             if (fighter.Id == self.Id)
             {
                 spells[fighter.Id] = CharacterSpells.InFight(character, fight, fighter, blows, tables.Breeds);
-                points[fighter.Id] = turnPoints ?? (fighter.ActionPoints, fighter.MovementPoints);
+                points[fighter.Id] = fighter.Id == actor.Id ? turnPoints ?? (fighter.ActionPoints, fighter.MovementPoints) : (fighter.ActionPoints, fighter.MovementPoints);
                 fighters.Add(combatant);
 
                 continue;
@@ -63,10 +65,12 @@ public static class ImaginedFights
                 }
 
                 spells[fighter.Id] = levels.DrainToImmutable();
-                combatant = combatant with { ActionPoints = found.Characteristics.ActionPoints, MovementPoints = found.Characteristics.MovementPoints };
+
+                if (fighter.Id != actor.Id)
+                    combatant = combatant with { ActionPoints = found.Characteristics.ActionPoints, MovementPoints = Math.Max(0, (int)found.Characteristics.MovementPoints) };
             }
 
-            points[fighter.Id] = (combatant.ActionPoints, combatant.MovementPoints);
+            points[fighter.Id] = fighter.Id == actor.Id ? turnPoints ?? (combatant.ActionPoints, combatant.MovementPoints) : (combatant.ActionPoints, combatant.MovementPoints);
             fighters.Add(combatant);
         }
 
@@ -74,15 +78,15 @@ public static class ImaginedFights
         {
             Map = map,
             Fighters = fighters.DrainToImmutable(),
-            ActorId = self.Id,
+            ActorId = actor.Id,
             Round = fight.Round,
-            History = self.Casts,
+            History = actor.Casts,
         };
         var knowledge = new FightKnowledge
         {
             Spells = spells.ToImmutable(),
             TurnPoints = points.ToImmutable(),
-            Cooldowns = self.Cooldowns.ToImmutableDictionary(),
+            Cooldowns = actor.Cooldowns.ToImmutableDictionary(),
         };
 
         return (imagined, knowledge);

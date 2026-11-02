@@ -218,6 +218,38 @@ public sealed class ActivityRunTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AFightBegunBetweenTwoStepsIsTheActivitysAsOneThatCutAStep()
+    {
+        // Measured in game (D266): a protector's fight began as the harvest's step was over, and the activity never knew it.
+        _play.Bots.Delays = BotDelays.Measured;
+
+        var (connection, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity();
+        var run = bot.StartActivity(activity);
+
+        await activity.SteppingAsync(bot);
+        connection.Server(new KamasUpdateEvent { Kamas = 1 });
+        await WaitForAsync(() => run.Steps is 1);
+
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        connection.Server(new MapCurrentEvent { MapId = TestPlay.MapId });
+        connection.Server(TestPlay.Information(358));
+        await bot.ProcessedAsync();
+        _play.Time.Advance(BotDelays.Measured.BetweenSteps);
+
+        Assert.Equal(2, await activity.SteppingAsync(bot));
+        Assert.Equal([Interruption.Fight], activity.Interruptions);
+        Assert.Equal([Interruption.Fight], activity.Recoveries);
+        Assert.Equal(Interruption.Fight, run.LastInterruption);
+
+        run.Stop();
+        await run.Completion;
+    }
+
+    [Fact]
     public async Task AnActivityMayPauseTheBotOnAFightWhichTheCardResumes()
     {
         var (connection, bot) = await _play.EnterAsync(300);

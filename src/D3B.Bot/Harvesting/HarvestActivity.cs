@@ -256,8 +256,9 @@ public sealed class HarvestActivity : BotActivity
 
         if (reason is Interruption.Fight)
         {
-            // Measured: a protector attacks as the character's own harvest ends, the objects' events between (D144).
-            var kind = _context is { UseEndedAt: { } ended } context && context.Time.GetUtcNow() - ended <= _protectorDelay ? FightKind.Protector : FightKind.Aggression;
+            // Measured: a protector attacks as the character's own harvest ends, the objects' events between (D144); the fight
+            // may be answered once over, when it began between two steps (D266).
+            var kind = _context is { UseEndedAt: { } ended, FightBeganAt: { } began } && began >= ended && began - ended <= _protectorDelay ? FightKind.Protector : FightKind.Aggression;
 
             _fight = kind;
             _fightItem = kind is FightKind.Protector ? _lastTarget : null;

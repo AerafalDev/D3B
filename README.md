@@ -58,8 +58,10 @@ Pull requests that add any of these are closed.
 D3B is young and changes fast: settings, data formats and the app may change from one version to the next. The first
 milestone, harvesting and banking, is reached. Fights are in progress: the AI that plays them and the fighting activity
 are in release 0.3.0, measured in game on five breeds. Journeys go through an NPC's dialog where the world's graph has no
-way, Incarnam's portal to Astrub and the boat to Sarakech, so that a character in Incarnam leaves it. Next come summons, glyphs and the
-other breeds' mechanisms, so that the AI plays every breed whole. Then several accounts and groups, blueprint mods edited in the app, the marketplace and crafting. The
+way, Incarnam's portal to Astrub and the boat to Sarakech, so that a character in Incarnam leaves it. The AI summons, and
+plays the summons the character controls; next come the bombs, glyphs and the other breeds' mechanisms, so that the AI
+plays every breed whole. Then several accounts and groups, blueprint mods edited in the app, the marketplace and
+crafting. The
 [roadmap](docs/roadmap.md) has the steps in order.
 
 ## Install
