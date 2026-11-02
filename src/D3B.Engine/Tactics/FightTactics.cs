@@ -22,10 +22,11 @@ namespace D3B.Engine.Tactics;
 /// the turn now is best. The bot sends its first action, then searches again from what the server answered.
 /// </para>
 /// <para>
-/// The best sequences found, their end walk among them, are then weighed once more against the enemies' reply (D203): each
-/// living enemy plays its next turn in the imagined fight, as greedily as the search plays, walking where its spells reach
-/// the fighter playing's side through the rules, line of sight and tackle included, and casting what lowers that side's
-/// worth most, until nothing does. The plan is the sequence whose fight is best once they replied, the threat's guess left
+/// The best sequences found, their end walk among them, are then weighed once more against the enemies' reply (D203): the
+/// fighter playing's summons that play strike first, right after it as the server orders them (D270), then each living
+/// enemy plays its next turn in the imagined fight, as greedily as the search plays, walking where its spells reach the
+/// fighter playing's side through the rules, line of sight and tackle included, and casting what lowers that side's worth
+/// most, until nothing does. The plan is the sequence whose fight is best once they replied, the threat's guess left
 /// for the search's own ranking.
 /// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
@@ -40,8 +41,12 @@ public sealed class FightTactics
     private const int NextTurnCasts = 2;
     private const int NextTurnCells = 12;
 
+    // Summons the judge knows before the search brings them take ids no server and no search gives.
+    private const long FirstJudgedSummon = -200_000;
+
     private readonly SpellCatalog _spells;
     private readonly SpellStateCatalog _states;
+    private readonly MonsterCatalog _monsters;
     private readonly EffectActions _actions;
 
     /// <summary>Gets the pack's spells and the weapons' blows, which the AI casts as spells' levels (D220).</summary>
@@ -58,6 +63,9 @@ public sealed class FightTactics
 
     /// <summary>Gets what actions do to an imagined fight.</summary>
     public Imagination Imagination { get; }
+
+    /// <summary>Gets the levels each monster casts at its grade, a summon's the search brings among them.</summary>
+    public MonsterSpells MonsterSpells { get; }
 
     /// <summary>Initializes a new instance of the <see cref="FightTactics"/> class.</summary>
     /// <param name="tables">The pack's game tables.</param>
@@ -91,11 +99,13 @@ public sealed class FightTactics
         Blows = blows;
         _spells = blows.Spells;
         _states = states;
+        _monsters = monsters;
         _actions = new EffectActions(effects);
         Rules = new CastRules(_spells, states);
         Moves = new FightMoves(states);
         Effects = new SpellEffects(blows, Rules, _actions);
         Imagination = new Imagination(_spells, monsters, _actions, Effects);
+        MonsterSpells = new MonsterSpells(_spells, monsters);
     }
 
     private static long Signature(ImaginedFight fight)
@@ -170,7 +180,53 @@ public sealed class FightTactics
     /// <returns>The judge.</returns>
     public FightJudge JudgeOf(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights)
     {
-        return new FightJudge(fight, knowledge, weights, Blows, _actions, Rules, Moves, _states);
+        ArgumentNullException.ThrowIfNull(fight);
+        ArgumentNullException.ThrowIfNull(knowledge);
+
+        return new FightJudge(fight, knowledge, weights, Blows, _actions, Rules, Moves, _states, SummonsOf(fight, knowledge));
+    }
+
+    /// <summary>Gets the levels a fighter casts: as the knowledge lists them, else, for a summon the search brought, its monster's at its grade.</summary>
+    /// <param name="fight">The fight.</param>
+    /// <param name="fighter">The fighter.</param>
+    /// <param name="knowledge">What the AI knows of the fighters.</param>
+    /// <returns>The levels; none when not known.</returns>
+    public ImmutableArray<SpellLevel> SpellsOf(ImaginedFight fight, Combatant fighter, FightKnowledge knowledge)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+        ArgumentNullException.ThrowIfNull(fighter);
+        ArgumentNullException.ThrowIfNull(knowledge);
+
+        if (knowledge.Spells.TryGetValue(fighter.Id, out var known))
+            return known;
+
+        return fighter is { MonsterId: { } monster, Grade: { } grade } ? MonsterSpells.Of(monster, grade) : [];
+    }
+
+    private List<(Combatant Summon, ImmutableArray<SpellLevel> Levels)> SummonsOf(ImaginedFight fight, FightKnowledge knowledge)
+    {
+        // Each summon the fighter playing's levels may bring, once, as it would come now.
+        var summons = new List<(Combatant, ImmutableArray<SpellLevel>)>();
+        var seen = new HashSet<(int, int)>();
+        var actor = fight.Actor;
+
+        foreach (var level in knowledge.SpellsOf(actor.Id))
+        {
+            foreach (var effect in _spells.EffectsOf(level))
+            {
+                if (_actions.Of(effect.EffectId).Kind is not EffectKind.Summon || !_monsters.TryGetMonster(effect.DiceNum, out var monster))
+                    continue;
+
+                var gradeOf = Math.Clamp(effect.DiceSide, 1, Math.Max(1, (int)monster.GradeCount));
+
+                if (!seen.Add((monster.Id, gradeOf)) || !_monsters.TryGetGrade(monster.Id, gradeOf, out var grade))
+                    continue;
+
+                summons.Add((Summons.Of(actor, monster, grade, FirstJudgedSummon - summons.Count, Combatant.NoCell), MonsterSpells.Of(monster.Id, gradeOf)));
+            }
+        }
+
+        return summons;
     }
 
     /// <summary>Gets how the fight looks for the fighter playing's side as it starts.</summary>
@@ -311,7 +367,7 @@ public sealed class FightTactics
         return new TurnPlan(best.Actions, bestScore, standingScore, weighed, clock.Elapsed);
     }
 
-    /// <summary>Gets the fight once the enemies played their next turns after the fighter playing's, as greedily as the search imagines them.</summary>
+    /// <summary>Gets the fight once the fighter playing's summons, then the enemies, played their next turns after its, as greedily as the search imagines them.</summary>
     /// <param name="fight">The fight as the fighter playing's turn ends.</param>
     /// <param name="knowledge">What the AI knows of the fighters' spells.</param>
     /// <param name="judge">The judge, whose worth of the fighter playing's side each enemy lowers as much as it can.</param>
@@ -325,10 +381,17 @@ public sealed class FightTactics
         var team = fight.Actor.Team;
         var replied = fight;
 
+        // Measured (9f2): a summon plays right after its summoner, the latest summoned first, so before the enemies.
+        foreach (var summon in fight.Fighters.Where(fighter => fighter.SummonerId == fight.ActorId && (fighter.MonsterProperties & MonsterProperties.CanPlay) is not 0).OrderBy(fighter => fighter.Id))
+        {
+            if (summon.IsAlive && summon.Cell is not Combatant.NoCell)
+                replied = Reply(replied, summon.Id, SpellsOf(replied, summon, knowledge), view => -judge.Standing(view), strikesOnly: false);
+        }
+
         foreach (var enemy in fight.Fighters)
         {
             if (enemy.IsAlive && enemy.Team != team && enemy.Cell is not Combatant.NoCell)
-                replied = Reply(replied, enemy.Id, knowledge, judge);
+                replied = Reply(replied, enemy.Id, knowledge.SpellsOf(enemy.Id), judge.AlliesWorth, strikesOnly: true);
         }
 
         return replied with { ActorId = fight.ActorId, History = fight.History };
@@ -427,10 +490,11 @@ public sealed class FightTactics
         return kept.Max(end => end.Score);
     }
 
-    private ImaginedFight Reply(ImaginedFight fight, long enemyId, FightKnowledge knowledge, FightJudge judge)
+    private ImaginedFight Reply(ImaginedFight fight, long fighterId, ImmutableArray<SpellLevel> levels, Func<ImaginedFight, double> worth, bool strikesOnly)
     {
-        var levels = knowledge.SpellsOf(enemyId);
-        var view = fight with { ActorId = enemyId, History = CastHistory.Empty };
+        // An enemy lowers the worth of the fighter playing's side as much as it can, striking that side; one of that side's
+        // summons lowers the worth's opposite, on any fighter, an ally it heals or boosts as an enemy it strikes.
+        var view = fight with { ActorId = fighterId, History = CastHistory.Empty };
 
         if (levels.IsEmpty)
             return view;
@@ -444,15 +508,16 @@ public sealed class FightTactics
 
             var mobile = !enemy.IsStatic && (enemy.MonsterId is null || (enemy.MonsterProperties & MonsterProperties.CanMove) is not 0);
             var reachable = mobile && enemy.MovementPoints > 0 ? Moves.Reachable(view.Map, view.Fighters, enemy) : new Dictionary<int, (int, int)> { [enemy.Cell] = (enemy.MovementPoints, enemy.ActionPoints) };
-            var targets = view.Fighters.Where(fighter => fighter.IsAlive && fighter.Team != enemy.Team && fighter.Cell is not Combatant.NoCell).Select(fighter => fighter.Cell).ToList();
+            var foes = view.Fighters.Where(fighter => fighter.IsAlive && fighter.Team != enemy.Team && fighter.Cell is not Combatant.NoCell).Select(fighter => fighter.Cell).ToList();
+            var targets = strikesOnly ? foes : [.. view.Fighters.Where(fighter => fighter.IsAlive && fighter.Cell is not Combatant.NoCell).Select(fighter => fighter.Cell)];
 
-            if (targets.Count is 0)
+            if (foes.Count is 0)
                 break;
 
-            // The cells nearest its targets, where its blows land, those keeping the most MP first.
-            var cells = reachable.OrderBy(pair => targets.Min(target => MapGeometry.Distance(pair.Key, target))).ThenByDescending(pair => pair.Value.MovementPoints).Take(ReplyCells).ToList();
+            // The cells nearest its foes, where its blows land, those keeping the most MP first.
+            var cells = reachable.OrderBy(pair => foes.Min(foe => MapGeometry.Distance(pair.Key, foe))).ThenByDescending(pair => pair.Value.MovementPoints).Take(ReplyCells).ToList();
             ImaginedFight? best = null;
-            var bestWorth = judge.AlliesWorth(view) - Better;
+            var bestWorth = worth(view) - Better;
 
             foreach (var level in levels)
             {
@@ -471,7 +536,7 @@ public sealed class FightTactics
                             continue;
 
                         var after = Imagination.Cast(there, level, target);
-                        var lowered = judge.AlliesWorth(after);
+                        var lowered = worth(after);
 
                         if (lowered < bestWorth)
                         {

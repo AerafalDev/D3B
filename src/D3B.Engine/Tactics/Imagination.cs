@@ -472,11 +472,23 @@ public sealed class Imagination
 
     private void OnCell(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell)
     {
+        // Of summons drawn at random, such as a Xélor's 80 and 20 in a hundred, the likeliest alone comes (9f2).
+        var drawn = 0f;
+
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            if (_actions.Of(effect.EffectId).Kind is EffectKind.Summon)
+                drawn = Math.Max(drawn, effect.Random);
+        }
+
         foreach (var effect in _spells.EffectsOf(level))
         {
             var kind = _actions.Of(effect.EffectId).Kind;
 
             if (effect.Delay is not 0 || (effect.Properties & SpellEffectProperties.ForClientOnly) is not 0 || !IsFree(map, fighters, cell))
+                continue;
+
+            if (kind is EffectKind.Summon && effect.Random < drawn)
                 continue;
 
             if (kind is EffectKind.Teleport)
@@ -488,27 +500,12 @@ public sealed class Imagination
 
     private Combatant? Summoned(List<Combatant> fighters, Combatant caster, in SpellEffect effect, int cell)
     {
-        // Measured (D195): a summon's monster and grade are the effect's dice.
+        // Measured (D195): a summon's monster and grade are the effect's dice; its characteristics, its summoner's share (9f2).
         var monsterId = effect.DiceNum;
 
         if (!_monsters.TryGetMonster(monsterId, out var monster) || !_monsters.TryGetGrade(monsterId, Math.Clamp(effect.DiceSide, 1, Math.Max(1, (int)monster.GradeCount)), out var grade))
             return null;
 
-        var life = grade.Characteristics.LifePoints + grade.Characteristics.Vitality;
-
-        return new Combatant
-        {
-            Id = FirstImaginedSummon - fighters.Count,
-            Team = caster.Team,
-            Cell = cell,
-            Life = life,
-            MaxLife = life,
-            ActionPoints = grade.Characteristics.ActionPoints,
-            MovementPoints = grade.Characteristics.MovementPoints,
-            MonsterId = monsterId,
-            MonsterProperties = monster.Properties,
-            SummonerId = caster.Id,
-            Level = grade.Level,
-        };
+        return Summons.Of(caster, monster, grade, FirstImaginedSummon - fighters.Count, cell);
     }
 }

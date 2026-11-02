@@ -59,6 +59,9 @@ public sealed record Combatant
     /// <summary>Gets a monster's or a summon's monster, or null for a character.</summary>
     public int? MonsterId { get; init; }
 
+    /// <summary>Gets a monster's or a summon's grade, or null when not known.</summary>
+    public int? Grade { get; init; }
+
     /// <summary>Gets that monster's properties, from the pack: whether it moves and tackles, among others.</summary>
     public MonsterProperties MonsterProperties { get; init; }
 

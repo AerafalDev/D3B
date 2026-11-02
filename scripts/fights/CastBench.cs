@@ -20,11 +20,15 @@ namespace D3B.Scripts.Fights;
 /// A cast a fighter chose is the first of its sequence of a spell (client.md): what follows until that sequence closes is
 /// the cast's, the casts its effects trigger included, which the counts tell apart. D3B foresees the cast from the fight as
 /// it stood before it, through <see cref="SpellEffects"/>; the server's actions are grouped by target and kind and set
-/// against it.
+/// against it. Each summon is set against the fighter D3B.Engine imagines from its grade and its summoner (D269), and the
+/// character's casts are foreseen again with the heals and critical damage the server gives out of fights only (D272).
 /// </remarks>
 internal sealed class CastBench
 {
     private const int CriticalHits = 18;
+
+    // What the server gives the character out of fights and never in one (D263): heals and the critical hits' damage.
+    private static readonly int[] _outOfFights = [FightCharacteristic.HealBonus, FightCharacteristic.CriticalDamageBonus];
 
     private readonly GameTables _tables;
     private readonly GameMaps _maps;
@@ -108,7 +112,13 @@ internal sealed class CastBench
                 continue;
 
             Before(fight, message, mapId, open, levels, character);
+
+            var before = fight;
+
             FightEvents.TryApply(fight, self, message, out fight);
+
+            if (message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Summons } summoning && summoning.Summons.Fighters is { } summoned)
+                Summoned(before, fight, summoned);
 
             if (message is SequenceEndEvent)
             {
@@ -121,6 +131,41 @@ internal sealed class CastBench
 
             if (message is FightEndEvent)
                 fight = null;
+        }
+    }
+
+    private void Summoned(FightState before, FightState after, SummonedFighters summoned)
+    {
+        // Each summon as D3B.Engine imagines it from its monster's grade and its summoner (Summons, 9f2), against the
+        // characteristics the server gave it.
+        foreach (var summon in summoned.Summons)
+        {
+            if (summon.Positions.FirstOrDefault()?.Position is not { } position || !after.Fighters.TryGetValue(position.Id, out var given)
+                || given is not { MonsterId: { } monsterId, Grade: { } grade, SummonerId: { } summonerId } || !before.Fighters.TryGetValue(summonerId, out var summoner)
+                || !_tables.Monsters.TryGetMonster(monsterId, out var monster) || !_tables.Monsters.TryGetGrade(monsterId, grade, out var found))
+            {
+                Tally.Count("summons: not compared");
+
+                continue;
+            }
+
+            var server = FightCombatants.Of(given, _tables.Monsters);
+            var imagined = Summons.Of(FightCombatants.Of(summoner, _tables.Monsters), monster, found, server.Id, server.Cell);
+            var by = summoner.BreedId is not null ? "a character" : "a monster";
+
+            Tally.Count($"summons: by {by}, {((monster.Properties & Data.Monsters.MonsterProperties.CanPlay) is 0 ? "not playing" : "playing")}");
+            Tally.Count($"summons: life {(imagined.MaxLife == server.MaxLife ? "as foreseen" : "otherwise")}");
+            Tally.Count($"summons: AP {(imagined.ActionPoints == server.ActionPoints ? "as foreseen" : "otherwise")}");
+            Tally.Count($"summons: MP {(imagined.MovementPoints == server.MovementPoints ? "as foreseen" : "otherwise")}");
+
+            foreach (var id in server.Characteristics.Keys.Union(imagined.Characteristics.Keys).Where(id => id is not (0 or 1 or 23)))
+            {
+                // What the server gives every fighter alike, the damage and heals multipliers and erosion, D3B never reads off a grade.
+                if (id is FightCharacteristic.Erosion or 93 or >= 100)
+                    continue;
+
+                Tally.Count($"summons: characteristics {(imagined.Characteristic(id) == server.Characteristic(id) ? "as foreseen" : $"otherwise, {id}")}");
+            }
         }
     }
 
@@ -214,6 +259,7 @@ internal sealed class CastBench
                 open.Add(new Cast
                 {
                     Caster = combatant,
+                    OutOfFights = action.SourceId == character?.Key.CharacterId ? OutOfFights(combatant, character) : null,
                     Fighters = fighters,
                     Map = map,
                     Level = level,
@@ -276,6 +322,20 @@ internal sealed class CastBench
         }
     }
 
+    private static Combatant? OutOfFights(Combatant caster, CharacterState character)
+    {
+        // The character as the AI would see it with what the server gives out of fights only, when it changes something.
+        var characteristics = caster.Characteristics;
+
+        foreach (var id in _outOfFights)
+        {
+            if (caster.Characteristic(id) is 0 && character.Characteristics.GetValueOrDefault(id) is not 0 and var value)
+                characteristics = characteristics.SetItem(id, value);
+        }
+
+        return ReferenceEquals(characteristics, caster.Characteristics) ? null : caster with { Characteristics = characteristics };
+    }
+
     private FightMap MapOf(long mapId)
     {
         if (!_fightMaps.TryGetValue(mapId, out var map))
@@ -300,13 +360,26 @@ internal sealed class CastBench
         States(cast, after);
         Damage(cast, foreseen, alone);
         Heals(cast, foreseen, alone);
+
+        // The character's casts, foreseen from the characteristics the fight gives, then with heals and the critical hits'
+        // damage from out of fights (D263, 9f2).
+        if (cast.OutOfFights is { } fuller && cast.TriggeredCasts is 0)
+        {
+            var completed = _effects.Foresee(cast.Map, cast.Fighters, fuller, cast.Level, cast.Cell, cast.Critical);
+            var kind = cast.Critical ? "critical" : "normal";
+
+            Damage(cast, foreseen, $"the character's {kind}, as in fights", main: false);
+            Damage(cast, completed, $"the character's {kind}, out of fights", main: false);
+            Heals(cast, foreseen, $"the character's {kind}, as in fights", main: false);
+            Heals(cast, completed, $"the character's {kind}, out of fights", main: false);
+        }
         Pushes(cast, foreseen);
         Points(cast, foreseen, alone);
         Buffs(cast, foreseen);
         Moves(cast, foreseen);
     }
 
-    private void Damage(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone)
+    private void Damage(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone, bool main = true)
     {
         var dealt = new Dictionary<(long Target, EffectElement Element), (int Total, bool Capped)>();
 
@@ -355,10 +428,10 @@ internal sealed class CastBench
 
             Tally.Count($"damage, {alone}: {outcome}");
 
-            if (cast.TriggeredCasts is 0)
+            if (cast.TriggeredCasts is 0 && main)
                 Tally.Count($"damage alone, by element: {key.Element}, {outcome}");
 
-            if (outcome is "below" or "above")
+            if (outcome is "below" or "above" && main)
                 _details?.WriteLine($"damage {outcome}: spell {cast.Level.SpellId} level {cast.Level.Id}{(cast.Critical ? " critical" : "")} element {key.Element}: {total} against {range.Min}..{range.Max}, {alone}; {Why(cast, foreseen, key.Target, key.Element)}");
         }
     }
@@ -380,7 +453,7 @@ internal sealed class CastBench
             + $"target {(target.IsCharacter ? "character" : target.IsSummon ? "summon" : "monster")} res%={target.Characteristic(33 + offset)} fixed={target.Characteristic(54 + offset)} [{targetChanged}] away {(target.Cell < 0 ? -1 : MapGeometry.Distance(cast.Cell, target.Cell))} melee {(caster.Cell >= 0 && target.Cell >= 0 ? MapGeometry.Distance(caster.Cell, target.Cell) : -1)}; {rolls}";
     }
 
-    private void Heals(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone)
+    private void Heals(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone, bool main = true)
     {
         var healed = new Dictionary<long, (int Total, bool Capped)>();
 
@@ -411,7 +484,9 @@ internal sealed class CastBench
             var held = expected.GetValueOrDefault(cast.Caster.Id);
 
             expected[cast.Caster.Id] = new LifeRange(held.Min + (taken / 2), held.Max + (taken / 2));
-            Tally.Count($"steals: foreseen, {(taken > 0 ? "life taken" : "no life taken")}");
+
+            if (main)
+                Tally.Count($"steals: foreseen, {(taken > 0 ? "life taken" : "no life taken")}");
         }
 
         foreach (var target in healed.Keys.Union(expected.Keys))
@@ -729,6 +804,8 @@ internal sealed class CastBench
     private sealed class Cast
     {
         public required Combatant Caster { get; init; }
+
+        public Combatant? OutOfFights { get; init; }
 
         public required IReadOnlyList<Combatant> Fighters { get; init; }
 

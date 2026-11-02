@@ -59,6 +59,7 @@ public static class FightCombatants
             MaxSummons = characteristics.TryGetValue(MaxSummons, out var summons) ? summons : null,
             BreedId = fighter.BreedId,
             MonsterId = fighter.MonsterId,
+            Grade = fighter.Grade,
             MonsterProperties = properties,
             SummonerId = fighter.SummonerId,
             States = fighter.States,

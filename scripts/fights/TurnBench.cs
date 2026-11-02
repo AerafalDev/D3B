@@ -27,6 +27,10 @@ namespace D3B.Scripts.Fights;
 /// before its next turn, the enemies' reply as the search plays it against the same, and the approach against the damage
 /// it dealt in its next turn. It prints counts and sums, never a value of one fight.
 /// </para>
+/// <para>
+/// A summon's turn the client played is replayed the same, the AI's plan against the player's (D271); the summons planned
+/// and played are counted by breed and spell, and what the summons deal in the reply (D270).
+/// </para>
 /// </remarks>
 internal sealed class TurnBench
 {
@@ -88,6 +92,7 @@ internal sealed class TurnBench
     {
         CharacterState? state = null;
         Turn? turn = null;
+        Turn? summonTurn = null;
         Ending? ending = null;
 
         foreach (var message in messages)
@@ -107,6 +112,9 @@ internal sealed class TurnBench
             if (turn is not null && state.Fight is { } before)
                 Observe(before, self, message, turn, state.Weapon is { } weapon && _tactics.Blows.TryGetBlow(weapon.ItemId, out var blow) ? blow : null);
 
+            if (summonTurn is not null && state.Fight is { } summonBefore)
+                Observe(summonBefore, summonTurn.Start.ActorId, message, summonTurn, null);
+
             // Whom the enemies' blows took life from between two of the character's turns, as the server announced it.
             if (ending is not null && message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.LifeLost } lost && state.Fight is { } between
                 && between.Fighters.TryGetValue(self, out var own) && between.Fighters.TryGetValue(lost.LifeLost.TargetId, out var hit) && hit.Team == own.Team
@@ -119,6 +127,19 @@ internal sealed class TurnBench
 
             switch (message)
             {
+                // A summon the client controls plays its turn as the character does (9f2), the turns between left alone.
+                case FightTurnStartPlayingEvent when state.Fight is { IsOwnTurn: true, PlayingId: { } summon } && summon != self && Imagined(state, null) is { } summoned:
+                    summonTurn = new Turn(summoned.Fight, summoned.Knowledge, (summoned.Fight.Actor.ActionPoints, summoned.Fight.Actor.MovementPoints));
+                    Plan(summonTurn);
+
+                    break;
+
+                case FightTurnEndEvent ended when summonTurn is not null && ended.FighterId == summonTurn.Start.ActorId:
+                    FinishSummon(summonTurn);
+                    summonTurn = null;
+
+                    break;
+
                 case FightTurnStartPlayingEvent when state.Fight is { IsOwnTurn: true } && Imagined(state, null) is { } start:
                     turn = new Turn(start.Fight, start.Knowledge, (start.Fight.Actor.ActionPoints, start.Fight.Actor.MovementPoints));
 
@@ -145,6 +166,7 @@ internal sealed class TurnBench
                         Settle(ending, null, over.Fighters.GetValueOrDefault(self));
 
                     turn = null;
+                    summonTurn = null;
                     ending = null;
 
                     break;
@@ -193,7 +215,7 @@ internal sealed class TurnBench
 
         var casts = plan.Actions.Count(action => action.Kind is TacticActionKind.Cast);
 
-        Tally.Count($"plans: {(plan.IsEmpty ? "nothing" : casts is 0 ? "walks only" : "casts")}");
+        Tally.Count($"{(turn.Start.Actor.IsSummon ? "summon plans" : "plans")}: {(plan.IsEmpty ? "nothing" : casts is 0 ? "walks only" : "casts")}");
     }
 
     private static void Observe(FightState fight, long self, IMessage message, Turn turn, SpellLevel? blow)
@@ -406,6 +428,20 @@ internal sealed class TurnBench
         }
     }
 
+    private void FinishSummon(Turn turn)
+    {
+        // A controlled summon's turn, the AI's plan against the turn the player played, both imagined from its start.
+        var played = Act(turn.Start, turn.Played);
+        var planned = turn.Planned is { } plan ? Act(turn.Start, plan.Actions) : turn.Start;
+        var monster = turn.Start.Actor.MonsterId is { } id ? $"monster {id}" : "monster unknown";
+
+        Tally.Count($"summon turns: replayed, {monster}");
+        Tally.Count("summon turns: casts played", turn.Played.Count(action => action.Kind is TacticActionKind.Cast));
+        Tally.Count("summon turns: casts planned", turn.Planned?.Actions.Count(action => action.Kind is TacticActionKind.Cast) ?? 0);
+        Add("summon turns: damage dealt, played", Dealt(turn.Start, played));
+        Add("summon turns: damage dealt, planned", Dealt(turn.Start, planned));
+    }
+
     private Ending Finish(Turn turn, CharacterState state)
     {
         var judge = _tactics.JudgeOf(turn.Start, turn.Knowledge, _weights);
@@ -431,7 +467,15 @@ internal sealed class TurnBench
         }
 
         foreach (var action in turn.Planned?.Actions.Where(action => action.Kind is TacticActionKind.Cast) ?? [])
+        {
             Tally.Count($"casts planned, by what they do: {Does(action.LevelId)}");
+
+            if (Does(action.LevelId) is "summon")
+                Tally.Count($"summons planned: breed {turn.Start.Actor.BreedId}, spell {action.SpellId}");
+        }
+
+        foreach (var action in turn.Played.Where(action => action.Kind is TacticActionKind.Cast && Does(action.LevelId) is "summon"))
+            Tally.Count($"summons played: breed {turn.Start.Actor.BreedId}, spell {action.SpellId}");
 
         States(turn.Start, turn.Played, "played");
 
@@ -531,6 +575,10 @@ internal sealed class TurnBench
         Add("planned: kills foreseen", plannedKills);
         Add("planned: heals foreseen", plannedHealed);
         Add("planned: life the reply takes", Math.Max(0, plannedLost));
+
+        // What the character's summons deal in the reply, right after it and before the enemies (9f2).
+        Add("played: damage its summons foresee in the reply", Dealt(played, playedReply));
+        Add("planned: damage its summons foresee in the reply", Dealt(planned, plannedReply));
 
         // Over two turns: this turn's damage, then the next turn's as the search plays it from where the reply left the fight.
         var later = turn.Knowledge with { Cooldowns = turn.Knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
