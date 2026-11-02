@@ -42,6 +42,8 @@ internal sealed class CastBench
     private readonly TextWriter? _details;
     private readonly Dictionary<long, FightMap> _fightMaps = [];
     private readonly Dictionary<(long Fighter, int Spell), int> _turnsEnded = [];
+    private readonly Dictionary<long, StruckBefore> _struckLast = [];
+    private (long FighterId, int Cell, string What)? _turnBegun;
     private Starting? _starting;
 
     public Tally Tally { get; } = new();
@@ -106,6 +108,7 @@ internal sealed class CastBench
 
             if (message is FightStartingEvent)
             {
+                SettleStruck();
                 fight = new FightState();
                 self = characters.GetValueOrDefault(index);
                 open.Clear();
@@ -138,6 +141,7 @@ internal sealed class CastBench
             if (message is FightEndEvent)
             {
                 SettleStart();
+                SettleStruck();
                 fight = null;
             }
         }
@@ -169,13 +173,48 @@ internal sealed class CastBench
 
                 _bombs.Walls(imagined.Map, imagined.Fighters, walls);
 
-                if (!_bombs.IsBomb(before, out _) && walls.Exists(wall => wall.Cell == before.Cell))
+                var walled = !_bombs.IsBomb(before, out _) && walls.Exists(wall => wall.Cell == before.Cell);
+
+                if (walled)
                     covering++;
 
-                _starting = new Starting(turn.FighterId, covering, Effective(before) - (after is null ? 0 : Effective(after)));
+                // Whether the other side's marks still stand, a glyph struck as a turn begins or a wall of its bombs, for the
+                // fighter struck as its last turn began (D288).
+                var standing = imagined.Marks.Any(mark => mark.Kind is CellMarkKind.TurnStart && mark.Team != before.Team)
+                    || walls.Exists(wall => imagined.Find(wall.SummonerId) is { } summoner && summoner.Team != before.Team);
+
+                _starting = new Starting(turn.FighterId, covering, Effective(before) - (after is null ? 0 : Effective(after)))
+                {
+                    Walled = walled,
+                    Monster = before.MonsterId is not null,
+                    Standing = standing,
+                    Last = _struckLast.Remove(turn.FighterId, out var last) ? last : null,
+                };
+
+                // Where a monster that moves begins its turn, against where it ends it: how likely it stays on a mark it began
+                // on, by whether an enemy already stood beside it (D288).
+                if (before is { MonsterId: not null, IsStatic: false, IsSummon: false })
+                {
+                    var beside = imagined.Fighters.Any(other => other.IsAlive && other.Team != before.Team && other.Cell is not Combatant.NoCell && MapGeometry.Distance(other.Cell, before.Cell) is 1);
+
+                    _turnBegun = (turn.FighterId, before.Cell, $"{(beside ? "an enemy beside it" : "no enemy beside it")}{(covering > 0 ? ", on a mark" : "")}");
+                }
+                else
+                {
+                    _turnBegun = null;
+                }
 
                 break;
             }
+
+            case FightTurnEndEvent ended when _turnBegun is { } begun && ended.FighterId == begun.FighterId:
+                SettleStart();
+                _turnBegun = null;
+
+                if (fight.Fighters.TryGetValue(ended.FighterId, out var monster) && monster.IsAlive && monster.Cell is { } cell)
+                    Tally.Count($"monsters' turns: {begun.What}, {(cell == begun.Cell ? "ended where it began" : "moved")}");
+
+                break;
 
             case GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.MarkStruck } struck when _starting is { } starting && struck.MarkStruck.FighterId == starting.FighterId:
                 if (struck.ActionId is 307)
@@ -210,6 +249,8 @@ internal sealed class CastBench
 
         _starting = null;
 
+        Again(starting);
+
         if (starting.Covering is 0 && starting.Struck is 0)
             return;
 
@@ -223,6 +264,38 @@ internal sealed class CastBench
 
         if (outcome is not "within a tenth" || marks is not "as many as imagined")
             _details?.WriteLine($"marks at a turn's start: struck {starting.Struck} imagined {starting.Covering}, lost {starting.Lost} against {starting.Imagined:F0} imagined");
+    }
+
+    private void Again(Starting starting)
+    {
+        // A fighter struck by a mark as its turn began: whether the next one begins on a mark of the other side too, the
+        // rounds a mark is worth beyond its first blow (D288).
+        if (starting.Last is { } last)
+        {
+            var what = $"marks again at the next turn's start: {(last.Walled ? "a wall" : "a glyph")}, {(last.Monster ? "a monster" : "a character")}";
+
+            if (starting.Struck > 0)
+                Tally.Count($"{what}, struck again");
+            else
+                Tally.Count($"{what}, {(starting.Standing ? "not struck, the marks standing" : "not struck, the marks gone")}");
+
+            if (starting.Struck is 0)
+                Tally.Count($"marks again at the next turn's start: turns struck in a row, {last.Turns}");
+        }
+
+        if (starting.Struck > 0)
+            _struckLast[starting.FighterId] = new StruckBefore(starting.Walled, starting.Monster, (starting.Last?.Turns ?? 0) + 1);
+    }
+
+    private void SettleStruck()
+    {
+        foreach (var last in _struckLast.Values)
+        {
+            Tally.Count($"marks again at the next turn's start: {(last.Walled ? "a wall" : "a glyph")}, {(last.Monster ? "a monster" : "a character")}, dead or the fight over first");
+            Tally.Count($"marks again at the next turn's start: turns struck in a row, {last.Turns}");
+        }
+
+        _struckLast.Clear();
     }
 
     private void Summoned(FightState before, FightState after, SummonedFighters summoned)
@@ -634,14 +707,25 @@ internal sealed class CastBench
 
                 Tally.Count($"pushes and pulls: {(push.Action.Kind is EffectKind.Push ? "push" : "pull")}, {against}");
 
+                if (moved > 0)
+                {
+                    var a = MapGeometry.PointOf(from);
+                    var b = MapGeometry.PointOf(landed);
+                    var line = Math.Abs(a.X - b.X) == Math.Abs(a.Y - b.Y) ? "a diagonal of the coordinates" : a.X == b.X || a.Y == b.Y ? "a line of the coordinates" : "neither";
+
+                    Tally.Count($"pushes and pulls moved: {(push.Action.Kind is EffectKind.Push ? "push" : "pull")} along {line}, {push.Value.Min} cells, moved {moved}, next cell {Next(cast, from, landed)}{Beside(cast, from, landed)}");
+                }
+
                 if (landed != thought)
-                    _details?.WriteLine($"push or pull off: spell {cast.Level.SpellId} effect {push.EffectId}, {push.Value.Min} cells, moved {moved} imagined {foreseenSteps}, slides {moves.Count}, target {(cast.Fighters.First(fighter => fighter.Id == push.TargetId).IsCharacter ? "character" : "monster")}, next cell {Next(cast, from, landed)}, {Geometry(cast, from, landed, thought)}");
+                    _details?.WriteLine($"push or pull off: spell {cast.Level.SpellId} effect {push.EffectId}, {push.Value.Min} cells, moved {moved} imagined {foreseenSteps}, slides {moves.Count}, target {(cast.Fighters.First(fighter => fighter.Id == push.TargetId).IsCharacter ? "character" : "monster")}, next cell {Next(cast, from, landed)}, {Geometry(cast, from, landed, thought)}{Beside(cast, from, thought)}");
             }
 
             var slides = cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Slide && action.Slide.TargetId == push.TargetId).ToList();
-            var steps = slides.Sum(slide => Steps(slide.Slide.FromCell, slide.Slide.ToCell));
             var cells = push.Value.Min;
             var kind = push.Action.Kind is EffectKind.Push ? "push" : "pull";
+
+            // A push moves as far as its cells, a step along a diagonal of the coordinates as far as two (D289).
+            var steps = slides.Sum(slide => push.Action.Kind is EffectKind.Push ? MapGeometry.Distance(slide.Slide.FromCell, slide.Slide.ToCell) : Steps(slide.Slide.FromCell, slide.Slide.ToCell));
             var died = cast.Actions.Any(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Death && action.Death.TargetId == push.TargetId);
 
             if (died && slides.Count is 0)
@@ -686,6 +770,27 @@ internal sealed class CastBench
         }
 
         return $"caster {Off(cast.Caster.Cell)} cast on {Off(cast.Cell)} went {Off(landed)} imagined {Off(thought)}";
+    }
+
+    private static string Beside(Cast cast, int from, int thought)
+    {
+        // What stands on the two cells beside the first step D3B imagined along a diagonal of the coordinates.
+        var a = MapGeometry.PointOf(from);
+        var b = MapGeometry.PointOf(thought);
+        var (x, y) = (Math.Sign(b.X - a.X), Math.Sign(b.Y - a.Y));
+
+        if (x is 0 || y is 0)
+            return "";
+
+        string What(int dx, int dy)
+        {
+            if (!MapGeometry.TryGetCell(new MapPoint(a.X + dx, a.Y + dy), out var cell))
+                return "off the map";
+
+            return !cast.Map.IsWalkable(cell) ? "not walkable" : cast.Fighters.Any(fighter => fighter.IsAlive && fighter.Cell == cell) ? "a fighter" : "free";
+        }
+
+        return $", beside the step {What(x, 0)} and {What(0, y)}";
     }
 
     private static string Next(Cast cast, int from, int landed)
@@ -1014,12 +1119,23 @@ internal sealed class CastBench
 
         public double Imagined { get; }
 
+        public bool Walled { get; init; }
+
+        public bool Monster { get; init; }
+
+        public bool Standing { get; init; }
+
+        public StruckBefore? Last { get; init; }
+
         public int Struck { get; set; }
 
         public int Entered { get; set; }
 
         public int Lost { get; set; }
     }
+
+    /// <summary>A fighter a mark struck as its last turn began: by a wall or a glyph, a monster or a character, and how many turns in a row.</summary>
+    private sealed record StruckBefore(bool Walled, bool Monster, int Turns);
 
     private sealed class Cast
     {

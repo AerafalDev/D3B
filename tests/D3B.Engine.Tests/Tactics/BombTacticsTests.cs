@@ -188,6 +188,30 @@ public sealed class BombTacticsTests
     }
 
     [Fact]
+    public void APushAlongADiagonalOfTheCoordinatesGoesAStepForTwoOfItsCells()
+    {
+        // Measured (D289): the 13 pushes of 2 cells along such a diagonal moved a step, none dealing push damage.
+        var enemy = Enemy(-1, Off(1, 1)) with { Life = 100 };
+
+        var after = _tactics.Imagination.Cast(Fight(enemy), Level(_spells, Push), Off(1, 1));
+
+        Assert.Equal((Off(2, 2), 100), (after.Find(enemy.Id)!.Cell, after.Find(enemy.Id)!.Life));
+    }
+
+    [Fact]
+    public void APushAlongADiagonalOfTheCoordinatesStopsWhereACellBesideItsStepIsTaken()
+    {
+        // Measured (D289): the 8 pushes and pulls whose diagonal step had a cell beside it taken moved no one.
+        var enemy = Enemy(-1, Off(1, 1)) with { Life = 100 };
+        var beside = Enemy(-2, Off(2, 1)) with { Life = 100 };
+
+        var after = _tactics.Imagination.Cast(Fight(enemy, beside), Level(_spells, Push), Off(1, 1));
+
+        Assert.Equal(Off(1, 1), after.Find(enemy.Id)!.Cell);
+        Assert.True(after.Find(enemy.Id)!.Life < 100);
+    }
+
+    [Fact]
     public void APushMovesNoMonsterThePackKeepsFromBeingPushed()
     {
         // Measured (9f4): the server moved none of the targets the pack or their states keep from being pushed.
@@ -271,6 +295,29 @@ public sealed class BombTacticsTests
 
         Assert.Equal(80, _tactics.Imagination.TurnStarted(fight, enemy.Id, 2).Find(enemy.Id)!.Life);
         Assert.Equal(100, _tactics.Imagination.TurnStarted(fight, 1, 2).Find(enemy.Id)!.Life);
+    }
+
+    [Fact]
+    public void AWallKeepsStrikingAnEnemyLikelyToStayOnItItsBlowsRisingWithItsBombsCombos()
+    {
+        // Measured (D288): a monster whose turn began beside an enemy ended it there 82 times of 122, 21 of 989 otherwise; and
+        // (9f3) every bomb's combo rose 20 as its summoner's turn began, raising its wall's blow by their half. In a fight
+        // foreseen to last 4 rounds, the wall strikes again in the 3 after its sure blow.
+        var enemy = Enemy(-1, Off(3, 0)) with { Life = 100 };
+        var bombs = new[] { BombAt(-10, Off(1, 0)), BombAt(-11, Off(5, 0)) };
+        var knowledge = new FightKnowledge { Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(1, [Level(_spells, Throw)]).Add(enemy.Id, []) };
+        var beside = new ImaginedFight { Map = Open(), Fighters = [Rogue() with { Cell = Off(3, 1) }, .. bombs, enemy], ActorId = 1, Round = 1 };
+        var away = beside.With(beside.Actor with { Cell = Off(0, 3) });
+        var judge = _tactics.JudgeOf(beside, knowledge, TacticWeights.Default);
+        double Strikes(double stays)
+        {
+            return (stays * 1.2) + (stays * stays * 1.4) + (stays * stays * stays * 1.6);
+        }
+
+        var lasting = 0.8 * TacticWeights.Default.Approach * 20 * (Strikes(82.0 / 122) - Strikes(21.0 / 989));
+
+        Assert.Equal(80, _tactics.Imagination.TurnStarted(beside, enemy.Id, 2).Find(enemy.Id)!.Life);
+        Assert.Equal(lasting, judge.Judge(beside) - judge.Judge(away), 6);
     }
 
     [Fact]

@@ -36,6 +36,11 @@ internal static class FightsCommand
         {
             Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206).",
         };
+        var enemyLife = new Option<double>("--enemy-life")
+        {
+            Description = "With --turns, multiplies the life of the characters' enemies in the fights the AI plans, for fights against bigger enemies than those captured (D288). Defaults to 1.",
+            DefaultValueFactory = _ => 1,
+        };
         var live = new Option<bool>("--live")
         {
             Description = "Counts what D3B did in the fights instead: who played each, how it ended, and what came of the AI's requests (D206).",
@@ -47,15 +52,16 @@ internal static class FightsCommand
             version,
             details,
             turns,
+            enemyLife,
             live,
         };
 
-        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(data)?.FullName ?? PackLocations.DefaultRoot, result.GetValue(version), result.GetValue(details), result.GetValue(turns), result.GetValue(live)));
+        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(data)?.FullName ?? PackLocations.DefaultRoot, result.GetValue(version), result.GetValue(details), result.GetValue(turns), result.GetValue(enemyLife), result.GetValue(live)));
 
         return command;
     }
 
-    private static int Run(string[] paths, string root, string? version, bool details, bool turns, bool live)
+    private static int Run(string[] paths, string root, string? version, bool details, bool turns, double enemyLife, bool live)
     {
         var client = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ankama", "Dofus-dofus3");
         var build = version is null ? ClientBuild.Read(client) : ClientBuild.Parse(version);
@@ -90,7 +96,7 @@ internal static class FightsCommand
         var maps = new GameMaps(pack);
         var translation = ProtocolTranslation.Create(ProtocolSchema.Load(schemaPath), MappingFile.Read(mappingPath));
         var bench = new CastBench(tables, maps, details ? Console.Out : null);
-        var turnBench = new TurnBench(tables, maps, TacticWeights.Default, TurnSearchLimits.Default);
+        var turnBench = new TurnBench(tables, maps, TacticWeights.Default, TurnSearchLimits.Default, enemyLife);
         var liveBench = new LiveBench();
         var huntBench = live ? new HuntBench(tables, maps) : null;
         var failed = 0;

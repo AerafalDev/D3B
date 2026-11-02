@@ -34,7 +34,8 @@ namespace D3B.Engine.Tactics;
 /// and never worth more than its life, its kill counted once, since one Détonateur sets their chain off (9f4).</description></item>
 /// <item><description>A mark of a side struck as a turn begins, a glyph or a bombs' wall, on a fighter of the other: what it
 /// takes off an enemy as its next turn begins, as sure as a blow struck now, or what it takes from an ally, as the threat
-/// is (9f4).</description></item>
+/// is (9f4). On an enemy, it strikes again at each round it lasts, a wall while its bombs live, up to the rounds the fight is
+/// foreseen to last still, each blow as likely as the enemy stays there, and worth as a buff's damage is (D288).</description></item>
 /// </list>
 /// <para>
 /// A fighter's best turn's damage on another comes from its spells as the knowledge lists them, each effect that damages at
@@ -59,8 +60,10 @@ public sealed class FightJudge
     private const double AliveShare = 0.5;
     private const double KillTurns = 1.5;
 
-    // Measured (9f3): every bomb's combo rose a level, 20, as its summoner's turn began.
+    // Measured (9f3): every bomb's combo rose a level, 20, as its summoner's turn began, from Combo I to Combo XV at most.
     private const int NextCombo = 20;
+    private const int MostCombo = 14 * NextCombo;
+    private const double Percent = 100;
 
     // A summon's life is worth nothing of itself: what it shields its side from is in the threat, what it deals in its being
     // alive. Measured (D270): worth a tenth of an ally's, the AI planned 201 summons on the turns its players summoned 42,
@@ -75,6 +78,11 @@ public sealed class FightJudge
 
     // A point of damage the side playing deals more is worth about what an enemy's point of life costs (Cost).
     private const double DamageWorth = 0.8;
+
+    // Measured (D288): of the monsters that move, 82 of the 122 whose turn began beside an enemy ended it where it began, 21
+    // of the 989 others; a mark keeps striking the enemy only as long as it stays.
+    private const double StaysBeside = 82.0 / 122;
+    private const double StaysAway = 21.0 / 989;
 
     private const int ActionPoints = 1;
     private const int MovementPoints = 23;
@@ -461,7 +469,7 @@ public sealed class FightJudge
 
         var next = nextTurn > 0 ? nextTurn : Approach(fight);
 
-        return Standing(fight) + (_weights.Approach * next) + (fight.Buffs.IsEmpty ? 0 : Lasting(fight));
+        return Standing(fight) + (_weights.Approach * next) + (fight.Buffs.IsEmpty ? 0 : Lasting(fight)) + Lingered(fight);
     }
 
     /// <summary>Gets what a fight is worth as it stands for the fighter playing's side: its fighters' life and being alive, less what the enemies' cost.</summary>
@@ -617,6 +625,8 @@ public sealed class FightJudge
 
         if (threatened)
             worth += Promised(fight, sure, feared);
+        else
+            worth += Lingered(fight);
 
         for (var index = 0; index < fight.Fighters.Length; index++)
         {
@@ -816,6 +826,7 @@ public sealed class FightJudge
         // The marks on an enemy strike it as its turn begins, as sure as a blow now; those on an ally are feared as the
         // enemies' blows are.
         var worth = 0.0;
+        var walls = WallsOf(fight);
 
         for (var index = 0; index < fight.Fighters.Length; index++)
         {
@@ -824,7 +835,7 @@ public sealed class FightJudge
             if (!fighter.IsAlive || fighter.Cell is Combatant.NoCell)
                 continue;
 
-            var marked = Marked(fight, fighter);
+            var marked = Marked(fight, fighter, walls);
 
             if (fighter.Team == _team)
             {
@@ -839,10 +850,92 @@ public sealed class FightJudge
             var life = Effective(fighter);
 
             sure[index] = Math.Min(marked, life);
-            worth += Taken(fighter, IndexOf(fighter), life, sure[index]);
+            worth += Taken(fighter, IndexOf(fighter), life, sure[index]) + Lingering(fight, fighter, walls, marked, life - sure[index]);
         }
 
         return worth;
+    }
+
+    private double Lingered(ImaginedFight fight)
+    {
+        // Once the enemies replied, their first blow from the marks is in their life: the rounds that follow are left.
+        var worth = 0.0;
+        var walls = WallsOf(fight);
+
+        foreach (var enemy in fight.Fighters)
+        {
+            if (!enemy.IsAlive || enemy.Team == _team || enemy.Cell is Combatant.NoCell)
+                continue;
+
+            var marked = Marked(fight, enemy, walls);
+
+            if (marked > 0)
+                worth += Lingering(fight, enemy, walls, marked, Effective(enemy));
+        }
+
+        return worth;
+    }
+
+    private double Lingering(ImaginedFight fight, Combatant enemy, List<BombWallCell> walls, double strike, double life)
+    {
+        // The rounds after the next a mark strikes the enemy again, up to the rounds the fight is foreseen to last still: a
+        // wall's while its bombs live, which the judge cannot foresee, its blow raised as its bombs' combos rise each round; a
+        // glyph's until it goes, the first to go of those on the enemy bounding them. Each blow is as likely as the enemy stays
+        // on the mark through its turns before, and is worth what a buff's damage is (Lasting).
+        var rounds = _rounds - 1;
+        var glyphed = false;
+
+        foreach (var mark in fight.Marks)
+        {
+            if (mark.Kind is CellMarkKind.TurnStart && mark.Team != enemy.Team && mark.Covers(enemy.Cell))
+            {
+                rounds = Math.Min(rounds, mark.EndRound - fight.Round - 1);
+                glyphed = true;
+            }
+        }
+
+        if (rounds <= 0 || strike <= 0 || life <= 0)
+            return 0;
+
+        var combo = glyphed ? -1 : WallCombo(fight, enemy, walls);
+        var stays = Stays(fight, enemy);
+        double strikes = 0, kept = 1;
+
+        for (var round = 1; round <= rounds; round++)
+        {
+            kept *= stays;
+            strikes += combo < 0 ? kept : kept * (Percent + Math.Min(MostCombo, combo + (NextCombo * round))) / (Percent + combo);
+        }
+
+        return DamageWorth * _weights.Approach * Math.Min(strike * strikes, life);
+    }
+
+    private static int WallCombo(ImaginedFight fight, Combatant enemy, List<BombWallCell> walls)
+    {
+        // The combo of the other side's wall on the enemy's cell, its two bombs' halved; none when no wall is there.
+        foreach (var wall in walls)
+        {
+            if (wall.Cell == enemy.Cell && fight.Find(wall.SummonerId) is { } summoner && summoner.Team != enemy.Team)
+                return wall.Combo;
+        }
+
+        return -1;
+    }
+
+    private double Stays(ImaginedFight fight, Combatant enemy)
+    {
+        var known = IndexOf(enemy);
+
+        if (known >= 0 && !_mobile[known])
+            return 1;
+
+        foreach (var other in fight.Fighters)
+        {
+            if (other.IsAlive && other.Team != enemy.Team && other.Cell is not Combatant.NoCell && MapGeometry.Distance(other.Cell, enemy.Cell) is 1)
+                return StaysBeside;
+        }
+
+        return StaysAway;
     }
 
     private double Taken(Combatant enemy, int known, double life, double damage)
@@ -853,11 +946,21 @@ public sealed class FightJudge
         return Cost(enemy, known, life) - (damage >= life ? 0 : Cost(enemy, known, life - damage));
     }
 
-    private double Marked(ImaginedFight fight, Combatant fighter)
+    private List<BombWallCell> WallsOf(ImaginedFight fight)
     {
-        // What the marks of the other side covering its cell take from a fighter as its next turn begins: a glyph, or a wall
-        // of the other side's bombs.
-        if (_imagination is null || !StruckThere(fight, fighter))
+        var walls = new List<BombWallCell>();
+
+        if (_imagination is not null && _bombs is not null && _bombs.Any(fight.Fighters))
+            _bombs.Walls(fight.Map, fight.Fighters, walls);
+
+        return walls;
+    }
+
+    private double Marked(ImaginedFight fight, Combatant fighter, List<BombWallCell> walls)
+    {
+        // What the other side's marks covering its cell take from a fighter as its next turn begins: a glyph, or a wall of its
+        // bombs.
+        if (_imagination is null || !StruckThere(fight, fighter, walls))
             return 0;
 
         var struck = _imagination.TurnStarted(fight, fighter.Id, int.MinValue).Find(fighter.Id);
@@ -865,20 +968,22 @@ public sealed class FightJudge
         return struck is null ? 0 : Math.Max(0, Effective(fighter) - Effective(struck));
     }
 
-    private bool StruckThere(ImaginedFight fight, Combatant fighter)
+    private bool StruckThere(ImaginedFight fight, Combatant fighter, List<BombWallCell> walls)
     {
+        // The other side's marks alone: a wall's masks strike its own side's fighters too, but reckoning them changed no plan
+        // of the captures' and cost the search a seventh of its time (D290); the reply strikes them still.
         foreach (var mark in fight.Marks)
         {
             if (mark.Kind is CellMarkKind.TurnStart && mark.Team != fighter.Team && mark.Covers(fighter.Cell))
                 return true;
         }
 
-        if (_bombs is null || fighter.IsSummon && _bombs.IsBomb(fighter, out _))
+        if (walls.Count is 0 || _bombs is null || fighter.IsSummon && _bombs.IsBomb(fighter, out _))
             return false;
 
-        foreach (var other in fight.Fighters)
+        foreach (var wall in walls)
         {
-            if (other.IsAlive && other.Team != fighter.Team && other.IsSummon && _bombs.IsBomb(other, out _))
+            if (wall.Cell == fighter.Cell && fight.Find(wall.SummonerId) is { } summoner && summoner.Team != fighter.Team)
                 return true;
         }
 

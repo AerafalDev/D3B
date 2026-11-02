@@ -131,6 +131,11 @@ public sealed class Imagination
         return -1;
     }
 
+    private static bool IsFree(FightMap map, List<Combatant> fighters, MapPoint point)
+    {
+        return MapGeometry.TryGetCell(point, out var cell) && IsFree(map, fighters, cell);
+    }
+
     private static bool IsFree(FightMap map, List<Combatant> fighters, int cell)
     {
         if (!map.IsWalkable(cell))
@@ -781,19 +786,32 @@ public sealed class Imagination
         if ((x, y) == (0, 0))
             return;
 
-        var moved = 0;
+        // Measured (D289): a push moves its target as far as its cells, a step along a diagonal of the coordinates as far as
+        // two, as the distance counts it: the 13 pushes of 2 cells along one moved a step, 3 of them with the next cell free,
+        // none dealing push damage. A pull of a cell along one moved a step, 3 times. Such a step passes between two cells'
+        // corners, which must both be free: the 17 that moved had both free, the 8 that did not one taken.
+        var diagonal = x is not 0 && y is not 0;
+        var step = (away || upTo) && diagonal ? 2 : 1;
+        var used = 0;
+        var blocked = false;
         var position = target.Cell;
 
-        while (moved < cells)
+        while (used + step <= cells)
         {
-            var next = new MapPoint(MapGeometry.PointOf(position).X + x, MapGeometry.PointOf(position).Y + y);
+            var here = MapGeometry.PointOf(position);
+            var next = new MapPoint(here.X + x, here.Y + y);
 
             // A pull stops beside the cell it pulls towards, a push to a cell on it; anything else stops it short.
-            if (!MapGeometry.TryGetCell(next, out var nextCell) || !IsFree(map, fighters, nextCell) || (!away && !upTo && nextCell == cell))
+            if (!MapGeometry.TryGetCell(next, out var nextCell) || !IsFree(map, fighters, nextCell) || (!away && !upTo && nextCell == cell)
+                || (diagonal && !(IsFree(map, fighters, new MapPoint(here.X + x, here.Y)) && IsFree(map, fighters, new MapPoint(here.X, here.Y + y)))))
+            {
+                blocked = true;
+
                 break;
+            }
 
             position = nextCell;
-            moved++;
+            used += step;
 
             if (walls is not null && walls.Exists(wall => wall.Cell == nextCell))
                 break;
@@ -801,8 +819,8 @@ public sealed class Imagination
 
         target = target with { Cell = position };
 
-        if (away && !harmless && moved < cells && walls?.Exists(wall => wall.Cell == position) is not true)
-            target = Hurt(target, EffectFormulas.PushDamage(cells - moved, caster, caster.Level, target));
+        if (away && !harmless && blocked && walls?.Exists(wall => wall.Cell == position) is not true)
+            target = Hurt(target, EffectFormulas.PushDamage(cells - used, caster, caster.Level, target));
 
         fighters[index] = target;
     }

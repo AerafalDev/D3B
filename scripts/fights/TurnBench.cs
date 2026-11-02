@@ -40,13 +40,14 @@ internal sealed class TurnBench
     private readonly EffectActions _actions;
     private readonly TacticWeights _weights;
     private readonly TurnSearchLimits _limits;
+    private readonly double _enemyLife;
     private readonly Dictionary<long, FightMap> _fightMaps = [];
     private readonly List<double> _searches = [];
     private readonly Dictionary<string, double> _sums = new(StringComparer.Ordinal);
 
     public Tally Tally { get; } = new();
 
-    public TurnBench(GameTables tables, GameMaps maps, TacticWeights weights, TurnSearchLimits limits)
+    public TurnBench(GameTables tables, GameMaps maps, TacticWeights weights, TurnSearchLimits limits, double enemyLife = 1)
     {
         _tables = tables;
         _maps = maps;
@@ -54,6 +55,7 @@ internal sealed class TurnBench
         _actions = new EffectActions(tables.Effects);
         _weights = weights;
         _limits = limits;
+        _enemyLife = enemyLife;
     }
 
     private static double Effective(Combatant fighter)
@@ -202,7 +204,20 @@ internal sealed class TurnBench
         if (!_fightMaps.TryGetValue(mapId, out var map))
             _fightMaps[mapId] = map = FightMap.Of(data);
 
-        return ImaginedFights.Of(state, map, _tables, _tactics.Blows, turnPoints);
+        var imagined = ImaginedFights.Of(state, map, _tables, _tactics.Blows, turnPoints);
+
+        if (imagined is not { } found || _enemyLife is 1)
+            return imagined;
+
+        // The captured fights against enemies of more life, which no capture holds (D288): what the AI plans then.
+        var team = found.Fight.Actor.Team;
+
+        return (found.Fight with { Fighters = [.. found.Fight.Fighters.Select(Bigger)] }, found.Knowledge);
+
+        Combatant Bigger(Combatant fighter)
+        {
+            return fighter.Team == team ? fighter : fighter with { Life = (int)(fighter.Life * _enemyLife), MaxLife = (int)(fighter.MaxLife * _enemyLife) };
+        }
     }
 
     private void Plan(Turn turn)
