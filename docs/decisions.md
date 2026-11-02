@@ -2682,7 +2682,7 @@ D93 left an activity's settings to 5b and 5c, and 5b did not write them.
 
 *2026-10-29, step 5, session 5c; both layouts chosen by the owner among mockups. Supersedes D96 in part: the rail
 shows always. Builds D94, D96, D99. Its editor grown by D127: tiles, a zone's mini-map, figures, bars and segments. Superseded in part by D159
-and D162: the editor on a page of its own, deleting asked in a dialog.*
+and D162: the editor on a page of its own, deleting asked in a dialog. Its profiles' page superseded by D351 and D352.*
 
 - **The rail** shows always: the bots, the accounts, the profiles, a line once a module registered a page, then the
   modules' pages (D96). Its icons are the app's own line drawings.
@@ -2938,7 +2938,8 @@ Measured on a client of 3.7.12.12 through the app, in two runs, the scripts' fol
 ## D111: The logs and the protocol inspector, two pages of the rail
 
 *2026-10-29, step 5, session 5e; the layout chosen by the owner among three mockups, the filters as the lead proposed
-them, chosen by the owner. Builds D92, D101. Superseded in part by D162: a selector in place of the chips, one toolbar.*
+them, chosen by the owner. Builds D92, D101. Superseded in part by D162: a selector in place of the chips, one toolbar.
+Superseded by D353: tabs of the bottom panel.*
 
 - **Two pages** in the rail, after the profiles: the logs, and the protocol inspector. They look at one bot
   (`BotChoice`): chosen on either, it is the other's. A bot's card has a journal button, beside its connection, which
@@ -3714,7 +3715,7 @@ Measured on a client of 3.7.12.12 through the app, captures on, the owner's prof
 
 *2026-10-29, step 6, session 6c; the owner asked for longer delays, the bots doing "anything" on small machines, then for
 a page holding every delay. Builds D77, D132. Superseded in part by D162: the language and the theme on the settings
-page alone.*
+page alone. Its page superseded by D354: a tab in sections.*
 
 - **Why**: D3B waits half a second after the server placed the character on a map before acting (D77), and half a second
   for a window to show before closing it (D132), both measured on the owner's machine. On a slower one the client has not
@@ -3855,7 +3856,7 @@ guild's chest chosen, bags opened, healing under 80 % with Carasau:
 
 *2026-10-29, step 6, session 6d; the editor chosen by the owner among three mockups, as the lead recommended it, the
 owner asking for toasts, dialogs and the resources' modes (D160); the scale the lead's. Supersedes D101's editor unfolded
-in place. Builds D127, D155.*
+in place. Builds D127, D155. Superseded by D352: a tab per profile.*
 
 - **What the survey found**, every page drawn without a screen in both languages and themes and the app run on the owner's
   data: no scale, 20 spacings, some 30 paddings, 13 radii, icons in 7 sizes and 10 font sizes; the same classes redefined
@@ -7624,6 +7625,151 @@ theme.*
   that remain removed.
 - **Not checked** on a real window: the cards, the right click's menu, the inspector's edge and the tab under a real
   pointer and a live client; the owner's look at the running app.
+
+## D349: 7c4 as the owner asks it, the trace recorded by the runtime
+
+*2026-11-03, step 7, session 7c4, the owner's choice on what 7c left open. Builds D319, D326, D327, D329, D330.*
+
+- **Asked**: the assets' tree, which chooses an asset for the inspector (D326); the bottom panel drawn again, the trace
+  in place of the journal behind a character's "Voir la trace" (D327); the settings in sections (D329); a profile's
+  editor in a tab (D330); the pages of D101 and D162 that remain removed, nothing they do lost, Lucide's icons with them.
+- **The trace is recorded by the runtime**: the owner's choice among a trace the runtime keeps, one read from the journal
+  and one left for 7g, as the lead recommended it. The journal says what the bot did, never what the behavior weighed or
+  why a state was chosen; read from it, the trace would have been the journal filtered.
+
+## D350: The trace, a line per decision of a behavior's run
+
+*2026-11-03, step 7, session 7c4, the lead's. Makes D349. Builds D315, D341.*
+
+- **`BotActor.Trace`**, a `RecentItems<TraceEntry>` of 1,000 lines beside the journal: each line when, the run it belongs
+  to (when it began), the behavior, the state playing, what was done (`TraceKind`) and how it ended (`TraceOutcome`).
+- **What `BehaviorActivity` writes**: a state entered, or the run waiting when none holds; an urgent state that cut the
+  step; a rule whose event happened and conditions held, played or failed; each step of an action or an activity played,
+  done, cut or failed, with the node's sentence or the activity's name and what the activity said it does once its step
+  was played; a threshold the activity playing watches (D341), said once as a state begins and then only as it comes to
+  hold or stops holding, never at each of the bot's moves.
+- **The step in flight**, which a cut or a failure ends, is the visit's (`StateVisit.InFlight`); a failure is traced by an
+  exception filter that never catches, so that the step's exception goes on as it was.
+- 7g's history (D302) reads the same lines.
+
+## D351: The assets' tree and the project's folders
+
+*2026-11-03, step 7, session 7c4, the lead's. Makes D326. Builds D296, D314.*
+
+- **`AssetLibrary`** lists the project's folders, the empty ones included (`Folders`), makes one (`CreateFolderAsync`),
+  saves a new asset in a folder, moves an asset with its file (`MoveAsync`), imports an asset's file under a new id when
+  its own is taken (`ImportAsync`), writes one elsewhere (`ExportAsync`) and says where its file is (`FileOf`). A folder
+  never leaves the project's.
+- **The tree** (`AssetsViewModel`, `AssetsView`): the project's folders, their own folders first, then their assets and
+  the files that do not read, in red with the reason in a tooltip; then "Donnés avec D3B", read only. Each kind has its
+  IntelliJ icon on its colour's dark tint, the same in the tree, the search and the Add menu: behavior
+  `toolwindows/hierarchy` blue, profile `nodes/template` violet, route `general/vcs` teal, zone `actions/selectAll` green,
+  list `general/listFiles` amber, planning `actions/stopWatch` light blue, fight preferences `nodes/securityRole` red.
+  Beside each, how many assets and characters use it; a dot on one whose tab has changes not saved.
+- **The search** keeps what holds its text, lit, its folders unfolded to it. **A click** chooses an asset for the inspector
+  or folds a folder; **a double click** or Enter opens a profile in its tab; the other kinds' editors come with their
+  sessions, their row chosen. **The right click**: open, used by (the inspector, opened), rename in place (F2), duplicate
+  (Ctrl D), move to a folder, export, show in the folder, delete after a question (Delete); a given asset is copied into
+  the project instead.
+- **Add** offers the profile, which its dialog names and gives an activity as before; behaviors until 7e, routes and zones
+  until 7d, lists and plannings until 7f and fight preferences until 7h are shown disabled with their session, since no
+  editor makes them yet; then a folder, named in place, and an import.
+
+## D352: A profile's editor, a tab of its own
+
+*2026-11-03, step 7, session 7c4, the lead's. Makes D330. Supersedes D159's editor page and D101's profiles page.*
+
+- **A tab per profile**, several open at once, each closed by its ×, which asks first when it holds changes; saved, the
+  tab stays open on what was saved; a dot on the tab and in the tree while changes are not saved; Ctrl S saves them all.
+- **The header**: the kind's square, the name edited in place, "Variante de" the behavior, how many values the profile
+  changes and "Tout remettre"; the menu (duplicate, delete) and Enregistrer. A given profile shows read only, with
+  "Copier dans le projet" in place of saving.
+- **The form**: the sections in a bar that follows the scroll, a dot on those changed; a label and its control on a grid,
+  the help in a tooltip on a mark beside the label; a value that differs from the behavior's bold, with a bar in the
+  margin and an amber arrow that gives the behavior's value back, field by field (`SettingFieldViewModel.IsChanged`,
+  `SettingsEditor.Defaults`); professions as tiles, sub-areas as tokens, shares as sliders. Below 560 pixels, the labels go
+  above their control.
+- **The preview** beside, 280 pixels: the zone, its legend and its figures, three a row; who plays the profile, with what
+  it gives each.
+- **The page goes**, nothing lost: the cards' settings at a glance and players are in the inspector's uses and used by;
+  a new profile from Add, File or Ctrl N; a profile to review says why in its tab.
+
+## D353: The bottom panel drawn again
+
+*2026-11-03, step 7, session 7c4, the lead's. Makes D327. Supersedes D111's logs and inspector pages and D146's statistics
+page.*
+
+- **The panel** (`BottomPanelViewModel`, `BottomPanelView`): its tabs, then each tab's toolbar of drop-downs, segments,
+  a filter and tools, as the mockup's; the problems' tab shows its errors in red and warnings in amber. Only the tab shown
+  reads the host, and only while the panel is open.
+- **Journal**: every source by time, or one bot's; Tout, Infos, Avertissements, Erreurs; a filter, following, copying.
+  Each line its time, its level's icon, its source with its class's head (the host's "H"), its text. What a line names
+  is not yet a link: the journal's lines hold no target.
+- **Trace** (`TraceViewModel`, D350): the chosen character's, else the first online; its behavior and runs, "Run en cours"
+  or "Run de 14:30", the newest line first, each its time, its state with a dot (green playing, grey for the layer
+  Always, red for an urgent cut), what was weighed or played in plain words ("Pods ≥ 90 % → Banque", "Entre dans
+  Récolter", "Coupé pour Soin") and how it ended, Joué, Terminé, Oui, Non, Interrompu or Échoué. A character's tab's
+  "Voir la trace" opens it on that character.
+- **Problems** (`ProblemsViewModel`): by origin, Projet, Personnages, Hôte; a file of the project that does not read,
+  "Ouvrir le dossier"; a character D3B knows with no profile or whose profile is gone, "Choisir un profil", which chooses
+  it for the inspector; the host's failure and its warnings and errors, each said once, the last 50. The mockup's missing
+  level is left: the professions' levels the profile asks are the zone's preview's to say.
+- **Protocol**: a character's frames live or a capture, Tout, Envoyés, Reçus, a name filter, those the readable protocol
+  does not read shown or hidden, frozen on demand; a frame unfolded in place, its name in italics when unread.
+- **Statistics**: by character and period, a card of the resources, their total, time and rate an hour, each with its
+  bar, and the levels gained; a card of the runs, each its character's head, its profile, its times and how long it
+  lasted, the one going on green, a failed one red.
+
+## D354: The settings, a tab in sections
+
+*2026-11-03, step 7, session 7c4, the lead's. Makes D329. Supersedes D151's settings page.*
+
+- **The tab**: a column of sections, 220 pixels, under a search that keeps only the rows whose title or line holds its
+  text, the section shown moving to the first that does; Bots, Réseau, Apparence, Fichiers and À propos, each with its
+  IntelliJ icon, a dot on one whose values differ from their defaults. The body, 720 pixels at most: the section's title,
+  a line saying what it is for, its groups of rows, each a title, a dim line and its control on the right.
+- **Bots**: the client's display time, a slider from 0.5 to 3 s; the bots' delays, then the relay's under "Au prochain
+  démarrage", each a box with − and +, its default in its line, "Tout remettre par défaut" once one differs. The delays
+  stay in seconds, as their model and bounds are: the relay's reach 60 s, which milliseconds would make five figures.
+  What the page did stays: the bots' delays at once, the host's raised ones shown once it runs, the measured defaults.
+- **Réseau**: the captures, a checkbox with its badge and whether the host records now; their folder, copied or opened.
+- **Apparence**: the language as two segments; the layout given back, `StudioLayout.Reset`.
+- **Fichiers**: the project, the database, the client's data and the app's preferences, each a path copied or opened.
+- **À propos**: the logo, the version, the client build, the update with its button; the licences, which open
+  `THIRD-PARTY-NOTICES.md` beside the app, or the repository's when run from its code.
+- **A value changed** shows a bar in the margin and an amber arrow giving its default back. A setting the search finds
+  opens its section (`SettingsViewModel.Show`). Its view models are in `D3B.App.ViewModels.AppSettings`, apart from the
+  profile editor's fields in `D3B.App.ViewModels.Settings`.
+
+## D355: The pages of D101 and D162 removed, Lucide's icons with them
+
+*2026-11-03, step 7, session 7c4, the lead's. Makes D319's ask. Supersedes D161.*
+
+- **Gone**: the profiles' page (`ProfilesView`) for the assets' tree and a profile's tab (D351, D352); the logs', the
+  protocol's and the statistics' pages drawn again as the bottom panel's tabs (D353); the settings' page as a tab in
+  sections (D354). The accounts' and the map's pages went at 7c3 (D344, D346). The modules' pages stay in the editor's
+  tabs (D333).
+- **Lucide's icons** (`Themes/Icons.axaml`, D161) go, the converter that named them (`IconOf`), the journal's marks
+  (`LogMark`) and the empty state (`EmptyState`) no view draws any more: every icon is IntelliJ's (D331, D337) or the
+  game's own (D336). `Icon` still draws a geometry, a module page's own icon. The mockup keeps Lucide's, under their
+  licence in `THIRD-PARTY-NOTICES.md`.
+- **`scripts/icons.cs`** takes 75 icons, the 26 the new views draw added, each file's notice checked.
+
+## D356: 7c4, what it leaves
+
+*2026-11-03, step 7, session 7c4.*
+
+- **Done**: the owner's choice of a trace the runtime records (D349, D350); the assets' tree and the project's folders
+  (D351); a profile's editor in a tab (D352); the bottom panel (D353); the settings in sections (D354); the pages and
+  Lucide's icons removed (D355). The pieces compared with the mockup, the app drawn by Skia in the tests. Made in three
+  parts, the lead's and two of its forks, each in a worktree of its own, merged on the session's branch.
+- **To publish**, each on the owner's go, as 7c3 left them: the pack of 3.7.12.12 in format 9 and its mapping in format
+  16, then a release of the app.
+- **Left**: the journal's links to what a line names; the problems' missing level; an asset's folder renamed or deleted
+  from the tree, done in the system's file manager meanwhile; a profile renamed in the tree while its tab holds changes
+  keeps the tab's name, which its next save writes.
+- **Not checked** on a real window: the tree's drag-free moves, rename in place and menus, the profile tab's sections'
+  bar under a real scroll, the file pickers, the bottom panel's menus; the owner's look at the running app.
 
 ## Open questions
 
