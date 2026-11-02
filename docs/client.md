@@ -18,7 +18,8 @@ Its fights were measured on 2026-10-30 for session 9a, on the wire ([the game, f
 casts against D3B's rules for session 9c ([the game, cast](#the-game-cast)), and what each did against D3B's effects for
 session 9d ([the game, foreseen](#the-game-foreseen)), and the states its spells ask for session 9f
 ([the game, masked](#the-game-masked)). Its NPCs' dialogs and transports were measured on 2026-11-01 for session 9g3
-([the game, through an NPC](#the-game-through-an-npc)).
+([the game, through an NPC](#the-game-through-an-npc)). What its items heal, the walks it does not follow and a hunt's
+journeys were measured on 2026-11-02 for session 9g5 ([the game, kept on its way](#the-game-kept-on-its-way)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -283,8 +284,9 @@ a text in French and English. `typeId`, a `UInt16`, names 229 of the 236 types; 
 client lacks. `level`, a `UInt8`, from 0 to 200. `realWeight`, a `UInt16`, is the weight of one item in pods: 26
 values from 0 to 20,000, 0 or 1 on 77% of items. `m_flags`, a `UInt16`, sets bits 0 to 11, bit 10 on 96% of items;
 which bit means what is not measured, the client's code naming bit 10 saleable ([Fights' tables](#fights-tables)). `iconId` names the item's icon ([Icons](#icons)): 11,756 distinct over the items.
-The pack keeps the id, name, type, level, weight and icon, 17 bytes an item; effects, recipes, drops, criteria and
-`m_flags` are left out (D29, D139).
+The pack keeps the id, name, type, level, weight and icon, and from format 8 the life one use gives back when that is
+all it does, 21 bytes an item ([the game, kept on its way](#the-game-kept-on-its-way)); the other effects, recipes,
+drops, criteria and `m_flags` are left out (D29, D139, D257).
 
 **Weapons**, measured for session 9e3 (D218, D219), kept from format 6 in their own entry: 769 of 13 types, each of super
 type 2, the only types of it. A weapon names its effects by reference, in the table's registry. AP 4 on 386, 3 on 201, 5
@@ -1765,6 +1767,35 @@ never an actor's id or name.
   before D253, the bot paused by that leaving, once after, the bot walking on 0.5 s after the map's information.
 - **Reached.** From Incarnam's arrival, every transition followed whose criterion a character of level 1 with nothing
   meets: 77 maps of the graph without the portal; with it, 530 without a subscription and 5,420 with one.
+
+### The game, kept on its way
+
+Measured on 2026-11-02 for session 9g5 (D257 to D261): the client 3.7.12.12's items and effects, then 4 game connections
+the owner captured with the app, a Zobal of level 45 hunting then harvesting, a Xelor hunting, a Huppermage of level 21
+harvesting, and the 13 of 9g2 to 9g4 D3B played, with `scripts/fights.cs` and measuring tools never committed that print
+counts, timings and the client's ids, never an actor's id or name.
+
+- **What heals.** Effect 110, "Rend #1 à #2 points de vie", is on 294 items, 211 of which do nothing else but give back
+  energy (139) and say they are bound (981) or exchangeable (983): 97 primitive meats (type 187), 31 candies (42), 20
+  breads (33), 18 meats (69), 18 fishes (49), 14 potions (12), 10 drinks (79), 2 usable objects (94) and 1 preparation
+  (179); 178 write a single value in `diceNum`, `diceSide` 0, and the largest heals 2,000. The 83 others also give
+  characteristics for good (606 to 611), items (193, 209), launch a fight (905) or change something else. Recall potions
+  are type 43, "Potion de téléportation", effect 600; type 12 holds the potions changing a class, a sex or a name (854,
+  852, 850).
+- **The life after a fight.** The server gave the regeneration's interval, 5, after every fight, as before (D153). A lost
+  fight left the character at half its most life, 138 of 275, every time, then back at its save point, Astrub's temple.
+- **Walks the client does not follow** (D260). Of the 734 walks D3B sent outside fights in the 17 game connections, the
+  client did not follow 45: 36 of the 39 ending on the cell the character's previous walk ended on, on that map or the
+  one before, against 9 of the 695 others. The same request from the client, byte for byte, was followed where D3B's was
+  not. The time since the map's information, 0.50 to 0.52 s for both, the path's length, turning points and corners, the
+  cells' data and the actors on the map told them apart in nothing. The client's own 28 walks were all followed.
+- **Hunting** (D259). 13 attacks of D3B's in sub-area 30, all accepted after one walk, 11 fights won in a row, 5.9 s
+  halfway from a fight's end to the next attack, 18 s at 90 %; the first, before any fight, on a group of 8, lost. From
+  Astrub's temple to the zone, 16 maps of groups of levels 11 to 20, crossed twice.
+- **The Zobal's masks** (D261). 61 turns of 14 fights: a mask first 12 times, 11 of them before a spell it opens; last
+  22 times, 16 of them before the next turn's first cast asking it; Furia cast 18 times.
+- **A mine.** The miner's automatic place led into rooms of four doors and no ore, each offering skill 339 alone, the
+  same cells on every room.
 
 ## Protocol code
 

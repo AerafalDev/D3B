@@ -147,7 +147,9 @@ resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D
 the switch, the monster groups on a map and the fighting activity; in session 9g2 (D244 to D249), the strategies removed,
 one AI for every character, the fighting activity's sub-areas suggested by its monsters, isolated maps, place, preview
 and families of monsters, every interactive transition followed, refused teleports remembered, and groups judged over the
-fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarnam's portal first.
+fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarnam's portal first; in session 9g5 (D257 to
+D260), the food the inventory holds, the regeneration back to the share, a hunt's journey stopping on its zone's maps, and
+no walk ending where the previous one did.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -182,13 +184,15 @@ fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarna
   ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character
   on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85); the server may still hold it, and
   refuses what is not a walk from there, so a step aside comes first (`MapWalk.ReleaseHeldWalkAsync`, D89). A walk of no
-  step is never sent: the server closes the connection of one.
+  step is never sent: the server closes the connection of one. The client does not follow a walk ending on the cell its
+  previous walk ended on, even on another map (D260): the state keeps that cell (`CharacterState.LastWalkEnd`), and such a
+  walk goes in two, to the path's cell before its last, or a step aside first when it has one step.
 - **Using an element** (D75): `ElementUse`, in `D3B.Bot.Interactives`, walks to the nearest cell the client uses the
   element from, asks for the skill by the id the server gave it on the element, and waits for the start or the refusal,
   then for the end of a use that lasts, such as a harvest. Nothing is sent for an element the map does not offer the
   skill on; the character walking or using answers `Busy`.
 - **Changing maps** (D73, D76): `MapChange` follows one step of a path through the world. It walks to the nearest cell
-  the map is left from, then asks for the neighbour, walks onto a map action's cell, or uses a door, and waits for the
+  the map is left from, another than the one its previous walk ended on when there is one (D260), then asks for the neighbour, walks onto a map action's cell, or uses a door, and waits for the
   new map, then for what is on it, which the client asks for. The server answers nothing to a change it refuses, which
   ends after its delay, and refuses a door's use with an event. A teleport (D83) is one request from where the character
   stands, refused with an error text (D84); `MapChange.LeaveHavenBagAsync` leaves the character's haven bag, back to the
@@ -202,7 +206,8 @@ fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarna
   refuses from a map is never asked from it again for the bot's life (`BotActor.NoTeleportFrom`, D248), nor an NPC's way
   whose dialog offered none of its replies (`BotActor.NoNpcWays`, D253). The bots' pathfinder goes through the ways
   through an NPC's dialog measured in game (`NpcWays.Measured`), which `Bots` gives it. A journey from the
-  character's haven bag leaves it first. The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
+  character's haven bag leaves it first. An activity may end a journey on a map it reaches where it has work, its
+  information received (D259). The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
   on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83). A teleport counts as as many map changes as
   the running activity says (`BotActivity.TeleportChanges`, `WorldPathRules.TeleportChanges`), so that a zaap is taken only
   when it saves that many, and never on a tie with a walk (D167).
@@ -251,7 +256,9 @@ fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarna
   a later visit; a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
   and waits for the first rather than D128's minute (D145). Before a step, the activity opens a resource bag and, under its
   share of life, eats the profile's food in one request (`ObjectUse.UseObjectsAsync`, the life reckoned by `BotActor.LifeAt`,
-  D148, D153, D156); full, it may deposit in the guild's chest (`GuildChest`, D147), what the chest leaves going to the
+  D148, D153, D156), or with none chosen the stack that heals the least of those whose use only heals, by the pack
+  (`Food.StackToEat`, D257), until its life is whole; with nothing to eat, it regenerates back to its share alone, looking
+  at its life each 10 seconds at least (D258); full, it may deposit in the guild's chest (`GuildChest`, D147), what the chest leaves going to the
   character's own. Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
   An activity gives its figures (`BotActivity.Statistics`,
   `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146).
@@ -295,13 +302,14 @@ fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarna
   fight" says, a lost fight as "After a lost fight" says, resumed once its life is regained, three in a row ending it. The
   bot remembers the character as its last fight's placement showed it (`BotActor.LastFighter`). The strategies of 9g, a
   profile each character played, are gone (D244).
-- **Fighting** (D236, D241, D245 to D249), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
+- **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), and the AI judges it beats
   (`GroupJudge`, the group's fight imagined from the pack's grades and `BotActor.LastFighter`, over its course, only a group
   that would beat the character four times faster turned away, D249),
   and sends `AttackMonsterRequest`, measured from the group's own cell (D239); a group the server answers nothing for is left
-  for the visit. Else it travels to the nearest map of the zone left, isolated maps last when the settings take them
+  for the visit. Else it travels to the nearest map of the zone left, stopping on the first map of the zone on its way
+  that holds such a group, gone through or not (D259), isolated maps last when the settings take them
   (`HuntingGround`: the sub-areas chosen, or the one whose monsters are worth the most at the character's level among
   those of at least 10 maps on a world map; the maps reached only far round left out, `IsolatedMaps`, shared with
   harvesting's zone), the tour starting again once every map was. Its fights are its own, the AI playing them; it counts
@@ -445,13 +453,14 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 7 holds (D27, D29, D139, D182, D219, D237, D238):
+- A pack of format 8 holds (D27, D29, D139, D182, D219, D237, D238, D257):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
     of map positions, sub-areas with their resources and the monsters the client lists in them, areas and zaaps
     (`WorldAtlas`, `MonstersOf`, D238), both read once by `GameWorld`;
-  - the game tables a harvesting and banking bot uses: items and their types (`ItemCatalog`), jobs and skills
+  - the game tables a harvesting and banking bot uses: items and their types, and the life an item's use gives back
+    when that is all it does (`ItemCatalog`, `Item.Heals`, D257), jobs and skills
     (`JobCatalog`), interactives (`InteractiveCatalog`), banks and bankers with the replies that open the bank
     (`BankCatalog`), each read once by `GameTables`; items and jobs name their icon;
   - the weapons, each with its fight fields and effects, and the zone of each type of weapon as the client writes it
@@ -769,7 +778,10 @@ monster groups on a map, mapping format 14 (D239); measured with `scripts/fights
 owner's asks (D243); the strategies removed, one AI for every character (D244); the fighting activity's sub-areas
 suggested by its monsters, its isolated maps and its place among sub-areas of maps shown (D245). Built in session 9g4: a
 change of the character's states kept in the turn's search, the Zobal's masks put on first to cast their spells (D255, in
-[Engine](#engine)), and what the owner met in game, left to the next session (D256).
+[Engine](#engine)), and what the owner met in game, left to the next session (D256). Built in session 9g5: the food the
+inventory holds, pack format 8 (D257), the regeneration back to the share (D258), a hunt's journey stopping on the first
+map of its zone holding a group it attacks (D259), all in [Bot run time](#bot-run-time); the masks measured in game,
+nothing to change (D261).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
