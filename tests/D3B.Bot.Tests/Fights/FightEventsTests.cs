@@ -271,6 +271,21 @@ public sealed class FightEventsTests
     }
 
     [Fact]
+    public void TheClientPlaysTheTurnOfASummonOfTheCharactersItControls()
+    {
+        // Measured (9f2): the server lets the client play the summons it controls, 20 turns of 6 monsters in the captures.
+        var summoned = Apply(Playing(), Summoned(Summon(Turret, 5_836, 286)), new FightTurnEndEvent { FighterId = Self });
+
+        var controlled = Apply(summoned, new FightTurnEvent { FighterId = Turret, Duration = 150, Round = 1 }, new FightTurnStartPlayingEvent());
+
+        Assert.Equal((Turret, true), (controlled.Fight!.PlayingId, controlled.Fight.IsOwnTurn));
+
+        var free = Apply(summoned, new FightTurnEvent { FighterId = Turret, Duration = 150, Round = 1 });
+
+        Assert.Equal((Turret, false), (free.Fight!.PlayingId, free.Fight.IsOwnTurn));
+    }
+
+    [Fact]
     public void ASummonSummonedAgainUnderAnotherMonsterKeepsItsIdAndTakesTheNewOne()
     {
         // Measured: a turret summoned again under another monster's id, its own id the same, on another cell.
