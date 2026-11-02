@@ -514,7 +514,8 @@ same name at 100 pixels per unit, named by the icon's identifier, which items an
 - **Sizes**, for the 121 items' icons at 1x: 1,982,464 bytes of RGBA, 474,157 compressed by zstd 19 icon by icon, 463,574
   all at once, 500,449 to 620,331 as PNG; at 2x, 1,251,326 compressed. The professions' at 2x: 344,064 bytes of RGBA,
   128,688 compressed.
-- The extractor keeps the items' at 1x and the professions' at 2x, decoded, as raw RGBA (D135 to D137).
+- The extractor keeps the items' at 1x and the professions' at 2x, decoded, as raw RGBA (D135 to D137); since D265, every
+  item's, halved to 32 pixels, each pixel the mean of four weighed by their alpha, the 3 not of 64 pixels in BC7 left out.
 
 ## The pack of 3.7.12.12
 
@@ -1801,6 +1802,37 @@ counts, timings and the client's ids, never an actor's id or name.
   not the bot's. Of the 190 walks D3B sent, none ended where the previous one did, and the client followed 189; the one
   left went back along the previous walk, which another walk in the captures did, followed. A teleport from a room of
   the mine was refused 20 ms after, text 474 of the error kind.
+
+### The game, judged
+
+Measured on 2026-11-02 for session 9g6 (D263 to D265): the 99 game connections of 3.7.12.12, its pack of format 8, the
+client's `Picto/Items` and the 222 graphics the owner's bots learned, with `scripts/fights.cs --live` and measuring tools
+never committed that print counts and the client's ids, never an actor's id or name.
+
+- **The characteristics out of fights and in a fight.** Of 163 fights whose placement showed the character after the
+  server gave its characteristics out of fights, 55 the first of their connection: every characteristic both gave was
+  equal, but 97, the life lacking, 39 times, which regenerated between. The placement's fighter lacks strength,
+  intelligence, chance, agility, the damage bonus, the critical hits, the range bonus, the power and the summons (10, 13
+  to 16, 18, 19, 25, 26), present out of fights, but once. At the character's first turn, 158 fights, the fight gives
+  them, each equal to its value out of fights, the range bonus but 7 times. Never in a fight, even at the first turn,
+  though not zero out of fights: the wisdom (12, 103 times), the heals (49, 60), the critical damage (86, 60), the AP and
+  MP removal (82, 83, 88), the characteristic points, the energy, the pods, the prospecting, the alignment's (3, 29, 30,
+  40, 43, 46 to 48) and 109. AP and MP, 1 and 23, equal at every placement.
+- **The breed** is in no message the readable protocol names out of fights; the spells the server lists are its own.
+- **The groups judged** (D263), with the character from its characteristics out of fights: no group is judged by levels
+  any more. D3B's 60 attacks: 57 judged winnable, all won; 3 turned away, 2 won and 1 lost, 9g5's first attack on a group
+  of 8. The player's 96: 89 judged winnable, 79 won; 7 turned away, 5 won. Before, the character as its last placement
+  showed it, 41 of the player's and 11 of D3B's were judged by levels, 7 of them lost.
+- **Aggressions.** No capture holds a fight that began without an attack or a harvest's end but one, rejoined on a new
+  connection. `aggressiveZoneSize` is 0 on 882 of the 5,129 monsters and 3 on 4,220; of the 4,247 others,
+  `aggressiveLevelDiff` is 50 on 4,192 and `aggressiveAttackDelay` 10,000 on 4,236: defaults, which say nothing of which
+  groups attack.
+- **The Souterrains** (D264), sub-area 29, are 12 undergrounds apart through their own maps, 56 maps of the graph: the
+  main part, 12 maps, holds no ore; the 22 maps iron's graphic 1081 is drawn on lie in 5 others, all isolated (D149).
+  The Huppermage of 9g5, a miner of 4, went through 6 maps of the main part. Graphic 1081 is drawn on 70 maps.
+- **Items' icons** (D265). The pack's 21,554 items name 11,755 icons, of which `item_assets_1x` holds 11,751: two of 60
+  pixels in BC7, one of 62 in RGBA32, the others 64 in BC7. Kept at 64, the pack would weigh 53.5 MB and the icons 192 MB
+  once read; at 48, 43.8 and 108; at 32, 26.9 and 48. The app draws an item at 16, 24 or 32 pixels.
 
 ## Protocol code
 

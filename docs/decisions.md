@@ -6128,6 +6128,67 @@ iron for 16 minutes in Incarnam's mine, with every fix of the session. Builds D1
 - **Risk**: an element harvested again unseen between two sightings grows back later than reckoned; its map is then
   gone through each tour, as before D145.
 
+## D263: A group judged from the characteristics the server gives out of fights, before the first fight too
+
+*2026-11-02, step 9, session 9g6, the owner's ask: the hunt's first fight, judged by levels alone (D241, D261), was on a
+group of 8, lost. Measured on the 99 game connections of 3.7.12.12. Supersedes D241 on the character the judge imagines.*
+
+- **Measured** (client.md): the characteristics the server gives out of fights equal those of the character's first turn
+  in a fight, each one both give, 158 fights of 158, the life lacking aside; at the placement, whose fighter the judge
+  took (`BotActor.LastFighter`), 163 fights, those it gives are equal too, but it lacks strength, intelligence, chance,
+  agility, the damage bonus, the critical hits, the range, the power and the summons. So the judge imagined the
+  character without its elements, from its second fight on, and by levels before.
+- **Made**: the character's state keeps every characteristic the server gives, each its whole value
+  (`CharacterState.Characteristics`, `CharacteristicTotals`, shared with the fight's state). `GroupJudge` imagines the
+  character from them, at its life, AP and MP 1 and 23, its breed the one whose spells the server listed
+  (`GroupJudge.Character`), no message the readable protocol names giving it out of fights; by levels only before the
+  server gave them. `BotActor.LastFighter` is gone; `scripts/fights.cs --live` judges as the activity does.
+- **Measured** with `--live`: no group judged by levels. D3B's 60 attacks: 57 judged winnable, all won; 3 turned away, 2
+  won, and 9g5's group of 8, lost. The player's 96: 89 judged winnable, 79 won; 7 turned away, 5 won. The margin of
+  D249, a quarter, kept.
+- **Left**: in a fight, the server never gives the heals (49), the critical damage (86) nor the AP and MP removal (82,
+  83), which out of fights it does; the fight's AI reads the first two from the fighter's own, zero. Not measured on what
+  the AI foresees.
+- **Rejected.**
+  - The placement's fighter filled from the characteristics out of fights: two sources for what one gives whole.
+  - The breed from the character's look or the list's unread fields: a mapping format for what the spells tell.
+
+## D264: The harvest's automatic place counts no isolated map the tour leaves out
+
+*2026-11-02, step 9, session 9g6, the owner's ask: the miner's automatic place led into a mine without ore (D261),
+measured on the pack and the 222 graphics the owner's bots learned. Builds D138, D149, D166.*
+
+- **Measured** (client.md): the Huppermage of 9g5, a miner of 4, was sent to the Souterrains, sub-area 29, 12
+  undergrounds apart: the 22 maps where iron's graphic is drawn are all isolated, which a tour leaves out by default
+  (D149), and its main part, the 6 maps it went through, holds no ore. The place counted them all, 19.8 against 14.4 for
+  the Carrière d'Astrub.
+- **Made**: `AutomaticPlace.Rank` takes whether the tour goes through the isolated maps, the profile's "Isolated maps";
+  when not, a map isolated from its sub-area's main part counts for nothing. The harvest and the editor's preview pass it.
+- **Measured**: a miner of 4 at level 21 goes to the Carrière d'Astrub, 46 maps; of 1 to sub-area 1034, where the bot
+  found ore on 15 of the 16 maps it went through on 2026-10-29; the first ranking 380 ms, the graphics' index built, then
+  2 ms.
+- **Rejected.** The maps counted by part, the richest part taken: the tour goes through a sub-area's main part, and the
+  isolated ones last, as D149 has it.
+
+## D265: Every item's icon in the pack, at 32 pixels, the owner's choice
+
+*2026-11-02, step 9, session 9g6, the owner's ask (D250) and choice of the size among three, as the lead recommended it.
+Builds D135, D136, D247.*
+
+- **Measured** (client.md): the pack's 21,554 items name 11,755 icons; the client's 1x bundle holds 11,751, three of them
+  not of 64 pixels in BC7. Kept at 64, the pack would weigh 53.5 MB and the icons 192 MB once read; at 48, 43.8 MB and
+  108; at 32, 26.9 and 48. The app draws an item at 16, 24 or 32 pixels.
+- **Made**: the extractor keeps every item's icon, halved to 32 pixels, each pixel the mean of four weighed by their
+  alpha, so that the transparent texels' colour does not darken the edges; an icon missing or of another size or format
+  is counted and left out, but a harvest's, which fails the extraction as before. The items' table carries its size, so
+  that the pack stays at format 8, which no release holds yet.
+- **Measured**: 11,748 icons, the pack 26,870,528 bytes against 19,420,668, extracted in 34 to 38 s; the icons read in
+  240 ms; two extractions alike; 96 icons looked at, upright, whole, their edges clean.
+- **To publish**: the pack of 3.7.12.12 in format 8, on the owner's go (D257).
+- **Rejected.**
+  - 64 or 48 pixels: twice to four times the bytes for pictures drawn at 24.
+  - Two tables, the harvest's and the loot's at 64: a size the app would draw no better.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
