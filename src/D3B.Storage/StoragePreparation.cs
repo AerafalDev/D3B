@@ -2,6 +2,7 @@ using System.Globalization;
 using D3B.Bot.Activities;
 using D3B.Bot.Hosting;
 using D3B.Storage.Accounts;
+using D3B.Storage.Fights;
 using D3B.Storage.Graphics;
 using D3B.Storage.Harvests;
 using D3B.Storage.Profiles;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage;
 
-/// <summary>Opens the database before the host starts: creates it, applies its migrations, stores the activities' presets never stored, and reads the accounts, the profiles, the graphics learned, the resources' growing back and the runs (D100, D138, D145, D146, D168).</summary>
+/// <summary>Opens the database before the host starts: creates it, applies its migrations, stores the activities' presets never stored, and reads the accounts, the profiles, the graphics learned, the resources' growing back, the fights' placement cells and the runs (D100, D138, D145, D146, D168, 9f3).</summary>
 /// <remarks>The presets are named in the system's language, the one the app starts in by default.</remarks>
 internal sealed class StoragePreparation : IHostPreparation
 {
@@ -22,11 +23,12 @@ internal sealed class StoragePreparation : IHostPreparation
     private readonly ProfileBook _profiles;
     private readonly GraphicRecorder _graphics;
     private readonly RegrowthRecorder _regrowths;
+    private readonly PlacementRecorder _placements;
     private readonly RunBook _runs;
     private readonly ILogger<StoragePreparation> _log;
     private readonly ActivityCatalog? _activities;
 
-    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, ProfileBook profiles, GraphicRecorder graphics, RegrowthRecorder regrowths, RunBook runs, ILogger<StoragePreparation> log, ActivityCatalog? activities = null)
+    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, ProfileBook profiles, GraphicRecorder graphics, RegrowthRecorder regrowths, PlacementRecorder placements, RunBook runs, ILogger<StoragePreparation> log, ActivityCatalog? activities = null)
     {
         _activities = activities;
         _settings = settings;
@@ -35,6 +37,7 @@ internal sealed class StoragePreparation : IHostPreparation
         _profiles = profiles;
         _graphics = graphics;
         _regrowths = regrowths;
+        _placements = placements;
         _runs = runs;
         _log = log;
     }
@@ -58,9 +61,10 @@ internal sealed class StoragePreparation : IHostPreparation
 
             var graphics = await _graphics.LoadAsync(cancellationToken).ConfigureAwait(false);
             var regrowths = await _regrowths.LoadAsync(cancellationToken).ConfigureAwait(false);
+            var placements = await _placements.LoadAsync(cancellationToken).ConfigureAwait(false);
 
             await _runs.LoadAsync(cancellationToken).ConfigureAwait(false);
-            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, _profiles.Profiles.Count, graphics, regrowths, _runs.Runs.Count);
+            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, _profiles.Profiles.Count, graphics, regrowths, placements, _runs.Runs.Count);
 
             return null;
         }

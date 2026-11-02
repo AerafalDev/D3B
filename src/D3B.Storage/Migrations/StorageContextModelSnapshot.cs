@@ -75,6 +75,31 @@ namespace D3B.Storage.Migrations
                     b.ToTable("Characters", (string)null);
                 });
 
+            modelBuilder.Entity("D3B.Storage.Fights.LearnedPlacement", b =>
+                {
+                    b.Property<long>("MapId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ChallengerCells")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DefenderCells")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("FirstSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Seen")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("MapId", "ChallengerCells", "DefenderCells");
+
+                    b.ToTable("Placements", (string)null);
+                });
+
             modelBuilder.Entity("D3B.Storage.Graphics.LearnedGraphic", b =>
                 {
                     b.Property<int>("GfxId")
