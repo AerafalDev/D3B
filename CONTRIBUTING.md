@@ -131,5 +131,6 @@ dotnet build scripts/<tool>.cs        # each tool you changed
 ## Reporting a bug or asking for a feature
 
 Use the [issue forms](https://github.com/AerafalDev/D3B/issues/new/choose). For a bug, give D3B's version and the
-client build, both on the app's settings page, what you did, what you expected and what happened, and the relevant lines
-of the bot's journal from the logs page. Leave out anything that names your account if you prefer: it is never needed.
+client build, both in the settings' About section, what you did, what you expected and what happened, and the relevant
+lines of the bot's journal from the bottom panel. Leave out anything that names your account if you prefer: it is never
+needed.

@@ -77,7 +77,8 @@ and groups, the marketplace and crafting. The [roadmap](docs/roadmap.md) has the
 Each version of D3B ships the data of one client build, extracted from the official client: its maps, items, spells and
 texts, and the mapping of its protocol. When Ankama updates the client, D3B says it does not know that build yet; the
 version of D3B for it comes out afterwards. D3B checks for a new version when it starts, downloads it, and installs it
-when you restart it from its banner or close it. Its settings page shows its version and the client build it ships.
+when you restart it from its banner or close it. Its settings' About section shows its version and the client build it
+ships.
 
 D3B keeps its database, settings and captures in `%LOCALAPPDATA%\D3B`. Uninstalling it from Windows' settings removes the
 app and keeps that folder.
@@ -87,7 +88,8 @@ app and keeps that folder.
 1. Start D3B, and wait until it says it runs for your client's build.
 2. Start Dofus from Ankama's launcher, log in and choose a character. Its card shows in the characters' panel.
 3. Click its card, choose its profile in the inspector, one of those given or your own, and play it from the title bar
-   (F5). The bot can also start its profile as soon as its client connects: the inspector's auto start.
+   (F5). The bot can also start its profile as soon as its client connects: the inspector's auto start. Your own
+   profiles are made from Add in the assets' panel, each edited in a tab of its own.
 4. Take the character back at any time by playing it: the bot pauses, and you resume it from the title bar.
 
 Start D3B before the game: a client started while D3B is closed plays without it. If D3B ever crashes, the client cannot
@@ -95,7 +97,7 @@ connect until D3B runs again: start D3B and close it, which gives the client Ank
 `dotnet run --file scripts/client.cs -- restore` from a clone of this repository.
 
 On a slow machine, the client may not have drawn a map or shown a window when a bot acts: raise the client's display
-time on the settings page, 0.5 s by default, up to 3 s. Every other delay is there too, each measured by default.
+time in the settings' Bots section, 0.5 s by default, up to 3 s. Every other delay is there too, each measured by default.
 
 ## Build from source
 

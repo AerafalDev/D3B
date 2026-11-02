@@ -347,6 +347,11 @@ seen so.
   unloading and end. An action begun within another (`BotContext.BeginAction`) is one deeper, and a walk made for
   another action has no entry. Entries name the game's ids, never the protocol's messages. `RecentItems<T>` keeps them,
   read by the app as they come.
+- **The trace** (D349, D350), in `D3B.Bot.Behaviors`: each bot's last 1,000 decisions of its behaviors' runs
+  (`BotActor.Trace`, `TraceEntry`), apart from the journal, which says what the bot did: a state entered or none holding,
+  an urgent state's cut, a rule played or failed, each step of an action or activity played, done, cut or failed with
+  what it said it does, and a threshold the activity watches as it comes to hold or stops holding. Each line names its
+  run by when it began, for the studio's trace and 7g's history.
 - **The host's problems** (D114): `HostProblems`, a logging provider, keeps the host's last 2,000 warnings and errors
   that name no bot.
 - **Delays** (D151, D152): every delay goes through `TimeProvider`, and every wait of a behavior reads `BotDelays`
@@ -743,7 +748,9 @@ no new interface:
   by default, before the host starts (`AssetPreparation`), each file `<name>.<kind>.json` an asset (`AssetFiles`): its id,
   kind, format 1 and client build, its name the file's; behaviors and profiles hold what they are made of, the other kinds
   their files as they are (`PlannedAsset`). A file that does not read, or takes another's id, is left out and said
-  (`Problems`). Writes go to the disk, then memory, one at a time, a version counted; "used by" is exact (`UsedBy`). The
+  (`Problems`). Writes go to the disk, then memory, one at a time, a version counted; "used by" is exact (`UsedBy`). Its
+  folders, the empty ones included, are listed and made; an asset is saved in a folder, moved with its file, imported
+  under a new id when its own is taken, and exported (D351). The
   given assets (`GivenAssets`), made from the modules: a behavior per activity, `d3b.<id>`, playing it whole, its settings
   its public settings; a profile per preset, holding what it changes; read only.
 - **A behavior** (`BehaviorAsset`, `D3B.Bot.Behaviors`): public settings, variables, the layer Always, rules on events and the
@@ -759,10 +766,10 @@ no new interface:
   (`StateVisit`), an activity's node delegating to today's activity; a leaf played to its end and chosen again is done
   unless it repeats; no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
   urgent state cuts the step. Variables of the run, the character's (`CharacterVariables`, kept by `D3B.Storage`) and the
-  bots' (`SharedVariables`). The journal says each state entered and each note.
-- **The app until 7c** (D317): its profiles page lists the profile assets, a profile of a behavior playing one activity
-  whole edited as its settings (`ProfileForms`), saved as what differs; a given profile read only, copied; the bot's card
-  and the accounts page name profile assets.
+  bots' (`SharedVariables`). The journal says each state entered and each note; the trace, each decision (D350).
+- **The app** (D317, D352): a profile of a behavior playing one activity whole is edited as its settings (`ProfileForms`),
+  in a tab of its own, saved as what differs from the behavior, each value that differs marked; a given profile read only,
+  copied; the characters' cards and the inspector name profile assets.
 
 The target:
 
