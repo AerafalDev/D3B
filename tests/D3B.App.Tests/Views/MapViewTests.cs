@@ -73,7 +73,7 @@ public sealed class MapViewTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task AFightIsDrawnInEachThemesPalette()
+    public async Task AFightIsDrawnInTheStudiosPalette()
     {
         const int Enemy = Ground;
         const int Red = 452;
@@ -116,7 +116,7 @@ public sealed class MapViewTests : IAsyncDisposable
 
             var canvas = window.GetVisualDescendants().OfType<MapCanvas>().Single();
 
-            foreach (var theme in new[] { ThemeVariant.Dark, ThemeVariant.Light })
+            foreach (var theme in new[] { ThemeVariant.Dark })
             {
                 window.RequestedThemeVariant = theme;
                 Dispatcher.UIThread.RunJobs();
@@ -161,7 +161,7 @@ public sealed class MapViewTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheMapIsDrawnInEachThemesPaletteAndTheCellUnderThePointerIsDescribed()
+    public async Task TheMapIsDrawnInTheStudiosPaletteAndTheCellUnderThePointerIsDescribed()
     {
         await _play.EnterAsync(300);
 
@@ -177,7 +177,7 @@ public sealed class MapViewTests : IAsyncDisposable
 
             var canvas = window.GetVisualDescendants().OfType<MapCanvas>().Single();
 
-            foreach (var theme in new[] { ThemeVariant.Dark, ThemeVariant.Light })
+            foreach (var theme in new[] { ThemeVariant.Dark })
             {
                 window.RequestedThemeVariant = theme;
                 Dispatcher.UIThread.RunJobs();
@@ -214,7 +214,6 @@ public sealed class MapViewTests : IAsyncDisposable
         });
 
         Assert.All(drawn.Colours, colour => Assert.Equal(colour.Expected, colour.Drawn));
-        Assert.NotEqual(drawn.Colours[0].Drawn, drawn.Colours[5].Drawn);
         Assert.Equal((TestPlay.TreeCell, true, null), (drawn.Hovered, drawn.Shown, drawn.Left));
         Assert.Contains("Ash tree: Cut", drawn.Said);
     }

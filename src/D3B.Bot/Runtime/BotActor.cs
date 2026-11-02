@@ -216,10 +216,16 @@ public sealed class BotActor : IAsyncDisposable
         ImmutableInterlocked.Update(ref _noNpcWays, (ways, refused) => ways.Add(refused), way);
     }
 
-    /// <summary>Pauses the bot as the player's hand does, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
-    internal void Pause()
+    /// <summary>Pauses the bot from the app, as the player's hand does: the behavior running is cut, and it starts nothing until <see cref="Resume"/> (D322).</summary>
+    public void Pause()
     {
-        Post(new Pausing());
+        Post(new Pausing(FromApp: true));
+    }
+
+    /// <summary>Pauses the bot once its step is over, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
+    internal void PauseAfterStep()
+    {
+        Post(new Pausing(FromApp: false));
     }
 
     /// <summary>Starts an activity: its steps, one after another, until it is done, fails or is stopped (D87).</summary>
@@ -412,8 +418,8 @@ public sealed class BotActor : IAsyncDisposable
             case Resuming:
                 OnResuming();
                 break;
-            case Pausing:
-                OnPausing();
+            case Pausing pausing:
+                OnPausing(pausing.FromApp);
                 break;
             case Attached attached:
                 OnAttached(attached.Session, attached.State);
@@ -598,14 +604,27 @@ public sealed class BotActor : IAsyncDisposable
         Write(BotEvent.Resumed);
     }
 
-    private void OnPausing()
+    private void OnPausing(bool fromApp)
     {
         if (_paused)
             return;
 
         _paused = true;
-        BotLog.PausedAfterFight(_log, Key.CharacterId);
-        Write(BotEvent.PausedAfterFight);
+
+        if (!fromApp)
+        {
+            BotLog.PausedAfterFight(_log, Key.CharacterId);
+            Write(BotEvent.PausedAfterFight);
+
+            return;
+        }
+
+        // As the player's hand: the walk or the harvest under way stops now, not at the end of the step.
+        if (_behavior is { } behavior)
+            Interrupt(behavior, Interruption.Player);
+
+        BotLog.PausedFromApp(_log, Key.CharacterId);
+        Write(BotEvent.PausedFromApp);
     }
 
     private void OnAttached(GameSession session, CharacterState state)
@@ -684,7 +703,7 @@ public sealed class BotActor : IAsyncDisposable
 
     private sealed record Resuming : Input;
 
-    private sealed record Pausing : Input;
+    private sealed record Pausing(bool FromApp) : Input;
 
     private sealed record Attached(GameSession Session, CharacterState State) : Input;
 

@@ -20,4 +20,7 @@ public enum BotEvent
 
     /// <summary>An activity paused the bot after a fight, as its settings say: it waits until it is resumed (D144).</summary>
     PausedAfterFight,
+
+    /// <summary>The app paused the bot, its run block's pause: what it did is cut, and it waits until it is resumed (D322).</summary>
+    PausedFromApp,
 }

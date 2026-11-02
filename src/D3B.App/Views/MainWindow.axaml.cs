@@ -1,8 +1,8 @@
 using System.ComponentModel;
-using Avalonia.Controls.Primitives;
-using Avalonia.Input.Platform;
+using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Styling;
+using Avalonia.Platform.Storage;
 using D3B.App.Controls;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Settings;
@@ -10,9 +10,12 @@ using ShadUI;
 
 namespace D3B.App.Views;
 
-/// <summary>The app's window: where the bots' host stands, its pages beside the sidebar, its dialogs and toasts, dark unless the settings say otherwise.</summary>
+/// <summary>The studio's window: its title row, its docks laid out as the layout says, its dialogs and toasts (D320 to D322).</summary>
 internal sealed partial class MainWindow : ShadUI.Window
 {
+    // The gap between two docks, which their edges sit in.
+    private const double Gap = 5;
+
     private readonly DialogManager _dialogManager = new DialogManager()
         .Register<QuestionView, QuestionViewModel>()
         .Register<GamePickerView, GamePickerViewModel>()
@@ -21,6 +24,7 @@ internal sealed partial class MainWindow : ShadUI.Window
     private readonly ToastManager _toastManager = new();
     private MainViewModel? _main;
     private object? _dialog;
+    private double _dragStart;
 
     /// <summary>Initializes a new instance of the <see cref="MainWindow"/> class.</summary>
     public MainWindow()
@@ -28,7 +32,22 @@ internal sealed partial class MainWindow : ShadUI.Window
         InitializeComponent();
         DialogHost.Manager = _dialogManager;
         ToastHost.Manager = _toastManager;
-        Sidebar.AddHandler(ToggleButton.IsCheckedChangedEvent, OnSidebarChecked);
+
+        LeftSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.LeftWidth ?? 0;
+        LeftSplitter.DragDelta += (_, e) => _main?.Layout.ResizeLeft(_dragStart + e.Vector.X, Bounds.Width);
+        RightSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.RightWidth ?? 0;
+        RightSplitter.DragDelta += (_, e) => _main?.Layout.ResizeRight(_dragStart - e.Vector.X, Bounds.Width);
+        ShareSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.LeftShare ?? 0;
+        ShareSplitter.DragDelta += (_, e) => _main?.Layout.ResizeShare(_dragStart + e.Vector.Y / Math.Max(1, LeftColumn.Bounds.Height - Gap), LeftColumn.Bounds.Height - Gap);
+        BottomSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.BottomHeight ?? 0;
+        BottomSplitter.DragDelta += (_, e) => _main?.Layout.ResizeBottom(_dragStart - e.Vector.Y, CentreColumn.Bounds.Height - Gap);
+
+        foreach (var splitter in new[] { LeftSplitter, RightSplitter, ShareSplitter, BottomSplitter })
+            splitter.DragCompleted += (_, _) => _main?.Layout.Remember();
+
+        // The panel last pressed is outlined in the accent, as the mockup's focused panel.
+        foreach (var dock in new[] { CharactersDock, AssetsDock, EditorDock, BottomDock, InspectorDock })
+            dock.AddHandler(PointerPressedEvent, (_, _) => Focus(dock), RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
     /// <inheritdoc/>
@@ -38,18 +57,21 @@ internal sealed partial class MainWindow : ShadUI.Window
 
         if (_main is not null)
         {
-            _main.Settings.PropertyChanged -= OnSettingsChanged;
+            _main.Layout.PropertyChanged -= OnLayoutChanged;
             _main.Dialogs.PropertyChanged -= OnDialogsChanged;
             _main.Toasts.Shown -= OnToastShown;
+            _main.OpenFolder = null;
         }
 
         _main = DataContext as MainViewModel;
 
         if (_main is not null)
         {
-            _main.Settings.PropertyChanged += OnSettingsChanged;
+            _main.Layout.PropertyChanged += OnLayoutChanged;
             _main.Dialogs.PropertyChanged += OnDialogsChanged;
             _main.Toasts.Shown += OnToastShown;
+            _main.OpenFolder = OpenFolder;
+            ApplyLayout();
         }
     }
 
@@ -60,18 +82,62 @@ internal sealed partial class MainWindow : ShadUI.Window
         _dialogManager.Dispose();
     }
 
-    private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnLayoutChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SettingsViewModel.IsDark) && sender is SettingsViewModel settings && Avalonia.Application.Current is { } application)
-            application.RequestedThemeVariant = settings.IsDark ? ThemeVariant.Dark : ThemeVariant.Light;
+        ApplyLayout();
     }
 
-    private void OnSidebarChecked(object? sender, RoutedEventArgs e)
+    private void ApplyLayout()
     {
-        // ShadUI's sidebar checks the item of its route, and no more: a page checked by a click, a key or a screen reader is
-        // the one to show, which then names the route back.
-        if (e.Source is SidebarItem { IsChecked: true, Route: { Length: > 0 } route } && _main is not null && route != _main.CurrentRoute)
-            _main.Navigate(route);
+        if (_main?.Layout is not { } layout)
+            return;
+
+        // A closed panel's row or column takes no room, and its gap goes with it: its neighbour takes the room.
+        var columns = Docks.ColumnDefinitions;
+
+        columns[0].Width = new GridLength(layout.IsLeftOpen ? layout.LeftWidth : 0);
+        columns[1].Width = new GridLength(layout.IsLeftOpen ? Gap : 0);
+        columns[3].Width = new GridLength(layout.IsInspectorOpen ? Gap : 0);
+        columns[4].Width = new GridLength(layout.IsInspectorOpen ? layout.RightWidth : 0);
+
+        var left = LeftColumn.RowDefinitions;
+
+        left[0].Height = layout.AreBothLeftOpen ? new GridLength(layout.LeftShare, GridUnitType.Star) : new GridLength(layout.IsCharactersOpen ? 1 : 0, GridUnitType.Star);
+        left[1].Height = new GridLength(layout.AreBothLeftOpen ? Gap : 0);
+        left[2].Height = layout.AreBothLeftOpen ? new GridLength(1 - layout.LeftShare, GridUnitType.Star) : new GridLength(layout.IsAssetsOpen ? 1 : 0, GridUnitType.Star);
+
+        var centre = CentreColumn.RowDefinitions;
+
+        centre[1].Height = new GridLength(layout.IsBottomOpen ? Gap : 0);
+        centre[2].Height = new GridLength(layout.IsBottomOpen ? layout.BottomHeight : 0);
+    }
+
+    private void Focus(Border dock)
+    {
+        foreach (var other in new[] { CharactersDock, AssetsDock, EditorDock, BottomDock, InspectorDock })
+            other.Classes.Set("Focused", other == dock);
+    }
+
+    private void OnRunChoiceClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: BotViewModel bot })
+            _main?.RunBlock.Choose(bot);
+
+        RunWho.Flyout?.Hide();
+    }
+
+    private void OnScrimPressed(object? sender, PointerPressedEventArgs e)
+    {
+        _main?.Search.Close();
+    }
+
+    private async void OpenFolder(string folder)
+    {
+        // The project's folder may not exist until the first asset is written.
+        Directory.CreateDirectory(folder);
+
+        if (Launcher is { } launcher)
+            await launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(folder));
     }
 
     private void OnDialogsChanged(object? sender, PropertyChangedEventArgs e)
@@ -124,12 +190,5 @@ internal sealed partial class MainWindow : ShadUI.Window
                 builder.Show();
                 break;
         }
-    }
-
-    private async void OnCopyFailureClick(object? sender, RoutedEventArgs e)
-    {
-        // What to run to fix it, often: a command the owner pastes in a terminal.
-        if (DataContext is MainViewModel { HostFailure: { } failure } && Clipboard is { } clipboard)
-            await clipboard.SetTextAsync(failure);
     }
 }

@@ -158,6 +158,7 @@ in `%LOCALAPPDATA%\Ankama\Dofus-dofus3` and write under `%LOCALAPPDATA%\D3B`.
 | `client.cs` | Says which configuration the client reads, Ankama's or D3B's; `restore` gives it Ankama's back. |
 | `capture.cs` | Describes the captures by their structure, never their content. |
 | `fights.cs` | Replays the captured fights and compares what D3B foresees of each cast with what the server did. |
+| `icons.cs` | Takes the IntelliJ Platform's icons the studio draws, checks each one's Apache 2.0 notice, writes them for Avalonia. |
 
 The repository's local tools, `dotnet-ef` for the database's migrations and Velopack's `vpk` for the installer, are
 pinned in [`.config/dotnet-tools.json`](.config/dotnet-tools.json):

@@ -50,8 +50,9 @@ what the server announces of a fight named, mapping format 10, and kept in the f
 modifiers, cooldowns, casts and moves, and the effects' engine in `D3B.Engine`, every effect as data and Bubble's formulas
 measured by a bench replaying every captured fight (step 9, session 9d); the studio's model and its run time, the project's
 assets in files, behaviors of priority states over short actions run as one activity, nodes declared by the modules,
-variables, profiles as variants and the database started from zero (step 7, session 7b). Everything else below is the
-target.
+variables, profiles as variants and the database started from zero (step 7, session 7b); the studio's frame, dark only,
+IntelliJ's icons, one title row and its run block, the docks remembered, the status bar and the search (step 7, session
+7c2). Everything else below is the target.
 
 ## Overview
 
@@ -516,36 +517,68 @@ Built at step 2 (D24 to D33):
 
 Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
 5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151); redesigned in 6d (D159 to D162); published and
-updating itself in 6f (D171 to D173).
+updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340), which 7c3 and 7c4 fill.
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
   the clients and gives them their configuration back. The window shows the host getting ready, running for the
   installed client's build, or why it did not start.
-- **The window**: dark by default; where the host stands in the title bar, nothing else (D162). Its icons are Lucide's,
-  drawn by `Icon` from `Themes/Icons.axaml` (D161), its statuses by `StatusPill`, in the tone each says (`Tone`). The
-  app's own icon is the owner's logo (D231): `Assets/d3b.ico` for the window, the taskbar, the executable and the
-  installer, `Assets/d3b.png` in the title bar.
-- **One scale** (D159, D163), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32, fonts 12, 14,
-  16, 22 and 28 (`Caption`, the window's text, `Title`, `PageTitle`, `Figure`), every control of a toolbar or a row 36 high,
-  the icon buttons of a list's items 32, radii 6, 8 and 12, ShadUI's included, icons 14, 16 and 20. A page with nothing to
-  show says so with an `EmptyState`, the same on every page. Every page is an `AppPage` (`D3B.App.Controls`): its title or a header of its own, its actions on the right, the
-  same margins and the window's width up to 1,200 pixels; it fades in as it shows. A setting's help, a delay's default
-  and what a page is for are tooltips on a mark beside their name.
+- **The studio's frame** (D320 to D322, D339), the mockup `docs/mockups/studio-7c.html` its reference: ShadUI's window
+  given D3B's own template (`Themes/Window.axaml`), one title row 44 pixels high, the logo and the menus File, Edit,
+  Window and Help on the left (`Themes/Menus.axaml`), the search in the middle of the window while it does not touch a side
+  (`TitleBarPanel`), then the run block, the settings' gear and the window's buttons; under it the docks, then the status
+  bar. Dark only (D320): `Themes/Colors.axaml` gives ShadUI's keys D3B's values and holds the studio's surfaces, from the
+  window's near black up, one blue accent, green, amber and red for states. The app's own icon is the owner's logo (D231):
+  `Assets/d3b.ico` for the window, the taskbar, the executable and the installer, `Assets/d3b.png` in the title row and
+  the welcome.
+- **Icons** (D305, D331, D337): the IntelliJ Platform's, `Themes/IntelliJIcons.axaml`, which `scripts/icons.cs` writes, each
+  file's Apache 2.0 notice checked, keyed as `General.Search`; `Icon` draws one on its grid of 16 in IntelliJ's colours,
+  repaints its neutral greys with a `Tint`, and greys it while its control is disabled. The pages 7c3 and 7c4 draw again keep
+  Lucide's line icons (`Themes/Icons.axaml`, D161) until then (D333). The game's own concepts take the client's own
+  icons, from 7c3 (D336).
+- **The docks** (D321, `StudioLayout` in `D3B.App.ViewModels.Studio`): on the left the characters over the assets, in the
+  centre the editor's tabs over the bottom panel, on the right the inspector, rounded panels with a hairline edge, 5
+  pixels apart, the one last pressed outlined in the accent. Every edge is dragged on its own (`DockSplitter`), within the
+  mockup's bounds, the line between characters and assets kept as a share; a panel closes by its × and opens again from
+  the Window menu, which gives the default layout back; Ctrl J shows or hides the bottom panel, Ctrl Space opens the
+  assets. A drag's end, a panel closed or opened, are remembered in `app.json`, the default never written.
+- **The editor's tabs** (`EditorTabs`, `EditorTab`): the welcome, D3B's logo and version, the first shortcuts and where the
+  host stands while it does not run (`WelcomeView`); each tab opened once, its view kept while it is open, closed by its ×,
+  its neighbour then shown. A tab that reads the host shows where the host stands until it runs (`HostStateView`).
+- **The run block** (D322, D338, `RunBlockViewModel`): the chosen character's initials with a dot of its state, its name and
+  what it does live, a menu of the characters online, and only the buttons its state allows: none chosen, play disabled;
+  stopped, play; playing, pause and stop; paused, play and stop; its edge green while it plays, amber paused. Play starts
+  what its card would, its own profile first, or resumes it; pause is `BotActor.Pause`, which cuts the step as the player's
+  hand does and says it in the journal (`BotEvent.PausedFromApp`); stop ends the activity. F5 plays or pauses, F6 pauses,
+  Shift F5 stops. A click on a bot's card chooses it too.
+- **The search** (D328, D334, `SearchViewModel`, `SearchView`), Ctrl K or the title's field: over the studio, the recent
+  items first, then the assets, the characters, the commands with their shortcuts and the settings, grouped, the text found
+  lit; scopes by a click or Tab, `>` for the commands, `@` for the characters; the arrows, Enter and Escape. In 7c2 the
+  assets are the profiles, and the maps wait for a tab that opens one (D334). Help's Shortcuts opens it on the commands.
+- **The status bar**: where the host stands with a dot, its detail in a tooltip; the client build; whether everything is
+  saved, a profile edited with changes or not; once an update is downloaded, a button that restarts the app into it (D173).
+- **One scale** (D159, D163, D335), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32; the
+  studio's text 12.5, its small text 11, the pages' fonts 12, 14, 16, 22 and 28 (`Caption`, text, `Title`, `PageTitle`,
+  `Figure`); the studio's controls 24 to 30 high (`StudioButton` and its classes: `Tool`, `TabFace`, `TitleSearch`,
+  `Status`), the pages' 32 and 36; radii 6, 7, 10 and 12, ShadUI's included; icons 12, 14, 16 and 20. Keycaps (`Border.Key`)
+  say a shortcut, and a tooltip's shortcut is a `KeyTip`. A page with nothing to show says so with an `EmptyState`. Every
+  page is an `AppPage` (`D3B.App.Controls`): its title or a header of its own, its actions on the right, the same margins and
+  the window's width up to 1,200 pixels; docked, its title is the tab's and its margins narrower. A setting's help, a
+  delay's default and what a page is for are tooltips on a mark beside their name.
 - **Dialogs and toasts** (D159, D162): `Dialogs` holds the dialog shown, a `QuestionViewModel` or a dialog's own view model
   (choosing resources, a new profile), which the window shows through ShadUI's dialog host, closed by its buttons and
   Escape; `Toasts` says what was done and what a bot met, which the window shows through ShadUI's toasts. The view models
   only open, close and say, tested without a window.
-- **The sidebar**, always (D101, D111, D120, D162): ShadUI's, the bots with their count, the accounts, the profiles, the
-  map, the statistics (D146), the logs and the inspector, a line once a module registered a page, then the modules' pages
-  in the catalogue's order (D96), each named, folded to their icons on a click that `app.json` remembers; at its foot the
-  settings page (D151), shown whether the host runs or not. A module's page (`ModulePageViewModel`) is made the first
-  time it shows and kept, refreshed every 250 ms while it shows through its context (`AppPageContext`, in
-  `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead (`PageFailureViewModel`), logged, and
-  the bots and the other pages go on. What a page's own code throws on the UI's thread, which nothing caught, is told by
-  the page's assembly in its stack and fails that page alone; the app's own faults still end it. A page looks like the
-  app's through the theme, Inter and ShadUI's styles it inherits, and the app's classes it may use: `PageHeader`,
-  `PageTitle`, `Plate`, `PlateFooter`, `Card` and the typography's.
+- **The pages until 7c3 and 7c4** (D333): each has its place in the docks, the bots' cards in the characters' panel, the
+  journal, the protocol and the statistics in the bottom panel, the accounts, the profiles, the map, the settings and the
+  modules' pages in the editor's tabs, opened from the Window menu, the search, a card or the gear. The trace and the
+  problems show a plain empty state, the assets a way to the profiles, the inspector what to choose. A module's page
+  (`ModulePageViewModel`) is made the first time its tab shows and kept, refreshed every 250 ms while it shows through its
+  context (`AppPageContext`, in `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead
+  (`PageFailureViewModel`), logged, and the bots and the other pages go on. What a page's own code throws on the UI's
+  thread, which nothing caught, is told by the page's assembly in its stack and fails that page alone; the app's own faults
+  still end it. A page looks like the app's through the theme, Inter and ShadUI's styles it inherits, and the app's
+  classes it may use: `PageHeader`, `PageTitle`, `Plate`, `PlateFooter`, `Card` and the typography's.
 - **The bots page**: a card per bot, in as many columns as the width holds (`CardGrid`), each whole: who, a dot of its
   connection, said only when it is not connected, and the player's pause, resumed from the card; where, the coordinates large and the sub-area named from the
   pack's texts; pods and kamas; what it is in the middle of; its activity, started from a profile or from the catalogue
@@ -586,7 +619,7 @@ updating itself in 6f (D171 to D173).
   rows each. The client's display time, a bar from 0.5 to 3 s; the delays, each a box from its default to its most, its
   help and measured or D3B's value in a tooltip, a dot when raised, and a button restoring them all but the display time,
   the bots' applying at once (`Bots.Delays`), the relay's from the next start; the captures, `Network:Captures:Enabled`,
-  from the next start, with whether the host records now and where; the language and the theme; where the database, the
+  from the next start, with whether the host records now and where; the language; where the database, the
   pack and the app's own file are, each copied on a click; D3B's version, the client build it ships and its update
   (D173). Once the host runs, the page shows the delays its
   bots wait, which its command line may have raised; changed before, the page's are given to them.
@@ -626,7 +659,7 @@ updating itself in 6f (D171 to D173).
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
   French; the language starts as the system's, or the one the app was left in, and changes live, the views binding
   through `{l:Tr Key}`.
-- **Preferences** (`AppPreferences`): the language, the theme and the sidebar folded or not, remembered in
+- **Preferences** (`AppPreferences`): the language and the studio's layout (`StudioLayoutState`), remembered in
   `%LOCALAPPDATA%\D3B\app.json`, read before the window shows (D101, D162); and the host's settings the settings page changed, by their configuration's keys and values,
   such as `Delays:Display` or `Network:Captures:Enabled`, one given back its default forgotten (D151). The app reads the
   file before the host, which starts with them (`HostRunner`, `BotHost.CreateBuilder(args, settings)`), its own

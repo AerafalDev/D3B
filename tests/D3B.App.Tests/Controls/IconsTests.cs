@@ -27,4 +27,22 @@ public sealed class IconsTests
         Assert.All(icons, icon => Assert.StartsWith("Icon", icon.Key, StringComparison.Ordinal));
         Assert.All(icons, icon => Assert.True(icon.Bounds is { Left: >= 0, Top: >= 0, Right: <= 24, Bottom: <= 24, Width: > 0 }, icon.Key));
     }
+
+    [Fact]
+    public async Task EveryIntelliJIconReadsAsADrawingWithinItsGridOfSixteen()
+    {
+        // scripts/icons.cs writes the file: a shape Avalonia cannot read would fail only once a view draws it.
+        var icons = await OnTheUIThreadAsync(() =>
+        {
+            var dictionary = (ResourceDictionary)AvaloniaXamlLoader.Load(new Uri("avares://D3B.App/Themes/IntelliJIcons.axaml"));
+
+            return dictionary.Keys.OfType<string>().Select(key => (Key: key, Shapes: ((DrawingGroup)dictionary[key]!).Children.OfType<GeometryDrawing>().Select(shape => shape.Geometry!.Bounds).ToList())).ToList();
+        });
+
+        Assert.True(icons.Count >= 49);
+        Assert.Contains(icons, icon => icon.Key == "Run.Run");
+        Assert.All(icons, icon => Assert.Matches(@"^[A-Z][a-z]+\.[A-Z][A-Za-z]+$", icon.Key));
+        Assert.All(icons, icon => Assert.NotEmpty(icon.Shapes));
+        Assert.All(icons, icon => Assert.All(icon.Shapes, bounds => Assert.True(bounds is { Left: >= -0.5, Top: >= -0.5, Right: <= 16.5, Bottom: <= 16.5 } && bounds.Width + bounds.Height > 0, icon.Key)));
+    }
 }

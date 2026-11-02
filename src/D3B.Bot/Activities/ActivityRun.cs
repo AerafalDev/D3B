@@ -263,7 +263,7 @@ public sealed class ActivityRun
                 return ActivityOutcome.Stopped;
 
             if (response is InterruptionResponse.Pause)
-                _bot.Pause();
+                _bot.PauseAfterStep();
         }
     }
 

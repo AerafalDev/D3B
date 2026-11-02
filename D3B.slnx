@@ -9,6 +9,7 @@
     <File Path="scripts/embed.cs" />
     <File Path="scripts/extract.cs" />
     <File Path="scripts/fights.cs" />
+    <File Path="scripts/icons.cs" />
     <File Path="scripts/inspect.cs" />
     <File Path="scripts/mapping.cs" />
     <File Path="scripts/release.cs" />
@@ -56,6 +57,13 @@
     <File Path="scripts/fights/LiveBench.cs" />
     <File Path="scripts/fights/Tally.cs" />
     <File Path="scripts/fights/TurnBench.cs" />
+  </Folder>
+  <Folder Name="/scripts/icons/">
+    <File Path="scripts/icons/IconsCommand.cs" />
+    <File Path="scripts/icons/IconShape.cs" />
+    <File Path="scripts/icons/SvgIcon.cs" />
+    <File Path="scripts/icons/SvgPath.cs" />
+    <File Path="scripts/icons/SvgStyle.cs" />
   </Folder>
   <Folder Name="/scripts/inspect/">
     <File Path="scripts/inspect/BundleBlock.cs" />

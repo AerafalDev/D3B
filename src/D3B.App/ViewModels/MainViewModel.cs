@@ -8,8 +8,10 @@ using D3B.App.Localization;
 using D3B.App.Updates;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
-using D3B.App.ViewModels.Statistics;
 using D3B.App.ViewModels.Maps;
+using D3B.App.ViewModels.Statistics;
+using D3B.App.ViewModels.Studio;
+using D3B.Bot.Assets;
 using D3B.Bot.Characters;
 using D3B.Bot.Pages;
 using D3B.Data;
@@ -17,86 +19,81 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The app's window: where the bots' host stands, its pages in the sidebar, its dialogs and toasts (D14, D91, D96, D101, D111, D120, D151, D159).</summary>
+/// <summary>The studio's window: where the bots' host stands, its docks and editor, the run block, the search, its dialogs and toasts (D14, D91, D320 to D322, D328).</summary>
+/// <remarks>
+/// Until 7c3 and 7c4 draw them again, each page of D101 and D162 has its place in the docks (D333): the bots' cards in the
+/// characters' panel, the journal, the protocol and the statistics in the bottom panel, the accounts, the profiles, the map,
+/// the settings and the modules' pages in the editor's tabs.
+/// </remarks>
 internal sealed partial class MainViewModel : ObservableObject
 {
+    private const string WelcomeTab = "welcome";
+    private const string AccountsTab = "accounts";
+    private const string ProfilesTab = "profiles";
+    private const string MapTab = "map";
+    private const string SettingsTab = "settings";
+
     private readonly HostRunner _host;
     private readonly Localizer _localizer;
     private readonly AppPreferences? _preferences;
+    private readonly Action _close;
     private bool _pagesRead;
 
-    /// <summary>Gets the dialog the window shows over its pages.</summary>
+    /// <summary>Gets the dialog the window shows over the studio.</summary>
     public Dialogs Dialogs { get; } = new();
 
     /// <summary>Gets what the window says in its toasts.</summary>
     public Toasts Toasts { get; } = new();
 
-    /// <summary>Gets the bots page.</summary>
+    /// <summary>Gets the docks' layout.</summary>
+    public StudioLayout Layout { get; }
+
+    /// <summary>Gets the editor's tabs.</summary>
+    public EditorTabs Editor { get; } = new();
+
+    /// <summary>Gets the title row's run block.</summary>
+    public RunBlockViewModel RunBlock { get; }
+
+    /// <summary>Gets the search, Ctrl K.</summary>
+    public SearchViewModel Search { get; }
+
+    /// <summary>Gets the bots' cards, in the characters' panel until 7c3.</summary>
     public BotsViewModel Bots { get; }
 
-    /// <summary>Gets the accounts page.</summary>
+    /// <summary>Gets the accounts' page, a tab until 7c3.</summary>
     public AccountsViewModel Accounts { get; }
 
-    /// <summary>Gets the profiles page.</summary>
+    /// <summary>Gets the profiles' page, a tab until 7c4.</summary>
     public ProfilesViewModel Profiles { get; }
 
-    /// <summary>Gets the map page.</summary>
+    /// <summary>Gets the map's page, a tab until 7c3.</summary>
     public MapViewModel Map { get; }
 
-    /// <summary>Gets the statistics page.</summary>
+    /// <summary>Gets the statistics, in the bottom panel.</summary>
     public StatisticsViewModel Statistics { get; }
 
-    /// <summary>Gets the logs page.</summary>
+    /// <summary>Gets the journal, in the bottom panel.</summary>
     public LogsViewModel Logs { get; }
 
-    /// <summary>Gets the protocol inspector.</summary>
+    /// <summary>Gets the protocol, in the bottom panel.</summary>
     public InspectorViewModel Inspector { get; }
 
-    /// <summary>Gets the settings page, at the rail's foot, whose theme the window follows.</summary>
+    /// <summary>Gets the settings, a tab of the editor (D329).</summary>
     public SettingsViewModel Settings { get; }
 
-    /// <summary>Gets the app's version and its update, in the window's banner and on the settings page (D173).</summary>
+    /// <summary>Gets the app's version and its update, in the status bar and the settings (D173).</summary>
     public UpdatesViewModel Updates { get; }
 
-    /// <summary>Gets the pages the host's modules registered, in the rail after the app's own, once the host runs.</summary>
+    /// <summary>Gets the pages the host's modules registered, each opened in a tab of the editor.</summary>
     public ObservableCollection<ModulePageViewModel> Pages { get; } = [];
 
-    /// <summary>Gets whether the bots page is the one the window shows.</summary>
-    [ObservableProperty]
-    public partial bool IsBotsPage { get; private set; } = true;
+    /// <summary>Gets or sets what opens a folder in the system's file manager, as the window can.</summary>
+    public Action<string>? OpenFolder { get; set; }
 
-    /// <summary>Gets whether the accounts page is the one the window shows.</summary>
+    /// <summary>Gets the bottom panel's tab shown.</summary>
     [ObservableProperty]
-    public partial bool IsAccountsPage { get; private set; }
-
-    /// <summary>Gets whether the profiles page is the one the window shows.</summary>
-    [ObservableProperty]
-    public partial bool IsProfilesPage { get; private set; }
-
-    /// <summary>Gets whether the map page is the one the window shows.</summary>
-    [ObservableProperty]
-    public partial bool IsMapPage { get; private set; }
-
-    /// <summary>Gets whether the statistics page is the one the window shows.</summary>
-    [ObservableProperty]
-    public partial bool IsStatisticsPage { get; private set; }
-
-    /// <summary>Gets whether the logs page is the one the window shows.</summary>
-    [ObservableProperty]
-    public partial bool IsLogsPage { get; private set; }
-
-    /// <summary>Gets whether the protocol inspector is the page the window shows.</summary>
-    [ObservableProperty]
-    public partial bool IsInspectorPage { get; private set; }
-
-    /// <summary>Gets whether the settings page is the one the window shows, whether the host runs or not.</summary>
-    [ObservableProperty]
-    public partial bool IsSettingsPage { get; private set; }
-
-    /// <summary>Gets the module's page the window shows, if it shows one.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsModulePage))]
-    public partial ModulePageViewModel? SelectedPage { get; private set; }
+    [NotifyPropertyChangedFor(nameof(IsJournalShown), nameof(IsTraceShown), nameof(IsProblemsShown), nameof(IsProtocolShown), nameof(IsStatisticsShown))]
+    public partial BottomTab BottomTab { get; private set; }
 
     /// <summary>Gets whether any module registered a page.</summary>
     [ObservableProperty]
@@ -120,6 +117,7 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets whether the host runs: its bots are shown.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotRunning))]
     public partial bool IsRunning { get; private set; }
 
     /// <summary>Gets whether the host stops, or stopped.</summary>
@@ -142,40 +140,55 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string MissingBuildText { get; private set; } = "";
 
-    /// <summary>Gets or sets the page the sidebar marks: <c>bots</c>, <c>accounts</c>, <c>settings</c> and the others, or a module's page's route.</summary>
+    /// <summary>Gets the client build the host runs for, or the one the app ships, in the status bar.</summary>
     [ObservableProperty]
-    public partial string CurrentRoute { get; set; } = "bots";
+    public partial string ClientText { get; private set; } = "";
 
-    /// <summary>Gets whether the sidebar shows its pages' names, or their icons alone.</summary>
+    /// <summary>Gets how many characters are connected, beside the characters' tab.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SidebarToggleText), nameof(SidebarToggleIcon))]
-    public partial bool IsSidebarExpanded { get; private set; } = true;
+    public partial string OnlineText { get; private set; } = "";
 
-    /// <summary>Gets what the sidebar's button does, said.</summary>
-    public string SidebarToggleText => _localizer[IsSidebarExpanded ? "CollapseSidebar" : "ExpandSidebar"];
+    /// <summary>Gets whether everything is saved: no profile edited with changes not saved.</summary>
+    [ObservableProperty]
+    public partial bool IsSaved { get; private set; } = true;
 
-    /// <summary>Gets the icon of the sidebar's button, by its name among the app's.</summary>
-    public string SidebarToggleIcon => IsSidebarExpanded ? "SidebarClose" : "SidebarOpen";
+    /// <summary>Gets whether the host does not run, which the panels that read it say.</summary>
+    public bool IsNotRunning => !IsRunning;
 
-    /// <summary>Gets whether a module's page is the one the window shows.</summary>
-    public bool IsModulePage => SelectedPage is not null;
+    /// <summary>Gets whether the bottom panel shows the journal.</summary>
+    public bool IsJournalShown => BottomTab is BottomTab.Journal;
+
+    /// <summary>Gets whether the bottom panel shows the trace.</summary>
+    public bool IsTraceShown => BottomTab is BottomTab.Trace;
+
+    /// <summary>Gets whether the bottom panel shows the problems.</summary>
+    public bool IsProblemsShown => BottomTab is BottomTab.Problems;
+
+    /// <summary>Gets whether the bottom panel shows the protocol.</summary>
+    public bool IsProtocolShown => BottomTab is BottomTab.Protocol;
+
+    /// <summary>Gets whether the bottom panel shows the statistics.</summary>
+    public bool IsStatisticsShown => BottomTab is BottomTab.Statistics;
+
+    /// <summary>Gets the app's version and the client build it ships, under the welcome's logo.</summary>
+    public string VersionText => _localizer.Format("WelcomeVersion", Updates.Version, Updates.ClientVersion);
 
     /// <summary>Initializes a new instance of the <see cref="MainViewModel"/> class.</summary>
     /// <param name="host">The bots' host in the app's process.</param>
     /// <param name="localizer">The app's texts.</param>
-    /// <param name="preferences">What the app remembers of its own, its language, theme and the host's settings, or <see langword="null"/> to remember nothing.</param>
+    /// <param name="preferences">What the app remembers of its own, its language, layout and the host's settings, or <see langword="null"/> to remember nothing.</param>
     /// <param name="updates">The app's updates, or <see langword="null"/> for an app that never updates.</param>
-    /// <param name="close">Closes the app, as restarting it to install its update does.</param>
+    /// <param name="close">Closes the app, as File's Quit and restarting it to install its update do.</param>
     public MainViewModel(HostRunner host, Localizer localizer, AppPreferences? preferences = null, AppUpdates? updates = null, Action? close = null)
     {
         _host = host;
         _localizer = localizer;
         _preferences = preferences;
-
-        IsSidebarExpanded = !(preferences?.IsSidebarCollapsed ?? false);
+        _close = close ?? (() => { });
 
         var choice = new BotChoice();
 
+        Layout = new StudioLayout(preferences);
         Bots = new BotsViewModel(localizer, ShowJournalOf, ShowMapOf, Toasts);
         Accounts = new AccountsViewModel(localizer, Dialogs);
         Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts);
@@ -183,8 +196,23 @@ internal sealed partial class MainViewModel : ObservableObject
         Statistics = new StatisticsViewModel(localizer);
         Logs = new LogsViewModel(localizer, choice, Toasts);
         Inspector = new InspectorViewModel(localizer, choice);
-        Updates = new UpdatesViewModel(localizer, updates, Dialogs, () => IsRunning && Bots.HasItems, close ?? (() => { }));
+        Updates = new UpdatesViewModel(localizer, updates, Dialogs, () => IsRunning && Bots.HasItems, _close);
         Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates);
+        RunBlock = new RunBlockViewModel(Bots, localizer);
+        Search = new SearchViewModel(localizer, SearchItems);
+        Bots.Choose = RunBlock.Choose;
+        ClientText = localizer.Format("StatusClient", Updates.ClientVersion);
+        ShowWelcome();
+    }
+
+    private static IEnumerable<(string Key, string Section)> SettingsFound()
+    {
+        yield return ("SettingDisplay", "SectionBots");
+        yield return ("SettingDelays", "SectionBots");
+        yield return ("SettingCaptures", "SectionNetwork");
+        yield return ("SettingLanguage", "SectionAppearance");
+        yield return ("SettingFiles", "SectionFiles");
+        yield return ("SettingUpdate", "SectionAbout");
     }
 
     /// <summary>Reads the host and its bots again, in the language chosen.</summary>
@@ -203,7 +231,6 @@ internal sealed partial class MainViewModel : ObservableObject
         // Run from its code, the app says what the maintainer does: extract and map the build; installed, that it updates.
         IsMissingBuild = IsFailed && _host.MissingBuild is not null && Updates.IsInstalled;
         MissingBuildText = IsMissingBuild ? _localizer.Format("MissingBuildText", _host.MissingBuild, Updates.Version, Updates.ClientVersion) : "";
-        OnPropertyChanged(nameof(SidebarToggleText));
         (HostTitle, HostTone) = status switch
         {
             HostStatus.Starting => (_localizer["HostStatusStarting"], Tone.Info),
@@ -212,73 +239,42 @@ internal sealed partial class MainViewModel : ObservableObject
             HostStatus.Stopping => (_localizer["HostStatusStopping"], Tone.Warning),
             _ => (_localizer["HostStatusStopped"], Tone.Neutral),
         };
+
+        var build = services?.GetService<ClientBuild>()?.Version;
+
         HostDetail = status switch
         {
             HostStatus.Starting => _localizer["HostPreparing"],
-            HostStatus.Running => _localizer.Format("HostClient", services?.GetService<ClientBuild>()?.Version ?? "?"),
+            HostStatus.Running => _localizer.Format("HostClient", build ?? "?"),
             HostStatus.Failed => _localizer["HostFailedDetail"],
             _ => "",
         };
+        ClientText = _localizer.Format("StatusClient", build ?? Updates.ClientVersion);
 
         // The profiles first: the bots' cards offer them, and the accounts name them.
         Profiles.Refresh(services);
         Accounts.Refresh(services);
         Bots.Refresh(services);
+        RunBlock.Refresh();
+        OnlineText = _localizer.Format("CharactersOnline", RunBlock.Online.Count);
+        IsSaved = Profiles.Editing is not { IsDirty: true };
 
-        // Only the page shown reads what came since: the others read it all once shown again.
-        if (IsMapPage)
+        // Only what shows reads what came since: the rest reads it all once shown again.
+        if (Editor.IsShown(MapTab))
             Map.Refresh(services);
 
-        if (IsStatisticsPage)
+        if (Layout.IsBottomOpen && IsStatisticsShown)
             Statistics.Refresh(services);
 
-        if (IsLogsPage)
+        if (Layout.IsBottomOpen && IsJournalShown)
             Logs.Refresh(services);
 
-        if (IsInspectorPage)
+        if (Layout.IsBottomOpen && IsProtocolShown)
             Inspector.Refresh(services);
 
-        // Always: the bots' delays the page shows are read once the host runs, whichever page shows.
+        // Always: the bots' delays the settings show are read once the host runs, whichever tab shows.
         Settings.Refresh(services);
         RefreshPages(services);
-    }
-
-    /// <summary>Shows the page of a route, as the sidebar names it.</summary>
-    /// <param name="route">The route: <c>bots</c>, <c>accounts</c> and the others, or a module's page's.</param>
-    public void Navigate(string route)
-    {
-        ArgumentNullException.ThrowIfNull(route);
-
-        switch (route)
-        {
-            case "bots":
-                ShowBots();
-                break;
-            case "accounts":
-                ShowAccounts();
-                break;
-            case "profiles":
-                ShowProfiles();
-                break;
-            case "map":
-                ShowMap();
-                break;
-            case "statistics":
-                ShowStatistics();
-                break;
-            case "logs":
-                ShowLogs();
-                break;
-            case "inspector":
-                ShowInspector();
-                break;
-            case "settings":
-                ShowSettings();
-                break;
-            default:
-                Pages.FirstOrDefault(page => page.Route == route)?.ShowCommand.Execute(null);
-                break;
-        }
     }
 
     /// <summary>Replaces the module's page whose own code threw what nothing else caught on the UI's thread.</summary>
@@ -289,106 +285,220 @@ internal sealed partial class MainViewModel : ObservableObject
         return Pages.Any(page => page.TryFailWith(exception));
     }
 
+    /// <summary>Shows a tab of the bottom panel, the panel opened if it was closed.</summary>
+    /// <param name="tab">The tab.</param>
+    [RelayCommand]
+    public void ShowBottom(BottomTab tab)
+    {
+        BottomTab = tab;
+
+        if (!Layout.IsBottomOpen)
+            Layout.Show(StudioPanel.Bottom, true);
+
+        RefreshBottom();
+    }
+
+    /// <summary>Shows the bottom panel, or closes it: Ctrl J.</summary>
+    [RelayCommand]
+    public void ToggleBottom()
+    {
+        Layout.Toggle(StudioPanel.Bottom);
+        RefreshBottom();
+    }
+
+    /// <summary>Opens the assets: Ctrl Space (D321).</summary>
+    [RelayCommand]
+    public void GoToAssets()
+    {
+        Layout.Show(StudioPanel.Assets, true);
+    }
+
+    /// <summary>Shows the welcome's tab.</summary>
+    [RelayCommand]
+    public void ShowWelcome()
+    {
+        Editor.Open(WelcomeTab, () => new EditorTab(WelcomeTab, () => _localizer["Welcome"], null, this, needsHost: false));
+    }
+
+    /// <summary>Shows the accounts' tab.</summary>
+    [RelayCommand]
+    public void ShowAccounts()
+    {
+        Editor.Open(AccountsTab, () => new EditorTab(AccountsTab, () => _localizer["Accounts"], "General.User", Accounts, needsHost: true));
+    }
+
+    /// <summary>Shows the profiles' tab.</summary>
+    [RelayCommand]
+    public void ShowProfiles()
+    {
+        Editor.Open(ProfilesTab, () => new EditorTab(ProfilesTab, () => _localizer["Profiles"], "Nodes.Template", Profiles, needsHost: true));
+    }
+
+    /// <summary>Shows the map's tab.</summary>
+    [RelayCommand]
+    public void ShowMap()
+    {
+        Editor.Open(MapTab, () => new EditorTab(MapTab, () => _localizer["Map"], "Toolwindows.Web", Map, needsHost: true));
+        Map.Refresh(_host.Services);
+    }
+
+    /// <summary>Shows the settings' tab: the title's gear, Ctrl , (D329).</summary>
+    [RelayCommand]
+    public void ShowSettings()
+    {
+        Editor.Open(SettingsTab, () => new EditorTab(SettingsTab, () => _localizer["Settings"], "General.Settings", Settings, needsHost: false));
+        Settings.Refresh(_host.Services);
+    }
+
+    /// <summary>Shows a module's page in a tab.</summary>
+    /// <param name="page">The page.</param>
+    [RelayCommand]
+    public void ShowPage(ModulePageViewModel? page)
+    {
+        if (page is null)
+            return;
+
+        Editor.Open(page.Route, () => new EditorTab(page.Route, () => page.Title, "Toolwindows.Services", page, needsHost: true));
+        RefreshPages(_host.Services);
+    }
+
+    /// <summary>Starts a new profile: File's New profile, Ctrl N.</summary>
+    [RelayCommand]
+    public void NewProfile()
+    {
+        ShowProfiles();
+
+        if (IsRunning)
+            Profiles.NewCommand.Execute(null);
+    }
+
+    /// <summary>Saves what is edited: File's Save all, Ctrl S.</summary>
+    [RelayCommand]
+    public void SaveAll()
+    {
+        if (Profiles.Editing is { } editing && editing.SaveCommand.CanExecute(null))
+            editing.SaveCommand.Execute(null);
+    }
+
+    /// <summary>Opens the project's folder in the system's file manager.</summary>
+    [RelayCommand]
+    public void OpenProjectFolder()
+    {
+        if (_host.Services?.GetService<AssetLibrary>()?.Folder is { } folder)
+            OpenFolder?.Invoke(folder);
+    }
+
+    /// <summary>Lists the shortcuts: the search on its commands, each with its keys.</summary>
+    [RelayCommand]
+    public void ShowShortcuts()
+    {
+        Search.Open(SearchScope.Commands);
+    }
+
+    /// <summary>Closes the app: File's Quit.</summary>
+    [RelayCommand]
+    public void Quit()
+    {
+        _close();
+    }
+
+    /// <summary>Says what the editor's tabs and the search are named, in the language chosen.</summary>
+    private void Retell()
+    {
+        Editor.Refresh();
+        OnPropertyChanged(nameof(VersionText));
+    }
+
     private void RefreshPages(IServiceProvider? services)
     {
         // The catalogue is the host's: read once the host runs, and kept after it stops, as the bots shown are.
         if (!_pagesRead && IsRunning && services is not null)
         {
             foreach (var definition in services.GetService<PageCatalog>()?.All ?? [])
-                Pages.Add(new ModulePageViewModel(definition, services, _localizer, Select));
+                Pages.Add(new ModulePageViewModel(definition, services, _localizer, ShowPage));
 
             _pagesRead = true;
             HasPages = Pages.Count > 0;
         }
 
         foreach (var page in Pages)
+        {
+            page.IsSelected = Editor.IsShown(page.Route);
             page.Refresh();
+        }
     }
 
-    [RelayCommand]
-    private void ShowBots()
+    private void RefreshBottom()
     {
-        Select(null);
+        var services = _host.Services;
+
+        if (!Layout.IsBottomOpen)
+            return;
+
+        switch (BottomTab)
+        {
+            case BottomTab.Journal:
+                Logs.Refresh(services);
+                break;
+            case BottomTab.Protocol:
+                Inspector.Refresh(services);
+                break;
+            case BottomTab.Statistics:
+                Statistics.Refresh(services);
+                break;
+        }
     }
 
-    [RelayCommand]
-    private void ToggleSidebar()
+    private IEnumerable<SearchItem> SearchItems()
     {
-        IsSidebarExpanded = !IsSidebarExpanded;
-        _preferences?.RememberSidebar(!IsSidebarExpanded);
+        foreach (var profile in Profiles.Items)
+        {
+            yield return new SearchItem(SearchScope.Assets, "profile:" + profile.Id, profile.Name, _localizer.Format("SearchProfile", profile.ActivityName), "Nodes.Template", "", "", () =>
+            {
+                ShowProfiles();
+
+                if (profile.EditCommand.CanExecute(null))
+                    profile.EditCommand.Execute(null);
+            });
+        }
+
+        foreach (var bot in Bots.Items)
+            yield return new SearchItem(SearchScope.Characters, "character:" + bot.Bot.Key, bot.Name, bot.IsConnected ? bot.Level : _localizer["Disconnected"], null, bot.Initials, "", () => RunBlock.Choose(bot));
+
+        foreach (var command in Commands())
+            yield return command;
+
+        foreach (var (key, section) in SettingsFound())
+            yield return new SearchItem(SearchScope.Settings, "setting:" + key, _localizer[key], _localizer[section], "General.Settings", "", "", ShowSettings);
     }
 
-    [RelayCommand]
-    private void ShowAccounts()
+    private IEnumerable<SearchItem> Commands()
     {
-        Select(null);
-        IsBotsPage = false;
-        IsAccountsPage = true;
-        CurrentRoute = "accounts";
-    }
+        SearchItem Command(string key, string keys, Action run)
+        {
+            return new SearchItem(SearchScope.Commands, "command:" + key, _localizer[key], "", null, "", keys, run);
+        }
 
-    [RelayCommand]
-    private void ShowProfiles()
-    {
-        Select(null);
-        IsBotsPage = false;
-        IsProfilesPage = true;
-        CurrentRoute = "profiles";
-    }
-
-    [RelayCommand]
-    private void ShowMap()
-    {
-        Select(null);
-        IsBotsPage = false;
-        IsMapPage = true;
-        CurrentRoute = "map";
-        Map.Refresh(_host.Services);
-    }
-
-    [RelayCommand]
-    private void ShowStatistics()
-    {
-        Select(null);
-        IsBotsPage = false;
-        IsStatisticsPage = true;
-        CurrentRoute = "statistics";
-        Statistics.Refresh(_host.Services);
-    }
-
-    [RelayCommand]
-    private void ShowLogs()
-    {
-        Select(null);
-        IsBotsPage = false;
-        IsLogsPage = true;
-        CurrentRoute = "logs";
-        Logs.Refresh(_host.Services);
-    }
-
-    [RelayCommand]
-    private void ShowInspector()
-    {
-        Select(null);
-        IsBotsPage = false;
-        IsInspectorPage = true;
-        CurrentRoute = "inspector";
-        Inspector.Refresh(_host.Services);
-    }
-
-    [RelayCommand]
-    private void ShowSettings()
-    {
-        Select(null);
-        IsBotsPage = false;
-        IsSettingsPage = true;
-        CurrentRoute = "settings";
-        Settings.Refresh(_host.Services);
+        yield return Command("CommandNewProfile", "Ctrl N", NewProfile);
+        yield return Command("CommandSaveAll", "Ctrl S", SaveAll);
+        yield return Command("CommandToggleJournal", "Ctrl J", ToggleBottom);
+        yield return Command("CommandGoToAssets", _localizer["KeysCtrlSpace"], GoToAssets);
+        yield return Command("CommandDefaultLayout", "", Layout.Reset);
+        yield return Command("CommandPlay", "F5", RunBlock.PlayOrPause);
+        yield return Command("CommandPause", "F6", RunBlock.Pause);
+        yield return Command("CommandStop", _localizer["KeysShiftF5"], RunBlock.Stop);
+        yield return Command("CommandSettings", "Ctrl ,", ShowSettings);
+        yield return Command("CommandAccounts", "", ShowAccounts);
+        yield return Command("CommandProfiles", "", ShowProfiles);
+        yield return Command("CommandMap", "", ShowMap);
+        yield return Command("CommandCloseTabs", "", Editor.CloseAll);
+        yield return Command("CommandProjectFolder", "", OpenProjectFolder);
+        yield return Command("CommandCheckUpdate", "", () => Updates.CheckCommand.Execute(null));
     }
 
     private void ShowJournalOf(CharacterKey key)
     {
-        ShowLogs();
+        ShowBottom(BottomTab.Journal);
         Logs.Show(key);
     }
 
@@ -398,28 +508,11 @@ internal sealed partial class MainViewModel : ObservableObject
         Map.Show(key);
     }
 
-    private void Select(ModulePageViewModel? page)
-    {
-        foreach (var other in Pages)
-            other.IsSelected = other == page;
-
-        SelectedPage = page;
-        CurrentRoute = page?.Route ?? "bots";
-        IsBotsPage = page is null;
-        IsAccountsPage = false;
-        IsProfilesPage = false;
-        IsMapPage = false;
-        IsStatisticsPage = false;
-        IsLogsPage = false;
-        IsInspectorPage = false;
-        IsSettingsPage = false;
-        page?.Refresh();
-    }
-
     private void UseLanguage(CultureInfo culture)
     {
         _localizer.Use(culture);
         _preferences?.RememberLanguage(_localizer.Culture.TwoLetterISOLanguageName);
+        Retell();
         Refresh();
     }
 }

@@ -196,6 +196,7 @@ internal sealed class JournalLines
             BotEvent.PausedByPlayer => (_localizer["JournalPaused"], null, Tone.Warning, LogMark.Hand),
             BotEvent.Resumed => (_localizer["JournalResumed"], null, Tone.Info, LogMark.Play),
             BotEvent.PausedAfterFight => (_localizer["JournalPausedAfterFight"], null, Tone.Warning, LogMark.Pause),
+            BotEvent.PausedFromApp => (_localizer["JournalPausedFromApp"], null, Tone.Warning, LogMark.Pause),
             _ => (_localizer["JournalFight"], null, Tone.Warning, LogMark.Swords),
         };
     }

@@ -7382,6 +7382,126 @@ page, once 7c4 makes it.*
 
 - **Left**: the game's icons (D331); which details each session measures on the real app, with the owner.
 
+## D333: Until 7c3 and 7c4, each page in its place in the docks
+
+*2026-11-02, step 7, session 7c2, chosen by the owner among three, as the lead recommended it. Builds D319, D321.*
+
+- **Asked**: the frame coded, its panels showing today's pages or a clean empty state, the app usable at the end of the
+  session.
+- **The places**: the bots' cards in the characters' panel, one column, a click choosing the run block's character; the
+  journal, the protocol and the statistics in the bottom panel, the trace and the problems a plain empty state; the
+  accounts, the profiles, the map, the settings and the modules' pages in the editor's tabs, opened from the Window menu,
+  the search, a card or the gear; the assets a way to the profiles; the inspector what to choose.
+- **Docked**, a page's title is its tab's, its margins narrower; it keeps its own look and Lucide's icons until its session
+  draws it again (D161 holds for them until then). A panel or tab that reads the host shows where the host stands while
+  it does not run; the welcome says why it failed.
+- **Rejected**: every page in a tab of the editor, the docks empty, which left the frame hollow; a new list of characters
+  on the left, thrown away at 7c3.
+
+## D334: What the search finds in 7c2
+
+*2026-11-02, step 7, session 7c2, the lead's. Builds D328.*
+
+- The recent items first while nothing is typed, then the assets, the characters, the commands with their shortcuts, and
+  the settings; everywhere shows each group's first four, a scope thirty. The commands and settings wait for a letter or
+  their scope, so that an empty search shows what is opened most.
+- **Assets** are the profiles, which open in the profiles' tab, edited when the project's own; the behaviors wait for their
+  editor (7e). **Characters** choose the run block's, their tab coming at 7c3. **Settings** open the settings' tab, its
+  sections at 7c4.
+- **Maps** by coordinates or name wait for a tab that opens a map, a character's at 7c3 or the world's at 7d: a result
+  that opens nothing would be a dead end.
+
+## D335: The studio's scale, the mockup's
+
+*2026-11-02, step 7, session 7c2, the lead's. Amends D159's scale for the frame; the pages keep theirs until 7c3 and 7c4.*
+
+- The studio's text is 12.5, its small text 11, as the mockup's; its controls 24 to 30 high, its rows 26 to 40; radii 6,
+  7, 10 and 12, ShadUI's set to them; the window 1,440 by 900 by default, 960 by 600 at the least.
+- The frame's buttons have a theme of their own, `StudioButton`, a surface and its content: ShadUI's centres its content
+  and sets its own padding and weight, where the frame's tabs, tools and rows lay theirs out across the button.
+
+## D336: The game's icons, the client's own
+
+*2026-11-02, step 7, session 7c2, chosen by the owner among three, as the lead recommended it. Settles what D331 left.*
+
+- **Measured** on 3.7.12.12: `StreamingAssets/aa/StandaloneWindows64/icons_assets_1x` and `_2x.bundle` hold white
+  monochrome glyphs, one sprite each on a texture of its own, 64 pixels and DXT5 at 2x: `weight` for pods, `heart`, `job`,
+  `resources`, `skull`, `character`, `success`, `pause` among them, which a tint repaints as IntelliJ's; `uiassets_assets_2x`
+  holds coloured ones, `tx_lifePoints` and `tx_health` hearts, `map`, `havenbag`, `inventory`; `spriteassets` holds the
+  texts' inline icons, `pv`, `pod`, `kama`, `xp`, `epeesCroisees`, in one atlas whose texels its asset keeps inline. The
+  professions' and the items' icons are in the pack already (D135, D265).
+- **Chosen**: the client's monochrome glyphs for life, pods, fights, professions and harvests, tinted; the professions' and
+  resources' own coloured icons where they name one; a neutral mark without the pack. They go in the pack, its format
+  raised, extracted by `scripts/extract.cs`, never committed (D11); 7c3 takes them with the characters' cards.
+- **Rejected**: Lucide's, as the mockup draws them, a second family beside IntelliJ's; icons drawn by D3B on IntelliJ's
+  grid, the most even but to draw and validate.
+
+## D337: IntelliJ's icons taken by a tool, drawn by the app's own control
+
+*2026-11-02, step 7, session 7c2, the lead's. Builds D305, D331.*
+
+- **`scripts/icons.cs`** fetches the dark variant of each icon the app draws, `<name>_dark.svg` under
+  `platform/icons/src/expui` of `JetBrains/intellij-community` at a pinned revision, checks that its first comment is
+  JetBrains' Apache 2.0 notice, and writes them all to `src/D3B.App/Themes/IntelliJIcons.axaml`, each with its notice: an
+  icon whose file lacks it is refused and nothing is written. `--check` compares the file with what it would write. It
+  reads what the icons are drawn with, paths, rectangles, circles and ellipses, plain colours, transforms and a clip of the
+  whole grid, and fails on anything else rather than draw an icon wrong; a path's numbers are written apart, since SVG lets
+  them touch where Avalonia does not read them, and its fill rule always, Avalonia's default being SVG's other.
+- **Avalonia's own drawings**, `DrawingGroup`, not an SVG library: no dependency, and the app's `Icon` draws them on their
+  grid of 16 in IntelliJ's colours, repaints their neutral greys with a tint, such as white on the accent, and greys a
+  disabled control's icon as IntelliJ does. Keys as `General.Search`.
+- The 49 icons of the mockup, `debugger/freeze` and `toolwindows/dataflow` left out for their missing notice (D331). Window
+  menus and caption buttons keep ShadUI's geometries.
+
+## D338: The run block's buttons, and a pause from the app
+
+*2026-11-02, step 7, session 7c2, the lead's. Builds D322, D66.*
+
+- **The state**: none chosen; stopped, the character connected or not, running nothing; playing, its activity running, a
+  fight included; paused, its activity waiting for the bot to be resumed. The character is kept by its key, chosen again
+  as its bot comes back.
+- **Play** starts what the character's card would, its own profile first, else what the card has chosen; a bot left paused
+  by the player's hand is resumed first. Disabled, its tooltip says why: no character chosen, not connected, or no profile.
+  Once paused, play resumes.
+- **Pause** is a new `BotActor.Pause`, public: as the player's hand, the step under way is cut and the bot starts nothing
+  until resumed, the journal saying "Mis en pause depuis D3B" (`BotEvent.PausedFromApp`). The pause after a fight, which an
+  activity asks for once its step is over, is `PauseAfterStep`, as before.
+- **Stop** ends the activity, as the card's stop does.
+
+## D339: The window's one row, the docks remembered, the status bar
+
+*2026-11-02, step 7, session 7c2, the lead's. Builds D320 to D322. Supersedes D162's title bar, D101's sidebar and D151's
+theme.*
+
+- **ShadUI's window keeps its code**, its moving, maximizing with Windows' snap layouts, its dialogs and toasts, under a
+  template of D3B's own: one row of 44 pixels, the logo and menus left, the search centred on the window until a side would
+  touch it, then narrowing and sliding aside, gone below 200 pixels, Ctrl K still opening it (`TitleBarPanel`); the run
+  block, the gear and the window's buttons right.
+- **`app.json`** keeps the language and the layout, each edge's size and the panels closed, read back within bounds; the
+  default is not written, so that a later default reaches a user who never moved an edge. The theme and the sidebar's
+  fold go, an older file's dropped at the next write; the theme leaves the settings (D320).
+- **The status bar**: the host's state with its dot, its detail in a tooltip; the client build; whether everything is
+  saved, which until the studio's own assets means a profile edited with its changes not saved; an update downloaded
+  shows a button that restarts into it, in place of D173's banner.
+- **Menus**: File, new profile, save all, the project's folder, quit; Edit, undo and redo disabled until an editor has a
+  history (7e), the settings; Window, the panels checked, today's pages and the modules', the default layout; Help, the
+  shortcuts as the search's commands, about as the settings.
+
+## D340: 7c2, what it leaves
+
+*2026-11-02, step 7, session 7c2.*
+
+- **Done**: ShadUI themed dark only (D320); IntelliJ's icons taken and drawn (D337); the title row and its run block (D322,
+  D338, D339); the docks, every edge resized on its own and remembered (D321, D339); the status bar; the search (D328,
+  D334); today's pages in their places (D333); the scale (D335); the game's icons chosen (D336). Compared with the mockup
+  piece by piece, the app drawn by Skia in the tests.
+- **Left for 7c3**: the characters' cards and their heads, with the game's icons in the pack (D323, D336); the inspector
+  (D324); a character's tab (D325); the maps in the search (D334). **For 7c4**: the assets' tree, the bottom panel's own
+  views, the settings' sections and a profile's editor (D326, D327, D329, D330), the pages of D101 and D162 removed, and
+  Lucide's icons with them.
+- **Not checked** on a real window: the drag of the window by its row, the snap layouts, the menus' popups and the
+  splitters under a real pointer; the owner's look at the running app.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

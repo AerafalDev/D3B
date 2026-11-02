@@ -66,7 +66,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheSettingsPageIsDrawnInBothLanguagesAndThemesAtTheRailsFoot()
+    public async Task TheSettingsTabIsDrawnInBothLanguages()
     {
         using var host = TestHost();
         var runner = await TestHosts.RunningAsync(host);
@@ -130,7 +130,6 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Contains("Réponse du serveur", french);
         Assert.Contains("Rétablir", french);
         Assert.Contains("Au prochain démarrage", french);
-        Assert.Contains("Sombre", french);
         Assert.Contains("Base de données", french);
         Assert.DoesNotContain("Display time", french);
         Assert.Equal(2, raised);

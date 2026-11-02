@@ -223,36 +223,6 @@
                             </Border>
                         </Grid>
                     </Border>
-                    <Border Classes="Row">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock
-                                Classes="Label"
-                                Text="{l:Tr Theme}"
-                                VerticalAlignment="Center" />
-                            <Border Classes="Segmented" Grid.Column="1">
-                                <StackPanel Orientation="Horizontal" Spacing="2">
-                                    <Button
-                                        Classes="Segment"
-                                        Classes.Selected="{Binding IsDark}"
-                                        Command="{Binding UseDarkCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <c:Icon Classes="Small" Data="{StaticResource IconMoon}" />
-                                            <TextBlock Text="{l:Tr ThemeDark}" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Button
-                                        Classes="Segment"
-                                        Classes.Selected="{Binding IsLight}"
-                                        Command="{Binding UseLightCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <c:Icon Classes="Small" Data="{StaticResource IconSun}" />
-                                            <TextBlock Text="{l:Tr ThemeLight}" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-                    </Border>
                 </StackPanel>
             </Border>
             <Border Classes="Card">

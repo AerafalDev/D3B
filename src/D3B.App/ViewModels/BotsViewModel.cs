@@ -31,6 +31,9 @@ internal sealed partial class BotsViewModel : ObservableObject
     /// <summary>Gets whether there is a bot.</summary>
     public bool HasItems => !IsEmpty;
 
+    /// <summary>Gets or sets what choosing a bot's card does: the run block drives it (D322, D323).</summary>
+    public Action<BotViewModel>? Choose { get; set; }
+
     /// <summary>Initializes a new instance of the <see cref="BotsViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
     /// <param name="showJournal">Shows a bot's journal on the logs page, as its card asks, or <see langword="null"/> when no page shows it.</param>
@@ -56,7 +59,7 @@ internal sealed partial class BotsViewModel : ObservableObject
                 if (_byKey.ContainsKey(bot.Key))
                     continue;
 
-                var item = new BotViewModel(bot, services, _localizer, _showJournal, _showMap, _toasts);
+                var item = new BotViewModel(bot, services, _localizer, _showJournal, _showMap, _toasts, chosen => Choose?.Invoke(chosen));
 
                 _byKey.Add(bot.Key, item);
                 Items.Add(item);

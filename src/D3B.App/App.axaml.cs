@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using D3B.App.Hosting;
 using D3B.App.Localization;
@@ -59,12 +58,9 @@ internal sealed partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && Host is { } host)
         {
-            // The language and theme the app was left in, before the window shows.
+            // The language the app was left in, before the window shows; the studio is dark only (D320).
             if (Preferences?.Language is { } language)
                 Localizer.Instance.Use(CultureInfo.GetCultureInfo(language));
-
-            if (Preferences?.Theme == AppPreferences.Light)
-                RequestedThemeVariant = ThemeVariant.Light;
 
             // Closing the window stops the host, then installs the version downloaded and starts the app again (D173).
             var main = new MainViewModel(host, Localizer.Instance, Preferences, Updates, () => desktop.Shutdown());

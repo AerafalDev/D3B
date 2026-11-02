@@ -1,6 +1,7 @@
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Studio;
 using D3B.Data.Tests;
 
 namespace D3B.App.Tests.Hosting;
@@ -8,20 +9,41 @@ namespace D3B.App.Tests.Hosting;
 public sealed class AppPreferencesTests
 {
     [Fact]
-    public void TheAppRemembersItsLanguageAndThemeFromOneRunToTheNext()
+    public void TheAppRemembersItsLanguageAndLayoutFromOneRunToTheNext()
     {
         using var directory = new TemporaryDirectory();
         var path = directory.Combine("D3B", "app.json");
         var first = AppPreferences.Load(path);
 
-        Assert.Equal((null, null), (first.Language, first.Theme));
+        Assert.Equal((null, null), (first.Language, first.Layout));
 
         first.RememberLanguage("fr");
-        first.RememberTheme(AppPreferences.Light);
+        first.RememberLayout(new StudioLayoutState(260, 400, 0.5, 180, ["Inspector"]));
 
         var next = AppPreferences.Load(path);
 
-        Assert.Equal(("fr", AppPreferences.Light), (next.Language, next.Theme));
+        Assert.Equal("fr", next.Language);
+        Assert.Equal((260d, 400d, 0.5, 180d), (next.Layout!.LeftWidth, next.Layout.RightWidth, next.Layout.LeftShare, next.Layout.BottomHeight));
+        Assert.Equal(["Inspector"], next.Layout.Closed);
+    }
+
+    [Fact]
+    public void AnOlderFilesThemeAndSidebarAreDroppedAtTheNextWrite()
+    {
+        using var directory = new TemporaryDirectory();
+        var path = directory.Combine("app.json");
+
+        File.WriteAllText(path, """{ "Language": "fr", "Theme": "Light", "SidebarCollapsed": true, "Host": { "Delays:Display": "1.5" } }""");
+
+        var preferences = AppPreferences.Load(path);
+
+        preferences.RememberLanguage("en");
+
+        var text = File.ReadAllText(path);
+
+        Assert.DoesNotContain("Theme", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Sidebar", text, StringComparison.Ordinal);
+        Assert.Equal(("en", "1.5"), (AppPreferences.Load(path).Language, AppPreferences.Load(path).Host["Delays:Display"]));
     }
 
     [Fact]
@@ -52,13 +74,13 @@ public sealed class AppPreferencesTests
 
         var preferences = AppPreferences.Load(path);
 
-        Assert.Equal((null, null), (preferences.Language, preferences.Theme));
+        Assert.Equal((null, null), (preferences.Language, preferences.Layout));
         Assert.Empty(preferences.Host);
         Assert.Equal(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "D3B", "app.json"), AppPreferences.DefaultPath);
     }
 
     [Fact]
-    public async Task TheWindowRemembersTheLanguageItSwitchesTo()
+    public async Task TheWindowRemembersTheLanguageAndLayoutItIsLeftIn()
     {
         using var directory = new TemporaryDirectory();
         await using var store = new TestStore();
@@ -70,15 +92,16 @@ public sealed class AppPreferencesTests
         var main = new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), preferences);
 
         main.Settings.UseFrenchCommand.Execute(null);
-        main.Settings.UseLightCommand.Execute(null);
-        main.ToggleSidebarCommand.Execute(null);
+        main.Layout.CloseCommand.Execute(StudioPanel.Inspector);
 
-        Assert.Equal(("fr", AppPreferences.Light), (AppPreferences.Load(path).Language, AppPreferences.Load(path).Theme));
-        Assert.True(AppPreferences.Load(path).IsSidebarCollapsed);
-        Assert.False(new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), AppPreferences.Load(path)).IsSidebarExpanded);
+        var again = new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), AppPreferences.Load(path));
 
-        main.Settings.UseDarkCommand.Execute(null);
+        Assert.Equal("fr", AppPreferences.Load(path).Language);
+        Assert.False(again.Layout.IsInspectorOpen);
+        Assert.True(again.Layout.IsCharactersOpen);
 
-        Assert.Equal(AppPreferences.Dark, AppPreferences.Load(path).Theme);
+        again.Layout.ResetCommand.Execute(null);
+
+        Assert.Null(AppPreferences.Load(path).Layout);
     }
 }
