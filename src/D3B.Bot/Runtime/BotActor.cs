@@ -72,6 +72,7 @@ public sealed class BotActor : IAsyncDisposable
     private int _lastEndedFight;
     private long _placedAt;
     private long _useEndedAt = NeverEnded;
+    private long _fightBeganAt = NeverEnded;
     private long _regeneratingSince = NeverEnded;
 
     /// <summary>Gets who the bot plays.</summary>
@@ -139,6 +140,9 @@ public sealed class BotActor : IAsyncDisposable
 
     /// <summary>Gets when the server last ended a use of the character's own, if it ever did.</summary>
     internal DateTimeOffset? UseEndedAt => Volatile.Read(ref _useEndedAt) is var ticks and not NeverEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
+
+    /// <summary>Gets when the server last created a fight's context for the character, if it ever did.</summary>
+    internal DateTimeOffset? FightBeganAt => Volatile.Read(ref _fightBeganAt) is var ticks and not NeverEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
 
     internal BotActor(CharacterState state, GameMaps maps, Lazy<WorldPathfinder> world, Lazy<BankDirectory> banks, Func<BotDelays> delays, TimeProvider time, ILogger log)
     {
@@ -469,6 +473,7 @@ public sealed class BotActor : IAsyncDisposable
 
         if (side is RelayDirection.FromServer && message is ContextCreationEvent { Context: ContextCreationEvent.Types.GameContext.Fight })
         {
+            Volatile.Write(ref _fightBeganAt, Time.GetUtcNow().UtcTicks);
             Interlocked.Increment(ref _fightsBegun);
             Write(BotEvent.FightBegan);
 
