@@ -74,6 +74,21 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AfterALostFightAGroupNoLessRiskyIsTurnedAway()
+    {
+        // The group lost to was to take the character's life in 4 turns of the 10 it needed: a share of 0.4.
+        var lost = GroupJudge.Share(new FightOdds(TurnsToWin: 10, TurnsToLose: 4));
+
+        Assert.Equal(0.4, lost, 3);
+        Assert.True(GroupJudge.Winnable(new FightOdds(10, 3)));
+        Assert.False(GroupJudge.Winnable(new FightOdds(10, 2)));
+        Assert.False(GroupJudge.Winnable(new FightOdds(10, 4), lost));
+        Assert.False(GroupJudge.Winnable(new FightOdds(10, 3), lost));
+        Assert.True(GroupJudge.Winnable(new FightOdds(10, 5), lost));
+        Assert.Equal(double.PositiveInfinity, GroupJudge.Share(new FightOdds(0, 3)));
+    }
+
+    [Fact]
     public void TheCharacterIsImaginedFromTheCharacteristicsTheServerGaveItOutOfFights()
     {
         // Breed 3's spells are those the server listed.

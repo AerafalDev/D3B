@@ -64,15 +64,33 @@ public static class GroupJudge
     /// <param name="map">The map the group stands on.</param>
     /// <param name="tables">The pack's game tables.</param>
     /// <param name="tactics">The fight's AI.</param>
+    /// <param name="lostAt">The share of the turns to win in which the group the character last lost to was to take its life (<see cref="Share"/>): a group no less risky is turned away too (D267); 0 before any loss.</param>
     /// <returns>Whether it does; before the server gave the character's characteristics, whether no monster of the group is above the character's level.</returns>
-    public static bool Beats(MapMonsterGroup group, CharacterState state, FightMap map, GameTables tables, FightTactics tactics)
+    public static bool Beats(MapMonsterGroup group, CharacterState state, FightMap map, GameTables tables, FightTactics tactics, double lostAt = 0)
     {
         ArgumentNullException.ThrowIfNull(group);
         ArgumentNullException.ThrowIfNull(state);
 
         return OddsOf(group, state, map, tables, tactics) is { } odds
-            ? odds.TurnsToLose >= odds.TurnsToWin * Margin
+            ? Winnable(odds, lostAt)
             : group.Monsters.All(monster => monster.Level <= (state.Level ?? 0));
+    }
+
+    /// <summary>Tells whether odds let the character attack a group: the group would not take its life in under a quarter of the turns it needs to beat it (D249), nor in a share no greater than the group it last lost to (D267).</summary>
+    /// <param name="odds">The odds of the fight against the group.</param>
+    /// <param name="lostAt">The share of the group the character last lost to (<see cref="Share"/>), 0 before any loss.</param>
+    /// <returns>Whether they do.</returns>
+    public static bool Winnable(FightOdds odds, double lostAt = 0)
+    {
+        return odds.TurnsToLose >= odds.TurnsToWin * Margin && (lostAt <= 0 || odds.TurnsToLose > odds.TurnsToWin * lostAt);
+    }
+
+    /// <summary>Gets in what share of the turns the character needs to beat a group the group would take its life: under 1, the group first.</summary>
+    /// <param name="odds">The odds of the fight against the group.</param>
+    /// <returns>The share; infinite when the character would lose no life.</returns>
+    public static double Share(FightOdds odds)
+    {
+        return odds.TurnsToWin > 0 ? odds.TurnsToLose / odds.TurnsToWin : double.PositiveInfinity;
     }
 
     /// <summary>Gets the odds the AI gives the character against a group, over the fight's course (D249).</summary>

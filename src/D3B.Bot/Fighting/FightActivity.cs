@@ -71,6 +71,8 @@ public sealed class FightActivity : BotActivity
     private int _lost;
     private int _lostInARow;
     private int _banks;
+    private FightOdds? _attacked;
+    private double _lostAt;
 
     /// <inheritdoc/>
     public override string Name => "Fighting";
@@ -209,6 +211,10 @@ public sealed class FightActivity : BotActivity
     /// <inheritdoc/>
     public override InterruptionResponse OnFightOver(FightEnd? ending, InterruptionResponse response)
     {
+        var attacked = _attacked;
+
+        _attacked = null;
+
         if (ending is { } end)
         {
             foreach (var (item, quantity) in end.Items)
@@ -229,6 +235,12 @@ public sealed class FightActivity : BotActivity
         _lost++;
         _lostInARow++;
         _regaining = true;
+
+        // Measured (D266): two groups of 4 judged winnable, each to take the character's life in under half the turns it
+        // needed, lost one after the other. A group no less risky than one it lost to is left for the run (D267).
+        if (attacked is { } odds && GroupJudge.Share(odds) is var share && double.IsFinite(share))
+            _lostAt = Math.Max(_lostAt, share);
+
         Tally();
 
         if (_lostInARow >= MostLostInARow)
@@ -303,7 +315,7 @@ public sealed class FightActivity : BotActivity
             if (map is null && _maps.TryGet(mapId, out var data))
                 map = FightMap.Of(data);
 
-            if (map is not null && GroupJudge.Beats(group, state, map, _tables, _tactics.Value))
+            if (map is not null && GroupJudge.Beats(group, state, map, _tables, _tactics.Value, _lostAt))
                 return group;
 
             _skipped.Add(group.ActorId);
@@ -330,6 +342,10 @@ public sealed class FightActivity : BotActivity
 
             var fought = context.Expect((side, _, state) => state.Fight is not null);
 
+            _attacked = _settings.OnlyWinnable && _maps.TryGet(context.State.MapId ?? 0, out var data)
+                ? GroupJudge.OddsOf(now, context.State, FightMap.Of(data), _tables, _tactics.Value)
+                : null;
+
             await context.SendAsync(new AttackMonsterRequest { MonsterGroupId = group.ActorId }, cancellationToken).ConfigureAwait(false);
 
             // A fight beginning interrupts this step; a refusal is no answer at all, measured.
@@ -339,6 +355,7 @@ public sealed class FightActivity : BotActivity
             break;
         }
 
+        _attacked = null;
         _skipped.Add(group.ActorId);
     }
 
