@@ -39,7 +39,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task EachProfileShowsItsActivityAFewSettingsAndItsCharacters()
+    public async Task EachProfileSaysItsActivityItsCharactersAndWhatIsToReview()
     {
         await _store.OpenedAsync();
 
@@ -62,19 +62,15 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         var item = page.Items[1];
 
         Assert.Equal("Harvest", item.ActivityName);
-        Assert.Equal("On Job · Lumberjack · Chestnut, Ash and 1 more", item.Summary);
-        Assert.Equal(["AE"], item.Players);
-        Assert.Equal("1 character", item.PlayersText);
         Assert.False(item.NeedsReview);
+        Assert.Equal(["Aerafa"], page.PlayersOf(item.Id).Select(character => character.Name));
         Assert.Equal("Behavior gone: gone", page.Items[0].Review);
         Assert.Equal("To review", page.Items[2].Review);
-        Assert.Equal("No character", page.Items[3].PlayersText);
-        Assert.Equal("", page.Items[3].Summary);
 
         _localizer.Use(Localizer.French);
         page.Refresh(_store.Host.Services);
 
-        Assert.Equal("On Job · Bûcheron · Châtaignier, Frêne et 1 de plus", page.Items[1].Summary);
+        Assert.Equal("Comportement disparu : gone", page.Items[0].Review);
     }
 
     [Fact]

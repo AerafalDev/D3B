@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>A profile on its page: as a card, its name, activity, settings at a glance and characters; edited, on the whole page (D99, D101, D159, D300).</summary>
+/// <summary>A profile, edited in a tab of its own: its name, the behavior it is a variant of, its settings and what they change (D300, D330).</summary>
 /// <remarks>A profile given with the app is read only: copied to be changed (D296).</remarks>
 internal sealed partial class ProfileViewModel : ObservableObject
 {
@@ -71,19 +71,6 @@ internal sealed partial class ProfileViewModel : ObservableObject
     [ObservableProperty]
     public partial string ActivityName { get; private set; } = "";
 
-    /// <summary>Gets a few of its settings, at a glance.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSummary))]
-    public partial string Summary { get; private set; } = "";
-
-    /// <summary>Gets the initials of the characters that play it, four at most.</summary>
-    [ObservableProperty]
-    public partial IReadOnlyList<string> Players { get; private set; } = [];
-
-    /// <summary>Gets how many characters play it.</summary>
-    [ObservableProperty]
-    public partial string PlayersText { get; private set; } = "";
-
     /// <summary>Gets why the profile is to be looked at, if it is: its activity gone, or a setting that no longer reads.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NeedsReview))]
@@ -124,9 +111,6 @@ internal sealed partial class ProfileViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
     public partial bool CanSave { get; private set; }
-
-    /// <summary>Gets whether some settings show at a glance.</summary>
-    public bool HasSummary => Summary.Length > 0;
 
     /// <summary>Gets whether the profile is to be looked at.</summary>
     public bool NeedsReview => Review is not null;
@@ -262,33 +246,10 @@ internal sealed partial class ProfileViewModel : ObservableObject
         RefreshTitle();
         ActivityName = definition?.Name.In(culture) ?? _profile?.Behavior ?? "";
 
-        if (_profile is null)
-        {
-            Summary = "";
-            Review = null;
-            Players = [];
-            PlayersText = "";
-
-            return;
-        }
-
-        if (definition is null)
-        {
-            Summary = "";
-            Review = _page.Localizer.Format("BehaviorMissing", _profile.Behavior);
-        }
-        else
-        {
-            var reading = definition.Settings.Read(settings);
-
-            Summary = _page.Summarize(definition.Settings, reading.Settings);
-            Review = reading.Reset.Count > 0 ? _page.Localizer["ProfileNeedsReview"] : null;
-        }
-
-        var players = _page.PlayersOf(_profile.Id);
-
-        Players = [.. players.Take(4).Select(character => AvatarInitials.Of(character.Name))];
-        PlayersText = players.Count == 0 ? _page.Localizer["NoPlayer"] : _page.Localizer.Plural("Players", players.Count);
+        Review = _profile is null ? null
+            : definition is null ? _page.Localizer.Format("BehaviorMissing", _profile.Behavior)
+            : definition.Settings.Read(settings).Reset.Count > 0 ? _page.Localizer["ProfileNeedsReview"]
+            : null;
     }
 
     private void Load(string? settings)

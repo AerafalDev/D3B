@@ -16,12 +16,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The profiles page: the profiles as cards, or the one being edited on the whole page (D99, D101, D159).</summary>
+/// <summary>The profiles: each one's item, those whose editor is open, each in a tab of its own, and their dialogs (D99, D330).</summary>
 /// <remarks>
 /// <para>
 /// It reads the profiles, assets of the project since 7b (D296, D300), and the characters from memory each refresh, and
 /// makes its items again only once they changed: a profile being edited keeps its editor while the relay records what it
-/// sees, and while another page shows.
+/// sees, and while another tab shows.
 /// </para>
 /// <para>
 /// Until the studio's editor (D306), a profile shows as the settings of the activity its behavior plays whole
@@ -30,7 +30,6 @@ namespace D3B.App.ViewModels;
 /// </remarks>
 internal sealed partial class ProfilesViewModel : ObservableObject
 {
-    private const int SummaryLength = 3;
     private const int CopyAttempts = 50;
 
     private readonly Dictionary<string, ProfileViewModel> _byId = new(StringComparer.Ordinal);
@@ -198,31 +197,6 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         ];
     }
 
-    /// <summary>Says a few of a profile's settings, those that show, at a glance.</summary>
-    /// <param name="declared">The settings its activity declares.</param>
-    /// <param name="settings">The profile's settings.</param>
-    /// <returns>Three of them at most, joined.</returns>
-    public string Summarize(ActivitySettings declared, object? settings)
-    {
-        if (settings is null)
-            return "";
-
-        var culture = Localizer.Culture;
-        var parts = new List<string>();
-
-        foreach (var setting in declared.All.Where(setting => declared.IsVisible(setting, settings)))
-        {
-            // The game's values say what they are, a resource or a sub-area; a flag says its name, a number with it.
-            if (Describe(setting, settings) is { Length: > 0 } value)
-                parts.Add(setting.Kind is SettingKind.Number ? Localizer.Format("SummaryItem", setting.Name.In(culture), value) : value);
-
-            if (parts.Count == SummaryLength)
-                break;
-        }
-
-        return string.Join(" · ", parts);
-    }
-
     /// <summary>Opens a profile's editor in its tab, beside the others open.</summary>
     /// <param name="item">The profile being edited.</param>
     public void BeginEditing(ProfileViewModel item)
@@ -335,50 +309,6 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         EndEditing(item);
         Sync(false);
         Toasts.Show(new Toast(Localizer.Format("ProfileDeleted", item.Name)));
-    }
-
-    private string Describe(SettingDefinition setting, object settings)
-    {
-        var culture = Localizer.Culture;
-        var value = setting.GetValue(settings);
-
-        switch (setting.Kind)
-        {
-            case SettingKind.Flag:
-                return value is true ? setting.Name.In(culture) : "";
-
-            case SettingKind.Number:
-                return setting.IsPercent ? Localizer.Format("PercentValue", (int)value!) : ((int)value!).ToString(culture);
-
-            case SettingKind.Text:
-                return (string)value!;
-
-            case SettingKind.Choice:
-                {
-                    var names = setting.GetValues(settings).Select(choice => setting.Options.FirstOrDefault(option => option.Value.Equals(choice))?.Text.In(culture) ?? choice.ToString()!);
-
-                    return Joined(setting.IsList ? [.. names] : [setting.Options.FirstOrDefault(option => option.Value.Equals(value))?.Text.In(culture) ?? ""]);
-                }
-
-            default:
-                {
-                    IReadOnlyList<object> ids = setting.IsList ? setting.GetValues(settings) : value is int id ? [id] : [];
-
-                    return Joined([.. ids.Select(item => Names.Name(setting.Kind, Game?.Options(setting.Kind).FirstOrDefault(option => option.Id == (int)item) ?? new GameReference((int)item, 0, null)))]);
-                }
-        }
-    }
-
-    private string Joined(IReadOnlyList<string> names)
-    {
-        var shown = names.Where(name => name.Length > 0).Take(2).ToList();
-
-        if (shown.Count == 0)
-            return "";
-
-        var rest = names.Count - shown.Count;
-
-        return rest > 0 ? Localizer.Format("AndMore", string.Join(", ", shown), rest) : string.Join(", ", shown);
     }
 
     private void Sync(bool relabel)
