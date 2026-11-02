@@ -667,9 +667,31 @@ cells in session 9f3 (D275).
 
 ## Mods
 
-Lua scripts went (D116, D119): users extend the bot with nothing yet. Mods come in blueprint style at step 7, after step
-6 (D117): graphs of nodes edited on a canvas in the app, their nodes over D3B's behaviors, a graph run as an activity
-(D87). What a node is, how a graph runs and resumes, where mods live and which canvas are Q13's, settled at that step.
+Lua scripts went (D116, D119): users extend the bot with nothing yet. Mods come in blueprint style at step 7 (D117), within
+a studio that the whole app becomes, designed in session 7a with no code (D293 to D311); Q13 is settled. The target:
+
+- **The studio** (D295, D309, D310): one window, as a game engine or an IDE, clean and never a catch-all. On the left, the
+  party's frames, a character each, always in sight; the explorer of the project's assets; the editor in the centre, in
+  tabs, a character opened in its own; the inspector of the selection on the right; at the bottom, folded until asked for,
+  the trace, problems, journal, protocol and statistics. The pages of D101 and D162 go.
+- **The project** (D296): a folder, `%LOCALAPPDATA%\D3B\studio` by default, one JSON file per asset, referenced by a
+  stable id: routes, zones, lists, behaviors, profiles, plannings and fight preferences; behaviors given with the app, read
+  only. The database keeps what is learned, the accounts and the characters.
+- **A behavior** (D297, D307): a stack of states by priority, each with its conditions of entry, under a layer Always that
+  keeps the character safe; in the chosen state, short actions on a canvas, with branches, variables and waits. One
+  activity runs any behavior: each step, the first state true is chosen from the state, and one step of its actions played;
+  an action is a goal the state says reached or not, so nothing of a position is kept (D87). Harvesting and hunting are
+  whole nodes over today's activities, opened to show them in small nodes.
+- **Nodes** (D298) are declared in C# by the modules, as sentences of typed values; conditions read the state, events come
+  from the game, variables live for a run, a character or the bots together.
+- **Routes and zones** (D299, D308): built on the world's map drawn from the client's own images, clicked, painted,
+  recorded while playing or typed; the maps clicked are anchors, those between found by the world's path.
+- **Profiles** (D300) are a behavior and the values they change. **Debugging** (D302): live, step by step, the history of
+  each run, a simulation on the pack. **Sharing** (D303): files, behaviors given, a gallery later.
+- **The look** (D305, D311): a dark creation tool, ShadUI themed again, IntelliJ's icons, Inter, a canvas of D3B's own,
+  as beautiful and practical as Unreal's Blueprints.
+- **The sessions** (D306): 7b the model and run time, 7c the shell, 7d routes and zones, 7e and 7e2 the canvas, 7f the nodes and
+  plannings, 7g debugging, 7h fight preferences, 7i sharing; profiles, presets and runs dropped at 7b (D304).
 
 ## Engine
 

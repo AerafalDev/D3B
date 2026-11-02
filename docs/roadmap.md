@@ -13,9 +13,9 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 4 | Bot run time and navigation | Done |
 | 5 | Desktop app, first version | Done |
 | 6 | Harvesting and banking: first milestone | Milestone reached in 6a; icons and learned graphics in 6b; what 6a left in 6c; the app redesigned in 6d; the owner's settings in 6e; the app published in 6f |
-| 7 | Mods: Lua scripting, then blueprints | Lua done, then removed (D119); next after 9f5, the breeds set aside: the app's working rethought around one editor that may merge profiles, blueprints and journeys, designed first with no code, then the interface recast (D117, D292) |
+| 7 | Mods: Lua scripting, then blueprints; the studio | Lua done, then removed (D119); 7a done: the whole app one studio, its model, Q13 settled, its look and the mockups chosen (D293 to D311); next 7b, the model and its run time, then 7c to 7i (D306) |
 | 8 | MITM mode | Dropped: merged into step 3 (D23) |
-| 9 | Fights | In progress, before the blueprints (D169): 9a to 9e3, 9f's states, 9f2's summons, 9f3's bombs, 9f4's marks, 9f5's marks weighed, 9g to 9g6 done, one AI for every character (D244), Incarnam left through its portal (D253); set aside after 9f5 for the app's working rethought around one editor, step 7's blueprints in it, and the interface's recast (D292); then the Roublard measured in game against big enemies, the Féca's glyphs and 9f's other mechanisms (D291) |
+| 9 | Fights | In progress, before the blueprints (D169): 9a to 9e3, 9f's states, 9f2's summons, 9f3's bombs, 9f4's marks, 9f5's marks weighed, 9g to 9g6 done, one AI for every character (D244), Incarnam left through its portal (D253); set aside after 9f5 for step 7's studio, every session of it first (D292, D306); then the Roublard measured in game against big enemies, the Féca's glyphs and 9f's other mechanisms (D291) |
 | 10 | Several accounts and groups | To do |
 | 11 | Marketplace and crafting | To do |
 | 12 | Treasure hunts and dungeons | To do |
@@ -182,9 +182,28 @@ Done on 2026-10-29, with 6f last. Next: step 9.
 Settles Q13. Lua scripting done on 2026-10-29, in one session, with decisions D103 to D109, then removed (D116, D119).
 Settles Q1, settled by D103.
 
-Next, after 9f5, the breeds set aside, the owner's choice (D292): the app's working rethought around one editor that may merge profiles, blueprints, journeys and the rest, designed first with no code, then the interface recast; very advanced and complete mods in blueprint style, graphs of nodes edited on a canvas in the app, their nodes over D3B's
-behaviors and run as activities (D87). Q13 first: who writes them, where they live, what a node is, how a graph runs and
-resumes, its settings, and which canvas in Avalonia.
+After 9f5, the breeds set aside, the owner's choice (D292): the app's working rethought around one editor, designed
+first with no code in 7a, which settled Q13 (D297). The whole app becomes a studio, as a game engine or an IDE (D295):
+assets in a project's folder, routes, zones, lists, behaviors, profiles as their variants, plannings and fight
+preferences (D296); a behavior a stack of states by priority over short actions on a canvas, run as one activity and
+resumed from the state (D297, D307); nodes declared by the modules as sentences of typed values (D298); routes built on
+the world's map from the client's own images, clicked, painted, recorded or typed (D299, D308); debugging live, step by
+step, through the history and simulated (D302); the characters as a party's frames (D309); a dark creation tool, ShadUI
+themed again, IntelliJ's icons and Inter (D305), clean, never a catch-all (D310). The breeds come back once every
+session below is done (D306).
+
+| Session | Content | Status |
+| --- | --- | --- |
+| 7a | Research, the owner's questions one at a time, the model and Q13, the mockups; no code. Done: release 0.4.0 before the studio, the owner's ask (D293); the research (D294); the whole app one studio (D295); the project's assets (D296); behaviors, Q13 settled (D297); nodes, conditions, events and variables (D298); routes and zones (D299); profiles as variants (D300); the AI's fight preferences, D244 in part superseded (D301); debugging (D302); sharing (D303); starting from zero, the owner's choice (D304); the look (D305); the sessions (D306); the editor's mockup C (D307); the world's map from the client's images (D308); the party's frames (D309); the studio clean, never a catch-all, the owner's ask (D310); the blueprints as beautiful and practical as Unreal's, the owner's ask, the canvas in two sessions (D311). | Done on 2026-11-02 |
+| 7b | The model and its run time: assets in files with stable ids, behaviors, nodes, conditions, events, variables, the activity that runs a behavior, harvesting and hunting as nodes, profiles as variants, the migration from zero (D296 to D300, D304). | To do |
+| 7c | The studio's shell, its mockups first, clean (D310): ShadUI themed, IntelliJ's icons, the panels, the explorer and its assets, the party's frames, a character's tab, the inspector, the search, the bottom panel's trace, problems, journal, protocol and statistics (D295, D305, D309). | To do |
+| 7d | Routes and zones on the world's map from the client's own images, clicked, painted, recorded while playing, typed (D299, D308). | To do |
+| 7e | The canvas of behaviors, D3B's own, as beautiful and practical as Unreal's (D311): its view, nodes, wires, selection, adding by search, undo and the stack of states (D305, D307). | To do |
+| 7e2 | The canvas finished (D311): arranging, comment boxes, collapsing into a behavior, the minimap, bookmarks, the live flow and the polish, checked with the owner. | To do |
+| 7f | The low-level nodes, conditions, events and the planning (D298). | To do |
+| 7g | Debugging: live, step by step, the history and the simulation (D302). | To do |
+| 7h | Fight preferences in the AI (D301). | To do |
+| 7i | Sharing: files, behaviors given, a gallery later (D303). | To do |
 
 What follows is the Lua scripting this step held first.
 
