@@ -69,6 +69,11 @@ public sealed class GlyphTacticsTests
         return new ImaginedFight { Map = Open(), Fighters = [Caster(Off(0, 0)), .. others], ActorId = 1, Round = 1 };
     }
 
+    private static CellMark GlyphOn(int cell, int endRound)
+    {
+        return new CellMark(-100, 1, 0, CellMarkKind.TurnStart, Struck, 1, cell, [cell], endRound);
+    }
+
     [Fact]
     public void AGlyphCastSetsItsMarksOnTheCellsOfItsZoneItsAuraStrikingTheEnemiesThere()
     {
@@ -134,5 +139,40 @@ public sealed class GlyphTacticsTests
 
         Assert.Equal(85, replied.Find(enemy.Id)!.Life);
         Assert.True(judge.Judge(under) > judge.Judge(away) + 10);
+    }
+
+    [Fact]
+    public void AGlyphIsWorthTheRoundsItStillStrikesAnEnemyAsLikelyAsTheEnemyStaysInIt()
+    {
+        // Measured (D288): a monster whose turn began beside an enemy ended it there 82 times of 122, 21 of 989 otherwise. A
+        // glyph lasting to round 4 strikes in rounds 2 and 3 after its sure blow, each as likely as the enemy stayed; worth
+        // as a buff's damage, 0.8 a point, by the approach's weight.
+        var beside = Enemy(-1, Off(1, 0)) with { Life = 100 };
+        var away = Enemy(-1, Off(5, 0)) with { Life = 100 };
+        var knowledge = new FightKnowledge { Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(1, [Level(_spells, Glyph)]).Add(beside.Id, []) };
+        var judge = _tactics.JudgeOf(Fight(beside), knowledge, TacticWeights.Default);
+        double Stays(double kept)
+        {
+            return 0.8 * TacticWeights.Default.Approach * 10 * (kept + (kept * kept));
+        }
+
+        double Lasting(Combatant enemy, Func<ImaginedFight, double> judged)
+        {
+            return judged(Fight(enemy) with { Marks = [GlyphOn(enemy.Cell, 4)] }) - judged(Fight(enemy) with { Marks = [GlyphOn(enemy.Cell, 2)] });
+        }
+
+        Assert.Equal(Stays(82.0 / 122), Lasting(beside, judge.Judge), 6);
+        Assert.Equal(Stays(21.0 / 989), Lasting(away, judge.Judge), 6);
+        Assert.Equal(Stays(82.0 / 122), Lasting(beside, judge.JudgeReplied), 6);
+    }
+
+    [Fact]
+    public void AGlyphIsWorthNoMoreThanItsNextBlowInAFightForeseenToEndThisRound()
+    {
+        var enemy = Enemy(-1, Off(1, 0)) with { Life = 30 };
+        var knowledge = new FightKnowledge { Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(1, [Level(_spells, Struck)]).Add(enemy.Id, []) };
+        var judge = _tactics.JudgeOf(Fight(enemy), knowledge, TacticWeights.Default);
+
+        Assert.Equal(judge.Judge(Fight(enemy) with { Marks = [GlyphOn(enemy.Cell, 2)] }), judge.Judge(Fight(enemy) with { Marks = [GlyphOn(enemy.Cell, 4)] }), 6);
     }
 }
