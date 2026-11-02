@@ -479,23 +479,8 @@
   <data name="DelaySeconds" xml:space="preserve">
     <value>{0:0.##} s</value>
   </data>
-  <data name="DelayRaised" xml:space="preserve">
-    <value>Raised above its default</value>
-  </data>
-  <data name="SettingsDelays" xml:space="preserve">
-    <value>Delays</value>
-  </data>
   <data name="SettingsDelaysDetail" xml:space="preserve">
     <value>Each bounds a wait, which ends as soon as the answer comes. Raise one only if it runs out.</value>
-  </data>
-  <data name="RestoreDelays" xml:space="preserve">
-    <value>Restore</value>
-  </data>
-  <data name="DelaysBots" xml:space="preserve">
-    <value>Bots</value>
-  </data>
-  <data name="DelaysRelay" xml:space="preserve">
-    <value>Relay</value>
   </data>
   <data name="AppliesNextStart" xml:space="preserve">
     <value>From the next start</value>
@@ -566,38 +551,14 @@
   <data name="DelaySelectionHelp" xml:space="preserve">
     <value>Wait for the game connection after the server selection.</value>
   </data>
-  <data name="SettingsCaptures" xml:space="preserve">
-    <value>Captures</value>
-  </data>
-  <data name="RecordCaptures" xml:space="preserve">
-    <value>Record the connections</value>
-  </data>
-  <data name="RecordCapturesHelp" xml:space="preserve">
-    <value>Records each connection in a .d3bcap file, for the inspector. It holds your session: never share it.</value>
-  </data>
   <data name="CapturesRecording" xml:space="preserve">
     <value>Recording now, in {0}</value>
   </data>
   <data name="CapturesNotRecording" xml:space="preserve">
     <value>Not recording now</value>
   </data>
-  <data name="SettingsAppearance" xml:space="preserve">
-    <value>Appearance</value>
-  </data>
   <data name="Language" xml:space="preserve">
     <value>Language</value>
-  </data>
-  <data name="SettingsData" xml:space="preserve">
-    <value>Data</value>
-  </data>
-  <data name="DataDatabase" xml:space="preserve">
-    <value>Database</value>
-  </data>
-  <data name="DataPack" xml:space="preserve">
-    <value>Game data</value>
-  </data>
-  <data name="DataSettings" xml:space="preserve">
-    <value>Settings</value>
   </data>
   <data name="PackPathUnknown" xml:space="preserve">
     <value>Known once the host runs</value>
@@ -1430,18 +1391,6 @@
   <data name="MissingBuildText" xml:space="preserve">
     <value>The launcher installed client {0}; D3B {1} ships the data of client {2}. The version of D3B for this client comes out after Ankama's update, and D3B updates itself to it.</value>
   </data>
-  <data name="SettingsAbout" xml:space="preserve">
-    <value>D3B</value>
-  </data>
-  <data name="AboutVersion" xml:space="preserve">
-    <value>Version</value>
-  </data>
-  <data name="AboutClient" xml:space="preserve">
-    <value>Client build</value>
-  </data>
-  <data name="AboutUpdate" xml:space="preserve">
-    <value>Update</value>
-  </data>
   <data name="AddMonsters" xml:space="preserve">
     <value>Add monsters</value>
   </data>
@@ -2077,5 +2026,119 @@
   </data>
   <data name="RailEmpty" xml:space="preserve">
     <value>Nothing plays</value>
+  </data>
+  <data name="SectionBotsLead" xml:space="preserve">
+    <value>What every bot on this machine respects, whatever its profile.</value>
+  </data>
+  <data name="SectionNetworkLead" xml:space="preserve">
+    <value>How D3B stands between the client and the servers.</value>
+  </data>
+  <data name="SectionAppearanceLead" xml:space="preserve">
+    <value>These settings concern this app alone.</value>
+  </data>
+  <data name="SectionFilesLead" xml:space="preserve">
+    <value>Where D3B keeps what it knows and what you make.</value>
+  </data>
+  <data name="SectionAboutLead" xml:space="preserve">
+    <value>The app's version and the client it serves.</value>
+  </data>
+  <data name="SettingsSearch" xml:space="preserve">
+    <value>Search a setting</value>
+  </data>
+  <data name="SettingsNoMatch" xml:space="preserve">
+    <value>No setting matches</value>
+  </data>
+  <data name="SettingsChanged" xml:space="preserve">
+    <value>Values changed</value>
+  </data>
+  <data name="GroupBotDelays" xml:space="preserve">
+    <value>Bots' minimum delays</value>
+  </data>
+  <data name="GroupRelayDelays" xml:space="preserve">
+    <value>Relay's delays</value>
+  </data>
+  <data name="GroupInterface" xml:space="preserve">
+    <value>Interface</value>
+  </data>
+  <data name="GroupLocations" xml:space="preserve">
+    <value>Locations</value>
+  </data>
+  <data name="RestoreAllDelays" xml:space="preserve">
+    <value>Reset all to default</value>
+  </data>
+  <data name="ResetDefault" xml:space="preserve">
+    <value>Reset to default</value>
+  </data>
+  <data name="DelayLine" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="DelayReset" xml:space="preserve">
+    <value>Reset to {0}</value>
+  </data>
+  <data name="SettingCapturesRow" xml:space="preserve">
+    <value>Record the connections</value>
+  </data>
+  <data name="SettingCapturesRowDetail" xml:space="preserve">
+    <value>Keeps each game connection's messages to replay them in the Protocol. Never share them: they hold your session.</value>
+  </data>
+  <data name="SettingCapturesFolder" xml:space="preserve">
+    <value>Captures' folder</value>
+  </data>
+  <data name="SettingLanguageRow" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingLayout" xml:space="preserve">
+    <value>Layout</value>
+  </data>
+  <data name="SettingLayoutDetail" xml:space="preserve">
+    <value>Size and place of the panels</value>
+  </data>
+  <data name="SettingProject" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="SettingProjectDetail" xml:space="preserve">
+    <value>Your assets, a file each</value>
+  </data>
+  <data name="SettingDatabase" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="SettingDatabaseDetail" xml:space="preserve">
+    <value>Accounts, characters and what the bots learn</value>
+  </data>
+  <data name="SettingClientData" xml:space="preserve">
+    <value>Client's data</value>
+  </data>
+  <data name="SettingClientDataDetail" xml:space="preserve">
+    <value>The pack, schema and mapping of the installed build</value>
+  </data>
+  <data name="SettingPreferences" xml:space="preserve">
+    <value>App's preferences</value>
+  </data>
+  <data name="SettingPreferencesDetail" xml:space="preserve">
+    <value>Language, layout and the settings changed here</value>
+  </data>
+  <data name="SettingVersion" xml:space="preserve">
+    <value>Version and update</value>
+  </data>
+  <data name="SettingLicences" xml:space="preserve">
+    <value>Licences</value>
+  </data>
+  <data name="SettingLicencesDetail" xml:space="preserve">
+    <value>D3B's, and those of what it uses, IntelliJ's icons among them</value>
+  </data>
+  <data name="AboutClientLine" xml:space="preserve">
+    <value>Client {0} · its data shipped with the app</value>
+  </data>
+  <data name="OpenFolder" xml:space="preserve">
+    <value>Open the folder</value>
+  </data>
+  <data name="CopyPath" xml:space="preserve">
+    <value>Copy the path</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="GroupCaptures" xml:space="preserve">
+    <value>Captures</value>
   </data>
 </root>

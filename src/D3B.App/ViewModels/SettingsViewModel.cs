@@ -4,6 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
+using D3B.App.ViewModels.AppSettings;
+using D3B.Bot.Assets;
 using D3B.Bot.Data;
 using D3B.Bot.Runtime;
 using D3B.Network.Relay;
@@ -13,7 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The settings page: the client's display time, D3B's delays, the captures, the language and theme, and where D3B keeps its data (D151).</summary>
+/// <summary>The settings' tab, in sections: Bots, Network, Appearance, Files and About (D151, D329).</summary>
 /// <remarks>
 /// <para>
 /// The settings are the machine's, not a profile's, kept in the app's own file (<see cref="AppPreferences"/>) as the
@@ -21,22 +23,48 @@ namespace D3B.App.ViewModels;
 /// bot's next wait; the relay's and the captures from the host's next start, the relay being built once.
 /// </para>
 /// <para>
-/// The page shows the delays the bots wait once the host runs, which the host's command line may have raised; changed
-/// before it ran, the page's are given to the bots instead.
+/// The tab shows the delays the bots wait once the host runs, which the host's command line may have raised; changed
+/// before it ran, the tab's are given to the bots instead.
+/// </para>
+/// <para>
+/// One section shows at a time, chosen in its column or by the search's settings; the tab's own search keeps the rows
+/// whose title or line hold its text, and the sections that keep one.
 /// </para>
 /// </remarks>
 internal sealed partial class SettingsViewModel : ObservableObject
 {
+    private const string NoticesFile = "THIRD-PARTY-NOTICES.md";
+    private const string NoticesPage = "https://github.com/AerafalDev/D3B/blob/main/THIRD-PARTY-NOTICES.md";
+
     private readonly Localizer _localizer;
     private readonly AppPreferences? _preferences;
     private readonly Action<CultureInfo> _useLanguage;
     private readonly Toasts _toasts;
+    private readonly string? _storedCaptures;
     private BotDelays _delays;
     private RelayTimeouts _timeouts;
     private Bots? _bots;
     private bool _changed;
     private bool _remembers;
     private CultureInfo? _labelled;
+
+    /// <summary>Gets the sections, in their column's order.</summary>
+    public IReadOnlyList<SettingsSectionViewModel> Sections { get; }
+
+    /// <summary>Gets the section Bots.</summary>
+    public SettingsSectionViewModel Bots => Sections[(int)SettingsSection.Bots];
+
+    /// <summary>Gets the section Network.</summary>
+    public SettingsSectionViewModel Network => Sections[(int)SettingsSection.Network];
+
+    /// <summary>Gets the section Appearance.</summary>
+    public SettingsSectionViewModel Appearance => Sections[(int)SettingsSection.Appearance];
+
+    /// <summary>Gets the section Files.</summary>
+    public SettingsSectionViewModel Files => Sections[(int)SettingsSection.Files];
+
+    /// <summary>Gets the section About.</summary>
+    public SettingsSectionViewModel About => Sections[(int)SettingsSection.About];
 
     /// <summary>Gets the client's display time, after a map and after a window.</summary>
     public DelayViewModel Display { get; }
@@ -47,13 +75,64 @@ internal sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Gets the relay's timeouts, which apply from the host's next start.</summary>
     public IReadOnlyList<DelayViewModel> RelayWaits { get; }
 
+    /// <summary>Gets the row of the captures.</summary>
+    public SettingsRowViewModel Captures { get; }
+
+    /// <summary>Gets the row of the captures' folder.</summary>
+    public SettingsRowViewModel CapturesFolder { get; }
+
+    /// <summary>Gets the row of the language.</summary>
+    public SettingsRowViewModel Language { get; }
+
+    /// <summary>Gets the row of the docks' layout.</summary>
+    public SettingsRowViewModel Layout { get; }
+
+    /// <summary>Gets the row of the project's folder.</summary>
+    public SettingsRowViewModel Project { get; }
+
+    /// <summary>Gets the row of the database.</summary>
+    public SettingsRowViewModel Database { get; }
+
+    /// <summary>Gets the row of the client's data.</summary>
+    public SettingsRowViewModel ClientData { get; }
+
+    /// <summary>Gets the row of the app's own preferences.</summary>
+    public SettingsRowViewModel Preferences { get; }
+
+    /// <summary>Gets the row of the app's version and update.</summary>
+    public SettingsRowViewModel Version { get; }
+
+    /// <summary>Gets the row of the licences.</summary>
+    public SettingsRowViewModel Licences { get; }
+
+    /// <summary>Gets the section shown.</summary>
+    [ObservableProperty]
+    public partial SettingsSectionViewModel Selected { get; private set; }
+
+    /// <summary>Gets or sets the text the rows are searched by.</summary>
+    [ObservableProperty]
+    public partial string Filter { get; set; } = "";
+
+    /// <summary>Gets whether the search leaves no row.</summary>
+    [ObservableProperty]
+    public partial bool HasNoMatch { get; private set; }
+
     /// <summary>Gets or sets whether the relay records captures from the host's next start.</summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ResetCapturesCommand))]
     public partial bool RecordsCaptures { get; set; }
 
     /// <summary>Gets whether the host records captures now, and where.</summary>
     [ObservableProperty]
     public partial string CapturesNow { get; private set; } = "";
+
+    /// <summary>Gets the folder the captures are recorded in, or would be.</summary>
+    [ObservableProperty]
+    public partial string CapturesPath { get; private set; } = RelaySettings.DefaultCapturesDirectory;
+
+    /// <summary>Gets the client build the app ships, said under its version.</summary>
+    [ObservableProperty]
+    public partial string ClientLine { get; private set; } = "";
 
     /// <summary>Gets whether the app is in French.</summary>
     [ObservableProperty]
@@ -63,24 +142,49 @@ internal sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsEnglish { get; private set; }
 
-    /// <summary>Gets whether a delay was raised above its default, which the page restores.</summary>
+    /// <summary>Gets whether a delay was raised above its default, which the tab restores.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RestoreDelaysCommand))]
     public partial bool HasRaisedDelays { get; private set; }
 
+    /// <summary>Gets the project's folder, its assets a file each (D296).</summary>
+    [ObservableProperty]
+    public partial string ProjectPath { get; private set; } = StudioSettings.DefaultPath;
+
     /// <summary>Gets D3B's database file.</summary>
     [ObservableProperty]
-    public partial string DatabasePath { get; private set; } = "";
+    public partial string DatabasePath { get; private set; } = StorageSettings.DefaultPath;
 
-    /// <summary>Gets the installed build's pack, once the host knows it.</summary>
+    /// <summary>Gets the installed build's pack, once the host knows it, else that it is not known yet.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ClientDataPath))]
     public partial string PackPath { get; private set; } = "";
+
+    /// <summary>Gets whether the host knows the installed build's pack.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ClientDataPath))]
+    public partial bool IsPackKnown { get; private set; }
+
+    /// <summary>Gets the folder of the installed build's pack, schema and mapping, once known, else that it is not known yet.</summary>
+    public string ClientDataPath => IsPackKnown ? Path.GetDirectoryName(PackPath) ?? PackPath : PackPath;
 
     /// <summary>Gets the file the app keeps its settings in.</summary>
     public string SettingsPath { get; }
 
+    /// <summary>Gets D3B's licence and those of what it uses: the file published beside the app, else the repository's.</summary>
+    public string LicencesPath { get; }
+
     /// <summary>Gets the app's version and its update (D173).</summary>
     public UpdatesViewModel Updates { get; }
+
+    /// <summary>Gets or sets what opens a folder in the system's file manager, as the window can.</summary>
+    public Action<string>? OpenFolder { get; set; }
+
+    /// <summary>Gets or sets what opens a file or a page with the system's own application, as the window can.</summary>
+    public Action<string>? OpenFile { get; set; }
+
+    /// <summary>Gets or sets what gives the docks their default layout back.</summary>
+    public Action? ResetLayout { get; set; }
 
     /// <summary>Initializes a new instance of the <see cref="SettingsViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
@@ -97,11 +201,29 @@ internal sealed partial class SettingsViewModel : ObservableObject
         Updates = updates ?? new UpdatesViewModel(localizer, null, new Dialogs(), () => false, () => { });
 
         var stored = new ConfigurationBuilder().AddInMemoryCollection(preferences?.Host ?? new Dictionary<string, string?>()).Build();
+        var notices = Path.Combine(AppContext.BaseDirectory, NoticesFile);
 
         _delays = Stored(() => BotDelays.Read(stored), BotDelays.Measured);
         _timeouts = Stored(() => RelayTimeouts.Read(stored), RelayTimeouts.Default);
+        _storedCaptures = stored[RelaySettings.CapturesDirectoryKey];
         RecordsCaptures = bool.TryParse(stored[RelaySettings.CapturesEnabledKey], out var records) && records;
         SettingsPath = preferences?.Path ?? AppPreferences.DefaultPath;
+        LicencesPath = File.Exists(notices) ? notices : NoticesPage;
+        PackPath = localizer["PackPathUnknown"];
+        ClientLine = localizer.Format("AboutClientLine", Updates.ClientVersion);
+        Sections = [.. Enum.GetValues<SettingsSection>().Select(section => new SettingsSectionViewModel(localizer, section))];
+        Selected = Sections[0];
+        Selected.IsSelected = true;
+        Captures = new SettingsRowViewModel(localizer, "SettingCapturesRow");
+        CapturesFolder = new SettingsRowViewModel(localizer, "SettingCapturesFolder", hasDetail: false);
+        Language = new SettingsRowViewModel(localizer, "SettingLanguageRow", hasDetail: false);
+        Layout = new SettingsRowViewModel(localizer, "SettingLayout");
+        Project = new SettingsRowViewModel(localizer, "SettingProject");
+        Database = new SettingsRowViewModel(localizer, "SettingDatabase");
+        ClientData = new SettingsRowViewModel(localizer, "SettingClientData");
+        Preferences = new SettingsRowViewModel(localizer, "SettingPreferences");
+        Version = new SettingsRowViewModel(localizer, "SettingVersion", hasDetail: false);
+        Licences = new SettingsRowViewModel(localizer, "SettingLicences");
         Display = BotDelay("DelayDisplay", delays => delays.Display, (delays, delay) => delays with { Display = delay });
         BotWaits =
         [
@@ -123,7 +245,9 @@ internal sealed partial class SettingsViewModel : ObservableObject
             RelayDelay("DelaySelection", timeouts => timeouts.Selection, (timeouts, delay) => timeouts with { Selection = delay }),
         ];
         HasRaisedDelays = AnyRaised();
+        _labelled = localizer.Culture;
         _remembers = true;
+        MarkChanges();
     }
 
     /// <summary>Reads the host again, in the language chosen.</summary>
@@ -135,24 +259,57 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
         if (!_localizer.Culture.Equals(_labelled))
         {
-            foreach (var delay in BotWaits.Concat(RelayWaits).Prepend(Display))
+            foreach (var delay in Delays())
                 delay.Relabel();
 
+            foreach (var row in Rows())
+                row.Relabel();
+
+            foreach (var section in Sections)
+                section.Relabel();
+
+            ClientLine = _localizer.Format("AboutClientLine", Updates.ClientVersion);
             _labelled = _localizer.Culture;
+            Search();
         }
 
         if (_bots is null && services?.GetService<Bots>() is { } bots)
             Attach(bots);
 
-        if (services?.GetService<RelaySettings>() is not { } relay)
+        var relay = services?.GetService<RelaySettings>();
+
+        if (relay is null)
             CapturesNow = "";
         else if (relay.CapturesDirectory is { } directory)
             CapturesNow = _localizer.Format("CapturesRecording", directory);
         else
             CapturesNow = _localizer["CapturesNotRecording"];
 
+        CapturesPath = relay?.CapturesDirectory ?? (string.IsNullOrWhiteSpace(_storedCaptures) ? RelaySettings.DefaultCapturesDirectory : _storedCaptures);
+        ProjectPath = services?.GetService<AssetLibrary>()?.Folder ?? services?.GetService<StudioSettings>()?.Path ?? StudioSettings.DefaultPath;
         DatabasePath = services?.GetService<StorageSettings>()?.Path ?? StorageSettings.DefaultPath;
-        PackPath = services?.GetService<PackSource>()?.PackPath ?? _localizer["PackPathUnknown"];
+
+        var pack = services?.GetService<PackSource>()?.PackPath;
+
+        IsPackKnown = pack is not null;
+        PackPath = pack ?? _localizer["PackPathUnknown"];
+    }
+
+    /// <summary>Shows a section, the tab's search cleared if it hid it, as the search's settings ask.</summary>
+    /// <param name="section">The section.</param>
+    [RelayCommand]
+    public void Show(SettingsSection section)
+    {
+        if (!Sections[(int)section].IsShown)
+            Filter = "";
+
+        Select(Sections[(int)section]);
+    }
+
+    /// <summary>Says a path was copied.</summary>
+    public void Copied()
+    {
+        _toasts.Show(new Toast(_localizer["Copied"], Tone.Success));
     }
 
     private static T Stored<T>(Func<T> read, T fallback)
@@ -163,7 +320,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
         }
         catch (InvalidOperationException)
         {
-            // A file edited by hand to a delay out of its bounds: the host says so as it starts; the page offers D3B's.
+            // A file edited by hand to a delay out of its bounds: the host says so as it starts; the tab offers D3B's.
             return fallback;
         }
     }
@@ -178,9 +335,55 @@ internal sealed partial class SettingsViewModel : ObservableObject
         return new DelayViewModel(_localizer, key, "DelayDefault", (read(RelayTimeouts.Default), read(RelayTimeouts.Most)), () => read(_timeouts), delay => UseTimeouts(write(_timeouts, delay)));
     }
 
+    private IEnumerable<DelayViewModel> Delays()
+    {
+        return BotWaits.Concat(RelayWaits).Prepend(Display);
+    }
+
+    private IEnumerable<SettingsRowViewModel> Rows()
+    {
+        return [Captures, CapturesFolder, Language, Layout, Project, Database, ClientData, Preferences, Version, Licences];
+    }
+
+    private void Select(SettingsSectionViewModel section)
+    {
+        foreach (var other in Sections)
+            other.IsSelected = other == section;
+
+        Selected = section;
+    }
+
+    private void Search()
+    {
+        var filter = Filter.Trim();
+
+        foreach (var delay in Delays())
+            delay.IsShown = delay.Holds(filter);
+
+        foreach (var row in Rows())
+            row.IsShown = row.Holds(filter);
+
+        Bots.IsShown = Delays().Any(delay => delay.IsShown);
+        Network.IsShown = Captures.IsShown || CapturesFolder.IsShown;
+        Appearance.IsShown = Language.IsShown || Layout.IsShown;
+        Files.IsShown = Project.IsShown || Database.IsShown || ClientData.IsShown || Preferences.IsShown;
+        About.IsShown = Version.IsShown || Licences.IsShown;
+        HasNoMatch = !Sections.Any(section => section.IsShown);
+
+        // The section shown stays while it keeps a row; else the first that keeps one shows.
+        if (!Selected.IsShown && Sections.FirstOrDefault(section => section.IsShown) is { } first)
+            Select(first);
+    }
+
+    private void MarkChanges()
+    {
+        Bots.HasChanges = Display.IsRaised || HasRaisedDelays;
+        Network.HasChanges = RecordsCaptures;
+    }
+
     private void Attach(Bots bots)
     {
-        // Changed while the host got ready, the page's delays win; else the bots', which its command line may raise.
+        // Changed while the host got ready, the tab's delays win; else the bots', which its command line may raise.
         if (_changed)
             bots.Delays = _delays;
         else
@@ -192,6 +395,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
             delay.Reread();
 
         HasRaisedDelays = AnyRaised();
+        MarkChanges();
     }
 
     private bool AnyRaised()
@@ -209,6 +413,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
         _preferences?.RememberHost(delays.ToConfiguration());
         HasRaisedDelays = AnyRaised();
+        MarkChanges();
     }
 
     private void UseTimeouts(RelayTimeouts timeouts)
@@ -216,6 +421,12 @@ internal sealed partial class SettingsViewModel : ObservableObject
         _timeouts = timeouts;
         _preferences?.RememberHost(timeouts.ToConfiguration());
         HasRaisedDelays = AnyRaised();
+        MarkChanges();
+    }
+
+    partial void OnFilterChanged(string value)
+    {
+        Search();
     }
 
     partial void OnRecordsCapturesChanged(bool value)
@@ -223,14 +434,10 @@ internal sealed partial class SettingsViewModel : ObservableObject
         if (!_remembers)
             return;
 
+        MarkChanges();
+
         // Off is the relay's default: forgotten, the host's own configuration decides again.
         _preferences?.RememberHost(new Dictionary<string, string?> { [RelaySettings.CapturesEnabledKey] = value ? bool.TrueString : null });
-    }
-
-    /// <summary>Says a path was copied.</summary>
-    public void Copied()
-    {
-        _toasts.Show(new Toast(_localizer["Copied"], Tone.Success));
     }
 
     [RelayCommand(CanExecute = nameof(HasRaisedDelays))]
@@ -243,7 +450,42 @@ internal sealed partial class SettingsViewModel : ObservableObject
             delay.Reread();
 
         HasRaisedDelays = AnyRaised();
+        MarkChanges();
         _toasts.Show(new Toast(_localizer["DelaysRestored"], Tone.Success));
+    }
+
+    [RelayCommand(CanExecute = nameof(RecordsCaptures))]
+    private void ResetCaptures()
+    {
+        RecordsCaptures = false;
+    }
+
+    [RelayCommand]
+    private void Choose(SettingsSection section)
+    {
+        Select(Sections[(int)section]);
+    }
+
+    [RelayCommand]
+    private void OpenPath(string path)
+    {
+        // A file is shown in its folder: the system's file manager opens folders.
+        var folder = File.Exists(path) || Path.HasExtension(path) ? Path.GetDirectoryName(path) : path;
+
+        if (!string.IsNullOrEmpty(folder))
+            OpenFolder?.Invoke(folder);
+    }
+
+    [RelayCommand]
+    private void OpenLicences()
+    {
+        OpenFile?.Invoke(LicencesPath);
+    }
+
+    [RelayCommand]
+    private void ResetLayoutToDefault()
+    {
+        ResetLayout?.Invoke();
     }
 
     [RelayCommand]
