@@ -248,6 +248,32 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task WithNothingToEatTheCharacterRegeneratesBackToTheShareAloneBeforeItAttacks()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        // Two points a second, as measured (D153): back to 95 % in 40 s, whole in 65 s.
+        connection.Server(new LifeRegenEndEvent { Life = 870, MaxLife = 1_000 });
+        connection.Server(new LifeRegenStartEvent { Interval = 5 });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+
+        var started = _play.Time.GetUtcNow();
+        var activity = Activity(new FightSettings { OnlyWinnable = false, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], HealBelow = 95 });
+        var run = bot.StartActivity(activity);
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+
+        var waited = _play.Time.GetUtcNow() - started;
+
+        Assert.InRange(waited, TimeSpan.FromSeconds(40), TimeSpan.FromSeconds(55));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
     public async Task WithNoFoodChosenTheCharacterEatsWhatOnlyHealsBeforeItAttacks()
     {
         var (connection, bot) = await _play.EnterAsync(433);

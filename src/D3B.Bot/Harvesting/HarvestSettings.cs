@@ -60,9 +60,9 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets whether to heal under a share of life (D148).</summary>
     public bool Heal { get; set; }
 
-    /// <summary>Gets or sets the share of its life under which the character heals, in percent, until its life is whole.</summary>
+    /// <summary>Gets or sets the share of its life under which the character heals, in percent: eating until its life is whole, or regenerating back to the share.</summary>
     public int HealBelow { get; set; } = 50;
 
-    /// <summary>Gets or sets the food to eat, by item, the first carried eaten first; none chosen, what the inventory holds that only heals, the smallest heal first; with none left the life regenerates by itself.</summary>
+    /// <summary>Gets or sets the food to eat, by item, the first carried eaten first; none chosen, what the inventory holds that only heals, the smallest heal first; with none left the life regenerates by itself up to the share.</summary>
     public IReadOnlyList<int> Food { get; set; } = [];
 }
