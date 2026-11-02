@@ -210,8 +210,8 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         var running = await RunningAsync(AppPreferences.Load(PreferencesPath));
 
         running.ShowSettingsCommand.Execute(null);
-        running.ShowBottomCommand.Execute(BottomTab.Journal);
+        running.Bottom.ShowCommand.Execute(BottomTab.Journal);
 
-        Assert.Equal(("settings", true, BottomTab.Journal), (running.Editor.Selected?.Key, running.Layout.IsBottomOpen, running.BottomTab));
+        Assert.Equal(("settings", true, BottomTab.Journal), (running.Editor.Selected?.Key, running.Layout.IsBottomOpen, running.Bottom.Tab));
     }
 }

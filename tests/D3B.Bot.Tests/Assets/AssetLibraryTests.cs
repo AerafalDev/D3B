@@ -112,6 +112,60 @@ public sealed class AssetLibraryTests : IDisposable
         Assert.Equal("Ash.behavior.json", behavior.Path);
     }
 
+    [Fact]
+    public async Task FoldersAreListedEmptyOnesIncludedAndAnAssetIsSavedInOneAndMovedToAnother()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        WriteFile(Path.Combine("farm", "Wheat.profile.json"), """{"id":"p2","kind":"profile","format":1,"behavior":"d3b.harvest"}""");
+        await _library.LoadAsync([Given()], cancellationToken);
+        await _library.CreateFolderAsync("mines/astrub", cancellationToken);
+
+        Assert.Equal(["farm", "mines", Path.Combine("mines", "astrub")], _library.Folders);
+
+        var saved = await _library.SaveAsync(new ProfileAsset { Id = "p3", Name = "Iron", Behavior = "d3b.harvest" }, cancellationToken, Path.Combine("mines", "astrub"));
+
+        Assert.Equal(Path.Combine("mines", "astrub", "Iron.profile.json"), saved.Path);
+
+        var moved = await _library.MoveAsync("p3", "farm", cancellationToken);
+
+        Assert.Equal(Path.Combine("farm", "Iron.profile.json"), moved.Path);
+        Assert.True(File.Exists(Path.Combine(_library.Folder, "farm", "Iron.profile.json")));
+
+        // Back at the root, then read again from the disk: the asset is where it was moved.
+        await _library.MoveAsync("p3", "", cancellationToken);
+        await _library.LoadAsync([Given()], cancellationToken);
+
+        Assert.Equal("Iron.profile.json", _library.Find("p3")?.Path);
+        await Assert.ThrowsAsync<ArgumentException>(() => _library.CreateFolderAsync("../out", cancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _library.MoveAsync("d3b.harvest", "farm", cancellationToken));
+    }
+
+    [Fact]
+    public async Task AnImportedFileIsACopyUnderANewIdWhenItsOwnIsTakenAndAnExportIsTheProjectsFile()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        await _library.LoadAsync([Given()], cancellationToken);
+
+        var saved = await _library.SaveAsync(new ProfileAsset { Id = "p1", Name = "Ash", Behavior = "d3b.harvest" }, cancellationToken);
+        var exported = _directory.Combine("Elsewhere.profile.json");
+
+        await _library.ExportAsync("p1", exported, cancellationToken);
+
+        Assert.Equal(AssetFiles.Write(saved), File.ReadAllText(exported));
+
+        var imported = await _library.ImportAsync(exported, "kept", cancellationToken);
+
+        Assert.NotEqual("p1", imported.Id);
+        Assert.Equal(("Elsewhere", Path.Combine("kept", "Elsewhere.profile.json")), (imported.Name, imported.Path));
+        Assert.Equal(_library.Folder + Path.DirectorySeparatorChar + imported.Path, _library.FileOf(imported));
+        Assert.Null(_library.FileOf(Given()));
+
+        File.WriteAllText(_directory.Combine("notes.json"), "{}");
+        await Assert.ThrowsAsync<AssetFormatException>(() => _library.ImportAsync(_directory.Combine("notes.json"), "", cancellationToken));
+    }
+
     [Theory]
     [InlineData("", false)]
     [InlineData("Harvest", true)]

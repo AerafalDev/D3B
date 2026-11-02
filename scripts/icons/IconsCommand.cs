@@ -22,17 +22,23 @@ internal static class IconsCommand
     // debugger/freeze and toolwindows/dataflow carry no notice, and are not here (D331).
     private static readonly string[] _names =
     [
+        "actions/newFolder", "actions/selectAll", "actions/stopWatch",
         "debugger/threadRunning", "debugger/watch",
-        "general/add", "general/chevronDown", "general/chevronRight", "general/close", "general/collapseAll", "general/copy",
-        "general/editorOnly", "general/filter", "general/groups", "general/hide", "general/history", "general/ideUpdate",
-        "general/layout", "general/locked", "general/menu", "general/moreHorizontal", "general/pin", "general/reset", "general/save",
-        "general/search", "general/settings", "general/user",
+        "general/add", "general/chevronDown", "general/chevronRight", "general/chevronUp", "general/close", "general/collapseAll",
+        "general/copy", "general/delete", "general/edit", "general/editorOnly", "general/expandAll", "general/export",
+        "general/filter", "general/groups", "general/hide", "general/history", "general/ideUpdate", "general/import",
+        "general/language", "general/layout", "general/listFiles", "general/locate", "general/locked", "general/menu",
+        "general/moreHorizontal", "general/moveDown", "general/moveUp", "general/open", "general/pin", "general/questionMark",
+        "general/refresh", "general/remove", "general/reset", "general/save", "general/scrollDown", "general/search",
+        "general/settings", "general/user", "general/vcs",
         "ide/externalLink",
-        "nodes/dataTables", "nodes/desktop", "nodes/folder", "nodes/function", "nodes/tag", "nodes/template", "nodes/variable",
+        "nodes/dataTables", "nodes/desktop", "nodes/folder", "nodes/function", "nodes/securityRole", "nodes/tag", "nodes/template",
+        "nodes/variable",
         "run/pause", "run/resume", "run/run", "run/stepOver", "run/stop",
-        "status/error", "status/info", "status/success", "status/warning",
-        "toolwindows/debug", "toolwindows/messages", "toolwindows/notifications", "toolwindows/problems", "toolwindows/profiler",
-        "toolwindows/project", "toolwindows/run", "toolwindows/services", "toolwindows/structure", "toolwindows/web",
+        "status/error", "status/info", "status/infoOutline", "status/success", "status/warning",
+        "toolwindows/debug", "toolwindows/hierarchy", "toolwindows/messages", "toolwindows/notifications", "toolwindows/palette",
+        "toolwindows/problems", "toolwindows/profiler", "toolwindows/project", "toolwindows/run", "toolwindows/services",
+        "toolwindows/structure", "toolwindows/web",
     ];
 
     public static RootCommand Create()

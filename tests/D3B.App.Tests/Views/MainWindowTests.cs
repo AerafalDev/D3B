@@ -316,11 +316,11 @@ public sealed class MainWindowTests : IAsyncDisposable
             main.Bots.Items[0].ShowJournalCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
-            var journal = (main.Layout.IsBottomOpen && main.IsJournalShown, main.Logs.Source?.Name);
+            var journal = (main.Layout.IsBottomOpen && main.Bottom.IsJournalShown, main.Bottom.Logs.Source?.Name);
 
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "logs-en");
-            main.ShowBottomCommand.Execute(BottomTab.Protocol);
+            main.Bottom.ShowCommand.Execute(BottomTab.Protocol);
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "inspector-en");
@@ -332,7 +332,7 @@ public sealed class MainWindowTests : IAsyncDisposable
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "inspector-fr");
-            main.ShowBottomCommand.Execute(BottomTab.Journal);
+            main.Bottom.ShowCommand.Execute(BottomTab.Journal);
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "logs-fr");

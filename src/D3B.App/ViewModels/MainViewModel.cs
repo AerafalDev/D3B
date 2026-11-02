@@ -6,6 +6,7 @@ using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.Updates;
+using D3B.App.ViewModels.Bottom;
 using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
@@ -75,14 +76,8 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the profiles' page, a tab until 7c4.</summary>
     public ProfilesViewModel Profiles { get; }
 
-    /// <summary>Gets the statistics, in the bottom panel.</summary>
-    public StatisticsViewModel Statistics { get; }
-
-    /// <summary>Gets the journal, in the bottom panel.</summary>
-    public LogsViewModel Logs { get; }
-
-    /// <summary>Gets the protocol, in the bottom panel.</summary>
-    public InspectorViewModel Inspector { get; }
+    /// <summary>Gets the bottom panel (D327).</summary>
+    public BottomPanelViewModel Bottom { get; }
 
     /// <summary>Gets the settings, a tab of the editor (D329).</summary>
     public SettingsViewModel Settings { get; }
@@ -95,11 +90,6 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets or sets what opens a folder in the system's file manager, as the window can.</summary>
     public Action<string>? OpenFolder { get; set; }
-
-    /// <summary>Gets the bottom panel's tab shown.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsJournalShown), nameof(IsTraceShown), nameof(IsProblemsShown), nameof(IsProtocolShown), nameof(IsStatisticsShown))]
-    public partial BottomTab BottomTab { get; private set; }
 
     /// <summary>Gets whether any module registered a page.</summary>
     [ObservableProperty]
@@ -161,21 +151,6 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets whether the host does not run, which the panels that read it say.</summary>
     public bool IsNotRunning => !IsRunning;
 
-    /// <summary>Gets whether the bottom panel shows the journal.</summary>
-    public bool IsJournalShown => BottomTab is BottomTab.Journal;
-
-    /// <summary>Gets whether the bottom panel shows the trace.</summary>
-    public bool IsTraceShown => BottomTab is BottomTab.Trace;
-
-    /// <summary>Gets whether the bottom panel shows the problems.</summary>
-    public bool IsProblemsShown => BottomTab is BottomTab.Problems;
-
-    /// <summary>Gets whether the bottom panel shows the protocol.</summary>
-    public bool IsProtocolShown => BottomTab is BottomTab.Protocol;
-
-    /// <summary>Gets whether the bottom panel shows the statistics.</summary>
-    public bool IsStatisticsShown => BottomTab is BottomTab.Statistics;
-
     /// <summary>Gets the app's version and the client build it ships, under the welcome's logo.</summary>
     public string VersionText => _localizer.Format("WelcomeVersion", Updates.Version, Updates.ClientVersion);
 
@@ -202,9 +177,7 @@ internal sealed partial class MainViewModel : ObservableObject
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
             new AssetPropertiesViewModel(localizer));
         Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts);
-        Statistics = new StatisticsViewModel(localizer);
-        Logs = new LogsViewModel(localizer, choice, Toasts);
-        Inspector = new InspectorViewModel(localizer, choice);
+        Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), new StatisticsViewModel(localizer));
         Updates = new UpdatesViewModel(localizer, updates, Dialogs, () => IsRunning && Bots.HasItems, _close);
         Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates);
         RunBlock = new RunBlockViewModel(Bots, localizer) { Characters = Characters, Chose = Chose };
@@ -280,14 +253,7 @@ internal sealed partial class MainViewModel : ObservableObject
         // A character's tab is named by its character and shows its head, both of which the server may say late.
         Editor.Refresh();
 
-        if (Layout.IsBottomOpen && IsStatisticsShown)
-            Statistics.Refresh(services);
-
-        if (Layout.IsBottomOpen && IsJournalShown)
-            Logs.Refresh(services);
-
-        if (Layout.IsBottomOpen && IsProtocolShown)
-            Inspector.Refresh(services);
+        Bottom.Refresh(services);
 
         // Always: the bots' delays the settings show are read once the host runs, whichever tab shows.
         Settings.Refresh(services);
@@ -302,25 +268,11 @@ internal sealed partial class MainViewModel : ObservableObject
         return Pages.Any(page => page.TryFailWith(exception));
     }
 
-    /// <summary>Shows a tab of the bottom panel, the panel opened if it was closed.</summary>
-    /// <param name="tab">The tab.</param>
-    [RelayCommand]
-    public void ShowBottom(BottomTab tab)
-    {
-        BottomTab = tab;
-
-        if (!Layout.IsBottomOpen)
-            Layout.Show(StudioPanel.Bottom, true);
-
-        RefreshBottom();
-    }
-
     /// <summary>Shows the bottom panel, or closes it: Ctrl J.</summary>
     [RelayCommand]
     public void ToggleBottom()
     {
-        Layout.Toggle(StudioPanel.Bottom);
-        RefreshBottom();
+        Bottom.Toggle();
     }
 
     /// <summary>Opens the assets: Ctrl Space (D321).</summary>
@@ -454,27 +406,6 @@ internal sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    private void RefreshBottom()
-    {
-        var services = _host.Services;
-
-        if (!Layout.IsBottomOpen)
-            return;
-
-        switch (BottomTab)
-        {
-            case BottomTab.Journal:
-                Logs.Refresh(services);
-                break;
-            case BottomTab.Protocol:
-                Inspector.Refresh(services);
-                break;
-            case BottomTab.Statistics:
-                Statistics.Refresh(services);
-                break;
-        }
-    }
-
     private IEnumerable<SearchItem> SearchItems()
     {
         foreach (var profile in Profiles.Items)
@@ -520,8 +451,8 @@ internal sealed partial class MainViewModel : ObservableObject
 
     private void ShowJournalOf(CharacterKey key)
     {
-        ShowBottom(BottomTab.Journal);
-        Logs.Show(key);
+        Bottom.Show(BottomTab.Journal);
+        Bottom.Logs.Show(key);
     }
 
     private BotViewModel? BotOf(CharacterKey key)

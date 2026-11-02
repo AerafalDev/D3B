@@ -34,6 +34,9 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     private readonly Lock _attaching = new();
     private readonly ImmutableArray<OutlineState> _always;
     private readonly ImmutableArray<OutlineState> _states;
+
+    // What the trace last said of each threshold, which only the bot's loop reads and writes.
+    private readonly Dictionary<ActivityWatch, bool> _weighed = [];
     private volatile BotActor? _bot;
     private volatile BehaviorVariables? _variables;
     private volatile StateVisit? _visit;
@@ -92,7 +95,7 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         {
             foreach (var state in level)
             {
-                outlined.Add(new OutlineState(state.Id, state.Name.Length > 0 ? state.Name : state.Id, depth, state.IsUrgent));
+                outlined.Add(new OutlineState(state.Id, NameOf(state), depth, state.IsUrgent));
                 Add(state.States, depth + 1);
             }
         }
@@ -100,6 +103,22 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         Add(states, 0);
 
         return outlined.ToImmutable();
+    }
+
+    private static string NameOf(CompiledState state)
+    {
+        return state.Name.Length > 0 ? state.Name : state.Id;
+    }
+
+    /// <summary>Tells whether a threshold an activity watches holds for the character as it is; unknown without its gauge.</summary>
+    internal static bool? Holds(ActivityWatch watch, CharacterState state)
+    {
+        return watch.Gauge switch
+        {
+            WatchedGauge.Pods when state.MaxWeight > 0 => state.Weight * 100L >= (long)watch.Threshold * state.MaxWeight,
+            WatchedGauge.Life when state is { Life: { } life, MaxLife: > 0 } => life * 100L <= (long)watch.Threshold * state.MaxLife.Value,
+            _ => null,
+        };
     }
 
     /// <inheritdoc/>
@@ -141,13 +160,26 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
                 if (visit.IsFinished)
                     visit.Restart();
 
-                await visit.StepAsync(context, () => Evaluate(bot, bot.State), this, () => _halt || _stopping, cut.Token).ConfigureAwait(false);
+                await visit.StepAsync(context, () => Evaluate(bot, bot.State), this, () => _halt || _stopping, step => TracePlayed(bot, step), cut.Token).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (cut.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
+            TraceCut(bot, TraceOutcome.Interrupted);
+
             // An urgent state, a variable set, a pause or the run's stop cut the step: what it left open is settled first.
             await Recovery.SettleAsync(context, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // The bot's interruption, a fight or the player's hand, cut it: the activity resumes it once settled.
+            TraceCut(bot, TraceOutcome.Interrupted);
+
+            throw;
+        }
+        catch (Exception) when (TraceCut(bot, TraceOutcome.Failed))
+        {
+            throw;
         }
         finally
         {
@@ -211,6 +243,8 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         if (before is null || (ReferenceEquals(before.State, view.State) && before.IsConnected == view.IsConnected && before.FightsEnded == view.FightsEnded))
             return;
 
+        Weigh(bot, view.State);
+
         var evaluation = new Evaluation(view, _variables!);
 
         if (!_behavior.Rules.IsEmpty)
@@ -224,6 +258,7 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         if (_behavior.HasUrgent && !_idle && _cut is { } cut && _behavior.Choose(evaluation) is { IsUrgent: true } urgent && urgent != _visit?.State)
         {
             BehaviorLog.Urgent(bot.Log, bot.Key.CharacterId, _name, urgent.Name);
+            Trace(bot, TraceKind.Urgent, TraceOutcome.None, subject: NameOf(urgent));
             _ = cut.CancelAsync();
         }
     }
@@ -292,8 +327,9 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         _entered = true;
         _visit?.Dispose();
         _visit = leaf is null ? null : new StateVisit(leaf, _services);
+        _weighed.Clear();
 
-        var name = leaf is null ? null : leaf.Name.Length > 0 ? leaf.Name : leaf.Id;
+        var name = leaf is null ? null : NameOf(leaf);
 
         if (name is null)
             BehaviorLog.NoState(bot.Log, bot.Key.CharacterId, _name);
@@ -301,6 +337,45 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
             BehaviorLog.StateEntered(bot.Log, bot.Key.CharacterId, _name, name);
 
         bot.Journal.Add(new StateEnteredEntry(bot.Time.GetUtcNow(), _name, name));
+        Trace(bot, name is null ? TraceKind.Waiting : TraceKind.Entered, TraceOutcome.None);
+    }
+
+    private void Trace(BotActor bot, TraceKind kind, TraceOutcome outcome, string? subject = null, PlayedStep? step = null, ActivityWatch? watch = null)
+    {
+        bot.Trace.Add(new TraceEntry(bot.Time.GetUtcNow(), _started, _name, _visit is { } visit ? NameOf(visit.State) : null, kind, outcome)
+        {
+            Subject = subject,
+            Node = step?.Node,
+            Doing = step?.Doing,
+            Watch = watch,
+        });
+    }
+
+    private void TracePlayed(BotActor bot, PlayedStep step)
+    {
+        Trace(bot, TraceKind.Played, step.Done ? TraceOutcome.Done : TraceOutcome.Played, step: step);
+    }
+
+    private bool TraceCut(BotActor bot, TraceOutcome outcome)
+    {
+        if (_visit?.InFlight is { } step)
+            Trace(bot, TraceKind.Played, outcome, step: step);
+
+        // A filter that never catches: the step's exception goes on as it was.
+        return false;
+    }
+
+    // A threshold is said as it comes to hold or stops holding, and once as a state begins, never at each of the bot's moves.
+    private void Weigh(BotActor bot, CharacterState state)
+    {
+        foreach (var watch in Watches)
+        {
+            if (Holds(watch, state) is not { } holds || (_weighed.TryGetValue(watch, out var was) && was == holds))
+                continue;
+
+            _weighed[watch] = holds;
+            Trace(bot, TraceKind.Weighed, holds ? TraceOutcome.Holds : TraceOutcome.DoesNotHold, watch: watch);
+        }
     }
 
     private void Play(CompiledRule rule, BotChange change, Evaluation evaluation, BotActor bot)
@@ -309,6 +384,8 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         {
             if (!rule.Event.Happened(change, rule.EventValues.Resolve(evaluation)!) || rule.When?.Holds(evaluation) == false)
                 return;
+
+            Trace(bot, TraceKind.Rule, TraceOutcome.Played, subject: rule.Name);
 
             var context = new ActionContext(null, evaluation.View, this);
 
@@ -337,6 +414,7 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             BehaviorLog.RuleFailed(bot.Log, bot.Key.CharacterId, _name, rule.Id, exception);
+            Trace(bot, TraceKind.Rule, TraceOutcome.Failed, subject: rule.Name);
         }
     }
 

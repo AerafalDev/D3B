@@ -4,6 +4,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Journal;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
@@ -40,6 +41,9 @@ public sealed class BotActor : IAsyncDisposable
 {
     /// <summary>The number of entries a bot's journal keeps: older ones are dropped (D113).</summary>
     public const int JournalCapacity = 2_000;
+
+    /// <summary>The number of lines a bot's trace keeps: older ones are dropped (D327).</summary>
+    public const int TraceCapacity = 1_000;
 
     private const long NeverEnded = long.MinValue;
 
@@ -120,6 +124,9 @@ public sealed class BotActor : IAsyncDisposable
 
     /// <summary>Gets what the bot did and met, its actions once over, for the app (D112).</summary>
     public RecentItems<JournalEntry> Journal { get; } = new(JournalCapacity);
+
+    /// <summary>Gets what the behaviors it ran weighed and chose, for the studio's trace (D327).</summary>
+    public RecentItems<TraceEntry> Trace { get; } = new(TraceCapacity);
 
     internal GameMaps Maps { get; }
 

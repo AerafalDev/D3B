@@ -158,6 +158,7 @@ internal sealed class BehaviorCompiler
         return new CompiledRule
         {
             Id = rule.Id,
+            Name = rule.Name.Length > 0 ? rule.Name : rule.Id,
             Event = (IEventNode)_nodes.CodeOf(definition),
             EventValues = Bind(definition, rule.On.Values, [], rule.Id),
             When = rule.When is { } when ? Condition(when, rule.Id) : null,
@@ -351,7 +352,7 @@ internal sealed class BehaviorCompiler
                 var at = In(_where, id);
                 CompiledStep? step = definition.Role switch
                 {
-                    NodeRole.Action => new CompiledStep.Action { Id = id, Node = (IActionNode)_behavior._nodes.CodeOf(definition), Values = _behavior.Bind(definition, node.Values, Wires(id), at) },
+                    NodeRole.Action => new CompiledStep.Action { Id = id, Node = (IActionNode)_behavior._nodes.CodeOf(definition), Sentence = definition.Sentence, Values = _behavior.Bind(definition, node.Values, Wires(id), at) },
                     NodeRole.Activity => new CompiledStep.Activity { Id = id, Definition = definition.Activity!, Settings = _behavior.Bind(definition, node.Values, Wires(id), at) },
                     NodeRole.Branch => Branch(definition, node, at),
                     NodeRole.SetVariable => SetVariable(node, at),

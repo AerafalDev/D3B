@@ -454,7 +454,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.ShowBottomCommand.Execute(BottomTab.Statistics);
+            main.Bottom.ShowCommand.Execute(BottomTab.Statistics);
             Dispatcher.UIThread.RunJobs();
 
             var english = Texts(window);
