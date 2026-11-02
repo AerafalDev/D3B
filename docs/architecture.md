@@ -705,10 +705,13 @@ no new interface:
 
 The target:
 
-- **The studio** (D295, D309, D310): one window, as a game engine or an IDE, clean and never a catch-all. On the left, the
-  party's frames, a character each, always in sight; the explorer of the project's assets; the editor in the centre, in
-  tabs, a character opened in its own; the inspector of the selection on the right; at the bottom, folded until asked for,
-  the trace, problems, journal, protocol and statistics. The pages of D101 and D162 go.
+- **The studio** (D295, D310), designed in session 7c (D319 to D332), its mockup `docs/mockups/studio-7c.html`: one window,
+  Unreal's look made modern, dark only (D320), clean and never a catch-all. One title row: the menus, the search (Ctrl K,
+  D328), the chosen character's run block with only the buttons its state allows, the settings (D322). All docked, every
+  edge resized on its own (D321): on the left, the characters as cards (D323) over the project's assets (D326); in the
+  centre, the editor's tabs, a character's map and what it does (D325), a profile's editor (D330), the settings (D329),
+  over the bottom panel's journal, trace, problems, protocol and statistics (D327); on the right, the inspector of the
+  character or asset chosen (D324). Coded in 7c2 to 7c4; the pages of D101 and D162 go, nothing they do lost.
 - **The project** (D296): a folder, `%LOCALAPPDATA%\D3B\studio` by default, one JSON file per asset, referenced by a
   stable id: routes, zones, lists, behaviors, profiles, plannings and fight preferences; behaviors given with the app, read
   only. The database keeps what is learned, the accounts and the characters.
@@ -723,10 +726,11 @@ The target:
   recorded while playing or typed; the maps clicked are anchors, those between found by the world's path.
 - **Profiles** (D300) are a behavior and the values they change. **Debugging** (D302): live, step by step, the history of
   each run, a simulation on the pack. **Sharing** (D303): files, behaviors given, a gallery later.
-- **The look** (D305, D311): a dark creation tool, ShadUI themed again, IntelliJ's icons, Inter, a canvas of D3B's own,
-  as beautiful and practical as Unreal's Blueprints.
-- **The sessions** (D306): 7b the model and run time, 7c the shell, 7d routes and zones, 7e and 7e2 the canvas, 7f the nodes and
-  plannings, 7g debugging, 7h fight preferences, 7i sharing; profiles, presets and runs dropped at 7b (D304).
+- **The look** (D305, D311, D320): a dark creation tool, ShadUI themed again, IntelliJ's icons checked file by file
+  (D331), Inter, a canvas of D3B's own, as beautiful and practical as Unreal's Blueprints.
+- **The sessions** (D306, D319): 7b the model and run time, 7c the shell's design, 7c2 to 7c4 its code, 7d routes and
+  zones, 7e and 7e2 the canvas, 7f the nodes and plannings, 7g debugging, 7h fight preferences, 7i sharing; profiles,
+  presets and runs dropped at 7b (D304).
 
 ## Engine
 

@@ -7198,6 +7198,190 @@ takes two sessions.*
   the run's; the project's folder is read as the host starts and after each write of the app's, not watched; a value a
   wire or a variable brings is set by reflection as the node plays, the others once.
 
+## D319: 7c as the owner asks it: the shell designed again from zero, mockup by mockup, then coded in three sessions
+
+*2026-11-02, step 7, session 7c, the owner's choices. Amends D306: 7c is the shell's design, 7c2 to 7c4 its code.*
+
+- **Asked**: the studio's shell (D306), its mockups first, validated one by one, the pages of D101 and D162 gone without
+  losing anything they do. On the first mockup, the owner asked to start from zero: VS Code's layout at its simplest, then
+  pieces added one at a time; better quality each time; then Unreal's style, made more modern.
+- **The mockup** is kept in the repository, `docs/mockups/studio-7c.html`, one page that plays every piece with made-up
+  data: the owner's logo, IntelliJ's icons (D330) and nothing extracted from the client. 7a's mockups stayed outside the
+  repository, so a later session could not see them; this one is the reference the code follows.
+- **Code in three sessions**, each ending with an app that works, the owner's choice as the lead recommended it: the whole
+  shell was larger than any step so far, and the session had spent its length on the design.
+- **Rejected**: the frames of the first mockup (IntelliJ's stripes, a menu bar, 7a's minimal frame, a mix of VS Code and
+  Rider), and coding the whole shell in this session.
+
+## D320: The studio's look: Unreal's, made modern, dark only
+
+*2026-11-02, step 7, session 7c, chosen by the owner among a VS Code layout, Unreal's classic look and Unreal's look made
+modern. Builds D305. Supersedes the theme D101 remembers and D151 chooses, once 7c2 makes it.*
+
+- **Unreal's structure**: menus, docked panels with their tab, a search on every panel that needs one, an editor in tabs.
+- **Made modern**: panels as rounded blocks with a hairline edge on a near black, a gap between them instead of black
+  rules; the focused panel outlined in the accent; tabs as lit buttons; menus, tooltips and popups with a short motion;
+  scrollbars thin and dark, seen on hover.
+- **Colour**: neutral greys, one blue accent for selection and focus, green, amber and red for states only (D305, D310).
+- **Dark only**, the owner's word: the theme leaves the settings and `app.json`.
+- **Rejected**: VS Code's layout at its simplest, polished; Unreal's classic look, square and black-ruled.
+
+## D321: All docked: characters over assets, the editor over the bottom panel, the inspector on the right
+
+*2026-11-02, step 7, session 7c, chosen by the owner among four layouts. Supersedes D295's and D309's arrangement and
+D310's rule of an explorer and a bottom panel folded, once 7c2 makes it.*
+
+- **The layout**: on the left, the characters over the assets, 60 % and 40 % of the column by default; in the centre, the
+  editor's tabs over the bottom panel; on the right, the inspector the whole height.
+- **Every edge is resized on its own**: the left column's width, the inspector's, the line between characters and assets
+  (kept as a share, so a resized window keeps it), the bottom panel's height.
+- **A panel closes** by its ×, and its neighbour takes the room; the Window menu opens it again and gives the default
+  layout back. Ctrl J shows or hides the bottom panel, Ctrl Space goes to the assets' search. No drawer.
+- **Rejected**: the characters on the left and the inspector alone on the right; Unreal 5's column of the outliner over the
+  details; the characters as a bar across the top; drawers over the editor.
+
+## D322: One title row: menus, search, the chosen character's run block, settings
+
+*2026-11-02, step 7, session 7c, the owner's ask that the toolbar row go. Builds D310's toolbar of few things.*
+
+- **The row**: the logo and the menus (File, Edit, Window, Help) on the left, the search in the centre, then the run block,
+  the settings' gear and the window's buttons. Save goes to File and Ctrl S, Add to the assets and File.
+- **The run block**: the chosen character's portrait with a dot of its state, its name and what it does live
+  ("Récolte · carte 3/14"), a menu of the characters online, and only the buttons its state allows: none chosen, play
+  disabled; stopped, play; playing, pause and stop; paused, play and stop. The block's edge glows green while it plays,
+  amber when paused. F5 plays or pauses, F6 pauses, Shift F5 stops.
+- **Play is IntelliJ's own icon**, alone, the owner's word; a filled green button and a label were turned down.
+- **The status bar** keeps the host's state, the client's build and whether everything is saved.
+- **Rejected**: a row of its own for the toolbar; the controls in the characters' panel, gone when it closes.
+
+## D323: The characters as cards: portrait, state, activity, life and pods
+
+*2026-11-02, step 7, session 7c, the owner's choices. Builds D309.*
+
+- **A card per character online**: a portrait in its colour with a ring of its state (green playing, amber paused, red and
+  beating in a fight, dim stopped) and its level as a medal; its name and where it is; what it does with an icon and its
+  progress (3/14, round 3); life and pods as two gauges with their share, life red under 50 %, pods amber from 90 %. A
+  fight tints the card. Tooltips give the numbers (6 107 / 7 540) and the map's coordinates.
+- **The characters offline** are folded under their own heading, a line each.
+- **A click** chooses the character the run block drives and the inspector shows; a double click or Enter opens its tab;
+  the right click plays, pauses, stops, gives a profile, the start on connection, forgets.
+- **Each class's head** replaces the initials, the owner's ask: measured on 3.7.12.12, `Content/Picto/UI/class_assets_1x`
+  and `_2x.bundle` hold a sprite `Head_<breed><sex>` for each of the 20 breeds and both sexes, `Head_10` to `Head_201`;
+  the server's list of characters gives each one's breed and gender (`CharacterInformation`). They go in the pack as the
+  items' icons do (D135, D265), and each known character keeps its breed and gender, a migration.
+- **Rejected**: one line per character, kept for no case.
+
+## D324: The inspector, plain: sections under a rule, faint labels, filled fields
+
+*2026-11-02, step 7, session 7c, chosen by the owner among three after two drafts turned down. Supersedes D101's accounts
+page, once 7c3 makes it.*
+
+- **The look**: sections parted by a rule, their title alone, labels faint, fields filled with no border, a value per
+  line; a search filters the properties; the labels' column is resized. A flag is a checkbox, never a switch.
+- **A character**: its portrait, name, breed, level and server, and a way to its tab; Game: its profile as an asset's
+  field that opens it, the start on connection, its planning (7f) and fight preferences (7h); Variables: the character's,
+  each with a dot of its type in the wires' colours (D313) and its editor; Account: the account, its subscription, server,
+  and forgetting it. A value changed from its default shows an amber arrow that resets it.
+- **An asset**: its name and kind; its file, path and format; what it uses (a profile's behavior and how many values it
+  changes) and what uses it.
+- **Rejected**: Unreal's Details as it is, dense and square; a card in the header with filters by section.
+
+## D325: A character's tab: its map live and a column of what it does
+
+*2026-11-02, step 7, session 7c, chosen by the owner among three. Supersedes D120's map page and D94's bot card, once 7c3
+makes them.*
+
+- **The map**, today's (D121, D122): cells, elements, NPCs, exits, the other bots, the character, its path and its target;
+  its layers in a menu; the cell under the pointer; the tour as a small grid of maps done, current and to do.
+- **The column**: what it does now, large, with the tour's progress, the time spent and when it should end; its behavior's
+  states on a rail, the rules of the layer Always each with a gauge of the value against its threshold, the state playing
+  lit; its session, resources as tiles with their rate an hour, the profession's level, fights, deposits and kamas; its
+  latest decisions on a thread, each with why, and a way to the whole trace.
+- **Texts** short and plain, the owner's ask: "Fin estimée 16:07", "Pods ≥ 90 % → Banque", "Banque non requise".
+- **Rejected**: the map whole with a heads-up display and a floating panel; the map over a timeline of states.
+
+## D326: The assets: a tree of the project's folders, then the given ones
+
+*2026-11-02, step 7, session 7c, validated by the owner. Builds D296, D314.*
+
+- **The tree**: the project's folders and their assets, each kind with its icon and colour, the same everywhere (behavior
+  blue, profile violet, route teal, zone green, list amber, planning light blue, fight preferences red); how many use each
+  asset; a dot on one not saved; one whose file does not read in red, the reason in its tooltip; the assets given with D3B
+  under their own heading, read only.
+- **Add** offers each kind, those of a later session disabled until it (routes and zones 7d, plannings 7f, fight
+  preferences 7h), a folder and an import. The right click opens, finds what uses the asset, renames, duplicates, exports,
+  shows the file and deletes; a given asset is copied into the project instead. A double click opens it in a tab.
+
+## D327: The bottom panel: journal, trace, problems, protocol and statistics
+
+*2026-11-02, step 7, session 7c, validated by the owner. Supersedes D111's logs and inspector pages and D146's statistics
+page, once 7c4 makes it.*
+
+- **Journal**: every source by time, its level and its message with a way to what it names; sources, levels, text,
+  following and copying.
+- **Trace**: the decisions of the chosen character's run, the state, what was weighed or played and how it ended.
+- **Problems**: by origin, the project, the characters, the host, each saying what is wrong and why, with a button to fix it.
+- **Protocol**: a character's frames live or a capture replayed, by direction and name, frozen on demand, a frame unfolded
+  in place, a frame the readable protocol does not read marked.
+- **Statistics**: by character and period, the resources with their rate an hour, and the runs.
+
+## D328: Search everywhere, Ctrl K
+
+*2026-11-02, step 7, session 7c, validated by the owner. Builds D310.*
+
+- Recent items first; then assets, characters, maps by coordinates or name, commands with their shortcuts and settings,
+  grouped, the text found lit; scopes chosen by a click or Tab; `>` for commands, `@` for characters; the arrows, Enter
+  and Escape. A result opens its tab, plays its command or its setting's section.
+
+## D329: The settings, a tab of the editor
+
+*2026-11-02, step 7, session 7c, validated by the owner. Supersedes D151's settings page, once 7c4 makes it.*
+
+- Opened by the title's gear, Ctrl , or a search. Sections: Bots (the client's display time, the delays), Network (the
+  captures, from the next start), Appearance (the language, the layout given back), Files (the project, the database, the
+  client's data and the app's preferences, each copied or opened), About (versions, the update, the licences). A value
+  changed shows a bar in the margin and an arrow that resets it.
+
+## D330: A profile's editor, a tab: its settings on a grid, its preview beside
+
+*2026-11-02, step 7, session 7c, the owner's choices after a first draft turned down. Supersedes D159's editor page, once
+7c4 makes it. Builds D300, D317.*
+
+- **The header**: the name edited in place; under it, the behavior it is a variant of, how many values it changes and
+  "Tout remettre"; save.
+- **The form**: its sections in a bar that follows the scroll and marks those changed; a label and its control on a grid,
+  the help in a tooltip; a value changed bold with a bar in the margin and an arrow that resets it (D300); the professions
+  as a grid of plain buttons under "all professions"; the sub-areas a field of tokens; shares as sliders. Narrow, the
+  labels go above their control.
+- **The preview**: the zone, its figures, and who plays the profile, with what it gives each.
+- The zone keeps D127's squares until 7d draws the world from the client's images (D308).
+
+## D331: Icons: IntelliJ's, checked file by file; the game's own for the game
+
+*2026-11-02, step 7, session 7c, the lead's. Builds D305.*
+
+- **IntelliJ's** come from `platform/icons/src/expui` in `JetBrains/intellij-community`, their dark variants. Each file's
+  Apache 2.0 notice is checked: of the 50 the mockup took, `debugger/freeze` and `toolwindows/dataflow` had none and were
+  left out. 7c2 makes the tool that takes them, checks them and writes them for Avalonia.
+- **The game's concepts**, life, pods, professions, fights and resources, have no icon in IntelliJ's set: the lead
+  recommends the client's own, in the pack as the items' are; the mockup draws Lucide's in their place. To settle in 7c2.
+
+## D332: 7c, what it leaves
+
+*2026-11-02, step 7, session 7c.*
+
+- **Done**: the shell's design, validated with the owner piece by piece, its mockup in `docs/mockups/studio-7c.html`, the
+  decisions D319 to D331. No code changed.
+- **The sessions that follow**:
+
+| Session | Content |
+| --- | --- |
+| 7c2 | The frame: ShadUI themed dark (D320), IntelliJ's icons (D331), the title row and its run block (D322), the docks and their layout (D321), the status bar, the search (D328). |
+| 7c3 | The characters (D323, their heads included), the inspector of a character and of an asset (D324), a character's tab (D325). |
+| 7c4 | The assets (D326), the bottom panel (D327), the settings (D329), a profile's editor (D330); the pages of D101 and D162 removed, nothing they do lost. |
+
+- **Left**: the game's icons (D331); which details each session measures on the real app, with the owner.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
