@@ -32,7 +32,7 @@ internal sealed partial class SettingsEditor : ObservableObject
     public object? Draft { get; }
 
     /// <summary>Gets the behavior's values, which a profile changes, or <see langword="null"/> when the settings change nothing's (D300).</summary>
-    public object? Defaults { get; init; }
+    public object? Defaults { get; }
 
     /// <summary>Gets or sets what gives a setting the behavior's value back, as the profile's editor does.</summary>
     public Action<SettingFieldViewModel>? Resets { get; set; }
@@ -136,8 +136,10 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <param name="services">The host's services, which the activity reckons what its settings lead to from, if it runs.</param>
     /// <param name="players">The characters that play the profile, with their professions' levels.</param>
     /// <param name="dialogs">The window's dialogs, or <see langword="null"/>.</param>
-    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PreviewPlayer>? players = null, Dialogs? dialogs = null)
+    /// <param name="defaults">The behavior's values, which a profile changes, or <see langword="null"/>.</param>
+    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PreviewPlayer>? players = null, Dialogs? dialogs = null, object? defaults = null)
     {
+        Defaults = defaults;
         Dialogs = dialogs;
         Settings = settings;
         Draft = draft;

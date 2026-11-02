@@ -312,9 +312,8 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
         _defaults = behavior is null ? null : ProfileForms.SettingsOf(behavior, null);
         BehaviorName = behavior is null ? "" : behavior.Title?.In(_page.Localizer.Culture) ?? behavior.Name;
-        Editor = new SettingsEditor(definition.Settings, reading.Settings, _page.Game, _page.Names, _page.Localizer, _page.Services, IsNew ? [] : _page.LevelsOf(Id), _page.Dialogs)
+        Editor = new SettingsEditor(definition.Settings, reading.Settings, _page.Game, _page.Names, _page.Localizer, _page.Services, IsNew ? [] : _page.LevelsOf(Id), _page.Dialogs, _defaults is null ? null : definition.Settings.Read(_defaults).Settings)
         {
-            Defaults = _defaults is null ? null : definition.Settings.Read(_defaults).Settings,
             Resets = ResetField,
         };
         Editor.PropertyChanged += OnEditorChanged;

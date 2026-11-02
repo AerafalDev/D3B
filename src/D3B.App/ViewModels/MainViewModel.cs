@@ -6,6 +6,7 @@ using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.Updates;
+using D3B.App.ViewModels.AppSettings;
 using D3B.App.ViewModels.Assets;
 using D3B.App.ViewModels.Bottom;
 using D3B.App.ViewModels.Characters;
@@ -94,6 +95,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets or sets what opens a folder in the system's file manager, as the window can.</summary>
     public Action<string>? OpenFolder { get; set; }
+
+    /// <summary>Gets or sets what opens a file or a link with the system's own application, as the window can.</summary>
+    public Action<string>? OpenFile { get; set; }
 
     /// <summary>Gets or sets what shows a file, chosen, in the system's file manager, as the window can.</summary>
     public Action<string>? RevealFile { get; set; }
@@ -197,7 +201,12 @@ internal sealed partial class MainViewModel : ObservableObject
         };
         Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), new StatisticsViewModel(localizer));
         Updates = new UpdatesViewModel(localizer, updates, Dialogs, () => IsRunning && Bots.HasItems, _close);
-        Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates);
+        Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates)
+        {
+            ResetLayout = Layout.Reset,
+            OpenFolder = path => OpenFolder?.Invoke(path),
+            OpenFile = path => OpenFile?.Invoke(path),
+        };
         RunBlock = new RunBlockViewModel(Bots, localizer) { Characters = Characters, Chose = Chose };
         Characters.RunBlock = RunBlock;
         Search = new SearchViewModel(localizer, SearchItems);
@@ -206,14 +215,14 @@ internal sealed partial class MainViewModel : ObservableObject
         ShowWelcome();
     }
 
-    private static IEnumerable<(string Key, string Section)> SettingsFound()
+    private static IEnumerable<(string Key, SettingsSection Section)> SettingsFound()
     {
-        yield return ("SettingDisplay", "SectionBots");
-        yield return ("SettingDelays", "SectionBots");
-        yield return ("SettingCaptures", "SectionNetwork");
-        yield return ("SettingLanguage", "SectionAppearance");
-        yield return ("SettingFiles", "SectionFiles");
-        yield return ("SettingUpdate", "SectionAbout");
+        yield return ("SettingDisplay", SettingsSection.Bots);
+        yield return ("SettingDelays", SettingsSection.Bots);
+        yield return ("SettingCaptures", SettingsSection.Network);
+        yield return ("SettingLanguage", SettingsSection.Appearance);
+        yield return ("SettingFiles", SettingsSection.Files);
+        yield return ("SettingUpdate", SettingsSection.About);
     }
 
     /// <summary>Reads the host and its bots again, in the language chosen.</summary>
@@ -343,6 +352,16 @@ internal sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void ShowSettings()
     {
+        ShowSettings(null);
+    }
+
+    /// <summary>Shows the settings' tab on a section, as a setting the search found asks.</summary>
+    /// <param name="section">The section, or <see langword="null"/> for the one shown last.</param>
+    public void ShowSettings(SettingsSection? section)
+    {
+        if (section is { } shown)
+            Settings.Show(shown);
+
         Editor.Open(SettingsTab, () => new EditorTab(SettingsTab, () => _localizer["Settings"], "General.Settings", Settings, needsHost: false));
         Settings.Refresh(_host.Services);
     }
@@ -444,7 +463,7 @@ internal sealed partial class MainViewModel : ObservableObject
             yield return command;
 
         foreach (var (key, section) in SettingsFound())
-            yield return new SearchItem(SearchScope.Settings, "setting:" + key, _localizer[key], _localizer[section], "General.Settings", "", "", ShowSettings);
+            yield return new SearchItem(SearchScope.Settings, "setting:" + key, _localizer[key], _localizer["Section" + section], "General.Settings", "", "", () => ShowSettings(section));
     }
 
     private IEnumerable<SearchItem> Commands()

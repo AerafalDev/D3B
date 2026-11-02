@@ -62,6 +62,7 @@ internal sealed partial class MainWindow : ShadUI.Window
             _main.Toasts.Shown -= OnToastShown;
             _main.OpenFolder = null;
             _main.RevealFile = null;
+            _main.OpenFile = null;
             _main.FocusAssets = null;
             _main.Assets.PickExport = null;
             _main.Assets.PickImport = null;
@@ -76,6 +77,7 @@ internal sealed partial class MainWindow : ShadUI.Window
             _main.Toasts.Shown += OnToastShown;
             _main.OpenFolder = OpenFolder;
             _main.RevealFile = RevealFile;
+            _main.OpenFile = OpenFile;
             _main.FocusAssets = () => Avalonia.Threading.Dispatcher.UIThread.Post(AssetsPanel.FocusSearch);
             _main.Assets.PickExport = PickExportAsync;
             _main.Assets.PickImport = PickImportAsync;
@@ -146,6 +148,17 @@ internal sealed partial class MainWindow : ShadUI.Window
 
         if (Launcher is { } launcher)
             await launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(folder));
+    }
+
+    private async void OpenFile(string target)
+    {
+        if (Launcher is not { } launcher)
+            return;
+
+        if (Uri.TryCreate(target, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https")
+            await launcher.LaunchUriAsync(uri);
+        else if (File.Exists(target))
+            await launcher.LaunchFileInfoAsync(new FileInfo(target));
     }
 
     // Explorer selects the file shown; elsewhere its folder opens.
