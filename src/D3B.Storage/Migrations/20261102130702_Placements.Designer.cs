@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace D3B.Storage.Migrations
 {
     [DbContext(typeof(StorageContext))]
-    [Migration("20261102123942_Placements")]
+    [Migration("20261102130702_Placements")]
     partial class Placements
     {
         /// <inheritdoc />
@@ -80,25 +80,40 @@ namespace D3B.Storage.Migrations
 
             modelBuilder.Entity("D3B.Storage.Fights.LearnedPlacement", b =>
                 {
+                    b.Property<long>("FromMapId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long>("MapId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ChallengerCells")
+                    b.Property<string>("RedCells")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DefenderCells")
+                    b.Property<string>("BlueCells")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("FirstSeenAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("FromAreaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("FromSubAreaId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTimeOffset>("LastSeenAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("PosX")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("PosY")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Seen")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("MapId", "ChallengerCells", "DefenderCells");
+                    b.HasKey("FromMapId", "MapId", "RedCells", "BlueCells");
 
                     b.ToTable("Placements", (string)null);
                 });

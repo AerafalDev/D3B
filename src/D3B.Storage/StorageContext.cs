@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D3B.Storage;
 
-/// <summary>D3B's database: the accounts and characters it saw, the profiles, what the bots learned of the maps' graphics, and the fights' placement cells (D100, D138, 9f3).</summary>
+/// <summary>D3B's database: the accounts and characters it saw, the profiles, what the bots learned of the maps' graphics, and the fights' placement cells (D100, D138, D275).</summary>
 public sealed class StorageContext : DbContext
 {
     /// <summary>Gets the accounts.</summary>
@@ -29,7 +29,7 @@ public sealed class StorageContext : DbContext
     /// <summary>Gets how long the resources take to grow back, by the skill that gathers each (D145).</summary>
     public DbSet<LearnedRegrowth> Regrowths => Set<LearnedRegrowth>();
 
-    /// <summary>Gets the fights' maps and their placement cells, as the bots saw fights begin (9f3).</summary>
+    /// <summary>Gets the fights' placement cells, the map fought on and the one left, as the bots saw fights begin (D275).</summary>
     public DbSet<LearnedPlacement> Placements => Set<LearnedPlacement>();
 
     /// <summary>Gets the runs of the activities, for the statistics (D146).</summary>
@@ -85,7 +85,7 @@ public sealed class StorageContext : DbContext
         modelBuilder.Entity<LearnedPlacement>(placement =>
         {
             placement.ToTable("Placements");
-            placement.HasKey(learned => new { learned.MapId, learned.ChallengerCells, learned.DefenderCells });
+            placement.HasKey(learned => new { learned.FromMapId, learned.MapId, learned.RedCells, learned.BlueCells });
         });
 
         modelBuilder.Entity<RunRecord>(run =>

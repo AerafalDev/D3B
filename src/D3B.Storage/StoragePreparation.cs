@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage;
 
-/// <summary>Opens the database before the host starts: creates it, applies its migrations, stores the activities' presets never stored, and reads the accounts, the profiles, the graphics learned, the resources' growing back, the fights' placement cells and the runs (D100, D138, D145, D146, D168, 9f3).</summary>
+/// <summary>Opens the database before the host starts: creates it, applies its migrations, stores the activities' presets never stored, and reads the accounts, the profiles, the graphics learned, the resources' growing back, the fights' placement cells and the runs (D100, D138, D145, D146, D168, D275).</summary>
 /// <remarks>The presets are named in the system's language, the one the app starts in by default.</remarks>
 internal sealed class StoragePreparation : IHostPreparation
 {

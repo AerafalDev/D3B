@@ -31,7 +31,7 @@ namespace D3B.Storage;
 /// when asked. Activities do not see it: profiles are D3B's, and only name the activities modules and scripts register.
 /// The <see cref="GraphicRecorder"/> keeps what the bots learn of the graphics, which they share as <see cref="GraphicSkills"/>,
 /// the <see cref="RegrowthRecorder"/> how long the resources take to grow back, as <see cref="Regrowths"/> (D145), the
-/// <see cref="PlacementRecorder"/> every fight's map and placement cells, as <see cref="FightPlacements"/> (9f3), and the
+/// <see cref="PlacementRecorder"/> every fight's map and placement cells, as <see cref="FightPlacements"/> (D275), and the
 /// <see cref="RunRecorder"/> each run of the bots' activities, which the <see cref="RunBook"/> gives the statistics (D146).
 /// </para>
 /// </remarks>

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage.Fights;
 
-/// <summary>Keeps every fight's map and placement cells, as the host's bots see fights begin, so that they outlive the run (9f3).</summary>
+/// <summary>Keeps every fight's placement cells, the map fought on and the one left, as the host's bots see fights begin, so that they outlive the run (D275).</summary>
 /// <remarks>
 /// As the growing back's recorder does (D145): read back before the host starts, a set of cells seen on a relay's read loop
 /// queued and written by the recorder's own loop. A write that fails is logged, and the host goes on knowing it until it stops.
@@ -50,7 +50,7 @@ internal sealed class PlacementRecorder : BackgroundService
             var placements = await context.Placements.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
 
             foreach (var placement in placements)
-                _placements.Remember(new FightPlacement(placement.MapId, Of(placement.ChallengerCells), Of(placement.DefenderCells), placement.Seen, placement.FirstSeenAt, placement.LastSeenAt));
+                _placements.Remember(new FightPlacement(placement.FromMapId, placement.FromSubAreaId, placement.FromAreaId, placement.PosX, placement.PosY, placement.MapId, Of(placement.RedCells), Of(placement.BlueCells), placement.Seen, placement.FirstSeenAt, placement.LastSeenAt));
 
             return placements.Count;
         }
@@ -75,7 +75,7 @@ internal sealed class PlacementRecorder : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var batch = new Dictionary<(long, string, string), FightPlacement>();
+        var batch = new Dictionary<(long, long, string, string), FightPlacement>();
         var waiting = new List<TaskCompletionSource>();
 
         while (await _queue.Reader.WaitToReadAsync(stoppingToken).ConfigureAwait(false))
@@ -85,7 +85,7 @@ internal sealed class PlacementRecorder : BackgroundService
                 if (item.Written is { } written)
                     waiting.Add(written);
                 else if (item.Placement is { } placement)
-                    batch[(placement.MapId, Of(placement.ChallengerCells), Of(placement.DefenderCells))] = placement;
+                    batch[(placement.FromMapId, placement.MapId, Of(placement.RedCells), Of(placement.BlueCells))] = placement;
             }
 
             try
@@ -112,22 +112,34 @@ internal sealed class PlacementRecorder : BackgroundService
         _queue.Writer.TryWrite((placement, null));
     }
 
-    private async Task WriteAsync(Dictionary<(long MapId, string Challengers, string Defenders), FightPlacement> batch, CancellationToken cancellationToken)
+    private async Task WriteAsync(Dictionary<(long FromMapId, long MapId, string Red, string Blue), FightPlacement> batch, CancellationToken cancellationToken)
     {
         var context = await _contexts.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
 
         await using (context.ConfigureAwait(false))
         {
-            var maps = batch.Keys.Select(key => key.MapId).Distinct().ToList();
-            var known = await context.Placements.Where(placement => maps.Contains(placement.MapId)).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var maps = batch.Keys.Select(key => key.FromMapId).Distinct().ToList();
+            var known = await context.Placements.Where(placement => maps.Contains(placement.FromMapId)).ToListAsync(cancellationToken).ConfigureAwait(false);
 
-            foreach (var ((mapId, challengers, defenders), placement) in batch)
+            foreach (var ((fromMapId, mapId, red, blue), placement) in batch)
             {
-                var learned = known.Find(stored => stored.MapId == mapId && stored.ChallengerCells == challengers && stored.DefenderCells == defenders);
+                var learned = known.Find(stored => stored.FromMapId == fromMapId && stored.MapId == mapId && stored.RedCells == red && stored.BlueCells == blue);
 
                 if (learned is null)
                 {
-                    context.Placements.Add(learned = new LearnedPlacement { MapId = mapId, ChallengerCells = challengers, DefenderCells = defenders, FirstSeenAt = placement.FirstSeen });
+                    learned = new LearnedPlacement
+                    {
+                        FromMapId = fromMapId,
+                        FromAreaId = placement.FromAreaId,
+                        FromSubAreaId = placement.FromSubAreaId,
+                        PosX = placement.PosX,
+                        PosY = placement.PosY,
+                        MapId = mapId,
+                        RedCells = red,
+                        BlueCells = blue,
+                        FirstSeenAt = placement.FirstSeen,
+                    };
+                    context.Placements.Add(learned);
                     known.Add(learned);
                 }
 

@@ -62,9 +62,9 @@ public sealed class BotsModule : IModule
         bot.Services.TryAddSingleton(services => new GraphicPlaces(services.GetRequiredService<GamePack>(), services.GetRequiredService<GameWorld>()));
         bot.Services.AddSingleton<IGameObserver>(services => new GraphicLearner(services.GetRequiredService<GameMaps>(), services.GetRequiredService<GraphicSkills>()));
 
-        // Whoever fights, every fight begun teaches its map's placement cells, which the server alone gives (D180, 9f3).
+        // Whoever fights, every fight begun teaches its placement cells and maps, which the server alone gives (D180, D275).
         bot.Services.TryAddSingleton<FightPlacements>();
-        bot.Services.AddSingleton<IGameObserver>(services => new FightPlacementLearner(services.GetRequiredService<FightPlacements>(), services.GetRequiredService<TimeProvider>()));
+        bot.Services.AddSingleton<IGameObserver>(services => new FightPlacementLearner(services.GetRequiredService<FightPlacements>(), services.GetRequiredService<GameWorld>(), services.GetRequiredService<TimeProvider>()));
 
         // Recording always, after the bots, so that the protocol inspector shows what came before it was opened (D115).
         bot.Services.AddSingleton(services => new FrameRecorder(services.GetRequiredService<TimeProvider>()));
