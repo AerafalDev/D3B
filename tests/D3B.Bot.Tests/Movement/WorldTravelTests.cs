@@ -42,6 +42,35 @@ public sealed class WorldTravelTests
     }
 
     [Fact]
+    public async Task AJourneyStopsOnTheFirstMapOfTheWayWhereTheActivityHasWork()
+    {
+        // From the north map to the east one, through the middle map, where the activity has work.
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(300, TestPlay.NorthMapId);
+        var asked = new List<long?>();
+        var journey = bot.RunAsync(
+            (context, token) => context.TravelAsync(
+                new HashSet<long> { TestPlay.EastMapId },
+                state =>
+                {
+                    asked.Add(state.MapId);
+
+                    return state.MapId == TestPlay.MapId;
+                },
+                token),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(await TestWalks.WalkedAsync(play, connection, 1) >= 532);
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.MapId }, await TestWalks.SentAsync(play, connection, 2));
+        TestWalks.Arrive(connection, TestPlay.MapId, 20);
+
+        Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.Equal(TestPlay.MapId, bot.State.MapId);
+        Assert.Equal(2, connection.Sent.Count);
+        Assert.Equal([TestPlay.MapId], asked);
+    }
+
+    [Fact]
     public async Task AJourneyGoesThroughADoor()
     {
         await using var play = new TestPlay();

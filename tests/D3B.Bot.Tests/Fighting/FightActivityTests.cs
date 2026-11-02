@@ -248,6 +248,67 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task WithNothingToEatTheCharacterRegeneratesBackToTheShareAloneBeforeItAttacks()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        // Two points a second, as measured (D153): back to 95 % in 40 s, whole in 65 s.
+        connection.Server(new LifeRegenEndEvent { Life = 870, MaxLife = 1_000 });
+        connection.Server(new LifeRegenStartEvent { Interval = 5 });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+
+        var started = _play.Time.GetUtcNow();
+        var activity = Activity(new FightSettings { OnlyWinnable = false, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], HealBelow = 95 });
+        var run = bot.StartActivity(activity);
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+
+        var waited = _play.Time.GetUtcNow() - started;
+
+        Assert.InRange(waited, TimeSpan.FromSeconds(40), TimeSpan.FromSeconds(55));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task WithNoFoodChosenTheCharacterEatsWhatOnlyHealsBeforeItAttacks()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new InventoryContentEvent
+        {
+            Objects =
+            {
+                new InventoryObject { Item = new ObjectItem { Uid = 52, ItemId = TestPlay.ClassPotion, Quantity = 1 }, Position = InventoryItem.NotWorn },
+                new InventoryObject { Item = new ObjectItem { Uid = 53, ItemId = TestPlay.Loaf, Quantity = 2 }, Position = InventoryItem.NotWorn },
+                new InventoryObject { Item = new ObjectItem { Uid = 50, ItemId = TestPlay.Bread, Quantity = 3 }, Position = InventoryItem.NotWorn },
+            },
+        });
+        connection.Server(new LifeRegenEndEvent { Life = 300, MaxLife = 1_000 });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+
+        var activity = Activity(new FightSettings { OnlyWinnable = false, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], HealBelow = 70 });
+        var run = bot.StartActivity(activity);
+
+        // The bread heals less than the loaf; the potion, whose use does more than heal, is never eaten.
+        Assert.Equal(new ObjectUseMultipleRequest { Uid = 50, Quantity = 3 }, await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 50, Quantity = 1 } });
+        connection.Server(new LifeRegenEndEvent { Life = 1_000, MaxLife = 1_000 });
+
+        // Whole again, the character walks onto the group.
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 2));
+        Assert.DoesNotContain(connection.Sent, message => message is ObjectUseRequest { Uid: 52 } or ObjectUseMultipleRequest { Uid: 52 });
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
     public void TheActivityFightsItsOwnFightsAndCountsWonAndLost()
     {
         var activity = Activity(new FightSettings());

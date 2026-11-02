@@ -49,7 +49,23 @@ public static class WorldTravel
     /// <param name="maps">The maps sought.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How the journey ended.</returns>
-    public static async Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, CancellationToken cancellationToken)
+    public static Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, CancellationToken cancellationToken)
+    {
+        return context.TravelAsync(maps, null, cancellationToken);
+    }
+
+    /// <summary>Travels to the nearest of several maps, within a behavior, stopping on the first map of the way where the activity has work.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="maps">The maps sought.</param>
+    /// <param name="stopAt">Whether the journey ends on a map it reached, the map's information received; never asked of the map it starts from.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the journey ended: <see cref="TravelOutcome.Arrived"/> on a map sought or one <paramref name="stopAt"/> stopped on.</returns>
+    /// <remarks>
+    /// Measured (D256, 9g5): the fighting activity crossed maps of its zone holding groups it would attack on its way to the
+    /// tour's farthest maps. The rest of a shortest path is the shortest from where it stops, so that the journeys after it
+    /// do not come back through the maps it left.
+    /// </remarks>
+    public static async Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(maps);
@@ -58,7 +74,7 @@ public static class WorldTravel
         var depth = action.Depth;
         var from = context.State.MapId;
         long? sought = maps.Count is 1 ? maps.First() : null;
-        var (outcome, changes) = await JourneyAsync(context, maps, cancellationToken).ConfigureAwait(false);
+        var (outcome, changes) = await JourneyAsync(context, maps, stopAt, cancellationToken).ConfigureAwait(false);
 
         context.Record(action, (at, took) => new TravelEntry(at, depth, from, sought, context.State.MapId, changes, outcome, took));
 
@@ -101,7 +117,7 @@ public static class WorldTravel
         };
     }
 
-    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, CancellationToken cancellationToken)
+    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, CancellationToken cancellationToken)
     {
         var banned = new HashSet<int>();
         var teleports = true;
@@ -116,7 +132,7 @@ public static class WorldTravel
             if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsBusy)
                 return (changes is 0 && failures is 0 ? TravelOutcome.Busy : TravelOutcome.Failed, changes);
 
-            if (maps.Contains(mapId))
+            if (maps.Contains(mapId) || (changes > 0 && !state.IsInHavenBag && stopAt is not null && stopAt(state)))
                 return Over(context, state, TravelOutcome.Arrived, changes);
 
             if (state.IsInHavenBag)

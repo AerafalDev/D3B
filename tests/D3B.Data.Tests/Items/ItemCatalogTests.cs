@@ -17,6 +17,18 @@ public sealed class ItemCatalogTests
     }
 
     [Fact]
+    public void AnItemWhoseUseOnlyHealsKeepsTheLifeItGivesBack()
+    {
+        var catalog = TestTables.Items();
+
+        Assert.True(catalog.TryGetItem(468, out var bread));
+        Assert.True(bread.Heals);
+        Assert.Equal((10, 15), ((int)bread.HealMin, (int)bread.HealMax));
+        Assert.True(catalog.TryGetItem(303, out var wood));
+        Assert.False(wood.Heals);
+    }
+
+    [Fact]
     public void AnItemMayNameATypeTheCatalogLacks()
     {
         var catalog = TestTables.Items();

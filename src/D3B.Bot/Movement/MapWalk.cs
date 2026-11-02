@@ -22,10 +22,11 @@ namespace D3B.Bot.Movement;
 /// server's answers end the walk.
 /// </para>
 /// <para>
-/// The client, at times, does not follow a walk the server shows it, for no cause found: the server has the character
-/// on the path's last cell, which the state then takes, and the client follows the next walk from there (D85). The
-/// server may still hold the character walking it, refusing what is not a walk from there: a step aside lets it go
-/// (<see cref="ReleaseHeldWalkAsync"/>, D89).
+/// The client does not follow a walk ending on the cell its previous walk ended on, even on another map, measured (9g5):
+/// such a walk goes in two, to the cell before its last, then the last step, or a step aside first when it has one step.
+/// A walk the client did not follow leaves the server with the character on the path's last cell, which the state then
+/// takes, and the client follows the next walk from there (D85). The server may still hold the character walking it,
+/// refusing what is not a walk from there: a step aside lets it go (<see cref="ReleaseHeldWalkAsync"/>, D89).
 /// </para>
 /// </remarks>
 public static class MapWalk
@@ -140,7 +141,42 @@ public static class MapWalk
         if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFind(map.Cells.Span, from, cell, out var path))
             return WalkOutcome.NoPath;
 
+        if (path.End == context.State.LastWalkEnd && await AwayFromLastEndAsync(context, mapId, map, path, cancellationToken).ConfigureAwait(false) is { } away)
+        {
+            if (away is not WalkOutcome.Arrived || context.State.Cell is not { } between || context.State.MapId != mapId)
+                return away;
+
+            if (!CellPathfinder.TryFind(map.Cells.Span, between, cell, out path))
+                return WalkOutcome.NoPath;
+        }
+
         return await WalkAlongAsync(context, mapId, path, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A first walk that ends elsewhere, so that the client follows the walk to the cell its previous one ended on: to the
+    // path's cell before its last, or a step aside when the path has one step; none when no other cell can be reached.
+    private static async Task<WalkOutcome?> AwayFromLastEndAsync(BotContext context, long mapId, MapData map, CellPath path, CancellationToken cancellationToken)
+    {
+        var cells = map.Cells.Span;
+        CellPath? away;
+
+        if (path.Steps > 1)
+        {
+            if (!CellPathfinder.TryFind(cells, path.Start, path.Cells.Span[^2], out away))
+                return null;
+        }
+        else
+        {
+            var neighbours = Enumerable.Range(0, MapCell.DirectionCount)
+                .Select(direction => MapGeometry.Neighbour(path.Start, direction))
+                .Where(neighbour => neighbour >= 0 && neighbour != path.End)
+                .ToArray();
+
+            if (!CellPathfinder.TryFindNearest(cells, path.Start, neighbours, out away) || away.Steps is 0)
+                return null;
+        }
+
+        return await WalkAlongAsync(context, mapId, away, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<WalkOutcome> WalkAlongAsync(BotContext context, long mapId, CellPath path, CancellationToken cancellationToken)

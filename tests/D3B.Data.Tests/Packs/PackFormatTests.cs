@@ -42,6 +42,7 @@ public sealed class PackFormatTests
         (5, "9de3d67e4a573c63eb675ab6c1ec13cc5e0b653014fa144c5b3de3c408867ff7"),
         (6, "1c90f607d5c45ba002152f90ea53357e25606148b2c9536c4ac1a53b1c708907"),
         (7, "ce9c6ec360dcce84bd518b449148b2a40d44a05a7ce6d19e618ef0780c300a6b"),
+        (8, "8a4430ff75cfa0a4f52eaa0fbb717cbfa7c45b4c0a23157e31da9d348359ebcc"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -127,7 +128,7 @@ public sealed class PackFormatTests
             new Waypoint[] { new(40, 41, 42, true) },
             _harvestables,
             _inhabitants));
-        Append(hash, new ItemCatalog(new Item[] { new(44, 45, 46, 47, 48, 68) }, new ItemType[] { new(49, 50, 51, 52) }));
+        Append(hash, new ItemCatalog(new Item[] { new(44, 45, 46, 47, 48, 68, 214, 215) }, new ItemType[] { new(49, 50, 51, 52) }));
         Append(hash, new WeaponCatalog(
             new Weapon[] { new() { ItemId = 195, TypeId = 196, ApCost = 197, MinRange = 198, Range = 199, CriticalHitProbability = 200, CriticalHitBonus = 201, MaxCastPerTurn = 3, Properties = SpellLevelProperties.CastInDiagonal, FirstEffect = 0, EffectCount = 1 } },
             new WeaponEffect[] { new() { EffectId = 202, DiceNum = 204, DiceSide = 205, Value = 206 } },

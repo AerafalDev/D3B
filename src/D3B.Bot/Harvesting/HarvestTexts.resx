@@ -294,7 +294,7 @@
     <value>Food</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
-    <value>In order, until life is full.</value>
+    <value>In order, until life is full; none chosen, what the inventory holds that only heals, the smallest heal first; else the life regenerates up to the share.</value>
   </data>
   <data name="DoingOpenBag" xml:space="preserve">
     <value>Opening {0}</value>

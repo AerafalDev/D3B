@@ -35,6 +35,33 @@ public sealed class MapChangeTests
     }
 
     [Fact]
+    public async Task AScrollLeavesByAnotherCellOfItsEdgeThanTheOneThePreviousWalkEndedOn()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+
+        // The previous walk ended on cell 27, the edge's nearest from 433, as on the map before of a journey straight north.
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 461, 433 } });
+        connection.Client(new MapMovementConfirmRequest());
+        connection.Response(new MapMovementConfirmResponse());
+        await bot.ProcessedAsync();
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 433, 27 } });
+        await bot.ProcessedAsync();
+        TestWalks.Arrive(connection, TestPlay.MapId, 433);
+        await bot.ProcessedAsync();
+
+        var change = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.NorthMapId), TestContext.Current.CancellationToken);
+        var exit = await TestWalks.WalkedAsync(play, connection, 1);
+
+        Assert.NotEqual(27, exit);
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.NorthMapId }, await connection.SentAsync(2));
+
+        TestWalks.Arrive(connection, TestPlay.NorthMapId, 538);
+
+        Assert.Equal(MapChangeOutcome.Changed, await TestWalks.AdvanceUntilDoneAsync(play.Time, change));
+    }
+
+    [Fact]
     public async Task AWalkToTheEdgeThatSetsOffAMapActionAsksForNothing()
     {
         await using var play = new TestPlay();

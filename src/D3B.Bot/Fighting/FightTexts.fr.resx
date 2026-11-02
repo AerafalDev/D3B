@@ -138,7 +138,7 @@
     <value>Nourriture</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
-    <value>Dans l'ordre, jusqu'à la vie pleine ; sinon la vie se régénère.</value>
+    <value>Dans l'ordre, jusqu'à la vie pleine ; sans choix, ce que l'inventaire contient qui ne fait que soigner, le plus petit soin d'abord ; sinon la vie se régénère jusqu'au seuil.</value>
   </data>
   <data name="SectionBank" xml:space="preserve">
     <value>Banque</value>

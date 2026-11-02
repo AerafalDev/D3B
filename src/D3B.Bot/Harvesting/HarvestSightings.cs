@@ -33,11 +33,18 @@ public sealed class HarvestSightings
     /// <param name="mapId">The map.</param>
     /// <param name="elements">Its elements that gather a resource.</param>
     /// <param name="at">When, by the bot's clock.</param>
+    /// <remarks>
+    /// An element harvested by another, unseen, was harvested before a bot first saw it so: each keeps when that was, so that
+    /// the next sightings do not put off when it should grow back (9g5).
+    /// </remarks>
     public void SeenElements(long mapId, IReadOnlyCollection<SightedElement> elements, DateTimeOffset at)
     {
         ArgumentNullException.ThrowIfNull(elements);
 
-        _maps[mapId] = new MapSighting(elements.Select(element => element.ItemId).ToFrozenSet(), at, [.. elements]);
+        var before = _maps.TryGetValue(mapId, out var previous) && !previous.Elements.IsDefault ? previous : null;
+        var kept = elements.Select(element => element with { DisabledSince = element.IsEnabled ? null : DisabledSince(before, element, at) });
+
+        _maps[mapId] = new MapSighting(elements.Select(element => element.ItemId).ToFrozenSet(), at, [.. kept]);
     }
 
     /// <summary>Finds what a map was seen holding.</summary>
@@ -58,5 +65,19 @@ public sealed class HarvestSightings
         ArgumentNullException.ThrowIfNull(wanted);
 
         return _maps.TryGetValue(mapId, out var sighting) && !sighting.Resources.Overlaps(wanted);
+    }
+
+    private static DateTimeOffset DisabledSince(MapSighting? before, SightedElement element, DateTimeOffset at)
+    {
+        if (before is null)
+            return at;
+
+        foreach (var seen in before.Elements)
+        {
+            if (seen.ElementId == element.ElementId && seen.SkillId == element.SkillId && !seen.IsEnabled)
+                return seen.DisabledSince ?? before.At;
+        }
+
+        return at;
     }
 }

@@ -24,7 +24,8 @@ namespace D3B.Bot.Fighting;
 /// measured (9g): the attack from the group's own cell, which a group leaves by walking 1 to 4 cells, so that the walk is
 /// made again; a group the server answers nothing for is left for the rest of the visit. A map with no such group is gone
 /// through, and the step travels to the nearest map of the zone still to go through, isolated maps last when the settings
-/// take them (D149, D245); once every map was, the tour starts again, the groups having come back.
+/// take them (D149, D245), stopping on the first map of the zone on its way that holds such a group; once every map was, the
+/// tour starts again, the groups having come back.
 /// </para>
 /// <para>
 /// A fight is the activity's own: the AI plays it (<see cref="BotActivity.FightsItsFights"/>), then the run answers it. A
@@ -43,7 +44,6 @@ public sealed class FightActivity : BotActivity
     private const int RegainPoll = 5;
 
     private static readonly TimeSpan _busyDelay = TimeSpan.FromSeconds(10);
-    private static readonly TimeSpan _longestRegeneration = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan _regainStep = TimeSpan.FromSeconds(10);
 
     // Measured (9g): groups come back to a map within minutes; a zone of one map waits for one rather than loop.
@@ -134,12 +134,6 @@ public sealed class FightActivity : BotActivity
 
         if (ground.Maps.ContainsKey(mapId))
         {
-            if (_skippedOn != mapId)
-            {
-                _skipped.Clear();
-                _skippedOn = mapId;
-            }
-
             if (GroupTo(context) is { } group)
             {
                 await AttackAsync(context, group, cancellationToken).ConfigureAwait(false);
@@ -288,6 +282,13 @@ public sealed class FightActivity : BotActivity
         if (state.Level is not { } level || state.Cell is not { } here || state.MapId is not { } mapId)
             return null;
 
+        // A group's identifier is its map's: the groups left are those of the map the character stands on.
+        if (_skippedOn != mapId)
+        {
+            _skipped.Clear();
+            _skippedOn = mapId;
+        }
+
         FightMap? map = null;
 
         // The nearest first: the shortest walk, before the group walks on.
@@ -371,7 +372,13 @@ public sealed class FightActivity : BotActivity
 
         Publish(GameText.Of(FightTexts.Text(inZone ? "DoingTravel" : "DoingReturn")));
 
-        switch (await context.TravelAsync(sought, cancellationToken).ConfigureAwait(false))
+        // Measured (D256, 9g5): a journey crossed maps of the zone holding groups the activity attacks; it stops on the first.
+        bool Attackable(CharacterState state)
+        {
+            return state.MapId is { } map && ground.Maps.ContainsKey(map) && GroupTo(context) is not null;
+        }
+
+        switch (await context.TravelAsync(sought, Attackable, cancellationToken).ConfigureAwait(false))
         {
             case TravelOutcome.Arrived:
                 _failedJourneys = 0;
@@ -402,7 +409,7 @@ public sealed class FightActivity : BotActivity
         if (!_settings.Heal || context.Life is not { } life || state.MaxLife is not { } most || most <= 0)
             return false;
 
-        // Once under the share, the character heals until its life is whole (D148).
+        // Once under the share, the character eats until its life is whole (D148), or regenerates up to the share (9g5).
         if (life >= most || (!_healing && life * 100L >= (long)_settings.HealBelow * most))
         {
             _healing = false;
@@ -412,9 +419,7 @@ public sealed class FightActivity : BotActivity
 
         _healing = true;
 
-        var food = _settings.Food.Select(item => StackOf(state, item)).FirstOrDefault(stack => stack is not null);
-
-        if (food is not null)
+        if (Food.StackToEat(state, _settings.Food, _tables.Items, _unusable) is { } food)
         {
             Publish(GameText.Of(FightTexts.Text("DoingEat"), GameTextValue.Item(food.ItemId)));
 
@@ -437,14 +442,23 @@ public sealed class FightActivity : BotActivity
             return true;
         }
 
-        // Nothing left to eat: measured, the life regenerates by itself a point each interval the server gave (D153).
-        var wait = state.LifeRegenInterval is { } interval ? TimeSpan.FromMilliseconds((most - life) * interval * 100L) : _longestRegeneration;
+        // Nothing left to eat: measured, the life regenerates by itself a point each interval the server gave (D153). The
+        // owner's choice (9g5): nearly whole, the character waited its whole life back without looking at it again; it waits
+        // for the share it heals under alone, as after a lost fight (D198), looking again at least each 10 seconds.
+        var share = (((long)_settings.HealBelow * most) + 99) / 100;
 
-        if (wait > _longestRegeneration)
-            wait = _longestRegeneration;
+        if (life >= share)
+        {
+            _healing = false;
 
-        Publish(GameText.Of(FightTexts.Text("DoingRegenerate"), GameTextValue.Number((long)Math.Ceiling(wait.TotalSeconds))));
-        await context.WaitUntilAsync(_ => false, wait, cancellationToken).ConfigureAwait(false);
+            return false;
+        }
+
+        var point = TimeSpan.FromMilliseconds(100 * (state.LifeRegenInterval ?? RegainPoll));
+        var regenerating = TimeSpan.FromTicks(point.Ticks * (share - life));
+
+        Publish(GameText.Of(FightTexts.Text("DoingRegenerate"), GameTextValue.Number((long)Math.Ceiling(regenerating.TotalSeconds))));
+        await context.WaitUntilAsync(_ => false, regenerating < _regainStep ? regenerating : _regainStep, cancellationToken).ConfigureAwait(false);
 
         return true;
     }
@@ -454,7 +468,7 @@ public sealed class FightActivity : BotActivity
         // Food the profile carries heals at the next step (D148); else the life regenerates, a point each interval (D153).
         var state = context.State;
 
-        if (_settings.Heal && _settings.Food.Any(item => StackOf(state, item) is not null))
+        if (_settings.Heal && Food.StackToEat(state, _settings.Food, _tables.Items, _unusable) is not null)
             return;
 
         for (var life = context.Life; life is { } now && state.MaxLife is { } most && now * 100L < (long)_settings.HealBelow * most; life = context.Life)
@@ -467,11 +481,6 @@ public sealed class FightActivity : BotActivity
             await Task.Delay(TimeSpan.FromTicks(Math.Min(interval.Ticks * Math.Max(1, missing), _regainStep.Ticks)), context.Time, cancellationToken).ConfigureAwait(false);
             state = context.State;
         }
-    }
-
-    private InventoryItem? StackOf(CharacterState state, int itemId)
-    {
-        return state.Inventory.Values.FirstOrDefault(stack => !stack.IsWorn && !_unusable.Contains(stack.Uid) && stack.ItemId == itemId);
     }
 
     private void Publish(GameText doing)

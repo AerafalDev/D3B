@@ -65,6 +65,32 @@ public sealed class MapWalkTests
     }
 
     [Fact]
+    public async Task AWalkEndingWhereThePreviousOneEndedGoesInTwoForTheClientToFollowIt()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+        var previous = PathOn(play, 433, 388);
+
+        // A walk the client followed to cell 388, then the character placed on 433 again, as on the next map of a journey.
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { previous.Cells.ToArray() } });
+        connection.Client(new MapMovementConfirmRequest());
+        connection.Response(new MapMovementConfirmResponse());
+        TestWalks.Arrive(connection, TestPlay.MapId, 433);
+        await bot.ProcessedAsync();
+
+        Assert.Equal(388, bot.State.LastWalkEnd);
+
+        var walk = bot.WalkAsync(388, TestContext.Current.CancellationToken);
+        var before = previous.Cells.Span[^2];
+
+        Assert.Equal(before, await TestWalks.WalkedAsync(play, connection, 1));
+        Assert.Equal(MapWalk.Request(TestPlay.MapId, PathOn(play, before, 388)), await TestWalks.SentAsync(play, connection, 2));
+        Assert.Equal(388, await TestWalks.WalkedAsync(play, connection, 2));
+        Assert.Equal(WalkOutcome.Arrived, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.Equal(2, connection.Sent.Count);
+    }
+
+    [Fact]
     public async Task AWalkOnANewMapWaitsUntilTheClientDrewIt()
     {
         await using var play = new TestPlay();

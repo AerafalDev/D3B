@@ -6016,6 +6016,118 @@ with measuring tools never committed that print counts. Builds D236, D241, D148,
 - **For the next session**, the owner's choice: these four, measured on captures of the owner's cases, then the
   measures in game of D254 and D255.
 
+## D257: The food the inventory holds eaten when the profile chose none: pack format 8
+
+*2026-11-02, step 9, session 9g5, the owner's words in game (D256) and choice among three ways, as the lead recommended
+it; measured on the client's data and on the owner's capture of a Xelor. Builds D148, D153, D156.*
+
+- **Measured** on the client 3.7.12.12's items: effect 110, "Rend #1 à #2 points de vie", alone says that an item heals,
+  on 294 items. The types the profile offers as food hold no recall potion, which is type 43, "Potion de
+  téléportation", but type 12, "Potion", holds the potions that change a class, a sex or a name (854, 852, 850); some
+  breads launch a fight (905) or give characteristics for good (606 to 611), some candies give items (193, 209), and an
+  item may teleport (600, 826). An energy bread heals nothing, and eating its stack whole would have eaten it all.
+- **Measured** on the owner's capture: a Xelor ended a fight at 87 % of its life, under its share of 95 %, with no food
+  chosen, and waited for its life to regenerate, 98 s, with "Pain d'Incarnam" and "Carasau" in its bag; it also held a
+  "Multygely", which teleports, and a "Bonbon Zaï", which gives items.
+- **Made**: the pack, format 8, keeps on each item the life one use gives back, a least and a most, only when its use
+  does nothing else: effect 110 and none but 139, energy, 981, bound to the character, and 983, exchangeable
+  (`Item.HealMin`, `Item.HealMax`, `Item.Heals`): 211 items of 9 types, 178 of them a single value. With no food chosen,
+  harvesting and fighting eat the stack that heals the least first, whole, as the server eats only what the life lacks
+  (D156) (`Food.StackToEat`). Food chosen is eaten as before.
+- **To publish**: the pack of 3.7.12.12 in format 8, on the owner's go; the app published before reads format 7 only.
+- **Rejected.**
+  - The types alone, bread, meat and fish, one item at a time: no release, but energy breads and breads launching a
+    fight would have been eaten.
+  - The effects the server gives each object of the inventory, which the readable protocol does not read: a mapping
+    format and a release too, for data the client's tables hold.
+
+## D258: A character with nothing to eat regenerates back to its share alone
+
+*2026-11-02, step 9, session 9g5, the owner's words in game (D256) and choice, as the lead recommended it. Supersedes in
+part D148: without food, the life no longer regenerates until it is whole.*
+
+- **Measured** on the owner's captures: the server gave the regeneration's interval, 5 tenths of a second, after every
+  fight of the game connections read, so that the bot reckoned its wait right; but it waited for its whole life, without
+  looking at it again, 98 s for the Xelor of D257 at 87 %. A lost fight leaves the character at half its life.
+- **Made**: without food, harvesting and fighting wait for the share they heal under alone, as after a lost fight (D198),
+  looking at the life again each 10 seconds at least. Food still heals until the life is whole.
+- **Rejected.** A second setting, "Heal up to": one more number for what the share already says.
+
+## D259: A hunt's journey stops on the first map of its zone holding a group it attacks
+
+*2026-11-02, step 9, session 9g5, the owner's words in game (D256) and choice among three, as the lead recommended it;
+measured on the owner's capture of a Zobal of level 45 hunting. Builds D74, D241, D245.*
+
+- **Measured**: 13 attacks of D3B's in sub-area 30, all accepted, 11 fights won in a row, 5.9 s halfway from a fight's end
+  to the next attack; on the zone's maps, no group the settings allow and the judge beats was left. The slowness came
+  from the journeys: after each lost fight, from Astrub's temple, the bot crossed 16 maps outside its zone, about 90 s,
+  each holding groups of levels 11 to 20 it would have attacked. A journey looked at no map it crossed (D256).
+- **Made**: `WorldTravel.TravelAsync` takes a predicate asked on each map a journey reaches, once its information came,
+  never the map it starts from, and ends the journey there as arrived. The fighting activity stops on a map of its zone,
+  gone through or not, holding a group the settings allow and the judge beats; the groups it leaves are kept per map, a
+  group's identifier being its map's. The rest of a shortest path being the shortest from where it stops, the next
+  journeys do not come back through the maps it left.
+- **Rejected.**
+  - Attacking on every map of the way: monsters far weaker than those the place was chosen for.
+  - An option for the maps outside the zone: not asked for.
+
+## D260: No walk ends on the cell the previous walk ended on, which the client does not follow
+
+*2026-11-02, step 9, session 9g5, the owner's words in game: at times the bot stands on a map for 10 or 20 seconds, no one
+knows why. Measured on the 17 game connections of 9g2 to 9g5. Supersedes D85 on its cause, not found then.*
+
+- **Measured**: the client did not follow 45 of the 734 walks D3B sent outside fights. 36 of the 39 walks ending on the
+  cell the character's previous walk ended on were not followed, even on another map, against 9 of the 695 others. On
+  a journey straight on, each map is left by the same cell of its edge, such as 540 going south. On the Huppermage's
+  capture, D3B sent the path from 302 to 397 four times on one map, never followed; the owner then sent it from the
+  client, the same bytes, followed. Neither the time since the map's information, 0.5 s for both, the path's length or
+  shape, the cells' data nor an actor in the way told them apart. The bot waited each walk's whole delay, up to 11 s,
+  then walked the same path again: in a mine, over a minute on one map.
+- **Made**: the state keeps the last cell of the character's last walk the server showed, whatever the map
+  (`CharacterState.LastWalkEnd`). A map change leaves by another cell of its exits when there is one; a walk that must
+  still end there goes in two, to the path's cell before its last, then the last step, or a step aside first when it has
+  one step (`MapWalk`).
+- **Not known**: why the client keeps that cell, and what may reset it; 3 such walks were followed.
+
+## D261: 9g5 measured in game, and what it leaves
+
+*2026-11-02, step 9, session 9g5, on the game connections the owner captured with the app: a Zobal of level 45 hunting,
+a Xelor hunting, a Huppermage of level 21 harvesting. Builds D254, D255, D256.*
+
+- **The Zobal's masks** (D255), with `scripts/fights.cs --turns`: 61 turns of 14 fights, 12 won. A mask put on first 12
+  times, 11 of them before a spell it opens; put on last 22 times, 16 of them before the next turn's first cast asking
+  it, the AP left spent on the next turn, a mask lasting until changed; Furia cast 18 times. Nothing to change.
+- **Big groups** (D249): the hunt's first attack, before any fight, judged by levels alone (D241), was on a group of 8
+  monsters, lost; the judge then turned away the groups of 3 to 8 monsters of level 30 for a character of 45, and the
+  AI's groups were of 1 or 2.
+- **Harvesting**: the miner's automatic place sent the Huppermage into a mine of rooms without ore, nothing harvested
+  in 4 minutes; the alchemist harvested 65 nettles, leaving none on the maps it went through.
+- **Not measured in game**: the interactive transitions other than doors, a teleport refused, Sarakech's bank and the
+  inactivity popup, none on the journeys captured.
+
+## D262: An element another harvested grows back from when a bot first saw it so, and harvesting measured in game
+
+*2026-11-02, step 9, session 9g5, the owner's words in game (D256), measured on the owner's capture of a Xelor harvesting
+iron for 16 minutes in Incarnam's mine, with every fix of the session. Builds D128, D145, D260.*
+
+- **Measured**: 119 iron, the mine's seven rooms gone through by their doors; no map gone through or crossed left with
+  iron the bot could harvest. Iron grew back 729 and 731 s after the bot's own harvests, and was still harvested 779 s
+  after one, another player having maybe harvested it again; most of the iron seen harvested was not the bot's. Before
+  the host knew iron's time, a tour that harvested nothing waited D128's minute, 62 s, five times; once it knew 729 s, the
+  bot waited 101 s for an iron it had harvested 729 s before, and found it grown back.
+- **Read in the code**: a tour reckoned when an element harvested by another, unseen, should grow back from the map's
+  last sighting, so that each visit put it off again.
+- **Made**: each element sighted keeps when a bot first saw it not offering its skill, of the sightings since it last did
+  (`SightedElement.DisabledSince`, `HarvestSightings`), and the tour reckons from there; a harvest a bot saw still wins.
+- **The walks** of D260, measured on the same capture: none of the 190 walks D3B sent ended where the previous one did,
+  and the client followed 189; the last, back along the previous walk to the cell the character entered the room on,
+  it did not, as 7 others of the 17 earlier game connections, 1 % of the walks, whose cause is not found.
+- **A teleport refused** (D248), the capture's last request: from a room of the mine, the bot's teleport was refused
+  with text 474 of the error kind, where Incarnam's maps gave text 416; the owner stopped the run 6 s later, so that
+  the journey after it is not measured.
+- **Risk**: an element harvested again unseen between two sightings grows back later than reckoned; its map is then
+  gone through each tour, as before D145.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
