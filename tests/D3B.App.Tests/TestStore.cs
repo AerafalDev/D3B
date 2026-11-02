@@ -1,4 +1,5 @@
 using D3B.Bot.Activities;
+using D3B.Bot.Assets;
 using D3B.Bot.Localization;
 using D3B.Bot.Network;
 using D3B.Bot.Tests.Activities;
@@ -6,7 +7,6 @@ using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
 using D3B.Data.Tests;
 using D3B.Storage.Accounts;
-using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -28,7 +28,10 @@ internal sealed class TestStore : IAsyncDisposable
 
     public AccountBook Accounts => Host.Services.GetRequiredService<AccountBook>();
 
-    public ProfileBook Profiles => Host.Services.GetRequiredService<ProfileBook>();
+    public AssetLibrary Assets => Host.Services.GetRequiredService<AssetLibrary>();
+
+    /// <summary>Gets the harvests the behaviors made as they played them, for a test to read their settings.</summary>
+    public System.Collections.Concurrent.ConcurrentQueue<BotActivity> Harvests { get; } = new();
 
     public static ActivityDefinition Harvest()
     {
@@ -63,7 +66,10 @@ internal sealed class TestStore : IAsyncDisposable
 
     public async Task<TestStore> OpenedAsync()
     {
-        _host = await TestHosts.WithStorageAsync(Play, _directory.Combine("d3b.db"), _game, Harvest(), new ActivityDefinition(StrollId, "Stroll", _ => new TestActivity()));
+        var harvest = Harvest();
+        var kept = new ActivityDefinition(harvest.Id, harvest.Name, harvest.Settings, (services, settings) => Kept(harvest.Create(services, settings)));
+
+        _host = await TestHosts.WithStorageAsync(Play, _directory.Combine("d3b.db"), _game, kept, new ActivityDefinition(StrollId, "Stroll", _ => new TestActivity()));
 
         return this;
     }
@@ -72,6 +78,13 @@ internal sealed class TestStore : IAsyncDisposable
     public async Task SeeAsync(GameAccount account, params (long Id, string Name, int? Level)[] characters)
     {
         await Accounts.SeeAsync(account, characters, Play.Time.GetUtcNow(), TestContext.Current.CancellationToken);
+    }
+
+    private BotActivity Kept(BotActivity activity)
+    {
+        Harvests.Enqueue(activity);
+
+        return activity;
     }
 
     public async ValueTask DisposeAsync()

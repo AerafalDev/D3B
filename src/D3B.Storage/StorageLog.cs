@@ -1,4 +1,4 @@
-using D3B.Storage.Profiles;
+using D3B.Bot.Behaviors;
 using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage;
@@ -6,11 +6,11 @@ namespace D3B.Storage;
 /// <summary>The storage's log messages.</summary>
 internal static partial class StorageLog
 {
-    [LoggerMessage(Level = LogLevel.Information, Message = "Opened the database {Path}: {Accounts} accounts, {Characters} characters, {Profiles} profiles, {Graphics} graphics learned, {Regrowths} resources' growing back, {Placements} fights' placements, {Runs} runs")]
-    public static partial void Opened(ILogger logger, string path, int accounts, int characters, int profiles, int graphics, int regrowths, int placements, int runs);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Opened the database {Path}: {Accounts} accounts, {Characters} characters, {Graphics} graphics learned, {Regrowths} resources' growing back, {Placements} fights' placements, {Runs} runs, {Variables} variables")]
+    public static partial void Opened(ILogger logger, string path, int accounts, int characters, int graphics, int regrowths, int placements, int runs, int variables);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Stored {Count} profiles the activities give")]
-    public static partial void PresetsStored(ILogger logger, int count);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Copied the database {Path} to {Copy} before it drops its profiles, presets and runs (D304)")]
+    public static partial void CopiedBeforeStudio(ILogger logger, string path, string copy);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "What the relay saw of an account could not be recorded")]
     public static partial void RecordFailed(ILogger logger, Exception exception);
@@ -26,6 +26,9 @@ internal static partial class StorageLog
 
     [LoggerMessage(Level = LogLevel.Error, Message = "The activities' runs could not be recorded for the statistics")]
     public static partial void RunsFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The variables the characters keep could not be recorded")]
+    public static partial void VariablesFailed(ILogger logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: started profile {Profile} on its connection")]
     public static partial void StartedOnConnection(ILogger logger, long character, string profile);

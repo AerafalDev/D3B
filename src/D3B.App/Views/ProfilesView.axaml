@@ -976,6 +976,10 @@
                                             IsVisible="{Binding NeedsReview}"
                                             Text="{Binding Review}"
                                             Tone="Warning" />
+                                        <c:StatusPill
+                                            IsVisible="{Binding IsGiven}"
+                                            Text="{l:Tr GivenProfile}"
+                                            Tone="Info" />
                                     </StackPanel>
                                     <Grid ColumnDefinitions="*,Auto" Grid.Row="2">
                                         <StackPanel

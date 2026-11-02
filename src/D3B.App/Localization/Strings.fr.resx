@@ -1478,4 +1478,31 @@
   <data name="NoGroup" xml:space="preserve">
     <value>Autres</value>
   </data>
+  <data name="ProfileMissing" xml:space="preserve">
+    <value>Le profil {0} a disparu</value>
+  </data>
+  <data name="ProfileBehaviorMissing" xml:space="preserve">
+    <value>Le comportement de {0} a disparu</value>
+  </data>
+  <data name="BehaviorMissing" xml:space="preserve">
+    <value>Comportement disparu : {0}</value>
+  </data>
+  <data name="ProfileGone" xml:space="preserve">
+    <value>Le profil a disparu</value>
+  </data>
+  <data name="BehaviorGone" xml:space="preserve">
+    <value>Son comportement a disparu</value>
+  </data>
+  <data name="NameInvalid" xml:space="preserve">
+    <value>Ni \ / : * ? " &lt; &gt; |, ni point à la fin</value>
+  </data>
+  <data name="JournalStateEntered" xml:space="preserve">
+    <value>{0} : état {1}</value>
+  </data>
+  <data name="JournalNoState" xml:space="preserve">
+    <value>{0} : aucun état ne tient, il attend</value>
+  </data>
+  <data name="GivenProfile" xml:space="preserve">
+    <value>Livré avec D3B</value>
+  </data>
 </root>

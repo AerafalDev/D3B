@@ -56,7 +56,7 @@ internal sealed partial class NewProfileViewModel : ObservableObject
     {
         var name = Name.Trim();
         var problem = name.Length == 0 ? _page.Localizer["NameRequired"]
-            : _page.Profiles?.IsTaken(name, null) == true ? _page.Localizer["NameTaken"]
+            : _page.IsTaken(name, null) ? _page.Localizer["NameTaken"]
             : null;
 
         // An empty name is no mistake while the dialog opens: the button waits for one.

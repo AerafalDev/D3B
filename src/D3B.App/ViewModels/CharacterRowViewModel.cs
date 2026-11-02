@@ -54,7 +54,7 @@ internal sealed partial class CharacterRowViewModel : ObservableObject
         Initials = AvatarInitials.Of(Name);
         Profiles = profiles;
         _reading = true;
-        SelectedProfile = profiles.FirstOrDefault(profile => profile.Id == character.ProfileId) ?? profiles[0];
+        SelectedProfile = profiles.FirstOrDefault(profile => profile.Id == character.Profile) ?? profiles[0];
         StartsOnConnection = character.StartsOnConnection;
         _reading = false;
     }

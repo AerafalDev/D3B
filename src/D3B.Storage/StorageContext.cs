@@ -2,13 +2,14 @@ using D3B.Storage.Accounts;
 using D3B.Storage.Fights;
 using D3B.Storage.Graphics;
 using D3B.Storage.Harvests;
-using D3B.Storage.Profiles;
 using D3B.Storage.Runs;
+using D3B.Storage.Variables;
 using Microsoft.EntityFrameworkCore;
 
 namespace D3B.Storage;
 
-/// <summary>D3B's database: the accounts and characters it saw, the profiles, what the bots learned of the maps' graphics, and the fights' placement cells (D100, D138, D275).</summary>
+/// <summary>D3B's database: the accounts and characters it saw, what the bots learned of the maps' graphics and the fights' placement cells, the runs, and the variables the characters keep (D100, D138, D275, D298).</summary>
+/// <remarks>The profiles left it for the project's files at session 7b (D296, D304).</remarks>
 public sealed class StorageContext : DbContext
 {
     /// <summary>Gets the accounts.</summary>
@@ -16,12 +17,6 @@ public sealed class StorageContext : DbContext
 
     /// <summary>Gets the characters.</summary>
     public DbSet<KnownCharacter> Characters => Set<KnownCharacter>();
-
-    /// <summary>Gets the profiles.</summary>
-    public DbSet<Profile> Profiles => Set<Profile>();
-
-    /// <summary>Gets the presets the activities give, once stored as profiles (D168).</summary>
-    public DbSet<StoredPreset> Presets => Set<StoredPreset>();
 
     /// <summary>Gets the graphics the bots learned.</summary>
     public DbSet<LearnedGraphic> Graphics => Set<LearnedGraphic>();
@@ -34,6 +29,9 @@ public sealed class StorageContext : DbContext
 
     /// <summary>Gets the runs of the activities, for the statistics (D146).</summary>
     public DbSet<RunRecord> Runs => Set<RunRecord>();
+
+    /// <summary>Gets the variables the characters keep (D298).</summary>
+    public DbSet<KeptVariable> Variables => Set<KeptVariable>();
 
     /// <summary>Initializes a new instance of the <see cref="StorageContext"/> class.</summary>
     /// <param name="options">The context's options: SQLite, on the database's file.</param>
@@ -52,20 +50,6 @@ public sealed class StorageContext : DbContext
             account.ToTable("Accounts");
             account.HasKey(known => known.Id);
             account.Property(known => known.Id).ValueGeneratedNever();
-        });
-
-        modelBuilder.Entity<Profile>(profile =>
-        {
-            profile.ToTable("Profiles");
-            profile.HasKey(known => known.Id);
-            profile.Property(known => known.Name).HasMaxLength(Profile.NameLength).UseCollation("NOCASE");
-            profile.HasIndex(known => known.Name).IsUnique();
-        });
-
-        modelBuilder.Entity<StoredPreset>(preset =>
-        {
-            preset.ToTable("Presets");
-            preset.HasKey(stored => new { stored.ActivityId, stored.Key });
         });
 
         modelBuilder.Entity<LearnedGraphic>(graphic =>
@@ -96,15 +80,21 @@ public sealed class StorageContext : DbContext
             run.Property(record => record.Jobs).HasConversion(jobs => RunJson.Write(jobs), json => RunJson.ReadJobs(json), RunJson.JobsComparer);
         });
 
+        modelBuilder.Entity<KeptVariable>(variable =>
+        {
+            variable.ToTable("Variables");
+            // No key to the characters: a rule may set one as its connection begins, before the relay's record of it is written.
+            variable.HasKey(kept => new { kept.AccountId, kept.CharacterId, kept.Name });
+        });
+
         modelBuilder.Entity<KnownCharacter>(character =>
         {
             character.ToTable("Characters");
             character.HasKey(known => new { known.AccountId, known.Id });
             character.Ignore(known => known.Key);
 
-            // Forgetting an account forgets its characters; deleting a profile leaves its characters without one.
+            // Forgetting an account forgets its characters. A profile is a file of the project, which no key here reaches (D296).
             character.HasOne<KnownAccount>().WithMany().HasForeignKey(known => known.AccountId).OnDelete(DeleteBehavior.Cascade);
-            character.HasOne<Profile>().WithMany().HasForeignKey(known => known.ProfileId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

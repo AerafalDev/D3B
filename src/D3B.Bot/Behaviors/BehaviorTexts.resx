@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Doing" xml:space="preserve">
+    <value>State {0}</value>
+  </data>
+  <data name="Branch" xml:space="preserve">
+    <value>If {Condition}</value>
+  </data>
+  <data name="BranchHelp" xml:space="preserve">
+    <value>Goes on by its way true when the condition holds, else by its way false.</value>
+  </data>
+  <data name="BranchCondition" xml:space="preserve">
+    <value>Condition</value>
+  </data>
+  <data name="SetVariable" xml:space="preserve">
+    <value>Set a variable</value>
+  </data>
+  <data name="SetVariableHelp" xml:space="preserve">
+    <value>Played at once, once each time the state is entered.</value>
+  </data>
+  <data name="GetVariable" xml:space="preserve">
+    <value>Read a variable</value>
+  </data>
+  <data name="GetVariableHelp" xml:space="preserve">
+    <value>Gives the variable's value to the node its wire reaches.</value>
+  </data>
+  <data name="ActivityHelp" xml:space="preserve">
+    <value>Plays the activity whole, with its settings, until it is done.</value>
+  </data>
+  <data name="PodsAtLeast" xml:space="preserve">
+    <value>Pods at least {Percent} %</value>
+  </data>
+  <data name="PodsAtLeastHelp" xml:space="preserve">
+    <value>What the character carries, against what it may carry.</value>
+  </data>
+  <data name="LifeAtLeast" xml:space="preserve">
+    <value>Life at least {Percent} %</value>
+  </data>
+  <data name="LifeAtLeastHelp" xml:space="preserve">
+    <value>The character's life as the server last said it, against its most.</value>
+  </data>
+  <data name="Percent" xml:space="preserve">
+    <value>Share</value>
+  </data>
+  <data name="LevelAtLeast" xml:space="preserve">
+    <value>Level at least {Level}</value>
+  </data>
+  <data name="LevelAtLeastHelp" xml:space="preserve">
+    <value>The character's level.</value>
+  </data>
+  <data name="Level" xml:space="preserve">
+    <value>Level</value>
+  </data>
+  <data name="JobLevelAtLeast" xml:space="preserve">
+    <value>{Job} at least level {Level}</value>
+  </data>
+  <data name="JobLevelAtLeastHelp" xml:space="preserve">
+    <value>A profession's level; a profession the character lacks does not hold.</value>
+  </data>
+  <data name="JobLevelAtLeastExample" xml:space="preserve">
+    <value>Lumberjack at least level 40: the ash trees are behind.</value>
+  </data>
+  <data name="Job" xml:space="preserve">
+    <value>Profession</value>
+  </data>
+  <data name="KamasAtLeast" xml:space="preserve">
+    <value>At least {Amount} kamas</value>
+  </data>
+  <data name="KamasAtLeastHelp" xml:space="preserve">
+    <value>The kamas the character carries, not its bank's.</value>
+  </data>
+  <data name="Amount" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="ItemsAtLeast" xml:space="preserve">
+    <value>At least {Amount} of {Items}</value>
+  </data>
+  <data name="ItemsAtLeastHelp" xml:space="preserve">
+    <value>The items of the inventory, counted together.</value>
+  </data>
+  <data name="ItemsAtLeastExample" xml:space="preserve">
+    <value>At least 100 of Ash Wood: go and craft.</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Items</value>
+  </data>
+  <data name="InSubArea" xml:space="preserve">
+    <value>In {SubAreas}</value>
+  </data>
+  <data name="InSubAreaHelp" xml:space="preserve">
+    <value>The sub-area the server says the character is in.</value>
+  </data>
+  <data name="SubAreas" xml:space="preserve">
+    <value>Sub-areas</value>
+  </data>
+  <data name="InArea" xml:space="preserve">
+    <value>In the area {Areas}</value>
+  </data>
+  <data name="InAreaHelp" xml:space="preserve">
+    <value>Any sub-area of the areas, by the pack.</value>
+  </data>
+  <data name="Areas" xml:space="preserve">
+    <value>Areas</value>
+  </data>
+  <data name="LastFight" xml:space="preserve">
+    <value>Last fight {Result}</value>
+  </data>
+  <data name="LastFightHelp" xml:space="preserve">
+    <value>The last fight the bot saw end; none before the first.</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="ResultAny" xml:space="preserve">
+    <value>won or lost</value>
+  </data>
+  <data name="ResultWon" xml:space="preserve">
+    <value>won</value>
+  </data>
+  <data name="ResultLost" xml:space="preserve">
+    <value>lost</value>
+  </data>
+  <data name="RunLongerThan" xml:space="preserve">
+    <value>Running for at least {Minutes} min</value>
+  </data>
+  <data name="RunLongerThanHelp" xml:space="preserve">
+    <value>Since the profile was started on the character.</value>
+  </data>
+  <data name="Minutes" xml:space="preserve">
+    <value>Minutes</value>
+  </data>
+  <data name="MinutesUnit" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="FlagOn" xml:space="preserve">
+    <value>{First} is on</value>
+  </data>
+  <data name="FlagOnHelp" xml:space="preserve">
+    <value>Reads a flag, such as a variable's.</value>
+  </data>
+  <data name="FlagOff" xml:space="preserve">
+    <value>{First} is off</value>
+  </data>
+  <data name="FlagOffHelp" xml:space="preserve">
+    <value>Not: a condition that does not hold.</value>
+  </data>
+  <data name="Flag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="FlagAnd" xml:space="preserve">
+    <value>{First} and {Second}</value>
+  </data>
+  <data name="FlagAndHelp" xml:space="preserve">
+    <value>Both conditions hold.</value>
+  </data>
+  <data name="FlagOr" xml:space="preserve">
+    <value>{First} or {Second}</value>
+  </data>
+  <data name="FlagOrHelp" xml:space="preserve">
+    <value>One condition at least holds.</value>
+  </data>
+  <data name="First" xml:space="preserve">
+    <value>First</value>
+  </data>
+  <data name="Second" xml:space="preserve">
+    <value>Second</value>
+  </data>
+  <data name="NumberAtLeast" xml:space="preserve">
+    <value>{Value} at least {Least}</value>
+  </data>
+  <data name="NumberAtLeastHelp" xml:space="preserve">
+    <value>Compares a number, such as a variable's, with a bound.</value>
+  </data>
+  <data name="NumberAtLeastExample" xml:space="preserve">
+    <value>Fights won at least 10: go and bank.</value>
+  </data>
+  <data name="Number" xml:space="preserve">
+    <value>Number</value>
+  </data>
+  <data name="Least" xml:space="preserve">
+    <value>At least</value>
+  </data>
+  <data name="MapChanged" xml:space="preserve">
+    <value>When the map changes</value>
+  </data>
+  <data name="MapChangedHelp" xml:space="preserve">
+    <value>The character arrived on another map.</value>
+  </data>
+  <data name="FightBegan" xml:space="preserve">
+    <value>When a fight begins</value>
+  </data>
+  <data name="FightBeganHelp" xml:space="preserve">
+    <value>The character entered a fight, its own or one it was attacked in.</value>
+  </data>
+  <data name="FightOver" xml:space="preserve">
+    <value>When a fight ends {Result}</value>
+  </data>
+  <data name="FightOverHelp" xml:space="preserve">
+    <value>The fight's end, as the server said it.</value>
+  </data>
+  <data name="FightOverExample" xml:space="preserve">
+    <value>When a fight ends lost: set lost to on, then a state heals.</value>
+  </data>
+  <data name="LevelGained" xml:space="preserve">
+    <value>When a level is gained</value>
+  </data>
+  <data name="LevelGainedHelp" xml:space="preserve">
+    <value>The character's level, on the same connection.</value>
+  </data>
+  <data name="JobLevelGained" xml:space="preserve">
+    <value>When {Job} gains a level</value>
+  </data>
+  <data name="JobLevelGainedHelp" xml:space="preserve">
+    <value>A profession's level, on the same connection.</value>
+  </data>
+  <data name="ItemReceived" xml:space="preserve">
+    <value>When {Items} come in the inventory</value>
+  </data>
+  <data name="ItemReceivedHelp" xml:space="preserve">
+    <value>More of an item than there was, on the same connection.</value>
+  </data>
+  <data name="ItemReceivedItemsHelp" xml:space="preserve">
+    <value>None: any item.</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>When a connection plays the character</value>
+  </data>
+  <data name="ConnectedHelp" xml:space="preserve">
+    <value>The client connected, or connected again.</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>When the connection is lost</value>
+  </data>
+  <data name="DisconnectedHelp" xml:space="preserve">
+    <value>The client closed, or lost the server.</value>
+  </data>
+  <data name="Wait" xml:space="preserve">
+    <value>Wait {Seconds} s</value>
+  </data>
+  <data name="WaitHelp" xml:space="preserve">
+    <value>Played whole, and again if an interruption cut it.</value>
+  </data>
+  <data name="Seconds" xml:space="preserve">
+    <value>Seconds</value>
+  </data>
+  <data name="SecondsUnit" xml:space="preserve">
+    <value>s</value>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>Note {Text}</value>
+  </data>
+  <data name="NoteHelp" xml:space="preserve">
+    <value>Writes in the bot's journal; played at once.</value>
+  </data>
+  <data name="NoteExample" xml:space="preserve">
+    <value>Note "Bank full": it shows in the journal.</value>
+  </data>
+  <data name="NoteText" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Pause the bot</value>
+  </data>
+  <data name="PauseHelp" xml:space="preserve">
+    <value>As the player's hand does: the bot waits until it is resumed.</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Stop the run</value>
+  </data>
+  <data name="StopHelp" xml:space="preserve">
+    <value>The run ends, done, once its step is over.</value>
+  </data>
+</root>

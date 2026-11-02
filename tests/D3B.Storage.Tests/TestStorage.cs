@@ -1,4 +1,6 @@
 using D3B.Bot.Activities;
+using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Hosting;
 using D3B.Bot.Localization;
 using D3B.Bot.Tests.Activities;
@@ -6,7 +8,6 @@ using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
 using D3B.Data.Tests;
 using D3B.Storage.Accounts;
-using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -37,9 +38,11 @@ internal sealed class TestStorage : IAsyncDisposable
 
     public AccountBook Accounts => _services.GetRequiredService<AccountBook>();
 
-    public ProfileBook Profiles => _services.GetRequiredService<ProfileBook>();
+    public AssetLibrary Assets => _services.GetRequiredService<AssetLibrary>();
 
     public ProfileStarter Starter => _services.GetRequiredService<ProfileStarter>();
+
+    public System.Collections.Concurrent.ConcurrentQueue<BotActivity> Activities { get; } = new();
 
     public TestStorage(string? path = null)
     {
@@ -48,6 +51,7 @@ internal sealed class TestStorage : IAsyncDisposable
         var services = new ServiceCollection();
 
         StorageModule.Register(services, Settings);
+        BehaviorsModule.Register(services, new StudioSettings { Path = _directory.Combine("studio") });
 
         // The recorder sees the game as the bots do, after them.
         Play = new TestPlay([new DeferredObserver(() => _services!.GetRequiredService<AccountRecorder>())]);
@@ -55,10 +59,13 @@ internal sealed class TestStorage : IAsyncDisposable
         services.AddSingleton<TimeProvider>(Play.Time);
         services.AddLogging(logging => logging.AddProvider(new FakeLoggerProvider(Log)).SetMinimumLevel(LogLevel.Debug));
         services.AddSingleton(TestReferences.Game());
+        var settings = SettingsDefinition();
+
+        // Made by the behavior as it plays the node, the activities are kept for the test to read their settings.
         services.AddSingleton(new ActivityCatalog(
         [
             new ActivityDefinition(PlainActivityId, "Plain", _ => new TestActivity()),
-            SettingsDefinition(),
+            new ActivityDefinition(settings.Id, settings.Name, settings.Settings, (provider, values) => Made(settings.Create(provider, values))),
         ]));
         _services = services.BuildServiceProvider();
     }
@@ -77,12 +84,17 @@ internal sealed class TestStorage : IAsyncDisposable
         return services.Select(descriptor => descriptor.ImplementationInstance).OfType<ActivityDefinition>().Single();
     }
 
+    /// <summary>Waits until the variables set so far are written.</summary>
+    public Task VariablesWrittenAsync()
+    {
+        return _services.GetRequiredService<D3B.Storage.Variables.VariableRecorder>().WrittenAsync();
+    }
+
     /// <summary>Opens the database, as the host does before it starts, and starts the storage's services.</summary>
     public async Task<TestStorage> StartedAsync()
     {
-        var failure = await _services.GetRequiredService<IHostPreparation>().PrepareAsync(TestContext.Current.CancellationToken);
-
-        Assert.Null(failure);
+        foreach (var preparation in _services.GetServices<IHostPreparation>())
+            Assert.Null(await preparation.PrepareAsync(TestContext.Current.CancellationToken));
 
         foreach (var service in _services.GetServices<IHostedService>())
             await service.StartAsync(TestContext.Current.CancellationToken);
@@ -96,6 +108,13 @@ internal sealed class TestStorage : IAsyncDisposable
     public Task RecordedAsync()
     {
         return _services.GetRequiredService<AccountRecorder>().WrittenAsync();
+    }
+
+    private BotActivity Made(BotActivity activity)
+    {
+        Activities.Enqueue(activity);
+
+        return activity;
     }
 
     public async ValueTask DisposeAsync()

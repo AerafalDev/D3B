@@ -7073,6 +7073,131 @@ takes two sessions.*
 - **Two sessions**: 7e, the canvas's core, the view, nodes, wires, selection, adding, undo and the stack of states; 7e2,
   arranging, comments, collapsing, the minimap, bookmarks, the live flow and the polish, checked with the owner.
 
+## D312: The migration from zero, confirmed, with a copy of the database first
+
+*2026-11-02, step 7, session 7b, the owner's choice, as the lead recommended it. Carries out D304.*
+
+- **Confirmed again before the code**, as the owner asked: migration `Studio` drops the profiles, the presets stored and the
+  runs' history; it keeps the accounts, the characters, the graphics learned, the growing back and the placements. A
+  character's profile becomes the id of a profile asset (`KnownCharacter.Profile`), none after the migration, and no
+  character starts on connection.
+- **A copy first**: before the migration applies, the database is copied once beside itself, `d3b.before-studio.db`,
+  through SQLite's own backup (`StoragePreparation`), so that nothing dropped is lost for good. A new database is not copied.
+- **The runs** recorded from then on are kept as before, for the statistics.
+- **Rejected**: the same migration without a copy; the runs' history kept.
+
+## D313: Wires of execution and of typed data, as Unreal's
+
+*2026-11-02, step 7, session 7b, the owner's choice, as the lead recommended it. Builds D298, D311.*
+
+- **A node's value** is chosen, bound to a public setting of the behavior (`{"$param": "key"}`), which its profiles change,
+  bound to a variable (`{"$var": "name"}`), or brought by a wire from a pure node: a condition, which gives a flag, or a
+  variable's read, which gives the variable's type. A wire from another type is refused, with the reason said (D311).
+- **No arithmetic** in 7b: the pure nodes are the conditions, joined on a canvas by `flag.and`, `flag.or` and `flag.off`,
+  and the variables' reads. A state's conditions of entry stay sentences joined by and, or and not, as its stack shows
+  them (D307).
+- **Rejected**: wires of execution alone, the conditions of a branch written in its node, Warcraft III's way: the simplest,
+  but less a blueprint, and D311 already supposed typed pins.
+
+## D314: The project in `D3B.Bot`: a file per asset, its name the file's, a stable id, given assets made from the modules
+
+*2026-11-02, step 7, session 7b, the lead's, from D296.*
+
+- **Where**: `D3B.Bot.Assets` holds the project (`AssetLibrary`, `AssetFiles`), `D3B.Bot.Behaviors` the behaviors, their
+  nodes and run time; the behaviors module (`BehaviorsModule`) is one of the default modules. Plugins are gone (D116), so
+  nothing argues for a project of its own, as EF Core did for `D3B.Storage` (D100).
+- **The folder** is `Studio:Path`, `%LOCALAPPDATA%\D3B\studio` by default, read before the host starts and made only once
+  something is written in it. A file is an asset when its extension names a kind, `Harvest.behavior.json`,
+  `Ash.profile.json`, `.route.json`, `.zone.json`, `.list.json`, `.planning.json`, `.fight.json`, in the folder or one of its
+  own, which the user arranges.
+- **The name is the file's**, so that one truth holds it; renaming moves the file, the id stays. An id is a GUID of version
+  7 for the project's assets. A file that does not read, or whose id another already has, as a copy made by hand, is left
+  out and said in the problems, never taking another's place.
+- **A file** holds its id, kind, format (1) and the client build its maps' ids are of when it names maps; values left as
+  their defaults are not written; where nodes stand on their canvas is kept apart from what they do, in a `layout` of
+  its own (D294). A format newer than D3B reads does not read, rather than lose what it does not know.
+- **The kinds made now**: behaviors and profiles. Routes, zones, lists, plannings and fight preferences are read and
+  written back as their files hold them, until their sessions (D306).
+- **Given assets** are made from the modules as the host starts (`GivenAssets`): one behavior per activity, `d3b.<id>`,
+  playing it whole with every setting a public setting of its key; one profile per preset, `d3b.<id>.<preset>`, holding
+  only what the preset changes. Read only, named in the app's language, copied to be changed (D296, D303).
+- **References** are by id; "used by" is exact (`AssetLibrary.UsedBy`). A profile deleted leaves its characters without
+  one (`AccountBook.LeaveProfileAsync`).
+
+## D315: How a behavior runs: from the first action at each step, a state played to its end done, urgent states and rules on the bot's loop
+
+*2026-11-02, step 7, session 7b, the lead's: D297 left how actions resume and states change to the lead.*
+
+- **One activity runs any behavior** (`BehaviorActivity`), compiled once with its profile's values (`BehaviorCompiler`):
+  every node found, every value read and checked as an activity's settings are, every wire typed, the way checked for
+  loops; a behavior that does not hold does not start, and says where and why (`BehaviorProblem`).
+- **Each step** chooses the leaf from the state, the layer Always first, then the stack, the first whose conditions hold,
+  down to a leaf; a state whose states all fail is passed, as StateTree's. Then it goes through the leaf's actions from its
+  first: a branch chooses its way, a goal reached is passed, an action the state says nothing of is played once per visit
+  of the leaf, and again if an interruption cut it. The first action that is not passed is the step. Actions played at
+  once, a variable set, a note, a pause, a stop, are no step of their own: the way goes on.
+- **What a visit remembers** is what was played to its end, never where it was (D87). An activity's node keeps its
+  activity for the visit, so that harvesting goes on with its tour, and the behavior speaks for it: report, statistics,
+  fullness and unloading, interruptions, fights, journeys' zaaps. Out of one, a fight is the AI's (D301).
+- **A leaf played to its end and chosen again ends the run, done**, unless it repeats, as StateTree's root does, and as an
+  activity done did; a state that should give way sets a variable or waits on the state. When no state holds, the run
+  waits, five seconds at most, for the state, a variable or the time to choose one.
+- **On the bot's loop** (`BotActivity.Watch`, called after everything it handles while an activity runs), the events start
+  their rules, which play only actions played at once, and a state marked urgent that comes to hold cuts the step running;
+  what the step left open is settled (`Recovery`) before the next.
+- **Rejected.**
+  - A leaf finished waiting until the choice changes: a behavior forgetting to set its variable would idle forever, and the
+    given behaviors would never end as their activities did.
+  - Every action played again at each step, the visit remembering nothing: a note or an NPC's dialog would repeat forever.
+  - Events as conditions that stay true a while: when they end is ambiguous; rules setting variables say it in the open.
+
+## D316: Nodes declared in C#, their values an activity's settings; the conditions and events the state already reads; variables of three scopes
+
+*2026-11-02, step 7, session 7b, the lead's, from D298.*
+
+- **A kind of node** is registered with `AddNode<TNode, TValues>(id, sentence, describe)`: its code a `ConditionNode`,
+  `EventNode`, `ActionNode` or `InstantAction` of its values, made once per host; its values a class described as an
+  activity's settings (D98), so that they are typed, chosen, checked and stored as before, and the app's editors serve;
+  its sentence names its values by their keys, checked as it registers, with a help and an example. Each activity is a
+  node of its own (`NodeCatalog`), its settings its values; the branch and the variables' set and read are D3B's own.
+- **Conditions** (`CoreNodes`): pods and life at least a share, the character's or a profession's level, kamas, items of
+  the inventory, in sub-areas or areas, the last fight won or lost, the run's length, a flag on or off, a number at least
+  another, and on a canvas and, or.
+- **Events**: a map changed, a fight begun, a fight over won or lost, a level gained, the character's or a profession's,
+  an item received, a connection new or lost; what changes as a new connection starts the state over is not taken for the
+  game's. The time reached and the player's hand come at 7f with the planning.
+- **Actions** of 7b: wait, a note in the journal, pause, stop. The low-level actions are 7f's (D306).
+- **Variables** are flags, numbers or texts. The run's live in the run; the character's are kept in D3B's database by
+  character and name (`CharacterVariables`, table `Variables`), read by every behavior it plays; the bots' are shared in
+  memory until the host stops (`SharedVariables`). Set by a behavior, a variable wakes a run waiting for a state.
+
+## D317: Profiles as variants, and the app's profile editor until the studio's
+
+*2026-11-02, step 7, session 7b, the lead's, from D300 and the owner's ask that the app keep starting a profile.*
+
+- **A profile** holds its behavior's id and the values it changes by public setting. A value for a setting the behavior no
+  longer declares is passed over; one that no longer reads stops the profile, looked at before the bot runs (D99).
+- **The app until 7c**: the profiles page lists the profile assets, given first; a profile whose behavior plays one activity
+  whole (`ProfileForms`) is edited as that activity's settings, as before, and saved as what differs from its behavior. A
+  new profile takes the given behavior of the activity chosen. A given profile is read only, marked "Given with D3B",
+  copied to be changed. The bot's card starts a profile asset through the `ProfileStarter`; the accounts page gives a
+  character a profile asset. A behavior of more than one activity has no editor before 7e.
+- **The journal** says the state each run enters and the notes it writes.
+
+## D318: 7b, what it leaves
+
+*2026-11-02, step 7, session 7b.*
+
+- **Checked**: the build, `dotnet format --verify-no-changes` and every test, 1,248, the run time played through
+  a test's bot: states chosen and chosen again, goals passed, an interrupted wait played again whole, a state repeating,
+  a variable choosing another state, a rule and an urgent state cutting a step, a pause, a branch wired to a condition,
+  the migration on a database as 0.4.0 left it, and the copy.
+- **Not measured in game**: a given behavior played on a client through the app, harvesting and hunting as nodes. The app
+  was checked by its tests, not by hand.
+- **Left**: a behavior of several activities keeps the statistics of the one playing, which the runs' recorder writes as
+  the run's; the project's folder is read as the host starts and after each write of the app's, not watched; a value a
+  wire or a variable brings is set by reflection as the node plays, the others once.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

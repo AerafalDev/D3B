@@ -2,32 +2,42 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.ViewModels.Settings;
-using D3B.Storage.Profiles;
+using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
+using D3B.Storage.Accounts;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>A profile on its page: as a card, its name, activity, settings at a glance and characters; edited, on the whole page (D99, D101, D159).</summary>
+/// <summary>A profile on its page: as a card, its name, activity, settings at a glance and characters; edited, on the whole page (D99, D101, D159, D300).</summary>
+/// <remarks>A profile given with the app is read only: copied to be changed (D296).</remarks>
 internal sealed partial class ProfileViewModel : ObservableObject
 {
     private readonly ProfilesViewModel _page;
-    private Profile? _profile;
+    private ProfileAsset? _profile;
     private bool _loading;
     private (string Name, string? Activity, string? Settings) _baseline;
 
-    /// <summary>Gets the profile's id, 0 until a new one is saved.</summary>
-    public int Id => _profile?.Id ?? 0;
+    /// <summary>Gets the profile's id, empty until a new one is saved.</summary>
+    public string Id => _profile?.Id ?? "";
 
     /// <summary>Gets whether the profile is a new one, not saved yet.</summary>
     public bool IsNew => _profile is null;
 
+    /// <summary>Gets whether the profile was given with the app: read only, copied to be changed.</summary>
+    public bool IsGiven => _profile?.IsGiven == true;
+
+    /// <summary>Gets whether the profile may be edited or deleted: one of the project's own.</summary>
+    public bool IsOwn => !IsGiven;
+
     /// <summary>Gets the activities a profile may run, named in the app's language.</summary>
     public IReadOnlyList<ActivityChoiceViewModel> Activities => _page.Activities;
 
-    /// <summary>Gets the activity the profile was saved with, if it still exists.</summary>
-    public ActivityChoiceViewModel? SavedActivity => _profile is null ? null : Activities.FirstOrDefault(activity => activity.Definition?.Id == _profile.ActivityId);
+    /// <summary>Gets the activity the profile's behavior plays whole, if it still does.</summary>
+    public ActivityChoiceViewModel? SavedActivity => _page.FormOf(_profile).Activity is { } saved ? Activities.FirstOrDefault(activity => activity.Definition?.Id == saved.Id) : null;
 
-    /// <summary>Gets the settings the profile was saved with, if it was.</summary>
-    public string? SavedSettings => _profile?.Settings;
+    /// <summary>Gets the settings the profile was saved with, its behavior's where it changes none, if it was saved.</summary>
+    public string? SavedSettings => _page.FormOf(_profile).Settings;
 
     /// <summary>Gets the profile's name.</summary>
     [ObservableProperty]
@@ -113,7 +123,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
     /// <summary>Initializes a new instance of the <see cref="ProfileViewModel"/> class.</summary>
     /// <param name="page">The profiles' page.</param>
     /// <param name="profile">The profile, or <see langword="null"/> for a new one.</param>
-    public ProfileViewModel(ProfilesViewModel page, Profile? profile)
+    public ProfileViewModel(ProfilesViewModel page, ProfileAsset? profile)
     {
         _page = page;
         _profile = profile;
@@ -122,7 +132,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     /// <summary>Shows the profile as it was saved, above its editor if it is being edited.</summary>
     /// <param name="profile">The profile, as saved.</param>
-    public void Update(Profile profile)
+    public void Update(ProfileAsset profile)
     {
         _profile = profile;
         Show();
@@ -170,13 +180,13 @@ internal sealed partial class ProfileViewModel : ObservableObject
     }
 
     /// <summary>Opens the editor on the page, from the profile as saved.</summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsOwn))]
     public void Edit()
     {
         if (IsEditing)
             return;
 
-        Open(_profile?.Name ?? "", SavedActivity ?? (IsNew && Activities.Count > 0 ? Activities[0] : null), _profile?.Settings);
+        Open(_profile?.Name ?? "", SavedActivity ?? (IsNew && Activities.Count > 0 ? Activities[0] : null), SavedSettings);
     }
 
     /// <summary>Opens the editor of a profile never saved, its name and activity chosen.</summary>
@@ -213,14 +223,18 @@ internal sealed partial class ProfileViewModel : ObservableObject
     private void Show()
     {
         var culture = _page.Localizer.Culture;
-        var definition = _profile is null ? null : _page.ActivityOf(_profile.ActivityId);
+        var (definition, settings) = _page.FormOf(_profile);
 
         // Computed from the profile kept, which saving a new one gives: the view hears it is new no more.
         OnPropertyChanged(nameof(IsNew));
         OnPropertyChanged(nameof(Id));
-        Name = _profile?.Name ?? "";
+        OnPropertyChanged(nameof(IsGiven));
+        OnPropertyChanged(nameof(IsOwn));
+        EditCommand.NotifyCanExecuteChanged();
+        AskDeleteCommand.NotifyCanExecuteChanged();
+        Name = _profile is null ? "" : _profile.Title?.In(culture) ?? _profile.Name;
         RefreshTitle();
-        ActivityName = definition?.Name.In(culture) ?? _profile?.ActivityId ?? "";
+        ActivityName = definition?.Name.In(culture) ?? _profile?.Behavior ?? "";
 
         if (_profile is null)
         {
@@ -235,11 +249,11 @@ internal sealed partial class ProfileViewModel : ObservableObject
         if (definition is null)
         {
             Summary = "";
-            Review = _page.Localizer.Format("ActivityMissing", _profile.ActivityId);
+            Review = _page.Localizer.Format("BehaviorMissing", _profile.Behavior);
         }
         else
         {
-            var reading = definition.Settings.Read(_profile.Settings);
+            var reading = definition.Settings.Read(settings);
 
             Summary = _page.Summarize(definition.Settings, reading.Settings);
             Review = reading.Reset.Count > 0 ? _page.Localizer["ProfileNeedsReview"] : null;
@@ -301,7 +315,8 @@ internal sealed partial class ProfileViewModel : ObservableObject
         }
 
         NameProblem = string.IsNullOrWhiteSpace(EditName) ? _page.Localizer["NameRequired"]
-            : _page.Profiles?.IsTaken(EditName, IsNew ? null : Id) == true ? _page.Localizer["NameTaken"]
+            : AssetLibrary.NameProblem(EditName) is not null ? _page.Localizer["NameInvalid"]
+            : _page.IsTaken(EditName, IsNew ? null : Id) ? _page.Localizer["NameTaken"]
             : null;
         UpdateCanSave();
     }
@@ -314,12 +329,31 @@ internal sealed partial class ProfileViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
-        if (_page.Profiles is not { } profiles || EditActivity?.Definition is not { } definition || Editor is not { } editor)
+        if (_page.Assets is not { } assets || EditActivity?.Definition is not { } definition || Editor is not { } editor)
             return;
+
+        // The profile keeps its behavior while it plays the activity edited; one whose behavior is gone takes the activity's given one.
+        var behavior = _profile is { } saved && _page.FormOf(saved).Activity?.Id == definition.Id ? assets.Find<BehaviorAsset>(saved.Behavior) : _page.BehaviorOf(definition);
+
+        if (behavior is null)
+        {
+            Error = _page.Localizer.Format("ProfileBehaviorMissing", Title);
+
+            return;
+        }
 
         try
         {
-            _profile = await profiles.SaveAsync(Id, EditName, definition.Id, editor.Write(), CancellationToken.None);
+            _profile = await assets.SaveAsync(
+                new ProfileAsset
+                {
+                    Id = _profile?.Id ?? AssetLibrary.NewId(),
+                    Name = EditName.Trim(),
+                    Path = _profile?.Path,
+                    Behavior = behavior.Id,
+                    Values = ProfileForms.ValuesOf(behavior, editor.Write()),
+                },
+                CancellationToken.None);
             IsEditing = false;
             IsDirty = false;
             Error = null;
@@ -332,7 +366,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
         {
             Error = exception.Message;
         }
-        catch (Exception exception) when (exception is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             Error = _page.Localizer.Format("SaveFailed", exception.GetBaseException().Message);
         }
@@ -367,7 +401,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
         _page.Duplicate(this);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsOwn))]
     private void AskDelete()
     {
         var localizer = _page.Localizer;
@@ -393,15 +427,20 @@ internal sealed partial class ProfileViewModel : ObservableObject
             return;
         }
 
-        if (_page.Profiles is not { } profiles)
+        if (_page.Assets is not { } assets)
             return;
 
         try
         {
-            await profiles.DeleteAsync(Id, CancellationToken.None);
+            await assets.DeleteAsync(Id, CancellationToken.None);
+
+            // The characters that played it are left without one, as a deleted profile always left them (D99).
+            if (_page.Services?.GetService<AccountBook>() is { } accounts)
+                await accounts.LeaveProfileAsync(Id, CancellationToken.None);
+
             _page.Deleted(this);
         }
-        catch (Exception exception) when (exception is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException)
         {
             Error = _page.Localizer.Format("SaveFailed", exception.GetBaseException().Message);
         }

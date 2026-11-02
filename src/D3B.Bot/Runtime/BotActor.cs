@@ -380,6 +380,7 @@ public sealed class BotActor : IAsyncDisposable
             {
                 Handle(input);
                 Wake();
+                _activity?.Watch();
             }
             catch (Exception exception)
             {

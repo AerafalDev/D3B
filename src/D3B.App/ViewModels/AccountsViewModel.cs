@@ -2,9 +2,9 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Localization;
+using D3B.Bot.Assets;
 using D3B.Bot.Runtime;
 using D3B.Storage.Accounts;
-using D3B.Storage.Profiles;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +20,7 @@ internal sealed partial class AccountsViewModel : ObservableObject
 {
     private IServiceProvider? _services;
     private AccountBook? _accounts;
-    private ProfileBook? _profiles;
+    private AssetLibrary? _assets;
     private Bots? _bots;
     private TimeProvider _time = TimeProvider.System;
     private int _accountsVersion = -1;
@@ -69,7 +69,7 @@ internal sealed partial class AccountsViewModel : ObservableObject
         {
             _services = services;
             _accounts = services.GetService<AccountBook>();
-            _profiles = services.GetService<ProfileBook>();
+            _assets = services.GetService<AssetLibrary>();
             _bots = services.GetService<Bots>();
             _time = services.GetService<TimeProvider>() ?? TimeProvider.System;
             IsAvailable = _accounts is not null;
@@ -78,7 +78,7 @@ internal sealed partial class AccountsViewModel : ObservableObject
         if (_accounts is null)
             return;
 
-        if (!Localizer.Culture.Equals(_culture) || _accounts.Version != _accountsVersion || (_profiles?.Version ?? 0) != _profilesVersion)
+        if (!Localizer.Culture.Equals(_culture) || _accounts.Version != _accountsVersion || (_assets?.Version ?? 0) != _profilesVersion)
             Rebuild();
 
         var now = _time.GetUtcNow();
@@ -118,9 +118,9 @@ internal sealed partial class AccountsViewModel : ObservableObject
 
         _culture = Localizer.Culture;
         _accountsVersion = accounts.Version;
-        _profilesVersion = _profiles?.Version ?? 0;
+        _profilesVersion = _assets?.Version ?? 0;
 
-        List<ProfileOptionViewModel> profiles = [new(null, Localizer["NoProfile"]), .. (_profiles?.Profiles ?? []).Select(profile => new ProfileOptionViewModel(profile.Id, profile.Name))];
+        List<ProfileOptionViewModel> profiles = [new(null, Localizer["NoProfile"]), .. (_assets?.OfType<ProfileAsset>() ?? []).Select(profile => new ProfileOptionViewModel(profile.Id, profile.Title?.In(Localizer.Culture) ?? profile.Name))];
 
         Items.Clear();
 

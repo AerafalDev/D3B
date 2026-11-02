@@ -48,7 +48,10 @@ map (step 9, session 9b); the rules of a cast in `D3B.Engine`, its range, line o
 costs and cooldowns, and walking in a fight with its tackle, checked on every cast and walk captured (step 9, session 9c);
 what the server announces of a fight named, mapping format 10, and kept in the fight's state, its buffs, states,
 modifiers, cooldowns, casts and moves, and the effects' engine in `D3B.Engine`, every effect as data and Bubble's formulas
-measured by a bench replaying every captured fight (step 9, session 9d). Everything else below is the target.
+measured by a bench replaying every captured fight (step 9, session 9d); the studio's model and its run time, the project's
+assets in files, behaviors of priority states over short actions run as one activity, nodes declared by the modules,
+variables, profiles as variants and the database started from zero (step 7, session 7b). Everything else below is the
+target.
 
 ## Overview
 
@@ -87,7 +90,7 @@ each step adds the references it needs.
 | `src/D3B.Engine` | Pure logic with no I/O: cell and world pathfinding, line of sight, fight simulation. |
 | `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, activities and their settings, pages, the default modules, and the host's composition the app and `D3B.Host` share. |
 | `src/D3B.Host` | The bots' host without the app, for measurements: its entry point alone, with the database (D91, D100). |
-| `src/D3B.Storage` | D3B's database, SQLite through EF Core and its migrations: the accounts seen and the profiles, which the app and `D3B.Host` share (D100). |
+| `src/D3B.Storage` | D3B's database, SQLite through EF Core and its migrations: the accounts seen, what the bots learn, the runs and the characters' variables, which the app and `D3B.Host` share (D100, D312). |
 | `src/D3B.App` | The Avalonia desktop app, which runs the bots' host in its process (D91). |
 | `scripts/` | Inspection, extraction, release and mapping tools, and the bench of the fights' effects, as file-based apps. |
 | `tests/`, `benchmarks/` | One test project per `src/` project that has logic; benchmarks for the codec and pathfinding. |
@@ -104,7 +107,8 @@ replaced them (D116, D119). Mods come as blueprints at step 7, after step 6 (Mod
   Adding a module type twice builds it once.
 - A group (`IModuleGroup`) lists modules in order; whoever adds it may disable some. `DefaultModules`, in `D3B.Bot`,
   gathers the standard modules: so far the data module (D31), the protocol module (D48), the network module (D36), the
-  bots module (D67) and the harvesting module (D127), then, as the steps write them, fights and the rest. D3B's own
+  bots module (D67), the harvesting module (D127), the fighting module (D236) and the behaviors module (D314), then, as
+  the steps write them, the rest. D3B's own
   features are modules like any other, so they can be disabled, and later replaced (D20).
 - The host's composition, `BotHost` in `D3B.Bot.Hosting`, which the app and `D3B.Host` share (D91), adds
   `DefaultModules`, logs what it built, gets the pack of the installed client's build ready (Game data, below), then its
@@ -639,14 +643,17 @@ cells in session 9f3 (D275).
   why. Migrations are written by `dotnet-ef`, a local tool, through a design-time context.
 - **Accounts and characters** (`AccountBook`): recorded as the relay sees them (`AccountRecorder`, an observer of the game
   connections), the server's list and the character the client chooses, queued off the relay's loop; forgotten on
-  demand. Each character may play a profile, and start it on connection. Migration `Strategies` dropped D213's switch
+  demand. Each character may play a profile asset, by its id (`KnownCharacter.Profile`), and start it on connection; a
+  profile deleted leaves its characters without one (`LeaveProfileAsync`). Migration `Strategies` dropped D213's switch
   and gave each character a strategy (D235, D240); migration `NoStrategy` deleted the strategies' profiles and presets and
   dropped the column, in SQLite's own `ALTER TABLE`, inside its transaction (D244).
-- **Profiles** (`ProfileBook`): a name, an activity and its settings as JSON, shared by characters. The activities' presets
-  are stored once as profiles as the database opens, named in the system's language, `Presets` keeping which were, so that
-  one deleted never comes back (`StorePresetsAsync`, D168). `ProfileStarter`
-  starts one on a bot once its activity is registered and its settings read and hold; `StartOnConnection` starts a
-  character's when its bot is made, if it asks.
+- **Profiles** left the database at 7b for the project's files (D296, D314): migration `Studio` dropped the profiles, the
+  presets stored and the runs' history, kept the rest, and left no character starting on connection; the database is
+  copied once before it, `d3b.before-studio.db` beside it (D312). `StartOnConnection` starts a character's profile asset
+  through the behaviors' `ProfileStarter` when its bot is made, if it asks, and says in the journal why one did not.
+- **The characters' variables** (`VariableRecorder`, D316): `CharacterVariables` by character and name, as JSON, read back
+  before the host starts and written as the behaviors set them, queued, as the graphics are; no key to the characters, a
+  rule may set one before the relay's record of its character is written; forgetting an account forgets them.
 - **The maps' graphics** (`GraphicRecorder`, D138): what the bots learn of each graphic, its skills as JSON, read into
   `GraphicSkills` once the database opens and written as the bots learn, queued off the relays' loops, whatever the
   client's build.
@@ -661,14 +668,42 @@ cells in session 9f3 (D275).
   brought, the experience its character gained and its banks and fights; the recorder looks at the bots every 5 s and
   writes a run as it begins, banks, once a minute while its figures change, and once over. The book reads them back after
   each write, for the app's statistics.
-- **In memory**: both books are read once the database opens, then again after each write; the app reads them every
+- **In memory**: the books are read once the database opens, then again after each write; the app reads them every
   refresh, and their version tells it they changed.
 - **No secret** is kept: no Data Protection yet (D100).
 
 ## Mods
 
-Lua scripts went (D116, D119): users extend the bot with nothing yet. Mods come in blueprint style at step 7 (D117), within
-a studio that the whole app becomes, designed in session 7a with no code (D293 to D311); Q13 is settled. The target:
+Lua scripts went (D116, D119). Mods come in blueprint style at step 7 (D117), within a studio that the whole app becomes,
+designed in session 7a with no code (D293 to D311); Q13 is settled. Built in session 7b (D312 to D318), in `D3B.Bot`, with
+no new interface:
+
+- **The project** (`D3B.Bot.Assets`, D314): `AssetLibrary` reads the folder of `Studio:Path`, `%LOCALAPPDATA%\D3B\studio`
+  by default, before the host starts (`AssetPreparation`), each file `<name>.<kind>.json` an asset (`AssetFiles`): its id,
+  kind, format 1 and client build, its name the file's; behaviors and profiles hold what they are made of, the other kinds
+  their files as they are (`PlannedAsset`). A file that does not read, or takes another's id, is left out and said
+  (`Problems`). Writes go to the disk, then memory, one at a time, a version counted; "used by" is exact (`UsedBy`). The
+  given assets (`GivenAssets`), made from the modules: a behavior per activity, `d3b.<id>`, playing it whole, its settings
+  its public settings; a profile per preset, holding what it changes; read only.
+- **A behavior** (`BehaviorAsset`, `D3B.Bot.Behaviors`): public settings, variables, the layer Always, rules on events and the
+  stack of states; a state's conditions are sentences joined by and, or and not, a leaf's actions an `ActionGraph` of
+  nodes and wires of execution and typed data, its layout kept apart (D313).
+- **Nodes** (D316): `AddNode<TNode, TValues>` registers a `ConditionNode`, `EventNode`, `ActionNode` or `InstantAction`, its
+  values described as an activity's settings and its sentence checked; `NodeCatalog` holds D3B's own, the branch and the
+  variables' set and read, the modules' (`CoreNodes`: conditions and events the state reads, wait, note, pause, stop),
+  and a node per activity.
+- **The run time** (D315): `ProfileStarter` compiles a profile's behavior with its values (`BehaviorCompiler`, problems said
+  where they are) and starts `BehaviorActivity`, the one activity that runs any behavior: each step the leaf chosen, then
+  its actions gone through from the first, goals passed, what the state says nothing of played once per visit
+  (`StateVisit`), an activity's node delegating to today's activity; a leaf played to its end and chosen again is done
+  unless it repeats; no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
+  urgent state cuts the step. Variables of the run, the character's (`CharacterVariables`, kept by `D3B.Storage`) and the
+  bots' (`SharedVariables`). The journal says each state entered and each note.
+- **The app until 7c** (D317): its profiles page lists the profile assets, a profile of a behavior playing one activity
+  whole edited as its settings (`ProfileForms`), saved as what differs; a given profile read only, copied; the bot's card
+  and the accounts page name profile assets.
+
+The target:
 
 - **The studio** (D295, D309, D310): one window, as a game engine or an IDE, clean and never a catch-all. On the left, the
   party's frames, a character each, always in sight; the explorer of the project's assets; the editor in the centre, in

@@ -70,7 +70,8 @@ dotnet test                                # every test project, on Microsoft.Te
 dotnet format --verify-no-changes          # CI checks it
 dotnet run --project src/D3B.App           # the desktop app, which runs the bots' host in its process (D91); closing it disconnects the clients
 dotnet run --project src/D3B.Host          # the same host without the app, until Ctrl+C; needs the installed build's pack, schema and mapping on this machine (D172)
-                                           # both keep accounts and profiles in %LOCALAPPDATA%\D3B\d3b.db, migrated before the host starts; --Storage:Path <file> names another (D100)
+                                           # both keep accounts and what the bots learn in %LOCALAPPDATA%\D3B\d3b.db, migrated before the host starts; --Storage:Path <file> names another (D100)
+                                           # and the project's assets, profiles and behaviors, in %LOCALAPPDATA%\D3B\studio; --Studio:Path <folder> names another (D296, D314)
                                            # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
                                            # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53), which the app's inspector replays (D115)
                                            # --Fights:Alone true has the AI play every fight of the bots, whatever their activity says (D235, D244)

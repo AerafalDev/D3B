@@ -6,28 +6,37 @@ using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Settings;
 using D3B.Bot.Activities;
+using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
 using D3B.Data.Texts;
 using D3B.Storage.Accounts;
-using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
 /// <summary>The profiles page: the profiles as cards, or the one being edited on the whole page (D99, D101, D159).</summary>
 /// <remarks>
-/// It reads the profiles and characters from memory each refresh, and makes its items again only once their books
-/// changed: a profile being edited keeps its editor while the relay records what it sees, and while another page shows.
+/// <para>
+/// It reads the profiles, assets of the project since 7b (D296, D300), and the characters from memory each refresh, and
+/// makes its items again only once they changed: a profile being edited keeps its editor while the relay records what it
+/// sees, and while another page shows.
+/// </para>
+/// <para>
+/// Until the studio's editor (D306), a profile shows as the settings of the activity its behavior plays whole
+/// (<see cref="ProfileForms"/>), saved as the values it changes; the profiles given with the app are copied to be changed.
+/// </para>
 /// </remarks>
 internal sealed partial class ProfilesViewModel : ObservableObject
 {
     private const int SummaryLength = 3;
     private const int CopyAttempts = 50;
 
-    private readonly Dictionary<int, ProfileViewModel> _byId = [];
+    private readonly Dictionary<string, ProfileViewModel> _byId = new(StringComparer.Ordinal);
     private IServiceProvider? _services;
     private ActivityCatalog? _catalog;
+    private NodeCatalog? _nodes;
     private int _profilesVersion = -1;
     private int _accountsVersion = -1;
     private CultureInfo? _culture;
@@ -47,8 +56,8 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <summary>Gets the activities a profile may run, named in the app's language.</summary>
     public IReadOnlyList<ActivityChoiceViewModel> Activities { get; private set; } = [];
 
-    /// <summary>Gets the profiles, kept in the database.</summary>
-    public ProfileBook? Profiles { get; private set; }
+    /// <summary>Gets the project, which holds the profiles and their behaviors.</summary>
+    public AssetLibrary? Assets { get; private set; }
 
     /// <summary>Gets the game's values the settings name.</summary>
     public GameReferences? Game => _services?.GetService<GameReferences>();
@@ -97,12 +106,13 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         {
             _services = services;
             _catalog = services.GetService<ActivityCatalog>();
-            Profiles = services.GetService<ProfileBook>();
+            _nodes = services.GetService<NodeCatalog>();
+            Assets = services.GetService<AssetLibrary>();
             Names = new GameNames(services.GetService<GameTexts>(), Localizer);
-            IsAvailable = Profiles is not null;
+            IsAvailable = Assets is not null && _nodes is not null;
         }
 
-        if (Profiles is null)
+        if (Assets is null || _nodes is null)
             return;
 
         var relabel = !Localizer.Culture.Equals(_culture);
@@ -110,11 +120,11 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         if (relabel)
         {
             _culture = Localizer.Culture;
-            Activities = [.. (_catalog?.All ?? []).Select(definition => new ActivityChoiceViewModel(definition, Localizer.Culture))];
+            Activities = [.. (_catalog?.All ?? []).Where(definition => Assets.Find<BehaviorAsset>(GivenAssets.BehaviorOf(definition.Id)) is not null).Select(definition => new ActivityChoiceViewModel(definition, Localizer.Culture))];
             OnPropertyChanged(nameof(Activities));
         }
 
-        if (relabel || Profiles.Version != _profilesVersion || (Accounts?.Version ?? 0) != _accountsVersion)
+        if (relabel || Assets.Version != _profilesVersion || (Accounts?.Version ?? 0) != _accountsVersion)
             Sync(relabel);
     }
 
@@ -126,18 +136,48 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         return _catalog is not null && _catalog.TryGet(id, out var definition) ? definition : null;
     }
 
+    /// <summary>Gets a profile as the settings of the activity its behavior plays whole.</summary>
+    /// <param name="profile">The profile.</param>
+    /// <returns>The activity and the settings as JSON; none when its behavior is gone, or is more than one activity.</returns>
+    public (ActivityDefinition? Activity, string? Settings) FormOf(ProfileAsset? profile)
+    {
+        if (profile is null || _nodes is null || Assets?.Find<BehaviorAsset>(profile.Behavior) is not { } behavior || ProfileForms.ActivityOf(behavior, _nodes) is not { } activity)
+            return (null, null);
+
+        return (activity, ProfileForms.SettingsOf(behavior, profile.Values));
+    }
+
+    /// <summary>Gets the behavior a profile of an activity plays: the one given with the app for it.</summary>
+    /// <param name="activity">The activity.</param>
+    /// <returns>The behavior, or <see langword="null"/> when none is given for it.</returns>
+    public BehaviorAsset? BehaviorOf(ActivityDefinition activity)
+    {
+        ArgumentNullException.ThrowIfNull(activity);
+
+        return Assets?.Find<BehaviorAsset>(GivenAssets.BehaviorOf(activity.Id));
+    }
+
+    /// <summary>Tells whether a name is another profile's, whatever its case.</summary>
+    /// <param name="name">The name.</param>
+    /// <param name="exceptId">The profile the name is for, which may keep its own.</param>
+    /// <returns>Whether another profile has it.</returns>
+    public bool IsTaken(string name, string? exceptId)
+    {
+        return Assets?.IsTaken(AssetKind.Profile, name, exceptId) == true;
+    }
+
     /// <summary>Gets the characters that play a profile.</summary>
     /// <param name="id">The profile's id.</param>
     /// <returns>The characters.</returns>
-    public IReadOnlyList<KnownCharacter> PlayersOf(int id)
+    public IReadOnlyList<KnownCharacter> PlayersOf(string id)
     {
-        return [.. (Accounts?.Characters ?? []).Where(character => character.ProfileId == id)];
+        return [.. (Accounts?.Characters ?? []).Where(character => character.Profile == id)];
     }
 
     /// <summary>Gets the characters that play a profile, with their levels and their map, as their bots last saw them.</summary>
     /// <param name="id">The profile's id.</param>
     /// <returns>The characters; those no bot plays yet with no level known.</returns>
-    public IReadOnlyList<PreviewPlayer> LevelsOf(int id)
+    public IReadOnlyList<PreviewPlayer> LevelsOf(string id)
     {
         var bots = _services?.GetService<Bots>();
 
@@ -217,7 +257,7 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         {
             var copy = attempt == 1 ? Localizer.Format("CopyOf", name) : Localizer.Format("CopyOfNumbered", name, attempt);
 
-            if (Profiles?.IsTaken(copy, null) != true)
+            if (!IsTaken(copy, null))
                 return copy;
         }
 
@@ -290,10 +330,10 @@ internal sealed partial class ProfilesViewModel : ObservableObject
 
     private void Sync(bool relabel)
     {
-        var profiles = Profiles!.Profiles;
-        var ids = profiles.Select(profile => profile.Id).ToHashSet();
+        var profiles = Assets!.OfType<ProfileAsset>();
+        var ids = profiles.Select(profile => profile.Id).ToHashSet(StringComparer.Ordinal);
 
-        _profilesVersion = Profiles.Version;
+        _profilesVersion = Assets.Version;
         _accountsVersion = Accounts?.Version ?? 0;
 
         foreach (var gone in _byId.Keys.Where(id => !ids.Contains(id)).ToList())
@@ -320,7 +360,7 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         if (relabel && Editing is { IsNew: true } editing)
             editing.Relabel();
 
-        // A new profile shows in its editor alone until it is saved; the others follow the book's order, by name.
+        // A new profile shows in its editor alone until it is saved; the others follow the project's order, given first, by name.
         List<ProfileViewModel> order = [.. profiles.Select(profile => _byId[profile.Id])];
 
         for (var index = 0; index < order.Count; index++)
