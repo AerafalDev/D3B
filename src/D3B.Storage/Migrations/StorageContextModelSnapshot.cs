@@ -62,15 +62,13 @@ namespace D3B.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("ProfileId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Profile")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("StartsOnConnection")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("AccountId", "Id");
-
-                    b.HasIndex("ProfileId");
 
                     b.ToTable("Characters", (string)null);
                 });
@@ -148,53 +146,6 @@ namespace D3B.Storage.Migrations
                     b.ToTable("Regrowths", (string)null);
                 });
 
-            modelBuilder.Entity("D3B.Storage.Profiles.Profile", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ActivityId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(60)
-                        .HasColumnType("TEXT")
-                        .UseCollation("NOCASE");
-
-                    b.Property<string>("Settings")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset>("Updated")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Profiles", (string)null);
-                });
-
-            modelBuilder.Entity("D3B.Storage.Profiles.StoredPreset", b =>
-                {
-                    b.Property<string>("ActivityId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Key")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset>("Stored")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("ActivityId", "Key");
-
-                    b.ToTable("Presets", (string)null);
-                });
-
             modelBuilder.Entity("D3B.Storage.Runs.RunRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -252,6 +203,26 @@ namespace D3B.Storage.Migrations
                     b.ToTable("Runs", (string)null);
                 });
 
+            modelBuilder.Entity("D3B.Storage.Variables.KeptVariable", b =>
+                {
+                    b.Property<long>("AccountId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CharacterId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("AccountId", "CharacterId", "Name");
+
+                    b.ToTable("Variables", (string)null);
+                });
+
             modelBuilder.Entity("D3B.Storage.Accounts.KnownCharacter", b =>
                 {
                     b.HasOne("D3B.Storage.Accounts.KnownAccount", null)
@@ -259,11 +230,6 @@ namespace D3B.Storage.Migrations
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("D3B.Storage.Profiles.Profile", null)
-                        .WithMany()
-                        .HasForeignKey("ProfileId")
-                        .OnDelete(DeleteBehavior.SetNull);
                 });
 #pragma warning restore 612, 618
         }

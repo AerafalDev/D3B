@@ -2,6 +2,7 @@ using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Hosting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Journal;
@@ -69,6 +70,8 @@ internal sealed class JournalLines
             ActivityUnloadingEntry unloading => (Format("JournalUnloading", unloading.Activity, unloading.Weight, unloading.MaxWeight), null, Tone.Info, LogMark.Bag),
             ActivityOverEntry over => Over(over),
             ProfileNotStartedEntry profile => (Format("JournalProfileNotStarted", profile.Profile), NotStarted(profile), Tone.Warning, LogMark.Alert),
+            StateEnteredEntry state => (state.State is { } name ? Format("JournalStateEntered", state.Behavior, name) : Format("JournalNoState", state.Behavior), null, Tone.Info, LogMark.Route),
+            NoteEntry note => (note.Text, note.Behavior, Tone.Info, LogMark.Alert),
             BotEventEntry bot => Event(bot.Event),
             FightEndEntry end => FightEnd(end),
             _ => (entry.GetType().Name, null, Tone.Neutral, LogMark.Alert),
@@ -177,9 +180,9 @@ internal sealed class JournalLines
     {
         return profile.Failure switch
         {
-            ProfileStartFailure.ActivityMissing => Format("ActivityMissing", profile.ActivityId),
-            ProfileStartFailure.SettingsReset => _localizer["ProfileNeedsReview"],
-            ProfileStartFailure.SettingsInvalid => _localizer["SettingsDoNotHold"],
+            ProfileStartFailure.ProfileMissing => _localizer["ProfileGone"],
+            ProfileStartFailure.BehaviorMissing => _localizer["BehaviorGone"],
+            ProfileStartFailure.Invalid => profile.Problems.Count > 0 ? string.Join(Separator, profile.Problems.Take(3).Select(problem => $"{problem.Where}: {problem.Detail}")) : _localizer["SettingsDoNotHold"],
             _ => profile.Error,
         };
     }

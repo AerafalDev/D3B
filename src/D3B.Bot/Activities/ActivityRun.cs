@@ -103,6 +103,22 @@ public sealed class ActivityRun
         _ = Task.Run(RunAsync);
     }
 
+    internal void Watch()
+    {
+        if (IsOver)
+            return;
+
+        try
+        {
+            Activity.Watch(_bot);
+        }
+        catch (Exception exception)
+        {
+            // On the bot's loop, which must see the next message whatever an activity's watch does.
+            BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
+        }
+    }
+
     private async Task RunAsync()
     {
         BotLog.ActivityStarted(_bot.Log, _bot.Key.CharacterId, Activity.Name);

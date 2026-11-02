@@ -1,11 +1,13 @@
 using D3B.App.Hosting;
 using D3B.Bot.Activities;
+using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Hosting;
 using D3B.Bot.Pages;
 using D3B.Bot.Tests;
 using D3B.Bot.Tests.Runtime;
-using D3B.Storage;
 using D3B.Data;
+using D3B.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -44,12 +46,20 @@ internal static class TestHosts
         builder.Services.AddSingleton(game.Texts);
         builder.Services.AddSingleton<TimeProvider>(play.Time);
         StorageModule.Register(builder.Services, new StorageSettings { Path = path });
+        BehaviorsModule.Register(builder.Services, new StudioSettings { Path = Path.Combine(Path.GetDirectoryName(path)!, "studio") });
 
         var host = builder.Build();
 
-        Assert.Null(await host.Services.GetRequiredService<IHostPreparation>().PrepareAsync(TestContext.Current.CancellationToken));
+        await PreparedAsync(host);
 
         return host;
+    }
+
+    /// <summary>Gets a host ready as it is before it starts: its database, its project.</summary>
+    public static async Task PreparedAsync(IHost host)
+    {
+        foreach (var preparation in host.Services.GetServices<IHostPreparation>())
+            Assert.Null(await preparation.PrepareAsync(TestContext.Current.CancellationToken));
     }
 
     /// <summary>The app's runner of a host that started.</summary>

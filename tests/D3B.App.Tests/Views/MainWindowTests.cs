@@ -12,6 +12,7 @@ using D3B.Bot.Hosting;
 using D3B.Bot.Inspection;
 using D3B.Bot.Pages;
 using D3B.Bot.Tests.Activities;
+using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
 using Microsoft.Extensions.DependencyInjection;
@@ -196,7 +197,7 @@ public sealed class MainWindowTests : IAsyncDisposable
         await store.OpenedAsync();
 
         var ct = TestContext.Current.CancellationToken;
-        var walker = await store.Profiles.SaveAsync(0, "Walker", TestStore.HarvestId, TestStore.Settings(new() { Job = D3B.Bot.Tests.Settings.TestReferences.Lumberjack }), ct);
+        var walker = await store.Assets.SaveProfileAsync("Walker", TestStore.HarvestId, TestStore.Settings(new() { Job = D3B.Bot.Tests.Settings.TestReferences.Lumberjack }), ct);
 
         await store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
         await store.Accounts.AssignAsync(TestPlay.Key, walker.Id, ct);

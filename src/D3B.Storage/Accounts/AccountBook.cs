@@ -126,19 +126,34 @@ public sealed class AccountBook : IDisposable
 
     /// <summary>Gives a character a profile, or none.</summary>
     /// <param name="key">The character.</param>
-    /// <param name="profileId">The profile's id, or <see langword="null"/> for none, which no longer starts on connection.</param>
+    /// <param name="profile">The profile asset's id, or <see langword="null"/> for none, which no longer starts on connection.</param>
     /// <param name="cancellationToken">Stops the write.</param>
     /// <returns>A task that completes once saved.</returns>
-    public Task AssignAsync(CharacterKey key, int? profileId, CancellationToken cancellationToken)
+    public Task AssignAsync(CharacterKey key, string? profile, CancellationToken cancellationToken)
     {
         return WriteAsync(
             context => context.Characters
                 .Where(character => character.AccountId == key.AccountId && character.Id == key.CharacterId)
                 .ExecuteUpdateAsync(
                     setters => setters
-                        .SetProperty(character => character.ProfileId, profileId)
-                        .SetProperty(character => character.StartsOnConnection, character => profileId != null && character.StartsOnConnection),
+                        .SetProperty(character => character.Profile, profile)
+                        .SetProperty(character => character.StartsOnConnection, character => profile != null && character.StartsOnConnection),
                     cancellationToken),
+            cancellationToken);
+    }
+
+    /// <summary>Leaves the characters that play a profile without one, once it is deleted: they no longer start on connection.</summary>
+    /// <param name="profile">The profile asset's id.</param>
+    /// <param name="cancellationToken">Stops the write.</param>
+    /// <returns>A task that completes once saved.</returns>
+    public Task LeaveProfileAsync(string profile, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+
+        return WriteAsync(
+            context => context.Characters
+                .Where(character => character.Profile == profile)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(character => character.Profile, (string?)null).SetProperty(character => character.StartsOnConnection, false), cancellationToken),
             cancellationToken);
     }
 
@@ -152,17 +167,23 @@ public sealed class AccountBook : IDisposable
         return WriteAsync(
             context => context.Characters
                 .Where(character => character.AccountId == key.AccountId && character.Id == key.CharacterId)
-                .ExecuteUpdateAsync(setters => setters.SetProperty(character => character.StartsOnConnection, character => starts && character.ProfileId != null), cancellationToken),
+                .ExecuteUpdateAsync(setters => setters.SetProperty(character => character.StartsOnConnection, character => starts && character.Profile != null), cancellationToken),
             cancellationToken);
     }
 
-    /// <summary>Forgets an account and its characters, until its client lists them again.</summary>
+    /// <summary>Forgets an account, its characters and what they kept, until its client lists them again.</summary>
     /// <param name="accountId">The account's id.</param>
     /// <param name="cancellationToken">Stops the write.</param>
     /// <returns>A task that completes once forgotten.</returns>
     public Task ForgetAsync(long accountId, CancellationToken cancellationToken)
     {
-        return WriteAsync(context => context.Accounts.Where(account => account.Id == accountId).ExecuteDeleteAsync(cancellationToken), cancellationToken);
+        return WriteAsync(
+            async context =>
+            {
+                await context.Variables.Where(variable => variable.AccountId == accountId).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+                await context.Accounts.Where(account => account.Id == accountId).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            },
+            cancellationToken);
     }
 
     /// <inheritdoc/>

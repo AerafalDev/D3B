@@ -1,6 +1,9 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Settings;
+using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
+using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
 
@@ -41,11 +44,11 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         await _store.OpenedAsync();
 
         var ct = TestContext.Current.CancellationToken;
-        var lumberjack = await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Resources = [TestReferences.Chestnut, TestReferences.Ash, TestReferences.Iron] }), ct);
+        var lumberjack = await _store.Assets.SaveProfileAsync("Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Resources = [TestReferences.Chestnut, TestReferences.Ash, TestReferences.Iron] }), ct);
 
-        await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", ct);
-        await _store.Profiles.SaveAsync(0, "Gone", "gone", "{}", ct);
-        await _store.Profiles.SaveAsync(0, "Old", TestStore.HarvestId, """{"Focus":"Dungeon"}""", ct);
+        await _store.Assets.SaveProfileAsync("Stroll", TestStore.StrollId, "{}", ct);
+        await _store.Assets.SaveAsync(new ProfileAsset { Id = AssetLibrary.NewId(), Name = "Gone", Behavior = "gone" }, ct);
+        await _store.Assets.SaveProfileAsync("Old", TestStore.HarvestId, """{"Focus":"Dungeon"}""", ct);
         await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200), (70_002, "Kolossa", 87));
         await _store.Accounts.AssignAsync(TestPlay.Key, lumberjack.Id, ct);
 
@@ -63,7 +66,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.Equal(["AE"], item.Players);
         Assert.Equal("1 character", item.PlayersText);
         Assert.False(item.NeedsReview);
-        Assert.Equal("Activity gone: gone", page.Items[0].Review);
+        Assert.Equal("Behavior gone: gone", page.Items[0].Review);
         Assert.Equal("To review", page.Items[2].Review);
         Assert.Equal("No character", page.Items[3].PlayersText);
         Assert.Equal("", page.Items[3].Summary);
@@ -126,12 +129,12 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
 
         await item.SaveCommand.ExecuteAsync(null);
 
-        var saved = Assert.Single(_store.Profiles.Profiles);
+        var saved = Assert.Single(_store.Assets.OfType<ProfileAsset>());
 
         Assert.False(item.IsEditing);
         Assert.True(page.IsListing);
-        Assert.Equal(("Lumberjack", TestStore.HarvestId), (saved.Name, saved.ActivityId));
-        Assert.Contains($"\"Job\":{TestReferences.Lumberjack}", saved.Settings, StringComparison.Ordinal);
+        Assert.Equal(("Lumberjack", GivenAssets.BehaviorOf(TestStore.HarvestId)), (saved.Name, saved.Behavior));
+        Assert.Equal(TestReferences.Lumberjack, saved.Values["Job"]!.GetValue<int>());
 
         // Saved, it is new no more, and the view hears it: its header keeps its name.
         Assert.False(item.IsNew);
@@ -148,7 +151,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     public async Task ANameAnotherProfileHasCannotBeSaved()
     {
         await _store.OpenedAsync();
-        await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
+        await _store.Assets.SaveProfileAsync("Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
 
         var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
@@ -171,7 +174,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     public async Task EachSettingIsEditedByItsKindAndCheckedAsItChanges()
     {
         await _store.OpenedAsync();
-        await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack }), TestContext.Current.CancellationToken);
+        await _store.Assets.SaveProfileAsync("Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack }), TestContext.Current.CancellationToken);
 
         var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
@@ -256,8 +259,8 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
 
         await item.SaveCommand.ExecuteAsync(null);
 
-        var saved = Assert.Single(_store.Profiles.Profiles);
-        var settings = Assert.IsType<TestSettings>(TestStore.Harvest().Settings.Read(saved.Settings).Settings);
+        var saved = Assert.Single(_store.Assets.OfType<ProfileAsset>());
+        var settings = Assert.IsType<TestSettings>(TestStore.Harvest().Settings.Read(ProfileForms.SettingsOf(_store.Assets.Find<BehaviorAsset>(saved.Behavior)!, saved.Values)).Settings);
 
         Assert.Equal((TestFocus.Area, (int?)null, 50, false, "Salut", 6, 8), (settings.Focus, settings.Job, settings.Walks, settings.UseBank, settings.Greeting, settings.Lowest, settings.Highest));
         Assert.Equal([TestFocus.Area, TestFocus.Nothing], settings.Order);
@@ -268,7 +271,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     public async Task ResourcesAreChosenSeveralAtOnceInADialogSearchedAndFilteredByProfession()
     {
         await _store.OpenedAsync();
-        await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack }), TestContext.Current.CancellationToken);
+        await _store.Assets.SaveProfileAsync("Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack }), TestContext.Current.CancellationToken);
 
         var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
@@ -335,7 +338,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     public async Task ChangingTheActivityStartsItsSettingsFromTheirDefaults()
     {
         await _store.OpenedAsync();
-        await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42 }), TestContext.Current.CancellationToken);
+        await _store.Assets.SaveProfileAsync("Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42 }), TestContext.Current.CancellationToken);
 
         var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
@@ -372,7 +375,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     public async Task AProfileBeingEditedKeepsItsEditorWhileTheRelayRecords()
     {
         await _store.OpenedAsync();
-        await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
+        await _store.Assets.SaveProfileAsync("Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
 
         var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
@@ -397,7 +400,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     public async Task ANewProfileIsNamedInADialogThenEditedOnThePageAloneUntilSaved()
     {
         await _store.OpenedAsync();
-        await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
+        await _store.Assets.SaveProfileAsync("Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
 
         var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
@@ -440,7 +443,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     public async Task ADuplicateStartsFromTheProfilesSettingsUnderANameOfItsOwn()
     {
         await _store.OpenedAsync();
-        await _store.Profiles.SaveAsync(0, "Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42 }), TestContext.Current.CancellationToken);
+        await _store.Assets.SaveProfileAsync("Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42 }), TestContext.Current.CancellationToken);
 
         var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
@@ -467,7 +470,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     public async Task DeletingAProfileAsksFirst()
     {
         await _store.OpenedAsync();
-        await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
+        await _store.Assets.SaveProfileAsync("Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
 
         var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
 
@@ -486,12 +489,12 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         question.CancelCommand.Execute(null);
 
         Assert.Null(page.Dialogs.Current);
-        Assert.Single(_store.Profiles.Profiles);
+        Assert.Single(_store.Assets.OfType<ProfileAsset>());
 
         item.AskDeleteCommand.Execute(null);
         await item.DeleteCommand.ExecuteAsync(null);
 
-        Assert.Empty(_store.Profiles.Profiles);
+        Assert.Empty(_store.Assets.OfType<ProfileAsset>());
         Assert.Empty(page.Items);
         Assert.True(page.IsEmpty);
         Assert.True(page.IsListing);

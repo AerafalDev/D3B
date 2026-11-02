@@ -4,6 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Activities;
+using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
@@ -11,7 +13,6 @@ using D3B.Data;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Storage.Accounts;
-using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
@@ -32,9 +33,10 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly Localizer _localizer;
     private readonly GameWorld? _world;
     private readonly GameTexts? _texts;
-    private readonly ProfileBook? _profiles;
+    private readonly AssetLibrary? _assets;
     private readonly AccountBook? _accounts;
     private readonly ProfileStarter? _starter;
+    private readonly NodeCatalog? _nodes;
     private readonly Action<CharacterKey>? _showJournal;
     private readonly Action<CharacterKey>? _showMap;
     private readonly Toasts? _toasts;
@@ -253,9 +255,10 @@ internal sealed partial class BotViewModel : ObservableObject
         _localizer = localizer;
         _world = services.GetService<GameWorld>();
         _texts = services.GetService<GameTexts>();
-        _profiles = services.GetService<ProfileBook>();
+        _assets = services.GetService<AssetLibrary>();
         _accounts = services.GetService<AccountBook>();
         _starter = services.GetService<ProfileStarter>();
+        _nodes = services.GetService<NodeCatalog>();
         _says = new GameTextFormatter(localizer, _world, _texts, services.GetService<GameTables>());
         _icons = GameIcons.Of(services.GetService<GameTables>());
         _time = services.GetService<TimeProvider>() ?? TimeProvider.System;
@@ -332,7 +335,7 @@ internal sealed partial class BotViewModel : ObservableObject
         Doing = IsConnected ? _localizer[DoingOf(state)] : "";
         Kamas = _localizer.Format("KamasOf", state.Kamas);
 
-        if ((_profiles?.Version ?? 0) != _profilesVersion)
+        if ((_assets?.Version ?? 0) != _profilesVersion)
             RefreshChoices();
 
         foreach (var activity in Activities)
@@ -360,7 +363,7 @@ internal sealed partial class BotViewModel : ObservableObject
         Refresh();
     }
 
-    private void StartProfile(ActivityChoiceViewModel choice, Profile profile)
+    private void StartProfile(ActivityChoiceViewModel choice, ProfileAsset profile)
     {
         if (_starter is null)
             return;
@@ -370,9 +373,10 @@ internal sealed partial class BotViewModel : ObservableObject
         Error = start.Failure switch
         {
             null => null,
-            ProfileStartFailure.ActivityMissing => _localizer.Format("ProfileActivityMissing", profile.Name),
-            ProfileStartFailure.SettingsReset => _localizer.Format("ProfileToReview", profile.Name),
-            ProfileStartFailure.SettingsInvalid => _localizer.Format("ProfileInvalid", profile.Name),
+            ProfileStartFailure.ProfileMissing => _localizer.Format("ProfileMissing", choice.Name),
+            ProfileStartFailure.BehaviorMissing => _localizer.Format("ProfileBehaviorMissing", choice.Name),
+            ProfileStartFailure.Invalid when start.Problems.Any(problem => problem.Kind is BehaviorProblemKind.ProfileValueDoesNotRead) => _localizer.Format("ProfileToReview", choice.Name),
+            ProfileStartFailure.Invalid => _localizer.Format("ProfileInvalid", choice.Name),
             _ => _localizer.Format("StartFailed", start.Error),
         };
 
@@ -415,20 +419,20 @@ internal sealed partial class BotViewModel : ObservableObject
         var selected = SelectedActivity;
         var choices = new List<ActivityChoiceViewModel>();
 
-        _profilesVersion = _profiles?.Version ?? 0;
+        _profilesVersion = _assets?.Version ?? 0;
 
-        foreach (var profile in _profiles?.Profiles ?? [])
+        foreach (var profile in _assets?.OfType<ProfileAsset>() ?? [])
         {
-            ActivityDefinition? definition = null;
+            var behavior = _assets!.Find<BehaviorAsset>(profile.Behavior);
+            var definition = behavior is not null && _nodes is not null ? ProfileForms.ActivityOf(behavior, _nodes) : null;
 
-            catalog?.TryGet(profile.ActivityId, out definition);
-            choices.Add(new ActivityChoiceViewModel(profile, definition, culture, language => definition?.Name.In(language) ?? _localizer.Format("ActivityMissing", profile.ActivityId)));
+            choices.Add(new ActivityChoiceViewModel(profile, definition, culture, language => definition?.Name.In(language) ?? behavior?.Title?.In(language) ?? behavior?.Name ?? _localizer.Format("BehaviorMissing", profile.Behavior)));
         }
 
         foreach (var definition in catalog?.All ?? [])
             choices.Add(new ActivityChoiceViewModel(definition, culture, _ => definition.Settings.IsEmpty ? null : _localizer["DefaultSettings"]));
 
-        var assigned = _accounts?.Find(Bot.Key)?.ProfileId;
+        var assigned = _accounts?.Find(Bot.Key)?.Profile;
 
         Activities = choices;
         SelectedActivity = choices.FirstOrDefault(choice => selected is not null && Same(choice, selected))

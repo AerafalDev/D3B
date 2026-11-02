@@ -20,8 +20,9 @@ public sealed class KnownCharacter
     /// <summary>Gets when the client last chose the character, or <see langword="null"/> if it only listed it.</summary>
     public DateTimeOffset? LastPlayed { get; init; }
 
-    /// <summary>Gets the id of the profile the character plays, preselected on its bot's card, if it has one.</summary>
-    public int? ProfileId { get; init; }
+    /// <summary>Gets the id of the profile asset the character plays, preselected on its bot's card, if it has one (D304).</summary>
+    /// <remarks>An asset of the project, not of the database: one deleted outside the app leaves the id naming nothing, which starts nothing.</remarks>
+    public string? Profile { get; init; }
 
     /// <summary>Gets whether the character's profile starts once its client first connects while the host runs.</summary>
     public bool StartsOnConnection { get; init; }

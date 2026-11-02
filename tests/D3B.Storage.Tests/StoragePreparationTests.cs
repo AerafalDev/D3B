@@ -26,7 +26,7 @@ public sealed class StoragePreparationTests
         Assert.True(File.Exists(storage.Settings.Path));
         Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
         Assert.Equal(context.Database.GetMigrations(), await context.Database.GetAppliedMigrationsAsync(TestContext.Current.CancellationToken));
-        Assert.Contains(storage.Log.GetSnapshot(), record => record.Message == $"Opened the database {storage.Settings.Path}: 0 accounts, 0 characters, 0 profiles, 0 graphics learned, 0 resources' growing back, 0 fights' placements, 0 runs");
+        Assert.Contains(storage.Log.GetSnapshot(), record => record.Message == $"Opened the database {storage.Settings.Path}: 0 accounts, 0 characters, 0 graphics learned, 0 resources' growing back, 0 fights' placements, 0 runs, 0 variables");
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public sealed class StoragePreparationTests
         Directory.CreateDirectory(directory.Combine("d3b.db"));
 
         await using var storage = new TestStorage(directory.Combine("d3b.db"));
-        var failure = await storage.Services.GetRequiredService<IHostPreparation>().PrepareAsync(TestContext.Current.CancellationToken);
+        var failure = await storage.Services.GetServices<IHostPreparation>().OfType<StoragePreparation>().Single().PrepareAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(failure);
         Assert.StartsWith($"The database {storage.Settings.Path} does not open: ", failure, StringComparison.Ordinal);

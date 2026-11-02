@@ -111,12 +111,12 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         var (_, bot) = await _play.EnterAsync(300);
         var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
 
-        bot.Journal.Add(new ProfileNotStartedEntry(_at, "Promenade", "script:promenade.lua", ProfileStartFailure.ActivityMissing, null));
+        bot.Journal.Add(new ProfileNotStartedEntry(_at, "Promenade", D3B.Bot.Behaviors.ProfileStartFailure.BehaviorMissing, [], null));
         page.Refresh(_host.Services);
 
         var line = page.Lines[^1];
 
-        Assert.Equal(("Le profil « Promenade » n'a pas démarré à la connexion", "Activité disparue : script:promenade.lua", Tone.Warning), (line.Text, line.Detail, line.Tone));
+        Assert.Equal(("Le profil « Promenade » n'a pas démarré à la connexion", "Son comportement a disparu", Tone.Warning), (line.Text, line.Detail, line.Tone));
     }
 
     [Fact]

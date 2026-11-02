@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <Compile Include="..\D3B.Bot.Tests\Activities\TestActivity.cs" Link="Bot\TestActivity.cs" />
+    <Compile Include="..\D3B.Bot.Tests\Behaviors\TestProfiles.cs" Link="Bot\TestProfiles.cs" />
     <Compile Include="..\D3B.Bot.Tests\Movement\TestWalks.cs" Link="Bot\TestWalks.cs" />
     <Compile Include="..\D3B.Bot.Tests\Network\FakeRelayConnection.cs" Link="Bot\FakeRelayConnection.cs" />
     <Compile Include="..\D3B.Bot.Tests\Network\TestGame.cs" Link="Bot\TestGame.cs" />

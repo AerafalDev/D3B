@@ -1,3 +1,4 @@
+using D3B.Bot.Behaviors;
 using D3B.Bot.Fights;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Hosting;
@@ -11,6 +12,7 @@ using D3B.Storage.Graphics;
 using D3B.Storage.Harvests;
 using D3B.Storage.Profiles;
 using D3B.Storage.Runs;
+using D3B.Storage.Variables;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -18,7 +20,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage;
 
-/// <summary>D3B's database, SQLite through EF Core: the accounts and characters the relay saw, the profiles, and the maps' graphics the bots learned (D99, D100, D138).</summary>
+/// <summary>D3B's database, SQLite through EF Core: the accounts and characters the relay saw, what the bots learned, the runs and the characters' variables (D99, D100, D138, D298).</summary>
 /// <remarks>
 /// <para>
 /// The app and <c>D3B.Host</c> both add it to the host's composition, so both read and write one database, in
@@ -26,9 +28,10 @@ namespace D3B.Storage;
 /// (<see cref="IHostPreparation"/>): a database that does not open stops the host, which says why.
 /// </para>
 /// <para>
-/// It registers the <see cref="AccountBook"/>, fed by the game connections it observes, the <see cref="ProfileBook"/>,
-/// the <see cref="ProfileStarter"/> that starts a profile on a bot, and starts a character's profile on its connection,
-/// when asked. Activities do not see it: profiles are D3B's, and only name the activities modules and scripts register.
+/// It registers the <see cref="AccountBook"/>, fed by the game connections it observes, each character naming the profile
+/// asset it plays (D304), and starts a character's profile on its connection, when asked, through the behaviors module's
+/// <see cref="ProfileStarter"/>. Activities do not see it. The <see cref="VariableRecorder"/> keeps the variables the
+/// characters keep, as <see cref="CharacterVariables"/> (D298).
 /// The <see cref="GraphicRecorder"/> keeps what the bots learn of the graphics, which they share as <see cref="GraphicSkills"/>,
 /// the <see cref="RegrowthRecorder"/> how long the resources take to grow back, as <see cref="Regrowths"/> (D145), the
 /// <see cref="PlacementRecorder"/> every fight's map and placement cells, as <see cref="FightPlacements"/> (D275), and the
@@ -42,8 +45,9 @@ public sealed class StorageModule : IModule
         services.AddSingleton(settings);
         services.AddDbContextFactory<StorageContext>(options => options.UseSqlite(settings.ConnectionString));
         services.AddSingleton<AccountBook>();
-        services.AddSingleton<ProfileBook>();
-        services.AddSingleton<ProfileStarter>();
+        services.TryAddSingleton<CharacterVariables>();
+        services.AddSingleton<VariableRecorder>();
+        services.AddHostedService(provider => provider.GetRequiredService<VariableRecorder>());
         services.TryAddSingleton<GraphicSkills>();
         services.AddSingleton<GraphicRecorder>();
         services.AddHostedService(provider => provider.GetRequiredService<GraphicRecorder>());
@@ -69,6 +73,7 @@ public sealed class StorageModule : IModule
         ArgumentNullException.ThrowIfNull(bot);
 
         bot.AddModule<BotsModule>();
+        bot.AddModule<BehaviorsModule>();
 
         Register(bot.Services, new StorageSettings { Path = Path.GetFullPath(bot.Configuration[StorageSettings.PathKey] ?? StorageSettings.DefaultPath) });
     }

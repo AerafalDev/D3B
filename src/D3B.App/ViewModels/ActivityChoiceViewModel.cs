@@ -1,7 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.Bot.Activities;
-using D3B.Storage.Profiles;
+using D3B.Bot.Assets;
 
 namespace D3B.App.ViewModels;
 
@@ -14,7 +14,7 @@ internal sealed partial class ActivityChoiceViewModel : ObservableObject
     public ActivityDefinition? Definition { get; }
 
     /// <summary>Gets the profile, or <see langword="null"/> for an activity with its defaults.</summary>
-    public Profile? Profile { get; }
+    public ProfileAsset? Profile { get; }
 
     /// <summary>Gets the profile's name, or the activity's in the app's language.</summary>
     [ObservableProperty]
@@ -42,15 +42,15 @@ internal sealed partial class ActivityChoiceViewModel : ObservableObject
 
     /// <summary>Initializes a new instance of the <see cref="ActivityChoiceViewModel"/> class, for a profile.</summary>
     /// <param name="profile">The profile.</param>
-    /// <param name="definition">Its activity, or <see langword="null"/> when no module registers it.</param>
+    /// <param name="definition">The activity its behavior plays whole, or <see langword="null"/> when the behavior is gone or more than one activity.</param>
     /// <param name="culture">The app's language.</param>
     /// <param name="detail">What the app says beside its name, in a language.</param>
-    public ActivityChoiceViewModel(Profile profile, ActivityDefinition? definition, CultureInfo culture, Func<CultureInfo, string?> detail)
+    public ActivityChoiceViewModel(ProfileAsset profile, ActivityDefinition? definition, CultureInfo culture, Func<CultureInfo, string?> detail)
     {
         Profile = profile;
         Definition = definition;
         _detail = detail;
-        Name = profile.Name;
+        Name = profile.Title?.In(culture) ?? profile.Name;
         Detail = detail(culture);
     }
 
@@ -58,7 +58,7 @@ internal sealed partial class ActivityChoiceViewModel : ObservableObject
     /// <param name="culture">The app's language.</param>
     public void Refresh(CultureInfo culture)
     {
-        Name = Profile?.Name ?? Definition!.Name.In(culture);
+        Name = Profile is { } profile ? profile.Title?.In(culture) ?? profile.Name : Definition!.Name.In(culture);
         Detail = _detail?.Invoke(culture);
     }
 }

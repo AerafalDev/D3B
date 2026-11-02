@@ -44,6 +44,9 @@ internal sealed class TestInstall : IDisposable
 
     public string RedirectDirectory => Path.Combine(Root, "redirect");
 
+    /// <summary>Gets the project's folder of a test's host, so that none reads the user's own (D296).</summary>
+    public string StudioDirectory => Path.Combine(Root, "studio");
+
     public string VersionFile => Path.Combine(ClientDirectory, "Dofus_Data", "StreamingAssets", "version");
 
     /// <summary>Gets the URL of the client's configuration, a local file the version file names, as Ankama's would.</summary>
@@ -51,7 +54,7 @@ internal sealed class TestInstall : IDisposable
 
     /// <summary>Gets the settings that point a host at them, as command-line arguments.</summary>
     /// <remarks>The relay listens on a port of its own, so that tests never take 5555 or 443 from a host running beside them.</remarks>
-    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Network:Ports:0", "0", "--Network:Game:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory];
+    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Network:Ports:0", "0", "--Network:Game:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory, "--Studio:Path", StudioDirectory];
 
     public TestInstall()
     {

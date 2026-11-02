@@ -1,3 +1,5 @@
+using D3B.Bot.Behaviors;
+using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
 using D3B.Protocol.Game;
@@ -25,18 +27,18 @@ public sealed class StartOnConnectionTests : IAsyncDisposable
         connection.Server(new CharacterListEvent { Characters = { TestPlay.Chosen().Success.Character } });
         await _storage.RecordedAsync();
 
-        var profile = await _storage.Profiles.SaveAsync(0, "Walker", TestStorage.SettingsActivityId, """{"Walks":4}""", cancellationToken);
+        var profile = await _storage.Assets.SaveProfileAsync("Walker", TestStorage.SettingsActivityId, """{"Walks":4}""", cancellationToken);
 
         await _storage.Accounts.AssignAsync(TestPlay.Key, profile.Id, cancellationToken);
         await _storage.Accounts.SetStartsOnConnectionAsync(TestPlay.Key, true, cancellationToken);
 
         var (_, bot) = await _storage.Play.EnterAsync(300);
 
-        await Waiting.UntilAsync(() => bot.Activity is not null);
+        await Waiting.UntilAsync(() => bot.Activity is { IsOver: true });
 
-        Assert.Equal(4, Assert.IsType<SettingsActivity>(bot.Activity!.Activity).Settings.Walks);
+        Assert.Equal(4, Assert.IsType<SettingsActivity>(Assert.Single(_storage.Activities)).Settings.Walks);
+        Assert.Equal("Walker", bot.Activity!.Title);
         await Waiting.UntilAsync(() => _storage.Log.GetSnapshot().Any(record => record.Message == $"Bot {TestPlay.CharacterId}: started profile Walker on its connection"));
-        bot.Activity.Stop();
     }
 
     [Fact]
@@ -50,7 +52,7 @@ public sealed class StartOnConnectionTests : IAsyncDisposable
         connection.Server(new CharacterListEvent { Characters = { TestPlay.Chosen().Success.Character } });
         await _storage.RecordedAsync();
 
-        var profile = await _storage.Profiles.SaveAsync(0, "Walker", TestStorage.SettingsActivityId, "{}", cancellationToken);
+        var profile = await _storage.Assets.SaveProfileAsync("Walker", TestStorage.SettingsActivityId, "{}", cancellationToken);
 
         await _storage.Accounts.AssignAsync(TestPlay.Key, profile.Id, cancellationToken);
 
@@ -61,7 +63,7 @@ public sealed class StartOnConnectionTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task AProfileThatDoesNotHoldOnConnectionDoesNotStartAndSaysWhyInTheJournal()
+    public async Task AProfileTheProjectNoLongerHoldsDoesNotStartOnConnectionAndSaysWhyInTheJournal()
     {
         await _storage.StartedAsync();
 
@@ -71,9 +73,7 @@ public sealed class StartOnConnectionTests : IAsyncDisposable
         connection.Server(new CharacterListEvent { Characters = { TestPlay.Chosen().Success.Character } });
         await _storage.RecordedAsync();
 
-        var profile = await _storage.Profiles.SaveAsync(0, "Broken", "gone", "{}", cancellationToken);
-
-        await _storage.Accounts.AssignAsync(TestPlay.Key, profile.Id, cancellationToken);
+        await _storage.Accounts.AssignAsync(TestPlay.Key, "gone", cancellationToken);
         await _storage.Accounts.SetStartsOnConnectionAsync(TestPlay.Key, true, cancellationToken);
 
         var (_, bot) = await _storage.Play.EnterAsync(300);
@@ -84,7 +84,7 @@ public sealed class StartOnConnectionTests : IAsyncDisposable
         var entry = bot.Journal.All().OfType<ProfileNotStartedEntry>().Single();
 
         Assert.Null(bot.Activity);
-        Assert.Contains(_storage.Log.GetSnapshot(), record => record.Message.StartsWith($"Bot {TestPlay.CharacterId}: profile Broken did not start on its connection, ActivityMissing", StringComparison.Ordinal));
-        Assert.Equal(new ProfileNotStartedEntry(entry.At, "Broken", "gone", ProfileStartFailure.ActivityMissing, null), entry);
+        Assert.Contains(_storage.Log.GetSnapshot(), record => record.Message.StartsWith($"Bot {TestPlay.CharacterId}: profile gone did not start on its connection, ProfileMissing", StringComparison.Ordinal));
+        Assert.Equal(("gone", ProfileStartFailure.ProfileMissing, 0, (string?)null), (entry.Profile, entry.Failure, entry.Problems.Count, entry.Error));
     }
 }

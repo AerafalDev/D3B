@@ -1,3 +1,4 @@
+using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
 
@@ -77,7 +78,7 @@ public sealed class AccountBookTests : IAsyncDisposable
         connection.Server(List());
         await _storage.RecordedAsync();
 
-        var profile = await _storage.Profiles.SaveAsync(0, "Lumberjack", TestStorage.PlainActivityId, "{}", TestContext.Current.CancellationToken);
+        var profile = await _storage.Assets.SaveProfileAsync("Lumberjack", TestStorage.PlainActivityId, "{}", TestContext.Current.CancellationToken);
         var other = new D3B.Bot.Characters.CharacterKey(TestPlay.AccountId, OtherCharacterId);
 
         await _storage.Accounts.AssignAsync(other, profile.Id, TestContext.Current.CancellationToken);
@@ -90,7 +91,7 @@ public sealed class AccountBookTests : IAsyncDisposable
 
         Assert.Equal(_storage.Time.GetUtcNow() - TimeSpan.FromHours(1), account.FirstSeen);
         Assert.Equal(_storage.Time.GetUtcNow(), account.LastSeen);
-        Assert.Equal(("Mulette", (int?)60, (int?)profile.Id), (character?.Name, character?.Level, character?.ProfileId));
+        Assert.Equal(("Mulette", (int?)60, profile.Id), (character?.Name, character?.Level, character?.Profile));
     }
 
     [Fact]
@@ -114,7 +115,7 @@ public sealed class AccountBookTests : IAsyncDisposable
         await _storage.RecordedAsync();
 
         var cancellationToken = TestContext.Current.CancellationToken;
-        var profile = await _storage.Profiles.SaveAsync(0, "Stroll", TestStorage.PlainActivityId, "{}", cancellationToken);
+        var profile = await _storage.Assets.SaveProfileAsync("Stroll", TestStorage.PlainActivityId, "{}", cancellationToken);
 
         await _storage.Accounts.SetStartsOnConnectionAsync(TestPlay.Key, true, cancellationToken);
 
@@ -127,7 +128,23 @@ public sealed class AccountBookTests : IAsyncDisposable
 
         await _storage.Accounts.AssignAsync(TestPlay.Key, null, cancellationToken);
 
-        Assert.Equal((null, false), (_storage.Accounts.Find(TestPlay.Key)?.ProfileId, _storage.Accounts.Find(TestPlay.Key)?.StartsOnConnection));
+        Assert.Equal(((string?)null, false), (_storage.Accounts.Find(TestPlay.Key)?.Profile, _storage.Accounts.Find(TestPlay.Key)?.StartsOnConnection));
+    }
+
+    [Fact]
+    public async Task ADeletedProfileLeavesItsCharactersWithoutOne()
+    {
+        await _storage.StartedAsync();
+        await _storage.Play.EnterAsync(300);
+        await _storage.RecordedAsync();
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        await _storage.Accounts.AssignAsync(TestPlay.Key, "gone", cancellationToken);
+        await _storage.Accounts.SetStartsOnConnectionAsync(TestPlay.Key, true, cancellationToken);
+        await _storage.Accounts.LeaveProfileAsync("gone", cancellationToken);
+
+        Assert.Equal(((string?)null, false), (_storage.Accounts.Find(TestPlay.Key)?.Profile, _storage.Accounts.Find(TestPlay.Key)?.StartsOnConnection));
     }
 
     [Fact]
@@ -159,7 +176,7 @@ public sealed class AccountBookTests : IAsyncDisposable
 
         connection.Server(List());
         await _storage.RecordedAsync();
-        await _storage.Profiles.SaveAsync(0, "Stroll", TestStorage.PlainActivityId, "{}", TestContext.Current.CancellationToken);
+        await _storage.Accounts.AssignAsync(TestPlay.Key, "a-profile", TestContext.Current.CancellationToken);
 
         await using var next = new TestStorage(_storage.Settings.Path);
 
@@ -167,6 +184,6 @@ public sealed class AccountBookTests : IAsyncDisposable
 
         Assert.Equal(["nickname"], next.Accounts.Accounts.Select(account => account.Nickname));
         Assert.Equal(2, next.Accounts.Characters.Count);
-        Assert.Equal(["Stroll"], next.Profiles.Profiles.Select(profile => profile.Name));
+        Assert.Equal("a-profile", next.Accounts.Find(TestPlay.Key)?.Profile);
     }
 }

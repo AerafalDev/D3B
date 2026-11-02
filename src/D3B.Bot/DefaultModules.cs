@@ -1,3 +1,4 @@
+using D3B.Bot.Behaviors;
 using D3B.Bot.Data;
 using D3B.Bot.Fighting;
 using D3B.Bot.Harvesting;
@@ -26,5 +27,6 @@ public sealed class DefaultModules : IModuleGroup
         group.Add<BotsModule>();
         group.Add<HarvestingModule>();
         group.Add<FightingModule>();
+        group.Add<BehaviorsModule>();
     }
 }

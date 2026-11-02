@@ -2,6 +2,7 @@ using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.Bot.Network;
+using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 
 namespace D3B.App.Tests.ViewModels;
@@ -73,7 +74,7 @@ public sealed class AccountsViewModelTests : IAsyncDisposable
         await _store.OpenedAsync();
 
         var ct = TestContext.Current.CancellationToken;
-        var stroll = await _store.Profiles.SaveAsync(0, "Stroll", TestStore.StrollId, "{}", ct);
+        var stroll = await _store.Assets.SaveProfileAsync("Stroll", TestStore.StrollId, "{}", ct);
 
         await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Character", 200));
 
@@ -97,7 +98,7 @@ public sealed class AccountsViewModelTests : IAsyncDisposable
 
         var character = _store.Accounts.Find(TestPlay.Key);
 
-        Assert.Equal((stroll.Id, true), (character?.ProfileId, character?.StartsOnConnection));
+        Assert.Equal((stroll.Id, true), (character?.Profile, character?.StartsOnConnection));
 
         // The cards are made again from what was saved.
         page.Refresh(_store.Host.Services);

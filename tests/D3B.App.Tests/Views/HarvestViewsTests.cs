@@ -9,18 +9,19 @@ using D3B.App.ViewModels;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
 using D3B.Bot.Activities;
+using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Harvesting;
-using D3B.Bot.Hosting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Pages;
 using D3B.Bot.Settings;
 using D3B.Bot.Tests;
+using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data;
 using D3B.Data.Tests;
 using D3B.Storage;
 using D3B.Storage.Accounts;
-using D3B.Storage.Profiles;
 using D3B.Storage.Runs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,10 +75,11 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         builder.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
         builder.Services.AddSingleton(new PageCatalog([]));
         StorageModule.Register(builder.Services, new StorageSettings { Path = _directory.Combine("d3b.db") });
+        BehaviorsModule.Register(builder.Services, new StudioSettings { Path = _directory.Combine("studio") });
 
         var host = builder.Build();
 
-        Assert.Null(await host.Services.GetRequiredService<IHostPreparation>().PrepareAsync(TestContext.Current.CancellationToken));
+        await TestHosts.PreparedAsync(host);
 
         return host;
     }
@@ -89,7 +91,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         var definition = host.Services.GetRequiredService<ActivityCatalog>().All.Single();
         var settings = new HarvestSettings { Resources = [TestPlay.Ash, TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId], Heal = true, Food = [TestPlay.Bread] };
 
-        await host.Services.GetRequiredService<ProfileBook>().SaveAsync(0, "Ash and chestnut", HarvestingModule.ActivityId, definition.Settings.Write(settings), TestContext.Current.CancellationToken);
+        await host.Services.GetRequiredService<AssetLibrary>().SaveProfileAsync("Ash and chestnut", HarvestingModule.ActivityId, definition.Settings.Write(settings), TestContext.Current.CancellationToken);
 
         // A bot met an ash elsewhere: the maps drawing its graphic are probable.
         host.Services.GetRequiredService<GraphicSkills>().Learn(TestPlay.TreeGfxId, [TestPlay.TreeSkillId]);
@@ -184,6 +186,39 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AGivenProfileIsReadOnlyAndItsCopyIsTheProjectsOwnWithItsValues()
+    {
+        using var host = await HostAsync();
+        var assets = host.Services.GetRequiredService<AssetLibrary>();
+        var copied = await OnTheUIThreadAsync(async () =>
+        {
+            var page = new ProfilesViewModel(new Localizer(Localizer.English), new Dialogs(), new Toasts());
+
+            page.Refresh(host.Services);
+
+            var given = page.Items.Single(item => item.Name == "Auto lumberjack");
+
+            Assert.True(given.IsGiven);
+            Assert.False(given.EditCommand.CanExecute(null));
+            Assert.False(given.AskDeleteCommand.CanExecute(null));
+
+            given.DuplicateCommand.Execute(null);
+            Assert.IsType<NewProfileViewModel>(page.Dialogs.Current).CreateCommand.Execute(null);
+            await page.Editing!.SaveCommand.ExecuteAsync(null);
+            page.Refresh(host.Services);
+
+            return (Given: given.Id, Own: page.Items.Single(item => item.Name == "Auto lumberjack (copy)").IsOwn);
+        });
+        var (givenId, own) = await copied;
+        var copy = assets.OfType<ProfileAsset>().Single(profile => !profile.IsGiven);
+        var original = assets.Find<ProfileAsset>(givenId)!;
+
+        Assert.True(own);
+        Assert.Equal(("Auto lumberjack (copy)", original.Behavior), (copy.Name, copy.Behavior));
+        Assert.Equal(AssetFiles.Write(original with { Id = copy.Id, Name = copy.Name, Title = null }), AssetFiles.Write(copy));
+    }
+
+    [Fact]
     public async Task TheHarvestByProfessionShowsItsProfessionsAndThePlaceChosenForEachCharacterInBothLanguagesAndThemes()
     {
         using var host = await HostAsync();
@@ -197,9 +232,9 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             Order = HarvestOrder.HighestLevel,
             Place = HarvestPlace.Automatic,
         };
-        var profiles = host.Services.GetRequiredService<ProfileBook>();
+        var profiles = host.Services.GetRequiredService<AssetLibrary>();
         var accounts = host.Services.GetRequiredService<AccountBook>();
-        var profile = await profiles.SaveAsync(0, "By profession", HarvestingModule.ActivityId, definition.Settings.Write(settings), ct);
+        var profile = await profiles.SaveProfileAsync("By profession", HarvestingModule.ActivityId, definition.Settings.Write(settings), ct);
 
         await accounts.SeeAsync(TestPlay.Account, [(TestPlay.CharacterId, "Ortie", 60)], _play.Time.GetUtcNow(), ct);
         await accounts.AssignAsync(TestPlay.Key, profile.Id, ct);
@@ -275,8 +310,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Equal("Ortie", note.Name);
         Assert.NotNull(note.Note);
 
-        // The harvest's presets were stored as the database opened, beside the profile made here.
-        Assert.Equal(7, profiles.Profiles.Count);
+        // The harvest's presets are its given profiles, beside the profile made here.
+        Assert.Equal(7, profiles.OfType<ProfileAsset>().Count);
     }
 
     [Fact]

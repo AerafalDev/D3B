@@ -8,11 +8,13 @@ using D3B.App.ViewModels;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
 using D3B.Bot.Activities;
+using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Fighting;
-using D3B.Bot.Hosting;
 using D3B.Bot.Pages;
 using D3B.Bot.Settings;
 using D3B.Bot.Tests;
+using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data;
 using D3B.Data.Monsters;
@@ -20,7 +22,6 @@ using D3B.Data.Tests;
 using D3B.Data.World;
 using D3B.Storage;
 using D3B.Storage.Accounts;
-using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -95,10 +96,11 @@ public sealed class FightViewsTests : IAsyncDisposable
         builder.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
         builder.Services.AddSingleton(new PageCatalog([]));
         StorageModule.Register(builder.Services, new StorageSettings { Path = _directory.Combine("d3b.db") });
+        BehaviorsModule.Register(builder.Services, new StudioSettings { Path = _directory.Combine("studio") });
 
         var host = builder.Build();
 
-        Assert.Null(await host.Services.GetRequiredService<IHostPreparation>().PrepareAsync(TestContext.Current.CancellationToken));
+        await TestHosts.PreparedAsync(host);
 
         return host;
     }
@@ -108,10 +110,10 @@ public sealed class FightViewsTests : IAsyncDisposable
     {
         using var host = await HostAsync();
         var ct = TestContext.Current.CancellationToken;
-        var profiles = host.Services.GetRequiredService<ProfileBook>();
+        var profiles = host.Services.GetRequiredService<AssetLibrary>();
         var accounts = host.Services.GetRequiredService<AccountBook>();
 
-        await profiles.SaveAsync(0, "Larvae", FightingModule.ActivityId, """{"Mode":"Chosen","Place":"Chosen","SubAreas":[440]}""", ct);
+        await profiles.SaveProfileAsync("Larvae", FightingModule.ActivityId, """{"Mode":"Chosen","Place":"Chosen","SubAreas":[440]}""", ct);
         await accounts.SeeAsync(TestPlay.Account, [(TestPlay.CharacterId, "Character", 200)], _play.Time.GetUtcNow(), ct);
 
         var runner = await TestHosts.RunningAsync(host);

@@ -98,6 +98,13 @@ public abstract class BotActivity
         return null;
     }
 
+    /// <summary>Sees the bot as its loop leaves it after everything it handles, while the activity runs: a behavior's events and urgent states read it (D297).</summary>
+    /// <param name="bot">The bot.</param>
+    /// <remarks>Called on the bot's loop, which every message of its character goes through: quick, never waiting. Nothing, by default.</remarks>
+    public virtual void Watch(BotActor bot)
+    {
+    }
+
     /// <summary>Puts the character back in order once the bot can act again after an interruption, before the next step.</summary>
     /// <param name="context">The recovery's behavior context.</param>
     /// <param name="reason">Why the step stopped.</param>
