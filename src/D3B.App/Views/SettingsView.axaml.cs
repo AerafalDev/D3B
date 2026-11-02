@@ -5,7 +5,7 @@ using D3B.App.ViewModels;
 
 namespace D3B.App.Views;
 
-/// <summary>The settings page: the machine's settings, in cards of rows (D151, D159).</summary>
+/// <summary>The settings' tab: its sections in a column, the one chosen beside, a row per setting (D151, D329).</summary>
 internal sealed partial class SettingsView : UserControl
 {
     /// <summary>Initializes a new instance of the <see cref="SettingsView"/> class.</summary>
