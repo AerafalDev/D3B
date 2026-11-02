@@ -206,7 +206,8 @@ seen so.
   fails after three, or when it goes on too long; a teleport that fails leaves every teleport out, and one the server
   refuses from a map is never asked from it again for the bot's life (`BotActor.NoTeleportFrom`, D248), nor an NPC's way
   whose dialog offered none of its replies (`BotActor.NoNpcWays`, D253). The bots' pathfinder goes through the ways
-  through an NPC's dialog measured in game (`NpcWays.Measured`), which `Bots` gives it. A journey from the
+  through an NPC's dialog measured in game (`NpcWays.Measured`), Incarnam's portal and the boat to Sarakech (D266), which
+  `Bots` gives it. A journey from the
   character's haven bag leaves it first. An activity may end a journey on a map it reaches where it has work, its
   information received (D259). The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
   on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83). A teleport counts as as many map changes as
