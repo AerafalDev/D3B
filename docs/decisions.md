@@ -6595,6 +6595,19 @@ pulling them into its walls. On the owner's capture of 4 fights the AI played, 1
 - **Left**: a wall's spell on an ally, its masks' conditions on states, not measured; the search's misses, a wider search
   costing more than it finds; the Roublard measured in game again.
 
+## D286: Walls and glyphs worth the rounds they strike, the owner's observation
+
+*2026-11-02, step 9, session 9f4, the owner's words: walls pay more against big enemies. Builds D209, D280, D285.*
+
+- **The owner**: against enemies of much life, a Roublard gains more by walling them than by throwing its bombs on them.
+- **Why, in the AI's terms**: a fight against such enemies lasts several rounds, and a wall strikes an enemy on it at each
+  of its turns' starts while its bombs' combos rise, a glyph for the rounds it lasts; the judge counts a mark's blow at the
+  next turn's start alone and the bombs' explosion a level up, where a buff is weighed over the rounds the fight is
+  foreseen to last (D209). Against small enemies a blow now kills, and the fight ends before a wall pays.
+- **So**: the next session weighs a mark, a wall while its bombs live, a glyph for its rounds, over the rounds the fight
+  is foreseen to last, as a buff is, the enemy kept there as likely as the measures say, and measures it on the Roublard's
+  captures and in game against big enemies, before the Féca's glyphs, which it serves too.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
