@@ -1,0 +1,101 @@
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using D3B.App.Localization;
+using D3B.App.ViewModels;
+using D3B.App.Views;
+using D3B.Bot.Tests.Behaviors;
+using D3B.Bot.Tests.Runtime;
+using D3B.Bot.Tests.Settings;
+
+namespace D3B.App.Tests.Views;
+
+public sealed class AssetsViewsTests
+{
+    private static List<string> Texts(Control root)
+    {
+        return [.. root.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Concat(block.Inlines?.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text) ?? [])).Where(text => text.Length > 0)];
+    }
+
+    private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
+    {
+        return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(AssetsViewsTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task TheAssetsTreeAndAProfilesTabShowInBothLanguages()
+    {
+        await using var store = new TestStore();
+
+        await store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+        var walker = await store.Assets.SaveProfileAsync("Walker", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42 }), ct);
+
+        await store.Assets.SaveProfileAsync("Ash", TestStore.HarvestId, "{}", ct);
+        await store.Assets.CreateFolderAsync("Lumberjack", ct);
+        await store.Assets.MoveAsync(walker.Id, "Lumberjack", ct);
+        await File.WriteAllTextAsync(Path.Combine(store.Assets.Folder, "Broken.profile.json"), "{", ct);
+        await store.Assets.LoadAsync([.. store.Assets.Assets.Where(asset => asset.IsGiven)], ct);
+        await store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
+        await store.Accounts.AssignAsync(TestPlay.Key, walker.Id, ct);
+
+        var runner = await TestHosts.RunningAsync(store.Host);
+        var (english, french, tab) = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            main.Refresh();
+            window.Show();
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var dock = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "AssetsDock");
+            var english = Texts(dock);
+
+            main.OpenAsset(walker.Id);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var view = window.GetVisualDescendants().OfType<ProfileView>().Single(view => view.IsEffectivelyVisible);
+
+            english.AddRange(Texts(view));
+            Drawings.Draw(window, "assets-en");
+            main.Settings.UseFrenchCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var french = Texts(dock).Concat(Texts(view)).ToList();
+
+            Drawings.Draw(window, "assets-fr");
+            Drawings.DrawPart(dock, "part-assets-fr");
+            Drawings.DrawPart(view, "part-profile-fr");
+
+            var tab = (main.Editor.Selected?.Key, main.Editor.Selected?.Title, main.Properties.ShowsAsset);
+
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return (english, french, tab);
+        });
+
+        Assert.Contains("Lumberjack", english);
+        Assert.Contains("Walker", english);
+        Assert.Contains("Broken.profile.json", english);
+        Assert.Contains("Given with D3B", english);
+        Assert.Contains("Variant of", english);
+        Assert.Contains("Preview", english);
+        Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Donnés avec D3B", french);
+        Assert.Contains("Variante de", french);
+        Assert.Contains("Tout remettre", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Equal(("profile:" + walker.Id, "Walker", true), tab);
+    }
+}

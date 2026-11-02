@@ -101,11 +101,15 @@
         <Style Selector="Grid.FieldRow.Changed:pointerover Button.FieldReset">
             <Setter Property="Opacity" Value="1" />
         </Style>
-        <Style Selector="UserControl.Narrow Grid.FieldRow > StackPanel.FieldName">
+        <Style Selector="Grid.FieldRow > StackPanel.FieldControl">
+            <Setter Property="Grid.Column" Value="2" />
+            <Setter Property="Margin" Value="16,0" />
+        </Style>
+        <Style Selector=":is(UserControl).Narrow Grid.FieldRow > StackPanel.FieldName">
             <Setter Property="Grid.ColumnSpan" Value="2" />
         </Style>
-        <Style Selector="UserControl.Narrow Grid.FieldRow > StackPanel.FieldControl">
-            <Setter Property="Grid.Column" Value="0" />
+        <Style Selector=":is(UserControl).Narrow Grid.FieldRow > StackPanel.FieldControl">
+            <Setter Property="Grid.Column" Value="1" />
             <Setter Property="Grid.ColumnSpan" Value="2" />
             <Setter Property="Grid.Row" Value="1" />
             <Setter Property="Margin" Value="0,6,0,4" />
@@ -824,11 +828,11 @@
                 </ItemsControl>
             </Border>
             <ScrollViewer Name="Form">
-                <StackPanel IsEnabled="{Binding !IsReadOnly}" Margin="24,4,24,48">
+                <StackPanel IsEnabled="{Binding !IsReadOnly}" Margin="12,4,24,48">
                     <TextBlock
                         Classes="Muted"
                         IsVisible="{Binding Editor.IsEmpty, FallbackValue=False}"
-                        Margin="0,22,0,0"
+                        Margin="12,22,0,0"
                         Text="{l:Tr NoSetting}" />
                     <ItemsControl ItemsSource="{Binding Editor.Sections, FallbackValue={x:Null}}" Name="Sections">
                         <ItemsControl.Styles>
@@ -844,7 +848,7 @@
                                         FontWeight="SemiBold"
                                         Foreground="{DynamicResource BrightColor}"
                                         IsVisible="{Binding HasTitle}"
-                                        Margin="0,0,0,8"
+                                        Margin="12,0,0,8"
                                         Text="{Binding Title}" />
                                     <ItemsControl ItemsSource="{Binding Fields}">
                                         <ItemsControl.Styles>
@@ -857,18 +861,19 @@
                                                 <Grid
                                                     Classes="FieldRow"
                                                     Classes.Changed="{Binding IsChanged}"
-                                                    ColumnDefinitions="150,*,26"
+                                                    ColumnDefinitions="12,150,*,26"
                                                     RowDefinitions="Auto,Auto">
                                                     <Border
                                                         Background="{DynamicResource AccentColor}"
                                                         Classes="ChangeBar"
-                                                        Grid.RowSpan="2"
                                                         CornerRadius="1"
+                                                        Grid.RowSpan="2"
                                                         HorizontalAlignment="Left"
-                                                        Margin="-12,12"
+                                                        Margin="0,12"
                                                         Width="2" />
                                                     <StackPanel
                                                         Classes="FieldName"
+                                                        Grid.Column="1"
                                                         Orientation="Horizontal"
                                                         Spacing="6"
                                                         VerticalAlignment="Center">
@@ -888,8 +893,6 @@
                                                     </StackPanel>
                                                     <StackPanel
                                                         Classes="FieldControl"
-                                                        Grid.Column="1"
-                                                        Margin="16,0"
                                                         Spacing="4"
                                                         VerticalAlignment="Center">
                                                         <ContentControl Content="{Binding}" />
@@ -903,7 +906,7 @@
                                                         AutomationProperties.Name="{l:Tr ResetValue}"
                                                         Classes="Tool Small FieldReset"
                                                         Command="{Binding ResetCommand}"
-                                                        Grid.Column="2"
+                                                        Grid.Column="3"
                                                         ToolTip.Tip="{l:Tr ResetValue}"
                                                         VerticalAlignment="Center">
                                                         <c:Icon
