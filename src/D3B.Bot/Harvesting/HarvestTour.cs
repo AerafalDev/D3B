@@ -199,7 +199,8 @@ internal sealed class HarvestTour
     }
 
     // A map whose wanted elements were all seen harvested is held back until the first should have grown back. Measured:
-    // the server never says when; one harvested before it was seen grew back no later than the sighting's time reckons.
+    // the server never says when; one harvested before it was seen grew back no later than the first sighting of it so
+    // reckons, which later sightings must not put off (9g5).
     private DateTimeOffset? ReadyAt(long mapId, HarvestZone zone)
     {
         if (_regrowths is null || !_sightings.TryGet(mapId, out var sighting) || sighting.Elements.IsDefaultOrEmpty)
@@ -215,7 +216,7 @@ internal sealed class HarvestTour
             if (element.IsEnabled || _regrowths.Reckoned(element.SkillId) is not { } takes)
                 return null;
 
-            var harvested = _regrowths.TryGetHarvest(mapId, element.ElementId, out var at) ? at : sighting.At;
+            var harvested = _regrowths.TryGetHarvest(mapId, element.ElementId, out var at) ? at : element.DisabledSince ?? sighting.At;
             var ready = harvested + takes;
 
             if (first is null || ready < first)

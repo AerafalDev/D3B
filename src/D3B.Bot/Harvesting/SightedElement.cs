@@ -5,4 +5,5 @@ namespace D3B.Bot.Harvesting;
 /// <param name="SkillId">The skill that gathers it.</param>
 /// <param name="ItemId">The resource it gives.</param>
 /// <param name="IsEnabled">Whether it offered the skill then: not, from its harvest until it grows back.</param>
-public readonly record struct SightedElement(int ElementId, int SkillId, int ItemId, bool IsEnabled);
+/// <param name="DisabledSince">When a bot first saw it not offering the skill, of the sightings since it last did; none while it does.</param>
+public readonly record struct SightedElement(int ElementId, int SkillId, int ItemId, bool IsEnabled, DateTimeOffset? DisabledSince = null);

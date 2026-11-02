@@ -130,4 +130,38 @@ public sealed class RegrowthsTests
         Assert.Equal([TestPlay.MapId], tour.Remaining(zone));
         Assert.Null(tour.NextReady(zone));
     }
+
+    [Fact]
+    public async Task AnElementAnotherHarvestedGrowsBackFromWhenABotFirstSawItSoWhateverTheSightingsSince()
+    {
+        await using var play = new TestPlay();
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] };
+        var zone = HarvestZone.Of(settings, play.World.Atlas, play.World.Graph, play.Tables.Jobs, play.Maps);
+        var sightings = new HarvestSightings();
+        var regrowths = new Regrowths();
+        var time = new FakeTimeProvider(_start);
+        var tour = new HarvestTour(sightings, new GraphicSkills(), regrowths, time);
+        var harvested = new SightedElement(TestPlay.TreeElementId, TestPlay.TreeSkillId, TestPlay.Ash, IsEnabled: false);
+
+        regrowths.Remember(TestPlay.TreeSkillId, new Regrowth(TimeSpan.FromMinutes(5), 1, null));
+
+        // Seen harvested by another, then again 3 minutes later: it should grow back 5 minutes after the first sighting.
+        sightings.SeenElements(TestPlay.MapId, [harvested], _start);
+        sightings.SeenElements(TestPlay.MapId, [harvested], _start.AddMinutes(3));
+
+        while (tour.Remaining(zone) is { Count: > 0 } left)
+        {
+            foreach (var map in left)
+                tour.Visit(map);
+        }
+
+        Assert.Equal(_start.AddMinutes(5), tour.NextReady(zone));
+
+        // Seen offering its skill, then harvested again: from that new sighting.
+        sightings.SeenElements(TestPlay.MapId, [harvested with { IsEnabled = true }], _start.AddMinutes(6));
+        sightings.SeenElements(TestPlay.MapId, [harvested], _start.AddMinutes(7));
+
+        Assert.True(sightings.TryGet(TestPlay.MapId, out var sighting));
+        Assert.Equal(_start.AddMinutes(7), sighting.Elements.Single().DisabledSince);
+    }
 }
