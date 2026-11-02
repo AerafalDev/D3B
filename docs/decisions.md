@@ -6608,6 +6608,122 @@ pulling them into its walls. On the owner's capture of 4 fights the AI played, 1
   is foreseen to last, as a buff is, the enemy kept there as likely as the measures say, and measures it on the Roublard's
   captures and in game against big enemies, before the Féca's glyphs, which it serves too.
 
+## D287: 9f5 as the owner asks it
+
+*2026-11-02, step 9, session 9f5, the owner's words. Builds D278, D286.*
+
+- **Asked**: D286 made, a wall weighed while its bombs live and a glyph for its rounds over the rounds the fight is
+  foreseen to last, as a buff is (D209), measured on the Roublard's captures with `scripts/fights.cs --turns` then in game
+  against big enemies; the owner's new captures if made, a Féca's glyphs, an Osamodas with "Maîtrise des invocations" off
+  then on, the fight map's preview; what 9f4 left, the Pulsar's pushes the server does not make, a wall's spell on an ally,
+  a glyph-aura's buffs as a fighter leaves it; with the owner in game if it comes, D273, an aggression, stairs and portals,
+  the inactivity popup.
+- **So**: the captures are the 102 of 9f4, none new; the Roublard's fights in them are against small monsters, a level 45
+  Roublard dealing 204 a turn against a monster of 53 life, so that the session measures the marks weighed on them as they
+  are, and on the same turns with the enemies' life five times as much (`--enemy-life`). The Féca, the Osamodas and the
+  preview wait for the owner's captures; nothing was played in game.
+
+## D288: Walls and glyphs weighed over the rounds they strike
+
+*2026-11-02, step 9, session 9f5, measured with `scripts/fights.cs` on the 102 game connections of 3.7.12.12. Makes D286.
+Builds D209, D280, D281.*
+
+- **Measured**: of the 8 turn starts a mark struck, the fighter's next turn began struck again once, on no mark twice, the
+  marks standing, and 5 times the fighter died or the fight ended first: too few to weigh a mark by. Of the monsters that
+  move, every turn of the captures: of the 122 that began their turn beside an enemy, 82 ended it where they began; of the
+  989 others, 21; the 5 whose turn began on a mark, too few to tell apart, 1 stayed.
+- **Made**: the judge weighs a mark of the side playing on an enemy, after its sure blow as the enemy's next turn begins
+  (D280), for each round it strikes again, up to the rounds the fight is foreseen to last still (D209): a glyph until it
+  goes, the first to go of those on the enemy bounding them; a wall while its bombs live, which the judge cannot foresee,
+  its blow raised each round as its bombs' combos rise by 20 (9f3). Each blow is as likely as the enemy stayed through its
+  turns before, 82 of 122 beside a fighter of the other side, 21 of 989 otherwise, always for one that cannot move; worth
+  as a buff's damage is, 0.8 a point by the approach's weight, never more than the enemy's life left. The same after the
+  enemies' reply, their first blow then in their life (`FightJudge.Lingered`). A mark on an ally is feared at the next turn's
+  start alone, the fighter playing walking off it.
+- **Measured**, against `main` at the session's start, each run alone, with D289:
+  - the Roublard's 89 turns: enemies on a wall as the turn ends, planned 8 then 15, played 4; wall cells planned 15 then
+    22, played 27; bombs planned 66 then 69; Détonateurs planned 38 then 34, played 13; casts foreseen to do nothing but
+    spend AP, planned 7 then 5;
+  - every capture's 444 turns, the enemies' life five times as much (`--enemy-life 5`): enemies on a wall as the turn
+    ends, planned 28 then 38; wall cells 60 then 74; Détonateurs 39 then 36; bombs 113 then 102; damage the plans foresee
+    113,447 then 112,802, over two turns 216,626 then 217,098; the life the reply takes 19,347 then 19,337; searches 134 then
+    128 ms halfway, 635 then 621 at most;
+  - every capture's 444 turns as they are: damage the plans foresee 86,371 then 85,621, over two turns 149,495 then
+    149,420; kills 424 then 423; the life the reply takes 15,244 then 15,185; plans empty 5 then 5; searches 112 then 110
+    ms halfway, 289 then 288 at 90%, 652 then 649 at most.
+- **Rejected**: a mark's blows to come counted as sure as the next one: a monster beside no enemy walks off 968 times in
+  989.
+- **Not measured in game**: the Roublard against big enemies, with `Fights:Alone`, the owner's next measure.
+
+## D289: Pushes along a diagonal of the coordinates, a step for two cells, between free corners
+
+*2026-11-02, step 9, session 9f5, on the 102 game connections. Settles D283's "left" on the Pulsar's pushes. Builds
+D214, D283.*
+
+- **Measured**, every push and pull whose target moved, set by the line it moved along: of the 13 pushes of 2 cells along
+  a diagonal of the coordinates, each moved a step, 3 with the next cell free, none dealing push damage, where D3B
+  foresaw 2 steps and 13 damage; pushes of 2 along a line of the coordinates moved 2, 11 times, with the next cell free.
+  A diagonal step passes between the corners of the two cells beside it: the 17 diagonal steps the server made had both
+  free; of the 8 pushes and pulls D3B foresaw so that moved no one, 7 of them a Pulsar's, each had one taken by a fighter
+  or not walkable. A pull of a cell along such a diagonal moved a step, 3 times.
+- **Made**: a push moves its target as far as its cells as the distance counts them, a diagonal step as far as two, and
+  deals its damage only when stopped, by the cells left; a push or pull steps along a diagonal only between two free
+  cells (`Imagination`). A push to a cell (783), whose cells are the distance, counts its steps so too. A pull's steps stay
+  one cell each.
+- **Measured**: pushes on the cell imagined 148 of 169 then 158 of 170, short of it 20 then 11; pulls 95 then 99 of 102; push
+  damage below the formula 21 then 8, none foreseen and none dealt 59 then 72.
+- **Left**: a Botte's rings of 1103, which D3B adds to one cell more than the server moved, 5 times; a pull of 2 along a
+  diagonal, never captured free.
+
+## D290: A wall's spell on its own side: read, struck in the reply, not feared by the judge
+
+*2026-11-02, step 9, session 9f5, from the pack of format 8, measured with `scripts/fights.cs`. Settles D285's "left" on a
+wall's spell on an ally.*
+
+- **Read**: the bombs' walls' spells (*Mur de Feu* 13458 and its kin) strike the enemies (`A`), the summoner's allies but
+  its own (`a,p`) and its own but the bombs of the wall's kind (`a,P,f3112`), none in state 92, *Kaboom*, each stronger
+  with the summoner in state 2483. The imagination casts the wall's spell through these masks, on whoever a cast or a walk
+  leaves on it and whose turn begins on it; the judge, before the reply, feared only the other side's marks.
+- **Made**: the judge reckons the walls once a judgement, and has a fighter's turn's start imagined only on a mark
+  (`FightJudge.Marked`), where it imagined every enemy's whenever a bomb of the other side lived.
+- **Rejected, measured**: the judge fearing its own side's marks on its fighters, as the masks say. On the 444 turns, it
+  changed no plan, to the turn, and cost searches 110 then 127 ms halfway, 288 then 371 at 90%, 649 then 985 at most,
+  past the search's budget of 800 ms; reckoning every fighter at each judgement whenever a bomb lived, 140 halfway. The
+  reply still strikes the fighter playing as its next turn begins on its own wall (D280).
+- **Not measured**: no capture holds an ally on a wall as its turn begins.
+
+## D291: 9f5 measured, and what it leaves
+
+*2026-11-02, step 9, session 9f5.*
+
+- **Measured**: as D288 to D290 say; nothing in game. `dotnet build`, `dotnet test` and `dotnet format --verify-no-changes`
+  green.
+- **Left**: the Roublard against big enemies in game, with `Fights:Alone`, before another breed; the Féca's glyphs, an
+  Osamodas's summons and "Maîtrise des invocations", the fight map's preview, none captured; a glyph-aura's buffs as a
+  fighter leaves it, no capture holding one leaving an aura that buffed it; a Botte's rings; with the owner in game, D273,
+  an aggression, stairs and portals, the inactivity popup.
+
+## D292: After 9f5, the breeds set aside: the app's working rethought around one editor, blueprints in it, then its interface recast
+
+*2026-11-02, step 9, session 9f5, the owner's words. Amends D169: step 7's blueprints before 9f's other mechanisms.*
+
+- **Asked**: after this session, the breeds' mechanisms set aside; the blueprints, very advanced, with many features,
+  something truly complete; with them, the app's main working looked at again, an editor perhaps that merges profiles,
+  blueprints, journeys and the rest; and a global recast of the app's interface, less generic, less a dashboard.
+- **What it changes**: the blueprints are no more a page beside the profiles (D117) but maybe the app's heart, a profile
+  a graph whose nodes are the activities, harvesting, fighting, a journey, the bank, each with its settings. Profiles,
+  presets, settings, activities, journeys and hunts as D3B has them are what such an editor would replace or hold: hard
+  to undo, so settled before any code.
+- **The order, the lead's recommendation**: the next session designs, with no code: what the app models today, a model
+  that unifies it, Q13 answered (who writes graphs, where they live, what a node is over the behaviors and the state, how a
+  graph runs as an activity and resumes, its settings, which canvas in Avalonia), the editor's mockups (D143, D155), the
+  owner choosing at each step, and the sessions that follow. Then the model and its run time, then the editor, then the
+  other pages recast in the editor's visual direction, so that nothing is made twice.
+- **Kept**: 9f's other mechanisms and the Roublard measured in game (D291) come back after these, the AI as it stands.
+- **Risk, the lead's**: a graph that runs is a language to keep (D117), and an editor that merges everything is the
+  largest change since the app was made; "very complete" is reached feature by feature, each tested, the stored profiles
+  migrated, never lost.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

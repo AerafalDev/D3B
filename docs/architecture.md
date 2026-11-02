@@ -761,7 +761,12 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     on an enemy, feared on an ally, and the bombs' promise on an enemy with the approach, its kill once (D281). A summon
     casts its grade's starting spell, a spell modifier is imagined, and a fighter's death takes back the buffs it gave
     (`HeldBuff.CasterId`, D282). Pushes and pulls go along the farthest axis, the cast's way for a line across it, never
-    moving a fighter `CastRules.CanBePushed` refuses nor one the mask only maybe selects (D283).
+    moving a fighter `CastRules.CanBePushed` refuses nor one the mask only maybe selects (D283); a push moves as far as its
+    cells, a step along a diagonal of the coordinates as far as two, and a step so only between two free cells (D289). The
+    judge weighs a mark of the side playing on an enemy over the rounds the fight is foreseen to last, a glyph until it
+    goes, a wall while its bombs live, its blow rising with their combos, each blow as likely as the enemy stays, measured
+    on the monsters' turns (D288); it reckons the walls once a judgement, and a turn's start only for a fighter on the
+    other side's mark, its own side's left to the reply as the cost measured (D290).
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
@@ -830,7 +835,12 @@ measured whole before another breed (D278); a summon's spells kept apart and the
 [Bot run time](#bot-run-time)); glyphs, walls and the marks as a turn begins and ends (D280), the bombs' promise counted
 once (D281), a bomb's starting spell and the buffs a fighter gave taken back as it dies (D282), pushes and pulls as the
 server moves them (D283), all in [Engine](#engine); measured with `scripts/fights.cs` (D284); a wall striking a fighter
-once as it comes from outside, a Botte harmless, measured on the owner's second Roublard capture (D285).
+once as it comes from outside, a Botte harmless, measured on the owner's second Roublard capture (D285). Built in session
+9f5: the owner's asks (D287); walls and glyphs weighed over the rounds they strike (D288), pushes along a diagonal of the
+coordinates (D289) and a wall's spell on its own side, struck in the reply, not feared by the judge (D290), all in
+[Engine](#engine); measured on the captures, and on their turns against enemies of five times the life, nothing in game
+(D291); the breeds then set aside for the app's working rethought around one editor, step 7's blueprints in it, and the
+interface's recast (D292).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the
@@ -850,7 +860,8 @@ once as it comes from outside, a Botte harmless, measured on the owner's second 
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
   summons, those the AI brings and those the client controls (built, D269 to D271); the Roublard's bombs, their chains,
   combos and walls, every move that brings a fighter into a wall counted (built, D276, D277); the marks on the cells,
-  glyphs and walls struck as a turn begins and ends, the Féca's to measure in game (built, D280); then runes,
+  glyphs and walls struck as a turn begins and ends, the Féca's to measure in game (built, D280), weighed over the rounds
+  they strike (built, D288); then runes,
   telefrags, traps, portals, carrying, each taken in through every move that brings fighters into it (D277): one AI for every breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
   allows (9g, built, D236 to D241, D245).
 

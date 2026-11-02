@@ -1997,6 +1997,32 @@ committed that print fighters by aliases, never an actor's id or name.
   third `int64`. No capture holds them: which `int64` is the map and which the map fought on is left to the owner's
   capture with the preview on.
 
+### The game, kept on a mark
+
+Measured on 2026-11-02 for session 9f5 (D287 to D291): the 102 game connections of 3.7.12.12, the same as 9f4's, its pack
+of format 8 and mapping format 15, with `scripts/fights.cs`, which prints counts only.
+
+- **Struck again.** Of the 8 turn starts a mark struck (4 glyphs, 2 on a character and 2 on monsters, and 4 walls on
+  monsters), the fighter's next turn began struck once more, a character on a monster's glyph; twice it began off
+  the mark, the marks standing, both monsters off a wall; 5 times the fighter died or the fight ended first.
+- **Where a monster ends its turn.** Of the monsters that move, summons and those that cannot move left out: of the 122
+  turns that began beside a fighter of the other side, 82 ended on the cell they began on; of the 989 others, 21; of the 5
+  that began on a mark, 1.
+- **The Roublard's fights.** Of level 45, it was reckoned to deal 204 damage a turn with 7 AP, against a monster of 53
+  life in the turns most often judged: the judge foresaw its fights over in a round on 138 of the 221 judges begun with a
+  bomb alive.
+- **Pushes along a diagonal of the coordinates**, a line of the screen: the 13 pushes of 2 cells whose target moved went a
+  step, 3 with the next cell free, and dealt no push damage; along a line of the coordinates pushes of 2 went 2 cells, 11
+  times, the next cell free. The 17 diagonal steps the server made, pushes and pulls, had both cells beside them free; the
+  8 it did not make, 7 of them a Pulsar's (13442, its pushes of 2 on a diagonal cross around the cell cast on), had one of
+  them taken by a fighter or not walkable. Pulls of a cell along such a diagonal went a step, 3 times. A Botte's rings
+  (13434, a push of 1103 for each ring of a cross of 1 to 3 the target stands in, by masks telling a Roublard's bombs from
+  the rest) moved a target one cell less than D3B foresees, 5 times.
+- **The walls' masks.** Each wall spell, *Mur de Feu* (13458) and its kin, has three effects of each roll: on the enemies
+  (`A`), on the summoner's allies but its own (`a,p`), and on its own but the bombs of the wall's kind (`a,P,f3112` for an
+  Explobombe's), none in state 92, *Kaboom*; each twice, stronger with the summoner in state 2483 (`*E2483`) than
+  without (`*e2483`). No capture holds an ally on a wall.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it
