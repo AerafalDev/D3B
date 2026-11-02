@@ -90,6 +90,7 @@ dotnet run --file scripts/mapping.cs       # matches the readable .proto files w
 dotnet run --file scripts/fights.cs        # replays the captured fights: what D3B.Engine foresees of each cast against the server's actions (D196); --details
                                            # --turns replays each turn the characters played through the AI, its foresight against what came; --live counts what D3B did (D206)
                                            # --enemy-life <n> has --turns plan against enemies of n times their life, bigger than any captured (D288)
+dotnet run --file scripts/icons.cs         # takes the IntelliJ icons the studio draws, each one's Apache 2.0 notice checked, into src/D3B.App/Themes/IntelliJIcons.axaml (D331); --check compares
 dotnet run -c Release --project benchmarks/D3B.Network.Benchmarks   # BenchmarkDotNet; --filter '*' runs them all
 dotnet run -c Release --project benchmarks/D3B.Engine.Benchmarks    # world paths, a fight's rules, its effects and the AI's turn on the installed build's pack; D3B_PACK names another
 ```

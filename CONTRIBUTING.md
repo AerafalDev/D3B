@@ -57,8 +57,8 @@ To run the app from source, the host needs the installed client's pack, schema a
   pages. A new feature is a new module or grows an existing one; it does not reach into another module's internals.
 - **`src/D3B.Engine` is pure**: pathfinding, the rules of a fight, its effects and the AI's search, with no I/O, so that
   they are tested and benchmarked on data alone.
-- **`scripts/` holds the tools**, file-based apps that read the official client. They follow their own conventions,
-  below, and have no tests.
+- **`scripts/` holds the tools**, file-based apps that read the official client, or, for `icons.cs`, take the IntelliJ
+  Platform's icons the studio draws. They follow their own conventions, below, and have no tests.
 - **Tests mirror `src/`**: one test project per project with logic, in `tests/`.
 
 ## Conventions
