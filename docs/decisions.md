@@ -6709,7 +6709,8 @@ wall's spell on an ally.*
 
 - **Asked**: after this session, the breeds' mechanisms set aside; the blueprints, very advanced, with many features,
   something truly complete; with them, the app's main working looked at again, an editor perhaps that merges profiles,
-  blueprints, journeys and the rest; and a global recast of the app's interface, less generic, less a dashboard.
+  blueprints, journeys and the rest; and a global recast of the app's interface, less generic, less a dashboard. Then:
+  research taken very far into what is worth making, and every question needed asked of the owner.
 - **What it changes**: the blueprints are no more a page beside the profiles (D117) but maybe the app's heart, a profile
   a graph whose nodes are the activities, harvesting, fighting, a journey, the bank, each with its settings. Profiles,
   presets, settings, activities, journeys and hunts as D3B has them are what such an editor would replace or hold: hard
