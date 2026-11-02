@@ -226,6 +226,7 @@ flowchart LR
 | [docs/architecture.md](docs/architecture.md) | How D3B is built: projects, modules, run time, protocol, data, app, fights. |
 | [docs/roadmap.md](docs/roadmap.md) | The steps in order, what each one did, and the next one. |
 | [docs/client.md](docs/client.md) | What the official client holds that D3B uses, measured. |
+| [docs/mockups/studio-7c.html](docs/mockups/studio-7c.html) | The studio's interactive mockup, which the app's shell follows (D319). |
 
 ## Contributing
 

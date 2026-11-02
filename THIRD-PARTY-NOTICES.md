@@ -54,6 +54,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## IntelliJ Platform's icons
+
+The studio's mockup, `docs/mockups/studio-7c.html` (D319), holds the dark variants of these SVG icons of the IntelliJ
+Platform, from `platform/icons/src/expui` in [JetBrains/intellij-community](https://github.com/JetBrains/intellij-community),
+each of whose files says "Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by
+the Apache 2.0 license" (the years from 2000-2022 to 2000-2025, by file). Only files carrying that notice are taken
+(D331). The license's text follows, under Apache-2.0. Its Lucide icons are under Lucide's license above.
+
+debugger/threadRunning, debugger/watch, general/add, general/chevronDown, general/chevronRight, general/close,
+general/collapseAll, general/copy, general/editorOnly, general/filter, general/groups, general/hide, general/history,
+general/ideUpdate, general/layout, general/locked, general/menu, general/moreHorizontal, general/pin, general/save,
+general/search, general/settings, general/user, nodes/dataTables, nodes/desktop, nodes/folder, nodes/function, nodes/tag,
+nodes/template, nodes/variable, run/pause, run/resume, run/run, run/stepOver, run/stop, status/error, status/info,
+status/success, status/warning, toolwindows/debug, toolwindows/messages, toolwindows/notifications, toolwindows/problems,
+toolwindows/profiler, toolwindows/project, toolwindows/run, toolwindows/services, toolwindows/structure, toolwindows/web.
+
 ## Components of the published app
 
 | Component | Copyright | License |
@@ -210,7 +226,7 @@ DISCLAIMER
 THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.
 ```
 
-## Apache-2.0, for SQLitePCLRaw
+## Apache-2.0, for SQLitePCLRaw and the IntelliJ Platform's icons
 
 ```text
 Apache License
