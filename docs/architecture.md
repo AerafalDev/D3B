@@ -52,7 +52,9 @@ measured by a bench replaying every captured fight (step 9, session 9d); the stu
 assets in files, behaviors of priority states over short actions run as one activity, nodes declared by the modules,
 variables, profiles as variants and the database started from zero (step 7, session 7b); the studio's frame, dark only,
 IntelliJ's icons, one title row and its run block, the docks remembered, the status bar and the search (step 7, session
-7c2). Everything else below is the target.
+7c2); the characters as cards with their classes' heads and the client's glyphs, pack format 9 and mapping format 16, the
+inspector, a character's tab with its map live and its column, the maps in the search, and the studio's motions (step 7,
+session 7c3). Everything else below is the target.
 
 ## Overview
 
@@ -422,7 +424,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-15.binpb` (`MappingFile`, D279), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-16.binpb` (`MappingFile`, D342), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -470,7 +472,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 8 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265):
+- A pack of format 9 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -485,7 +487,9 @@ Built at step 2 (D24 to D33):
   - the icons of every item, 32 pixels square in raw RGBA, the client's halved (D265), of the professions, 64, of the
     breeds' spells and their variants, 48, and of the monsters a sub-area lists, 64, by their look, decoded from the
     client's BC7 textures by the extraction tool (`IconCatalog`, each `IconTable` its size, D135 to D137, D237, D238),
-    read once by `GameTables`;
+    read once by `GameTables`; and from format 9 the classes' heads, 64, for each breed and sex (`IconCatalog.HeadOf`),
+    and the client's white glyphs D3B tints for the game's concepts, 64, from its DXT5 textures, keyed by `GameGlyph`
+    (D343);
     the app draws no spell's icon since the strategies went (D244);
   - what fights need, each read once by `GameTables`: the spells, their levels with every field and their effects, each
     with its zone, target mask and triggers as the client writes them, the spells' variants, and the Rogue's bombs and
@@ -517,7 +521,8 @@ Built at step 2 (D24 to D33):
 
 Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
 5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151); redesigned in 6d (D159 to D162); published and
-updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340), which 7c3 and 7c4 fill.
+updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340); the characters, the inspector and a
+character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
@@ -533,9 +538,11 @@ updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340), 
   the welcome.
 - **Icons** (D305, D331, D337): the IntelliJ Platform's, `Themes/IntelliJIcons.axaml`, which `scripts/icons.cs` writes, each
   file's Apache 2.0 notice checked, keyed as `General.Search`; `Icon` draws one on its grid of 16 in IntelliJ's colours,
-  repaints its neutral greys with a `Tint`, and greys it while its control is disabled. The pages 7c3 and 7c4 draw again keep
+  repaints its neutral greys with a `Tint`, and greys it while its control is disabled. The pages 7c4 draws again keep
   Lucide's line icons (`Themes/Icons.axaml`, D161) until then (D333). The game's own concepts take the client's own
-  icons, from 7c3 (D336).
+  glyphs from the pack, painted in the colour of the text around them by `GlyphIcon`, a neutral dot without the pack
+  (D336, D343); a character's portrait is its class's head on its breed's colour, its initials without it (`Portrait`,
+  `BreedColors`, D343).
 - **The docks** (D321, `StudioLayout` in `D3B.App.ViewModels.Studio`): on the left the characters over the assets, in the
   centre the editor's tabs over the bottom panel, on the right the inspector, rounded panels with a hairline edge, 5
   pixels apart, the one last pressed outlined in the accent. Every edge is dragged on its own (`DockSplitter`), within the
@@ -545,18 +552,25 @@ updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340), 
 - **The editor's tabs** (`EditorTabs`, `EditorTab`): the welcome, D3B's logo and version, the first shortcuts and where the
   host stands while it does not run (`WelcomeView`); each tab opened once, its view kept while it is open, closed by its ×,
   its neighbour then shown. A tab that reads the host shows where the host stands until it runs (`HostStateView`).
-- **The run block** (D322, D338, `RunBlockViewModel`): the chosen character's initials with a dot of its state, its name and
+- **The run block** (D322, D338, `RunBlockViewModel`): the chosen character's portrait with a dot of its state, its name and
   what it does live, a menu of the characters online, and only the buttons its state allows: none chosen, play disabled;
   stopped, play; playing, pause and stop; paused, play and stop; its edge green while it plays, amber paused. Play starts
   what its card would, its own profile first, or resumes it; pause is `BotActor.Pause`, which cuts the step as the player's
   hand does and says it in the journal (`BotEvent.PausedFromApp`); stop ends the activity. F5 plays or pauses, F6 pauses,
-  Shift F5 stops. A click on a bot's card chooses it too.
+  Shift F5 stops. A click on a character's card chooses it too, the inspector then showing it; a character chosen
+  offline shows disconnected.
 - **The search** (D328, D334, `SearchViewModel`, `SearchView`), Ctrl K or the title's field: over the studio, the recent
-  items first, then the assets, the characters, the commands with their shortcuts and the settings, grouped, the text found
-  lit; scopes by a click or Tab, `>` for the commands, `@` for the characters; the arrows, Enter and Escape. In 7c2 the
-  assets are the profiles, and the maps wait for a tab that opens one (D334). Help's Shortcuts opens it on the commands.
+  items first, then the assets, the characters, the maps, the commands with their shortcuts and the settings, grouped,
+  the text found lit; scopes by a click or Tab, `>` for the commands, `@` for the characters; the arrows, Enter and
+  Escape. The assets are the profiles until 7c4; a character opens its tab; a map, found by coordinates or name once a
+  letter is typed, shows in preview in the tab of the character chosen, else of the first online or known (D341). Help's
+  Shortcuts opens it on the commands.
 - **The status bar**: where the host stands with a dot, its detail in a tooltip; the client build; whether everything is
   saved, a profile edited with changes or not; once an update is downloaded, a button that restarts the app into it (D173).
+- **Motions** (D320, D347): short and easing out. The studio's buttons fade their surface, edge and text, a tool gives
+  under the press; menus and tooltips fade in; gauges (`ShareBar`) ease to their share; chevrons turn; what unfolds or is
+  chosen fades in (`FadeIn`). A surface lit on hover rests on `ClearColor`, the hover's grey with no alpha, never on
+  `Transparent`, white with no alpha, which a brush transition would flash through.
 - **One scale** (D159, D163, D335), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32; the
   studio's text 12.5, its small text 11, the pages' fonts 12, 14, 16, 22 and 28 (`Caption`, text, `Title`, `PageTitle`,
   `Figure`); the studio's controls 24 to 30 high (`StudioButton` and its classes: `Tool`, `TabFace`, `TitleSearch`,
@@ -569,28 +583,41 @@ updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340), 
   (choosing resources, a new profile), which the window shows through ShadUI's dialog host, closed by its buttons and
   Escape; `Toasts` says what was done and what a bot met, which the window shows through ShadUI's toasts. The view models
   only open, close and say, tested without a window.
-- **The pages until 7c3 and 7c4** (D333): each has its place in the docks, the bots' cards in the characters' panel, the
-  journal, the protocol and the statistics in the bottom panel, the accounts, the profiles, the map, the settings and the
-  modules' pages in the editor's tabs, opened from the Window menu, the search, a card or the gear. The trace and the
-  problems show a plain empty state, the assets a way to the profiles, the inspector what to choose. A module's page
+- **The characters' panel** (D323, D344, `CharactersViewModel` in `D3B.App.ViewModels.Characters`, `CharactersView`): a
+  card per character online, its bot's (`BotViewModel`): the portrait with the ring of its state (`PlayState`), its level
+  as a medal, its name and where it is, what it does with its glyph and progress, life and pods as gauges, the numbers in
+  tooltips; a fight tints it, the chosen one is outlined. The characters offline, those D3B knows and the bots whose
+  client left, are folded under their heading, a line each (`CharacterLineViewModel`). A click chooses the character for
+  the run block and the inspector, a double click or Enter opens its tab, the right click chooses it and opens its menu,
+  made as it opens: open, play, pause, stop, a profile, the start on connection, forgetting its account after a question
+  (`CharacterAccounts`). The profiles' menus list the project's, the given ones, then each activity with its defaults for
+  the session alone (`ProfileChoices`). What a bot meets while the app looks is a toast with a way to its journal or tab
+  (D162).
+- **The inspector** (D324, D345, `PropertiesViewModel` in `D3B.App.ViewModels.Properties`, `PropertiesView`): what is
+  chosen, under its search, which filters the rows; sections under a rule, faint labels whose column its edge resizes. A
+  character (`CharacterPropertiesViewModel`): its head, name, breed and level and a way to its tab; Game, its profile as a
+  field whose menu opens it or gives another, the start on connection with an arrow resetting it, the planning and fight
+  preferences disabled until 7f and 7h; Variables, the character's own, each with a dot of its type and its editor
+  (`VariableRowViewModel`), which sets what its behaviors read; Account, the account, its subscription and forgetting it.
+  An asset (`AssetPropertiesViewModel`), chosen in the profiles' tab or the search until 7c4's tree: its name, kind, file
+  and format, what it uses and what uses it, characters included.
+- **A character's tab** (D325, D346, `CharacterTabViewModel`, `CharacterView`): the character's map live
+  (`MapViewModel`, drawn for that character alone): its coordinates and place, the cell under the pointer and what stands
+  there, its layers in a menu, its tour's mini-map, a map the search found in preview; and a column: what it does now,
+  tinted by its state, with its progress, the time spent and when it should end, its failure and warnings; its behavior's
+  profile and rail, the layer Always listing the thresholds the activity watches (`BotActivity.Watches`) with their
+  gauges, then the behavior's states, the one playing lit (`BotActivity.Outline`); its session, a tile per resource with
+  its rate an hour, the profession raised, fights, deposits and kamas; its latest decisions, from its journal, and a way
+  to the journal until 7c4's trace.
+- **The pages until 7c4** (D333): the journal, the protocol and the statistics in the bottom panel, the profiles, the
+  settings and the modules' pages in the editor's tabs, opened from the Window menu, the search or the gear. The trace and
+  the problems show a plain empty state, the assets a way to the profiles. A module's page
   (`ModulePageViewModel`) is made the first time its tab shows and kept, refreshed every 250 ms while it shows through its
   context (`AppPageContext`, in `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead
   (`PageFailureViewModel`), logged, and the bots and the other pages go on. What a page's own code throws on the UI's
   thread, which nothing caught, is told by the page's assembly in its stack and fails that page alone; the app's own faults
   still end it. A page looks like the app's through the theme, Inter and ShadUI's styles it inherits, and the app's
   classes it may use: `PageHeader`, `PageTitle`, `Plate`, `PlateFooter`, `Card` and the typography's.
-- **The bots page**: a card per bot, in as many columns as the width holds (`CardGrid`), each whole: who, a dot of its
-  connection, said only when it is not connected, and the player's pause, resumed from the card; where, the coordinates large and the sub-area named from the
-  pack's texts; pods and kamas; what it is in the middle of; its activity, started from a profile or from the catalogue
-  with its defaults (D93, D99), the character's own profile chosen, stopped, with its status, steps and last
-  interruption, and the error it failed with (D103). A profile whose activity is gone, such as a Lua script's, is offered
-  with it said gone, and does not start (D119). An activity's report shows there: what it does, its tour as a bar and how
-  long it ran, what it counts with each item's icon and rate an hour, the experience gained and the fights, its warnings, and why it
-  ended (D131, D141, D144, D146). What a bot meets while the app looks, its activity done, failed or still full, the
-  player taking it over, a disconnection while it ran, a fight, is a toast with a way to its journal or map (D162).
-- **The accounts page** (D101, D244): a card per account the relay saw, its subscription and when it was seen, forgotten
-  after a question; its characters in rows under columns named once, each with the profile it plays and whether its
-  profile starts on connection.
 - **The profiles page** (D101, D159): the profiles as cards, each with its name, activity, settings at a glance and
   characters, edited, copied or deleted. A new profile, or a copy, is named in a dialog with its activity
   (`NewProfileViewModel`), then edited. The editor takes the page: its name in its header, beside its activity, cancel,
@@ -631,17 +658,16 @@ updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340), 
   capture of the game connection replayed, both chosen top right; filtered by sender, name and whether the readable
   protocol read them, in one toolbar; a frame unfolded in place, the ticket hidden. Both pages and the map look at one
   bot (`BotChoice`), each chosen in the same selector.
-- **The map page** (D120 to D122, `D3B.App.ViewModels.Maps`): the bot's map drawn from the pack as its character moves,
-  which its card opens. `MapCanvas`, in `D3B.App.Controls`, draws a scene flat in the theme's palette (`MapPalette`), a
-  map's fixed geometries built once, in layers toggled in a menu that shows each one's marks, the legend (D162): the cells, the character and its path, the elements by
-  what the server says of them, the NPCs, the exits from the world graph (`MapExits`), the other bots, the zones and
-  stairs, and the fight; it says the cell under the pointer, which the page describes in the app's language (`MapNames`). The haven
-  bag's and a fight's maps are drawn as the others; in a fight, the Fight layer tints the teams' placement cells red and
-  blue during the placement, the server's (D180), then draws the character on its fighter's cell and its allies and
-  enemies as squares, each described under the pointer with its life, AP and MP, a monster by its name (D184); a resource by its icon, faded once harvested (D141). A running
-  activity's report adds a line, an Activity layer ringing the elements it wants and the one it goes for and marking the
-  exit it heads to, and its tour's mini-map, gone through, probable, to see, without a resource, growing back and isolated
-  (D131, D138, D145, D149).
+- **The map** (D120 to D122, D346, `D3B.App.ViewModels.Maps`), in a character's tab: `MapCanvas`, in `D3B.App.Controls`,
+  draws a scene flat in the theme's palette (`MapPalette`), a map's fixed geometries built once, in layers toggled in a
+  menu: the cells, the character and its path, the elements by what the server says of them, the NPCs, the exits from the
+  world graph (`MapExits`), the other bots, the zones and stairs, and the fight; it says the cell under the pointer, which
+  the tab describes in the app's language (`MapNames`). The haven bag's and a fight's maps are drawn as the others; in a
+  fight, the Fight layer tints the teams' placement cells red and blue during the placement, the server's (D180), then
+  draws the character on its fighter's cell and its allies and enemies as squares, each described under the pointer with
+  its life, AP and MP, a monster by its name (D184); a resource by its icon, faded once harvested (D141). A running
+  activity's report rings the elements it wants and the one it goes for and marks the exit it heads to, and its tour's
+  mini-map, gone through, probable, to see, without a resource, growing back and isolated (D131, D138, D145, D149).
 - **Published** (D171): pushing a tag `v<version>` has `.github/workflows/release.yml` publish the app self-contained for
   win-x64, put the pack, schema and mapping of the build `ClientVersion` names in `data/<version>/` beside it with
   `scripts/embed.cs` (D172), and pack it with Velopack into the release `v<version>`: an installer, a portable zip, full and
@@ -676,7 +702,9 @@ cells in session 9f3 (D275).
   why. Migrations are written by `dotnet-ef`, a local tool, through a design-time context.
 - **Accounts and characters** (`AccountBook`): recorded as the relay sees them (`AccountRecorder`, an observer of the game
   connections), the server's list and the character the client chooses, queued off the relay's loop; forgotten on
-  demand. Each character may play a profile asset, by its id (`KnownCharacter.Profile`), and start it on connection; a
+  demand, each with its breed and sex from the list, which the studio draws its class's head from (`ListedCharacter`,
+  migration `CharacterLooks`, D342). Each character may play a profile asset, by its id (`KnownCharacter.Profile`), and
+  start it on connection; a
   profile deleted leaves its characters without one (`LeaveProfileAsync`). Migration `Strategies` dropped D213's switch
   and gave each character a strategy (D235, D240); migration `NoStrategy` deleted the strategies' profiles and presets and
   dropped the column, in SQLite's own `ALTER TABLE`, inside its transaction (D244).
@@ -1016,10 +1044,11 @@ character's (D279). The character's spells by the
   through game sessions, D3B's requests included, and the inspector's fields and replays on captures the tests write
   (D115); the logs and inspector pages against bots played the same way, in both languages (D111).
 - The app's dialogs and toasts are read from its view models (`Dialogs`, `Toasts`): a profile made, copied, closed with
-  changes and deleted, an account forgotten, resources chosen several at once, what a bot met said once; every icon is
+  changes and deleted, an account forgotten from the characters' menu, a character's profile, start and variables from the
+  inspector, resources chosen several at once, what a bot met said once; every icon is
   parsed within its grid (D161); every page and the profile editor's dialogs are drawn without a screen in both languages
   and themes, and looked at (D159, D162).
-- The map page against bots played the same way: its scene, exits, elements, NPCs, other bots, a fight's placement and
+- A character's map against bots played the same way, a map found by the search in preview included: its scene, exits, elements, NPCs, other bots, a fight's placement and
   fighters, a fight's and a missing map, and what a cell holds, in both languages; its drawing without a screen, a pixel of each mark checked in each
   theme's palette and the cell under the pointer described; its layout's cells found back from their centres (D120 to
   D122).
