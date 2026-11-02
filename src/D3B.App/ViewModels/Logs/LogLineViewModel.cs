@@ -35,9 +35,6 @@ internal sealed class LogLineViewModel
     /// <summary>Gets its tone: success, warning, danger, or neutral.</summary>
     public Tone Tone { get; }
 
-    /// <summary>Gets what it is about, at a glance.</summary>
-    public LogMark Mark { get; }
-
     /// <summary>Gets how far it is set in: a travel's map changes lie 1 deeper than the travel.</summary>
     public double Indent { get; }
 
@@ -53,7 +50,7 @@ internal sealed class LogLineViewModel
     /// <summary>Gets whether it is no problem, shown when the journal shows the infos.</summary>
     public bool IsInfo => !IsProblem;
 
-    public LogLineViewModel(DateTimeOffset at, string time, string? source, string text, string? detail, string? more, Tone tone, LogMark mark, int depth, LogWho? who = null)
+    public LogLineViewModel(DateTimeOffset at, string time, string? source, string text, string? detail, string? more, Tone tone, int depth, LogWho? who = null)
     {
         At = at;
         Time = time;
@@ -63,7 +60,6 @@ internal sealed class LogLineViewModel
         Detail = detail;
         More = more;
         Tone = tone;
-        Mark = mark;
         Indent = depth * IndentStep;
     }
 

@@ -200,6 +200,9 @@ internal sealed partial class MainViewModel : ObservableObject
             IsUnsaved = id => Profiles.Find(id)?.IsDirty == true,
         };
         Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), new StatisticsViewModel(localizer));
+        Bottom.HostFailure = () => IsFailed ? HostFailure : null;
+        Bottom.Problems.OpenFolder = folder => OpenFolder?.Invoke(folder);
+        Bottom.Problems.ChooseCharacter = key => RunBlock!.Choose(key);
         Updates = new UpdatesViewModel(localizer, updates, Dialogs, () => IsRunning && Bots.HasItems, _close);
         Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates)
         {
@@ -539,7 +542,7 @@ internal sealed partial class MainViewModel : ObservableObject
     private CharacterTabViewModel TabOf(CharacterKey key)
     {
         if (!_characterTabs.TryGetValue(key, out var tab))
-            _characterTabs[key] = tab = new CharacterTabViewModel(_localizer, key, Bots, OpenProfile, ShowJournalOf);
+            _characterTabs[key] = tab = new CharacterTabViewModel(_localizer, key, Bots, OpenProfile, Bottom.ShowTrace);
 
         return tab;
     }
@@ -547,6 +550,7 @@ internal sealed partial class MainViewModel : ObservableObject
     private void Chose(CharacterKey? key)
     {
         Characters.Chosen = key;
+        Bottom.Chosen = key;
         Properties.ShowCharacter(key);
         Characters.Refresh(_host.Services);
         Properties.Refresh(_host.Services);

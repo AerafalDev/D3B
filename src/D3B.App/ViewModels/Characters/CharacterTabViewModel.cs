@@ -35,7 +35,7 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
     private readonly Localizer _localizer;
     private readonly BotsViewModel _bots;
     private readonly Action<string> _openProfile;
-    private readonly Action<CharacterKey> _showJournal;
+    private readonly Action<CharacterKey> _showTrace;
     private readonly Dictionary<int, (int Level, long Experience)> _jobsAtStart = [];
     private AccountBook? _book;
     private GameTables? _tables;
@@ -189,13 +189,13 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
     /// <param name="key">The character.</param>
     /// <param name="bots">The bots, the character's among them once the host made it.</param>
     /// <param name="openProfile">Opens a profile, by its id.</param>
-    /// <param name="showJournal">Shows a character's journal, for the whole trace until 7c4's.</param>
-    public CharacterTabViewModel(Localizer localizer, CharacterKey key, BotsViewModel bots, Action<string> openProfile, Action<CharacterKey> showJournal)
+    /// <param name="showTrace">Shows a character's trace in the bottom panel (D327).</param>
+    public CharacterTabViewModel(Localizer localizer, CharacterKey key, BotsViewModel bots, Action<string> openProfile, Action<CharacterKey> showTrace)
     {
         _localizer = localizer;
         _bots = bots;
         _openProfile = openProfile;
-        _showJournal = showJournal;
+        _showTrace = showTrace;
         Key = key;
         Map = new MapViewModel(localizer, key);
     }
@@ -253,7 +253,7 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
     [RelayCommand]
     private void ShowTrace()
     {
-        _showJournal(Key);
+        _showTrace(Key);
     }
 
     private void RefreshNow(BotViewModel bot)

@@ -14,8 +14,8 @@ namespace D3B.App.Controls;
 /// as the white of an icon on the accent.
 /// </para>
 /// <para>
-/// The geometries are Lucide's, in <c>Themes/Icons.axaml</c> (D161), which the pages keep until the studio's sessions draw
-/// them again (D333); a button's icon takes the button's text colour.
+/// A geometry is a module page's own icon, lines in SVG's path syntax (<c>PageDefinition.Icon</c>); Lucide's, which the app
+/// drew until 7c4, are gone (D355). A button's icon takes the button's text colour.
 /// </para>
 /// </remarks>
 internal sealed class Icon : Control, ICustomHitTest

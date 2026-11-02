@@ -59,26 +59,26 @@ internal sealed class JournalLines
     /// <returns>The line.</returns>
     public LogLineViewModel Of(JournalEntry entry, string? source, LogWho? who = null)
     {
-        var (text, detail, tone, mark) = entry switch
+        var (text, detail, tone) = entry switch
         {
-            WalkEntry walk => (Format("JournalWalk", walk.Cell), Ended(walk.Outcome.ToString(), walk.Duration), ToneOf(walk.Outcome is WalkOutcome.Arrived), LogMark.Walk),
+            WalkEntry walk => (Format("JournalWalk", walk.Cell), Ended(walk.Outcome.ToString(), walk.Duration), ToneOf(walk.Outcome is WalkOutcome.Arrived)),
             MapChangeEntry change => MapChange(change),
-            UseEntry use => (Format("JournalUse", ElementName(use), SkillName(use.SkillId)), Ended(use.Outcome.ToString(), use.Duration), ToneOf(use.Outcome is UseOutcome.Used), LogMark.Leaf),
+            UseEntry use => (Format("JournalUse", ElementName(use), SkillName(use.SkillId)), Ended(use.Outcome.ToString(), use.Duration), ToneOf(use.Outcome is UseOutcome.Used)),
             TravelEntry travel => Travel(travel),
             BankEntry bank => Bank(bank),
-            ActivityStartedEntry started => (Format("JournalActivityStarted", started.Activity), null, Tone.Info, LogMark.Play),
-            ActivityInterruptedEntry interrupted => (Interrupted(interrupted), null, Tone.Warning, LogMark.Pause),
-            ActivityUnloadingEntry unloading => (Format("JournalUnloading", unloading.Activity, unloading.Weight, unloading.MaxWeight), null, Tone.Info, LogMark.Bag),
+            ActivityStartedEntry started => (Format("JournalActivityStarted", started.Activity), null, Tone.Info),
+            ActivityInterruptedEntry interrupted => (Interrupted(interrupted), null, Tone.Warning),
+            ActivityUnloadingEntry unloading => (Format("JournalUnloading", unloading.Activity, unloading.Weight, unloading.MaxWeight), null, Tone.Info),
             ActivityOverEntry over => Over(over),
-            ProfileNotStartedEntry profile => (Format("JournalProfileNotStarted", profile.Profile), NotStarted(profile), Tone.Warning, LogMark.Alert),
-            StateEnteredEntry state => (state.State is { } name ? Format("JournalStateEntered", state.Behavior, name) : Format("JournalNoState", state.Behavior), null, Tone.Info, LogMark.Route),
-            NoteEntry note => (note.Text, note.Behavior, Tone.Info, LogMark.Alert),
+            ProfileNotStartedEntry profile => (Format("JournalProfileNotStarted", profile.Profile), NotStarted(profile), Tone.Warning),
+            StateEnteredEntry state => (state.State is { } name ? Format("JournalStateEntered", state.Behavior, name) : Format("JournalNoState", state.Behavior), null, Tone.Info),
+            NoteEntry note => (note.Text, note.Behavior, Tone.Info),
             BotEventEntry bot => Event(bot.Event),
             FightEndEntry end => FightEnd(end),
-            _ => (entry.GetType().Name, null, Tone.Neutral, LogMark.Alert),
+            _ => (entry.GetType().Name, null, Tone.Neutral),
         };
 
-        return new LogLineViewModel(entry.At, Time(entry.At), source, text, detail, null, tone, mark, entry.Depth, who);
+        return new LogLineViewModel(entry.At, Time(entry.At), source, text, detail, null, tone, entry.Depth, who);
     }
 
     /// <summary>Says a problem of the host, in the host's own words.</summary>
@@ -93,10 +93,10 @@ internal sealed class JournalLines
         var text = problem.Message.Split('\n', 2)[0].TrimEnd('\r');
         var more = problem.Exception is { } exception ? problem.Message + Environment.NewLine + exception : null;
 
-        return new LogLineViewModel(problem.At, Time(problem.At), source, text, category, more, tone, LogMark.Alert, 0, who);
+        return new LogLineViewModel(problem.At, Time(problem.At), source, text, category, more, tone, 0, who);
     }
 
-    private (string, string?, Tone, LogMark) MapChange(MapChangeEntry change)
+    private (string, string?, Tone) MapChange(MapChangeEntry change)
     {
         var from = Place(change.From);
         var to = change.To is { } sought ? Place(sought) : "";
@@ -109,31 +109,25 @@ internal sealed class JournalLines
             MapChangeKind.Npc => Format("JournalNpcWay", from, to),
             _ => Side(change.From, change.To) is { } side ? Format("JournalScroll", from, to, side) : Format("JournalMapChange", from, to),
         };
-        var mark = change.Kind switch
-        {
-            MapChangeKind.Zaap => LogMark.Zaap,
-            MapChangeKind.HavenBag => LogMark.Home,
-            _ => LogMark.Map,
-        };
 
-        return (text, Ended(change.Outcome.ToString(), change.Duration), ToneOf(change.Outcome is MapChangeOutcome.Changed), mark);
+        return (text, Ended(change.Outcome.ToString(), change.Duration), ToneOf(change.Outcome is MapChangeOutcome.Changed));
     }
 
-    private (string, string?, Tone, LogMark) Travel(TravelEntry travel)
+    private (string, string?, Tone) Travel(TravelEntry travel)
     {
         var text = travel.Sought is { } sought ? Format("JournalTravel", PlaceNamed(sought)) : _localizer["JournalTravelNearest"];
         var detail = string.Join(Separator, _localizer["Outcome" + travel.Outcome], _localizer.Plural("Maps", travel.Changes), Duration(travel.Duration));
 
-        return (text, detail, ToneOf(travel.Outcome is TravelOutcome.Arrived), LogMark.Route);
+        return (text, detail, ToneOf(travel.Outcome is TravelOutcome.Arrived));
     }
 
-    private (string, string?, Tone, LogMark) Bank(BankEntry bank)
+    private (string, string?, Tone) Bank(BankEntry bank)
     {
         var text = bank.Outcome is BankOutcome.Done
             ? Format("JournalBanked", _localizer.Plural("Stacks", bank.Stacks), Format("KamasOf", bank.Kamas))
             : _localizer["JournalBank"];
 
-        return (text, Ended(bank.Outcome.ToString(), bank.Duration), ToneOf(bank.Outcome is BankOutcome.Done), LogMark.Bank);
+        return (text, Ended(bank.Outcome.ToString(), bank.Duration), ToneOf(bank.Outcome is BankOutcome.Done));
     }
 
     private string Interrupted(ActivityInterruptedEntry interrupted)
@@ -156,26 +150,26 @@ internal sealed class JournalLines
         return Format(key, interrupted.Activity, reason);
     }
 
-    private (string, string?, Tone, LogMark) Over(ActivityOverEntry over)
+    private (string, string?, Tone) Over(ActivityOverEntry over)
     {
         var steps = _localizer.Plural("Steps", over.Steps);
 
         return over.Outcome switch
         {
-            ActivityOutcome.Done => (Format("JournalActivityDone", over.Activity), steps, Tone.Success, LogMark.Stop),
-            ActivityOutcome.Stopped => (Format("JournalActivityStopped", over.Activity), steps, Tone.Neutral, LogMark.Stop),
-            _ when over.StillFull => (Format("JournalActivityStillFull", over.Activity), steps, Tone.Danger, LogMark.Alert),
-            _ when over.Error is { } error => (Format("JournalActivityFailedWith", over.Activity, error), steps, Tone.Danger, LogMark.Alert),
-            _ => (Format("JournalActivityFailed", over.Activity), steps, Tone.Danger, LogMark.Alert),
+            ActivityOutcome.Done => (Format("JournalActivityDone", over.Activity), steps, Tone.Success),
+            ActivityOutcome.Stopped => (Format("JournalActivityStopped", over.Activity), steps, Tone.Neutral),
+            _ when over.StillFull => (Format("JournalActivityStillFull", over.Activity), steps, Tone.Danger),
+            _ when over.Error is { } error => (Format("JournalActivityFailedWith", over.Activity, error), steps, Tone.Danger),
+            _ => (Format("JournalActivityFailed", over.Activity), steps, Tone.Danger),
         };
     }
 
-    private (string, string?, Tone, LogMark) FightEnd(FightEndEntry end)
+    private (string, string?, Tone) FightEnd(FightEndEntry end)
     {
         var won = end.Outcome is FightOutcome.Won;
         var gains = string.Join(Separator, Format("JournalExperience", end.Experience), Format("KamasOf", end.Kamas), _localizer.Plural("Objects", end.Objects));
 
-        return (_localizer[won ? "JournalFightWon" : "JournalFightLost"], gains, won ? Tone.Success : Tone.Danger, LogMark.Swords);
+        return (_localizer[won ? "JournalFightWon" : "JournalFightLost"], gains, won ? Tone.Success : Tone.Danger);
     }
 
     private string? NotStarted(ProfileNotStartedEntry profile)
@@ -189,17 +183,17 @@ internal sealed class JournalLines
         };
     }
 
-    private (string, string?, Tone, LogMark) Event(BotEvent bot)
+    private (string, string?, Tone) Event(BotEvent bot)
     {
         return bot switch
         {
-            BotEvent.Connected => (_localizer["JournalConnected"], null, Tone.Success, LogMark.Plug),
-            BotEvent.Disconnected => (_localizer["JournalDisconnected"], null, Tone.Neutral, LogMark.Plug),
-            BotEvent.PausedByPlayer => (_localizer["JournalPaused"], null, Tone.Warning, LogMark.Hand),
-            BotEvent.Resumed => (_localizer["JournalResumed"], null, Tone.Info, LogMark.Play),
-            BotEvent.PausedAfterFight => (_localizer["JournalPausedAfterFight"], null, Tone.Warning, LogMark.Pause),
-            BotEvent.PausedFromApp => (_localizer["JournalPausedFromApp"], null, Tone.Warning, LogMark.Pause),
-            _ => (_localizer["JournalFight"], null, Tone.Warning, LogMark.Swords),
+            BotEvent.Connected => (_localizer["JournalConnected"], null, Tone.Success),
+            BotEvent.Disconnected => (_localizer["JournalDisconnected"], null, Tone.Neutral),
+            BotEvent.PausedByPlayer => (_localizer["JournalPaused"], null, Tone.Warning),
+            BotEvent.Resumed => (_localizer["JournalResumed"], null, Tone.Info),
+            BotEvent.PausedAfterFight => (_localizer["JournalPausedAfterFight"], null, Tone.Warning),
+            BotEvent.PausedFromApp => (_localizer["JournalPausedFromApp"], null, Tone.Warning),
+            _ => (_localizer["JournalFight"], null, Tone.Warning),
         };
     }
 
