@@ -1,6 +1,7 @@
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Hosting;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
@@ -171,51 +172,46 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheLanguageAndThemeChangeFromThePageAsFromTheTitleBar()
+    public async Task TheLanguageChangesFromTheSettingsAndTheStudiosTabsFollowIt()
     {
         var main = await RunningAsync(AppPreferences.Load(PreferencesPath));
         var settings = main.Settings;
 
         Assert.True(settings.IsEnglish);
-        Assert.True(settings.IsDark);
 
         settings.UseFrenchCommand.Execute(null);
-        settings.UseLightCommand.Execute(null);
 
         Assert.True(settings.IsFrench);
-        Assert.False(settings.IsDark);
         Assert.Equal("Temps d'affichage", settings.Display.Label);
         Assert.Equal("Mesuré : 0,5 s", settings.Display.DefaultText);
-        Assert.Equal(("fr", AppPreferences.Light), (AppPreferences.Load(PreferencesPath).Language, AppPreferences.Load(PreferencesPath).Theme));
+        Assert.Equal("Bienvenue", main.Editor.Selected?.Title);
+        Assert.Equal("fr", AppPreferences.Load(PreferencesPath).Language);
 
         settings.UseEnglishCommand.Execute(null);
-        settings.UseDarkCommand.Execute(null);
 
         Assert.True(settings.IsEnglish);
-        Assert.True(settings.IsDark);
         Assert.Equal("Display time", settings.Display.Label);
+        Assert.Equal("Welcome", main.Editor.Selected?.Title);
     }
 
     [Fact]
-    public async Task TheSettingsPageShowsWhetherTheHostRunsOrNot()
+    public async Task TheSettingsTabShowsWhetherTheHostRunsOrNot()
     {
         var main = new MainViewModel(new HostRunner(_ => new TaskCompletionSource<BotHostStart>().Task), _localizer);
 
         main.ShowSettingsCommand.Execute(null);
 
-        Assert.True(main.IsSettingsPage);
-        Assert.False(main.IsBotsPage);
+        Assert.Equal(("settings", false), (main.Editor.Selected?.Key, main.Editor.Selected?.NeedsHost));
 
-        main.ShowBotsCommand.Execute(null);
+        main.ShowWelcomeCommand.Execute(null);
 
-        Assert.False(main.IsSettingsPage);
+        Assert.Equal("welcome", main.Editor.Selected?.Key);
 
         var running = await RunningAsync(AppPreferences.Load(PreferencesPath));
 
         running.ShowSettingsCommand.Execute(null);
-        running.ShowLogsCommand.Execute(null);
+        running.ShowBottomCommand.Execute(BottomTab.Journal);
 
-        Assert.False(running.IsSettingsPage);
-        Assert.True(running.IsLogsPage);
+        Assert.Equal(("settings", true, BottomTab.Journal), (running.Editor.Selected?.Key, running.Layout.IsBottomOpen, running.BottomTab));
     }
 }

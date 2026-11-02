@@ -12,6 +12,9 @@
         <Style Selector="Grid.Offline">
             <Setter Property="Opacity" Value="0.5" />
         </Style>
+        <Style Selector="Border.Plate.Chosen">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+        </Style>
         <Style Selector="Border.Count">
             <Setter Property="Background" Value="{DynamicResource GhostColor}" />
             <Setter Property="CornerRadius" Value="999" />
@@ -34,7 +37,11 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:BotViewModel">
-                        <Border Classes="Plate" Classes.Warned="{Binding IsPaused}">
+                        <Border
+                            Classes="Plate"
+                            Classes.Chosen="{Binding IsChosen}"
+                            Classes.Warned="{Binding IsPaused}"
+                            Tapped="OnCardTapped">
                             <DockPanel>
                                 <Border
                                     Classes="PlateFooter"

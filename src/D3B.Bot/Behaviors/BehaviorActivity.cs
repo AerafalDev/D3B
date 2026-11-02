@@ -203,7 +203,7 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     public void Pause()
     {
         _halt = true;
-        _bot?.Pause();
+        _bot?.PauseAfterStep();
         _ = _cut?.CancelAsync();
     }
 

@@ -63,11 +63,6 @@ internal sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsEnglish { get; private set; }
 
-    /// <summary>Gets whether the app is dark, which the window follows.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsLight))]
-    public partial bool IsDark { get; private set; }
-
     /// <summary>Gets whether a delay was raised above its default, which the page restores.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RestoreDelaysCommand))]
@@ -86,9 +81,6 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>Gets the app's version and its update (D173).</summary>
     public UpdatesViewModel Updates { get; }
-
-    /// <summary>Gets whether the app is light.</summary>
-    public bool IsLight => !IsDark;
 
     /// <summary>Initializes a new instance of the <see cref="SettingsViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
@@ -109,7 +101,6 @@ internal sealed partial class SettingsViewModel : ObservableObject
         _delays = Stored(() => BotDelays.Read(stored), BotDelays.Measured);
         _timeouts = Stored(() => RelayTimeouts.Read(stored), RelayTimeouts.Default);
         RecordsCaptures = bool.TryParse(stored[RelaySettings.CapturesEnabledKey], out var records) && records;
-        IsDark = preferences?.Theme != AppPreferences.Light;
         SettingsPath = preferences?.Path ?? AppPreferences.DefaultPath;
         Display = BotDelay("DelayDisplay", delays => delays.Display, (delays, delay) => delays with { Display = delay });
         BotWaits =
@@ -227,12 +218,6 @@ internal sealed partial class SettingsViewModel : ObservableObject
         HasRaisedDelays = AnyRaised();
     }
 
-    private void UseTheme(bool dark)
-    {
-        IsDark = dark;
-        _preferences?.RememberTheme(dark ? AppPreferences.Dark : AppPreferences.Light);
-    }
-
     partial void OnRecordsCapturesChanged(bool value)
     {
         if (!_remembers)
@@ -271,17 +256,5 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private void UseEnglish()
     {
         _useLanguage(Localizer.English);
-    }
-
-    [RelayCommand]
-    private void UseDark()
-    {
-        UseTheme(dark: true);
-    }
-
-    [RelayCommand]
-    private void UseLight()
-    {
-        UseTheme(dark: false);
     }
 }

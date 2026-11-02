@@ -1,0 +1,185 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--  The studio's menus (D320): the title row's words, lit on hover, opening a popup of rows that turn the accent under
+         the pointer, a check or an icon on their left and their shortcut faint on their right, with a short motion. A row's
+         shortcut is its Tag, said in the app's language, the window's key bindings acting on it.  -->
+    <ControlTheme TargetType="MenuItem" x:Key="TitleMenuItem">
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Padding" Value="9,0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Panel>
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Name="PART_LayoutRoot"
+                        Padding="{TemplateBinding Padding}">
+                        <ContentPresenter
+                            Content="{TemplateBinding Header}"
+                            Foreground="{TemplateBinding Foreground}"
+                            Name="PART_HeaderPresenter"
+                            RecognizesAccessKey="True"
+                            VerticalAlignment="Center" />
+                    </Border>
+                    <Popup
+                        HorizontalOffset="-4"
+                        IsLightDismissEnabled="True"
+                        IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}"
+                        Name="PART_Popup"
+                        OverlayInputPassThroughElement="{Binding $parent[Menu]}"
+                        Placement="BottomEdgeAlignedLeft"
+                        VerticalOffset="4"
+                        WindowManagerAddShadowHint="False">
+                        <Border Classes="MenuPopup">
+                            <ScrollViewer>
+                                <ItemsPresenter
+                                    Grid.IsSharedSizeScope="True"
+                                    ItemsPanel="{TemplateBinding ItemsPanel}"
+                                    Name="PART_ItemsPresenter" />
+                            </ScrollViewer>
+                        </Border>
+                    </Popup>
+                </Panel>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover, ^:open">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme TargetType="MenuItem" x:Key="{x:Type MenuItem}">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Panel>
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Name="PART_LayoutRoot"
+                        Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition SharedSizeGroup="MenuItemIcon" Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition SharedSizeGroup="MenuItemKeys" Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Panel
+                                Margin="0,0,8,0"
+                                Name="PART_IconColumn"
+                                VerticalAlignment="Center"
+                                Width="14">
+                                <Path
+                                    Data="M 2 7.5 L 5.5 11 L 12 4"
+                                    IsVisible="False"
+                                    Name="Check"
+                                    Stroke="{TemplateBinding Foreground}"
+                                    StrokeLineCap="Round"
+                                    StrokeJoin="Round"
+                                    StrokeThickness="1.4" />
+                                <ContentPresenter Content="{TemplateBinding Icon}" Name="PART_IconPresenter" />
+                            </Panel>
+                            <ContentPresenter
+                                Content="{TemplateBinding Header}"
+                                Foreground="{TemplateBinding Foreground}"
+                                Grid.Column="1"
+                                Name="PART_HeaderPresenter"
+                                RecognizesAccessKey="True"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{DynamicResource DimColor}"
+                                Grid.Column="2"
+                                Margin="24,0,0,0"
+                                Name="Keys"
+                                Text="{TemplateBinding Tag}"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <Popup
+                        HorizontalOffset="4"
+                        IsLightDismissEnabled="False"
+                        IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}"
+                        Name="PART_Popup"
+                        Placement="RightEdgeAlignedTop"
+                        WindowManagerAddShadowHint="False">
+                        <Border Classes="MenuPopup">
+                            <ScrollViewer>
+                                <ItemsPresenter
+                                    Grid.IsSharedSizeScope="True"
+                                    ItemsPanel="{TemplateBinding ItemsPanel}"
+                                    Name="PART_ItemsPresenter" />
+                            </ScrollViewer>
+                        </Border>
+                    </Popup>
+                </Panel>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:checked /template/ Path#Check">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="^:pointerover, ^:selected">
+            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+            <Setter Property="Foreground" Value="White" />
+            <Style Selector="^ /template/ TextBlock#Keys">
+                <Setter Property="Foreground" Value="#DBE8FF" />
+            </Style>
+        </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme TargetType="Menu" x:Key="TitleMenu">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="ItemContainerTheme" Value="{StaticResource TitleMenuItem}" />
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" Name="PART_ItemsPresenter" />
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <ControlTheme TargetType="MenuFlyoutPresenter" x:Key="{x:Type MenuFlyoutPresenter}">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Classes="MenuPopup">
+                    <ScrollViewer>
+                        <ItemsPresenter
+                            Grid.IsSharedSizeScope="True"
+                            ItemsPanel="{TemplateBinding ItemsPanel}"
+                            KeyboardNavigation.TabNavigation="Continue"
+                            Name="PART_ItemsPresenter" />
+                    </ScrollViewer>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <ControlTheme TargetType="ContextMenu" x:Key="{x:Type ContextMenu}">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Classes="MenuPopup">
+                    <ScrollViewer>
+                        <ItemsPresenter
+                            Grid.IsSharedSizeScope="True"
+                            ItemsPanel="{TemplateBinding ItemsPanel}"
+                            KeyboardNavigation.TabNavigation="Continue"
+                            Name="PART_ItemsPresenter" />
+                    </ScrollViewer>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>

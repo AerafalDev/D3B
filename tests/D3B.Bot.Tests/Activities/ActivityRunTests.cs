@@ -1,4 +1,5 @@
 using D3B.Bot.Activities;
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
@@ -137,6 +138,32 @@ public sealed class ActivityRunTests : IAsyncDisposable
 
         Assert.Equal(2, await activity.SteppingAsync(bot));
         Assert.Equal([Interruption.Player], activity.Recoveries);
+
+        connection.Server(new KamasUpdateEvent { Kamas = 0 });
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+    }
+
+    [Fact]
+    public async Task ThePauseFromTheAppCutsTheStepAsThePlayersHandThenTheActivityResumes()
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity();
+        var run = bot.StartActivity(activity);
+
+        await activity.SteppingAsync(bot);
+        bot.Pause();
+        await WaitForAsync(() => run.Status is ActivityStatus.Waiting);
+        await bot.ProcessedAsync();
+
+        Assert.True(bot.IsPaused);
+        Assert.Equal(Interruption.Player, run.LastInterruption);
+        Assert.Contains(bot.Journal.All(), entry => entry is BotEventEntry { Event: BotEvent.PausedFromApp });
+        Assert.DoesNotContain(bot.Journal.All(), entry => entry is BotEventEntry { Event: BotEvent.PausedAfterFight });
+
+        bot.Resume();
+
+        Assert.Equal(2, await activity.SteppingAsync(bot));
 
         connection.Server(new KamasUpdateEvent { Kamas = 0 });
 

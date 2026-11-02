@@ -1,0 +1,310 @@
+<UserControl
+    x:Class="D3B.App.Views.SearchView"
+    x:ClassModifier="internal"
+    x:DataType="studio:SearchViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:studio="clr-namespace:D3B.App.ViewModels.Studio"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="Button.Scope">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="CornerRadius" Value="13" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
+        <Style Selector="Button.Scope:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+        </Style>
+        <Style Selector="Button.Scope.On">
+            <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+        <Style Selector="Border.Result">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.Result.Active">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+        </Style>
+        <Style Selector="Border.Result TextBlock.Enter">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Border.Result.Active TextBlock.Enter">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Border.Glyph">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource TipColor}" />
+        </Style>
+    </UserControl.Styles>
+    <Border
+        Background="#1A1A1E"
+        BorderBrush="{DynamicResource BorderColor}"
+        BorderThickness="1"
+        BoxShadow="0 30 80 0 #99000000"
+        CornerRadius="14"
+        HorizontalAlignment="Center"
+        Margin="16,72,16,16"
+        MaxHeight="560"
+        VerticalAlignment="Top"
+        Width="640">
+        <DockPanel>
+            <Border
+                BorderBrush="{DynamicResource BorderColor60}"
+                BorderThickness="0,0,0,1"
+                DockPanel.Dock="Top"
+                Height="52"
+                Padding="16,0">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <c:Icon
+                        Drawing="{StaticResource General.Search}"
+                        Height="18"
+                        VerticalAlignment="Center"
+                        Width="18" />
+                    <TextBox
+                        Background="Transparent"
+                        BorderThickness="0"
+                        FontSize="15"
+                        Foreground="{DynamicResource BrightColor}"
+                        Grid.Column="1"
+                        KeyDown="OnQueryKeyDown"
+                        Margin="10,0"
+                        MinHeight="0"
+                        Name="QueryBox"
+                        Padding="0"
+                        Text="{Binding Query}"
+                        VerticalAlignment="Center"
+                        PlaceholderText="{l:Tr SearchWatermark}" />
+                    <Border
+                        Classes="Key Popup"
+                        Grid.Column="2"
+                        VerticalAlignment="Center">
+                        <TextBlock Text="{l:Tr KeyEscape}" />
+                    </Border>
+                </Grid>
+            </Border>
+            <Border
+                BorderBrush="{DynamicResource BorderColor60}"
+                BorderThickness="0,0,0,1"
+                DockPanel.Dock="Top"
+                Padding="12,8">
+                <ItemsControl ItemsSource="{Binding Chips}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="studio:SearchScopeChip">
+                            <Button
+                                Classes="Scope"
+                                Classes.On="{Binding IsOn}"
+                                Click="OnScopeClick"
+                                Content="{Binding Name}"
+                                Focusable="False" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+            <Border
+                BorderBrush="{DynamicResource BorderColor60}"
+                BorderThickness="0,1,0,0"
+                DockPanel.Dock="Bottom"
+                Height="36"
+                Padding="14,0">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                    <Grid.Styles>
+                        <Style Selector="StackPanel.Hint">
+                            <Setter Property="Orientation" Value="Horizontal" />
+                            <Setter Property="Spacing" Value="5" />
+                            <Setter Property="Margin" Value="0,0,14,0" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                        <Style Selector="StackPanel.Hint TextBlock.HintText">
+                            <Setter Property="FontSize" Value="11.5" />
+                            <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                        <Style Selector="Path.Arrow">
+                            <Setter Property="Stroke" Value="{DynamicResource MutedColor}" />
+                            <Setter Property="StrokeThickness" Value="1.1" />
+                            <Setter Property="StrokeLineCap" Value="Round" />
+                            <Setter Property="StrokeJoin" Value="Round" />
+                            <Setter Property="Width" Value="8" />
+                            <Setter Property="Height" Value="8" />
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                        <Style Selector="StackPanel.Hint Border.Key">
+                            <Setter Property="Height" Value="16" />
+                            <Setter Property="MinWidth" Value="16" />
+                            <Setter Property="Background" Value="{DynamicResource TipColor}" />
+                        </Style>
+                    </Grid.Styles>
+                    <StackPanel Classes="Hint">
+                        <!--  Arrows drawn, not typed: Inter, the app's only typeface, has no arrow glyphs.  -->
+                        <Border Classes="Key">
+                            <Path Classes="Arrow" Data="M 4 7.5 L 4 1 M 1.5 3.5 L 4 1 L 6.5 3.5" />
+                        </Border>
+                        <Border Classes="Key">
+                            <Path Classes="Arrow" Data="M 4 0.5 L 4 7 M 1.5 4.5 L 4 7 L 6.5 4.5" />
+                        </Border>
+                        <TextBlock Classes="HintText" Text="{l:Tr SearchHintMove}" />
+                    </StackPanel>
+                    <StackPanel Classes="Hint" Grid.Column="1">
+                        <Border Classes="Key">
+                            <TextBlock Text="{l:Tr KeyEnter}" />
+                        </Border>
+                        <TextBlock Classes="HintText" Text="{l:Tr SearchHintOpen}" />
+                    </StackPanel>
+                    <StackPanel Classes="Hint" Grid.Column="2">
+                        <Border Classes="Key">
+                            <TextBlock Text="Tab" />
+                        </Border>
+                        <TextBlock Classes="HintText" Text="{l:Tr SearchHintScope}" />
+                    </StackPanel>
+                    <StackPanel
+                        Classes="Hint"
+                        Grid.Column="4"
+                        Margin="0">
+                        <Border Classes="Key">
+                            <TextBlock Text="&gt;" />
+                        </Border>
+                        <TextBlock Classes="HintText" Text="{l:Tr SearchHintCommands}" />
+                        <Border Classes="Key">
+                            <TextBlock Text="@" />
+                        </Border>
+                        <TextBlock Classes="HintText" Text="{l:Tr SearchHintCharacters}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <Panel>
+                <TextBlock
+                    Classes="Dim"
+                    HorizontalAlignment="Center"
+                    IsVisible="{Binding IsEmpty}"
+                    Margin="0,28"
+                    Text="{Binding EmptyText}" />
+                <ScrollViewer Name="Results" Padding="6">
+                    <ItemsControl ItemsSource="{Binding Groups}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="studio:SearchGroup">
+                                <StackPanel>
+                                    <Grid
+                                        ColumnDefinitions="*,Auto"
+                                        Height="28"
+                                        Margin="10,0">
+                                        <TextBlock
+                                            Classes="Dim"
+                                            FontSize="11.5"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding Title}"
+                                            VerticalAlignment="Center" />
+                                        <TextBlock
+                                            Classes="Dim"
+                                            FontSize="11.5"
+                                            Grid.Column="1"
+                                            IsVisible="{Binding HasMore}"
+                                            Text="{Binding More}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding Results}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="studio:SearchResult">
+                                                <Border
+                                                    Classes="Result"
+                                                    Classes.Active="{Binding IsActive}"
+                                                    PointerEntered="OnResultPointerEntered"
+                                                    PointerPressed="OnResultPressed">
+                                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                                        <Panel VerticalAlignment="Center">
+                                                            <Border Classes="Glyph" IsVisible="{Binding Item.Icon, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <c:Icon
+                                                                    Drawing="{Binding Item.Icon, Converter={x:Static c:DrawingOf.Instance}}"
+                                                                    Height="13"
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"
+                                                                    Width="13" />
+                                                            </Border>
+                                                            <Border Classes="Glyph" IsVisible="{Binding Item.Initials, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                                <TextBlock
+                                                                    Classes="Bright"
+                                                                    FontSize="10.5"
+                                                                    FontWeight="SemiBold"
+                                                                    HorizontalAlignment="Center"
+                                                                    Text="{Binding Item.Initials}"
+                                                                    VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <Border Classes="Glyph">
+                                                                <Border.IsVisible>
+                                                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                                        <Binding Converter="{x:Static ObjectConverters.IsNull}" Path="Item.Icon" />
+                                                                        <Binding Converter="{x:Static StringConverters.IsNullOrEmpty}" Path="Item.Initials" />
+                                                                    </MultiBinding>
+                                                                </Border.IsVisible>
+                                                                <Path
+                                                                    Data="M 5 3 L 9 7 L 5 11"
+                                                                    HorizontalAlignment="Center"
+                                                                    Stroke="{DynamicResource MutedColor}"
+                                                                    StrokeLineCap="Round"
+                                                                    StrokeJoin="Round"
+                                                                    StrokeThickness="1.4"
+                                                                    VerticalAlignment="Center" />
+                                                            </Border>
+                                                        </Panel>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Margin="10,0,0,0"
+                                                            TextTrimming="CharacterEllipsis"
+                                                            VerticalAlignment="Center"><Run Text="{Binding Before}" /><Run FontWeight="SemiBold" Foreground="{DynamicResource AccentTextColor}" Text="{Binding Match}" /><Run Text="{Binding After}" /></TextBlock>
+                                                        <TextBlock
+                                                            Classes="Dim"
+                                                            Grid.Column="2"
+                                                            Margin="10,0,0,0"
+                                                            Text="{Binding Item.Detail}"
+                                                            TextTrimming="CharacterEllipsis"
+                                                            VerticalAlignment="Center" />
+                                                        <c:KeyTip
+                                                            Grid.Column="3"
+                                                            IsVisible="{Binding HasKeys}"
+                                                            Keys="{Binding Item.Keys}"
+                                                            VerticalAlignment="Center" />
+                                                        <TextBlock
+                                                            Classes="Dim Enter"
+                                                            FontSize="11.5"
+                                                            Grid.Column="3"
+                                                            IsVisible="{Binding !HasKeys}"
+                                                            Text="{l:Tr KeyEnter}"
+                                                            VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Panel>
+        </DockPanel>
+    </Border>
+</UserControl>

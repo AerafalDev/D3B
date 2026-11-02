@@ -40,6 +40,7 @@ internal sealed partial class BotViewModel : ObservableObject
     private readonly Action<CharacterKey>? _showJournal;
     private readonly Action<CharacterKey>? _showMap;
     private readonly Toasts? _toasts;
+    private readonly Action<BotViewModel>? _choose;
     private readonly GameTextFormatter _says;
     private readonly GameIcons? _icons;
     private readonly TimeProvider _time;
@@ -238,6 +239,10 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     public partial string? Error { get; private set; }
 
+    /// <summary>Gets or sets whether the run block drives this bot, its card then outlined in the accent (D322, D323).</summary>
+    [ObservableProperty]
+    public partial bool IsChosen { get; set; }
+
     /// <summary>Initializes a new instance of the <see cref="BotViewModel"/> class.</summary>
     /// <param name="bot">The bot.</param>
     /// <param name="services">The host's services: the activities, the profiles, and the pack's world and texts.</param>
@@ -245,10 +250,12 @@ internal sealed partial class BotViewModel : ObservableObject
     /// <param name="showJournal">Shows the bot's journal on the logs page, or <see langword="null"/> when no page shows it.</param>
     /// <param name="showMap">Shows the bot's map on the map page, or <see langword="null"/> when no page shows it.</param>
     /// <param name="toasts">What the window says in its toasts, of what the bot meets, or <see langword="null"/> to say nothing.</param>
-    public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer, Action<CharacterKey>? showJournal = null, Action<CharacterKey>? showMap = null, Toasts? toasts = null)
+    /// <param name="choose">Chooses the bot for the run block, as a click on its card does, or <see langword="null"/>.</param>
+    public BotViewModel(BotActor bot, IServiceProvider services, Localizer localizer, Action<CharacterKey>? showJournal = null, Action<CharacterKey>? showMap = null, Toasts? toasts = null, Action<BotViewModel>? choose = null)
     {
         Bot = bot;
         _toasts = toasts;
+        _choose = choose;
         _showJournal = showJournal;
         _showMap = showMap;
         _services = services;
@@ -455,6 +462,12 @@ internal sealed partial class BotViewModel : ObservableObject
     private void Resume()
     {
         Bot.Resume();
+    }
+
+    [RelayCommand]
+    private void Choose()
+    {
+        _choose?.Invoke(this);
     }
 
     [RelayCommand]

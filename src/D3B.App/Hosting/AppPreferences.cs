@@ -2,12 +2,13 @@ using System.Text.Json;
 
 namespace D3B.App.Hosting;
 
-/// <summary>What the app remembers of its own: its language and theme, its sidebar folded or not, and the host's settings it changed, in a file of its own beside the database (D101, D151, D159).</summary>
+/// <summary>What the app remembers of its own: its language, the studio's layout, and the host's settings it changed, in a file of its own beside the database (D101, D151, D321).</summary>
 /// <remarks>
 /// <para>
 /// Read before the window shows, while the host, and its database, still get ready: the window opens in the language and
-/// theme it was left in. A file that does not read, or cannot be written, leaves the app on its defaults, the system's
-/// language and dark, and the host on its own.
+/// the layout it was left in. A file that does not read, or cannot be written, leaves the app on its defaults, the system's
+/// language and the default layout, and the host on its own. The studio is dark only (D320): an older file's theme, and its
+/// sidebar folded or not, are read no more and dropped at the next write.
 /// </para>
 /// <para>
 /// The host's settings are its configuration's own keys and values, such as <c>Delays:Display</c> in seconds or
@@ -18,12 +19,6 @@ namespace D3B.App.Hosting;
 /// </remarks>
 internal sealed class AppPreferences
 {
-    /// <summary>The theme that is not the default.</summary>
-    public const string Light = "Light";
-
-    /// <summary>The default theme.</summary>
-    public const string Dark = "Dark";
-
     private static readonly JsonSerializerOptions _json = new() { WriteIndented = true };
 
     private readonly SortedDictionary<string, string> _host;
@@ -37,21 +32,17 @@ internal sealed class AppPreferences
     /// <summary>Gets the language the app was left in, <c>fr</c> or <c>en</c>, if it was changed.</summary>
     public string? Language { get; private set; }
 
-    /// <summary>Gets the theme the app was left in, if it was changed.</summary>
-    public string? Theme { get; private set; }
-
-    /// <summary>Gets whether the sidebar was left folded to its icons.</summary>
-    public bool IsSidebarCollapsed { get; private set; }
+    /// <summary>Gets the studio's layout as it was left, if it was changed.</summary>
+    public StudioLayoutState? Layout { get; private set; }
 
     /// <summary>Gets the host's settings the app changed, by their configuration's keys, which it gives the host as it starts.</summary>
     public IReadOnlyDictionary<string, string?> Host => _host.ToDictionary(setting => setting.Key, string? (setting) => setting.Value, StringComparer.OrdinalIgnoreCase);
 
-    private AppPreferences(string path, string? language, string? theme, bool sidebarCollapsed, IReadOnlyDictionary<string, string>? host)
+    private AppPreferences(string path, string? language, StudioLayoutState? layout, IReadOnlyDictionary<string, string>? host)
     {
         Path = path;
         Language = language;
-        Theme = theme;
-        IsSidebarCollapsed = sidebarCollapsed;
+        Layout = layout;
         _host = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (key, value) in host ?? new Dictionary<string, string>())
@@ -72,11 +63,11 @@ internal sealed class AppPreferences
         {
             var stored = JsonSerializer.Deserialize<Stored>(File.ReadAllText(path));
 
-            return new AppPreferences(path, stored?.Language, stored?.Theme, stored?.SidebarCollapsed ?? false, stored?.Host);
+            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
-            return new AppPreferences(path, null, null, false, null);
+            return new AppPreferences(path, null, null, null);
         }
     }
 
@@ -88,19 +79,11 @@ internal sealed class AppPreferences
         Save();
     }
 
-    /// <summary>Remembers the theme the app is in.</summary>
-    /// <param name="theme"><see cref="Dark"/> or <see cref="Light"/>.</param>
-    public void RememberTheme(string theme)
+    /// <summary>Remembers the studio's layout, or forgets it to give the default back.</summary>
+    /// <param name="layout">The layout, or <see langword="null"/> for the default.</param>
+    public void RememberLayout(StudioLayoutState? layout)
     {
-        Theme = theme;
-        Save();
-    }
-
-    /// <summary>Remembers whether the sidebar is folded to its icons.</summary>
-    /// <param name="collapsed">Whether it is.</param>
-    public void RememberSidebar(bool collapsed)
-    {
-        IsSidebarCollapsed = collapsed;
+        Layout = layout;
         Save();
     }
 
@@ -126,7 +109,7 @@ internal sealed class AppPreferences
         try
         {
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Theme, IsSidebarCollapsed ? true : null, _host.Count > 0 ? _host : null), _json));
+            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null), _json));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -134,5 +117,5 @@ internal sealed class AppPreferences
         }
     }
 
-    private sealed record Stored(string? Language, string? Theme, bool? SidebarCollapsed, IReadOnlyDictionary<string, string>? Host);
+    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host);
 }

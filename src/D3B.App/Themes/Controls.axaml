@@ -6,14 +6,18 @@
         <Setter Property="Template">
             <ControlTemplate>
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled" Name="PART_Scroll">
-                    <Grid Margin="32,24,32,32" RowDefinitions="Auto,*">
+                    <Grid
+                        Margin="32,24,32,32"
+                        Name="PART_Body"
+                        RowDefinitions="Auto,*">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition MaxWidth="1200" Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid
                             ColumnDefinitions="*,Auto"
                             Margin="0,0,0,16"
-                            MinHeight="36">
+                            MinHeight="36"
+                            Name="PART_Header">
                             <Panel VerticalAlignment="Center">
                                 <StackPanel
                                     IsVisible="{TemplateBinding Header, Converter={x:Static ObjectConverters.IsNull}}"
@@ -137,5 +141,66 @@
             <Setter Property="Foreground" Value="{DynamicResource ErrorColor}" />
             <Setter Property="Background" Value="{DynamicResource ErrorColor10}" />
         </Style>
+    </ControlTheme>
+    <ControlTheme TargetType="c:KeyTip" x:Key="{x:Type c:KeyTip}">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock
+                        FontWeight="Medium"
+                        Text="{TemplateBinding Text}"
+                        VerticalAlignment="Center" />
+                    <ItemsControl ItemsSource="{TemplateBinding KeyCaps}" VerticalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="3" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Border Classes="Key Tip">
+                                    <TextBlock Text="{Binding}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+    <!--  The studio's own buttons, a surface and its content (D320): ShadUI's centres its content and sets its own padding and
+         weight, where the frame's tabs, tools and rows lay theirs out across the button. Each class's look is in Styles.axaml.  -->
+    <ControlTheme TargetType="Button" x:Key="StudioButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Arrow" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Duration="0:0:0.12" Property="Background" />
+            </Transitions>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}"
+                    Padding="{TemplateBinding Padding}">
+                    <ContentPresenter
+                        Content="{TemplateBinding Content}"
+                        ContentTemplate="{TemplateBinding ContentTemplate}"
+                        Foreground="{TemplateBinding Foreground}"
+                        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                        Name="PART_ContentPresenter"
+                        RecognizesAccessKey="True"
+                        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
     </ControlTheme>
 </ResourceDictionary>

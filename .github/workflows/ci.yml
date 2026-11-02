@@ -65,6 +65,9 @@ jobs:
       - name: Build the embedding tool
         run: dotnet build scripts/embed.cs
 
+      - name: Build the icons tool
+        run: dotnet build scripts/icons.cs
+
       - name: Check formatting
         run: dotnet format --verify-no-changes --no-restore
 

@@ -1,0 +1,47 @@
+<UserControl
+    x:Class="D3B.App.Views.HostStateView"
+    x:ClassModifier="internal"
+    x:DataType="vm:MainViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+    xmlns:vm="clr-namespace:D3B.App.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--  What a panel reading the host shows while it does not run: it gets ready, failed, or stops; the welcome says why.  -->
+    <StackPanel
+        HorizontalAlignment="Center"
+        Margin="16"
+        MaxWidth="280"
+        Spacing="8"
+        VerticalAlignment="Center">
+        <shadui:Loading
+            Height="16"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding IsStarting}"
+            Width="16" />
+        <c:Icon
+            Drawing="{StaticResource Status.Error}"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding IsFailed}" />
+        <TextBlock
+            Classes="Muted"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding IsStarting}"
+            Text="{l:Tr HostStartingTitle}"
+            TextAlignment="Center" />
+        <TextBlock
+            Classes="Muted"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding IsStopping}"
+            Text="{l:Tr HostStoppingTitle}"
+            TextAlignment="Center" />
+        <TextBlock
+            Classes="Muted"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding IsFailed}"
+            Text="{l:Tr HostFailedShort}"
+            TextAlignment="Center"
+            TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

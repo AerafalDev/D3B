@@ -6,6 +6,7 @@ using Avalonia.VisualTree;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
 using D3B.Bot.Activities;
@@ -42,8 +43,9 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
     private static int Icons(Window window)
     {
-        // The pages' icons, the pack's: the title bar's logo is the window's own, outside its content (D231).
-        return ((Visual)window.Content!).GetVisualDescendants().OfType<Image>().Count(image => image.IsEffectivelyVisible && image.Source is not null);
+        // The pages' icons, the pack's: D3B's logo, on the welcome and its tab, is the app's own (D231).
+        return ((Visual)window.Content!).GetVisualDescendants().OfType<Image>()
+            .Count(image => image.IsEffectivelyVisible && image.Source is not null && !image.GetVisualAncestors().Any(parent => parent is WelcomeView || parent is Border { Classes: var classes } && classes.Contains("TabHost")));
     }
 
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
@@ -356,7 +358,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));
-            main.ShowBotsCommand.Execute(null);
+            main.ShowWelcomeCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));
@@ -451,7 +453,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.ShowStatisticsCommand.Execute(null);
+            main.ShowBottomCommand.Execute(BottomTab.Statistics);
             Dispatcher.UIThread.RunJobs();
 
             var english = Texts(window);

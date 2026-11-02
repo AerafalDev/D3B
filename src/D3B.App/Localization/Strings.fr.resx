@@ -587,15 +587,6 @@
   <data name="Language" xml:space="preserve">
     <value>Langue</value>
   </data>
-  <data name="Theme" xml:space="preserve">
-    <value>Thème</value>
-  </data>
-  <data name="ThemeDark" xml:space="preserve">
-    <value>Sombre</value>
-  </data>
-  <data name="ThemeLight" xml:space="preserve">
-    <value>Clair</value>
-  </data>
   <data name="SettingsData" xml:space="preserve">
     <value>Données</value>
   </data>
@@ -1250,12 +1241,6 @@
   <data name="DelayFightActionHelp" xml:space="preserve">
     <value>Pause avant chaque action de l'IA en combat, pour voir ce qu'elle fait.</value>
   </data>
-  <data name="CollapseSidebar" xml:space="preserve">
-    <value>Réduire la barre latérale</value>
-  </data>
-  <data name="ExpandSidebar" xml:space="preserve">
-    <value>Afficher la barre latérale</value>
-  </data>
   <data name="Preview" xml:space="preserve">
     <value>Aperçu</value>
   </data>
@@ -1504,5 +1489,314 @@
   </data>
   <data name="GivenProfile" xml:space="preserve">
     <value>Livré avec D3B</value>
+  </data>
+  <data name="MenuFile" xml:space="preserve">
+    <value>Fichier</value>
+  </data>
+  <data name="MenuEdit" xml:space="preserve">
+    <value>Édition</value>
+  </data>
+  <data name="MenuWindow" xml:space="preserve">
+    <value>Fenêtre</value>
+  </data>
+  <data name="MenuHelp" xml:space="preserve">
+    <value>Aide</value>
+  </data>
+  <data name="MenuQuit" xml:space="preserve">
+    <value>Quitter</value>
+  </data>
+  <data name="MenuUndo" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="MenuRedo" xml:space="preserve">
+    <value>Rétablir</value>
+  </data>
+  <data name="MenuPanels" xml:space="preserve">
+    <value>Panneaux</value>
+  </data>
+  <data name="MenuPages" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="MenuModules" xml:space="preserve">
+    <value>Modules</value>
+  </data>
+  <data name="MenuShortcuts" xml:space="preserve">
+    <value>Raccourcis</value>
+  </data>
+  <data name="MenuAbout" xml:space="preserve">
+    <value>À propos de D3B</value>
+  </data>
+  <data name="PanelCharacters" xml:space="preserve">
+    <value>Personnages</value>
+  </data>
+  <data name="PanelAssets" xml:space="preserve">
+    <value>Assets</value>
+  </data>
+  <data name="PanelJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="PanelInspector" xml:space="preserve">
+    <value>Inspecteur</value>
+  </data>
+  <data name="KeysCtrlSpace" xml:space="preserve">
+    <value>Ctrl Espace</value>
+  </data>
+  <data name="KeysShiftF5" xml:space="preserve">
+    <value>Maj F5</value>
+  </data>
+  <data name="KeySpace" xml:space="preserve">
+    <value>Espace</value>
+  </data>
+  <data name="KeyEscape" xml:space="preserve">
+    <value>Échap</value>
+  </data>
+  <data name="KeyEnter" xml:space="preserve">
+    <value>Entrée</value>
+  </data>
+  <data name="TitleSearch" xml:space="preserve">
+    <value>Chercher</value>
+  </data>
+  <data name="SearchEverywhere" xml:space="preserve">
+    <value>Chercher partout</value>
+  </data>
+  <data name="SearchWatermark" xml:space="preserve">
+    <value>Chercher un asset, un personnage, une commande</value>
+  </data>
+  <data name="SearchHintMove" xml:space="preserve">
+    <value>naviguer</value>
+  </data>
+  <data name="SearchHintOpen" xml:space="preserve">
+    <value>ouvrir</value>
+  </data>
+  <data name="SearchHintScope" xml:space="preserve">
+    <value>portée</value>
+  </data>
+  <data name="SearchHintCommands" xml:space="preserve">
+    <value>commandes</value>
+  </data>
+  <data name="SearchHintCharacters" xml:space="preserve">
+    <value>personnages</value>
+  </data>
+  <data name="SearchScopeAll" xml:space="preserve">
+    <value>Tout</value>
+  </data>
+  <data name="SearchScopeAssets" xml:space="preserve">
+    <value>Assets</value>
+  </data>
+  <data name="SearchScopeCharacters" xml:space="preserve">
+    <value>Personnages</value>
+  </data>
+  <data name="SearchScopeCommands" xml:space="preserve">
+    <value>Commandes</value>
+  </data>
+  <data name="SearchScopeSettings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="SearchRecent" xml:space="preserve">
+    <value>Récents</value>
+  </data>
+  <data name="SearchMore" xml:space="preserve">
+    <value>{0} de plus · Tab</value>
+  </data>
+  <data name="SearchNothingFor" xml:space="preserve">
+    <value>Rien ne correspond à « {0} »</value>
+  </data>
+  <data name="SearchNothing" xml:space="preserve">
+    <value>Rien à afficher</value>
+  </data>
+  <data name="SearchProfile" xml:space="preserve">
+    <value>Profil · {0}</value>
+  </data>
+  <data name="CommandNewProfile" xml:space="preserve">
+    <value>Nouveau profil</value>
+  </data>
+  <data name="CommandSaveAll" xml:space="preserve">
+    <value>Enregistrer tout</value>
+  </data>
+  <data name="CommandProjectFolder" xml:space="preserve">
+    <value>Ouvrir le dossier du projet</value>
+  </data>
+  <data name="CommandDefaultLayout" xml:space="preserve">
+    <value>Disposition par défaut</value>
+  </data>
+  <data name="CommandToggleJournal" xml:space="preserve">
+    <value>Afficher ou cacher le journal</value>
+  </data>
+  <data name="CommandGoToAssets" xml:space="preserve">
+    <value>Aller aux assets</value>
+  </data>
+  <data name="CommandPlay" xml:space="preserve">
+    <value>Jouer le personnage choisi</value>
+  </data>
+  <data name="CommandPause" xml:space="preserve">
+    <value>Mettre en pause</value>
+  </data>
+  <data name="CommandStop" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="CommandSettings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="CommandAccounts" xml:space="preserve">
+    <value>Ouvrir les comptes</value>
+  </data>
+  <data name="CommandProfiles" xml:space="preserve">
+    <value>Ouvrir les profils</value>
+  </data>
+  <data name="CommandMap" xml:space="preserve">
+    <value>Ouvrir la carte</value>
+  </data>
+  <data name="CommandCloseTabs" xml:space="preserve">
+    <value>Fermer tous les onglets</value>
+  </data>
+  <data name="CommandCheckUpdate" xml:space="preserve">
+    <value>Rechercher une mise à jour</value>
+  </data>
+  <data name="SettingDisplay" xml:space="preserve">
+    <value>Temps d'affichage du client</value>
+  </data>
+  <data name="SettingDelays" xml:space="preserve">
+    <value>Délais minimums</value>
+  </data>
+  <data name="SettingCaptures" xml:space="preserve">
+    <value>Enregistrer les captures</value>
+  </data>
+  <data name="SettingLanguage" xml:space="preserve">
+    <value>Langue</value>
+  </data>
+  <data name="SettingFiles" xml:space="preserve">
+    <value>Base de données et dossier du projet</value>
+  </data>
+  <data name="SettingUpdate" xml:space="preserve">
+    <value>Version et mise à jour</value>
+  </data>
+  <data name="SectionBots" xml:space="preserve">
+    <value>Bots</value>
+  </data>
+  <data name="SectionNetwork" xml:space="preserve">
+    <value>Réseau</value>
+  </data>
+  <data name="SectionAppearance" xml:space="preserve">
+    <value>Apparence</value>
+  </data>
+  <data name="SectionFiles" xml:space="preserve">
+    <value>Fichiers</value>
+  </data>
+  <data name="SectionAbout" xml:space="preserve">
+    <value>À propos</value>
+  </data>
+  <data name="RunWhoTip" xml:space="preserve">
+    <value>Personnage à piloter</value>
+  </data>
+  <data name="RunOnline" xml:space="preserve">
+    <value>Personnages connectés</value>
+  </data>
+  <data name="RunNobodyOnline" xml:space="preserve">
+    <value>Aucun personnage connecté</value>
+  </data>
+  <data name="RunNobody" xml:space="preserve">
+    <value>Aucun personnage</value>
+  </data>
+  <data name="RunChoose" xml:space="preserve">
+    <value>Choisir</value>
+  </data>
+  <data name="RunChooseFirst" xml:space="preserve">
+    <value>Choisis d'abord un personnage</value>
+  </data>
+  <data name="RunFighting" xml:space="preserve">
+    <value>En combat</value>
+  </data>
+  <data name="RunPausedDoing" xml:space="preserve">
+    <value>En pause · {0}</value>
+  </data>
+  <data name="RunStopped" xml:space="preserve">
+    <value>Arrêté</value>
+  </data>
+  <data name="RunResume" xml:space="preserve">
+    <value>Reprendre</value>
+  </data>
+  <data name="RunStart" xml:space="preserve">
+    <value>Jouer {0}</value>
+  </data>
+  <data name="RunNoProfile" xml:space="preserve">
+    <value>Aucun profil à jouer : choisis-en un sur sa carte</value>
+  </data>
+  <data name="RunPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="RunStopTip" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Fermer</value>
+  </data>
+  <data name="AssetsEmpty" xml:space="preserve">
+    <value>L'arbre du projet arrive ensuite. Les profils s'ouvrent depuis Fenêtre ou la recherche.</value>
+  </data>
+  <data name="AssetsOpenProfiles" xml:space="preserve">
+    <value>Ouvrir les profils</value>
+  </data>
+  <data name="BottomJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="BottomTrace" xml:space="preserve">
+    <value>Trace</value>
+  </data>
+  <data name="BottomProblems" xml:space="preserve">
+    <value>Problèmes</value>
+  </data>
+  <data name="BottomProtocol" xml:space="preserve">
+    <value>Protocole</value>
+  </data>
+  <data name="BottomStatistics" xml:space="preserve">
+    <value>Statistiques</value>
+  </data>
+  <data name="TraceEmptyTitle" xml:space="preserve">
+    <value>Aucune trace</value>
+  </data>
+  <data name="TraceEmptyText" xml:space="preserve">
+    <value>Les décisions du personnage choisi apparaîtront ici.</value>
+  </data>
+  <data name="ProblemsEmpty" xml:space="preserve">
+    <value>Aucun problème</value>
+  </data>
+  <data name="InspectorEmpty" xml:space="preserve">
+    <value>Choisis quelque chose pour voir ses propriétés</value>
+  </data>
+  <data name="StatusSaved" xml:space="preserve">
+    <value>Tout est enregistré</value>
+  </data>
+  <data name="StatusUnsaved" xml:space="preserve">
+    <value>Modifications non enregistrées</value>
+  </data>
+  <data name="StatusClient" xml:space="preserve">
+    <value>Client {0}</value>
+  </data>
+  <data name="CharactersOnline" xml:space="preserve">
+    <value>{0} en ligne</value>
+  </data>
+  <data name="Welcome" xml:space="preserve">
+    <value>Bienvenue</value>
+  </data>
+  <data name="WelcomeVersion" xml:space="preserve">
+    <value>{0} · client {1}</value>
+  </data>
+  <data name="WelcomeSearch" xml:space="preserve">
+    <value>Chercher partout</value>
+  </data>
+  <data name="WelcomeAssets" xml:space="preserve">
+    <value>Assets</value>
+  </data>
+  <data name="WelcomeJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="WelcomePlay" xml:space="preserve">
+    <value>Jouer</value>
+  </data>
+  <data name="HostFailedShort" xml:space="preserve">
+    <value>D3B n'a pas démarré : la page Bienvenue dit pourquoi.</value>
+  </data>
+  <data name="JournalPausedFromApp" xml:space="preserve">
+    <value>Mis en pause depuis D3B</value>
   </data>
 </root>

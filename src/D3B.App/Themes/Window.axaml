@@ -1,0 +1,139 @@
+<ResourceDictionary
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--  ShadUI's window drawn as the studio's one title row (D322): the logo and menus left, the search in the middle, the
+         run block and settings right, then the window's buttons. Its parts keep ShadUI's names, which its code looks for: the
+         row's background moves the window and maximizes it on a double click, and the buttons minimize, maximize with
+         Windows' snap layouts, and close.  -->
+    <ControlTheme TargetType="WindowDrawnDecorations" x:Key="SuppressedDecorations">
+        <Setter Property="Template">
+            <WindowDrawnDecorationsTemplate>
+                <WindowDrawnDecorationsContent />
+            </WindowDrawnDecorationsTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <ControlTheme TargetType="Button" x:Key="CaptionButton">
+        <Setter Property="Width" Value="46" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}">
+                    <ContentPresenter
+                        Content="{TemplateBinding Content}"
+                        Foreground="{TemplateBinding Foreground}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+        <Style Selector="^.Close:pointerover">
+            <Setter Property="Background" Value="{DynamicResource CloseHoverColor}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme TargetType="shadui:Window" x:Key="{x:Type shadui:Window}">
+        <Setter Property="Background" Value="{DynamicResource WindowBackgroundColor}" />
+        <Setter Property="TransparencyLevelHint" Value="Transparent" />
+        <Setter Property="WindowDecorations" Value="BorderOnly" />
+        <Setter Property="ExtendClientAreaToDecorationsHint" Value="True" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource ForegroundColor}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    ClipToBounds="True"
+                    Name="PART_WindowRoot">
+                    <VisualLayerManager IsHitTestVisible="True">
+                        <Panel>
+                            <Panel Name="PART_Root">
+                                <DockPanel>
+                                    <Panel DockPanel.Dock="Top" Height="44">
+                                        <Border Background="Transparent" Name="PART_TitleBarBackground" />
+                                        <c:TitleBarPanel Gap="12">
+                                            <ContentPresenter Content="{TemplateBinding LogoContent}" VerticalAlignment="Center" />
+                                            <ContentPresenter
+                                                Content="{TemplateBinding MenuBarContent}"
+                                                MaxWidth="340"
+                                                MinWidth="200"
+                                                VerticalAlignment="Center" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <ContentPresenter
+                                                    Content="{TemplateBinding RightWindowTitleBarContent}"
+                                                    Margin="0,0,6,0"
+                                                    VerticalAlignment="Center" />
+                                                <Button
+                                                    IsVisible="{TemplateBinding CanMinimize}"
+                                                    Name="PART_MinimizeButton"
+                                                    Theme="{StaticResource CaptionButton}">
+                                                    <PathIcon Data="{x:Static shadui:Icons.WindowMinimize}" Height="10" Width="10" />
+                                                </Button>
+                                                <Button
+                                                    IsVisible="{TemplateBinding CanMaximize}"
+                                                    Name="PART_MaximizeButton"
+                                                    Theme="{StaticResource CaptionButton}">
+                                                    <PathIcon
+                                                        Data="{x:Static shadui:Icons.WindowMaximize}"
+                                                        Height="10"
+                                                        IsHitTestVisible="False"
+                                                        Width="10"
+                                                        Name="MaximizeIcon" />
+                                                </Button>
+                                                <Button
+                                                    Classes="Close"
+                                                    Name="PART_CloseButton"
+                                                    Theme="{StaticResource CaptionButton}">
+                                                    <PathIcon Data="{x:Static shadui:Icons.WindowClose}" Height="10" Width="10" />
+                                                </Button>
+                                            </StackPanel>
+                                        </c:TitleBarPanel>
+                                    </Panel>
+                                    <ContentPresenter
+                                        Content="{TemplateBinding Content}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}"
+                                        HorizontalContentAlignment="Stretch"
+                                        VerticalContentAlignment="Stretch" />
+                                </DockPanel>
+                            </Panel>
+                            <ItemsControl ItemsSource="{Binding Hosts, RelativeSource={RelativeSource AncestorType={x:Type shadui:Window}}}" x:CompileBindings="False">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Panel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </Panel>
+                    </VisualLayerManager>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^[WindowState=Maximized] /template/ Border#PART_WindowRoot">
+            <Setter Property="Margin" Value="8" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="^[WindowState=Maximized] /template/ PathIcon#MaximizeIcon">
+            <Setter Property="Data" Value="{x:Static shadui:Icons.WindowRestore}" />
+        </Style>
+        <Style Selector="^[IsActive=False] /template/ StackPanel > Button">
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+        <Style Selector="^[ShowAvaloniaFullscreenPopover=False]">
+            <Setter Property="WindowDecorationsTheme" Value="{StaticResource SuppressedDecorations}" />
+        </Style>
+    </ControlTheme>
+</ResourceDictionary>
