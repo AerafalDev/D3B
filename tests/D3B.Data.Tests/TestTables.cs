@@ -32,11 +32,11 @@ internal static class TestTables
     private static readonly int[] _formulaIds = [4];
     private static readonly string[] _formulas = ["function main()\n   return 1\nend"];
 
-    /// <summary>Wheat and ash wood, of known types, and a test item whose type the client lacks.</summary>
+    /// <summary>Wheat and ash wood, of known types, a bread that heals 10 to 15 life, and a test item whose type the client lacks.</summary>
     public static ItemCatalog Items()
     {
         return new ItemCatalog(
-            new Item[] { new(289, 1001, 34, 1, 1, 34_009), new(303, 1002, 38, 1, 1, 38_017), new(34_569, 1003, 264, 0, 0, 0) },
+            new Item[] { new(289, 1001, 34, 1, 1, 34_009), new(303, 1002, 38, 1, 1, 38_017), new(468, 1004, 33, 1, 1, 0, 10, 15), new(34_569, 1003, 264, 0, 0, 0) },
             new ItemType[] { new(34, 2001, 9, 2), new(38, 2002, 9, 2) });
     }
 

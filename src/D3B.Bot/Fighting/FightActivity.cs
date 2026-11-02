@@ -420,9 +420,7 @@ public sealed class FightActivity : BotActivity
 
         _healing = true;
 
-        var food = _settings.Food.Select(item => StackOf(state, item)).FirstOrDefault(stack => stack is not null);
-
-        if (food is not null)
+        if (Food.StackToEat(state, _settings.Food, _tables.Items, _unusable) is { } food)
         {
             Publish(GameText.Of(FightTexts.Text("DoingEat"), GameTextValue.Item(food.ItemId)));
 
@@ -462,7 +460,7 @@ public sealed class FightActivity : BotActivity
         // Food the profile carries heals at the next step (D148); else the life regenerates, a point each interval (D153).
         var state = context.State;
 
-        if (_settings.Heal && _settings.Food.Any(item => StackOf(state, item) is not null))
+        if (_settings.Heal && Food.StackToEat(state, _settings.Food, _tables.Items, _unusable) is not null)
             return;
 
         for (var life = context.Life; life is { } now && state.MaxLife is { } most && now * 100L < (long)_settings.HealBelow * most; life = context.Life)
@@ -475,11 +473,6 @@ public sealed class FightActivity : BotActivity
             await Task.Delay(TimeSpan.FromTicks(Math.Min(interval.Ticks * Math.Max(1, missing), _regainStep.Ticks)), context.Time, cancellationToken).ConfigureAwait(false);
             state = context.State;
         }
-    }
-
-    private InventoryItem? StackOf(CharacterState state, int itemId)
-    {
-        return state.Inventory.Values.FirstOrDefault(stack => !stack.IsWorn && !_unusable.Contains(stack.Uid) && stack.ItemId == itemId);
     }
 
     private void Publish(GameText doing)

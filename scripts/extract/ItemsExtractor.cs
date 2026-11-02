@@ -8,8 +8,9 @@ namespace D3B.Scripts.Extract;
 /// <summary>Reads the items and their types, and the weapons with their effects and their types' zones.</summary>
 /// <remarks>
 /// <para>
-/// An item keeps what a bot names, sorts and weighs it by, and its icon, which the pack holds for some items only. Its effects, recipes, criteria and <c>m_flags</c>, whose bits
-/// are not measured, are left out (client.md).
+/// An item keeps what a bot names, sorts and weighs it by, and its icon, which the pack holds for some items only. Of its
+/// effects, it keeps the life its use gives back when that is all its use does, so that a bot eats it without risk; its
+/// other effects, recipes, criteria and <c>m_flags</c>, whose bits are not measured, are left out (client.md).
 /// </para>
 /// <para>
 /// A weapon keeps its fight fields and its effects, which its record names by reference, and its type the zone the client
@@ -26,7 +27,15 @@ internal static class ItemsExtractor
     // The zone the client writes on every weapon's effect of client 3.7.12.12, a circle of size 1: its type's zone is the one a blow hits.
     private const byte EffectZoneShape = (byte)'C';
 
+    // The effect that gives life back, "Rend #1 à #2 points de vie".
+    private const int HealEffect = 110;
+
     private static readonly string[] _tables = ["items", "itemtypes"];
+
+    // Life, energy, bound to the character and exchangeable: an item whose use does anything else is never eaten for its
+    // life. Measured on 3.7.12.12: potions change a class, a sex or a name (854, 852, 850), breads launch a fight (905) or
+    // give characteristics for good (606 to 611), some give items (193, 209) and recall potions teleport (600).
+    private static readonly HashSet<int> _onlyHealing = [HealEffect, 139, 981, 983];
 
     public static IReadOnlyList<string> Inputs(ClientInstall client)
     {
@@ -39,13 +48,20 @@ internal static class ItemsExtractor
         {
             var (records, references) = UnityDataTable.ReadByIdWithReferences(client, "items");
             var typeRecords = UnityDataTable.ReadById(client, "itemtypes");
-            var items = records.Select(record => new Item(
-                record.Int32("id"),
-                checked((int)record.UInt32("nameId")),
-                record.UInt16("typeId"),
-                record.Byte("level"),
-                record.UInt16("realWeight"),
-                record.Int32("iconId")));
+            var items = records.Select(record =>
+            {
+                var (healMin, healMax) = Heal(record, references);
+
+                return new Item(
+                    record.Int32("id"),
+                    checked((int)record.UInt32("nameId")),
+                    record.UInt16("typeId"),
+                    record.Byte("level"),
+                    record.UInt16("realWeight"),
+                    record.Int32("iconId"),
+                    healMin,
+                    healMax);
+            });
             var types = typeRecords.Select(record => new ItemType(
                 record.Int32("id"),
                 record.Int32("nameId"),
@@ -61,7 +77,15 @@ internal static class ItemsExtractor
                     untyped++;
             }
 
-            Console.WriteLine($"Items: {catalog.Items.Length:N0}, {catalog.Types.Length:N0} types; {untyped:N0} of a type the client lacks");
+            var heal = 0;
+
+            foreach (var item in catalog.Items.Span)
+            {
+                if (item.Heals)
+                    heal++;
+            }
+
+            Console.WriteLine($"Items: {catalog.Items.Length:N0}, {catalog.Types.Length:N0} types; {untyped:N0} of a type the client lacks; {heal:N0} whose use only heals");
 
             var weapons = Weapons(records, references, typeRecords, catalog, effects);
 
@@ -71,6 +95,40 @@ internal static class ItemsExtractor
         {
             throw new InvalidDataException($"The items' tables do not fit what the extractor measured: {exception.Message}", exception);
         }
+    }
+
+    private static (ushort Min, ushort Max) Heal(UnityFields record, IReadOnlyDictionary<long, UnityFields> references)
+    {
+        UnityFields? heal = null;
+
+        foreach (var item in record.Items("possibleEffects"))
+        {
+            var effect = references[item.Reference("rid")];
+            var effectId = effect.UInt16("actionId");
+
+            if (!_onlyHealing.Contains(effectId))
+                return (0, 0);
+
+            if (effectId is HealEffect)
+            {
+                if (heal is not null)
+                    throw new InvalidDataException($"Item {record.Int32("id")} heals twice, which no item of client 3.7.12.12 does.");
+
+                heal = effect;
+            }
+        }
+
+        if (heal is null)
+            return (0, 0);
+
+        // The client writes a single value as diceNum with diceSide 0, on 178 of the 211 items that only heal of 3.7.12.12.
+        var min = heal.Int32("diceNum");
+        var max = heal.Int32("diceSide") is 0 ? min : heal.Int32("diceSide");
+
+        if (min <= 0 || max < min)
+            throw new InvalidDataException($"Item {record.Int32("id")} heals {min} to {max} life, which no item of client 3.7.12.12 does.");
+
+        return (checked((ushort)min), checked((ushort)max));
     }
 
     private static WeaponCatalog Weapons(IReadOnlyList<UnityFields> records, IReadOnlyDictionary<long, UnityFields> references, IReadOnlyList<UnityFields> typeRecords, ItemCatalog items, EffectCatalog effects)

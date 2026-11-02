@@ -138,7 +138,7 @@
     <value>Food</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
-    <value>In order, until the life is whole; else the life regenerates.</value>
+    <value>In order, until the life is whole; none chosen, what the inventory holds that only heals, the smallest heal first; else the life regenerates.</value>
   </data>
   <data name="SectionBank" xml:space="preserve">
     <value>Bank</value>
