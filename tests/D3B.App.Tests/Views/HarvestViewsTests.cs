@@ -113,9 +113,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             dialogs.Clear();
             main.Refresh();
             window.Show();
-            main.ShowProfilesCommand.Execute(null);
             main.Refresh();
-            main.Profiles.Items.Single(profile => profile.Name == "Ash and chestnut").EditCommand.Execute(null);
+            main.OpenProfile(main.Profiles.Items.Single(profile => profile.Name == "Ash and chestnut").Id);
             Dispatcher.UIThread.RunJobs();
 
             var english = Texts(window);
@@ -202,7 +201,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             var given = page.Items.Single(item => item.Name == "Auto lumberjack");
 
             Assert.True(given.IsGiven);
-            Assert.False(given.EditCommand.CanExecute(null));
+            Assert.True(given.IsReadOnly);
             Assert.False(given.AskDeleteCommand.CanExecute(null));
 
             given.DuplicateCommand.Execute(null);
@@ -258,9 +257,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.ShowProfilesCommand.Execute(null);
             main.Refresh();
-            main.Profiles.Items.Single(item => item.Name == "By profession").EditCommand.Execute(null);
+            main.OpenProfile(main.Profiles.Items.Single(item => item.Name == "By profession").Id);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
 

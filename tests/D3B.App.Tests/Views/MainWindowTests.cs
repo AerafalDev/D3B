@@ -127,10 +127,10 @@ public sealed class MainWindowTests : IAsyncDisposable
 
             var reopened = (inspector.IsEffectivelyVisible, item.IsChecked);
 
-            main.ShowProfilesCommand.Execute(null);
             main.ShowSettingsCommand.Execute(null);
-            main.ShowProfilesCommand.Execute(null);
-            main.Editor.CloseCommand.Execute(main.Editor.Selected);
+            main.ShowWelcomeCommand.Execute(null);
+            main.ShowSettingsCommand.Execute(null);
+            main.Editor.CloseCommand.Execute(main.Editor.Items.Single(tab => tab.Key == "welcome"));
 
             var tabs = (main.Editor.Items.Select(tab => tab.Key).ToList(), main.Editor.Selected?.Key);
 
@@ -141,8 +141,8 @@ public sealed class MainWindowTests : IAsyncDisposable
 
         Assert.Equal((false, 0d), closed);
         Assert.Equal((true, true), reopened);
-        Assert.Equal(["welcome", "settings"], tabs.Item1);
-        Assert.Equal("welcome", tabs.Item2);
+        Assert.Equal(["settings"], tabs.Item1);
+        Assert.Equal("settings", tabs.Item2);
     }
 
     [Fact]
@@ -234,11 +234,8 @@ public sealed class MainWindowTests : IAsyncDisposable
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "inspector-en");
-            main.ShowProfilesCommand.Execute(null);
             main.Refresh();
-            Dispatcher.UIThread.RunJobs();
-            Drawings.Draw(window, "profiles-en");
-            main.Profiles.Items.Single(profile => profile.Name == "Walker").EditCommand.Execute(null);
+            main.OpenProfile(main.Profiles.Items.Single(profile => profile.Name == "Walker").Id);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
@@ -266,15 +263,13 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Walker", english);
         Assert.Contains("Auto start", english);
         Assert.Contains("nickname#tag", english);
-        Assert.Contains("Profiles", english);
-        Assert.Contains("New profile", english);
-        Assert.Contains(english, text => text.Contains("Lumberjack", StringComparison.Ordinal));
+        Assert.Contains("Variant of", english);
+        Assert.Contains("Preview", english);
         Assert.Contains("Save", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Inspecteur", french);
-        Assert.Contains("Profils", french);
-        Assert.Contains("Nouveau profil", french);
-        Assert.Contains(french, text => text.Contains("Bûcheron", StringComparison.Ordinal));
+        Assert.Contains("Variante de", french);
+        Assert.Contains("Aperçu", french);
         Assert.Contains("Enregistrer", french);
         Assert.Contains("Auto-démarrage", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));

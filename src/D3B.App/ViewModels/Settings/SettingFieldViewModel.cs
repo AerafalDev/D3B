@@ -1,4 +1,6 @@
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Settings;
@@ -33,6 +35,10 @@ internal abstract partial class SettingFieldViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsVisible { get; private set; } = true;
 
+    /// <summary>Gets whether the value differs from the behavior's, which the profile then changes (D300, D330).</summary>
+    [ObservableProperty]
+    public partial bool IsChanged { get; private set; }
+
     /// <summary>Gets whether the activity says something of the setting.</summary>
     public bool HasHelp => Help is not null;
 
@@ -62,6 +68,12 @@ internal abstract partial class SettingFieldViewModel : ObservableObject
         Help = definition.Help?.In(editor.Localizer.Culture);
     }
 
+    // A value is a number, a text, a choice or a list of them: written as JSON, two equal values read the same.
+    private static bool Same(object? value, object? other)
+    {
+        return JsonSerializer.Serialize(value) == JsonSerializer.Serialize(other);
+    }
+
     /// <summary>Names the setting again, in the app's language.</summary>
     public virtual void Relabel()
     {
@@ -74,8 +86,16 @@ internal abstract partial class SettingFieldViewModel : ObservableObject
     public void Update(SettingProblem? problem)
     {
         IsVisible = Editor.Settings.IsVisible(Definition, Editor.Draft);
+        IsChanged = Editor.Defaults is { } defaults && !Same(Definition.GetValue(Draft), Definition.GetValue(defaults));
         Quiet(RefreshOptions);
         Problem = InputProblem() ?? (problem is null ? null : Editor.ProblemText(problem));
+    }
+
+    /// <summary>Gives the setting the behavior's value back.</summary>
+    [RelayCommand]
+    public void Reset()
+    {
+        Editor.Reset(this);
     }
 
     /// <summary>Says what was typed that is no value at all.</summary>

@@ -20,6 +20,10 @@ internal sealed partial class SettingSectionViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsVisible { get; private set; } = true;
 
+    /// <summary>Gets whether one of its settings differs from the behavior's, which the sections' bar marks (D330).</summary>
+    [ObservableProperty]
+    public partial bool HasChanges { get; private set; }
+
     /// <summary>Gets whether the section has a title.</summary>
     public bool HasTitle => Title is not null;
 
@@ -40,5 +44,6 @@ internal sealed partial class SettingSectionViewModel : ObservableObject
     {
         Title = _title?.In(editor.Localizer.Culture);
         IsVisible = Fields.Any(field => field.IsVisible);
+        HasChanges = Fields.Any(field => field.IsVisible && field.IsChanged);
     }
 }

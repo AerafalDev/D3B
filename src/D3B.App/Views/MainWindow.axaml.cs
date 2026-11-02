@@ -61,6 +61,10 @@ internal sealed partial class MainWindow : ShadUI.Window
             _main.Dialogs.PropertyChanged -= OnDialogsChanged;
             _main.Toasts.Shown -= OnToastShown;
             _main.OpenFolder = null;
+            _main.RevealFile = null;
+            _main.FocusAssets = null;
+            _main.Assets.PickExport = null;
+            _main.Assets.PickImport = null;
         }
 
         _main = DataContext as MainViewModel;
@@ -71,6 +75,10 @@ internal sealed partial class MainWindow : ShadUI.Window
             _main.Dialogs.PropertyChanged += OnDialogsChanged;
             _main.Toasts.Shown += OnToastShown;
             _main.OpenFolder = OpenFolder;
+            _main.RevealFile = RevealFile;
+            _main.FocusAssets = () => Avalonia.Threading.Dispatcher.UIThread.Post(AssetsPanel.FocusSearch);
+            _main.Assets.PickExport = PickExportAsync;
+            _main.Assets.PickImport = PickImportAsync;
             ApplyLayout();
         }
     }
@@ -138,6 +146,33 @@ internal sealed partial class MainWindow : ShadUI.Window
 
         if (Launcher is { } launcher)
             await launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(folder));
+    }
+
+    // Explorer selects the file shown; elsewhere its folder opens.
+    private void RevealFile(string file)
+    {
+        if (OperatingSystem.IsWindows() && File.Exists(file))
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{file}\"") { UseShellExecute = false })?.Dispose();
+        else
+            OpenFolder(Directory.Exists(file) ? file : Path.GetDirectoryName(file) ?? file);
+    }
+
+    private async Task<string?> PickExportAsync(string name)
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { SuggestedFileName = name, DefaultExtension = ".json" });
+
+        return file?.TryGetLocalPath();
+    }
+
+    private async Task<string?> PickImportAsync()
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("D3B") { Patterns = ["*.json"] }],
+        });
+
+        return files.Count > 0 ? files[0].TryGetLocalPath() : null;
     }
 
     private void OnDialogsChanged(object? sender, PropertyChangedEventArgs e)

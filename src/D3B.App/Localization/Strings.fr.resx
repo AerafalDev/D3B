@@ -2078,4 +2078,100 @@
   <data name="RailEmpty" xml:space="preserve">
     <value>Rien ne joue</value>
   </data>
+  <data name="AssetCopied" xml:space="preserve">
+    <value>{0} copié dans le projet</value>
+  </data>
+  <data name="NoValueChanged" xml:space="preserve">
+    <value>aucune valeur changée</value>
+  </data>
+  <data name="VariantOf" xml:space="preserve">
+    <value>Variante de</value>
+  </data>
+  <data name="ResetAll" xml:space="preserve">
+    <value>Tout remettre</value>
+  </data>
+  <data name="GivenReadOnly" xml:space="preserve">
+    <value>Donné avec D3B, en lecture seule</value>
+  </data>
+  <data name="CopyToProject" xml:space="preserve">
+    <value>Copier dans le projet</value>
+  </data>
+  <data name="ResetValue" xml:space="preserve">
+    <value>Remettre la valeur du comportement</value>
+  </data>
+  <data name="NoneChosen" xml:space="preserve">
+    <value>Aucune</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Ajouter</value>
+  </data>
+  <data name="AssetsSearch" xml:space="preserve">
+    <value>Chercher un asset</value>
+  </data>
+  <data name="AssetsNoMatch" xml:space="preserve">
+    <value>Aucun asset ne correspond</value>
+  </data>
+  <data name="AssetsWaitHost" xml:space="preserve">
+    <value>Le projet s’affiche quand l’hôte tourne</value>
+  </data>
+  <data name="UnsavedChanges" xml:space="preserve">
+    <value>Modifié, non enregistré</value>
+  </data>
+  <data name="AddNew" xml:space="preserve">
+    <value>Nouveau</value>
+  </data>
+  <data name="Folder" xml:space="preserve">
+    <value>Dossier</value>
+  </data>
+  <data name="ImportFile" xml:space="preserve">
+    <value>Importer un fichier…</value>
+  </data>
+  <data name="FindUsages" xml:space="preserve">
+    <value>Utilisé par…</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>Renommer</value>
+  </data>
+  <data name="MoveTo" xml:space="preserve">
+    <value>Déplacer vers</value>
+  </data>
+  <data name="ExportFile" xml:space="preserve">
+    <value>Exporter…</value>
+  </data>
+  <data name="ShowInFolder" xml:space="preserve">
+    <value>Montrer dans le dossier</value>
+  </data>
+  <data name="ProjectRoot" xml:space="preserve">
+    <value>Projet</value>
+  </data>
+  <data name="GivenAssets" xml:space="preserve">
+    <value>Donnés avec D3B</value>
+  </data>
+  <data name="UsedByCountOne" xml:space="preserve">
+    <value>Utilisé par {0}</value>
+  </data>
+  <data name="UsedByCountOther" xml:space="preserve">
+    <value>Utilisé par {0}</value>
+  </data>
+  <data name="DeleteAssetTitle" xml:space="preserve">
+    <value>Supprimer {0} ?</value>
+  </data>
+  <data name="DeleteAssetUsersOne" xml:space="preserve">
+    <value>{0} asset l’utilise et ne référencera plus rien.</value>
+  </data>
+  <data name="DeleteAssetUsersOther" xml:space="preserve">
+    <value>{0} assets l’utilisent et ne référenceront plus rien.</value>
+  </data>
+  <data name="NewFolder" xml:space="preserve">
+    <value>Nouveau dossier</value>
+  </data>
+  <data name="AssetImported" xml:space="preserve">
+    <value>{0} importé</value>
+  </data>
+  <data name="AssetExported" xml:space="preserve">
+    <value>{0} exporté</value>
+  </data>
+  <data name="AssetWriteFailed" xml:space="preserve">
+    <value>Non écrit : {0}</value>
+  </data>
 </root>

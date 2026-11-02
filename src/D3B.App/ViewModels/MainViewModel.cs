@@ -6,6 +6,7 @@ using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.Updates;
+using D3B.App.ViewModels.Assets;
 using D3B.App.ViewModels.Bottom;
 using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Inspector;
@@ -32,7 +33,7 @@ namespace D3B.App.ViewModels;
 internal sealed partial class MainViewModel : ObservableObject
 {
     private const string WelcomeTab = "welcome";
-    private const string ProfilesTab = "profiles";
+    private const string ProfileTab = "profile:";
     private const string SettingsTab = "settings";
     private const string CharacterTab = "character:";
 
@@ -73,8 +74,11 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the inspector (D324).</summary>
     public PropertiesViewModel Properties { get; }
 
-    /// <summary>Gets the profiles' page, a tab until 7c4.</summary>
+    /// <summary>Gets the profiles, each edited in a tab of its own (D330).</summary>
     public ProfilesViewModel Profiles { get; }
+
+    /// <summary>Gets the assets' panel (D326).</summary>
+    public AssetsViewModel Assets { get; }
 
     /// <summary>Gets the bottom panel (D327).</summary>
     public BottomPanelViewModel Bottom { get; }
@@ -90,6 +94,12 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets or sets what opens a folder in the system's file manager, as the window can.</summary>
     public Action<string>? OpenFolder { get; set; }
+
+    /// <summary>Gets or sets what shows a file, chosen, in the system's file manager, as the window can.</summary>
+    public Action<string>? RevealFile { get; set; }
+
+    /// <summary>Gets or sets what puts the keyboard in the assets' search, as the window can: Ctrl Space.</summary>
+    public Action? FocusAssets { get; set; }
 
     /// <summary>Gets whether any module registered a page.</summary>
     [ObservableProperty]
@@ -144,7 +154,7 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string OnlineText { get; private set; } = "";
 
-    /// <summary>Gets whether everything is saved: no profile edited with changes not saved.</summary>
+    /// <summary>Gets whether everything is saved: no profile's tab with changes not saved.</summary>
     [ObservableProperty]
     public partial bool IsSaved { get; private set; } = true;
 
@@ -176,7 +186,15 @@ internal sealed partial class MainViewModel : ObservableObject
         Properties = new PropertiesViewModel(
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
             new AssetPropertiesViewModel(localizer));
-        Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts);
+        Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts) { Opened = OpenProfileTab, Closed = CloseProfileTab };
+        Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles)
+        {
+            Choose = ChooseAsset,
+            Open = OpenAsset,
+            ShowUsages = ShowUsages,
+            Reveal = path => RevealFile?.Invoke(path),
+            IsUnsaved = id => Profiles.Find(id)?.IsDirty == true,
+        };
         Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), new StatisticsViewModel(localizer));
         Updates = new UpdatesViewModel(localizer, updates, Dialogs, () => IsRunning && Bots.HasItems, _close);
         Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates);
@@ -241,7 +259,8 @@ internal sealed partial class MainViewModel : ObservableObject
         RunBlock.Refresh();
         Properties.Refresh(services);
         OnlineText = _localizer.Format("CharactersOnline", RunBlock.Online.Count);
-        IsSaved = Profiles.Editing is not { IsDirty: true };
+        IsSaved = !Profiles.IsAnyDirty;
+        Assets.Refresh(services);
 
         // Only what shows reads what came since: the rest reads it all once shown again.
         foreach (var (key, tab) in _characterTabs)
@@ -275,11 +294,12 @@ internal sealed partial class MainViewModel : ObservableObject
         Bottom.Toggle();
     }
 
-    /// <summary>Opens the assets: Ctrl Space (D321).</summary>
+    /// <summary>Opens the assets, the keyboard in their search: Ctrl Space (D321).</summary>
     [RelayCommand]
     public void GoToAssets()
     {
         Layout.Show(StudioPanel.Assets, true);
+        FocusAssets?.Invoke();
     }
 
     /// <summary>Shows the welcome's tab.</summary>
@@ -287,13 +307,6 @@ internal sealed partial class MainViewModel : ObservableObject
     public void ShowWelcome()
     {
         Editor.Open(WelcomeTab, () => new EditorTab(WelcomeTab, () => _localizer["Welcome"], null, this, needsHost: false));
-    }
-
-    /// <summary>Shows the profiles' tab.</summary>
-    [RelayCommand]
-    public void ShowProfiles()
-    {
-        Editor.Open(ProfilesTab, () => new EditorTab(ProfilesTab, () => _localizer["Profiles"], "Nodes.Template", Profiles, needsHost: true));
     }
 
     /// <summary>Opens a character's tab: its map live and what it does (D325).</summary>
@@ -308,16 +321,22 @@ internal sealed partial class MainViewModel : ObservableObject
         Editor.Refresh();
     }
 
-    /// <summary>Opens a profile in the profiles' tab, the inspector showing it.</summary>
+    /// <summary>Opens a profile in its tab, the inspector showing it (D330).</summary>
     /// <param name="id">The profile's id.</param>
     public void OpenProfile(string id)
     {
-        ShowProfiles();
-        Properties.ShowAsset(id);
-        Properties.Refresh(_host.Services);
+        ChooseAsset(id);
+        Profiles.Find(id)?.Edit();
+    }
 
-        if (Profiles.Items.FirstOrDefault(profile => profile.Id == id) is { } shown && shown.EditCommand.CanExecute(null))
-            shown.EditCommand.Execute(null);
+    /// <summary>Opens an asset in its tab: a profile today, the other kinds once their editors come (D306).</summary>
+    /// <param name="id">The asset's id.</param>
+    public void OpenAsset(string id)
+    {
+        if (Profiles.Find(id) is not null)
+            OpenProfile(id);
+        else
+            ChooseAsset(id);
     }
 
     /// <summary>Shows the settings' tab: the title's gear, Ctrl , (D329).</summary>
@@ -344,8 +363,6 @@ internal sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void NewProfile()
     {
-        ShowProfiles();
-
         if (IsRunning)
             Profiles.NewCommand.Execute(null);
     }
@@ -354,8 +371,7 @@ internal sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void SaveAll()
     {
-        if (Profiles.Editing is { } editing && editing.SaveCommand.CanExecute(null))
-            editing.SaveCommand.Execute(null);
+        Profiles.SaveAll();
     }
 
     /// <summary>Opens the project's folder in the system's file manager.</summary>
@@ -408,8 +424,12 @@ internal sealed partial class MainViewModel : ObservableObject
 
     private IEnumerable<SearchItem> SearchItems()
     {
-        foreach (var profile in Profiles.Items)
-            yield return new SearchItem(SearchScope.Assets, "profile:" + profile.Id, profile.Name, _localizer.Format("SearchProfile", profile.ActivityName), "Nodes.Template", "", "", () => OpenProfile(profile.Id));
+        foreach (var asset in _host.Services?.GetService<AssetLibrary>()?.Assets ?? [])
+        {
+            var folder = asset.IsGiven ? _localizer["GivenAssets"] : Path.GetDirectoryName(asset.Path) is { Length: > 0 } directory ? directory.Replace(Path.DirectorySeparatorChar, '/') : _localizer["ProjectRoot"];
+
+            yield return new SearchItem(SearchScope.Assets, "asset:" + asset.Id, asset.Title?.In(_localizer.Culture) ?? asset.Name, $"{_localizer["AssetKind" + asset.Kind]} · {folder}", AssetKinds.IconOf(asset.Kind), "", "", () => OpenAsset(asset.Id)) { Color = new Avalonia.Media.SolidColorBrush(AssetKinds.ColorOf(asset.Kind)) };
+        }
 
         foreach (var bot in Characters.Online)
             yield return new SearchItem(SearchScope.Characters, "character:" + bot.Bot.Key, bot.Name, bot.Level, null, bot.Initials, "", () => ChooseAndOpen(bot.Bot.Key)) { Picture = bot.Head, Color = bot.PortraitColor };
@@ -443,10 +463,47 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandPause", "F6", RunBlock.Pause);
         yield return Command("CommandStop", _localizer["KeysShiftF5"], RunBlock.Stop);
         yield return Command("CommandSettings", "Ctrl ,", ShowSettings);
-        yield return Command("CommandProfiles", "", ShowProfiles);
         yield return Command("CommandCloseTabs", "", Editor.CloseAll);
         yield return Command("CommandProjectFolder", "", OpenProjectFolder);
         yield return Command("CommandCheckUpdate", "", () => Updates.CheckCommand.Execute(null));
+    }
+
+    private void ChooseAsset(string id)
+    {
+        Properties.ShowAsset(id);
+        Properties.Refresh(_host.Services);
+    }
+
+    private void ShowUsages(string id)
+    {
+        ChooseAsset(id);
+        Layout.Show(StudioPanel.Inspector, true);
+    }
+
+    private void OpenProfileTab(ProfileViewModel item)
+    {
+        Editor.Open(ProfileTab + item.TabKey, () => new EditorTab(ProfileTab + item.TabKey, () => item.Title, "Nodes.Template", item, needsHost: true)
+        {
+            Closing = () => CloseProfile(item),
+            Modified = () => item.IsDirty,
+        });
+        Editor.Refresh();
+    }
+
+    private void CloseProfileTab(ProfileViewModel item)
+    {
+        Editor.Drop(Editor.Items.FirstOrDefault(tab => tab.Content == item));
+    }
+
+    // The tab closes once its editor does: at once without changes, else once the question asked is answered.
+    private static bool CloseProfile(ProfileViewModel item)
+    {
+        if (item.IsDirty)
+            item.CloseCommand.Execute(null);
+        else
+            item.Cancel();
+
+        return false;
     }
 
     private void ShowJournalOf(CharacterKey key)

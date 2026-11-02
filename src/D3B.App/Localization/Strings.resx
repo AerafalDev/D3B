@@ -2078,4 +2078,100 @@
   <data name="RailEmpty" xml:space="preserve">
     <value>Nothing plays</value>
   </data>
+  <data name="AssetCopied" xml:space="preserve">
+    <value>{0} copied into the project</value>
+  </data>
+  <data name="NoValueChanged" xml:space="preserve">
+    <value>no value changed</value>
+  </data>
+  <data name="VariantOf" xml:space="preserve">
+    <value>Variant of</value>
+  </data>
+  <data name="ResetAll" xml:space="preserve">
+    <value>Reset all</value>
+  </data>
+  <data name="GivenReadOnly" xml:space="preserve">
+    <value>Given with D3B, read only</value>
+  </data>
+  <data name="CopyToProject" xml:space="preserve">
+    <value>Copy into the project</value>
+  </data>
+  <data name="ResetValue" xml:space="preserve">
+    <value>Reset to the behavior’s value</value>
+  </data>
+  <data name="NoneChosen" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="AssetsSearch" xml:space="preserve">
+    <value>Search the assets</value>
+  </data>
+  <data name="AssetsNoMatch" xml:space="preserve">
+    <value>No asset matches</value>
+  </data>
+  <data name="AssetsWaitHost" xml:space="preserve">
+    <value>The project shows once the host runs</value>
+  </data>
+  <data name="UnsavedChanges" xml:space="preserve">
+    <value>Changed, not saved</value>
+  </data>
+  <data name="AddNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Folder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="ImportFile" xml:space="preserve">
+    <value>Import a file…</value>
+  </data>
+  <data name="FindUsages" xml:space="preserve">
+    <value>Used by…</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="MoveTo" xml:space="preserve">
+    <value>Move to</value>
+  </data>
+  <data name="ExportFile" xml:space="preserve">
+    <value>Export…</value>
+  </data>
+  <data name="ShowInFolder" xml:space="preserve">
+    <value>Show in the folder</value>
+  </data>
+  <data name="ProjectRoot" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="GivenAssets" xml:space="preserve">
+    <value>Given with D3B</value>
+  </data>
+  <data name="UsedByCountOne" xml:space="preserve">
+    <value>Used by {0}</value>
+  </data>
+  <data name="UsedByCountOther" xml:space="preserve">
+    <value>Used by {0}</value>
+  </data>
+  <data name="DeleteAssetTitle" xml:space="preserve">
+    <value>Delete {0}?</value>
+  </data>
+  <data name="DeleteAssetUsersOne" xml:space="preserve">
+    <value>{0} asset uses it and will reference nothing.</value>
+  </data>
+  <data name="DeleteAssetUsersOther" xml:space="preserve">
+    <value>{0} assets use it and will reference nothing.</value>
+  </data>
+  <data name="NewFolder" xml:space="preserve">
+    <value>New folder</value>
+  </data>
+  <data name="AssetImported" xml:space="preserve">
+    <value>{0} imported</value>
+  </data>
+  <data name="AssetExported" xml:space="preserve">
+    <value>{0} exported</value>
+  </data>
+  <data name="AssetWriteFailed" xml:space="preserve">
+    <value>Not written: {0}</value>
+  </data>
 </root>

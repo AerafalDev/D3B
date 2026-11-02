@@ -2,6 +2,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.ViewModels.Settings;
+using D3B.Bot.Activities;
 using D3B.Bot.Assets;
 using D3B.Bot.Behaviors;
 using D3B.Storage.Accounts;
@@ -17,6 +18,10 @@ internal sealed partial class ProfileViewModel : ObservableObject
     private ProfileAsset? _profile;
     private bool _loading;
     private (string Name, string? Activity, string? Settings) _baseline;
+    private string? _defaults;
+
+    /// <summary>Gets what keys the profile's tab, the same once a new one is saved.</summary>
+    public string TabKey { get; }
 
     /// <summary>Gets the profile's id, empty until a new one is saved.</summary>
     public string Id => _profile?.Id ?? "";
@@ -29,6 +34,21 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     /// <summary>Gets whether the profile may be edited or deleted: one of the project's own.</summary>
     public bool IsOwn => !IsGiven;
+
+    /// <summary>Gets whether the profile is shown but not changed: given with the app, it is copied to be changed (D296).</summary>
+    public bool IsReadOnly => IsGiven;
+
+    /// <summary>Gets the name of the behavior the profile is a variant of, as its header says it (D330).</summary>
+    [ObservableProperty]
+    public partial string BehaviorName { get; private set; } = "";
+
+    /// <summary>Gets how many values the profile changes from its behavior, in words.</summary>
+    [ObservableProperty]
+    public partial string ChangedText { get; private set; } = "";
+
+    /// <summary>Gets whether the profile changes a value of its behavior.</summary>
+    [ObservableProperty]
+    public partial bool HasChanges { get; private set; }
 
     /// <summary>Gets the activities a profile may run, named in the app's language.</summary>
     public IReadOnlyList<ActivityChoiceViewModel> Activities => _page.Activities;
@@ -127,6 +147,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
     {
         _page = page;
         _profile = profile;
+        TabKey = profile?.Id ?? Guid.NewGuid().ToString("N");
         Show();
     }
 
@@ -171,6 +192,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
     public void Cancel()
     {
         IsEditing = false;
+        IsDirty = false;
         Error = null;
         Editor = null;
         _page.EndEditing(this);
@@ -179,12 +201,16 @@ internal sealed partial class ProfileViewModel : ObservableObject
             Show();
     }
 
-    /// <summary>Opens the editor on the page, from the profile as saved.</summary>
-    [RelayCommand(CanExecute = nameof(IsOwn))]
+    /// <summary>Opens the editor in its tab, from the profile as saved; a given one is shown, not changed.</summary>
+    [RelayCommand]
     public void Edit()
     {
         if (IsEditing)
+        {
+            _page.BeginEditing(this);
+
             return;
+        }
 
         Open(_profile?.Name ?? "", SavedActivity ?? (IsNew && Activities.Count > 0 ? Activities[0] : null), SavedSettings);
     }
@@ -200,7 +226,6 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     private void Open(string name, ActivityChoiceViewModel? activity, string? settings)
     {
-        _page.BeginEditing(this);
         _loading = true;
 
         try
@@ -218,6 +243,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
         _baseline = (EditName.Trim(), EditActivity?.Definition?.Id, Editor?.Write());
         CheckName();
         CheckDirty();
+        _page.BeginEditing(this);
     }
 
     private void Show()
@@ -282,16 +308,71 @@ internal sealed partial class ProfileViewModel : ObservableObject
         }
 
         var reading = definition.Settings.Read(settings);
+        var behavior = BehaviorOf(definition);
 
-        Editor = new SettingsEditor(definition.Settings, reading.Settings, _page.Game, _page.Names, _page.Localizer, _page.Services, IsNew ? [] : _page.LevelsOf(Id), _page.Dialogs);
+        _defaults = behavior is null ? null : ProfileForms.SettingsOf(behavior, null);
+        BehaviorName = behavior is null ? "" : behavior.Title?.In(_page.Localizer.Culture) ?? behavior.Name;
+        Editor = new SettingsEditor(definition.Settings, reading.Settings, _page.Game, _page.Names, _page.Localizer, _page.Services, IsNew ? [] : _page.LevelsOf(Id), _page.Dialogs)
+        {
+            Defaults = _defaults is null ? null : definition.Settings.Read(_defaults).Settings,
+            Resets = ResetField,
+        };
         Editor.PropertyChanged += OnEditorChanged;
         Editor.Edited += OnEdited;
         UpdateCanSave();
+        ShowChanges();
+    }
+
+    private BehaviorAsset? BehaviorOf(ActivityDefinition definition)
+    {
+        // The profile keeps its behavior while it plays the activity edited; one whose behavior is gone takes the activity's given one.
+        return _profile is { } saved && _page.FormOf(saved).Activity?.Id == definition.Id ? _page.Assets?.Find<BehaviorAsset>(saved.Behavior) : _page.BehaviorOf(definition);
+    }
+
+    private void ShowChanges()
+    {
+        var count = Editor?.ChangedCount ?? 0;
+
+        HasChanges = count > 0;
+        ChangedText = count > 0 ? _page.Localizer.Plural("ValuesChanged", count) : _page.Localizer["NoValueChanged"];
+    }
+
+    private void ResetField(SettingFieldViewModel field)
+    {
+        if (IsReadOnly || Editor is not { Draft: { } draft } editor || _defaults is null || EditActivity?.Definition is not { } definition)
+            return;
+
+        var defaults = definition.Settings.Read(_defaults).Settings!;
+
+        // The editor is made again from the value given back: each field then shows what it reads, the others kept.
+        field.Definition.SetValue(draft, field.Definition.GetValue(defaults));
+        Load(editor.Write());
+        CheckDirty();
+    }
+
+    /// <summary>Gives every value the behavior's back: "Tout remettre" (D330).</summary>
+    [RelayCommand]
+    public void ResetAll()
+    {
+        if (IsReadOnly || _defaults is null)
+            return;
+
+        Load(_defaults);
+        CheckDirty();
+    }
+
+    /// <summary>Copies the profile, given with the app, into the project, and opens the copy.</summary>
+    /// <returns>A task that completes once copied.</returns>
+    [RelayCommand]
+    public Task CopyToProjectAsync()
+    {
+        return _page.CopyToProjectAsync(this);
     }
 
     private void OnEdited(object? sender, EventArgs e)
     {
         CheckDirty();
+        ShowChanges();
     }
 
     private void CheckDirty()
@@ -323,7 +404,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     private void UpdateCanSave()
     {
-        CanSave = IsEditing && NameProblem is null && EditActivity?.Definition is not null && Editor is { HasProblems: false };
+        CanSave = IsEditing && !IsReadOnly && NameProblem is null && EditActivity?.Definition is not null && Editor is { HasProblems: false };
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
@@ -332,8 +413,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
         if (_page.Assets is not { } assets || EditActivity?.Definition is not { } definition || Editor is not { } editor)
             return;
 
-        // The profile keeps its behavior while it plays the activity edited; one whose behavior is gone takes the activity's given one.
-        var behavior = _profile is { } saved && _page.FormOf(saved).Activity?.Id == definition.Id ? assets.Find<BehaviorAsset>(saved.Behavior) : _page.BehaviorOf(definition);
+        var behavior = BehaviorOf(definition);
 
         if (behavior is null)
         {
@@ -354,12 +434,12 @@ internal sealed partial class ProfileViewModel : ObservableObject
                     Values = ProfileForms.ValuesOf(behavior, editor.Write()),
                 },
                 CancellationToken.None);
-            IsEditing = false;
+            // The tab stays open on what was saved, as an editor's does.
+            _baseline = (EditName.Trim(), EditActivity?.Definition?.Id, editor.Write());
             IsDirty = false;
             Error = null;
-            Editor = null;
             Show();
-            _page.EndEditing(this);
+            CheckName();
             _page.Saved(this);
         }
         catch (ArgumentException exception)

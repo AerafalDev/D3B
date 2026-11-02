@@ -225,7 +225,6 @@
                         IsChecked="{Binding Layout.IsInspectorOpen, Mode=OneWay}" />
                     <Separator />
                     <MenuItem Classes="Heading" Header="{l:Tr MenuPages}" />
-                    <MenuItem Command="{Binding ShowProfilesCommand}" Header="{l:Tr Profiles}" />
                     <MenuItem
                         Header="{l:Tr MenuModules}"
                         IsVisible="{Binding HasPages}"
@@ -571,31 +570,7 @@
                                     </Border>
                                 </StackPanel>
                             </Border>
-                            <StackPanel
-                                HorizontalAlignment="Center"
-                                Margin="20"
-                                MaxWidth="240"
-                                Spacing="10"
-                                VerticalAlignment="Center">
-                                <c:Icon
-                                    Drawing="{StaticResource Nodes.Folder}"
-                                    Height="20"
-                                    HorizontalAlignment="Center"
-                                    Opacity="0.6"
-                                    Width="20" />
-                                <TextBlock
-                                    Classes="Dim"
-                                    HorizontalAlignment="Center"
-                                    Text="{l:Tr AssetsEmpty}"
-                                    TextAlignment="Center"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Classes="Outline"
-                                    Command="{Binding ShowProfilesCommand}"
-                                    Content="{l:Tr AssetsOpenProfiles}"
-                                    HorizontalAlignment="Center"
-                                    Padding="12,0" />
-                            </StackPanel>
+                            <views:AssetsView DataContext="{Binding Assets}" Name="AssetsPanel" />
                         </DockPanel>
                     </Border>
                 </Grid>
@@ -656,6 +631,13 @@
                                                                 VerticalAlignment="Center"
                                                                 Width="16" />
                                                             <TextBlock Classes="TabTitle" Text="{Binding Title}" />
+                                                            <Ellipse
+                                                                Fill="{DynamicResource PausedColor}"
+                                                                Height="6"
+                                                                IsVisible="{Binding IsModified}"
+                                                                ToolTip.Tip="{l:Tr UnsavedChanges}"
+                                                                VerticalAlignment="Center"
+                                                                Width="6" />
                                                         </StackPanel>
                                                     </Button>
                                                     <Button
@@ -693,8 +675,8 @@
                                                     <DataTemplate x:DataType="vm:MainViewModel">
                                                         <views:WelcomeView />
                                                     </DataTemplate>
-                                                    <DataTemplate x:DataType="vm:ProfilesViewModel">
-                                                        <views:ProfilesView />
+                                                    <DataTemplate x:DataType="vm:ProfileViewModel">
+                                                        <views:ProfileView />
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="ch:CharacterTabViewModel">
                                                         <views:CharacterView />

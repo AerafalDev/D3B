@@ -34,6 +34,7 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     private const int CopyAttempts = 50;
 
     private readonly Dictionary<string, ProfileViewModel> _byId = new(StringComparer.Ordinal);
+    private readonly List<ProfileViewModel> _open = [];
     private IServiceProvider? _services;
     private ActivityCatalog? _catalog;
     private NodeCatalog? _nodes;
@@ -68,9 +69,20 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <summary>Gets the host's services, once it runs: an activity reckons what its settings lead to from them (D127).</summary>
     public IServiceProvider? Services => _services;
 
-    /// <summary>Gets the profile whose editor shows on the page, if any.</summary>
+    /// <summary>Gets the profiles whose editor is open, each in a tab of its own (D330).</summary>
+    public IReadOnlyList<ProfileViewModel> Open => _open;
+
+    /// <summary>Gets or sets what opens a profile's tab once its editor opens.</summary>
+    public Action<ProfileViewModel>? Opened { get; set; }
+
+    /// <summary>Gets or sets what closes a profile's tab once its editor closes.</summary>
+    public Action<ProfileViewModel>? Closed { get; set; }
+
+    /// <summary>Gets whether an editor holds changes not saved.</summary>
+    public bool IsAnyDirty => _open.Any(item => item.IsDirty);
+
+    /// <summary>Gets the profile whose editor opened last, if any is open.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsListing))]
     public partial ProfileViewModel? Editing { get; private set; }
 
     /// <summary>Gets whether there is no profile.</summary>
@@ -80,9 +92,6 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <summary>Gets whether the host keeps profiles: its database opened.</summary>
     [ObservableProperty]
     public partial bool IsAvailable { get; private set; }
-
-    /// <summary>Gets whether the page shows the profiles, no editor open.</summary>
-    public bool IsListing => Editing is null;
 
     private AccountBook? Accounts => _services?.GetService<AccountBook>();
 
@@ -214,22 +223,66 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         return string.Join(" · ", parts);
     }
 
-    /// <summary>Shows a profile's editor on the page, the only one open.</summary>
+    /// <summary>Opens a profile's editor in its tab, beside the others open.</summary>
     /// <param name="item">The profile being edited.</param>
     public void BeginEditing(ProfileViewModel item)
     {
-        if (Editing is { } other && other != item)
-            other.Cancel();
+        if (!_open.Contains(item))
+            _open.Add(item);
 
         Editing = item;
+        Opened?.Invoke(item);
     }
 
-    /// <summary>Shows the profiles again, once a profile's editor closed.</summary>
+    /// <summary>Closes a profile's tab, once its editor closed.</summary>
     /// <param name="item">The profile that was edited.</param>
     public void EndEditing(ProfileViewModel item)
     {
-        if (Editing == item)
-            Editing = null;
+        if (!_open.Remove(item))
+            return;
+
+        Editing = _open.LastOrDefault();
+        Closed?.Invoke(item);
+    }
+
+    /// <summary>Saves every profile edited whose settings hold: File's Save all, Ctrl S.</summary>
+    public void SaveAll()
+    {
+        foreach (var item in _open.Where(item => item.IsDirty && item.SaveCommand.CanExecute(null)).ToList())
+            item.SaveCommand.Execute(null);
+    }
+
+    /// <summary>Copies a profile given with the app into the project, under a name of its own, and opens the copy.</summary>
+    /// <param name="item">The profile given.</param>
+    /// <returns>A task that completes once the copy is saved and opened.</returns>
+    public async Task CopyToProjectAsync(ProfileViewModel item)
+    {
+        if (Assets is not { } assets || assets.Find<ProfileAsset>(item.Id) is not { } given)
+            return;
+
+        try
+        {
+            var copy = await assets.SaveAsync(given with { Id = AssetLibrary.NewId(), Name = CopyName(item.Name), Title = null, Path = null }, CancellationToken.None);
+
+            Sync(false);
+
+            if (_byId.TryGetValue(copy.Id, out var opened))
+                opened.Edit();
+
+            Toasts.Show(new Toast(Localizer.Format("AssetCopied", copy.Name), Tone.Success));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
+        {
+            Toasts.Show(new Toast(Localizer.Format("SaveFailed", exception.GetBaseException().Message), Tone.Danger));
+        }
+    }
+
+    /// <summary>Finds a profile's item by its id.</summary>
+    /// <param name="id">The profile's id.</param>
+    /// <returns>The item, or <see langword="null"/>.</returns>
+    public ProfileViewModel? Find(string id)
+    {
+        return _byId.GetValueOrDefault(id);
     }
 
     /// <summary>Opens the editor of a new profile, its name and activity chosen, its settings another's or the activity's defaults.</summary>
@@ -357,8 +410,11 @@ internal sealed partial class ProfilesViewModel : ObservableObject
             }
         }
 
-        if (relabel && Editing is { IsNew: true } editing)
-            editing.Relabel();
+        if (relabel)
+        {
+            foreach (var editing in _open.Where(item => item.IsNew))
+                editing.Relabel();
+        }
 
         // A new profile shows in its editor alone until it is saved; the others follow the project's order, given first, by name.
         List<ProfileViewModel> order = [.. profiles.Select(profile => _byId[profile.Id])];

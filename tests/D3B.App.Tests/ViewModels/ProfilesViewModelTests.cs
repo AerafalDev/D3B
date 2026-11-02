@@ -131,8 +131,8 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
 
         var saved = Assert.Single(_store.Assets.OfType<ProfileAsset>());
 
-        Assert.False(item.IsEditing);
-        Assert.True(page.IsListing);
+        Assert.True(item.IsEditing);
+        Assert.False(item.IsDirty);
         Assert.Equal(("Lumberjack", GivenAssets.BehaviorOf(TestStore.HarvestId)), (saved.Name, saved.Behavior));
         Assert.Equal(TestReferences.Lumberjack, saved.Values["Job"]!.GetValue<int>());
 
@@ -366,6 +366,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         question.OtherCommand.Execute(null);
 
         Assert.False(item.IsEditing);
+        Assert.False(item.IsDirty);
         Assert.Null(item.Editor);
         Assert.Null(page.Editing);
         Assert.Null(page.Dialogs.Current);
@@ -397,7 +398,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task ANewProfileIsNamedInADialogThenEditedOnThePageAloneUntilSaved()
+    public async Task ANewProfileIsNamedInADialogThenEditedInATabOfItsOwnBesideTheOthers()
     {
         await _store.OpenedAsync();
         await _store.Assets.SaveProfileAsync("Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
@@ -430,12 +431,12 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         page.Items[0].EditCommand.Execute(null);
 
         Assert.Same(page.Items[0], page.Editing);
-        Assert.False(editing.IsEditing);
+        Assert.True(editing.IsEditing);
+        Assert.Equal(2, page.Open.Count);
         Assert.Single(page.Items);
 
         await page.Items[0].SaveCommand.ExecuteAsync(null);
 
-        Assert.True(page.IsListing);
         Assert.Equal("Stroll saved", Assert.Single(page.Toasts.Recent).Text);
     }
 
@@ -497,7 +498,6 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.Empty(_store.Assets.OfType<ProfileAsset>());
         Assert.Empty(page.Items);
         Assert.True(page.IsEmpty);
-        Assert.True(page.IsListing);
         Assert.Equal("Stroll deleted", Assert.Single(page.Toasts.Recent).Text);
     }
 }
