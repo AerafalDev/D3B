@@ -1799,7 +1799,8 @@ counts, timings and the client's ids, never an actor's id or name.
 - **Iron in Incarnam's mine** (D262), 16 minutes, every fix of the session: 119 iron from seven rooms joined by doors;
   iron grown back 729 and 731 s after the bot's harvests, still harvested 779 s after one; most iron seen harvested was
   not the bot's. Of the 190 walks D3B sent, none ended where the previous one did, and the client followed 189; the one
-  left went back along the previous walk, which another walk in the captures did, followed.
+  left went back along the previous walk, which another walk in the captures did, followed. A teleport from a room of
+  the mine was refused 20 ms after, text 474 of the error kind.
 
 ## Protocol code
 

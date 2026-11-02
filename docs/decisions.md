@@ -6122,6 +6122,9 @@ iron for 16 minutes in Incarnam's mine, with every fix of the session. Builds D1
 - **The walks** of D260, measured on the same capture: none of the 190 walks D3B sent ended where the previous one did,
   and the client followed 189; the last, back along the previous walk to the cell the character entered the room on,
   it did not, as 7 others of the 17 earlier game connections, 1 % of the walks, whose cause is not found.
+- **A teleport refused** (D248), the capture's last request: from a room of the mine, the bot's teleport was refused
+  with text 474 of the error kind, where Incarnam's maps gave text 416; the owner stopped the run 6 s later, so that
+  the journey after it is not measured.
 - **Risk**: an element harvested again unseen between two sightings grows back later than reckoned; its map is then
   gone through each tour, as before D145.
 
