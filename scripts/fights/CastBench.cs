@@ -38,9 +38,11 @@ internal sealed class CastBench
     private readonly EffectActions _actions;
     private readonly Bombs _bombs;
     private readonly Imagination _imagination;
+    private readonly Glyphs _glyphs;
     private readonly TextWriter? _details;
     private readonly Dictionary<long, FightMap> _fightMaps = [];
     private readonly Dictionary<(long Fighter, int Spell), int> _turnsEnded = [];
+    private Starting? _starting;
 
     public Tally Tally { get; } = new();
 
@@ -53,7 +55,8 @@ internal sealed class CastBench
         _actions = new EffectActions(tables.Effects);
         _effects = new SpellEffects(_blows, _rules, _actions);
         _bombs = new Bombs(_blows.Spells, _rules);
-        _imagination = new Imagination(_blows.Spells, tables.Monsters, _actions, _effects, _bombs);
+        _glyphs = new Glyphs(_blows.Spells);
+        _imagination = new Imagination(_blows.Spells, tables.Monsters, _actions, _effects, _bombs, _glyphs, _rules);
         _details = details;
     }
 
@@ -114,6 +117,7 @@ internal sealed class CastBench
                 continue;
 
             Before(fight, message, mapId, open, levels, character);
+            Starts(fight, message, mapId);
 
             var before = fight;
 
@@ -132,8 +136,93 @@ internal sealed class CastBench
             }
 
             if (message is FightEndEvent)
+            {
+                SettleStart();
                 fight = null;
+            }
         }
+    }
+
+    private void Starts(FightState fight, IMessage message, long mapId)
+    {
+        // The marks on a fighter's cell as its turn begins, a glyph or a bombs' wall (9f4): which struck it and the life it
+        // lost before its turn's own effects, against what D3B.Engine imagines of them.
+        switch (message)
+        {
+            case FightTurnEvent turn when fight.Phase is FightPhase.Fighting && fight.Fighters.TryGetValue(turn.FighterId, out var fighter) && fighter.IsAlive && fighter.Cell is not null:
+            {
+                SettleStart();
+
+                var fighters = FightCombatants.Of(fight, _tables.Monsters);
+                var imagined = new ImaginedFight
+                {
+                    Map = MapOf(mapId),
+                    Fighters = [.. fighters],
+                    ActorId = turn.FighterId,
+                    Round = turn.Round,
+                    Marks = ImaginedFights.MarksOf(fight, _glyphs),
+                };
+                var before = imagined.Actor;
+                var after = _imagination.TurnStarted(imagined, turn.FighterId, turn.Round).Find(turn.FighterId);
+                var covering = imagined.Marks.Count(mark => mark.Kind is CellMarkKind.TurnStart && mark.Covers(before.Cell));
+                var walls = new List<BombWallCell>();
+
+                _bombs.Walls(imagined.Map, imagined.Fighters, walls);
+
+                if (!_bombs.IsBomb(before, out _) && walls.Exists(wall => wall.Cell == before.Cell))
+                    covering++;
+
+                _starting = new Starting(turn.FighterId, covering, Effective(before) - (after is null ? 0 : Effective(after)));
+
+                break;
+            }
+
+            case GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.MarkStruck } struck when _starting is { } starting && struck.MarkStruck.FighterId == starting.FighterId:
+                if (struck.ActionId is 307)
+                    starting.Struck++;
+                else
+                    starting.Entered++;
+
+                break;
+
+            case GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.LifeLost } lost when _starting is { } starting && lost.LifeLost.TargetId == starting.FighterId:
+                starting.Lost += lost.LifeLost.Loss + (lost.LifeLost.HasShieldLoss ? lost.LifeLost.ShieldLoss : 0);
+
+                break;
+
+            case SequenceStartEvent { Type: not SequenceType.Value2 and not SequenceType.Triggered }:
+            case FightTurnEndEvent:
+                SettleStart();
+
+                break;
+        }
+    }
+
+    private static double Effective(Combatant fighter)
+    {
+        return fighter.IsAlive ? fighter.Life + Math.Max(0, fighter.Characteristic(FightCharacteristic.Shield)) : 0;
+    }
+
+    private void SettleStart()
+    {
+        if (_starting is not { } starting)
+            return;
+
+        _starting = null;
+
+        if (starting.Covering is 0 && starting.Struck is 0)
+            return;
+
+        var marks = starting.Struck == starting.Covering ? "as many as imagined" : starting.Struck > starting.Covering ? "more than imagined" : "fewer than imagined";
+        var outcome = Math.Abs(starting.Lost - starting.Imagined) <= Math.Max(2, starting.Lost / 10.0) ? "within a tenth" : starting.Imagined < starting.Lost ? "less imagined" : "more imagined";
+
+        Tally.Count($"marks at a turn's start: struck {starting.Struck}, imagined {starting.Covering}, {marks}");
+        Tally.Count($"marks at a turn's start: life, {outcome}");
+        Tally.Count("marks at a turn's start: life announced", starting.Lost);
+        Tally.Count("marks at a turn's start: life imagined", (int)Math.Round(starting.Imagined));
+
+        if (outcome is not "within a tenth" || marks is not "as many as imagined")
+            _details?.WriteLine($"marks at a turn's start: struck {starting.Struck} imagined {starting.Covering}, lost {starting.Lost} against {starting.Imagined:F0} imagined");
     }
 
     private void Summoned(FightState before, FightState after, SummonedFighters summoned)
@@ -525,8 +614,30 @@ internal sealed class CastBench
 
     private void Pushes(Cast cast, IReadOnlyList<ForeseenEffect> foreseen)
     {
+        ImaginedFight? imagined = null;
+
         foreach (var push in foreseen.Where(effect => effect.IsImmediate && effect.IsCertain && effect.Action.Kind is EffectKind.Push or EffectKind.Pull))
         {
+            // Where the target ends, as the server moved it and as D3B imagines the whole cast, blocks and walls counted (9f4).
+            imagined ??= _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty }, cast.Level, cast.Cell);
+
+            var moves = cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Slide && action.Slide.TargetId == push.TargetId).ToList();
+            var from = cast.Fighters.FirstOrDefault(fighter => fighter.Id == push.TargetId)?.Cell ?? Combatant.NoCell;
+            var landed = moves.Count > 0 ? moves[^1].Slide.ToCell : from;
+            var thought = imagined.Find(push.TargetId) is { IsAlive: true } there ? there.Cell : Combatant.NoCell;
+
+            if (from is not Combatant.NoCell && landed is not Combatant.NoCell && thought is not Combatant.NoCell)
+            {
+                var moved = Steps(from, landed);
+                var foreseenSteps = Steps(from, thought);
+                var against = landed == thought ? "on the cell imagined" : moved < foreseenSteps ? "short of the cell imagined" : moved > foreseenSteps ? "beyond the cell imagined" : "on another cell as far";
+
+                Tally.Count($"pushes and pulls: {(push.Action.Kind is EffectKind.Push ? "push" : "pull")}, {against}");
+
+                if (landed != thought)
+                    _details?.WriteLine($"push or pull off: spell {cast.Level.SpellId} effect {push.EffectId}, {push.Value.Min} cells, moved {moved} imagined {foreseenSteps}, slides {moves.Count}, target {(cast.Fighters.First(fighter => fighter.Id == push.TargetId).IsCharacter ? "character" : "monster")}, next cell {Next(cast, from, landed)}, {Geometry(cast, from, landed, thought)}");
+            }
+
             var slides = cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Slide && action.Slide.TargetId == push.TargetId).ToList();
             var steps = slides.Sum(slide => Steps(slide.Slide.FromCell, slide.Slide.ToCell));
             var cells = push.Value.Min;
@@ -561,6 +672,35 @@ internal sealed class CastBench
             if (formula != damage && !capped)
                 _details?.WriteLine($"push damage: spell {cast.Level.SpellId}, {cells} cells, {steps} moved: {damage} against {formula}; target {(target.IsCharacter ? "character" : "monster")} lvl {target.Level} props {target.MonsterProperties} states {string.Join(",", target.States)} res85 {target.Characteristic(85)} caster lvl {level} bonus84 {cast.Caster.Characteristic(84)} shares {string.Join(",", target.ReceivedDamageShares)} slides {cast.Actions.Count(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Slide)} hits80 {cast.Actions.Count(action => action.ActionId is 80)}");
         }
+    }
+
+    private static string Geometry(Cast cast, int from, int landed, int thought)
+    {
+        // The target's place against the caster and the cell cast on, and where it went and was imagined to, by coordinates.
+        var at = MapGeometry.PointOf(from);
+        string Off(int cell)
+        {
+            var point = MapGeometry.PointOf(cell);
+
+            return $"({point.X - at.X},{point.Y - at.Y})";
+        }
+
+        return $"caster {Off(cast.Caster.Cell)} cast on {Off(cast.Cell)} went {Off(landed)} imagined {Off(thought)}";
+    }
+
+    private static string Next(Cast cast, int from, int landed)
+    {
+        // What stands on the cell past the one the server stopped on, along the slide.
+        var a = MapGeometry.PointOf(from);
+        var b = MapGeometry.PointOf(landed);
+
+        if (a == b)
+            return "none, not moved";
+
+        if (!MapGeometry.TryGetCell(new MapPoint(b.X + Math.Sign(b.X - a.X), b.Y + Math.Sign(b.Y - a.Y)), out var next))
+            return "off the map";
+
+        return !cast.Map.IsWalkable(next) ? "not walkable" : cast.Fighters.Any(fighter => fighter.IsAlive && fighter.Cell == next) ? "a fighter" : "free";
     }
 
     private void Points(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone)
@@ -859,6 +999,28 @@ internal sealed class CastBench
     }
 
     /// <summary>A cast a fighter chose, the fight as it stood before it, and what the server announced until its sequence closed.</summary>
+    private sealed class Starting
+    {
+        public Starting(long fighterId, int covering, double imagined)
+        {
+            FighterId = fighterId;
+            Covering = covering;
+            Imagined = imagined;
+        }
+
+        public long FighterId { get; }
+
+        public int Covering { get; }
+
+        public double Imagined { get; }
+
+        public int Struck { get; set; }
+
+        public int Entered { get; set; }
+
+        public int Lost { get; set; }
+    }
+
     private sealed class Cast
     {
         public required Combatant Caster { get; init; }

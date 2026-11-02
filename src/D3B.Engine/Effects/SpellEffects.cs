@@ -136,7 +136,8 @@ public sealed class SpellEffects
     /// <param name="cell">The cell cast on.</param>
     /// <param name="critical">Whether the cast is a critical hit: its level's critical effects apply instead.</param>
     /// <param name="foreseen">The list the effects foreseen are added to, in the level's order.</param>
-    public void Foresee(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell, bool critical, List<ForeseenEffect> foreseen)
+    /// <param name="whole">Whether a zone's effects reach every fighter whole, its decrease left out: a mark's spell on the fighter it strikes (9f4).</param>
+    public void Foresee(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell, bool critical, List<ForeseenEffect> foreseen, bool whole = false)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(fighters);
@@ -169,7 +170,10 @@ public sealed class SpellEffects
             if (reached.Count is 0)
                 continue;
 
-            Steps(effect, map, occupied, caster, cell, reached, steps);
+            if (whole)
+                steps[..reached.Count].Clear();
+            else
+                Steps(effect, map, occupied, caster, cell, reached, steps);
 
             for (var index = 0; index < reached.Count; index++)
             {

@@ -134,7 +134,7 @@ public sealed class MaskTacticsTests
 
         Assert.Equal([99], masked.States);
         Assert.Equal(5, masked.ActionPoints);
-        Assert.Equal([new HeldBuff(Psychopath, 950, 99)], masked.Buffs);
+        Assert.Equal([new HeldBuff(Psychopath, 950, 99, CasterId: zobal.Id)], masked.Buffs);
     }
 
     [Fact]

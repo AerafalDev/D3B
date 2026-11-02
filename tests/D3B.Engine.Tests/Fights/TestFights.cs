@@ -55,7 +55,7 @@ internal static class TestFights
     /// <summary>An enemy monster, of team 1.</summary>
     public static Combatant Enemy(long id, int cell)
     {
-        return new Combatant { Id = id, Team = 1, Cell = cell, MonsterId = 31, Life = 50, MaxLife = 100, MonsterProperties = Data.Monsters.MonsterProperties.CanTackle | Data.Monsters.MonsterProperties.CanMove };
+        return new Combatant { Id = id, Team = 1, Cell = cell, MonsterId = 31, Life = 50, MaxLife = 100, MonsterProperties = Data.Monsters.MonsterProperties.CanTackle | Data.Monsters.MonsterProperties.CanMove | Data.Monsters.MonsterProperties.CanBePushed };
     }
 
     /// <summary>A zone of a shape and sizes.</summary>
