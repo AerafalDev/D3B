@@ -17,6 +17,12 @@ internal sealed class LogLineViewModel
     /// <summary>Gets whom it is about, a bot's name or the host, shown when the page shows every source; else <see langword="null"/>.</summary>
     public string? Source { get; }
 
+    /// <summary>Gets whom it is about as its source column draws it, when the journal shows every source.</summary>
+    public LogWho? Who { get; }
+
+    /// <summary>Gets whether the journal draws its source.</summary>
+    public bool HasWho => Who is not null;
+
     /// <summary>Gets what happened.</summary>
     public string Text { get; }
 
@@ -41,11 +47,18 @@ internal sealed class LogLineViewModel
     /// <summary>Gets whether it is shown when the page shows errors alone.</summary>
     public bool IsError => Tone is Tone.Danger;
 
-    public LogLineViewModel(DateTimeOffset at, string time, string? source, string text, string? detail, string? more, Tone tone, LogMark mark, int depth)
+    /// <summary>Gets whether it is shown when the journal shows warnings alone.</summary>
+    public bool IsWarning => Tone is Tone.Warning;
+
+    /// <summary>Gets whether it is no problem, shown when the journal shows the infos.</summary>
+    public bool IsInfo => !IsProblem;
+
+    public LogLineViewModel(DateTimeOffset at, string time, string? source, string text, string? detail, string? more, Tone tone, LogMark mark, int depth, LogWho? who = null)
     {
         At = at;
         Time = time;
-        Source = source;
+        Source = who?.Name ?? source;
+        Who = who;
         Text = text;
         Detail = detail;
         More = more;

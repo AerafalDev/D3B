@@ -42,6 +42,18 @@ internal sealed partial class FrameRowViewModel : ObservableObject
     /// <summary>Gets whether the readable protocol read it.</summary>
     public bool IsRead => Frame.Frame.IsRead;
 
+    /// <summary>Gets whether it went to the server, the client's or D3B's, rather than came from it.</summary>
+    public bool IsOutgoing => Frame.Source is not FrameSource.Server;
+
+    /// <summary>Gets whether it came from the server.</summary>
+    public bool IsIncoming => !IsOutgoing;
+
+    /// <summary>Gets whether D3B sent it, not the client.</summary>
+    public bool IsD3B => Frame.Source is not (FrameSource.Client or FrameSource.Server);
+
+    /// <summary>Gets whether no message of the readable protocol names it, so that its type's own name shows instead.</summary>
+    public bool IsUnnamed => Frame.Frame.ReadableType is null;
+
     /// <summary>Gets or sets whether it is unfolded, showing its fields.</summary>
     [ObservableProperty]
     public partial bool IsExpanded { get; set; }

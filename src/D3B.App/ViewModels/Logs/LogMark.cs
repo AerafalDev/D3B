@@ -1,6 +1,6 @@
 namespace D3B.App.ViewModels.Logs;
 
-/// <summary>What a line of the journal is about, at a glance: the icon it shows, <c>Icon</c> and its name in <c>Themes/Icons.axaml</c>.</summary>
+/// <summary>What a line of the journal is about, at a glance, which a copy of the journal or the character's tab may say.</summary>
 internal enum LogMark
 {
     /// <summary>A walk on a map.</summary>

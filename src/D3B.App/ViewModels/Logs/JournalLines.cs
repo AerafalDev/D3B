@@ -55,8 +55,9 @@ internal sealed class JournalLines
     /// <summary>Says a bot's journal entry.</summary>
     /// <param name="entry">The entry.</param>
     /// <param name="source">The bot's name, when the page shows every source.</param>
+    /// <param name="who">The bot as the journal's source column draws it, when it shows every source.</param>
     /// <returns>The line.</returns>
-    public LogLineViewModel Of(JournalEntry entry, string? source)
+    public LogLineViewModel Of(JournalEntry entry, string? source, LogWho? who = null)
     {
         var (text, detail, tone, mark) = entry switch
         {
@@ -77,21 +78,22 @@ internal sealed class JournalLines
             _ => (entry.GetType().Name, null, Tone.Neutral, LogMark.Alert),
         };
 
-        return new LogLineViewModel(entry.At, Time(entry.At), source, text, detail, null, tone, mark, entry.Depth);
+        return new LogLineViewModel(entry.At, Time(entry.At), source, text, detail, null, tone, mark, entry.Depth, who);
     }
 
     /// <summary>Says a problem of the host, in the host's own words.</summary>
     /// <param name="problem">The problem.</param>
     /// <param name="source">The host's name, when the page shows every source.</param>
+    /// <param name="who">The host as the journal's source column draws it, when it shows every source.</param>
     /// <returns>The line.</returns>
-    public LogLineViewModel Of(HostProblem problem, string? source)
+    public LogLineViewModel Of(HostProblem problem, string? source, LogWho? who = null)
     {
         var category = problem.Category[(problem.Category.LastIndexOf('.') + 1)..];
         var tone = problem.Level is LogLevel.Warning ? Tone.Warning : Tone.Danger;
         var text = problem.Message.Split('\n', 2)[0].TrimEnd('\r');
         var more = problem.Exception is { } exception ? problem.Message + Environment.NewLine + exception : null;
 
-        return new LogLineViewModel(problem.At, Time(problem.At), source, text, category, more, tone, LogMark.Alert, 0);
+        return new LogLineViewModel(problem.At, Time(problem.At), source, text, category, more, tone, LogMark.Alert, 0, who);
     }
 
     private (string, string?, Tone, LogMark) MapChange(MapChangeEntry change)

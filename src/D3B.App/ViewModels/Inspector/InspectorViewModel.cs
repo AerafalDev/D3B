@@ -115,6 +115,15 @@ internal sealed partial class InspectorViewModel : ObservableObject
     /// <summary>Gets whether the inspector shows a bot's frames as they go, rather than a capture's.</summary>
     public bool IsLive => Capture is null;
 
+    /// <summary>Gets whether every sender's frames show.</summary>
+    public bool IsAllSenders => ShowsClient && ShowsServer && ShowsD3B;
+
+    /// <summary>Gets whether only the frames sent to the server show, the client's and D3B's.</summary>
+    public bool IsSent => ShowsClient && ShowsD3B && !ShowsServer;
+
+    /// <summary>Gets whether only the frames the server sent show.</summary>
+    public bool IsReceived => ShowsServer && !ShowsClient && !ShowsD3B;
+
     /// <summary>Initializes a new instance of the <see cref="InspectorViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
     /// <param name="choice">The bot the logs page and the inspector look at.</param>
@@ -176,17 +185,17 @@ internal sealed partial class InspectorViewModel : ObservableObject
 
     partial void OnShowsClientChanged(bool value)
     {
-        Filter();
+        SendersChanged();
     }
 
     partial void OnShowsServerChanged(bool value)
     {
-        Filter();
+        SendersChanged();
     }
 
     partial void OnShowsD3BChanged(bool value)
     {
-        Filter();
+        SendersChanged();
     }
 
     partial void OnHidesUnreadChanged(bool value)
@@ -381,6 +390,65 @@ internal sealed partial class InspectorViewModel : ObservableObject
     private LogSourceViewModel? Find(CharacterKey key)
     {
         return Bots.FirstOrDefault(source => source.Bot?.Key == key);
+    }
+
+    private void SendersChanged()
+    {
+        OnPropertyChanged(nameof(IsAllSenders));
+        OnPropertyChanged(nameof(IsSent));
+        OnPropertyChanged(nameof(IsReceived));
+        Filter();
+    }
+
+    private void ShowSenders(bool client, bool server, bool d3b)
+    {
+        ShowsClient = client;
+        ShowsServer = server;
+        ShowsD3B = d3b;
+    }
+
+    [RelayCommand]
+    private void ShowAllSenders()
+    {
+        ShowSenders(true, true, true);
+    }
+
+    [RelayCommand]
+    private void ShowSent()
+    {
+        ShowSenders(true, false, true);
+    }
+
+    [RelayCommand]
+    private void ShowReceived()
+    {
+        ShowSenders(false, true, false);
+    }
+
+    [RelayCommand]
+    private void GoLive()
+    {
+        // Back from a capture to the bot looked at, else the first one.
+        if (((_choice.Key is { } key ? Find(key) : null) ?? Bots.FirstOrDefault()) is { } bot)
+            Choose(bot);
+    }
+
+    [RelayCommand]
+    private void ToggleFollow()
+    {
+        Follow = !Follow;
+    }
+
+    [RelayCommand]
+    private void ToggleFreeze()
+    {
+        IsFrozen = !IsFrozen;
+    }
+
+    [RelayCommand]
+    private void ToggleHidesUnread()
+    {
+        HidesUnread = !HidesUnread;
     }
 
     private void StopFollowing()

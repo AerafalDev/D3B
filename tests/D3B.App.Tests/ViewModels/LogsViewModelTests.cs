@@ -128,13 +128,18 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         Write(bot);
         bot.Journal.Add(new WalkEntry(_at, 0, TestPlay.MapId, 12, WalkOutcome.Refused, TimeSpan.FromMilliseconds(100)));
         page.Refresh(_host.Services);
-        page.ShowProblemsCommand.Execute(null);
+        page.ShowWarningsCommand.Execute(null);
 
-        Assert.Equal(["« patrouille » a échoué : The step failed.", "Marche vers la case 12"], page.Lines.Select(line => line.Text));
+        Assert.Equal(["Marche vers la case 12"], page.Lines.Select(line => line.Text));
 
         page.ShowErrorsCommand.Execute(null);
 
-        Assert.Single(page.Lines);
+        Assert.Equal(["« patrouille » a échoué : The step failed."], page.Lines.Select(line => line.Text));
+
+        page.ShowInfosCommand.Execute(null);
+
+        Assert.Equal(4, page.Lines.Count);
+        Assert.All(page.Lines, line => Assert.False(line.IsProblem));
 
         page.ShowAllLevelsCommand.Execute(null);
         page.Search = "CASE";
@@ -155,6 +160,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         Assert.True(page.ShowsSources);
         Assert.Equal(["Toutes les sources", "Hôte", "Character"], page.Sources.Select(source => source.Name));
         Assert.Equal(["Character", "Hôte"], page.Lines.Select(line => line.Source).Order(StringComparer.Ordinal));
+        Assert.Equal([("CH", "Character"), ("H", "Hôte")], page.Lines.Select(line => (line.Who!.Initials, line.Who.Name)).Order());
 
         page.Sources[1].SelectCommand.Execute(null);
 
@@ -162,6 +168,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
 
         Assert.Equal(("Game connection 7: its account is not known, so no bot plays its character", "Bots", Tone.Warning), (problem.Text, problem.Detail, problem.Tone));
         Assert.False(page.ShowsSources);
+        Assert.False(problem.HasWho);
     }
 
     [Fact]

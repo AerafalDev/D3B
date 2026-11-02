@@ -475,14 +475,13 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         });
 
         // 806 resources over 2 h 50, the run going on counted to its last write.
-        Assert.Contains("806", english);
-        Assert.Contains("2 h 50", english);
-        Assert.Contains("284/h", english);
+        Assert.Contains(english, text => text.Contains("806 · 2 h 50 · 284/h", StringComparison.Ordinal));
         Assert.Contains("+1 level", english);
         Assert.Contains("Lumberjack 10 → 11", english);
         Assert.Contains("Ash", english);
         Assert.Contains("700", english);
-        Assert.Contains("Character · Ortie", english);
+        Assert.Contains("Ortie", english);
+        Assert.Contains(english, text => text.StartsWith("Character · since", StringComparison.Ordinal));
         Assert.Contains("Running", english);
         Assert.Equal(2, icons);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
