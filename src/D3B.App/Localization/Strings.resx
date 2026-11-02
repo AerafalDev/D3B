@@ -320,26 +320,8 @@
   <data name="StorageUnavailable" xml:space="preserve">
     <value>D3B's database did not open.</value>
   </data>
-  <data name="Profiles" xml:space="preserve">
-    <value>Profiles</value>
-  </data>
-  <data name="PlayersOne" xml:space="preserve">
-    <value>{0} character</value>
-  </data>
-  <data name="PlayersOther" xml:space="preserve">
-    <value>{0} characters</value>
-  </data>
-  <data name="NoPlayer" xml:space="preserve">
-    <value>No character</value>
-  </data>
   <data name="NewProfile" xml:space="preserve">
     <value>New profile</value>
-  </data>
-  <data name="NoProfileTitle" xml:space="preserve">
-    <value>No profile</value>
-  </data>
-  <data name="NoProfileDetail" xml:space="preserve">
-    <value>A profile is an activity and its settings, shared by characters.</value>
   </data>
   <data name="ProfileName" xml:space="preserve">
     <value>Name</value>
@@ -349,9 +331,6 @@
   </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>
-  </data>
-  <data name="Edit" xml:space="preserve">
-    <value>Edit</value>
   </data>
   <data name="Delete" xml:space="preserve">
     <value>Delete</value>
@@ -370,9 +349,6 @@
   </data>
   <data name="NameTaken" xml:space="preserve">
     <value>Another profile has this name</value>
-  </data>
-  <data name="AndMore" xml:space="preserve">
-    <value>{0} and {1} more</value>
   </data>
   <data name="NumberRange" xml:space="preserve">
     <value>From {0} to {1}</value>
@@ -445,9 +421,6 @@
   </data>
   <data name="ActivityNeedsProfile" xml:space="preserve">
     <value>{0} needs settings: make it a profile</value>
-  </data>
-  <data name="SummaryItem" xml:space="preserve">
-    <value>{0} {1}</value>
   </data>
   <data name="Logs" xml:space="preserve">
     <value>Logs</value>
@@ -1217,9 +1190,6 @@
   <data name="DuplicateProfile" xml:space="preserve">
     <value>Duplicate the profile</value>
   </data>
-  <data name="Back" xml:space="preserve">
-    <value>Back</value>
-  </data>
   <data name="Unsaved" xml:space="preserve">
     <value>Unsaved</value>
   </data>
@@ -1553,9 +1523,6 @@
   <data name="SearchNothing" xml:space="preserve">
     <value>Nothing to show</value>
   </data>
-  <data name="SearchProfile" xml:space="preserve">
-    <value>Profile · {0}</value>
-  </data>
   <data name="CommandNewProfile" xml:space="preserve">
     <value>New profile</value>
   </data>
@@ -1588,9 +1555,6 @@
   </data>
   <data name="CommandAccounts" xml:space="preserve">
     <value>Open the accounts</value>
-  </data>
-  <data name="CommandProfiles" xml:space="preserve">
-    <value>Open the profiles</value>
   </data>
   <data name="CommandMap" xml:space="preserve">
     <value>Open the map</value>
@@ -1678,12 +1642,6 @@
   </data>
   <data name="Close" xml:space="preserve">
     <value>Close</value>
-  </data>
-  <data name="AssetsEmpty" xml:space="preserve">
-    <value>The project's tree comes next. Profiles open from the Window menu or the search.</value>
-  </data>
-  <data name="AssetsOpenProfiles" xml:space="preserve">
-    <value>Open the profiles</value>
   </data>
   <data name="BottomJournal" xml:space="preserve">
     <value>Journal</value>
