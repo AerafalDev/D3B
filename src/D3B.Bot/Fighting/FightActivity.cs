@@ -24,7 +24,8 @@ namespace D3B.Bot.Fighting;
 /// measured (9g): the attack from the group's own cell, which a group leaves by walking 1 to 4 cells, so that the walk is
 /// made again; a group the server answers nothing for is left for the rest of the visit. A map with no such group is gone
 /// through, and the step travels to the nearest map of the zone still to go through, isolated maps last when the settings
-/// take them (D149, D245); once every map was, the tour starts again, the groups having come back.
+/// take them (D149, D245), stopping on the first map of the zone on its way that holds such a group; once every map was, the
+/// tour starts again, the groups having come back.
 /// </para>
 /// <para>
 /// A fight is the activity's own: the AI plays it (<see cref="BotActivity.FightsItsFights"/>), then the run answers it. A
@@ -134,12 +135,6 @@ public sealed class FightActivity : BotActivity
 
         if (ground.Maps.ContainsKey(mapId))
         {
-            if (_skippedOn != mapId)
-            {
-                _skipped.Clear();
-                _skippedOn = mapId;
-            }
-
             if (GroupTo(context) is { } group)
             {
                 await AttackAsync(context, group, cancellationToken).ConfigureAwait(false);
@@ -288,6 +283,13 @@ public sealed class FightActivity : BotActivity
         if (state.Level is not { } level || state.Cell is not { } here || state.MapId is not { } mapId)
             return null;
 
+        // A group's identifier is its map's: the groups left are those of the map the character stands on.
+        if (_skippedOn != mapId)
+        {
+            _skipped.Clear();
+            _skippedOn = mapId;
+        }
+
         FightMap? map = null;
 
         // The nearest first: the shortest walk, before the group walks on.
@@ -371,7 +373,13 @@ public sealed class FightActivity : BotActivity
 
         Publish(GameText.Of(FightTexts.Text(inZone ? "DoingTravel" : "DoingReturn")));
 
-        switch (await context.TravelAsync(sought, cancellationToken).ConfigureAwait(false))
+        // Measured (D256, 9g5): a journey crossed maps of the zone holding groups the activity attacks; it stops on the first.
+        bool Attackable(CharacterState state)
+        {
+            return state.MapId is { } map && ground.Maps.ContainsKey(map) && GroupTo(context) is not null;
+        }
+
+        switch (await context.TravelAsync(sought, Attackable, cancellationToken).ConfigureAwait(false))
         {
             case TravelOutcome.Arrived:
                 _failedJourneys = 0;
