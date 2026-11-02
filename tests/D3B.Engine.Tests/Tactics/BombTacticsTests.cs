@@ -22,6 +22,7 @@ public sealed class BombTacticsTests
     private const int Wall = 33;
     private const int Lighting = 34;
     private const int Bombard = 35;
+    private const int Boot = 36;
 
     private static readonly SpellCatalog _spells = Catalog();
 
@@ -35,6 +36,7 @@ public sealed class BombTacticsTests
         new(1008, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(1009, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(1027, 0, 0, '+', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
+        new(1103, 0, 0, '\0', 2, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
     }), Monsters());
 
     /// <summary>
@@ -43,7 +45,7 @@ public sealed class BombTacticsTests
     /// summoner's bombs in a circle of 2, its explosion deals 10 fire to enemies in a circle of 2 and kills it, its instant
     /// spell 15, its wall 20, the wall between two of them in a line 1 to 7 cells apart. Its circles leave out their centre, as
     /// the pack's. As it comes, it casts its starting spell, which gives its summoner a buff raising spell 10 by 1 AP, as
-    /// a Roublard's Allumage. Spell 35 pushes 1 cell the fighters on a line across the cast, as a Bombarde.
+    /// a Roublard's Allumage. Spell 35 pushes 1 cell the fighters on a line across the cast, as a Bombarde; 36 pushes 3 cells with no damage, as a Botte.
     /// </summary>
     private static SpellCatalog Catalog()
     {
@@ -62,6 +64,7 @@ public sealed class BombTacticsTests
             new SpellLevel { Id = 1033, SpellId = Wall, Grade = 1, ApCost = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 8, EffectCount = 1 },
             new SpellLevel { Id = 1034, SpellId = Lighting, Grade = 1, ApCost = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 9, EffectCount = 1 },
             new SpellLevel { Id = 1035, SpellId = Bombard, Grade = 1, ApCost = 3, MinRange = 1, Range = 6, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 10, EffectCount = 1 },
+            new SpellLevel { Id = 1036, SpellId = Boot, Grade = 1, ApCost = 2, MinRange = 1, Range = 6, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 11, EffectCount = 1 },
         ];
         SpellEffect[] effects =
         [
@@ -76,6 +79,7 @@ public sealed class BombTacticsTests
             new SpellEffect { Uid = 9, EffectId = 99, TargetMask = 0, Triggers = 2, DiceNum = 20, DiceSide = 20, Zone = point },
             new SpellEffect { Uid = 10, EffectId = 296, TargetMask = 5, Triggers = 2, Duration = -1, DiceNum = Throw, Value = 1, Zone = Zone(SpellZoneShape.WholeMap) },
             new SpellEffect { Uid = 11, EffectId = 5, TargetMask = 0, Triggers = 2, DiceNum = 1, Zone = Zone(SpellZoneShape.PerpendicularLine, 1) },
+            new SpellEffect { Uid = 12, EffectId = 1103, TargetMask = 0, Triggers = 2, DiceNum = 3, Zone = Zone(SpellZoneShape.Point) },
         ];
         Spell[] spells = [.. levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 })];
 
@@ -158,6 +162,29 @@ public sealed class BombTacticsTests
         var after = _tactics.Imagination.Cast(Fight(enemy), Level(_spells, Bombard), Off(3, 0));
 
         Assert.Equal(Off(4, 1), after.Find(enemy.Id)!.Cell);
+    }
+
+    [Fact]
+    public void AFighterMovedFromAWallOntoAnotherWallCellIsNotStruckAgain()
+    {
+        // Measured (9f4): a monster a Botte moved from a wall's cell onto another was struck by nothing, 3 times.
+        var enemy = Enemy(-1, Off(3, 0)) with { Life = 100 };
+        var fight = Fight(BombAt(-10, Off(2, 0)), BombAt(-11, Off(5, 0)), enemy);
+
+        var after = _tactics.Imagination.Cast(fight, Level(_spells, Push), Off(3, 0));
+
+        Assert.Equal((Off(4, 0), 100), (after.Find(enemy.Id)!.Cell, after.Find(enemy.Id)!.Life));
+    }
+
+    [Fact]
+    public void APushWithoutDamageHurtsNoFighterItStopsShort()
+    {
+        var enemy = Enemy(-1, Off(1, 0)) with { Life = 100 };
+        var blocker = Enemy(-2, Off(3, 0)) with { Life = 100 };
+
+        var after = _tactics.Imagination.Cast(Fight(enemy, blocker), Level(_spells, Boot), Off(1, 0));
+
+        Assert.Equal((Off(2, 0), 100), (after.Find(enemy.Id)!.Cell, after.Find(enemy.Id)!.Life));
     }
 
     [Fact]

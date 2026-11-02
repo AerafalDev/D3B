@@ -56,6 +56,9 @@ public sealed class Imagination
     // Summons the search imagines take ids no server gives: the server's are small negative numbers (client.md).
     private const long FirstImaginedSummon = -100_000;
 
+    // A push "without damage", as a Roublard's Botte's: measured (9f4), its target hurt by nothing as it was stopped.
+    private const int HarmlessPush = 1103;
+
     // A level sets one mark an effect: a Féca's glyph sets two, a monster's four (9f4).
     private const int MostMarksACast = 8;
 
@@ -568,7 +571,9 @@ public sealed class Imagination
 
             var was = before.FirstOrDefault(other => other.Id == fighter.Id);
 
-            if (was is not null && was.Cell == fighter.Cell && earlier.Exists(wall => wall.Cell == fighter.Cell))
+            // Measured (9f4): a fighter a Botte moved from a wall's cell onto another wall's was not struck again, 3 times; one
+            // a push brought onto a wall from outside was.
+            if (was is not null && was.Cell is not Combatant.NoCell && earlier.Exists(wall => wall.Cell == was.Cell))
                 continue;
 
             StrikeWall(map, fighters, walls[at], fighter.Cell, buffs, ref kept);
@@ -627,7 +632,7 @@ public sealed class Imagination
             // A move happens or not: one the mask only maybe selects, such as a Botte's push of another Roublard's bombs, moves no
             // one (9f4), where its half rounded to a whole cell.
             case EffectKind.Push when effect.IsCertain:
-                Slide(map, fighters, casterIndex, index, cell, value, away: true, across: Across(level, effect.EffectId));
+                Slide(map, fighters, casterIndex, index, cell, value, away: true, across: Across(level, effect.EffectId), harmless: effect.EffectId is HarmlessPush);
                 break;
             case EffectKind.Pull when effect.IsCertain:
                 Slide(map, fighters, casterIndex, index, cell, value, away: false, across: Across(level, effect.EffectId));
@@ -753,7 +758,7 @@ public sealed class Imagination
         return false;
     }
 
-    private void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away, bool upTo = false, bool across = false)
+    private void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away, bool upTo = false, bool across = false, bool harmless = false)
     {
         var target = fighters[index];
         var caster = fighters[casterIndex];
@@ -796,7 +801,7 @@ public sealed class Imagination
 
         target = target with { Cell = position };
 
-        if (away && moved < cells && walls?.Exists(wall => wall.Cell == position) is not true)
+        if (away && !harmless && moved < cells && walls?.Exists(wall => wall.Cell == position) is not true)
             target = Hurt(target, EffectFormulas.PushDamage(cells - moved, caster, caster.Level, target));
 
         fighters[index] = target;
