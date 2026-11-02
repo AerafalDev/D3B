@@ -81,6 +81,8 @@ public static class FightEvents
             SequenceStartEvent started => fight with { Sequences = fight.Sequences.Add(new FightSequence(started.Type, started.AuthorId, HasCast: false)) },
             SequenceEndEvent => fight.Sequences.IsEmpty ? fight : fight with { Sequences = fight.Sequences.RemoveAt(fight.Sequences.Length - 1) },
             FightEndEvent end => fight with { Phase = FightPhase.Ended, PlayingId = null, IsOwnTurn = false, End = Ended(end, self) },
+            // Measured (9f4): a summon the client controls comes with its own list, sent to the character, the summon named
+            // apart; taken as the character's, it left a Roublard with its Roublabot's spells for the rest of its fight.
             FightSpellsContextEvent context when context.FighterId == self && context.Spells.Count > 0 => fight with
             {
                 Spells = context.Spells.GroupBy(spell => spell.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Grade),
@@ -223,7 +225,26 @@ public static class FightEvents
                 Life = Math.Min(fighter.MaxLife, fighter.Life + action.LifeGained.Amount),
             }),
             GameActionFightEvent.ActionOneofCase.Summons when action.Summons.Fighters is { } summoned => summoned.Summons.Aggregate(fight, Summoned),
+            GameActionFightEvent.ActionOneofCase.MarkSet when action.MarkSet.Mark is { } mark => fight with { Marks = fight.Marks.SetItem(mark.MarkId, Marked(mark)) },
+            GameActionFightEvent.ActionOneofCase.MarkRemoved => fight with { Marks = fight.Marks.Remove(action.MarkRemoved.MarkId) },
             _ => fight,
+        };
+    }
+
+    private static GroundMark Marked(FightMark mark)
+    {
+        return new GroundMark
+        {
+            Id = mark.MarkId,
+            Type = mark.Type,
+            AuthorId = mark.AuthorId,
+            Team = mark.Team,
+            SetterId = mark.SpellId,
+            SpellId = mark.CastSpellId,
+            Grade = mark.Grade,
+            Centre = mark.ImpactCell,
+            Cells = [.. mark.Cells.Select(cell => cell.CellId).Where(IsCell)],
+            EndRound = mark.End?.Round ?? 0,
         };
     }
 

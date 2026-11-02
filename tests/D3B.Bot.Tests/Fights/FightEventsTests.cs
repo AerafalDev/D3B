@@ -555,10 +555,38 @@ public sealed class FightEventsTests
     {
         var listed = Apply(
             Playing(),
-            new FightSpellsContextEvent { FighterId = Self, Spells = { new SpellItem { SpellId = 8_703, Grade = 1 }, new SpellItem { SpellId = 202, Grade = 2 } } },
-            new FightSpellsContextEvent { FighterId = Monster, Spells = { new SpellItem { SpellId = 5, Grade = 1 } } });
+            new FightSpellsContextEvent { CharacterId = Self, FighterId = Self, Spells = { new SpellItem { SpellId = 8_703, Grade = 1 }, new SpellItem { SpellId = 202, Grade = 2 } } },
+            new FightSpellsContextEvent { CharacterId = Self, FighterId = Monster, Spells = { new SpellItem { SpellId = 5, Grade = 1 } } });
 
         Assert.Equal([KeyValuePair.Create(202, 2), KeyValuePair.Create(8_703, 1)], listed.Fight!.Spells.ToArray());
+    }
+
+    [Fact]
+    public void AMarkIsKeptAsTheServerSetsItAndGoesAsItTakesItBack()
+    {
+        var mark = new FightMark
+        {
+            MarkId = 3,
+            AuthorId = Monster,
+            Team = FightTeam.Defender,
+            ImpactCell = 414,
+            SpellId = 10_241,
+            CastSpellId = 10_241,
+            Grade = 5,
+            End = new FightMoment { Turn = 5, Round = 4 },
+            Cells = { new FightMarkedCell { CellId = 413 }, new FightMarkedCell { CellId = 415 } },
+        };
+
+        var marked = Apply(Playing(), new GameActionFightEvent { ActionId = 401, SourceId = Monster, MarkSet = new FightMarkSet { Mark = mark } });
+
+        Assert.Equal(
+            (FightMarkType.Glyph, Monster, 10_241, 5, 414, 4),
+            (marked.Fight!.Marks[3].Type, marked.Fight.Marks[3].AuthorId, marked.Fight.Marks[3].SpellId, marked.Fight.Marks[3].Grade, marked.Fight.Marks[3].Centre, marked.Fight.Marks[3].EndRound));
+        Assert.Equal([413, 415], marked.Fight.Marks[3].Cells);
+
+        var gone = Apply(marked, new GameActionFightEvent { ActionId = 310, SourceId = Monster, MarkRemoved = new FightMarkRemoved { MarkId = 3 } });
+
+        Assert.Empty(gone.Fight!.Marks);
     }
 
     [Fact]

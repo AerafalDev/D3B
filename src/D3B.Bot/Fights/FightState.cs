@@ -60,6 +60,9 @@ public sealed record FightState
     /// <remarks>Measured: in the 55 fights whose context listed the character's spells, its 300 casts were of them, at their grade; a transformed character's are its form's.</remarks>
     public ImmutableSortedDictionary<int, int> Spells { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
 
+    /// <summary>Gets the marks on the fight's cells, glyphs, traps and bombs' walls, by id, as the server set and took them back (9f4).</summary>
+    public ImmutableSortedDictionary<int, GroundMark> Marks { get; init; } = ImmutableSortedDictionary<int, GroundMark>.Empty;
+
     /// <summary>Gets the options of the character's team's fight the server said are set, or not, by option (D203).</summary>
     public ImmutableSortedDictionary<FightOption, bool> Options { get; init; } = ImmutableSortedDictionary<FightOption, bool>.Empty;
 

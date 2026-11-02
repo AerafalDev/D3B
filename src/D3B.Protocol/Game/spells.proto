@@ -19,15 +19,18 @@ message SpellsEvent {
   repeated SpellItem transformed_spells = 3;
 }
 
-// The spells the client plays a fighter with in a fight, sent as the fight starts and before a summon's turn the client
-// controls: the character's whole list, or a transformed character's own (D203).
+// The spells the client plays a fighter with in a fight, sent as the fight starts and as a summon the client controls
+// comes: the character's whole list, a transformed character's own (D203), or the summon's.
 message FightSpellsContextEvent {
   option (d3b.readable.partial) = true;
 
-  // The fighter the spells are of, measured as the character's own as its fight starts.
-  optional int64 fighter_id = 4;
+  // The character whose client plays the fighter: the character's own id on all 182 lists captured, a summon's too.
+  optional int64 character_id = 4;
 
   repeated SpellItem spells = 5;
+
+  // The fighter the spells are of: the character, or the summon it controls, such as a Roublabot, on 15 of the 182 (9f4).
+  int64 fighter_id = 6;
 }
 
 // A spell the character knows.
