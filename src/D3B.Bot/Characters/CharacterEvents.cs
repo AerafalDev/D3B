@@ -243,25 +243,15 @@ public static class CharacterEvents
 
     private static CharacterState Lived(CharacterState state, CharacterStats stats)
     {
+        var values = CharacteristicTotals.Of(stats.Characteristics);
+
         // Measured (D153): the most life is characteristic 0 plus 11, the vitality; the life, the most plus 97, the life lacking.
-        int? ValueOf(int id)
-        {
-            var found = stats.Characteristics.FirstOrDefault(characteristic => characteristic.Id == id);
-
-            if (found is null)
-                return null;
-
-            var numbers = found.Detailed;
-
-            return numbers is null ? 0 : numbers.Number1 + numbers.Number2 + numbers.Number3 + numbers.Number4 + numbers.Number5 + numbers.Number7;
-        }
-
-        if (ValueOf(MostLife) is not { } most)
+        if (!values.TryGetValue(MostLife, out var most))
             return state;
 
-        var max = most + (ValueOf(Vitality) ?? 0);
+        var max = most + values.GetValueOrDefault(Vitality);
 
-        return state with { MaxLife = max, Life = max + (ValueOf(LifeLacking) ?? 0) };
+        return state with { Characteristics = values, MaxLife = max, Life = max + values.GetValueOrDefault(LifeLacking) };
     }
 
     private static ImmutableSortedDictionary<long, int> Costs(TeleportDestinationsEvent destinations)

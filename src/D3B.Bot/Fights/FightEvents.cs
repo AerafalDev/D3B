@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using D3B.Bot.Characters;
 using D3B.Data.Maps;
 using D3B.Engine.Fights;
 using D3B.Protocol.Game;
@@ -345,14 +346,7 @@ public static class FightEvents
 
     private static long? ValueOf(Characteristic found)
     {
-        return found.KindCase switch
-        {
-            Characteristic.KindOneofCase.None => null,
-            Characteristic.KindOneofCase.Usable => (long)found.Usable.Number1 + found.Usable.Number2 + found.Usable.Number3 + found.Usable.Number4 + found.Usable.Number5 + found.Usable.Number6,
-            Characteristic.KindOneofCase.Value => found.Value.Total,
-            Characteristic.KindOneofCase.Detailed => (long)found.Detailed.Number1 + found.Detailed.Number2 + found.Detailed.Number3 + found.Detailed.Number4 + found.Detailed.Number5 + found.Detailed.Number7,
-            _ => 0,
-        };
+        return CharacteristicTotals.Of(found);
     }
 
     private static bool IsCell(int cell)

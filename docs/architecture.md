@@ -206,7 +206,8 @@ seen so.
   fails after three, or when it goes on too long; a teleport that fails leaves every teleport out, and one the server
   refuses from a map is never asked from it again for the bot's life (`BotActor.NoTeleportFrom`, D248), nor an NPC's way
   whose dialog offered none of its replies (`BotActor.NoNpcWays`, D253). The bots' pathfinder goes through the ways
-  through an NPC's dialog measured in game (`NpcWays.Measured`), which `Bots` gives it. A journey from the
+  through an NPC's dialog measured in game (`NpcWays.Measured`), Incarnam's portal and the boat to Sarakech (D266), which
+  `Bots` gives it. A journey from the
   character's haven bag leaves it first. An activity may end a journey on a map it reaches where it has work, its
   information received (D259). The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
   on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83). A teleport counts as as many map changes as
@@ -268,7 +269,8 @@ seen so.
   out, the nearest first or the highest level first, or a list as before (`HarvestMode`, `HarvestOrder`,
   `HarvestZone.TargetsOf`, D165); the place chosen, or chosen by the activity for each character at each tour, the sub-area
   where the learned graphics place the most of what it can harvest at its levels, each 20 levels below a profession's
-  halving a resource's worth, not above the character's level (`HarvestPlace`, `AutomaticPlace`, D166), its name before
+  halving a resource's worth, not above the character's level, the isolated maps the tour leaves out counting for
+  nothing (`HarvestPlace`, `AutomaticPlace`, D166, D264), its name before
   the tour on the card; a zaap only when it saves the profile's number of maps, 5 by default (`HarvestSettings.ZaapSaving`,
   D167). The module reads a profile stored before as it harvested, and gives six presets (D168).
 - **Fights** (D179), in `D3B.Bot.Fights`: the character's state holds its fight (`CharacterState.Fight`, `FightState`) from
@@ -302,13 +304,15 @@ seen so.
   (D252). An activity that fights its own has the fight
   answered once over (`BotActivity.OnFightOver`, `BotActor.LastFightEnd`): harvesting resumes, pauses or stops as "After a
   fight" says, a lost fight as "After a lost fight" says, resumed once its life is regained, three in a row ending it. The
-  bot remembers the character as its last fight's placement showed it (`BotActor.LastFighter`). The strategies of 9g, a
-  profile each character played, are gone (D244).
+  character's state keeps every characteristic the server gives out of fights (`CharacterState.Characteristics`,
+  `CharacteristicTotals`, D263). The strategies of 9g, a profile each character played, are gone (D244).
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), and the AI judges it beats
-  (`GroupJudge`, the group's fight imagined from the pack's grades and `BotActor.LastFighter`, over its course, only a group
-  that would beat the character four times faster turned away, D249),
+  (`GroupJudge`, the group's fight imagined from the pack's grades and the character from its characteristics out of
+  fights, its breed the one whose spells the server listed, before its first fight too, over its course, only a group
+  that would beat the character four times faster turned away, D249, D263, and after a fight lost against a group it
+  attacked, for the run, a group no less risky, D267),
   and sends `AttackMonsterRequest`, measured from the group's own cell (D239); a group the server answers nothing for is left
   for the visit. Else it travels to the nearest map of the zone left, stopping on the first map of the zone on its way
   that holds such a group, gone through or not (D259), isolated maps last when the settings take them
@@ -455,7 +459,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 8 holds (D27, D29, D139, D182, D219, D237, D238, D257):
+- A pack of format 8 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -467,10 +471,10 @@ Built at step 2 (D24 to D33):
     (`BankCatalog`), each read once by `GameTables`; items and jobs name their icon;
   - the weapons, each with its fight fields and effects, and the zone of each type of weapon as the client writes it
     (`WeaponCatalog`, D219), read once by `GameTables`;
-  - the icons of the items a harvest names or the monsters a hunter meets drop (D247) and of the professions, 64 pixels
-    square in raw RGBA, of the breeds' spells and
-    their variants, 48, and of the monsters a sub-area lists, 64, by their look, decoded from the client's BC7 textures by
-    the extraction tool (`IconCatalog`, each `IconTable` its size, D135 to D137, D237, D238), read once by `GameTables`;
+  - the icons of every item, 32 pixels square in raw RGBA, the client's halved (D265), of the professions, 64, of the
+    breeds' spells and their variants, 48, and of the monsters a sub-area lists, 64, by their look, decoded from the
+    client's BC7 textures by the extraction tool (`IconCatalog`, each `IconTable` its size, D135 to D137, D237, D238),
+    read once by `GameTables`;
     the app draws no spell's icon since the strategies went (D244);
   - what fights need, each read once by `GameTables`: the spells, their levels with every field and their effects, each
     with its zone, target mask and triggers as the client writes them, the spells' variants, and the Rogue's bombs and
@@ -783,7 +787,10 @@ change of the character's states kept in the turn's search, the Zobal's masks pu
 [Engine](#engine)), and what the owner met in game, left to the next session (D256). Built in session 9g5: the food the
 inventory holds, pack format 8 (D257), the regeneration back to the share (D258), a hunt's journey stopping on the first
 map of its zone holding a group it attacks (D259), all in [Bot run time](#bot-run-time); the masks measured in game,
-nothing to change (D261).
+nothing to change (D261). Built in session 9g6: a group judged from the characteristics the server gives out of fights,
+before the first fight too (D263), the harvest's automatic place leaving out the isolated maps (D264), every item's icon at
+32 pixels (D265), the boat to Sarakech (D266), a group no less risky than one lost to turned away (D267), in [Bot run
+time](#bot-run-time) and [Game data](#game-data).
 
 - The protocol, measured: the server creates a fight's context, shows each fighter, gives both teams' placement cells and
   every fighter's disposition after each move, then starts the fight. Each turn it names the fighter playing, lets the

@@ -2,18 +2,19 @@ using MemoryPack;
 
 namespace D3B.Data.Icons;
 
-/// <summary>The icons the pack holds: those of the items a harvest names, of the professions, of the classes' spells, and of the monsters a hunter meets (D126).</summary>
+/// <summary>The icons the pack holds: those of the items, of the professions, of the classes' spells, and of the monsters a hunter meets (D126).</summary>
 /// <remarks>
 /// <para>
-/// Items, jobs, spells and monsters number their icons apart, so each kind has its table, each its own size: items',
-/// professions' and monsters' icons are 64 pixels square, spells' 48, the client's at 1x. Each table is keyed by the
-/// client's identifier of the picture, which an item, a job, a spell or a monster names: monsters share pictures, an
-/// archmonster its monster's, so that a monster's icon is found through its <see cref="D3B.Data.Monsters.Monster.GfxId"/>.
+/// Items, jobs, spells and monsters number their icons apart, so each kind has its table, each its own size: items' are
+/// 32 pixels square, the client's halved (D265), professions' and monsters' 64, spells' 48, the client's at 1x. Each table
+/// is keyed by the client's identifier of the picture, which an item, a job, a spell or a monster names: monsters share
+/// pictures, an archmonster its monster's, so that a monster's icon is found through its
+/// <see cref="D3B.Data.Monsters.Monster.GfxId"/>.
 /// </para>
 /// <para>
-/// The pack keeps the icons of the items the sub-areas list as harvestable and of those a skill gathers, not every
-/// item's; those of the breeds' spells and their variants, not every spell's; and those of the monsters a sub-area lists,
-/// but those hidden from the bestiary or that are bombs, not every monster's: one without an icon is drawn without it.
+/// The pack keeps every item's icon the client holds (D265); those of the breeds' spells and their variants, not every
+/// spell's; and those of the monsters a sub-area lists, but those hidden from the bestiary or that are bombs, not every
+/// monster's: one without an icon is drawn without it.
 /// One entry, read whole the first time an icon is asked for.
 /// </para>
 /// </remarks>

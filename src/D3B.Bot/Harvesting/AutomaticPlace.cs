@@ -1,4 +1,6 @@
+using System.Collections.Frozen;
 using D3B.Bot.Interactives;
+using D3B.Bot.Movement;
 using D3B.Data.World;
 
 namespace D3B.Bot.Harvesting;
@@ -7,16 +9,17 @@ namespace D3B.Bot.Harvesting;
 /// <remarks>
 /// <para>
 /// A sub-area counts, for each resource the character can harvest at its profession's level, the maps the host's learned
-/// graphics place it on (D138), each as much as the resource is worth: a resource counts half as much every
-/// <see cref="HalvingLevels"/> levels below its profession's, so that the zone follows the character as it rises. While
-/// no learned graphic places anything the character can harvest, each sub-area counts the worth of the resources it lists.
+/// graphics place it on (D138), but the isolated maps a tour leaves out (D149, D264), each as much as the resource is
+/// worth: a resource counts half as much every <see cref="HalvingLevels"/> levels below its profession's, so that the zone
+/// follows the character as it rises. While no learned graphic places anything the character can harvest, each sub-area
+/// counts the worth of the resources it lists.
 /// </para>
 /// <para>
 /// A sub-area above the character's level is left out when the settings ask it, its monsters attacking (D144). Measured on
 /// the pack of 3.7.12.12 with the owner's 109 graphics learned, about 10 ms a ranking once the graphics' index is built: a
 /// lumberjack of 20 of a character of 60 goes to the Forêt d'Astrub, 69 maps; one of 80 of a character of 200 to the Bois
-/// de Litneg, 62; an alchemist of 80 to the Dédale du Dark Vlad; a farmer of 40 to the Champs de Cania; a miner of 1 to the
-/// Souterrains.
+/// de Litneg, 62; an alchemist of 80 to the Dédale du Dark Vlad; a farmer of 40 to the Champs de Cania. With 222 graphics,
+/// a miner of 4 to the Carrière d'Astrub, where the Souterrains, 12 undergrounds apart, came first by maps all isolated.
 /// </para>
 /// </remarks>
 public static class AutomaticPlace
@@ -29,6 +32,7 @@ public static class AutomaticPlace
     /// <param name="level">The character's level; 0 when unknown, which leaves no sub-area out for its level.</param>
     /// <param name="jobLevels">Its professions' levels, by profession; one not given counts as the first level.</param>
     /// <param name="safeLevel">Whether to leave out the sub-areas above the character's level.</param>
+    /// <param name="isolatedMaps">Whether the tour goes through the maps reached from their sub-area's main part only far round (D149): when not, they count for nothing.</param>
     /// <param name="atlas">The atlas, placing the maps in their sub-areas.</param>
     /// <param name="graph">The world graph, holding the maps a character may travel to.</param>
     /// <param name="places">Where each graphic is drawn.</param>
@@ -39,6 +43,7 @@ public static class AutomaticPlace
         int level,
         IReadOnlyDictionary<int, int> jobLevels,
         bool safeLevel,
+        bool isolatedMaps,
         WorldAtlas atlas,
         WorldGraph graph,
         GraphicPlaces places,
@@ -87,15 +92,26 @@ public static class AutomaticPlace
                 maps[position.SubAreaId] = maps.GetValueOrDefault(position.SubAreaId) + 1;
         }
 
-        var scores = new Dictionary<int, double>();
+        var offered = new List<(long MapId, int SubAreaId, double Worth)>();
 
         foreach (var (item, gathering) in skills)
         {
             foreach (var map in places.MapsOffering(gathering, graphics))
             {
                 if (atlas.TryGetPosition(map, out var position) && maps.ContainsKey(position.SubAreaId))
-                    scores[position.SubAreaId] = scores.GetValueOrDefault(position.SubAreaId) + worths[item];
+                    offered.Add((map, position.SubAreaId, worths[item]));
             }
+        }
+
+        // Measured (D264): the Souterrains, 12 undergrounds apart, ranked first for a miner of 4 by the 22 maps its iron
+        // is drawn on, every one isolated, which the tour left out; it went through 6 maps without ore.
+        var isolated = isolatedMaps || offered.Count is 0 ? FrozenSet<long>.Empty : IsolatedOf(offered.Select(map => map.SubAreaId).ToHashSet(), atlas, graph);
+        var scores = new Dictionary<int, double>();
+
+        foreach (var (map, subAreaId, worth) in offered)
+        {
+            if (!isolated.Contains(map))
+                scores[subAreaId] = scores.GetValueOrDefault(subAreaId) + worth;
         }
 
         if (scores.Count is 0)
@@ -118,5 +134,18 @@ public static class AutomaticPlace
             .OrderByDescending(candidate => candidate.Score)
             .ThenBy(candidate => atlas.TryGetSubArea(candidate.SubAreaId, out var subArea) ? subArea.Level : 0)
             .ThenBy(candidate => candidate.SubAreaId)];
+    }
+
+    private static FrozenSet<long> IsolatedOf(HashSet<int> subAreas, WorldAtlas atlas, WorldGraph graph)
+    {
+        var maps = new Dictionary<long, int>();
+
+        foreach (var position in atlas.Positions.Span)
+        {
+            if (subAreas.Contains(position.SubAreaId) && graph.Contains(position.MapId))
+                maps[position.MapId] = position.SubAreaId;
+        }
+
+        return IsolatedMaps.Of(graph, maps);
     }
 }

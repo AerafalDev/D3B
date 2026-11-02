@@ -513,7 +513,7 @@ public sealed class HarvestActivity : BotActivity
     {
         var state = context.State;
         var levels = state.Jobs.Values.ToDictionary(job => job.JobId, job => job.Level);
-        var ranked = AutomaticPlace.Rank(HarvestZone.TargetsOf(_settings, _tables.Jobs).Values, state.Level ?? 0, levels, _settings.SafeLevel, _atlas, _graph, _places, _graphics);
+        var ranked = AutomaticPlace.Rank(HarvestZone.TargetsOf(_settings, _tables.Jobs).Values, state.Level ?? 0, levels, _settings.SafeLevel, _settings.IsolatedMaps, _atlas, _graph, _places, _graphics);
 
         if (ranked.Count is 0)
             return [];

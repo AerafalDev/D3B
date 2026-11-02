@@ -123,6 +123,13 @@ public sealed record CharacterState
     /// <summary>Gets the most life the character has, as the server last said it.</summary>
     public int? MaxLife { get; init; }
 
+    /// <summary>Gets the character's characteristics by id, each its whole value, as the server last gave them all (D263).</summary>
+    /// <remarks>
+    /// Measured on 158 fights: at the character's first turn, every characteristic the fight gives it equals this one's, the
+    /// life lacking aside, where its fighter at the placement lacks the elements', the power and the damage bonuses.
+    /// </remarks>
+    public ImmutableSortedDictionary<int, int> Characteristics { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
+
     /// <summary>Gets every how many tenths of a second the life regenerates a point, while it does; none in a fight, or before the server said.</summary>
     public int? LifeRegenInterval { get; init; }
 

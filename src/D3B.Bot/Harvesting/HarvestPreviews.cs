@@ -152,11 +152,11 @@ public sealed class HarvestPreviews
         return preview;
     }
 
-    private PlaceCandidate? PlaceFor(IEnumerable<HarvestTarget> targets, PreviewPlayer player, bool safeLevel)
+    private PlaceCandidate? PlaceFor(IEnumerable<HarvestTarget> targets, PreviewPlayer player, bool safeLevel, bool isolatedMaps)
     {
         var reachable = _reachable.Value;
 
-        return AutomaticPlace.Rank(targets, player.Level, player.JobLevels, safeLevel, _world.Atlas, _world.Graph, _places, _graphics)
+        return AutomaticPlace.Rank(targets, player.Level, player.JobLevels, safeLevel, isolatedMaps, _world.Atlas, _world.Graph, _places, _graphics)
             .FirstOrDefault(candidate => reachable.Contains(candidate.SubAreaId));
     }
 
@@ -182,7 +182,7 @@ public sealed class HarvestPreviews
                     continue;
                 }
 
-                if (PlaceFor(targets, player, settings.SafeLevel) is not { } place)
+                if (PlaceFor(targets, player, settings.SafeLevel, settings.IsolatedMaps) is not { } place)
                 {
                     notes.Add(new PreviewPlayerNote(player.Name, GameText.Of(HarvestTexts.Text("PlaceNone"))));
 

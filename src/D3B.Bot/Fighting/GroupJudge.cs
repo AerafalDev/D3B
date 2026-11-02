@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Data;
+using D3B.Data.Breeds;
 using D3B.Data.Maps;
 using D3B.Data.Monsters;
 using D3B.Data.Spells;
@@ -16,13 +17,17 @@ namespace D3B.Bot.Fighting;
 /// <remarks>
 /// Measured on the captures (9g): every monster of a map's groups is a grade of the pack's at that grade's level, so a group
 /// is imagined as a fight from the pack alone, its monsters at their grades' life, points, characteristics and spells. The
-/// character is the one its last fight's placement showed, at its life now; before any fight, a group is judged by levels,
-/// none of its monsters above the character's.
+/// character is imagined from the characteristics the server gives it out of fights, which those of its first turn in a
+/// fight equal (D263), at its life; before the server gave them, a group is judged by levels, none of its monsters above
+/// the character's.
 /// </remarks>
 public static class GroupJudge
 {
     // The character imagined beside the group: the odds weigh no position, only who reaches whom in a turn.
     private const long Self = 1;
+
+    private const int ActionPoints = 1;
+    private const int MovementPoints = 23;
 
     // Measured on the owner's 54 groups the character was known for (D249): of the 13 the group would beat it in under a
     // quarter of the turns it needs, 11 were won; of the 20 under the turns it needs, 17. Only the first are turned away.
@@ -56,30 +61,46 @@ public static class GroupJudge
     /// <summary>Tells whether the AI expects the character to beat a group: the group would not take its life in under a quarter of the turns it takes to beat the group, over the fight's course (D249).</summary>
     /// <param name="group">The group.</param>
     /// <param name="state">The character's state, out of a fight.</param>
-    /// <param name="self">The character as its last fight's placement showed it, or <see langword="null"/> before any.</param>
     /// <param name="map">The map the group stands on.</param>
     /// <param name="tables">The pack's game tables.</param>
     /// <param name="tactics">The fight's AI.</param>
-    /// <returns>Whether it does; before any fight, whether no monster of the group is above the character's level.</returns>
-    public static bool Beats(MapMonsterGroup group, CharacterState state, Fighter? self, FightMap map, GameTables tables, FightTactics tactics)
+    /// <param name="lostAt">The share of the turns to win in which the group the character last lost to was to take its life (<see cref="Share"/>): a group no less risky is turned away too (D267); 0 before any loss.</param>
+    /// <returns>Whether it does; before the server gave the character's characteristics, whether no monster of the group is above the character's level.</returns>
+    public static bool Beats(MapMonsterGroup group, CharacterState state, FightMap map, GameTables tables, FightTactics tactics, double lostAt = 0)
     {
         ArgumentNullException.ThrowIfNull(group);
         ArgumentNullException.ThrowIfNull(state);
 
-        return OddsOf(group, state, self, map, tables, tactics) is { } odds
-            ? odds.TurnsToLose >= odds.TurnsToWin * Margin
+        return OddsOf(group, state, map, tables, tactics) is { } odds
+            ? Winnable(odds, lostAt)
             : group.Monsters.All(monster => monster.Level <= (state.Level ?? 0));
+    }
+
+    /// <summary>Tells whether odds let the character attack a group: the group would not take its life in under a quarter of the turns it needs to beat it (D249), nor in a share no greater than the group it last lost to (D267).</summary>
+    /// <param name="odds">The odds of the fight against the group.</param>
+    /// <param name="lostAt">The share of the group the character last lost to (<see cref="Share"/>), 0 before any loss.</param>
+    /// <returns>Whether they do.</returns>
+    public static bool Winnable(FightOdds odds, double lostAt = 0)
+    {
+        return odds.TurnsToLose >= odds.TurnsToWin * Margin && (lostAt <= 0 || odds.TurnsToLose > odds.TurnsToWin * lostAt);
+    }
+
+    /// <summary>Gets in what share of the turns the character needs to beat a group the group would take its life: under 1, the group first.</summary>
+    /// <param name="odds">The odds of the fight against the group.</param>
+    /// <returns>The share; infinite when the character would lose no life.</returns>
+    public static double Share(FightOdds odds)
+    {
+        return odds.TurnsToWin > 0 ? odds.TurnsToLose / odds.TurnsToWin : double.PositiveInfinity;
     }
 
     /// <summary>Gets the odds the AI gives the character against a group, over the fight's course (D249).</summary>
     /// <param name="group">The group.</param>
     /// <param name="state">The character's state, out of a fight.</param>
-    /// <param name="self">The character as its last fight's placement showed it, or <see langword="null"/> before any.</param>
     /// <param name="map">The map the group stands on.</param>
     /// <param name="tables">The pack's game tables.</param>
     /// <param name="tactics">The fight's AI.</param>
-    /// <returns>The odds, or <see langword="null"/> when the group is judged by levels: before the character's first fight, or on a map too small to imagine it.</returns>
-    public static FightOdds? OddsOf(MapMonsterGroup group, CharacterState state, Fighter? self, FightMap map, GameTables tables, FightTactics tactics)
+    /// <returns>The odds, or <see langword="null"/> when the group is judged by levels: before the server gave the character's characteristics, or on a map too small to imagine it.</returns>
+    public static FightOdds? OddsOf(MapMonsterGroup group, CharacterState state, FightMap map, GameTables tables, FightTactics tactics)
     {
         ArgumentNullException.ThrowIfNull(group);
         ArgumentNullException.ThrowIfNull(state);
@@ -87,7 +108,7 @@ public static class GroupJudge
         ArgumentNullException.ThrowIfNull(tables);
         ArgumentNullException.ThrowIfNull(tactics);
 
-        if (self is null || state.Level is not { } level)
+        if (Character(state, tables.Breeds) is not { } self || state.Level is not { } level)
             return null;
 
         var cells = Cells(map, group.Monsters.Length + 1);
@@ -95,8 +116,7 @@ public static class GroupJudge
         if (cells.Count <= group.Monsters.Length)
             return null;
 
-        var life = state.Life is { } now && state.MaxLife is { } most ? (now, most) : (self.MaxLife, self.MaxLife);
-        var character = FightCombatants.Of(self with { Id = Self, Team = FightTeam.Challenger, Cell = cells[0], IsAlive = true, Buffs = [], Life = life.Item1, MaxLife = life.Item2 }, tables.Monsters);
+        var character = FightCombatants.Of(self with { Cell = cells[0] }, tables.Monsters);
         var fighters = ImmutableArray.CreateBuilder<Combatant>();
         var spells = ImmutableDictionary.CreateBuilder<long, ImmutableArray<SpellLevel>>();
         var points = ImmutableDictionary.CreateBuilder<long, (int ActionPoints, int MovementPoints)>();
@@ -125,6 +145,55 @@ public static class GroupJudge
 
         // Over the fight's course, the group's members dying one after another, rather than all striking every turn (D249).
         return tactics.OddsOverTheFight(fight, knowledge);
+    }
+
+    /// <summary>Gets the character as a fighter, from the characteristics the server gives it out of fights (D263).</summary>
+    /// <param name="state">The character's state, out of a fight.</param>
+    /// <param name="breeds">The pack's breeds: the character's is the one whose spells the server listed.</param>
+    /// <returns>The fighter, or <see langword="null"/> before the server gave the characteristics and the life.</returns>
+    public static Fighter? Character(CharacterState state, BreedCatalog breeds)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(breeds);
+
+        if (state.Characteristics.IsEmpty || state.Life is not { } life || state.MaxLife is not { } most || most <= 0)
+            return null;
+
+        return new Fighter
+        {
+            Id = Self,
+            Team = FightTeam.Challenger,
+            Life = life,
+            MaxLife = most,
+            ActionPoints = state.Characteristics.GetValueOrDefault(ActionPoints),
+            MovementPoints = state.Characteristics.GetValueOrDefault(MovementPoints),
+            Level = state.Level,
+            BreedId = BreedOf(state, breeds),
+            Characteristics = state.Characteristics,
+        };
+    }
+
+    private static int? BreedOf(CharacterState state, BreedCatalog breeds)
+    {
+        // No message the readable protocol names gives the breed out of fights; the spells the server lists do.
+        int? breed = null;
+        var most = 0;
+
+        foreach (var candidate in breeds.Breeds.Span)
+        {
+            var held = 0;
+
+            foreach (var spellId in breeds.SpellsOf(candidate))
+            {
+                if (state.Spells.ContainsKey(spellId))
+                    held++;
+            }
+
+            if (held > most)
+                (breed, most) = (candidate.Id, held);
+        }
+
+        return breed;
     }
 
     private static List<int> Cells(FightMap map, int count)
