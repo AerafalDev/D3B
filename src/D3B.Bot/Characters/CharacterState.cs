@@ -51,6 +51,13 @@ public sealed record CharacterState
     /// </remarks>
     public bool IsWalkHeld { get; init; }
 
+    /// <summary>Gets the last cell of the last walk the server showed the character, whatever map it was on.</summary>
+    /// <remarks>
+    /// Measured (9g5): the client does not follow a walk ending on the cell its previous walk ended on, even on another map,
+    /// 36 times of 39 in the captures, against 9 of 695 others; <see cref="Movement.MapWalk"/> never sends one.
+    /// </remarks>
+    public int? LastWalkEnd { get; init; }
+
     /// <summary>Gets the interactive elements of the map, by id, as the server described them; empty until the map's information is sent.</summary>
     /// <remarks>Only the map's own: the information also lists the neighbouring maps' elements, which cannot be used from it.</remarks>
     public ImmutableSortedDictionary<int, MapElement> Elements { get; init; } = ImmutableSortedDictionary<int, MapElement>.Empty;

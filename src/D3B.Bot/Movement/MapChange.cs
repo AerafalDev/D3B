@@ -151,6 +151,11 @@ public static class MapChange
         {
             var exits = world.ExitCells(map, step, rules);
 
+            // Measured (9g5): the client does not follow a walk ending where its previous one did, such as the same cell of
+            // each map's edge on a journey straight on; another exit saves walking in two (MapWalk).
+            if (exits.Any(exit => exit != state.LastWalkEnd))
+                exits = [.. exits.Where(exit => exit != state.LastWalkEnd)];
+
             if (!CellPathfinder.TryFindNearest(map.Cells.Span, cell, [.. exits], out var path))
                 return MapChangeOutcome.NoPath;
 

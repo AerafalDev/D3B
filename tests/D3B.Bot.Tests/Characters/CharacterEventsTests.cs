@@ -92,6 +92,7 @@ public sealed class CharacterEventsTests
               "Path": [],
               "IsWalking": false,
               "IsWalkHeld": false,
+              "LastWalkEnd": null,
               "Elements": {
                 "514662": {
                   "ElementId": 514662,
