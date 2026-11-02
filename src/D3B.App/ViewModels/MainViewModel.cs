@@ -6,38 +6,44 @@ using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.Updates;
+using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
-using D3B.App.ViewModels.Maps;
+using D3B.App.ViewModels.Properties;
 using D3B.App.ViewModels.Statistics;
 using D3B.App.ViewModels.Studio;
 using D3B.Bot.Assets;
 using D3B.Bot.Characters;
 using D3B.Bot.Pages;
 using D3B.Data;
+using D3B.Data.Texts;
+using D3B.Data.World;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
 /// <summary>The studio's window: where the bots' host stands, its docks and editor, the run block, the search, its dialogs and toasts (D14, D91, D320 to D322, D328).</summary>
 /// <remarks>
-/// Until 7c3 and 7c4 draw them again, each page of D101 and D162 has its place in the docks (D333): the bots' cards in the
-/// characters' panel, the journal, the protocol and the statistics in the bottom panel, the accounts, the profiles, the map,
-/// the settings and the modules' pages in the editor's tabs.
+/// The characters' panel, the inspector and a character's tab are the studio's own since 7c3 (D323 to D325). Until 7c4
+/// draws them again, the journal, the protocol and the statistics hold the bottom panel, and the profiles, the settings and
+/// the modules' pages are tabs of the editor (D333).
 /// </remarks>
 internal sealed partial class MainViewModel : ObservableObject
 {
     private const string WelcomeTab = "welcome";
-    private const string AccountsTab = "accounts";
     private const string ProfilesTab = "profiles";
-    private const string MapTab = "map";
     private const string SettingsTab = "settings";
+    private const string CharacterTab = "character:";
 
     private readonly HostRunner _host;
     private readonly Localizer _localizer;
     private readonly AppPreferences? _preferences;
     private readonly Action _close;
+    private readonly Dictionary<CharacterKey, CharacterTabViewModel> _characterTabs = [];
+    private readonly CharacterAccounts _characterAccounts;
     private bool _pagesRead;
+    private List<SearchItem> _maps = [];
+    private System.Globalization.CultureInfo? _mapsCulture;
 
     /// <summary>Gets the dialog the window shows over the studio.</summary>
     public Dialogs Dialogs { get; } = new();
@@ -57,17 +63,17 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the search, Ctrl K.</summary>
     public SearchViewModel Search { get; }
 
-    /// <summary>Gets the bots' cards, in the characters' panel until 7c3.</summary>
+    /// <summary>Gets the bots, each character online's card.</summary>
     public BotsViewModel Bots { get; }
 
-    /// <summary>Gets the accounts' page, a tab until 7c3.</summary>
-    public AccountsViewModel Accounts { get; }
+    /// <summary>Gets the characters' panel (D323).</summary>
+    public CharactersViewModel Characters { get; }
+
+    /// <summary>Gets the inspector (D324).</summary>
+    public PropertiesViewModel Properties { get; }
 
     /// <summary>Gets the profiles' page, a tab until 7c4.</summary>
     public ProfilesViewModel Profiles { get; }
-
-    /// <summary>Gets the map's page, a tab until 7c3.</summary>
-    public MapViewModel Map { get; }
 
     /// <summary>Gets the statistics, in the bottom panel.</summary>
     public StatisticsViewModel Statistics { get; }
@@ -189,16 +195,20 @@ internal sealed partial class MainViewModel : ObservableObject
         var choice = new BotChoice();
 
         Layout = new StudioLayout(preferences);
-        Bots = new BotsViewModel(localizer, ShowJournalOf, ShowMapOf, Toasts);
-        Accounts = new AccountsViewModel(localizer, Dialogs);
+        _characterAccounts = new CharacterAccounts(localizer, Dialogs, Toasts);
+        Bots = new BotsViewModel(localizer, ShowJournalOf, OpenCharacter, Toasts);
+        Characters = new CharactersViewModel(localizer, Bots, _characterAccounts, key => RunBlock!.Choose(key), OpenCharacter);
+        Properties = new PropertiesViewModel(
+            new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
+            new AssetPropertiesViewModel(localizer));
         Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts);
-        Map = new MapViewModel(localizer, choice);
         Statistics = new StatisticsViewModel(localizer);
         Logs = new LogsViewModel(localizer, choice, Toasts);
         Inspector = new InspectorViewModel(localizer, choice);
         Updates = new UpdatesViewModel(localizer, updates, Dialogs, () => IsRunning && Bots.HasItems, _close);
         Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates);
-        RunBlock = new RunBlockViewModel(Bots, localizer);
+        RunBlock = new RunBlockViewModel(Bots, localizer) { Characters = Characters, Chose = Chose };
+        Characters.RunBlock = RunBlock;
         Search = new SearchViewModel(localizer, SearchItems);
         Bots.Choose = RunBlock.Choose;
         ClientText = localizer.Format("StatusClient", Updates.ClientVersion);
@@ -251,17 +261,24 @@ internal sealed partial class MainViewModel : ObservableObject
         };
         ClientText = _localizer.Format("StatusClient", build ?? Updates.ClientVersion);
 
-        // The profiles first: the bots' cards offer them, and the accounts name them.
+        // The profiles first: the bots' cards offer them, and the characters name them.
         Profiles.Refresh(services);
-        Accounts.Refresh(services);
         Bots.Refresh(services);
+        Characters.Refresh(services);
         RunBlock.Refresh();
+        Properties.Refresh(services);
         OnlineText = _localizer.Format("CharactersOnline", RunBlock.Online.Count);
         IsSaved = Profiles.Editing is not { IsDirty: true };
 
         // Only what shows reads what came since: the rest reads it all once shown again.
-        if (Editor.IsShown(MapTab))
-            Map.Refresh(services);
+        foreach (var (key, tab) in _characterTabs)
+        {
+            if (Editor.IsShown(CharacterTab + key))
+                tab.Refresh(services);
+        }
+
+        // A character's tab is named by its character and shows its head, both of which the server may say late.
+        Editor.Refresh();
 
         if (Layout.IsBottomOpen && IsStatisticsShown)
             Statistics.Refresh(services);
@@ -320,13 +337,6 @@ internal sealed partial class MainViewModel : ObservableObject
         Editor.Open(WelcomeTab, () => new EditorTab(WelcomeTab, () => _localizer["Welcome"], null, this, needsHost: false));
     }
 
-    /// <summary>Shows the accounts' tab.</summary>
-    [RelayCommand]
-    public void ShowAccounts()
-    {
-        Editor.Open(AccountsTab, () => new EditorTab(AccountsTab, () => _localizer["Accounts"], "General.User", Accounts, needsHost: true));
-    }
-
     /// <summary>Shows the profiles' tab.</summary>
     [RelayCommand]
     public void ShowProfiles()
@@ -334,12 +344,28 @@ internal sealed partial class MainViewModel : ObservableObject
         Editor.Open(ProfilesTab, () => new EditorTab(ProfilesTab, () => _localizer["Profiles"], "Nodes.Template", Profiles, needsHost: true));
     }
 
-    /// <summary>Shows the map's tab.</summary>
-    [RelayCommand]
-    public void ShowMap()
+    /// <summary>Opens a character's tab: its map live and what it does (D325).</summary>
+    /// <param name="key">The character.</param>
+    public void OpenCharacter(CharacterKey key)
     {
-        Editor.Open(MapTab, () => new EditorTab(MapTab, () => _localizer["Map"], "Toolwindows.Web", Map, needsHost: true));
-        Map.Refresh(_host.Services);
+        var tab = TabOf(key);
+
+        // Read first: the tab is named by its character, and its head drawn, as it opens.
+        tab.Refresh(_host.Services);
+        Editor.Open(CharacterTab + key, () => new EditorTab(CharacterTab + key, () => tab.Name, "General.User", tab, needsHost: true) { Picture = () => BotOf(key)?.Head ?? Characters.LineOf(key)?.Head });
+        Editor.Refresh();
+    }
+
+    /// <summary>Opens a profile in the profiles' tab, the inspector showing it.</summary>
+    /// <param name="id">The profile's id.</param>
+    public void OpenProfile(string id)
+    {
+        ShowProfiles();
+        Properties.ShowAsset(id);
+        Properties.Refresh(_host.Services);
+
+        if (Profiles.Items.FirstOrDefault(profile => profile.Id == id) is { } shown && shown.EditCommand.CanExecute(null))
+            shown.EditCommand.Execute(null);
     }
 
     /// <summary>Shows the settings' tab: the title's gear, Ctrl , (D329).</summary>
@@ -452,18 +478,16 @@ internal sealed partial class MainViewModel : ObservableObject
     private IEnumerable<SearchItem> SearchItems()
     {
         foreach (var profile in Profiles.Items)
-        {
-            yield return new SearchItem(SearchScope.Assets, "profile:" + profile.Id, profile.Name, _localizer.Format("SearchProfile", profile.ActivityName), "Nodes.Template", "", "", () =>
-            {
-                ShowProfiles();
+            yield return new SearchItem(SearchScope.Assets, "profile:" + profile.Id, profile.Name, _localizer.Format("SearchProfile", profile.ActivityName), "Nodes.Template", "", "", () => OpenProfile(profile.Id));
 
-                if (profile.EditCommand.CanExecute(null))
-                    profile.EditCommand.Execute(null);
-            });
-        }
+        foreach (var bot in Characters.Online)
+            yield return new SearchItem(SearchScope.Characters, "character:" + bot.Bot.Key, bot.Name, bot.Level, null, bot.Initials, "", () => ChooseAndOpen(bot.Bot.Key)) { Picture = bot.Head, Color = bot.PortraitColor };
 
-        foreach (var bot in Bots.Items)
-            yield return new SearchItem(SearchScope.Characters, "character:" + bot.Bot.Key, bot.Name, bot.IsConnected ? bot.Level : _localizer["Disconnected"], null, bot.Initials, "", () => RunBlock.Choose(bot));
+        foreach (var line in Characters.Offline)
+            yield return new SearchItem(SearchScope.Characters, "character:" + line.Key, line.Name, _localizer["Disconnected"], null, line.Initials, "", () => ChooseAndOpen(line.Key)) { Picture = line.Head, Color = line.PortraitColor };
+
+        foreach (var map in MapsFound())
+            yield return map;
 
         foreach (var command in Commands())
             yield return command;
@@ -488,9 +512,7 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandPause", "F6", RunBlock.Pause);
         yield return Command("CommandStop", _localizer["KeysShiftF5"], RunBlock.Stop);
         yield return Command("CommandSettings", "Ctrl ,", ShowSettings);
-        yield return Command("CommandAccounts", "", ShowAccounts);
         yield return Command("CommandProfiles", "", ShowProfiles);
-        yield return Command("CommandMap", "", ShowMap);
         yield return Command("CommandCloseTabs", "", Editor.CloseAll);
         yield return Command("CommandProjectFolder", "", OpenProjectFolder);
         yield return Command("CommandCheckUpdate", "", () => Updates.CheckCommand.Execute(null));
@@ -502,10 +524,76 @@ internal sealed partial class MainViewModel : ObservableObject
         Logs.Show(key);
     }
 
-    private void ShowMapOf(CharacterKey key)
+    private BotViewModel? BotOf(CharacterKey key)
     {
-        ShowMap();
-        Map.Show(key);
+        return Bots.Items.FirstOrDefault(bot => bot.Bot.Key == key);
+    }
+
+    private CharacterTabViewModel TabOf(CharacterKey key)
+    {
+        if (!_characterTabs.TryGetValue(key, out var tab))
+            _characterTabs[key] = tab = new CharacterTabViewModel(_localizer, key, Bots, OpenProfile, ShowJournalOf);
+
+        return tab;
+    }
+
+    private void Chose(CharacterKey? key)
+    {
+        Characters.Chosen = key;
+        Properties.ShowCharacter(key);
+        Characters.Refresh(_host.Services);
+        Properties.Refresh(_host.Services);
+    }
+
+    private void ChooseAndOpen(CharacterKey key)
+    {
+        RunBlock.Choose(key);
+        OpenCharacter(key);
+    }
+
+    private IEnumerable<SearchItem> MapsFound()
+    {
+        // The map shows in the tab of the character chosen, else of the first online, else of the first D3B knows (D334).
+        if ((RunBlock.ChosenKey ?? Characters.Online.FirstOrDefault()?.Bot.Key ?? Characters.Offline.FirstOrDefault()?.Key) is not { } key)
+            return [];
+
+        var services = _host.Services;
+
+        if (_maps.Count == 0 || !_localizer.Culture.Equals(_mapsCulture))
+        {
+            _mapsCulture = _localizer.Culture;
+            _maps = [.. MapItems(services?.GetService<GameWorld>(), services?.GetService<GameTexts>())];
+        }
+
+        return _maps.Select(map => map with { Run = () => PreviewMap(map.Key, key) });
+    }
+
+    private IEnumerable<SearchItem> MapItems(GameWorld? world, GameTexts? texts)
+    {
+        if (world is null)
+            yield break;
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var i = 0; i < world.Atlas.Positions.Length; i++)
+        {
+            var position = world.Atlas.Positions.Span[i];
+            var area = world.Atlas.TryGetSubArea(position.SubAreaId, out var subArea) && texts is not null && texts.TryGet(_localizer.GameLanguage, subArea.NameId, out var name) ? name : _localizer.Format("SubArea", position.SubAreaId);
+            var coordinates = _localizer.Format("Coordinates", position.X, position.Y);
+
+            // Maps of one place and coordinates, as floors, are one result: the first.
+            if (seen.Add(coordinates + area))
+                yield return new SearchItem(SearchScope.Maps, "map:" + position.MapId, $"{coordinates} · {area}", "", "Toolwindows.Web", "", "", () => { });
+        }
+    }
+
+    private void PreviewMap(string mapKey, CharacterKey key)
+    {
+        var mapId = long.Parse(mapKey.AsSpan("map:".Length), System.Globalization.CultureInfo.InvariantCulture);
+
+        RunBlock.Choose(key);
+        OpenCharacter(key);
+        TabOf(key).Map.Preview(mapId);
     }
 
     private void UseLanguage(CultureInfo culture)

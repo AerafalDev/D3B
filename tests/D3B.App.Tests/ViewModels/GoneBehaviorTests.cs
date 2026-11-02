@@ -88,7 +88,7 @@ public sealed class GoneBehaviorTests : IAsyncDisposable
         var profile = await services.GetRequiredService<AssetLibrary>().SaveAsync(new ProfileAsset { Id = AssetLibrary.NewId(), Name = "Promenade", Behavior = ScriptId, Values = ImmutableSortedDictionary<string, JsonNode?>.Empty.Add("walks", 3) }, ct);
         var accounts = services.GetRequiredService<AccountBook>();
 
-        await accounts.SeeAsync(TestPlay.Account, [(TestPlay.CharacterId, "Character", 200)], _play.Time.GetUtcNow(), ct);
+        await accounts.SeeAsync(TestPlay.Account, [new ListedCharacter(TestPlay.CharacterId, "Character", 200)], _play.Time.GetUtcNow(), ct);
         await accounts.AssignAsync(TestPlay.Key, profile.Id, ct);
 
         return services;

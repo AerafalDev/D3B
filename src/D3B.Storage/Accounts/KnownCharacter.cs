@@ -17,6 +17,12 @@ public sealed class KnownCharacter
     /// <summary>Gets the character's level, as the server last listed it, if it did.</summary>
     public int? Level { get; init; }
 
+    /// <summary>Gets the character's breed's id in the client's table, as the server last listed it, if it did (D323).</summary>
+    public int? BreedId { get; init; }
+
+    /// <summary>Gets whether the character is female, as the server last listed it, if it did (D323).</summary>
+    public bool? IsFemale { get; init; }
+
     /// <summary>Gets when the client last chose the character, or <see langword="null"/> if it only listed it.</summary>
     public DateTimeOffset? LastPlayed { get; init; }
 

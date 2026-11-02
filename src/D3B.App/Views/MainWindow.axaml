@@ -13,7 +13,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
-    xmlns:maps="clr-namespace:D3B.App.ViewModels.Maps"
+    xmlns:ch="clr-namespace:D3B.App.ViewModels.Characters"
     xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
     xmlns:studio="clr-namespace:D3B.App.ViewModels.Studio"
     xmlns:views="clr-namespace:D3B.App.Views"
@@ -60,7 +60,7 @@
             <Setter Property="MinWidth" Value="176" />
             <Setter Property="Padding" Value="4,0,6,0" />
             <Setter Property="CornerRadius" Value="9" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -103,7 +103,7 @@
             <Setter Property="MinHeight" Value="40" />
             <Setter Property="Padding" Value="8,0" />
             <Setter Property="CornerRadius" Value="7" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -116,8 +116,18 @@
         <Style Selector="Button.Choice.Chosen">
             <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
         </Style>
+        <Style Selector="TextBox.PropertySearch">
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="{DynamicResource InputColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
         <Style Selector="FlyoutPresenter.Bare">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="CornerRadius" Value="10" />
@@ -215,9 +225,7 @@
                         IsChecked="{Binding Layout.IsInspectorOpen, Mode=OneWay}" />
                     <Separator />
                     <MenuItem Classes="Heading" Header="{l:Tr MenuPages}" />
-                    <MenuItem Command="{Binding ShowAccountsCommand}" Header="{l:Tr Accounts}" />
                     <MenuItem Command="{Binding ShowProfilesCommand}" Header="{l:Tr Profiles}" />
-                    <MenuItem Command="{Binding ShowMapCommand}" Header="{l:Tr Map}" />
                     <MenuItem
                         Header="{l:Tr MenuModules}"
                         IsVisible="{Binding HasPages}"
@@ -301,18 +309,13 @@
                                                         Click="OnRunChoiceClick">
                                                         <Grid ColumnDefinitions="Auto,*,Auto">
                                                             <Panel VerticalAlignment="Center">
-                                                                <Border
-                                                                    Classes="Avatar"
+                                                                <c:Portrait
+                                                                    Color="{Binding PortraitColor}"
+                                                                    Head="{Binding Head}"
                                                                     Height="26"
-                                                                    Width="26">
-                                                                    <TextBlock
-                                                                        Classes="Bright"
-                                                                        FontSize="11"
-                                                                        FontWeight="SemiBold"
-                                                                        HorizontalAlignment="Center"
-                                                                        Text="{Binding Initials}"
-                                                                        VerticalAlignment="Center" />
-                                                                </Border>
+                                                                    Initials="{Binding Initials}"
+                                                                    Radius="7"
+                                                                    Width="26" />
                                                                 <Ellipse
                                                                     Classes="StateDot"
                                                                     Classes.Paused="{Binding IsPaused}"
@@ -349,26 +352,23 @@
                         </Button.Flyout>
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <Panel VerticalAlignment="Center">
-                                <Border Classes="Avatar">
-                                    <Panel>
-                                        <c:Icon
-                                            Drawing="{StaticResource General.User}"
-                                            Height="14"
-                                            HorizontalAlignment="Center"
-                                            IsVisible="{Binding !RunBlock.IsChosen}"
-                                            Opacity="0.7"
-                                            VerticalAlignment="Center"
-                                            Width="14" />
-                                        <TextBlock
-                                            Classes="Bright"
-                                            FontSize="11"
-                                            FontWeight="SemiBold"
-                                            HorizontalAlignment="Center"
-                                            IsVisible="{Binding RunBlock.IsChosen}"
-                                            Text="{Binding RunBlock.Initials}"
-                                            VerticalAlignment="Center" />
-                                    </Panel>
+                                <Border Classes="Avatar" IsVisible="{Binding RunBlock.PortraitColor, Converter={x:Static ObjectConverters.IsNull}}">
+                                    <c:Icon
+                                        Drawing="{StaticResource General.User}"
+                                        Height="14"
+                                        HorizontalAlignment="Center"
+                                        Opacity="0.7"
+                                        VerticalAlignment="Center"
+                                        Width="14" />
                                 </Border>
+                                <c:Portrait
+                                    Color="{Binding RunBlock.PortraitColor}"
+                                    Head="{Binding RunBlock.Head}"
+                                    Height="24"
+                                    Initials="{Binding RunBlock.Initials}"
+                                    IsVisible="{Binding RunBlock.PortraitColor, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    Radius="7"
+                                    Width="24" />
                                 <Ellipse
                                     Classes="StateDot"
                                     Classes.Paused="{Binding RunBlock.IsPaused}"
@@ -522,7 +522,7 @@
                                 </Grid>
                             </Border>
                             <Panel>
-                                <views:BotsView DataContext="{Binding Bots}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsRunning}" />
+                                <views:CharactersView DataContext="{Binding Characters}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsRunning}" />
                                 <views:HostStateView IsVisible="{Binding IsNotRunning}" />
                             </Panel>
                         </DockPanel>
@@ -645,9 +645,16 @@
                                                             <c:Icon
                                                                 Drawing="{Binding Icon, Converter={x:Static c:DrawingOf.Instance}}"
                                                                 Height="14"
-                                                                IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                                IsVisible="{Binding !HasPicture}"
                                                                 VerticalAlignment="Center"
                                                                 Width="14" />
+                                                            <c:Portrait
+                                                                Head="{Binding Image}"
+                                                                Height="16"
+                                                                IsVisible="{Binding HasPicture}"
+                                                                Radius="4"
+                                                                VerticalAlignment="Center"
+                                                                Width="16" />
                                                             <TextBlock Classes="TabTitle" Text="{Binding Title}" />
                                                         </StackPanel>
                                                     </Button>
@@ -678,19 +685,19 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="studio:EditorTab">
-                                            <ContentControl Content="{Binding Content}" IsVisible="{Binding IsSelected}">
+                                            <ContentControl
+                                                Classes="FadeIn"
+                                                Content="{Binding Content}"
+                                                IsVisible="{Binding IsSelected}">
                                                 <ContentControl.DataTemplates>
                                                     <DataTemplate x:DataType="vm:MainViewModel">
                                                         <views:WelcomeView />
                                                     </DataTemplate>
-                                                    <DataTemplate x:DataType="vm:AccountsViewModel">
-                                                        <views:AccountsView />
-                                                    </DataTemplate>
                                                     <DataTemplate x:DataType="vm:ProfilesViewModel">
                                                         <views:ProfilesView />
                                                     </DataTemplate>
-                                                    <DataTemplate x:DataType="maps:MapViewModel">
-                                                        <views:MapView />
+                                                    <DataTemplate x:DataType="ch:CharacterTabViewModel">
+                                                        <views:CharacterView />
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="vm:SettingsViewModel">
                                                         <views:SettingsView />
@@ -944,14 +951,24 @@
                                 </Border>
                             </StackPanel>
                         </Border>
-                        <TextBlock
-                            Classes="Dim"
-                            HorizontalAlignment="Center"
-                            Margin="24"
-                            Text="{l:Tr InspectorEmpty}"
-                            TextAlignment="Center"
-                            TextWrapping="Wrap"
-                            VerticalAlignment="Center" />
+                        <Border
+                            DockPanel.Dock="Top"
+                            IsVisible="{Binding !Properties.IsEmpty}"
+                            Padding="6,6,6,2">
+                            <TextBox
+                                Classes="PropertySearch"
+                                Text="{Binding Properties.Filter}"
+                                Watermark="{l:Tr InspectorSearch}">
+                                <TextBox.InnerLeftContent>
+                                    <c:Icon
+                                        Drawing="{StaticResource General.Search}"
+                                        Height="14"
+                                        Margin="8,0,0,0"
+                                        Width="14" />
+                                </TextBox.InnerLeftContent>
+                            </TextBox>
+                        </Border>
+                        <views:PropertiesView DataContext="{Binding Properties}" />
                     </DockPanel>
                 </Border>
             </Grid>

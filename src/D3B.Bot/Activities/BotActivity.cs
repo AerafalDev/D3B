@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Bot.Localization;
@@ -33,6 +35,12 @@ public abstract class BotActivity
     /// <summary>Gets what the activity brought so far, in figures D3B keeps (D146): none by default.</summary>
     /// <remarks>Read from any thread, while the activity runs: an activity replaces them whole.</remarks>
     public virtual ActivityStatistics? Statistics => null;
+
+    /// <summary>Gets the thresholds the activity watches, from its settings, such as the pods it unloads at (D325).</summary>
+    public virtual ImmutableArray<ActivityWatch> Watches => [];
+
+    /// <summary>Gets the behavior's states and the one playing, when the activity runs a behavior (D325).</summary>
+    public virtual BehaviorOutline? Outline => null;
 
     /// <summary>Gets how many map changes a teleport counts as on the activity's journeys, its banking's included: a zaap is taken only when it saves as many (D167).</summary>
     /// <remarks>1 by default: a zaap as soon as it saves a change, as before.</remarks>

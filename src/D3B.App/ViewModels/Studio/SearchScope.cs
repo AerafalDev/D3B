@@ -12,6 +12,9 @@ internal enum SearchScope
     /// <summary>The characters, <c>@</c> first.</summary>
     Characters,
 
+    /// <summary>The maps, by coordinates or name, each shown in preview in the chosen character's tab (D334).</summary>
+    Maps,
+
     /// <summary>The studio's commands and their shortcuts, <c>&gt;</c> first.</summary>
     Commands,
 

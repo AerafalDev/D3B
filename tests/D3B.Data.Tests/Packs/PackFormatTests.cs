@@ -43,6 +43,7 @@ public sealed class PackFormatTests
         (6, "1c90f607d5c45ba002152f90ea53357e25606148b2c9536c4ac1a53b1c708907"),
         (7, "ce9c6ec360dcce84bd518b449148b2a40d44a05a7ce6d19e618ef0780c300a6b"),
         (8, "8a4430ff75cfa0a4f52eaa0fbb717cbfa7c45b4c0a23157e31da9d348359ebcc"),
+        (9, "1ab3a85feff4d72ab0885e08568857695f6ad388bb28c36f026976bd75ccde8d"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -53,6 +54,8 @@ public sealed class PackFormatTests
     private static readonly int[] _jobIcons = [72];
     private static readonly int[] _spellIcons = [208];
     private static readonly int[] _monsterIcons = [212];
+    private static readonly int[] _headIcons = [214];
+    private static readonly int[] _glyphIcons = [216];
     private static readonly int[] _levelIds = [97, 98];
     private static readonly int[] _zoneCells = [99, 100, 101];
     private static readonly string[] _strings = ["s0", "s1", "s2", "s3", "s4"];
@@ -141,7 +144,9 @@ public sealed class PackFormatTests
             new IconTable(2, _itemIcons, Pixels(73, 2)),
             new IconTable(3, _jobIcons, Pixels(74, 3)),
             new IconTable(4, _spellIcons, Pixels(209, 4)),
-            new IconTable(5, _monsterIcons, Pixels(213, 5))));
+            new IconTable(5, _monsterIcons, Pixels(213, 5)),
+            new IconTable(6, _headIcons, Pixels(215, 6)),
+            new IconTable(7, _glyphIcons, Pixels(217, 7))));
         Append(hash, new SpellCatalog(
             new Spell[] { new() { Id = 75, NameId = 76, TypeId = 77, Order = 78, IconId = 79, Properties = SpellProperties.BypassSummoningLimit, FirstLevel = 0, LevelCount = 2, PreviewZone = Zone(102) } },
             new SpellLevel[]

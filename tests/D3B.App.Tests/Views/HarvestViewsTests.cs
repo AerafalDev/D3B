@@ -6,6 +6,7 @@ using Avalonia.VisualTree;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
@@ -238,7 +239,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         var accounts = host.Services.GetRequiredService<AccountBook>();
         var profile = await profiles.SaveProfileAsync("By profession", HarvestingModule.ActivityId, definition.Settings.Write(settings), ct);
 
-        await accounts.SeeAsync(TestPlay.Account, [(TestPlay.CharacterId, "Ortie", 60)], _play.Time.GetUtcNow(), ct);
+        await accounts.SeeAsync(TestPlay.Account, [new ListedCharacter(TestPlay.CharacterId, "Ortie", 60)], _play.Time.GetUtcNow(), ct);
         await accounts.AssignAsync(TestPlay.Key, profile.Id, ct);
 
         var runner = await TestHosts.RunningAsync(host);
@@ -317,7 +318,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheCardAndTheMapSayWhatTheHarvestDoesInBothLanguagesAndThemes()
+    public async Task TheCardAndTheTabSayWhatTheHarvestDoesInBothLanguages()
     {
         using var host = await HostAsync();
         var definition = host.Services.GetRequiredService<ActivityCatalog>().All.Single();
@@ -342,22 +343,24 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             window.Show();
             Dispatcher.UIThread.RunJobs();
             english.AddRange(Texts(window));
-
-            var icons = Icons(window);
-
             Drawings.Draw(window, "card-en");
             main.Bots.Items[0].ShowMapCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             english.AddRange(Texts(window));
-            Drawings.Draw(window, "map-en");
 
-            var map = (main.Map.Scene?.Activity?.Target, main.Map.Scene?.Activity?.Wanted.ToArray(), main.Map.Tour?.Squares.Length, main.Map.Scene?.Elements.Count(element => element.Icon is not null));
+            var icons = Icons(window);
+            var tab = (CharacterTabViewModel)main.Editor.Items.Single(item => item.Content is CharacterTabViewModel).Content;
+
+            Drawings.Draw(window, "tab-en");
+
+            var map = (tab.Map.Scene?.Activity?.Target, tab.Map.Scene?.Activity?.Wanted.ToArray(), tab.Map.Tour?.Squares.Length, tab.Map.Scene?.Elements.Count(element => element.Icon is not null));
 
             main.Settings.UseFrenchCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));
+            Drawings.Draw(window, "tab-fr");
             main.ShowWelcomeCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
@@ -373,18 +376,16 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         await run.Completion;
 
         Assert.Contains("Harvesting", english);
-        Assert.Contains("Harvesting Ash", english);
-        Assert.Contains("Tour 1, map 1 of 4", english);
-        Assert.Contains("Ash 0", english);
+        Assert.Contains("1/4", english);
+        Assert.Contains("Ash · 0 / h", english);
         Assert.Equal(2, icons);
         Assert.Contains("Chestnut needs Lumberjack 20, the character is 1", english);
         Assert.Contains("Layers", english);
         Assert.Contains("The tour", english);
         Assert.Contains("Harvesting Ash · Tour 1, map 1 of 4", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Récolte : Frêne", french);
-        Assert.Contains("Tournée 1, carte 1 sur 4", french);
-        Assert.Contains("Frêne 0", french);
+        Assert.Contains("Récolte : Frêne · Tournée 1, carte 1 sur 4", french);
+        Assert.Contains("Frêne · 0 / h", french);
         Assert.Contains("Châtaignier demande Bûcheron 20, le perso est 1", french);
         Assert.Contains("Calques", french);
         Assert.Contains("La tournée", french);

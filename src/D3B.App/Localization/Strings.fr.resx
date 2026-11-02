@@ -1799,4 +1799,283 @@
   <data name="JournalPausedFromApp" xml:space="preserve">
     <value>Mis en pause depuis D3B</value>
   </data>
+  <data name="AgoNow" xml:space="preserve">
+    <value>à l'instant</value>
+  </data>
+  <data name="AgoMinutes" xml:space="preserve">
+    <value>il y a {0} min</value>
+  </data>
+  <data name="AgoHours" xml:space="preserve">
+    <value>il y a {0} h</value>
+  </data>
+  <data name="AgoYesterday" xml:space="preserve">
+    <value>hier</value>
+  </data>
+  <data name="AgoDays" xml:space="preserve">
+    <value>il y a {0} j</value>
+  </data>
+  <data name="AgoOn" xml:space="preserve">
+    <value>le {0:d}</value>
+  </data>
+  <data name="AssetBuiltIn" xml:space="preserve">
+    <value>Intégré</value>
+  </data>
+  <data name="AssetGiven" xml:space="preserve">
+    <value>donné</value>
+  </data>
+  <data name="AssetGivenKind" xml:space="preserve">
+    <value>{0} · donné avec D3B</value>
+  </data>
+  <data name="AssetKindBehavior" xml:space="preserve">
+    <value>Comportement</value>
+  </data>
+  <data name="AssetKindProfile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="AssetKindRoute" xml:space="preserve">
+    <value>Trajet</value>
+  </data>
+  <data name="AssetKindZone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="AssetKindList" xml:space="preserve">
+    <value>Liste</value>
+  </data>
+  <data name="AssetKindPlanning" xml:space="preserve">
+    <value>Planning</value>
+  </data>
+  <data name="AssetKindFightPreferences" xml:space="preserve">
+    <value>Préférences de combat</value>
+  </data>
+  <data name="AssetUses" xml:space="preserve">
+    <value>Utilise</value>
+  </data>
+  <data name="AssetUsedBy" xml:space="preserve">
+    <value>Utilisé par</value>
+  </data>
+  <data name="AssetUsedByNobody" xml:space="preserve">
+    <value>Personne</value>
+  </data>
+  <data name="CardFighting" xml:space="preserve">
+    <value>Combat</value>
+  </data>
+  <data name="CardPaused" xml:space="preserve">
+    <value>En pause</value>
+  </data>
+  <data name="CardRound" xml:space="preserve">
+    <value>tour {0}</value>
+  </data>
+  <data name="CardStep" xml:space="preserve">
+    <value>{0}/{1}</value>
+  </data>
+  <data name="CardStopped" xml:space="preserve">
+    <value>Arrêté</value>
+  </data>
+  <data name="CardWhereTip" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="CharactersEmpty" xml:space="preserve">
+    <value>Lance le client depuis le lanceur d'Ankama : ses personnages s'affichent ici dès que D3B le relaie.</value>
+  </data>
+  <data name="CharactersOffline" xml:space="preserve">
+    <value>Déconnectés</value>
+  </data>
+  <data name="ColumnBehavior" xml:space="preserve">
+    <value>Comportement</value>
+  </data>
+  <data name="ColumnDecisions" xml:space="preserve">
+    <value>Décisions</value>
+  </data>
+  <data name="ColumnSession" xml:space="preserve">
+    <value>Session</value>
+  </data>
+  <data name="ComesIn7f" xml:space="preserve">
+    <value>Arrive avec les plannings, session 7f</value>
+  </data>
+  <data name="ComesIn7h" xml:space="preserve">
+    <value>Arrive avec les préférences de combat, session 7h</value>
+  </data>
+  <data name="EndEstimate" xml:space="preserve">
+    <value>Fin estimée {0:t}</value>
+  </data>
+  <data name="ForgetAccount" xml:space="preserve">
+    <value>Oublier le compte…</value>
+  </data>
+  <data name="InspectorSearch" xml:space="preserve">
+    <value>Chercher une propriété</value>
+  </data>
+  <data name="KeysEnter" xml:space="preserve">
+    <value>Entrée</value>
+  </data>
+  <data name="LevelLower" xml:space="preserve">
+    <value>niveau {0}</value>
+  </data>
+  <data name="MapHoverHint" xml:space="preserve">
+    <value>Survole une cellule</value>
+  </data>
+  <data name="MapPreview" xml:space="preserve">
+    <value>Aperçu de {0} · Revenir à {1}</value>
+  </data>
+  <data name="MenuOpen" xml:space="preserve">
+    <value>Ouvrir</value>
+  </data>
+  <data name="MenuProfile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="MenuResume" xml:space="preserve">
+    <value>Reprendre</value>
+  </data>
+  <data name="MenuStartOnConnection" xml:space="preserve">
+    <value>Démarrer à la connexion</value>
+  </data>
+  <data name="NoneValue" xml:space="preserve">
+    <value>Aucun</value>
+  </data>
+  <data name="OpenCharacterTab" xml:space="preserve">
+    <value>Ouvrir son onglet</value>
+  </data>
+  <data name="OpenProfile" xml:space="preserve">
+    <value>Ouvrir le profil</value>
+  </data>
+  <data name="ProfileChangedDetail" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="ProfileGivenDetail" xml:space="preserve">
+    <value>{0} · donné</value>
+  </data>
+  <data name="ProfilesGiven" xml:space="preserve">
+    <value>Donnés avec D3B</value>
+  </data>
+  <data name="ProfilesMine" xml:space="preserve">
+    <value>Mes profils</value>
+  </data>
+  <data name="PropertyAccount" xml:space="preserve">
+    <value>Compte</value>
+  </data>
+  <data name="PropertyFight" xml:space="preserve">
+    <value>Combat</value>
+  </data>
+  <data name="PropertyFile" xml:space="preserve">
+    <value>Fichier</value>
+  </data>
+  <data name="PropertyFormat" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="PropertyName" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="PropertyPlanning" xml:space="preserve">
+    <value>Planning</value>
+  </data>
+  <data name="PropertyProfile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="PropertyStart" xml:space="preserve">
+    <value>Auto-démarrage</value>
+  </data>
+  <data name="PropertyStartHelp" xml:space="preserve">
+    <value>Démarre le profil quand le personnage se connecte</value>
+  </data>
+  <data name="PropertySubscription" xml:space="preserve">
+    <value>Abonnement</value>
+  </data>
+  <data name="RailActive" xml:space="preserve">
+    <value>Actif</value>
+  </data>
+  <data name="RailAlways" xml:space="preserve">
+    <value>Toujours</value>
+  </data>
+  <data name="RailGaugeTip" xml:space="preserve">
+    <value>{0} : {1:P0} · seuil {2:P0}</value>
+  </data>
+  <data name="RailLife" xml:space="preserve">
+    <value>Vie ≤ {0} % → {1}</value>
+  </data>
+  <data name="RailPods" xml:space="preserve">
+    <value>Pods ≥ {0} % → {1}</value>
+  </data>
+  <data name="ResetToDefault" xml:space="preserve">
+    <value>Remettre par défaut</value>
+  </data>
+  <data name="SearchScopeMaps" xml:space="preserve">
+    <value>Cartes</value>
+  </data>
+  <data name="SectionAccount" xml:space="preserve">
+    <value>Compte</value>
+  </data>
+  <data name="SectionFile" xml:space="preserve">
+    <value>Fichier</value>
+  </data>
+  <data name="SectionGame" xml:space="preserve">
+    <value>Jeu</value>
+  </data>
+  <data name="SectionVariables" xml:space="preserve">
+    <value>Variables</value>
+  </data>
+  <data name="SessionDeposits" xml:space="preserve">
+    <value>Dépôts {0:N0}</value>
+  </data>
+  <data name="SessionFights" xml:space="preserve">
+    <value>Combats {0:N0}</value>
+  </data>
+  <data name="SessionKamasGained" xml:space="preserve">
+    <value>Kamas +{0:N0}</value>
+  </data>
+  <data name="SessionKamasSpent" xml:space="preserve">
+    <value>Kamas −{0:N0}</value>
+  </data>
+  <data name="SessionProfession" xml:space="preserve">
+    <value>{0} · niveau {1}</value>
+  </data>
+  <data name="SessionProfessionGain" xml:space="preserve">
+    <value>+{0} · {1:P0}</value>
+  </data>
+  <data name="SessionSince" xml:space="preserve">
+    <value>Depuis {0:t}</value>
+  </data>
+  <data name="SessionTileDetail" xml:space="preserve">
+    <value>{0} · {1:N0} / h</value>
+  </data>
+  <data name="ShowTrace" xml:space="preserve">
+    <value>Voir la trace</value>
+  </data>
+  <data name="TourCount" xml:space="preserve">
+    <value>{0} / {1}</value>
+  </data>
+  <data name="TourLegend" xml:space="preserve">
+    <value>Vert vif : faites · vert : en cours · gris : à voir</value>
+  </data>
+  <data name="UsedOnConnection" xml:space="preserve">
+    <value>au démarrage</value>
+  </data>
+  <data name="ValuesChangedOne" xml:space="preserve">
+    <value>{0:N0} valeur changée</value>
+  </data>
+  <data name="ValuesChangedOther" xml:space="preserve">
+    <value>{0:N0} valeurs changées</value>
+  </data>
+  <data name="VariableFlag" xml:space="preserve">
+    <value>Drapeau</value>
+  </data>
+  <data name="VariableNumber" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="VariableText" xml:space="preserve">
+    <value>Texte</value>
+  </data>
+  <data name="VariablesNone" xml:space="preserve">
+    <value>Aucune</value>
+  </data>
+  <data name="WatchBank" xml:space="preserve">
+    <value>Banque</value>
+  </data>
+  <data name="WatchHeal" xml:space="preserve">
+    <value>Soin</value>
+  </data>
+  <data name="ProfilesActivities" xml:space="preserve">
+    <value>Activités avec leurs réglages par défaut</value>
+  </data>
+  <data name="RailEmpty" xml:space="preserve">
+    <value>Rien ne joue</value>
+  </data>
 </root>

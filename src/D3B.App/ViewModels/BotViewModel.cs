@@ -1,15 +1,20 @@
 using System.Globalization;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
+using D3B.App.ViewModels.Characters;
 using D3B.Bot.Activities;
 using D3B.Bot.Assets;
 using D3B.Bot.Behaviors;
 using D3B.Bot.Characters;
+using D3B.Bot.Fighting;
+using D3B.Bot.Harvesting;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
 using D3B.Data;
+using D3B.Data.Icons;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Storage.Accounts;
@@ -17,7 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>A bot as the app shows it: its character's state, its activity, and the commands that start, stop and resume it (D87).</summary>
+/// <summary>A bot as the app shows it: its character's card, state and activity, and the commands that start, stop and resume it (D87, D323).</summary>
 /// <remarks>
 /// It reads the bot's snapshots each time the window refreshes (D9), on the UI's thread: the bot's loop never waits for
 /// the app.
@@ -28,6 +33,9 @@ internal sealed partial class BotViewModel : ObservableObject
 
     /// <summary>How full a character shows as nearly full, a hint only: each activity says when it unloads (D87).</summary>
     private const double NearlyFull = 0.9;
+
+    /// <summary>Under this share of its life, a card's gauge turns red (D323).</summary>
+    private const double LowLife = 50;
 
     private readonly IServiceProvider _services;
     private readonly Localizer _localizer;
@@ -54,6 +62,8 @@ internal sealed partial class BotViewModel : ObservableObject
     private bool _wasConnected;
     private bool _wasFighting;
     private ActivityRun? _runningSeen;
+    private int? _headBreed;
+    private bool? _headFemale;
 
     /// <summary>Gets the bot.</summary>
     public BotActor Bot { get; }
@@ -123,7 +133,7 @@ internal sealed partial class BotViewModel : ObservableObject
 
     /// <summary>Gets the character's life, of its most, its regeneration reckoned, once the server said it (D148, D153).</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasLife))]
+    [NotifyPropertyChangedFor(nameof(HasLife), nameof(HasMeters))]
     public partial string? Life { get; private set; }
 
     /// <summary>Gets the character's life, from 0 to 100 of its most.</summary>
@@ -140,7 +150,14 @@ internal sealed partial class BotViewModel : ObservableObject
 
     /// <summary>Gets how full the character is, said.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLoad), nameof(HasMeters))]
     public partial string LoadPercentText { get; private set; } = "";
+
+    /// <summary>Gets whether the server said the weight the character carries and the most it can.</summary>
+    public bool HasLoad => LoadPercentText.Length > 0;
+
+    /// <summary>Gets whether the card shows a gauge, the life's or the pods'.</summary>
+    public bool HasMeters => HasLife || HasLoad;
 
     /// <summary>Gets whether the server said the character's life.</summary>
     public bool HasLife => Life is not null;
@@ -243,6 +260,75 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsChosen { get; set; }
 
+    /// <summary>Gets or sets the characters' panel, whose menu the card's right click opens.</summary>
+    public CharactersViewModel? Panel { get; set; }
+
+    /// <summary>Gets the character's class's head, when the server listed its breed and the pack holds it (D323).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasHead))]
+    public partial IImage? Head { get; private set; }
+
+    /// <summary>Gets the colour of the character's portrait, its breed's.</summary>
+    [ObservableProperty]
+    public partial IBrush PortraitColor { get; private set; } = BreedColors.Of(null);
+
+    /// <summary>Gets where the character stands, as its card's ring and tint say.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPlaying), nameof(IsFighting), nameof(IsStopped), nameof(IsHalted))]
+    public partial PlayState PlayState { get; private set; }
+
+    /// <summary>Gets what the card says the character does: its activity, a fight, the player's hand, or stopped.</summary>
+    [ObservableProperty]
+    public partial string CardActivity { get; private set; } = "";
+
+    /// <summary>Gets the glyph of what the character does.</summary>
+    [ObservableProperty]
+    public partial IImage? ActivityGlyph { get; private set; }
+
+    /// <summary>Gets how far the character is, its tour's map or its fight's round.</summary>
+    [ObservableProperty]
+    public partial string Step { get; private set; } = "";
+
+    /// <summary>Gets where the character is, in a word: the sub-area, a haven bag, a fight.</summary>
+    [ObservableProperty]
+    public partial string Where { get; private set; } = "";
+
+    /// <summary>Gets where the character is, its coordinates and sub-area, in the card's tooltip.</summary>
+    [ObservableProperty]
+    public partial string WhereTip { get; private set; } = "";
+
+    /// <summary>Gets the character's life as a share, said.</summary>
+    [ObservableProperty]
+    public partial string LifePercentText { get; private set; } = "";
+
+    /// <summary>Gets whether the character's life is under half.</summary>
+    [ObservableProperty]
+    public partial bool IsLifeLow { get; private set; }
+
+    /// <summary>Gets the life's glyph.</summary>
+    public IImage? LifeGlyph { get; }
+
+    /// <summary>Gets the pods' glyph.</summary>
+    public IImage? PodsGlyph { get; }
+
+    /// <summary>Gets the place's glyph.</summary>
+    public IImage? PlaceGlyph { get; }
+
+    /// <summary>Gets whether the card shows the character's class's head.</summary>
+    public bool HasHead => Head is not null;
+
+    /// <summary>Gets whether the character plays, its ring green.</summary>
+    public bool IsPlaying => PlayState is PlayState.Playing;
+
+    /// <summary>Gets whether the character fights, its ring red and its card tinted.</summary>
+    public bool IsFighting => PlayState is PlayState.Fighting;
+
+    /// <summary>Gets whether the character runs nothing, its ring dim.</summary>
+    public bool IsStopped => PlayState is PlayState.Stopped or PlayState.Offline;
+
+    /// <summary>Gets whether the character waits to be resumed, its ring amber.</summary>
+    public bool IsHalted => PlayState is PlayState.Paused;
+
     /// <summary>Initializes a new instance of the <see cref="BotViewModel"/> class.</summary>
     /// <param name="bot">The bot.</param>
     /// <param name="services">The host's services: the activities, the profiles, and the pack's world and texts.</param>
@@ -269,6 +355,9 @@ internal sealed partial class BotViewModel : ObservableObject
         _says = new GameTextFormatter(localizer, _world, _texts, services.GetService<GameTables>());
         _icons = GameIcons.Of(services.GetService<GameTables>());
         _time = services.GetService<TimeProvider>() ?? TimeProvider.System;
+        LifeGlyph = _icons?.Glyph(GameGlyph.Life);
+        PodsGlyph = _icons?.Glyph(GameGlyph.Pods);
+        PlaceGlyph = _icons?.Glyph(GameGlyph.Place);
         RefreshChoices();
     }
 
@@ -353,7 +442,92 @@ internal sealed partial class BotViewModel : ObservableObject
         RefreshLoad(state);
         RefreshActivity();
         RefreshTone();
+        RefreshCard(state);
         Announce(state);
+    }
+
+    /// <summary>Gets the id of the activity the character plays, or would play: the one started, else its profile's.</summary>
+    /// <returns>The activity's id, or <see langword="null"/> when none is known.</returns>
+    internal string? ActivityId()
+    {
+        if (Bot.Activity is { } run && run == _startedRun && _startedChoice is { Definition: { } started })
+            return started.Id;
+
+        return (SelectedActivity ?? Activities.FirstOrDefault(choice => choice.Profile?.Id == _accounts?.Find(Bot.Key)?.Profile))?.Definition?.Id;
+    }
+
+    /// <summary>Gets the glyph of an activity, as the cards and the character's tab draw it.</summary>
+    /// <param name="activityId">The activity's id.</param>
+    /// <returns>Its glyph.</returns>
+    internal static GameGlyph GlyphOf(string? activityId)
+    {
+        return activityId switch
+        {
+            HarvestingModule.ActivityId => GameGlyph.Harvest,
+            FightingModule.ActivityId => GameGlyph.Fight,
+            _ => GameGlyph.Success,
+        };
+    }
+
+    private void RefreshCard(CharacterState state)
+    {
+        var known = _accounts?.Find(Bot.Key);
+
+        // The head is drawn again only when the breed or sex the server listed changes.
+        if (known?.BreedId != _headBreed || known?.IsFemale != _headFemale)
+        {
+            _headBreed = known?.BreedId;
+            _headFemale = known?.IsFemale;
+            Head = _headBreed is { } breed ? _icons?.Head(breed, _headFemale ?? false) : null;
+            PortraitColor = BreedColors.Of(_headBreed);
+        }
+
+        PlayState = !IsConnected ? PlayState.Offline
+            : state.IsFighting ? PlayState.Fighting
+            : IsPaused && IsActivityRunning ? PlayState.Paused
+            : IsActivityRunning ? PlayState.Playing
+            : IsPaused ? PlayState.Paused
+            : PlayState.Stopped;
+
+        (CardActivity, var glyph) = PlayState switch
+        {
+            PlayState.Fighting => (_localizer["CardFighting"], GameGlyph.Fight),
+            PlayState.Paused => (_localizer["CardPaused"], GameGlyph.Pause),
+            PlayState.Playing => (ActivityName, GlyphOf(ActivityId())),
+            _ => (_localizer["CardStopped"], GameGlyph.None),
+        };
+        ActivityGlyph = glyph is GameGlyph.None ? null : _icons?.Glyph(glyph);
+        Step = PlayState switch
+        {
+            PlayState.Fighting when state.Fight is { Round: > 0 } fight => _localizer.Format("CardRound", fight.Round),
+            // The map it is on, not those it is done with: "3/14" on its third.
+            PlayState.Playing when Bot.Activity?.Activity.Report?.Progress is { Total: > 0 } progress => _localizer.Format("CardStep", Math.Min(progress.Done + 1, progress.Total), progress.Total),
+            _ => "",
+        };
+
+        Where = Place.Length > 0 && Coordinates != NoValue ? PlaceName(state) : Place;
+        WhereTip = Coordinates != NoValue ? _localizer.Format("CardWhereTip", Coordinates, Place) : Place;
+        LifePercentText = HasLife ? _localizer.Format("LoadPercent", LifePercent / 100) : "";
+        IsLifeLow = HasLife && LifePercent < LowLife;
+    }
+
+    private string PlaceName(CharacterState state)
+    {
+        return state.MapId is { } mapId && _world is not null && _world.Atlas.TryGetPosition(mapId, out var position) ? SubAreaName(position.SubAreaId) : Place;
+    }
+
+    /// <summary>Chooses what play starts for the session: an activity with its defaults, as the card's list did (D99).</summary>
+    /// <param name="activityId">The activity's id.</param>
+    public void PreferActivity(string activityId)
+    {
+        SelectedActivity = Activities.FirstOrDefault(choice => choice.Profile is null && choice.Definition?.Id == activityId) ?? SelectedActivity;
+    }
+
+    /// <summary>Chooses what play starts: a profile given to the character, or none.</summary>
+    /// <param name="profileId">The profile's id, or <see langword="null"/>.</param>
+    public void Prefer(string? profileId)
+    {
+        SelectedActivity = profileId is null ? null : Activities.FirstOrDefault(choice => choice.Profile?.Id == profileId) ?? SelectedActivity;
     }
 
     [RelayCommand(CanExecute = nameof(CanStart))]

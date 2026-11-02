@@ -1,0 +1,765 @@
+<UserControl
+    x:Class="D3B.App.Views.CharacterView"
+    x:ClassModifier="internal"
+    x:DataType="ch:CharacterTabViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:ch="clr-namespace:D3B.App.ViewModels.Characters"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <LinearGradientBrush EndPoint="100%,0%" StartPoint="0%,0%" x:Key="NowFill">
+            <GradientStop Color="#2FB54D" Offset="0" />
+            <GradientStop Color="#7EE39A" Offset="1" />
+        </LinearGradientBrush>
+        <LinearGradientBrush EndPoint="100%,0%" StartPoint="0%,0%" x:Key="XpFill">
+            <GradientStop Color="#5B7FF0" Offset="0" />
+            <GradientStop Color="#8FB1FF" Offset="1" />
+        </LinearGradientBrush>
+        <SolidColorBrush Color="#14FFFFFF" x:Key="BarTrack" />
+        <SolidColorBrush Color="#A4A8B2" x:Key="RuleFill" />
+        <SolidColorBrush Color="#E0605A" x:Key="LifeRuleFill" />
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <Style Selector="Border.Pill">
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="11,0" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Background" Value="#E0161619" />
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.Pill">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="Padding" Value="11,0" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Background" Value="#E0161619" />
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.Pill:pointerover">
+            <Setter Property="Background" Value="#F226262C" />
+        </Style>
+        <Style Selector="Button.Pill.Preview">
+            <Setter Property="Background" Value="#E61E2A44" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+        </Style>
+        <Style Selector="Border.Now">
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="Background" Value="{DynamicResource HeaderColor}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition
+                        Duration="0:0:0.25"
+                        Easing="CubicEaseOut"
+                        Property="BorderBrush" />
+                    <BrushTransition
+                        Duration="0:0:0.25"
+                        Easing="CubicEaseOut"
+                        Property="Background" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Now.Playing">
+            <Setter Property="BorderBrush" Value="#383ECF5C" />
+            <Setter Property="Background">
+                <LinearGradientBrush EndPoint="100%,100%" StartPoint="0%,0%">
+                    <GradientStop Color="#243ECF5C" Offset="0" />
+                    <GradientStop Color="#083ECF5C" Offset="0.6" />
+                </LinearGradientBrush>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Now.Paused">
+            <Setter Property="BorderBrush" Value="#38E9AD3C" />
+            <Setter Property="Background">
+                <LinearGradientBrush EndPoint="100%,100%" StartPoint="0%,0%">
+                    <GradientStop Color="#24E9AD3C" Offset="0" />
+                    <GradientStop Color="#08E9AD3C" Offset="0.6" />
+                </LinearGradientBrush>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Now.Fighting">
+            <Setter Property="BorderBrush" Value="#38EA5D52" />
+            <Setter Property="Background">
+                <LinearGradientBrush EndPoint="100%,100%" StartPoint="0%,0%">
+                    <GradientStop Color="#24EA5D52" Offset="0" />
+                    <GradientStop Color="#08EA5D52" Offset="0.6" />
+                </LinearGradientBrush>
+            </Setter>
+        </Style>
+        <Style Selector="Border.NowIcon">
+            <Setter Property="Width" Value="38" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
+        </Style>
+        <Style Selector="Border.Now.Playing Border.NowIcon">
+            <Setter Property="Background" Value="#2E3ECF5C" />
+        </Style>
+        <Style Selector="Border.Now.Paused Border.NowIcon">
+            <Setter Property="Background" Value="#2EE9AD3C" />
+        </Style>
+        <Style Selector="Border.Now.Fighting Border.NowIcon">
+            <Setter Property="Background" Value="#2EEA5D52" />
+        </Style>
+        <Style Selector="Border.NowIcon c|GlyphIcon">
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
+        <Style Selector="Border.Now.Playing Border.NowIcon c|GlyphIcon">
+            <Setter Property="Foreground" Value="#8FE3A2" />
+        </Style>
+        <Style Selector="Border.Now.Paused Border.NowIcon c|GlyphIcon">
+            <Setter Property="Foreground" Value="#F0C674" />
+        </Style>
+        <Style Selector="Border.Now.Fighting Border.NowIcon c|GlyphIcon">
+            <Setter Property="Foreground" Value="#F3A19A" />
+        </Style>
+        <Style Selector="TextBlock.NowDetail">
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
+        <Style Selector="Border.Now.Playing TextBlock.NowDetail">
+            <Setter Property="Foreground" Value="#A9D9B5" />
+        </Style>
+        <Style Selector="TextBlock.Heading">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.Link">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.Link:pointerover TextBlock">
+            <Setter Property="TextDecorations" Value="Underline" />
+        </Style>
+        <Style Selector="Button.Profile">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Padding" Value="4,0,8,0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="{DynamicResource FieldColor}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="MaxWidth" Value="180" />
+        </Style>
+        <Style Selector="Button.Profile:pointerover">
+            <Setter Property="Background" Value="#232328" />
+        </Style>
+        <Style Selector="Border.Dot">
+            <Setter Property="Width" Value="11" />
+            <Setter Property="Height" Value="11" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource PanelColor}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="#3A3B42" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition
+                        Duration="0:0:0.25"
+                        Easing="CubicEaseOut"
+                        Property="Background" />
+                    <BoxShadowsTransition
+                        Duration="0:0:0.25"
+                        Easing="CubicEaseOut"
+                        Property="BoxShadow" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Dot.Layer">
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="BorderBrush" Value="#5A5B64" />
+        </Style>
+        <Style Selector="Border.Dot.Rule">
+            <Setter Property="Width" Value="7" />
+            <Setter Property="Height" Value="7" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="#3A3B42" />
+        </Style>
+        <Style Selector="Border.Dot.Active">
+            <Setter Property="Background" Value="{DynamicResource PlayingColor}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BoxShadow" Value="0 0 0 4 #2E3ECF5C, 0 0 10 0 #993ECF5C" />
+        </Style>
+        <Style Selector="TextBlock.RailText">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+        <Style Selector="TextBlock.RailText.Layer, TextBlock.RailText.Rule">
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
+        <Style Selector="TextBlock.RailText.Layer">
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+        <Style Selector="TextBlock.RailText.Active">
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Border.Tile">
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+        </Style>
+        <Style Selector="Border.Fact">
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="9,0" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+        </Style>
+        <Style Selector="Border.Event">
+            <Setter Property="Width" Value="11" />
+            <Setter Property="Height" Value="11" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource PanelColor}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="#4B4C55" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Margin" Value="0,3,0,0" />
+        </Style>
+        <Style Selector="Border.Event.Success">
+            <Setter Property="BorderBrush" Value="{DynamicResource PlayingColor}" />
+        </Style>
+        <Style Selector="Border.Event.Info">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+        </Style>
+        <Style Selector="Border.Event.Warning">
+            <Setter Property="BorderBrush" Value="{DynamicResource WarningColor}" />
+        </Style>
+        <Style Selector="Border.Event.Danger">
+            <Setter Property="BorderBrush" Value="{DynamicResource ErrorColor}" />
+        </Style>
+    </UserControl.Styles>
+    <Grid ColumnDefinitions="*,320">
+        <Panel ClipToBounds="True" Name="Surface">
+            <Panel.Background>
+                <RadialGradientBrush Center="50%,45%" GradientOrigin="50%,45%" RadiusX="75%" RadiusY="75%">
+                    <GradientStop Color="#141418" Offset="0" />
+                    <GradientStop Color="#0D0D10" Offset="1" />
+                </RadialGradientBrush>
+            </Panel.Background>
+            <c:MapCanvas
+                HoveredCell="{Binding Map.HoveredCell}"
+                IsVisible="{Binding Map.HasScene}"
+                Layers="{Binding Map.Layers}"
+                Margin="40,48,40,40"
+                Name="MapCanvas"
+                Palette="{DynamicResource MapPalette}"
+                Scene="{Binding Map.Scene}" />
+            <TextBlock
+                Classes="Muted"
+                HorizontalAlignment="Center"
+                IsVisible="{Binding Map.Problem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Margin="24"
+                Text="{Binding Map.Problem}"
+                TextWrapping="Wrap"
+                VerticalAlignment="Center" />
+            <StackPanel
+                HorizontalAlignment="Left"
+                Margin="12,12,130,12"
+                Spacing="6"
+                VerticalAlignment="Top">
+                <WrapPanel ItemSpacing="6" LineSpacing="6">
+                    <Border Classes="Pill">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <c:GlyphIcon
+                                Foreground="{DynamicResource MutedColor}"
+                                Height="13"
+                                Source="{Binding PlaceGlyph}"
+                                VerticalAlignment="Center"
+                                Width="13" />
+                            <TextBlock
+                                Classes="Bright Figures"
+                                FontWeight="SemiBold"
+                                Text="{Binding Map.Coordinates}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                MaxWidth="200"
+                                Text="{Binding Map.Place}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="Pill" MinWidth="150">
+                        <Panel VerticalAlignment="Center">
+                            <TextBlock
+                                Classes="Dim"
+                                IsVisible="{Binding !Map.HasHover}"
+                                Text="{l:Tr MapHoverHint}" />
+                            <StackPanel
+                                IsVisible="{Binding Map.HasHover}"
+                                Orientation="Horizontal"
+                                Spacing="7">
+                                <TextBlock
+                                    Classes="Bright Figures"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding Map.HoverTitle}" />
+                                <TextBlock
+                                    MaxWidth="260"
+                                    Text="{Binding Map.HoverDetail}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Panel>
+                    </Border>
+                </WrapPanel>
+                <Border
+                    Background="#E6141417"
+                    BorderBrush="{DynamicResource OutlineColor}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    HorizontalAlignment="Left"
+                    IsVisible="{Binding Map.HoverItems.Count}"
+                    MaxWidth="320"
+                    Padding="11,8">
+                    <ItemsControl ItemsSource="{Binding Map.HoverItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock
+                                    FontSize="12"
+                                    Margin="0,2"
+                                    Text="{Binding}"
+                                    TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+            </StackPanel>
+            <Button
+                Classes="Pill Preview"
+                Command="{Binding Map.BackToCharacterCommand}"
+                HorizontalAlignment="Center"
+                IsVisible="{Binding Map.IsPreview}"
+                Margin="0,52,0,0"
+                VerticalAlignment="Top">
+                <TextBlock Text="{Binding Map.PreviewText}" VerticalAlignment="Center" />
+            </Button>
+            <Button
+                Classes="Pill"
+                HorizontalAlignment="Right"
+                Margin="12"
+                VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <c:Icon
+                        Drawing="{StaticResource General.Layout}"
+                        Height="13"
+                        VerticalAlignment="Center"
+                        Width="13" />
+                    <TextBlock Text="{l:Tr Layers}" VerticalAlignment="Center" />
+                    <c:Icon
+                        Drawing="{StaticResource General.ChevronDown}"
+                        Height="10"
+                        Opacity="0.6"
+                        VerticalAlignment="Center"
+                        Width="10" />
+                </StackPanel>
+                <Button.Flyout>
+                    <Flyout FlyoutPresenterClasses="Bare" Placement="BottomEdgeAlignedRight">
+                        <Border Classes="MenuPopup" MinWidth="230">
+                            <StackPanel Margin="6" Spacing="8">
+                                <TextBlock
+                                    Classes="Dim"
+                                    FontSize="11"
+                                    Text="{l:Tr Layers}" />
+                                <CheckBox Content="{l:Tr LayerCells}" IsChecked="{Binding Map.ShowsCells}" />
+                                <CheckBox Content="{l:Tr LayerElements}" IsChecked="{Binding Map.ShowsElements}" />
+                                <CheckBox Content="{l:Tr LayerNpcs}" IsChecked="{Binding Map.ShowsNpcs}" />
+                                <CheckBox Content="{l:Tr LayerExits}" IsChecked="{Binding Map.ShowsExits}" />
+                                <CheckBox Content="{l:Tr LayerBots}" IsChecked="{Binding Map.ShowsBots}" />
+                                <CheckBox Content="{l:Tr LayerActivity}" IsChecked="{Binding Map.ShowsActivity}" />
+                                <CheckBox Content="{l:Tr LayerCharacter}" IsChecked="{Binding Map.ShowsCharacter}" />
+                                <CheckBox Content="{l:Tr LayerFight}" IsChecked="{Binding Map.ShowsFight}" />
+                                <CheckBox Content="{l:Tr LayerZones}" IsChecked="{Binding Map.ShowsZones}" />
+                            </StackPanel>
+                        </Border>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+            <Border
+                Background="#E6161619"
+                BorderBrush="{DynamicResource OutlineColor}"
+                BorderThickness="1"
+                CornerRadius="10"
+                HorizontalAlignment="Left"
+                IsVisible="{Binding Map.HasTour}"
+                Margin="12"
+                Padding="8"
+                ToolTip.Tip="{l:Tr TourLegend}"
+                VerticalAlignment="Bottom"
+                Width="176">
+                <StackPanel Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto" Margin="2,0">
+                        <TextBlock
+                            Classes="Muted"
+                            FontSize="11"
+                            Text="{l:Tr MapTour}" />
+                        <TextBlock
+                            Classes="Figures"
+                            FontSize="11"
+                            Grid.Column="1"
+                            Text="{Binding TourText}" />
+                    </Grid>
+                    <c:ZoneMapCanvas
+                        Height="72"
+                        Palette="{DynamicResource MapPalette}"
+                        Scene="{Binding Map.Tour}" />
+                </StackPanel>
+            </Border>
+        </Panel>
+        <Border
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1,0,0,0"
+            Grid.Column="1">
+            <ScrollViewer>
+                <StackPanel Margin="14">
+                    <Border
+                        Classes="Now"
+                        Classes.Fighting="{Binding IsFighting}"
+                        Classes.Paused="{Binding IsPaused}"
+                        Classes.Playing="{Binding IsPlaying}">
+                        <StackPanel>
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Border Classes="NowIcon">
+                                    <c:GlyphIcon
+                                        Height="18"
+                                        Source="{Binding NowGlyph}"
+                                        Width="18" />
+                                </Border>
+                                <StackPanel
+                                    Grid.Column="1"
+                                    Margin="12,0,0,0"
+                                    VerticalAlignment="Center">
+                                    <TextBlock
+                                        Classes="Bright"
+                                        FontSize="16"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding NowTitle}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Classes="NowDetail"
+                                        FontSize="12"
+                                        Margin="0,1,0,0"
+                                        Text="{Binding NowDetail}"
+                                        TextTrimming="CharacterEllipsis"
+                                        ToolTip.Tip="{Binding NowDetail}" />
+                                </StackPanel>
+                            </Grid>
+                            <c:ShareBar
+                                Fill="{StaticResource NowFill}"
+                                Height="6"
+                                IsVisible="{Binding HasProgress}"
+                                Margin="0,14,0,8"
+                                Track="{StaticResource BarTrack}"
+                                Value="{Binding Progress}" />
+                            <Grid
+                                ColumnDefinitions="Auto,*"
+                                IsVisible="{Binding Elapsed, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Margin="0,6,0,0">
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <c:GlyphIcon
+                                        Foreground="{DynamicResource MutedColor}"
+                                        Height="12"
+                                        Source="{Binding TimeGlyph}"
+                                        VerticalAlignment="Center"
+                                        Width="12" />
+                                    <TextBlock
+                                        Classes="Muted Figures"
+                                        FontSize="11.5"
+                                        Text="{Binding Elapsed}"
+                                        VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock
+                                    Classes="Muted Figures"
+                                    FontSize="11.5"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    Text="{Binding EndEstimate}"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                            <TextBlock
+                                FontSize="12"
+                                Foreground="#F3A19A"
+                                IsVisible="{Binding HasProblem}"
+                                Margin="0,10,0,0"
+                                Text="{Binding Problem}"
+                                TextWrapping="Wrap" />
+                            <ItemsControl
+                                IsVisible="{Binding HasWarnings}"
+                                ItemsSource="{Binding Warnings}"
+                                Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="#F0C674"
+                                            Margin="0,2"
+                                            Text="{Binding}"
+                                            TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                    <StackPanel Margin="4,16,4,0">
+                        <Grid ColumnDefinitions="Auto,*" Margin="2,0,2,10">
+                            <TextBlock Classes="Heading" Text="{l:Tr ColumnBehavior}" />
+                            <Button
+                                Classes="Profile"
+                                Command="{Binding OpenProfileCommand}"
+                                Grid.Column="1"
+                                ToolTip.Tip="{l:Tr OpenProfile}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border
+                                        Background="#2A2238"
+                                        CornerRadius="4"
+                                        Height="16"
+                                        Width="16">
+                                        <c:Icon
+                                            Drawing="{StaticResource Nodes.Template}"
+                                            Height="10"
+                                            Tint="#C9A7F2"
+                                            Width="10" />
+                                    </Border>
+                                    <TextBlock
+                                        Text="{Binding ProfileName}"
+                                        TextTrimming="CharacterEllipsis"
+                                        VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <TextBlock
+                            Classes="Dim"
+                            FontSize="12"
+                            IsVisible="{Binding !HasRail}"
+                            Margin="2,0"
+                            Text="{l:Tr RailEmpty}" />
+                        <Panel IsVisible="{Binding HasRail}">
+                            <Border
+                                Background="#2A2B31"
+                                HorizontalAlignment="Left"
+                                Margin="9,12"
+                                Width="1.5" />
+                            <ItemsControl ItemsSource="{Binding Rail}" Margin="4,0,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="ch:RailRowViewModel">
+                                        <Grid
+                                            ColumnDefinitions="Auto,*,Auto"
+                                            Margin="{Binding Indent, Converter={x:Static c:LeftMargin.Instance}}"
+                                            MinHeight="30">
+                                            <Border
+                                                Classes="Dot"
+                                                Classes.Active="{Binding IsActive}"
+                                                Classes.Layer="{Binding IsLayer}"
+                                                Classes.Rule="{Binding IsRule}"
+                                                Margin="{Binding IsRule, Converter={x:Static c:RuleIndent.Instance}}" />
+                                            <TextBlock
+                                                Classes="RailText"
+                                                Classes.Active="{Binding IsActive}"
+                                                Classes.Layer="{Binding IsLayer}"
+                                                Classes.Rule="{Binding IsRule}"
+                                                Grid.Column="1"
+                                                Margin="10,0,8,0"
+                                                Text="{Binding Text}" />
+                                            <c:ShareBar
+                                                Fill="{StaticResource RuleFill}"
+                                                Grid.Column="2"
+                                                IsVisible="{Binding HasPodsGauge}"
+                                                Mark="{Binding Threshold}"
+                                                MarkBrush="{DynamicResource BrightColor}"
+                                                ToolTip.Tip="{Binding GaugeTip}"
+                                                Track="{StaticResource BarTrack}"
+                                                Value="{Binding GaugeValue}"
+                                                VerticalAlignment="Center"
+                                                Width="64" />
+                                            <c:ShareBar
+                                                Fill="{StaticResource LifeRuleFill}"
+                                                Grid.Column="2"
+                                                IsVisible="{Binding HasLifeGauge}"
+                                                Mark="{Binding Threshold}"
+                                                MarkBrush="{DynamicResource BrightColor}"
+                                                ToolTip.Tip="{Binding GaugeTip}"
+                                                Track="{StaticResource BarTrack}"
+                                                Value="{Binding GaugeValue}"
+                                                VerticalAlignment="Center"
+                                                Width="64" />
+                                            <TextBlock
+                                                FontSize="11"
+                                                Foreground="#8FE3A2"
+                                                Grid.Column="2"
+                                                IsVisible="{Binding IsActive}"
+                                                Text="{Binding ActiveText}"
+                                                VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Panel>
+                    </StackPanel>
+                    <StackPanel IsVisible="{Binding HasSession}" Margin="4,16,4,0">
+                        <Grid ColumnDefinitions="Auto,*" Margin="2,0,2,10">
+                            <TextBlock Classes="Heading" Text="{l:Tr ColumnSession}" />
+                            <TextBlock
+                                Classes="Dim"
+                                FontSize="11.5"
+                                Grid.Column="1"
+                                HorizontalAlignment="Right"
+                                Text="{Binding Since}"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                        <ItemsControl IsVisible="{Binding HasTiles}" ItemsSource="{Binding Tiles}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="3" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="ch:SessionTileViewModel">
+                                    <Border Classes="Tile" Margin="0,0,6,6">
+                                        <StackPanel Spacing="6">
+                                            <Border
+                                                BorderBrush="{DynamicResource BorderColor}"
+                                                BorderThickness="1"
+                                                CornerRadius="7"
+                                                Height="26"
+                                                HorizontalAlignment="Left"
+                                                Width="26">
+                                                <Image
+                                                    Height="22"
+                                                    RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                    Source="{Binding Icon}"
+                                                    Width="22" />
+                                            </Border>
+                                            <TextBlock
+                                                Classes="Bright Figures"
+                                                FontSize="17"
+                                                FontWeight="SemiBold"
+                                                LineHeight="17"
+                                                Text="{Binding Count}" />
+                                            <TextBlock
+                                                Classes="Dim"
+                                                FontSize="11"
+                                                Text="{Binding Detail}"
+                                                TextTrimming="CharacterEllipsis"
+                                                ToolTip.Tip="{Binding Detail}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border
+                            Background="{DynamicResource CardBackgroundColor}"
+                            CornerRadius="10"
+                            IsVisible="{Binding HasProfession}"
+                            Margin="0,6,0,0"
+                            Padding="12,10">
+                            <StackPanel>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock
+                                        Classes="Muted"
+                                        FontSize="12"
+                                        Text="{Binding Profession}" />
+                                    <TextBlock
+                                        Classes="Dim Figures"
+                                        FontSize="11"
+                                        Grid.Column="1"
+                                        Text="{Binding ProfessionGain}" />
+                                </Grid>
+                                <c:ShareBar
+                                    Fill="{StaticResource XpFill}"
+                                    Height="4"
+                                    Margin="0,8,0,0"
+                                    Track="{StaticResource BarTrack}"
+                                    Value="{Binding ProfessionProgress}" />
+                            </StackPanel>
+                        </Border>
+                        <ItemsControl ItemsSource="{Binding Facts}" Margin="0,8,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Border Classes="Fact">
+                                        <TextBlock
+                                            Classes="Muted Figures"
+                                            FontSize="11.5"
+                                            Text="{Binding}"
+                                            VerticalAlignment="Center" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <StackPanel IsVisible="{Binding HasDecisions}" Margin="4,10,4,0">
+                        <Grid ColumnDefinitions="Auto,*" Margin="2,0,2,10">
+                            <TextBlock Classes="Heading" Text="{l:Tr ColumnDecisions}" />
+                            <Button
+                                Classes="Link"
+                                Command="{Binding ShowTraceCommand}"
+                                Grid.Column="1">
+                                <TextBlock Text="{l:Tr ShowTrace}" />
+                            </Button>
+                        </Grid>
+                        <Panel>
+                            <Border
+                                Background="#26272D"
+                                HorizontalAlignment="Left"
+                                Margin="5,10"
+                                Width="1.5" />
+                            <ItemsControl ItemsSource="{Binding Decisions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="ch:DecisionViewModel">
+                                        <Grid ColumnDefinitions="11,*,Auto" Margin="0,6">
+                                            <Border
+                                                Classes="Event"
+                                                Classes.Danger="{Binding Tone, Converter={x:Static c:ToneIs.Danger}}"
+                                                Classes.Info="{Binding Tone, Converter={x:Static c:ToneIs.Info}}"
+                                                Classes.Success="{Binding Tone, Converter={x:Static c:ToneIs.Success}}"
+                                                Classes.Warning="{Binding Tone, Converter={x:Static c:ToneIs.Warning}}" />
+                                            <StackPanel Grid.Column="1" Margin="12,0">
+                                                <TextBlock
+                                                    FontSize="12.5"
+                                                    Text="{Binding Text}"
+                                                    TextWrapping="Wrap" />
+                                                <TextBlock
+                                                    Classes="Dim"
+                                                    FontSize="11"
+                                                    IsVisible="{Binding HasWhy}"
+                                                    Margin="0,1,0,0"
+                                                    Text="{Binding Why}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Classes="Dim Figures"
+                                                FontSize="11"
+                                                Grid.Column="2"
+                                                Margin="0,2,0,0"
+                                                Text="{Binding Time}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Panel>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

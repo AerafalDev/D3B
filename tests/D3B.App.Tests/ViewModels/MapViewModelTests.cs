@@ -1,6 +1,5 @@
 using D3B.App.Controls;
 using D3B.App.Localization;
-using D3B.App.ViewModels;
 using D3B.App.ViewModels.Maps;
 using D3B.Bot.Characters;
 using D3B.Bot.Tests.Runtime;
@@ -80,9 +79,9 @@ public sealed class MapViewModelTests : IAsyncDisposable
         return new Actor { Id = id, Disposition = new ActorDisposition { CellId = cell }, Information = new ActorInformation { Fighter = fighter } };
     }
 
-    private MapViewModel Page(Localizer localizer, BotChoice? choice = null)
+    private MapViewModel Page(Localizer localizer, CharacterKey? key = null)
     {
-        var page = new MapViewModel(localizer, choice ?? new BotChoice());
+        var page = new MapViewModel(localizer, key ?? TestPlay.Key);
 
         page.Refresh(_host.Services);
 
@@ -280,7 +279,7 @@ public sealed class MapViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task AnotherBotOnTheMapShowsAndTheChosenBotIsShared()
+    public async Task AnotherBotOnTheMapShowsAndEachTabFollowsItsOwnCharacter()
     {
         var (_, bot) = await _play.EnterAsync(300);
         var connection = _play.Connect(TestPlay.Account);
@@ -296,22 +295,49 @@ public sealed class MapViewModelTests : IAsyncDisposable
         });
         await other.ProcessedAsync();
 
-        var choice = new BotChoice();
-        var page = Page(_french, choice);
+        var page = Page(_french);
 
-        Assert.Equal(bot.Key, choice.Key);
+        Assert.Same(bot, page.Bot);
         Assert.Equal([350], page.Scene!.Bots);
         Assert.Equal("Character, un autre bot", Hover(page, 350)[^1]);
 
-        page.Show(other.Key);
+        var others = Page(_french, other.Key);
 
-        Assert.Equal((other.Key, 350, 300), (choice.Key, page.Scene!.Character, page.Scene.Bots.Single()));
+        Assert.Equal((350, 300), (others.Scene!.Character, others.Scene.Bots.Single()));
+    }
+
+    [Fact]
+    public async Task AMapFoundByTheSearchShowsInPreviewUntilTheTabGoesBackToTheCharacter()
+    {
+        await _play.EnterAsync(300);
+
+        var page = Page(_french);
+        var live = page.Scene;
+
+        page.Preview(TestPlay.NorthMapId);
+
+        Assert.True(page.IsPreview);
+        Assert.NotSame(live, page.Scene);
+        Assert.Equal(TestPlay.NorthMapId, page.Scene!.Map.Id);
+        Assert.Null(page.Scene.Character);
+        Assert.StartsWith("Aperçu de ", page.PreviewText, StringComparison.Ordinal);
+        Assert.EndsWith(" · Revenir à Character", page.PreviewText, StringComparison.Ordinal);
+
+        page.HoveredCell = 200;
+
+        Assert.True(page.HasHover);
+        Assert.Empty(page.HoverItems);
+
+        page.BackToCharacterCommand.Execute(null);
+
+        Assert.False(page.IsPreview);
+        Assert.Equal(300, page.Scene!.Character);
     }
 
     [Fact]
     public void TheLayersShowAllButTheZonesAtFirstEachToggled()
     {
-        var page = new MapViewModel(_french, new BotChoice());
+        var page = new MapViewModel(_french, TestPlay.Key);
 
         Assert.Equal(MapLayers.Default, page.Layers);
 
@@ -323,11 +349,10 @@ public sealed class MapViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public void WithoutABotThePageSaysSo()
+    public void WithoutItsBotTheMapDrawsNothing()
     {
         var page = Page(_french);
 
-        Assert.True(page.HasNoBot);
         Assert.False(page.HasBot);
         Assert.Null(page.Scene);
     }

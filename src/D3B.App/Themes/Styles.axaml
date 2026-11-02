@@ -165,7 +165,7 @@
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
     </Style>
@@ -218,7 +218,7 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="Border.ItemIcon.HasIcon">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
     </Style>
     <Style Selector="Border.ItemIcon.Large">
@@ -300,12 +300,15 @@
     <Style Selector="Border.TabHost">
         <Setter Property="Height" Value="26" />
         <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="MaxWidth" Value="220" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Duration="0:0:0.12" Property="Background" />
+                <BrushTransition
+                    Duration="0:0:0.15"
+                    Easing="CubicEaseOut"
+                    Property="Background" />
             </Transitions>
         </Setter>
     </Style>
@@ -316,6 +319,14 @@
         <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
     </Style>
     <Style Selector="Border.TabHost TextBlock.TabTitle">
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition
+                    Duration="0:0:0.15"
+                    Easing="CubicEaseOut"
+                    Property="Foreground" />
+            </Transitions>
+        </Setter>
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -332,7 +343,7 @@
         <Setter Property="Height" Value="26" />
         <Setter Property="MinHeight" Value="26" />
         <Setter Property="Padding" Value="9,0,4,0" />
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="FontWeight" Value="Normal" />
@@ -341,7 +352,7 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.TabFace:pointerover, Button.TabFace:pressed">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
     </Style>
     <Style Selector="Button.TabFace.Plain">
         <Setter Property="Padding" Value="9,0" />
@@ -354,7 +365,7 @@
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="0,0,5,0" />
         <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Opacity" Value="0" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -376,7 +387,7 @@
         <Setter Property="MinWidth" Value="28" />
         <Setter Property="Padding" Value="6,0" />
         <Setter Property="CornerRadius" Value="7" />
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -389,6 +400,7 @@
     </Style>
     <Style Selector="Button.Tool:pressed">
         <Setter Property="Background" Value="{DynamicResource PressColor}" />
+        <Setter Property="RenderTransform" Value="scale(0.94)" />
     </Style>
     <Style Selector="Button.Tool:disabled">
         <Setter Property="Opacity" Value="0.4" />
@@ -446,7 +458,7 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="Border.Key.Flat">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BoxShadow" Value="none" />
     </Style>
     <Style Selector="Border.Key.Flat > TextBlock">
@@ -469,6 +481,20 @@
         <Setter Property="CornerRadius" Value="10" />
         <Setter Property="Padding" Value="5" />
         <Setter Property="MinWidth" Value="240" />
+    </Style>
+    <Style Selector="Border.MenuPopup">
+        <Style.Animations>
+            <Animation Duration="0:0:0.14" Easing="CubicEaseOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="0" />
+                    <Setter Property="TranslateTransform.Y" Value="-4" />
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="1" />
+                    <Setter Property="TranslateTransform.Y" Value="0" />
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
     </Style>
     <Style Selector="Border.MenuPopup Separator">
         <Setter Property="Height" Value="1" />
@@ -493,6 +519,55 @@
         <Setter Property="Padding" Value="10,7" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="MaxWidth" Value="280" />
+        <Style.Animations>
+            <Animation Duration="0:0:0.12" Easing="CubicEaseOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="0" />
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="1" />
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <!--  A gauge eases to its new share, as the mockup's: life and pods move, never jump.  -->
+    <Style Selector="c|ShareBar">
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition
+                    Duration="0:0:0.6"
+                    Easing="CubicEaseOut"
+                    Property="Value" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!--  A chevron turns as its section folds or unfolds.  -->
+    <Style Selector="c|Icon.Chevron">
+        <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition
+                    Duration="0:0:0.15"
+                    Easing="CubicEaseOut"
+                    Property="RenderTransform" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!--  What shows once unfolded or chosen, a section, an editor's tab, the inspector's subject, fades in.  -->
+    <Style Selector=":is(Control).FadeIn[IsVisible=True]">
+        <Style.Animations>
+            <Animation Duration="0:0:0.18" Easing="CubicEaseOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="0" />
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="1" />
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
     </Style>
 
     <Style Selector="TextBlock.Bright">
@@ -511,7 +586,7 @@
         <Setter Property="MinHeight" Value="26" />
         <Setter Property="Padding" Value="9,0" />
         <Setter Property="CornerRadius" Value="13" />
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         <Setter Property="FontWeight" Value="Normal" />

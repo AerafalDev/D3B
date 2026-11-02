@@ -1,11 +1,10 @@
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
-using D3B.App.ViewModels.Logs;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
@@ -20,15 +19,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Maps;
 
-/// <summary>The map page: a bot's map drawn from the pack as its character moves, what stands on it in layers, and what a cell holds under the pointer (D120 to D122).</summary>
+/// <summary>A character's map in its tab, drawn from the pack as it moves, what stands on it in layers, and what a cell holds under the pointer (D120 to D122, D325).</summary>
 /// <remarks>
 /// <para>
-/// It reads the bot's snapshot every 250 ms while it shows, on the UI's thread (D9, D94), and makes a new scene only when
-/// the snapshot, the other bots on the map or the language changed: the bot's loop never waits for the page.
+/// It reads the bot's snapshot every 250 ms while its tab shows, on the UI's thread (D9, D94), and makes a new scene only
+/// when the snapshot, the other bots on the map or the language changed: the bot's loop never waits for the tab.
 /// </para>
 /// <para>
-/// The bot it shows is the one the logs page and the inspector show too (<see cref="BotChoice"/>): a bot's card opens its
-/// map here.
+/// A map found by the search shows in preview, from the pack alone, until the tab goes back to the character (D334).
 /// </para>
 /// </remarks>
 internal sealed partial class MapViewModel : ObservableObject
@@ -37,7 +35,7 @@ internal sealed partial class MapViewModel : ObservableObject
     private const string Separator = " · ";
 
     private readonly Localizer _localizer;
-    private readonly BotChoice _choice;
+    private readonly CharacterKey _key;
     private GameMaps? _maps;
     private GameWorld? _world;
     private MapNames? _names;
@@ -48,6 +46,7 @@ internal sealed partial class MapViewModel : ObservableObject
     private string _drawnOthers = "";
     private bool _drawnConnected;
     private bool _drawnPaused;
+    private long? _drawnPreview;
     private ActivityReport? _drawnReport;
     private CultureInfo? _drawnCulture;
     private GameTextFormatter? _says;
@@ -57,28 +56,22 @@ internal sealed partial class MapViewModel : ObservableObject
     private IReadOnlyList<MapExit> _exits = [];
     private List<(string Name, int Cell)> _others = [];
 
-    /// <summary>Gets the bots, a chip each, in the order the bots page shows them.</summary>
-    public ObservableCollection<LogSourceViewModel> Bots { get; } = [];
-
-    /// <summary>Gets the bot whose map the page shows.</summary>
+    /// <summary>Gets the character's bot, once the host made it.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasBot))]
-    public partial LogSourceViewModel? Bot { get; private set; }
+    public partial BotActor? Bot { get; private set; }
 
-    /// <summary>Gets or sets the source chosen in the page's selector: setting it chooses it, as a click on it does.</summary>
-    public LogSourceViewModel? Chosen
-    {
-        get => Bot;
-        set
-        {
-            if (value is not null)
-                Choose(value);
-        }
-    }
-
-    /// <summary>Gets whether no bot has been made, so that the page has nothing to show.</summary>
+    /// <summary>Gets the map shown in preview, a search's result, instead of the character's.</summary>
     [ObservableProperty]
-    public partial bool HasNoBot { get; private set; } = true;
+    [NotifyPropertyChangedFor(nameof(IsPreview))]
+    public partial long? PreviewMapId { get; private set; }
+
+    /// <summary>Gets what the preview's pill says: the map shown, and the character to go back to.</summary>
+    [ObservableProperty]
+    public partial string PreviewText { get; private set; } = "";
+
+    /// <summary>Gets whether the map shows a search's result instead of the character's.</summary>
+    public bool IsPreview => PreviewMapId is not null;
 
     /// <summary>Gets what the map draws, once the bot's character is on a map the pack holds.</summary>
     [ObservableProperty]
@@ -177,7 +170,7 @@ internal sealed partial class MapViewModel : ObservableObject
     [ObservableProperty]
     public partial IReadOnlyList<string> HoverItems { get; private set; } = [];
 
-    /// <summary>Gets whether the page shows a bot.</summary>
+    /// <summary>Gets whether the host made the character's bot.</summary>
     public bool HasBot => Bot is not null;
 
     /// <summary>Gets whether a map is drawn.</summary>
@@ -185,11 +178,11 @@ internal sealed partial class MapViewModel : ObservableObject
 
     /// <summary>Initializes a new instance of the <see cref="MapViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>
-    /// <param name="choice">The bot the logs page, the inspector and the map look at.</param>
-    public MapViewModel(Localizer localizer, BotChoice choice)
+    /// <param name="key">The character whose map it draws.</param>
+    public MapViewModel(Localizer localizer, CharacterKey key)
     {
         _localizer = localizer;
-        _choice = choice;
+        _key = key;
     }
 
     private static string Side(int direction)
@@ -221,7 +214,7 @@ internal sealed partial class MapViewModel : ObservableObject
         return moveZones is 3;
     }
 
-    /// <summary>Reads the bots, and the chosen one's state, in the language chosen.</summary>
+    /// <summary>Reads the character's state, in the language chosen.</summary>
     /// <param name="services">The host's services while it runs, else <see langword="null"/>: what was drawn stays.</param>
     public void Refresh(IServiceProvider? services)
     {
@@ -235,25 +228,27 @@ internal sealed partial class MapViewModel : ObservableObject
         }
 
         _bots = services?.GetService<Bots>() ?? _bots;
-        RefreshBots(services?.GetService<Bots>());
 
-        // The bot chosen on the logs page, the inspector or a card is the one shown.
-        if (_choice.Key is { } key && Bot?.Bot?.Key != key && Find(key) is { } chosen)
-            Choose(chosen);
-        else if (Bot is null && Bots.Count > 0)
-            Choose(Bots[0]);
+        if (Bot is null && _bots is not null && _bots.TryGet(_key, out var bot))
+            Bot = bot;
 
         Read();
     }
 
-    /// <summary>Shows a bot's map, as its card asks.</summary>
-    /// <param name="key">The bot's character.</param>
-    public void Show(CharacterKey key)
+    /// <summary>Shows a map in preview, from the pack alone, as a search's result asks (D334).</summary>
+    /// <param name="mapId">The map.</param>
+    public void Preview(long mapId)
     {
-        _choice.Key = key;
+        PreviewMapId = mapId;
+        Read();
+    }
 
-        if (Find(key) is { } source)
-            Choose(source);
+    /// <summary>Shows the character's map again, live.</summary>
+    [RelayCommand]
+    public void BackToCharacter()
+    {
+        PreviewMapId = null;
+        Read();
     }
 
     partial void OnShowsCellsChanged(bool value)
@@ -322,45 +317,19 @@ internal sealed partial class MapViewModel : ObservableObject
         Layers = layers;
     }
 
-    private void RefreshBots(Bots? bots)
-    {
-        if (bots is null)
-            return;
-
-        foreach (var bot in bots.All.OrderBy(bot => bot.Key.AccountId).ThenBy(bot => bot.Key.CharacterId))
-        {
-            if (Find(bot.Key) is null)
-                Bots.Add(new LogSourceViewModel(LogSourceKind.Bot, bot, Choose));
-        }
-
-        foreach (var source in Bots)
-        {
-            var bot = source.Bot!;
-
-            source.Name = NameOf(bot);
-            source.Tone = bot.IsPaused ? Tone.Warning : bot.IsConnected ? Tone.Success : Tone.Neutral;
-        }
-
-        HasNoBot = Bots.Count is 0;
-    }
-
-    private void Choose(LogSourceViewModel source)
-    {
-        foreach (var other in Bots)
-            other.IsSelected = other == source;
-
-        _choice.Key = source.Bot?.Key;
-
-        if (Bot == source)
-            return;
-
-        Bot = source;
-        Read();
-    }
-
     private void Read()
     {
-        if (Bot?.Bot is not { } bot || _names is null)
+        if (_names is null)
+            return;
+
+        if (PreviewMapId is { } preview)
+        {
+            ReadPreview(preview);
+
+            return;
+        }
+
+        if (Bot is not { } bot)
             return;
 
         var state = bot.State;
@@ -369,10 +338,12 @@ internal sealed partial class MapViewModel : ObservableObject
         var report = bot.Activity is { IsOver: false } run ? run.Activity.Report : null;
 
         if (bot == _drawnBot && ReferenceEquals(state, _drawnState) && othersKey == _drawnOthers && bot.IsConnected == _drawnConnected
-            && bot.IsPaused == _drawnPaused && ReferenceEquals(report, _drawnReport) && _localizer.Culture.Equals(_drawnCulture))
+            && bot.IsPaused == _drawnPaused && ReferenceEquals(report, _drawnReport) && _localizer.Culture.Equals(_drawnCulture) && _drawnPreview is null)
         {
             return;
         }
+
+        _drawnPreview = null;
 
         var tourChanged = report?.Focus?.Zone != _drawnReport?.Focus?.Zone || state.MapId != _drawnState?.MapId || bot != _drawnBot;
 
@@ -391,6 +362,48 @@ internal sealed partial class MapViewModel : ObservableObject
             Tour = report?.Focus is { Zone.Length: > 0 } focus && _world is not null ? ZoneScenes.Of(focus.Zone, _world.Atlas, tour: true, character: state.MapId) : null;
 
         Scene = SceneOf(state, report?.Focus);
+        Describe();
+    }
+
+    private void ReadPreview(long mapId)
+    {
+        if (_drawnPreview == mapId && _localizer.Culture.Equals(_drawnCulture))
+            return;
+
+        _drawnPreview = mapId;
+        _drawnCulture = _localizer.Culture;
+        _drawnState = null;
+        _others = [];
+
+        var name = Bot is { } bot ? NameOf(bot) : _localizer.Format("CharacterNamed", _key.CharacterId);
+
+        if (_world is not null && _world.Atlas.TryGetPosition(mapId, out var position))
+        {
+            Coordinates = _localizer.Format("Coordinates", position.X, position.Y);
+            Place = _names!.SubArea(position.SubAreaId);
+        }
+        else
+        {
+            Coordinates = NoValue;
+            Place = _localizer["OffAtlas"];
+        }
+
+        Detail = _localizer.Format("MapNumber", mapId);
+        PreviewText = _localizer.Format("MapPreview", Coordinates, name);
+        ActivityLine = "";
+        Tour = null;
+
+        if (_maps is null || !_maps.TryGet(mapId, out var map))
+        {
+            Problem = _localizer.Format("MapNotInPack", mapId);
+            Scene = null;
+        }
+        else
+        {
+            Problem = null;
+            Scene = new MapScene(map, ExitsOf(map));
+        }
+
         Describe();
     }
 
@@ -475,16 +488,7 @@ internal sealed partial class MapViewModel : ObservableObject
 
         Problem = null;
 
-        // The exits' labels name places in the app's language: a new language says them again.
-        if (!ReferenceEquals(map, _map) || !_localizer.Culture.Equals(_exitsCulture))
-        {
-            var exits = _world is null ? [] : MapExits.Of(map, _world.Graph);
-
-            _exits = [.. exits.Select(exit => exit.Kind is MapExitKind.Scroll ? exit with { Label = _names!.Place(exit.Destinations[0]) } : exit)];
-            _map = map;
-            _exitsCulture = _localizer.Culture;
-            _mapHasStairs = HasStairs(map);
-        }
+        ExitsOf(map);
 
         var elements = ElementsOf(map, state);
 
@@ -500,6 +504,22 @@ internal sealed partial class MapViewModel : ObservableObject
             Path = [.. state.Path.Where(IsCell)],
             Activity = focus is not null && focus.MapId == mapId ? ActivityOf(focus, elements) : null,
         };
+    }
+
+    private IReadOnlyList<MapExit> ExitsOf(MapData map)
+    {
+        // The exits' labels name places in the app's language: a new language says them again.
+        if (!ReferenceEquals(map, _map) || !_localizer.Culture.Equals(_exitsCulture))
+        {
+            var exits = _world is null ? [] : MapExits.Of(map, _world.Graph);
+
+            _exits = [.. exits.Select(exit => exit.Kind is MapExitKind.Scroll ? exit with { Label = _names!.Place(exit.Destinations[0]) } : exit)];
+            _map = map;
+            _exitsCulture = _localizer.Culture;
+            _mapHasStairs = HasStairs(map);
+        }
+
+        return _exits;
     }
 
     private MapScene FightSceneOf(MapData map, CharacterState state, FightState fight, ImmutableArray<MapElementMark> elements)
@@ -575,7 +595,7 @@ internal sealed partial class MapViewModel : ObservableObject
 
     private void Describe()
     {
-        if (HoveredCell is not { } cell || !IsCell(cell) || Scene is not { } scene || _names is null || _drawnState is not { } state)
+        if (HoveredCell is not { } cell || !IsCell(cell) || Scene is not { } scene || _names is null)
         {
             HasHover = false;
 
@@ -590,13 +610,13 @@ internal sealed partial class MapViewModel : ObservableObject
         HoverDetail = mapCell.IsWalkable
             ? _localizer.Format(stair ? "MapStairs" : "MapWalkable", mapCell.Floor, mapCell.Zone)
             : _localizer[(mapCell.Properties & MapCellProperties.LineOfSight) is MapCellProperties.None ? "MapObstacle" : "MapVoid"];
-        HoverItems = [.. ItemsOn(cell, scene, state)];
+        HoverItems = _drawnState is { } state ? [.. ItemsOn(cell, scene, state)] : [];
         HasHover = true;
     }
 
     private IEnumerable<string> ItemsOn(int cell, MapScene scene, CharacterState state)
     {
-        var name = Bot?.Name ?? "";
+        var name = Bot is { } bot ? NameOf(bot) : "";
 
         if (scene.Character == cell)
         {
@@ -670,18 +690,8 @@ internal sealed partial class MapViewModel : ObservableObject
         };
     }
 
-    private LogSourceViewModel? Find(CharacterKey key)
-    {
-        return Bots.FirstOrDefault(source => source.Bot?.Key == key);
-    }
-
     private string NameOf(BotActor bot)
     {
         return bot.State.Name.Length > 0 ? bot.State.Name : _localizer.Format("CharacterNamed", bot.Key.CharacterId);
-    }
-
-    partial void OnBotChanged(LogSourceViewModel? value)
-    {
-        OnPropertyChanged(nameof(Chosen));
     }
 }

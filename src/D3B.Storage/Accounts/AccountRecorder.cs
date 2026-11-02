@@ -27,9 +27,18 @@ internal sealed class AccountRecorder : BackgroundService, IGameObserver
         _log = log;
     }
 
-    private static int? LevelOf(Character character)
+    private static ListedCharacter Listed(Character character)
     {
-        return character.Basics is { HasLevel: true } basics ? basics.Level : null;
+        var basics = character.Basics;
+        var look = basics?.Look;
+
+        // A list without the look says nothing of the breed: the one known is kept.
+        return new ListedCharacter(
+            character.Id,
+            basics?.Name ?? "",
+            basics is { HasLevel: true } ? basics.Level : null,
+            look is { BreedId: > 0 } ? look.BreedId : null,
+            look is null ? null : look.Sex?.Gender is Gender.Female);
     }
 
     public void OnSessionStarted(GameSession session)
@@ -52,7 +61,7 @@ internal sealed class AccountRecorder : BackgroundService, IGameObserver
         {
             case CharacterListEvent list:
                 {
-                    List<(long Id, string Name, int? Level)> characters = [.. list.Characters.Select(character => (character.Id, character.Basics?.Name ?? "", LevelOf(character)))];
+                    List<ListedCharacter> characters = [.. list.Characters.Select(Listed)];
 
                     _writes.Writer.TryWrite(cancellationToken => _accounts.SeeAsync(account, characters, seen, cancellationToken));
 
@@ -60,7 +69,7 @@ internal sealed class AccountRecorder : BackgroundService, IGameObserver
                 }
 
             case CharacterSelectionEvent { Success.Character: { } character }:
-                _writes.Writer.TryWrite(cancellationToken => _accounts.PlayAsync(account, character.Id, character.Basics?.Name ?? "", LevelOf(character), seen, cancellationToken));
+                _writes.Writer.TryWrite(cancellationToken => _accounts.PlayAsync(account, Listed(character), seen, cancellationToken));
 
                 break;
         }

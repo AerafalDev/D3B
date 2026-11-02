@@ -52,6 +52,12 @@ namespace D3B.Storage.Migrations
                     b.Property<long>("Id")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("BreedId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool?>("IsFemale")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTimeOffset?>("LastPlayed")
                         .HasColumnType("TEXT");
 

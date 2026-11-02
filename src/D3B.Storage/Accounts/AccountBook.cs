@@ -69,11 +69,11 @@ public sealed class AccountBook : IDisposable
 
     /// <summary>Records an account and the characters its client listed.</summary>
     /// <param name="account">The account, as its identification named it.</param>
-    /// <param name="characters">The characters the server listed: their id, name and level.</param>
+    /// <param name="characters">The characters the server listed.</param>
     /// <param name="seen">When the relay saw the list.</param>
     /// <param name="cancellationToken">Stops the write.</param>
     /// <returns>A task that completes once recorded.</returns>
-    internal Task SeeAsync(GameAccount account, IReadOnlyList<(long Id, string Name, int? Level)> characters, DateTimeOffset seen, CancellationToken cancellationToken)
+    internal Task SeeAsync(GameAccount account, IReadOnlyList<ListedCharacter> characters, DateTimeOffset seen, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(account);
         ArgumentNullException.ThrowIfNull(characters);
@@ -83,14 +83,14 @@ public sealed class AccountBook : IDisposable
             {
                 await SeeAccountAsync(context, account, seen, cancellationToken).ConfigureAwait(false);
 
-                foreach (var (id, name, level) in characters)
+                foreach (var character in characters)
                 {
-                    var known = await context.Characters.FindAsync([account.Id, id], cancellationToken).ConfigureAwait(false);
+                    var known = await context.Characters.FindAsync([account.Id, character.Id], cancellationToken).ConfigureAwait(false);
 
                     if (known is null)
-                        context.Characters.Add(new KnownCharacter { AccountId = account.Id, Id = id, Name = name, Level = level });
+                        context.Characters.Add(new KnownCharacter { AccountId = account.Id, Id = character.Id, Name = character.Name, Level = character.Level, BreedId = character.BreedId, IsFemale = character.IsFemale });
                     else
-                        context.Entry(known).CurrentValues.SetValues(new { Name = name, Level = level ?? known.Level });
+                        context.Entry(known).CurrentValues.SetValues(new { character.Name, Level = character.Level ?? known.Level, BreedId = character.BreedId ?? known.BreedId, IsFemale = character.IsFemale ?? known.IsFemale });
                 }
             },
             cancellationToken);
@@ -98,28 +98,26 @@ public sealed class AccountBook : IDisposable
 
     /// <summary>Records that an account's client chose a character.</summary>
     /// <param name="account">The account.</param>
-    /// <param name="id">The character's id.</param>
-    /// <param name="name">Its name.</param>
-    /// <param name="level">Its level, if the server said.</param>
+    /// <param name="character">The character, as the server confirmed it.</param>
     /// <param name="played">When the relay saw the server confirm the choice.</param>
     /// <param name="cancellationToken">Stops the write.</param>
     /// <returns>A task that completes once recorded.</returns>
-    internal Task PlayAsync(GameAccount account, long id, string name, int? level, DateTimeOffset played, CancellationToken cancellationToken)
+    internal Task PlayAsync(GameAccount account, ListedCharacter character, DateTimeOffset played, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(account);
-        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(character);
 
         return WriteAsync(
             async context =>
             {
                 await SeeAccountAsync(context, account, played, cancellationToken).ConfigureAwait(false);
 
-                var known = await context.Characters.FindAsync([account.Id, id], cancellationToken).ConfigureAwait(false);
+                var known = await context.Characters.FindAsync([account.Id, character.Id], cancellationToken).ConfigureAwait(false);
 
                 if (known is null)
-                    context.Characters.Add(new KnownCharacter { AccountId = account.Id, Id = id, Name = name, Level = level, LastPlayed = played });
+                    context.Characters.Add(new KnownCharacter { AccountId = account.Id, Id = character.Id, Name = character.Name, Level = character.Level, BreedId = character.BreedId, IsFemale = character.IsFemale, LastPlayed = played });
                 else
-                    context.Entry(known).CurrentValues.SetValues(new { Name = name, Level = level ?? known.Level, LastPlayed = (DateTimeOffset?)played });
+                    context.Entry(known).CurrentValues.SetValues(new { character.Name, Level = character.Level ?? known.Level, BreedId = character.BreedId ?? known.BreedId, IsFemale = character.IsFemale ?? known.IsFemale, LastPlayed = (DateTimeOffset?)played });
             },
             cancellationToken);
     }

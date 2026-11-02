@@ -80,13 +80,13 @@ public sealed class SearchViewModelTests
         // Chosen by Tab, a scope drops the prefix that named another.
         search.Cycle(forward: true);
 
-        Assert.Equal((SearchScope.Commands, ""), (search.ShownScope, search.Query));
+        Assert.Equal((SearchScope.Maps, ""), (search.ShownScope, search.Query));
 
         search.Cycle(forward: false);
         search.Cycle(forward: false);
 
         Assert.Equal(SearchScope.Assets, search.ShownScope);
-        Assert.Equal(["Assets", "Personnages", "Commandes", "Paramètres"], search.Chips.Skip(1).Select(chip => chip.Name));
+        Assert.Equal(["Assets", "Personnages", "Cartes", "Commandes", "Paramètres"], search.Chips.Skip(1).Select(chip => chip.Name));
         Assert.True(search.Chips.Single(chip => chip.Scope is SearchScope.Assets).IsOn);
     }
 
