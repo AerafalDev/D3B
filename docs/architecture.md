@@ -148,8 +148,9 @@ the switch, the monster groups on a map and the fighting activity; in session 9g
 one AI for every character, the fighting activity's sub-areas suggested by its monsters, isolated maps, place, preview
 and families of monsters, every interactive transition followed, refused teleports remembered, and groups judged over the
 fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarnam's portal first; in session 9g5 (D257 to
-D260), the food the inventory holds, the regeneration back to the share, a hunt's journey stopping on its zone's maps, and
-no walk ending where the previous one did.
+D260, D262), the food the inventory holds, the regeneration back to the share, a hunt's journey stopping on its zone's
+maps, no walk ending where the previous one did, and an element another harvested growing back from when it was first
+seen so.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
@@ -254,7 +255,8 @@ no walk ending where the previous one did.
   journal names the kind (`BotActivity.Describe`, D144). `Regrowths`, one per host, learns how long each resource takes to
   grow back from every map a bot is on (`RegrowthLearner`): whole when a bot stayed on the map, else a bound from above on
   a later visit; a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
-  and waits for the first rather than D128's minute (D145). Before a step, the activity opens a resource bag and, under its
+  and waits for the first rather than D128's minute (D145), an element another harvested reckoned from when a bot first
+  saw it so (`SightedElement.DisabledSince`, D262). Before a step, the activity opens a resource bag and, under its
   share of life, eats the profile's food in one request (`ObjectUse.UseObjectsAsync`, the life reckoned by `BotActor.LifeAt`,
   D148, D153, D156), or with none chosen the stack that heals the least of those whose use only heals, by the pack
   (`Food.StackToEat`, D257), until its life is whole; with nothing to eat, it regenerates back to its share alone, looking

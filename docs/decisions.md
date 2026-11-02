@@ -6105,6 +6105,26 @@ a Xelor hunting, a Huppermage of level 21 harvesting. Builds D254, D255, D256.*
 - **Not measured in game**: the interactive transitions other than doors, a teleport refused, Sarakech's bank and the
   inactivity popup, none on the journeys captured.
 
+## D262: An element another harvested grows back from when a bot first saw it so, and harvesting measured in game
+
+*2026-11-02, step 9, session 9g5, the owner's words in game (D256), measured on the owner's capture of a Xelor harvesting
+iron for 16 minutes in Incarnam's mine, with every fix of the session. Builds D128, D145, D260.*
+
+- **Measured**: 119 iron, the mine's seven rooms gone through by their doors; no map gone through or crossed left with
+  iron the bot could harvest. Iron grew back 729 and 731 s after the bot's own harvests, and was still harvested 779 s
+  after one, another player having maybe harvested it again; most of the iron seen harvested was not the bot's. Before
+  the host knew iron's time, a tour that harvested nothing waited D128's minute, 62 s, five times; once it knew 729 s, the
+  bot waited 101 s for an iron it had harvested 729 s before, and found it grown back.
+- **Read in the code**: a tour reckoned when an element harvested by another, unseen, should grow back from the map's
+  last sighting, so that each visit put it off again.
+- **Made**: each element sighted keeps when a bot first saw it not offering its skill, of the sightings since it last did
+  (`SightedElement.DisabledSince`, `HarvestSightings`), and the tour reckons from there; a harvest a bot saw still wins.
+- **The walks** of D260, measured on the same capture: none of the 190 walks D3B sent ended where the previous one did,
+  and the client followed 189; the last, back along the previous walk to the cell the character entered the room on,
+  it did not, as 7 others of the 17 earlier game connections, 1 % of the walks, whose cause is not found.
+- **Risk**: an element harvested again unseen between two sightings grows back later than reckoned; its map is then
+  gone through each tour, as before D145.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
