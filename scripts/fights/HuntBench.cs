@@ -1,7 +1,6 @@
 using System.Globalization;
 using D3B.Bot.Characters;
 using D3B.Bot.Fighting;
-using D3B.Bot.Fights;
 using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Engine.Fights;
@@ -17,8 +16,8 @@ namespace D3B.Scripts.Fights;
 /// <remarks>
 /// An attack D3B sent is an <see cref="CaptureRecordKind.Injected"/> frame, the player's the client's. One is accepted when a
 /// fight starts within the server's answer delay, 3 s (D152), unanswered otherwise. Its group is judged as the fighting
-/// activity judges it (<see cref="GroupJudge.Beats"/>), the character as its last fight's placement in the capture showed
-/// it, by levels before. It prints counts and times, never a value of one fight.
+/// activity judges it (<see cref="GroupJudge.Beats"/>), the character from the characteristics the server last gave it out of fights (D263),
+/// by levels before. It prints counts and times, never a value of one fight.
 /// </remarks>
 internal sealed class HuntBench
 {
@@ -57,7 +56,6 @@ internal sealed class HuntBench
     public void Replay(List<(TimeSpan Offset, CaptureRecordKind Kind, IMessage Message)> messages)
     {
         CharacterState? state = null;
-        Fighter? self = null;
         Attack? attack = null;
         Attack? fought = null;
         TimeSpan? ended = null;
@@ -86,7 +84,7 @@ internal sealed class HuntBench
 
                 if (message is AttackMonsterRequest request)
                 {
-                    attack = Attacked(state, self, request.MonsterGroupId, kind, offset, walks);
+                    attack = Attacked(state, request.MonsterGroupId, kind, offset, walks);
                     walks = 0;
 
                     if (kind is CaptureRecordKind.Injected)
@@ -110,10 +108,6 @@ internal sealed class HuntBench
 
             if (state.MapId != map)
                 walks = 0;
-
-            // The character as the fighting activity judges it: its last fight's placement (BotActor.LastFighter).
-            if (state.Fight is { Phase: FightPhase.Placement } placing && placing.Fighters.TryGetValue(state.Key.CharacterId, out var shown) && shown.MaxLife > 0)
-                self = shown;
 
             if (attack is { } pending)
             {
@@ -175,7 +169,7 @@ internal sealed class HuntBench
         writer.WriteLine($"  from D3B's attack to the fight's start: {Spread(_toFight, "ms")}");
     }
 
-    private Attack Attacked(CharacterState state, Fighter? self, long groupId, CaptureRecordKind kind, TimeSpan offset, int walks)
+    private Attack Attacked(CharacterState state, long groupId, CaptureRecordKind kind, TimeSpan offset, int walks)
     {
         var who = kind is CaptureRecordKind.Injected ? Bot : Player;
 
@@ -198,8 +192,8 @@ internal sealed class HuntBench
         if (state.MapId is not { } mapId || !_maps.TryGet(mapId, out var data))
             return new Attack(who, offset, "without its map", "without its map");
 
-        var beats = GroupJudge.Beats(group, state, self, FightMap.Of(data), _tables, _tactics);
-        var ratio = GroupJudge.OddsOf(group, state, self, FightMap.Of(data), _tables, _tactics) is { } odds ? odds.TurnsToLose / odds.TurnsToWin : (double?)null;
+        var beats = GroupJudge.Beats(group, state, FightMap.Of(data), _tables, _tactics);
+        var ratio = GroupJudge.OddsOf(group, state, FightMap.Of(data), _tables, _tactics) is { } odds ? odds.TurnsToLose / odds.TurnsToWin : (double?)null;
         var bucket = ratio switch
         {
             null => "by levels",
@@ -210,7 +204,7 @@ internal sealed class HuntBench
             _ => "winning first",
         };
 
-        return new Attack(who, offset, (self is null ? "by levels " : "") + (beats ? "winnable" : "risky"), bucket);
+        return new Attack(who, offset, (ratio is null ? "by levels " : "") + (beats ? "winnable" : "risky"), bucket);
     }
 
     private sealed record Attack(string Who, TimeSpan Offset, string Judged, string Bucket);

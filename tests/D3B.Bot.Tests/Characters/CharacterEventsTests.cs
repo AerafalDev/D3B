@@ -164,6 +164,7 @@ public sealed class CharacterEventsTests
               "Kamas": 12500,
               "Life": null,
               "MaxLife": null,
+              "Characteristics": {},
               "LifeRegenInterval": null,
               "Weight": 770,
               "MaxWeight": 7590,
@@ -201,6 +202,30 @@ public sealed class CharacterEventsTests
         Assert.Null(_chosen.MapId);
         Assert.Null(_chosen.Cell);
         Assert.Empty(_chosen.Inventory);
+    }
+
+    [Fact]
+    public void TheCharacteristicsAreKeptWholeWhicheverWayTheServerGivesThem()
+    {
+        var stats = new CharacterStats
+        {
+            Characteristics =
+            {
+                new Characteristic { Id = 0, Detailed = new DetailedCharacteristic { Number5 = 1_000, Number7 = 55 } },
+                new Characteristic { Id = 11, Detailed = new DetailedCharacteristic { Number1 = 200 } },
+                new Characteristic { Id = 97, Detailed = new DetailedCharacteristic { Number5 = -300 } },
+                new Characteristic { Id = 1, Usable = new UsableCharacteristic { Number4 = 6, Number2 = 1 } },
+                new Characteristic { Id = 10, Detailed = new DetailedCharacteristic { Number1 = 300, Number3 = 120 } },
+                new Characteristic { Id = 29, Value = new CharacteristicValue { Total = 4_000 } },
+                new Characteristic { Id = 40 },
+            },
+        };
+
+        var state = Apply(_chosen, Server(new CharacterStatsEvent { Stats = stats }));
+
+        Assert.Equal(1_255, state.MaxLife);
+        Assert.Equal(955, state.Life);
+        Assert.Equal(new Dictionary<int, int> { [0] = 1_055, [1] = 7, [10] = 420, [11] = 200, [29] = 4_000, [97] = -300 }, state.Characteristics);
     }
 
     [Fact]

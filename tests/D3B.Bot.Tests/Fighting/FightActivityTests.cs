@@ -5,8 +5,11 @@ using D3B.Bot.Fighting;
 using D3B.Bot.Fights;
 using D3B.Bot.Tests.Movement;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Breeds;
 using D3B.Data.Monsters;
 using D3B.Data.World;
+using D3B.Engine.Fights;
+using D3B.Engine.Tactics;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Fighting;
@@ -68,6 +71,52 @@ public sealed class FightActivityTests : IAsyncDisposable
         Assert.False(GroupJudge.Allows(automatic, Group(null, (Larva, 20), (Larva, 20)), level: 30, _play.Tables.Monsters));
         Assert.True(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 90), (Larva, 90)), level: 30, _play.Tables.Monsters));
         Assert.False(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 10)), level: 30, _play.Tables.Monsters));
+    }
+
+    [Fact]
+    public void TheCharacterIsImaginedFromTheCharacteristicsTheServerGaveItOutOfFights()
+    {
+        // Breed 3's spells are those the server listed.
+        int[] spells = [13_286, 13_290, 99];
+        var breeds = new BreedCatalog(
+            new Breed[] { new() { Id = 3, FirstSpell = 0, SpellCount = 2 }, new() { Id = 4, FirstSpell = 2, SpellCount = 1 } },
+            spells,
+            Array.Empty<BreedRole>(),
+            Array.Empty<BreedRoleValue>(),
+            Array.Empty<BreedStatCost>());
+        var state = CharacterState.Chosen(TestPlay.Key, TestPlay.Chosen().Success.Character) with
+        {
+            Life = 400,
+            MaxLife = 500,
+            Characteristics = ImmutableSortedDictionary.CreateRange(new Dictionary<int, int> { [1] = 7, [23] = 4, [10] = 120 }),
+            Spells = ImmutableSortedDictionary.CreateRange(new Dictionary<int, int> { [0] = 1, [13_286] = 2, [13_290] = 1 }),
+        };
+
+        var fighter = GroupJudge.Character(state, breeds);
+
+        Assert.NotNull(fighter);
+        Assert.Equal((400, 500, 7, 4, 200, 3), (fighter.Life, fighter.MaxLife, fighter.ActionPoints, fighter.MovementPoints, fighter.Level, fighter.BreedId));
+        Assert.Equal(state.Characteristics, fighter.Characteristics);
+        Assert.Null(GroupJudge.Character(state with { Characteristics = ImmutableSortedDictionary<int, int>.Empty }, breeds));
+    }
+
+    [Fact]
+    public void BeforeAnyFightAGroupIsJudgedByTheOddsOnceTheServerGaveTheCharacteristics()
+    {
+        Assert.True(_play.Maps.TryGet(TestPlay.MapId, out var data));
+
+        var map = FightMap.Of(data);
+        var tactics = new FightTactics(_play.Tables);
+
+        // The pack's larva at its first grade holds no life: the odds beat it, where its level in the group is above the character's.
+        var group = new MapMonsterGroup(GroupId, GroupCell, [new MonsterInGroup(TestPlay.LarvaId, 1, 250)]);
+        var unknown = CharacterState.Chosen(TestPlay.Key, TestPlay.Chosen().Success.Character) with { Life = 400, MaxLife = 500 };
+        var known = unknown with { Characteristics = ImmutableSortedDictionary.CreateRange(new Dictionary<int, int> { [1] = 6, [23] = 3 }) };
+
+        Assert.Null(GroupJudge.OddsOf(group, unknown, map, _play.Tables, tactics));
+        Assert.False(GroupJudge.Beats(group, unknown, map, _play.Tables, tactics));
+        Assert.NotNull(GroupJudge.OddsOf(group, known, map, _play.Tables, tactics));
+        Assert.True(GroupJudge.Beats(group, known, map, _play.Tables, tactics));
     }
 
     [Fact]

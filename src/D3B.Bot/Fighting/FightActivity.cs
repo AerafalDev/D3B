@@ -303,7 +303,7 @@ public sealed class FightActivity : BotActivity
             if (map is null && _maps.TryGet(mapId, out var data))
                 map = FightMap.Of(data);
 
-            if (map is not null && GroupJudge.Beats(group, state, context.LastFighter, map, _tables, _tactics.Value))
+            if (map is not null && GroupJudge.Beats(group, state, map, _tables, _tactics.Value))
                 return group;
 
             _skipped.Add(group.ActorId);
