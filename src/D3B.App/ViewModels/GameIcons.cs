@@ -10,7 +10,7 @@ using D3B.Data.Packs;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The pack's icons as bitmaps the views draw: an item's, a profession's and a monster's, each made once (D135, D136, D236).</summary>
+/// <summary>The pack's icons as bitmaps the views draw: an item's, a profession's, a monster's, a class's head and a glyph, each made once (D135, D136, D236, D323, D336).</summary>
 /// <remarks>
 /// One per pack, which every view model shares, made on the UI's thread as views first ask. An item the pack keeps no
 /// icon for, or a pack without icons, gives none, and the view keeps its neutral square.
@@ -23,6 +23,8 @@ internal sealed class GameIcons
     private readonly Dictionary<int, Bitmap?> _items = [];
     private readonly Dictionary<int, Bitmap?> _jobs = [];
     private readonly Dictionary<int, Bitmap?> _monsters = [];
+    private readonly Dictionary<int, Bitmap?> _heads = [];
+    private readonly Dictionary<int, Bitmap?> _glyphs = [];
     private IconCatalog? _catalog;
     private bool _read;
 
@@ -84,6 +86,23 @@ internal sealed class GameIcons
     public IImage? Monster(int monsterId)
     {
         return Catalog() is { } catalog && _tables.Monsters.TryGetMonster(monsterId, out var monster) ? Cached(_monsters, catalog.Monsters, monster.GfxId) : null;
+    }
+
+    /// <summary>Gets a class's head, which the studio draws in place of a character's initials (D323).</summary>
+    /// <param name="breedId">The character's breed.</param>
+    /// <param name="isFemale">Whether the character is female.</param>
+    /// <returns>Its head, or <see langword="null"/> when the pack keeps none of it.</returns>
+    public IImage? Head(int breedId, bool isFemale)
+    {
+        return Catalog() is { } catalog ? Cached(_heads, catalog.Heads, IconCatalog.HeadOf(breedId, isFemale)) : null;
+    }
+
+    /// <summary>Gets one of the client's glyphs, white on transparent, which a view tints (D336).</summary>
+    /// <param name="glyph">The glyph.</param>
+    /// <returns>It, or <see langword="null"/> when the pack keeps none of it.</returns>
+    public IImage? Glyph(GameGlyph glyph)
+    {
+        return Catalog() is { } catalog ? Cached(_glyphs, catalog.Glyphs, (int)glyph) : null;
     }
 
     private IconCatalog? Catalog()

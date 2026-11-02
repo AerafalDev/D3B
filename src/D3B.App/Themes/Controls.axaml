@@ -115,7 +115,7 @@
             <Setter Property="IsVisible" Value="False" />
         </Style>
         <Style Selector="^.Dot /template/ Border#PART_Border">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
             <Setter Property="Padding" Value="0" />
         </Style>
         <Style Selector="^.Dot /template/ Ellipse#PART_Dot">
@@ -171,16 +171,36 @@
     <!--  The studio's own buttons, a surface and its content (D320): ShadUI's centres its content and sets its own padding and
          weight, where the frame's tabs, tools and rows lay theirs out across the button. Each class's look is in Styles.axaml.  -->
     <ControlTheme TargetType="Button" x:Key="StudioButton">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Cursor" Value="Arrow" />
+        <Setter Property="RenderTransformOrigin" Value="50%,50%" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Duration="0:0:0.12" Property="Background" />
+                <BrushTransition
+                    Duration="0:0:0.15"
+                    Easing="CubicEaseOut"
+                    Property="Background" />
+                <BrushTransition
+                    Duration="0:0:0.15"
+                    Easing="CubicEaseOut"
+                    Property="BorderBrush" />
+                <BrushTransition
+                    Duration="0:0:0.15"
+                    Easing="CubicEaseOut"
+                    Property="Foreground" />
+                <DoubleTransition
+                    Duration="0:0:0.15"
+                    Easing="CubicEaseOut"
+                    Property="Opacity" />
+                <TransformOperationsTransition
+                    Duration="0:0:0.1"
+                    Easing="CubicEaseOut"
+                    Property="RenderTransform" />
             </Transitions>
         </Setter>
         <Setter Property="Template">

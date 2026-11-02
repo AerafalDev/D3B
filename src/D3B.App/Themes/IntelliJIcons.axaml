@@ -318,6 +318,15 @@
         </GeometryDrawing>
     </DrawingGroup>
 
+    <!--  general/reset: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Reset">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 5.85363 2.35355 C 6.04889 2.15829 6.04889 1.84171 5.85363 1.64645 C 5.65837 1.45118 5.34178 1.45118 5.14652 1.64645 L 1.64652 5.14645 L 1.29297 5.5 L 1.64652 5.85355 L 5.14652 9.35355 C 5.34178 9.54882 5.65837 9.54882 5.85363 9.35355 C 6.04889 9.15829 6.04889 8.84171 5.85363 8.64645 L 3.20718 6 H 10.5001 C 12.4331 6 14.0001 7.567 14.0001 9.5 C 14.0001 11.433 12.4331 13 10.5001 13 H 5.50008 C 5.22393 13 5.00008 13.2239 5.00008 13.5 C 5.00008 13.7761 5.22393 14 5.50008 14 H 10.5001 C 12.9854 14 15.0001 11.9853 15.0001 9.5 C 15.0001 7.01472 12.9854 5 10.5001 5 H 3.20718 L 5.85363 2.35355 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
     <!--  general/save: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
     <DrawingGroup x:Key="General.Save">
         <GeometryDrawing>
@@ -379,6 +388,15 @@
         <GeometryDrawing Brush="#FFCED0D6">
             <GeometryDrawing.Geometry>
                 <StreamGeometry>F0 M 7.99969 8 C 3.54766 8 2.39906 11.3034 2.10272 13.008 C 2.00813 13.5521 2.4474 14 2.99969 14 H 12.9997 C 13.552 14 13.9912 13.5521 13.8967 13.008 C 13.6003 11.3034 12.4517 8 7.99969 8 Z M 11.7438 10.5114 C 12.4081 11.2951 12.7281 12.2552 12.8778 13 H 3.12154 C 3.27126 12.2552 3.59131 11.2951 4.25563 10.5114 C 4.94028 9.70375 6.05804 9 7.99969 9 C 9.94134 9 11.0591 9.70375 11.7438 10.5114 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  ide/externalLink: Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="Ide.ExternalLink">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 5 5.5 C 5 5.224 5.224 5 5.5 5 H 11 V 10.5 C 11 10.776 10.776 11 10.5 11 C 10.224 11 10 10.776 10 10.5 V 6.707 L 4.854 11.854 C 4.658 12.049 4.342 12.049 4.146 11.854 C 3.951 11.658 3.951 11.342 4.146 11.146 L 9.293 6 H 5.5 C 5.224 6 5 5.776 5 5.5 Z</StreamGeometry>
             </GeometryDrawing.Geometry>
         </GeometryDrawing>
     </DrawingGroup>

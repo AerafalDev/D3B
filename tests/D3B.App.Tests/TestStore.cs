@@ -77,7 +77,7 @@ internal sealed class TestStore : IAsyncDisposable
     /// <summary>Records an account and its characters, as the relay would.</summary>
     public async Task SeeAsync(GameAccount account, params (long Id, string Name, int? Level)[] characters)
     {
-        await Accounts.SeeAsync(account, characters, Play.Time.GetUtcNow(), TestContext.Current.CancellationToken);
+        await Accounts.SeeAsync(account, [.. characters.Select(character => new ListedCharacter(character.Id, character.Name, character.Level))], Play.Time.GetUtcNow(), TestContext.Current.CancellationToken);
     }
 
     private BotActivity Kept(BotActivity activity)

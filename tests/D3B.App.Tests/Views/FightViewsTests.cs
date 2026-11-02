@@ -114,7 +114,7 @@ public sealed class FightViewsTests : IAsyncDisposable
         var accounts = host.Services.GetRequiredService<AccountBook>();
 
         await profiles.SaveProfileAsync("Larvae", FightingModule.ActivityId, """{"Mode":"Chosen","Place":"Chosen","SubAreas":[440]}""", ct);
-        await accounts.SeeAsync(TestPlay.Account, [(TestPlay.CharacterId, "Character", 200)], _play.Time.GetUtcNow(), ct);
+        await accounts.SeeAsync(TestPlay.Account, [new ListedCharacter(TestPlay.CharacterId, "Character", 200)], _play.Time.GetUtcNow(), ct);
 
         var runner = await TestHosts.RunningAsync(host);
         var (englishTexts, fightTexts, accountTexts, picker) = await OnTheUIThreadAsync<(List<string>, List<string>, List<string>, GamePickerViewModel?)>(() =>
@@ -159,13 +159,13 @@ public sealed class FightViewsTests : IAsyncDisposable
             Drawings.Draw(window, "monsters-fr");
             main.Dialogs.Close();
             main.Profiles.Editing!.CloseCommand.Execute(null);
-            main.ShowAccountsCommand.Execute(null);
+            main.RunBlock.Choose(TestPlay.Key);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
 
             var accountTexts = Texts(window);
 
-            Drawings.Draw(window, "accounts-fr");
+            Drawings.Draw(window, "inspector-offline-fr");
             localizer.Use(Localizer.English);
             window.Close();
 

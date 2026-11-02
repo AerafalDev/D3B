@@ -31,10 +31,12 @@ a module, and the game's data and protocol are read from the client you have ins
   size, and only those the AI judges it beats over the fight's course; the sub-areas where the monsters chosen live come
   first, and the profile's editor shows the zone, its monsters and the place chosen for each character. One AI fights for
   every character, whatever its breed: it plays prudently a fight it judges risky, and closes the fight and refuses
-  spectators. The bot's card counts the fights and the loot, with its icons.
-- **The desktop app.** A card per bot, with where it is, its pods, kamas and activity; a live map of the bot's map, its
-  path, elements, NPCs and fighters; the accounts, the profiles and their editor with a preview of the zone; a journal
-  per bot, a protocol inspector, and the settings. Dark by default, in French and English. It installs without
+  spectators. The character's tab counts the fights and the loot, with its icons.
+- **The desktop app**, a studio: a card per character with its class's head, where it is, its life, pods and activity;
+  an inspector of the character chosen, its profile, start on connection, variables and account; a tab per character,
+  its map live, its path, elements, NPCs and fighters, and what it does, its behavior, session and latest decisions; the
+  profiles and their editor with a preview of the zone; a journal per bot, a protocol inspector, a search everywhere, and
+  the settings. Dark, in French and English. It installs without
   administrator rights and updates itself from this repository's releases.
 
 D3B injects nothing into the client and never sees a password. The client you start from Ankama's launcher logs in as
@@ -83,10 +85,10 @@ app and keeps that folder.
 ## Getting started
 
 1. Start D3B, and wait until it says it runs for your client's build.
-2. Start Dofus from Ankama's launcher, log in and choose a character. Its card shows on the bots page.
-3. Choose a profile on the card, one of those given or your own from the profiles page, and start it. The bot can also
-   start its profile as soon as its client connects; that is set per character on the accounts page.
-4. Take the character back at any time by playing it: the bot pauses, and you resume it from its card.
+2. Start Dofus from Ankama's launcher, log in and choose a character. Its card shows in the characters' panel.
+3. Click its card, choose its profile in the inspector, one of those given or your own, and play it from the title bar
+   (F5). The bot can also start its profile as soon as its client connects: the inspector's auto start.
+4. Take the character back at any time by playing it: the bot pauses, and you resume it from the title bar.
 
 Start D3B before the game: a client started while D3B is closed plays without it. If D3B ever crashes, the client cannot
 connect until D3B runs again: start D3B and close it, which gives the client Ankama's configuration back, or run

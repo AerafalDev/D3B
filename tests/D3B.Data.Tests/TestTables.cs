@@ -22,6 +22,8 @@ internal static class TestTables
     private static readonly int[] _jobIcons = [1];
     private static readonly int[] _spellIcons = [11_556];
     private static readonly int[] _monsterIcons = [1];
+    private static readonly int[] _headIcons = [80, 151];
+    private static readonly int[] _glyphIcons = [(int)GameGlyph.Life];
     private static readonly int[] _levelIds = [1001, 1002, 2001];
     private static readonly int[] _zoneCells = [10, 11];
     private static readonly string[] _strings = ["a,A", "I", "HS!4", "C", ""];
@@ -79,7 +81,9 @@ internal static class TestTables
             new IconTable(64, _itemIcons, Enumerable.Repeat((byte)1, Large).Concat(Enumerable.Repeat((byte)2, Large)).ToArray()),
             new IconTable(64, _jobIcons, Enumerable.Repeat((byte)3, Large).ToArray()),
             new IconTable(48, _spellIcons, Enumerable.Repeat((byte)4, 48 * 48 * 4).ToArray()),
-            new IconTable(64, _monsterIcons, Enumerable.Repeat((byte)5, Large).ToArray()));
+            new IconTable(64, _monsterIcons, Enumerable.Repeat((byte)5, Large).ToArray()),
+            new IconTable(64, _headIcons, Enumerable.Repeat((byte)6, 2 * Large).ToArray()),
+            new IconTable(64, _glyphIcons, Enumerable.Repeat((byte)7, Large).ToArray()));
     }
 
     /// <summary>One bank; banker 100 has two chest replies, banker 6394 one.</summary>

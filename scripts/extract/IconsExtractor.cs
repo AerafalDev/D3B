@@ -1,5 +1,6 @@
 using System.Globalization;
 using AssetRipper.TextureDecoder.Bc;
+using AssetRipper.TextureDecoder.Dxt;
 using AssetRipper.TextureDecoder.Rgb.Formats;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
@@ -15,8 +16,9 @@ using D3B.Scripts.Unity;
 namespace D3B.Scripts.Extract;
 
 /// <summary>
-/// Reads the icons of every item, of the professions, of the classes' spells and of the monsters a hunter meets, decoded
-/// from the client's BC7 textures (D135, D136, D247, D265).
+/// Reads the icons of every item, of the professions, of the classes' spells, of the monsters a hunter meets and the
+/// classes' heads, decoded from the client's BC7 textures, and the glyphs D3B draws, from its DXT5 ones (D135, D136, D247,
+/// D265, D323, D336).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -37,25 +39,66 @@ namespace D3B.Scripts.Extract;
 /// counted and left out, as an item's icon of another size or format is: 4 monsters of client 3.7.12.12 have no picture,
 /// 4 items' icons are missing and 3 are not of 64 pixels in BC7, and nothing but a name needs one.
 /// </para>
+/// <para>
+/// <c>Picto/UI/class_assets_2x</c> holds a head per breed and sex, <c>Head_&lt;breed&gt;&lt;sex&gt;</c>, 64 pixels in BC7,
+/// as the other icons; <c>aa/StandaloneWindows64/icons_assets_2x</c>, an addressables bundle, the client's white glyphs,
+/// one sprite each on a texture of its own, 64 pixels in DXT5, named rather than numbered. The head of every breed of the
+/// client's table, the 19 of 3.7.12.12 numbered 1 to 18 and 20, and every glyph <see cref="GameGlyph"/> names must be
+/// there, or the extraction fails.
+/// </para>
 /// </remarks>
 internal static class IconsExtractor
 {
-    // UnityEngine.TextureFormat.BC7.
+    // UnityEngine.TextureFormat.BC7 and DXT5.
     private const int Bc7Format = 25;
+    private const int Dxt5Format = 12;
 
     // Each bundle's icons at the scale it is read at (D136): a texture of another size fails the extraction.
     private const int ItemSize = 64;
     private const int JobSize = 64;
     private const int SpellSize = 48;
     private const int MonsterSize = 64;
+    private const int HeadSize = 64;
+    private const int GlyphSize = 64;
 
     // A hunter meets neither. UseSummonSlot is no such flag: set on 4,655 of the 5,129 monsters of client 3.7.12.12,
     // Astrub's larvae included, it says what a monster does once summoned.
     private const MonsterProperties Unmet = MonsterProperties.UseBombSlot | MonsterProperties.HideInBestiary;
 
+    // Each glyph by the client's name for it: D3B keys them by its own values, which the client never numbers.
+    private static readonly Dictionary<string, GameGlyph> _glyphs = new(StringComparer.Ordinal)
+    {
+        ["heart"] = GameGlyph.Life,
+        ["weight"] = GameGlyph.Pods,
+        ["crossedSwords"] = GameGlyph.Fight,
+        ["job"] = GameGlyph.Profession,
+        ["resources"] = GameGlyph.Harvest,
+        ["pin"] = GameGlyph.Place,
+        ["hourglass"] = GameGlyph.Time,
+        ["kamas"] = GameGlyph.Kamas,
+        ["experience"] = GameGlyph.Experience,
+        ["chest"] = GameGlyph.Bank,
+        ["havreSac"] = GameGlyph.HavenBag,
+        ["character"] = GameGlyph.Character,
+        ["pause"] = GameGlyph.Pause,
+        ["success"] = GameGlyph.Success,
+        ["zaap"] = GameGlyph.Zaap,
+        ["skull"] = GameGlyph.Death,
+    };
+
     public static IReadOnlyList<string> Inputs(ClientInstall client)
     {
-        return [ItemsBundle(client), JobsBundle(client), SpellsBundle(client), MonstersBundle(client), UnityDataTable.PathOf(client, "subareas")];
+        return [ItemsBundle(client), JobsBundle(client), SpellsBundle(client), MonstersBundle(client), HeadsBundle(client), GlyphsBundle(client), UnityDataTable.PathOf(client, "subareas")];
+    }
+
+    private static string HeadsBundle(ClientInstall client)
+    {
+        return Path.Combine(client.StreamingAssets, "Content", "Picto", "UI", "class_assets_2x.bundle");
+    }
+
+    private static string GlyphsBundle(ClientInstall client)
+    {
+        return Path.Combine(client.StreamingAssets, "aa", "StandaloneWindows64", "icons_assets_2x.bundle");
     }
 
     private static string ItemsBundle(ClientInstall client)
@@ -137,23 +180,35 @@ internal static class IconsExtractor
                 allIcons.Add(item.IconId);
         }
 
-        var (read, itemsLacking) = Decode(ItemsBundle(client), string.Empty, ItemSize, allIcons, leaveOdd: true);
+        var (read, itemsLacking) = Decode(ItemsBundle(client), Numbered(string.Empty), ItemSize, allIcons, leaveOdd: true);
 
         if (itemsLacking.Where(itemIcons.Contains).ToList() is { Count: > 0 } harvestLacking)
             throw new InvalidDataException($"{Path.GetFileName(ItemsBundle(client))} lacks {Missing(harvestLacking)}.");
 
         var itemTable = Halved(read);
 
-        var (monsterTable, lacking) = Decode(MonstersBundle(client), string.Empty, MonsterSize, monsterIcons);
+        var (monsterTable, lacking) = Decode(MonstersBundle(client), Numbered(string.Empty), MonsterSize, monsterIcons);
         var unpictured = met.Where(id => monsters.TryGetMonster(id, out var monster) && lacking.Contains(monster.GfxId)).ToList();
+        var heads = new SortedSet<int>();
+
+        foreach (ref readonly var breed in breeds.Breeds.Span)
+        {
+            heads.Add(IconCatalog.HeadOf(breed.Id, false));
+            heads.Add(IconCatalog.HeadOf(breed.Id, true));
+        }
+
+        var glyphs = new SortedSet<int>(_glyphs.Values.Select(glyph => (int)glyph));
         var catalog = new IconCatalog(
             itemTable,
-            Whole(JobsBundle(client), string.Empty, JobSize, jobIcons, Missing),
-            Whole(SpellsBundle(client), "sort_", SpellSize, spellIcons, ids => MissingSpells(ids, spells, breeds, classSpells)),
-            monsterTable);
+            Whole(JobsBundle(client), Numbered(string.Empty), JobSize, jobIcons, Missing),
+            Whole(SpellsBundle(client), Numbered("sort_"), SpellSize, spellIcons, ids => MissingSpells(ids, spells, breeds, classSpells)),
+            monsterTable,
+            Whole(HeadsBundle(client), Numbered("Head_"), HeadSize, heads, ids => $"the heads {List(ids)}"),
+            Whole(GlyphsBundle(client), GlyphOf, GlyphSize, glyphs, MissingGlyphs, Dxt5Format));
 
         Console.WriteLine($"Icons: {catalog.Items.Count:N0} of the items' {allIcons.Count:N0} at {catalog.Items.Size} pixels, {itemsLacking.Count:N0} lacking or not of {ItemSize} pixels in BC7; {catalog.Jobs.Count:N0} of the professions, {catalog.Spells.Count:N0} of the {classSpells.Count:N0} spells of the breeds and their variants");
         Console.WriteLine($"  {catalog.Monsters.Count:N0} pictures of the {met.Count:N0} monsters a hunter meets; monsters whose picture the client lacks, drawn without: {unpictured.Count:N0}{(unpictured.Count > 0 ? $" ({List(unpictured)})" : string.Empty)}");
+        Console.WriteLine($"  {catalog.Heads.Count:N0} heads of the {breeds.Breeds.Length:N0} breeds, {catalog.Glyphs.Count:N0} glyphs");
 
         return catalog;
     }
@@ -214,9 +269,9 @@ internal static class IconsExtractor
         return $"{string.Join(", ", ids.Take(10))}{(ids.Count > 10 ? ", …" : string.Empty)}";
     }
 
-    private static IconTable Whole(string path, string prefix, int size, SortedSet<int> wanted, Func<IReadOnlyList<int>, string> describeMissing)
+    private static IconTable Whole(string path, Func<string, int?> idOf, int size, SortedSet<int> wanted, Func<IReadOnlyList<int>, string> describeMissing, int format = Bc7Format)
     {
-        var (table, missing) = Decode(path, prefix, size, wanted);
+        var (table, missing) = Decode(path, idOf, size, wanted, format: format);
 
         if (missing.Count > 0)
             throw new InvalidDataException($"{Path.GetFileName(path)} lacks {describeMissing(missing)}.");
@@ -224,7 +279,7 @@ internal static class IconsExtractor
         return table;
     }
 
-    private static (IconTable Table, IReadOnlyList<int> Missing) Decode(string path, string prefix, int size, SortedSet<int> wanted, bool leaveOdd = false)
+    private static (IconTable Table, IReadOnlyList<int> Missing) Decode(string path, Func<string, int?> idOf, int size, SortedSet<int> wanted, bool leaveOdd = false, int format = Bc7Format)
     {
         if (!File.Exists(path))
             throw new FileNotFoundException($"The client has no icons there: {path} does not exist.", path);
@@ -242,21 +297,21 @@ internal static class IconsExtractor
             {
                 var texture = ReadFields(file, info, "Texture2D");
 
-                if (IconOf(texture.String("m_Name"), prefix) is not { } iconId || !wanted.Contains(iconId))
+                if (idOf(texture.String("m_Name")) is not { } iconId || !wanted.Contains(iconId))
                     continue;
 
                 // Measured on client 3.7.12.12: 3 of the 11,751 items' icons are 60 or 62 pixels, one of them not BC7.
-                if (leaveOdd && !IsIcon(texture, size))
+                if (leaveOdd && !IsIcon(texture, size, format))
                     odd.Add(info.PathId);
                 else
-                    textures.Add(info.PathId, (iconId, DecodeTexture(bundle, texture, iconId, size)));
+                    textures.Add(info.PathId, (iconId, DecodeTexture(bundle, texture, iconId, size, format)));
             }
 
             foreach (var info in metadata.GetAssetsOfType(AssetClassID.Sprite))
             {
                 var sprite = ReadFields(file, info, "Sprite");
 
-                if (IconOf(sprite.String("m_Name"), prefix) is not { } iconId || !wanted.Contains(iconId))
+                if (idOf(sprite.String("m_Name")) is not { } iconId || !wanted.Contains(iconId))
                     continue;
 
                 var data = sprite.Nested("m_RD");
@@ -291,10 +346,20 @@ internal static class IconsExtractor
         return UnityFields.Read(ref reader, 0, owner);
     }
 
-    private static int? IconOf(string name, string prefix)
+    private static Func<string, int?> Numbered(string prefix)
     {
-        return name.StartsWith(prefix, StringComparison.Ordinal)
+        return name => name.StartsWith(prefix, StringComparison.Ordinal)
             && int.TryParse(name.AsSpan(prefix.Length), NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : null;
+    }
+
+    private static int? GlyphOf(string name)
+    {
+        return _glyphs.TryGetValue(name, out var glyph) ? (int)glyph : null;
+    }
+
+    private static string MissingGlyphs(IReadOnlyList<int> ids)
+    {
+        return $"the glyphs {string.Join(", ", _glyphs.Where(pair => ids.Contains((int)pair.Value)).Select(pair => pair.Key))}";
     }
 
     private static bool IsWhole(UnityFields rectangle, int size)
@@ -303,10 +368,10 @@ internal static class IconsExtractor
             && rectangle.Single("width") == size && rectangle.Single("height") == size;
     }
 
-    private static bool IsIcon(UnityFields texture, int size)
+    private static bool IsIcon(UnityFields texture, int size, int format)
     {
-        // BC7 packs a block of 4 by 4 texels in 16 bytes: one byte a texel.
-        return texture.Int32("m_Width") == size && texture.Int32("m_Height") == size && texture.Int32("m_TextureFormat") == Bc7Format
+        // BC7 and DXT5 both pack a block of 4 by 4 texels in 16 bytes: one byte a texel.
+        return texture.Int32("m_Width") == size && texture.Int32("m_Height") == size && texture.Int32("m_TextureFormat") == format
             && texture.Int32("m_MipCount") == 1 && texture.Nested("m_StreamData").UInt32("size") == size * size;
     }
 
@@ -358,19 +423,23 @@ internal static class IconsExtractor
         return new IconTable(to, table.Ids, pixels);
     }
 
-    private static byte[] DecodeTexture(UnityBundle bundle, UnityFields texture, int iconId, int size)
+    private static byte[] DecodeTexture(UnityBundle bundle, UnityFields texture, int iconId, int size, int wanted)
     {
         var (width, height) = (texture.Int32("m_Width"), texture.Int32("m_Height"));
         var format = texture.Int32("m_TextureFormat");
         var stream = texture.Nested("m_StreamData");
         var length = checked((int)stream.UInt32("size"));
 
-        if (!IsIcon(texture, size))
-            throw new InvalidDataException($"Icon {iconId} is {width}x{height}, format {format}, {texture.Int32("m_MipCount")} levels and {length} bytes, not {size}x{size} BC7 in one level.");
+        if (!IsIcon(texture, size, wanted))
+            throw new InvalidDataException($"Icon {iconId} is {width}x{height}, format {format}, {texture.Int32("m_MipCount")} levels and {length} bytes, not {size}x{size} in format {wanted} and one level.");
 
         var blocks = bundle.ReadStream(stream.String("path"), checked((long)stream.UInt64("offset")), length);
+        byte[] decoded;
 
-        Bc7.Decompress<ColorRGBA<byte>, byte>(blocks, width, height, out var decoded);
+        if (wanted is Dxt5Format)
+            DxtDecoder.DecompressDXT5<ColorRGBA<byte>, byte>(blocks, width, height, out decoded);
+        else
+            Bc7.Decompress<ColorRGBA<byte>, byte>(blocks, width, height, out decoded);
 
         // Unity's texels start at the bottom row; an icon's rows start at the top (IconTable).
         var stride = width * 4;

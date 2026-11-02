@@ -102,6 +102,11 @@ public sealed class HarvestActivity : BotActivity
     public override ActivityStatistics? Statistics => Volatile.Read(ref _statistics);
 
     /// <inheritdoc/>
+    public override ImmutableArray<ActivityWatch> Watches => _settings.Heal
+        ? [new ActivityWatch(WatchedGauge.Pods, _settings.FullAt, WatchAction.Bank), new ActivityWatch(WatchedGauge.Life, _settings.HealBelow, WatchAction.Heal)]
+        : [new ActivityWatch(WatchedGauge.Pods, _settings.FullAt, WatchAction.Bank)];
+
+    /// <inheritdoc/>
     public override int TeleportChanges => _settings.ZaapSaving;
 
     /// <inheritdoc/>

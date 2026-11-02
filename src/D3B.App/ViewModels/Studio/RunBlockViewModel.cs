@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
+using D3B.App.ViewModels.Characters;
 using D3B.Bot.Characters;
 
 namespace D3B.App.ViewModels.Studio;
@@ -44,9 +46,27 @@ internal sealed partial class RunBlockViewModel : ObservableObject
     [ObservableProperty]
     public partial string Detail { get; private set; } = "";
 
-    /// <summary>Gets the chosen character's initials, its portrait until its class's head (D323).</summary>
+    /// <summary>Gets the chosen character's initials, its portrait without its class's head.</summary>
     [ObservableProperty]
     public partial string Initials { get; private set; } = "";
+
+    /// <summary>Gets the chosen character's class's head (D323).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasHead))]
+    public partial IImage? Head { get; private set; }
+
+    /// <summary>Gets the chosen character's portrait's colour, its breed's.</summary>
+    [ObservableProperty]
+    public partial IBrush? PortraitColor { get; private set; }
+
+    /// <summary>Gets the key of the character chosen, online or not.</summary>
+    public CharacterKey? ChosenKey => _chosen;
+
+    /// <summary>Gets or sets the characters' panel, which names a character chosen offline.</summary>
+    public CharactersViewModel? Characters { get; set; }
+
+    /// <summary>Gets whether the block shows the chosen character's head.</summary>
+    public bool HasHead => Head is not null;
 
     /// <summary>Gets whether play does something now.</summary>
     [ObservableProperty]
@@ -59,6 +79,9 @@ internal sealed partial class RunBlockViewModel : ObservableObject
     /// <summary>Gets whether no character is connected, which the menu says.</summary>
     [ObservableProperty]
     public partial bool IsNobodyOnline { get; private set; } = true;
+
+    /// <summary>Gets or sets what else follows the character chosen: the panel's cards and the inspector.</summary>
+    public Action<CharacterKey?>? Chose { get; set; }
 
     /// <summary>Gets whether a character is chosen.</summary>
     public bool IsChosen => Chosen is not null;
@@ -109,12 +132,16 @@ internal sealed partial class RunBlockViewModel : ObservableObject
 
         if (Chosen is not { } chosen)
         {
-            State = RunState.None;
-            Name = _localizer["RunNobody"];
-            Detail = _localizer["RunChoose"];
-            Initials = "";
+            var line = _chosen is { } offline ? Characters?.LineOf(offline) : null;
+
+            State = line is null ? RunState.None : RunState.Stopped;
+            Name = line?.Name ?? _localizer["RunNobody"];
+            Detail = line is null ? _localizer["RunChoose"] : _localizer["Disconnected"];
+            Initials = line?.Initials ?? "";
+            Head = line?.Head;
+            PortraitColor = line?.PortraitColor;
             CanPlay = false;
-            PlayTip = _localizer["RunChooseFirst"];
+            PlayTip = line is null ? _localizer["RunChooseFirst"] : _localizer["Disconnected"];
 
             return;
         }
@@ -124,6 +151,8 @@ internal sealed partial class RunBlockViewModel : ObservableObject
             : RunState.Playing;
         Name = chosen.Name;
         Initials = chosen.Initials;
+        Head = chosen.Head;
+        PortraitColor = chosen.PortraitColor;
         Detail = State switch
         {
             RunState.Playing when chosen.Bot.State.IsFighting => _localizer["RunFighting"],
@@ -139,12 +168,20 @@ internal sealed partial class RunBlockViewModel : ObservableObject
             : _localizer["RunNoProfile"];
     }
 
-    /// <summary>Chooses the character the block drives, and the inspector shows once 7c3 draws it.</summary>
+    /// <summary>Chooses the character the block drives, as the run block's menu does.</summary>
     /// <param name="bot">The character, or <see langword="null"/> for none.</param>
     [RelayCommand]
     public void Choose(BotViewModel? bot)
     {
-        _chosen = bot?.Bot.Key;
+        Choose(bot?.Bot.Key);
+    }
+
+    /// <summary>Chooses the character the block drives, online or not.</summary>
+    /// <param name="key">The character, or <see langword="null"/> for none.</param>
+    public void Choose(CharacterKey? key)
+    {
+        _chosen = key;
+        Chose?.Invoke(key);
         Refresh();
     }
 

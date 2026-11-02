@@ -74,6 +74,10 @@
     <Color x:Key="PopupColor">#202025</Color>
     <Color x:Key="TipColor">#26262B</Color>
     <Color x:Key="HoverColor">#2A2A30</Color>
+    <!--  What a surface that lights on hover is at rest: the hover's grey with no alpha. Transparent is white with no alpha,
+         and a brush transition mixes each channel apart: halfway to the hover it would be a light grey at half alpha, a
+         flash over the whole control.  -->
+    <Color x:Key="ClearColor">#002A2A30</Color>
     <Color x:Key="PressColor">#33333A</Color>
     <Color x:Key="BrightColor">#F4F4F6</Color>
     <Color x:Key="DimColor">#5F616A</Color>

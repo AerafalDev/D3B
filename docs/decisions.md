@@ -7502,6 +7502,129 @@ theme.*
 - **Not checked** on a real window: the drag of the window by its row, the snap layouts, the menus' popups and the
   splitters under a real pointer; the owner's look at the running app.
 
+## D341: 7c3 as the owner asks it
+
+*2026-11-02, step 7, session 7c3, the owner's choices on what 7c left open. Builds D319, D323 to D325, D334.*
+
+- **Asked**: the characters' cards with their classes' heads and the client's game icons in the pack (D323, D336), the
+  characters offline folded, the click, the double click and the right click; the plain inspector of a character and of
+  an asset (D324); a character's tab, its map live and its column (D325); the maps in the search (D334). The bots' cards
+  and the map's page go, nothing they did lost.
+- **A map the search finds** opens the tab of the character chosen, else of the first online, else of the first D3B
+  knows, its map showing the one found in preview, from the pack, a pill "Aperçu de 4,-18 · Revenir à Aerafal-Iop" going
+  back to the character live: the owner's choice among a preview, the maps a character stands on alone, and waiting for
+  7d's world map, as the lead recommended it.
+- **The rail's layer Always** lists the thresholds the activity playing watches, from its settings, "Pods ≥ 90 % →
+  Banque", "Vie ≤ 50 % → Soin", each with its gauge, then the behavior's own states and those of its layer Always, the
+  one playing lit: the owner's choice against the behavior's states alone, which a given behavior, of one state, would
+  have left nearly empty until 7e.
+
+## D342: A character's breed and sex, from the list: mapping format 16, and a migration
+
+*2026-11-02, step 7, session 7c3, the lead's. Builds D323, D99.*
+
+- **Measured** on the 103 game connections of 3.7.12.12: the list's `CharacterBasics` (`lmo.lmm`) holds, in its oneof's
+  field 5 (`lmo.lmm.lmk`), the breed as its `int32` field 3 and a message, field 1 of another oneof, whose two-valued
+  enum, field 4, is the sex, absent for a male. Its 15 characters, listed 145 times, read breeds 2 to 20 and sexes 0 and
+  1, the owner's Xélor and Steamer among them (D209).
+- **Made**: `CharacterLook`, `CharacterSex` and `Gender` in `characters.proto`; `MappingFile.FormatVersion` 16: 224
+  messages, 496 fields, 30 enums and 208 values audited, no failure, 14,830 bytes; the 178,939 frames read as before, none
+  misread. `KnownCharacter` keeps `BreedId` and `IsFemale`, the migration `CharacterLooks` adding both, empty until the
+  client lists its characters again; a list without the look keeps what was known. `AccountBook` takes `ListedCharacter`s.
+- **To publish**: mapping format 16 for 3.7.12.12, on the owner's go.
+
+## D343: The classes' heads and the client's glyphs in the pack: format 9
+
+*2026-11-02, step 7, session 7c3, the lead's. Settles D323's heads and D336's glyphs.*
+
+- **Measured** on 3.7.12.12: `Content/Picto/UI/class_assets_2x.bundle` holds `Head_<breed><sex>`, 64 pixels in BC7, one
+  level, the sprite covering its texture, for the 19 breeds of the client's table, 1 to 18 and 20: breed 19, gone from
+  the table, has no head. `aa/StandaloneWindows64/icons_assets_2x.bundle` holds 670 sprites, the glyphs 64 pixels in DXT5.
+- **Made**: `IconCatalog` gains `Heads`, keyed as the client names them, `HeadOf(breed, female)` breed times 10 plus 1 for
+  a female, and `Glyphs`, keyed by D3B's own `GameGlyph`, never renumbered: life (`heart`), pods (`weight`), fight
+  (`crossedSwords`), profession (`job`), harvest (`resources`), place (`pin`), time (`hourglass`), kamas, experience,
+  bank (`chest`), haven bag (`havreSac`), character, pause, success, zaap and death (`skull`). The extractor decodes the
+  heads as the other BC7 icons and the glyphs with AssetRipper's DXT5 decoder, and fails on a head of the table's breeds
+  or a glyph missing. `GamePack.FormatVersion` 9; the pack 27,067,153 bytes against 26,870,528; 38 heads and 16 glyphs
+  looked at, upright and clean.
+- **Drawn**: `Portrait` draws the head on its breed's colour (`BreedColors`, muted), the initials without it;
+  `GlyphIcon` paints a glyph in the colour of the text around it, its alpha a mask, a dot without the pack.
+- **To publish**: the pack of 3.7.12.12 in format 9, then a release of the app, on the owner's go.
+
+## D344: The characters' panel
+
+*2026-11-02, step 7, session 7c3, the lead's. Makes D323. Supersedes D94's bot card and D101's accounts page.*
+
+- **A card per character online**, as the mockup's: the portrait, 44 pixels, its ring of the state (green playing, amber
+  paused, red and beating in a fight, dim stopped) and its level as a medal; its name and where it is, the coordinates in
+  a tooltip; what it does with its glyph and its progress, "3/14" or "tour 3"; life and pods as gauges with their share,
+  life red under half, pods amber from 90 %, the numbers in a tooltip. A fight tints the card, the chosen one is outlined.
+- **Offline** are the characters D3B knows and the bots whose client left, under "Déconnectés" and their number, folded,
+  a line each, the portrait dimmed, "il y a 2 h".
+- **A click** chooses the character for the run block and the inspector; a double click or Enter opens its tab; the
+  right click chooses it, then opens its menu, made as it opens: open, play or resume, pause, stop, its profile among the
+  project's and the given ones, the start on connection, forgetting its account after a question.
+- **Nothing lost**: what a bot card started now starts from the run block, the menu or the inspector; its report, warnings
+  and failure are in the tab; its journal opens from the tab's thread. The profiles' menus offer, after the project's and
+  the given ones, each activity with its defaults for the session alone, as a card's list did (D93, D99); a profile of its
+  defaults given with each behavior was tried and dropped, every list of profiles growing by one per activity.
+
+## D345: The inspector
+
+*2026-11-02, step 7, session 7c3, the lead's. Makes D324.*
+
+- **The look**, the mockup's chosen variant: a header, then sections under a rule, their title alone, labels faint and
+  values on one line, fields filled with no border; a search filters the rows, a section with none folds away; the labels'
+  column, 36 % at first, is resized by its edge, from a quarter to seven tenths.
+- **A character**: its head, name, breed, sex and level, and its tab; Game, its profile as an asset's field whose menu
+  opens it, gives another or none, the start on connection, a checkbox whose amber arrow resets it, the planning and fight
+  preferences shown disabled until 7f and 7h; Variables, the character's own, a dot of their type in the wires' colours,
+  a flag a checkbox, a number and a text a field, an edit setting the variable its behaviors read; Account, the account,
+  its subscription and forgetting it. The server is not shown: D3B does not know it.
+- **An asset**, chosen in the profiles' tab or the search until 7c4's tree: its name and kind, its file, path and format,
+  what it uses and what uses it, assets and the characters that play it.
+
+## D346: A character's tab
+
+*2026-11-02, step 7, session 7c3, the lead's. Makes D325. Supersedes D120's map page.*
+
+- **The map**, today's (D121, D122), drawn for the tab's character alone: its coordinates and place in a pill, the cell
+  under the pointer in another, what stands there under them; its layers in a menu; the tour's mini-map with its count;
+  a map the search found in preview (D341).
+- **The column**, 320 pixels: what it does now, large, tinted by its state, its doing and progress, a bar, the time spent
+  and "Fin estimée 16:07" at the pace kept so far, then its failure and warnings; its behavior, the profile a button that
+  opens it, and the rail (D341); its session since it began, a tile per resource with its rate an hour, the wanted ones
+  from zero, the profession it raised with its level and gain, fights, deposits and kamas; its latest decisions, the
+  journal's last entries but the walks, each with why and its tone.
+- **The trace** of D327 comes at 7c4: until then "Voir la trace" opens the character's journal.
+
+## D347: Motions, and no flash on hover
+
+*2026-11-02, step 7, session 7c3, the owner's report and ask. Builds D320's short motion.*
+
+- **The flash**: every surface lit on hover rested on `Transparent`, white with no alpha, and a brush transition mixes
+  each channel apart, so that halfway to the hover's grey it was a light grey at half alpha, a flash over the whole
+  control. Such surfaces now rest on `ClearColor`, the hover's grey with no alpha.
+- **Motions**, short and easing out, as the mockup's: the studio's buttons fade their surface, edge and text, a tool
+  gives under the press; menus and tooltips fade in, menus a few pixels down; gauges ease to their share; chevrons turn;
+  a card, a ring, the column's state and the rail's lit state fade between their colours; what unfolds or is chosen, the
+  offline lines, an editor's tab, the inspector's subject, fades in.
+
+## D348: 7c3, what it leaves
+
+*2026-11-02, step 7, session 7c3.*
+
+- **Done**: the owner's choices (D341); the breed and sex read, mapping 16 and a migration (D342); the heads and glyphs in
+  the pack, format 9 (D343); the characters' panel (D344); the inspector (D345); a character's tab (D346); the motions
+  and the hover's flash (D347). The bots' cards, the accounts' and the map's pages removed, with their tests.
+- **To publish**, each on the owner's go: the pack of 3.7.12.12 in format 9 and its mapping in format 16, then a release
+  of the app, which reads only them.
+- **For 7c4**: the assets' tree, which chooses an asset for the inspector, the bottom panel's own views, the trace the
+  tab's thread opens, the settings' sections, a profile's editor (D326, D327, D329, D330), and the pages of D101 and D162
+  that remain removed.
+- **Not checked** on a real window: the cards, the right click's menu, the inspector's edge and the tab under a real
+  pointer and a live client; the owner's look at the running app.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

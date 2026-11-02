@@ -1,0 +1,627 @@
+<UserControl
+    x:Class="D3B.App.Views.PropertiesView"
+    x:ClassModifier="internal"
+    x:DataType="p:PropertiesViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:p="clr-namespace:D3B.App.ViewModels.Properties"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="Border.Section">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="0,4,0,10" />
+        </Style>
+        <Style Selector="TextBlock.SectionTitle">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="14,11,8,0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+        <Style Selector="Grid.Prop">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Margin" Value="14,0,8,0" />
+        </Style>
+        <Style Selector="TextBlock.Key">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+        </Style>
+        <Style Selector="TextBlock.Key.Changed">
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+        </Style>
+        <Style Selector="Button.Pick">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource FieldColor}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.Pick:pointerover">
+            <Setter Property="Background" Value="#222227" />
+        </Style>
+        <Style Selector="Button.Pick:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+        <Style Selector="Border.Kind">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="Border.Field">
+            <Setter Property="Height" Value="28" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource FieldColor}" />
+            <Setter Property="Padding" Value="8,0" />
+        </Style>
+        <Style Selector="TextBox.Field">
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource FieldColor}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.Reset">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="MinHeight" Value="18" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.Reset:pointerover">
+            <Setter Property="Background" Value="#24E9AD3C" />
+        </Style>
+        <Style Selector="Button.Danger">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Margin" Value="-10,0,0,0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Foreground" Value="#F3A19A" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.Danger:pointerover">
+            <Setter Property="Background" Value="#1FEA5D52" />
+        </Style>
+        <Style Selector="Button.Open">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.Open:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+        </Style>
+        <Style Selector="Ellipse.Pin">
+            <Setter Property="Width" Value="9" />
+            <Setter Property="Height" Value="9" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,7,0" />
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+    <Panel>
+        <TextBlock
+            Classes="Dim"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding IsEmpty}"
+            Margin="24"
+            Text="{l:Tr InspectorEmpty}"
+            TextAlignment="Center"
+            TextWrapping="Wrap"
+            VerticalAlignment="Center" />
+        <ScrollViewer
+            Classes="FadeIn"
+            IsVisible="{Binding ShowsCharacter}"
+            Name="CharacterPart">
+            <StackPanel>
+                <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="14">
+                    <Grid ColumnDefinitions="34,*,Auto">
+                        <c:Portrait
+                            Color="{Binding Character.PortraitColor}"
+                            Head="{Binding Character.Head}"
+                            Height="34"
+                            Initials="{Binding Character.Initials}"
+                            Radius="10"
+                            VerticalAlignment="Center"
+                            Width="34" />
+                        <StackPanel
+                            Grid.Column="1"
+                            Margin="12,0"
+                            Spacing="2"
+                            VerticalAlignment="Center">
+                            <TextBlock
+                                Classes="Bright"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="{Binding Character.Name}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Classes="Muted"
+                                FontSize="12"
+                                Text="{Binding Character.Subtitle}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Button
+                            Classes="Open"
+                            Command="{Binding Character.OpenTabCommand}"
+                            Grid.Column="2">
+                            <ToolTip.Tip>
+                                <c:KeyTip Keys="{l:Tr KeysEnter}" Text="{l:Tr OpenCharacterTab}" />
+                            </ToolTip.Tip>
+                            <c:Icon
+                                Drawing="{StaticResource Ide.ExternalLink}"
+                                Height="14"
+                                Width="14" />
+                        </Button>
+                    </Grid>
+                </Border>
+                <Border Classes="Section" IsVisible="{Binding Character.ShowsGame}">
+                    <StackPanel>
+                        <TextBlock Classes="SectionTitle" Text="{l:Tr SectionGame}" />
+                        <Grid Classes="Prop" IsVisible="{Binding Character.ShowsProfile}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyProfile}" />
+                            <Button
+                                Classes="Pick"
+                                Click="OnProfileClick"
+                                Grid.Column="1">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Background="#2A2238" Classes="Kind">
+                                        <c:Icon
+                                            Drawing="{StaticResource Nodes.Template}"
+                                            Height="11"
+                                            Tint="#C9A7F2"
+                                            Width="11" />
+                                    </Border>
+                                    <TextBlock
+                                        Classes.Dim="{Binding !Character.HasProfile}"
+                                        Grid.Column="1"
+                                        Margin="7,0"
+                                        Text="{Binding Character.Profile.Name}"
+                                        TextTrimming="CharacterEllipsis"
+                                        ToolTip.Tip="{Binding Character.Profile.Detail}"
+                                        VerticalAlignment="Center" />
+                                    <c:Icon
+                                        Drawing="{StaticResource General.ChevronDown}"
+                                        Grid.Column="2"
+                                        Height="10"
+                                        Opacity="0.5"
+                                        Width="10" />
+                                </Grid>
+                            </Button>
+                        </Grid>
+                        <Grid Classes="Prop" IsVisible="{Binding Character.ShowsStart}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Classes="Key"
+                                Classes.Changed="{Binding Character.IsStartChanged}"
+                                Text="{l:Tr PropertyStart}"
+                                ToolTip.Tip="{l:Tr PropertyStartHelp}" />
+                            <CheckBox
+                                Grid.Column="1"
+                                IsChecked="{Binding Character.StartsOnConnection}"
+                                IsEnabled="{Binding Character.HasProfile}" />
+                            <Button
+                                Classes="Reset"
+                                Command="{Binding Character.ResetStartCommand}"
+                                Grid.Column="2"
+                                IsVisible="{Binding Character.IsStartChanged}"
+                                ToolTip.Tip="{l:Tr ResetToDefault}">
+                                <c:Icon
+                                    Drawing="{StaticResource General.Reset}"
+                                    Height="12"
+                                    Tint="#E9AD3C"
+                                    Width="12" />
+                            </Button>
+                        </Grid>
+                        <Grid
+                            Classes="Prop"
+                            IsVisible="{Binding Character.ShowsPlanning}"
+                            ToolTip.Tip="{l:Tr ComesIn7f}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyPlanning}" />
+                            <Button
+                                Classes="Pick"
+                                Grid.Column="1"
+                                IsEnabled="False">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Background="#1F2A38" Classes="Kind">
+                                        <c:Icon
+                                            Drawing="{StaticResource General.History}"
+                                            Height="11"
+                                            Tint="#8FB8F2"
+                                            Width="11" />
+                                    </Border>
+                                    <TextBlock
+                                        Classes="Dim"
+                                        Grid.Column="1"
+                                        Margin="7,0"
+                                        Text="{l:Tr NoneValue}"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                            </Button>
+                        </Grid>
+                        <Grid
+                            Classes="Prop"
+                            IsVisible="{Binding Character.ShowsFight}"
+                            ToolTip.Tip="{l:Tr ComesIn7h}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyFight}" />
+                            <Button
+                                Classes="Pick"
+                                Grid.Column="1"
+                                IsEnabled="False">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Background="#382422" Classes="Kind">
+                                        <c:Icon
+                                            Drawing="{StaticResource Nodes.Function}"
+                                            Height="11"
+                                            Tint="#F3A19A"
+                                            Width="11" />
+                                    </Border>
+                                    <TextBlock
+                                        Classes="Dim"
+                                        Grid.Column="1"
+                                        Margin="7,0"
+                                        Text="{l:Tr NoneValue}"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                <Border Classes="Section" IsVisible="{Binding Character.ShowsVariables}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Classes="SectionTitle" Text="{l:Tr SectionVariables}" />
+                            <TextBlock
+                                Classes="Dim Figures"
+                                FontSize="12"
+                                IsVisible="{Binding Character.HasVariables}"
+                                Margin="-2,11,0,0"
+                                Text="{Binding Character.Variables.Count}" />
+                        </StackPanel>
+                        <TextBlock
+                            Classes="Dim"
+                            FontSize="12"
+                            IsVisible="{Binding !Character.HasVariables}"
+                            Margin="14,6,8,4"
+                            Text="{l:Tr VariablesNone}" />
+                        <ItemsControl ItemsSource="{Binding Character.Variables}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="p:VariableRowViewModel">
+                                    <Grid Classes="Prop" IsVisible="{Binding IsShown}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="{Binding $parent[UserControl].((p:PropertiesViewModel)DataContext).LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                            <ColumnDefinition Width="{Binding $parent[UserControl].((p:PropertiesViewModel)DataContext).LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                            <ColumnDefinition Width="20" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Ellipse
+                                                Classes="Pin"
+                                                Fill="#E0605A"
+                                                IsVisible="{Binding IsFlag}"
+                                                ToolTip.Tip="{l:Tr VariableFlag}" />
+                                            <Ellipse
+                                                Classes="Pin"
+                                                Fill="#3FD0B0"
+                                                IsVisible="{Binding IsNumber}"
+                                                ToolTip.Tip="{l:Tr VariableNumber}" />
+                                            <Ellipse
+                                                Classes="Pin"
+                                                Fill="#E66AD8"
+                                                IsVisible="{Binding IsText}"
+                                                ToolTip.Tip="{l:Tr VariableText}" />
+                                            <TextBlock
+                                                Classes="Mono"
+                                                FontSize="11.5"
+                                                Text="{Binding Name}"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <CheckBox
+                                            Grid.Column="1"
+                                            IsChecked="{Binding Flag}"
+                                            IsVisible="{Binding IsFlag}" />
+                                        <TextBox
+                                            Classes="Field"
+                                            Grid.Column="1"
+                                            HorizontalAlignment="Left"
+                                            IsVisible="{Binding IsNumber}"
+                                            Text="{Binding Text}"
+                                            Width="72" />
+                                        <TextBox
+                                            Classes="Field"
+                                            Grid.Column="1"
+                                            IsVisible="{Binding IsText}"
+                                            Text="{Binding Text}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                <Border
+                    BorderThickness="0"
+                    Classes="Section"
+                    IsVisible="{Binding Character.ShowsAccountSection}">
+                    <StackPanel>
+                        <TextBlock Classes="SectionTitle" Text="{l:Tr SectionAccount}" />
+                        <Grid Classes="Prop" IsVisible="{Binding Character.ShowsAccount}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyAccount}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{Binding Character.Account}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid Classes="Prop" IsVisible="{Binding Character.ShowsSubscription}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertySubscription}" />
+                            <StackPanel
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="6"
+                                VerticalAlignment="Center">
+                                <Ellipse
+                                    Fill="{DynamicResource PlayingColor}"
+                                    Height="6"
+                                    IsVisible="{Binding Character.IsSubscribed}"
+                                    VerticalAlignment="Center"
+                                    Width="6" />
+                                <TextBlock
+                                    Classes.Dim="{Binding !Character.IsSubscribed}"
+                                    Text="{Binding Character.Subscription}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid Classes="Prop" IsVisible="{Binding Character.ShowsForget}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <Button
+                                Classes="Danger"
+                                Command="{Binding Character.ForgetCommand}"
+                                Content="{l:Tr ForgetAccount}"
+                                Grid.Column="1" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+        <ScrollViewer Classes="FadeIn" IsVisible="{Binding ShowsAsset}">
+            <StackPanel>
+                <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="14">
+                    <Grid ColumnDefinitions="34,*">
+                        <Border
+                            Background="#2A2238"
+                            CornerRadius="10"
+                            Height="34"
+                            Width="34">
+                            <c:Icon
+                                Drawing="{StaticResource Nodes.Template}"
+                                Height="16"
+                                Tint="#C9A7F2"
+                                Width="16" />
+                        </Border>
+                        <StackPanel
+                            Grid.Column="1"
+                            Margin="12,0"
+                            Spacing="2"
+                            VerticalAlignment="Center">
+                            <TextBlock
+                                Classes="Bright"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="{Binding Asset.Name}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Classes="Muted"
+                                FontSize="12"
+                                Text="{Binding Asset.KindText}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Classes="Section" IsVisible="{Binding Asset.ShowsFile}">
+                    <StackPanel>
+                        <TextBlock Classes="SectionTitle" Text="{l:Tr SectionFile}" />
+                        <Grid Classes="Prop">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyName}" />
+                            <Border Classes="Field" Grid.Column="1">
+                                <TextBlock
+                                    Text="{Binding Asset.Name}"
+                                    TextTrimming="CharacterEllipsis"
+                                    VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+                        <Grid Classes="Prop">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyFile}" />
+                            <TextBlock
+                                Classes="Mono Muted"
+                                FontSize="11.5"
+                                Grid.Column="1"
+                                Text="{Binding Asset.File}"
+                                TextTrimming="CharacterEllipsis"
+                                ToolTip.Tip="{Binding Asset.File}"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid Classes="Prop">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyFormat}" />
+                            <TextBlock
+                                Classes="Muted"
+                                Grid.Column="1"
+                                Text="{Binding Asset.Format}"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                <Border Classes="Section" IsVisible="{Binding Asset.ShowsUses}">
+                    <StackPanel>
+                        <TextBlock Classes="SectionTitle" Text="{l:Tr AssetUses}" />
+                        <ItemsControl ItemsSource="{Binding Asset.Uses}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="p:AssetUseViewModel">
+                                    <Grid
+                                        ColumnDefinitions="Auto,*,Auto"
+                                        Margin="14,0,8,0"
+                                        MinHeight="30">
+                                        <Border
+                                            Background="#1F2A3D"
+                                            Classes="Kind"
+                                            VerticalAlignment="Center">
+                                            <c:Icon
+                                                Drawing="{StaticResource Nodes.DataTables}"
+                                                Height="11"
+                                                Tint="#7FA7FF"
+                                                Width="11" />
+                                        </Border>
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Margin="8,0"
+                                            Text="{Binding Name}"
+                                            TextTrimming="CharacterEllipsis"
+                                            VerticalAlignment="Center" />
+                                        <TextBlock
+                                            Classes="Dim"
+                                            FontSize="11"
+                                            Grid.Column="2"
+                                            Text="{Binding Detail}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                <Border
+                    BorderThickness="0"
+                    Classes="Section"
+                    IsVisible="{Binding Asset.ShowsUsedBy}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Classes="SectionTitle" Text="{l:Tr AssetUsedBy}" />
+                            <TextBlock
+                                Classes="Dim Figures"
+                                FontSize="12"
+                                Margin="-2,11,0,0"
+                                Text="{Binding Asset.UsedBy.Count}" />
+                        </StackPanel>
+                        <TextBlock
+                            Classes="Dim"
+                            FontSize="12"
+                            IsVisible="{Binding Asset.IsUnused}"
+                            Margin="14,6,8,4"
+                            Text="{l:Tr AssetUsedByNobody}" />
+                        <ItemsControl ItemsSource="{Binding Asset.UsedBy}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="p:AssetUseViewModel">
+                                    <Grid
+                                        ColumnDefinitions="Auto,*,Auto"
+                                        Margin="14,0,8,0"
+                                        MinHeight="30">
+                                        <Border
+                                            Background="{DynamicResource RaisedColor}"
+                                            Classes="Kind"
+                                            VerticalAlignment="Center">
+                                            <c:Icon
+                                                Drawing="{StaticResource General.User}"
+                                                Height="11"
+                                                Width="11" />
+                                        </Border>
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Margin="8,0"
+                                            Text="{Binding Name}"
+                                            TextTrimming="CharacterEllipsis"
+                                            VerticalAlignment="Center" />
+                                        <TextBlock
+                                            Classes="Dim"
+                                            FontSize="11"
+                                            Grid.Column="2"
+                                            Text="{Binding Detail}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+        <Border
+            Background="Transparent"
+            Cursor="SizeWestEast"
+            HorizontalAlignment="Left"
+            IsVisible="{Binding !IsEmpty}"
+            Name="LabelEdge"
+            PointerMoved="OnEdgeMoved"
+            PointerPressed="OnEdgePressed"
+            PointerReleased="OnEdgeReleased"
+            VerticalAlignment="Stretch"
+            Width="6" />
+    </Panel>
+</UserControl>

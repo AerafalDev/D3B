@@ -214,6 +214,10 @@ internal sealed partial class SearchViewModel : ObservableObject
             if (scope is SearchScope.All && text.Length == 0 && kind is SearchScope.Commands or SearchScope.Settings)
                 continue;
 
+            // The maps are thousands: they wait for a letter, whatever the scope.
+            if (text.Length == 0 && kind is SearchScope.Maps)
+                continue;
+
             var found = items.Where(item => item.Scope == kind && (text.Length == 0 || item.Title.Contains(text, StringComparison.CurrentCultureIgnoreCase))).ToList();
 
             if (found.Count > 0)

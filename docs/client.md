@@ -2023,6 +2023,24 @@ of format 8 and mapping format 15, with `scripts/fights.cs`, which prints counts
   Explobombe's), none in state 92, *Kaboom*; each twice, stronger with the summoner in state 2483 (`*E2483`) than
   without (`*e2483`). No capture holds an ally on a wall.
 
+### The game, listed and pictured
+
+Measured on 2026-11-02 for session 7c3 (D342, D343): the 103 game connections of 3.7.12.12 and its bundles, with
+`scripts/inspect.cs`, `scripts/capture.cs` and a measuring tool never committed that prints breeds and sexes by
+character, never a name.
+
+- **The character list.** `CharacterListEvent` (`ksc`) lists `lmo`, whose oneof's field 4, `lmo.lmm`, carries the
+  level (3) and name (6), and in another oneof, field 5, `lmo.lmm.lmk`: the breed as its `int32` field 3, a message as
+  field 1 of its own oneof whose two-valued enum `kyb`, field 4, is the sex, 1 for a female, absent for a male, and the
+  look (`kzu`, field 6). The 15 characters listed 145 times read breeds 2 to 20 and both sexes.
+- **The classes' heads.** `Content/Picto/UI/class_assets_1x` and `_2x.bundle` hold `Head_<breed><sex>`, 64 pixels at
+  2x, BC7, one level, the sprite's rectangle the whole texture, its mesh trimmed to the face: 38, for the 19 breeds of the
+  client's table, 1 to 18 and 20. Breed 19, gone from the table, has none.
+- **The glyphs.** `aa/StandaloneWindows64/icons_assets_2x.bundle` holds 670 sprites, each on a texture of its own, 64
+  pixels in DXT5 (format 12), one level, white on transparent: `heart`, `weight`, `crossedSwords`, `job`,
+  `resources`, `pin`, `hourglass`, `kamas`, `experience`, `chest`, `havreSac`, `character`, `pause`, `success`,
+  `zaap` and `skull` among them, and a `ShadowOutline` variant of many.
+
 ## Protocol code
 
 What the client's IL2CPP code holds of the protocol, measured with `scripts/schema.cs` (D39, D40), which reads it

@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using D3B.App.Localization;
 using D3B.App.Tests.Pages;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Studio;
 using D3B.App.Views;
 using D3B.Bot.Activities;
@@ -42,7 +43,7 @@ public sealed class MainWindowTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheWindowShowsTheBotsAndFollowsAChangeOfLanguage()
+    public async Task TheWindowShowsTheCharactersAndFollowsAChangeOfLanguage()
     {
         using var host = TestHosts.Of(_play, new ActivityDefinition("patrol", "Patrol", _ => new TestActivity()));
         var runner = await TestHosts.RunningAsync(host);
@@ -68,13 +69,13 @@ public sealed class MainWindowTests : IAsyncDisposable
 
                 var english = Texts(window);
 
-                Drawings.Draw(window, "bots-en");
+                Drawings.Draw(window, "characters-en");
                 main.Settings.UseFrenchCommand.Execute(null);
                 Dispatcher.UIThread.RunJobs();
 
                 var french = Texts(window);
 
-                Drawings.Draw(window, "bots-fr");
+                Drawings.Draw(window, "characters-fr");
                 localizer.Use(Localizer.English);
                 window.Close();
 
@@ -85,18 +86,16 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Characters", english);
         Assert.Contains("Welcome", english);
         Assert.Contains("Character", english);
-        Assert.Contains("Level 200", english);
-        // Connected goes without saying: only a bot that is not says it.
+        Assert.Contains("200", english);
+        Assert.Contains("Stopped", english);
+        // Connected goes without saying: only a character that is not says it.
         Assert.DoesNotContain("Connected", english);
-        Assert.Contains("Patrol", english);
-        Assert.Contains("Start", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Personnages", french);
         Assert.Contains("Bienvenue", french);
-        Assert.Contains("Niveau 200", french);
-        Assert.Contains("Démarrer", french);
+        Assert.Contains("Arrêté", french);
         Assert.Contains("En marche", french);
-        Assert.DoesNotContain("Start", french);
+        Assert.DoesNotContain("Stopped", french);
     }
 
     [Fact]
@@ -128,9 +127,9 @@ public sealed class MainWindowTests : IAsyncDisposable
 
             var reopened = (inspector.IsEffectivelyVisible, item.IsChecked);
 
-            main.ShowAccountsCommand.Execute(null);
-            main.ShowMapCommand.Execute(null);
-            main.ShowAccountsCommand.Execute(null);
+            main.ShowProfilesCommand.Execute(null);
+            main.ShowSettingsCommand.Execute(null);
+            main.ShowProfilesCommand.Execute(null);
             main.Editor.CloseCommand.Execute(main.Editor.Selected);
 
             var tabs = (main.Editor.Items.Select(tab => tab.Key).ToList(), main.Editor.Selected?.Key);
@@ -142,7 +141,7 @@ public sealed class MainWindowTests : IAsyncDisposable
 
         Assert.Equal((false, 0d), closed);
         Assert.Equal((true, true), reopened);
-        Assert.Equal(["welcome", "map"], tabs.Item1);
+        Assert.Equal(["welcome", "settings"], tabs.Item1);
         Assert.Equal("welcome", tabs.Item2);
     }
 
@@ -205,7 +204,7 @@ public sealed class MainWindowTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheAccountsAndProfilesOpenInTabsInBothLanguages()
+    public async Task TheInspectorShowsTheChosenCharacterAndTheProfilesOpenInATabInBothLanguages()
     {
         await using var store = new TestStore();
 
@@ -230,11 +229,11 @@ public sealed class MainWindowTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.ShowAccountsCommand.Execute(null);
+            main.RunBlock.Choose(TestPlay.Key);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
-            Drawings.Draw(window, "accounts-en");
+            Drawings.Draw(window, "inspector-en");
             main.ShowProfilesCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
@@ -251,32 +250,33 @@ public sealed class MainWindowTests : IAsyncDisposable
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "profiles-edit-fr");
-            main.ShowAccountsCommand.Execute(null);
+            main.ShowWelcomeCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
-            Drawings.Draw(window, "accounts-fr");
+            Drawings.Draw(window, "inspector-fr");
             localizer.Use(Localizer.English);
             window.Close();
 
             return (english, texts);
         });
 
-        Assert.Contains("Accounts", english);
+        Assert.Contains("Inspector", english);
         Assert.Contains("Aerafa", english);
         Assert.Contains("Walker", english);
-        Assert.Contains("On connection", english);
+        Assert.Contains("Auto start", english);
+        Assert.Contains("nickname#tag", english);
         Assert.Contains("Profiles", english);
         Assert.Contains("New profile", english);
         Assert.Contains(english, text => text.Contains("Lumberjack", StringComparison.Ordinal));
         Assert.Contains("Save", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Comptes", french);
+        Assert.Contains("Inspecteur", french);
         Assert.Contains("Profils", french);
         Assert.Contains("Nouveau profil", french);
         Assert.Contains(french, text => text.Contains("Bûcheron", StringComparison.Ordinal));
         Assert.Contains("Enregistrer", french);
-        Assert.Contains("À la connexion", french);
+        Assert.Contains("Auto-démarrage", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
 
@@ -359,7 +359,7 @@ public sealed class MainWindowTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheMapOpensInATabInBothLanguagesAndACardOpensItsBotsMap()
+    public async Task ACardOpensItsCharactersTabItsMapLiveInBothLanguages()
     {
         using var game = new TestGameData();
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
@@ -391,8 +391,11 @@ public sealed class MainWindowTests : IAsyncDisposable
             main.Bots.Items[0].ShowMapCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
 
-            var map = (main.Editor.IsShown("map"), main.Editor.Items.Count, main.Map.Bot?.Name, main.Map.Scene?.Character);
+            var tab = (CharacterTabViewModel)main.Editor.Selected!.Content;
+            var map = (main.Editor.IsShown("character:" + TestPlay.Key), main.Editor.Items.Count, tab.Name, tab.Map.Scene?.Character);
             var english = Texts(window);
+
+            Drawings.Draw(window, "character-tab-en");
 
             main.Settings.UseFrenchCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
@@ -406,12 +409,13 @@ public sealed class MainWindowTests : IAsyncDisposable
         });
 
         Assert.Equal((true, 2, "Character", 300), map);
-        Assert.Contains("Map", english);
+        Assert.Contains("Character", english);
         Assert.Contains("4,-18", english);
         Assert.Contains("Sub-area 440, cell 300", english);
         Assert.Contains("Layers", english);
+        Assert.Contains("Behavior", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Carte", french);
+        Assert.Contains("Comportement", french);
         Assert.Contains("Sous-zone 440, cellule 300", french);
         Assert.Contains("Calques", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));

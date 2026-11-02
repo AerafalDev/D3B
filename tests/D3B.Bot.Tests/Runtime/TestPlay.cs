@@ -306,7 +306,9 @@ internal sealed class TestPlay : IAsyncDisposable
                 new IconTable(IconSize, new[] { AshIconId, ChestnutIconId }, Disc(0x8B, 0xC3, 0x4A).Concat(Disc(0x9C, 0x5B, 0x2E)).ToArray()),
                 new IconTable(IconSize, new[] { LumberjackIconId }, Disc(0x3B, 0x82, 0xF6)),
                 new IconTable(48, Array.Empty<int>(), Array.Empty<byte>()),
-                new IconTable(IconSize, Array.Empty<int>(), Array.Empty<byte>())));
+                new IconTable(IconSize, Array.Empty<int>(), Array.Empty<byte>()),
+                new IconTable(IconSize, new[] { IconCatalog.HeadOf(5, true), IconCatalog.HeadOf(8, false) }, Disc(0x5B, 0x8D, 0xD6).Concat(Disc(0xC8, 0x6A, 0x3E)).ToArray()),
+                new IconTable(IconSize, Enum.GetValues<GameGlyph>().Where(glyph => glyph is not GameGlyph.None).Select(glyph => (int)glyph).ToArray(), Enum.GetValues<GameGlyph>().Where(glyph => glyph is not GameGlyph.None).SelectMany(_ => Disc(0xFF, 0xFF, 0xFF)).ToArray())));
             writer.Add(SpellCatalog.EntryName, Spells());
             writer.Add(WeaponCatalog.EntryName, new WeaponCatalog(
                 new[] { new Weapon { ItemId = SwordItemId, TypeId = 6, ApCost = 3, MinRange = 1, Range = 1, CriticalHitProbability = 0, MaxCastPerTurn = 1, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 0, EffectCount = 1 } },

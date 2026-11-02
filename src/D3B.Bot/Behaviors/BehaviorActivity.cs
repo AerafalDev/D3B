@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
@@ -31,6 +32,8 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     private readonly CharacterVariables _characters;
     private readonly SharedVariables _shared;
     private readonly Lock _attaching = new();
+    private readonly ImmutableArray<OutlineState> _always;
+    private readonly ImmutableArray<OutlineState> _states;
     private volatile BotActor? _bot;
     private volatile BehaviorVariables? _variables;
     private volatile StateVisit? _visit;
@@ -56,6 +59,12 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     public override ActivityStatistics? Statistics => _visit?.Current?.Statistics;
 
     /// <inheritdoc/>
+    public override ImmutableArray<ActivityWatch> Watches => _visit?.Current?.Watches ?? [];
+
+    /// <inheritdoc/>
+    public override BehaviorOutline? Outline => new(_always, _states, _visit?.State.Id);
+
+    /// <inheritdoc/>
     public override int TeleportChanges => _visit?.Current?.TeleportChanges ?? 1;
 
     /// <inheritdoc/>
@@ -71,6 +80,26 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         _services = services;
         _characters = characters;
         _shared = shared;
+        _always = Outlined(behavior.Always);
+        _states = Outlined(behavior.States);
+    }
+
+    private static ImmutableArray<OutlineState> Outlined(ImmutableArray<CompiledState> states)
+    {
+        var outlined = ImmutableArray.CreateBuilder<OutlineState>();
+
+        void Add(ImmutableArray<CompiledState> level, int depth)
+        {
+            foreach (var state in level)
+            {
+                outlined.Add(new OutlineState(state.Id, state.Name.Length > 0 ? state.Name : state.Id, depth, state.IsUrgent));
+                Add(state.States, depth + 1);
+            }
+        }
+
+        Add(states, 0);
+
+        return outlined.ToImmutable();
     }
 
     /// <inheritdoc/>

@@ -54,10 +54,39 @@ message Character {
   }
 }
 
-// What the list says of a character: its name and level.
+// What the list says of a character: its name, level and look.
 message CharacterBasics {
   option (d3b.readable.partial) = true;
 
   optional int32 level = 3;
   string name = 6;
+
+  oneof kind {
+    CharacterLook look = 5;
+  }
+}
+
+// What the list says of a character's look: its breed and sex, which the studio draws its class's head from (D323).
+message CharacterLook {
+  option (d3b.readable.partial) = true;
+
+  oneof kind {
+    CharacterSex sex = 1;
+  }
+
+  // The breed's id in the client's table, 1 to 20.
+  int32 breed_id = 3;
+}
+
+// A character's sex, in a message of its own on the wire.
+message CharacterSex {
+  option (d3b.readable.partial) = true;
+
+  Gender gender = 4;
+}
+
+// A character's sex, as the client's heads number it: Head_<breed><gender>.
+enum Gender {
+  GENDER_MALE = 0;
+  GENDER_FEMALE = 1;
 }

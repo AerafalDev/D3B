@@ -19,6 +19,17 @@ internal sealed partial class EditorTab : ObservableObject
     /// <summary>Gets whether the tab shows nothing until the host runs, its content read from the host's services.</summary>
     public bool NeedsHost { get; }
 
+    /// <summary>Gets or sets what reads the picture the tab shows in place of its icon, such as a character's class's head (D325).</summary>
+    public Func<Avalonia.Media.IImage?>? Picture { get; init; }
+
+    /// <summary>Gets the picture the tab shows in place of its icon, if any.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPicture))]
+    public partial Avalonia.Media.IImage? Image { get; private set; }
+
+    /// <summary>Gets whether the tab shows a picture.</summary>
+    public bool HasPicture => Image is not null;
+
     /// <summary>Gets the tab's name, in the app's language.</summary>
     [ObservableProperty]
     public partial string Title { get; private set; }
@@ -47,5 +58,6 @@ internal sealed partial class EditorTab : ObservableObject
     public void Refresh()
     {
         Title = _title();
+        Image = Picture?.Invoke();
     }
 }

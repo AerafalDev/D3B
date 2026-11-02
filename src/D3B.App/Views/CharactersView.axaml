@@ -1,0 +1,471 @@
+<UserControl
+    x:Class="D3B.App.Views.CharactersView"
+    x:ClassModifier="internal"
+    x:DataType="ch:CharactersViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:ch="clr-namespace:D3B.App.ViewModels.Characters"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:vm="clr-namespace:D3B.App.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <LinearGradientBrush EndPoint="100%,0%" StartPoint="0%,0%" x:Key="LifeFill">
+            <GradientStop Color="#C9443D" Offset="0" />
+            <GradientStop Color="#EF6B5F" Offset="1" />
+        </LinearGradientBrush>
+        <LinearGradientBrush EndPoint="100%,0%" StartPoint="0%,0%" x:Key="PodsFill">
+            <GradientStop Color="#7D8290" Offset="0" />
+            <GradientStop Color="#B4B8C2" Offset="1" />
+        </LinearGradientBrush>
+        <LinearGradientBrush EndPoint="100%,0%" StartPoint="0%,0%" x:Key="FullFill">
+            <GradientStop Color="#C98B23" Offset="0" />
+            <GradientStop Color="#E9AD3C" Offset="1" />
+        </LinearGradientBrush>
+        <SolidColorBrush Color="#12FFFFFF" x:Key="GaugeTrack" />
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <Style Selector="Border.Card">
+            <Setter Property="Padding" Value="10,10,12,11" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="Focusable" Value="True" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background">
+                <LinearGradientBrush EndPoint="0%,100%" StartPoint="0%,0%">
+                    <GradientStop Color="#06FFFFFF" Offset="0" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </LinearGradientBrush>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition
+                        Duration="0:0:0.15"
+                        Easing="CubicEaseOut"
+                        Property="BorderBrush" />
+                    <BrushTransition
+                        Duration="0:0:0.15"
+                        Easing="CubicEaseOut"
+                        Property="Background" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Card:pointerover">
+            <Setter Property="Background">
+                <LinearGradientBrush EndPoint="0%,100%" StartPoint="0%,0%">
+                    <GradientStop Color="#0DFFFFFF" Offset="0" />
+                    <GradientStop Color="#04FFFFFF" Offset="1" />
+                </LinearGradientBrush>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Card.Fighting">
+            <Setter Property="BorderBrush" Value="#38EA5D52" />
+            <Setter Property="Background">
+                <LinearGradientBrush EndPoint="0%,100%" StartPoint="0%,0%">
+                    <GradientStop Color="#1AEA5D52" Offset="0" />
+                    <GradientStop Color="#05EA5D52" Offset="1" />
+                </LinearGradientBrush>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Card.Chosen">
+            <Setter Property="BorderBrush" Value="#803B82F6" />
+            <Setter Property="Background">
+                <LinearGradientBrush EndPoint="0%,100%" StartPoint="0%,0%">
+                    <GradientStop Color="#293B82F6" Offset="0" />
+                    <GradientStop Color="#0F3B82F6" Offset="1" />
+                </LinearGradientBrush>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Card:focus-visible">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+        </Style>
+        <Style Selector="Border.Ring">
+            <Setter Property="Margin" Value="-3" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DimColor}" />
+            <Setter Property="Opacity" Value="0.35" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition
+                        Duration="0:0:0.25"
+                        Easing="CubicEaseOut"
+                        Property="BorderBrush" />
+                    <DoubleTransition
+                        Duration="0:0:0.25"
+                        Easing="CubicEaseOut"
+                        Property="Opacity" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Ring.Playing">
+            <Setter Property="BorderBrush" Value="{DynamicResource PlayingColor}" />
+            <Setter Property="Opacity" Value="0.9" />
+        </Style>
+        <Style Selector="Border.Ring.Paused">
+            <Setter Property="BorderBrush" Value="{DynamicResource PausedColor}" />
+            <Setter Property="Opacity" Value="0.9" />
+        </Style>
+        <Style Selector="Border.Ring.Fighting">
+            <Setter Property="BorderBrush" Value="{DynamicResource ErrorColor}" />
+            <Setter Property="Opacity" Value="0.9" />
+            <Style.Animations>
+                <Animation
+                    Duration="0:0:1.6"
+                    IterationCount="Infinite"
+                    PlaybackDirection="Alternate">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="BoxShadow" Value="0 0 0 0 #00EA5D52" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="BoxShadow" Value="0 0 12 2 #73EA5D52" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.Medal">
+            <Setter Property="Height" Value="16" />
+            <Setter Property="MinWidth" Value="26" />
+            <Setter Property="Padding" Value="5,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="#0D0D10" />
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="0,0,0,-8" />
+        </Style>
+        <Style Selector="TextBlock.Activity">
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
+        <Style Selector="TextBlock.Activity.Paused">
+            <Setter Property="Foreground" Value="#F0C674" />
+        </Style>
+        <Style Selector="TextBlock.Activity.Fighting">
+            <Setter Property="Foreground" Value="#F3A19A" />
+        </Style>
+        <Style Selector="c|GlyphIcon.Activity">
+            <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+        </Style>
+        <Style Selector="c|GlyphIcon.Activity.Playing">
+            <Setter Property="Foreground" Value="{DynamicResource PlayingColor}" />
+        </Style>
+        <Style Selector="c|GlyphIcon.Activity.Paused">
+            <Setter Property="Foreground" Value="{DynamicResource PausedColor}" />
+        </Style>
+        <Style Selector="c|GlyphIcon.Activity.Fighting">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorColor}" />
+        </Style>
+        <Style Selector="TextBlock.Meter">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="30" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="FontFeatures" Value="+tnum" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.Meter.Low">
+            <Setter Property="Foreground" Value="#F3A19A" />
+        </Style>
+        <Style Selector="TextBlock.Meter.Full">
+            <Setter Property="Foreground" Value="{DynamicResource WarningColor}" />
+        </Style>
+        <Style Selector="Button.Section">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.Section:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
+        <Style Selector="Border.Line">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="8,0,10,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
+            <Setter Property="Focusable" Value="True" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition
+                        Duration="0:0:0.15"
+                        Easing="CubicEaseOut"
+                        Property="Background" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Line:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+        </Style>
+        <Style Selector="Border.Line.Chosen">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+        </Style>
+    </UserControl.Styles>
+    <Panel>
+        <TextBlock
+            Classes="Dim"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding IsEmpty}"
+            Margin="24"
+            Text="{l:Tr CharactersEmpty}"
+            TextAlignment="Center"
+            TextWrapping="Wrap"
+            VerticalAlignment="Center" />
+        <ScrollViewer IsVisible="{Binding !IsEmpty}">
+            <StackPanel Margin="6" Spacing="4">
+                <ItemsControl ItemsSource="{Binding Online}" Name="Cards">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:BotViewModel">
+                            <Border
+                                Classes="Card"
+                                Classes.Chosen="{Binding IsChosen}"
+                                Classes.Fighting="{Binding IsFighting}"
+                                ContextRequested="OnContextRequested"
+                                DoubleTapped="OnCardDoubleTapped"
+                                KeyDown="OnCardKeyDown"
+                                Tapped="OnCardTapped">
+                                <Grid ColumnDefinitions="44,*" RowDefinitions="Auto,Auto">
+                                    <Panel
+                                        Grid.RowSpan="2"
+                                        Height="44"
+                                        VerticalAlignment="Top"
+                                        Width="44">
+                                        <Border
+                                            Classes="Ring"
+                                            Classes.Fighting="{Binding IsFighting}"
+                                            Classes.Paused="{Binding IsHalted}"
+                                            Classes.Playing="{Binding IsPlaying}" />
+                                        <c:Portrait
+                                            Color="{Binding PortraitColor}"
+                                            Head="{Binding Head}"
+                                            Initials="{Binding Initials}"
+                                            Radius="13" />
+                                        <Border Classes="Medal" IsVisible="{Binding Bot.State.Level, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                            <TextBlock
+                                                FontSize="10"
+                                                FontWeight="SemiBold"
+                                                HorizontalAlignment="Center"
+                                                Text="{Binding Bot.State.Level}"
+                                                VerticalAlignment="Center" />
+                                        </Border>
+                                    </Panel>
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        Margin="12,1,0,0"
+                                        Spacing="3">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock
+                                                Classes="Bright"
+                                                FontSize="13.5"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding Name}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <StackPanel
+                                                Background="Transparent"
+                                                Grid.Column="1"
+                                                Margin="8,0,0,0"
+                                                Orientation="Horizontal"
+                                                Spacing="4"
+                                                ToolTip.Tip="{Binding WhereTip}"
+                                                VerticalAlignment="Center">
+                                                <c:GlyphIcon
+                                                    Foreground="{DynamicResource DimColor}"
+                                                    Height="11"
+                                                    Source="{Binding PlaceGlyph}"
+                                                    VerticalAlignment="Center"
+                                                    Width="11" />
+                                                <TextBlock
+                                                    Classes="Dim"
+                                                    FontSize="11"
+                                                    MaxWidth="110"
+                                                    Text="{Binding Where}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <c:GlyphIcon
+                                                Classes="Activity"
+                                                Classes.Fighting="{Binding IsFighting}"
+                                                Classes.Paused="{Binding IsHalted}"
+                                                Classes.Playing="{Binding IsPlaying}"
+                                                IsVisible="{Binding !IsStopped}"
+                                                Margin="0,0,6,0"
+                                                Source="{Binding ActivityGlyph}"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Classes="Activity"
+                                                Classes.Fighting="{Binding IsFighting}"
+                                                Classes.Paused="{Binding IsHalted}"
+                                                FontSize="12"
+                                                Grid.Column="1"
+                                                Text="{Binding CardActivity}"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Classes="Dim Figures"
+                                                FontSize="11"
+                                                Grid.Column="2"
+                                                Margin="6,0,0,0"
+                                                Text="{Binding Step}"
+                                                VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+                                    <Grid
+                                        ColumnDefinitions="*,10,*"
+                                        Grid.Column="1"
+                                        Grid.Row="1"
+                                        IsVisible="{Binding HasMeters}"
+                                        Margin="12,10,0,0">
+                                        <Grid
+                                            Background="Transparent"
+                                            ColumnDefinitions="13,*,Auto"
+                                            IsVisible="{Binding HasLife}"
+                                            ToolTip.Tip="{Binding Life}">
+                                            <c:GlyphIcon
+                                                Foreground="{Binding IsLifeLow, Converter={x:Static c:LifeGlyphBrush.Instance}}"
+                                                Height="12"
+                                                Source="{Binding LifeGlyph}"
+                                                VerticalAlignment="Center"
+                                                Width="12" />
+                                            <c:ShareBar
+                                                Fill="{StaticResource LifeFill}"
+                                                Grid.Column="1"
+                                                Margin="6,0"
+                                                Track="{StaticResource GaugeTrack}"
+                                                Value="{Binding LifePercent}"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Classes="Meter"
+                                                Classes.Low="{Binding IsLifeLow}"
+                                                Grid.Column="2"
+                                                Text="{Binding LifePercentText}" />
+                                        </Grid>
+                                        <Grid
+                                            Background="Transparent"
+                                            ColumnDefinitions="13,*,Auto"
+                                            Grid.Column="2"
+                                            IsVisible="{Binding HasLoad}"
+                                            ToolTip.Tip="{Binding Load}">
+                                            <c:GlyphIcon
+                                                Foreground="{DynamicResource DimColor}"
+                                                Height="12"
+                                                Source="{Binding PodsGlyph}"
+                                                VerticalAlignment="Center"
+                                                Width="12" />
+                                            <c:ShareBar
+                                                Fill="{StaticResource PodsFill}"
+                                                Grid.Column="1"
+                                                IsVisible="{Binding !IsNearlyFull}"
+                                                Margin="6,0"
+                                                Track="{StaticResource GaugeTrack}"
+                                                Value="{Binding LoadPercent}"
+                                                VerticalAlignment="Center" />
+                                            <c:ShareBar
+                                                Fill="{StaticResource FullFill}"
+                                                Grid.Column="1"
+                                                IsVisible="{Binding IsNearlyFull}"
+                                                Margin="6,0"
+                                                Track="{StaticResource GaugeTrack}"
+                                                Value="{Binding LoadPercent}"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Classes="Meter"
+                                                Classes.Full="{Binding IsNearlyFull}"
+                                                Grid.Column="2"
+                                                Text="{Binding LoadPercentText}" />
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button
+                    Classes="Section"
+                    Command="{Binding ToggleOfflineCommand}"
+                    IsVisible="{Binding HasOffline}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <c:Icon
+                            Classes="Chevron"
+                            Drawing="{StaticResource General.ChevronRight}"
+                            Height="12"
+                            RenderTransform="{Binding IsOfflineOpen, Converter={x:Static c:ChevronTurn.Instance}}"
+                            VerticalAlignment="Center"
+                            Width="12" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Margin="6,0,0,0"
+                            Text="{l:Tr CharactersOffline}"
+                            VerticalAlignment="Center" />
+                        <TextBlock
+                            Classes="Figures"
+                            Grid.Column="2"
+                            Text="{Binding OfflineCount}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+                <ItemsControl
+                    Classes="FadeIn"
+                    IsVisible="{Binding IsOfflineOpen}"
+                    ItemsSource="{Binding Offline}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="ch:CharacterLineViewModel">
+                            <Border
+                                Classes="Line"
+                                Classes.Chosen="{Binding IsChosen}"
+                                ContextRequested="OnContextRequested"
+                                DoubleTapped="OnLineDoubleTapped"
+                                KeyDown="OnLineKeyDown"
+                                Tapped="OnLineTapped">
+                                <Grid ColumnDefinitions="28,*">
+                                    <c:Portrait
+                                        Color="{Binding PortraitColor}"
+                                        Head="{Binding Head}"
+                                        Height="28"
+                                        Initials="{Binding Initials}"
+                                        IsDimmed="True"
+                                        Radius="8"
+                                        VerticalAlignment="Center"
+                                        Width="28" />
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        Margin="10,0,0,0"
+                                        Orientation="Horizontal"
+                                        Spacing="8"
+                                        VerticalAlignment="Center">
+                                        <TextBlock
+                                            FontSize="12.5"
+                                            FontWeight="Medium"
+                                            Foreground="{DynamicResource MutedColor}"
+                                            Text="{Binding Name}"
+                                            TextTrimming="CharacterEllipsis"
+                                            VerticalAlignment="Center" />
+                                        <TextBlock
+                                            Classes="Dim"
+                                            FontSize="11"
+                                            Text="{Binding LastPlayed}"
+                                            VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </Panel>
+</UserControl>

@@ -9,4 +9,11 @@ namespace D3B.App.ViewModels.Studio;
 /// <param name="Initials">A character's initials, else empty.</param>
 /// <param name="Keys">Its shortcut, said in the app's language, else empty.</param>
 /// <param name="Run">What choosing it does: opens its tab, plays its command or opens its setting's section.</param>
-internal sealed record SearchItem(SearchScope Scope, string Key, string Title, string Detail, string? Icon, string Initials, string Keys, Action Run);
+internal sealed record SearchItem(SearchScope Scope, string Key, string Title, string Detail, string? Icon, string Initials, string Keys, Action Run)
+{
+    /// <summary>Gets a character's class's head, drawn in place of its initials (D323).</summary>
+    public Avalonia.Media.IImage? Picture { get; init; }
+
+    /// <summary>Gets a character's portrait's colour, its breed's.</summary>
+    public Avalonia.Media.IBrush? Color { get; init; }
+}
