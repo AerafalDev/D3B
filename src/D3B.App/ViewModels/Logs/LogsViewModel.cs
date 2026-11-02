@@ -4,17 +4,19 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
+using D3B.App.ViewModels.Characters;
 using D3B.Bot.Characters;
 using D3B.Bot.Hosting;
 using D3B.Bot.Runtime;
 using D3B.Data;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Storage.Accounts;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Logs;
 
-/// <summary>The logs page: a bot's journal, the host's problems, or both by time, filtered by tone and text (D111 to D114).</summary>
+/// <summary>The journal, in the bottom panel: a bot's journal, the host's problems, or both by time, filtered by level and text (D111 to D114, D327).</summary>
 /// <remarks>
 /// <para>
 /// The journals and problems live in the host, in memory (D113): the page reads only what came since its last refresh,
@@ -34,6 +36,8 @@ internal sealed partial class LogsViewModel : ObservableObject
     private long _readOfHost;
     private IServiceProvider? _services;
     private JournalLines? _say;
+    private AccountBook? _accounts;
+    private GameIcons? _icons;
     private CultureInfo? _culture;
 
     /// <summary>Gets the sources: every one, the host, then each bot in the order the bots page shows them.</summary>
@@ -60,7 +64,7 @@ internal sealed partial class LogsViewModel : ObservableObject
 
     /// <summary>Gets which lines the page shows, by their tone.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsAllLevels), nameof(IsProblems), nameof(IsErrors))]
+    [NotifyPropertyChangedFor(nameof(IsAllLevels), nameof(IsInfos), nameof(IsWarnings), nameof(IsErrors))]
     public partial LogLevelFilter Level { get; private set; }
 
     /// <summary>Gets or sets the text the lines shown say, whatever its case.</summary>
@@ -85,10 +89,13 @@ internal sealed partial class LogsViewModel : ObservableObject
     /// <summary>Gets whether the page shows every line.</summary>
     public bool IsAllLevels => Level is LogLevelFilter.All;
 
-    /// <summary>Gets whether the page shows warnings and errors.</summary>
-    public bool IsProblems => Level is LogLevelFilter.Problems;
+    /// <summary>Gets whether the journal shows the lines that are no problem.</summary>
+    public bool IsInfos => Level is LogLevelFilter.Infos;
 
-    /// <summary>Gets whether the page shows errors alone.</summary>
+    /// <summary>Gets whether the journal shows warnings alone.</summary>
+    public bool IsWarnings => Level is LogLevelFilter.Warnings;
+
+    /// <summary>Gets whether the journal shows errors alone.</summary>
     public bool IsErrors => Level is LogLevelFilter.Errors;
 
     /// <summary>Initializes a new instance of the <see cref="LogsViewModel"/> class.</summary>
@@ -112,6 +119,8 @@ internal sealed partial class LogsViewModel : ObservableObject
         {
             _services = services;
             _say = new JournalLines(_localizer, services.GetService<GameWorld>(), services.GetService<GameTexts>(), services.GetService<GameTables>());
+            _accounts = services.GetService<AccountBook>();
+            _icons = GameIcons.Of(services.GetService<GameTables>());
         }
 
         Sources[0].Name = _localizer["LogsEverything"];
@@ -139,6 +148,12 @@ internal sealed partial class LogsViewModel : ObservableObject
             Choose(source);
     }
 
+    /// <summary>Shows the host's problems alone, as a problem of the host asks.</summary>
+    public void ShowHost()
+    {
+        Choose(Sources[1]);
+    }
+
     /// <summary>Gets the lines shown, as text, for the clipboard.</summary>
     /// <returns>A line each.</returns>
     public string Text()
@@ -159,9 +174,16 @@ internal sealed partial class LogsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ShowProblems()
+    private void ShowInfos()
     {
-        Level = LogLevelFilter.Problems;
+        Level = LogLevelFilter.Infos;
+        Filter();
+    }
+
+    [RelayCommand]
+    private void ShowWarnings()
+    {
+        Level = LogLevelFilter.Warnings;
         Filter();
     }
 
@@ -229,8 +251,10 @@ internal sealed partial class LogsViewModel : ObservableObject
 
         if (source.Kind is not LogSourceKind.Bot && _services.GetService<HostProblems>() is { } host)
         {
+            var who = named ? new LogWho(_localizer["LogsHost"], _localizer["LogsHostInitial"], BreedColors.Of(null), null) : null;
+
             foreach (var problem in host.Problems.After(ref _readOfHost))
-                fresh.Add(_say.Of(problem, named ? _localizer["LogsHost"] : null));
+                fresh.Add(_say.Of(problem, who?.Name, who));
         }
 
         IEnumerable<BotActor> bots = source.Kind switch
@@ -243,10 +267,10 @@ internal sealed partial class LogsViewModel : ObservableObject
         foreach (var bot in bots)
         {
             var read = _readOfBots.GetValueOrDefault(bot.Key);
-            var name = named ? NameOf(bot) : null;
+            var who = named ? WhoOf(bot) : null;
 
             foreach (var entry in bot.Journal.After(ref read))
-                fresh.Add(_say.Of(entry, name));
+                fresh.Add(_say.Of(entry, who?.Name, who));
 
             _readOfBots[bot.Key] = read;
         }
@@ -303,7 +327,8 @@ internal sealed partial class LogsViewModel : ObservableObject
     {
         var level = Level switch
         {
-            LogLevelFilter.Problems => line.IsProblem,
+            LogLevelFilter.Infos => line.IsInfo,
+            LogLevelFilter.Warnings => line.IsWarning,
             LogLevelFilter.Errors => line.IsError,
             _ => true,
         };
@@ -328,6 +353,21 @@ internal sealed partial class LogsViewModel : ObservableObject
     private LogSourceViewModel? Find(CharacterKey key)
     {
         return Sources.FirstOrDefault(source => source.Bot?.Key == key);
+    }
+
+    [RelayCommand]
+    private void ToggleFollow()
+    {
+        Follow = !Follow;
+    }
+
+    private LogWho WhoOf(BotActor bot)
+    {
+        var name = NameOf(bot);
+        var known = _accounts?.Find(bot.Key);
+        var head = known?.BreedId is { } breed ? _icons?.Head(breed, known.IsFemale ?? false) : null;
+
+        return new LogWho(name, AvatarInitials.Of(name), BreedColors.Of(known?.BreedId), head);
     }
 
     private string NameOf(BotActor bot)

@@ -422,12 +422,6 @@
   <data name="ActivityNeedsProfile" xml:space="preserve">
     <value>{0} a besoin de réglages : crée-lui un profil</value>
   </data>
-  <data name="Logs" xml:space="preserve">
-    <value>Journaux</value>
-  </data>
-  <data name="Inspector" xml:space="preserve">
-    <value>Inspecteur</value>
-  </data>
   <data name="Settings" xml:space="preserve">
     <value>Paramètres</value>
   </data>
@@ -547,9 +541,6 @@
   </data>
   <data name="LevelAll" xml:space="preserve">
     <value>Tout</value>
-  </data>
-  <data name="LevelProblems" xml:space="preserve">
-    <value>Alertes</value>
   </data>
   <data name="LevelErrors" xml:space="preserve">
     <value>Erreurs</value>
@@ -1116,13 +1107,7 @@
     <value>Tout</value>
   </data>
   <data name="StatisticsResources" xml:space="preserve">
-    <value>ressources</value>
-  </data>
-  <data name="StatisticsTime" xml:space="preserve">
-    <value>de récolte</value>
-  </data>
-  <data name="StatisticsAverage" xml:space="preserve">
-    <value>en moyenne</value>
+    <value>Ressources</value>
   </data>
   <data name="StatisticsRate" xml:space="preserve">
     <value>{0}/h</value>
@@ -1135,9 +1120,6 @@
   </data>
   <data name="StatisticsLevelsOf" xml:space="preserve">
     <value>{0} {1} → {2}</value>
-  </data>
-  <data name="StatisticsByResource" xml:space="preserve">
-    <value>Par ressource</value>
   </data>
   <data name="StatisticsRuns" xml:space="preserve">
     <value>Sessions</value>
@@ -1256,12 +1238,6 @@
   <data name="Profile" xml:space="preserve">
     <value>Profil</value>
   </data>
-  <data name="StatisticsStarted" xml:space="preserve">
-    <value>Début</value>
-  </data>
-  <data name="StatisticsDuration" xml:space="preserve">
-    <value>Durée</value>
-  </data>
   <data name="Layers" xml:space="preserve">
     <value>Calques</value>
   </data>
@@ -1280,9 +1256,6 @@
   <data name="Copied" xml:space="preserve">
     <value>Copié</value>
   </data>
-  <data name="StatisticsTotal" xml:space="preserve">
-    <value>Ressources</value>
-  </data>
   <data name="ToastDone" xml:space="preserve">
     <value>{0} : activité finie</value>
   </data>
@@ -1300,15 +1273,6 @@
   </data>
   <data name="ToastFight" xml:space="preserve">
     <value>{0} : en combat</value>
-  </data>
-  <data name="LogsEmptyTitle" xml:space="preserve">
-    <value>Aucune ligne</value>
-  </data>
-  <data name="FramesEmptyTitle" xml:space="preserve">
-    <value>Aucune trame</value>
-  </data>
-  <data name="StatisticsEmptyTitle" xml:space="preserve">
-    <value>Aucune session</value>
   </data>
   <data name="ExcludeResources" xml:space="preserve">
     <value>Exclure des ressources</value>
@@ -1657,12 +1621,6 @@
   </data>
   <data name="BottomStatistics" xml:space="preserve">
     <value>Statistiques</value>
-  </data>
-  <data name="TraceEmptyTitle" xml:space="preserve">
-    <value>Aucune trace</value>
-  </data>
-  <data name="TraceEmptyText" xml:space="preserve">
-    <value>Les décisions du personnage choisi apparaîtront ici.</value>
   </data>
   <data name="ProblemsEmpty" xml:space="preserve">
     <value>Aucun problème</value>
@@ -2194,5 +2152,143 @@
   </data>
   <data name="GroupCaptures" xml:space="preserve">
     <value>Captures</value>
+  </data>
+  <data name="LogsHostInitial" xml:space="preserve">
+    <value>H</value>
+  </data>
+  <data name="LevelInfos" xml:space="preserve">
+    <value>Infos</value>
+  </data>
+  <data name="LevelWarnings" xml:space="preserve">
+    <value>Avertissements</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Filtrer</value>
+  </data>
+  <data name="Characters" xml:space="preserve">
+    <value>Personnages</value>
+  </data>
+  <data name="ProblemsErrorsTip" xml:space="preserve">
+    <value>Erreurs</value>
+  </data>
+  <data name="ProblemsWarningsTip" xml:space="preserve">
+    <value>Avertissements</value>
+  </data>
+  <data name="ProblemsAll" xml:space="preserve">
+    <value>Tout</value>
+  </data>
+  <data name="ProblemsOriginProject" xml:space="preserve">
+    <value>Projet</value>
+  </data>
+  <data name="ProblemsOriginCharacters" xml:space="preserve">
+    <value>Personnages</value>
+  </data>
+  <data name="ProblemsOriginHost" xml:space="preserve">
+    <value>Hôte</value>
+  </data>
+  <data name="ProblemAssetNotRead" xml:space="preserve">
+    <value>{0} ne se lit pas</value>
+  </data>
+  <data name="ProblemOpenFolder" xml:space="preserve">
+    <value>Ouvrir le dossier</value>
+  </data>
+  <data name="ProblemNoProfile" xml:space="preserve">
+    <value>{0} n'a pas de profil</value>
+  </data>
+  <data name="ProblemNoProfileWhy" xml:space="preserve">
+    <value>Il ne peut pas jouer tant qu'aucun profil n'est choisi</value>
+  </data>
+  <data name="ProblemProfileGone" xml:space="preserve">
+    <value>Le profil de {0} a disparu</value>
+  </data>
+  <data name="ProblemProfileGoneWhy" xml:space="preserve">
+    <value>Son fichier a été supprimé ou ne se lit plus</value>
+  </data>
+  <data name="ProblemChooseProfile" xml:space="preserve">
+    <value>Choisir un profil</value>
+  </data>
+  <data name="ProblemHostFailed" xml:space="preserve">
+    <value>L'hôte n'a pas démarré</value>
+  </data>
+  <data name="ProblemSeeJournal" xml:space="preserve">
+    <value>Voir le journal</value>
+  </data>
+  <data name="TraceCharacter" xml:space="preserve">
+    <value>Personnage</value>
+  </data>
+  <data name="TraceNoCharacter" xml:space="preserve">
+    <value>Aucun personnage</value>
+  </data>
+  <data name="TraceRun" xml:space="preserve">
+    <value>Run</value>
+  </data>
+  <data name="TraceNoRun" xml:space="preserve">
+    <value>Aucun run</value>
+  </data>
+  <data name="TraceNoBot" xml:space="preserve">
+    <value>Aucun personnage n'est connecté.</value>
+  </data>
+  <data name="TraceEmpty" xml:space="preserve">
+    <value>Aucune décision pour l'instant : la trace se remplit quand un comportement joue.</value>
+  </data>
+  <data name="TraceRunLive" xml:space="preserve">
+    <value>Run en cours</value>
+  </data>
+  <data name="TraceRunAt" xml:space="preserve">
+    <value>Run de {0}</value>
+  </data>
+  <data name="TraceNoState" xml:space="preserve">
+    <value>Aucun</value>
+  </data>
+  <data name="TraceEntered" xml:space="preserve">
+    <value>Entre dans {0}</value>
+  </data>
+  <data name="TraceWaiting" xml:space="preserve">
+    <value>Aucun état ne tient</value>
+  </data>
+  <data name="TraceUrgent" xml:space="preserve">
+    <value>Coupé pour {0}</value>
+  </data>
+  <data name="TraceRule" xml:space="preserve">
+    <value>Règle {0}</value>
+  </data>
+  <data name="TraceHolds" xml:space="preserve">
+    <value>Oui</value>
+  </data>
+  <data name="TraceDoesNotHold" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="TracePlayed" xml:space="preserve">
+    <value>Joué</value>
+  </data>
+  <data name="TraceDone" xml:space="preserve">
+    <value>Terminé</value>
+  </data>
+  <data name="TraceInterrupted" xml:space="preserve">
+    <value>Interrompu</value>
+  </data>
+  <data name="TraceFailed" xml:space="preserve">
+    <value>Échoué</value>
+  </data>
+  <data name="ProtocolNoCharacter" xml:space="preserve">
+    <value>Aucun personnage</value>
+  </data>
+  <data name="ProtocolLive" xml:space="preserve">
+    <value>En direct</value>
+  </data>
+  <data name="ProtocolNoCapture" xml:space="preserve">
+    <value>Aucune capture pour l'instant</value>
+  </data>
+  <data name="FramesSent" xml:space="preserve">
+    <value>Envoyés</value>
+  </data>
+  <data name="FramesReceived" xml:space="preserve">
+    <value>Reçus</value>
+  </data>
+  <data name="StatisticsSince" xml:space="preserve">
+    <value>depuis {0}</value>
+  </data>
+  <data name="StatisticsSpan" xml:space="preserve">
+    <value>{0} à {1}</value>
   </data>
 </root>

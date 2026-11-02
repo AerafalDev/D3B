@@ -2,29 +2,31 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using D3B.App.Controls;
 using D3B.App.Localization;
+using D3B.App.ViewModels.Characters;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Localization;
 using D3B.Data;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Storage.Accounts;
 using D3B.Storage.Runs;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Statistics;
 
-/// <summary>The statistics page: what the runs D3B kept brought, by character and period (D146).</summary>
+/// <summary>The statistics, in the bottom panel: what the runs D3B kept brought, by character and period (D146, D327).</summary>
 /// <remarks>
-/// Four figures, the resources, the time, the rate an hour and the levels gained; each resource with its icon and rate; and
-/// the runs, the latest first. Made again only once the runs, the filters or the language changed.
+/// The resources, the time, the rate an hour and the levels gained; each resource with its icon and rate; and the runs, the
+/// latest first. Made again only once the runs, the filters or the language changed.
 /// </remarks>
 internal sealed partial class StatisticsViewModel : ObservableObject
 {
     private RunBook? _book;
     private GameTextFormatter? _says;
     private GameIcons? _icons;
+    private AccountBook? _accounts;
     private TimeProvider _time = TimeProvider.System;
     private int _version = -1;
     private CultureInfo? _culture;
@@ -84,6 +86,10 @@ internal sealed partial class StatisticsViewModel : ObservableObject
     /// <summary>Gets whether the page counts today's runs.</summary>
     public bool IsToday => Period is StatisticsPeriod.Today;
 
+    /// <summary>Gets the resources, the time and the rate an hour, beside the resources' title.</summary>
+    [ObservableProperty]
+    public partial string Summary { get; private set; } = "";
+
     /// <summary>Gets whether the page counts the last 7 days' runs.</summary>
     public bool IsWeek => Period is StatisticsPeriod.Week;
 
@@ -107,6 +113,7 @@ internal sealed partial class StatisticsViewModel : ObservableObject
             _time = services.GetService<TimeProvider>() ?? TimeProvider.System;
             _says = new GameTextFormatter(Localizer, services.GetService<GameWorld>(), services.GetService<GameTexts>(), services.GetService<GameTables>());
             _icons = GameIcons.Of(services.GetService<GameTables>());
+            _accounts = services.GetService<AccountBook>();
             IsAvailable = _book is not null;
         }
 
@@ -151,6 +158,7 @@ internal sealed partial class StatisticsViewModel : ObservableObject
 
         var levels = jobs.Sum(job => job.To - job.From);
 
+        Summary = string.Join(" · ", ResourcesValue, TimeValue, RateValue);
         LevelsValue = Localizer.Format(levels == 1 ? "StatisticsLevelsOne" : "StatisticsLevels", levels);
         LevelsDetail = string.Join(", ", jobs.Select(job => Localizer.Format("StatisticsLevelsOf", _says?.Name(GameTextValue.Job(job.JobId)) ?? job.JobId.ToString(culture), job.From, job.To)));
 
@@ -168,16 +176,8 @@ internal sealed partial class StatisticsViewModel : ObservableObject
 
         Runs.Clear();
 
-        // A run names who ran what once, above the runs that follow it of the same.
-        string? previous = null;
-
         foreach (var run in runs)
-        {
-            var row = RunOf(run, now, previous);
-
-            previous = row.Who;
-            Runs.Add(row);
-        }
+            Runs.Add(RunOf(run, now));
     }
 
     private void RebuildCharacters(IReadOnlyList<RunRecord> all)
@@ -212,22 +212,25 @@ internal sealed partial class StatisticsViewModel : ObservableObject
         };
     }
 
-    private StatisticsRunViewModel RunOf(RunRecord run, DateTimeOffset now, string? previous)
+    private StatisticsRunViewModel RunOf(RunRecord run, DateTimeOffset now)
     {
         var culture = Localizer.Culture;
         var began = run.StartedAt.ToOffset(now.Offset);
-        var when = began.Date == now.Date ? began.ToString("t", culture) : began.ToString("g", culture);
-        var (outcome, tone) = run.Outcome switch
-        {
-            ActivityOutcome.Done => (Localizer["ActivityDone"], Tone.Success),
-            ActivityOutcome.Failed => (Localizer["ActivityFailed"], Tone.Danger),
-            ActivityOutcome.Stopped => (Localizer["ActivityStopped"], Tone.Neutral),
-            _ => (Localizer["StatisticsOngoing"], Tone.Info),
-        };
-        var who = run.Title is { Length: > 0 } title ? $"{run.CharacterName} · {title}" : run.CharacterName;
+        var from = began.Date == now.Date ? began.ToString("t", culture) : began.ToString("g", culture);
+        var isLive = run.Outcome is null;
+        var isFailed = run.Outcome is ActivityOutcome.Failed;
+        var span = isLive || run.EndedAt is not { } ended
+            ? Localizer.Format("StatisticsSince", from)
+            : Localizer.Format("StatisticsSpan", from, ended.ToOffset(now.Offset).ToString("t", culture));
 
-        // A run stopped or done ended as runs do: only one going on, or failed, says so.
-        return new StatisticsRunViewModel(when, who, who != previous, DurationText(DurationOf(run)), TotalOf(run).ToString("N0", culture), outcome, tone, run.Outcome is not (ActivityOutcome.Done or ActivityOutcome.Stopped));
+        // A run stopped or done ended as runs do, its length said: only one going on, or failed, says so.
+        var end = isLive ? Localizer["StatisticsOngoing"] : isFailed ? Localizer["ActivityFailed"] : DurationText(DurationOf(run));
+        var key = new CharacterKey(run.AccountId, run.CharacterId);
+        var known = _accounts?.Find(key);
+        var head = known?.BreedId is { } breed ? _icons?.Head(breed, known.IsFemale ?? false) : null;
+        var title = run.Title is { Length: > 0 } named ? named : run.Activity;
+
+        return new StatisticsRunViewModel(title, run.CharacterName, span, end, isLive, isFailed, AvatarInitials.Of(run.CharacterName), BreedColors.Of(known?.BreedId), head);
     }
 
     private string DurationText(TimeSpan duration)

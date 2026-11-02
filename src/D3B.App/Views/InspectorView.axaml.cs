@@ -1,12 +1,13 @@
 using System.Collections.Specialized;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using D3B.App.ViewModels.Inspector;
 
 namespace D3B.App.Views;
 
-/// <summary>The protocol inspector: a bot's game frames as they go, or a capture's, which it follows as they come (D111, D115).</summary>
+/// <summary>The protocol: a bot's game frames as they go, or a capture's, which it follows as they come (D111, D115, D327).</summary>
 internal sealed partial class InspectorView : UserControl
 {
     private InspectorViewModel? _model;
@@ -64,9 +65,22 @@ internal sealed partial class InspectorView : UserControl
             row.ToggleCommand.Execute(null);
     }
 
-    private void OnCapturesOpened(object? sender, EventArgs e)
+    private void OnCapturesOpening(object? sender, EventArgs e)
     {
         _model?.ReadCaptures();
+    }
+
+    private void OnCaptureClick(object? sender, RoutedEventArgs e)
+    {
+        if (_model is not null && (sender as Control)?.DataContext is CaptureChoiceViewModel capture)
+            _model.Capture = capture;
+
+        FlyoutRows.Close(sender);
+    }
+
+    private void OnMenuRowClick(object? sender, RoutedEventArgs e)
+    {
+        FlyoutRows.Close(sender);
     }
 
     private void ScrollToEnd()

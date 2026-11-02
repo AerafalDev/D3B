@@ -349,7 +349,7 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("compris", french);
         Assert.Contains("Journal", french);
         Assert.Contains("Joue par la connexion de jeu", french);
-        Assert.Contains("Alertes", french);
+        Assert.Contains("Avertissements", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
 
