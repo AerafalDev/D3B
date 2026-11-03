@@ -802,7 +802,7 @@
                             <TextBox
                                 Classes="PropertySearch"
                                 Text="{Binding Properties.Filter}"
-                                Watermark="{l:Tr InspectorSearch}">
+                                PlaceholderText="{l:Tr InspectorSearch}">
                                 <TextBox.InnerLeftContent>
                                     <c:Icon
                                         Drawing="{StaticResource General.Search}"

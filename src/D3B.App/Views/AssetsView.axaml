@@ -92,7 +92,7 @@
                 Margin="8,0,0,0"
                 Name="Search"
                 Text="{Binding Filter}"
-                Watermark="{l:Tr Search}">
+                PlaceholderText="{l:Tr Search}">
                 <TextBox.InnerLeftContent>
                     <c:Icon
                         Drawing="{StaticResource General.Search}"

@@ -341,7 +341,7 @@
                     AutomationProperties.Name="{l:Tr SettingsSearch}"
                     Classes="Find"
                     Text="{Binding Filter}"
-                    Watermark="{l:Tr SettingsSearch}">
+                    PlaceholderText="{l:Tr SettingsSearch}">
                     <TextBox.InnerLeftContent>
                         <c:Icon
                             Drawing="{StaticResource General.Search}"
