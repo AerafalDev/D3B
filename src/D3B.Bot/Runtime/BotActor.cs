@@ -36,8 +36,12 @@ namespace D3B.Bot.Runtime;
 /// (<see cref="StartActivity"/>, D87). Anyone may wait for what a bot's state becomes (<see cref="WaitUntilAsync"/>), as
 /// another bot following it will.
 /// </para>
+/// <para>
+/// While the AI plays the character's fight, the turns' ends the client sends by itself in its inactive state never reach
+/// the server, the owner's choice (D367): the AI's turn goes on. The player's own still do, and pause the bot.
+/// </para>
 /// </remarks>
-public sealed class BotActor : IAsyncDisposable
+public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 {
     /// <summary>The number of entries a bot's journal keeps: older ones are dropped (D113).</summary>
     public const int JournalCapacity = 2_000;
@@ -74,6 +78,7 @@ public sealed class BotActor : IAsyncDisposable
     private ImmutableHashSet<int> _noNpcWays = [];
     private int _fightsBegun;
     private int _lastEndedFight;
+    private int _inactiveFight = -1;
     private long _placedAt;
     private long _useEndedAt = NeverEnded;
     private long _fightBeganAt = NeverEnded;
@@ -118,6 +123,8 @@ public sealed class BotActor : IAsyncDisposable
 
     /// <summary>Gets whether the AI plays the character's fights now: the host's switch, or its activity's own fights as its profile says; out of an activity, the fights are the player's (D235, D244).</summary>
     public bool Fights => _fightsAlone || _activity is { IsOver: false, Activity.FightsItsFights: true };
+
+    bool IRequestWithholder.IsWithholding => _acting && !_paused && Fights && _state.Fight is { Phase: FightPhase.Fighting };
 
     /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
     public ActivityRun? Activity => _activity;
@@ -317,6 +324,13 @@ public sealed class BotActor : IAsyncDisposable
         Post(new Detached(session));
     }
 
+    bool IRequestWithholder.Withholds(IMessage request)
+    {
+        // Measured (D366): the client ended 21 of the AI's turns by itself, before its first request or after an action it
+        // showed. The player's own end is not marked so, and goes on to pause the bot (D66).
+        return request is FightTurnFinishRequest { Automatic: true } && ((IRequestWithholder)this).IsWithholding;
+    }
+
     /// <summary>Waits until the loop handled everything posted before, so that a test reads the state they made.</summary>
     internal Task ProcessedAsync()
     {
@@ -483,6 +497,15 @@ public sealed class BotActor : IAsyncDisposable
             _paused = true;
             Interrupt(behavior, Interruption.Player);
             BotLog.PausedByPlayer(_log, Key.CharacterId, message.Descriptor.Name);
+        }
+
+        // Measured (D366): in its inactive state the client ends the character's turns one after another, until, its text
+        // says, the player clicks its OK; the journal says it once a fight, a fight already begun as the bot came included.
+        if (side is RelayDirection.FromClient && message is FightTurnFinishRequest { Automatic: true } && _inactiveFight != _fightsBegun)
+        {
+            _inactiveFight = _fightsBegun;
+            Write(BotEvent.ClientInactive);
+            BotLog.ClientInactive(_log, Key.CharacterId);
         }
 
         if (side is RelayDirection.FromServer && message is ContextCreationEvent { Context: ContextCreationEvent.Types.GameContext.Fight })

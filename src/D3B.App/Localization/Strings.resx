@@ -1664,6 +1664,12 @@
   <data name="JournalPausedFromApp" xml:space="preserve">
     <value>Paused from D3B</value>
   </data>
+  <data name="JournalClientInactive" xml:space="preserve">
+    <value>The client is inactive and would pass the character's turns</value>
+  </data>
+  <data name="JournalClientInactiveDetail" xml:space="preserve">
+    <value>D3B withholds its turns' ends while the AI plays. Click OK in the client so that it leaves that state.</value>
+  </data>
   <data name="AgoNow" xml:space="preserve">
     <value>just now</value>
   </data>

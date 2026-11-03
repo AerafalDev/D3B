@@ -27,7 +27,8 @@ namespace D3B.Bot.Runtime;
 /// </para>
 /// <para>
 /// The client also ends a turn by itself, along its inactivity popup, and marks that end as its own: it cut the AI's
-/// turn and paused the bot, though no one touched the client, measured on a friend's capture (D252).
+/// turn and paused the bot, though no one touched the client, measured on a friend's capture (D252). Its text names that
+/// state: an inactive client passes the character's turns until the player clicks its OK (D366).
 /// </para>
 /// </remarks>
 public static class PlayerActions

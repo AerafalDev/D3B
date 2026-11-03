@@ -27,7 +27,10 @@ public interface IConnectionInterceptor
     /// Whether the relay held it, nothing of it forwarded yet: the frame may then be rewritten. Otherwise it is already on
     /// its way, as it came.
     /// </param>
-    /// <returns>For a frame held, the bytes to forward in its place, without their length, or null to forward it as it came.</returns>
+    /// <returns>
+    /// For a frame held, the bytes to forward in its place, without their length; none to forward nothing (D367); or null to
+    /// forward it as it came.
+    /// </returns>
     byte[]? OnFrame(RelayDirection direction, ReadOnlySequence<byte> frame, bool held);
 
     /// <summary>Learns that the relay forwarded a frame it held before it was whole, and holds nothing more on that side.</summary>

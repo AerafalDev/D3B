@@ -594,7 +594,7 @@ table and print counts only.
   game frames, 5,256 understood whole, 1,232 more read, none misread. The client confirmed all 63 of D3B's walks out of
   fights, asked for the information of each of the 49 maps it entered, and ended all 25 of D3B's uses (D60). In the AI's
   fight it ended 8 of the character's turns by itself, `automatic` set, over the fight's last 80 s, after 13 turns the
-  AI played (D252).
+  AI played (D252), its inactive state (D366).
 
 ## Connection
 
@@ -1789,6 +1789,21 @@ activity ran on five characters of two accounts, the pack of 3.7.12.12 and its c
   a walk and 0.75 s after a cast; two ended a turn 1.7 and 2.7 s after its start, the bot paused. In the owner's
   captures, the 170 turns' ends sent by hand and D3B's 146 leave the field unset; one more end sets it, 130 ms after
   `FightIsTurnReadyEvent`, in a fight the AI played. With the bot paused and no one playing, a turn ran its 60 s.
+- **The client's inactive state** (D366), measured on 2026-11-03 for session 9g7 on the owner's 31 game captures of
+  3.7.12.12 and 3.7.13.17, with a tool never committed that prints counts and delays. The client's French texts name it:
+  "Vous êtes en état inactif. Vous allez automatiquement passer vos tours. Cliquez sur ok pour sortir de cet état.";
+  beside it "Sortie du mode AFK", "Vous êtes resté inactif trop longtemps. Le jeu va se fermer automatiquement si vous ne
+  donnez aucun signe d'activité." and an option, "Chat : afficher un message en cas d'inactivité prolongée en combat".
+  Of the 89 fights the AI played, 5 hold 21 turns' ends the client sent itself, `automatic` set; the 57 played by hand
+  none; D3B ended 302 turns, none ran its time. The first came after 2 to 11 of the AI's turns in the fight, 36 s to
+  3.5 min into it, 43 s to 11 min after the last request sent by hand, once less than a minute after the character was
+  chosen by hand: the client counts what sends nothing, the mouse and the keyboard. It then ended turns in a row, and
+  twice let the AI play two or more turns before ending them again, no request by hand between. From the character's
+  `FightTurnEvent`, 8 ends came at 0.01 to 0.80 s, 6 of them 8 ms after it, before `FightTurnStartPlayingEvent`, and 13
+  at 1.41 to 3.52 s, 0.2 to 2.4 s after D3B's first request, a cast or a walk, once the client showed it; the character
+  still had 2 to 11 AP. D3B's first request came 1.02 s after the turn's start halfway over 315 turns, 0.92 to 1.29 s
+  from the tenth to the ninetieth, the fight's pace of 0.9 s and the plan: the 8 early ends came before it. Since D367,
+  D3B withholds these ends from the server while the AI plays; a capture still records them as the client sent them.
 
 ### The game, through an NPC
 

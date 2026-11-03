@@ -106,9 +106,9 @@ public sealed record BotDelays
     /// <remarks>
     /// Measured on the owner's 49 captured fights, the player's pace: 1.3 s halfway from a turn's start to its first action and
     /// from an action shown to the next, 0.6 s before ending a turn, 1.2 s from the placement's cells to the first move. The owner,
-    /// who asked to see what the AI does, chose 0.9 s, the least: above the client's display time, below the player's median.
+    /// who asked to see what the AI does, chose 0.9 s, then 0.8 s (D368), the least: above the client's display time, below the player's median.
     /// </remarks>
-    public TimeSpan FightAction { get; init; } = TimeSpan.FromMilliseconds(900);
+    public TimeSpan FightAction { get; init; } = TimeSpan.FromMilliseconds(800);
 
     /// <summary>Reads the delays from a configuration, in seconds, the measured ones for what it does not set.</summary>
     /// <param name="configuration">The configuration.</param>
