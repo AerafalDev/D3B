@@ -7771,6 +7771,20 @@ page.*
 - **Not checked** on a real window: the tree's drag-free moves, rename in place and menus, the profile tab's sections'
   bar under a real scroll, the file pickers, the bottom panel's menus; the owner's look at the running app.
 
+## D357: What the owner's first look at 7c4 found
+
+*2026-11-03, step 7, session 7c4, the owner's reports, the lead's fixes. Amends D351, D353.*
+
+- **A binding read as a text**: a toolbar's text when nothing is chosen was a translation given as a binding's fallback,
+  which Avalonia printed as `Avalonia.Data.ReflectionBinding`; each is now a text of its own shown when nothing is
+  chosen, and the views' tests fail on any text naming Avalonia or the app's types.
+- **A scrollbar in a field**: the studio's fields, lower than ShadUI's, showed a vertical bar beside their text; a field of
+  one line never scrolls up and down (`Themes/Styles.axaml`).
+- **Add opened empty**: its menu, filled as its flyout opened, showed nothing; it is made at the click, as the tree's.
+- **A file's problem in English**: `AssetProblem` and `AssetFormatException` say why as an `AssetProblemKind`, which the
+  tree, the problems and the toasts say in the app's language; the English message stays for the logs.
+- **Texts**: "perso" becomes "personnage" in French, the owner's ask for professional texts.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
