@@ -1664,6 +1664,12 @@
   <data name="JournalPausedFromApp" xml:space="preserve">
     <value>Mis en pause depuis D3B</value>
   </data>
+  <data name="JournalClientInactive" xml:space="preserve">
+    <value>Le client est inactif et veut passer les tours du personnage</value>
+  </data>
+  <data name="JournalClientInactiveDetail" xml:space="preserve">
+    <value>D3B retient ses fins de tour pendant que l'IA joue. Cliquez sur OK dans le client pour qu'il en sorte.</value>
+  </data>
   <data name="AgoNow" xml:space="preserve">
     <value>à l'instant</value>
   </data>

@@ -8,7 +8,7 @@ namespace D3B.Network.Relay;
 /// <remarks>
 /// <para>
 /// Bytes go on as they are read, but for a frame the interceptor holds: its bytes wait until it is whole, then what the
-/// interceptor gives goes in its place. A frame is held only when nothing of it has gone yet, and only when its length is
+/// interceptor gives goes in its place, nothing when it gives no bytes (D367). A frame is held only when nothing of it has gone yet, and only when its length is
 /// within <see cref="RelaySettings.MaxHeldLength"/>. <see cref="Release"/> is the way out: what is held goes as it came,
 /// and nothing more is held on this side.
 /// </para>
@@ -104,7 +104,7 @@ internal sealed class InterceptedSide
 
                     if (replacement is null)
                         Forward(output, bytes.Slice(start, end - start));
-                    else
+                    else if (replacement.Length > 0)
                         FrameWriter.Write(output, replacement);
 
                     forwarded = end;

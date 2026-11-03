@@ -28,7 +28,7 @@ public sealed class BotDelaysTests
         Assert.Equal(TimeSpan.FromSeconds(2), measured.UseEnd);
         Assert.Equal(TimeSpan.FromSeconds(1), measured.BankFollow);
         Assert.Equal(TimeSpan.FromSeconds(30), measured.Recovery);
-        Assert.Equal(TimeSpan.FromMilliseconds(900), measured.FightAction);
+        Assert.Equal(TimeSpan.FromMilliseconds(800), measured.FightAction);
         Assert.Equal(TimeSpan.FromSeconds(3), BotDelays.Most.Display);
         Assert.Equal(TimeSpan.FromSeconds(3.5), measured.Confirmation(5));
         Assert.Equal(measured, BotDelays.Read(Configuration()));

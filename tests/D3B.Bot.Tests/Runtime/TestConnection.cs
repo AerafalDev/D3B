@@ -13,8 +13,12 @@ internal sealed class TestConnection : IDisposable
     private readonly FakeRelayConnection _connection;
     private readonly IConnectionInterceptor _interceptor;
     private readonly ProtocolTranslation _translation;
+    private readonly List<IMessage> _withheld = [];
 
     public GameSession Session { get; }
+
+    /// <summary>Gets the client's requests its game session withheld from the server (D367).</summary>
+    public IReadOnlyList<IMessage> Withheld => [.. _withheld];
 
     /// <summary>Gets the requests D3B sent the server, readable.</summary>
     public IReadOnlyList<IMessage> Sent => [.. _connection.Sent.Select(frame => _translation.DecodeGame(new ReadOnlySequence<byte>(frame)).Content!)];
@@ -29,7 +33,8 @@ internal sealed class TestConnection : IDisposable
 
     public void Client(IMessage request)
     {
-        Show(RelayDirection.FromClient, TestGame.Request(request));
+        if (Show(RelayDirection.FromClient, TestGame.Request(request)) is { Length: 0 })
+            _withheld.Add(request);
     }
 
     public void Server(IMessage content)
@@ -66,8 +71,9 @@ internal sealed class TestConnection : IDisposable
         _connection.Dispose();
     }
 
-    private void Show(RelayDirection direction, byte[] frame)
+    private byte[]? Show(RelayDirection direction, byte[] frame)
     {
-        _interceptor.OnFrame(direction, new ReadOnlySequence<byte>(frame), held: false);
+        // As the relay does: a frame the session asks to hold may be rewritten, to nothing for one withheld.
+        return _interceptor.OnFrame(direction, new ReadOnlySequence<byte>(frame), _interceptor.Holds(direction));
     }
 }

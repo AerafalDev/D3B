@@ -234,6 +234,31 @@ public sealed class RelayInterceptorTests
     }
 
     [Fact]
+    public async Task AFrameHeldThatTheInterceptorRewritesToNothingDoesNotGoOn()
+    {
+        var before = Payload(30, 12);
+        var withheld = Payload(40, 13);
+        var after = Payload(50, 14);
+        var interceptor = new RecordingInterceptor { Holding = RelayDirection.FromClient, Rewrite = frame => frame.AsSpan().SequenceEqual(withheld) ? [] : null };
+        var expected = Framed(before, after);
+
+        await using var relay = await TestRelay.StartAsync(interceptor: interceptor);
+        var (client, server) = await relay.ConnectAsync();
+
+        using (client)
+        using (server)
+        {
+            var serverReceives = TestRelay.ReadExactlyAsync(server, expected.Length);
+
+            await client.SendAsync(Framed(before, withheld, after), TestContext.Current.CancellationToken);
+
+            Assert.Equal(expected, await serverReceives);
+        }
+
+        Assert.Equal([Seen(RelayDirection.FromClient, before), Seen(RelayDirection.FromClient, withheld), Seen(RelayDirection.FromClient, after)], interceptor.Frames.Select(frame => Seen(frame.Direction, frame.Frame)));
+    }
+
+    [Fact]
     public async Task AFrameHeldThatDoesNotComeWholeGoesOnAsItCameOnceTheHoldTimesOut()
     {
         var interceptor = new RecordingInterceptor { Holding = RelayDirection.FromServer, Rewrite = _ => [1, 2, 3] };

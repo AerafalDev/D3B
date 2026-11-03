@@ -28,6 +28,9 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: paused from the app, until it is resumed")]
     public static partial void PausedFromApp(ILogger logger, long character);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: the client, inactive, sends the turns' ends by itself until the player clicks its OK")]
+    public static partial void ClientInactive(ILogger logger, long character);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: its behavior was interrupted, {Reason}")]
     public static partial void Interrupted(ILogger logger, long character, Interruption reason);
 

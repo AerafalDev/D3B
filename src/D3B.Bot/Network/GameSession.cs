@@ -11,8 +11,9 @@ namespace D3B.Bot.Network;
 /// <remarks>
 /// <para>
 /// Every frame is decoded once (D58) and shown to the <see cref="IGameObserver"/> instances, then logged at the debug
-/// level by what it is and its length, never by what it holds. No frame is held or rewritten: the client and the server
-/// get every byte the other sent.
+/// level by what it is and its length, never by what it holds. No frame is rewritten, and the client gets every byte the
+/// server sent; the server gets every byte the client sent, but for the requests the session's
+/// <see cref="IRequestWithholder"/> withholds, the client's own turn's ends while the AI plays (D367).
 /// </para>
 /// <para>
 /// D3B acts through the client's connection with the requests that start an action, each with the id the client gives
@@ -31,6 +32,9 @@ public sealed class GameSession : IConnectionInterceptor
 
     // Set from the client's read loop on its first request, read from the server's once the character is chosen.
     private volatile GameAccount? _account;
+
+    // Set once a bot plays the connection, read from the client's read loop.
+    private volatile IRequestWithholder? _withholder;
 
     /// <summary>Gets the game connection's id, as the relay's log names it.</summary>
     public string Id => _connection.Id;
@@ -119,9 +123,16 @@ public sealed class GameSession : IConnectionInterceptor
         }
     }
 
+    /// <summary>Has the client's requests that a withholder names not sent the server, from the next one on.</summary>
+    /// <param name="withholder">What names them, such as the bot that plays the connection, or null to send them all.</param>
+    public void WithholdWith(IRequestWithholder? withholder)
+    {
+        _withholder = withholder;
+    }
+
     bool IConnectionInterceptor.Holds(RelayDirection direction)
     {
-        return false;
+        return direction is RelayDirection.FromClient && _withholder is { IsWithholding: true };
     }
 
     byte[]? IConnectionInterceptor.OnFrame(RelayDirection direction, ReadOnlySequence<byte> frame, bool held)
@@ -153,11 +164,21 @@ public sealed class GameSession : IConnectionInterceptor
             }
         }
 
+        // The observers saw it: the bots learn the client sent it, though the server never gets it.
+        if (held && direction is RelayDirection.FromClient && decoded.Content is { } request && _withholder?.Withholds(request) is true)
+        {
+            GameLog.Withheld(_log, Id, request.Descriptor.Name);
+
+            return [];
+        }
+
         return null;
     }
 
     void IConnectionInterceptor.OnHoldAbandoned(RelayDirection direction, string reason)
     {
-        // Nothing is held on the game connection.
+        // The relay holds nothing more on that side: what the withholder names goes to the server from then on.
+        if (direction is RelayDirection.FromClient)
+            GameLog.HoldAbandoned(_log, Id, reason);
     }
 }

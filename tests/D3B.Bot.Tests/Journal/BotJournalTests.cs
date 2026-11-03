@@ -158,6 +158,25 @@ public sealed class BotJournalTests
     }
 
     [Fact]
+    public async Task TheClientsInactiveStateIsWrittenOnceAFight()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(300);
+
+        // As measured (D366): the client passes the character's turns one after another, its end marked as its own.
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Client(new FightTurnFinishRequest { Automatic = true });
+        connection.Client(new FightTurnFinishRequest { Automatic = true });
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Client(new FightTurnFinishRequest { Automatic = true });
+        connection.Client(new FightTurnFinishRequest());
+        await bot.ProcessedAsync();
+
+        Assert.Equal([BotEvent.FightBegan, BotEvent.ClientInactive, BotEvent.FightBegan, BotEvent.ClientInactive], AfterConnecting(bot).Select(entry => Assert.IsType<BotEventEntry>(entry).Event));
+        Assert.False(bot.IsPaused);
+    }
+
+    [Fact]
     public async Task AFightsEndIsWrittenOnceWithItsOutcomeAndGains()
     {
         await using var play = new TestPlay();

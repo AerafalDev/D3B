@@ -239,8 +239,9 @@ message FightTurnEndEvent {
 
 // Ends the character's turn before its time: the player's click, D3B's, or the client's own (D252).
 message FightTurnFinishRequest {
-  // Set when the client ends the turn by itself, as it did along its inactivity popup, measured on a friend's capture:
-  // 5 in the captures, none of the player's 170 clicks nor D3B's 146.
+  // Set when the client ends the turn by itself, in its inactive state, which passes the character's turns until the
+  // player clicks its OK (D366): 4 in a friend's capture, 21 in 5 of the owner's 89 fights the AI played, never in a
+  // fight played by hand nor in an end D3B sent. Withheld from the server while the AI plays (D367).
   bool automatic = 1;
 }
 

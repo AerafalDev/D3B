@@ -11,6 +11,12 @@ internal static partial class GameLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Connection {ConnectionId}: D3B sent {Message}, {Length} bytes")]
     public static partial void Sent(ILogger logger, string connectionId, string message, int length);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Connection {ConnectionId}: the client's {Message} withheld from the server")]
+    public static partial void Withheld(ILogger logger, string connectionId, string message);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Connection {ConnectionId}: the relay holds none of the client's frames any more, {Reason}: none is withheld from now on")]
+    public static partial void HoldAbandoned(ILogger logger, string connectionId, string reason);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "Connection {ConnectionId}: the game observer {Observer} failed")]
     public static partial void ObserverFailed(ILogger logger, string connectionId, Type observer, Exception exception);
 }

@@ -148,4 +148,41 @@ public sealed class GameSessionTests : IDisposable
         Assert.True(observer.Sessions[0].Closed.IsCancellationRequested);
         await Assert.ThrowsAsync<RelayInjectionException>(() => observer.Sessions[0].SendAsync(new DialogLeaveRequest(), TestContext.Current.CancellationToken));
     }
+
+    [Fact]
+    public void TheClientsRequestsAWithholderNamesAreShownThenGoNowhere()
+    {
+        var observer = new RecordingObserver();
+        var session = Start(observer);
+        var withholder = new TurnEndWithholder();
+        var automatic = TestGame.Request(new FightTurnFinishRequest { Automatic = true });
+        var hand = TestGame.Request(new FightTurnFinishRequest());
+
+        // No frame is held before a withholder asks for it, nor while it does not.
+        Assert.False(session.Holds(RelayDirection.FromClient));
+        observer.Sessions[0].WithholdWith(withholder);
+        Assert.False(session.Holds(RelayDirection.FromClient));
+
+        withholder.IsWithholding = true;
+
+        Assert.True(session.Holds(RelayDirection.FromClient));
+        Assert.False(session.Holds(RelayDirection.FromServer));
+        Assert.Empty(Assert.IsType<byte[]>(session.OnFrame(RelayDirection.FromClient, new ReadOnlySequence<byte>(automatic), held: true)));
+        Assert.Null(session.OnFrame(RelayDirection.FromClient, new ReadOnlySequence<byte>(hand), held: true));
+
+        // A frame the relay could not hold is already on its way: it is shown, never withheld.
+        Assert.Null(session.OnFrame(RelayDirection.FromClient, new ReadOnlySequence<byte>(automatic), held: false));
+        Assert.Equal(3, observer.Frames.Count);
+        Assert.Contains(_log.GetSnapshot(), record => record.Message == "Connection g1: the client's FightTurnFinishRequest withheld from the server");
+    }
+
+    private sealed class TurnEndWithholder : IRequestWithholder
+    {
+        public bool IsWithholding { get; set; }
+
+        public bool Withholds(IMessage request)
+        {
+            return request is FightTurnFinishRequest { Automatic: true };
+        }
+    }
 }

@@ -23,4 +23,7 @@ public enum BotEvent
 
     /// <summary>The app paused the bot, its run block's pause: what it did is cut, and it waits until it is resumed (D322).</summary>
     PausedFromApp,
+
+    /// <summary>The client sent the character's turn's end by itself, in its inactive state, which passes the turns until the player clicks its OK: once a fight (D366), withheld while the AI plays (D367).</summary>
+    ClientInactive,
 }

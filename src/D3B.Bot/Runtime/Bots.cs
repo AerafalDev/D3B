@@ -178,6 +178,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
 
         bot.Attach(session, state);
         binding.Bot = bot;
+        session.WithholdWith(bot);
 
         // The connection may have closed while it was bound, after Close found no bot to tell.
         if (session.Closed.IsCancellationRequested)
