@@ -10,9 +10,10 @@
     <UserControl.Styles>
         <Style Selector="Border.AssetRow">
             <Setter Property="Background" Value="{DynamicResource ClearColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ClearColor}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Height" Value="28" />
-            <Setter Property="Focusable" Value="True" />
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Duration="0:0:0.12" Property="Background" />
@@ -24,12 +25,16 @@
         </Style>
         <Style Selector="Border.AssetRow.Selected">
             <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
-            <Setter Property="BorderThickness" Value="1" />
         </Style>
-        <Style Selector="Border.AssetRow:focus-visible">
+        <Style Selector="Border#Tree:focus-within Border.AssetRow.Focused">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+        </Style>
+        <Style Selector="Border.AssetRow.Cut">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+        <Style Selector="Border.AssetRow.Drop">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
             <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
-            <Setter Property="BorderThickness" Value="2" />
         </Style>
         <Style Selector="Border.AssetRow.Heading">
             <Setter Property="Margin" Value="0,8,0,0" />
@@ -71,6 +76,7 @@
             Margin="8,8,8,6">
             <Button
                 Classes="Primary Add"
+                Click="OnAddClick"
                 IsEnabled="{Binding IsAvailable}"
                 Name="AddButton">
                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -81,18 +87,16 @@
                         Width="14" />
                     <TextBlock Text="{l:Tr Add}" VerticalAlignment="Center" />
                 </StackPanel>
-                <Button.Flyout>
-                    <MenuFlyout Placement="BottomEdgeAlignedLeft" />
-                </Button.Flyout>
             </Button>
             <TextBox
                 AutomationProperties.Name="{l:Tr AssetsSearch}"
                 Classes="PropertySearch"
                 Grid.Column="1"
+                KeyDown="OnSearchKeyDown"
                 Margin="8,0,0,0"
                 Name="Search"
-                Text="{Binding Filter}"
-                PlaceholderText="{l:Tr Search}">
+                PlaceholderText="{l:Tr Search}"
+                Text="{Binding Filter}">
                 <TextBox.InnerLeftContent>
                     <c:Icon
                         Drawing="{StaticResource General.Search}"
@@ -102,137 +106,166 @@
                 </TextBox.InnerLeftContent>
             </TextBox>
         </Grid>
-        <Panel>
-            <TextBlock
-                Classes="Dim"
-                HorizontalAlignment="Center"
-                IsVisible="{Binding FindsNothing}"
-                Margin="16,30"
-                Text="{l:Tr AssetsNoMatch}"
-                TextAlignment="Center"
-                TextWrapping="Wrap"
-                VerticalAlignment="Top" />
-            <TextBlock
-                Classes="Dim"
-                HorizontalAlignment="Center"
-                IsVisible="{Binding !IsAvailable}"
-                Margin="16,30"
-                Text="{l:Tr AssetsWaitHost}"
-                TextAlignment="Center"
-                TextWrapping="Wrap"
-                VerticalAlignment="Top" />
-            <ScrollViewer>
-                <ItemsControl ItemsSource="{Binding Rows}" Margin="6,2,6,10">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="a:AssetRowViewModel">
-                            <Border
-                                Classes="AssetRow"
-                                Classes.Bad="{Binding IsProblem}"
-                                Classes.Given="{Binding IsGiven}"
-                                Classes.Heading="{Binding IsGivenHeading}"
-                                Classes.Selected="{Binding IsSelected}"
-                                ContextRequested="OnContextRequested"
-                                DoubleTapped="OnRowDoubleTapped"
-                                KeyDown="OnRowKeyDown"
-                                Tapped="OnRowTapped"
-                                ToolTip.Tip="{Binding Problem}">
-                                <Grid
-                                    ColumnDefinitions="Auto,Auto,*,Auto,Auto"
-                                    Margin="{Binding Indent, Converter={x:Static c:LeftMargin.Instance}}"
-                                    VerticalAlignment="Center">
-                                    <c:Icon
-                                        Classes="Chevron"
-                                        Drawing="{StaticResource General.ChevronRight}"
-                                        RenderTransform="{Binding IsExpanded, Converter={x:Static c:ChevronTurn.Instance}}"
-                                        Height="12"
-                                        IsVisible="{Binding Folds}"
-                                        Margin="6,0,7,0"
-                                        Width="12" />
-                                    <Panel
-                                        Grid.Column="1"
-                                        Margin="6,0,7,0"
-                                        VerticalAlignment="Center">
-                                        <Panel.IsVisible>
-                                            <MultiBinding Converter="{x:Static BoolConverters.Or}">
-                                                <Binding Path="IsAsset" />
-                                                <Binding Path="IsProblem" />
-                                                <Binding Path="IsGivenHeading" />
-                                            </MultiBinding>
-                                        </Panel.IsVisible>
-                                        <Border
-                                            Background="{Binding KindTint}"
-                                            Classes="KindSquare"
-                                            IsVisible="{Binding HasKind}">
+        <Border
+            Background="{DynamicResource ClearColor}"
+            ContextRequested="OnTreeContextRequested"
+            DragDrop.AllowDrop="True"
+            Focusable="True"
+            KeyDown="OnTreeKeyDown"
+            Name="Tree"
+            PointerPressed="OnTreePressed">
+            <Panel>
+                <TextBlock
+                    Classes="Dim"
+                    HorizontalAlignment="Center"
+                    IsVisible="{Binding FindsNothing}"
+                    Margin="16,30"
+                    Text="{l:Tr AssetsNoMatch}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap"
+                    VerticalAlignment="Top" />
+                <TextBlock
+                    Classes="Dim"
+                    HorizontalAlignment="Center"
+                    IsVisible="{Binding !IsAvailable}"
+                    Margin="16,30"
+                    Text="{l:Tr AssetsWaitHost}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap"
+                    VerticalAlignment="Top" />
+                <ScrollViewer Name="Scroller">
+                    <StackPanel Margin="6,2,6,10">
+                        <ItemsControl ItemsSource="{Binding Rows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="a:AssetRowViewModel">
+                                    <Border
+                                        Classes="AssetRow"
+                                        Classes.Bad="{Binding IsProblem}"
+                                        Classes.Cut="{Binding IsCut}"
+                                        Classes.Drop="{Binding IsDropTarget}"
+                                        Classes.Focused="{Binding IsFocused}"
+                                        Classes.Given="{Binding IsGiven}"
+                                        Classes.Heading="{Binding IsGivenHeading}"
+                                        Classes.Selected="{Binding IsSelected}"
+                                        ContextRequested="OnRowContextRequested"
+                                        DoubleTapped="OnRowDoubleTapped"
+                                        PointerMoved="OnRowPointerMoved"
+                                        PointerPressed="OnRowPressed"
+                                        PointerReleased="OnRowReleased"
+                                        ToolTip.Tip="{Binding Tip}">
+                                        <Grid
+                                            ColumnDefinitions="Auto,Auto,*,Auto,Auto"
+                                            Margin="{Binding Indent, Converter={x:Static c:LeftMargin.Instance}}"
+                                            VerticalAlignment="Center">
+                                            <Border
+                                                Background="{DynamicResource ClearColor}"
+                                                Name="Chevron"
+                                                Padding="6,0,7,0"
+                                                VerticalAlignment="Stretch"
+                                                Width="25">
+                                                <c:Icon
+                                                    Classes="Chevron"
+                                                    IsVisible="{Binding Folds}"
+                                                    Drawing="{StaticResource General.ChevronRight}"
+                                                    Height="12"
+                                                    RenderTransform="{Binding IsExpanded, Converter={x:Static c:ChevronTurn.Instance}}"
+                                                    VerticalAlignment="Center"
+                                                    Width="12" />
+                                            </Border>
+                                            <Panel
+                                                Grid.Column="1"
+                                                Margin="0,0,7,0"
+                                                VerticalAlignment="Center">
+                                                <Panel.IsVisible>
+                                                    <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                                        <Binding Path="IsAsset" />
+                                                        <Binding Path="IsProblem" />
+                                                    </MultiBinding>
+                                                </Panel.IsVisible>
+                                                <Border
+                                                    Background="{Binding KindTint}"
+                                                    Classes="KindSquare"
+                                                    IsVisible="{Binding HasKind}">
+                                                    <c:Icon
+                                                        Drawing="{Binding Icon, Converter={x:Static c:DrawingOf.Instance}}"
+                                                        Height="12"
+                                                        Tint="{Binding KindBrush}"
+                                                        Width="12" />
+                                                </Border>
+                                            </Panel>
                                             <c:Icon
-                                                Drawing="{Binding Icon, Converter={x:Static c:DrawingOf.Instance}}"
+                                                Drawing="{StaticResource General.Locked}"
+                                                Grid.Column="1"
                                                 Height="12"
-                                                Tint="{Binding KindBrush}"
+                                                IsVisible="{Binding IsGivenHeading}"
+                                                Margin="0,0,7,0"
                                                 Width="12" />
-                                        </Border>
-                                        <c:Icon
-                                            Drawing="{StaticResource General.Locked}"
-                                            Height="12"
-                                            IsVisible="{Binding IsGivenHeading}"
-                                            Width="12" />
-                                    </Panel>
-                                    <c:Icon
-                                        Drawing="{StaticResource Nodes.Folder}"
-                                        Grid.Column="1"
-                                        Height="16"
-                                        IsVisible="{Binding IsFolder}"
-                                        Margin="0,0,7,0"
-                                        Width="16" />
-                                    <TextBlock
-                                        Classes="AssetName"
-                                        Grid.Column="2"
-                                        IsVisible="{Binding IsShowingName}"
-                                        TextTrimming="CharacterEllipsis"
-                                        VerticalAlignment="Center">
-                                        <Run Text="{Binding Before}" /><Run
-                                            Background="{DynamicResource AccentEdgeColor}"
-                                            Foreground="{DynamicResource BrightColor}"
-                                            Text="{Binding Found}" /><Run Text="{Binding After}" />
-                                    </TextBlock>
-                                    <TextBox
-                                        AttachedToVisualTree="OnRenameAttached"
-                                        Classes="Rename"
-                                        Grid.Column="2"
-                                        IsVisible="{Binding IsRenaming}"
-                                        KeyDown="OnRenameKeyDown"
-                                        LostFocus="OnRenameLostFocus"
-                                        Margin="-5,0,6,0"
-                                        Text="{Binding EditName}" />
-                                    <Ellipse
-                                        Fill="{DynamicResource PausedColor}"
-                                        Grid.Column="3"
-                                        Height="6"
-                                        IsVisible="{Binding IsUnsaved}"
-                                        Margin="6,0,0,0"
-                                        ToolTip.Tip="{l:Tr UnsavedChanges}"
-                                        VerticalAlignment="Center"
-                                        Width="6" />
-                                    <TextBlock
-                                        Classes="Dim Figures"
-                                        FontSize="11"
-                                        Grid.Column="4"
-                                        IsVisible="{Binding HasCount}"
-                                        Margin="8,0,8,0"
-                                        Text="{Binding Count}"
-                                        ToolTip.Tip="{Binding CountTip}"
-                                        VerticalAlignment="Center" />
-                                    <c:Icon
-                                        Drawing="{StaticResource Status.Error}"
-                                        Grid.Column="4"
-                                        Height="14"
-                                        IsVisible="{Binding IsProblem}"
-                                        Margin="8,0,8,0"
-                                        Width="14" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Panel>
+                                            <c:Icon
+                                                Drawing="{StaticResource Nodes.Folder}"
+                                                Grid.Column="1"
+                                                Height="16"
+                                                IsVisible="{Binding IsFolder}"
+                                                Margin="0,0,7,0"
+                                                Width="16" />
+                                            <TextBlock
+                                                Classes="AssetName"
+                                                Grid.Column="2"
+                                                IsVisible="{Binding IsShowingName}"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center">
+                                                <Run Text="{Binding Before}" /><Run
+                                                    Background="{DynamicResource AccentEdgeColor}"
+                                                    Foreground="{DynamicResource BrightColor}"
+                                                    Text="{Binding Found}" /><Run Text="{Binding After}" />
+                                            </TextBlock>
+                                            <TextBox
+                                                AttachedToVisualTree="OnRenameAttached"
+                                                Classes="Rename"
+                                                Grid.Column="2"
+                                                IsVisible="{Binding IsRenaming}"
+                                                KeyDown="OnRenameKeyDown"
+                                                LostFocus="OnRenameLostFocus"
+                                                Margin="-5,0,6,0"
+                                                Text="{Binding EditName}" />
+                                            <Ellipse
+                                                Fill="{DynamicResource PausedColor}"
+                                                Grid.Column="3"
+                                                Height="6"
+                                                IsVisible="{Binding IsUnsaved}"
+                                                Margin="6,0,0,0"
+                                                ToolTip.Tip="{l:Tr UnsavedChanges}"
+                                                VerticalAlignment="Center"
+                                                Width="6" />
+                                            <TextBlock
+                                                Classes="Dim Figures"
+                                                FontSize="11"
+                                                Grid.Column="4"
+                                                IsVisible="{Binding HasCount}"
+                                                Margin="8,0,8,0"
+                                                Text="{Binding Count}"
+                                                ToolTip.Tip="{Binding CountTip}"
+                                                VerticalAlignment="Center" />
+                                            <c:Icon
+                                                Drawing="{StaticResource Status.Error}"
+                                                Grid.Column="4"
+                                                Height="14"
+                                                IsVisible="{Binding IsProblem}"
+                                                Margin="8,0,8,0"
+                                                Width="14" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock
+                            Classes="Dim"
+                            IsVisible="{Binding IsProjectEmpty}"
+                            Margin="10,12,10,0"
+                            Text="{l:Tr AssetsEmptyProject}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Panel>
+        </Border>
     </DockPanel>
 </UserControl>

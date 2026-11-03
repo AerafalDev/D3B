@@ -73,7 +73,13 @@
                     <Button AutomationProperties.Name="{l:Tr Characters}" Classes="Dd">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock
-                                Text="{Binding SelectedCharacter.Name, FallbackValue={l:Tr StatisticsEveryCharacter}}"
+                                IsVisible="{Binding SelectedCharacter, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                Text="{Binding SelectedCharacter.Name}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                IsVisible="{Binding SelectedCharacter, Converter={x:Static ObjectConverters.IsNull}}"
+                                Text="{l:Tr StatisticsEveryCharacter}"
                                 TextTrimming="CharacterEllipsis"
                                 VerticalAlignment="Center" />
                             <c:Icon

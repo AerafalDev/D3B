@@ -2004,7 +2004,7 @@
     <value>Export…</value>
   </data>
   <data name="ShowInFolder" xml:space="preserve">
-    <value>Show in the folder</value>
+    <value>Show in Explorer</value>
   </data>
   <data name="ProjectRoot" xml:space="preserve">
     <value>Project</value>
@@ -2290,5 +2290,107 @@
   </data>
   <data name="StatisticsSpan" xml:space="preserve">
     <value>{0} to {1}</value>
+  </data>
+  <data name="AssetProblemContent" xml:space="preserve">
+    <value>A value is missing or is not of its type</value>
+  </data>
+  <data name="AssetProblemNotJson" xml:space="preserve">
+    <value>It is not valid JSON</value>
+  </data>
+  <data name="AssetProblemWrongKind" xml:space="preserve">
+    <value>The kind it says is not its extension’s</value>
+  </data>
+  <data name="AssetProblemFormat" xml:space="preserve">
+    <value>Its format is missing, or newer than this version of D3B reads</value>
+  </data>
+  <data name="AssetProblemIdTaken" xml:space="preserve">
+    <value>Its id is another asset’s: saved from D3B, it takes a new one</value>
+  </data>
+  <data name="AssetProblemUnreadable" xml:space="preserve">
+    <value>The system does not let it be read</value>
+  </data>
+  <data name="AssetProblemNotAsset" xml:space="preserve">
+    <value>Its extension names no kind of asset</value>
+  </data>
+  <data name="NewSubfolder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="ImportHere" xml:space="preserve">
+    <value>Import files…</value>
+  </data>
+  <data name="DeleteFolder" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="DeleteFolderTitle" xml:space="preserve">
+    <value>Delete the folder {0}?</value>
+  </data>
+  <data name="DeleteFolderEmpty" xml:space="preserve">
+    <value>It holds no asset.</value>
+  </data>
+  <data name="DeleteFolderAssetsOne" xml:space="preserve">
+    <value>Its {0} asset is deleted with it.</value>
+  </data>
+  <data name="DeleteFolderAssetsOther" xml:space="preserve">
+    <value>Its {0} assets are deleted with it.</value>
+  </data>
+  <data name="AssetEditorLater" xml:space="preserve">
+    <value>{0}: its editor comes with session {1}.</value>
+  </data>
+  <data name="FolderHoldsOne" xml:space="preserve">
+    <value>{0} asset</value>
+  </data>
+  <data name="FolderHoldsOther" xml:space="preserve">
+    <value>{0} assets</value>
+  </data>
+  <data name="DeleteItemsTitleOne" xml:space="preserve">
+    <value>Delete {0} item?</value>
+  </data>
+  <data name="DeleteItemsTitleOther" xml:space="preserve">
+    <value>Delete {0} items?</value>
+  </data>
+  <data name="DeleteToRecycleBin" xml:space="preserve">
+    <value>It goes to the Windows recycle bin.</value>
+  </data>
+  <data name="AssetsImportedOne" xml:space="preserve">
+    <value>{0} asset imported</value>
+  </data>
+  <data name="AssetsImportedOther" xml:space="preserve">
+    <value>{0} assets imported</value>
+  </data>
+  <data name="MenuNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="ImportFiles" xml:space="preserve">
+    <value>Import files…</value>
+  </data>
+  <data name="Cut" xml:space="preserve">
+    <value>Cut</value>
+  </data>
+  <data name="PasteHere" xml:space="preserve">
+    <value>Paste here</value>
+  </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Collapse all</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>Expand all</value>
+  </data>
+  <data name="LocateTab" xml:space="preserve">
+    <value>Locate the open tab</value>
+  </data>
+  <data name="KindsShown" xml:space="preserve">
+    <value>Kinds shown</value>
+  </data>
+  <data name="ShowAllKinds" xml:space="preserve">
+    <value>Show every kind</value>
+  </data>
+  <data name="ReloadProject" xml:space="preserve">
+    <value>Read the folder again</value>
+  </data>
+  <data name="ShowProject" xml:space="preserve">
+    <value>Show the project in Explorer</value>
+  </data>
+  <data name="AssetsEmptyProject" xml:space="preserve">
+    <value>The project is empty. Add a profile, or drop asset files here.</value>
   </data>
 </root>

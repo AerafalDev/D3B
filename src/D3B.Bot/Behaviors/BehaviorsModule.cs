@@ -43,6 +43,11 @@ public sealed class BehaviorsModule : IModule
 
         bot.AddModule<BotsModule>();
 
-        Register(bot.Services, new StudioSettings { Path = Path.GetFullPath(bot.Configuration[StudioSettings.PathKey] ?? StudioSettings.DefaultPath) });
+        Register(bot.Services, new StudioSettings
+        {
+            Path = Path.GetFullPath(bot.Configuration[StudioSettings.PathKey] ?? StudioSettings.DefaultPath),
+            Recycles = bool.TryParse(bot.Configuration[StudioSettings.RecycleKey], out var recycles) && recycles,
+            Watches = bool.TryParse(bot.Configuration[StudioSettings.WatchKey], out var watches) && watches,
+        });
     }
 }

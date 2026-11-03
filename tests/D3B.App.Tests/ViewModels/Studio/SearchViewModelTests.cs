@@ -32,6 +32,22 @@ public sealed class SearchViewModelTests
     }
 
     [Fact]
+    public void TheTitlesFieldAndCtrlKOpenItWithNoParameterEverywhere()
+    {
+        var search = Search();
+
+        search.Open(SearchScope.Commands);
+        search.Close();
+
+        Assert.True(search.OpenCommand.CanExecute(null));
+
+        search.OpenCommand.Execute(null);
+
+        Assert.True(search.IsOpen);
+        Assert.Equal(SearchScope.All, search.Scope);
+    }
+
+    [Fact]
     public void EverywhereGroupsWhatItFindsEachGroupItsFirstFewAndTheTextFoundLit()
     {
         var search = Search();

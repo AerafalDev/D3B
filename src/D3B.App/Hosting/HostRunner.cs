@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using D3B.Bot.Assets;
 using D3B.Bot.Hosting;
 using D3B.Storage;
 using Microsoft.Extensions.Hosting;
@@ -45,7 +46,7 @@ internal sealed class HostRunner
     /// <param name="args">The command-line arguments, read as the host's configuration.</param>
     /// <param name="settings">The host's settings the app changed (D151), which its configuration and command line win over.</param>
     public HostRunner(string[] args, IReadOnlyDictionary<string, string?> settings)
-        : this(cancellationToken => BotHost.StartAsync(BotHost.CreateBuilder(args, settings).AddModule<StorageModule>(), cancellationToken))
+        : this(cancellationToken => BotHost.StartAsync(BotHost.CreateBuilder(args, WithStudio(settings)).AddModule<StorageModule>(), cancellationToken))
     {
     }
 
@@ -54,6 +55,18 @@ internal sealed class HostRunner
     internal HostRunner(Func<CancellationToken, Task<BotHostStart>> start)
     {
         _start = start;
+    }
+
+    // The app's studio sends what it deletes to the recycle bin and follows its folder as it changes (D358); the console
+    // host and the tests keep plain deletes and a folder read once, unless their configuration says otherwise.
+    private static Dictionary<string, string?> WithStudio(IReadOnlyDictionary<string, string?> settings)
+    {
+        var merged = new Dictionary<string, string?>(settings, StringComparer.OrdinalIgnoreCase);
+
+        merged.TryAdd(StudioSettings.RecycleKey, "true");
+        merged.TryAdd(StudioSettings.WatchKey, "true");
+
+        return merged;
     }
 
     /// <summary>Starts getting the host ready, off the caller's thread.</summary>

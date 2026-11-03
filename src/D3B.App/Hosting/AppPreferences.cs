@@ -35,14 +35,18 @@ internal sealed class AppPreferences
     /// <summary>Gets the studio's layout as it was left, if it was changed.</summary>
     public StudioLayoutState? Layout { get; private set; }
 
+    /// <summary>Gets the assets' folders folded, relative to the project's, as the tree was left (D358).</summary>
+    public IReadOnlyList<string> FoldedAssets { get; private set; } = [];
+
     /// <summary>Gets the host's settings the app changed, by their configuration's keys, which it gives the host as it starts.</summary>
     public IReadOnlyDictionary<string, string?> Host => _host.ToDictionary(setting => setting.Key, string? (setting) => setting.Value, StringComparer.OrdinalIgnoreCase);
 
-    private AppPreferences(string path, string? language, StudioLayoutState? layout, IReadOnlyDictionary<string, string>? host)
+    private AppPreferences(string path, string? language, StudioLayoutState? layout, IReadOnlyDictionary<string, string>? host, IReadOnlyList<string>? folded = null)
     {
         Path = path;
         Language = language;
         Layout = layout;
+        FoldedAssets = folded ?? [];
         _host = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (key, value) in host ?? new Dictionary<string, string>())
@@ -63,7 +67,7 @@ internal sealed class AppPreferences
         {
             var stored = JsonSerializer.Deserialize<Stored>(File.ReadAllText(path));
 
-            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host);
+            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host, stored?.FoldedAssets);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -84,6 +88,16 @@ internal sealed class AppPreferences
     public void RememberLayout(StudioLayoutState? layout)
     {
         Layout = layout;
+        Save();
+    }
+
+    /// <summary>Remembers the assets' folders folded.</summary>
+    /// <param name="folded">The folders, relative to the project's.</param>
+    public void RememberFoldedAssets(IReadOnlyCollection<string> folded)
+    {
+        ArgumentNullException.ThrowIfNull(folded);
+
+        FoldedAssets = [.. folded.Order(StringComparer.OrdinalIgnoreCase)];
         Save();
     }
 
@@ -109,7 +123,7 @@ internal sealed class AppPreferences
         try
         {
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null), _json));
+            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null, FoldedAssets.Count > 0 ? FoldedAssets : null), _json));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -117,5 +131,5 @@ internal sealed class AppPreferences
         }
     }
 
-    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host);
+    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host, IReadOnlyList<string>? FoldedAssets = null);
 }

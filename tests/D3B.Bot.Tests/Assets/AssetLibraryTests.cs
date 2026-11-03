@@ -45,7 +45,7 @@ public sealed class AssetLibraryTests : IDisposable
 
         Assert.Equal(["Harvest", "Mine", "Wheat"], _library.Assets.Select(asset => asset.Name));
         Assert.Equal(Path.Combine("farm", "Wheat.profile.json"), _library.Find("p2")?.Path);
-        Assert.Equal(["Broken.profile.json", "Other.profile.json"], _library.Problems.Select(problem => problem.Path).Order());
+        Assert.Equal([("Broken.profile.json", AssetProblemKind.NotJson), ("Other.profile.json", AssetProblemKind.IdTaken)], _library.Problems.Select(problem => (problem.Path, problem.Kind)).OrderBy(problem => problem.Path));
         Assert.Equal(["Mine", "Wheat"], _library.UsedBy("d3b.harvest").Select(asset => asset.Name));
     }
 
@@ -164,6 +164,70 @@ public sealed class AssetLibraryTests : IDisposable
 
         File.WriteAllText(_directory.Combine("notes.json"), "{}");
         await Assert.ThrowsAsync<AssetFormatException>(() => _library.ImportAsync(_directory.Combine("notes.json"), "", cancellationToken));
+    }
+
+    [Fact]
+    public async Task AFolderIsRenamedItsAssetsFollowingAndDeletedWithThem()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        await _library.LoadAsync([Given()], cancellationToken);
+        await _library.SaveAsync(new ProfileAsset { Id = "p1", Name = "Iron", Behavior = "d3b.harvest" }, cancellationToken, Path.Combine("mines", "astrub"));
+        await _library.SaveAsync(new ProfileAsset { Id = "p2", Name = "Ash", Behavior = "d3b.harvest" }, cancellationToken);
+
+        var renamed = await _library.RenameFolderAsync("mines", "Mines", cancellationToken);
+
+        Assert.Equal("Mines", renamed);
+        Assert.Equal(Path.Combine("Mines", "astrub", "Iron.profile.json"), _library.Find("p1")?.Path);
+        Assert.True(File.Exists(Path.Combine(_library.Folder, "Mines", "astrub", "Iron.profile.json")));
+        Assert.Equal(["p1"], _library.AssetsIn("Mines").Select(asset => asset.Id));
+
+        await _library.CreateFolderAsync("farm", cancellationToken);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _library.RenameFolderAsync("farm", "Mines", cancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(() => _library.RenameFolderAsync("farm", "a/b", cancellationToken));
+
+        var deleted = await _library.DeleteFolderAsync("Mines", cancellationToken);
+
+        Assert.Equal(["p1"], deleted.Select(asset => asset.Id));
+        Assert.Null(_library.Find("p1"));
+        Assert.NotNull(_library.Find("p2"));
+        Assert.False(Directory.Exists(Path.Combine(_library.Folder, "Mines")));
+        Assert.Equal(["farm"], _library.Folders);
+        await Assert.ThrowsAsync<ArgumentException>(() => _library.DeleteFolderAsync("", cancellationToken));
+    }
+
+    [Fact]
+    public async Task AFolderMovesIntoAnotherWithWhatItHoldsButNeverIntoItself()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        await _library.LoadAsync([Given()], cancellationToken);
+        await _library.SaveAsync(new ProfileAsset { Id = "p1", Name = "Iron", Behavior = "d3b.harvest" }, cancellationToken, Path.Combine("mines", "astrub"));
+        await _library.CreateFolderAsync("farm", cancellationToken);
+
+        var moved = await _library.MoveFolderAsync("mines", "farm", cancellationToken);
+
+        Assert.Equal(Path.Combine("farm", "mines"), moved);
+        Assert.Equal(Path.Combine("farm", "mines", "astrub", "Iron.profile.json"), _library.Find("p1")?.Path);
+        await Assert.ThrowsAsync<ArgumentException>(() => _library.MoveFolderAsync("farm", Path.Combine("farm", "mines"), cancellationToken));
+
+        await _library.MoveFolderAsync(Path.Combine("farm", "mines"), "", cancellationToken);
+
+        Assert.Equal(Path.Combine("mines", "astrub", "Iron.profile.json"), _library.Find("p1")?.Path);
+    }
+
+    [Fact]
+    public async Task AWatchedProjectIsReadAgainAsAFileComesBesideD3B()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var watched = new AssetLibrary(new StudioSettings { Path = _directory.Combine("watched"), Watches = true });
+
+        Directory.CreateDirectory(watched.Folder);
+        await watched.LoadAsync([Given()], cancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(watched.Folder, "Dropped.profile.json"), """{"id":"p9","kind":"profile","format":1,"behavior":"d3b.harvest"}""", cancellationToken);
+        await D3B.Bot.Tests.Behaviors.TestBehaviors.UntilAsync(() => watched.Find("p9") is not null);
+
+        Assert.Equal("Dropped", watched.Find("p9")?.Name);
     }
 
     [Theory]

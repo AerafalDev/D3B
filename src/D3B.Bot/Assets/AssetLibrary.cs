@@ -24,7 +24,15 @@ public sealed class AssetLibrary : IDisposable
     /// <summary>The greatest length of an asset's name.</summary>
     public const int NameLength = 60;
 
+    // A burst of changes, a folder pasted in the file manager, is read once it is over.
+    private static readonly TimeSpan _settle = TimeSpan.FromMilliseconds(400);
+
     private readonly SemaphoreSlim _writing = new(1, 1);
+    private readonly bool _recycles;
+    private readonly bool _watches;
+    private readonly Lock _watching = new();
+    private FileSystemWatcher? _watcher;
+    private Timer? _reading;
     private volatile Snapshot _snapshot = Snapshot.Empty;
     private IReadOnlyList<Asset> _given = [];
 
@@ -50,6 +58,8 @@ public sealed class AssetLibrary : IDisposable
         ArgumentNullException.ThrowIfNull(settings);
 
         Folder = Path.GetFullPath(settings.Path);
+        _recycles = settings.Recycles;
+        _watches = settings.Watches;
     }
 
     /// <summary>Gets an id for a new asset, never another's.</summary>
@@ -78,6 +88,11 @@ public sealed class AssetLibrary : IDisposable
             return "An asset's name is what a file may be named: no \\ / : * ? \" < > |, nor a dot at its end.";
 
         return null;
+    }
+
+    private static bool IsIn(string path, string folder)
+    {
+        return path.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Finds an asset by its id.</summary>
@@ -165,18 +180,19 @@ public sealed class AssetLibrary : IDisposable
                         var asset = AssetFiles.Read(await File.ReadAllTextAsync(file, cancellationToken).ConfigureAwait(false), name, path, kind);
 
                         if (!ids.Add(asset.Id))
-                            problems.Add(new AssetProblem(path, $"Its id {asset.Id} is another asset's: copied by hand, it takes a new id once saved from the app."));
+                            problems.Add(new AssetProblem(path, $"Its id {asset.Id} is another asset's: copied by hand, it takes a new id once saved from the app.") { Kind = AssetProblemKind.IdTaken });
                         else
                             read.Add(asset);
                     }
                     catch (Exception exception) when (exception is AssetFormatException or IOException or UnauthorizedAccessException)
                     {
-                        problems.Add(new AssetProblem(path, exception.Message));
+                        problems.Add(new AssetProblem(path, exception.Message) { Kind = exception is AssetFormatException format ? format.Kind : AssetProblemKind.Unreadable });
                     }
                 }
             }
 
             _snapshot = Snapshot.Of([.. given, .. read], problems, FoldersOn(), _snapshot.Version + 1);
+            Watch();
         }
         finally
         {
@@ -235,6 +251,7 @@ public sealed class AssetLibrary : IDisposable
                 File.Delete(Path.Combine(Folder, old));
 
             _snapshot = Snapshot.Of([.. _snapshot.Assets.Where(other => other.Id != asset.Id), saved], _snapshot.Problems, FoldersOn(), _snapshot.Version + 1);
+            Watch();
 
             return saved;
         }
@@ -264,7 +281,7 @@ public sealed class AssetLibrary : IDisposable
                 throw new InvalidOperationException($"The asset {id} was given with the app.");
 
             if (asset.Path is { } path)
-                File.Delete(Path.Combine(Folder, path));
+                Discard(Path.Combine(Folder, path), directory: false);
 
             _snapshot = Snapshot.Of([.. _snapshot.Assets.Where(other => other.Id != id)], _snapshot.Problems, _snapshot.Folders, _snapshot.Version + 1);
         }
@@ -294,11 +311,106 @@ public sealed class AssetLibrary : IDisposable
         {
             Directory.CreateDirectory(Path.Combine(Folder, inside));
             _snapshot = Snapshot.Of(_snapshot.Assets, _snapshot.Problems, FoldersOn(), _snapshot.Version + 1);
+            Watch();
         }
         finally
         {
             _writing.Release();
         }
+    }
+
+    /// <summary>Renames a folder of the project, the assets in it keeping their ids and names.</summary>
+    /// <param name="folder">The folder, relative to the project's.</param>
+    /// <param name="name">Its new name, a name a file may have.</param>
+    /// <param name="cancellationToken">Stops the write.</param>
+    /// <returns>The folder renamed, relative to the project's.</returns>
+    /// <exception cref="ArgumentException">The name does not do, or the folder is the project's own.</exception>
+    /// <exception cref="InvalidOperationException">Another file or folder of the name is there already.</exception>
+    public async Task<string> RenameFolderAsync(string folder, string name, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+        ArgumentNullException.ThrowIfNull(name);
+
+        var inside = Inside(folder);
+        var trimmed = name.Trim();
+
+        if (inside.Length == 0)
+            throw new ArgumentException("The project's own folder is not renamed.", nameof(folder));
+
+        if (NameProblem(trimmed) is { } problem)
+            throw new ArgumentException(problem, nameof(name));
+
+        return await PlaceFolderAsync(inside, Path.Combine(Path.GetDirectoryName(inside) ?? "", trimmed), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Moves a folder of the project into another, or to the project's root, the assets in it keeping their ids and names.</summary>
+    /// <param name="folder">The folder, relative to the project's.</param>
+    /// <param name="parent">The folder it goes into, relative to the project's; empty for the root.</param>
+    /// <param name="cancellationToken">Stops the write.</param>
+    /// <returns>The folder moved, relative to the project's.</returns>
+    /// <exception cref="ArgumentException">The folder is the project's own, or the parent is the folder or one of its own.</exception>
+    /// <exception cref="InvalidOperationException">Another file or folder of its name is in the parent already.</exception>
+    public async Task<string> MoveFolderAsync(string folder, string parent, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+        ArgumentNullException.ThrowIfNull(parent);
+
+        var inside = Inside(folder);
+        var into = Inside(parent);
+
+        if (inside.Length == 0)
+            throw new ArgumentException("The project's own folder is not moved.", nameof(folder));
+
+        if (string.Equals(into, inside, StringComparison.OrdinalIgnoreCase) || IsIn(into, inside))
+            throw new ArgumentException($"{folder} is not moved into itself.", nameof(parent));
+
+        return await PlaceFolderAsync(inside, Path.Combine(into, Path.GetFileName(inside)), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Deletes a folder of the project, its own folders and every file in them; what referenced its assets is left referencing nothing.</summary>
+    /// <param name="folder">The folder, relative to the project's.</param>
+    /// <param name="cancellationToken">Stops the write.</param>
+    /// <returns>The assets deleted with it.</returns>
+    /// <exception cref="ArgumentException">The folder is the project's own.</exception>
+    public async Task<IReadOnlyList<Asset>> DeleteFolderAsync(string folder, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+
+        var inside = Inside(folder);
+
+        if (inside.Length == 0)
+            throw new ArgumentException("The project's own folder is not deleted.", nameof(folder));
+
+        await _writing.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            var deleted = _snapshot.Assets.Where(asset => asset.Path is { } path && IsIn(path, inside)).ToList();
+            var directory = Path.Combine(Folder, inside);
+
+            if (Directory.Exists(directory))
+                Discard(directory, directory: true);
+
+            _snapshot = Snapshot.Of([.. _snapshot.Assets.Except(deleted)], [.. _snapshot.Problems.Where(item => !IsIn(item.Path, inside))], FoldersOn(), _snapshot.Version + 1);
+
+            return deleted;
+        }
+        finally
+        {
+            _writing.Release();
+        }
+    }
+
+    /// <summary>Gets the assets of the project in a folder or one of its own.</summary>
+    /// <param name="folder">The folder, relative to the project's.</param>
+    /// <returns>The assets, in <see cref="Assets"/>'s order.</returns>
+    public IReadOnlyList<Asset> AssetsIn(string folder)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+
+        var inside = Inside(folder);
+
+        return [.. Assets.Where(asset => asset.Path is { } path && IsIn(path, inside))];
     }
 
     /// <summary>Moves an asset of the project to another folder, its file with it, its id and name kept.</summary>
@@ -358,7 +470,7 @@ public sealed class AssetLibrary : IDisposable
         ArgumentNullException.ThrowIfNull(file);
 
         if (!AssetFiles.TryKindOf(Path.GetFileName(file), out var kind, out var name))
-            throw new AssetFormatException($"{Path.GetFileName(file)} is no asset's file: its extension names no kind.");
+            throw new AssetFormatException($"{Path.GetFileName(file)} is no asset's file: its extension names no kind.") { Kind = AssetProblemKind.NotAsset };
 
         var asset = AssetFiles.Read(await File.ReadAllTextAsync(file, cancellationToken).ConfigureAwait(false), name, Path.GetFileName(file), kind) with { Path = null };
 
@@ -393,10 +505,119 @@ public sealed class AssetLibrary : IDisposable
         return asset.Path is { } path ? Path.Combine(Folder, path) : null;
     }
 
+    /// <summary>Reads the project's folder again, with the assets given with the app it was read with.</summary>
+    /// <param name="cancellationToken">Stops the read.</param>
+    /// <returns>A task that completes once read.</returns>
+    public Task ReloadAsync(CancellationToken cancellationToken)
+    {
+        return LoadAsync(_given, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public void Dispose()
     {
+        lock (_watching)
+        {
+            _watcher?.Dispose();
+            _watcher = null;
+            _reading?.Dispose();
+            _reading = null;
+        }
+
         _writing.Dispose();
+    }
+
+    private async Task<string> PlaceFolderAsync(string inside, string placed, CancellationToken cancellationToken)
+    {
+        await _writing.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (string.Equals(placed, inside, StringComparison.Ordinal))
+                return inside;
+
+            var target = Path.Combine(Folder, placed);
+
+            // A change of case alone is a move Windows makes, the folder being the same.
+            if (!string.Equals(placed, inside, StringComparison.OrdinalIgnoreCase) && (Directory.Exists(target) || File.Exists(target)))
+                throw new InvalidOperationException($"{placed} is there already.");
+
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            Directory.Move(Path.Combine(Folder, inside), target);
+
+            var assets = _snapshot.Assets.Select(asset => asset.Path is { } path && IsIn(path, inside) ? asset with { Path = placed + path[inside.Length..] } : asset).ToList();
+            var problems = _snapshot.Problems.Select(item => IsIn(item.Path, inside) ? item with { Path = placed + item.Path[inside.Length..] } : item).ToList();
+
+            _snapshot = Snapshot.Of(assets, problems, FoldersOn(), _snapshot.Version + 1);
+
+            return placed;
+        }
+        finally
+        {
+            _writing.Release();
+        }
+    }
+
+    private void Discard(string path, bool directory)
+    {
+        if (_recycles && OperatingSystem.IsWindows())
+        {
+            if (directory)
+                Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+            else
+                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+        }
+        else if (directory)
+        {
+            Directory.Delete(path, recursive: true);
+        }
+        else
+        {
+            File.Delete(path);
+        }
+    }
+
+    // The folder is watched once it exists, which the first write makes; a change, D3B's own included, reads it again.
+    private void Watch()
+    {
+        if (!_watches || !Directory.Exists(Folder))
+            return;
+
+        lock (_watching)
+        {
+            if (_watcher is not null)
+                return;
+
+            _reading = new Timer(_ => _ = ReadAgainAsync(), null, Timeout.Infinite, Timeout.Infinite);
+            _watcher = new FileSystemWatcher(Folder) { IncludeSubdirectories = true, NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite };
+            _watcher.Created += OnFolderChanged;
+            _watcher.Deleted += OnFolderChanged;
+            _watcher.Renamed += OnFolderChanged;
+            _watcher.Changed += OnFolderChanged;
+            _watcher.EnableRaisingEvents = true;
+        }
+    }
+
+    private void OnFolderChanged(object sender, FileSystemEventArgs e)
+    {
+        // A file half written beside its asset's, then moved over it, is no change of its own.
+        if (e.Name?.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) == true)
+            return;
+
+        lock (_watching)
+            _reading?.Change(_settle, Timeout.InfiniteTimeSpan);
+    }
+
+    private async Task ReadAgainAsync()
+    {
+        try
+        {
+            await ReloadAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (ObjectDisposedException)
+        {
+            // The host stopped as the folder changed.
+        }
     }
 
     // A folder said with either separator, relative to the project's, which never leaves it.

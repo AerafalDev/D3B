@@ -105,7 +105,7 @@
             <Setter Property="Grid.Column" Value="2" />
             <Setter Property="Margin" Value="16,0" />
         </Style>
-        <Style Selector=":is(UserControl).Narrow Grid.FieldRow > StackPanel.FieldName">
+        <Style Selector=":is(UserControl).Narrow Grid.FieldRow > TextBlock.FieldName">
             <Setter Property="Grid.ColumnSpan" Value="2" />
         </Style>
         <Style Selector=":is(UserControl).Narrow Grid.FieldRow > StackPanel.FieldControl">
@@ -580,25 +580,29 @@
                         RenderOptions.BitmapInterpolationMode="HighQuality"
                         Source="{Binding Option.Icon}"
                         Width="{Binding Option.IconSize}" />
-                    <StackPanel
+                    <Grid
+                        ColumnDefinitions="Auto,Auto,*"
                         Grid.Column="2"
-                        Orientation="Horizontal"
-                        Spacing="8"
                         VerticalAlignment="Center">
                         <TextBlock Text="{Binding Option.Name}" TextTrimming="CharacterEllipsis" />
                         <Image
+                            Grid.Column="1"
                             Height="14"
                             IsVisible="{Binding Option.DetailIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Margin="8,0,0,0"
                             RenderOptions.BitmapInterpolationMode="HighQuality"
                             Source="{Binding Option.DetailIcon}"
                             VerticalAlignment="Center"
                             Width="14" />
                         <TextBlock
                             Classes="Dim"
+                            Grid.Column="2"
                             IsVisible="{Binding Option.HasDetail}"
+                            Margin="6,0,0,0"
                             Text="{Binding Option.Detail}"
-                            TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip.Tip="{Binding Option.Detail}" />
+                    </Grid>
                     <c:Icon
                         Drawing="{StaticResource Status.Warning}"
                         Grid.Column="3"
@@ -641,7 +645,7 @@
     <Grid ColumnDefinitions="*,Auto" Name="Body">
         <DockPanel>
             <StackPanel DockPanel.Dock="Top" Margin="24,16,24,0" Name="Header">
-                <Grid ColumnDefinitions="Auto,*,Auto">
+                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
                     <Border
                         Background="#2A2238"
                         CornerRadius="10"
@@ -654,13 +658,19 @@
                             Tint="#C9A7F2"
                             Width="18" />
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="14,0,12,0">
-                        <TextBox
-                            AutomationProperties.Name="{l:Tr ProfileName}"
-                            Classes="NameEdit"
-                            IsReadOnly="{Binding IsReadOnly}"
-                            Text="{Binding EditName}" />
-                        <WrapPanel Margin="0,2,0,0">
+                    <TextBox
+                        AutomationProperties.Name="{l:Tr ProfileName}"
+                        Classes="NameEdit"
+                        Grid.Column="1"
+                        IsReadOnly="{Binding IsReadOnly}"
+                        Margin="14,0,12,0"
+                        Text="{Binding EditName}"
+                        VerticalAlignment="Center" />
+                    <WrapPanel
+                        Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Grid.Row="1"
+                        Margin="14,2,0,0">
                             <TextBlock
                                 Classes="Dim"
                                 Margin="0,0,5,0"
@@ -706,8 +716,7 @@
                                 Margin="0,0,8,0"
                                 Text="{l:Tr GivenReadOnly}"
                                 VerticalAlignment="Center" />
-                        </WrapPanel>
-                    </StackPanel>
+                    </WrapPanel>
                     <StackPanel
                         Grid.Column="2"
                         Orientation="Horizontal"
@@ -788,6 +797,7 @@
                 DockPanel.Dock="Top"
                 Margin="0,12,0,0"
                 Padding="20,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding Editor.Sections, FallbackValue={x:Null}}" Name="SectionBar">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -826,6 +836,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                </ScrollViewer>
             </Border>
             <ScrollViewer Name="Form">
                 <StackPanel IsEnabled="{Binding !IsReadOnly}" Margin="12,4,24,48">
@@ -861,7 +872,7 @@
                                                 <Grid
                                                     Classes="FieldRow"
                                                     Classes.Changed="{Binding IsChanged}"
-                                                    ColumnDefinitions="12,150,*,26"
+                                                    ColumnDefinitions="12,170,*,26"
                                                     RowDefinitions="Auto,Auto">
                                                     <Border
                                                         Background="{DynamicResource AccentColor}"
@@ -871,26 +882,23 @@
                                                         HorizontalAlignment="Left"
                                                         Margin="0,12"
                                                         Width="2" />
-                                                    <StackPanel
-                                                        Classes="FieldName"
+                                                    <TextBlock
+                                                        Classes="FieldLabel FieldName"
                                                         Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        Spacing="6"
+                                                        LineHeight="17"
+                                                        TextWrapping="Wrap"
                                                         VerticalAlignment="Center">
-                                                        <TextBlock
-                                                            Classes="FieldLabel"
-                                                            Text="{Binding Label}"
-                                                            TextTrimming="CharacterEllipsis"
-                                                            VerticalAlignment="Center" />
-                                                        <c:Icon
-                                                            Classes="FieldHelp"
-                                                            Drawing="{StaticResource General.QuestionMark}"
-                                                            Height="14"
-                                                            IsVisible="{Binding HasHelp}"
-                                                            ToolTip.Tip="{Binding Help}"
-                                                            VerticalAlignment="Center"
-                                                            Width="14" />
-                                                    </StackPanel>
+                                                        <Run Text="{Binding Label}" /><InlineUIContainer BaselineAlignment="Center">
+                                                            <c:Icon
+                                                                Classes="FieldHelp"
+                                                                Drawing="{StaticResource General.QuestionMark}"
+                                                                Height="14"
+                                                                IsVisible="{Binding HasHelp}"
+                                                                Margin="4,0,0,0"
+                                                                ToolTip.Tip="{Binding Help}"
+                                                                Width="14" />
+                                                        </InlineUIContainer>
+                                                    </TextBlock>
                                                     <StackPanel
                                                         Classes="FieldControl"
                                                         Spacing="4"

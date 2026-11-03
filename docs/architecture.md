@@ -615,8 +615,9 @@ D356), the pages of D101 and D162 gone.
   gauges, then the behavior's states, the one playing lit (`BotActivity.Outline`); its session, a tile per resource with
   its rate an hour, the profession raised, fights, deposits and kamas; its latest decisions, from its journal, and a way
   to its whole trace in the bottom panel (D353).
-- **The assets' panel** (D326, D351, `AssetsViewModel` in `D3B.App.ViewModels.Assets`, `AssetsView`): Add and a search
-  over the project's tree, its folders first, then their assets and the files that do not read, then those given with
+- **The assets' panel** (D326, D351, D358, `AssetsViewModel` in `D3B.App.ViewModels.Assets`, `AssetsView`): as an IDE's
+  explorer, several rows chosen, the keyboard, drag and drop, cut and paste, IntelliJ's menus, the kinds shown, the open
+  tab located, the folds kept in `app.json`; Add and a search over the project's tree, its folders first, then their assets and the files that do not read, then those given with
   D3B, read only; each kind its IntelliJ icon on its colour (`AssetKinds`), how many use it, a dot while its tab has
   changes not saved. A click chooses an asset for the inspector or folds a folder, a double click or Enter opens a
   profile in its tab; the right click opens, finds what uses it, renames in place (F2), duplicates (Ctrl D), moves,

@@ -39,7 +39,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
     private static List<string> Texts(Visual root)
     {
-        return [.. root.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text).OfType<string>().Where(text => text.Length > 0)];
+        return [.. root.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Concat(block.Inlines?.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text) ?? [])).Where(text => text.Length > 0)];
     }
 
     private static int Icons(Window window)
@@ -484,7 +484,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Equal(2, icons);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Statistiques", french);
-        Assert.Contains("Tous les persos", french);
+        Assert.Contains("Tous les personnages", french);
         Assert.Contains("En cours", french);
         Assert.Contains("Frêne", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));

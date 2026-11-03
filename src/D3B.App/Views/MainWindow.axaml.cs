@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using D3B.App.Controls;
@@ -63,6 +64,7 @@ internal sealed partial class MainWindow : ShadUI.Window
             _main.OpenFolder = null;
             _main.RevealFile = null;
             _main.OpenFile = null;
+            _main.CopyText = null;
             _main.FocusAssets = null;
             _main.Assets.PickExport = null;
             _main.Assets.PickImport = null;
@@ -78,6 +80,7 @@ internal sealed partial class MainWindow : ShadUI.Window
             _main.OpenFolder = OpenFolder;
             _main.RevealFile = RevealFile;
             _main.OpenFile = OpenFile;
+            _main.CopyText = text => _ = Clipboard?.SetTextAsync(text);
             _main.FocusAssets = () => Avalonia.Threading.Dispatcher.UIThread.Post(AssetsPanel.FocusSearch);
             _main.Assets.PickExport = PickExportAsync;
             _main.Assets.PickImport = PickImportAsync;
@@ -177,15 +180,21 @@ internal sealed partial class MainWindow : ShadUI.Window
         return file?.TryGetLocalPath();
     }
 
-    private async Task<string?> PickImportAsync()
+    private async Task<IReadOnlyList<string>> PickImportAsync()
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            AllowMultiple = false,
+            AllowMultiple = true,
             FileTypeFilter = [new FilePickerFileType("D3B") { Patterns = ["*.json"] }],
         });
 
-        return files.Count > 0 ? files[0].TryGetLocalPath() : null;
+        return [.. files.Select(file => file.TryGetLocalPath()).OfType<string>()];
+    }
+
+    private void OnAssetsFilterClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control anchor)
+            AssetsPanel.OpenFilter(anchor);
     }
 
     private void OnDialogsChanged(object? sender, PropertyChangedEventArgs e)

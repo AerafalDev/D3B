@@ -79,11 +79,13 @@ internal sealed partial class SearchViewModel : ObservableObject
     }
 
     /// <summary>Opens the search, empty, on a scope.</summary>
-    /// <param name="scope">The scope, everywhere by default.</param>
+    /// <param name="scope">The scope, everywhere when none is given.</param>
     [RelayCommand]
-    public void Open(SearchScope scope = SearchScope.All)
+    public void Open(SearchScope? scope = null)
     {
-        Scope = scope;
+        // Nullable, so that the command runs with no parameter, as the title's field and Ctrl K give none: a command of a
+        // value type refuses a missing one.
+        Scope = scope ?? SearchScope.All;
         Query = "";
         IsOpen = true;
         Search();

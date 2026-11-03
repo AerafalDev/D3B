@@ -42,7 +42,7 @@ public sealed class AssetsViewsTests
         await store.Accounts.AssignAsync(TestPlay.Key, walker.Id, ct);
 
         var runner = await TestHosts.RunningAsync(store.Host);
-        var (english, french, tab) = await OnTheUIThreadAsync(() =>
+        var (english, french, tab, add) = await OnTheUIThreadAsync(() =>
         {
             var localizer = Localizer.Instance;
 
@@ -58,6 +58,10 @@ public sealed class AssetsViewsTests
 
             var dock = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "AssetsDock");
             var english = Texts(dock);
+            var panel = dock.GetVisualDescendants().OfType<AssetsView>().Single();
+
+            var menu = panel.AddMenu();
+            var add = (menu is not null, menu?.Items.OfType<MenuItem>().Select(item => (item.Header as string ?? (item.Header as Control)?.GetVisualDescendants().OfType<TextBlock>().LastOrDefault()?.Text ?? string.Concat((item.Header as DockPanel)?.Children.OfType<TextBlock>().Select(block => block.Text) ?? []), item.IsEnabled)).ToList());
 
             main.OpenAsset(walker.Id);
             main.Refresh();
@@ -82,7 +86,7 @@ public sealed class AssetsViewsTests
             localizer.Use(Localizer.English);
             window.Close();
 
-            return (english, french, tab);
+            return (english, french, tab, add);
         });
 
         Assert.Contains("Lumberjack", english);
@@ -97,5 +101,13 @@ public sealed class AssetsViewsTests
         Assert.Contains("Tout remettre", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Equal(("profile:" + walker.Id, "Walker", true), tab);
+
+        // Add offers each kind, the profile alone made today, then a folder and an import.
+        Assert.True(add.Item1);
+        Assert.Contains(("Profile", true), add.Item2!);
+        Assert.Contains(("Folder", true), add.Item2!);
+        Assert.Contains(add.Item2!, item => item is { Item2: false });
+        Assert.All(english.Concat(french), text => Assert.DoesNotContain("Avalonia.", text, StringComparison.Ordinal));
+        Assert.All(english.Concat(french), text => Assert.DoesNotContain("D3B.App.", text, StringComparison.Ordinal));
     }
 }

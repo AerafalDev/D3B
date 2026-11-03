@@ -54,7 +54,13 @@
                     <Button AutomationProperties.Name="{l:Tr TraceCharacter}" Classes="Dd">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock
-                                Text="{Binding Bot.Name, FallbackValue={l:Tr TraceNoCharacter}}"
+                                IsVisible="{Binding Bot, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                Text="{Binding Bot.Name}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                IsVisible="{Binding Bot, Converter={x:Static ObjectConverters.IsNull}}"
+                                Text="{l:Tr TraceNoCharacter}"
                                 TextTrimming="CharacterEllipsis"
                                 VerticalAlignment="Center" />
                             <c:Icon
@@ -104,7 +110,13 @@
                         IsEnabled="{Binding HasBehavior}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock
-                                Text="{Binding Run.Label, FallbackValue={l:Tr TraceNoRun}}"
+                                IsVisible="{Binding Run, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                Text="{Binding Run.Label}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                IsVisible="{Binding Run, Converter={x:Static ObjectConverters.IsNull}}"
+                                Text="{l:Tr TraceNoRun}"
                                 TextTrimming="CharacterEllipsis"
                                 VerticalAlignment="Center" />
                             <c:Icon

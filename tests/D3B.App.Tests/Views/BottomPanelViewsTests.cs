@@ -130,5 +130,9 @@ public sealed class BottomPanelViewsTests : IAsyncDisposable
         Assert.Contains("Envoyés", tabs[BottomTab.Protocol]);
         Assert.Contains("Ortie", tabs[BottomTab.Statistics]);
         Assert.All(tabs.Values.SelectMany(texts => texts), text => Assert.False(text.StartsWith('[') && text.EndsWith(']'), text));
+
+        // A text a toolbar shows when nothing is chosen is the app's, never a binding the view could not read.
+        Assert.Contains("Tous les personnages", tabs[BottomTab.Statistics]);
+        Assert.All(tabs.Values.SelectMany(texts => texts), text => Assert.DoesNotContain("Avalonia.Data", text, StringComparison.Ordinal));
     }
 }

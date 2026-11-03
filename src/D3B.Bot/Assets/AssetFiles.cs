@@ -87,23 +87,23 @@ public static class AssetFiles
 
         try
         {
-            root = JsonNode.Parse(json) as JsonObject ?? throw new AssetFormatException("The file holds no JSON object.");
+            root = JsonNode.Parse(json) as JsonObject ?? throw new AssetFormatException("The file holds no JSON object.") { Kind = AssetProblemKind.NotJson };
         }
         catch (JsonException exception)
         {
-            throw new AssetFormatException($"The file is no JSON: {exception.Message}", exception);
+            throw new AssetFormatException($"The file is no JSON: {exception.Message}", exception) { Kind = AssetProblemKind.NotJson };
         }
 
         var id = Text(root, "id");
         var said = Text(root, "kind");
 
         if (!string.Equals(said, NameOf(kind), StringComparison.Ordinal))
-            throw new AssetFormatException($"The file says it is a {said}, its extension a {NameOf(kind)}.");
+            throw new AssetFormatException($"The file says it is a {said}, its extension a {NameOf(kind)}.") { Kind = AssetProblemKind.WrongKind };
 
-        var format = root["format"] is JsonValue value && value.TryGetValue<int>(out var number) ? number : throw new AssetFormatException("The file says no format.");
+        var format = root["format"] is JsonValue value && value.TryGetValue<int>(out var number) ? number : throw new AssetFormatException("The file says no format.") { Kind = AssetProblemKind.Format };
 
         if (format > Format || format < 1)
-            throw new AssetFormatException($"The file's format is {format}, which this version of D3B does not read: it reads up to {Format}.");
+            throw new AssetFormatException($"The file's format is {format}, which this version of D3B does not read: it reads up to {Format}.") { Kind = AssetProblemKind.Format };
 
         var client = root["client"]?.GetValue<string>();
 

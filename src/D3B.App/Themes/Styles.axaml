@@ -7,6 +7,11 @@
          24, 32; fonts 11, 12, 12.5 the studio's text, 14 the pages', 16, 22, 28; the studio's controls 24 to 30 high, the
          pages' 32 and 36; radii 6, 7, 10, 12, round; icons 12, 14, 16, 20. The studio's frame follows the mockup,
          docs/mockups/studio-7c.html; the pages it keeps until 7c3 and 7c4 keep their own.  -->
+    <!--  A field of one line never scrolls up and down: the studio's fields, lower than ShadUI's, would show a bar beside the text.  -->
+    <Style Selector="TextBox[AcceptsReturn=False]">
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Hidden" />
+    </Style>
     <Style Selector="TextBlock.Caption">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />

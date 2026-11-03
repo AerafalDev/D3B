@@ -80,7 +80,13 @@
                         IsEnabled="{Binding !HasNoBot}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock
-                                Text="{Binding Bot.Name, FallbackValue={l:Tr ProtocolNoCharacter}}"
+                                IsVisible="{Binding Bot, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                Text="{Binding Bot.Name}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                IsVisible="{Binding Bot, Converter={x:Static ObjectConverters.IsNull}}"
+                                Text="{l:Tr ProtocolNoCharacter}"
                                 TextTrimming="CharacterEllipsis"
                                 VerticalAlignment="Center" />
                             <c:Icon

@@ -3,6 +3,9 @@ namespace D3B.Bot.Assets;
 /// <summary>A file of the project that does not read as an asset, and why.</summary>
 public sealed class AssetFormatException : Exception
 {
+    /// <summary>Gets why, as the app says it.</summary>
+    public AssetProblemKind Kind { get; init; } = AssetProblemKind.Content;
+
     /// <summary>Initializes a new instance of the <see cref="AssetFormatException"/> class.</summary>
     public AssetFormatException()
     {

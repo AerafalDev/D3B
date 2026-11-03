@@ -23,6 +23,9 @@ internal sealed partial class ProfileViewModel : ObservableObject
     /// <summary>Gets what keys the profile's tab, the same once a new one is saved.</summary>
     public string TabKey { get; }
 
+    /// <summary>Gets the folder a new profile is saved in, relative to the project's; empty for its root.</summary>
+    public string Folder { get; init; } = "";
+
     /// <summary>Gets the profile's id, empty until a new one is saved.</summary>
     public string Id => _profile?.Id ?? "";
 
@@ -393,7 +396,8 @@ internal sealed partial class ProfileViewModel : ObservableObject
                     Behavior = behavior.Id,
                     Values = ProfileForms.ValuesOf(behavior, editor.Write()),
                 },
-                CancellationToken.None);
+                CancellationToken.None,
+                Folder);
             // The tab stays open on what was saved, as an editor's does.
             _baseline = (EditName.Trim(), EditActivity?.Definition?.Id, editor.Write());
             IsDirty = false;

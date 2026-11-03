@@ -34,6 +34,7 @@ internal sealed partial class ProfilesViewModel : ObservableObject
 
     private readonly Dictionary<string, ProfileViewModel> _byId = new(StringComparer.Ordinal);
     private readonly List<ProfileViewModel> _open = [];
+    private string _newFolder = "";
     private IServiceProvider? _services;
     private ActivityCatalog? _catalog;
     private NodeCatalog? _nodes;
@@ -265,13 +266,17 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <param name="settings">The settings it starts from, a profile's, or <see langword="null"/> for the activity's defaults.</param>
     public void Create(string name, ActivityChoiceViewModel activity, string? settings)
     {
-        new ProfileViewModel(this, null).EditNew(name, activity, settings);
+        new ProfileViewModel(this, null) { Folder = _newFolder }.EditNew(name, activity, settings);
     }
 
     /// <summary>Asks the name of a copy of a profile, which then opens in the editor.</summary>
     /// <param name="item">The profile copied.</param>
     public void Duplicate(ProfileViewModel item)
     {
+        ArgumentNullException.ThrowIfNull(item);
+
+        // The copy goes beside the profile copied, as the tree's own duplicate does.
+        _newFolder = Path.GetDirectoryName(Assets?.Find(item.Id)?.Path ?? "") ?? "";
         Dialogs.Show(new NewProfileViewModel(this, item));
     }
 
@@ -362,9 +367,23 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         IsEmpty = Items.Count == 0;
     }
 
+    /// <summary>Asks the name and activity of a new profile, saved in a folder of the project.</summary>
+    /// <param name="folder">The folder, relative to the project's; empty for its root.</param>
+    public void NewIn(string folder)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+
+        if (!IsAvailable)
+            return;
+
+        _newFolder = folder;
+        Dialogs.Show(new NewProfileViewModel(this, null));
+    }
+
     [RelayCommand]
     private void New()
     {
+        _newFolder = "";
         Dialogs.Show(new NewProfileViewModel(this, null));
     }
 }

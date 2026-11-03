@@ -82,7 +82,7 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
 
         var (assets, _) = Panel();
 
-        assets.Select(assets.Rows.Single(row => row.Name == "Farm"));
+        assets.Toggle(assets.Rows.Single(row => row.Name == "Farm"));
 
         Assert.DoesNotContain(assets.Rows, row => row.Name == "Walker");
 
@@ -110,7 +110,7 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
         var (assets, _) = Panel();
 
         assets.Choose = chosen.Add;
-        assets.Select(assets.Rows.Single(row => row.Name == "Walker"));
+        assets.Click(assets.Rows.Single(row => row.Name == "Walker"));
 
         Assert.Equal([walker.Id], chosen);
         Assert.True(assets.Rows.Single(row => row.Name == "Walker").IsSelected);
@@ -158,12 +158,12 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
 
         Assert.Contains("Mines", _store.Assets.Folders);
 
-        assets.ChooseFolder(assets.Rows.Single(item => item.Name == "Mines"));
+        assets.Click(assets.Rows.Single(item => item.Name == "Mines"));
         await File.WriteAllTextAsync(file, $$"""{"id":"{{AssetLibrary.NewId()}}","kind":"profile","format":1,"behavior":"{{GivenAssets.BehaviorOf(TestStore.HarvestId)}}"}""", ct);
 
         try
         {
-            assets.PickImport = () => Task.FromResult<string?>(file);
+            assets.PickImport = () => Task.FromResult<IReadOnlyList<string>>([file]);
             await assets.ImportCommand.ExecuteAsync(null);
         }
         finally
@@ -172,5 +172,171 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
         }
 
         Assert.Contains(_store.Assets.Assets, asset => asset.Path == Path.Combine("Mines", Path.GetFileName(file)));
+    }
+
+    [Fact]
+    public async Task AFolderIsRenamedInPlaceAndDeletedAfterAQuestionItsProfilesTabsClosed()
+    {
+        await _store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+        var walker = await _store.Assets.SaveProfileAsync("Walker", TestStore.HarvestId, "{}", ct);
+
+        await _store.Assets.MoveAsync(walker.Id, "Farm", ct);
+
+        var (assets, profiles) = Panel();
+        var folder = assets.Rows.Single(row => row.Name == "Farm");
+
+        assets.StartRename(folder);
+
+        Assert.True(folder.IsRenaming);
+
+        folder.EditName = "Fields";
+        await assets.CommitRenameAsync(folder);
+
+        Assert.Equal(Path.Combine("Fields", "Walker.profile.json"), _store.Assets.Find(walker.Id)?.Path);
+
+        profiles.Find(walker.Id)!.Edit();
+
+        Assert.Single(profiles.Open);
+
+        assets.AskDelete(assets.Rows.Single(row => row.Name == "Fields"));
+
+        var question = Assert.IsType<QuestionViewModel>(profiles.Dialogs.Current);
+
+        Assert.Equal("Its 1 asset is deleted with it. It goes to the Windows recycle bin.", question.Message);
+
+        question.ConfirmCommand.Execute(null);
+        await Waiting.UntilAsync(() => _store.Assets.Find(walker.Id) is null, TimeSpan.FromSeconds(10));
+
+        Assert.Empty(profiles.Open);
+        Assert.DoesNotContain(assets.Rows, row => row.Name == "Fields");
+    }
+
+    [Fact]
+    public async Task SeveralRowsAreChosenByCtrlAndShiftThenMovedTogetherAsADropWouldAndCutAndPasted()
+    {
+        await _store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+
+        await _store.Assets.SaveProfileAsync("Ash", TestStore.HarvestId, "{}", ct);
+        await _store.Assets.SaveProfileAsync("Oak", TestStore.HarvestId, "{}", ct);
+        await _store.Assets.SaveProfileAsync("Yew", TestStore.HarvestId, "{}", ct);
+        await _store.Assets.CreateFolderAsync("Trees", ct);
+        await _store.Assets.CreateFolderAsync("Other", ct);
+
+        var (assets, _) = Panel();
+
+        assets.Click(assets.Rows.Single(row => row.Name == "Ash"));
+        assets.Click(assets.Rows.Single(row => row.Name == "Yew"), range: true);
+
+        Assert.Equal(["Ash", "Oak", "Yew"], assets.Rows.Where(row => row.IsSelected).Select(row => row.Name));
+
+        assets.Click(assets.Rows.Single(row => row.Name == "Oak"), add: true);
+
+        var keys = assets.DragKeys(assets.Rows.Single(row => row.Name == "Ash"));
+
+        Assert.Equal(2, keys.Count);
+        Assert.True(assets.CanMove(keys, "Trees"));
+        Assert.False(assets.CanMove(keys, ""));
+
+        await assets.MoveAsync(keys, "Trees");
+
+        Assert.Equal(["Ash", "Yew"], _store.Assets.AssetsIn("Trees").Select(asset => asset.Name).Order());
+
+        // A folder never goes into itself, and moves with what it holds.
+        Assert.False(assets.CanMove(["folder:Trees"], "Trees"));
+        await assets.MoveAsync(["folder:Trees"], "Other");
+
+        Assert.Equal(Path.Combine("Other", "Trees", "Ash.profile.json"), _store.Assets.Assets.Single(asset => asset.Name == "Ash").Path);
+
+        assets.Click(assets.Rows.Single(row => row.Name == "Oak"));
+        assets.Cut();
+
+        Assert.True(assets.HasCut);
+        Assert.True(assets.Rows.Single(row => row.Name == "Oak").IsCut);
+
+        assets.Click(assets.Rows.Single(row => row.Name == "Other"));
+        await assets.PasteAsync();
+
+        Assert.Equal(Path.Combine("Other", "Oak.profile.json"), _store.Assets.Assets.Single(asset => asset.Name == "Oak").Path);
+        Assert.False(assets.HasCut);
+    }
+
+    [Fact]
+    public async Task TheKeyboardMovesUnfoldsAndFoldsAndNothingChosenMakesAtTheRootUnderAFreeName()
+    {
+        await _store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+        var walker = await _store.Assets.SaveProfileAsync("Walker", TestStore.HarvestId, "{}", ct);
+
+        await _store.Assets.MoveAsync(walker.Id, "Farm", ct);
+
+        var folds = new List<IReadOnlyCollection<string>>();
+        var (assets, _) = Panel();
+
+        assets.FoldsChanged = folded => folds.Add([.. folded]);
+        assets.MoveFocus(1);
+
+        Assert.Equal("folder:Farm", assets.FocusKey);
+
+        assets.Collapse();
+
+        Assert.False(assets.Rows.Single(row => row.Name == "Farm").IsExpanded);
+        Assert.Equal(["Farm"], folds[^1]);
+
+        assets.Expand();
+        assets.Expand();
+
+        Assert.Equal(walker.Id, assets.FocusKey);
+
+        assets.Collapse();
+
+        Assert.Equal("folder:Farm", assets.FocusKey);
+
+        assets.ClearSelection();
+        assets.NewFolderCommand.Execute(null);
+
+        var first = Assert.Single(assets.Rows, row => row.IsNewFolder);
+
+        Assert.Equal((0, "New folder"), (first.Depth, first.EditName));
+        await assets.CommitRenameAsync(first);
+
+        assets.ClearSelection();
+        assets.NewFolderCommand.Execute(null);
+
+        Assert.Equal("New folder 2", Assert.Single(assets.Rows, row => row.IsNewFolder).EditName);
+        Assert.Contains("New folder", _store.Assets.Folders);
+    }
+
+    [Fact]
+    public async Task AKindHiddenLeavesTheTreeAndTheOpenTabsAssetIsLocatedItsFoldersUnfolded()
+    {
+        await _store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+        var walker = await _store.Assets.SaveProfileAsync("Walker", TestStore.HarvestId, "{}", ct);
+
+        await _store.Assets.MoveAsync(walker.Id, Path.Combine("Farm", "Deep"), ct);
+
+        var (assets, _) = Panel();
+
+        assets.ToggleKind(D3B.Bot.Assets.AssetKind.Profile);
+
+        Assert.True(assets.IsFiltered);
+        Assert.DoesNotContain(assets.Rows, row => row.AssetKind is D3B.Bot.Assets.AssetKind.Profile);
+
+        assets.ShowAllKinds();
+        assets.CollapseAll();
+
+        Assert.DoesNotContain(assets.Rows, row => row.Name == "Walker");
+
+        assets.OpenAssetId = () => walker.Id;
+        assets.LocateOpenCommand.Execute(null);
+
+        Assert.True(assets.Rows.Single(row => row.Name == "Walker").IsSelected);
+        Assert.Equal(walker.Id, assets.ChosenId);
     }
 }
