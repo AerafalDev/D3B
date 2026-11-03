@@ -7920,6 +7920,20 @@ to build".*
   3.2 s in, just after a cast; no one touched the client, the owner's words. Measured further and decided in a session
   of its own: how D2 bounds what D3B may do about the client's inactivity.
 
+## D365: The release client-3.7.13.17
+
+*2026-11-03, step 3, session 3i, on the owner's go, as D293 recorded 0.4.0's.*
+
+- **Published** by `scripts/release.cs --publish` after its dry run: `data-9.pack`, 27,087,404 bytes, extracted again
+  from the session's committed code so that the extractor's version it records names it, the same tables, maps and
+  icons as the first extraction; `schema-1.binpb`, 170,287 bytes, 3.7.12.12's bytes; `mapping-16.binpb`, 14,830
+  bytes, made with the owner's captures (D364); each with its SHA-256, the GitHub digests equal to them. Not marked
+  latest: `D3B 0.5.0` stays so until the app's release.
+- **Checked** by `scripts/embed.cs --client-version 3.7.13.17`, as the release workflow takes them: the three files
+  downloaded, their hashes and the mapping's audit hold.
+- **Next**, on the owner's go: this session's pull request, then the tag `v0.5.1` on `main` once merged, whose workflow
+  ships client 3.7.13.17's files (D172).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
