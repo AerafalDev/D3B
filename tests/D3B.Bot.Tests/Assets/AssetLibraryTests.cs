@@ -166,6 +166,36 @@ public sealed class AssetLibraryTests : IDisposable
         await Assert.ThrowsAsync<AssetFormatException>(() => _library.ImportAsync(_directory.Combine("notes.json"), "", cancellationToken));
     }
 
+    [Fact]
+    public async Task AFolderIsRenamedItsAssetsFollowingAndDeletedWithThem()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        await _library.LoadAsync([Given()], cancellationToken);
+        await _library.SaveAsync(new ProfileAsset { Id = "p1", Name = "Iron", Behavior = "d3b.harvest" }, cancellationToken, Path.Combine("mines", "astrub"));
+        await _library.SaveAsync(new ProfileAsset { Id = "p2", Name = "Ash", Behavior = "d3b.harvest" }, cancellationToken);
+
+        var renamed = await _library.RenameFolderAsync("mines", "Mines", cancellationToken);
+
+        Assert.Equal("Mines", renamed);
+        Assert.Equal(Path.Combine("Mines", "astrub", "Iron.profile.json"), _library.Find("p1")?.Path);
+        Assert.True(File.Exists(Path.Combine(_library.Folder, "Mines", "astrub", "Iron.profile.json")));
+        Assert.Equal(["p1"], _library.AssetsIn("Mines").Select(asset => asset.Id));
+
+        await _library.CreateFolderAsync("farm", cancellationToken);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _library.RenameFolderAsync("farm", "Mines", cancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(() => _library.RenameFolderAsync("farm", "a/b", cancellationToken));
+
+        var deleted = await _library.DeleteFolderAsync("Mines", cancellationToken);
+
+        Assert.Equal(["p1"], deleted.Select(asset => asset.Id));
+        Assert.Null(_library.Find("p1"));
+        Assert.NotNull(_library.Find("p2"));
+        Assert.False(Directory.Exists(Path.Combine(_library.Folder, "Mines")));
+        Assert.Equal(["farm"], _library.Folders);
+        await Assert.ThrowsAsync<ArgumentException>(() => _library.DeleteFolderAsync("", cancellationToken));
+    }
+
     [Theory]
     [InlineData("", false)]
     [InlineData("Harvest", true)]

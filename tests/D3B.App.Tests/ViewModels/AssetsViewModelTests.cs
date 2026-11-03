@@ -173,4 +173,43 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
 
         Assert.Contains(_store.Assets.Assets, asset => asset.Path == Path.Combine("Mines", Path.GetFileName(file)));
     }
+
+    [Fact]
+    public async Task AFolderIsRenamedInPlaceAndDeletedAfterAQuestionItsProfilesTabsClosed()
+    {
+        await _store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+        var walker = await _store.Assets.SaveProfileAsync("Walker", TestStore.HarvestId, "{}", ct);
+
+        await _store.Assets.MoveAsync(walker.Id, "Farm", ct);
+
+        var (assets, profiles) = Panel();
+        var folder = assets.Rows.Single(row => row.Name == "Farm");
+
+        assets.StartRename(folder);
+
+        Assert.True(folder.IsRenaming);
+
+        folder.EditName = "Fields";
+        await assets.CommitRenameAsync(folder);
+
+        Assert.Equal(Path.Combine("Fields", "Walker.profile.json"), _store.Assets.Find(walker.Id)?.Path);
+
+        profiles.Find(walker.Id)!.Edit();
+
+        Assert.Single(profiles.Open);
+
+        assets.AskDelete(assets.Rows.Single(row => row.Name == "Fields"));
+
+        var question = Assert.IsType<QuestionViewModel>(profiles.Dialogs.Current);
+
+        Assert.Equal("Its 1 asset is deleted with it.", question.Message);
+
+        question.ConfirmCommand.Execute(null);
+        await Waiting.UntilAsync(() => _store.Assets.Find(walker.Id) is null, TimeSpan.FromSeconds(10));
+
+        Assert.Empty(profiles.Open);
+        Assert.DoesNotContain(assets.Rows, row => row.Name == "Fields");
+    }
 }

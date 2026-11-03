@@ -37,6 +37,13 @@ internal sealed partial class AssetsView : UserControl
         return DrawingOf.Instance.Convert(key, typeof(DrawingGroup), null, System.Globalization.CultureInfo.InvariantCulture) as DrawingGroup;
     }
 
+    private static MenuItem Danger(MenuItem item)
+    {
+        item.Foreground = new SolidColorBrush(Color.Parse("#F3A19A"));
+
+        return item;
+    }
+
     private static Border KindIcon(AssetKindChoice kind)
     {
         return new Border
@@ -193,6 +200,7 @@ internal sealed partial class AssetsView : UserControl
             if (row.IsGiven)
             {
                 menu.Items.Add(Item(texts["CopyToProject"], null, () => _ = assets.CopyToProjectAsync(row)));
+                menu.Items.Add(Item(texts["ExportFile"], null, () => _ = assets.ExportAsync(row)));
             }
             else
             {
@@ -205,25 +213,26 @@ internal sealed partial class AssetsView : UserControl
                     move.Items.Add(Item(name, null, () => _ = assets.MoveAsync(row, folder)));
 
                 menu.Items.Add(move);
+                menu.Items.Add(Item(texts["ExportFile"], null, () => _ = assets.ExportAsync(row)));
+                menu.Items.Add(Item(texts["ShowInFolder"], null, () => assets.ShowInFolder(row)));
+                menu.Items.Add(new Separator());
+                menu.Items.Add(Danger(Item(texts["Delete"], "Delete", () => assets.AskDelete(row))));
             }
-
-            menu.Items.Add(Item(texts["ExportFile"], null, () => _ = assets.ExportAsync(row)));
         }
-
-        menu.Items.Add(Item(texts["ShowInFolder"], null, () => assets.ShowInFolder(row), !row.IsGiven));
-
-        if (row.IsAsset && !row.IsGiven)
+        else if (row.IsFolder)
         {
+            menu.Items.Add(Item(texts["NewSubfolder"], null, assets.NewFolder));
+            menu.Items.Add(Item(texts["ImportHere"], null, () => _ = assets.ImportAsync()));
             menu.Items.Add(new Separator());
-
-            var delete = Item(texts["Delete"], "Delete", () => assets.AskDelete(row));
-
-            delete.Foreground = new SolidColorBrush(Color.Parse("#F3A19A"));
-            menu.Items.Add(delete);
+            menu.Items.Add(Item(texts["Rename"], "F2", () => assets.StartRename(row)));
+            menu.Items.Add(Item(texts["ShowInFolder"], null, () => assets.ShowInFolder(row)));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(Danger(Item(texts["DeleteFolder"], "Delete", () => assets.AskDelete(row))));
         }
-
-        if (row.IsFolder)
-            menu.Items.Insert(0, Item(texts["Folder"], null, assets.NewFolder));
+        else
+        {
+            menu.Items.Add(Item(texts["ShowInFolder"], null, () => assets.ShowInFolder(row)));
+        }
 
         menu.Open(target);
     }

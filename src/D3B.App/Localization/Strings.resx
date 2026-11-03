@@ -2001,10 +2001,10 @@
     <value>Move to</value>
   </data>
   <data name="ExportFile" xml:space="preserve">
-    <value>Export…</value>
+    <value>Export the file…</value>
   </data>
   <data name="ShowInFolder" xml:space="preserve">
-    <value>Show in the folder</value>
+    <value>Show in Explorer</value>
   </data>
   <data name="ProjectRoot" xml:space="preserve">
     <value>Project</value>
@@ -2311,5 +2311,26 @@
   </data>
   <data name="AssetProblemNotAsset" xml:space="preserve">
     <value>Its extension names no kind of asset</value>
+  </data>
+  <data name="NewSubfolder" xml:space="preserve">
+    <value>New folder inside</value>
+  </data>
+  <data name="ImportHere" xml:space="preserve">
+    <value>Import a file here…</value>
+  </data>
+  <data name="DeleteFolder" xml:space="preserve">
+    <value>Delete the folder</value>
+  </data>
+  <data name="DeleteFolderTitle" xml:space="preserve">
+    <value>Delete the folder {0}?</value>
+  </data>
+  <data name="DeleteFolderEmpty" xml:space="preserve">
+    <value>It holds no asset.</value>
+  </data>
+  <data name="DeleteFolderAssetsOne" xml:space="preserve">
+    <value>Its {0} asset is deleted with it.</value>
+  </data>
+  <data name="DeleteFolderAssetsOther" xml:space="preserve">
+    <value>Its {0} assets are deleted with it.</value>
   </data>
 </root>

@@ -7784,6 +7784,12 @@ page.*
 - **A file's problem in English**: `AssetProblem` and `AssetFormatException` say why as an `AssetProblemKind`, which the
   tree, the problems and the toasts say in the app's language; the English message stays for the logs.
 - **Texts**: "perso" becomes "personnage" in French, the owner's ask for professional texts.
+- **A folder's menu** offered "Dossier" and the file manager alone: it now makes a folder inside, imports a file there,
+  renames the folder in place, shows it in Explorer and deletes it after a question saying how many assets go with it,
+  their tabs closed and their players left without a profile (`AssetLibrary.RenameFolderAsync`, `DeleteFolderAsync`).
+  The menus' texts say what they do: "Afficher dans l'Explorateur", "Exporter le fichier…", "Nouveau dossier dedans".
+- **The title's search did nothing** since 7c2: its command, of a value type, refused the click's missing parameter; the
+  scope is now optional, and a test opens it as the title and Ctrl K do.
 
 ## Open questions
 

@@ -204,13 +204,13 @@ internal sealed partial class AssetsViewModel : ObservableObject
             ShowUsages?.Invoke(id);
     }
 
-    /// <summary>Starts renaming an asset of the project in place: F2.</summary>
+    /// <summary>Starts renaming an asset or a folder of the project in place: F2.</summary>
     /// <param name="row">The row.</param>
     public void StartRename(AssetRowViewModel row)
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        if (!row.IsAsset || row.IsGiven)
+        if (!(row.IsAsset || row.IsFolder) || row.IsGiven || row.IsNewFolder)
             return;
 
         foreach (var other in Rows.Where(other => other.IsRenaming && other != row))
@@ -244,6 +244,14 @@ internal sealed partial class AssetsViewModel : ObservableObject
 
             _shown = "";
             Refresh(null);
+
+            return;
+        }
+
+        if (row.IsFolder)
+        {
+            if (name.Length > 0 && name != row.Name)
+                await RenameFolderAsync(row, name).ConfigureAwait(true);
 
             return;
         }
@@ -369,11 +377,18 @@ internal sealed partial class AssetsViewModel : ObservableObject
             Reveal?.Invoke(path);
     }
 
-    /// <summary>Asks, then deletes an asset of the project: Delete. A profile asks as its editor does, its players told.</summary>
+    /// <summary>Asks, then deletes an asset or a folder of the project: Delete. A profile asks as its editor does, its players told.</summary>
     /// <param name="row">The row.</param>
     public void AskDelete(AssetRowViewModel row)
     {
         ArgumentNullException.ThrowIfNull(row);
+
+        if (row is { IsFolder: true, IsNewFolder: false })
+        {
+            AskDeleteFolder(row);
+
+            return;
+        }
 
         if (row.IsGiven || row.Id is not { } id || _assets?.Find(id) is not { } asset)
             return;
@@ -395,6 +410,37 @@ internal sealed partial class AssetsViewModel : ObservableObject
             _localizer["Cancel"],
             () => _ = WriteAsync(assets => assets.DeleteAsync(id, CancellationToken.None)),
             destructive: true));
+    }
+
+    /// <summary>Deletes a folder, its own folders and every asset in them, the tabs of its profiles closed and their players left without one.</summary>
+    /// <param name="row">The folder's row.</param>
+    /// <returns>A task that completes once deleted.</returns>
+    public async Task DeleteFolderAsync(AssetRowViewModel row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+
+        if (_assets is not { } assets || !row.IsFolder)
+            return;
+
+        foreach (var profile in assets.AssetsIn(row.Folder).OfType<ProfileAsset>())
+            _profiles.Find(profile.Id)?.Cancel();
+
+        IReadOnlyList<Asset> deleted = [];
+
+        await WriteAsync(async library => deleted = await library.DeleteFolderAsync(row.Folder, CancellationToken.None).ConfigureAwait(true)).ConfigureAwait(true);
+
+        // The characters that played a profile deleted are left without one, as deleting it alone leaves them (D99).
+        if (_book is { } book)
+        {
+            foreach (var profile in deleted.OfType<ProfileAsset>())
+                await book.LeaveProfileAsync(profile.Id, CancellationToken.None).ConfigureAwait(true);
+        }
+
+        if (IsIn(ChosenFolder, row.Folder))
+            ChosenFolder = "";
+
+        _shown = "";
+        Refresh(null);
     }
 
     /// <summary>Starts a new asset of a kind D3B makes today: a profile, named and given its activity in a dialog.</summary>
@@ -458,6 +504,55 @@ internal sealed partial class AssetsViewModel : ObservableObject
             _folded.Add(folder);
 
         _givenFolded = true;
+        _shown = "";
+        Refresh(null);
+    }
+
+    private static bool IsIn(string folder, string parent)
+    {
+        return string.Equals(folder, parent, StringComparison.OrdinalIgnoreCase) || folder.StartsWith(parent + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void AskDeleteFolder(AssetRowViewModel row)
+    {
+        var count = _assets?.AssetsIn(row.Folder).Count ?? 0;
+
+        _dialogs.Ask(new QuestionViewModel(
+            _dialogs,
+            _localizer.Format("DeleteFolderTitle", row.Name),
+            count == 0 ? _localizer["DeleteFolderEmpty"] : _localizer.Plural("DeleteFolderAssets", count),
+            _localizer["Delete"],
+            _localizer["Cancel"],
+            () => _ = DeleteFolderAsync(row),
+            destructive: true));
+    }
+
+    private async Task RenameFolderAsync(AssetRowViewModel row, string name)
+    {
+        if (AssetLibrary.NameProblem(name) is not null)
+        {
+            _toasts.Show(new Toast(_localizer["NameInvalid"], Tone.Danger));
+
+            return;
+        }
+
+        string? renamed = null;
+
+        await WriteAsync(async assets => renamed = await assets.RenameFolderAsync(row.Folder, name, CancellationToken.None).ConfigureAwait(true)).ConfigureAwait(true);
+
+        if (renamed is null)
+            return;
+
+        // What was folded or chosen under the old name follows the folder.
+        foreach (var folded in _folded.Where(folder => IsIn(folder, row.Folder)).ToList())
+        {
+            _folded.Remove(folded);
+            _folded.Add(renamed + folded[row.Folder.Length..]);
+        }
+
+        if (IsIn(ChosenFolder, row.Folder))
+            ChosenFolder = renamed + ChosenFolder[row.Folder.Length..];
+
         _shown = "";
         Refresh(null);
     }

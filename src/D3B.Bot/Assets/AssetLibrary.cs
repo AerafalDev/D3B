@@ -301,6 +301,103 @@ public sealed class AssetLibrary : IDisposable
         }
     }
 
+    /// <summary>Renames a folder of the project, the assets in it keeping their ids and names.</summary>
+    /// <param name="folder">The folder, relative to the project's.</param>
+    /// <param name="name">Its new name, a name a file may have.</param>
+    /// <param name="cancellationToken">Stops the write.</param>
+    /// <returns>The folder renamed, relative to the project's.</returns>
+    /// <exception cref="ArgumentException">The name does not do, or the folder is the project's own.</exception>
+    /// <exception cref="InvalidOperationException">Another file or folder of the name is there already.</exception>
+    public async Task<string> RenameFolderAsync(string folder, string name, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+        ArgumentNullException.ThrowIfNull(name);
+
+        var inside = Inside(folder);
+        var trimmed = name.Trim();
+
+        if (inside.Length == 0)
+            throw new ArgumentException("The project's own folder is not renamed.", nameof(folder));
+
+        if (NameProblem(trimmed) is { } problem)
+            throw new ArgumentException(problem, nameof(name));
+
+        var renamed = Path.Combine(Path.GetDirectoryName(inside) ?? "", trimmed);
+
+        await _writing.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (string.Equals(renamed, inside, StringComparison.Ordinal))
+                return inside;
+
+            var target = Path.Combine(Folder, renamed);
+
+            // A change of case alone is a move Windows makes, the folder being the same.
+            if (!string.Equals(renamed, inside, StringComparison.OrdinalIgnoreCase) && (Directory.Exists(target) || File.Exists(target)))
+                throw new InvalidOperationException($"{renamed} is there already.");
+
+            Directory.Move(Path.Combine(Folder, inside), target);
+
+            var assets = _snapshot.Assets.Select(asset => asset.Path is { } path && IsIn(path, inside) ? asset with { Path = renamed + path[inside.Length..] } : asset).ToList();
+            var problems = _snapshot.Problems.Select(item => IsIn(item.Path, inside) ? item with { Path = renamed + item.Path[inside.Length..] } : item).ToList();
+
+            _snapshot = Snapshot.Of(assets, problems, FoldersOn(), _snapshot.Version + 1);
+
+            return renamed;
+        }
+        finally
+        {
+            _writing.Release();
+        }
+    }
+
+    /// <summary>Deletes a folder of the project, its own folders and every file in them; what referenced its assets is left referencing nothing.</summary>
+    /// <param name="folder">The folder, relative to the project's.</param>
+    /// <param name="cancellationToken">Stops the write.</param>
+    /// <returns>The assets deleted with it.</returns>
+    /// <exception cref="ArgumentException">The folder is the project's own.</exception>
+    public async Task<IReadOnlyList<Asset>> DeleteFolderAsync(string folder, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+
+        var inside = Inside(folder);
+
+        if (inside.Length == 0)
+            throw new ArgumentException("The project's own folder is not deleted.", nameof(folder));
+
+        await _writing.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            var deleted = _snapshot.Assets.Where(asset => asset.Path is { } path && IsIn(path, inside)).ToList();
+            var directory = Path.Combine(Folder, inside);
+
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, recursive: true);
+
+            _snapshot = Snapshot.Of([.. _snapshot.Assets.Except(deleted)], [.. _snapshot.Problems.Where(item => !IsIn(item.Path, inside))], FoldersOn(), _snapshot.Version + 1);
+
+            return deleted;
+        }
+        finally
+        {
+            _writing.Release();
+        }
+    }
+
+    /// <summary>Gets the assets of the project in a folder or one of its own.</summary>
+    /// <param name="folder">The folder, relative to the project's.</param>
+    /// <returns>The assets, in <see cref="Assets"/>'s order.</returns>
+    public IReadOnlyList<Asset> AssetsIn(string folder)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+
+        var inside = Inside(folder);
+
+        return [.. Assets.Where(asset => asset.Path is { } path && IsIn(path, inside))];
+    }
+
     /// <summary>Moves an asset of the project to another folder, its file with it, its id and name kept.</summary>
     /// <param name="id">The asset's id.</param>
     /// <param name="folder">The folder, relative to the project's; empty for its root.</param>
@@ -397,6 +494,11 @@ public sealed class AssetLibrary : IDisposable
     public void Dispose()
     {
         _writing.Dispose();
+    }
+
+    private static bool IsIn(string path, string folder)
+    {
+        return path.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
     }
 
     // A folder said with either separator, relative to the project's, which never leaves it.
