@@ -311,10 +311,11 @@ seen so.
   waits for the server's answer and the client's acknowledgement, plans again, and ends its turn as soon as the plan is
   empty. A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
   spells its grade's (`FightState.IsOwnTurn`, D271). Every request waits `BotDelays.FightAction` first, the owner's
-  0.9 s, and every wait ends with the fight. A cast
-  the server refuses with an error text, or leaves unanswered, is not cast again that fight. The player's placement,
-  readiness, casts, walks and turn's ends pause the bot (`PlayerActions`), not a turn's end the client marks as its own
-  (D252). An activity that fights its own has the fight
+  0.8 s (D368), and every wait ends with the fight. A cast the server refuses with an error text, or leaves unanswered, is not
+  cast again that fight. The player's placement, readiness, casts, walks and turn's ends pause the bot
+  (`PlayerActions`), not a turn's end the client marks as its own (D252): in its inactive state, whose first in a fight
+  the journal says (`BotEvent.ClientInactive`, D366), and which the game session withholds from the server while the AI
+  plays, so that the AI's turn goes on (`IRequestWithholder`, D367). An activity that fights its own has the fight
   answered once over (`BotActivity.OnFightOver`, `BotActor.LastFightEnd`): harvesting resumes, pauses or stops as "After a
   fight" says, a lost fight as "After a lost fight" says, resumed once its life is regained, three in a row ending it. The
   character's state keeps every characteristic the server gives out of fights (`CharacterState.Characteristics`,
@@ -397,8 +398,10 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   (`ProtobufValues`), and connects to that selection's server. A connection presenting no ticket waiting is closed.
 - The game, read (D62): `RelayDecoder`, the relay's interceptor, gives each game connection a `GameSession`, which
   decodes every frame through the translation (`DecodeGame`, D58), shows it to every `IGameObserver` in the services,
-  and logs it at the debug level by what it carries, never by what it holds. It holds and rewrites no frame of the
-  game. An observer sees each session start, then each frame of both sides, from the relay's read loops: the bots post
+  and logs it at the debug level by what it carries, never by what it holds. It rewrites no frame of the game, and
+  holds the client's only while its bot's `IRequestWithholder` asks, the AI playing a fight, so as to withhold from the
+  server the turns' ends the client sends by itself in its inactive state: given no bytes for a frame it held, the relay
+  forwards nothing (D367). An observer sees each session start, then each frame of both sides, from the relay's read loops: the bots post
   what they see to their inboxes (D9, D67). A game session knows its account once the client's first request presented
   the ticket the connection phase gave it (`GameAccounts`, D65).
 - The client's other connections, to the launcher, Haapi, the chat and the CDN, do not go through D3B.

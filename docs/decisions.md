@@ -7918,7 +7918,7 @@ to build".*
 - **The client's own turns' ends** (D252): in the AI's fight, after 13 turns it played, the client ended 8 of the
   character's turns by itself, `automatic` set, over its last 80 s; some before the AI's first request of the turn, one
   3.2 s in, just after a cast; no one touched the client, the owner's words. Measured further and decided in a session
-  of its own: how D2 bounds what D3B may do about the client's inactivity.
+  of its own: how D2 bounds what D3B may do about the client's inactivity (D366).
 
 ## D365: The release client-3.7.13.17
 
@@ -7933,6 +7933,75 @@ to build".*
   downloaded, their hashes and the mapping's audit hold.
 - **Next**, on the owner's go: this session's pull request, then the tag `v0.5.1` on `main` once merged, whose workflow
   ships client 3.7.13.17's files (D172).
+
+## D366: The client's inactive state, measured, and the journal saying it
+
+*2026-11-03, step 9, session 9g7, what D364 left: the client ending the AI's turns by itself, measured on the owner's
+captures of 3.7.12.12 and 3.7.13.17, then the owner's choices, one question at a time. Builds D2, D66, D202, D252.*
+
+- **What the client says** (client.md): its French texts hold "Vous êtes en état inactif. Vous allez automatiquement passer
+  vos tours. Cliquez sur ok pour sortir de cet état." `automatic` is never the player's hand, and most likely that
+  state's; D367's try leaves open what brings it.
+- **Measured** with a tool never committed that prints counts and delays: in 5 of the 89 fights the AI played on 31
+  captures, the client ended 21 of the character's turns itself, never in the 57 fights played by hand; D3B ended 302,
+  none ran its time. When the state begins the captures cannot say: the client counts the mouse and the keyboard, which
+  send nothing. It came after 2 to 11 of the AI's turns in the fight, 36 s to 3.5 min into it, 43 s to 11 min after the
+  last request sent by hand; the client then ended several turns in a row, and twice went on without one, no request by
+  hand between. From the character's `FightTurnEvent`: 8 ends at 0.01 to 0.80 s, 6 of them 8 ms after it, before
+  `FightTurnStartPlayingEvent`; 13 at 1.41 to 3.52 s, 0.2 to 2.4 s after D3B's first request, once the client showed it.
+  The character still had 2 to 11 AP. D3B sent nothing on the 8 first: its first request waited the fight's pace, 1.02 s
+  after the turn's start halfway over 315 turns, 0.92 to 1.29 s from the tenth to the ninetieth.
+- **Made**: the client's first `automatic` end in a fight writes `BotEvent.ClientInactive` to the journal, which the app
+  shows with what the client asks, a click on its OK, and the host's log a warning.
+- **The pace**: the owner first chose the turn's first request without the fight's pace, which could win at most the 2
+  ends that came 0.23 and 0.80 s in; once D367 withholds the client's ends, the owner kept the pace before every request (D368).
+- **Left**: what makes the client inactive, and what made it go on twice without a request by hand, are not in the
+  captures.
+- **Rejected.**
+  - Replaying a turn the client cut: the server ended it, and no request opens it again; the AI plays the next (D252).
+  - Keeping the client out of its state, a click on its OK or an input sent to it: feigning a player, too near what D2
+    puts out of scope (D252), and nothing the owner agreed to.
+
+## D367: The client's own turns' ends withheld while the AI plays, as BillBot does
+
+*2026-11-03, step 9, session 9g7, the owner's choice, against the lead's advice, once BillBot was read for the owner: do as
+BillBot does, or half the fights cannot be handled, the owner's words. Builds D49, D66, D366. Supersedes in part D60,
+D202 and D252.*
+
+- **BillBot**, read for the owner (D3): its proxy holds every `FightTurnFinishRequest` the client sends while its bot
+  plays, and sends the server nothing in its place; the player's own end with it.
+- **Made**: while the AI plays the character's fight, a behavior acting, the bot not paused and the fight's turns begun
+  (`IRequestWithholder.IsWithholding`), the relay holds each of the client's frames until it is whole, and the game
+  session withholds from the server the `FightTurnFinishRequest` marked `automatic` (`BotActor`, `GameSession.WithholdWith`,
+  bound by `Bots`). The bots still see it, so the journal says the client is inactive (D366); the host's log says each
+  one withheld. The AI's turn goes on, its pace unchanged. The player's own end is not marked so: it goes to the server
+  and pauses the bot (D66), unlike BillBot's. An interceptor returning no bytes for a frame it held has the relay forward
+  nothing (`IConnectionInterceptor.OnFrame`); a frame not held, the relay having given up holding on that side, goes on.
+  The requests of the first milestone all carry the id -1, so one withheld shifts no count (client.md).
+- **What it costs**, said to the owner: D60 held that D3B never drops a frame of the client; it now drops these. The
+  server no longer learns that the client called the player inactive, which comes near what D2 puts out of scope; the
+  owner chose it. The capture still holds the client's frame as it came, so `automatic` ends read in a capture made
+  since are not all ends the server got.
+- **Tried in game**, the owner's game connection through this code, 30 min 43 s, 8 fights the AI played, a Xélor's: the
+  client sent no turn's end at all, `automatic` or not, and no request by hand; D3B ended all 58 turns. So nothing was
+  withheld, and D367 is not yet measured. The client's popup saying it will pass the turns showed all the same, the
+  owner's words, who has seen the client pass a turn soon after it. The fights fill the capture to its last 2 s, but for
+  285 s from 10:21: when the popup showed, and whether it was closed, is not known, so that a popup with no end sent is
+  not explained.
+- **Left**: not measured in game: what the client shows once its end goes unanswered, whether it sends it again after
+  each action, and whether its inactivity still ends with the game closing itself, as another of its texts warns. The
+  share of fights measured is 5 of 89, not half: the owner's words may count fights not captured.
+
+## D368: The fight's pace 0.8 s, and 0.5.1 published with what D367 left unmeasured
+
+*2026-11-03, step 9, session 9g7, the owner's choice and go. Supersedes in part D202 (the pace of 0.9 s) and D364's wait
+for a measure in game. Builds D172, D365, D367.*
+
+- **Made**: `BotDelays.FightAction` is 0.8 s, still the least the settings allow: above the client's display time, below
+  the player's median.
+- **Published on the owner's go**, so that the players' fights go on while the client is inactive: D366 to D368, and the
+  client 3.7.13.17's files of D365, in `v0.5.1`. D367 goes out not measured in game: the owner knows no end was yet seen
+  withheld, and that a popup showed in the only try without one being sent.
 
 ## Open questions
 
