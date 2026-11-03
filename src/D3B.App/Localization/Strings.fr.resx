@@ -2001,7 +2001,7 @@
     <value>Déplacer vers</value>
   </data>
   <data name="ExportFile" xml:space="preserve">
-    <value>Exporter le fichier…</value>
+    <value>Exporter…</value>
   </data>
   <data name="ShowInFolder" xml:space="preserve">
     <value>Afficher dans l’Explorateur</value>
@@ -2313,13 +2313,13 @@
     <value>Son extension ne désigne aucun type d’asset</value>
   </data>
   <data name="NewSubfolder" xml:space="preserve">
-    <value>Nouveau dossier dedans</value>
+    <value>Dossier</value>
   </data>
   <data name="ImportHere" xml:space="preserve">
-    <value>Importer un fichier ici…</value>
+    <value>Importer des fichiers…</value>
   </data>
   <data name="DeleteFolder" xml:space="preserve">
-    <value>Supprimer le dossier</value>
+    <value>Supprimer</value>
   </data>
   <data name="DeleteFolderTitle" xml:space="preserve">
     <value>Supprimer le dossier {0} ?</value>
@@ -2332,5 +2332,65 @@
   </data>
   <data name="DeleteFolderAssetsOther" xml:space="preserve">
     <value>Ses {0} assets sont supprimés avec lui.</value>
+  </data>
+  <data name="AssetEditorLater" xml:space="preserve">
+    <value>{0} : son éditeur arrive avec la session {1}.</value>
+  </data>
+  <data name="FolderHoldsOne" xml:space="preserve">
+    <value>{0} asset</value>
+  </data>
+  <data name="FolderHoldsOther" xml:space="preserve">
+    <value>{0} assets</value>
+  </data>
+  <data name="DeleteItemsTitleOne" xml:space="preserve">
+    <value>Supprimer {0} élément ?</value>
+  </data>
+  <data name="DeleteItemsTitleOther" xml:space="preserve">
+    <value>Supprimer {0} éléments ?</value>
+  </data>
+  <data name="DeleteToRecycleBin" xml:space="preserve">
+    <value>Tout part dans la corbeille de Windows.</value>
+  </data>
+  <data name="AssetsImportedOne" xml:space="preserve">
+    <value>{0} asset importé</value>
+  </data>
+  <data name="AssetsImportedOther" xml:space="preserve">
+    <value>{0} assets importés</value>
+  </data>
+  <data name="MenuNew" xml:space="preserve">
+    <value>Nouveau</value>
+  </data>
+  <data name="ImportFiles" xml:space="preserve">
+    <value>Importer des fichiers…</value>
+  </data>
+  <data name="Cut" xml:space="preserve">
+    <value>Couper</value>
+  </data>
+  <data name="PasteHere" xml:space="preserve">
+    <value>Coller ici</value>
+  </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Tout replier</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>Tout déplier</value>
+  </data>
+  <data name="LocateTab" xml:space="preserve">
+    <value>Localiser l’onglet ouvert</value>
+  </data>
+  <data name="KindsShown" xml:space="preserve">
+    <value>Types affichés</value>
+  </data>
+  <data name="ShowAllKinds" xml:space="preserve">
+    <value>Tout afficher</value>
+  </data>
+  <data name="ReloadProject" xml:space="preserve">
+    <value>Relire le dossier</value>
+  </data>
+  <data name="ShowProject" xml:space="preserve">
+    <value>Afficher le projet dans l’Explorateur</value>
+  </data>
+  <data name="AssetsEmptyProject" xml:space="preserve">
+    <value>Le projet est vide. Ajoute un profil, ou dépose ici des fichiers d’assets.</value>
   </data>
 </root>

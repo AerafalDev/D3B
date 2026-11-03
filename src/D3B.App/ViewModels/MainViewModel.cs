@@ -96,6 +96,9 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets or sets what opens a folder in the system's file manager, as the window can.</summary>
     public Action<string>? OpenFolder { get; set; }
 
+    /// <summary>Gets or sets what puts a text in the clipboard, as the window can.</summary>
+    public Action<string>? CopyText { get; set; }
+
     /// <summary>Gets or sets what opens a file or a link with the system's own application, as the window can.</summary>
     public Action<string>? OpenFile { get; set; }
 
@@ -191,8 +194,11 @@ internal sealed partial class MainViewModel : ObservableObject
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
             new AssetPropertiesViewModel(localizer));
         Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts) { Opened = OpenProfileTab, Closed = CloseProfileTab };
-        Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles)
+        Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles, preferences?.FoldedAssets)
         {
+            OpenAssetId = () => (Editor.Selected?.Content as ProfileViewModel) is { IsNew: false } open ? open.Id : null,
+            FoldsChanged = folded => _preferences?.RememberFoldedAssets(folded),
+            CopyText = text => CopyText?.Invoke(text),
             Choose = ChooseAsset,
             Open = OpenAsset,
             ShowUsages = ShowUsages,

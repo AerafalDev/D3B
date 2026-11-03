@@ -7791,6 +7791,35 @@ page.*
 - **The title's search did nothing** since 7c2: its command, of a value type, refused the click's missing parameter; the
   scope is now optional, and a test opens it as the title and Ctrl K do.
 
+## D358: The assets' workspace, as an IDE's
+
+*2026-11-03, step 7, session 7c4, the owner's ask after their look at the tree, their choice of IntelliJ's menus among
+three. Amends D351, D357.*
+
+- **Asked**: the tree reworked whole, what an IDE's explorer does, the menus as IntelliJ's with icons; folders at the root;
+  drag and drop; rename that never keeps the keyboard.
+- **Choose**: a click chooses a row, Ctrl adds one, Shift a range; a click on the empty space chooses nothing, so that a
+  new folder or an import goes to the root; the chevron folds, a double click opens or folds. The arrows move, the right
+  one unfolds or goes in, the left one folds or goes to the folder; Enter opens, F2 renames, Delete deletes, Ctrl D
+  duplicates, Ctrl X and Ctrl V move, Ctrl Shift C copies the path, Escape clears the search or the choice.
+- **Move**: a drag takes the rows chosen to a folder, or to the root on the empty space, the folder lit; a folder moves
+  with what it holds, never into itself (`AssetLibrary.MoveFolderAsync`); files dropped from Explorer are imported where
+  they fall. Several rows chosen are cut, moved and deleted together, one question for all.
+- **Make**: Nouveau ▸ Profil or Dossier in the folder chosen, a profile saved there; a new folder named in place under a
+  free name ("Nouveau dossier 2"); several files imported at once.
+- **Menus**, IntelliJ's: icon, label and shortcut, the delete last and red; a folder's, an asset's, a given one's, a file
+  that does not read, several rows', and the empty space's (expand, collapse, read the folder again, show the project).
+- **The panel's tools**, in its tab's strip: the kinds shown, the open tab's asset located with its folders unfolded,
+  everything folded. The folds are kept in `app.json` from one start to the next.
+- **Safety**: what the studio deletes goes to the Windows recycle bin, and the project is read again as its folder
+  changes beside D3B, a file added in Explorer showing; the app's choice (`Studio:Recycle`, `Studio:Watch`), never the
+  tests', which keep plain deletes and a folder read once.
+- **Rows**: what a folder holds is indented under its name, every row keeping the chevron's place; a tooltip says each
+  row's kind and file; a kind without its editor yet says so when opened.
+- **Also fixed**, the owner's report: a profile's long labels went under their control; they wrap in a column of 170
+  pixels, the help after them; a list's detail is trimmed beside its buttons; the header's line goes under the name; the
+  sections' bar scrolls when narrow.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

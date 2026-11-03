@@ -116,6 +116,9 @@
         <Style Selector="Button.Choice.Chosen">
             <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
         </Style>
+        <Style Selector="Button.Tool.Lit">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+        </Style>
         <Style Selector="TextBox.PropertySearch">
             <Setter Property="Height" Value="28" />
             <Setter Property="MinHeight" Value="28" />
@@ -542,7 +545,7 @@
                         Name="AssetsDock">
                         <DockPanel>
                             <Border Classes="Strip" DockPanel.Dock="Top">
-                                <StackPanel Orientation="Horizontal">
+                                <DockPanel LastChildFill="False">
                                     <Border Classes="TabHost On">
                                         <StackPanel Orientation="Horizontal">
                                             <StackPanel
@@ -568,7 +571,39 @@
                                             </Button>
                                         </StackPanel>
                                     </Border>
-                                </StackPanel>
+                                    <StackPanel
+                                        DockPanel.Dock="Right"
+                                        Margin="0,0,6,0"
+                                        Orientation="Horizontal"
+                                        Spacing="2"
+                                        VerticalAlignment="Center">
+                                        <Button
+                                            AutomationProperties.Name="{l:Tr KindsShown}"
+                                            Classes="Tool Small"
+                                            Classes.Lit="{Binding Assets.IsFiltered}"
+                                            Click="OnAssetsFilterClick"
+                                            IsEnabled="{Binding Assets.IsAvailable}"
+                                            ToolTip.Tip="{l:Tr KindsShown}">
+                                            <c:Icon Drawing="{StaticResource General.Filter}" />
+                                        </Button>
+                                        <Button
+                                            AutomationProperties.Name="{l:Tr LocateTab}"
+                                            Classes="Tool Small"
+                                            Command="{Binding Assets.LocateOpenCommand}"
+                                            IsEnabled="{Binding Assets.IsAvailable}"
+                                            ToolTip.Tip="{l:Tr LocateTab}">
+                                            <c:Icon Drawing="{StaticResource General.Locate}" />
+                                        </Button>
+                                        <Button
+                                            AutomationProperties.Name="{l:Tr CollapseAll}"
+                                            Classes="Tool Small"
+                                            Command="{Binding Assets.CollapseAllCommand}"
+                                            IsEnabled="{Binding Assets.IsAvailable}"
+                                            ToolTip.Tip="{l:Tr CollapseAll}">
+                                            <c:Icon Drawing="{StaticResource General.CollapseAll}" />
+                                        </Button>
+                                    </StackPanel>
+                                </DockPanel>
                             </Border>
                             <views:AssetsView DataContext="{Binding Assets}" Name="AssetsPanel" />
                         </DockPanel>

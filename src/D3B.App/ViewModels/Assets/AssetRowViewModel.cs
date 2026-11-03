@@ -21,6 +21,18 @@ internal sealed partial class AssetRowViewModel : ObservableObject
     /// <summary>Gets the row's indent, in pixels.</summary>
     public double Indent => Depth * Step;
 
+    /// <summary>Gets what keys the row from one tree to the next: an asset's id, <c>folder:</c> and a folder's path, or <c>problem:</c> and a file's.</summary>
+    public string Key { get; init; } = "";
+
+    /// <summary>Gets what the row's tooltip says: its kind and file, or its folder's path, or why it does not read.</summary>
+    public string? Tip { get; init; }
+
+    /// <summary>Gets whether the keyboard is on the row.</summary>
+    public bool IsFocused { get; init; }
+
+    /// <summary>Gets whether the row is cut, waiting to be pasted, shown dim.</summary>
+    public bool IsCut { get; init; }
+
     /// <summary>Gets the asset's id, for an asset's row.</summary>
     public string? Id { get; init; }
 
@@ -60,6 +72,12 @@ internal sealed partial class AssetRowViewModel : ObservableObject
     /// <summary>Gets whether the row is a folder not made yet, its name being typed.</summary>
     public bool IsNewFolder { get; init; }
 
+    /// <summary>Gets whether the row may be chosen: an asset, a folder or a file that does not read.</summary>
+    public bool IsSelectable => Kind is not AssetRowKind.Given && !IsNewFolder;
+
+    /// <summary>Gets whether the row may be moved, renamed or deleted: the project's own asset or folder.</summary>
+    public bool IsMovable => Kind is AssetRowKind.Asset or AssetRowKind.Folder && !IsGiven && !IsNewFolder;
+
     /// <summary>Gets whether the row is an asset's.</summary>
     public bool IsAsset => Kind is AssetRowKind.Asset;
 
@@ -73,7 +91,7 @@ internal sealed partial class AssetRowViewModel : ObservableObject
     public bool IsGivenHeading => Kind is AssetRowKind.Given;
 
     /// <summary>Gets whether the row folds, a folder or the given heading.</summary>
-    public bool Folds => Kind is AssetRowKind.Folder;
+    public bool Folds => Kind is AssetRowKind.Folder or AssetRowKind.Given;
 
     /// <summary>Gets whether the asset's kind shows its icon.</summary>
     public bool HasKind => AssetKind is not null;
@@ -90,9 +108,12 @@ internal sealed partial class AssetRowViewModel : ObservableObject
     /// <summary>Gets the kind's dark tint.</summary>
     public IBrush? KindTint => AssetKind is { } kind ? new SolidColorBrush(AssetKinds.TintOf(kind)) : null;
 
-    /// <summary>Gets or sets whether the row is the one chosen.</summary>
+    /// <summary>Gets whether the row is one of those chosen.</summary>
+    public bool IsSelected { get; init; }
+
+    /// <summary>Gets or sets whether a drag is over the folder, which then takes what it carries.</summary>
     [ObservableProperty]
-    public partial bool IsSelected { get; set; }
+    public partial bool IsDropTarget { get; set; }
 
     /// <summary>Gets or sets whether the row's name is being edited in place.</summary>
     [ObservableProperty]
