@@ -31,6 +31,9 @@ internal sealed class StateVisit : IDisposable
     /// <summary>Gets the activity the last step played, which the behavior's activity speaks for, its report, fullness and fights.</summary>
     public BotActivity? Current => _current;
 
+    /// <summary>Gets the step being played, until it returns, for the trace to say which one a cut or a failure ended.</summary>
+    public PlayedStep? InFlight { get; private set; }
+
     public StateVisit(CompiledState state, IServiceProvider services)
     {
         State = state;
@@ -55,11 +58,14 @@ internal sealed class StateVisit : IDisposable
     /// <param name="evaluate">Reads the bot as it is now.</param>
     /// <param name="control">The run, for what actions ask of it.</param>
     /// <param name="halted">Tells whether an action played at once paused or stopped the run, which ends the step.</param>
+    /// <param name="played">Told of each action or activity's step played, for the trace.</param>
     /// <param name="cancellationToken">The step's token.</param>
     /// <returns>A task that completes once an action is played, or the actions are at their end.</returns>
-    public async Task StepAsync(BotContext context, Func<Evaluation> evaluate, IBehaviorControl control, Func<bool> halted, CancellationToken cancellationToken)
+    public async Task StepAsync(BotContext context, Func<Evaluation> evaluate, IBehaviorControl control, Func<bool> halted, Action<PlayedStep> played, CancellationToken cancellationToken)
     {
         var step = State.Entry;
+
+        InFlight = null;
 
         while (step is not null)
         {
@@ -94,9 +100,15 @@ internal sealed class StateVisit : IDisposable
                         }
 
                         _current = running;
+                        InFlight = new PlayedStep(activity.Definition.Name, null, false);
 
-                        if (!await running.StepAsync(context, cancellationToken).ConfigureAwait(false))
+                        var goesOn = await running.StepAsync(context, cancellationToken).ConfigureAwait(false);
+
+                        if (!goesOn)
                             _done.Add(activity.Id);
+
+                        InFlight = null;
+                        played(new PlayedStep(activity.Definition.Name, running.Report?.Doing, !goesOn));
 
                         return;
                     }
@@ -114,10 +126,14 @@ internal sealed class StateVisit : IDisposable
                         }
 
                         _current = null;
+                        InFlight = new PlayedStep(action.Sentence, null, false);
                         await action.Node.RunAsync(new ActionContext(context, evaluation.View, control), values, cancellationToken).ConfigureAwait(false);
+                        InFlight = null;
 
                         if (reached is null)
                             _done.Add(action.Id);
+
+                        played(new PlayedStep(action.Sentence, null, true));
 
                         // An action played at once is no step of its own: the way goes on, unless it paused or stopped the run.
                         if (!action.IsInstant || halted())

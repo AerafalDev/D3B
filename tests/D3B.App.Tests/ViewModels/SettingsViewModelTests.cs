@@ -1,6 +1,7 @@
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.AppSettings;
 using D3B.App.ViewModels.Studio;
 using D3B.Bot.Hosting;
 using D3B.Bot.Runtime;
@@ -195,6 +196,98 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public void TheSearchKeepsTheRowsAndSectionsThatHoldItsTextAndASectionShownClearsIt()
+    {
+        var settings = new SettingsViewModel(_localizer, null, _ => { }, new Toasts());
+
+        Assert.Equal(SettingsSection.Bots, settings.Selected.Section);
+
+        settings.Filter = "database";
+
+        Assert.Equal([SettingsSection.Files], settings.Sections.Where(section => section.IsShown).Select(section => section.Section));
+        Assert.Equal(SettingsSection.Files, settings.Selected.Section);
+        Assert.True(settings.Database.IsShown);
+        Assert.False(settings.Project.IsShown);
+        Assert.False(settings.Display.IsShown);
+
+        settings.Filter = "server's answer";
+
+        Assert.Equal(SettingsSection.Bots, settings.Selected.Section);
+        Assert.Equal(["Server's answer"], settings.BotWaits.Where(delay => delay.IsShown).Select(delay => delay.Label));
+
+        settings.Filter = "nothing at all";
+
+        Assert.True(settings.HasNoMatch);
+
+        settings.ShowCommand.Execute(SettingsSection.About);
+
+        Assert.Equal(("", SettingsSection.About, false), (settings.Filter, settings.Selected.Section, settings.HasNoMatch));
+        Assert.Equal([false, false, false, false, true], settings.Sections.Select(section => section.IsSelected));
+
+        settings.ChooseCommand.Execute(SettingsSection.Network);
+
+        Assert.True(settings.Network.IsSelected);
+    }
+
+    [Fact]
+    public void AValueChangedMarksItsSectionAndItsArrowGivesItsDefaultBack()
+    {
+        var settings = new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts());
+        var answer = settings.BotWaits[0];
+
+        Assert.False(settings.Bots.HasChanges);
+        Assert.False(answer.ResetCommand.CanExecute(null));
+
+        answer.IncreaseCommand.Execute(null);
+
+        Assert.Equal((3.5m, true, true), (answer.Value, answer.IsRaised, settings.Bots.HasChanges));
+        Assert.Equal("Reset to 3 s", answer.ResetText);
+        Assert.Equal("Wait for the server to answer a request. Measured: 3 s", answer.Detail);
+
+        answer.DecreaseCommand.Execute(null);
+
+        Assert.False(settings.Bots.HasChanges);
+
+        settings.Display.Value = 2m;
+
+        Assert.True(settings.Bots.HasChanges);
+
+        settings.Display.ResetCommand.Execute(null);
+
+        Assert.Equal((0.5m, false), (settings.Display.Value, settings.Bots.HasChanges));
+
+        settings.RecordsCaptures = true;
+
+        Assert.True(settings.Network.HasChanges);
+
+        settings.ResetCapturesCommand.Execute(null);
+
+        Assert.Equal((false, false), (settings.RecordsCaptures, settings.Network.HasChanges));
+        Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
+    }
+
+    [Fact]
+    public void AFileOpensItsFolderAndTheLayoutAndLicencesAreTheWindowsToOpen()
+    {
+        var settings = new SettingsViewModel(_localizer, null, _ => { }, new Toasts());
+        var opened = new List<string>();
+        var reset = 0;
+
+        settings.OpenFolder = opened.Add;
+        settings.OpenFile = opened.Add;
+        settings.ResetLayout = () => reset++;
+        settings.OpenPathCommand.Execute(@"C:\Users\Player\AppData\Local\D3B\d3b.db");
+        settings.OpenPathCommand.Execute(@"C:\Users\Player\AppData\Local\D3B\studio");
+        settings.OpenLicencesCommand.Execute(null);
+        settings.ResetLayoutToDefaultCommand.Execute(null);
+
+        Assert.Equal([@"C:\Users\Player\AppData\Local\D3B", @"C:\Users\Player\AppData\Local\D3B\studio", settings.LicencesPath], opened);
+        Assert.EndsWith("THIRD-PARTY-NOTICES.md", settings.LicencesPath, StringComparison.Ordinal);
+        Assert.Equal(1, reset);
+        Assert.Equal(("Known once the host runs", false), (settings.ClientDataPath, settings.IsPackKnown));
+    }
+
+    [Fact]
     public async Task TheSettingsTabShowsWhetherTheHostRunsOrNot()
     {
         var main = new MainViewModel(new HostRunner(_ => new TaskCompletionSource<BotHostStart>().Task), _localizer);
@@ -210,8 +303,8 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         var running = await RunningAsync(AppPreferences.Load(PreferencesPath));
 
         running.ShowSettingsCommand.Execute(null);
-        running.ShowBottomCommand.Execute(BottomTab.Journal);
+        running.Bottom.ShowCommand.Execute(BottomTab.Journal);
 
-        Assert.Equal(("settings", true, BottomTab.Journal), (running.Editor.Selected?.Key, running.Layout.IsBottomOpen, running.BottomTab));
+        Assert.Equal(("settings", true, BottomTab.Journal), (running.Editor.Selected?.Key, running.Layout.IsBottomOpen, running.Bottom.Tab));
     }
 }

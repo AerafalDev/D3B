@@ -237,4 +237,82 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(["profile's"], Notes(bot));
     }
+
+    [Fact]
+    public async Task TheTraceSaysTheStateChosenAndEachStepPlayedToItsEndForOneRun()
+    {
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("only", "Only") { Actions = Chain(Note("a", "a"), Node("w", "wait", ("Seconds", 5))) }));
+
+        await UntilAsync(() => Notes(bot).Count == 1);
+        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(5));
+        await run.Completion;
+
+        var trace = bot.Trace.All();
+
+        Assert.Equal([(TraceKind.Entered, TraceOutcome.None), (TraceKind.Played, TraceOutcome.Done), (TraceKind.Played, TraceOutcome.Done)], trace.Select(line => (line.Kind, line.Outcome)));
+        Assert.All(trace, line => Assert.Equal("Only", line.State));
+        Assert.Single(trace.Select(line => line.Run).Distinct());
+        Assert.All(trace.Skip(1), line => Assert.NotNull(line.Node));
+    }
+
+    [Fact]
+    public async Task TheTraceSaysARulePlayedAnUrgentCutAndTheStepItInterrupted()
+    {
+        var (connection, bot) = await _behaviors.Play.EnterAsync(300);
+        var behavior = Behavior(
+            new BehaviorState("moved", "Moved") { When = When("flag.on", ("First", Variable("moved"))), IsUrgent = true, Actions = Chain(Node("stop", "stop")) },
+            new BehaviorState("idle", "Idle") { Actions = Chain(Node("w", "wait", ("Seconds", 600))) }) with
+        {
+            Variables = [new BehaviorVariable("moved", VariableType.Flag, VariableScope.Run)],
+            Rules = [new BehaviorRule("on-map", "On map", new NodeCall("map.changed", Values())) { Actions = Chain(Node("set", NodeCatalog.SetVariable, ("variable", "moved"), ("value", true))) }],
+        };
+        var run = await _behaviors.StartAsync(bot, behavior);
+
+        await UntilAsync(() => States(bot).Count == 1 && run.Status is ActivityStatus.Stepping);
+        connection.Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId });
+        connection.Server(TestPlay.Information(300, TestPlay.NorthMapId));
+        await run.Completion;
+
+        var trace = bot.Trace.All();
+
+        Assert.Contains(trace, line => line is { Kind: TraceKind.Rule, Outcome: TraceOutcome.Played, Subject: "On map", State: "Idle" });
+        Assert.Contains(trace, line => line is { Kind: TraceKind.Urgent, Subject: "Moved", State: "Idle" });
+        Assert.Contains(trace, line => line is { Kind: TraceKind.Played, Outcome: TraceOutcome.Interrupted, State: "Idle" });
+        Assert.Contains(trace, line => line is { Kind: TraceKind.Entered, State: "Moved" });
+    }
+
+    [Fact]
+    public async Task TheTraceSaysWhenNoStateHolds()
+    {
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("rich", "Rich") { When = When("kamas.atLeast", ("Amount", 1_000_000)), Actions = Chain(Note("r", "rich")) }));
+
+        await UntilAsync(() => bot.Trace.Written > 0);
+        run.Stop();
+        await run.Completion;
+
+        Assert.Equal(TraceKind.Waiting, bot.Trace.All()[0].Kind);
+        Assert.Null(bot.Trace.All()[0].State);
+    }
+
+    [Theory]
+    [InlineData(WatchedGauge.Pods, 90, 899, 1000, false)]
+    [InlineData(WatchedGauge.Pods, 90, 900, 1000, true)]
+    [InlineData(WatchedGauge.Life, 40, 41, 100, false)]
+    [InlineData(WatchedGauge.Life, 40, 40, 100, true)]
+    public void AThresholdHoldsThePodsAtOrAboveItAndTheLifeAtOrUnderIt(WatchedGauge gauge, int threshold, int value, int most, bool holds)
+    {
+        var state = gauge is WatchedGauge.Pods ? new D3B.Bot.Characters.CharacterState { Key = TestPlay.Key, Name = "Character", Weight = value, MaxWeight = most } : new D3B.Bot.Characters.CharacterState { Key = TestPlay.Key, Name = "Character", Life = value, MaxLife = most };
+
+        Assert.Equal(holds, BehaviorActivity.Holds(new ActivityWatch(gauge, threshold, WatchAction.Bank), state));
+    }
+
+    [Fact]
+    public void AThresholdWithoutItsGaugeIsUnknown()
+    {
+        Assert.Null(BehaviorActivity.Holds(new ActivityWatch(WatchedGauge.Life, 40, WatchAction.Heal), new D3B.Bot.Characters.CharacterState { Key = TestPlay.Key, Name = "Character" }));
+    }
 }

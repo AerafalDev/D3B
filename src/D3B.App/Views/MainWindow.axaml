@@ -225,7 +225,6 @@
                         IsChecked="{Binding Layout.IsInspectorOpen, Mode=OneWay}" />
                     <Separator />
                     <MenuItem Classes="Heading" Header="{l:Tr MenuPages}" />
-                    <MenuItem Command="{Binding ShowProfilesCommand}" Header="{l:Tr Profiles}" />
                     <MenuItem
                         Header="{l:Tr MenuModules}"
                         IsVisible="{Binding HasPages}"
@@ -571,31 +570,7 @@
                                     </Border>
                                 </StackPanel>
                             </Border>
-                            <StackPanel
-                                HorizontalAlignment="Center"
-                                Margin="20"
-                                MaxWidth="240"
-                                Spacing="10"
-                                VerticalAlignment="Center">
-                                <c:Icon
-                                    Drawing="{StaticResource Nodes.Folder}"
-                                    Height="20"
-                                    HorizontalAlignment="Center"
-                                    Opacity="0.6"
-                                    Width="20" />
-                                <TextBlock
-                                    Classes="Dim"
-                                    HorizontalAlignment="Center"
-                                    Text="{l:Tr AssetsEmpty}"
-                                    TextAlignment="Center"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Classes="Outline"
-                                    Command="{Binding ShowProfilesCommand}"
-                                    Content="{l:Tr AssetsOpenProfiles}"
-                                    HorizontalAlignment="Center"
-                                    Padding="12,0" />
-                            </StackPanel>
+                            <views:AssetsView DataContext="{Binding Assets}" Name="AssetsPanel" />
                         </DockPanel>
                     </Border>
                 </Grid>
@@ -656,6 +631,13 @@
                                                                 VerticalAlignment="Center"
                                                                 Width="16" />
                                                             <TextBlock Classes="TabTitle" Text="{Binding Title}" />
+                                                            <Ellipse
+                                                                Fill="{DynamicResource PausedColor}"
+                                                                Height="6"
+                                                                IsVisible="{Binding IsModified}"
+                                                                ToolTip.Tip="{l:Tr UnsavedChanges}"
+                                                                VerticalAlignment="Center"
+                                                                Width="6" />
                                                         </StackPanel>
                                                     </Button>
                                                     <Button
@@ -693,8 +675,8 @@
                                                     <DataTemplate x:DataType="vm:MainViewModel">
                                                         <views:WelcomeView />
                                                     </DataTemplate>
-                                                    <DataTemplate x:DataType="vm:ProfilesViewModel">
-                                                        <views:ProfilesView />
+                                                    <DataTemplate x:DataType="vm:ProfileViewModel">
+                                                        <views:ProfileView />
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="ch:CharacterTabViewModel">
                                                         <views:CharacterView />
@@ -765,145 +747,7 @@
                         Grid.Row="2"
                         IsVisible="{Binding Layout.IsBottomOpen}"
                         Name="BottomDock">
-                        <DockPanel>
-                            <Border Classes="Strip" DockPanel.Dock="Top">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Orientation="Horizontal" Spacing="2">
-                                        <Border Classes="TabHost" Classes.On="{Binding IsJournalShown}">
-                                            <Button
-                                                Classes="TabFace Plain"
-                                                Command="{Binding ShowBottomCommand}"
-                                                CommandParameter="{x:Static studio:BottomTab.Journal}">
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <c:Icon
-                                                        Drawing="{StaticResource Toolwindows.Messages}"
-                                                        Height="14"
-                                                        Width="14" />
-                                                    <TextBlock Classes="TabTitle" Text="{l:Tr BottomJournal}" />
-                                                </StackPanel>
-                                            </Button>
-                                        </Border>
-                                        <Border Classes="TabHost" Classes.On="{Binding IsTraceShown}">
-                                            <Button
-                                                Classes="TabFace Plain"
-                                                Command="{Binding ShowBottomCommand}"
-                                                CommandParameter="{x:Static studio:BottomTab.Trace}">
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <c:Icon
-                                                        Drawing="{StaticResource Toolwindows.Run}"
-                                                        Height="14"
-                                                        Width="14" />
-                                                    <TextBlock Classes="TabTitle" Text="{l:Tr BottomTrace}" />
-                                                </StackPanel>
-                                            </Button>
-                                        </Border>
-                                        <Border Classes="TabHost" Classes.On="{Binding IsProblemsShown}">
-                                            <Button
-                                                Classes="TabFace Plain"
-                                                Command="{Binding ShowBottomCommand}"
-                                                CommandParameter="{x:Static studio:BottomTab.Problems}">
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <c:Icon
-                                                        Drawing="{StaticResource Toolwindows.Problems}"
-                                                        Height="14"
-                                                        Width="14" />
-                                                    <TextBlock Classes="TabTitle" Text="{l:Tr BottomProblems}" />
-                                                </StackPanel>
-                                            </Button>
-                                        </Border>
-                                        <Border Classes="TabHost" Classes.On="{Binding IsProtocolShown}">
-                                            <Button
-                                                Classes="TabFace Plain"
-                                                Command="{Binding ShowBottomCommand}"
-                                                CommandParameter="{x:Static studio:BottomTab.Protocol}">
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <c:Icon
-                                                        Drawing="{StaticResource Toolwindows.Web}"
-                                                        Height="14"
-                                                        Width="14" />
-                                                    <TextBlock Classes="TabTitle" Text="{l:Tr BottomProtocol}" />
-                                                </StackPanel>
-                                            </Button>
-                                        </Border>
-                                        <Border Classes="TabHost" Classes.On="{Binding IsStatisticsShown}">
-                                            <Button
-                                                Classes="TabFace Plain"
-                                                Command="{Binding ShowBottomCommand}"
-                                                CommandParameter="{x:Static studio:BottomTab.Statistics}">
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <c:Icon
-                                                        Drawing="{StaticResource Toolwindows.Profiler}"
-                                                        Height="14"
-                                                        Width="14" />
-                                                    <TextBlock Classes="TabTitle" Text="{l:Tr BottomStatistics}" />
-                                                </StackPanel>
-                                            </Button>
-                                        </Border>
-                                    </StackPanel>
-                                    <Button
-                                        Classes="Tool Small"
-                                        Command="{Binding Layout.CloseCommand}"
-                                        CommandParameter="{x:Static studio:StudioPanel.Bottom}"
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center">
-                                        <ToolTip.Tip>
-                                            <c:KeyTip Keys="Ctrl J" Text="{l:Tr Close}" />
-                                        </ToolTip.Tip>
-                                        <c:Icon
-                                            Drawing="{StaticResource General.Close}"
-                                            Height="12"
-                                            Width="12" />
-                                    </Button>
-                                </Grid>
-                            </Border>
-                            <Panel>
-                                <views:LogsView DataContext="{Binding Logs}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsJournalShown}" />
-                                <views:InspectorView DataContext="{Binding Inspector}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProtocolShown}" />
-                                <views:StatisticsView DataContext="{Binding Statistics}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsStatisticsShown}" />
-                                <StackPanel
-                                    HorizontalAlignment="Center"
-                                    IsVisible="{Binding IsTraceShown}"
-                                    MaxWidth="320"
-                                    Spacing="6"
-                                    VerticalAlignment="Center">
-                                    <TextBlock
-                                        Classes="Muted"
-                                        HorizontalAlignment="Center"
-                                        Text="{l:Tr TraceEmptyTitle}" />
-                                    <TextBlock
-                                        Classes="Dim"
-                                        HorizontalAlignment="Center"
-                                        Text="{l:Tr TraceEmptyText}"
-                                        TextAlignment="Center"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                                <StackPanel
-                                    HorizontalAlignment="Center"
-                                    IsVisible="{Binding IsProblemsShown}"
-                                    Orientation="Horizontal"
-                                    Spacing="8"
-                                    VerticalAlignment="Center">
-                                    <c:Icon Drawing="{StaticResource Status.Success}" VerticalAlignment="Center" />
-                                    <TextBlock
-                                        Classes="Muted"
-                                        Text="{l:Tr ProblemsEmpty}"
-                                        VerticalAlignment="Center" />
-                                </StackPanel>
-                                <Border Background="{DynamicResource PanelColor}">
-                                    <Border.IsVisible>
-                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                            <Binding Path="IsNotRunning" />
-                                            <MultiBinding Converter="{x:Static BoolConverters.Or}">
-                                                <Binding Path="IsJournalShown" />
-                                                <Binding Path="IsProtocolShown" />
-                                                <Binding Path="IsStatisticsShown" />
-                                            </MultiBinding>
-                                        </MultiBinding>
-                                    </Border.IsVisible>
-                                    <views:HostStateView />
-                                </Border>
-                            </Panel>
-                        </DockPanel>
+                        <views:BottomPanelView DataContext="{Binding Bottom}" />
                     </Border>
                 </Grid>
                 <c:DockSplitter
@@ -958,7 +802,7 @@
                             <TextBox
                                 Classes="PropertySearch"
                                 Text="{Binding Properties.Filter}"
-                                Watermark="{l:Tr InspectorSearch}">
+                                PlaceholderText="{l:Tr InspectorSearch}">
                                 <TextBox.InnerLeftContent>
                                     <c:Icon
                                         Drawing="{StaticResource General.Search}"

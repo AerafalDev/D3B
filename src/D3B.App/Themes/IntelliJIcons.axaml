@@ -3,6 +3,64 @@
          the dark variants of platform/icons/src/expui in JetBrains/intellij-community at 74546168a76169cc3b4ddd81e4c5d63d0e06e624,
          each under the Apache 2.0 license as its notice below says, which THIRD-PARTY-NOTICES.md holds whole.  -->
 
+    <!--  actions/newFolder: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="Actions.NewFolder">
+        <GeometryDrawing Brush="#FF548AF7">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 12.5 9 C 12.7761 9 13 9.22386 13 9.5 V 12 H 15.5 C 15.7761 12 16 12.2239 16 12.5 C 16 12.7761 15.7761 13 15.5 13 H 13 V 15.5 C 13 15.7761 12.7761 16 12.5 16 C 12.2239 16 12 15.7761 12 15.5 V 13 H 9.5 C 9.22386 13 9 12.7761 9 12.5 C 9 12.2239 9.22386 12 9.5 12 H 12 V 9.5 C 12 9.22386 12.2239 9 12.5 9 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FF43454A">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 2.63333 2 C 1.73127 2 1 2.83574 1 3.86667 V 12.1333 C 1 13.1643 1.73127 14 2.63333 14 H 8 V 12.5 C 8 11.6716 8.67157 11 9.5 11 H 11 V 9.5 C 11 8.67157 11.6716 8 12.5 8 H 15 V 6 C 15 4.89543 14.1046 4 13 4 L 8.46667 4 L 6.84336 2.30775 C 6.65477 2.11115 6.39413 2 6.1217 2 H 2.63333 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 6.1217 3 L 2.63333 3 C 2.40481 3 2 3.25841 2 3.86667 V 12.1333 C 2 12.7416 2.40481 13 2.63333 13 H 8 V 14 H 2.63333 C 1.73127 14 1 13.1643 1 12.1333 V 3.86667 C 1 2.83574 1.73127 2 2.63333 2 H 6.1217 C 6.39413 2 6.65477 2.11115 6.84336 2.30775 L 8.46667 4 L 13 4 C 14.1046 4 15 4.89543 15 6 V 8 H 14 V 6 C 14 5.44771 13.5523 5 13 5 H 8.04022 L 6.1217 3 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  actions/selectAll: Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="Actions.SelectAll">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 1.5 13 V 3 C 1.5 2.17157 2.17157 1.5 3 1.5 H 13 C 13.8284 1.5 14.5 2.17157 14.5 3 V 13 C 14.5 13.8284 13.8284 14.5 13 14.5 H 3 C 2.17157 14.5 1.5 13.8284 1.5 13 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 4.75 7.75 L 7 10 L 11.2422 5.75781</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1.5" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  actions/stopWatch: Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="Actions.StopWatch">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 4 1.5 C 4 1.22386 4.22386 1 4.5 1 H 11.5 C 11.7761 1 12 1.22386 12 1.5 C 12 1.77614 11.7761 2 11.5 2 H 4.5 C 4.22386 2 4 1.77614 4 1.5 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 8 5.5 C 8.27614 5.5 8.5 5.72386 8.5 6 V 8.13378 C 8.7989 8.30669 9 8.62986 9 9 C 9 9.55229 8.55229 10 8 10 C 7.44772 10 7 9.55229 7 9 C 7 8.62986 7.2011 8.30669 7.5 8.13378 V 6 C 7.5 5.72386 7.72386 5.5 8 5.5 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 13.8536 3.85355 C 14.0488 3.65829 14.0488 3.34171 13.8536 3.14645 C 13.6583 2.95118 13.3417 2.95118 13.1464 3.14645 L 11.8744 4.41847 C 10.8291 3.53358 9.47685 3 8 3 C 4.68629 3 2 5.68629 2 9 C 2 12.3137 4.68629 15 8 15 C 11.3137 15 14 12.3137 14 9 C 14 7.52315 13.4664 6.17092 12.5815 5.12558 L 13.8536 3.85355 Z M 13 9 C 13 11.7614 10.7614 14 8 14 C 5.23858 14 3 11.7614 3 9 C 3 6.23858 5.23858 4 8 4 C 10.7614 4 13 6.23858 13 9 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
     <!--  debugger/threadRunning: Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
     <DrawingGroup x:Key="Debugger.ThreadRunning">
         <GeometryDrawing Brush="#FF253627">
@@ -50,6 +108,18 @@
         <GeometryDrawing>
             <GeometryDrawing.Geometry>
                 <StreamGeometry>F1 M 6 11.5 L 9.5 8 L 6 4.5</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFB4B8BF" LineCap="Round" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/chevronUp: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.ChevronUp">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 4.5 9.75 L 8 6.25 L 11.5 9.75</StreamGeometry>
             </GeometryDrawing.Geometry>
             <GeometryDrawing.Pen>
                 <Pen Brush="#FFB4B8BF" LineCap="Round" LineJoin="Miter" Thickness="1" />
@@ -121,6 +191,27 @@
         </GeometryDrawing>
     </DrawingGroup>
 
+    <!--  general/delete: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Delete">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 7 2 H 9 C 9.55228 2 10 2.44772 10 3 H 6 C 6 2.44772 6.44772 2 7 2 Z M 5 3 C 5 1.89543 5.89543 1 7 1 H 9 C 10.1046 1 11 1.89543 11 3 H 13 C 13.5523 3 14 3.44772 14 4 V 5 V 6 H 13 V 13 C 13 14.1046 12.1046 15 11 15 H 5 C 3.89543 15 3 14.1046 3 13 V 6 H 2 V 5 V 4 C 2 3.44772 2.44772 3 3 3 H 5 Z M 11 4 H 10 H 6 H 5 H 3 V 5 H 4 H 12 H 13 V 4 H 11 Z M 4 6 H 12 V 13 C 12 13.5523 11.5523 14 11 14 H 5 C 4.44772 14 4 13.5523 4 13 V 6 Z M 6.5 7 C 6.22386 7 6 7.22386 6 7.5 V 11.5 C 6 11.7761 6.22386 12 6.5 12 C 6.77614 12 7 11.7761 7 11.5 V 7.5 C 7 7.22386 6.77614 7 6.5 7 Z M 9 7.5 C 9 7.22386 9.22386 7 9.5 7 C 9.77614 7 10 7.22386 10 7.5 V 11.5 C 10 11.7761 9.77614 12 9.5 12 C 9.22386 12 9 11.7761 9 11.5 V 7.5 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/edit: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Edit">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 11.5973 7.65471 L 13.6882 5.56049 C 14.1053 5.15406 14.1003 4.49602 13.6948 4.08627 L 12.0267 2.3136 L 12.0224 2.30932 C 11.6123 1.90004 10.942 1.89327 10.5331 2.31079 L 8.3867 4.44406 M 11.5973 7.65471 L 8.3867 4.44406 M 11.5973 7.65471 L 5.74041 13.5 H 2.50036 L 2.5 10.32 L 8.3867 4.44406</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
     <!--  general/editorOnly: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
     <DrawingGroup x:Key="General.EditorOnly">
         <GeometryDrawing Brush="#FFCED0D6">
@@ -142,6 +233,43 @@
             <GeometryDrawing.Geometry>
                 <StreamGeometry>F1 M 3.5 12 H 12.5 A 0.5 0.5 0 0 1 13 12.5 V 12.5 A 0.5 0.5 0 0 1 12.5 13 H 3.5 A 0.5 0.5 0 0 1 3 12.5 V 12.5 A 0.5 0.5 0 0 1 3.5 12 Z</StreamGeometry>
             </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/expandAll: Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.ExpandAll">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 4.5 5.5 L 8 2 L 11.5 5.5</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 4.5 10.5 L 8 14 L 11.5 10.5</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/export: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Export">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 13.9621 2.30861 C 13.938 2.25051 13.9026 2.19602 13.8557 2.14857 C 13.8543 2.14715 13.8528 2.14574 13.8514 2.14433 C 13.7611 2.05509 13.637 2 13.5 2 H 13.4999 H 9.5 C 9.22386 2 9 2.22386 9 2.5 C 9 2.77614 9.22386 3 9.5 3 H 12.2929 L 7.14645 8.14645 C 6.95118 8.34171 6.95118 8.65829 7.14645 8.85355 C 7.34171 9.04882 7.65829 9.04882 7.85355 8.85355 L 13 3.70711 V 6.5 C 13 6.77614 13.2239 7 13.5 7 C 13.7761 7 14 6.77614 14 6.5 V 2.50035 C 14 2.49923 14 2.49812 14 2.497 C 13.9996 2.43287 13.987 2.3688 13.9621 2.30861 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 2.5 4.5 V 12 C 2.5 12.8284 3.17157 13.5 4 13.5 H 11.5</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
         </GeometryDrawing>
     </DrawingGroup>
 
@@ -236,11 +364,88 @@
         </GeometryDrawing>
     </DrawingGroup>
 
+    <!--  general/import: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Import">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 7.03794 8.69139 C 7.06198 8.74949 7.09744 8.80398 7.14433 8.85143 C 7.14574 8.85285 7.14715 8.85426 7.14857 8.85567 C 7.23888 8.94491 7.36301 9 7.5 9 H 7.50009 H 11.5 C 11.7761 9 12 8.77614 12 8.5 C 12 8.22386 11.7761 8 11.5 8 H 8.70711 L 13.8536 2.85355 C 14.0488 2.65829 14.0488 2.34171 13.8536 2.14645 C 13.6583 1.95118 13.3417 1.95118 13.1464 2.14645 L 8 7.29289 V 4.5 C 8 4.22386 7.77614 4 7.5 4 C 7.22386 4 7 4.22386 7 4.5 V 8.49965 C 7 8.50077 7 8.50188 7.00001 8.503 C 7.00039 8.56713 7.01303 8.6312 7.03794 8.69139 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 2.5 4.5 V 12 C 2.5 12.8284 3.17157 13.5 4 13.5 H 11.5</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/language: Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Language">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 11.5001 7 C 11.7001 7 11.8809 7.1192 11.9597 7.30304 L 14.9597 14.303 C 15.0685 14.5569 14.9509 14.8508 14.6971 14.9596 C 14.4433 15.0683 14.1493 14.9508 14.0406 14.697 L 13.3133 13 H 9.68697 L 8.9597 14.697 C 8.85092 14.9508 8.55698 15.0683 8.30317 14.9596 C 8.04935 14.8508 7.93178 14.5569 8.04056 14.303 L 11.0406 7.30304 C 11.1193 7.1192 11.3001 7 11.5001 7 Z M 10.1155 12 H 12.8847 L 11.5001 8.7693 L 10.1155 12 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 5.5 1 C 5.77614 1 6 1.22386 6 1.5 V 2 H 9.5 C 9.77614 2 10 2.22386 10 2.5 C 10 2.77614 9.77614 3 9.5 3 H 1.5 C 1.22386 3 1 2.77614 1 2.5 C 1 2.22386 1.22386 2 1.5 2 H 5 V 1.5 C 5 1.22386 5.22386 1 5.5 1 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 7.50013 2 C 7.77627 2 8.00013 2.22386 8.00013 2.5 C 8.00013 3.89963 7.3101 5.50735 6.20125 6.8771 C 5.08584 8.25496 3.50292 9.44778 1.63749 9.98076 C 1.37197 10.0566 1.09523 9.90288 1.01937 9.63736 C 0.943505 9.37184 1.09725 9.0951 1.36277 9.01924 C 2.99734 8.55222 4.41442 7.49504 5.42401 6.2479 C 6.44016 4.99265 7.00013 3.60037 7.00013 2.5 C 7.00013 2.22386 7.22399 2 7.50013 2 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 3.40178 4.00984 C 3.67256 3.95569 3.93597 4.1313 3.99013 4.40208 C 4.45054 6.70415 6.29583 8.54943 8.59789 9.00984 C 8.86867 9.064 9.04428 9.32741 8.99013 9.59819 C 8.93597 9.86897 8.67256 10.0446 8.40178 9.99042 C 5.70385 9.45084 3.54913 7.29612 3.00955 4.59819 C 2.95539 4.32741 3.131 4.064 3.40178 4.00984 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
     <!--  general/layout: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
     <DrawingGroup x:Key="General.Layout">
         <GeometryDrawing Brush="#FFCED0D6">
             <GeometryDrawing.Geometry>
                 <StreamGeometry>F0 M 6.99988 3 L 3.99994 3 C 3.44765 3 2.99994 3.44772 2.99994 4 L 2.99994 12 C 2.99994 12.5523 3.44765 13 3.99994 13 L 6.99988 13 L 6.99988 8 L 6.99988 7 L 6.99988 3 Z M 7.99988 3 L 7.99988 7 L 12.9999 7 L 12.9999 4 C 12.9999 3.44772 12.5522 3 11.9999 3 L 7.99988 3 Z M 7.99988 8 L 7.99988 13 L 11.9999 13 C 12.5522 13 12.9999 12.5523 12.9999 12 L 12.9999 8 L 7.99988 8 Z M 3.99994 2 C 2.89537 2 1.99994 2.89543 1.99994 4 L 1.99994 12 C 1.99994 13.1046 2.89537 14 3.99994 14 L 11.9999 14 C 13.1045 14 13.9999 13.1046 13.9999 12 L 13.9999 4 C 13.9999 2.89543 13.1045 2 11.9999 2 L 3.99994 2 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/listFiles: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.ListFiles">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 4 1.5 H 12 A 1.5 1.5 0 0 1 13.5 3 V 13 A 1.5 1.5 0 0 1 12 14.5 H 4 A 1.5 1.5 0 0 1 2.5 13 V 3 A 1.5 1.5 0 0 1 4 1.5 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 5.5 5 H 10.5 A 0.5 0.5 0 0 1 11 5.5 V 5.5 A 0.5 0.5 0 0 1 10.5 6 H 5.5 A 0.5 0.5 0 0 1 5 5.5 V 5.5 A 0.5 0.5 0 0 1 5.5 5 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 5.5 7.5 H 10.5 A 0.5 0.5 0 0 1 11 8 V 8 A 0.5 0.5 0 0 1 10.5 8.5 H 5.5 A 0.5 0.5 0 0 1 5 8 V 8 A 0.5 0.5 0 0 1 5.5 7.5 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 5.5 10 H 10.5 A 0.5 0.5 0 0 1 11 10.5 V 10.5 A 0.5 0.5 0 0 1 10.5 11 H 5.5 A 0.5 0.5 0 0 1 5 10.5 V 10.5 A 0.5 0.5 0 0 1 5.5 10 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/locate: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Locate">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 8.5 5 V 2.02054 C 11.4149 2.26101 13.739 4.5851 13.9795 7.5 H 11 C 10.7239 7.5 10.5 7.72386 10.5 8 C 10.5 8.27614 10.7239 8.5 11 8.5 H 13.9795 C 13.739 11.4149 11.4149 13.739 8.5 13.9795 V 11 C 8.5 10.7239 8.27614 10.5 8 10.5 C 7.72386 10.5 7.5 10.7239 7.5 11 V 13.9795 C 4.5851 13.739 2.26101 11.4149 2.02054 8.5 H 5 C 5.27614 8.5 5.5 8.27614 5.5 8 C 5.5 7.72386 5.27614 7.5 5 7.5 H 2.02054 C 2.26101 4.5851 4.5851 2.26101 7.5 2.02054 V 5 C 7.5 5.27614 7.72386 5.5 8 5.5 C 8.27614 5.5 8.5 5.27614 8.5 5 Z M 1 8 C 1 4.13401 4.13401 1 8 1 C 11.866 1 15 4.13401 15 8 C 15 11.866 11.866 15 8 15 C 4.13401 15 1 11.866 1 8 Z</StreamGeometry>
             </GeometryDrawing.Geometry>
         </GeometryDrawing>
     </DrawingGroup>
@@ -304,6 +509,46 @@
         </GeometryDrawing>
     </DrawingGroup>
 
+    <!--  general/moveDown: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.MoveDown">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 2.5 2 H 13.5 A 0.5 0.5 0 0 1 14 2.5 V 2.5 A 0.5 0.5 0 0 1 13.5 3 H 2.5 A 0.5 0.5 0 0 1 2 2.5 V 2.5 A 0.5 0.5 0 0 1 2.5 2 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 11.8536 10.1535 C 12.0488 9.95828 12.0488 9.6417 11.8536 9.44644 C 11.6583 9.25117 11.3417 9.25117 11.1464 9.44644 L 8.5 12.0929 L 8.5 4.5 C 8.5 4.22386 8.27615 4 8 4 C 7.72386 4 7.5 4.22386 7.5 4.5 L 7.5 12.0929 L 4.85355 9.44644 C 4.65829 9.25118 4.34171 9.25118 4.14645 9.44644 C 3.95118 9.6417 3.95118 9.95828 4.14645 10.1535 L 7.64645 13.6535 L 8 14.0071 L 8.35355 13.6535 L 11.8536 10.1535 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/moveUp: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.MoveUp">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 11.8536 5.85354 C 12.0488 6.0488 12.0488 6.36538 11.8536 6.56064 C 11.6583 6.75591 11.3417 6.75591 11.1464 6.56064 L 8.5 3.9142 L 8.5 11.5071 C 8.5 11.7832 8.27615 12.0071 8 12.0071 C 7.72386 12.0071 7.5 11.7832 7.5 11.5071 L 7.5 3.91419 L 4.85355 6.56064 C 4.65829 6.7559 4.34171 6.7559 4.14645 6.56064 C 3.95118 6.36538 3.95118 6.0488 4.14645 5.85353 L 7.64645 2.35354 L 8 1.99998 L 8.35355 2.35354 L 11.8536 5.85354 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 2.5 13.0071 H 13.5 A 0.5 0.5 0 0 1 14 13.5071 V 13.5071 A 0.5 0.5 0 0 1 13.5 14.0071 H 2.5 A 0.5 0.5 0 0 1 2 13.5071 V 13.5071 A 0.5 0.5 0 0 1 2.5 13.0071 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/open: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Open">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 8.15132 4.35836 L 8.29689 4.5 H 8.5 H 13 C 13.8284 4.5 14.5 5.17157 14.5 6 V 12.1333 C 14.5 12.919 13.9104 13.5 13.25 13.5 H 2.75 C 2.08955 13.5 1.5 12.919 1.5 12.1333 V 3.86667 C 1.5 3.08099 2.08955 2.5 2.75 2.5 H 6.03823 C 6.16847 2.5 6.29357 2.55082 6.38691 2.64164 L 8.15132 4.35836 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
     <!--  general/pin: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
     <DrawingGroup x:Key="General.Pin">
         <GeometryDrawing Brush="#FFCED0D6">
@@ -314,6 +559,73 @@
         <GeometryDrawing Brush="#FFCED0D6">
             <GeometryDrawing.Geometry>
                 <StreamGeometry>F1 M 7.5 11 H 8.5 V 14.5 C 8.5 14.7761 8.27614 15 8 15 V 15 C 7.72386 15 7.5 14.7761 7.5 14.5 V 11 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/questionMark: Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.QuestionMark">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 1.5 8 A 6.5 6.5 0 1 1 14.5 8 A 6.5 6.5 0 1 1 1.5 8 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FF6F737A" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FF6F737A">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 7.59245 8.521 C 7.67312 8.33767 7.77212 8.18 7.88945 8.048 C 8.00679 7.916 8.16445 7.75833 8.36245 7.575 C 8.55312 7.40267 8.70345 7.25417 8.81345 7.1295 C 8.92712 7.00483 9.02245 6.86 9.09945 6.695 C 9.17645 6.52633 9.21495 6.33933 9.21495 6.134 C 9.21495 5.903 9.16545 5.69767 9.06645 5.518 C 8.97112 5.33833 8.83545 5.199 8.65945 5.1 C 8.48345 5.001 8.28179 4.9515 8.05445 4.9515 C 7.80145 4.9515 7.57779 5.0065 7.38345 5.1165 C 7.18912 5.2265 7.03879 5.3805 6.93245 5.5785 C 6.90638 5.62705 6.88351 5.67735 6.86383 5.72943 C 6.75806 6.00931 6.5304 6.2605 6.2312 6.2605 V 6.2605 C 5.932 6.2605 5.68157 6.01527 5.74167 5.72217 C 5.78989 5.48707 5.87148 5.27051 5.98645 5.0725 C 6.18445 4.7315 6.46312 4.4675 6.82245 4.2805 C 7.18179 4.0935 7.59612 4 8.06545 4 C 8.51279 4 8.90695 4.08617 9.24795 4.2585 C 9.58895 4.43083 9.85295 4.67467 10.04 4.99 C 10.227 5.30167 10.3186 5.661 10.315 6.068 C 10.315 6.38333 10.2655 6.662 10.1665 6.904 C 10.0675 7.14233 9.94645 7.34217 9.80345 7.5035 C 9.66045 7.66483 9.47529 7.84633 9.24795 8.048 C 9.07929 8.19833 8.94729 8.32483 8.85195 8.4275 C 8.75662 8.53017 8.67595 8.64567 8.60995 8.774 C 8.59197 8.80996 8.57743 8.84636 8.56569 8.88312 C 8.47784 9.15799 8.28252 9.401 7.99395 9.401 V 9.401 C 7.70538 9.401 7.45381 9.16525 7.4934 8.87941 C 7.51026 8.75764 7.54001 8.6378 7.59245 8.521 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FF6F737A">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 7.25 10.75 A 0.75 0.75 0 1 1 8.75 10.75 A 0.75 0.75 0 1 1 7.25 10.75 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/refresh: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Refresh">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 2.5 9 V 8 C 2.5 4.96243 4.96243 2.5 8 2.5 C 9.10679 2.5 10.1372 2.82692 11 3.38947</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 5 12.6105 C 5.86278 13.1731 6.89321 13.5 8 13.5 C 11.0376 13.5 13.5 11.0376 13.5 8 V 7</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 0.49997 7.50027 L 2.5 9.5 L 4.49998 7.50023</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 11.5 8.49982 L 13.5 6.5 L 15.5 8.49982</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/remove: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Remove">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 1 7.5 C 1 7.77614 1.22386 8 1.5 8 L 13.5 8 C 13.7761 8 14 7.77614 14 7.5 C 14 7.22386 13.7761 7 13.5 7 L 1.5 7 C 1.22386 7 1 7.22386 1 7.5 Z</StreamGeometry>
             </GeometryDrawing.Geometry>
         </GeometryDrawing>
     </DrawingGroup>
@@ -336,6 +648,23 @@
             <GeometryDrawing.Pen>
                 <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Round" Thickness="1" />
             </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/scrollDown: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.ScrollDown">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 1.5 3.5 H 5.5 M 1.5 8 H 5.5 M 1.5 12.5 H 14.5</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 11.5 3 C 11.7761 3 12 3.22386 12 3.5 L 12 9.29291 L 14.1464 7.14646 C 14.3417 6.95119 14.6583 6.9512 14.8536 7.14646 C 15.0488 7.34172 15.0488 7.65831 14.8536 7.85357 L 11.8535 10.8536 C 11.6583 11.0488 11.3417 11.0488 11.1464 10.8536 L 8.14645 7.85356 C 7.95118 7.6583 7.95118 7.34172 8.14645 7.14646 C 8.34171 6.9512 8.65829 6.9512 8.85355 7.14646 L 11 9.29289 L 11 3.5 C 11 3.22386 11.2238 3 11.5 3 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
         </GeometryDrawing>
     </DrawingGroup>
 
@@ -389,6 +718,42 @@
             <GeometryDrawing.Geometry>
                 <StreamGeometry>F0 M 7.99969 8 C 3.54766 8 2.39906 11.3034 2.10272 13.008 C 2.00813 13.5521 2.4474 14 2.99969 14 H 12.9997 C 13.552 14 13.9912 13.5521 13.8967 13.008 C 13.6003 11.3034 12.4517 8 7.99969 8 Z M 11.7438 10.5114 C 12.4081 11.2951 12.7281 12.2552 12.8778 13 H 3.12154 C 3.27126 12.2552 3.59131 11.2951 4.25563 10.5114 C 4.94028 9.70375 6.05804 9 7.99969 9 C 9.94134 9 11.0591 9.70375 11.7438 10.5114 Z</StreamGeometry>
             </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  general/vcs: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="General.Vcs">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 2.5 4 A 2 2 0 1 1 6.5 4 A 2 2 0 1 1 2.5 4 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 4.5 11 H 8.5 C 9.60457 11 10.5 10.1046 10.5 9 V 9 V 7.5</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 4.5 6.5 L 4.5 14.5</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 8.5 6 A 2 2 0 1 1 12.5 6 A 2 2 0 1 1 8.5 6 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
         </GeometryDrawing>
     </DrawingGroup>
 
@@ -479,6 +844,15 @@
         <GeometryDrawing Brush="#FFDB5C5C">
             <GeometryDrawing.Geometry>
                 <StreamGeometry>F1 M 7.25726 12 H 8.2744 V 7.32741 H 9.82869 V 6.43027 H 8.2744 V 5.48 C 8.2744 5.12 8.52012 4.87429 8.8744 4.87429 H 9.88012 V 4 H 8.77726 C 7.8744 4 7.25726 4.57143 7.25726 5.40571 V 6.43027 H 6.12012 V 7.32741 H 7.25726 V 12 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  nodes/securityRole: Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="Nodes.SecurityRole">
+        <GeometryDrawing Brush="#FF548AF7">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 8 8.96905 C 9.97316 8.723 11.5 7.03981 11.5 5 C 11.5 2.79086 9.70914 1 7.5 1 C 5.29086 1 3.5 2.79086 3.5 5 C 3.5 7.03981 5.02684 8.723 7 8.96905 V 14.5 C 7 14.7761 7.22386 15 7.5 15 C 7.77614 15 8 14.7761 8 14.5 V 14 H 9.5 C 9.77614 14 10 13.7761 10 13.5 C 10 13.2239 9.77614 13 9.5 13 H 8 V 12 H 9.5 C 9.77614 12 10 11.7761 10 11.5 C 10 11.2239 9.77614 11 9.5 11 H 8 V 8.96905 Z M 10.5 5 C 10.5 6.65685 9.15685 8 7.5 8 C 5.84315 8 4.5 6.65685 4.5 5 C 4.5 3.34315 5.84315 2 7.5 2 C 9.15685 2 10.5 3.34315 10.5 5 Z</StreamGeometry>
             </GeometryDrawing.Geometry>
         </GeometryDrawing>
     </DrawingGroup>
@@ -650,6 +1024,25 @@
         </GeometryDrawing>
     </DrawingGroup>
 
+    <!--  status/infoOutline: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="Status.InfoOutline">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 8 1 C 4.13401 1 1 4.13401 1 8 C 1 11.866 4.13401 15 8 15 C 11.866 15 15 11.866 15 8 C 15 4.13401 11.866 1 8 1 Z M 8 2 C 4.68629 2 2 4.68629 2 8 C 2 11.3137 4.68629 14 8 14 C 11.3137 14 14 11.3137 14 8 C 14 4.68629 11.3137 2 8 2 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 7 11 C 7 11.5523 7.44772 12 8 12 C 8.55228 12 9 11.5523 9 11 L 9 8 C 9 7.44771 8.55228 7 8 7 C 7.44771 7 7 7.44772 7 8 L 7 11 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 8 4 C 7.44771 4 7 4.44772 7 5 C 7 5.55228 7.44771 6 8 6 C 8.55228 6 9 5.55228 9 5 C 9 4.44772 8.55228 4 8 4 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
     <!--  status/success: Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
     <DrawingGroup x:Key="Status.Success">
         <GeometryDrawing Brush="#FF57965C">
@@ -733,6 +1126,20 @@
         </GeometryDrawing>
     </DrawingGroup>
 
+    <!--  toolwindows/hierarchy: Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="Toolwindows.Hierarchy">
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 11 7 C 11.5523 7 12 7.44772 12 8 V 10 H 14 L 14.1025 10.0049 C 14.6067 10.0562 15 10.4823 15 11 V 14 C 15 14.5177 14.6067 14.9438 14.1025 14.9951 L 14 15 H 10 C 9.48232 15 9.05621 14.6067 9.00488 14.1025 L 9 14 V 11 C 9 10.4477 9.44772 10 10 10 H 11 V 8 H 5 V 10 H 6 L 6.10254 10.0049 C 6.60667 10.0562 7 10.4823 7 11 V 14 C 7 14.5177 6.60667 14.9438 6.10254 14.9951 L 6 15 H 2 C 1.48232 15 1.05621 14.6067 1.00488 14.1025 L 1 14 V 11 C 1 10.4477 1.44772 10 2 10 H 4 V 8 C 4 7.44778 4.4478 7.0001 5 7 H 11 Z M 2 14 H 6 V 11 H 2 V 14 Z M 10 14 H 14 V 11 H 10 V 14 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 10.1025 1.00488 C 10.6067 1.05621 11 1.48232 11 2 V 5 C 11 5.51768 10.6067 5.94379 10.1025 5.99512 L 10 6 H 6 C 5.48232 6 5.05621 5.60667 5.00488 5.10254 L 5 5 V 2 C 5 1.44772 5.44772 1 6 1 H 10 L 10.1025 1.00488 Z M 6 5 H 10 V 2 H 6 V 5 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
     <!--  toolwindows/messages: Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
     <DrawingGroup x:Key="Toolwindows.Messages">
         <GeometryDrawing Brush="#FFCED0D6">
@@ -774,6 +1181,28 @@
             <GeometryDrawing.Pen>
                 <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Round" Thickness="1" />
             </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  toolwindows/palette: Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.  -->
+    <DrawingGroup x:Key="Toolwindows.Palette">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 2.5 10 v 3 a 0.5 0.5 0 0 0 0.5 0.5 h 10 a 0.5 0.5 0 0 0 0.5 -0.5 v -3 a 0.5 0.5 0 0 0 -0.5 -0.5 H 3 a 0.5 0.5 0 0 0 -0.5 0.5 z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Flat" LineJoin="Miter" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F0 M 10 2 a 1 1 0 0 0 -1 1 v 1.103 l 1 0.974 V 3 h 3 v 4.957 a 0.5 0.5 0 0 0 0.203 0.043 H 14 V 3 a 1 1 0 0 0 -1 -1 h -3 z M 3.14 5.152 a 1 1 0 0 0 0 1.414 L 4.575 8 h 1.414 l -2.14 -2.14 1.98 -1.981 L 9.95 8 h 1.414 L 6.536 3.172 a 1 1 0 0 0 -1.415 0 l -1.98 1.98 z</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFCED0D6">
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>F1 M 11 11.5 A 0.5 0.5 0 1 1 12 11.5 A 0.5 0.5 0 1 1 11 11.5 Z</StreamGeometry>
+            </GeometryDrawing.Geometry>
         </GeometryDrawing>
     </DrawingGroup>
 

@@ -128,9 +128,8 @@ public sealed class FightViewsTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.ShowProfilesCommand.Execute(null);
             main.Refresh();
-            main.Profiles.Items.Single(profile => profile.Name == "Larvae").EditCommand.Execute(null);
+            main.OpenProfile(main.Profiles.Items.Single(profile => profile.Name == "Larvae").Id);
             Dispatcher.UIThread.RunJobs();
 
             var englishTexts = Texts(window);

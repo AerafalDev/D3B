@@ -68,10 +68,20 @@ internal sealed partial class EditorTabs : ObservableObject
         Selected = tab;
     }
 
-    /// <summary>Closes a tab; the one shown, its neighbour on the left shows, else on the right.</summary>
+    /// <summary>Closes a tab by its ×, unless what it shows keeps it to ask first.</summary>
     /// <param name="tab">The tab.</param>
     [RelayCommand]
     public void Close(EditorTab? tab)
+    {
+        if (tab?.Closing is { } closing && !closing())
+            return;
+
+        Drop(tab);
+    }
+
+    /// <summary>Closes a tab, whatever it shows; the one shown, its neighbour on the left shows, else on the right.</summary>
+    /// <param name="tab">The tab.</param>
+    public void Drop(EditorTab? tab)
     {
         var index = tab is null ? -1 : Items.IndexOf(tab);
 

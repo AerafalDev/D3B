@@ -6,6 +6,7 @@ using Avalonia.VisualTree;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.AppSettings;
 using D3B.App.Views;
 using D3B.Bot.Activities;
 using D3B.Bot.Pages;
@@ -83,7 +84,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
                 localizer.Use(Localizer.English);
 
                 var main = new MainViewModel(runner, localizer, preferences);
-                var window = new MainWindow { DataContext = main, Height = 2240 };
+                var window = new MainWindow { DataContext = main, Height = 1400 };
 
                 main.Refresh();
                 main.ShowSettingsCommand.Execute(null);
@@ -92,20 +93,38 @@ public sealed class SettingsViewTests : IAsyncDisposable
                 window.Show();
                 Dispatcher.UIThread.RunJobs();
 
-                var english = Texts(window);
+                // Each section shows alone: its texts are read, and it is drawn to set beside the mockup's.
+                List<string> Sections(string language)
+                {
+                    var texts = new List<string>();
+
+                    foreach (var section in Enum.GetValues<SettingsSection>())
+                    {
+                        main.Settings.ChooseCommand.Execute(section);
+                        Dispatcher.UIThread.RunJobs();
+                        texts.AddRange(Texts(window));
+                        Drawings.DrawPart(window.GetVisualDescendants().OfType<SettingsView>().Single(), $"part-settings-{section.ToString().ToLowerInvariant()}-{language}");
+                        Drawings.Draw(window, $"settings-{section.ToString().ToLowerInvariant()}-{language}");
+                    }
+
+                    main.Settings.ChooseCommand.Execute(SettingsSection.Bots);
+                    Dispatcher.UIThread.RunJobs();
+
+                    return texts;
+                }
+
+                var english = Sections("en");
                 var boxes = new List<List<string?>> { Boxes(window) };
+                var raised = window.GetVisualDescendants().OfType<Border>().Count(bar => bar.Classes.Contains("Bar") && bar.IsEffectivelyVisible);
 
                 Drawings.Draw(window, "settings-en");
                 main.Settings.UseFrenchCommand.Execute(null);
                 Dispatcher.UIThread.RunJobs();
 
-                var french = Texts(window);
+                var french = Sections("fr");
 
                 boxes.Add(Boxes(window));
                 Drawings.Draw(window, "settings-fr");
-
-                var raised = window.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Ellipse>().Count(dot => dot.Classes.Contains("Raised") && dot.IsEffectivelyVisible);
-
                 localizer.Use(Localizer.English);
                 window.Close();
 
@@ -117,21 +136,28 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Contains("Display time", english);
         Assert.Contains("1.2 s", english);
         Assert.Contains("Server's answer", english);
-        Assert.Contains("Restore", english);
+        Assert.Contains("Reset all to default", english);
         Assert.Contains("Record the connections", english);
         Assert.Contains(@"Recording now, in C:\Users\Player\AppData\Local\D3B\captures", english);
+        Assert.Contains(@"C:\Users\Player\AppData\Local\D3B\captures", english);
         Assert.Contains("Appearance", english);
         Assert.Contains("English", english);
         Assert.Contains("Database", english);
+        Assert.Contains(@"C:\Users\Player\AppData\Local\D3B\d3b.db", english);
+        Assert.Contains("Licences", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Paramètres", french);
         Assert.Contains("Temps d'affichage", french);
         Assert.Contains("1,2 s", french);
         Assert.Contains("Réponse du serveur", french);
-        Assert.Contains("Rétablir", french);
+        Assert.Contains("Tout remettre par défaut", french);
         Assert.Contains("Au prochain démarrage", french);
         Assert.Contains("Base de données", french);
+        Assert.Contains("Emplacements", french);
         Assert.DoesNotContain("Display time", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+
+        // The display time and the relay's first delay, raised: each with its bar in the margin.
         Assert.Equal(2, raised);
 
         // In the app's language, not the system's.

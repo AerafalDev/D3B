@@ -1,10 +1,11 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>A delay of D3B's on the settings page, in seconds, from its default, the least, to its most (D151).</summary>
+/// <summary>A delay of D3B's in the settings' tab, in seconds, from its default, the least, to its most (D151, D329).</summary>
 /// <remarks>
 /// Its default is the value D3B measured, or chose for the relay: the box never goes below it, since a shorter delay
 /// would have the bot act before the client or the server is done. A fixed value, never drawn at random (D152).
@@ -54,6 +55,18 @@ internal sealed partial class DelayViewModel : ObservableObject
     [ObservableProperty]
     public partial string Help { get; private set; } = "";
 
+    /// <summary>Gets the line under its title: what it waits for, and its default.</summary>
+    [ObservableProperty]
+    public partial string Detail { get; private set; } = "";
+
+    /// <summary>Gets what its reset arrow says: the default it gives back.</summary>
+    [ObservableProperty]
+    public partial string ResetText { get; private set; } = "";
+
+    /// <summary>Gets or sets whether the settings' search leaves it.</summary>
+    [ObservableProperty]
+    public partial bool IsShown { get; set; } = true;
+
     /// <summary>Gets the default said, measured or D3B's.</summary>
     [ObservableProperty]
     public partial string DefaultText { get; private set; } = "";
@@ -72,6 +85,7 @@ internal sealed partial class DelayViewModel : ObservableObject
 
     /// <summary>Gets whether the delay was raised above its default.</summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ResetCommand), nameof(DecreaseCommand))]
     public partial bool IsRaised { get; private set; }
 
     /// <summary>Gets or sets the delay in seconds, as the bar moves it.</summary>
@@ -109,6 +123,8 @@ internal sealed partial class DelayViewModel : ObservableObject
         Help = _localizer[_key + "Help"];
         DefaultText = _localizer.Format(_defaultKey, Seconds(Default));
         MostText = _localizer.Format("DelayMost", Seconds(Most));
+        Detail = _localizer.Format("DelayLine", Help, DefaultText);
+        ResetText = _localizer.Format("DelayReset", Seconds(Default));
         NumberFormat = _localizer.Culture.NumberFormat;
         ValueText = Value is { } seconds ? Seconds(TimeSpan.FromSeconds((double)seconds)) : "";
     }
@@ -128,14 +144,46 @@ internal sealed partial class DelayViewModel : ObservableObject
         }
     }
 
+    /// <summary>Tells whether the delay's title or line holds a text, as the settings' search asks.</summary>
+    /// <param name="filter">The text, trimmed; empty holds always.</param>
+    /// <returns>Whether it holds it.</returns>
+    public bool Holds(string filter)
+    {
+        return filter.Length == 0 || Label.Contains(filter, StringComparison.CurrentCultureIgnoreCase) || Help.Contains(filter, StringComparison.CurrentCultureIgnoreCase);
+    }
+
     private string Seconds(TimeSpan delay)
     {
         return _localizer.Format("DelaySeconds", delay.TotalSeconds);
     }
 
+    [RelayCommand(CanExecute = nameof(IsRaised))]
+    private void Reset()
+    {
+        Value = Minimum;
+    }
+
+    [RelayCommand(CanExecute = nameof(IsRaised))]
+    private void Decrease()
+    {
+        Value = Math.Max(Minimum, (Value ?? Minimum) - Increment);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanIncrease))]
+    private void Increase()
+    {
+        Value = Math.Min(Maximum, (Value ?? Minimum) + Increment);
+    }
+
+    private bool CanIncrease()
+    {
+        return (Value ?? Minimum) < Maximum;
+    }
+
     partial void OnValueChanged(decimal? value)
     {
         OnPropertyChanged(nameof(Slider));
+        IncreaseCommand.NotifyCanExecuteChanged();
 
         if (value is not { } seconds)
             return;

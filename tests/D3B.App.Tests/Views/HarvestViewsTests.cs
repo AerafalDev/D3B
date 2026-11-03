@@ -113,9 +113,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             dialogs.Clear();
             main.Refresh();
             window.Show();
-            main.ShowProfilesCommand.Execute(null);
             main.Refresh();
-            main.Profiles.Items.Single(profile => profile.Name == "Ash and chestnut").EditCommand.Execute(null);
+            main.OpenProfile(main.Profiles.Items.Single(profile => profile.Name == "Ash and chestnut").Id);
             Dispatcher.UIThread.RunJobs();
 
             var english = Texts(window);
@@ -202,7 +201,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             var given = page.Items.Single(item => item.Name == "Auto lumberjack");
 
             Assert.True(given.IsGiven);
-            Assert.False(given.EditCommand.CanExecute(null));
+            Assert.True(given.IsReadOnly);
             Assert.False(given.AskDeleteCommand.CanExecute(null));
 
             given.DuplicateCommand.Execute(null);
@@ -258,9 +257,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.ShowProfilesCommand.Execute(null);
             main.Refresh();
-            main.Profiles.Items.Single(item => item.Name == "By profession").EditCommand.Execute(null);
+            main.OpenProfile(main.Profiles.Items.Single(item => item.Name == "By profession").Id);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
 
@@ -454,7 +452,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.ShowBottomCommand.Execute(BottomTab.Statistics);
+            main.Bottom.ShowCommand.Execute(BottomTab.Statistics);
             Dispatcher.UIThread.RunJobs();
 
             var english = Texts(window);
@@ -475,14 +473,13 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         });
 
         // 806 resources over 2 h 50, the run going on counted to its last write.
-        Assert.Contains("806", english);
-        Assert.Contains("2 h 50", english);
-        Assert.Contains("284/h", english);
+        Assert.Contains(english, text => text.Contains("806 · 2 h 50 · 284/h", StringComparison.Ordinal));
         Assert.Contains("+1 level", english);
         Assert.Contains("Lumberjack 10 → 11", english);
         Assert.Contains("Ash", english);
         Assert.Contains("700", english);
-        Assert.Contains("Character · Ortie", english);
+        Assert.Contains("Ortie", english);
+        Assert.Contains(english, text => text.StartsWith("Character · since", StringComparison.Ordinal));
         Assert.Contains("Running", english);
         Assert.Equal(2, icons);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));

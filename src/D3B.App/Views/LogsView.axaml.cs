@@ -7,7 +7,7 @@ using D3B.App.ViewModels.Logs;
 
 namespace D3B.App.Views;
 
-/// <summary>The logs page: the lines of a bot, of the host or of all, which it follows as they come (D111).</summary>
+/// <summary>The journal: the lines of a bot, of the host or of all, which it follows as they come (D111, D327).</summary>
 internal sealed partial class LogsView : UserControl
 {
     private LogsViewModel? _model;
@@ -67,6 +67,11 @@ internal sealed partial class LogsView : UserControl
             Scroller.ScrollToEnd();
             _scrolling = false;
         }, DispatcherPriority.Background);
+    }
+
+    private void OnMenuRowClick(object? sender, RoutedEventArgs e)
+    {
+        FlyoutRows.Close(sender);
     }
 
     private async void OnCopyClick(object? sender, RoutedEventArgs e)

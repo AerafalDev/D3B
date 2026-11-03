@@ -320,26 +320,8 @@
   <data name="StorageUnavailable" xml:space="preserve">
     <value>D3B's database did not open.</value>
   </data>
-  <data name="Profiles" xml:space="preserve">
-    <value>Profiles</value>
-  </data>
-  <data name="PlayersOne" xml:space="preserve">
-    <value>{0} character</value>
-  </data>
-  <data name="PlayersOther" xml:space="preserve">
-    <value>{0} characters</value>
-  </data>
-  <data name="NoPlayer" xml:space="preserve">
-    <value>No character</value>
-  </data>
   <data name="NewProfile" xml:space="preserve">
     <value>New profile</value>
-  </data>
-  <data name="NoProfileTitle" xml:space="preserve">
-    <value>No profile</value>
-  </data>
-  <data name="NoProfileDetail" xml:space="preserve">
-    <value>A profile is an activity and its settings, shared by characters.</value>
   </data>
   <data name="ProfileName" xml:space="preserve">
     <value>Name</value>
@@ -349,9 +331,6 @@
   </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>
-  </data>
-  <data name="Edit" xml:space="preserve">
-    <value>Edit</value>
   </data>
   <data name="Delete" xml:space="preserve">
     <value>Delete</value>
@@ -370,9 +349,6 @@
   </data>
   <data name="NameTaken" xml:space="preserve">
     <value>Another profile has this name</value>
-  </data>
-  <data name="AndMore" xml:space="preserve">
-    <value>{0} and {1} more</value>
   </data>
   <data name="NumberRange" xml:space="preserve">
     <value>From {0} to {1}</value>
@@ -446,15 +422,6 @@
   <data name="ActivityNeedsProfile" xml:space="preserve">
     <value>{0} needs settings: make it a profile</value>
   </data>
-  <data name="SummaryItem" xml:space="preserve">
-    <value>{0} {1}</value>
-  </data>
-  <data name="Logs" xml:space="preserve">
-    <value>Logs</value>
-  </data>
-  <data name="Inspector" xml:space="preserve">
-    <value>Inspector</value>
-  </data>
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
@@ -479,23 +446,8 @@
   <data name="DelaySeconds" xml:space="preserve">
     <value>{0:0.##} s</value>
   </data>
-  <data name="DelayRaised" xml:space="preserve">
-    <value>Raised above its default</value>
-  </data>
-  <data name="SettingsDelays" xml:space="preserve">
-    <value>Delays</value>
-  </data>
   <data name="SettingsDelaysDetail" xml:space="preserve">
     <value>Each bounds a wait, which ends as soon as the answer comes. Raise one only if it runs out.</value>
-  </data>
-  <data name="RestoreDelays" xml:space="preserve">
-    <value>Restore</value>
-  </data>
-  <data name="DelaysBots" xml:space="preserve">
-    <value>Bots</value>
-  </data>
-  <data name="DelaysRelay" xml:space="preserve">
-    <value>Relay</value>
   </data>
   <data name="AppliesNextStart" xml:space="preserve">
     <value>From the next start</value>
@@ -566,38 +518,14 @@
   <data name="DelaySelectionHelp" xml:space="preserve">
     <value>Wait for the game connection after the server selection.</value>
   </data>
-  <data name="SettingsCaptures" xml:space="preserve">
-    <value>Captures</value>
-  </data>
-  <data name="RecordCaptures" xml:space="preserve">
-    <value>Record the connections</value>
-  </data>
-  <data name="RecordCapturesHelp" xml:space="preserve">
-    <value>Records each connection in a .d3bcap file, for the inspector. It holds your session: never share it.</value>
-  </data>
   <data name="CapturesRecording" xml:space="preserve">
     <value>Recording now, in {0}</value>
   </data>
   <data name="CapturesNotRecording" xml:space="preserve">
     <value>Not recording now</value>
   </data>
-  <data name="SettingsAppearance" xml:space="preserve">
-    <value>Appearance</value>
-  </data>
   <data name="Language" xml:space="preserve">
     <value>Language</value>
-  </data>
-  <data name="SettingsData" xml:space="preserve">
-    <value>Data</value>
-  </data>
-  <data name="DataDatabase" xml:space="preserve">
-    <value>Database</value>
-  </data>
-  <data name="DataPack" xml:space="preserve">
-    <value>Game data</value>
-  </data>
-  <data name="DataSettings" xml:space="preserve">
-    <value>Settings</value>
   </data>
   <data name="PackPathUnknown" xml:space="preserve">
     <value>Known once the host runs</value>
@@ -613,9 +541,6 @@
   </data>
   <data name="LevelAll" xml:space="preserve">
     <value>All</value>
-  </data>
-  <data name="LevelProblems" xml:space="preserve">
-    <value>Warnings</value>
   </data>
   <data name="LevelErrors" xml:space="preserve">
     <value>Errors</value>
@@ -1182,13 +1107,7 @@
     <value>Everything</value>
   </data>
   <data name="StatisticsResources" xml:space="preserve">
-    <value>resources</value>
-  </data>
-  <data name="StatisticsTime" xml:space="preserve">
-    <value>of harvesting</value>
-  </data>
-  <data name="StatisticsAverage" xml:space="preserve">
-    <value>on average</value>
+    <value>Resources</value>
   </data>
   <data name="StatisticsRate" xml:space="preserve">
     <value>{0}/h</value>
@@ -1201,9 +1120,6 @@
   </data>
   <data name="StatisticsLevelsOf" xml:space="preserve">
     <value>{0} {1} → {2}</value>
-  </data>
-  <data name="StatisticsByResource" xml:space="preserve">
-    <value>By resource</value>
   </data>
   <data name="StatisticsRuns" xml:space="preserve">
     <value>Runs</value>
@@ -1255,9 +1171,6 @@
   </data>
   <data name="DuplicateProfile" xml:space="preserve">
     <value>Duplicate the profile</value>
-  </data>
-  <data name="Back" xml:space="preserve">
-    <value>Back</value>
   </data>
   <data name="Unsaved" xml:space="preserve">
     <value>Unsaved</value>
@@ -1325,12 +1238,6 @@
   <data name="Profile" xml:space="preserve">
     <value>Profile</value>
   </data>
-  <data name="StatisticsStarted" xml:space="preserve">
-    <value>Started</value>
-  </data>
-  <data name="StatisticsDuration" xml:space="preserve">
-    <value>Duration</value>
-  </data>
   <data name="Layers" xml:space="preserve">
     <value>Layers</value>
   </data>
@@ -1349,9 +1256,6 @@
   <data name="Copied" xml:space="preserve">
     <value>Copied</value>
   </data>
-  <data name="StatisticsTotal" xml:space="preserve">
-    <value>Resources</value>
-  </data>
   <data name="ToastDone" xml:space="preserve">
     <value>{0}: activity done</value>
   </data>
@@ -1369,15 +1273,6 @@
   </data>
   <data name="ToastFight" xml:space="preserve">
     <value>{0}: in a fight</value>
-  </data>
-  <data name="LogsEmptyTitle" xml:space="preserve">
-    <value>No line</value>
-  </data>
-  <data name="FramesEmptyTitle" xml:space="preserve">
-    <value>No frame</value>
-  </data>
-  <data name="StatisticsEmptyTitle" xml:space="preserve">
-    <value>No run</value>
   </data>
   <data name="ExcludeResources" xml:space="preserve">
     <value>Exclude resources</value>
@@ -1429,18 +1324,6 @@
   </data>
   <data name="MissingBuildText" xml:space="preserve">
     <value>The launcher installed client {0}; D3B {1} ships the data of client {2}. The version of D3B for this client comes out after Ankama's update, and D3B updates itself to it.</value>
-  </data>
-  <data name="SettingsAbout" xml:space="preserve">
-    <value>D3B</value>
-  </data>
-  <data name="AboutVersion" xml:space="preserve">
-    <value>Version</value>
-  </data>
-  <data name="AboutClient" xml:space="preserve">
-    <value>Client build</value>
-  </data>
-  <data name="AboutUpdate" xml:space="preserve">
-    <value>Update</value>
   </data>
   <data name="AddMonsters" xml:space="preserve">
     <value>Add monsters</value>
@@ -1604,9 +1487,6 @@
   <data name="SearchNothing" xml:space="preserve">
     <value>Nothing to show</value>
   </data>
-  <data name="SearchProfile" xml:space="preserve">
-    <value>Profile · {0}</value>
-  </data>
   <data name="CommandNewProfile" xml:space="preserve">
     <value>New profile</value>
   </data>
@@ -1639,9 +1519,6 @@
   </data>
   <data name="CommandAccounts" xml:space="preserve">
     <value>Open the accounts</value>
-  </data>
-  <data name="CommandProfiles" xml:space="preserve">
-    <value>Open the profiles</value>
   </data>
   <data name="CommandMap" xml:space="preserve">
     <value>Open the map</value>
@@ -1730,12 +1607,6 @@
   <data name="Close" xml:space="preserve">
     <value>Close</value>
   </data>
-  <data name="AssetsEmpty" xml:space="preserve">
-    <value>The project's tree comes next. Profiles open from the Window menu or the search.</value>
-  </data>
-  <data name="AssetsOpenProfiles" xml:space="preserve">
-    <value>Open the profiles</value>
-  </data>
   <data name="BottomJournal" xml:space="preserve">
     <value>Journal</value>
   </data>
@@ -1750,12 +1621,6 @@
   </data>
   <data name="BottomStatistics" xml:space="preserve">
     <value>Statistics</value>
-  </data>
-  <data name="TraceEmptyTitle" xml:space="preserve">
-    <value>No trace</value>
-  </data>
-  <data name="TraceEmptyText" xml:space="preserve">
-    <value>The chosen character's decisions will show here.</value>
   </data>
   <data name="ProblemsEmpty" xml:space="preserve">
     <value>No problem</value>
@@ -2077,5 +1942,353 @@
   </data>
   <data name="RailEmpty" xml:space="preserve">
     <value>Nothing plays</value>
+  </data>
+  <data name="AssetCopied" xml:space="preserve">
+    <value>{0} copied into the project</value>
+  </data>
+  <data name="NoValueChanged" xml:space="preserve">
+    <value>no value changed</value>
+  </data>
+  <data name="VariantOf" xml:space="preserve">
+    <value>Variant of</value>
+  </data>
+  <data name="ResetAll" xml:space="preserve">
+    <value>Reset all</value>
+  </data>
+  <data name="GivenReadOnly" xml:space="preserve">
+    <value>Given with D3B, read only</value>
+  </data>
+  <data name="CopyToProject" xml:space="preserve">
+    <value>Copy into the project</value>
+  </data>
+  <data name="ResetValue" xml:space="preserve">
+    <value>Reset to the behavior’s value</value>
+  </data>
+  <data name="NoneChosen" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="AssetsSearch" xml:space="preserve">
+    <value>Search the assets</value>
+  </data>
+  <data name="AssetsNoMatch" xml:space="preserve">
+    <value>No asset matches</value>
+  </data>
+  <data name="AssetsWaitHost" xml:space="preserve">
+    <value>The project shows once the host runs</value>
+  </data>
+  <data name="UnsavedChanges" xml:space="preserve">
+    <value>Changed, not saved</value>
+  </data>
+  <data name="AddNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Folder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="ImportFile" xml:space="preserve">
+    <value>Import a file…</value>
+  </data>
+  <data name="FindUsages" xml:space="preserve">
+    <value>Used by…</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="MoveTo" xml:space="preserve">
+    <value>Move to</value>
+  </data>
+  <data name="ExportFile" xml:space="preserve">
+    <value>Export…</value>
+  </data>
+  <data name="ShowInFolder" xml:space="preserve">
+    <value>Show in the folder</value>
+  </data>
+  <data name="ProjectRoot" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="GivenAssets" xml:space="preserve">
+    <value>Given with D3B</value>
+  </data>
+  <data name="UsedByCountOne" xml:space="preserve">
+    <value>Used by {0}</value>
+  </data>
+  <data name="UsedByCountOther" xml:space="preserve">
+    <value>Used by {0}</value>
+  </data>
+  <data name="DeleteAssetTitle" xml:space="preserve">
+    <value>Delete {0}?</value>
+  </data>
+  <data name="DeleteAssetUsersOne" xml:space="preserve">
+    <value>{0} asset uses it and will reference nothing.</value>
+  </data>
+  <data name="DeleteAssetUsersOther" xml:space="preserve">
+    <value>{0} assets use it and will reference nothing.</value>
+  </data>
+  <data name="NewFolder" xml:space="preserve">
+    <value>New folder</value>
+  </data>
+  <data name="AssetImported" xml:space="preserve">
+    <value>{0} imported</value>
+  </data>
+  <data name="AssetExported" xml:space="preserve">
+    <value>{0} exported</value>
+  </data>
+  <data name="AssetWriteFailed" xml:space="preserve">
+    <value>Not written: {0}</value>
+  </data>
+  <data name="SectionBotsLead" xml:space="preserve">
+    <value>What every bot on this machine respects, whatever its profile.</value>
+  </data>
+  <data name="SectionNetworkLead" xml:space="preserve">
+    <value>How D3B stands between the client and the servers.</value>
+  </data>
+  <data name="SectionAppearanceLead" xml:space="preserve">
+    <value>These settings concern this app alone.</value>
+  </data>
+  <data name="SectionFilesLead" xml:space="preserve">
+    <value>Where D3B keeps what it knows and what you make.</value>
+  </data>
+  <data name="SectionAboutLead" xml:space="preserve">
+    <value>The app's version and the client it serves.</value>
+  </data>
+  <data name="SettingsSearch" xml:space="preserve">
+    <value>Search a setting</value>
+  </data>
+  <data name="SettingsNoMatch" xml:space="preserve">
+    <value>No setting matches</value>
+  </data>
+  <data name="SettingsChanged" xml:space="preserve">
+    <value>Values changed</value>
+  </data>
+  <data name="GroupBotDelays" xml:space="preserve">
+    <value>Bots' minimum delays</value>
+  </data>
+  <data name="GroupRelayDelays" xml:space="preserve">
+    <value>Relay's delays</value>
+  </data>
+  <data name="GroupInterface" xml:space="preserve">
+    <value>Interface</value>
+  </data>
+  <data name="GroupLocations" xml:space="preserve">
+    <value>Locations</value>
+  </data>
+  <data name="RestoreAllDelays" xml:space="preserve">
+    <value>Reset all to default</value>
+  </data>
+  <data name="ResetDefault" xml:space="preserve">
+    <value>Reset to default</value>
+  </data>
+  <data name="DelayLine" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="DelayReset" xml:space="preserve">
+    <value>Reset to {0}</value>
+  </data>
+  <data name="SettingCapturesRow" xml:space="preserve">
+    <value>Record the connections</value>
+  </data>
+  <data name="SettingCapturesRowDetail" xml:space="preserve">
+    <value>Keeps each game connection's messages to replay them in the Protocol. Never share them: they hold your session.</value>
+  </data>
+  <data name="SettingCapturesFolder" xml:space="preserve">
+    <value>Captures' folder</value>
+  </data>
+  <data name="SettingLanguageRow" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingLayout" xml:space="preserve">
+    <value>Layout</value>
+  </data>
+  <data name="SettingLayoutDetail" xml:space="preserve">
+    <value>Size and place of the panels</value>
+  </data>
+  <data name="SettingProject" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="SettingProjectDetail" xml:space="preserve">
+    <value>Your assets, a file each</value>
+  </data>
+  <data name="SettingDatabase" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="SettingDatabaseDetail" xml:space="preserve">
+    <value>Accounts, characters and what the bots learn</value>
+  </data>
+  <data name="SettingClientData" xml:space="preserve">
+    <value>Client's data</value>
+  </data>
+  <data name="SettingClientDataDetail" xml:space="preserve">
+    <value>The pack, schema and mapping of the installed build</value>
+  </data>
+  <data name="SettingPreferences" xml:space="preserve">
+    <value>App's preferences</value>
+  </data>
+  <data name="SettingPreferencesDetail" xml:space="preserve">
+    <value>Language, layout and the settings changed here</value>
+  </data>
+  <data name="SettingVersion" xml:space="preserve">
+    <value>Version and update</value>
+  </data>
+  <data name="SettingLicences" xml:space="preserve">
+    <value>Licences</value>
+  </data>
+  <data name="SettingLicencesDetail" xml:space="preserve">
+    <value>D3B's, and those of what it uses, IntelliJ's icons among them</value>
+  </data>
+  <data name="AboutClientLine" xml:space="preserve">
+    <value>Client {0} · its data shipped with the app</value>
+  </data>
+  <data name="OpenFolder" xml:space="preserve">
+    <value>Open the folder</value>
+  </data>
+  <data name="CopyPath" xml:space="preserve">
+    <value>Copy the path</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="GroupCaptures" xml:space="preserve">
+    <value>Captures</value>
+  </data>
+  <data name="LogsHostInitial" xml:space="preserve">
+    <value>H</value>
+  </data>
+  <data name="LevelInfos" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="LevelWarnings" xml:space="preserve">
+    <value>Warnings</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="Characters" xml:space="preserve">
+    <value>Characters</value>
+  </data>
+  <data name="ProblemsErrorsTip" xml:space="preserve">
+    <value>Errors</value>
+  </data>
+  <data name="ProblemsWarningsTip" xml:space="preserve">
+    <value>Warnings</value>
+  </data>
+  <data name="ProblemsAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="ProblemsOriginProject" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="ProblemsOriginCharacters" xml:space="preserve">
+    <value>Characters</value>
+  </data>
+  <data name="ProblemsOriginHost" xml:space="preserve">
+    <value>Host</value>
+  </data>
+  <data name="ProblemAssetNotRead" xml:space="preserve">
+    <value>{0} does not read</value>
+  </data>
+  <data name="ProblemOpenFolder" xml:space="preserve">
+    <value>Open the folder</value>
+  </data>
+  <data name="ProblemNoProfile" xml:space="preserve">
+    <value>{0} has no profile</value>
+  </data>
+  <data name="ProblemNoProfileWhy" xml:space="preserve">
+    <value>It cannot play until a profile is chosen</value>
+  </data>
+  <data name="ProblemProfileGone" xml:space="preserve">
+    <value>{0}'s profile is gone</value>
+  </data>
+  <data name="ProblemProfileGoneWhy" xml:space="preserve">
+    <value>Its file was deleted or no longer reads</value>
+  </data>
+  <data name="ProblemChooseProfile" xml:space="preserve">
+    <value>Choose a profile</value>
+  </data>
+  <data name="ProblemHostFailed" xml:space="preserve">
+    <value>The host did not start</value>
+  </data>
+  <data name="ProblemSeeJournal" xml:space="preserve">
+    <value>See the journal</value>
+  </data>
+  <data name="TraceCharacter" xml:space="preserve">
+    <value>Character</value>
+  </data>
+  <data name="TraceNoCharacter" xml:space="preserve">
+    <value>No character</value>
+  </data>
+  <data name="TraceRun" xml:space="preserve">
+    <value>Run</value>
+  </data>
+  <data name="TraceNoRun" xml:space="preserve">
+    <value>No run</value>
+  </data>
+  <data name="TraceNoBot" xml:space="preserve">
+    <value>No character is connected.</value>
+  </data>
+  <data name="TraceEmpty" xml:space="preserve">
+    <value>No decision yet: the trace fills as a behavior plays.</value>
+  </data>
+  <data name="TraceRunLive" xml:space="preserve">
+    <value>Current run</value>
+  </data>
+  <data name="TraceRunAt" xml:space="preserve">
+    <value>Run of {0}</value>
+  </data>
+  <data name="TraceNoState" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="TraceEntered" xml:space="preserve">
+    <value>Enters {0}</value>
+  </data>
+  <data name="TraceWaiting" xml:space="preserve">
+    <value>No state holds</value>
+  </data>
+  <data name="TraceUrgent" xml:space="preserve">
+    <value>Cut for {0}</value>
+  </data>
+  <data name="TraceRule" xml:space="preserve">
+    <value>Rule {0}</value>
+  </data>
+  <data name="TraceHolds" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="TraceDoesNotHold" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="TracePlayed" xml:space="preserve">
+    <value>Played</value>
+  </data>
+  <data name="TraceDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="TraceInterrupted" xml:space="preserve">
+    <value>Interrupted</value>
+  </data>
+  <data name="TraceFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="ProtocolNoCharacter" xml:space="preserve">
+    <value>No character</value>
+  </data>
+  <data name="ProtocolLive" xml:space="preserve">
+    <value>Live</value>
+  </data>
+  <data name="ProtocolNoCapture" xml:space="preserve">
+    <value>No capture yet</value>
+  </data>
+  <data name="FramesSent" xml:space="preserve">
+    <value>Sent</value>
+  </data>
+  <data name="FramesReceived" xml:space="preserve">
+    <value>Received</value>
+  </data>
+  <data name="StatisticsSince" xml:space="preserve">
+    <value>since {0}</value>
+  </data>
+  <data name="StatisticsSpan" xml:space="preserve">
+    <value>{0} to {1}</value>
   </data>
 </root>

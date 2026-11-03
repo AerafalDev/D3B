@@ -39,7 +39,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task EachProfileShowsItsActivityAFewSettingsAndItsCharacters()
+    public async Task EachProfileSaysItsActivityItsCharactersAndWhatIsToReview()
     {
         await _store.OpenedAsync();
 
@@ -62,19 +62,15 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         var item = page.Items[1];
 
         Assert.Equal("Harvest", item.ActivityName);
-        Assert.Equal("On Job · Lumberjack · Chestnut, Ash and 1 more", item.Summary);
-        Assert.Equal(["AE"], item.Players);
-        Assert.Equal("1 character", item.PlayersText);
         Assert.False(item.NeedsReview);
+        Assert.Equal(["Aerafa"], page.PlayersOf(item.Id).Select(character => character.Name));
         Assert.Equal("Behavior gone: gone", page.Items[0].Review);
         Assert.Equal("To review", page.Items[2].Review);
-        Assert.Equal("No character", page.Items[3].PlayersText);
-        Assert.Equal("", page.Items[3].Summary);
 
         _localizer.Use(Localizer.French);
         page.Refresh(_store.Host.Services);
 
-        Assert.Equal("On Job · Bûcheron · Châtaignier, Frêne et 1 de plus", page.Items[1].Summary);
+        Assert.Equal("Comportement disparu : gone", page.Items[0].Review);
     }
 
     [Fact]
@@ -131,8 +127,8 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
 
         var saved = Assert.Single(_store.Assets.OfType<ProfileAsset>());
 
-        Assert.False(item.IsEditing);
-        Assert.True(page.IsListing);
+        Assert.True(item.IsEditing);
+        Assert.False(item.IsDirty);
         Assert.Equal(("Lumberjack", GivenAssets.BehaviorOf(TestStore.HarvestId)), (saved.Name, saved.Behavior));
         Assert.Equal(TestReferences.Lumberjack, saved.Values["Job"]!.GetValue<int>());
 
@@ -366,6 +362,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         question.OtherCommand.Execute(null);
 
         Assert.False(item.IsEditing);
+        Assert.False(item.IsDirty);
         Assert.Null(item.Editor);
         Assert.Null(page.Editing);
         Assert.Null(page.Dialogs.Current);
@@ -397,7 +394,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task ANewProfileIsNamedInADialogThenEditedOnThePageAloneUntilSaved()
+    public async Task ANewProfileIsNamedInADialogThenEditedInATabOfItsOwnBesideTheOthers()
     {
         await _store.OpenedAsync();
         await _store.Assets.SaveProfileAsync("Stroll", TestStore.StrollId, "{}", TestContext.Current.CancellationToken);
@@ -430,12 +427,12 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         page.Items[0].EditCommand.Execute(null);
 
         Assert.Same(page.Items[0], page.Editing);
-        Assert.False(editing.IsEditing);
+        Assert.True(editing.IsEditing);
+        Assert.Equal(2, page.Open.Count);
         Assert.Single(page.Items);
 
         await page.Items[0].SaveCommand.ExecuteAsync(null);
 
-        Assert.True(page.IsListing);
         Assert.Equal("Stroll saved", Assert.Single(page.Toasts.Recent).Text);
     }
 
@@ -497,7 +494,41 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.Empty(_store.Assets.OfType<ProfileAsset>());
         Assert.Empty(page.Items);
         Assert.True(page.IsEmpty);
-        Assert.True(page.IsListing);
         Assert.Equal("Stroll deleted", Assert.Single(page.Toasts.Recent).Text);
+    }
+
+    [Fact]
+    public async Task AValueChangedFromTheBehaviorsIsMarkedCountedAndGivenBackOneAtATimeOrAll()
+    {
+        await _store.OpenedAsync();
+        await _store.Assets.SaveProfileAsync("Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42 }), TestContext.Current.CancellationToken);
+
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
+        var opened = new List<ProfileViewModel>();
+
+        page.Opened = opened.Add;
+        page.Refresh(_store.Host.Services);
+
+        var item = page.Items.Single(profile => profile.Name == "Lumberjack");
+
+        item.EditCommand.Execute(null);
+
+        Assert.Equal([item], opened);
+        Assert.True(Field<NumberFieldViewModel>(item, "Walks").IsChanged);
+        Assert.True(item.HasChanges);
+        Assert.Equal(item.Editor!.ChangedCount, item.Editor.Sections.SelectMany(section => section.Fields).Count(field => field.IsVisible && field.IsChanged));
+        Assert.Contains(item.Editor.Sections, section => section.HasChanges);
+        Assert.False(string.IsNullOrEmpty(item.BehaviorName));
+
+        Field<NumberFieldViewModel>(item, "Walks").ResetCommand.Execute(null);
+
+        Assert.Equal(10, Field<NumberFieldViewModel>(item, "Walks").Value);
+        Assert.False(Field<NumberFieldViewModel>(item, "Walks").IsChanged);
+        Assert.True(item.IsDirty);
+
+        item.ResetAllCommand.Execute(null);
+
+        Assert.False(item.HasChanges);
+        Assert.Equal("no value changed", item.ChangedText);
     }
 }

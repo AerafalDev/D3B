@@ -41,7 +41,7 @@ public sealed class GoneBehaviorTests : IAsyncDisposable
         var item = Assert.Single(page.Items);
 
         Assert.Empty(page.Activities);
-        Assert.Equal(("Promenade", ScriptId, ""), (item.Name, item.ActivityName, item.Summary));
+        Assert.Equal(("Promenade", ScriptId), (item.Name, item.ActivityName));
         Assert.Equal($"Comportement disparu : {ScriptId}", item.Review);
 
         item.EditCommand.Execute(null);

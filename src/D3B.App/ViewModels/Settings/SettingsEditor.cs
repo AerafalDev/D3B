@@ -31,6 +31,16 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets the settings being edited, a copy, or <see langword="null"/> for an activity with none.</summary>
     public object? Draft { get; }
 
+    /// <summary>Gets the behavior's values, which a profile changes, or <see langword="null"/> when the settings change nothing's (D300).</summary>
+    public object? Defaults { get; }
+
+    /// <summary>Gets or sets what gives a setting the behavior's value back, as the profile's editor does.</summary>
+    public Action<SettingFieldViewModel>? Resets { get; set; }
+
+    /// <summary>Gets how many settings shown differ from the behavior's.</summary>
+    [ObservableProperty]
+    public partial int ChangedCount { get; private set; }
+
     /// <summary>Gets the game's values the settings name, or <see langword="null"/> when the host has none.</summary>
     public GameReferences? Game { get; }
 
@@ -126,8 +136,10 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <param name="services">The host's services, which the activity reckons what its settings lead to from, if it runs.</param>
     /// <param name="players">The characters that play the profile, with their professions' levels.</param>
     /// <param name="dialogs">The window's dialogs, or <see langword="null"/>.</param>
-    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PreviewPlayer>? players = null, Dialogs? dialogs = null)
+    /// <param name="defaults">The behavior's values, which a profile changes, or <see langword="null"/>.</param>
+    public SettingsEditor(ActivitySettings settings, object? draft, GameReferences? game, GameNames names, Localizer localizer, IServiceProvider? services = null, IReadOnlyList<PreviewPlayer>? players = null, Dialogs? dialogs = null, object? defaults = null)
     {
+        Defaults = defaults;
         Dialogs = dialogs;
         Settings = settings;
         Draft = draft;
@@ -185,10 +197,19 @@ internal sealed partial class SettingsEditor : ObservableObject
         foreach (var section in Sections)
             section.Update(this);
 
+        ChangedCount = _fields.Count(field => field.IsVisible && field.IsChanged);
+
         ShowPreview();
         Rules = string.Join(Environment.NewLine, problems.Where(problem => problem.Setting is null).Select(problem => problem.Message?.In(culture)));
         HasProblems = problems.Count > 0 || _fields.Any(field => field.IsVisible && field.HasInputProblem);
         Edited?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Gives a setting the behavior's value back, through the editor's owner.</summary>
+    /// <param name="field">The setting.</param>
+    public void Reset(SettingFieldViewModel field)
+    {
+        Resets?.Invoke(field);
     }
 
     /// <summary>Names everything again, in the app's language.</summary>

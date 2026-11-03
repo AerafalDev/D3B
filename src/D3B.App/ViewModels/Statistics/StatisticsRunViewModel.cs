@@ -1,14 +1,19 @@
-using D3B.App.Controls;
+using Avalonia.Media;
 
 namespace D3B.App.ViewModels.Statistics;
 
-/// <summary>A run the statistics page lists: when it began, who ran what, how long, what it brought, and how it ended (D146).</summary>
-/// <param name="When">When it began, said.</param>
-/// <param name="Who">The character, and the profile or activity it ran.</param>
-/// <param name="StartsGroup">Whether it is the first of the runs of the same, which it names.</param>
-/// <param name="Duration">How long it ran, said.</param>
-/// <param name="Total">How many resources it brought, said.</param>
-/// <param name="Outcome">How it ended, or that it goes on.</param>
-/// <param name="Tone">The tone of how it ended.</param>
-/// <param name="HasOutcome">Whether how it ended is said: it goes on, or failed.</param>
-internal sealed record StatisticsRunViewModel(string When, string Who, bool StartsGroup, string Duration, string Total, string Outcome, Tone Tone, bool HasOutcome);
+/// <summary>A run the statistics list: who ran what, when, and how long or how it ended (D146, D327).</summary>
+/// <param name="Title">The profile or activity it ran.</param>
+/// <param name="Character">The character that ran it.</param>
+/// <param name="Span">When it ran: since when, or from when to when.</param>
+/// <param name="End">How long it ran, or that it goes on, or failed.</param>
+/// <param name="IsLive">Whether it goes on.</param>
+/// <param name="IsFailed">Whether it failed.</param>
+/// <param name="Initials">What the character's portrait says without its head.</param>
+/// <param name="Color">The portrait's colour, its breed's.</param>
+/// <param name="Head">The class's head, once known.</param>
+internal sealed record StatisticsRunViewModel(string Title, string Character, string Span, string End, bool IsLive, bool IsFailed, string Initials, IBrush Color, IImage? Head)
+{
+    /// <summary>Gets what the run's second line says: the character and when.</summary>
+    public string Detail => Character + " · " + Span;
+}

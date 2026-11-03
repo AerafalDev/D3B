@@ -1,4 +1,5 @@
 using D3B.Bot.Activities;
+using D3B.Bot.Localization;
 
 namespace D3B.Bot.Behaviors;
 
@@ -25,6 +26,9 @@ internal abstract class CompiledStep
     public sealed class Action : CompiledStep
     {
         public required IActionNode Node { get; init; }
+
+        /// <summary>Gets the node's sentence, which the trace says.</summary>
+        public required LocalizedText Sentence { get; init; }
 
         public required BoundValues Values { get; init; }
 

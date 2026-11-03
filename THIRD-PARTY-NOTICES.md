@@ -1,13 +1,14 @@
 # Third-party notices
 
-The app published from this repository (D171) ships the components below, each under its own license: Lucide's and the
-IntelliJ Platform's icons in its code, and the libraries, runtime and typeface it is built with. Their licenses' texts
-follow the list.
+The app published from this repository (D171) ships the components below, each under its own license: the IntelliJ
+Platform's icons in its code, and the libraries, runtime and typeface it is built with. The studio's mockup in the
+repository draws some of Lucide's icons too. Their licenses' texts follow the list.
 
 ## Lucide
 
-The app's icons, in `src/D3B.App/Themes/Icons.axaml`, are the geometries of [Lucide](https://lucide.dev) 1.64.0 (D161),
-under the following license.
+The studio's mockup, `docs/mockups/studio-7c.html` (D319), draws some of the geometries of [Lucide](https://lucide.dev)
+1.64.0, under the following license. The app drew them until session 7c4 (D161), which replaced them with the IntelliJ
+Platform's (D355).
 
 ```text
 ISC License

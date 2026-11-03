@@ -16,12 +16,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The profiles page: the profiles as cards, or the one being edited on the whole page (D99, D101, D159).</summary>
+/// <summary>The profiles: each one's item, those whose editor is open, each in a tab of its own, and their dialogs (D99, D330).</summary>
 /// <remarks>
 /// <para>
 /// It reads the profiles, assets of the project since 7b (D296, D300), and the characters from memory each refresh, and
 /// makes its items again only once they changed: a profile being edited keeps its editor while the relay records what it
-/// sees, and while another page shows.
+/// sees, and while another tab shows.
 /// </para>
 /// <para>
 /// Until the studio's editor (D306), a profile shows as the settings of the activity its behavior plays whole
@@ -30,10 +30,10 @@ namespace D3B.App.ViewModels;
 /// </remarks>
 internal sealed partial class ProfilesViewModel : ObservableObject
 {
-    private const int SummaryLength = 3;
     private const int CopyAttempts = 50;
 
     private readonly Dictionary<string, ProfileViewModel> _byId = new(StringComparer.Ordinal);
+    private readonly List<ProfileViewModel> _open = [];
     private IServiceProvider? _services;
     private ActivityCatalog? _catalog;
     private NodeCatalog? _nodes;
@@ -68,9 +68,20 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <summary>Gets the host's services, once it runs: an activity reckons what its settings lead to from them (D127).</summary>
     public IServiceProvider? Services => _services;
 
-    /// <summary>Gets the profile whose editor shows on the page, if any.</summary>
+    /// <summary>Gets the profiles whose editor is open, each in a tab of its own (D330).</summary>
+    public IReadOnlyList<ProfileViewModel> Open => _open;
+
+    /// <summary>Gets or sets what opens a profile's tab once its editor opens.</summary>
+    public Action<ProfileViewModel>? Opened { get; set; }
+
+    /// <summary>Gets or sets what closes a profile's tab once its editor closes.</summary>
+    public Action<ProfileViewModel>? Closed { get; set; }
+
+    /// <summary>Gets whether an editor holds changes not saved.</summary>
+    public bool IsAnyDirty => _open.Any(item => item.IsDirty);
+
+    /// <summary>Gets the profile whose editor opened last, if any is open.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsListing))]
     public partial ProfileViewModel? Editing { get; private set; }
 
     /// <summary>Gets whether there is no profile.</summary>
@@ -80,9 +91,6 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <summary>Gets whether the host keeps profiles: its database opened.</summary>
     [ObservableProperty]
     public partial bool IsAvailable { get; private set; }
-
-    /// <summary>Gets whether the page shows the profiles, no editor open.</summary>
-    public bool IsListing => Editing is null;
 
     private AccountBook? Accounts => _services?.GetService<AccountBook>();
 
@@ -189,47 +197,66 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         ];
     }
 
-    /// <summary>Says a few of a profile's settings, those that show, at a glance.</summary>
-    /// <param name="declared">The settings its activity declares.</param>
-    /// <param name="settings">The profile's settings.</param>
-    /// <returns>Three of them at most, joined.</returns>
-    public string Summarize(ActivitySettings declared, object? settings)
-    {
-        if (settings is null)
-            return "";
-
-        var culture = Localizer.Culture;
-        var parts = new List<string>();
-
-        foreach (var setting in declared.All.Where(setting => declared.IsVisible(setting, settings)))
-        {
-            // The game's values say what they are, a resource or a sub-area; a flag says its name, a number with it.
-            if (Describe(setting, settings) is { Length: > 0 } value)
-                parts.Add(setting.Kind is SettingKind.Number ? Localizer.Format("SummaryItem", setting.Name.In(culture), value) : value);
-
-            if (parts.Count == SummaryLength)
-                break;
-        }
-
-        return string.Join(" · ", parts);
-    }
-
-    /// <summary>Shows a profile's editor on the page, the only one open.</summary>
+    /// <summary>Opens a profile's editor in its tab, beside the others open.</summary>
     /// <param name="item">The profile being edited.</param>
     public void BeginEditing(ProfileViewModel item)
     {
-        if (Editing is { } other && other != item)
-            other.Cancel();
+        if (!_open.Contains(item))
+            _open.Add(item);
 
         Editing = item;
+        Opened?.Invoke(item);
     }
 
-    /// <summary>Shows the profiles again, once a profile's editor closed.</summary>
+    /// <summary>Closes a profile's tab, once its editor closed.</summary>
     /// <param name="item">The profile that was edited.</param>
     public void EndEditing(ProfileViewModel item)
     {
-        if (Editing == item)
-            Editing = null;
+        if (!_open.Remove(item))
+            return;
+
+        Editing = _open.LastOrDefault();
+        Closed?.Invoke(item);
+    }
+
+    /// <summary>Saves every profile edited whose settings hold: File's Save all, Ctrl S.</summary>
+    public void SaveAll()
+    {
+        foreach (var item in _open.Where(item => item.IsDirty && item.SaveCommand.CanExecute(null)).ToList())
+            item.SaveCommand.Execute(null);
+    }
+
+    /// <summary>Copies a profile given with the app into the project, under a name of its own, and opens the copy.</summary>
+    /// <param name="item">The profile given.</param>
+    /// <returns>A task that completes once the copy is saved and opened.</returns>
+    public async Task CopyToProjectAsync(ProfileViewModel item)
+    {
+        if (Assets is not { } assets || assets.Find<ProfileAsset>(item.Id) is not { } given)
+            return;
+
+        try
+        {
+            var copy = await assets.SaveAsync(given with { Id = AssetLibrary.NewId(), Name = CopyName(item.Name), Title = null, Path = null }, CancellationToken.None);
+
+            Sync(false);
+
+            if (_byId.TryGetValue(copy.Id, out var opened))
+                opened.Edit();
+
+            Toasts.Show(new Toast(Localizer.Format("AssetCopied", copy.Name), Tone.Success));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
+        {
+            Toasts.Show(new Toast(Localizer.Format("SaveFailed", exception.GetBaseException().Message), Tone.Danger));
+        }
+    }
+
+    /// <summary>Finds a profile's item by its id.</summary>
+    /// <param name="id">The profile's id.</param>
+    /// <returns>The item, or <see langword="null"/>.</returns>
+    public ProfileViewModel? Find(string id)
+    {
+        return _byId.GetValueOrDefault(id);
     }
 
     /// <summary>Opens the editor of a new profile, its name and activity chosen, its settings another's or the activity's defaults.</summary>
@@ -284,50 +311,6 @@ internal sealed partial class ProfilesViewModel : ObservableObject
         Toasts.Show(new Toast(Localizer.Format("ProfileDeleted", item.Name)));
     }
 
-    private string Describe(SettingDefinition setting, object settings)
-    {
-        var culture = Localizer.Culture;
-        var value = setting.GetValue(settings);
-
-        switch (setting.Kind)
-        {
-            case SettingKind.Flag:
-                return value is true ? setting.Name.In(culture) : "";
-
-            case SettingKind.Number:
-                return setting.IsPercent ? Localizer.Format("PercentValue", (int)value!) : ((int)value!).ToString(culture);
-
-            case SettingKind.Text:
-                return (string)value!;
-
-            case SettingKind.Choice:
-                {
-                    var names = setting.GetValues(settings).Select(choice => setting.Options.FirstOrDefault(option => option.Value.Equals(choice))?.Text.In(culture) ?? choice.ToString()!);
-
-                    return Joined(setting.IsList ? [.. names] : [setting.Options.FirstOrDefault(option => option.Value.Equals(value))?.Text.In(culture) ?? ""]);
-                }
-
-            default:
-                {
-                    IReadOnlyList<object> ids = setting.IsList ? setting.GetValues(settings) : value is int id ? [id] : [];
-
-                    return Joined([.. ids.Select(item => Names.Name(setting.Kind, Game?.Options(setting.Kind).FirstOrDefault(option => option.Id == (int)item) ?? new GameReference((int)item, 0, null)))]);
-                }
-        }
-    }
-
-    private string Joined(IReadOnlyList<string> names)
-    {
-        var shown = names.Where(name => name.Length > 0).Take(2).ToList();
-
-        if (shown.Count == 0)
-            return "";
-
-        var rest = names.Count - shown.Count;
-
-        return rest > 0 ? Localizer.Format("AndMore", string.Join(", ", shown), rest) : string.Join(", ", shown);
-    }
-
     private void Sync(bool relabel)
     {
         var profiles = Assets!.OfType<ProfileAsset>();
@@ -357,8 +340,11 @@ internal sealed partial class ProfilesViewModel : ObservableObject
             }
         }
 
-        if (relabel && Editing is { IsNew: true } editing)
-            editing.Relabel();
+        if (relabel)
+        {
+            foreach (var editing in _open.Where(item => item.IsNew))
+                editing.Relabel();
+        }
 
         // A new profile shows in its editor alone until it is saved; the others follow the project's order, given first, by name.
         List<ProfileViewModel> order = [.. profiles.Select(profile => _byId[profile.Id])];

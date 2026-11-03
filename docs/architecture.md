@@ -347,6 +347,11 @@ seen so.
   unloading and end. An action begun within another (`BotContext.BeginAction`) is one deeper, and a walk made for
   another action has no entry. Entries name the game's ids, never the protocol's messages. `RecentItems<T>` keeps them,
   read by the app as they come.
+- **The trace** (D349, D350), in `D3B.Bot.Behaviors`: each bot's last 1,000 decisions of its behaviors' runs
+  (`BotActor.Trace`, `TraceEntry`), apart from the journal, which says what the bot did: a state entered or none holding,
+  an urgent state's cut, a rule played or failed, each step of an action or activity played, done, cut or failed with
+  what it said it does, and a threshold the activity watches as it comes to hold or stops holding. Each line names its
+  run by when it began, for the studio's trace and 7g's history.
 - **The host's problems** (D114): `HostProblems`, a logging provider, keeps the host's last 2,000 warnings and errors
   that name no bot.
 - **Delays** (D151, D152): every delay goes through `TimeProvider`, and every wait of a behavior reads `BotDelays`
@@ -522,7 +527,8 @@ Built at step 2 (D24 to D33):
 Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and CommunityToolkit.Mvvm; its pages in 5b,
 5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151); redesigned in 6d (D159 to D162); published and
 updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340); the characters, the inspector and a
-character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
+character's tab in 7c3 (D341 to D348); the assets, a profile's tab, the bottom panel and the settings in 7c4 (D349 to
+D356), the pages of D101 and D162 gone.
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
@@ -538,8 +544,8 @@ character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
   the welcome.
 - **Icons** (D305, D331, D337): the IntelliJ Platform's, `Themes/IntelliJIcons.axaml`, which `scripts/icons.cs` writes, each
   file's Apache 2.0 notice checked, keyed as `General.Search`; `Icon` draws one on its grid of 16 in IntelliJ's colours,
-  repaints its neutral greys with a `Tint`, and greys it while its control is disabled. The pages 7c4 draws again keep
-  Lucide's line icons (`Themes/Icons.axaml`, D161) until then (D333). The game's own concepts take the client's own
+  repaints its neutral greys with a `Tint`, and greys it while its control is disabled; Lucide's are gone (D355), `Icon`
+  drawing a geometry for a module page's own icon alone. The game's own concepts take the client's own
   glyphs from the pack, painted in the colour of the text around them by `GlyphIcon`, a neutral dot without the pack
   (D336, D343); a character's portrait is its class's head on its breed's colour, its initials without it (`Portrait`,
   `BreedColors`, D343).
@@ -562,11 +568,12 @@ character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
 - **The search** (D328, D334, `SearchViewModel`, `SearchView`), Ctrl K or the title's field: over the studio, the recent
   items first, then the assets, the characters, the maps, the commands with their shortcuts and the settings, grouped,
   the text found lit; scopes by a click or Tab, `>` for the commands, `@` for the characters; the arrows, Enter and
-  Escape. The assets are the profiles until 7c4; a character opens its tab; a map, found by coordinates or name once a
+  Escape. An asset opens its tab, a profile's, or shows in the inspector; a character opens its tab; a setting opens its
+  section; a map, found by coordinates or name once a
   letter is typed, shows in preview in the tab of the character chosen, else of the first online or known (D341). Help's
   Shortcuts opens it on the commands.
 - **The status bar**: where the host stands with a dot, its detail in a tooltip; the client build; whether everything is
-  saved, a profile edited with changes or not; once an update is downloaded, a button that restarts the app into it (D173).
+  saved, no profile's tab with changes or some; once an update is downloaded, a button that restarts the app into it (D173).
 - **Motions** (D320, D347): short and easing out. The studio's buttons fade their surface, edge and text, a tool gives
   under the press; menus and tooltips fade in; gauges (`ShareBar`) ease to their share; chevrons turn; what unfolds or is
   chosen fades in (`FadeIn`). A surface lit on hover rests on `ClearColor`, the hover's grey with no alpha, never on
@@ -575,10 +582,9 @@ character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
   studio's text 12.5, its small text 11, the pages' fonts 12, 14, 16, 22 and 28 (`Caption`, text, `Title`, `PageTitle`,
   `Figure`); the studio's controls 24 to 30 high (`StudioButton` and its classes: `Tool`, `TabFace`, `TitleSearch`,
   `Status`), the pages' 32 and 36; radii 6, 7, 10 and 12, ShadUI's included; icons 12, 14, 16 and 20. Keycaps (`Border.Key`)
-  say a shortcut, and a tooltip's shortcut is a `KeyTip`. A page with nothing to show says so with an `EmptyState`. Every
-  page is an `AppPage` (`D3B.App.Controls`): its title or a header of its own, its actions on the right, the same margins and
-  the window's width up to 1,200 pixels; docked, its title is the tab's and its margins narrower. A setting's help, a
-  delay's default and what a page is for are tooltips on a mark beside their name.
+  say a shortcut, and a tooltip's shortcut is a `KeyTip`. A module's page is an `AppPage` (`D3B.App.Controls`): its title
+  or a header of its own, its actions on the right, the same margins; docked, its title is the tab's and its margins
+  narrower. A setting's help is a tooltip on a mark beside its name.
 - **Dialogs and toasts** (D159, D162): `Dialogs` holds the dialog shown, a `QuestionViewModel` or a dialog's own view model
   (choosing resources, a new profile), which the window shows through ShadUI's dialog host, closed by its buttons and
   Escape; `Toasts` says what was done and what a bot met, which the window shows through ShadUI's toasts. The view models
@@ -599,7 +605,7 @@ character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
   field whose menu opens it or gives another, the start on connection with an arrow resetting it, the planning and fight
   preferences disabled until 7f and 7h; Variables, the character's own, each with a dot of its type and its editor
   (`VariableRowViewModel`), which sets what its behaviors read; Account, the account, its subscription and forgetting it.
-  An asset (`AssetPropertiesViewModel`), chosen in the profiles' tab or the search until 7c4's tree: its name, kind, file
+  An asset (`AssetPropertiesViewModel`), chosen in the assets' tree, a profile's tab or the search: its name, kind, file
   and format, what it uses and what uses it, characters included.
 - **A character's tab** (D325, D346, `CharacterTabViewModel`, `CharacterView`): the character's map live
   (`MapViewModel`, drawn for that character alone): its coordinates and place, the cell under the pointer and what stands
@@ -608,56 +614,49 @@ character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
   profile and rail, the layer Always listing the thresholds the activity watches (`BotActivity.Watches`) with their
   gauges, then the behavior's states, the one playing lit (`BotActivity.Outline`); its session, a tile per resource with
   its rate an hour, the profession raised, fights, deposits and kamas; its latest decisions, from its journal, and a way
-  to the journal until 7c4's trace.
-- **The pages until 7c4** (D333): the journal, the protocol and the statistics in the bottom panel, the profiles, the
-  settings and the modules' pages in the editor's tabs, opened from the Window menu, the search or the gear. The trace and
-  the problems show a plain empty state, the assets a way to the profiles. A module's page
+  to its whole trace in the bottom panel (D353).
+- **The assets' panel** (D326, D351, `AssetsViewModel` in `D3B.App.ViewModels.Assets`, `AssetsView`): Add and a search
+  over the project's tree, its folders first, then their assets and the files that do not read, then those given with
+  D3B, read only; each kind its IntelliJ icon on its colour (`AssetKinds`), how many use it, a dot while its tab has
+  changes not saved. A click chooses an asset for the inspector or folds a folder, a double click or Enter opens a
+  profile in its tab; the right click opens, finds what uses it, renames in place (F2), duplicates (Ctrl D), moves,
+  exports, shows its file and deletes, a given asset copied into the project instead. Add makes a profile, a folder named
+  in place, or imports a file; the kinds of later sessions show disabled with their session.
+- **A profile's tab** (D330, D352, `ProfileViewModel`, `ProfileView`): one tab per profile, several open, closed by its ×,
+  which asks first when it holds changes, kept open once saved (`ProfilesViewModel.Open`, `EditorTab.Closing`). Its header:
+  the name edited in place, the behavior it is a variant of, how many values it changes and "Tout remettre", the menu and
+  save. Its form, the activity's settings (`SettingsEditor` in `D3B.App.ViewModels.Settings`), checked as they change: the
+  sections in a bar that follows the scroll; a label and its control on a grid, labels above below 560 pixels; a value
+  that differs from the behavior's (`SettingsEditor.Defaults`) bold, a bar in the margin and an amber arrow giving it
+  back. Beside it, the preview: the zone's mini-map (`ZoneMapCanvas`), its legend and figures, the activity's word when it
+  draws no zone (`SettingsPreview.Message`), and who plays it with what the settings lead to for each
+  (`PlayerNoteViewModel`, D165 to D167). A new profile is named in a dialog with its activity (`NewProfileViewModel`);
+  a given one shows read only and is copied into the project. Resources are rows in their order with their icons, chosen
+  several at once in a dialog (`GamePickerViewModel`, D236, D246); professions are tiles, sub-areas tokens with the
+  suggested ones below (D245), shares sliders, short choices segments. The pack's icons are drawn as bitmaps once per
+  pack (`GameIcons`).
+- **The bottom panel** (D327, D353, `BottomPanelViewModel` in `D3B.App.ViewModels.Bottom`, `BottomPanelView`): its tabs,
+  each with a toolbar; only the one shown reads the host, while the panel is open. The journal (`LogsViewModel`, D111 to
+  D114): every source by time or one bot's, by level and text, followed and copied, each line with its source's head;
+  `JournalLines` says each entry in the app's language. The trace (`TraceViewModel`, D350): the chosen character's runs,
+  newest first, each decision with its state, its words and how it ended. The problems (`ProblemsViewModel`): the
+  project's files that do not read, the characters without a profile, the host's failure and problems, each with its
+  fix. The protocol (`InspectorViewModel`, D115): a bot's frames live or a capture replayed, by direction and name, those
+  not read marked, frozen on demand, a frame unfolded in place. The statistics (`StatisticsViewModel`, D146): what the
+  kept runs brought, by character and period, the resources with their rates and the runs.
+- **The settings** (D329, D354, `SettingsViewModel`, `D3B.App.ViewModels.AppSettings`, `SettingsView`): a tab of the
+  editor, the title's gear, Ctrl , or a setting found. Sections on the left under a search: Bots, the client's display
+  time and every delay, the bots' at once (`Bots.Delays`), the relay's from the next start, the host's raised ones once
+  it runs; Network, the captures from the next start and their folder; Appearance, the language and the layout given
+  back; Files, the project, the database, the client's data and `app.json`, copied or opened; About, the version, the
+  client build, the update (D173) and the licences. A value changed shows a bar and an arrow giving its default back.
+- **The modules' pages** (D333): in the editor's tabs, opened from the Window menu or the search. A module's page
   (`ModulePageViewModel`) is made the first time its tab shows and kept, refreshed every 250 ms while it shows through its
   context (`AppPageContext`, in `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead
   (`PageFailureViewModel`), logged, and the bots and the other pages go on. What a page's own code throws on the UI's
   thread, which nothing caught, is told by the page's assembly in its stack and fails that page alone; the app's own faults
   still end it. A page looks like the app's through the theme, Inter and ShadUI's styles it inherits, and the app's
   classes it may use: `PageHeader`, `PageTitle`, `Plate`, `PlateFooter`, `Card` and the typography's.
-- **The profiles page** (D101, D159): the profiles as cards, each with its name, activity, settings at a glance and
-  characters, edited, copied or deleted. A new profile, or a copy, is named in a dialog with its activity
-  (`NewProfileViewModel`), then edited. The editor takes the page: its name in its header, beside its activity, cancel,
-  save and a menu; its settings by section, a card each, a row per setting, its name and help left and its control right,
-  a list or a zone the card's width (`D3B.App.ViewModels.Settings`), checked as they change, searched by name for the
-  game's values, saved once they hold; beside them while they keep 520 pixels, under them below (`SidePanel`, D246), the
-  activity's preview, its word when it draws no zone (`SettingsPreview.Message`), the zone's mini-map (`ZoneMapCanvas`, each map
-  a square at its coordinates from the atlas, the probable ones marked, those left out dim) and its figures, and who plays
-  the profile. Closing it with changes asks to save, discard or stay; Ctrl+S saves. A profile whose activity is gone says
-  so, and is given another or deleted (D119). Resources are rows in their order, each with its icon, its profession's
-  icon and level, and a mark when a character playing it lacks the level; they are chosen several at once in a dialog,
-  searched and filtered by profession, as monsters are by super race, a drop-down past 12 groups, the first 120 shown, each
-  with its icon, a monster's at 36 pixels (`PickedGamesFieldViewModel`, `GamePickerViewModel`, D236, D246); a family of
-  monsters is sought by name, its super race beside it (D247); a sub-area setting suggested by resources lists the sub-areas where they grow, one
-  suggested by monsters those where they live (D245); a percentage is a bar, a short choice segments (D127, D138, D141). The professions that gather
-  are chips, all of them first and without a profession last (`GatheringJobsFieldViewModel`); a list leaving resources out
-  offers to exclude and warns of no level; a number says what it counts after its box; and the characters playing the
-  profile each say what the settings lead to for them, such as the place chosen for their levels (`PlayerNoteViewModel`,
-  D165 to D167). The pack's icons are drawn
-  as bitmaps once per pack (`GameIcons`); a pack without them, or an item without one, keeps the neutral square.
-- **The statistics page** (D146, `D3B.App.ViewModels.Statistics`): what the kept runs brought, by character and period,
-  today, 7 days or everything, both in its header: the resources, the time, the rate an hour and the levels gained; each
-  resource with its icon, rate and a bar; the runs, the latest first, grouped by who ran what, the one going on or failed
-  saying so.
-- **The settings page** (D151, `SettingsViewModel`, `DelayViewModel`): the machine's settings, not a profile's, a card of
-  rows each. The client's display time, a bar from 0.5 to 3 s; the delays, each a box from its default to its most, its
-  help and measured or D3B's value in a tooltip, a dot when raised, and a button restoring them all but the display time,
-  the bots' applying at once (`Bots.Delays`), the relay's from the next start; the captures, `Network:Captures:Enabled`,
-  from the next start, with whether the host records now and where; the language; where the database, the
-  pack and the app's own file are, each copied on a click; D3B's version, the client build it ships and its update
-  (D173). Once the host runs, the page shows the delays its
-  bots wait, which its command line may have raised; changed before, the page's are given to them.
-- **The logs page** (D111 to D114, `D3B.App.ViewModels.Logs`): every source by time, the host's problems, or a bot's
-  journal, which its card opens, a profile that did not start on connection included (D119), chosen top right; filtered
-  by tone and text, followed, copied, in one toolbar. `JournalLines` says each entry in the app's
-  language, maps by their coordinates and sub-area, elements and skills by their names in the pack.
-- **The protocol inspector** (D111, D115, `D3B.App.ViewModels.Inspector`): a bot's frames live, frozen on demand, or a
-  capture of the game connection replayed, both chosen top right; filtered by sender, name and whether the readable
-  protocol read them, in one toolbar; a frame unfolded in place, the ticket hidden. Both pages and the map look at one
-  bot (`BotChoice`), each chosen in the same selector.
 - **The map** (D120 to D122, D346, `D3B.App.ViewModels.Maps`), in a character's tab: `MapCanvas`, in `D3B.App.Controls`,
   draws a scene flat in the theme's palette (`MapPalette`), a map's fixed geometries built once, in layers toggled in a
   menu: the cells, the character and its path, the elements by what the server says of them, the NPCs, the exits from the
@@ -676,8 +675,8 @@ character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
 - **Updates** (D173, `D3B.App.Updates`): `Program` lets Velopack run first, as an install, an update or an uninstall asks;
   `AppUpdates` checks the repository's releases as the app starts (`VelopackUpdateClient`, or the folder `Updates:Source`
   names), downloads a newer version at once, and installs it when the user restarts from the window's banner, asked first
-  while bots play, or once the window is gone and the host stopped. `UpdatesViewModel` says it in the banner and on the
-  settings page, with the app's version and the client build it ships (`AppRelease`); when the host lacks the installed
+  while bots play, or once the window is gone and the host stopped. `UpdatesViewModel` says it in the banner and in the
+  settings' About section, with the app's version and the client build it ships (`AppRelease`); when the host lacks the installed
   build's files (D172), the installed app says so instead of the host's message, with the update and a button installing
   it. Run from its code, the app does not check.
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
@@ -686,7 +685,7 @@ character's tab in 7c3 (D341 to D348); 7c4 fills the rest.
   French; the language starts as the system's, or the one the app was left in, and changes live, the views binding
   through `{l:Tr Key}`.
 - **Preferences** (`AppPreferences`): the language and the studio's layout (`StudioLayoutState`), remembered in
-  `%LOCALAPPDATA%\D3B\app.json`, read before the window shows (D101, D162); and the host's settings the settings page changed, by their configuration's keys and values,
+  `%LOCALAPPDATA%\D3B\app.json`, read before the window shows (D101, D162); and the host's settings the settings' tab changed, by their configuration's keys and values,
   such as `Delays:Display` or `Network:Captures:Enabled`, one given back its default forgotten (D151). The app reads the
   file before the host, which starts with them (`HostRunner`, `BotHost.CreateBuilder(args, settings)`), its own
   configuration and command line winning over them.
@@ -743,7 +742,9 @@ no new interface:
   by default, before the host starts (`AssetPreparation`), each file `<name>.<kind>.json` an asset (`AssetFiles`): its id,
   kind, format 1 and client build, its name the file's; behaviors and profiles hold what they are made of, the other kinds
   their files as they are (`PlannedAsset`). A file that does not read, or takes another's id, is left out and said
-  (`Problems`). Writes go to the disk, then memory, one at a time, a version counted; "used by" is exact (`UsedBy`). The
+  (`Problems`). Writes go to the disk, then memory, one at a time, a version counted; "used by" is exact (`UsedBy`). Its
+  folders, the empty ones included, are listed and made; an asset is saved in a folder, moved with its file, imported
+  under a new id when its own is taken, and exported (D351). The
   given assets (`GivenAssets`), made from the modules: a behavior per activity, `d3b.<id>`, playing it whole, its settings
   its public settings; a profile per preset, holding what it changes; read only.
 - **A behavior** (`BehaviorAsset`, `D3B.Bot.Behaviors`): public settings, variables, the layer Always, rules on events and the
@@ -759,10 +760,10 @@ no new interface:
   (`StateVisit`), an activity's node delegating to today's activity; a leaf played to its end and chosen again is done
   unless it repeats; no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
   urgent state cuts the step. Variables of the run, the character's (`CharacterVariables`, kept by `D3B.Storage`) and the
-  bots' (`SharedVariables`). The journal says each state entered and each note.
-- **The app until 7c** (D317): its profiles page lists the profile assets, a profile of a behavior playing one activity
-  whole edited as its settings (`ProfileForms`), saved as what differs; a given profile read only, copied; the bot's card
-  and the accounts page name profile assets.
+  bots' (`SharedVariables`). The journal says each state entered and each note; the trace, each decision (D350).
+- **The app** (D317, D352): a profile of a behavior playing one activity whole is edited as its settings (`ProfileForms`),
+  in a tab of its own, saved as what differs from the behavior, each value that differs marked; a given profile read only,
+  copied; the characters' cards and the inspector name profile assets.
 
 The target:
 
@@ -1033,16 +1034,18 @@ character's (D279). The character's spells by the
 - Replays with injection (D63): a game session a test built is replayed through the relay, read by a game session whose
   observer sends a request; the test checks what each side got, what the observers saw, and the relay's capture.
 - The app's view models are tested against bots played as the bots' tests play them, and its window drawn without a
-  screen by Avalonia.Headless with Skia, its texts read in both languages (D94); its accounts and profiles pages against a
-  database of the test's own and the game's values of a small world, named by a pack's texts in both languages (D101).
+  screen by Avalonia.Headless with Skia, its texts read in both languages (D94), its pieces drawn apart beside the
+  mockup's when `D3B_DRAWINGS` names a folder (`Drawings.DrawPart`); the characters, the assets and a profile's tab against
+  a database of the test's own and the game's values of a small world, named by a pack's texts in both languages (D101).
 - Activities' settings are tested in `D3B.Bot.Tests`; the storage in `D3B.Storage.Tests`, on a database of the test's own,
   its recording and starting on connection through game connections played as the bots' tests play them (D99, D100).
 - The app's module pages are drawn with a page of the tests' own (D109). A profile naming a Lua script, in a host with no
-  activity, is shown gone on the profiles page and a bot's card, and one that does not start on connection is said in
+  activity, is shown gone in its tab and a character's card, and one that does not start on connection is said in
   the bot's journal (D119).
 - A bot's journal is read after the behaviors the bots' tests play, each entry and its depth (D112); the frame recorder
   through game sessions, D3B's requests included, and the inspector's fields and replays on captures the tests write
-  (D115); the logs and inspector pages against bots played the same way, in both languages (D111).
+  (D115); the journal, the trace, the problems, the protocol and the statistics against bots played the same way, in
+  both languages (D111, D353); the trace's lines after the behaviors the bots' tests play (D350).
 - The app's dialogs and toasts are read from its view models (`Dialogs`, `Toasts`): a profile made, copied, closed with
   changes and deleted, an account forgotten from the characters' menu, a character's profile, start and variables from the
   inspector, resources chosen several at once, what a bot met said once; every icon is

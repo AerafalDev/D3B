@@ -1,0 +1,143 @@
+<UserControl
+    x:Class="D3B.App.Views.ProblemsView"
+    x:ClassModifier="internal"
+    x:DataType="b:ProblemsViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:b="clr-namespace:D3B.App.ViewModels.Bottom"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.GroupTitle">
+            <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="10,0" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0,7,0,0" />
+        </Style>
+        <Style Selector="Border.Problem">
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Margin" Value="6,0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.Problem:pointerover">
+            <Setter Property="Background" Value="#08FFFFFF" />
+        </Style>
+        <Style Selector="Button.Fix">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="{DynamicResource FieldColor}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style Selector="Button.Fix:pointerover">
+            <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
+        </Style>
+    </UserControl.Styles>
+    <DockPanel>
+        <Border Classes="Toolbar" DockPanel.Dock="Top">
+            <Grid ColumnDefinitions="*">
+                <StackPanel>
+                    <Border Classes="Segs">
+                        <StackPanel>
+                            <Button
+                                Classes="Seg"
+                                Classes.On="{Binding IsAll}"
+                                Command="{Binding ShowAllCommand}"
+                                Content="{l:Tr ProblemsAll}" />
+                            <Button
+                                Classes="Seg"
+                                Classes.On="{Binding IsProject}"
+                                Command="{Binding ShowProjectCommand}"
+                                Content="{l:Tr ProblemsOriginProject}" />
+                            <Button
+                                Classes="Seg"
+                                Classes.On="{Binding IsCharacters}"
+                                Command="{Binding ShowCharactersCommand}"
+                                Content="{l:Tr ProblemsOriginCharacters}" />
+                            <Button
+                                Classes="Seg"
+                                Classes.On="{Binding IsHost}"
+                                Command="{Binding ShowHostCommand}"
+                                Content="{l:Tr ProblemsOriginHost}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Panel>
+            <StackPanel
+                HorizontalAlignment="Center"
+                IsVisible="{Binding IsEmpty}"
+                Orientation="Horizontal"
+                Spacing="8"
+                VerticalAlignment="Center">
+                <c:Icon
+                    Drawing="{StaticResource Status.Success}"
+                    Height="14"
+                    VerticalAlignment="Center"
+                    Width="14" />
+                <TextBlock
+                    Classes="Muted"
+                    Text="{l:Tr ProblemsEmpty}"
+                    VerticalAlignment="Center" />
+            </StackPanel>
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Groups}" Margin="0,6">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="b:ProblemGroupViewModel">
+                            <StackPanel>
+                                <TextBlock Classes="GroupTitle" Text="{Binding Title}" />
+                                <ItemsControl ItemsSource="{Binding Problems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="b:ProblemViewModel">
+                                            <Border Classes="Problem">
+                                                <Grid ColumnDefinitions="18,*,Auto" ColumnSpacing="10">
+                                                    <Panel Margin="0,1,0,0" VerticalAlignment="Top">
+                                                        <c:Icon
+                                                            Drawing="{StaticResource Status.Error}"
+                                                            Height="15"
+                                                            IsVisible="{Binding IsError}"
+                                                            Width="15" />
+                                                        <c:Icon
+                                                            Drawing="{StaticResource Status.Warning}"
+                                                            Height="15"
+                                                            IsVisible="{Binding IsWarning}"
+                                                            Width="15" />
+                                                    </Panel>
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock
+                                                            FontWeight="Medium"
+                                                            Text="{Binding Title}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock
+                                                            Classes="Dim"
+                                                            Text="{Binding Why}"
+                                                            TextTrimming="CharacterEllipsis"
+                                                            ToolTip.Tip="{Binding Why}" />
+                                                    </StackPanel>
+                                                    <Button
+                                                        Classes="Fix"
+                                                        Command="{Binding FixCommand}"
+                                                        Content="{Binding FixText}"
+                                                        Grid.Column="2"
+                                                        IsVisible="{Binding CanFix}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Panel>
+    </DockPanel>
+</UserControl>
