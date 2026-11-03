@@ -124,7 +124,7 @@ code reads. It looks for them in `%LOCALAPPDATA%\D3B\data`, then beside the publ
 from the build's release `client-<version>`, with the [GitHub CLI](https://cli.github.com) signed in:
 
 ```powershell
-dotnet run --file scripts/embed.cs -- --client-version 3.7.12.12 --output "$env:LOCALAPPDATA\D3B\data"
+dotnet run --file scripts/embed.cs -- --client-version 3.7.13.17 --output "$env:LOCALAPPDATA\D3B\data"
 ```
 
 The tool checks the files, and says so when the release lacks a format your checkout reads, as happens while a format
@@ -180,7 +180,7 @@ the app. The same installer, built on your machine in PowerShell:
 ```powershell
 dotnet tool restore
 dotnet publish src/D3B.App -c Release -r win-x64 --self-contained -o publish -p:MinVerVersionOverride=0.1.0
-dotnet run --file scripts/embed.cs -- --client-version 3.7.12.12 --output publish/data --packs "$env:LOCALAPPDATA\D3B\data"
+dotnet run --file scripts/embed.cs -- --client-version 3.7.13.17 --output publish/data --packs "$env:LOCALAPPDATA\D3B\data"
 dotnet tool run vpk pack --packId D3B.App --packVersion 0.1.0 --packDir publish --mainExe D3B.App.exe --packTitle D3B --icon src/D3B.App/Assets/d3b.ico -o releases
 ```
 

@@ -9,6 +9,8 @@ namespace D3B.Bot.Tests.Movement;
 /// <summary>What the server and the client answer a walk D3B sent, as a test plays them.</summary>
 internal static class TestWalks
 {
+    private static readonly TimeSpan _limit = TimeSpan.FromMinutes(5);
+
     /// <summary>Waits for D3B's n-th request, a walk, then shows it walked and confirmed; gives the cell it ends on.</summary>
     /// <param name="play">The test's play.</param>
     /// <param name="connection">The connection D3B sends through.</param>
@@ -36,11 +38,13 @@ internal static class TestWalks
     /// <summary>Waits until D3B sent a number of requests, the clock moving meanwhile, as after a map change; gives the last.</summary>
     public static async Task<IMessage> SentAsync(TestPlay play, TestConnection connection, int count)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        // Bounded on the test's clock, not the wall's: a bot waiting long on the clock, as a character regenerating for
+        // 40 s, takes hundreds of steps, each at least a timer's tick, which a slow runner took more than 10 s to run.
+        var deadline = play.Time.GetUtcNow() + _limit;
 
         while (connection.Sent.Count < count)
         {
-            Assert.True(DateTime.UtcNow < deadline, $"D3B sent {connection.Sent.Count} requests, not {count}.");
+            Assert.True(play.Time.GetUtcNow() < deadline, $"D3B sent {connection.Sent.Count} requests, not {count}, in {_limit.TotalMinutes} minutes of the clock.");
             play.Time.Advance(TimeSpan.FromMilliseconds(100));
             await Task.Delay(5, TestContext.Current.CancellationToken);
         }

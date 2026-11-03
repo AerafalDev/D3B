@@ -420,8 +420,9 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   and with their time, `--mapping` naming the readable ones (D178).
 - The readable protocol, built in session 3d for the connection phase (D42) and in session 3g for the game's first
   messages (D55, D56): `.proto` files of our own in `src/D3B.Protocol/Connection/` and `src/D3B.Protocol/Game/`, which
-  Grpc.Tools compiles into Google.Protobuf classes at build. Their numbers are 3.7.12.12's wire's; the game's are likely
-  shuffled at each build, which the next build measures (Q10). `ReadableProtocol` lists them. A game event marked
+  Grpc.Tools compiles into Google.Protobuf classes at build. Their numbers are the wire's of 3.7.12.12 and 3.7.13.17,
+  whose schemas are the same bytes (D361); a build that changes its schema may shuffle the game's, which that build
+  measures (Q17). `ReadableProtocol` lists them. A game event marked
   `(d3b.readable.partial)` declares only the fields bot code reads; a request is whole.
 - The mapping, built in session 3d (D43 to D45), in `D3B.Protocol.Mapping`. `scripts/mapping.cs` loads the build's
   schema (`ProtocolSchema`) and pins (`src/D3B.Protocol/Pins/<version>.json`), measures anchors in the build's captures

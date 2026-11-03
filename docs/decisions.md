@@ -7820,6 +7820,85 @@ three. Amends D351, D357.*
   pixels, the help after them; a list's detail is trimmed beside its buttons; the header's line goes under the name; the
   sections' bar scrolls when narrow.
 
+## D359: Release 0.5.0, after 7c4
+
+*2026-11-03, step 3, session 3i, recorded as D293 recorded 0.4.0.*
+
+- **The client's release** `client-3.7.12.12` got `data-9.pack`, 27,067,153 bytes, and `mapping-16.binpb`, 14,830 bytes,
+  with their hashes, which 7c3 and 7c4 left to publish (D348, D356).
+- **The app's release** `v0.5.0`, tagged on `main` at the merge of 7c4's pull request: the release workflow failed at
+  its first attempt, its tests stopping on
+  `FightActivityTests.WithNothingToEatTheCharacterRegeneratesBackToTheShareAloneBeforeItAttacks` after 10.2 s, "D3B sent
+  0 requests, not 1" (D363), and went green on its second. `D3B 0.5.0` marked latest: Setup.exe 105.8 MB, its full and
+  delta packages and the portable zip, shipping client 3.7.12.12's files (D172).
+
+## D360: Client 3.7.13.17, measured against 3.7.12.12
+
+*2026-11-03, step 3, session 3i. Amends D27's check of the zaaps.*
+
+Ankama's update of 2026-11-03: client 3.7.13.17, built that day at 14:09 UTC, Unity 6000.3.16f1, serialized format 22
+and Addressables 2.9.1 as before. Measured with `scripts/inspect.cs`, the extraction, and measuring tools never
+committed that compare the two builds' packs table by table and print counts only
+([client.md](client.md#client-371317)).
+
+- **The installation**: 20,671 bundles against 20,623; the data tables still 208 bundles, 99.1 MiB against 98.9; the
+  maps 596; 340,817 numbered texts against 339,912.
+- **The pack**, format 9 still, 27,087,316 bytes against 27,067,153: 17,623 maps against 17,722, 129 gone and 30 new; 68
+  items, 11 interactives, 6 monsters and their grades, a race and a spell state more; 2 of the 34,251 spell levels gone
+  and about ten changed in their range, casts per turn, flags or effects; the world graph 4 vertices and 8 edges more;
+  61 map positions, 2 sub-areas, an area and a zaap more; the professions, skills, breeds, banks, weapons and
+  characteristics as they were. 16 items' icons more; 619 items' icons and 7 heads re-encoded by a few texels; the 38
+  heads and 16 glyphs looked at, upright and clean.
+- **A zaap off the graph.** Zaap 81 stands in a new sub-area of a new area, 48 maps the world map does not show, which
+  3.7.12.12 held with neither position nor vertex; all now have a position, none a vertex. The extractor failed on it.
+  Since a path never teleports to a zaap without a vertex (`WorldPathfinder`, D83), it now keeps such a zaap as the
+  client lists it and counts it, and fails only on a zaap whose map the client lacks.
+- **The protocol**: its schema is 3.7.12.12's, byte for byte (D361).
+
+## D361: A build's game mapped from the previous build's pins: Q10 settled
+
+*2026-11-03, step 3, session 3i, chosen by the owner, as the lead recommended it. Settles Q10; amends D54's "from build
+to build".*
+
+- **Measured**: `scripts/schema.cs` writes for 3.7.13.17 the very bytes of 3.7.12.12's schema, SHA-256 `e383c947…`: the
+  same 2,212 messages, 6,394 fields and 432 enums, under the same obfuscated names and numbers. An update that leaves
+  the protocol as it was keeps its obfuscation: it neither shuffles nor renumbers the game's fields.
+- **The pins carried over**: `Pins/3.7.13.17.json` holds 3.7.12.12's 98 pairs, and the ticket's `AuthenticationRequest`
+  under the name 3.7.12.12's captures anchored (D57). Without it, only the new build's captures would pair it, and they
+  go through a host that needs the mapping first. Those captures then check it, as every pin: an anchor contradicting it
+  fails the mapping (D43). 3.7.12.12's file stays (D43).
+- **The mapping** of 3.7.13.17, format 16: 224 messages paired, 99 by pin, 94 by fields and 31 by scores, and 30 enums;
+  audited, no failure; 14,820 bytes. Every pair of messages, fields, enums and values is 3.7.12.12's.
+- **Left open**: a build whose schema changes, Q17.
+- **Rejected.**
+  - The previous build's mapping taken whole when the schemas' hashes are equal, by an option of the tool: quicker, but
+    the identity of the schema would replace the pins of each build, and the captures are made anyway, for D60.
+  - Pairing build to build by the order and shape of the messages now: no changed schema to measure it on.
+
+## D362: The graphics learned kept from build to build: Q14 settled
+
+*2026-11-03, step 3, session 3i, chosen by the owner, as the lead recommended it. Settles Q14; keeps D138.*
+
+- **Measured** on the two builds' packs: of the 46,446 elements of the 17,593 maps both hold, 46,438 keep their graphic,
+  8 take another, 6 pairs of graphics; 22 graphics are new and 9 gone, 3,512 against 3,499. The 261 graphics the owner's
+  bots learned are all still drawn, 258 on as many elements as before, none among the 8 elements changed.
+- **Kept as they are**, from one build to the next, as D138 has it: an update does not renumber the graphics. The
+  comparison is made again at each update.
+- **Rejected.**
+  - The host recording the build that taught each graphic, and forgetting what a new build no longer draws: code and a
+    migration for what did not happen.
+  - Forgetting them at each build: right always, but the bots learn everything again after each of Ankama's updates.
+
+## D363: A walk awaited on the test's clock
+
+*2026-11-03, step 3, session 3i. The owner's ask after D359's failed attempt.*
+
+- **The cause.** `TestWalks.SentAsync` moved the test's clock 100 ms each 5 ms of the wall, within 10 s of the wall. A
+  character regenerating for 40 s takes 400 steps, each at least a timer's tick, about 15 ms on Windows: 7.1 s of the 10
+  on the lead's machine, 10.2 s on the workflow's runner, which failed.
+- **Fixed**: the wait is bounded on the test's clock, 5 minutes of it, whatever the wall takes; what the test checks, a
+  wait of 40 to 55 s on the clock before the attack, is unchanged.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
@@ -7827,7 +7906,6 @@ Settled questions leave this table, and the decision that settles one says so.
 | Id | Question | Settled in |
 | --- | --- | --- |
 | Q5 | Which fight formulas of Bubble emu (Dofus 2) still hold in Dofus 3? Measured in 9d for damage, steals, heals, critical hits and the zone's decrease (D195), in 9e2 for a critical hit's chance (D207) and a push's damage (D214), in 9e3 for a sword's blow (D222); left: shields, AP and MP removed and their dodge, erosion, the final damage's rounding, a weapon's critical bonus, power and mastery (D220). | The captures of D196 left (D214), then 9f |
-| Q10 | Does every client build shuffle and renumber the game's fields, and how is a build's game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56)? | Step 3, the session after the next client update |
 | Q12 | Which facts must the bot learn, beyond its state, for the criteria it cannot answer: quests, breed, alignment, achievements, the server's own codes; from which messages, and what does each code mean, measured (D71)? On doors, achievements would open the most, then `Sc` and `SC`, then quests (D76). | The large effort on criteria the owner noted, then as each step needs them |
-| Q14 | Does a client update renumber the maps' graphics, so that a skill learned on one (D138), which is never forgotten, would foretell another's maps wrongly: are the graphics learned kept as they are, checked, or forgotten at a new build? | The session after the next client update, with Q10 |
 | Q16 | Which casts and walks does the server refuse that D3B's rules allow, or allow that they refuse: how it counts a corner beside what blocks, a proportional diagonal, the 11 zones no capture cast (D190, D191)? It refuses with an error text, 29 ms after the request (D203); which casts, but a Zobal's masks, is left. It allowed 11 casts the rules refuse, each a breed's mechanism: spells whose cost or range a gathered state changes, and summons (D214). The Zobal's 6 refused were the masks' states the bot kept, whose end it did not read (D224, D225). | Captures the owner makes, the AI sending its casts (D202), with those of D196; the breeds' mechanisms in 9f |
+| Q17 | When a client build changes its schema, does it shuffle and renumber the game's fields, and how is its game mapped from the previous build's: messages by order and shape, fields of one type told apart, numbers rewritten on the wire (D54, D56, D361)? | The session after the first client update whose schema changes |
