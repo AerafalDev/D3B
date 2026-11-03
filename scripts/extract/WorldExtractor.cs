@@ -243,13 +243,20 @@ internal static class WorldExtractor
                 throw new InvalidDataException($"The maps' information names map {position.MapId}, which the client does not hold.");
         }
 
+        var offGraph = 0;
+
         foreach (var waypoint in atlas.Waypoints.Span)
         {
+            if (!byId.ContainsKey(waypoint.MapId))
+                throw new InvalidDataException($"Zaap {waypoint.Id} stands on map {waypoint.MapId}, which the client does not hold.");
+
+            // Client 3.7.13.17 placed a zaap in a zone its graph does not reach yet; a path never teleports to a zaap
+            // without a vertex, so it is kept as the client lists it.
             if (!graph.Contains(waypoint.MapId))
-                throw new InvalidDataException($"Zaap {waypoint.Id} stands on map {waypoint.MapId}, which the world graph does not hold.");
+                offGraph++;
         }
 
-        Console.WriteLine($"Checked: every vertex's zone is on its map; {interactives:N0} interactive transitions use an element of their map, {elsewhere:N0} from another cell than the element's");
+        Console.WriteLine($"Checked: every vertex's zone is on its map; {interactives:N0} interactive transitions use an element of their map, {elsewhere:N0} from another cell than the element's; zaaps on a map the world graph lacks, which no path teleports to: {offGraph:N0}");
     }
 
     private static bool ZoneIsOn(MapData map, int zone)

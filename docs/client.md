@@ -21,7 +21,9 @@ session 9d ([the game, foreseen](#the-game-foreseen)), and the states its spells
 ([the game, through an NPC](#the-game-through-an-npc)). What its items heal, the walks it does not follow and a hunt's
 journeys were measured on 2026-11-02 for session 9g5 ([the game, kept on its way](#the-game-kept-on-its-way)), its
 summons for session 9f2 ([the game, summoned](#the-game-summoned)), and its bombs and fights' placement cells for session
-9f3 ([the game, bombed](#the-game-bombed), [the game, placed](#the-game-placed)).
+9f3 ([the game, bombed](#the-game-bombed), [the game, placed](#the-game-placed)). Client 3.7.13.17, built on
+2026-11-03, was measured against it the same day, its pack, schema and mapping beside 3.7.12.12's
+([Client 3.7.13.17](#client-371317)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -225,7 +227,8 @@ for a subscribed character of level 200 holding nothing: 5,607 with the doors of
 interactive transition ([the game, used](#the-game-used)).
 
 **Coverage.** 10,981 of the 17,722 maps have a vertex, all `ClientMapData`. Every map with a vertex has a position in
-`MapsInformationDataRoot`, and every zaap stands on one.
+`MapsInformationDataRoot`, and every zaap stands on one; in 3.7.13.17, all but one
+([Client 3.7.13.17](#client-371317)).
 
 ## Data tables
 
@@ -273,7 +276,8 @@ What the world tables hold, as the pack keeps them (D27, D29):
 - **Sub-areas.** 34 of the 567 allow accounts without a subscription (`basicAccountAllowed`). `associatedZaapMapId`
   names a zaap's map on 329 and is 0 on the other 238. `level` from 0 to 200. `harvestables` lists items on 190
   sub-areas ([Harvestables](#harvestables)). Every map a sub-area lists names that sub-area back.
-- **Zaaps.** 62, 47 `activated`; every one stands on a map of the world graph, in the sub-area of its map. The graph has
+- **Zaaps.** 62, 47 `activated`; every one stands on a map of the world graph, in the sub-area of its map, but
+  3.7.13.17's zaap 81 ([Client 3.7.13.17](#client-371317)). The graph has
   no zaap transitions: the path teleports to the zaaps the server says the character knows (D83).
 - **Areas and super-areas.** 69 areas and 10 super-areas; the pack keeps the areas' `superAreaId`, not the super-areas.
 - `MapScrollActionsDataRoot` and `MapReferencesDataRoot` are not extracted: the graph's scroll actions already lead
@@ -549,6 +553,48 @@ in under 1 ms.
 1.9 s, saves at best 0.45 MB with 16 KiB (3.27 MB of maps and dictionary instead of 3.72), 0.41 MB with 64 KiB and 0.35
 MB with 256 KiB; decompressing every map then takes 41 ms instead of 63. Trained on every entry but the texts, it gains
 nothing on the others. D30 keeps packs without one.
+
+## Client 3.7.13.17
+
+Measured on 2026-11-03 for session 3i (D360 to D362), against 3.7.12.12: `scripts/inspect.cs`, the extraction, the
+schema and mapping tools, and measuring tools never committed that compare the two builds' packs and mappings table by
+table and print counts only.
+
+- **The installation.** Built on 2026-11-03 at 14:09 UTC, Unity 6000.3.16f1, serialized format 22, Addressables 2.9.1,
+  as before. 20,671 bundles, 21.1 GiB, against 20,623: `Data` still 208 bundles, 99.1 MiB decompressed; `Map/Data` 596.
+  The texts: 340,817 numbered, identifiers 1 to 1,202,050, and 7,501 keyed, 348,318 distinct; 24.1 MiB in French.
+- **The pack**, format 9: 27,087,404 bytes, 17,639 entries, extracted in 32 s. Professions and skills, breeds, banks,
+  weapons, characteristics and effects are the same, but 3 effects' descriptions; the 38 heads and 16 glyphs, drawn on a
+  sheet, are upright and clean. The rest, table by table:
+
+| Table | 3.7.12.12 | 3.7.13.17 | Changed |
+| --- | ---: | ---: | --- |
+| Maps | 17,722 | 17,623 | 129 gone, 30 new; of the 17,593 both hold, 101 with other cells, 40 with other elements |
+| Interactive elements, graphics | 46,462, 3,499 | 46,490, 3,512 | 44 elements new, 4 gone, 12 moved, 8 drawn otherwise; 22 graphics new, 9 gone |
+| World graph | 11,327 vertices, 30,909 edges | 11,331, 30,917 | 8 transitions more, the same 619 criteria |
+| Positions, sub-areas, areas, zaaps | 15,409, 567, 69, 62 | 15,470, 569, 70, 63 | 62 positions new, 1 gone |
+| Items | 21,554 | 21,622 | 68 new, none changed |
+| Interactives | 446 | 457 | 11 new |
+| Spell levels | 34,251 | 34,249 | 2 gone; about ten with another range, casts per turn, flags or effects |
+| Spell states | 6,377 | 6,378 | 1 new; 24 named otherwise |
+| Monsters, grades | 5,129, 26,821 | 5,135, 26,851 | 6 monsters and a race new |
+| Icons | 11,748 items' | 11,764 | 619 items' and 7 heads re-encoded by a few texels; jobs, spells, monsters, glyphs the same |
+
+- **Zaap 81** stands on a map the world graph does not hold, in sub-area 1137 of area 104, both new: 48 maps, level 10,
+  not on the world map. 3.7.12.12 held the maps, with neither position nor vertex; all 48 now have a position, none a
+  vertex. The extractor keeps the zaap and counts it (D360); no path teleports to it.
+- **The graphics** (D362): 46,438 of the 46,446 elements on maps both builds hold keep their graphic. The 261 graphics
+  the owner's bots learned are all still drawn, none among the 8 elements drawn otherwise: an update does not renumber
+  them.
+- **The protocol** (D361): the schema is 3.7.12.12's byte for byte, 170,287 bytes, SHA-256 `e383c947…`. With 3.7.12.12's
+  pins and the ticket's request pinned as its captures anchored it, the mapping pairs every message, field, enum and
+  value as 3.7.12.12's does.
+- **The owner's captures** (D364): a connection phase and a game connection of 10 min 46 s through the app, 7,908
+  frames, every one read by the schema. The mapping made with them anchors the ticket's request as pinned; of the 7,683
+  game frames, 5,256 understood whole, 1,232 more read, none misread. The client confirmed all 63 of D3B's walks out of
+  fights, asked for the information of each of the 49 maps it entered, and ended all 25 of D3B's uses (D60). In the AI's
+  fight it ended 8 of the character's turns by itself, `automatic` set, over the fight's last 80 s, after 13 turns the
+  AI played (D252).
 
 ## Connection
 
@@ -2089,5 +2135,6 @@ with Cpp2IL.Core 2022.1.0-pre-release.21.
   510 game messages that nest types, and nested types named `decoy`; no type is tied to them without reading the code
   that uses them, which session 3g did not (D54). The client's classes handling game messages, in its `Core` assembly,
   are obfuscated too: 1,003 game types appear in their methods' signatures.
-- **The schema of 3.7.12.12.** 170,287 bytes, written in about 6 s, the same bytes on two runs. protoc compiles its
+- **The schema of 3.7.12.12.** 170,287 bytes, written in about 6 s, the same bytes on two runs; 3.7.13.17's are the same
+  bytes (D361). protoc compiles its
   `.proto` text to a descriptor equal to it on all 2,212 messages and 6,394 fields.

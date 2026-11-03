@@ -9,7 +9,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 0 | Foundation: brief, decisions, architecture, roadmap | Done |
 | 1 | Scaffold and modules | Done |
 | 2 | Game data | Done |
-| 3 | Protocol and connection | Done; Q10 at the next client update |
+| 3 | Protocol and connection | Done; client 3.7.13.17 in 3i, Q10 and Q14 settled (D360 to D362) |
 | 4 | Bot run time and navigation | Done |
 | 5 | Desktop app, first version | Done |
 | 6 | Harvesting and banking: first milestone | Milestone reached in 6a; icons and learned graphics in 6b; what 6a left in 6c; the app redesigned in 6d; the owner's settings in 6e; the app published in 6f |
@@ -62,8 +62,9 @@ Four sessions:
 Done on 2026-10-28, with decisions D34 to D63. Settles Q2, Q7, Q8 and Q9. Q8 is settled by D34 in session 3a, whose
 `hosts` line D35 replaces in session 3b, and whose game connection D52 matches in session 3f; Q7's format by D37, in
 session 3b, and its replays with injection by D63, in session 3h; Q2 by D47, in session 3e; Q9 by D60, in session 3h.
-Q10, how a build's game is mapped from the previous build's, waits for the next client update, which gets a session of
-its own before anything else (D54, D56), and measures again that the client follows the actions D3B sends (D60).
+Q10, how a build's game is mapped from the previous build's, waited for the next client update, which got a session of
+its own before anything else (D54, D56), and measured again that the client follows the actions D3B sends (D60): 3i,
+for client 3.7.13.17, settled it with Q14 (D361, D362). The first update that changes the schema gets one too (Q17).
 
 - The mapping pipeline: Cpp2IL dump, scored matching, pinned pairs, anchors from captures, contract audit that fails the
   build (D11), and the IDA tracer if a build needs it (D41). Ideas from BillBot and JondoEmu.
@@ -90,6 +91,7 @@ and gated before the game connection is taken, whose server address must be deco
 | 3f | The game connection, measured on running clients: the client takes an address for the game server's host, connects to the first port it is sent whatever its connection port, 443 included, and speaks first, its first frame presenting its ticket; the relay holding the server selection's answer alone until whole, with a way out, and rewriting it once understood whole to D3B's game listener; the game connection matched with its server by its ticket, read by the wire format alone, relayed unread and captured apart from the connection phase; two accounts at once in game through D3B (D51 to D53). | Done on 2026-10-28 |
 | 3g | Mapping, part 3: the game's structure measured, most of the first milestone's messages left open by it; pins for what it leaves open, which the mapping tool proposes from captures of the player's actions, build to build left for the next client update (Q10); the readable `.proto` files of the first milestone's game messages, requests whole and events partial, with the `Any` envelope and its type URLs: the game connection, the character choice, the context, the map and its actors and elements, movements, harvesting, the inventory, professions, NPC dialogs and the bank; the game's anchors and the messages its frames carry; mapping format 2; the translation reading game frames through their type URL; no IDA tracer, every field read being measured (D54 to D59). | Done on 2026-10-28 |
 | 3h | Q9, measured on the captures then on a client in game through the host: every request of the first milestone carries the id -1, the client counting others alone; D3B sends only the requests that start an action, and the client follows the server's answers as after its own, confirming walks and asking for new maps' information, the player seeing each action; the relay sending the server D3B's frames between the client's, recorded in captures of format 2; the game connection read through the translation by a game session per connection, for the modules observing it; replays with injection, which complete Q7 (D60 to D63). | Done on 2026-10-28 |
+| 3i | Client 3.7.13.17, Ankama's update of 2026-11-03: the build measured against 3.7.12.12, its pack, schema and mapping; Q10 and Q14 settled; the captures read again, D60 measured again; then its release and the app's 0.5.1 on the owner's go. Done: release 0.5.0 recorded (D359); the build measured, a zaap off the world graph kept (D360); the schema the same bytes, the pins carried over, Q10 settled, the owner's choice (D361); the graphics not renumbered, those learned kept, Q14 settled, the owner's choice (D362); a walk awaited on the test's clock (D363); the owner's captures read again, the mapping anchored, D60 holding, the client ending the AI's turns by itself left to a session of its own (D364); the release `client-3.7.13.17` published (D365). | In progress; the app's 0.5.1 on the owner's go |
 
 ## 4. Bot run time and navigation
 
