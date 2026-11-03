@@ -563,7 +563,7 @@ table and print counts only.
 - **The installation.** Built on 2026-11-03 at 14:09 UTC, Unity 6000.3.16f1, serialized format 22, Addressables 2.9.1,
   as before. 20,671 bundles, 21.1 GiB, against 20,623: `Data` still 208 bundles, 99.1 MiB decompressed; `Map/Data` 596.
   The texts: 340,817 numbered, identifiers 1 to 1,202,050, and 7,501 keyed, 348,318 distinct; 24.1 MiB in French.
-- **The pack**, format 9: 27,087,316 bytes, 17,639 entries, extracted in 32 s. Professions and skills, breeds, banks,
+- **The pack**, format 9: 27,087,404 bytes, 17,639 entries, extracted in 32 s. Professions and skills, breeds, banks,
   weapons, characteristics and effects are the same, but 3 effects' descriptions; the 38 heads and 16 glyphs, drawn on a
   sheet, are upright and clean. The rest, table by table:
 

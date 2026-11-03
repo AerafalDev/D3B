@@ -7843,7 +7843,7 @@ committed that compare the two builds' packs table by table and print counts onl
 
 - **The installation**: 20,671 bundles against 20,623; the data tables still 208 bundles, 99.1 MiB against 98.9; the
   maps 596; 340,817 numbered texts against 339,912.
-- **The pack**, format 9 still, 27,087,316 bytes against 27,067,153: 17,623 maps against 17,722, 129 gone and 30 new; 68
+- **The pack**, format 9 still, 27,087,404 bytes against 27,067,153: 17,623 maps against 17,722, 129 gone and 30 new; 68
   items, 11 interactives, 6 monsters and their grades, a race and a spell state more; 2 of the 34,251 spell levels gone
   and about ten changed in their range, casts per turn, flags or effects; the world graph 4 vertices and 8 edges more;
   61 map positions, 2 sub-areas, an area and a zaap more; the professions, skills, breeds, banks, weapons and
