@@ -142,7 +142,7 @@ internal sealed partial class ProblemsViewModel : ObservableObject
         {
             var folder = Path.GetDirectoryName(Path.Combine(assets!.Folder, problem.Path)) ?? assets.Folder;
 
-            yield return new ProblemViewModel(ProblemOrigin.Project, true, _localizer.Format("ProblemAssetNotRead", Path.GetFileName(problem.Path)), problem.Path + " · " + problem.Message, _localizer["ProblemOpenFolder"], () => OpenFolder?.Invoke(folder));
+            yield return new ProblemViewModel(ProblemOrigin.Project, true, _localizer.Format("ProblemAssetNotRead", Path.GetFileName(problem.Path)), problem.Path + " · " + _localizer["AssetProblem" + problem.Kind], _localizer["ProblemOpenFolder"], () => OpenFolder?.Invoke(folder));
         }
     }
 

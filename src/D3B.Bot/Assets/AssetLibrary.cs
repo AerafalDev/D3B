@@ -165,13 +165,13 @@ public sealed class AssetLibrary : IDisposable
                         var asset = AssetFiles.Read(await File.ReadAllTextAsync(file, cancellationToken).ConfigureAwait(false), name, path, kind);
 
                         if (!ids.Add(asset.Id))
-                            problems.Add(new AssetProblem(path, $"Its id {asset.Id} is another asset's: copied by hand, it takes a new id once saved from the app."));
+                            problems.Add(new AssetProblem(path, $"Its id {asset.Id} is another asset's: copied by hand, it takes a new id once saved from the app.") { Kind = AssetProblemKind.IdTaken });
                         else
                             read.Add(asset);
                     }
                     catch (Exception exception) when (exception is AssetFormatException or IOException or UnauthorizedAccessException)
                     {
-                        problems.Add(new AssetProblem(path, exception.Message));
+                        problems.Add(new AssetProblem(path, exception.Message) { Kind = exception is AssetFormatException format ? format.Kind : AssetProblemKind.Unreadable });
                     }
                 }
             }
@@ -358,7 +358,7 @@ public sealed class AssetLibrary : IDisposable
         ArgumentNullException.ThrowIfNull(file);
 
         if (!AssetFiles.TryKindOf(Path.GetFileName(file), out var kind, out var name))
-            throw new AssetFormatException($"{Path.GetFileName(file)} is no asset's file: its extension names no kind.");
+            throw new AssetFormatException($"{Path.GetFileName(file)} is no asset's file: its extension names no kind.") { Kind = AssetProblemKind.NotAsset };
 
         var asset = AssetFiles.Read(await File.ReadAllTextAsync(file, cancellationToken).ConfigureAwait(false), name, Path.GetFileName(file), kind) with { Path = null };
 

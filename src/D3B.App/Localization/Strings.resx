@@ -2291,4 +2291,25 @@
   <data name="StatisticsSpan" xml:space="preserve">
     <value>{0} to {1}</value>
   </data>
+  <data name="AssetProblemContent" xml:space="preserve">
+    <value>A value is missing or is not of its type</value>
+  </data>
+  <data name="AssetProblemNotJson" xml:space="preserve">
+    <value>It is not valid JSON</value>
+  </data>
+  <data name="AssetProblemWrongKind" xml:space="preserve">
+    <value>The kind it says is not its extension’s</value>
+  </data>
+  <data name="AssetProblemFormat" xml:space="preserve">
+    <value>Its format is missing, or newer than this version of D3B reads</value>
+  </data>
+  <data name="AssetProblemIdTaken" xml:space="preserve">
+    <value>Its id is another asset’s: saved from D3B, it takes a new one</value>
+  </data>
+  <data name="AssetProblemUnreadable" xml:space="preserve">
+    <value>The system does not let it be read</value>
+  </data>
+  <data name="AssetProblemNotAsset" xml:space="preserve">
+    <value>Its extension names no kind of asset</value>
+  </data>
 </root>

@@ -71,6 +71,7 @@
             Margin="8,8,8,6">
             <Button
                 Classes="Primary Add"
+                Click="OnAddClick"
                 IsEnabled="{Binding IsAvailable}"
                 Name="AddButton">
                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -81,9 +82,6 @@
                         Width="14" />
                     <TextBlock Text="{l:Tr Add}" VerticalAlignment="Center" />
                 </StackPanel>
-                <Button.Flyout>
-                    <MenuFlyout Placement="BottomEdgeAlignedLeft" />
-                </Button.Flyout>
             </Button>
             <TextBox
                 AutomationProperties.Name="{l:Tr AssetsSearch}"

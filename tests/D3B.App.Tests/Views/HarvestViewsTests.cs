@@ -484,7 +484,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Equal(2, icons);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Statistiques", french);
-        Assert.Contains("Tous les persos", french);
+        Assert.Contains("Tous les personnages", french);
         Assert.Contains("En cours", french);
         Assert.Contains("Frêne", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));

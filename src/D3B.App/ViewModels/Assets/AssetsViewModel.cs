@@ -562,7 +562,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
             rows.Add(new AssetRowViewModel(AssetRowKind.Problem, name, depth)
             {
                 Folder = folder,
-                Problem = problem.Message,
+                Problem = _localizer["AssetProblem" + problem.Kind],
                 AssetKind = AssetFiles.TryKindOf(name, out var kind, out _) ? kind : null,
                 Before = before,
                 Found = found,
@@ -621,7 +621,11 @@ internal sealed partial class AssetsViewModel : ObservableObject
         {
             await write(assets).ConfigureAwait(true);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or AssetFormatException)
+        catch (AssetFormatException exception)
+        {
+            _toasts.Show(new Toast(_localizer.Format("AssetWriteFailed", _localizer["AssetProblem" + exception.Kind]), Tone.Danger));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
         {
             _toasts.Show(new Toast(_localizer.Format("AssetWriteFailed", exception.GetBaseException().Message), Tone.Danger));
         }

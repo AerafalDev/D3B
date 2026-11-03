@@ -45,7 +45,7 @@ public sealed class AssetLibraryTests : IDisposable
 
         Assert.Equal(["Harvest", "Mine", "Wheat"], _library.Assets.Select(asset => asset.Name));
         Assert.Equal(Path.Combine("farm", "Wheat.profile.json"), _library.Find("p2")?.Path);
-        Assert.Equal(["Broken.profile.json", "Other.profile.json"], _library.Problems.Select(problem => problem.Path).Order());
+        Assert.Equal([("Broken.profile.json", AssetProblemKind.NotJson), ("Other.profile.json", AssetProblemKind.IdTaken)], _library.Problems.Select(problem => (problem.Path, problem.Kind)).OrderBy(problem => problem.Path));
         Assert.Equal(["Mine", "Wheat"], _library.UsedBy("d3b.harvest").Select(asset => asset.Name));
     }
 

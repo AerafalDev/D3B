@@ -87,7 +87,7 @@
     <value>Aucun bot</value>
   </data>
   <data name="NoBotDetail" xml:space="preserve">
-    <value>Lance le jeu et choisis un perso : son bot apparaît ici.</value>
+    <value>Lance le jeu et choisis un personnage : son bot apparaît ici.</value>
   </data>
   <data name="ConnectedOne" xml:space="preserve">
     <value>{0} connecté</value>
@@ -111,7 +111,7 @@
     <value>En pause</value>
   </data>
   <data name="PausedTitle" xml:space="preserve">
-    <value>Tu joues ce perso</value>
+    <value>Tu joues ce personnage</value>
   </data>
   <data name="PausedDetail" xml:space="preserve">
     <value>Le bot attend que tu le reprennes.</value>
@@ -300,7 +300,7 @@
     <value>À la connexion</value>
   </data>
   <data name="StartsOnConnectionHint" xml:space="preserve">
-    <value>Lance son profil dès que le perso se connecte.</value>
+    <value>Lance son profil dès que le personnage se connecte.</value>
   </data>
   <data name="Forget" xml:space="preserve">
     <value>Oublier</value>
@@ -309,7 +309,7 @@
     <value>Oublier</value>
   </data>
   <data name="ForgetDetail" xml:space="preserve">
-    <value>Ses persos et leurs profils sont oubliés jusqu'à sa prochaine connexion.</value>
+    <value>Ses personnages et leurs profils sont oubliés jusqu'à sa prochaine connexion.</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Annuler</value>
@@ -1095,7 +1095,7 @@
     <value>Statistiques</value>
   </data>
   <data name="StatisticsEveryCharacter" xml:space="preserve">
-    <value>Tous les persos</value>
+    <value>Tous les personnages</value>
   </data>
   <data name="StatisticsToday" xml:space="preserve">
     <value>Aujourd'hui</value>
@@ -1218,10 +1218,10 @@
     <value>Supprimer {0} ?</value>
   </data>
   <data name="DeleteProfilePlayersOne" xml:space="preserve">
-    <value>{0} perso le joue : il n'aura plus de profil.</value>
+    <value>{0} personnage le joue : il n'aura plus de profil.</value>
   </data>
   <data name="DeleteProfilePlayersOther" xml:space="preserve">
-    <value>{0} persos le jouent : ils n'auront plus de profil.</value>
+    <value>{0} personnages le jouent : ils n'auront plus de profil.</value>
   </data>
   <data name="Create" xml:space="preserve">
     <value>Créer</value>
@@ -2290,5 +2290,26 @@
   </data>
   <data name="StatisticsSpan" xml:space="preserve">
     <value>{0} à {1}</value>
+  </data>
+  <data name="AssetProblemContent" xml:space="preserve">
+    <value>Une valeur manque ou n’a pas le bon type</value>
+  </data>
+  <data name="AssetProblemNotJson" xml:space="preserve">
+    <value>Ce n’est pas un JSON valide</value>
+  </data>
+  <data name="AssetProblemWrongKind" xml:space="preserve">
+    <value>Le type qu’il indique n’est pas celui de son extension</value>
+  </data>
+  <data name="AssetProblemFormat" xml:space="preserve">
+    <value>Son format manque ou est plus récent que ce que lit cette version de D3B</value>
+  </data>
+  <data name="AssetProblemIdTaken" xml:space="preserve">
+    <value>Son identifiant est celui d’un autre asset : enregistré depuis D3B, il en prend un nouveau</value>
+  </data>
+  <data name="AssetProblemUnreadable" xml:space="preserve">
+    <value>Le système ne le laisse pas lire</value>
+  </data>
+  <data name="AssetProblemNotAsset" xml:space="preserve">
+    <value>Son extension ne désigne aucun type d’asset</value>
   </data>
 </root>

@@ -21,16 +21,6 @@ internal sealed partial class AssetsView : UserControl
     public AssetsView()
     {
         InitializeComponent();
-
-        if (AddButton.Flyout is MenuFlyout add)
-            add.Opening += (_, _) => FillAdd(add);
-    }
-
-    /// <summary>Puts the keyboard in the search: Ctrl Space.</summary>
-    public void FocusSearch()
-    {
-        Search.Focus();
-        Search.SelectAll();
     }
 
     private static MenuItem Item(string text, string? keys, Action run, bool enabled = true)
@@ -59,14 +49,23 @@ internal sealed partial class AssetsView : UserControl
         };
     }
 
-    private void FillAdd(MenuFlyout menu)
+    /// <summary>Puts the keyboard in the search: Ctrl Space.</summary>
+    public void FocusSearch()
+    {
+        Search.Focus();
+        Search.SelectAll();
+    }
+
+    /// <summary>Makes the Add menu: each kind, those of a later session disabled, then a folder and an import.</summary>
+    /// <returns>The menu, or <see langword="null"/> without the assets.</returns>
+    internal ContextMenu? AddMenu()
     {
         if (DataContext is not AssetsViewModel assets)
-            return;
+            return null;
 
         var texts = Localizer.Instance;
+        var menu = new ContextMenu { Placement = PlacementMode.BottomEdgeAlignedLeft, VerticalOffset = 6 };
 
-        menu.Items.Clear();
         menu.Items.Add(new MenuItem { Header = texts["AddNew"], Classes = { "Heading" }, IsEnabled = false });
 
         foreach (var kind in assets.Kinds)
@@ -84,6 +83,13 @@ internal sealed partial class AssetsView : UserControl
         menu.Items.Add(new Separator());
         menu.Items.Add(new MenuItem { Header = texts["Folder"], Icon = new Icon { Drawing = Drawing("Nodes.Folder"), Width = 16, Height = 16 }, Command = assets.NewFolderCommand });
         menu.Items.Add(new MenuItem { Header = texts["ImportFile"], Icon = new Icon { Drawing = Drawing("General.Import"), Width = 16, Height = 16 }, Command = assets.ImportCommand });
+        return menu;
+    }
+
+    // Made as it opens, as the tree's own menu: a flyout filled while it opens shows empty.
+    private void OnAddClick(object? sender, RoutedEventArgs e)
+    {
+        AddMenu()?.Open(AddButton);
     }
 
     private void OnRowTapped(object? sender, TappedEventArgs e)
