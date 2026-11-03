@@ -7899,6 +7899,27 @@ to build".*
 - **Fixed**: the wait is bounded on the test's clock, 5 minutes of it, whatever the wall takes; what the test checks, a
   wait of 40 to 55 s on the clock before the attack, is unchanged.
 
+## D364: 3.7.13.17's captures read again, D60 measured again
+
+*2026-11-03, step 3, session 3i, on the owner's captures. Completes D361 and D362.*
+
+- **The captures**: a connection phase and a game connection of 10 min 46 s through the app, 7,908 frames: walks, map
+  changes, harvests, a fight the player played and one the AI played. Every frame is read by the schema; 217 messages
+  ride in an `Any`, each read whole as its type URL names it.
+- **The mapping made again with them**: the ticket's `AuthenticationRequest` anchored as pinned, no conflict; 224
+  messages, 99 by pin, 10 by the captures and 115 by fields, and 30 enums; audited, no failure; 14,830 bytes, its pairs
+  3.7.12.12's. Of the 7,683 game frames, 5,256 understood whole, 1,232 more read, 1,195 carrying one of 126 messages the
+  readable protocol lacks, none misread. This mapping is the one to publish.
+- **D60 measured again**: the client follows D3B's actions as before. It confirmed all 63 of D3B's walks out of fights,
+  asked for the information of each of the 49 maps it entered, and all 25 uses D3B sent ended. `scripts/fights.cs`
+  replays both fights, and `--turns` the AI's 23 turns, with nothing left unread.
+- **The graphics** (D362): no graphic learned before the captures gained a skill from them; the database still holds
+  261.
+- **The client's own turns' ends** (D252): in the AI's fight, after 13 turns it played, the client ended 8 of the
+  character's turns by itself, `automatic` set, over its last 80 s; some before the AI's first request of the turn, one
+  3.2 s in, just after a cast; no one touched the client, the owner's words. Measured further and decided in a session
+  of its own: how D2 bounds what D3B may do about the client's inactivity.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

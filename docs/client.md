@@ -589,6 +589,12 @@ table and print counts only.
 - **The protocol** (D361): the schema is 3.7.12.12's byte for byte, 170,287 bytes, SHA-256 `e383c947…`. With 3.7.12.12's
   pins and the ticket's request pinned as its captures anchored it, the mapping pairs every message, field, enum and
   value as 3.7.12.12's does.
+- **The owner's captures** (D364): a connection phase and a game connection of 10 min 46 s through the app, 7,908
+  frames, every one read by the schema. The mapping made with them anchors the ticket's request as pinned; of the 7,683
+  game frames, 5,256 understood whole, 1,232 more read, none misread. The client confirmed all 63 of D3B's walks out of
+  fights, asked for the information of each of the 49 maps it entered, and ended all 25 of D3B's uses (D60). In the AI's
+  fight it ended 8 of the character's turns by itself, `automatic` set, over the fight's last 80 s, after 13 turns the
+  AI played (D252).
 
 ## Connection
 
