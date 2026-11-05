@@ -523,6 +523,74 @@ same name at 100 pixels per unit, named by the icon's identifier, which items an
 - The extractor keeps the items' at 1x and the professions' at 2x, decoded, as raw RGBA (D135 to D137); since D265, every
   item's, halved to 32 pixels, each pixel the mean of four weighed by their alpha, the 3 not of 64 pixels in BC7 left out.
 
+## The world's maps
+
+Measured on 3.7.13.17 on 2026-11-05 for session 7d (D308), with `scripts/inspect.cs` and a measuring tool never committed
+that prints counts and sizes, and writes a few previews outside the repository.
+
+- **The bundle**: `Content/Picto/Worldmaps/worldmap_assets_.bundle`, 536.9 MiB on disk (520.4 MiB on 3.7.12.12), 925.9 MiB
+  decompressed (891.0), in 7,408 blocks of 128 KiB. It holds 1,250 `Texture2D` and 1,250 `Sprite`, 969,875,776 bytes of
+  texels in its `.resS`, and nothing else. A texture is BC7 (format 25), one level, its texels bottom row first as
+  everywhere (Icons); its sprite and it share a name, a number.
+- **Which tile is which** is in no object: the bundle's container is a map of 32 hexadecimal characters, one per
+  texture-sprite pair, and the sprites are named `1`, `2`, `3`. The group's own Addressables catalog,
+  `Content/Picto/Worldmaps/catalog_1.0.bin`, which `Content/catalogs.json` lists for the other groups the same way, holds
+  the addresses, `worldmaps/<world>/<zoom>/<tile>.jpg`, the tiles having been JPEG files, each with its key. It is a
+  binary catalog of Addressables 2: its strings are a length as `uint32` then ASCII; before a key's own string stand
+  its address's suffix, `<zoom>/<tile>.jpg`, whose offset is the word 12 bytes before the key's length, and the word 8
+  bytes before it, the offset of a record whose first word is the offset of the address's prefix, `worldmaps/<world>`.
+  Read so, the 1,250 keys give 1,250 distinct addresses, none contradicting another, and the 1,250 sprites' names are
+  their tiles' numbers.
+- **The worlds**: `World.WorldMapsDataRoot`, `Content/Data/data_assets_worldmapsdataroot.asset.bundle`, 40 records with
+  ids 1 to 41 but 23, of `id`, `nameId`, `origineX`, `origineY`, `mapWidth`, `mapHeight`, `minScale`, `maxScale`,
+  `startScale`, `totalWidth`, `totalHeight`, `zoom` (floats) and `visibleOnMap`, which is 0 for 7 of them, ids 4, 5, 6, 7,
+  11, 19 and 29. World 1, the main one, is 10,000 by 9,664 pixels at zoom 1, 69.5 by 49.7 pixels a map, its origin
+  6,480 and 4,944, and has 5 levels, 1, 0.8, 0.6, 0.4 and 0.2; the other 39 have 4, 1, 0.75, 0.5 and 0.25, from 1,800 by
+  1,400 to 7,226 by 5,023 pixels, and from 91 by 65 to 910 by 660 a map. `BreachWorldMapSectorsDataRoot` and
+  `BreachWorldMapCoordinatesDataRoot` are the Breach's, not read.
+- **Tiles.** An image at a zoom is cut into tiles of 1,024 pixels, row by row from the top left, numbered from 1, the last
+  column and row cropped to what is left: 627 tiles are 1,024 by 1,024 and 623 smaller, such as world 24's 792 by 1,024
+  and 1,024 by 124 at zoom 1. The 161 groups of a world and a zoom hold exactly `ceil(totalWidth · z / 1024) ·
+  ceil(totalHeight · z / 1024)` tiles, numbered with no gap, 1,250 in all. The tiles stitched at zoom 0.4 draw world 1
+  whole, upright, with no seam. A level's size is what its tiles add up to, a multiple of 4: it is the table's size at the
+  zoom to within 4 pixels, 150 of the 161 levels differing from it (world 1 at 20 % is 2,000 by 1,932, the table's
+  1,932.8; world 19 at 100 % is 2,496 by 1,900, its table's 2,500 by 1,904). BC7 decodes the opaque texels a quarter of
+  the time as alpha 254, 225,405,668 of them, never less: the tiles are opaque.
+
+| Zoom | Tiles | BC7 bytes | JPEG 90 | JPEG 85 | JPEG 75 | WebP 80 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.2 | 4 | 3,864,000 | 618,798 | 570,644 | 493,243 | 588,130 |
+| 0.25 | 55 | 25,287,488 | 4,885,717 | 4,276,490 | 2,854,749 | 3,561,060 |
+| 0.4 | 16 | 15,472,000 | 1,988,344 | 1,836,556 | 1,583,458 | 1,879,016 |
+| 0.5 | 164 | 101,007,440 | 16,374,777 | 14,301,640 | 9,524,793 | 12,218,554 |
+| 0.6 | 36 | 34,800,000 | 3,857,313 | 3,566,325 | 3,071,615 | 3,673,812 |
+| 0.75 | 318 | 227,178,624 | 30,893,805 | 26,873,569 | 18,295,767 | 22,727,062 |
+| 0.8 | 64 | 61,856,000 | 6,042,373 | 5,585,909 | 4,812,031 | 5,755,202 |
+| 1 | 593 | 500,410,224 | 59,865,819 | 52,518,277 | 39,107,726 | 47,119,562 |
+| All | 1,250 | 969,875,776 | 124,526,946 | 109,529,410 | 79,743,382 | 97,522,398 |
+
+- **The pack** (D369): the 1,250 tiles encoded at JPEG 75, the owner's choice, 79,743,382 bytes, each a pack entry of its own,
+  `worldmaps/<world>/<zoom as a percentage>/<tile>`, and the 40 worlds and 161 zooms one more, `worldmaps/catalog`; with them
+  the pack of 3.7.13.17 is 105,494,687 bytes, format 10, 18,890 entries, extracted in 41 s, the same SHA-256 on two
+  extractions. Read back through `D3B.Data`, every tile decodes to the size its zoom gives it.
+- **Cost.** The tiles decoded from BC7 and encoded again by SkiaSharp 3.119.4, no resampling: the sizes above, all 1,250
+  tiles, in 112 s for the four encoders and the decoding. PNG, on 40 tiles drawn at random, weighs 525,584 bytes a tile,
+  about 6 times JPEG 85. A tile of world 1 at zoom 1 weighs 166,824 bytes at JPEG 75 and 192,008 at 85. Raw RGBA is 4
+  bytes a pixel, 3.9 GB. On a crop of that tile at full size, JPEG 75 and the PNG cannot be told apart by eye, the source
+  being a JPEG itself.
+- **Where a map stands.** At zoom 1, the map at coordinates `x`, `y` of world `w` begins at pixel `origineX + x · mapWidth`,
+  `origineY + y · mapHeight` of its image, and at zoom `z` at `z` times that: the top left corner of the map's rectangle,
+  `mapWidth` by `mapHeight`. Drawn over world 1 at 60 % for the maps of coordinates −14, −36 to 24, −6, around Astrub, every
+  rectangle covers land and they stop at the coasts, the lone island's own among them. A map's world is its `worldMap` in
+  `MapsInformationDataRoot`: −1 for 3,676 maps, 1 for 8,551, and 38 others, 3 to 640 each (world 11 holds none). Of the
+  11,794 maps with a world, 11,446 lie wholly inside its image by that rule, all of world 1's 8,551 and the others' but
+  348, whose place is not measured. A
+  sub-area names a world of its own in `customWorldMapId` (−1 for 425 of 569; 144 name one of 37 worlds, 3 to 41), an
+  area in `worldmapId` (0 for 55 of 70; 15 name 12 worlds).
+- **Coordinates shared.** In world 1, 8,551 maps stand on 6,222 coordinates: 273 hold two maps or more, 27 five or more,
+  and one holds 1,820. World −1, on no world's map, holds 3,676 maps on 990 coordinates, 480 of them with two or more
+  and 159 with five or more, up to 482; world 19 holds 640 on 70, 554 on one; world 12, 345 on 155.
+
 ## The pack of 3.7.12.12
 
 Format 6 (D219): 7,452,604 bytes, 17,738 entries, the weapons' 110 KB serialized and about 20 KB compressed, read in

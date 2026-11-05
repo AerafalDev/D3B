@@ -54,7 +54,8 @@ variables, profiles as variants and the database started from zero (step 7, sess
 IntelliJ's icons, one title row and its run block, the docks remembered, the status bar and the search (step 7, session
 7c2); the characters as cards with their classes' heads and the client's glyphs, pack format 9 and mapping format 16, the
 inspector, a character's tab with its map live and its column, the maps in the search, and the studio's motions (step 7,
-session 7c3). Everything else below is the target.
+session 7c3); the world's maps, 1,250 JPEG tiles of 40 worlds in the pack, format 10, and the route editor's mockup
+(step 7, session 7d). Everything else below is the target.
 
 ## Overview
 
@@ -89,7 +90,7 @@ each step adds the references it needs.
 | `src/D3B.Core` | Modules and `BotBuilder`, shared abstractions. |
 | `src/D3B.Network` | Kestrel transport, framing, codec over `IDuplexPipe`. The only project referencing `Microsoft.AspNetCore.App`, with the host. |
 | `src/D3B.Protocol` | Classes generated from the readable `.proto` files, a build's mapping, its matching and audit, and the per-build translation. |
-| `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, items, spells, monsters, interactives, texts. |
+| `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, world maps' tiles, items, spells, monsters, interactives, texts. |
 | `src/D3B.Engine` | Pure logic with no I/O: cell and world pathfinding, line of sight, fight simulation. |
 | `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, activities and their settings, pages, the default modules, and the host's composition the app and `D3B.Host` share. |
 | `src/D3B.Host` | The bots' host without the app, for measurements: its entry point alone, with the database (D91, D100). |
@@ -481,7 +482,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 9 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343):
+- A pack of format 10 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -500,6 +501,10 @@ Built at step 2 (D24 to D33):
     and the client's white glyphs D3B tints for the game's concepts, 64, from its DXT5 textures, keyed by `GameGlyph`
     (D343);
     the app draws no spell's icon since the strategies went (D244);
+  - the world's maps, from format 10 (D308, D369): the 40 worlds the client draws and their zooms, 100 % to 20 %, each
+    world's origin, size of a map and size of its image (`WorldMapCatalog`, `GameTables.WorldMaps`), and each of the
+    1,250 tiles, a JPEG of at most 1,024 pixels square, an entry of its own that `WorldMapTiles` reads alone, so that a
+    view loads only the tiles it shows; where a map stands on an image is `WorldMap.PixelOf` (client.md);
   - what fights need, each read once by `GameTables`: the spells, their levels with every field and their effects, each
     with its zone, target mask and triggers as the client writes them, the spells' variants, and the Rogue's bombs and
     walls (`SpellCatalog`, in `D3B.Data.Spells`); the states (`SpellStateCatalog`); the effects, by the id spells name and
