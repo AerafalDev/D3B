@@ -5,6 +5,7 @@ using Avalonia.VisualTree;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
 using D3B.Bot.Routes;
@@ -22,6 +23,12 @@ public sealed class RouteActionsViewTests
     }
 
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
+    {
+        return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RouteActionsViewTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
+    }
+
+    // The language is the window's one, shared by every test of the session: it is set, and read, on the interface's thread alone.
+    private static Task<T> OnTheUIThreadAsync<T>(Func<Task<T>> action)
     {
         return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RouteActionsViewTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
     }
@@ -63,25 +70,25 @@ public sealed class RouteActionsViewTests
         await store.OpenedAsync();
 
         var runner = await TestHosts.RunningAsync(store.Host);
-        var localizer = Localizer.Instance;
-
-        localizer.Use(Localizer.English);
-
-        var main = new MainViewModel(runner, localizer);
-
-        main.Refresh();
-        main.Routes.Use(TestRouteWorld.Services(store.Assets) with { Maps = new GameMaps(pack) });
-
-        var editor = (await main.Routes.CreateAsync(""))!;
-
-        editor.TraceSquare(1, 0, isDrag: false);
-        editor.TraceSquare(3, 0, isDrag: false);
-        editor.Select(0);
-        editor.OfferedActions.Single(action => action.Node == RouteActions.Exit).AddCommand.Execute(null);
-        editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
-
-        var result = await OnTheUIThreadAsync(() =>
+        var result = await OnTheUIThreadAsync(async () =>
         {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+            main.Routes.Use(TestRouteWorld.Services(store.Assets) with { Maps = new GameMaps(pack) });
+
+            var editor = (await main.Routes.CreateAsync(""))!;
+
+            editor.TraceSquare(1, 0, isDrag: false);
+            editor.TraceSquare(3, 0, isDrag: false);
+            editor.Select(0);
+            editor.OfferedActions.Single(action => action.Node == RouteActions.Exit).AddCommand.Execute(null);
+            editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
+
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 
             window.Show();
@@ -102,23 +109,78 @@ public sealed class RouteActionsViewTests
             Drawings.Draw(window, "route-actions-cell-picker");
             picker.Choose(300);
             Dispatcher.UIThread.RunJobs();
+
             Drawings.Draw(window, "route-actions");
+            editor.Steps[0].AddActionCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Drawings.Draw(window, "route-action-picker");
+            (main.Dialogs.Current as RouteActionPickerViewModel)?.CancelCommand.Execute(null);
 
             var after = Texts(properties);
 
             window.Close();
+            localizer.Use(Localizer.English);
 
             return (texts, after, picked.Map?.Id, main.Dialogs.IsOpen, editor.Steps[0].ActionsText, editor.IsDirty);
         });
 
         Assert.Contains("Actions on step 1", result.texts);
-        Assert.Contains("Leave by the top, or by cell none", result.texts);
-        Assert.Contains("Wait 5 s", result.texts);
+        Assert.Contains("Leave by ", result.texts);
+        Assert.Contains("the top", result.texts);
+        Assert.Contains("choose", result.texts);
+        Assert.Contains("Wait ", result.texts);
         Assert.Contains("2 actions", result.texts);
-        Assert.Contains("Leave by the top, or by cell 300", result.after);
+        Assert.DoesNotContain("choose", result.after);
+        Assert.Contains("300", result.after);
         Assert.Equal(1L, result.Id);
         Assert.False(result.IsOpen);
         Assert.Equal("2 actions", result.ActionsText);
         Assert.True(result.IsDirty);
+    }
+
+    [Fact]
+    public async Task AValueOfAnActionAloneShowsAsItsFieldWhereTheWholeEditorShowsItsSections()
+    {
+        await using var store = new TestStore();
+
+        await store.OpenedAsync();
+
+        var runner = await TestHosts.RunningAsync(store.Host);
+        var shown = await OnTheUIThreadAsync(async () =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+            main.Routes.Use(TestRouteWorld.Services(store.Assets));
+
+            var editor = (await main.Routes.CreateAsync(""))!;
+
+            editor.TraceSquare(1, 0, isDrag: false);
+            editor.Select(0);
+            editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
+
+            var field = editor.Actions[0].Parts.Single(part => part.IsToken).Field!;
+            var alone = new SettingsFormView { DataContext = field };
+            var whole = new SettingsFormView { DataContext = editor.Actions[0].Editor };
+            var window = new Window { Content = new StackPanel { Children = { alone, whole } }, Width = 500, Height = 400 };
+
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var result = (alone.GetVisualDescendants().OfType<NumericUpDown>().Count(), whole.GetVisualDescendants().OfType<NumericUpDown>().Count(), Texts(alone), Texts(whole));
+
+            window.Close();
+
+            return result;
+        });
+
+        Assert.Equal(1, shown.Item1);
+        Assert.Equal(1, shown.Item2);
+        Assert.DoesNotContain("Seconds", shown.Item3);
+        Assert.Contains("Seconds", shown.Item4);
     }
 }

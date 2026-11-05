@@ -10,6 +10,7 @@ internal sealed partial class SettingsFormView : UserControl
     public SettingsFormView()
     {
         InitializeComponent();
+        DataContextChanged += (_, _) => Fit();
     }
 
     /// <summary>Gets the sections the form shows.</summary>
@@ -21,5 +22,15 @@ internal sealed partial class SettingsFormView : UserControl
     public Control? ContainerOf(SettingSectionViewModel section)
     {
         return Sections.ContainerFromItem(section);
+    }
+
+    // A field alone, as a token's popover shows it, or the editor's sections whole.
+    private void Fit()
+    {
+        var field = DataContext as SettingFieldViewModel;
+
+        Single.Content = field;
+        Single.IsVisible = field is not null;
+        Sections.IsVisible = field is null;
     }
 }

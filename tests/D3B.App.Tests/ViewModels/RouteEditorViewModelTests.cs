@@ -398,18 +398,20 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
 
         editor.Select(1);
 
-        Assert.Equal(["Harvest", "Fight", "Take the door at cell", "Leave by", "Wait", "Take the zaap", "Go to the haven bag"], editor.OfferedActions.Select(action => action.Name));
+        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag"], editor.OfferedActions.Select(action => action.Name));
         Assert.True(editor.HasNoActions);
 
         editor.OfferedActions[3].AddCommand.Execute(null);
 
         var action = Assert.Single(editor.Actions);
 
-        Assert.Equal("Leave by the top, or by cell none", action.Sentence);
+        Assert.Equal("Leave by the top, or by cell choose", action.Sentence);
         Assert.Equal((1, "1 action", 1), (editor.Steps[1].ActionCount, editor.Steps[1].ActionsText, editor.ActionTotal));
         Assert.Equal((0, ""), (editor.Steps[0].ActionCount, editor.Steps[0].ActionsText));
         Assert.True(editor.IsDirty);
-        Assert.True(action.IsOpen);
+        Assert.Equal(["Leave by ", "the top", ", or by cell ", "choose"], action.Parts.Select(part => part.Text));
+        Assert.Equal([false, true, false, true], action.Parts.Select(part => part.IsToken));
+        Assert.Equal([false, false, false, true], action.Parts.Select(part => part.IsCell));
         Assert.False(editor.HasNoActions);
     }
 
@@ -430,6 +432,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
 
         Assert.Same(action, editor.Actions[0]);
         Assert.Equal("Wait 12 s", action.Sentence);
+        Assert.Equal("12", action.Parts.Single(part => part.IsToken).Text);
         Assert.True(editor.CanUndo);
 
         editor.Undo();
@@ -488,5 +491,34 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         Assert.Equal(["later.thing", "wait"], anchor.Actions.Select(call => call.Node));
         Assert.Equal("calm", anchor.Actions[0].Values["Mood"]!.GetValue<string>());
         Assert.False(editor.IsDirty);
+    }
+
+    [Fact]
+    public async Task ThePlusOfAStepOrOfTheActionsOpensTheActionsToChooseFromAndChoosingOneAddsItAndClosesThem()
+    {
+        var (routes, editor) = await OpenAsync(1, 3);
+
+        editor.Steps[1].AddActionCommand.Execute(null);
+
+        var picker = Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current);
+
+        Assert.Equal(1, editor.SelectedIndex);
+        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag"], picker.Actions.Select(action => action.Name));
+        Assert.All(picker.Actions, action => Assert.NotEmpty(action.Help));
+
+        picker.Actions[4].AddCommand.Execute(null);
+
+        Assert.False(routes.Dialogs.IsOpen);
+        Assert.Equal(["Wait 5 s"], editor.Actions.Select(action => action.Sentence));
+
+        editor.ChooseActionCommand.Execute(null);
+
+        Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current);
+        Assert.Equal(1, editor.SelectedIndex);
+
+        Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current).CancelCommand.Execute(null);
+
+        Assert.False(routes.Dialogs.IsOpen);
+        Assert.Single(editor.Actions);
     }
 }

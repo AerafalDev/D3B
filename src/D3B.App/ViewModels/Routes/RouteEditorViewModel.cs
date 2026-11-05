@@ -43,7 +43,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private readonly List<int> _sceneLegs = [];
     private readonly List<Snapshot> _undo = [];
     private readonly List<Snapshot> _redo = [];
-    private readonly HashSet<int> _openActions = [];
     private RouteAsset _saved;
     private IReadOnlyList<RouteLeg> _legs = [];
     private long _paintedFrom;
@@ -53,6 +52,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private bool _inGesture;
     private bool _gestureRecorded;
     private bool _keepActionForms;
+    private RouteActionPickerViewModel? _picker;
 
     /// <summary>Gets the route's id.</summary>
     public string Id => _saved.Id;
@@ -542,6 +542,13 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     }
 
     [RelayCommand]
+    private void ChooseAction()
+    {
+        if (HasSelectedStep)
+            OpenActionPicker(SelectedIndex);
+    }
+
+    [RelayCommand]
     private void AddAction(string? node)
     {
         var catalog = _page.Services?.Nodes;
@@ -550,11 +557,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             return;
 
         var anchor = _anchors[SelectedIndex];
-
-        _openActions.Clear();
-
-        if (!definition.Values.IsEmpty)
-            _openActions.Add(anchor.Actions.Length);
 
         _anchors[SelectedIndex] = anchor with { Actions = anchor.Actions.Add(RouteActionCalls.Create(definition)) };
         Changed();
@@ -761,13 +763,24 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
     private void AddActionNode(string node)
     {
+        if (_picker is not null)
+        {
+            _page.Dialogs.Close(_picker);
+            _picker = null;
+        }
+
         AddAction(node);
     }
 
-    private void ToggleAction(int index)
+    private void OpenActionPicker(int index)
     {
-        if (!_openActions.Add(index))
-            _openActions.Remove(index);
+        Select(index);
+
+        if (OfferedActions.Count == 0)
+            return;
+
+        _picker = new RouteActionPickerViewModel(_page.Dialogs, _page.Localizer["RouteActionAdd"], _page.Localizer["Cancel"], OfferedActions);
+        _page.Dialogs.Show(_picker);
     }
 
     private void RemoveAction(int index)
@@ -775,7 +788,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         if (!HasSelectedStep || index < 0 || index >= _anchors[SelectedIndex].Actions.Length)
             return;
 
-        _openActions.Clear();
         _anchors[SelectedIndex] = _anchors[SelectedIndex] with { Actions = _anchors[SelectedIndex].Actions.RemoveAt(index) };
         Changed();
     }
@@ -790,8 +802,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         var actions = _anchors[SelectedIndex].Actions;
         var moved = actions[index];
 
-        _openActions.Clear();
-        _openActions.Add(to);
         _anchors[SelectedIndex] = _anchors[SelectedIndex] with { Actions = actions.RemoveAt(index).Insert(to, moved) };
         Changed();
     }
@@ -824,6 +834,20 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         Actions[index].Say();
     }
 
+    private static string NameKeyOf(string node)
+    {
+        return node switch
+        {
+            RouteActions.Harvest => "RouteNameHarvest",
+            RouteActions.Fight => "RouteNameFight",
+            RouteActions.Door => "RouteNameDoor",
+            RouteActions.Exit => "RouteNameExit",
+            RouteActions.Wait => "RouteNameWait",
+            RouteActions.Zaap => "RouteNameZaap",
+            _ => "RouteNameBag",
+        };
+    }
+
     private void OfferActions()
     {
         var catalog = _page.Services?.Nodes;
@@ -835,7 +859,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             foreach (var node in RouteActions.Offered)
             {
                 if (catalog.TryGet(node, out var definition))
-                    offered.Add(new RouteActionChoiceViewModel(node, RouteActionViewModel.NameOf(definition, culture), AddActionNode));
+                    offered.Add(new RouteActionChoiceViewModel(node, _page.Localizer[NameKeyOf(node)], definition.Help?.In(culture) ?? "", AddActionNode));
             }
         }
 
@@ -884,7 +908,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
                     editor = created;
                 }
 
-                Actions.Add(new RouteActionViewModel(i, anchor.Actions.Length, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), _openActions.Contains(i), ToggleAction, RemoveAction, MoveAction));
+                Actions.Add(new RouteActionViewModel(i, anchor.Actions.Length, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), RemoveAction, MoveAction));
             }
         }
 
@@ -1070,7 +1094,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
                     gap = localizer["RouteGapNone"];
             }
 
-            steps.Add(new RouteStepViewModel(i, anchor.MapId, Place(anchor.MapId), Zone(anchor.MapId), anchor.IsPinned, elsewhere, gap, broken, closing && gap.Length > 0, anchor.Actions.Length, anchor.Actions.Length == 0 ? "" : localizer.Plural("RouteActionsCount", anchor.Actions.Length), Reveal, Remove) { IsSelected = i == SelectedIndex });
+            steps.Add(new RouteStepViewModel(i, anchor.MapId, Place(anchor.MapId), Zone(anchor.MapId), anchor.IsPinned, elsewhere, gap, broken, closing && gap.Length > 0, anchor.Actions.Length, anchor.Actions.Length == 0 ? "" : localizer.Plural("RouteActionsCount", anchor.Actions.Length), Reveal, Remove, OpenActionPicker) { IsSelected = i == SelectedIndex });
         }
 
         Steps.Clear();
@@ -1159,7 +1183,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     partial void OnSelectedIndexChanged(int value)
     {
         MarkSelected();
-        _openActions.Clear();
         BuildActions();
     }
 

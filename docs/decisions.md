@@ -8287,6 +8287,34 @@ and D374; the rest of the mockup stands.*
   - The editor's path played as it is: it assumes zaaps the character may lack.
   - A cursor in the behavior's variables: a node cannot write them, and a run's start tells a run apart as well.
 
+## D380: An action's values are tokens of its sentence
+
+*2026-11-05, step 7, session 7d3, the owner's remark on the real app ("not very practical to set a step up in the inspector") and his yes to the lead's first path. Supersedes D378's cards opened to a form; the rest of D378 stands.*
+
+- **A sentence, cut where it names a value.** In the inspector an action is its node's sentence in a line, each value a token that
+  shows it as chosen: `Leave by [the top], or by cell [300]`, `Wait [5] s`, `Harvest [Ash, Chestnut]`. A press on a token opens its
+  field where it stands, in a popover (`ActionPartViewModel`, `SettingsFormView` given one field): a number's box, a choice, the
+  resources' picker; a cell's token opens the map's own cells at once. A token with a problem has its border warm. No form to open,
+  no card to expand: an action takes a line or two, where the form took ten.
+- **The same fields.** The popover shows the field the profiles use, so each value is typed, picked and checked as before (D98,
+  D298); `SettingsEditor.FieldOf` finds it by its key. A cell not yet picked reads "choose".
+- **A node names all its values in its sentence**, which a test asserts for each action in both languages: a value the sentence
+  does not name would have no token, so nothing could edit it.
+- **Not tried in a window.** The popover is Avalonia's flyout; the headless window the tests draw has no popup layer, so the popover
+  is tried through its field alone (a field shown without its row) and the card by a drawing. The owner's look is the check.
+- **Left**: the second path of the lead's list, a card on the map by the step (a double click), and the recording (7d4), which
+  should do most of this configuring.
+
+## D381: Actions are added from a "+" that opens a dialog
+
+*2026-11-05, step 7, session 7d3, the owner's remark on a drawing of the step list ("better a + icon that opens a modal to add things"). Supersedes the buttons under the cards of D378.*
+
+- **A "+"**, on each step's row and in the head of the actions' section, opens a dialog that lists the actions with their name and
+  a line of what each does (`RouteActionPickerViewModel`, `RouteActionPickerView`); one press adds it to the step, which the "+" of a
+  row chooses, and closes the dialog. The seven buttons that stood under the cards are gone, the cards keep the sentences.
+- **Names of their own.** The picker names an action "Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap",
+  "Go to the haven bag", from the app's texts, where the first words of a sentence ("Leave by") read badly alone.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

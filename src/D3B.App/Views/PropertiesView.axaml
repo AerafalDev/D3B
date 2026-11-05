@@ -11,6 +11,24 @@
     xmlns:v="clr-namespace:D3B.App.Views"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
+        <Style Selector="Button.ValueToken">
+            <Setter Property="Background" Value="{DynamicResource TipColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="1,1" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="7,0" />
+        </Style>
+        <Style Selector="Button.ValueToken:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+        </Style>
+        <Style Selector="Button.ValueToken.Problem">
+            <Setter Property="BorderBrush" Value="{DynamicResource PausedEdgeColor}" />
+        </Style>
         <Style Selector="Border.Step:pointerover">
             <Setter Property="Background" Value="#2A2A30" />
         </Style>
@@ -714,6 +732,16 @@
                                                             ToolTip.Tip="{l:Tr RouteStepElsewhere}"
                                                             Width="12" />
                                                         <Button
+                                                            AutomationProperties.Name="{l:Tr RouteActionAdd}"
+                                                            Classes="Tool Small"
+                                                            Command="{Binding AddActionCommand}"
+                                                            ToolTip.Tip="{l:Tr RouteActionAdd}">
+                                                            <c:Icon
+                                                                Drawing="{StaticResource General.Add}"
+                                                                Height="11"
+                                                                Width="11" />
+                                                        </Button>
+                                                        <Button
                                                             AutomationProperties.Name="{l:Tr RouteStepRemove}"
                                                             Classes="Tool Small"
                                                             Command="{Binding RemoveCommand}"
@@ -741,7 +769,19 @@
                     </Border>
                     <Border Classes="Section" IsVisible="{Binding HasSelectedStep}">
                         <StackPanel>
-                            <TextBlock Classes="SectionTitle" Text="{Binding ActionsTitle}" />
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="SectionTitle" Text="{Binding ActionsTitle}" />
+                                <Button
+                                    AutomationProperties.Name="{l:Tr RouteActionAdd}"
+                                    Classes="Tool Small"
+                                    Command="{Binding ChooseActionCommand}"
+                                    Grid.Column="1"
+                                    IsVisible="{Binding CanAddActions}"
+                                    Margin="0,8,14,0"
+                                    ToolTip.Tip="{l:Tr RouteActionAdd}">
+                                    <c:Icon Drawing="{StaticResource General.Add}" Height="13" Width="13" />
+                                </Button>
+                            </Grid>
                             <TextBlock
                                 Classes="Dim"
                                 IsVisible="{Binding HasNoActions}"
@@ -760,19 +800,52 @@
                                             Padding="10,4,6,6">
                                             <StackPanel Spacing="4">
                                                 <Grid ColumnDefinitions="*,Auto" MinHeight="30">
-                                                    <Button
+                                                    <ItemsControl
                                                         AutomationProperties.Name="{Binding Sentence}"
-                                                        Background="Transparent"
-                                                        BorderThickness="0"
-                                                        Command="{Binding ToggleCommand}"
-                                                        HorizontalAlignment="Stretch"
-                                                        HorizontalContentAlignment="Left"
-                                                        Padding="0,4">
-                                                        <TextBlock
-                                                            Classes="Bright"
-                                                            Text="{Binding Sentence}"
-                                                            TextWrapping="Wrap" />
-                                                    </Button>
+                                                        ItemsSource="{Binding Parts}"
+                                                        VerticalAlignment="Center">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="routes:ActionPartViewModel">
+                                                                <Panel VerticalAlignment="Center">
+                                                                    <TextBlock
+                                                                        Classes="Bright"
+                                                                        IsVisible="{Binding IsWords}"
+                                                                        Text="{Binding Text}"
+                                                                        VerticalAlignment="Center" />
+                                                                    <Button
+                                                                        Classes="ValueToken"
+                                                                        Classes.Problem="{Binding HasProblem}"
+                                                                        Content="{Binding Text}"
+                                                                        IsVisible="{Binding IsPopup}">
+                                                                        <Button.Flyout>
+                                                                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                                                                <StackPanel MinWidth="260" Spacing="8">
+                                                                                    <TextBlock Classes="Muted" Text="{Binding Field.Label}" />
+                                                                                    <v:SettingsFormView DataContext="{Binding Field}" />
+                                                                                    <TextBlock
+                                                                                        Classes="Problem"
+                                                                                        IsVisible="{Binding Field.HasProblem}"
+                                                                                        Text="{Binding Field.Problem}"
+                                                                                        TextWrapping="Wrap" />
+                                                                                </StackPanel>
+                                                                            </Flyout>
+                                                                        </Button.Flyout>
+                                                                    </Button>
+                                                                    <Button
+                                                                        Classes="ValueToken"
+                                                                        Classes.Problem="{Binding HasProblem}"
+                                                                        Command="{Binding PickCommand}"
+                                                                        Content="{Binding Text}"
+                                                                        IsVisible="{Binding IsCell}" />
+                                                                </Panel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                     <StackPanel
                                                         Grid.Column="1"
                                                         Orientation="Horizontal"
@@ -815,36 +888,8 @@
                                                     IsVisible="{Binding !IsPlayed}"
                                                     Text="{l:Tr RouteActionNotPlayed}"
                                                     TextWrapping="Wrap" />
-                                                <v:SettingsFormView
-                                                    Classes="Narrow"
-                                                    DataContext="{Binding Editor}"
-                                                    IsVisible="{Binding $parent[Border].((routes:RouteActionViewModel)DataContext).IsOpen}" />
                                             </StackPanel>
                                         </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <ItemsControl ItemsSource="{Binding OfferedActions}" Margin="8,6,8,8">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="routes:RouteActionChoiceViewModel">
-                                        <Button
-                                            AutomationProperties.Name="{Binding Name}"
-                                            Classes="Outline Small"
-                                            Command="{Binding AddCommand}"
-                                            Margin="0,0,6,6">
-                                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <c:Icon
-                                                    Drawing="{StaticResource General.Add}"
-                                                    Height="11"
-                                                    Width="11" />
-                                                <TextBlock Text="{Binding Name}" />
-                                            </StackPanel>
-                                        </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

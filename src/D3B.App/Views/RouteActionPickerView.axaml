@@ -1,0 +1,54 @@
+<UserControl
+    x:Class="D3B.App.Views.RouteActionPickerView"
+    x:ClassModifier="internal"
+    x:DataType="routes:RouteActionPickerViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:routes="clr-namespace:D3B.App.ViewModels.Routes"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.KeyBindings>
+        <KeyBinding Command="{Binding CancelCommand}" Gesture="Escape" />
+    </UserControl.KeyBindings>
+    <StackPanel Margin="24" Spacing="14">
+        <TextBlock Classes="Title" Text="{Binding Title}" />
+        <ItemsControl ItemsSource="{Binding Actions}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="routes:RouteActionChoiceViewModel">
+                    <Button
+                        AutomationProperties.Name="{Binding Name}"
+                        Classes="Outline"
+                        Command="{Binding AddCommand}"
+                        Height="NaN"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Margin="0,0,0,6"
+                        MinHeight="48"
+                        Padding="12,6">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <c:Icon
+                                Drawing="{StaticResource General.Add}"
+                                Height="14"
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center"
+                                Width="14" />
+                            <StackPanel Grid.Column="1" Spacing="1">
+                                <TextBlock Classes="Bright" Text="{Binding Name}" />
+                                <TextBlock
+                                    Classes="Dim"
+                                    FontSize="11.5"
+                                    MaxWidth="360"
+                                    Text="{Binding Help}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button
+            Classes="Outline"
+            Command="{Binding CancelCommand}"
+            Content="{Binding CancelText}"
+            HorizontalAlignment="Right" />
+    </StackPanel>
+</UserControl>

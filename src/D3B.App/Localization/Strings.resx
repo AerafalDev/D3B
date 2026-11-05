@@ -2589,7 +2589,7 @@
     <value>Choose a cell</value>
   </data>
   <data name="CellNone" xml:space="preserve">
-    <value>none</value>
+    <value>choose</value>
   </data>
   <data name="CellClear" xml:space="preserve">
     <value>No cell</value>
@@ -2635,5 +2635,29 @@
   </data>
   <data name="RouteGapZaap" xml:space="preserve">
     <value>By zaap</value>
+  </data>
+  <data name="RouteActionAdd" xml:space="preserve">
+    <value>Add an action</value>
+  </data>
+  <data name="RouteNameHarvest" xml:space="preserve">
+    <value>Harvest</value>
+  </data>
+  <data name="RouteNameFight" xml:space="preserve">
+    <value>Fight</value>
+  </data>
+  <data name="RouteNameDoor" xml:space="preserve">
+    <value>Take a door</value>
+  </data>
+  <data name="RouteNameExit" xml:space="preserve">
+    <value>Forced exit</value>
+  </data>
+  <data name="RouteNameWait" xml:space="preserve">
+    <value>Wait</value>
+  </data>
+  <data name="RouteNameZaap" xml:space="preserve">
+    <value>Take the zaap</value>
+  </data>
+  <data name="RouteNameBag" xml:space="preserve">
+    <value>Go to the haven bag</value>
   </data>
 </root>

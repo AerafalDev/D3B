@@ -9,10 +9,10 @@ using D3B.Bot.Settings;
 
 namespace D3B.App.ViewModels.Routes;
 
-/// <summary>An action of a step in the inspector: a sentence of typed values, opened to edit them (D377).</summary>
+/// <summary>An action of a step in the inspector: the node's sentence, its values tokens that edit them where they stand (D377, D380).</summary>
 /// <remarks>
-/// The sentence is the node's own, its values filled in as they are chosen. Opened, the values show as the profiles' do, each
-/// typed and picked, a cell on the map's own cells. An action whose node the host does not know is kept as it is and said so.
+/// The sentence is the node's own, cut where it names a value: each is a token showing the value as chosen, and a press on it
+/// opens the typed field, a cell the map's own cells. An action whose node the host does not know is kept as it is and said so.
 /// </remarks>
 internal sealed partial class RouteActionViewModel : ObservableObject
 {
@@ -23,7 +23,7 @@ internal sealed partial class RouteActionViewModel : ObservableObject
     private readonly Func<SettingKind, int, string> _name;
     private readonly Action<int> _remove;
     private readonly Action<int, int> _move;
-    private readonly Action<int> _toggle;
+    private readonly List<(ActionPartViewModel Part, string Key)> _tokens = [];
 
     /// <summary>Gets the action's place in the step, from 0.</summary>
     public int Index { get; }
@@ -34,14 +34,14 @@ internal sealed partial class RouteActionViewModel : ObservableObject
     /// <summary>Gets the editor of its values, or <see langword="null"/> for an action the host does not know.</summary>
     public SettingsEditor? Editor { get; }
 
+    /// <summary>Gets the sentence cut into words and tokens.</summary>
+    public IReadOnlyList<ActionPartViewModel> Parts { get; }
+
     /// <summary>Gets whether the host does not know the action's node, which the file keeps as it is.</summary>
     public bool IsUnknown => _definition is null;
 
     /// <summary>Gets whether the run plays the action today (D377).</summary>
     public bool IsPlayed { get; }
-
-    /// <summary>Gets whether the action has values to edit.</summary>
-    public bool HasValues => Editor is { IsEmpty: false };
 
     /// <summary>Gets whether the action is the first of its step.</summary>
     public bool IsFirst => Index == 0;
@@ -49,21 +49,13 @@ internal sealed partial class RouteActionViewModel : ObservableObject
     /// <summary>Gets whether the action is the last of its step.</summary>
     public bool IsLast { get; }
 
-    /// <summary>Gets the sentence, its values filled in.</summary>
+    /// <summary>Gets the sentence, its values filled in, as a screen reader says it.</summary>
     [ObservableProperty]
     public partial string Sentence { get; private set; } = "";
 
     /// <summary>Gets whether something is wrong with the values.</summary>
     [ObservableProperty]
     public partial bool HasProblems { get; private set; }
-
-    /// <summary>Gets whether the values show.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsClosed))]
-    public partial bool IsOpen { get; private set; }
-
-    /// <summary>Gets whether the values are hidden.</summary>
-    public bool IsClosed => !IsOpen;
 
     /// <summary>Initializes a new instance of the <see cref="RouteActionViewModel"/> class.</summary>
     /// <param name="index">The action's place in the step.</param>
@@ -73,11 +65,9 @@ internal sealed partial class RouteActionViewModel : ObservableObject
     /// <param name="editor">The editor of its values.</param>
     /// <param name="localizer">The app's texts.</param>
     /// <param name="name">Names a value of the game.</param>
-    /// <param name="isOpen">Whether the values show.</param>
-    /// <param name="toggle">What opening or closing does, given the place.</param>
     /// <param name="remove">What removing does, given the place.</param>
     /// <param name="move">What moving does, given the place and how many places towards the end.</param>
-    public RouteActionViewModel(int index, int count, string nodeId, NodeDefinition? definition, SettingsEditor? editor, Localizer localizer, Func<SettingKind, int, string> name, bool isOpen, Action<int> toggle, Action<int> remove, Action<int, int> move)
+    public RouteActionViewModel(int index, int count, string nodeId, NodeDefinition? definition, SettingsEditor? editor, Localizer localizer, Func<SettingKind, int, string> name, Action<int> remove, Action<int, int> move)
     {
         Index = index;
         IsLast = index == count - 1;
@@ -86,15 +76,14 @@ internal sealed partial class RouteActionViewModel : ObservableObject
         Editor = editor;
         _localizer = localizer;
         _name = name;
-        _toggle = toggle;
         _remove = remove;
         _move = move;
         IsPlayed = RouteActions.IsPlayed(nodeId);
-        IsOpen = isOpen && HasValues;
+        Parts = Cut();
         Say();
     }
 
-    /// <summary>Says the sentence and the problems again, once the values changed or the language did.</summary>
+    /// <summary>Says the sentence and the problems again, once the values changed.</summary>
     public void Say()
     {
         if (_definition is null || Editor is null)
@@ -104,19 +93,15 @@ internal sealed partial class RouteActionViewModel : ObservableObject
             return;
         }
 
-        var culture = _localizer.Culture;
-        var text = _definition.Sentence.In(culture);
+        foreach (var (part, key) in _tokens)
+            part.Show(Value(key));
 
-        Sentence = _slot.Replace(text, match => Value(match.Groups[1].Value));
-        HasProblems = Editor is { HasProblems: true };
+        Sentence = string.Concat(Parts.Select(part => part.Text));
+        HasProblems = Editor.HasProblems;
     }
 
-    [RelayCommand]
-    private void Toggle()
-    {
-        IsOpen = HasValues && !IsOpen;
-        _toggle(Index);
-    }
+    [GeneratedRegex(@"\{(\w+)\}", RegexOptions.CultureInvariant)]
+    private static partial Regex SlotPattern();
 
     [RelayCommand]
     private void Remove()
@@ -136,20 +121,37 @@ internal sealed partial class RouteActionViewModel : ObservableObject
         _move(Index, 1);
     }
 
-    /// <summary>Names an action by its sentence without its values: "Wait {Seconds} s" names a wait.</summary>
-    /// <param name="definition">The action's node.</param>
-    /// <param name="culture">The language.</param>
-    /// <returns>The name.</returns>
-    public static string NameOf(NodeDefinition definition, System.Globalization.CultureInfo culture)
+    private List<ActionPartViewModel> Cut()
     {
-        var text = definition.Sentence.In(culture);
-        var slot = text.IndexOf('{', StringComparison.Ordinal);
+        if (_definition is null || Editor is null)
+            return [new ActionPartViewModel(_localizer.Format("RouteActionUnknown", NodeId), null)];
 
-        return (slot < 0 ? text : text[..slot]).Trim().TrimEnd(',', ';', ':').Trim();
+        var text = _definition.Sentence.In(_localizer.Culture);
+        var parts = new List<ActionPartViewModel>();
+        var from = 0;
+
+        foreach (Match match in _slot.Matches(text))
+        {
+            if (match.Index > from)
+                parts.Add(new ActionPartViewModel(text[from..match.Index], null));
+
+            var key = match.Groups[1].Value;
+            var field = Editor.FieldOf(key);
+            var part = new ActionPartViewModel(field is null ? match.Value : Value(key), field);
+
+            parts.Add(part);
+
+            if (field is not null)
+                _tokens.Add((part, key));
+
+            from = match.Index + match.Length;
+        }
+
+        if (from < text.Length)
+            parts.Add(new ActionPartViewModel(text[from..], null));
+
+        return parts;
     }
-
-    [GeneratedRegex(@"\{(\w+)\}", RegexOptions.CultureInvariant)]
-    private static partial Regex SlotPattern();
 
     private string Value(string key)
     {
