@@ -15,12 +15,12 @@ public sealed record PlannedAsset : Asset
     public override AssetKind Kind => _kind;
 
     /// <summary>Initializes a new instance of the <see cref="PlannedAsset"/> class.</summary>
-    /// <param name="kind">What the asset is: none behaviors and profiles are.</param>
-    /// <exception cref="ArgumentOutOfRangeException">The kind is a behavior or a profile.</exception>
+    /// <param name="kind">What the asset is: any kind but a behavior, a profile or a route.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The kind is a behavior, a profile or a route.</exception>
     public PlannedAsset(AssetKind kind)
     {
-        if (kind is AssetKind.Behavior or AssetKind.Profile)
-            throw new ArgumentOutOfRangeException(nameof(kind), kind, "Behaviors and profiles have their own records.");
+        if (kind is AssetKind.Behavior or AssetKind.Profile or AssetKind.Route)
+            throw new ArgumentOutOfRangeException(nameof(kind), kind, "Behaviors, profiles and routes have their own records.");
 
         _kind = kind;
     }

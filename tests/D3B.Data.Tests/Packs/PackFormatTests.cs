@@ -14,6 +14,7 @@ using D3B.Data.Packs;
 using D3B.Data.Spells;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Data.WorldMaps;
 using MemoryPack;
 
 namespace D3B.Data.Tests.Packs;
@@ -44,6 +45,7 @@ public sealed class PackFormatTests
         (7, "ce9c6ec360dcce84bd518b449148b2a40d44a05a7ce6d19e618ef0780c300a6b"),
         (8, "8a4430ff75cfa0a4f52eaa0fbb717cbfa7c45b4c0a23157e31da9d348359ebcc"),
         (9, "1ab3a85feff4d72ab0885e08568857695f6ad388bb28c36f026976bd75ccde8d"),
+        (10, "53dd018f5218468a162c91ed2b22add526bd5029e09a9090235af07f9fdb75ef"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -229,6 +231,8 @@ public sealed class PackFormatTests
             new BreedRoleValue[] { new(181, 182, 183) },
             new BreedStatCost[] { new(184, 188, 189) }));
         Append(hash, new CharacteristicCatalog(new Characteristic[] { new(190, 191, 192, 193, 194, true, false) }, _keywords, _formulaIds, _formulas));
+        Append(hash, new WorldMapCatalog(new WorldMap[] { new(217, 218, 219, 220, 221.5f, 222.5f, 0.2f, 1.5f, 0.6f, 223, 224, true, 0, 2) }, new WorldMapLevel[] { new(100, 225, 226), new(75, 227, 228) }));
+        Append(hash, new byte[] { 229, 230 });
 
         return Convert.ToHexStringLower(hash.GetHashAndReset());
     }

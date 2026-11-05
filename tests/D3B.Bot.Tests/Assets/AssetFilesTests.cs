@@ -102,4 +102,52 @@ public sealed class AssetFilesTests
         Assert.False(AssetFiles.TryKindOf("notes.json", out _, out _));
         Assert.False(AssetFiles.TryKindOf(".behavior.json", out _, out _));
     }
+
+    [Fact]
+    public void ARouteIsWrittenAndReadBackWithItsAnchorsModeAndWhatItDoesNotKnow()
+    {
+        var route = new RouteAsset
+        {
+            Id = "r1",
+            Name = "North",
+            Client = "3.7.13.17",
+            Mode = RouteMode.RoundTrip,
+            Unreachable = RouteUnreachable.Fail,
+            Anchors = [new RouteAnchor { MapId = 84_000_001 }, new RouteAnchor { MapId = 84_000_002, IsPinned = true, Details = new JsonObject { ["actions"] = new JsonArray("wait") } }],
+            Details = new JsonObject { ["later"] = 3 },
+        };
+        var json = AssetFiles.Write(route);
+        var read = Assert.IsType<RouteAsset>(AssetFiles.Read(json, "North", "North.route.json", AssetKind.Route));
+
+        Assert.Equal(json, AssetFiles.Write(read with { Path = null }));
+        Assert.Equal((RouteMode.RoundTrip, RouteUnreachable.Fail), (read.Mode, read.Unreachable));
+        Assert.Equal([84_000_001L, 84_000_002L], read.Anchors.Select(anchor => anchor.MapId));
+        Assert.Equal([false, true], read.Anchors.Select(anchor => anchor.IsPinned));
+        Assert.Equal("wait", read.Anchors[1].Details["actions"]![0]!.GetValue<string>());
+        Assert.Equal(3, read.Details["later"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public void ALoopThatSkipsWhatIsUnreachableIsTheDefaultAndIsNotWritten()
+    {
+        var json = AssetFiles.Write(new RouteAsset { Id = "r1", Name = "Empty" });
+
+        Assert.DoesNotContain("mode", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("unreachable", json, StringComparison.Ordinal);
+
+        var read = Assert.IsType<RouteAsset>(AssetFiles.Read(json, "Empty", "Empty.route.json", AssetKind.Route));
+
+        Assert.Equal((RouteMode.Loop, RouteUnreachable.Skip), (read.Mode, read.Unreachable));
+        Assert.Empty(read.Anchors);
+    }
+
+    [Fact]
+    public void AnAnchorWithNoMapOrAModeNobodyKnowsIsAFileThatDoesNotRead()
+    {
+        const string NoMap = "{\"id\":\"r\",\"kind\":\"route\",\"format\":1,\"anchors\":[{\"pinned\":true}]}";
+        const string BadMode = "{\"id\":\"r\",\"kind\":\"route\",\"format\":1,\"mode\":\"circle\"}";
+
+        Assert.Throws<AssetFormatException>(() => AssetFiles.Read(NoMap, "R", "R.route.json", AssetKind.Route));
+        Assert.Throws<AssetFormatException>(() => AssetFiles.Read(BadMode, "R", "R.route.json", AssetKind.Route));
+    }
 }

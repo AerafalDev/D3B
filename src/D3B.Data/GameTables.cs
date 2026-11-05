@@ -9,6 +9,7 @@ using D3B.Data.Jobs;
 using D3B.Data.Monsters;
 using D3B.Data.Packs;
 using D3B.Data.Spells;
+using D3B.Data.WorldMaps;
 
 namespace D3B.Data;
 
@@ -27,6 +28,7 @@ public sealed class GameTables
     private readonly Lazy<MonsterCatalog> _monsters;
     private readonly Lazy<BreedCatalog> _breeds;
     private readonly Lazy<CharacteristicCatalog> _characteristics;
+    private readonly Lazy<WorldMapCatalog> _worldMaps;
 
     /// <summary>Gets the items and their types.</summary>
     /// <exception cref="KeyNotFoundException">The pack holds no items.</exception>
@@ -88,6 +90,11 @@ public sealed class GameTables
     /// <exception cref="PackFormatException">Their entry is damaged.</exception>
     public CharacteristicCatalog Characteristics => _characteristics.Value;
 
+    /// <summary>Gets the worlds the client draws a map of and the zooms of their images; the tiles are read apart, by <see cref="WorldMapTiles"/>.</summary>
+    /// <exception cref="KeyNotFoundException">The pack holds no world maps.</exception>
+    /// <exception cref="PackFormatException">Their entry is damaged.</exception>
+    public WorldMapCatalog WorldMaps => _worldMaps.Value;
+
     /// <summary>Initializes a new instance of the <see cref="GameTables"/> class.</summary>
     /// <param name="pack">The pack holding the tables.</param>
     public GameTables(GamePack pack)
@@ -107,5 +114,6 @@ public sealed class GameTables
         _monsters = new Lazy<MonsterCatalog>(() => pack.Read<MonsterCatalog>(MonsterCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _breeds = new Lazy<BreedCatalog>(() => pack.Read<BreedCatalog>(BreedCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _characteristics = new Lazy<CharacteristicCatalog>(() => pack.Read<CharacteristicCatalog>(CharacteristicCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
+        _worldMaps = new Lazy<WorldMapCatalog>(() => pack.Read<WorldMapCatalog>(WorldMapCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
     }
 }

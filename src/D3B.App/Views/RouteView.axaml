@@ -1,0 +1,396 @@
+<UserControl
+    x:Class="D3B.App.Views.RouteView"
+    x:ClassModifier="internal"
+    x:DataType="vm:RouteEditorViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:vm="clr-namespace:D3B.App.ViewModels.Routes"
+    xmlns:w="clr-namespace:D3B.App.Controls.WorldMaps"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="Border.Glass">
+            <Setter Property="Background" Value="#DB161619" />
+            <Setter Property="BorderBrush" Value="#17FFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="11" />
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="BoxShadow" Value="0 8 24 0 #66000000" />
+        </Style>
+        <Style Selector="Border.Hud">
+            <Setter Property="Background" Value="#C70E0E10" />
+            <Setter Property="BorderBrush" Value="#0DFFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style Selector="Button.Tool.Selected">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+        <Style Selector="TextBox.Add">
+            <Setter Property="Height" Value="30" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Width" Value="190" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox.Add.Failed">
+            <Setter Property="Foreground" Value="#FF9D95" />
+        </Style>
+        <Style Selector="Button.Row">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+        <Style Selector="Button.Row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+        </Style>
+    </UserControl.Styles>
+    <Grid Background="#0C1A1C">
+        <w:WorldMapView
+            Name="Map"
+            Scene="{Binding Scene}"
+            ShowGrid="{Binding ShowGrid}"
+            ShowShared="{Binding ShowShared}"
+            Source="{Binding Source}"
+            Tool="{Binding Tool}"
+            World="{Binding Layer}" />
+
+        <Border
+            Classes="Glass"
+            HorizontalAlignment="Left"
+            Margin="12"
+            VerticalAlignment="Top">
+            <Button Classes="Tool" IsEnabled="{Binding HasWorlds}">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <c:Icon
+                        Drawing="{StaticResource General.Language}"
+                        Height="14"
+                        VerticalAlignment="Center"
+                        Width="14" />
+                    <TextBlock
+                        Foreground="{DynamicResource BrightColor}"
+                        Text="{Binding LayerName}"
+                        VerticalAlignment="Center" />
+                    <c:Icon
+                        Drawing="{StaticResource General.ChevronDown}"
+                        Height="10"
+                        Opacity="0.6"
+                        VerticalAlignment="Center"
+                        Width="10" />
+                </StackPanel>
+                <Button.Flyout>
+                    <Flyout FlyoutPresenterClasses="Bare" Placement="BottomEdgeAlignedLeft">
+                        <Border Classes="MenuPopup" MinWidth="260">
+                            <StackPanel Margin="4">
+                                <TextBlock
+                                    Classes="Dim"
+                                    FontSize="11"
+                                    Margin="10,6,10,3"
+                                    Text="{l:Tr RouteWorldLayer}" />
+                                <ScrollViewer MaxHeight="340">
+                                    <ItemsControl ItemsSource="{Binding Worlds}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:WorldChoiceViewModel">
+                                                <Button
+                                                    Classes="Row"
+                                                    Click="OnWorldChosen"
+                                                    Command="{Binding $parent[UserControl].((vm:RouteEditorViewModel)DataContext).ChooseWorldCommand}"
+                                                    CommandParameter="{Binding}">
+                                                    <Grid ColumnDefinitions="*,Auto,18">
+                                                        <TextBlock
+                                                            Foreground="{DynamicResource BrightColor}"
+                                                            Text="{Binding Name}"
+                                                            TextTrimming="CharacterEllipsis"
+                                                            VerticalAlignment="Center" />
+                                                        <TextBlock
+                                                            Classes="Dim"
+                                                            FontSize="11"
+                                                            Grid.Column="1"
+                                                            Margin="12,0,0,0"
+                                                            Text="{Binding Detail}"
+                                                            VerticalAlignment="Center" />
+                                                        <c:Icon
+                                                            Drawing="{StaticResource Status.Success}"
+                                                            Grid.Column="2"
+                                                            Height="12"
+                                                            HorizontalAlignment="Right"
+                                                            IsVisible="{Binding IsChosen}"
+                                                            Width="12" />
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                                <TextBlock
+                                    Classes="Dim"
+                                    FontSize="11"
+                                    Margin="10,6,10,6"
+                                    MaxWidth="250"
+                                    Text="{l:Tr RouteWorldFootnote}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+        </Border>
+
+        <Border
+            Classes="Glass"
+            HorizontalAlignment="Center"
+            Margin="0,12,0,0"
+            VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal" Spacing="3">
+                <Button
+                    Classes="Tool"
+                    Classes.Selected="{Binding IsSelecting}"
+                    Command="{Binding SetToolCommand}"
+                    CommandParameter="{x:Static w:WorldMapTool.Select}"
+                    ToolTip.Tip="{l:Tr RouteToolSelect}">
+                    <Viewbox Height="15" Width="15">
+                        <Canvas Height="16" Width="16">
+                            <Path
+                                Data="M4 2.5l8 4.2-3.6 1.1L7 11.6z"
+                                Stroke="{Binding $parent[Button].Foreground}"
+                                StrokeJoin="Round"
+                                StrokeLineCap="Round"
+                                StrokeThickness="1.6" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Button
+                    Classes="Tool"
+                    Classes.Selected="{Binding IsTracing}"
+                    Command="{Binding SetToolCommand}"
+                    CommandParameter="{x:Static w:WorldMapTool.Trace}"
+                    ToolTip.Tip="{l:Tr RouteToolTraceTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <Viewbox Height="15" Width="15">
+                            <Canvas Height="16" Width="16">
+                                <Path
+                                    Data="M3 13c2.5 0 3-1.5 3-2.5L12.5 4a1.4 1.4 0 0 0-2-2L4 8.5C3 9 3 11 3 13z"
+                                    Stroke="{Binding $parent[Button].Foreground}"
+                                    StrokeJoin="Round"
+                                    StrokeLineCap="Round"
+                                    StrokeThickness="1.6" />
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Text="{l:Tr RouteToolTrace}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Border
+                    Background="#17FFFFFF"
+                    Height="18"
+                    Margin="3,0"
+                    Width="1" />
+                <TextBox
+                    Classes="Add"
+                    Classes.Failed="{Binding AddFailed}"
+                    Text="{Binding AddText}"
+                    ToolTip.Tip="{l:Tr RouteAddUnknown}"
+                    PlaceholderText="{l:Tr RouteAddPlaceholder}">
+                    <TextBox.KeyBindings>
+                        <KeyBinding Command="{Binding AddCommand}" Gesture="Enter" />
+                    </TextBox.KeyBindings>
+                </TextBox>
+            </StackPanel>
+        </Border>
+
+        <Border
+            Classes="Glass"
+            HorizontalAlignment="Right"
+            Margin="12"
+            VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal" Spacing="3">
+                <Button Classes="Tool">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <c:Icon
+                            Drawing="{StaticResource Toolwindows.Structure}"
+                            Height="14"
+                            VerticalAlignment="Center"
+                            Width="14" />
+                        <TextBlock Text="{l:Tr RouteView}" VerticalAlignment="Center" />
+                        <c:Icon
+                            Drawing="{StaticResource General.ChevronDown}"
+                            Height="10"
+                            Opacity="0.6"
+                            VerticalAlignment="Center"
+                            Width="10" />
+                    </StackPanel>
+                    <Button.Flyout>
+                        <Flyout FlyoutPresenterClasses="Bare" Placement="BottomEdgeAlignedRight">
+                            <Border Classes="MenuPopup" MinWidth="240">
+                                <StackPanel Margin="6" Spacing="8">
+                                    <CheckBox Content="{l:Tr RouteViewGrid}" IsChecked="{Binding ShowGrid}" />
+                                    <CheckBox Content="{l:Tr RouteViewShared}" IsChecked="{Binding ShowShared}" />
+                                </StackPanel>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+                <Border
+                    Background="#17FFFFFF"
+                    Height="18"
+                    Margin="3,0"
+                    Width="1" />
+                <Button
+                    Classes="Tool Small"
+                    Click="OnZoomOut"
+                    ToolTip.Tip="{l:Tr RouteZoomOut}">
+                    <c:Icon
+                        Drawing="{StaticResource General.Remove}"
+                        Height="12"
+                        Width="12" />
+                </Button>
+                <TextBlock
+                    Foreground="{DynamicResource BrightColor}"
+                    HorizontalAlignment="Center"
+                    Text="{Binding ZoomText}"
+                    TextAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="44" />
+                <Button
+                    Classes="Tool Small"
+                    Click="OnZoomIn"
+                    ToolTip.Tip="{l:Tr RouteZoomIn}">
+                    <c:Icon
+                        Drawing="{StaticResource General.Add}"
+                        Height="12"
+                        Width="12" />
+                </Button>
+                <Button
+                    Classes="Tool Small"
+                    Click="OnFit"
+                    ToolTip.Tip="{l:Tr RouteFit}">
+                    <Viewbox Height="14" Width="14">
+                        <Canvas Height="16" Width="16">
+                            <Path
+                                Data="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3"
+                                Stroke="{Binding $parent[Button].Foreground}"
+                                StrokeJoin="Round"
+                                StrokeLineCap="Round"
+                                StrokeThickness="1.6" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <Border
+            Classes="Hud"
+            HorizontalAlignment="Left"
+            Margin="12"
+            VerticalAlignment="Bottom">
+            <TextBlock
+                Classes="Muted"
+                Text="{Binding Hud}"
+                TextTrimming="CharacterEllipsis" />
+        </Border>
+
+        <Border
+            Classes="Hud"
+            HorizontalAlignment="Right"
+            Margin="12"
+            VerticalAlignment="Bottom">
+            <StackPanel Orientation="Horizontal" Spacing="14">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <Ellipse
+                        Fill="#5FD3C0"
+                        Height="12"
+                        VerticalAlignment="Center"
+                        Width="12" />
+                    <TextBlock Classes="Muted" Text="{l:Tr RouteLegendStep}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <Border
+                        Background="#5FD3C0"
+                        CornerRadius="2"
+                        Height="3"
+                        VerticalAlignment="Center"
+                        Width="20" />
+                    <TextBlock Classes="Muted" Text="{l:Tr RouteLegendPath}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <Line
+                        EndPoint="20,0"
+                        Stroke="#EA5D52"
+                        StrokeDashArray="2,1.6"
+                        StrokeThickness="3"
+                        VerticalAlignment="Center" />
+                    <TextBlock Classes="Muted" Text="{l:Tr RouteLegendNone}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border
+            Classes="MenuPopup"
+            DataContext="{Binding Choice}"
+            HorizontalAlignment="Left"
+            IsVisible="{Binding $parent[UserControl].((vm:RouteEditorViewModel)DataContext).HasChoice}"
+            MinWidth="260"
+            Name="ChoicePopup"
+            VerticalAlignment="Top"
+            x:DataType="vm:SharedChoiceViewModel">
+            <StackPanel Margin="5">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock
+                        Classes="Dim"
+                        FontSize="11"
+                        Margin="10,6,10,3"
+                        Text="{Binding Title}" />
+                    <Button
+                        Classes="Tool Small"
+                        Command="{Binding CloseCommand}"
+                        Grid.Column="1">
+                        <c:Icon
+                            Drawing="{StaticResource General.Close}"
+                            Height="10"
+                            Width="10" />
+                    </Button>
+                </Grid>
+                <ScrollViewer MaxHeight="320">
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MapChoiceViewModel">
+                                <Button
+                                    Classes="Row"
+                                    Command="{Binding #ChoicePopup.((vm:SharedChoiceViewModel)DataContext).ChooseCommand}"
+                                    CommandParameter="{Binding}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock
+                                                Foreground="{DynamicResource BrightColor}"
+                                                Text="{Binding Zone}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                Classes="Dim"
+                                                FontSize="11"
+                                                Text="{Binding Kind}" />
+                                        </StackPanel>
+                                        <TextBlock
+                                            Classes="Dim"
+                                            FontSize="11"
+                                            Grid.Column="1"
+                                            Margin="14,0,0,0"
+                                            Text="{Binding MapId}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

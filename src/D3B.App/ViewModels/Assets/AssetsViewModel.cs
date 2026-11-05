@@ -112,6 +112,9 @@ internal sealed partial class AssetsViewModel : ObservableObject
     /// <summary>Gets or sets what tells the asset the editor's tab shows, if it shows one.</summary>
     public Func<string?>? OpenAssetId { get; set; }
 
+    /// <summary>Gets or sets the routes, whose editors a route's row opens and whose new ones this makes (D371).</summary>
+    public Routes.RoutesViewModel? Routes { get; set; }
+
     /// <summary>Gets or sets what remembers the folders folded, for the next start.</summary>
     public Action<IReadOnlyCollection<string>>? FoldsChanged { get; set; }
 
@@ -138,14 +141,14 @@ internal sealed partial class AssetsViewModel : ObservableObject
             _folded.Add(folder);
     }
 
-    /// <summary>Tells whether an asset opens in a tab today: a profile; the other kinds' editors come later (D306).</summary>
+    /// <summary>Tells whether an asset opens in a tab today: a profile or a route; the other kinds' editors come later (D306).</summary>
     /// <param name="row">The row.</param>
     /// <returns>Whether it opens.</returns>
     public static bool CanOpen(AssetRowViewModel row)
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        return row.AssetKind is AssetKind.Profile;
+        return row.AssetKind is AssetKind.Profile or AssetKind.Route;
     }
 
     private static (string Before, string Found, string After) Split(string name, string filter)
@@ -177,7 +180,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
 
         IsAvailable = _assets is not null;
 
-        var unsaved = string.Join(',', _profiles.Open.Where(item => item.IsDirty).Select(item => item.Id));
+        var unsaved = string.Join(',', _profiles.Open.Where(item => item.IsDirty).Select(item => item.Id).Concat(Routes?.Open.Where(item => item.IsDirty).Select(item => item.Id) ?? []));
         var shown = string.Join('|', _assets?.Version, _book?.Version, _localizer.Culture.Name, Filter, string.Join(',', _folded), _givenFolded, string.Join(',', _selected), string.Join(',', _cut), string.Join(',', _hidden), FocusKey, unsaved);
 
         // A name being typed keeps its row: the tree waits for it.
@@ -691,12 +694,14 @@ internal sealed partial class AssetsViewModel : ObservableObject
         _dialogs.Ask(new QuestionViewModel(_dialogs, title, detail, _localizer["Delete"], _localizer["Cancel"], () => _ = DeleteAsync(targets), destructive: true));
     }
 
-    /// <summary>Starts a new asset of a kind D3B makes today in the folder chosen: a profile, named and given its activity in a dialog.</summary>
+    /// <summary>Starts a new asset of a kind D3B makes today in the folder chosen: a profile, named and given its activity in a dialog, or an empty route opened in its tab.</summary>
     /// <param name="kind">The kind.</param>
     public void New(AssetKind kind)
     {
         if (kind is AssetKind.Profile)
             _profiles.NewIn(ChosenFolder);
+        else if (kind is AssetKind.Route && Routes is { IsAvailable: true } routes)
+            _ = routes.CreateAsync(ChosenFolder);
     }
 
     /// <summary>Starts a folder in the folder chosen, or at the root when nothing is, its name typed in place.</summary>

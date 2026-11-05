@@ -5,9 +5,20 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:ba="clr-namespace:D3B.Bot.Assets;assembly=D3B.Bot"
     xmlns:p="clr-namespace:D3B.App.ViewModels.Properties"
+    xmlns:routes="clr-namespace:D3B.App.ViewModels.Routes"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
+        <Style Selector="Border.Step:pointerover">
+            <Setter Property="Background" Value="#2A2A30" />
+        </Style>
+        <Style Selector="Border.Step.Selected">
+            <Setter Property="Background" Value="#173B82F6" />
+        </Style>
+        <Style Selector="TextBlock.Broken">
+            <Setter Property="Foreground" Value="#FF9D95" />
+        </Style>
         <Style Selector="Border.Section">
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
@@ -445,11 +456,24 @@
                             Background="#2A2238"
                             CornerRadius="10"
                             Height="34"
+                            IsVisible="{Binding !Asset.HasRoute}"
                             Width="34">
                             <c:Icon
                                 Drawing="{StaticResource Nodes.Template}"
                                 Height="16"
                                 Tint="#C9A7F2"
+                                Width="16" />
+                        </Border>
+                        <Border
+                            Background="#172B29"
+                            CornerRadius="10"
+                            Height="34"
+                            IsVisible="{Binding Asset.HasRoute}"
+                            Width="34">
+                            <c:Icon
+                                Drawing="{StaticResource General.Vcs}"
+                                Height="16"
+                                Tint="#5FD3C0"
                                 Width="16" />
                         </Border>
                         <StackPanel
@@ -471,6 +495,231 @@
                         </StackPanel>
                     </Grid>
                 </Border>
+                <StackPanel
+                    DataContext="{Binding Asset.Route}"
+                    IsVisible="{Binding $parent[UserControl].((p:PropertiesViewModel)DataContext).Asset.HasRoute}"
+                    x:DataType="routes:RouteEditorViewModel">
+                    <Border Classes="Section">
+                        <StackPanel>
+                            <TextBlock Classes="SectionTitle" Text="{l:Tr RouteSection}" />
+                            <StackPanel Margin="14,0,14,8" Spacing="4">
+                                <TextBlock Classes="Key" Text="{l:Tr RouteCourse}" />
+                                <Border Classes="Segmented" HorizontalAlignment="Stretch">
+                                    <UniformGrid Columns="3">
+                                        <Button
+                                            Classes="Segment"
+                                            Classes.Selected="{Binding IsLoop}"
+                                            Command="{Binding SetModeCommand}"
+                                            CommandParameter="{x:Static ba:RouteMode.Loop}"
+                                            Content="{l:Tr RouteLoop}" />
+                                        <Button
+                                            Classes="Segment"
+                                            Classes.Selected="{Binding IsOneWay}"
+                                            Command="{Binding SetModeCommand}"
+                                            CommandParameter="{x:Static ba:RouteMode.OneWay}"
+                                            Content="{l:Tr RouteOneWay}" />
+                                        <Button
+                                            Classes="Segment"
+                                            Classes.Selected="{Binding IsRoundTrip}"
+                                            Command="{Binding SetModeCommand}"
+                                            CommandParameter="{x:Static ba:RouteMode.RoundTrip}"
+                                            Content="{l:Tr RouteRoundTrip}" />
+                                    </UniformGrid>
+                                </Border>
+                            </StackPanel>
+                            <StackPanel Margin="14,0,14,8" Spacing="4">
+                                <TextBlock Classes="Key" Text="{l:Tr RouteUnreachable}" />
+                                <Border Classes="Segmented" HorizontalAlignment="Stretch">
+                                    <UniformGrid Columns="2">
+                                        <Button
+                                            Classes="Segment"
+                                            Classes.Selected="{Binding SkipsUnreachable}"
+                                            Command="{Binding SetUnreachableCommand}"
+                                            CommandParameter="{x:Static ba:RouteUnreachable.Skip}"
+                                            Content="{l:Tr RouteSkip}" />
+                                        <Button
+                                            Classes="Segment"
+                                            Classes.Selected="{Binding FailsOnUnreachable}"
+                                            Command="{Binding SetUnreachableCommand}"
+                                            CommandParameter="{x:Static ba:RouteUnreachable.Fail}"
+                                            Content="{l:Tr RouteFail}" />
+                                    </UniformGrid>
+                                </Border>
+                            </StackPanel>
+                            <UniformGrid Columns="3" Margin="14,0,14,6">
+                                <StackPanel Margin="0,0,6,0">
+                                    <TextBlock
+                                        Classes="Bright"
+                                        FontSize="15"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding StepCount}" />
+                                    <TextBlock
+                                        Classes="Dim"
+                                        FontSize="11"
+                                        Text="{l:Tr RouteSummarySteps}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,6,0">
+                                    <TextBlock
+                                        Classes="Bright"
+                                        FontSize="15"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding MapCount}" />
+                                    <TextBlock
+                                        Classes="Dim"
+                                        FontSize="11"
+                                        Text="{l:Tr RouteSummaryMaps}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock
+                                        Classes="Bright"
+                                        FontSize="15"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding GapCount}" />
+                                    <TextBlock
+                                        Classes="Dim"
+                                        FontSize="11"
+                                        Text="{l:Tr RouteSummaryGaps}" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <Border
+                                Background="#1AEA5D52"
+                                CornerRadius="8"
+                                IsVisible="{Binding HasProblem}"
+                                Margin="14,4"
+                                Padding="10,8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock
+                                            Foreground="#FFB4AD"
+                                            Text="{Binding Problem}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Foreground="#FFB4AD"
+                                            Opacity="0.7"
+                                            Text="{l:Tr RouteProblemDetail}"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button
+                                        Classes="Tool Small"
+                                        Command="{Binding ShowProblemCommand}"
+                                        Content="{l:Tr RouteProblemShow}"
+                                        Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Padding="8,0"
+                                        VerticalAlignment="Top" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="Section">
+                        <StackPanel>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="SectionTitle" Text="{l:Tr RouteStepsSection}" />
+                                <TextBlock
+                                    Classes="Dim"
+                                    Grid.Column="1"
+                                    Margin="0,11,14,0"
+                                    Text="{Binding StepCount}" />
+                            </Grid>
+                            <TextBlock
+                                Classes="Dim"
+                                IsVisible="{Binding IsEmpty}"
+                                Margin="14,4,14,8"
+                                Text="{l:Tr RouteStepsEmpty}"
+                                TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding Steps}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="routes:RouteStepViewModel">
+                                        <StackPanel>
+                                            <Border
+                                                Background="Transparent"
+                                                Classes="Step"
+                                                Classes.Selected="{Binding IsSelected}"
+                                                CornerRadius="8"
+                                                Margin="8,1"
+                                                Padding="8,0">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="34">
+                                                    <Button
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        Command="{Binding SelectCommand}"
+                                                        Grid.ColumnSpan="3"
+                                                        HorizontalAlignment="Stretch"
+                                                        Opacity="0"
+                                                        VerticalAlignment="Stretch" />
+                                                    <Border
+                                                        Background="#5FD3C0"
+                                                        CornerRadius="10"
+                                                        Height="20"
+                                                        IsHitTestVisible="False"
+                                                        VerticalAlignment="Center"
+                                                        Width="20">
+                                                        <TextBlock
+                                                            FontSize="10.5"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="#06201C"
+                                                            HorizontalAlignment="Center"
+                                                            Text="{Binding Number}"
+                                                            VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <StackPanel
+                                                        Grid.Column="1"
+                                                        IsHitTestVisible="False"
+                                                        Margin="9,0"
+                                                        VerticalAlignment="Center">
+                                                        <TextBlock
+                                                            Classes="Bright"
+                                                            Text="{Binding Place}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock
+                                                            Classes="Dim"
+                                                            FontSize="11"
+                                                            Text="{Binding Zone}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <StackPanel
+                                                        Grid.Column="2"
+                                                        Orientation="Horizontal"
+                                                        Spacing="4"
+                                                        VerticalAlignment="Center">
+                                                        <c:Icon
+                                                            Drawing="{StaticResource General.Pin}"
+                                                            Height="12"
+                                                            IsVisible="{Binding IsPinned}"
+                                                            ToolTip.Tip="{l:Tr RouteStepPinned}"
+                                                            Width="12" />
+                                                        <c:Icon
+                                                            Drawing="{StaticResource General.Language}"
+                                                            Height="12"
+                                                            IsVisible="{Binding IsElsewhere}"
+                                                            ToolTip.Tip="{l:Tr RouteStepElsewhere}"
+                                                            Width="12" />
+                                                        <Button
+                                                            Classes="Tool Small"
+                                                            Command="{Binding RemoveCommand}"
+                                                            ToolTip.Tip="{l:Tr RouteStepRemove}">
+                                                            <c:Icon
+                                                                Drawing="{StaticResource General.Close}"
+                                                                Height="10"
+                                                                Width="10" />
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock
+                                                Classes="Dim"
+                                                Classes.Broken="{Binding IsGapBroken}"
+                                                FontSize="11.5"
+                                                IsVisible="{Binding HasGap}"
+                                                Margin="30,2"
+                                                Text="{Binding Gap}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
                 <Border Classes="Section" IsVisible="{Binding Asset.ShowsFile}">
                     <StackPanel>
                         <TextBlock Classes="SectionTitle" Text="{l:Tr SectionFile}" />

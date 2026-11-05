@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Localization;
+using D3B.App.ViewModels.Routes;
 using D3B.Bot.Assets;
 using D3B.Storage.Accounts;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,6 +59,17 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
     [ObservableProperty]
     public partial bool ShowsUsedBy { get; private set; } = true;
 
+    /// <summary>Gets the editor of the route shown, once it is open: its parameters and steps are the inspector's (D371).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRoute))]
+    public partial RouteEditorViewModel? Route { get; private set; }
+
+    /// <summary>Gets or sets what finds a route's open editor by its id.</summary>
+    public Func<string, RouteEditorViewModel?>? RouteOf { get; set; }
+
+    /// <summary>Gets whether the asset shown is a route being edited.</summary>
+    public bool HasRoute => Route is not null;
+
     /// <summary>Gets whether the asset uses another.</summary>
     public bool HasUses => Uses.Count > 0;
 
@@ -96,6 +108,7 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
         KindText = asset.IsGiven ? _localizer.Format("AssetGivenKind", _localizer["AssetKind" + asset.Kind]) : _localizer["AssetKind" + asset.Kind];
         File = asset.Path ?? _localizer["AssetBuiltIn"];
         Format = AssetFiles.Format.ToString(_localizer.Culture);
+        Route = asset.Kind == AssetKind.Route ? RouteOf?.Invoke(id) : null;
         Uses = [.. asset.Uses().Select(used => _assets.Find(used)).OfType<Asset>().Select(used => Use(used, asset))];
         UsedBy =
         [

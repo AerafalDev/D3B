@@ -1,6 +1,7 @@
 #!/usr/bin/env dotnet
 #:package AssetRipper.TextureDecoder
 #:package AssetsTools.NET
+#:package SkiaSharp
 #:package System.CommandLine
 #:project ../src/D3B.Data/D3B.Data.csproj
 #:include extract/BanksExtractor.cs
@@ -23,6 +24,8 @@
 #:include extract/TextsExtractor.cs
 #:include extract/WorldExtractor.cs
 #:include extract/WorldGraphReader.cs
+#:include extract/WorldMapsExtractor.cs
+#:include unity/AddressablesCatalog.cs
 #:include unity/ClientInstall.cs
 #:include unity/I18nFile.cs
 #:include unity/LauncherManifest.cs

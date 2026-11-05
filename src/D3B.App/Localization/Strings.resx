@@ -2399,4 +2399,175 @@
   <data name="AssetsEmptyProject" xml:space="preserve">
     <value>The project is empty. Add a profile, or drop asset files here.</value>
   </data>
+  <data name="RouteSaved" xml:space="preserve">
+    <value>Route {0} saved</value>
+  </data>
+  <data name="RouteNewName" xml:space="preserve">
+    <value>New route</value>
+  </data>
+  <data name="RouteNewNameNumbered" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="RouteWorldLayer" xml:space="preserve">
+    <value>Layer: one world at a time</value>
+  </data>
+  <data name="RouteWorldFootnote" xml:space="preserve">
+    <value>The maps with no world, insides included, live in the layer of their world.</value>
+  </data>
+  <data name="RouteWorldMapsOne" xml:space="preserve">
+    <value>{0:N0} map</value>
+  </data>
+  <data name="RouteWorldMapsOther" xml:space="preserve">
+    <value>{0:N0} maps</value>
+  </data>
+  <data name="RouteWorldNumber" xml:space="preserve">
+    <value>World {0}</value>
+  </data>
+  <data name="RouteToolSelect" xml:space="preserve">
+    <value>Select · V</value>
+  </data>
+  <data name="RouteToolTrace" xml:space="preserve">
+    <value>Trace</value>
+  </data>
+  <data name="RouteToolTraceTip" xml:space="preserve">
+    <value>Trace · B: click or paint</value>
+  </data>
+  <data name="RouteAddPlaceholder" xml:space="preserve">
+    <value>Add: id or x, y</value>
+  </data>
+  <data name="RouteAddUnknown" xml:space="preserve">
+    <value>No map has this id or these coordinates in this world.</value>
+  </data>
+  <data name="RouteView" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="RouteViewGrid" xml:space="preserve">
+    <value>Grid of the maps</value>
+  </data>
+  <data name="RouteViewGridDetail" xml:space="preserve">
+    <value>The outline of each map</value>
+  </data>
+  <data name="RouteViewShared" xml:space="preserve">
+    <value>Shared coordinates</value>
+  </data>
+  <data name="RouteViewSharedDetail" xml:space="preserve">
+    <value>The marks for several maps on one square</value>
+  </data>
+  <data name="RouteZoomIn" xml:space="preserve">
+    <value>Zoom in</value>
+  </data>
+  <data name="RouteZoomOut" xml:space="preserve">
+    <value>Zoom out</value>
+  </data>
+  <data name="RouteFit" xml:space="preserve">
+    <value>See everything</value>
+  </data>
+  <data name="RouteHudNothing" xml:space="preserve">
+    <value>Hover a map</value>
+  </data>
+  <data name="RouteHudMap" xml:space="preserve">
+    <value>{0} · map {1} · {2}</value>
+  </data>
+  <data name="RouteHudMaps" xml:space="preserve">
+    <value>{0} · {1} maps · {2}</value>
+  </data>
+  <data name="RouteHudStep" xml:space="preserve">
+    <value>Step {0} · {1}</value>
+  </data>
+  <data name="RouteHudPath" xml:space="preserve">
+    <value>Path · click to pin</value>
+  </data>
+  <data name="RouteLegendStep" xml:space="preserve">
+    <value>Step</value>
+  </data>
+  <data name="RouteLegendPath" xml:space="preserve">
+    <value>Path found</value>
+  </data>
+  <data name="RouteLegendNone" xml:space="preserve">
+    <value>No path</value>
+  </data>
+  <data name="RouteSection" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="RouteCourse" xml:space="preserve">
+    <value>Course</value>
+  </data>
+  <data name="RouteLoop" xml:space="preserve">
+    <value>Loop</value>
+  </data>
+  <data name="RouteOneWay" xml:space="preserve">
+    <value>One way</value>
+  </data>
+  <data name="RouteRoundTrip" xml:space="preserve">
+    <value>There and back</value>
+  </data>
+  <data name="RouteUnreachable" xml:space="preserve">
+    <value>Unreachable map</value>
+  </data>
+  <data name="RouteSkip" xml:space="preserve">
+    <value>Skip it</value>
+  </data>
+  <data name="RouteFail" xml:space="preserve">
+    <value>Fail the route</value>
+  </data>
+  <data name="RouteSummarySteps" xml:space="preserve">
+    <value>steps</value>
+  </data>
+  <data name="RouteSummaryMaps" xml:space="preserve">
+    <value>maps</value>
+  </data>
+  <data name="RouteSummaryGaps" xml:space="preserve">
+    <value>gaps</value>
+  </data>
+  <data name="RouteStepsSection" xml:space="preserve">
+    <value>Steps</value>
+  </data>
+  <data name="RouteStepsEmpty" xml:space="preserve">
+    <value>Click the map with the Trace tool, paint, or type coordinates or a map's id.</value>
+  </data>
+  <data name="RouteGapNone" xml:space="preserve">
+    <value>No path</value>
+  </data>
+  <data name="RouteGapNeighbours" xml:space="preserve">
+    <value>neighbours</value>
+  </data>
+  <data name="RouteGapSame" xml:space="preserve">
+    <value>same map</value>
+  </data>
+  <data name="RouteGapMapsOne" xml:space="preserve">
+    <value>{0:N0} map</value>
+  </data>
+  <data name="RouteGapMapsOther" xml:space="preserve">
+    <value>{0:N0} maps</value>
+  </data>
+  <data name="RouteGapBack" xml:space="preserve">
+    <value>Back to step 1 · {0}</value>
+  </data>
+  <data name="RouteProblemNone" xml:space="preserve">
+    <value>No path between step {0} and step {1}.</value>
+  </data>
+  <data name="RouteProblemDetail" xml:space="preserve">
+    <value>No exit, door or scroll leads from one to the other.</value>
+  </data>
+  <data name="RouteProblemShow" xml:space="preserve">
+    <value>See</value>
+  </data>
+  <data name="RouteStepRemove" xml:space="preserve">
+    <value>Remove the step</value>
+  </data>
+  <data name="RouteStepPinned" xml:space="preserve">
+    <value>Pinned from the path</value>
+  </data>
+  <data name="RouteStepElsewhere" xml:space="preserve">
+    <value>In another world</value>
+  </data>
+  <data name="RouteSharedTitle" xml:space="preserve">
+    <value>{0} maps at {1}</value>
+  </data>
+  <data name="RouteSharedInside" xml:space="preserve">
+    <value>Inside</value>
+  </data>
+  <data name="RouteSharedOutside" xml:space="preserve">
+    <value>World</value>
+  </data>
 </root>
