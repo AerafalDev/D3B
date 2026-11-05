@@ -311,4 +311,97 @@
   <data name="StopHelp" xml:space="preserve">
     <value>Le run se termine, fini, une fois son étape finie.</value>
   </data>
+  <data name="RouteHarvest" xml:space="preserve">
+    <value>Récolter {Resources}</value>
+  </data>
+  <data name="RouteHarvestHelp" xml:space="preserve">
+    <value>Récolte les ressources de la carte, dans leur ordre, puis continue.</value>
+  </data>
+  <data name="Resources" xml:space="preserve">
+    <value>Ressources</value>
+  </data>
+  <data name="RouteFight" xml:space="preserve">
+    <value>Combattre {Monsters}, groupes de {LeastMonsters} à {MostMonsters}</value>
+  </data>
+  <data name="RouteFightHelp" xml:space="preserve">
+    <value>Combat les groupes de la carte que le filtre laisse passer, puis continue. Aucun monstre choisi, tous les groupes.</value>
+  </data>
+  <data name="RouteFightRule" xml:space="preserve">
+    <value>Le moins de monstres d'un groupe ne peut dépasser le plus.</value>
+  </data>
+  <data name="Monsters" xml:space="preserve">
+    <value>Monstres</value>
+  </data>
+  <data name="LeastMonsters" xml:space="preserve">
+    <value>Au moins dans un groupe</value>
+  </data>
+  <data name="MostMonsters" xml:space="preserve">
+    <value>Au plus dans un groupe</value>
+  </data>
+  <data name="RouteDoor" xml:space="preserve">
+    <value>Prendre la porte, cellule {Cell}</value>
+  </data>
+  <data name="RouteDoorHelp" xml:space="preserve">
+    <value>Utilise la porte dont l'élément est sur la cellule, puis continue.</value>
+  </data>
+  <data name="Cell" xml:space="preserve">
+    <value>Cellule</value>
+  </data>
+  <data name="RouteExit" xml:space="preserve">
+    <value>Sortir par {Direction}, ou par la cellule {Cell}</value>
+  </data>
+  <data name="RouteExitHelp" xml:space="preserve">
+    <value>Force la sortie : par la cellule, si l'on en choisit une, sinon par le côté de la carte.</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>Côté</value>
+  </data>
+  <data name="DirectionTop" xml:space="preserve">
+    <value>le haut</value>
+  </data>
+  <data name="DirectionRight" xml:space="preserve">
+    <value>la droite</value>
+  </data>
+  <data name="DirectionBottom" xml:space="preserve">
+    <value>le bas</value>
+  </data>
+  <data name="DirectionLeft" xml:space="preserve">
+    <value>la gauche</value>
+  </data>
+  <data name="RouteZaap" xml:space="preserve">
+    <value>Prendre le zaap</value>
+  </data>
+  <data name="RouteZaapHelp" xml:space="preserve">
+    <value>Se téléporte au zaap le plus proche de l'étape suivante.</value>
+  </data>
+  <data name="RouteBag" xml:space="preserve">
+    <value>Aller au havre-sac</value>
+  </data>
+  <data name="RouteBagHelp" xml:space="preserve">
+    <value>Entre dans le havre-sac depuis la carte.</value>
+  </data>
+  <data name="RouteFollow" xml:space="preserve">
+    <value>Suivre la route {Route}</value>
+  </data>
+  <data name="RouteFollowHelp" xml:space="preserve">
+    <value>Parcourt la route du projet : ses cartes dans l'ordre, comme son parcours le dit, et ce qu'elle fait sur chacune. Une boucle continue jusqu'à ce qu'un autre état prenne la main.</value>
+  </data>
+  <data name="Route" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="RouteNotPlayed" xml:space="preserve">
+    <value>La route contient l'action {0}, pas encore jouée : elle ne démarre pas.</value>
+  </data>
+  <data name="RouteUnreachableFails" xml:space="preserve">
+    <value>L'étape {0} de la route, carte {1}, est hors d'atteinte : la route échoue.</value>
+  </data>
+  <data name="RouteUnreachablePassed" xml:space="preserve">
+    <value>L'étape {0} de la route, carte {1}, est hors d'atteinte : passée.</value>
+  </data>
+  <data name="RouteNothingReachable" xml:space="preserve">
+    <value>Aucune étape de la route n'est atteignable d'ici : la route échoue.</value>
+  </data>
+  <data name="RouteMissing" xml:space="preserve">
+    <value>La route {0} n'est pas dans le projet.</value>
+  </data>
 </root>

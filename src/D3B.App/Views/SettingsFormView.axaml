@@ -1,0 +1,674 @@
+<UserControl
+    x:Class="D3B.App.Views.SettingsFormView"
+    x:ClassModifier="internal"
+    x:DataType="s:SettingsEditor"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:s="clr-namespace:D3B.App.ViewModels.Settings"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="Grid.FieldRow">
+            <Setter Property="MinHeight" Value="42" />
+            <Setter Property="Margin" Value="0,3" />
+        </Style>
+        <Style Selector="Grid.FieldRow TextBlock.FieldLabel">
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        </Style>
+        <Style Selector="Grid.FieldRow.Changed TextBlock.FieldLabel">
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Grid.FieldRow Border.ChangeBar">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="Grid.FieldRow.Changed Border.ChangeBar">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="Grid.FieldRow c|Icon.FieldHelp">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Grid.FieldRow:pointerover c|Icon.FieldHelp">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Grid.FieldRow Button.FieldReset">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+        <Style Selector="Grid.FieldRow.Changed Button.FieldReset">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="Grid.FieldRow.Changed:pointerover Button.FieldReset">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Grid.FieldRow > StackPanel.FieldControl">
+            <Setter Property="Grid.Column" Value="2" />
+            <Setter Property="Margin" Value="16,0" />
+        </Style>
+        <Style Selector=":is(UserControl).Narrow Grid.FieldRow > TextBlock.FieldName">
+            <Setter Property="Grid.ColumnSpan" Value="2" />
+        </Style>
+        <Style Selector=":is(UserControl).Narrow Grid.FieldRow > StackPanel.FieldControl">
+            <Setter Property="Grid.Column" Value="1" />
+            <Setter Property="Grid.ColumnSpan" Value="2" />
+            <Setter Property="Grid.Row" Value="1" />
+            <Setter Property="Margin" Value="0,6,0,4" />
+        </Style>
+        <Style Selector="Button.Tile">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+        <Style Selector="Button.Tile:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HeaderColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+        </Style>
+        <Style Selector="Button.Tile.Selected">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+        <Style Selector="Button.Tile.Selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+        <Style Selector="Border.Token">
+            <Setter Property="Background" Value="{DynamicResource TipColor}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Padding" Value="9,0,4,0" />
+        </Style>
+        <Style Selector="Border.TokenField">
+            <Setter Property="Background" Value="{DynamicResource RecessColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="4,4,4,-2" />
+        </Style>
+        <Style Selector="Border.Item">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="8,2" />
+        </Style>
+        <Style Selector="Border.Item.Warned">
+            <Setter Property="BorderBrush" Value="{DynamicResource PausedEdgeColor}" />
+        </Style>
+    </UserControl.Styles>
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="s:FlagFieldViewModel">
+            <CheckBox
+                AutomationProperties.Name="{Binding Label}"
+                IsChecked="{Binding Value}"
+                VerticalAlignment="Center" />
+        </DataTemplate>
+        <DataTemplate x:DataType="s:CellFieldViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button
+                    AutomationProperties.Name="{Binding Label}"
+                    Classes="Outline"
+                    Command="{Binding PickCommand}"
+                    Content="{Binding Text}"
+                    IsEnabled="{Binding CanPick}" />
+                <Button
+                    AutomationProperties.Name="{l:Tr CellClear}"
+                    Classes="Tool Small"
+                    Command="{Binding ClearCommand}"
+                    IsVisible="{Binding HasValue}"
+                    ToolTip.Tip="{l:Tr CellClear}">
+                    <c:Icon Drawing="{StaticResource General.Close}" />
+                </Button>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:NumberFieldViewModel">
+            <Panel>
+                <Grid
+                    ColumnDefinitions="*,52"
+                    IsVisible="{Binding IsPercent}"
+                    MaxWidth="340"
+                    HorizontalAlignment="Stretch">
+                    <Slider
+                        AutomationProperties.Name="{Binding Label}"
+                        IsSnapToTickEnabled="True"
+                        Maximum="{Binding SliderMaximum}"
+                        Minimum="{Binding SliderMinimum}"
+                        TickFrequency="1"
+                        Value="{Binding Slider}"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        Classes="Bright Figures"
+                        Grid.Column="1"
+                        Text="{Binding PercentText}"
+                        TextAlignment="Right"
+                        VerticalAlignment="Center" />
+                </Grid>
+                <StackPanel
+                    IsVisible="{Binding IsBox}"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <NumericUpDown
+                        AutomationProperties.Name="{Binding Label}"
+                        FormatString="0"
+                        Increment="1"
+                        Maximum="{Binding Maximum}"
+                        Minimum="{Binding Minimum}"
+                        ToolTip.Tip="{Binding Range}"
+                        Value="{Binding Value}"
+                        Width="130" />
+                    <TextBlock
+                        Classes="Muted"
+                        IsVisible="{Binding HasUnit}"
+                        Text="{Binding Unit}"
+                        VerticalAlignment="Center" />
+                </StackPanel>
+            </Panel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:TextFieldViewModel">
+            <TextBox
+                AutomationProperties.Name="{Binding Label}"
+                HorizontalAlignment="Left"
+                MaxLength="{Binding MaximumLength}"
+                Text="{Binding Value}"
+                Width="280" />
+        </DataTemplate>
+        <DataTemplate x:DataType="s:ChoiceFieldViewModel">
+            <Panel>
+                <Border
+                    Classes="Segmented"
+                    HorizontalAlignment="Left"
+                    IsVisible="{Binding IsSegmented}">
+                    <ItemsControl ItemsSource="{Binding Segments}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="s:SegmentViewModel">
+                                <Button
+                                    Classes="Segment"
+                                    Classes.Selected="{Binding IsSelected}"
+                                    Command="{Binding ChooseCommand}"
+                                    Content="{Binding Option.Name}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+                <ComboBox
+                    AutomationProperties.Name="{Binding Label}"
+                    HorizontalAlignment="Left"
+                    IsVisible="{Binding IsList}"
+                    ItemsSource="{Binding Options}"
+                    SelectedItem="{Binding Selected}"
+                    Width="240">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="s:OptionViewModel">
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Panel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:ChoicesFieldViewModel">
+            <StackPanel Spacing="6">
+                <ItemsControl IsVisible="{Binding !IsEmpty}" ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <ComboBox
+                    HorizontalAlignment="Left"
+                    ItemsSource="{Binding Available}"
+                    PlaceholderText="{l:Tr AddValue}"
+                    SelectedItem="{Binding ToAdd}"
+                    Width="280">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="s:OptionViewModel">
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:GameFieldViewModel">
+            <StackPanel Spacing="4">
+                <Grid
+                    ColumnDefinitions="*,Auto"
+                    HorizontalAlignment="Left"
+                    Width="280">
+                    <AutoCompleteBox
+                        AutomationProperties.Name="{Binding Label}"
+                        FilterMode="Custom"
+                        ItemFilter="{x:Static s:OptionViewModel.Filter}"
+                        ItemsSource="{Binding Options}"
+                        MaxDropDownHeight="280"
+                        MinimumPrefixLength="0"
+                        PlaceholderText="{l:Tr Search}"
+                        SelectedItem="{Binding Selected}">
+                        <AutoCompleteBox.ItemTemplate>
+                            <DataTemplate x:DataType="s:OptionViewModel">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Classes="Caption Muted"
+                                        IsVisible="{Binding HasDetail}"
+                                        Text="{Binding Detail}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </AutoCompleteBox.ItemTemplate>
+                    </AutoCompleteBox>
+                    <Button
+                        AutomationProperties.Name="{l:Tr Clear}"
+                        Classes="Tool Small"
+                        Command="{Binding ClearCommand}"
+                        Grid.Column="1"
+                        IsVisible="{Binding Selected, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Margin="4,0,0,0"
+                        ToolTip.Tip="{l:Tr Clear}">
+                        <c:Icon Drawing="{StaticResource General.Close}" />
+                    </Button>
+                </Grid>
+                <TextBlock
+                    Classes="Caption Muted"
+                    IsVisible="{Binding !HasGame}"
+                    Text="{l:Tr NoGameData}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:PickedGamesFieldViewModel">
+            <StackPanel Spacing="6">
+                <ItemsControl IsVisible="{Binding !IsEmpty}" ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock
+                        Classes="Dim"
+                        IsVisible="{Binding IsEmpty}"
+                        Text="{l:Tr NoneChosen}"
+                        VerticalAlignment="Center" />
+                    <Button
+                        Classes="Outline"
+                        Command="{Binding ChooseCommand}"
+                        IsVisible="{Binding CanChoose}">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <c:Icon
+                                Drawing="{StaticResource General.Add}"
+                                Height="14"
+                                Width="14" />
+                            <TextBlock Text="{Binding ChooseText}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <AutoCompleteBox
+                    FilterMode="Custom"
+                    HorizontalAlignment="Left"
+                    IsVisible="{Binding !CanChoose}"
+                    ItemFilter="{x:Static s:OptionViewModel.Filter}"
+                    ItemsSource="{Binding Available}"
+                    MaxDropDownHeight="280"
+                    MinimumPrefixLength="0"
+                    PlaceholderText="{l:Tr AddResource}"
+                    SelectedItem="{Binding ToAdd}"
+                    Text="{Binding Search}"
+                    Width="280" />
+                <TextBlock
+                    Classes="Caption Muted"
+                    IsVisible="{Binding !HasGame}"
+                    Text="{l:Tr NoGameData}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:GatheringJobsFieldViewModel">
+            <ItemsControl ItemsSource="{Binding Chips}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <c:CardGrid
+                            MaxColumns="6"
+                            MinColumnWidth="104"
+                            Spacing="0" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="s:FilterChipViewModel">
+                        <Button
+                            AutomationProperties.Name="{Binding Name}"
+                            Classes="Tile"
+                            Classes.Selected="{Binding IsSelected}"
+                            Command="{Binding ChooseCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Image
+                                    Height="16"
+                                    IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    RenderOptions.BitmapInterpolationMode="HighQuality"
+                                    Source="{Binding Icon}"
+                                    Width="16" />
+                                <TextBlock
+                                    Text="{Binding Name}"
+                                    TextTrimming="CharacterEllipsis"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:SubAreasFieldViewModel">
+            <StackPanel Spacing="8">
+                <Border Classes="TokenField">
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="s:ListItemViewModel">
+                                <Border Classes="Token">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock
+                                            FontSize="12"
+                                            Text="{Binding Option.Name}"
+                                            VerticalAlignment="Center" />
+                                        <Button
+                                            AutomationProperties.Name="{l:Tr Remove}"
+                                            Classes="Tool Small"
+                                            Command="{Binding RemoveCommand}"
+                                            Height="18"
+                                            ToolTip.Tip="{l:Tr Remove}"
+                                            Width="18">
+                                            <c:Icon
+                                                Drawing="{StaticResource General.Close}"
+                                                Height="11"
+                                                Width="11" />
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+                <AutoCompleteBox
+                    FilterMode="Custom"
+                    HorizontalAlignment="Left"
+                    ItemFilter="{x:Static s:OptionViewModel.Filter}"
+                    ItemsSource="{Binding Available}"
+                    MaxDropDownHeight="280"
+                    MinimumPrefixLength="0"
+                    PlaceholderText="{l:Tr ZoneSearch}"
+                    SelectedItem="{Binding ToAdd}"
+                    Text="{Binding Search}"
+                    Width="280">
+                    <AutoCompleteBox.ItemTemplate>
+                        <DataTemplate x:DataType="s:OptionViewModel">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Classes="Caption Muted"
+                                    IsVisible="{Binding HasDetail}"
+                                    Text="{Binding Detail}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </AutoCompleteBox.ItemTemplate>
+                </AutoCompleteBox>
+                <ItemsControl ItemsSource="{Binding Suggestions}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="s:SuggestionViewModel">
+                            <CheckBox Command="{Binding ToggleCommand}" IsChecked="{Binding IsChosen, Mode=OneWay}">
+                                <Grid ColumnDefinitions="*,Auto" Margin="2,0,0,0">
+                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Classes="Dim"
+                                        Grid.Column="1"
+                                        Margin="12,0,0,0"
+                                        Text="{Binding Detail}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </CheckBox>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock
+                    Classes="Caption Muted"
+                    IsVisible="{Binding !HasGame}"
+                    Text="{l:Tr NoGameData}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:GamesFieldViewModel">
+            <StackPanel Spacing="6">
+                <ItemsControl IsVisible="{Binding !IsEmpty}" ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <AutoCompleteBox
+                    FilterMode="Custom"
+                    HorizontalAlignment="Left"
+                    ItemFilter="{x:Static s:OptionViewModel.Filter}"
+                    ItemsSource="{Binding Available}"
+                    MaxDropDownHeight="280"
+                    MinimumPrefixLength="0"
+                    PlaceholderText="{l:Tr AddValue}"
+                    SelectedItem="{Binding ToAdd}"
+                    Text="{Binding Search}"
+                    Width="280">
+                    <AutoCompleteBox.ItemTemplate>
+                        <DataTemplate x:DataType="s:OptionViewModel">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Image
+                                    Height="18"
+                                    IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    Margin="0,0,8,0"
+                                    RenderOptions.BitmapInterpolationMode="HighQuality"
+                                    Source="{Binding Icon}"
+                                    Width="18" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{Binding Name}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Classes="Caption Muted"
+                                    Grid.Column="2"
+                                    IsVisible="{Binding HasDetail}"
+                                    Margin="12,0,0,0"
+                                    Text="{Binding Detail}"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </AutoCompleteBox.ItemTemplate>
+                </AutoCompleteBox>
+                <TextBlock
+                    Classes="Caption Muted"
+                    IsVisible="{Binding !HasGame}"
+                    Text="{l:Tr NoGameData}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:ListItemViewModel">
+            <Border Classes="Item" Classes.Warned="{Binding HasWarning}">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto">
+                    <TextBlock
+                        Classes="Dim Figures"
+                        IsVisible="{Binding IsOrdered}"
+                        Text="{Binding Position}"
+                        VerticalAlignment="Center"
+                        Width="22" />
+                    <Image
+                        Grid.Column="1"
+                        Height="{Binding Option.IconSize}"
+                        IsVisible="{Binding Option.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Margin="0,0,10,0"
+                        RenderOptions.BitmapInterpolationMode="HighQuality"
+                        Source="{Binding Option.Icon}"
+                        Width="{Binding Option.IconSize}" />
+                    <Grid
+                        ColumnDefinitions="Auto,Auto,*"
+                        Grid.Column="2"
+                        VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Option.Name}" TextTrimming="CharacterEllipsis" />
+                        <Image
+                            Grid.Column="1"
+                            Height="14"
+                            IsVisible="{Binding Option.DetailIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Margin="8,0,0,0"
+                            RenderOptions.BitmapInterpolationMode="HighQuality"
+                            Source="{Binding Option.DetailIcon}"
+                            VerticalAlignment="Center"
+                            Width="14" />
+                        <TextBlock
+                            Classes="Dim"
+                            Grid.Column="2"
+                            IsVisible="{Binding Option.HasDetail}"
+                            Margin="6,0,0,0"
+                            Text="{Binding Option.Detail}"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip.Tip="{Binding Option.Detail}" />
+                    </Grid>
+                    <c:Icon
+                        Drawing="{StaticResource Status.Warning}"
+                        Grid.Column="3"
+                        IsVisible="{Binding HasWarning}"
+                        Margin="8,0"
+                        ToolTip.Tip="{Binding Warning}"
+                        VerticalAlignment="Center" />
+                    <Button
+                        AutomationProperties.Name="{l:Tr MoveUp}"
+                        Classes="Tool Small"
+                        Command="{Binding MoveUpCommand}"
+                        Grid.Column="4"
+                        IsEnabled="{Binding CanMoveUp}"
+                        IsVisible="{Binding IsOrdered}"
+                        ToolTip.Tip="{l:Tr MoveUp}">
+                        <c:Icon Drawing="{StaticResource General.ChevronUp}" />
+                    </Button>
+                    <Button
+                        AutomationProperties.Name="{l:Tr MoveDown}"
+                        Classes="Tool Small"
+                        Command="{Binding MoveDownCommand}"
+                        Grid.Column="5"
+                        IsEnabled="{Binding CanMoveDown}"
+                        IsVisible="{Binding IsOrdered}"
+                        ToolTip.Tip="{l:Tr MoveDown}">
+                        <c:Icon Drawing="{StaticResource General.ChevronDown}" />
+                    </Button>
+                    <Button
+                        AutomationProperties.Name="{l:Tr Remove}"
+                        Classes="Tool Small"
+                        Command="{Binding RemoveCommand}"
+                        Grid.Column="6"
+                        ToolTip.Tip="{l:Tr Remove}">
+                        <c:Icon Drawing="{StaticResource General.Close}" />
+                    </Button>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+    <ItemsControl ItemsSource="{Binding Sections}" Name="Sections">
+        <ItemsControl.Styles>
+            <Style Selector="ContentPresenter" x:DataType="s:SettingSectionViewModel">
+                <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+            </Style>
+        </ItemsControl.Styles>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="s:SettingSectionViewModel">
+                <StackPanel Margin="0,22,0,0">
+                    <TextBlock
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource BrightColor}"
+                        IsVisible="{Binding HasTitle}"
+                        Margin="12,0,0,8"
+                        Text="{Binding Title}" />
+                    <ItemsControl ItemsSource="{Binding Fields}">
+                        <ItemsControl.Styles>
+                            <Style Selector="ContentPresenter" x:DataType="s:SettingFieldViewModel">
+                                <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+                            </Style>
+                        </ItemsControl.Styles>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="s:SettingFieldViewModel">
+                                <Grid
+                                    Classes="FieldRow"
+                                    Classes.Changed="{Binding IsChanged}"
+                                    ColumnDefinitions="12,170,*,26"
+                                    RowDefinitions="Auto,Auto">
+                                    <Border
+                                        Background="{DynamicResource AccentColor}"
+                                        Classes="ChangeBar"
+                                        CornerRadius="1"
+                                        Grid.RowSpan="2"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,12"
+                                        Width="2" />
+                                    <TextBlock
+                                        Classes="FieldLabel FieldName"
+                                        Grid.Column="1"
+                                        LineHeight="17"
+                                        TextWrapping="Wrap"
+                                        VerticalAlignment="Center">
+                                        <Run Text="{Binding Label}" /><InlineUIContainer BaselineAlignment="Center">
+                                            <c:Icon
+                                                Classes="FieldHelp"
+                                                Drawing="{StaticResource General.QuestionMark}"
+                                                Height="14"
+                                                IsVisible="{Binding HasHelp}"
+                                                Margin="4,0,0,0"
+                                                ToolTip.Tip="{Binding Help}"
+                                                Width="14" />
+                                        </InlineUIContainer>
+                                    </TextBlock>
+                                    <StackPanel
+                                        Classes="FieldControl"
+                                        Spacing="4"
+                                        VerticalAlignment="Center">
+                                        <ContentControl Content="{Binding}" />
+                                        <TextBlock
+                                            Classes="Problem"
+                                            IsVisible="{Binding HasProblem}"
+                                            Text="{Binding Problem}"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button
+                                        AutomationProperties.Name="{l:Tr ResetValue}"
+                                        Classes="Tool Small FieldReset"
+                                        Command="{Binding ResetCommand}"
+                                        Grid.Column="3"
+                                        ToolTip.Tip="{l:Tr ResetValue}"
+                                        VerticalAlignment="Center">
+                                        <c:Icon
+                                            Drawing="{StaticResource General.Reset}"
+                                            Height="13"
+                                            Tint="{DynamicResource PausedColor}"
+                                            Width="13" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

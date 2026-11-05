@@ -42,7 +42,7 @@ internal sealed partial class ProfileView : UserControl
 
     private Control? ContainerOf(SettingSectionViewModel section)
     {
-        return Sections.ContainerFromItem(section);
+        return Sections.ContainerOf(section);
     }
 
     // The section whose title the form passed last is the one the bar lights, as the scroll moves.
@@ -50,7 +50,7 @@ internal sealed partial class ProfileView : UserControl
     {
         SettingSectionViewModel? current = null;
 
-        foreach (var item in Sections.Items.OfType<SettingSectionViewModel>().Where(section => section.IsVisible))
+        foreach (var item in Sections.Shown.Where(section => section.IsVisible))
         {
             current ??= item;
 

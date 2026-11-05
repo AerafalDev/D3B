@@ -1,9 +1,12 @@
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Movement;
 using D3B.Bot.Routes;
+using D3B.Bot.Settings;
 using D3B.Data;
+using D3B.Data.Maps;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Data.WorldMaps;
@@ -229,7 +232,7 @@ internal sealed class RoutesViewModel
 
         try
         {
-            return new RouteServices(library, new RoutePlanner(new WorldPathfinder(world.Graph, world.Atlas, NpcWays.Measured)), index, tables.WorldMaps, world.Atlas, provider.GetService<GameTexts>(), tiles.Read);
+            return new RouteServices(library, new RoutePlanner(new WorldPathfinder(world.Graph, world.Atlas, NpcWays.Measured)), index, tables.WorldMaps, world.Atlas, provider.GetService<GameTexts>(), tiles.Read, provider.GetService<NodeCatalog>(), provider.GetService<GameReferences>(), provider.GetService<GameMaps>(), provider);
         }
         catch (Exception exception) when (exception is KeyNotFoundException or InvalidDataException or IOException)
         {

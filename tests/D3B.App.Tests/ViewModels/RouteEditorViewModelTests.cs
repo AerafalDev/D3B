@@ -2,6 +2,7 @@ using D3B.App.Controls.WorldMaps;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
+using D3B.App.ViewModels.Settings;
 using D3B.Bot.Assets;
 
 namespace D3B.App.Tests.ViewModels;
@@ -388,5 +389,104 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         editor.StepBy(-5);
 
         Assert.Equal(0, editor.SelectedIndex);
+    }
+
+    [Fact]
+    public async Task AnActionAddedToTheStepChosenIsSaidAsASentenceCountedOnTheStepAndMakesTheRouteDirty()
+    {
+        var (_, editor) = await OpenAsync(1, 3);
+
+        editor.Select(1);
+
+        Assert.Equal(["Harvest", "Fight", "Take the door at cell", "Leave by", "Wait", "Take the zaap", "Go to the haven bag"], editor.OfferedActions.Select(action => action.Name));
+        Assert.True(editor.HasNoActions);
+
+        editor.OfferedActions[3].AddCommand.Execute(null);
+
+        var action = Assert.Single(editor.Actions);
+
+        Assert.Equal("Leave by the top, or by cell none", action.Sentence);
+        Assert.Equal((1, "1 action", 1), (editor.Steps[1].ActionCount, editor.Steps[1].ActionsText, editor.ActionTotal));
+        Assert.Equal((0, ""), (editor.Steps[0].ActionCount, editor.Steps[0].ActionsText));
+        Assert.True(editor.IsDirty);
+        Assert.True(action.IsOpen);
+        Assert.False(editor.HasNoActions);
+    }
+
+    [Fact]
+    public async Task AValueEditedChangesTheSentenceAndTheRouteWithoutBuildingTheFormsAgain()
+    {
+        var (_, editor) = await OpenAsync(1, 3);
+
+        editor.Select(0);
+        editor.OfferedActions[4].AddCommand.Execute(null);
+
+        var action = editor.Actions[0];
+        var field = Assert.IsType<NumberFieldViewModel>(Assert.Single(action.Editor!.Sections.SelectMany(section => section.Fields)));
+
+        Assert.Equal("Wait 5 s", action.Sentence);
+
+        field.Value = 12;
+
+        Assert.Same(action, editor.Actions[0]);
+        Assert.Equal("Wait 12 s", action.Sentence);
+        Assert.True(editor.CanUndo);
+
+        editor.Undo();
+
+        Assert.Equal("Wait 5 s", editor.Actions[0].Sentence);
+    }
+
+    [Fact]
+    public async Task ActionsAreRemovedMovedAndTakenBackLikeAnyChangeOfTheRoute()
+    {
+        var (_, editor) = await OpenAsync(1, 3);
+
+        editor.Select(0);
+        editor.OfferedActions[4].AddCommand.Execute(null);
+        editor.OfferedActions[5].AddCommand.Execute(null);
+        editor.OfferedActions[6].AddCommand.Execute(null);
+
+        Assert.Equal(["Wait 5 s", "Take the zaap", "Go to the haven bag"], editor.Actions.Select(action => action.Sentence));
+        Assert.Equal((true, false), (editor.Actions[0].IsFirst, editor.Actions[0].IsLast));
+
+        editor.Actions[2].MoveUpCommand.Execute(null);
+
+        Assert.Equal(["Wait 5 s", "Go to the haven bag", "Take the zaap"], editor.Actions.Select(action => action.Sentence));
+
+        editor.Actions[0].RemoveCommand.Execute(null);
+
+        Assert.Equal(["Go to the haven bag", "Take the zaap"], editor.Actions.Select(action => action.Sentence));
+        Assert.Equal("2 actions", editor.Steps[0].ActionsText);
+
+        editor.Undo();
+
+        Assert.Equal(["Wait 5 s", "Go to the haven bag", "Take the zaap"], editor.Actions.Select(action => action.Sentence));
+    }
+
+    [Fact]
+    public async Task TheActionsAreSavedWithTheRouteAndReadBackAndAnActionNobodyKnowsIsKeptAsItIs()
+    {
+        var (routes, editor) = await OpenAsync(1, 3);
+        var unknown = new D3B.Bot.Behaviors.NodeCall("later.thing", System.Collections.Immutable.ImmutableSortedDictionary<string, System.Text.Json.Nodes.JsonNode?>.Empty.Add("Mood", "calm"));
+
+        var saved = await _store.Assets.SaveAsync((_store.Assets.Find<RouteAsset>("r1")!) with { Anchors = [new RouteAnchor { MapId = 1, Actions = [unknown] }, new RouteAnchor { MapId = 3 }] }, TestContext.Current.CancellationToken);
+
+        editor.Update(saved);
+        editor.Select(0);
+
+        var action = Assert.Single(editor.Actions);
+
+        Assert.True(action.IsUnknown);
+        Assert.Equal("Unknown action (later.thing)", action.Sentence);
+
+        editor.OfferedActions[4].AddCommand.Execute(null);
+        await editor.SaveCommand.ExecuteAsync(null);
+
+        var anchor = routes.Services!.Library.Find<RouteAsset>("r1")!.Anchors[0];
+
+        Assert.Equal(["later.thing", "wait"], anchor.Actions.Select(call => call.Node));
+        Assert.Equal("calm", anchor.Actions[0].Values["Mood"]!.GetValue<string>());
+        Assert.False(editor.IsDirty);
     }
 }

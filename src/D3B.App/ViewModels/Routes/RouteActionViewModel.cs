@@ -1,0 +1,185 @@
+using System.Text.RegularExpressions;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using D3B.App.Localization;
+using D3B.App.ViewModels.Settings;
+using D3B.Bot.Behaviors;
+using D3B.Bot.Routes;
+using D3B.Bot.Settings;
+
+namespace D3B.App.ViewModels.Routes;
+
+/// <summary>An action of a step in the inspector: a sentence of typed values, opened to edit them (D377).</summary>
+/// <remarks>
+/// The sentence is the node's own, its values filled in as they are chosen. Opened, the values show as the profiles' do, each
+/// typed and picked, a cell on the map's own cells. An action whose node the host does not know is kept as it is and said so.
+/// </remarks>
+internal sealed partial class RouteActionViewModel : ObservableObject
+{
+    private static readonly Regex _slot = SlotPattern();
+
+    private readonly NodeDefinition? _definition;
+    private readonly Localizer _localizer;
+    private readonly Func<SettingKind, int, string> _name;
+    private readonly Action<int> _remove;
+    private readonly Action<int, int> _move;
+    private readonly Action<int> _toggle;
+
+    /// <summary>Gets the action's place in the step, from 0.</summary>
+    public int Index { get; }
+
+    /// <summary>Gets the action's node id.</summary>
+    public string NodeId { get; }
+
+    /// <summary>Gets the editor of its values, or <see langword="null"/> for an action the host does not know.</summary>
+    public SettingsEditor? Editor { get; }
+
+    /// <summary>Gets whether the host does not know the action's node, which the file keeps as it is.</summary>
+    public bool IsUnknown => _definition is null;
+
+    /// <summary>Gets whether the run plays the action today (D377).</summary>
+    public bool IsPlayed { get; }
+
+    /// <summary>Gets whether the action has values to edit.</summary>
+    public bool HasValues => Editor is { IsEmpty: false };
+
+    /// <summary>Gets whether the action is the first of its step.</summary>
+    public bool IsFirst => Index == 0;
+
+    /// <summary>Gets whether the action is the last of its step.</summary>
+    public bool IsLast { get; }
+
+    /// <summary>Gets the sentence, its values filled in.</summary>
+    [ObservableProperty]
+    public partial string Sentence { get; private set; } = "";
+
+    /// <summary>Gets whether something is wrong with the values.</summary>
+    [ObservableProperty]
+    public partial bool HasProblems { get; private set; }
+
+    /// <summary>Gets whether the values show.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsClosed))]
+    public partial bool IsOpen { get; private set; }
+
+    /// <summary>Gets whether the values are hidden.</summary>
+    public bool IsClosed => !IsOpen;
+
+    /// <summary>Initializes a new instance of the <see cref="RouteActionViewModel"/> class.</summary>
+    /// <param name="index">The action's place in the step.</param>
+    /// <param name="count">How many actions the step has.</param>
+    /// <param name="nodeId">The action's node id.</param>
+    /// <param name="definition">The node, or <see langword="null"/> when the host does not know it.</param>
+    /// <param name="editor">The editor of its values.</param>
+    /// <param name="localizer">The app's texts.</param>
+    /// <param name="name">Names a value of the game.</param>
+    /// <param name="isOpen">Whether the values show.</param>
+    /// <param name="toggle">What opening or closing does, given the place.</param>
+    /// <param name="remove">What removing does, given the place.</param>
+    /// <param name="move">What moving does, given the place and how many places towards the end.</param>
+    public RouteActionViewModel(int index, int count, string nodeId, NodeDefinition? definition, SettingsEditor? editor, Localizer localizer, Func<SettingKind, int, string> name, bool isOpen, Action<int> toggle, Action<int> remove, Action<int, int> move)
+    {
+        Index = index;
+        IsLast = index == count - 1;
+        NodeId = nodeId;
+        _definition = definition;
+        Editor = editor;
+        _localizer = localizer;
+        _name = name;
+        _toggle = toggle;
+        _remove = remove;
+        _move = move;
+        IsPlayed = RouteActions.IsPlayed(nodeId);
+        IsOpen = isOpen && HasValues;
+        Say();
+    }
+
+    /// <summary>Says the sentence and the problems again, once the values changed or the language did.</summary>
+    public void Say()
+    {
+        if (_definition is null || Editor is null)
+        {
+            Sentence = _localizer.Format("RouteActionUnknown", NodeId);
+
+            return;
+        }
+
+        var culture = _localizer.Culture;
+        var text = _definition.Sentence.In(culture);
+
+        Sentence = _slot.Replace(text, match => Value(match.Groups[1].Value));
+        HasProblems = Editor is { HasProblems: true };
+    }
+
+    [RelayCommand]
+    private void Toggle()
+    {
+        IsOpen = HasValues && !IsOpen;
+        _toggle(Index);
+    }
+
+    [RelayCommand]
+    private void Remove()
+    {
+        _remove(Index);
+    }
+
+    [RelayCommand]
+    private void MoveUp()
+    {
+        _move(Index, -1);
+    }
+
+    [RelayCommand]
+    private void MoveDown()
+    {
+        _move(Index, 1);
+    }
+
+    /// <summary>Names an action by its sentence without its values: "Wait {Seconds} s" names a wait.</summary>
+    /// <param name="definition">The action's node.</param>
+    /// <param name="culture">The language.</param>
+    /// <returns>The name.</returns>
+    public static string NameOf(NodeDefinition definition, System.Globalization.CultureInfo culture)
+    {
+        var text = definition.Sentence.In(culture);
+        var slot = text.IndexOf('{', StringComparison.Ordinal);
+
+        return (slot < 0 ? text : text[..slot]).Trim().TrimEnd(',', ';', ':').Trim();
+    }
+
+    [GeneratedRegex(@"\{(\w+)\}", RegexOptions.CultureInvariant)]
+    private static partial Regex SlotPattern();
+
+    private string Value(string key)
+    {
+        var setting = _definition!.Values.All.FirstOrDefault(candidate => candidate.Key == key);
+
+        if (setting is null || Editor?.Draft is not { } draft)
+            return "{" + key + "}";
+
+        var culture = _localizer.Culture;
+
+        switch (setting.Kind)
+        {
+            case SettingKind.Choice:
+                return setting.Options.FirstOrDefault(option => Equals(option.Value, setting.GetValue(draft)))?.Text.In(culture) ?? "…";
+            case SettingKind.Cell:
+                return setting.GetValue(draft) is int cell ? cell.ToString(culture) : _localizer["CellNone"];
+            case SettingKind.Number:
+                return Convert.ToString(setting.GetValue(draft), culture) ?? "";
+        }
+
+        if (!setting.IsList)
+            return setting.GetValue(draft) is int id ? _name(setting.Kind, id) : "…";
+
+        var ids = setting.GetValues(draft).Cast<int>().ToList();
+
+        if (ids.Count == 0)
+            return setting.Kind is SettingKind.Monster ? _localizer["RouteEveryGroup"] : "…";
+
+        var shown = string.Join(", ", ids.Take(3).Select(item => _name(setting.Kind, item)));
+
+        return ids.Count > 3 ? _localizer.Format("RouteAndMore", shown, ids.Count - 3) : shown;
+    }
+}

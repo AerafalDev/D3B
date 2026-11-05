@@ -2582,4 +2582,58 @@
   <data name="RouteAddName" xml:space="preserve">
     <value>Ajouter une carte par son id ou ses coordonnées</value>
   </data>
+  <data name="CellNumber" xml:space="preserve">
+    <value>Cellule {0}</value>
+  </data>
+  <data name="CellChoose" xml:space="preserve">
+    <value>Choisir une cellule</value>
+  </data>
+  <data name="CellNone" xml:space="preserve">
+    <value>aucune</value>
+  </data>
+  <data name="CellClear" xml:space="preserve">
+    <value>Aucune cellule</value>
+  </data>
+  <data name="CellPickerTitle" xml:space="preserve">
+    <value>Choisir une cellule</value>
+  </data>
+  <data name="CellPickerHint" xml:space="preserve">
+    <value>Les cellules de la carte. Celles qui mènent hors de la carte sont teintées, et les points sont des éléments : portes, ressources, leviers.</value>
+  </data>
+  <data name="RouteActionUnknown" xml:space="preserve">
+    <value>Action inconnue ({0})</value>
+  </data>
+  <data name="RouteEveryGroup" xml:space="preserve">
+    <value>tous les groupes</value>
+  </data>
+  <data name="RouteAndMore" xml:space="preserve">
+    <value>{0} et {1} de plus</value>
+  </data>
+  <data name="RouteActionsTitle" xml:space="preserve">
+    <value>Actions de l'étape {0}</value>
+  </data>
+  <data name="RouteActionsCountOne" xml:space="preserve">
+    <value>{0:N0} action</value>
+  </data>
+  <data name="RouteActionsCountOther" xml:space="preserve">
+    <value>{0:N0} actions</value>
+  </data>
+  <data name="RouteHudStepActions" xml:space="preserve">
+    <value>Étape {0} · {1} · {2}</value>
+  </data>
+  <data name="RouteActionsEmpty" xml:space="preserve">
+    <value>Rien n'est fait sur cette carte : la route la traverse.</value>
+  </data>
+  <data name="RouteActionNotPlayed" xml:space="preserve">
+    <value>Gardée par la route, pas encore jouée.</value>
+  </data>
+  <data name="RouteActionRemove" xml:space="preserve">
+    <value>Retirer l'action</value>
+  </data>
+  <data name="RouteSummaryActions" xml:space="preserve">
+    <value>actions</value>
+  </data>
+  <data name="RouteGapZaap" xml:space="preserve">
+    <value>Par zaap</value>
+  </data>
 </root>

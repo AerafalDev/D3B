@@ -1,9 +1,13 @@
 using D3B.App.ViewModels.Routes;
+using D3B.Bot.Activities;
 using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
+using D3B.Bot.Behaviors.Nodes;
 using D3B.Bot.Routes;
 using D3B.Data.World;
 using D3B.Data.WorldMaps;
 using D3B.Engine.World;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests;
 
@@ -30,7 +34,20 @@ internal static class TestRouteWorld
         var atlas = Atlas();
         var graph = new WorldGraph(vertices, edges.ToArray(), transitions.ToArray(), Array.Empty<string>());
 
-        return new RouteServices(library, new RoutePlanner(new WorldPathfinder(graph, atlas)), Index(), Catalog(), atlas, null, (_, _, _) => []);
+        return new RouteServices(library, new RoutePlanner(new WorldPathfinder(graph, atlas)), Index(), Catalog(), atlas, null, (_, _, _) => [], Nodes());
+    }
+
+    /// <summary>Gets the kinds of nodes a host registers for routes: D3B's own and the route actions'.</summary>
+    public static NodeCatalog Nodes()
+    {
+        var services = new ServiceCollection();
+
+        CoreNodes.Register(services);
+        RouteActions.Register(services);
+
+        var provider = services.BuildServiceProvider();
+
+        return new NodeCatalog(provider.GetServices<NodeDefinition>(), new ActivityCatalog([]), provider);
     }
 
     /// <summary>Gets world 1, 1,000 by 800 pixels at its one zoom, and world 2, 500 by 400, a map 64 by 46 pixels with the map at 0, 0 at the image's top left.</summary>

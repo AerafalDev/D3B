@@ -11,8 +11,9 @@ namespace D3B.Bot.Routes;
 /// <remarks>
 /// <para>
 /// The path is the one the world graph gives with nothing assumed of the character but a subscription: a door or a scroll
-/// with a criterion nothing answers stays closed, and no zaap is taken, the route being made for any character. The
-/// quickest from any zone of one map to any zone of the other is kept.
+/// with a criterion nothing answers stays closed. Every zaap of the game is assumed known, the route being made for any
+/// character, and one is taken when it saves at least <see cref="ZaapSaving"/> map changes (D378); the run takes the
+/// path again with what the character it plays on knows. The quickest from any zone of one map to any zone of the other is kept.
 /// </para>
 /// <para>
 /// A leg found is kept by its two maps, so that moving one anchor searches again only the two legs it touches. Safe from any
@@ -21,11 +22,13 @@ namespace D3B.Bot.Routes;
 /// </remarks>
 public sealed class RoutePlanner
 {
+    /// <summary>How many map changes a zaap must save to be taken in the editor's path: the activities' own default (D378).</summary>
+    public const int ZaapSaving = 5;
+
     private const int KeptLegs = 8192;
     private const int PrimaryCandidates = 64;
 
-    private static readonly WorldPathRules _rules = new() { Facts = new CriterionFacts { Subscribed = true } };
-
+    private readonly WorldPathRules _rules;
     private readonly WorldPathfinder _pathfinder;
     private readonly ConcurrentDictionary<(long From, long To), RouteLeg> _legs = new();
 
@@ -36,6 +39,13 @@ public sealed class RoutePlanner
         ArgumentNullException.ThrowIfNull(pathfinder);
 
         _pathfinder = pathfinder;
+        _rules = new WorldPathRules
+        {
+            Facts = new CriterionFacts { Subscribed = true },
+            KnownZaaps = pathfinder.Atlas.Waypoints.ToArray().Select(waypoint => waypoint.MapId).ToHashSet(),
+            Kamas = long.MaxValue,
+            TeleportChanges = ZaapSaving,
+        };
     }
 
     /// <summary>Tells whether a route closes on its first anchor: a loop of three anchors or more (two go and come back).</summary>
@@ -132,6 +142,7 @@ public sealed class RoutePlanner
             return new RouteLeg(from, to, RouteLegKind.Unreachable, []);
 
         var between = ImmutableArray.CreateBuilder<long>();
+        var zaaps = ImmutableArray.CreateBuilder<long>();
         var vertices = _pathfinder.Graph.Vertices.Span;
         var last = from;
 
@@ -139,13 +150,16 @@ public sealed class RoutePlanner
         {
             var map = vertices[step.To].MapId;
 
+            if (step.IsTeleport)
+                zaaps.Add(map);
+
             if (map != last && map != to)
                 between.Add(map);
 
             last = map;
         }
 
-        return new RouteLeg(from, to, RouteLegKind.Path, between.ToImmutable());
+        return new RouteLeg(from, to, RouteLegKind.Path, between.ToImmutable(), zaaps.ToImmutable());
     }
 
     private List<int> VerticesOf(long map)
