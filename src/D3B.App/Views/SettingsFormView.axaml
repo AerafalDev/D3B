@@ -131,6 +131,42 @@
                 </Button>
             </StackPanel>
         </DataTemplate>
+        <DataTemplate x:DataType="s:NpcFieldViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button
+                    AutomationProperties.Name="{Binding Label}"
+                    Classes="Outline"
+                    Command="{Binding PickCommand}"
+                    Content="{Binding Text}"
+                    IsEnabled="{Binding CanPick}" />
+                <Button
+                    AutomationProperties.Name="{l:Tr NpcClear}"
+                    Classes="Tool Small"
+                    Command="{Binding ClearCommand}"
+                    IsVisible="{Binding HasValue}"
+                    ToolTip.Tip="{l:Tr NpcClear}">
+                    <c:Icon Drawing="{StaticResource General.Close}" />
+                </Button>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:DataType="s:NpcRepliesFieldViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button
+                    AutomationProperties.Name="{Binding Label}"
+                    Classes="Outline"
+                    Command="{Binding PickCommand}"
+                    Content="{Binding Text}"
+                    IsEnabled="{Binding CanPick}" />
+                <Button
+                    AutomationProperties.Name="{l:Tr NpcRepliesClear}"
+                    Classes="Tool Small"
+                    Command="{Binding ClearCommand}"
+                    IsVisible="{Binding HasValue}"
+                    ToolTip.Tip="{l:Tr NpcRepliesClear}">
+                    <c:Icon Drawing="{StaticResource General.Close}" />
+                </Button>
+            </StackPanel>
+        </DataTemplate>
         <DataTemplate x:DataType="s:NumberFieldViewModel">
             <Panel>
                 <Grid

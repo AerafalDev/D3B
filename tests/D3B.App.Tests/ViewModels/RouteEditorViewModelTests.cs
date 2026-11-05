@@ -398,7 +398,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
 
         editor.Select(1);
 
-        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag"], editor.OfferedActions.Select(action => action.Name));
+        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag", "Talk to an NPC"], editor.OfferedActions.Select(action => action.Name));
         Assert.True(editor.HasNoActions);
 
         editor.OfferedActions[3].AddCommand.Execute(null);
@@ -411,7 +411,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         Assert.True(editor.IsDirty);
         Assert.Equal(["Leave by ", "the top", ", or by cell ", "choose"], action.Parts.Select(part => part.Text));
         Assert.Equal([false, true, false, true], action.Parts.Select(part => part.IsToken));
-        Assert.Equal([false, false, false, true], action.Parts.Select(part => part.IsCell));
+        Assert.Equal([false, false, false, true], action.Parts.Select(part => part.IsDialog));
         Assert.False(editor.HasNoActions);
     }
 
@@ -503,7 +503,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         var picker = Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current);
 
         Assert.Equal(1, editor.SelectedIndex);
-        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag"], picker.Actions.Select(action => action.Name));
+        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag", "Talk to an NPC"], picker.Actions.Select(action => action.Name));
         Assert.All(picker.Actions, action => Assert.NotEmpty(action.Help));
 
         picker.Actions[4].AddCommand.Execute(null);
