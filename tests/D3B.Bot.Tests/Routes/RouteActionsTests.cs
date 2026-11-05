@@ -25,7 +25,7 @@ public sealed class RouteActionsTests : IAsyncDisposable
     [Fact]
     public void EveryActionTheEditorOffersIsANodeOfTheCatalogWithItsValuesAndSentenceInBothLanguages()
     {
-        Assert.Equal(["route.harvest", "route.fight", "route.door", "route.exit", "wait", "route.zaap", "route.bag"], RouteActions.Offered);
+        Assert.Equal(["route.harvest", "route.fight", "route.door", "route.exit", "wait", "route.zaap", "route.bag", "route.npc"], RouteActions.Offered);
 
         foreach (var id in RouteActions.Offered.Concat([RouteActions.Follow]))
         {
@@ -44,10 +44,37 @@ public sealed class RouteActionsTests : IAsyncDisposable
     }
 
     [Fact]
-    public void OnlyWaitingIsPlayedToday()
+    public void EveryActionTheEditorOffersIsPlayedAndFollowingARouteIsNotAnActionOfOne()
     {
-        Assert.Equal(["wait"], RouteActions.Offered.Where(RouteActions.IsPlayed));
+        Assert.Equal(RouteActions.Offered, RouteActions.Offered.Where(RouteActions.IsPlayed));
         Assert.False(RouteActions.IsPlayed(RouteActions.Follow));
+    }
+
+    [Fact]
+    public void AnNpcActionHoldsTheNpcAndTheRepliesGivenToItInOrderAndNeedsTheNpc()
+    {
+        var node = Node(RouteActions.Npc);
+
+        Assert.Equal([SettingKind.Npc, SettingKind.NpcReply], node.Values.All.Select(setting => setting.Kind));
+        Assert.False(node.Values.All[0].IsList);
+        Assert.True(node.Values.All[1].IsList);
+        Assert.True(node.Values.All[1].IsOrdered);
+        Assert.Equal(SettingProblemKind.Required, Assert.Single(node.Values.Check(new RouteNpcValues())).Kind);
+        Assert.Empty(node.Values.Check(new RouteNpcValues { Npc = 4398 }));
+        Assert.Empty(node.Values.Check(new RouteNpcValues { Npc = 4398, Replies = [36979, 36977] }));
+        Assert.Equal(SettingProblemKind.OutOfRange, Assert.Single(node.Values.Check(new RouteNpcValues { Npc = -1 })).Kind);
+    }
+
+    [Fact]
+    public void AnNpcActionIsWrittenAndReadBackWithItsRepliesInOrder()
+    {
+        var node = Node(RouteActions.Npc);
+        var made = RouteActionCalls.Make(node, new RouteNpcValues { Npc = 4398, Replies = [36979, 36977] });
+        var read = Assert.IsType<RouteNpcValues>(RouteActionCalls.Read(node, made).Settings);
+
+        Assert.Equal(["Npc", "Replies"], made.Values.Keys);
+        Assert.Equal(4398, read.Npc);
+        Assert.Equal([36979, 36977], read.Replies);
     }
 
     [Fact]

@@ -42,4 +42,9 @@ public enum SettingKind
 
     /// <summary>A cell of the map a node plays on, by its number, picked on the map's own cells (D121, D377); between 0 and the last cell of a map.</summary>
     Cell,
+    /// <summary>An NPC of the map a node plays on, by its id in the client's tables, picked among those the bots learned there (D298, D384).</summary>
+    Npc,
+
+    /// <summary>The replies given to an NPC, by their ids in the client's tables, the n-th to the n-th question, picked among those the bots saw offered (D298, D384).</summary>
+    NpcReply,
 }

@@ -390,7 +390,7 @@
     <value>Route</value>
   </data>
   <data name="RouteNotPlayed" xml:space="preserve">
-    <value>La route contient l'action {0}, pas encore jouée : elle ne démarre pas.</value>
+    <value>La route contient l'action {0}, que l'hôte ne connaît pas : elle ne démarre pas.</value>
   </data>
   <data name="RouteUnreachableFails" xml:space="preserve">
     <value>L'étape {0} de la route, carte {1}, est hors d'atteinte : la route échoue.</value>
@@ -403,5 +403,26 @@
   </data>
   <data name="RouteMissing" xml:space="preserve">
     <value>La route {0} n'est pas dans le projet.</value>
+  </data>
+  <data name="RouteNpc" xml:space="preserve">
+    <value>Parler au PNJ {Npc}, en répondant {Replies}</value>
+  </data>
+  <data name="RouteNpcHelp" xml:space="preserve">
+    <value>Parle au PNJ de la carte et lui donne les réponses, la première à sa première question, et ainsi de suite. Aucune réponse choisie, le dialogue est ouvert puis quitté.</value>
+  </data>
+  <data name="Npc" xml:space="preserve">
+    <value>PNJ</value>
+  </data>
+  <data name="NpcReplies" xml:space="preserve">
+    <value>Réponses</value>
+  </data>
+  <data name="RouteActionFailed" xml:space="preserve">
+    <value>L'action {0} de la route n'a pas pu être jouée sur la carte {1} ({2}) : la route échoue.</value>
+  </data>
+  <data name="RouteZaapNoNext" xml:space="preserve">
+    <value>La route ne va nulle part après cette étape : aucun zaap à prendre.</value>
+  </data>
+  <data name="RouteZaapNone" xml:space="preserve">
+    <value>Aucun zaap ne fait gagner un changement de carte vers la carte {0} : aucun n'est pris.</value>
   </data>
 </root>

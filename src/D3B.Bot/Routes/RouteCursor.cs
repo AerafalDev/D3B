@@ -56,6 +56,17 @@ public sealed class RouteCursor
         }
     }
 
+    /// <summary>Gets the anchor the run goes to after the one it is at, or -1 when it is the last: the route's next step, which a zaap is taken towards.</summary>
+    public int NextAnchor
+    {
+        get
+        {
+            var after = new RouteCursor(_count, _mode) { _visit = _visit + 1 };
+
+            return after.Anchor;
+        }
+    }
+
     /// <summary>Gets how many anchors the run has been to, a loop's counted again at each lap.</summary>
     public long Visits => _visit;
 

@@ -13,7 +13,6 @@ using D3B.Data;
 using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.World;
-using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Harvesting;
@@ -149,13 +148,12 @@ public sealed class HarvestActivity : BotActivity
 
     private static int LevelOf(CharacterState state, int jobId)
     {
-        // Every character has every profession; one the server has not described yet counts as the first level.
-        return state.Jobs.TryGetValue(jobId, out var job) && job.Level > 0 ? job.Level : 1;
+        return MapHarvest.LevelOf(state, jobId);
     }
 
     private static int Carried(CharacterState state, int itemId)
     {
-        return state.Inventory.Values.Where(stack => stack.ItemId == itemId && !stack.IsWorn).Sum(stack => stack.Quantity);
+        return MapHarvest.Carried(state, itemId);
     }
 
     private static ActivityException Failure(string message, string key)
@@ -623,44 +621,7 @@ public sealed class HarvestActivity : BotActivity
 
     private List<(int ElementId, HarvestTarget Target)> Candidates(BotContext context, HarvestZone zone, CharacterState state)
     {
-        var found = new List<(int ElementId, HarvestTarget Target, int Steps)>();
-
-        if (state.Cell is not { } cell || !context.Maps.TryGet(state.MapId!.Value, out var map))
-            return [];
-
-        var cells = map.Cells.Span;
-
-        foreach (var element in state.Elements.Values)
-        {
-            if (_skipped.Contains(element.ElementId))
-                continue;
-
-            HarvestTarget? best = null;
-
-            foreach (var skill in element.EnabledSkills)
-            {
-                if (zone.Targets.TryGetValue(skill.SkillId, out var target) && LevelOf(state, target.JobId) >= target.Level
-                    && (best is null || target.Priority < best.Value.Priority))
-                {
-                    best = target;
-                }
-            }
-
-            if (best is not { } chosen)
-                continue;
-
-            if (!ElementUse.TryGetCell(map, element.ElementId, out var elementCell)
-                || !CellPathfinder.TryFindNearest(cells, cell, [.. ElementCells.UsedFrom(cells, elementCell, cells[cell].Zone)], out var path))
-            {
-                _skipped.Add(element.ElementId);
-
-                continue;
-            }
-
-            found.Add((element.ElementId, chosen, path.Steps));
-        }
-
-        return [.. found.OrderBy(candidate => candidate.Target.Priority).ThenBy(candidate => candidate.Steps).ThenBy(candidate => candidate.ElementId).Select(candidate => (candidate.ElementId, candidate.Target))];
+        return MapHarvest.Candidates(context, zone.Targets, state, _skipped);
     }
 
     private async Task GoOnAsync(BotContext context, HarvestZone zone, CancellationToken cancellationToken)

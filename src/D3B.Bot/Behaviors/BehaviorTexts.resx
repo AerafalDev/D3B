@@ -390,7 +390,7 @@
     <value>Route</value>
   </data>
   <data name="RouteNotPlayed" xml:space="preserve">
-    <value>The route holds the action {0}, which is not played yet: it does not start.</value>
+    <value>The route holds the action {0}, which the host does not know: it does not start.</value>
   </data>
   <data name="RouteUnreachableFails" xml:space="preserve">
     <value>Step {0} of the route, map {1}, is out of reach: the route fails.</value>
@@ -403,5 +403,26 @@
   </data>
   <data name="RouteMissing" xml:space="preserve">
     <value>The route {0} is not in the project.</value>
+  </data>
+  <data name="RouteNpc" xml:space="preserve">
+    <value>Talk to NPC {Npc}, replying {Replies}</value>
+  </data>
+  <data name="RouteNpcHelp" xml:space="preserve">
+    <value>Talks to the NPC of the map and gives it the replies, the first to its first question, and so on. No reply chosen, the dialog is opened and left.</value>
+  </data>
+  <data name="Npc" xml:space="preserve">
+    <value>NPC</value>
+  </data>
+  <data name="NpcReplies" xml:space="preserve">
+    <value>Replies</value>
+  </data>
+  <data name="RouteActionFailed" xml:space="preserve">
+    <value>The action {0} of the route could not be played on map {1} ({2}): the route fails.</value>
+  </data>
+  <data name="RouteZaapNoNext" xml:space="preserve">
+    <value>The route goes nowhere after this step: no zaap to take.</value>
+  </data>
+  <data name="RouteZaapNone" xml:space="preserve">
+    <value>No zaap saves a map change on the way to map {0}: none is taken.</value>
   </data>
 </root>

@@ -36,14 +36,32 @@ internal sealed class GameRouteStage : IRouteStage
     }
 
     /// <inheritdoc/>
-    public Task PlayAsync(NodeCall action, CancellationToken cancellationToken)
+    public async Task<bool> PlayAsync(NodeCall action, long? next, CancellationToken cancellationToken)
     {
         if (!_nodes.TryGet(action.Node, out var definition))
             throw new InvalidOperationException($"The route holds the action {action.Node}, which the host does not know.");
 
-        var values = RouteActionCalls.Read(definition, action).Settings ?? new object();
+        try
+        {
+            if (action.Node == RouteActions.Zaap)
+            {
+                await TakeZaapAsync(next, cancellationToken).ConfigureAwait(false);
 
-        return ((IActionNode)_nodes.CodeOf(definition)).RunAsync(_context, values, cancellationToken);
+                return true;
+            }
+
+            var values = RouteActionCalls.Read(definition, action).Settings ?? new object();
+
+            await ((IActionNode)_nodes.CodeOf(definition)).RunAsync(_context, values, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+        catch (RouteActionException failed)
+        {
+            Note("RouteActionFailed", failed.Node, _bot.State.MapId ?? 0, failed.Outcome);
+
+            return false;
+        }
     }
 
     /// <inheritdoc/>
@@ -58,5 +76,35 @@ internal sealed class GameRouteStage : IRouteStage
         var culture = CultureInfo.CurrentUICulture;
 
         _context.Note(string.Format(culture, BehaviorTexts.Resources.GetString(key, culture) ?? key, values));
+    }
+
+    // The zaap nearest the next step, as the pathfinder reckons: a path there that begins with a teleport saving at least one change.
+    private async Task TakeZaapAsync(long? next, CancellationToken cancellationToken)
+    {
+        var state = _bot.State;
+
+        if (next is not { } map)
+        {
+            Note("RouteZaapNoNext");
+
+            return;
+        }
+
+        if (state.MapId is not { } here || state.Cell is not { } cell || state.IsBusy || !_bot.Maps.TryGet(here, out var data) || !_bot.World.TryGetVertex(data, cell, out var vertex))
+            throw new RouteActionException(RouteActions.Zaap, nameof(MapChangeOutcome.Busy));
+
+        var rules = WorldTravel.RulesOf(_bot) with { TeleportChanges = 1 };
+
+        if (!_bot.World.TryFind(vertex, new HashSet<long> { map }, rules, out var path) || path.Steps.Count is 0 || !path.Steps[0].IsTeleport)
+        {
+            Note("RouteZaapNone", map);
+
+            return;
+        }
+
+        var outcome = await _bot.ChangeMapAsync(path.Steps[0], rules, cancellationToken).ConfigureAwait(false);
+
+        if (outcome is not (MapChangeOutcome.Changed or MapChangeOutcome.Elsewhere))
+            throw new RouteActionException(RouteActions.Zaap, outcome.ToString());
     }
 }

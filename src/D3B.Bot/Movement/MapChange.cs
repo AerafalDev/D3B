@@ -164,7 +164,7 @@ public static class MapChange
             outcome = step.Transition.Type switch
             {
                 WorldTransitionType.MapAction => await StepOnAsync(context, map, path, cancellationToken).ConfigureAwait(false),
-                WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition, cancellationToken).ConfigureAwait(false),
+                WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition.ElementId, step.Transition.SkillId, cancellationToken).ConfigureAwait(false),
                 _ => await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, cancellationToken).ConfigureAwait(false),
             };
         }
@@ -203,7 +203,7 @@ public static class MapChange
         return outcome;
     }
 
-    private static (GameExpectation Current, GameExpectation Placed) ExpectNewMap(BotContext context, long from)
+    internal static (GameExpectation Current, GameExpectation Placed) ExpectNewMap(BotContext context, long from)
     {
         var current = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is MapCurrentEvent);
         var placed = context.Expect((side, message, state) => side is RelayDirection.FromServer
@@ -212,7 +212,7 @@ public static class MapChange
         return (current, placed);
     }
 
-    private static async Task<MapChangeOutcome> ScrollAsync(BotContext context, long mapId, CellPath path, int neighbour, CancellationToken cancellationToken)
+    internal static async Task<MapChangeOutcome> ScrollAsync(BotContext context, long mapId, CellPath path, int neighbour, CancellationToken cancellationToken)
     {
         // Expected before the walk: a walk onto a cell of the edge may end on a map action's, which moves the character as
         // its walk is confirmed (client.md). The request for the neighbour, then, would go unanswered.
@@ -253,10 +253,10 @@ public static class MapChange
         return await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task<MapChangeOutcome> UseDoorAsync(BotContext context, long mapId, CellPath path, WorldTransition door, CancellationToken cancellationToken)
+    internal static async Task<MapChangeOutcome> UseDoorAsync(BotContext context, long mapId, CellPath path, int elementId, int skillId, CancellationToken cancellationToken)
     {
         // The server names the door's skill on its element in the map's information: without it, nothing can be asked.
-        if (!context.State.Elements.TryGetValue(door.ElementId, out var element) || !element.TryGetEnabled(door.SkillId, out var skill))
+        if (!context.State.Elements.TryGetValue(elementId, out var element) || !element.TryGetEnabled(skillId, out var skill))
             return MapChangeOutcome.NoPath;
 
         var (current, placed) = ExpectNewMap(context, mapId);
@@ -267,9 +267,9 @@ public static class MapChange
         if (context.State.MapId == mapId)
         {
             var answer = context.Expect((side, message, _) => side is RelayDirection.FromServer
-                && (message is MapCurrentEvent || message is InteractiveUseErrorEvent error && error.ElementId == door.ElementId));
+                && (message is MapCurrentEvent || message is InteractiveUseErrorEvent error && error.ElementId == elementId));
 
-            await context.SendAsync(ElementUse.Request(door.ElementId, skill), cancellationToken).ConfigureAwait(false);
+            await context.SendAsync(ElementUse.Request(elementId, skill), cancellationToken).ConfigureAwait(false);
 
             if (await answer.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is InteractiveUseErrorEvent)
                 return MapChangeOutcome.Refused;
@@ -350,7 +350,7 @@ public static class MapChange
         }
     }
 
-    private static async Task<MapChangeOutcome> ArrivedAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)
+    internal static async Task<MapChangeOutcome> ArrivedAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)
     {
         var outcome = await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
 
@@ -367,7 +367,7 @@ public static class MapChange
         return outcome;
     }
 
-    private static async Task LeaveDialogAsync(BotContext context, CancellationToken cancellationToken)
+    internal static async Task LeaveDialogAsync(BotContext context, CancellationToken cancellationToken)
     {
         var left = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is DialogLeaveEvent);
 
@@ -375,7 +375,7 @@ public static class MapChange
         await left.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task<MapChangeOutcome> NewMapAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)
+    internal static async Task<MapChangeOutcome> NewMapAsync(BotContext context, GameExpectation current, GameExpectation placed, CancellationToken cancellationToken)
     {
         if (await current.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is null)
             return MapChangeOutcome.NoAnswer;
