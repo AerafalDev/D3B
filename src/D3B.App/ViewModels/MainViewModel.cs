@@ -47,6 +47,7 @@ internal sealed partial class MainViewModel : ObservableObject
     private readonly Dictionary<CharacterKey, CharacterTabViewModel> _characterTabs = [];
     private readonly CharacterAccounts _characterAccounts;
     private bool _pagesRead;
+    private IUndoable? _followed;
     private List<SearchItem> _maps = [];
     private System.Globalization.CultureInfo? _mapsCulture;
 
@@ -176,6 +177,12 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the app's version and the client build it ships, under the welcome's logo.</summary>
     public string VersionText => _localizer.Format("WelcomeVersion", Updates.Version, Updates.ClientVersion);
 
+    private IUndoable? Undoable => Editor.Selected?.Content as IUndoable;
+
+    private bool CanUndo => Undoable?.CanUndo == true;
+
+    private bool CanRedo => Undoable?.CanRedo == true;
+
     /// <summary>Initializes a new instance of the <see cref="MainViewModel"/> class.</summary>
     /// <param name="host">The bots' host in the app's process.</param>
     /// <param name="localizer">The app's texts.</param>
@@ -195,7 +202,7 @@ internal sealed partial class MainViewModel : ObservableObject
         _characterAccounts = new CharacterAccounts(localizer, Dialogs, Toasts);
         Bots = new BotsViewModel(localizer, ShowJournalOf, OpenCharacter, Toasts);
         Characters = new CharactersViewModel(localizer, Bots, _characterAccounts, key => RunBlock!.Choose(key), OpenCharacter);
-        Routes = new RoutesViewModel(localizer, Dialogs, Toasts) { Opened = OpenRouteTab, Closed = CloseRouteTab };
+        Routes = new RoutesViewModel(localizer, Dialogs, Toasts) { Opened = ShowRoute, Closed = CloseRouteTab };
         Properties = new PropertiesViewModel(
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
             new AssetPropertiesViewModel(localizer) { RouteOf = Routes.Find });
@@ -212,6 +219,7 @@ internal sealed partial class MainViewModel : ObservableObject
             Reveal = path => RevealFile?.Invoke(path),
             IsUnsaved = id => Profiles.Find(id)?.IsDirty == true || Routes.Find(id)?.IsDirty == true,
         };
+        Properties.Asset.Rename = Assets.RenameAssetAsync;
         Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), new StatisticsViewModel(localizer));
         Bottom.HostFailure = () => IsFailed ? HostFailure : null;
         Bottom.Problems.OpenFolder = folder => OpenFolder?.Invoke(folder);
@@ -228,6 +236,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Search = new SearchViewModel(localizer, SearchItems);
         Bots.Choose = RunBlock.Choose;
         ClientText = localizer.Format("StatusClient", Updates.ClientVersion);
+        Editor.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
         ShowWelcome();
     }
 
@@ -359,7 +368,6 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <param name="id">The route's id.</param>
     public void OpenRoute(string id)
     {
-        ChooseAsset(id);
         Routes.OpenRoute(id);
     }
 
@@ -419,6 +427,20 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         Profiles.SaveAll();
         Routes.SaveAll();
+    }
+
+    /// <summary>Takes back the last change of the editor shown: Edit's Undo, Ctrl Z.</summary>
+    [RelayCommand(CanExecute = nameof(CanUndo))]
+    public void Undo()
+    {
+        Undoable?.Undo();
+    }
+
+    /// <summary>Does again the change taken back in the editor shown: Edit's Redo, Ctrl Y.</summary>
+    [RelayCommand(CanExecute = nameof(CanRedo))]
+    public void Redo()
+    {
+        Undoable?.Redo();
     }
 
     /// <summary>Opens the project's folder in the system's file manager.</summary>
@@ -495,6 +517,37 @@ internal sealed partial class MainViewModel : ObservableObject
             yield return new SearchItem(SearchScope.Settings, "setting:" + key, _localizer[key], _localizer["Section" + section], "General.Settings", "", "", () => ShowSettings(section));
     }
 
+    // Edit's Undo and Redo follow the editor shown, and what it holds to take back or do again.
+    private void FollowEditor(string? property)
+    {
+        if (property is not nameof(EditorTabs.Selected))
+            return;
+
+        // Choosing a route's tab again shows its parameters and steps in the inspector, as opening it does.
+        if (Editor.Selected?.Content is RouteEditorViewModel route)
+            ChooseAsset(route.Id);
+
+        if (_followed is not null)
+            _followed.PropertyChanged -= OnUndoableChanged;
+
+        _followed = Undoable;
+
+        if (_followed is not null)
+            _followed.PropertyChanged += OnUndoableChanged;
+
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+    }
+
+    private void OnUndoableChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(IUndoable.CanUndo) or nameof(IUndoable.CanRedo)))
+            return;
+
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+    }
+
     private IEnumerable<SearchItem> Commands()
     {
         SearchItem Command(string key, string keys, Action run)
@@ -504,6 +557,8 @@ internal sealed partial class MainViewModel : ObservableObject
 
         yield return Command("CommandNewProfile", "Ctrl N", NewProfile);
         yield return Command("CommandSaveAll", "Ctrl S", SaveAll);
+        yield return Command("CommandUndo", "Ctrl Z", Undo);
+        yield return Command("CommandRedo", "Ctrl Y", Redo);
         yield return Command("CommandToggleJournal", "Ctrl J", ToggleBottom);
         yield return Command("CommandGoToAssets", _localizer["KeysCtrlSpace"], GoToAssets);
         yield return Command("CommandDefaultLayout", "", Layout.Reset);
@@ -536,6 +591,13 @@ internal sealed partial class MainViewModel : ObservableObject
             Modified = () => item.IsDirty,
         });
         Editor.Refresh();
+    }
+
+    // The inspector shows a route as soon as its editor opens, a new one among them, and follows it as it is edited.
+    private void ShowRoute(RouteEditorViewModel item)
+    {
+        OpenRouteTab(item);
+        ChooseAsset(item.Id);
     }
 
     private void OpenRouteTab(RouteEditorViewModel item)

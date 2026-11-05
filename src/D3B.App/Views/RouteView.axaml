@@ -56,6 +56,7 @@
     </UserControl.Styles>
     <Grid Background="#0C1A1C">
         <w:WorldMapView
+            AutomationProperties.Name="{l:Tr RouteMapName}"
             Name="Map"
             Scene="{Binding Scene}"
             ShowGrid="{Binding ShowGrid}"
@@ -151,6 +152,7 @@
             VerticalAlignment="Top">
             <StackPanel Orientation="Horizontal" Spacing="3">
                 <Button
+                    AutomationProperties.Name="{l:Tr RouteToolSelect}"
                     Classes="Tool"
                     Classes.Selected="{Binding IsSelecting}"
                     Command="{Binding SetToolCommand}"
@@ -168,6 +170,7 @@
                     </Viewbox>
                 </Button>
                 <Button
+                    AutomationProperties.Name="{l:Tr RouteToolTraceTip}"
                     Classes="Tool"
                     Classes.Selected="{Binding IsTracing}"
                     Command="{Binding SetToolCommand}"
@@ -193,7 +196,9 @@
                     Margin="3,0"
                     Width="1" />
                 <TextBox
+                    AutomationProperties.Name="{l:Tr RouteAddName}"
                     Classes="Add"
+                    Name="AddBox"
                     Classes.Failed="{Binding AddFailed}"
                     Text="{Binding AddText}"
                     ToolTip.Tip="{l:Tr RouteAddUnknown}"
@@ -243,6 +248,7 @@
                     Margin="3,0"
                     Width="1" />
                 <Button
+                    AutomationProperties.Name="{l:Tr RouteZoomOut}"
                     Classes="Tool Small"
                     Click="OnZoomOut"
                     ToolTip.Tip="{l:Tr RouteZoomOut}">
@@ -259,6 +265,7 @@
                     VerticalAlignment="Center"
                     Width="44" />
                 <Button
+                    AutomationProperties.Name="{l:Tr RouteZoomIn}"
                     Classes="Tool Small"
                     Click="OnZoomIn"
                     ToolTip.Tip="{l:Tr RouteZoomIn}">
@@ -268,6 +275,7 @@
                         Width="12" />
                 </Button>
                 <Button
+                    AutomationProperties.Name="{l:Tr RouteFit}"
                     Classes="Tool Small"
                     Click="OnFit"
                     ToolTip.Tip="{l:Tr RouteFit}">
@@ -348,6 +356,7 @@
                         Margin="10,6,10,3"
                         Text="{Binding Title}" />
                     <Button
+                        AutomationProperties.Name="{l:Tr Close}"
                         Classes="Tool Small"
                         Command="{Binding CloseCommand}"
                         Grid.Column="1">

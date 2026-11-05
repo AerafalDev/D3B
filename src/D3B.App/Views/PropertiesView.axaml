@@ -640,6 +640,7 @@
                                                 Padding="8,0">
                                                 <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="34">
                                                     <Button
+                                                        AutomationProperties.Name="{Binding Summary}"
                                                         Background="Transparent"
                                                         BorderThickness="0"
                                                         Command="{Binding SelectCommand}"
@@ -695,6 +696,7 @@
                                                             ToolTip.Tip="{l:Tr RouteStepElsewhere}"
                                                             Width="12" />
                                                         <Button
+                                                            AutomationProperties.Name="{l:Tr RouteStepRemove}"
                                                             Classes="Tool Small"
                                                             Command="{Binding RemoveCommand}"
                                                             ToolTip.Tip="{l:Tr RouteStepRemove}">
@@ -730,7 +732,22 @@
                                 <ColumnDefinition Width="20" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Classes="Key" Text="{l:Tr PropertyName}" />
-                            <Border Classes="Field" Grid.Column="1">
+                            <TextBox
+                                AutomationProperties.Name="{l:Tr PropertyName}"
+                                Classes="Field"
+                                Grid.Column="1"
+                                IsVisible="{Binding Asset.CanRename}"
+                                LostFocus="OnNameLostFocus"
+                                Text="{Binding Asset.NameText}">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Command="{Binding Asset.CommitNameCommand}" Gesture="Enter" />
+                                    <KeyBinding Command="{Binding Asset.RevertNameCommand}" Gesture="Escape" />
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            <Border
+                                Classes="Field"
+                                Grid.Column="1"
+                                IsVisible="{Binding Asset.IsGiven}">
                                 <TextBlock
                                     Text="{Binding Asset.Name}"
                                     TextTrimming="CharacterEllipsis"

@@ -148,7 +148,6 @@
                                         Classes.Heading="{Binding IsGivenHeading}"
                                         Classes.Selected="{Binding IsSelected}"
                                         ContextRequested="OnRowContextRequested"
-                                        DoubleTapped="OnRowDoubleTapped"
                                         PointerMoved="OnRowPointerMoved"
                                         PointerPressed="OnRowPressed"
                                         PointerReleased="OnRowReleased"

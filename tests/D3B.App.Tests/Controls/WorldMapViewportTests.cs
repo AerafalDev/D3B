@@ -46,6 +46,19 @@ public sealed class WorldMapViewportTests
     }
 
     [Fact]
+    public void CentringOnAPixelShowsItAtTheMiddleOfTheViewAtTheScaleAsked()
+    {
+        var viewport = Viewport();
+
+        viewport.CenterOn(4_200, 3_100, 0.8);
+
+        var (x, y) = viewport.ToView(4_200, 3_100);
+
+        Assert.Equal(0.8, viewport.Scale);
+        Assert.Equal((400, 300), (Math.Round(x, 6), Math.Round(y, 6)));
+    }
+
+    [Fact]
     public void TheScaleIsHeldBetweenTheLeastAndTheMost()
     {
         var viewport = Viewport();

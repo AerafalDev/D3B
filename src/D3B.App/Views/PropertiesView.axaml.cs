@@ -25,6 +25,11 @@ internal sealed partial class PropertiesView : UserControl
         InitializeComponent();
     }
 
+    private void OnNameLostFocus(object? sender, RoutedEventArgs e)
+    {
+        (DataContext as PropertiesViewModel)?.Asset.CommitNameCommand.Execute(null);
+    }
+
     /// <inheritdoc/>
     protected override void OnDataContextChanged(EventArgs e)
     {

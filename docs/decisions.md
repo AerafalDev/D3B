@@ -8158,6 +8158,65 @@ D324. The mockup: `docs/mockups/route-7d.html`.*
 - **To judge with the owner on the real app**: the marks of shared coordinates, 273 squares of the main world alone, crowd the map
   at 80 %; they might show from a greater zoom, or be dimmer, the lead's call once seen.
 
+## D375: The route editor after the owner's first look: a line and no pills, two levels of marks, a start that reads, undo and the keys
+
+*2026-11-05, step 7, session 7d3, the owner's remarks on the real app and the lead's answers, within D371 and D373. Amends D372
+and D374; the rest of the mockup stands.*
+
+- **No pills: a line, its maps outlined and a small node a step.** At 80 % the pills, as wide as their map's name, hid the maps
+  around and the path between them, which the route is for; the owner then asked for a line alone and drew what he meant: a
+  thin line between the centres of the maps, every map the route goes through outlined, a dot for each step. Then asked it
+  more beautiful and modern, and that maps beside each other not double their border into a thicker one. So: the maps the route
+  goes through are one shape, filled as a union (a tint never doubled) and outlined only where no other of them lies beside,
+  with a faint shade under the outline; the line 2 to 3.2 pixels thick on a soft shadow and a hairline casing, its turns
+  rounded, a small white chevron halfway between each map and the next for its way (one per leg before); a step a teal node
+  in a white ring on a shade, larger under the pointer, the accent ring on the step chosen, a dark dot in a pinned one. No
+  number or name on the map: the inspector's list says them, and the HUD names the step hovered. The colour stays the route
+  kind's teal (D326), where the owner's drawing was yellow; one constant changes it. A node is pressed on an area a little
+  larger than it is drawn. Supersedes the pills of D371.
+- **The marks of shared coordinates have two levels**, the owner's choice among three: under a map 96 pixels wide in the view
+  a small translucent amber dot, clickable as the badge is; above, the badge with the number of maps. They show from 14 pixels,
+  as the grid does.
+- **A new route starts where the world is inhabited**, not on the whole image, which at the main world's size read as a
+  speck: the median of the maps lying wholly inside the image (the maps stacked off it at 0, 0 pull nothing) at 80 %, or the
+  whole image when that is already closer.
+- **Undo and Redo** (Edit's items, Ctrl Z, Ctrl Y, Ctrl Shift Z, and in the command search) follow the editor shown through
+  `IUndoable`: today the route's, whose state is a snapshot of its anchors, course and unreachable policy, 200 deep, cleared
+  when the project changes the route under it. A press on the map and what it does until it is let go is one change (a paint
+  across ten maps, a station dragged across three), recorded at its first. Undoing back to what was saved is not dirty. The
+  profile's editor, the first to have asked for it in D320, does not undo yet, and the canvas of 7e will.
+- **Keys on the map**: V select, B trace, Escape closes the choice or leaves Trace, Delete or Backspace removes the step, Alt up
+  and down move it in the route, PageUp and PageDown choose the previous and next step and show it, the arrows pan (Shift for
+  more), + and - zoom, F shows the route, Home the whole world, Ctrl L goes to the box that adds a map and Escape back to the
+  map. The map takes focus with Tab, and its tools, the steps and their buttons carry names for a screen reader.
+- **The inspector shows a route as its editor opens**, a new one among them, and again when its tab is chosen; its steps and
+  counts follow the editor as it changes, the editor being what the inspector reads.
+- **The inspector's name field is typed in**, for any asset of the project (a route, a profile): Enter or leaving the field
+  renames the asset and its file with it, as the tree's rename does (one code, `AssetsViewModel.RenameAssetAsync`: a name
+  that is empty, the same, taken or not a file's is said and the field goes back), Escape drops it. A given asset stays read
+  only. What is typed stays through the host's refreshes.
+- **The assets' double click opens the row on the second press's click count.** A click chooses the row and builds the rows
+  again, so the second press landed on a new control and Avalonia's `DoubleTapped`, which wants the same control twice, rarely
+  came; the tree now opens a row when the press itself counts two (not with Ctrl or Shift), a test pressing a row twice on the
+  real window failing before. The characters' cards and lines, whose rows are not built again, are left as they are.
+- **Left**: an accessibility pass of the whole studio (the other editors' keys and names), undo in the other editors, and the
+  steps' reordering by dragging; this entry covers the route editor alone.
+
+## D376: 7d in four sessions: the actions and the run first, then recording and the zones
+
+*2026-11-05, step 7, session 7d3, the owner's choice among three splits, with the lead's recommendation. Amends D370.*
+
+| Session | Content |
+| --- | --- |
+| 7d3 | The first look's remarks on the route editor (D375), then the actions of each map as sentences of typed values, the cell picked on the map's own cells (D121), their count on the step, and the run of a route: loop, one way, there and back, a map out of reach passed or failing, the actions of each map played, zaaps in the path. |
+| 7d4 | Recording while playing (what happens, what is done on the map) and Simplify (D299); zones and their editor on the same view; and what 7d3 leaves: undo and the keys of the other editors, the steps reordered by dragging. |
+
+- **Why**: 7d3 as D370 wrote it holds four pieces, each a session's work with its own run time or host events; the actions
+  cannot be tried until a route runs them, so those two go together, and recording needs the actions' vocabulary and the
+  host's events, so it goes after.
+- **The first session spent on the owner's first look at the real app** (D375): the editor's discs, marks, start, undo, keys, the
+  inspector and the double click; the actions and the run were not started in it, 7d3 is the next session.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

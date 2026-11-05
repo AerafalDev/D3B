@@ -261,4 +261,132 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         Assert.Equal(["r1"], closed);
         Assert.Empty(routes.Open);
     }
+
+    [Fact]
+    public async Task UndoTakesBackEachChangeInTurnAndRedoDoesThemAgain()
+    {
+        var (_, editor) = await OpenAsync(1);
+
+        Assert.False(editor.CanUndo);
+
+        editor.TraceSquare(2, 0, isDrag: false);
+        editor.SetModeCommand.Execute(RouteMode.OneWay);
+        editor.TraceSquare(3, 0, isDrag: false);
+
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L], editor.Steps.Select(step => step.MapId));
+        Assert.Equal((RouteMode.OneWay, true), (editor.Mode, editor.CanUndo));
+
+        editor.Undo();
+        editor.Undo();
+
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L], editor.Steps.Select(step => step.MapId));
+        Assert.Equal((RouteMode.Loop, true), (editor.Mode, editor.CanRedo));
+
+        editor.Redo();
+        editor.Redo();
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L], editor.Steps.Select(step => step.MapId));
+        Assert.Equal((RouteMode.OneWay, false), (editor.Mode, editor.CanRedo));
+    }
+
+    [Fact]
+    public async Task AChangeAfterAnUndoLeavesNothingToRedoAndUndoingEverythingLeavesTheRouteAsSaved()
+    {
+        var (_, editor) = await OpenAsync(1, 2);
+
+        editor.TraceSquare(3, 0, isDrag: false);
+        editor.Undo();
+
+        Assert.False(editor.IsDirty);
+
+        editor.TraceSquare(4, 0, isDrag: false);
+
+        Assert.False(editor.CanRedo);
+
+        editor.Undo();
+
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L], editor.Steps.Select(step => step.MapId));
+        Assert.False(editor.IsDirty);
+    }
+
+    [Fact]
+    public async Task AGestureIsOneChangeToUndoHoweverManyMapsItCrossed()
+    {
+        var (_, editor) = await OpenAsync();
+
+        editor.BeginGesture();
+        editor.TraceSquare(1, 0, isDrag: false);
+        editor.TraceSquare(2, 0, isDrag: true);
+        editor.TraceSquare(3, 0, isDrag: true);
+        editor.EndGesture();
+        editor.TraceSquare(4, 0, isDrag: false);
+
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L, 4L], editor.Steps.Select(step => step.MapId));
+
+        editor.Undo();
+
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L], editor.Steps.Select(step => step.MapId));
+
+        editor.Undo();
+
+        await editor.Planned;
+
+        Assert.Empty(editor.Steps);
+        Assert.False(editor.CanUndo);
+    }
+
+    [Fact]
+    public async Task TheStepChosenMovesInTheRouteAndTheMovesCanBeUndone()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3);
+
+        editor.Select(0);
+        // Each change is planned before the next, as on the interface's thread: here no context keeps two plans apart.
+        editor.MoveSelected(1);
+        await editor.Planned;
+        editor.MoveSelected(1);
+        await editor.Planned;
+        editor.MoveSelected(1);
+
+        await editor.Planned;
+
+        Assert.Equal([2L, 3L, 1L], editor.Steps.Select(step => step.MapId));
+        Assert.Equal(2, editor.SelectedIndex);
+
+        editor.Undo();
+        await editor.Planned;
+        editor.Undo();
+
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L], editor.Steps.Select(step => step.MapId));
+    }
+
+    [Fact]
+    public async Task ThePageKeysChooseThePreviousAndNextStepAndStopAtTheEnds()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3);
+
+        editor.StepBy(1);
+        editor.StepBy(1);
+        editor.StepBy(1);
+        editor.StepBy(1);
+
+        Assert.Equal(2, editor.SelectedIndex);
+
+        editor.StepBy(-5);
+
+        Assert.Equal(0, editor.SelectedIndex);
+    }
 }

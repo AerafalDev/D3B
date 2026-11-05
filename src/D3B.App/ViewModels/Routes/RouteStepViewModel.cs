@@ -15,6 +15,9 @@ internal sealed partial class RouteStepViewModel : ObservableObject
     /// <summary>Gets the step's number, from 1, as the map's pill shows it.</summary>
     public int Number => Index + 1;
 
+    /// <summary>Gets what a screen reader says of the step: its number and where its map lies.</summary>
+    public string Summary => Number.ToString(System.Globalization.CultureInfo.CurrentCulture) + ". " + Place;
+
     /// <summary>Gets the step's map.</summary>
     public long MapId { get; }
 

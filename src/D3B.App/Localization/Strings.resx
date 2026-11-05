@@ -2454,13 +2454,13 @@
     <value>The marks for several maps on one square</value>
   </data>
   <data name="RouteZoomIn" xml:space="preserve">
-    <value>Zoom in</value>
+    <value>Zoom in · +</value>
   </data>
   <data name="RouteZoomOut" xml:space="preserve">
-    <value>Zoom out</value>
+    <value>Zoom out · -</value>
   </data>
   <data name="RouteFit" xml:space="preserve">
-    <value>See everything</value>
+    <value>See everything · Home</value>
   </data>
   <data name="RouteHudNothing" xml:space="preserve">
     <value>Hover a map</value>
@@ -2569,5 +2569,17 @@
   </data>
   <data name="RouteSharedOutside" xml:space="preserve">
     <value>World</value>
+  </data>
+  <data name="CommandUndo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="CommandRedo" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="RouteMapName" xml:space="preserve">
+    <value>Map of the world with the route</value>
+  </data>
+  <data name="RouteAddName" xml:space="preserve">
+    <value>Add a map by its id or its coordinates</value>
   </data>
 </root>

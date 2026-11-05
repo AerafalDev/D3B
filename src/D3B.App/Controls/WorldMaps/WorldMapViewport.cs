@@ -106,6 +106,17 @@ internal sealed class WorldMapViewport
         OffsetY = ((Height - (height * Scale)) / 2) - (top * Scale);
     }
 
+    /// <summary>Shows a pixel of the image at the view's centre, at a scale.</summary>
+    /// <param name="x">The image's column.</param>
+    /// <param name="y">The image's row.</param>
+    /// <param name="scale">The new scale, held between <see cref="MinScale"/> and <see cref="MaxScale"/>.</param>
+    public void CenterOn(double x, double y, double scale)
+    {
+        Scale = Math.Clamp(scale, MinScale, MaxScale);
+        OffsetX = (Width / 2) - (x * Scale);
+        OffsetY = (Height / 2) - (y * Scale);
+    }
+
     /// <summary>Keeps some of the image in the view, so that panning never loses it.</summary>
     /// <param name="imageWidth">The image's width at full size.</param>
     /// <param name="imageHeight">The image's height at full size.</param>

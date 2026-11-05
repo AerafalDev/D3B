@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -5,6 +6,7 @@ using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls.WorldMaps;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Assets;
 using D3B.Bot.Routes;
 using D3B.Data.WorldMaps;
@@ -24,8 +26,10 @@ namespace D3B.App.ViewModels.Routes;
 /// stays as it was. The map's view hears what is pressed through this model, and is given a <see cref="WorldMapScene"/>.
 /// </para>
 /// </remarks>
-internal sealed partial class RouteEditorViewModel : ObservableObject
+internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 {
+    private const int UndoDepth = 200;
+
     private static readonly Regex _coordinates = CoordinatesPattern();
     private static readonly Regex _mapId = MapIdPattern();
 
@@ -33,11 +37,16 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     private readonly List<RouteAnchor> _anchors;
     private readonly List<int> _stationAnchors = [];
     private readonly List<int> _sceneLegs = [];
+    private readonly List<Snapshot> _undo = [];
+    private readonly List<Snapshot> _redo = [];
     private RouteAsset _saved;
     private IReadOnlyList<RouteLeg> _legs = [];
     private long _paintedFrom;
     private int _version;
     private Task _planning = Task.CompletedTask;
+    private Snapshot _current;
+    private bool _inGesture;
+    private bool _gestureRecorded;
 
     /// <summary>Gets the route's id.</summary>
     public string Id => _saved.Id;
@@ -173,6 +182,12 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     /// <summary>Gets whether the select tool is chosen.</summary>
     public bool IsSelecting => Tool == WorldMapTool.Select;
 
+    /// <inheritdoc/>
+    public bool CanUndo => _undo.Count > 0;
+
+    /// <inheritdoc/>
+    public bool CanRedo => _redo.Count > 0;
+
     /// <summary>Gets what the path search has not finished.</summary>
     public Task Planned => _planning;
 
@@ -194,6 +209,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
         Name = route.Name;
         Mode = route.Mode;
         Unreachable = route.Unreachable;
+        _current = Take();
         Hud = page.Localizer["RouteHudNothing"];
         Layer = FirstLayer();
         Relabel();
@@ -247,6 +263,12 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
             _anchors.AddRange(route.Anchors);
             Mode = route.Mode;
             Unreachable = route.Unreachable;
+
+            // What was done belongs to the route as it was: undoing it onto another would make a mixture.
+            _undo.Clear();
+            _redo.Clear();
+            _current = Take();
+            Moved();
         }
 
         Rebuild();
@@ -411,6 +433,70 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     public void RemoveSelected()
     {
         Remove(SelectedIndex);
+    }
+
+    /// <summary>Moves the step chosen in the route: Alt with the up and down arrows.</summary>
+    /// <param name="delta">How many places towards the end, negative towards the start.</param>
+    public void MoveSelected(int delta)
+    {
+        var from = SelectedIndex;
+        var to = from + delta;
+
+        if (from < 0 || from >= _anchors.Count || to < 0 || to >= _anchors.Count || to == from)
+            return;
+
+        var anchor = _anchors[from];
+
+        _anchors.RemoveAt(from);
+        _anchors.Insert(to, anchor);
+        SelectedIndex = to;
+        Changed();
+    }
+
+    /// <summary>Chooses another step and shows it on the map: the page keys.</summary>
+    /// <param name="delta">How many places towards the end, negative towards the start.</param>
+    public void StepBy(int delta)
+    {
+        if (_anchors.Count == 0)
+            return;
+
+        Reveal(Math.Clamp(SelectedIndex < 0 ? (delta > 0 ? 0 : _anchors.Count - 1) : SelectedIndex + delta, 0, _anchors.Count - 1));
+    }
+
+    /// <summary>Starts a gesture, a press and what it does until it is let go: the changes it makes are one to undo.</summary>
+    public void BeginGesture()
+    {
+        _inGesture = true;
+        _gestureRecorded = false;
+    }
+
+    /// <summary>Ends the gesture.</summary>
+    public void EndGesture()
+    {
+        _inGesture = false;
+        _gestureRecorded = false;
+    }
+
+    /// <inheritdoc/>
+    public void Undo()
+    {
+        if (_undo.Count == 0)
+            return;
+
+        _redo.Add(_current);
+        Restore(_undo[^1]);
+        _undo.RemoveAt(_undo.Count - 1);
+    }
+
+    /// <inheritdoc/>
+    public void Redo()
+    {
+        if (_redo.Count == 0)
+            return;
+
+        _undo.Add(_current);
+        Restore(_redo[^1]);
+        _redo.RemoveAt(_redo.Count - 1);
     }
 
     /// <summary>Changes the layer to a world.</summary>
@@ -642,8 +728,53 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
 
     private void Changed()
     {
+        var now = Take();
+
+        if (!now.Equals(_current))
+        {
+            // A gesture, a drag across many maps, is one change to take back, recorded at its first.
+            if (!_inGesture || !_gestureRecorded)
+            {
+                _undo.Add(_current);
+
+                if (_undo.Count > UndoDepth)
+                    _undo.RemoveAt(0);
+
+                _gestureRecorded = _inGesture;
+            }
+
+            _redo.Clear();
+            _current = now;
+            Moved();
+        }
+
         Rebuild();
         RecomputeDirty();
+    }
+
+    private Snapshot Take()
+    {
+        return new Snapshot([.. _anchors], Mode, Unreachable);
+    }
+
+    private void Restore(Snapshot state)
+    {
+        _anchors.Clear();
+        _anchors.AddRange(state.Anchors);
+        Mode = state.Mode;
+        Unreachable = state.Unreachable;
+        _current = state;
+        Choice = null;
+        SelectedIndex = Math.Min(SelectedIndex, _anchors.Count - 1);
+        Moved();
+        Rebuild();
+        RecomputeDirty();
+    }
+
+    private void Moved()
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
     }
 
     private void RecomputeDirty()
@@ -832,5 +963,18 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     {
         BuildSteps();
         BuildScene();
+    }
+
+    private readonly record struct Snapshot(ImmutableArray<RouteAnchor> Anchors, RouteMode Mode, RouteUnreachable Unreachable)
+    {
+        public bool Equals(Snapshot other)
+        {
+            return Mode == other.Mode && Unreachable == other.Unreachable && Anchors.AsSpan().SequenceEqual(other.Anchors.AsSpan());
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Anchors.Length, Mode, Unreachable);
+        }
     }
 }

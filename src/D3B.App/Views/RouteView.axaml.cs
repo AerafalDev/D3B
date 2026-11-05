@@ -12,6 +12,8 @@ namespace D3B.App.Views;
 internal sealed partial class RouteView : UserControl
 {
     private const double ZoomStep = 1.25;
+    private const double FastPan = 320;
+    private const double SlowPan = 80;
     private const double ChoiceWidth = 270;
     private const double ChoiceHeight = 300;
 
@@ -38,6 +40,8 @@ internal sealed partial class RouteView : UserControl
             old.PropertyChanged -= OnRouteChanged;
             Map.StationSelected -= old.SelectStation;
             Map.StationMoved -= old.MoveStation;
+            Map.GestureStarted -= old.BeginGesture;
+            Map.GestureEnded -= old.EndGesture;
             Map.SquareTraced -= old.TraceSquare;
             Map.PathPointPinned -= old.PinPathPoint;
         }
@@ -52,6 +56,8 @@ internal sealed partial class RouteView : UserControl
         route.PropertyChanged += OnRouteChanged;
         Map.StationSelected += route.SelectStation;
         Map.StationMoved += route.MoveStation;
+        Map.GestureStarted += route.BeginGesture;
+        Map.GestureEnded += route.EndGesture;
         Map.SquareTraced += route.TraceSquare;
         Map.PathPointPinned += route.PinPathPoint;
         route.Zoomed(Map.ZoomPercent);
@@ -62,32 +68,132 @@ internal sealed partial class RouteView : UserControl
     {
         base.OnKeyDown(e);
 
-        if (_route is not { } route || e.Source is TextBox || e.KeyModifiers != KeyModifiers.None)
+        if (_route is not { } route)
             return;
 
-        switch (e.Key)
+        // Typing in the box is the box's; Escape gives the keys back to the map. Undo and Redo are the window's (Edit).
+        if (e.Source is TextBox)
         {
-            case Key.Delete:
-                route.RemoveSelected();
+            if (e.Key is Key.Escape && e.KeyModifiers == KeyModifiers.None)
+            {
+                Map.Focus();
                 e.Handled = true;
+            }
 
-                break;
-            case Key.V:
-                route.Tool = WorldMapTool.Select;
-                e.Handled = true;
-
-                break;
-            case Key.B:
-                route.Tool = WorldMapTool.Trace;
-                e.Handled = true;
-
-                break;
-            case Key.Escape when route.HasChoice:
-                route.CloseChoiceCommand.Execute(null);
-                e.Handled = true;
-
-                break;
+            return;
         }
+
+        var modifiers = e.KeyModifiers;
+        var onMap = e.Source == Map;
+        var step = modifiers.HasFlag(KeyModifiers.Shift) ? FastPan : SlowPan;
+
+        e.Handled = true;
+
+        if (modifiers == KeyModifiers.Control)
+        {
+            if (e.Key is Key.L)
+                FocusAdd();
+            else
+                e.Handled = false;
+        }
+        else if (modifiers == KeyModifiers.Alt)
+        {
+            switch (e.Key)
+            {
+                case Key.Up:
+                    route.MoveSelected(-1);
+
+                    break;
+                case Key.Down:
+                    route.MoveSelected(1);
+
+                    break;
+                default:
+                    e.Handled = false;
+
+                    break;
+            }
+        }
+        else if (e.Key is Key.Add or Key.OemPlus)
+        {
+            Map.ZoomBy(ZoomStep);
+        }
+        else if (e.Key is Key.Subtract or Key.OemMinus)
+        {
+            Map.ZoomBy(1 / ZoomStep);
+        }
+        else if (modifiers is not (KeyModifiers.None or KeyModifiers.Shift))
+        {
+            e.Handled = false;
+        }
+        else
+        {
+            switch (e.Key)
+            {
+                case Key.Delete or Key.Back:
+                    route.RemoveSelected();
+
+                    break;
+                case Key.V:
+                    route.Tool = WorldMapTool.Select;
+
+                    break;
+                case Key.B:
+                    route.Tool = WorldMapTool.Trace;
+
+                    break;
+                case Key.F:
+                    Map.FitScene();
+
+                    break;
+                case Key.Home:
+                    Map.FitWorld();
+
+                    break;
+                case Key.Escape when route.HasChoice:
+                    route.CloseChoiceCommand.Execute(null);
+
+                    break;
+                case Key.Escape when route.Tool is WorldMapTool.Trace:
+                    route.Tool = WorldMapTool.Select;
+
+                    break;
+                case Key.PageUp when onMap:
+                    route.StepBy(-1);
+
+                    break;
+                case Key.PageDown when onMap:
+                    route.StepBy(1);
+
+                    break;
+                case Key.Left when onMap:
+                    Map.PanBy(step, 0);
+
+                    break;
+                case Key.Right when onMap:
+                    Map.PanBy(-step, 0);
+
+                    break;
+                case Key.Up when onMap:
+                    Map.PanBy(0, step);
+
+                    break;
+                case Key.Down when onMap:
+                    Map.PanBy(0, -step);
+
+                    break;
+                default:
+                    e.Handled = false;
+
+                    break;
+            }
+        }
+    }
+
+    private void FocusAdd()
+    {
+        AddBox.Focus();
+        AddBox.SelectAll();
     }
 
     private void OnViewChanged()

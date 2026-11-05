@@ -2454,13 +2454,13 @@
     <value>Les marques de plusieurs cartes sur une même case</value>
   </data>
   <data name="RouteZoomIn" xml:space="preserve">
-    <value>Zoomer</value>
+    <value>Zoomer · +</value>
   </data>
   <data name="RouteZoomOut" xml:space="preserve">
-    <value>Dézoomer</value>
+    <value>Dézoomer · -</value>
   </data>
   <data name="RouteFit" xml:space="preserve">
-    <value>Tout voir</value>
+    <value>Tout voir · Origine</value>
   </data>
   <data name="RouteHudNothing" xml:space="preserve">
     <value>Survolez une carte</value>
@@ -2569,5 +2569,17 @@
   </data>
   <data name="RouteSharedOutside" xml:space="preserve">
     <value>Monde</value>
+  </data>
+  <data name="CommandUndo" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="CommandRedo" xml:space="preserve">
+    <value>Rétablir</value>
+  </data>
+  <data name="RouteMapName" xml:space="preserve">
+    <value>Carte du monde avec la route</value>
+  </data>
+  <data name="RouteAddName" xml:space="preserve">
+    <value>Ajouter une carte par son id ou ses coordonnées</value>
   </data>
 </root>
