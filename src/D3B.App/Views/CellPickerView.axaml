@@ -1,0 +1,53 @@
+<UserControl
+    x:Class="D3B.App.Views.CellPickerView"
+    x:ClassModifier="internal"
+    x:DataType="s:CellPickerViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:s="clr-namespace:D3B.App.ViewModels.Settings"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.KeyBindings>
+        <KeyBinding Command="{Binding CancelCommand}" Gesture="Escape" />
+    </UserControl.KeyBindings>
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock Classes="Title" Text="{Binding Title}" />
+        <TextBlock
+            Classes="Muted"
+            Text="{Binding Hint}"
+            TextWrapping="Wrap" />
+        <Border
+            Background="{DynamicResource RecessColor}"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1"
+            CornerRadius="10"
+            Height="420"
+            Width="720">
+            <c:CellPicker
+                AutomationProperties.Name="{Binding Title}"
+                Map="{Binding Map}"
+                Name="Cells"
+                Palette="{DynamicResource MapPalette}"
+                Selected="{Binding Selected, Mode=TwoWay}" />
+        </Border>
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBlock
+                Classes="Dim Figures"
+                Text="{Binding Pointed}"
+                VerticalAlignment="Center" />
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Classes="Outline"
+                    Command="{Binding ClearCommand}"
+                    Content="{Binding ClearText}"
+                    IsVisible="{Binding Selected, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                <Button
+                    Classes="Outline"
+                    Command="{Binding CancelCommand}"
+                    Content="{Binding CancelText}" />
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

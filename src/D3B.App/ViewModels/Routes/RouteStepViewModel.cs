@@ -15,6 +15,9 @@ internal sealed partial class RouteStepViewModel : ObservableObject
     /// <summary>Gets the step's number, from 1, as the map's pill shows it.</summary>
     public int Number => Index + 1;
 
+    /// <summary>Gets what a screen reader says of the step: its number and where its map lies.</summary>
+    public string Summary => Number.ToString(System.Globalization.CultureInfo.CurrentCulture) + ". " + Place;
+
     /// <summary>Gets the step's map.</summary>
     public long MapId { get; }
 
@@ -42,6 +45,15 @@ internal sealed partial class RouteStepViewModel : ObservableObject
     /// <summary>Gets whether the way back to the first step is meant: a loop's closing leg, said fainter.</summary>
     public bool IsGapBack { get; }
 
+    /// <summary>Gets how many actions the route plays on the step's map (D377).</summary>
+    public int ActionCount { get; }
+
+    /// <summary>Gets the count in words, such as "2 actions"; empty when there is none.</summary>
+    public string ActionsText { get; }
+
+    /// <summary>Gets whether the step has actions, which its row counts.</summary>
+    public bool HasActions => ActionCount > 0;
+
     /// <summary>Gets whether the step is the one chosen.</summary>
     [ObservableProperty]
     public partial bool IsSelected { get; set; }
@@ -56,9 +68,11 @@ internal sealed partial class RouteStepViewModel : ObservableObject
     /// <param name="gap">The way to the next step, in words.</param>
     /// <param name="isGapBroken">Whether no path leads to the next step.</param>
     /// <param name="isGapBack">Whether the way is a loop's way back to the first step.</param>
+    /// <param name="actionCount">How many actions the step has.</param>
+    /// <param name="actionsText">The count in words.</param>
     /// <param name="select">What choosing the step does, given its place.</param>
     /// <param name="remove">What removing the step does, given its place.</param>
-    public RouteStepViewModel(int index, long mapId, string place, string zone, bool isPinned, bool isElsewhere, string gap, bool isGapBroken, bool isGapBack, Action<int> select, Action<int> remove)
+    public RouteStepViewModel(int index, long mapId, string place, string zone, bool isPinned, bool isElsewhere, string gap, bool isGapBroken, bool isGapBack, int actionCount, string actionsText, Action<int> select, Action<int> remove)
     {
         Index = index;
         MapId = mapId;
@@ -69,6 +83,8 @@ internal sealed partial class RouteStepViewModel : ObservableObject
         Gap = gap;
         IsGapBroken = isGapBroken;
         IsGapBack = isGapBack;
+        ActionCount = actionCount;
+        ActionsText = actionsText;
         _select = select;
         _remove = remove;
     }

@@ -95,4 +95,54 @@ public sealed class RoutePlannerTests
         Assert.Equal(7, planner.Primary([7, 8]));
         Assert.Throws<ArgumentException>(() => planner.Primary([]));
     }
+
+    // 1 to 8 in a line, a zaap on 1 and 8 and both maps allowing a teleport: a walk of seven changes, a zaap of one.
+    private static RoutePlanner LongPlanner(bool withZaaps = true)
+    {
+        long[] maps = [1, 2, 3, 4, 5, 6, 7, 8];
+        var vertices = maps.Select(map => new WorldVertex(map, 1)).ToArray();
+        var edges = new List<WorldEdge>();
+        var transitions = new List<WorldTransition>();
+
+        for (var i = 0; i + 1 < maps.Length; i++)
+        {
+            foreach (var (from, to) in new[] { (i, i + 1), (i + 1, i) })
+            {
+                edges.Add(new WorldEdge(from, to, transitions.Count, 1));
+                transitions.Add(new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, maps[to], WorldTransition.None, WorldTransition.None));
+            }
+        }
+
+        edges.Sort((left, right) => (left.From, left.To).CompareTo((right.From, right.To)));
+
+        var graph = new WorldGraph(vertices, edges.ToArray(), transitions.ToArray(), Array.Empty<string>());
+        var positions = maps.Select(map => new MapPosition(map, (short)map, 0, SubAreaId, 1, 0, 1u << 3)).ToArray();
+        Waypoint[] waypoints = withZaaps ? [new(1, 1, SubAreaId, true), new(2, 8, SubAreaId, true)] : [];
+        var atlas = new WorldAtlas(positions, new[] { new SubArea(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 0, 0, 0) }, new[] { new Area(1, 0, 0) }, waypoints, Array.Empty<int>(), Array.Empty<int>());
+
+        return new RoutePlanner(new WorldPathfinder(graph, atlas));
+    }
+
+    [Fact]
+    public void AZaapIsTakenWhereItSavesAtLeastFiveChangesAndSaidInTheLeg()
+    {
+        var far = LongPlanner().Find(1, 8);
+        var near = LongPlanner().Find(1, 4);
+
+        Assert.Equal(RouteLegKind.Path, far.Kind);
+        Assert.True(far.UsesZaap);
+        Assert.Equal([8L], far.Teleports);
+        Assert.Equal(RouteLegKind.Path, near.Kind);
+        Assert.False(near.UsesZaap);
+        Assert.Equal([2L, 3L], near.Between);
+    }
+
+    [Fact]
+    public void WithoutAnyZaapOfTheGameTheSameLegIsWalked()
+    {
+        var leg = LongPlanner(withZaaps: false).Find(1, 8);
+
+        Assert.False(leg.UsesZaap);
+        Assert.Equal([2L, 3L, 4L, 5L, 6L, 7L], leg.Between);
+    }
 }

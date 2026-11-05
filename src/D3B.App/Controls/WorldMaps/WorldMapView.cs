@@ -32,6 +32,7 @@ internal sealed class WorldMapView : Control
     private const double KeptOfImage = 160;
     private const double Prefetch = 256;
     private const double GridFrom = 14;
+    private const double BadgeFrom = 96;
     private const double WheelStep = 1.22;
     private const double Ease = 14;
     private const double MaxSceneFit = 0.8;
@@ -60,6 +61,7 @@ internal sealed class WorldMapView : Control
     private static readonly IPen _tracePen = new Pen(new SolidColorBrush(Color.Parse("#5FD3C0")), 2);
     private static readonly IBrush _badge = new SolidColorBrush(Color.Parse("#1B1B1F"));
     private static readonly IBrush _amber = new SolidColorBrush(Color.Parse("#E9AD3C"));
+    private static readonly IBrush _dot = new SolidColorBrush(Color.Parse("#E9AD3C"), 0.55);
 
     private readonly WorldMapViewport _viewport = new();
     private WorldMapSource? _source;
@@ -158,6 +160,12 @@ internal sealed class WorldMapView : Control
     /// <summary>Raised when a station has been dragged and let go.</summary>
     public event Action? StationMoveEnded;
 
+    /// <summary>Raised when the pointer is pressed on the map, where a gesture that edits the route starts.</summary>
+    public event Action? GestureStarted;
+
+    /// <summary>Raised when the gesture ends, the pointer let go or taken away.</summary>
+    public event Action? GestureEnded;
+
     /// <summary>Raised by the trace tool, on the coordinates pressed and on each one a drag crosses, which the last argument says.</summary>
     public event Action<int, int, bool>? SquareTraced;
 
@@ -166,6 +174,16 @@ internal sealed class WorldMapView : Control
 
     /// <summary>Raised when the mark of shared coordinates is pressed, with the coordinates and the point pressed.</summary>
     public event Action<int, int, Point>? SharedPressed;
+
+    /// <summary>Moves the image, as the arrow keys do.</summary>
+    /// <param name="dx">Pixels of the view to move it right.</param>
+    /// <param name="dy">Pixels of the view to move it down.</param>
+    public void PanBy(double dx, double dy)
+    {
+        _viewport.Pan(dx, dy);
+        KeepInView();
+        Changed();
+    }
 
     /// <summary>Zooms around the middle of the view, by a factor.</summary>
     /// <param name="factor">More than 1 zooms in.</param>
@@ -184,7 +202,7 @@ internal sealed class WorldMapView : Control
         Settle();
     }
 
-    /// <summary>Shows the route whole, else the whole image.</summary>
+    /// <summary>Shows the route whole, else the heart of the world.</summary>
     public void FitScene()
     {
         if (!_hasWorld)
@@ -194,7 +212,7 @@ internal sealed class WorldMapView : Control
 
         if (stations.Count == 0)
         {
-            FitWorld();
+            FitHeart();
 
             return;
         }
@@ -331,6 +349,8 @@ internal sealed class WorldMapView : Control
         if (!point.Properties.IsLeftButtonPressed)
             return;
 
+        GestureStarted?.Invoke();
+
         var hit = HitAt(at);
 
         SetHit(hit);
@@ -421,6 +441,14 @@ internal sealed class WorldMapView : Control
         _dragStation = -1;
         e.Pointer.Capture(null);
         Cursor = null;
+        GestureEnded?.Invoke();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+        GestureEnded?.Invoke();
     }
 
     /// <inheritdoc/>
@@ -505,6 +533,36 @@ internal sealed class WorldMapView : Control
             _store = MakeStore(source);
 
         UseWorld(refit: true);
+    }
+
+    // An empty route starts where the world is inhabited, at a zoom to read it, not on the whole image: the middle of the maps
+    // that lie inside the image (the median, so that the maps stacked off it at 0, 0 pull nothing), at the zoom a route is
+    // fitted to, or the whole image when that is already closer.
+    private void FitHeart()
+    {
+        var xs = new List<double>();
+        var ys = new List<double>();
+
+        foreach (var square in _source!.Index.SquaresOf(World))
+        {
+            var (px, py) = _world.PixelOf(square.X, square.Y);
+
+            if (px < 0 || py < 0 || px + _world.MapWidth > _world.Width || py + _world.MapHeight > _world.Height)
+                continue;
+
+            xs.Add(px + (_world.MapWidth / 2));
+            ys.Add(py + (_world.MapHeight / 2));
+        }
+
+        FitWorld();
+
+        if (xs.Count == 0)
+            return;
+
+        xs.Sort();
+        ys.Sort();
+        _viewport.CenterOn(xs[xs.Count / 2], ys[ys.Count / 2], Math.Max(_viewport.Scale, MaxSceneFit));
+        Settle();
     }
 
     private void UseWorld(bool refit)
@@ -612,6 +670,13 @@ internal sealed class WorldMapView : Control
                 continue;
 
             var (center, radius) = SharedMark(square.X, square.Y, mapWidth);
+
+            if (mapWidth < BadgeFrom)
+            {
+                context.DrawEllipse(_dot, null, center, radius, radius);
+                continue;
+            }
+
             var count = new FormattedText(square.Count.ToString(CultureInfo.CurrentCulture), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface, radius * 1.1, _amber);
 
             context.DrawEllipse(_badge, null, center, radius, radius);
@@ -623,7 +688,7 @@ internal sealed class WorldMapView : Control
     {
         var rect = RectOf(x, y);
         var k = mapWidth / 64;
-        var radius = Math.Max(6, (8 * k) + 2.5);
+        var radius = mapWidth < BadgeFrom ? Math.Clamp(mapWidth / 16, 2.5, 4.5) : Math.Max(6, (8 * k) + 2.5);
 
         return (new Point(rect.Right - 3 - radius, rect.Top + 3 + radius), radius);
     }
@@ -647,13 +712,12 @@ internal sealed class WorldMapView : Control
 
         var scene = Scene;
         var mapWidth = _world.MapWidth * _viewport.Scale;
-        var typeface = new Typeface(GetValue(TextElement.FontFamilyProperty), FontStyle.Normal, FontWeight.Medium);
 
         for (var i = scene.Stations.Count - 1; i >= 0; i--)
         {
             var station = scene.Stations[i];
 
-            if (WorldMapRouteLayer.StationBounds(station, RectOf(station.X, station.Y).Center, mapWidth, typeface).Contains(at))
+            if (WorldMapRouteLayer.StationBounds(RectOf(station.X, station.Y).Center, mapWidth).Contains(at))
                 return new WorldMapHit(WorldMapHitKind.Station, station.X, station.Y, i, -1);
         }
 
@@ -682,7 +746,7 @@ internal sealed class WorldMapView : Control
         {
             var (center, radius) = SharedMark(over.X, over.Y, mapWidth);
 
-            if (Math.Sqrt(((center.X - at.X) * (center.X - at.X)) + ((center.Y - at.Y) * (center.Y - at.Y))) <= radius + 2)
+            if (Math.Sqrt(((center.X - at.X) * (center.X - at.X)) + ((center.Y - at.Y) * (center.Y - at.Y))) <= radius + (mapWidth < BadgeFrom ? 4 : 2))
                 return new WorldMapHit(WorldMapHitKind.Shared, over.X, over.Y, -1, -1);
         }
 

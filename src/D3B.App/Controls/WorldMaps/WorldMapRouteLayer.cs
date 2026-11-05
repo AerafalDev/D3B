@@ -4,68 +4,49 @@ using Avalonia.Media;
 
 namespace D3B.App.Controls.WorldMaps;
 
-/// <summary>Draws the route over the world's image as the mockup validated it: a thin teal line on a hairline casing, an arrowhead a leg, and each station a glass pill (D371).</summary>
+/// <summary>Draws the route over the world's image as the mockup validated it: a thin teal line on a soft shadow, chevrons for its way, the maps it goes through as one outlined shape, and each step a small ringed node on it (D371, D375).</summary>
 /// <remarks>
 /// <para>
 /// In the app's own language (D320): nothing moves, the blue accent marks the chosen step only, the unreachable gap is red.
 /// The sizes follow the mockup's, whose map was 64 pixels wide at its zoom 1: <c>k</c> below is a map's width in the view
-/// over 64.
+/// over 64. The owner asked the pills away once the route lay on the real map (D375): a step is a node to press and drag, its
+/// number and name are the inspector's.
 /// </para>
-/// <para>Hit testing asks <see cref="StationBounds"/> for the pill the drawing used, so that what is drawn is what is pressed.</para>
+/// <para>Hit testing asks <see cref="StationBounds"/> for the node the drawing used, a little larger, so that what is drawn is what is pressed.</para>
 /// </remarks>
 internal static class WorldMapRouteLayer
 {
     private const double MockupMapWidth = 64;
-    private const double LabelFrom = 0.42;
-    private const double LabelSize = 11.5;
+    private const double Reach = 5;
 
     private static readonly Color _teal = Color.Parse("#5FD3C0");
     private static readonly Color _red = Color.Parse("#EA5D52");
     private static readonly Color _accent = Color.Parse("#3B82F6");
     private static readonly IBrush _tealBrush = new SolidColorBrush(_teal);
-    private static readonly IBrush _tealTint = new SolidColorBrush(_teal, 0.11);
-    private static readonly IBrush _tealGlow = new SolidColorBrush(_teal, 0.16);
+    private static readonly IBrush _tealTint = new SolidColorBrush(_teal, 0.12);
+    private static readonly IBrush _tealEdge = new SolidColorBrush(_teal, 0.92);
+    private static readonly IBrush _shade = new SolidColorBrush(Color.Parse("#05070A"), 0.22);
     private static readonly IBrush _tealHover = new SolidColorBrush(Color.Parse("#A6EFE2"));
     private static readonly IBrush _redBrush = new SolidColorBrush(_red);
     private static readonly IBrush _casing = new SolidColorBrush(Color.Parse("#09090B"), 0.5);
-    private static readonly IBrush _glass = new SolidColorBrush(Color.Parse("#161619"), 0.92);
     private static readonly IBrush _glassSolid = new SolidColorBrush(Color.Parse("#161619"));
     private static readonly IBrush _raised = new SolidColorBrush(Color.Parse("#232328"));
     private static readonly IBrush _numberInk = new SolidColorBrush(Color.Parse("#06241F"));
     private static readonly IBrush _badgeInk = new SolidColorBrush(Color.Parse("#FFB4AD"));
-    private static readonly IBrush _label = new SolidColorBrush(Color.Parse("#CFD0D5"));
     private static readonly IBrush _bright = new SolidColorBrush(Color.Parse("#F4F4F6"));
-    private static readonly IBrush _arrowHalo = new SolidColorBrush(Color.Parse("#0B1A18"));
-    private static readonly IPen _pillEdge = new Pen(new SolidColorBrush(Colors.White, 0.12), 1);
     private static readonly IPen _selectedEdge = new Pen(new SolidColorBrush(_accent), 2);
     private static readonly IPen _ringTeal = new Pen(_tealBrush, 1.5);
     private static readonly IPen _ringRed = new Pen(_redBrush, 1.6);
 
-    /// <summary>Gets the pill of a station in the view.</summary>
-    /// <param name="station">The station.</param>
+    /// <summary>Gets the area of a station's node in the view, where it is pressed.</summary>
     /// <param name="center">The centre of the station's map in the view.</param>
     /// <param name="mapWidth">A map's width in the view.</param>
-    /// <param name="typeface">The label's typeface.</param>
-    /// <returns>The pill's bounds; a disc alone when the view is too small for a label.</returns>
-    public static Rect StationBounds(WorldMapStation station, Point center, double mapWidth, Typeface typeface)
+    /// <returns>The area's bounds, a square a little larger than the node.</returns>
+    public static Rect StationBounds(Point center, double mapWidth)
     {
-        var k = mapWidth / MockupMapWidth;
-        var radius = Radius(k);
+        var size = Radius(mapWidth / MockupMapWidth) + Reach;
 
-        if (k <= LabelFrom)
-            return new Rect(center.X - radius - 3, center.Y - radius - 3, (2 * radius) + 6, (2 * radius) + 6);
-
-        var width = (2 * radius) + 6 + Measure(station.Label, typeface).Width + 14;
-
-        return new Rect(center.X - radius - 3, center.Y - radius - 3, width, (2 * radius) + 6);
-    }
-
-    /// <summary>Gets the radius of the disc a station's number is in.</summary>
-    /// <param name="mapWidth">A map's width in the view.</param>
-    /// <returns>The radius in pixels.</returns>
-    public static double DiscRadius(double mapWidth)
-    {
-        return Radius(mapWidth / MockupMapWidth);
+        return new Rect(center.X - size, center.Y - size, 2 * size, 2 * size);
     }
 
     /// <summary>Draws the route.</summary>
@@ -78,30 +59,80 @@ internal static class WorldMapRouteLayer
     /// <param name="typeface">The labels' typeface.</param>
     public static void Draw(DrawingContext context, WorldMapScene scene, double mapWidth, double mapHeight, Func<int, int, Rect> rectOf, WorldMapHit hover, Typeface typeface)
     {
-        var lineWidth = Math.Max(3, Math.Min(5, mapWidth * 0.07));
-        var corner = Math.Max(6, Math.Min(mapWidth, mapHeight) * 0.45);
+        var lineWidth = Math.Clamp(mapWidth * 0.034, 2, 3.2);
+
+        DrawMaps(context, scene, rectOf, mapWidth);
 
         for (var i = 0; i < scene.Legs.Count; i++)
-            DrawLeg(context, scene.Legs[i], mapWidth, rectOf, lineWidth, corner, typeface);
+            DrawLeg(context, scene.Legs[i], mapWidth, rectOf, lineWidth, typeface);
 
         if (hover.Kind is WorldMapHitKind.PathPoint)
             DrawPinMark(context, rectOf(hover.X, hover.Y).Center);
 
         for (var i = 0; i < scene.Stations.Count; i++)
-            DrawStation(context, scene.Stations[i], i, mapWidth, rectOf, hover.Kind is WorldMapHitKind.Station && hover.Station == i, typeface);
+            DrawStation(context, scene.Stations[i], mapWidth, rectOf, hover.Kind is WorldMapHitKind.Station && hover.Station == i);
+    }
+
+    // The maps the route goes through are one shape: filled as a union, so that two beside each other do not double their tint, and
+    // outlined where no other of them lies beside, so that a shared side is not drawn twice and thicker (D375).
+    private static void DrawMaps(DrawingContext context, WorldMapScene scene, Func<int, int, Rect> rectOf, double mapWidth)
+    {
+        var squares = new HashSet<(int X, int Y)>();
+
+        foreach (var station in scene.Stations)
+            squares.Add((station.X, station.Y));
+
+        foreach (var leg in scene.Legs.Where(leg => leg.Kind is not WorldMapLegKind.Unreachable))
+        {
+            foreach (var square in leg.Squares)
+                squares.Add((square.X, square.Y));
+        }
+
+        var union = new GeometryGroup { FillRule = FillRule.NonZero };
+        var boundary = new StreamGeometry();
+
+        using (var draw = boundary.Open())
+        {
+            foreach (var (x, y) in squares)
+            {
+                var rect = rectOf(x, y);
+
+                union.Children.Add(new RectangleGeometry(rect));
+
+                if (!squares.Contains((x, y - 1)))
+                    Side(draw, rect.TopLeft, rect.TopRight);
+
+                if (!squares.Contains((x, y + 1)))
+                    Side(draw, rect.BottomLeft, rect.BottomRight);
+
+                if (!squares.Contains((x - 1, y)))
+                    Side(draw, rect.TopLeft, rect.BottomLeft);
+
+                if (!squares.Contains((x + 1, y)))
+                    Side(draw, rect.TopRight, rect.BottomRight);
+            }
+        }
+
+        var width = Math.Clamp(mapWidth * 0.026, 1.4, 2.2);
+
+        context.DrawGeometry(_tealTint, null, union);
+        context.DrawGeometry(null, new Pen(_shade, width + 2.2, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round), boundary);
+        context.DrawGeometry(null, new Pen(_tealEdge, width, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round), boundary);
+    }
+
+    private static void Side(StreamGeometryContext draw, Point from, Point to)
+    {
+        draw.BeginFigure(from, false);
+        draw.LineTo(to);
+        draw.EndFigure(false);
     }
 
     private static double Radius(double k)
     {
-        return Math.Max(9, (10 * k) + 5.5);
+        return Math.Clamp((1.5 * k) + 2.8, 3.8, 5.8);
     }
 
-    private static FormattedText Measure(string text, Typeface typeface)
-    {
-        return new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface, LabelSize, _label);
-    }
-
-    private static void DrawLeg(DrawingContext context, WorldMapLeg leg, double mapWidth, Func<int, int, Rect> rectOf, double lineWidth, double corner, Typeface typeface)
+    private static void DrawLeg(DrawingContext context, WorldMapLeg leg, double mapWidth, Func<int, int, Rect> rectOf, double lineWidth, Typeface typeface)
     {
         if (leg.Squares.Count < 2)
             return;
@@ -115,26 +146,23 @@ internal static class WorldMapRouteLayer
             return;
         }
 
-        // The maps the route crosses, barely tinted.
-        foreach (var square in leg.Squares.Skip(1).Take(leg.Squares.Count - 2))
-            context.DrawRectangle(_tealTint, null, rectOf(square.X, square.Y).Deflate(1));
+        var outline = Outline(points, Math.Clamp(mapWidth * 0.2, 4, 16));
+        var shadow = new Pen(_shade, lineWidth + 5, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
+        var casing = new Pen(_casing, lineWidth + 2.2, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
+        var line = new Pen(_tealBrush, lineWidth, leg.IsClosing ? new DashStyle([2.4, 1.8], 0) : null, PenLineCap.Round, PenLineJoin.Round);
 
-        var outline = Outline(points, corner);
-        var casing = new Pen(_casing, lineWidth + 2.4, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
-        var glow = new Pen(_tealGlow, lineWidth * 4, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
-        var line = new Pen(_tealBrush, lineWidth, leg.IsClosing ? new DashStyle([2.2, 1.6], 0) : null, PenLineCap.Round, PenLineJoin.Round);
-
-        using (context.PushOpacity(leg.IsClosing ? 0.5 : 1))
+        using (context.PushOpacity(leg.IsClosing ? 0.55 : 1))
         {
-            context.DrawGeometry(null, glow, outline);
+            context.DrawGeometry(null, shadow, outline);
             context.DrawGeometry(null, casing, outline);
             context.DrawGeometry(null, line, outline);
 
-            if (mapWidth > 10)
-                DrawArrow(context, points, lineWidth);
+            if (mapWidth >= 24)
+                DrawChevrons(context, points, lineWidth);
         }
     }
 
+    // The route's turns are rounded; the line stays straight between two maps.
     private static StreamGeometry Outline(List<Point> points, double corner)
     {
         var geometry = new StreamGeometry();
@@ -145,11 +173,8 @@ internal static class WorldMapRouteLayer
 
             for (var i = 1; i < points.Count - 1; i++)
             {
-                var before = Toward(points[i], points[i - 1], corner);
-                var after = Toward(points[i], points[i + 1], corner);
-
-                draw.LineTo(before);
-                draw.QuadraticBezierTo(points[i], after);
+                draw.LineTo(Toward(points[i], points[i - 1], corner));
+                draw.QuadraticBezierTo(points[i], Toward(points[i], points[i + 1], corner));
             }
 
             draw.LineTo(points[^1]);
@@ -161,61 +186,45 @@ internal static class WorldMapRouteLayer
 
     private static Point Toward(Point from, Point to, double distance)
     {
-        var dx = to.X - from.X;
-        var dy = to.Y - from.Y;
-        var length = Math.Sqrt((dx * dx) + (dy * dy));
+        var length = Distance(from, to);
 
         if (length < 1e-6)
             return from;
 
         var step = Math.Min(distance, length / 2) / length;
 
-        return new Point(from.X + (dx * step), from.Y + (dy * step));
+        return new Point(from.X + ((to.X - from.X) * step), from.Y + ((to.Y - from.Y) * step));
     }
 
-    private static void DrawArrow(DrawingContext context, List<Point> points, double lineWidth)
+    // The way the route goes, a small chevron halfway between each map and the next, the owner's modern touch (D375).
+    private static void DrawChevrons(DrawingContext context, List<Point> points, double lineWidth)
     {
-        var total = 0.0;
-
-        for (var i = 0; i + 1 < points.Count; i++)
-            total += Distance(points[i], points[i + 1]);
-
-        var half = total / 2;
+        var size = (lineWidth * 1.6) + 2;
+        var shadow = new Pen(_casing, (lineWidth * 0.65) + 1.8, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
+        var stroke = new Pen(_bright, Math.Max(1.3, lineWidth * 0.65), lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
 
         for (var i = 0; i + 1 < points.Count; i++)
         {
-            var length = Distance(points[i], points[i + 1]);
-
-            if (half > length)
-            {
-                half -= length;
-
+            if (Distance(points[i], points[i + 1]) < size * 5)
                 continue;
-            }
 
-            var along = length > 0 ? half / length : 0;
-            var middle = new Point(points[i].X + ((points[i + 1].X - points[i].X) * along), points[i].Y + ((points[i + 1].Y - points[i].Y) * along));
+            var middle = new Point((points[i].X + points[i + 1].X) / 2, (points[i].Y + points[i + 1].Y) / 2);
             var angle = Math.Atan2(points[i + 1].Y - points[i].Y, points[i + 1].X - points[i].X);
-            var size = (lineWidth * 0.95) + 2;
+            var chevron = new StreamGeometry();
+
+            using (var draw = chevron.Open())
+            {
+                draw.BeginFigure(new Point(-size * 0.45, -size * 0.85), false);
+                draw.LineTo(new Point(size * 0.45, 0));
+                draw.LineTo(new Point(-size * 0.45, size * 0.85));
+                draw.EndFigure(false);
+            }
 
             using (context.PushTransform(Matrix.CreateRotation(angle) * Matrix.CreateTranslation(middle.X, middle.Y)))
             {
-                context.DrawEllipse(_arrowHalo, null, default, size + 3, size + 3);
-
-                var head = new StreamGeometry();
-
-                using (var draw = head.Open())
-                {
-                    draw.BeginFigure(new Point(size, 0), true);
-                    draw.LineTo(new Point(-size * 0.65, -size * 0.8));
-                    draw.LineTo(new Point(-size * 0.65, size * 0.8));
-                    draw.EndFigure(true);
-                }
-
-                context.DrawGeometry(_tealBrush, null, head);
+                context.DrawGeometry(null, shadow, chevron);
+                context.DrawGeometry(null, stroke, chevron);
             }
-
-            return;
         }
     }
 
@@ -244,38 +253,21 @@ internal static class WorldMapRouteLayer
         context.DrawLine(plus, new Point(center.X, center.Y - 3.6), new Point(center.X, center.Y + 3.6));
     }
 
-    private static void DrawStation(DrawingContext context, WorldMapStation station, int index, double mapWidth, Func<int, int, Rect> rectOf, bool hovered, Typeface typeface)
+    private static void DrawStation(DrawingContext context, WorldMapStation station, double mapWidth, Func<int, int, Rect> rectOf, bool hovered)
     {
         var center = rectOf(station.X, station.Y).Center;
-        var k = mapWidth / MockupMapWidth;
-        var radius = Radius(k);
-        var bounds = StationBounds(station, center, mapWidth, typeface);
-        var disc = hovered ? _tealHover : _tealBrush;
-        var number = new FormattedText((index + 1).ToString(CultureInfo.CurrentCulture), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(typeface.FontFamily, weight: FontWeight.SemiBold), radius * 0.95, _numberInk);
+        var radius = Radius(mapWidth / MockupMapWidth) * (hovered ? 1.25 : 1);
 
-        if (k > LabelFrom)
-        {
-            context.DrawRectangle(_glass, station.IsSelected ? _selectedEdge : _pillEdge, bounds, bounds.Height / 2, bounds.Height / 2);
-            context.DrawEllipse(disc, null, center, radius, radius);
-            context.DrawText(number, new Point(center.X - (number.Width / 2), center.Y - (number.Height / 2)));
+        context.DrawEllipse(_shade, null, center, radius + 3.6, radius + 3.6);
 
-            var label = Measure(station.Label, typeface);
+        if (station.IsSelected)
+            context.DrawEllipse(null, _selectedEdge, center, radius + 4.8, radius + 4.8);
 
-            context.DrawText(label, new Point(center.X + radius + 8, center.Y - (label.Height / 2)));
-        }
-        else
-        {
-            context.DrawEllipse(_glassSolid, null, center, radius + 3, radius + 3);
-
-            if (station.IsSelected)
-                context.DrawEllipse(null, _selectedEdge, center, radius + 4.5, radius + 4.5);
-
-            context.DrawEllipse(disc, null, center, radius, radius);
-            context.DrawText(number, new Point(center.X - (number.Width / 2), center.Y - (number.Height / 2)));
-        }
+        context.DrawEllipse(_bright, null, center, radius + 1.8, radius + 1.8);
+        context.DrawEllipse(hovered ? _tealHover : _tealBrush, null, center, radius, radius);
 
         if (station.IsPinned)
-            context.DrawEllipse(_bright, null, new Point(center.X + (radius * 0.8), center.Y + (radius * 0.8)), 3, 3);
+            context.DrawEllipse(_numberInk, null, center, radius * 0.38, radius * 0.38);
     }
 
     private static double Distance(Point a, Point b)

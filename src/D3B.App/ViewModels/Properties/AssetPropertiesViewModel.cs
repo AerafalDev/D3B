@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Routes;
 using D3B.Bot.Assets;
@@ -14,6 +15,7 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
     private AssetLibrary? _assets;
     private AccountBook? _book;
     private string _filter = "";
+    private string? _named;
 
     /// <summary>Gets the asset shown, by its id.</summary>
     [ObservableProperty]
@@ -22,6 +24,15 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
     /// <summary>Gets its name.</summary>
     [ObservableProperty]
     public partial string Name { get; private set; } = "";
+
+    /// <summary>Gets or sets the name in the field, typed until Enter or the field is left gives it to the asset and its file.</summary>
+    [ObservableProperty]
+    public partial string NameText { get; set; } = "";
+
+    /// <summary>Gets whether the asset is given with D3B, read only, its name not typed over.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanRename))]
+    public partial bool IsGiven { get; private set; }
 
     /// <summary>Gets its kind, and whether it is given with D3B.</summary>
     [ObservableProperty]
@@ -67,6 +78,12 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
     /// <summary>Gets or sets what finds a route's open editor by its id.</summary>
     public Func<string, RouteEditorViewModel?>? RouteOf { get; set; }
 
+    /// <summary>Gets or sets what gives an asset the name typed: the tree's rename.</summary>
+    public Func<string, string, Task>? Rename { get; set; }
+
+    /// <summary>Gets whether the name can be typed: the asset is the project's.</summary>
+    public bool CanRename => !IsGiven;
+
     /// <summary>Gets whether the asset shown is a route being edited.</summary>
     public bool HasRoute => Route is not null;
 
@@ -81,6 +98,29 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
     public AssetPropertiesViewModel(Localizer localizer)
     {
         _localizer = localizer;
+    }
+
+    /// <summary>Gives the asset the name typed, its file with it; a name that cannot be is said and the field goes back to the asset's.</summary>
+    /// <returns>A task that completes once written.</returns>
+    [RelayCommand]
+    public async Task CommitNameAsync()
+    {
+        if (Id is not { } id || Rename is null || !CanRename || NameText.Trim() == Name)
+        {
+            NameText = Name;
+
+            return;
+        }
+
+        await Rename(id, NameText).ConfigureAwait(true);
+        NameText = _assets?.Find(id)?.Name ?? Name;
+    }
+
+    /// <summary>Drops what was typed in the name's field: Escape.</summary>
+    [RelayCommand]
+    public void RevertName()
+    {
+        NameText = Name;
     }
 
     /// <summary>Shows an asset.</summary>
@@ -103,7 +143,16 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
         if (Id is not { } id || _assets?.Find(id) is not { } asset)
             return;
 
+        var typing = NameText != Name && _named == id;
+
         Name = asset.Title?.In(_localizer.Culture) ?? asset.Name;
+        IsGiven = asset.IsGiven;
+
+        // What is being typed stays through the host's refreshes; another asset, or the name the file now has, replaces it.
+        if (!typing)
+            NameText = Name;
+
+        _named = id;
         Kind = asset.Kind;
         KindText = asset.IsGiven ? _localizer.Format("AssetGivenKind", _localizer["AssetKind" + asset.Kind]) : _localizer["AssetKind" + asset.Kind];
         File = asset.Path ?? _localizer["AssetBuiltIn"];

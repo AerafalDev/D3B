@@ -8,6 +8,7 @@
     xmlns:ba="clr-namespace:D3B.Bot.Assets;assembly=D3B.Bot"
     xmlns:p="clr-namespace:D3B.App.ViewModels.Properties"
     xmlns:routes="clr-namespace:D3B.App.ViewModels.Routes"
+    xmlns:v="clr-namespace:D3B.App.Views"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
         <Style Selector="Border.Step:pointerover">
@@ -546,7 +547,7 @@
                                     </UniformGrid>
                                 </Border>
                             </StackPanel>
-                            <UniformGrid Columns="3" Margin="14,0,14,6">
+                            <UniformGrid Columns="4" Margin="14,0,14,6">
                                 <StackPanel Margin="0,0,6,0">
                                     <TextBlock
                                         Classes="Bright"
@@ -568,6 +569,17 @@
                                         Classes="Dim"
                                         FontSize="11"
                                         Text="{l:Tr RouteSummaryMaps}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,6,0">
+                                    <TextBlock
+                                        Classes="Bright"
+                                        FontSize="15"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding ActionTotal}" />
+                                    <TextBlock
+                                        Classes="Dim"
+                                        FontSize="11"
+                                        Text="{l:Tr RouteSummaryActions}" />
                                 </StackPanel>
                                 <StackPanel>
                                     <TextBlock
@@ -640,6 +652,7 @@
                                                 Padding="8,0">
                                                 <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="34">
                                                     <Button
+                                                        AutomationProperties.Name="{Binding Summary}"
                                                         Background="Transparent"
                                                         BorderThickness="0"
                                                         Command="{Binding SelectCommand}"
@@ -682,6 +695,12 @@
                                                         Orientation="Horizontal"
                                                         Spacing="4"
                                                         VerticalAlignment="Center">
+                                                        <TextBlock
+                                                            Classes="Dim"
+                                                            FontSize="11"
+                                                            IsVisible="{Binding HasActions}"
+                                                            Text="{Binding ActionsText}"
+                                                            VerticalAlignment="Center" />
                                                         <c:Icon
                                                             Drawing="{StaticResource General.Pin}"
                                                             Height="12"
@@ -695,6 +714,7 @@
                                                             ToolTip.Tip="{l:Tr RouteStepElsewhere}"
                                                             Width="12" />
                                                         <Button
+                                                            AutomationProperties.Name="{l:Tr RouteStepRemove}"
                                                             Classes="Tool Small"
                                                             Command="{Binding RemoveCommand}"
                                                             ToolTip.Tip="{l:Tr RouteStepRemove}">
@@ -719,6 +739,117 @@
                             </ItemsControl>
                         </StackPanel>
                     </Border>
+                    <Border Classes="Section" IsVisible="{Binding HasSelectedStep}">
+                        <StackPanel>
+                            <TextBlock Classes="SectionTitle" Text="{Binding ActionsTitle}" />
+                            <TextBlock
+                                Classes="Dim"
+                                IsVisible="{Binding HasNoActions}"
+                                Margin="14,4,14,8"
+                                Text="{l:Tr RouteActionsEmpty}"
+                                TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding Actions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="routes:RouteActionViewModel">
+                                        <Border
+                                            Background="{DynamicResource CardBackgroundColor}"
+                                            BorderBrush="{DynamicResource BorderColor}"
+                                            BorderThickness="1"
+                                            CornerRadius="8"
+                                            Margin="8,2"
+                                            Padding="10,4,6,6">
+                                            <StackPanel Spacing="4">
+                                                <Grid ColumnDefinitions="*,Auto" MinHeight="30">
+                                                    <Button
+                                                        AutomationProperties.Name="{Binding Sentence}"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        Command="{Binding ToggleCommand}"
+                                                        HorizontalAlignment="Stretch"
+                                                        HorizontalContentAlignment="Left"
+                                                        Padding="0,4">
+                                                        <TextBlock
+                                                            Classes="Bright"
+                                                            Text="{Binding Sentence}"
+                                                            TextWrapping="Wrap" />
+                                                    </Button>
+                                                    <StackPanel
+                                                        Grid.Column="1"
+                                                        Orientation="Horizontal"
+                                                        Spacing="2"
+                                                        VerticalAlignment="Top">
+                                                        <c:Icon
+                                                            Drawing="{StaticResource Status.Warning}"
+                                                            Height="13"
+                                                            IsVisible="{Binding HasProblems}"
+                                                            Margin="0,6,4,0"
+                                                            Width="13" />
+                                                        <Button
+                                                            AutomationProperties.Name="{l:Tr MoveUp}"
+                                                            Classes="Tool Small"
+                                                            Command="{Binding MoveUpCommand}"
+                                                            IsEnabled="{Binding !IsFirst}"
+                                                            ToolTip.Tip="{l:Tr MoveUp}">
+                                                            <c:Icon Drawing="{StaticResource General.ChevronUp}" />
+                                                        </Button>
+                                                        <Button
+                                                            AutomationProperties.Name="{l:Tr MoveDown}"
+                                                            Classes="Tool Small"
+                                                            Command="{Binding MoveDownCommand}"
+                                                            IsEnabled="{Binding !IsLast}"
+                                                            ToolTip.Tip="{l:Tr MoveDown}">
+                                                            <c:Icon Drawing="{StaticResource General.ChevronDown}" />
+                                                        </Button>
+                                                        <Button
+                                                            AutomationProperties.Name="{l:Tr RouteActionRemove}"
+                                                            Classes="Tool Small"
+                                                            Command="{Binding RemoveCommand}"
+                                                            ToolTip.Tip="{l:Tr RouteActionRemove}">
+                                                            <c:Icon Drawing="{StaticResource General.Close}" Height="10" Width="10" />
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <TextBlock
+                                                    Classes="Dim"
+                                                    FontSize="11"
+                                                    IsVisible="{Binding !IsPlayed}"
+                                                    Text="{l:Tr RouteActionNotPlayed}"
+                                                    TextWrapping="Wrap" />
+                                                <v:SettingsFormView
+                                                    Classes="Narrow"
+                                                    DataContext="{Binding Editor}"
+                                                    IsVisible="{Binding $parent[Border].((routes:RouteActionViewModel)DataContext).IsOpen}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <ItemsControl ItemsSource="{Binding OfferedActions}" Margin="8,6,8,8">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="routes:RouteActionChoiceViewModel">
+                                        <Button
+                                            AutomationProperties.Name="{Binding Name}"
+                                            Classes="Outline Small"
+                                            Command="{Binding AddCommand}"
+                                            Margin="0,0,6,6">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <c:Icon
+                                                    Drawing="{StaticResource General.Add}"
+                                                    Height="11"
+                                                    Width="11" />
+                                                <TextBlock Text="{Binding Name}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
                 <Border Classes="Section" IsVisible="{Binding Asset.ShowsFile}">
                     <StackPanel>
@@ -730,7 +861,22 @@
                                 <ColumnDefinition Width="20" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Classes="Key" Text="{l:Tr PropertyName}" />
-                            <Border Classes="Field" Grid.Column="1">
+                            <TextBox
+                                AutomationProperties.Name="{l:Tr PropertyName}"
+                                Classes="Field"
+                                Grid.Column="1"
+                                IsVisible="{Binding Asset.CanRename}"
+                                LostFocus="OnNameLostFocus"
+                                Text="{Binding Asset.NameText}">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Command="{Binding Asset.CommitNameCommand}" Gesture="Enter" />
+                                    <KeyBinding Command="{Binding Asset.RevertNameCommand}" Gesture="Escape" />
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            <Border
+                                Classes="Field"
+                                Grid.Column="1"
+                                IsVisible="{Binding Asset.IsGiven}">
                                 <TextBlock
                                     Text="{Binding Asset.Name}"
                                     TextTrimming="CharacterEllipsis"

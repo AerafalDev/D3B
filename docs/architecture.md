@@ -796,12 +796,23 @@ The target:
   from the game, variables live for a run, a character or the bots together.
 - **Routes and zones** (D299, D308): built on the world's map drawn from the client's own images, clicked, painted,
   recorded while playing or typed; the maps clicked are anchors, those between found by the world's path.
-  Made in 7d2 (D372 to D374), without the recording, the actions of each map and the zones, which are 7d3:
+  Made in 7d2 (D372 to D374), then 7d3 (D375 to D379), without the recording and the zones, which are 7d4:
   - `RouteAsset` (`D3B.Bot.Assets`, file `<name>.route.json`): anchors, each a map's id and whether it was pinned, the course
     (`RouteMode`: loop, one way, there and back) and what to do with a map no path reaches (`RouteUnreachable`); what a file holds
-    beyond is kept for 7d3 (`Details`).
+    beyond is kept (`Details`). An anchor holds its actions (`RouteAnchor.Actions`, D378): nodes of the catalog, each with the
+    values that differ from its defaults, in its file under `actions`; two anchors are equal by what they hold.
+  - `RouteActions` (`D3B.Bot.Routes`): the actions a route plays on a map, nodes `route.harvest`, `route.fight`, `route.door`,
+    `route.exit`, `route.zaap` and `route.bag`, and the behaviors' `wait`, with their values (`RouteExitValues`, `RouteDoorValues`,
+    `RouteHarvestValues`, `RouteFightValues`) and sentences; waiting alone plays today, the rest wait for 7d3b (D377).
+    `RouteActionCalls` turns a call into the node's values and back. `SettingKind.Cell` is a cell of the map, picked on
+    `CellPicker` in a dialog (D121, D378).
+  - **The run** (D379): `RouteCursor` (the course: loop, one way, there and back, and where the run is), `RouteRuns` (a cursor
+    per character, route and run), `RouteRunner` (to each anchor by the character's own path, the actions played, a map out of
+    reach passed or failing) over `IRouteStage`, which `GameRouteStage` makes real; the node `route.follow` (`FollowRoute`) plays
+    it in a behavior's step. Not yet tried on a client.
   - `RoutePlanner` (`D3B.Bot.Routes`): the legs between anchors by the world's path (`WorldPathfinder`), as a subscribed
-    character with nothing else known, each leg kept by its two maps; `RouteLeg` lists the maps crossed, or says none leads.
+    character with every zaap of the game known and one taken where it saves 5 changes (D378), each leg kept by its two
+    maps; `RouteLeg` lists the maps crossed and the zaaps taken, or says none leads.
   - `WorldMapIndex` (`D3B.Data.WorldMaps`, a singleton of `DataModule` beside `WorldMapTiles`): the maps on each coordinates
     of each world's layer, an inside on the layer of its sub-area's world.
   - `WorldMapView` (`D3B.App.Controls.WorldMaps`): the world's image from its tiles, zoom and pan eased, the route over it as the

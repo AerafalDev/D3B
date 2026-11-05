@@ -398,6 +398,14 @@ public sealed class SettingDefinition
             case SettingKind.Number:
                 return (int)value! < Minimum || (int)value > Maximum ? Problem(SettingProblemKind.OutOfRange) : null;
 
+            case SettingKind.Cell:
+                {
+                    if (value is not int cell)
+                        return IsRequired ? Problem(SettingProblemKind.Required) : null;
+
+                    return cell < Minimum || cell > Maximum ? Problem(SettingProblemKind.OutOfRange) : null;
+                }
+
             case SettingKind.Text:
                 {
                     var text = (string)value!;
@@ -482,7 +490,7 @@ public sealed class SettingDefinition
             (SettingKind.Text, null) => "",
             (SettingKind.Text, string) => value,
             (SettingKind.Choice, not null) when _enum!.IsInstanceOfType(value) => value,
-            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily, null or int) => value,
+            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Cell, null or int) => value,
             _ => throw new ArgumentException($"The setting {Key} does not hold {value ?? "nothing"}.", nameof(value)),
         };
     }
@@ -508,10 +516,10 @@ public sealed class SettingDefinition
             case SettingKind.Choice when ChoiceOf(node) is { } choice:
                 return (new(choice), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily when node is null:
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Cell when node is null:
                 return (new(null), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily when node is JsonValue id && id.TryGetValue<int>(out var game):
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Cell when node is JsonValue id && id.TryGetValue<int>(out var game):
                 return (new(game), true);
 
             default:

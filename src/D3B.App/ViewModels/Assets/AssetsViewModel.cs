@@ -447,17 +447,33 @@ internal sealed partial class AssetsViewModel : ObservableObject
             return;
         }
 
-        if (name.Length == 0 || name == row.Name || _assets?.Find(row.Id ?? "") is not { } asset)
+        if (name.Length == 0 || name == row.Name || _assets?.Find(row.Id ?? "") is null)
         {
             Rebuild();
 
             return;
         }
 
+        await RenameAssetAsync(row.Id!, name).ConfigureAwait(true);
+        Rebuild();
+    }
+
+    /// <summary>Gives an asset a name, its file with it, as the tree and the inspector's name field do: a name that cannot be, empty, the same, taken or not a file's, is said and left.</summary>
+    /// <param name="id">The asset's id.</param>
+    /// <param name="name">The name typed.</param>
+    /// <returns>A task that completes once written.</returns>
+    public async Task RenameAssetAsync(string id, string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+
+        name = name.Trim();
+
+        if (_assets?.Find(id) is not { IsGiven: false } asset || name.Length == 0 || name == asset.Name)
+            return;
+
         if (AssetLibrary.NameProblem(name) is not null || _assets.IsTaken(asset.Kind, name, asset.Id))
         {
             _toasts.Show(new Toast(_localizer[AssetLibrary.NameProblem(name) is not null ? "NameInvalid" : "NameTaken"], Tone.Danger));
-            Rebuild();
 
             return;
         }

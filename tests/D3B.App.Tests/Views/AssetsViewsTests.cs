@@ -1,9 +1,12 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Assets;
 using D3B.App.Views;
 using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
@@ -109,5 +112,49 @@ public sealed class AssetsViewsTests
         Assert.Contains(add.Item2!, item => item is { Item2: false });
         Assert.All(english.Concat(french), text => Assert.DoesNotContain("Avalonia.", text, StringComparison.Ordinal));
         Assert.All(english.Concat(french), text => Assert.DoesNotContain("D3B.App.", text, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ADoubleClickOnAnAssetOpensItAlthoughTheFirstClickBuildsTheRowsAgain()
+    {
+        await using var store = new TestStore();
+
+        await store.OpenedAsync();
+
+        var ct = TestContext.Current.CancellationToken;
+        var ash = await store.Assets.SaveProfileAsync("Ash", TestStore.HarvestId, "{}", ct);
+        var runner = await TestHosts.RunningAsync(store.Host);
+        var tab = await OnTheUIThreadAsync(() =>
+        {
+            var main = new MainViewModel(runner, Localizer.Instance);
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            main.Refresh();
+            window.Show();
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var row = window.GetVisualDescendants().OfType<Border>().First(border => border.Classes.Contains("AssetRow") && border.DataContext is AssetRowViewModel { Name: "Ash" });
+            var at = row.TranslatePoint(new Point(row.Bounds.Width / 2, row.Bounds.Height / 2), window)!.Value;
+
+            window.MouseDown(at, MouseButton.Left);
+            window.MouseUp(at, MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
+
+            var chosen = main.Editor.Selected?.Key;
+
+            window.MouseDown(at, MouseButton.Left);
+            window.MouseUp(at, MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
+
+            var opened = main.Editor.Selected?.Key;
+
+            window.Close();
+
+            return (chosen, opened);
+        });
+
+        Assert.NotEqual("profile:" + ash.Id, tab.chosen);
+        Assert.Equal("profile:" + ash.Id, tab.opened);
     }
 }

@@ -8158,6 +8158,135 @@ D324. The mockup: `docs/mockups/route-7d.html`.*
 - **To judge with the owner on the real app**: the marks of shared coordinates, 273 squares of the main world alone, crowd the map
   at 80 %; they might show from a greater zoom, or be dimmer, the lead's call once seen.
 
+## D375: The route editor after the owner's first look: a line and no pills, two levels of marks, a start that reads, undo and the keys
+
+*2026-11-05, step 7, session 7d3, the owner's remarks on the real app and the lead's answers, within D371 and D373. Amends D372
+and D374; the rest of the mockup stands.*
+
+- **No pills: a line, its maps outlined and a small node a step.** At 80 % the pills, as wide as their map's name, hid the maps
+  around and the path between them, which the route is for; the owner then asked for a line alone and drew what he meant: a
+  thin line between the centres of the maps, every map the route goes through outlined, a dot for each step. Then asked it
+  more beautiful and modern, and that maps beside each other not double their border into a thicker one. So: the maps the route
+  goes through are one shape, filled as a union (a tint never doubled) and outlined only where no other of them lies beside,
+  with a faint shade under the outline; the line 2 to 3.2 pixels thick on a soft shadow and a hairline casing, its turns
+  rounded, a small white chevron halfway between each map and the next for its way (one per leg before); a step a teal node
+  in a white ring on a shade, larger under the pointer, the accent ring on the step chosen, a dark dot in a pinned one. No
+  number or name on the map: the inspector's list says them, and the HUD names the step hovered. The colour stays the route
+  kind's teal (D326), where the owner's drawing was yellow; one constant changes it. A node is pressed on an area a little
+  larger than it is drawn. Supersedes the pills of D371.
+- **The marks of shared coordinates have two levels**, the owner's choice among three: under a map 96 pixels wide in the view
+  a small translucent amber dot, clickable as the badge is; above, the badge with the number of maps. They show from 14 pixels,
+  as the grid does.
+- **A new route starts where the world is inhabited**, not on the whole image, which at the main world's size read as a
+  speck: the median of the maps lying wholly inside the image (the maps stacked off it at 0, 0 pull nothing) at 80 %, or the
+  whole image when that is already closer.
+- **Undo and Redo** (Edit's items, Ctrl Z, Ctrl Y, Ctrl Shift Z, and in the command search) follow the editor shown through
+  `IUndoable`: today the route's, whose state is a snapshot of its anchors, course and unreachable policy, 200 deep, cleared
+  when the project changes the route under it. A press on the map and what it does until it is let go is one change (a paint
+  across ten maps, a station dragged across three), recorded at its first. Undoing back to what was saved is not dirty. The
+  profile's editor, the first to have asked for it in D320, does not undo yet, and the canvas of 7e will.
+- **Keys on the map**: V select, B trace, Escape closes the choice or leaves Trace, Delete or Backspace removes the step, Alt up
+  and down move it in the route, PageUp and PageDown choose the previous and next step and show it, the arrows pan (Shift for
+  more), + and - zoom, F shows the route, Home the whole world, Ctrl L goes to the box that adds a map and Escape back to the
+  map. The map takes focus with Tab, and its tools, the steps and their buttons carry names for a screen reader.
+- **The inspector shows a route as its editor opens**, a new one among them, and again when its tab is chosen; its steps and
+  counts follow the editor as it changes, the editor being what the inspector reads.
+- **The inspector's name field is typed in**, for any asset of the project (a route, a profile): Enter or leaving the field
+  renames the asset and its file with it, as the tree's rename does (one code, `AssetsViewModel.RenameAssetAsync`: a name
+  that is empty, the same, taken or not a file's is said and the field goes back), Escape drops it. A given asset stays read
+  only. What is typed stays through the host's refreshes.
+- **The assets' double click opens the row on the second press's click count.** A click chooses the row and builds the rows
+  again, so the second press landed on a new control and Avalonia's `DoubleTapped`, which wants the same control twice, rarely
+  came; the tree now opens a row when the press itself counts two (not with Ctrl or Shift), a test pressing a row twice on the
+  real window failing before. The characters' cards and lines, whose rows are not built again, are left as they are.
+- **Left**: an accessibility pass of the whole studio (the other editors' keys and names), undo in the other editors, and the
+  steps' reordering by dragging; this entry covers the route editor alone.
+
+## D376: 7d in four sessions: the actions and the run first, then recording and the zones
+
+*2026-11-05, step 7, session 7d3, the owner's choice among three splits, with the lead's recommendation. Amends D370.*
+
+| Session | Content |
+| --- | --- |
+| 7d3 | The first look's remarks on the route editor (D375), then the actions of each map as sentences of typed values, the cell picked on the map's own cells (D121), their count on the step, and the run of a route: loop, one way, there and back, a map out of reach passed or failing, the actions of each map played, zaaps in the path. |
+| 7d4 | Recording while playing (what happens, what is done on the map) and Simplify (D299); zones and their editor on the same view; and what 7d3 leaves: undo and the keys of the other editors, the steps reordered by dragging. |
+
+- **Why**: 7d3 as D370 wrote it holds four pieces, each a session's work with its own run time or host events; the actions
+  cannot be tried until a route runs them, so those two go together, and recording needs the actions' vocabulary and the
+  host's events, so it goes after.
+- **The first session spent on the owner's first look at the real app** (D375): the editor's discs, marks, start, undo, keys, the
+  inspector and the double click; the actions and the run were not started in it, 7d3 is the next session.
+
+## D377: 7d3 in two sessions: the actions and the run's course first, then the actions that talk to the game
+
+*2026-11-05, step 7, session 7d3, the owner's choice ("as proposed"), within the lead's recommendation. Amends D376.*
+
+| Session | Content |
+| --- | --- |
+| 7d3 | The actions of each map as sentences of typed values, the cell picked on the map's own cells (D121), their count; the run's course (loop, one way, there and back), a map out of reach passed or failing, the character's own path with its zaaps; a node that follows a route; waiting played. |
+| 7d3b | The actions that ask the game: a door, a forced exit, a zaap, the haven bag, a harvest, a fight, an NPC; then a route run on a real client with the owner. |
+| 7d4 | Unchanged (D376). |
+
+- **What 7d3 holds, said plainly.** Of the actions, harvest, fight, door, forced exit, wait, zaap and haven bag are entered,
+  edited, saved and counted; only **waiting plays**. The others are declared with their values and sentences, and a route
+  that holds one fails before it moves, saying so in the journal, rather than walk to its third map to find out. The NPC is
+  7d3b's whole: its values, which NPC and which replies, wait for the dialogs measured. The proposal had the door, the exit,
+  the zaap and the haven bag played in 7d3; they are not, the primitives being a map change by cell, a door by cell, a
+  zaap's destination and the haven bag's entry, none of which could be tried here without a client.
+- **Not run on a client.** The run is tried through its course, policies and cursor on a stage apart from the game
+  (`IRouteStage`); the stage that moves a real character (`GameRouteStage`, `FollowRoute`) is not, and 7d3b is where it is.
+
+## D378: A route's actions are nodes of the catalog, edited with the settings' own editor
+
+*2026-11-05, step 7, session 7d3, the lead's, within D298, D299 and D371. Builds D121, D316.*
+
+- **Nodes, not a class of their own.** An action is a `NodeCall`, a node's id and the values that differ from its defaults,
+  kept in its anchor's file under `actions`: `{"node": "route.exit", "values": {"Direction": "Left"}}`, as a behavior's calls
+  are. The ids are `route.harvest`, `route.fight`, `route.door`, `route.exit`, `route.zaap`, `route.bag` and the behaviors' own
+  `wait`; `RouteActions.Offered` is the editor's menu. The canvas of 7e will offer them as it offers every node, and a
+  sentence is written once, in French and English, for both. `RouteAnchor.Actions` holds them; `Details` still keeps what the
+  version does not read, so that an action of a node the host does not know is kept as it is and said ("Unknown action"). Two
+  anchors are equal by what they hold, so a value changed and changed back leaves the route as saved.
+- **A new kind of setting, a cell** (`SettingKind.Cell`, `int?`, 0 to 559): checked like a number, written like a game id. It is
+  picked on `CellPicker`, a control that draws the map's own cells as the live map does (D121), those that lead off the map
+  tinted and the elements dotted, in a dialog (`CellPickerViewModel`, `CellPickerView`). The editor knows the map the step is.
+- **The sentence and its values.** In the inspector each action of the step chosen is a card: the node's sentence with its values
+  filled in (`Leave by the top, or by cell 300`), opened to its values as a typed form, each picked, never typed in (D298). The
+  form is the profiles' own, taken out of `ProfileView` into `SettingsFormView`, so that one code draws both; the mockup's
+  tokens inside the sentence are not made, the sentence reading and the form editing. A new action opens at once; the menu is
+  the node names as buttons under the cards, the app's icons holding none for a harvest or a door.
+- **Their count** shows on the step's row in the inspector's list ("2 actions") and in the HUD on a hover of the station ("Step 1
+  · 1,0 · 2 actions"), and as a fourth figure of the route. Nothing on the line (D375).
+- **Undo and Redo** cover them as any change of the route: they are in the anchors the snapshots hold. A value typed in an
+  action's form does not build the forms again, which would take the hand's focus.
+- **Rejected.**
+  - A class of action per kind, with its own file and editor: the nodes already are sentences of typed values.
+  - The profiles' templates copied into the inspector: three hundred lines to keep twice.
+
+## D379: Running a route: the character's own path, a cursor, a node
+
+*2026-11-05, step 7, session 7d3, the lead's, within D299 and D376. Builds D74, D83.*
+
+- **What the editor assumes and what the run knows.** The editor's path (`RoutePlanner`) assumes every zaap of the game
+  known and takes one where it saves at least 5 changes (`RoutePlanner.ZaapSaving`, the activities' default), kamas not
+  counted: the route is made for any character. A leg says its teleports (`RouteLeg.Teleports`) and the step list says "By zaap".
+  The run asks for none of it: it goes to each anchor by `WorldTravel`, the character's own rules, so that the zaaps it
+  knows, its kamas, its levels and its doors decide, and a zaap it lacks leaves the walk, or the policy below. The drawing of a
+  hop on the map, dotted as the mockup has it, and the problems panel saying "a zaap the character lacks" (D302) are left.
+- **The course** (`RouteCursor`, pure): a loop goes round its anchors for ever, a one-way route once, a route there and back goes to
+  the last and back to the first and stops; one anchor is visited once whatever the course. Which anchor is next, and how many
+  of its actions were played, is kept per character and route (`RouteRuns`) for the run, told by its start: an interruption,
+  a fight, a bank, goes on from where the route was cut, and a character that stops and starts again begins over.
+- **A map out of reach**, no path or a journey that fails, is passed with a note or fails the route, as the route says. A lap of a
+  loop with no arrival fails, so that a loop of unreachable maps does not spin. A character that cannot act waits 2 s and tries
+  again, ten times, then gives the run back where it was.
+- **The node** `route.follow` (`FollowRoute`, one setting, the route's id as a text) runs it inside a behavior's step. A failed
+  route ends the run with its reason in the journal. **No picker yet**: a route is named by its id, and a behavior's "uses"
+  does not list it; both want the assets referenced as values, 7e's.
+- **Rejected.**
+  - The editor's path played as it is: it assumes zaaps the character may lack.
+  - A cursor in the behavior's variables: a node cannot write them, and a run's start tells a run apart as well.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

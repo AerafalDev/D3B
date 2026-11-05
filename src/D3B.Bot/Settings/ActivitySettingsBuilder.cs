@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json.Nodes;
 using D3B.Bot.Localization;
+using D3B.Data.Maps;
 
 namespace D3B.Bot.Settings;
 
@@ -182,6 +183,15 @@ public sealed class ActivitySettingsBuilder<TSettings>
     public SettingBuilder<TSettings> Resource(Expression<Func<TSettings, int?>> property, LocalizedText name)
     {
         return Add(property, SettingKind.Resource, false, name);
+    }
+
+    /// <summary>Declares a cell of the map a node plays on, or none, picked on the map's own cells (D377).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Cell</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> Cell(Expression<Func<TSettings, int?>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.Cell, false, name, 0, MapData.CellCount - 1);
     }
 
     /// <summary>Declares several resources professions gather, by their items' ids, each once, which may be sought within a profession.</summary>

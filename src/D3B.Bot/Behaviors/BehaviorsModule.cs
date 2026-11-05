@@ -1,6 +1,7 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Assets;
 using D3B.Bot.Behaviors.Nodes;
+using D3B.Bot.Routes;
 using D3B.Bot.Hosting;
 using D3B.Bot.Runtime;
 using D3B.Core.Modules;
@@ -30,10 +31,12 @@ public sealed class BehaviorsModule : IModule
         services.AddSingleton<AssetLibrary>();
         services.TryAddSingleton<CharacterVariables>();
         services.TryAddSingleton<SharedVariables>();
+        services.TryAddSingleton<RouteRuns>();
         services.AddSingleton(provider => new NodeCatalog(provider.GetServices<NodeDefinition>(), provider.GetRequiredService<ActivityCatalog>(), provider));
         services.AddSingleton<ProfileStarter>();
         services.AddSingleton<IHostPreparation, AssetPreparation>();
         CoreNodes.Register(services);
+        RouteActions.Register(services);
     }
 
     /// <inheritdoc/>

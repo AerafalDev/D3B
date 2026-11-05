@@ -6,6 +6,7 @@ using D3B.App.Localization;
 using D3B.Bot.Activities;
 using D3B.Bot.Settings;
 using D3B.Data;
+using D3B.Data.Maps;
 using D3B.Data.Monsters;
 using D3B.Data.Texts;
 using D3B.Data.World;
@@ -33,6 +34,9 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     /// <summary>Gets the behavior's values, which a profile changes, or <see langword="null"/> when the settings change nothing's (D300).</summary>
     public object? Defaults { get; }
+
+    /// <summary>Gets or sets the map a node plays on, whose cells a setting of cells picks among (D377).</summary>
+    public MapData? Map { get; set; }
 
     /// <summary>Gets or sets what gives a setting the behavior's value back, as the profile's editor does.</summary>
     public Action<SettingFieldViewModel>? Resets { get; set; }
@@ -457,6 +461,7 @@ internal sealed partial class SettingsEditor : ObservableObject
         return (setting.Kind, setting.IsList) switch
         {
             (SettingKind.Flag, _) => new FlagFieldViewModel(setting, this),
+            (SettingKind.Cell, _) => new CellFieldViewModel(setting, this),
             (SettingKind.Number, _) => new NumberFieldViewModel(setting, this),
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),
             (SettingKind.Choice, false) => new ChoiceFieldViewModel(setting, this),

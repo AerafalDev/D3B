@@ -273,11 +273,11 @@ public static class AssetFiles
 
         foreach (var (key, detail) in node)
         {
-            if (key is not ("map" or "pinned"))
+            if (key is not ("map" or "pinned" or "actions"))
                 details[key] = detail?.DeepClone();
         }
 
-        return new RouteAnchor { MapId = map, IsPinned = Flag(node, "pinned"), Details = details };
+        return new RouteAnchor { MapId = map, IsPinned = Flag(node, "pinned"), Actions = Items(node, "actions", ReadCall), Details = details };
     }
 
     private static void WriteRoute(RouteAsset route, JsonObject root)
@@ -297,6 +297,9 @@ public static class AssetFiles
 
             if (anchor.IsPinned)
                 json["pinned"] = true;
+
+            if (anchor.Actions.Length > 0)
+                json["actions"] = new JsonArray([.. anchor.Actions.Select(call => (JsonNode)WriteCall(call))]);
 
             foreach (var (key, node) in anchor.Details)
                 json[key] = node?.DeepClone();

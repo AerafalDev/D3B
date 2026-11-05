@@ -429,6 +429,19 @@ internal sealed partial class AssetsView : UserControl
             return;
         }
 
+        // The second press of a double click opens the row. The click count is the platform's, whatever lies under the pointer: a
+        // click rebuilds the rows, so that the second press lands on a new control, which Avalonia's DoubleTapped, asked of the
+        // same control twice, never raised.
+        if (e.ClickCount % 2 == 0 && !e.KeyModifiers.HasFlag(KeyModifiers.Control) && !e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+        {
+            _pressed = null;
+            _pressedRow = null;
+            _choosesOnRelease = false;
+            assets.OpenRow(row);
+
+            return;
+        }
+
         var control = e.KeyModifiers.HasFlag(KeyModifiers.Control);
         var shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
 
@@ -485,12 +498,6 @@ internal sealed partial class AssetsView : UserControl
         _choosesOnRelease = false;
         _pressed = null;
         _pressedRow = null;
-    }
-
-    private void OnRowDoubleTapped(object? sender, TappedEventArgs e)
-    {
-        if (sender is Control { DataContext: AssetRowViewModel row } && Assets is { } assets && !row.IsRenaming && !IsOnChevron(e.Source))
-            assets.OpenRow(row);
     }
 
     // The folder a drop goes into: a folder's own, the folder an asset of the project is in, the root on the empty space.

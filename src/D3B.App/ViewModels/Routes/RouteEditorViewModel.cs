@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -5,8 +6,13 @@ using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls.WorldMaps;
+using D3B.App.ViewModels.Settings;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Assets;
+using D3B.Bot.Behaviors;
 using D3B.Bot.Routes;
+using D3B.Bot.Settings;
+using D3B.Data.Maps;
 using D3B.Data.WorldMaps;
 
 namespace D3B.App.ViewModels.Routes;
@@ -24,8 +30,10 @@ namespace D3B.App.ViewModels.Routes;
 /// stays as it was. The map's view hears what is pressed through this model, and is given a <see cref="WorldMapScene"/>.
 /// </para>
 /// </remarks>
-internal sealed partial class RouteEditorViewModel : ObservableObject
+internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 {
+    private const int UndoDepth = 200;
+
     private static readonly Regex _coordinates = CoordinatesPattern();
     private static readonly Regex _mapId = MapIdPattern();
 
@@ -33,11 +41,18 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     private readonly List<RouteAnchor> _anchors;
     private readonly List<int> _stationAnchors = [];
     private readonly List<int> _sceneLegs = [];
+    private readonly List<Snapshot> _undo = [];
+    private readonly List<Snapshot> _redo = [];
+    private readonly HashSet<int> _openActions = [];
     private RouteAsset _saved;
     private IReadOnlyList<RouteLeg> _legs = [];
     private long _paintedFrom;
     private int _version;
     private Task _planning = Task.CompletedTask;
+    private Snapshot _current;
+    private bool _inGesture;
+    private bool _gestureRecorded;
+    private bool _keepActionForms;
 
     /// <summary>Gets the route's id.</summary>
     public string Id => _saved.Id;
@@ -47,6 +62,12 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
 
     /// <summary>Gets the route's anchors as steps, in order.</summary>
     public ObservableCollection<RouteStepViewModel> Steps { get; } = [];
+
+    /// <summary>Gets the actions of the step chosen, in order (D377).</summary>
+    public ObservableCollection<RouteActionViewModel> Actions { get; } = [];
+
+    /// <summary>Gets the actions the menu offers to add to a step.</summary>
+    public IReadOnlyList<RouteActionChoiceViewModel> OfferedActions { get; private set; } = [];
 
     /// <summary>Gets the worlds the layer can show.</summary>
     public IReadOnlyList<WorldChoiceViewModel> Worlds { get; private set; } = [];
@@ -136,6 +157,10 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     [ObservableProperty]
     public partial int MapCount { get; private set; }
 
+    /// <summary>Gets how many actions the route plays in all.</summary>
+    [ObservableProperty]
+    public partial int ActionTotal { get; private set; }
+
     /// <summary>Gets how many gaps no path crosses.</summary>
     [ObservableProperty]
     public partial int GapCount { get; private set; }
@@ -158,6 +183,18 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     /// <summary>Gets whether the route has no anchor.</summary>
     public bool IsEmpty => _anchors.Count == 0;
 
+    /// <summary>Gets whether a step is chosen, whose actions the inspector shows.</summary>
+    public bool HasSelectedStep => SelectedIndex >= 0 && SelectedIndex < _anchors.Count;
+
+    /// <summary>Gets the title of the chosen step's actions, such as "Actions on step 3".</summary>
+    public string ActionsTitle => HasSelectedStep ? _page.Localizer.Format("RouteActionsTitle", SelectedIndex + 1) : "";
+
+    /// <summary>Gets whether the chosen step has no action.</summary>
+    public bool HasNoActions => HasSelectedStep && Actions.Count == 0;
+
+    /// <summary>Gets whether actions can be added: the host holds the kinds of nodes.</summary>
+    public bool CanAddActions => HasSelectedStep && OfferedActions.Count > 0;
+
     /// <summary>Gets whether a gap no path crosses is said.</summary>
     public bool HasProblem => Problem is not null;
 
@@ -172,6 +209,12 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
 
     /// <summary>Gets whether the select tool is chosen.</summary>
     public bool IsSelecting => Tool == WorldMapTool.Select;
+
+    /// <inheritdoc/>
+    public bool CanUndo => _undo.Count > 0;
+
+    /// <inheritdoc/>
+    public bool CanRedo => _redo.Count > 0;
 
     /// <summary>Gets what the path search has not finished.</summary>
     public Task Planned => _planning;
@@ -194,6 +237,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
         Name = route.Name;
         Mode = route.Mode;
         Unreachable = route.Unreachable;
+        _current = Take();
         Hud = page.Localizer["RouteHudNothing"];
         Layer = FirstLayer();
         Relabel();
@@ -227,6 +271,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(Worlds));
         OnPropertyChanged(nameof(HasWorlds));
         Name = _saved.Name;
+        OfferActions();
         Rebuild();
     }
 
@@ -247,6 +292,12 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
             _anchors.AddRange(route.Anchors);
             Mode = route.Mode;
             Unreachable = route.Unreachable;
+
+            // What was done belongs to the route as it was: undoing it onto another would make a mixture.
+            _undo.Clear();
+            _redo.Clear();
+            _current = Take();
+            Moved();
         }
 
         Rebuild();
@@ -261,7 +312,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
         Hud = hit.Kind switch
         {
             WorldMapHitKind.Square or WorldMapHitKind.Shared => Describe(hit.X, hit.Y),
-            WorldMapHitKind.Station when hit.Station >= 0 && hit.Station < _stationAnchors.Count => localizer.Format("RouteHudStep", _stationAnchors[hit.Station] + 1, Place(_anchors[_stationAnchors[hit.Station]].MapId)),
+            WorldMapHitKind.Station when hit.Station >= 0 && hit.Station < _stationAnchors.Count => HudOfStep(_stationAnchors[hit.Station]),
             WorldMapHitKind.PathPoint => localizer["RouteHudPath"],
             _ => localizer["RouteHudNothing"],
         };
@@ -413,6 +464,70 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
         Remove(SelectedIndex);
     }
 
+    /// <summary>Moves the step chosen in the route: Alt with the up and down arrows.</summary>
+    /// <param name="delta">How many places towards the end, negative towards the start.</param>
+    public void MoveSelected(int delta)
+    {
+        var from = SelectedIndex;
+        var to = from + delta;
+
+        if (from < 0 || from >= _anchors.Count || to < 0 || to >= _anchors.Count || to == from)
+            return;
+
+        var anchor = _anchors[from];
+
+        _anchors.RemoveAt(from);
+        _anchors.Insert(to, anchor);
+        SelectedIndex = to;
+        Changed();
+    }
+
+    /// <summary>Chooses another step and shows it on the map: the page keys.</summary>
+    /// <param name="delta">How many places towards the end, negative towards the start.</param>
+    public void StepBy(int delta)
+    {
+        if (_anchors.Count == 0)
+            return;
+
+        Reveal(Math.Clamp(SelectedIndex < 0 ? (delta > 0 ? 0 : _anchors.Count - 1) : SelectedIndex + delta, 0, _anchors.Count - 1));
+    }
+
+    /// <summary>Starts a gesture, a press and what it does until it is let go: the changes it makes are one to undo.</summary>
+    public void BeginGesture()
+    {
+        _inGesture = true;
+        _gestureRecorded = false;
+    }
+
+    /// <summary>Ends the gesture.</summary>
+    public void EndGesture()
+    {
+        _inGesture = false;
+        _gestureRecorded = false;
+    }
+
+    /// <inheritdoc/>
+    public void Undo()
+    {
+        if (_undo.Count == 0)
+            return;
+
+        _redo.Add(_current);
+        Restore(_undo[^1]);
+        _undo.RemoveAt(_undo.Count - 1);
+    }
+
+    /// <inheritdoc/>
+    public void Redo()
+    {
+        if (_redo.Count == 0)
+            return;
+
+        _undo.Add(_current);
+        Restore(_redo[^1]);
+        _redo.RemoveAt(_redo.Count - 1);
+    }
+
     /// <summary>Changes the layer to a world.</summary>
     /// <param name="world">The world's id.</param>
     public void UseLayer(int world)
@@ -424,6 +539,25 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
         Choice = null;
         Relabel();
         FitRequested?.Invoke();
+    }
+
+    [RelayCommand]
+    private void AddAction(string? node)
+    {
+        var catalog = _page.Services?.Nodes;
+
+        if (node is null || catalog is null || !catalog.TryGet(node, out var definition) || !HasSelectedStep)
+            return;
+
+        var anchor = _anchors[SelectedIndex];
+
+        _openActions.Clear();
+
+        if (!definition.Values.IsEmpty)
+            _openActions.Add(anchor.Actions.Length);
+
+        _anchors[SelectedIndex] = anchor with { Actions = anchor.Actions.Add(RouteActionCalls.Create(definition)) };
+        Changed();
     }
 
     [RelayCommand]
@@ -625,6 +759,155 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
             : localizer.Format("RouteHudMaps", coordinates, maps.Length, zone);
     }
 
+    private void AddActionNode(string node)
+    {
+        AddAction(node);
+    }
+
+    private void ToggleAction(int index)
+    {
+        if (!_openActions.Add(index))
+            _openActions.Remove(index);
+    }
+
+    private void RemoveAction(int index)
+    {
+        if (!HasSelectedStep || index < 0 || index >= _anchors[SelectedIndex].Actions.Length)
+            return;
+
+        _openActions.Clear();
+        _anchors[SelectedIndex] = _anchors[SelectedIndex] with { Actions = _anchors[SelectedIndex].Actions.RemoveAt(index) };
+        Changed();
+    }
+
+    private void MoveAction(int index, int delta)
+    {
+        var to = index + delta;
+
+        if (!HasSelectedStep || index < 0 || to < 0 || index >= _anchors[SelectedIndex].Actions.Length || to >= _anchors[SelectedIndex].Actions.Length)
+            return;
+
+        var actions = _anchors[SelectedIndex].Actions;
+        var moved = actions[index];
+
+        _openActions.Clear();
+        _openActions.Add(to);
+        _anchors[SelectedIndex] = _anchors[SelectedIndex] with { Actions = actions.RemoveAt(index).Insert(to, moved) };
+        Changed();
+    }
+
+    private void ActionEdited(int index, NodeDefinition definition, SettingsEditor editor)
+    {
+        if (!HasSelectedStep || index >= _anchors[SelectedIndex].Actions.Length || index >= Actions.Count)
+            return;
+
+        var anchor = _anchors[SelectedIndex];
+        var made = RouteActionCalls.Make(definition, editor.Draft);
+
+        if (!RouteAnchor.SameCall(anchor.Actions[index], made))
+        {
+            _anchors[SelectedIndex] = anchor with { Actions = anchor.Actions.SetItem(index, made) };
+
+            // The forms stay as they are: rebuilding them under the hand that types in one would take its focus.
+            _keepActionForms = true;
+
+            try
+            {
+                Changed();
+            }
+            finally
+            {
+                _keepActionForms = false;
+            }
+        }
+
+        Actions[index].Say();
+    }
+
+    private void OfferActions()
+    {
+        var catalog = _page.Services?.Nodes;
+        var culture = _page.Localizer.Culture;
+        var offered = new List<RouteActionChoiceViewModel>();
+
+        if (catalog is not null)
+        {
+            foreach (var node in RouteActions.Offered)
+            {
+                if (catalog.TryGet(node, out var definition))
+                    offered.Add(new RouteActionChoiceViewModel(node, RouteActionViewModel.NameOf(definition, culture), AddActionNode));
+            }
+        }
+
+        OfferedActions = offered;
+        OnPropertyChanged(nameof(OfferedActions));
+        OnPropertyChanged(nameof(CanAddActions));
+    }
+
+    private string HudOfStep(int index)
+    {
+        var localizer = _page.Localizer;
+        var place = Place(_anchors[index].MapId);
+        var count = _anchors[index].Actions.Length;
+
+        return count == 0 ? localizer.Format("RouteHudStep", index + 1, place) : localizer.Format("RouteHudStepActions", index + 1, place, localizer.Plural("RouteActionsCount", count));
+    }
+
+    private void BuildActions()
+    {
+        Actions.Clear();
+
+        var services = _page.Services!;
+
+        if (HasSelectedStep)
+        {
+            var anchor = _anchors[SelectedIndex];
+            var localizer = _page.Localizer;
+            var names = new GameNames(services.Texts, localizer);
+            MapData? map = null;
+
+            services.Maps?.TryGet(anchor.MapId, out map);
+
+            for (var i = 0; i < anchor.Actions.Length; i++)
+            {
+                var call = anchor.Actions[i];
+                NodeDefinition? definition = null;
+                SettingsEditor? editor = null;
+
+                if (services.Nodes is { } catalog && catalog.TryGet(call.Node, out definition))
+                {
+                    var made = definition;
+                    var index = i;
+                    var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, services.Game, names, localizer, services.Provider, [], _page.Dialogs) { Map = map };
+
+                    created.Edited += (_, _) => ActionEdited(index, made, created);
+                    editor = created;
+                }
+
+                Actions.Add(new RouteActionViewModel(i, anchor.Actions.Length, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), _openActions.Contains(i), ToggleAction, RemoveAction, MoveAction));
+            }
+        }
+
+        NotifyActions();
+    }
+
+    private string NameOf(GameNames names, SettingKind kind, int id)
+    {
+        var game = _page.Services!.Game;
+
+        return game is not null && game.Options(kind).FirstOrDefault(option => option.Id == id) is { } reference
+            ? names.Name(kind, reference)
+            : "#" + id.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private void NotifyActions()
+    {
+        OnPropertyChanged(nameof(HasSelectedStep));
+        OnPropertyChanged(nameof(ActionsTitle));
+        OnPropertyChanged(nameof(HasNoActions));
+        OnPropertyChanged(nameof(CanAddActions));
+    }
+
     private void AddAnchor(RouteAnchor anchor, int? at = null)
     {
         var index = Math.Clamp(at ?? _anchors.Count, 0, _anchors.Count);
@@ -642,8 +925,53 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
 
     private void Changed()
     {
+        var now = Take();
+
+        if (!now.Equals(_current))
+        {
+            // A gesture, a drag across many maps, is one change to take back, recorded at its first.
+            if (!_inGesture || !_gestureRecorded)
+            {
+                _undo.Add(_current);
+
+                if (_undo.Count > UndoDepth)
+                    _undo.RemoveAt(0);
+
+                _gestureRecorded = _inGesture;
+            }
+
+            _redo.Clear();
+            _current = now;
+            Moved();
+        }
+
         Rebuild();
         RecomputeDirty();
+    }
+
+    private Snapshot Take()
+    {
+        return new Snapshot([.. _anchors], Mode, Unreachable);
+    }
+
+    private void Restore(Snapshot state)
+    {
+        _anchors.Clear();
+        _anchors.AddRange(state.Anchors);
+        Mode = state.Mode;
+        Unreachable = state.Unreachable;
+        _current = state;
+        Choice = null;
+        SelectedIndex = Math.Min(SelectedIndex, _anchors.Count - 1);
+        Moved();
+        Rebuild();
+        RecomputeDirty();
+    }
+
+    private void Moved()
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
     }
 
     private void RecomputeDirty()
@@ -654,9 +982,13 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     private void Rebuild()
     {
         StepCount = _anchors.Count;
+        ActionTotal = _anchors.Sum(anchor => anchor.Actions.Length);
         OnPropertyChanged(nameof(IsEmpty));
         BuildSteps();
         BuildScene();
+
+        if (!_keepActionForms)
+            BuildActions();
 
         var version = ++_version;
         var maps = _anchors.ConvertAll(anchor => anchor.MapId);
@@ -728,6 +1060,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
                 {
                     RouteLegKind.Unreachable => (localizer["RouteGapNone"], true),
                     RouteLegKind.Same => (localizer["RouteGapSame"], false),
+                    _ when leg.UsesZaap => (localizer["RouteGapZaap"], false),
                     _ => (leg.Between.IsEmpty ? localizer["RouteGapNeighbours"] : localizer.Plural("RouteGapMaps", leg.Between.Length), false),
                 };
 
@@ -737,7 +1070,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
                     gap = localizer["RouteGapNone"];
             }
 
-            steps.Add(new RouteStepViewModel(i, anchor.MapId, Place(anchor.MapId), Zone(anchor.MapId), anchor.IsPinned, elsewhere, gap, broken, closing && gap.Length > 0, Reveal, Remove) { IsSelected = i == SelectedIndex });
+            steps.Add(new RouteStepViewModel(i, anchor.MapId, Place(anchor.MapId), Zone(anchor.MapId), anchor.IsPinned, elsewhere, gap, broken, closing && gap.Length > 0, anchor.Actions.Length, anchor.Actions.Length == 0 ? "" : localizer.Plural("RouteActionsCount", anchor.Actions.Length), Reveal, Remove) { IsSelected = i == SelectedIndex });
         }
 
         Steps.Clear();
@@ -826,11 +1159,26 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     partial void OnSelectedIndexChanged(int value)
     {
         MarkSelected();
+        _openActions.Clear();
+        BuildActions();
     }
 
     partial void OnLayerChanged(int value)
     {
         BuildSteps();
         BuildScene();
+    }
+
+    private readonly record struct Snapshot(ImmutableArray<RouteAnchor> Anchors, RouteMode Mode, RouteUnreachable Unreachable)
+    {
+        public bool Equals(Snapshot other)
+        {
+            return Mode == other.Mode && Unreachable == other.Unreachable && Anchors.AsSpan().SequenceEqual(other.Anchors.AsSpan());
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Anchors.Length, Mode, Unreachable);
+        }
     }
 }

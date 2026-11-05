@@ -311,4 +311,97 @@
   <data name="StopHelp" xml:space="preserve">
     <value>The run ends, done, once its step is over.</value>
   </data>
+  <data name="RouteHarvest" xml:space="preserve">
+    <value>Harvest {Resources}</value>
+  </data>
+  <data name="RouteHarvestHelp" xml:space="preserve">
+    <value>Harvests the resources on the map, in their order, then goes on.</value>
+  </data>
+  <data name="Resources" xml:space="preserve">
+    <value>Resources</value>
+  </data>
+  <data name="RouteFight" xml:space="preserve">
+    <value>Fight {Monsters}, groups of {LeastMonsters} to {MostMonsters}</value>
+  </data>
+  <data name="RouteFightHelp" xml:space="preserve">
+    <value>Fights the groups of the map that the filter lets through, then goes on. No monster chosen, every group.</value>
+  </data>
+  <data name="RouteFightRule" xml:space="preserve">
+    <value>The fewest monsters of a group cannot be more than the most.</value>
+  </data>
+  <data name="Monsters" xml:space="preserve">
+    <value>Monsters</value>
+  </data>
+  <data name="LeastMonsters" xml:space="preserve">
+    <value>Fewest in a group</value>
+  </data>
+  <data name="MostMonsters" xml:space="preserve">
+    <value>Most in a group</value>
+  </data>
+  <data name="RouteDoor" xml:space="preserve">
+    <value>Take the door at cell {Cell}</value>
+  </data>
+  <data name="RouteDoorHelp" xml:space="preserve">
+    <value>Uses the door whose element stands on the cell, then goes on.</value>
+  </data>
+  <data name="Cell" xml:space="preserve">
+    <value>Cell</value>
+  </data>
+  <data name="RouteExit" xml:space="preserve">
+    <value>Leave by {Direction}, or by cell {Cell}</value>
+  </data>
+  <data name="RouteExitHelp" xml:space="preserve">
+    <value>Forces the exit: by the cell, when one is chosen, else by the side of the map.</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>Side</value>
+  </data>
+  <data name="DirectionTop" xml:space="preserve">
+    <value>the top</value>
+  </data>
+  <data name="DirectionRight" xml:space="preserve">
+    <value>the right</value>
+  </data>
+  <data name="DirectionBottom" xml:space="preserve">
+    <value>the bottom</value>
+  </data>
+  <data name="DirectionLeft" xml:space="preserve">
+    <value>the left</value>
+  </data>
+  <data name="RouteZaap" xml:space="preserve">
+    <value>Take the zaap</value>
+  </data>
+  <data name="RouteZaapHelp" xml:space="preserve">
+    <value>Teleports to the zaap nearest the next step.</value>
+  </data>
+  <data name="RouteBag" xml:space="preserve">
+    <value>Go to the haven bag</value>
+  </data>
+  <data name="RouteBagHelp" xml:space="preserve">
+    <value>Enters the haven bag from the map.</value>
+  </data>
+  <data name="RouteFollow" xml:space="preserve">
+    <value>Follow the route {Route}</value>
+  </data>
+  <data name="RouteFollowHelp" xml:space="preserve">
+    <value>Goes through the route of the project: its maps in order, as its course says, and what it does on each. A loop goes on until another state takes over.</value>
+  </data>
+  <data name="Route" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="RouteNotPlayed" xml:space="preserve">
+    <value>The route holds the action {0}, which is not played yet: it does not start.</value>
+  </data>
+  <data name="RouteUnreachableFails" xml:space="preserve">
+    <value>Step {0} of the route, map {1}, is out of reach: the route fails.</value>
+  </data>
+  <data name="RouteUnreachablePassed" xml:space="preserve">
+    <value>Step {0} of the route, map {1}, is out of reach: passed.</value>
+  </data>
+  <data name="RouteNothingReachable" xml:space="preserve">
+    <value>No step of the route can be reached from here: the route fails.</value>
+  </data>
+  <data name="RouteMissing" xml:space="preserve">
+    <value>The route {0} is not in the project.</value>
+  </data>
 </root>

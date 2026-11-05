@@ -23,7 +23,7 @@ public sealed class TileStoreTests
     }
 
     [Fact]
-    public async Task TilesWantedAreLoadedOffTheCallingThreadOnceEachAndTheViewIsToldWhenOneArrives()
+    public void TilesWantedAreLoadedOffTheCallingThreadOnceEachAndTheViewIsToldWhenOneArrives()
     {
         var loads = new ConcurrentBag<(WorldMapTileKey Key, int Thread)>();
         var arrived = 0;
@@ -39,8 +39,8 @@ public sealed class TileStoreTests
         store.Want([], [Key(1), Key(2), Key(3)]);
         store.Want([], [Key(1), Key(2), Key(3)]);
 
-        await WaitForAsync(() => store.Count == 3);
-
+        // The caller's thread waits where it stands: awaiting would hand it back to the pool, which may then load a tile on it.
+        Assert.True(SpinWait.SpinUntil(() => store.Count == 3, TimeSpan.FromSeconds(10)));
         Assert.True(store.TryGet(Key(2), out var tile));
         Assert.Equal("tile2", tile);
         Assert.Equal(3, loads.Count);
