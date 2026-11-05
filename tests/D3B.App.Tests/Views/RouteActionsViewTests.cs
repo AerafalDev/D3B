@@ -5,6 +5,7 @@ using Avalonia.VisualTree;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
 using D3B.Bot.Routes;
@@ -104,6 +105,10 @@ public sealed class RouteActionsViewTests
             Dispatcher.UIThread.RunJobs();
 
             Drawings.Draw(window, "route-actions");
+            editor.Steps[0].AddActionCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Drawings.Draw(window, "route-action-picker");
+            (main.Dialogs.Current as RouteActionPickerViewModel)?.CancelCommand.Execute(null);
 
             var after = Texts(properties);
 

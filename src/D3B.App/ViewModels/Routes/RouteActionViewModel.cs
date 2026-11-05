@@ -83,18 +83,6 @@ internal sealed partial class RouteActionViewModel : ObservableObject
         Say();
     }
 
-    /// <summary>Names an action by its sentence without its values: "Wait {Seconds} s" names a wait.</summary>
-    /// <param name="definition">The action's node.</param>
-    /// <param name="culture">The language.</param>
-    /// <returns>The name.</returns>
-    public static string NameOf(NodeDefinition definition, System.Globalization.CultureInfo culture)
-    {
-        var text = definition.Sentence.In(culture);
-        var slot = text.IndexOf('{', StringComparison.Ordinal);
-
-        return (slot < 0 ? text : text[..slot]).Trim().TrimEnd(',', ';', ':').Trim();
-    }
-
     /// <summary>Says the sentence and the problems again, once the values changed.</summary>
     public void Say()
     {

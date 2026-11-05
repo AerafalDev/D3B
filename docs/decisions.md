@@ -8305,6 +8305,16 @@ and D374; the rest of the mockup stands.*
 - **Left**: the second path of the lead's list, a card on the map by the step (a double click), and the recording (7d4), which
   should do most of this configuring.
 
+## D381: Actions are added from a "+" that opens a dialog
+
+*2026-11-05, step 7, session 7d3, the owner's remark on a drawing of the step list ("better a + icon that opens a modal to add things"). Supersedes the buttons under the cards of D378.*
+
+- **A "+"**, on each step's row and in the head of the actions' section, opens a dialog that lists the actions with their name and
+  a line of what each does (`RouteActionPickerViewModel`, `RouteActionPickerView`); one press adds it to the step, which the "+" of a
+  row chooses, and closes the dialog. The seven buttons that stood under the cards are gone, the cards keep the sentences.
+- **Names of their own.** The picker names an action "Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap",
+  "Go to the haven bag", from the app's texts, where the first words of a sentence ("Leave by") read badly alone.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

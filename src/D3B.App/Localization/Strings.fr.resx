@@ -2636,4 +2636,28 @@
   <data name="RouteGapZaap" xml:space="preserve">
     <value>Par zaap</value>
   </data>
+  <data name="RouteActionAdd" xml:space="preserve">
+    <value>Ajouter une action</value>
+  </data>
+  <data name="RouteNameHarvest" xml:space="preserve">
+    <value>Récolter</value>
+  </data>
+  <data name="RouteNameFight" xml:space="preserve">
+    <value>Combattre</value>
+  </data>
+  <data name="RouteNameDoor" xml:space="preserve">
+    <value>Prendre une porte</value>
+  </data>
+  <data name="RouteNameExit" xml:space="preserve">
+    <value>Sortie forcée</value>
+  </data>
+  <data name="RouteNameWait" xml:space="preserve">
+    <value>Attendre</value>
+  </data>
+  <data name="RouteNameZaap" xml:space="preserve">
+    <value>Prendre le zaap</value>
+  </data>
+  <data name="RouteNameBag" xml:space="preserve">
+    <value>Aller au havre-sac</value>
+  </data>
 </root>

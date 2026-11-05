@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using D3B.App.Controls;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using ShadUI;
 
@@ -21,6 +22,7 @@ internal sealed partial class MainWindow : ShadUI.Window
         .Register<QuestionView, QuestionViewModel>()
         .Register<GamePickerView, GamePickerViewModel>()
         .Register<CellPickerView, CellPickerViewModel>()
+        .Register<RouteActionPickerView, RouteActionPickerViewModel>()
         .Register<NewProfileView, NewProfileViewModel>();
 
     private readonly ToastManager _toastManager = new();
@@ -219,6 +221,9 @@ internal sealed partial class MainWindow : ShadUI.Window
                 break;
             case CellPickerViewModel cells:
                 _dialogManager.CreateDialog(cells).WithMinWidth(760).WithMaxWidth(800).Show();
+                break;
+            case RouteActionPickerViewModel actions:
+                _dialogManager.CreateDialog(actions).WithMinWidth(420).WithMaxWidth(480).Show();
                 break;
             case NewProfileViewModel profile:
                 _dialogManager.CreateDialog(profile).WithMaxWidth(440).Show();

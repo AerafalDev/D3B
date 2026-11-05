@@ -732,6 +732,16 @@
                                                             ToolTip.Tip="{l:Tr RouteStepElsewhere}"
                                                             Width="12" />
                                                         <Button
+                                                            AutomationProperties.Name="{l:Tr RouteActionAdd}"
+                                                            Classes="Tool Small"
+                                                            Command="{Binding AddActionCommand}"
+                                                            ToolTip.Tip="{l:Tr RouteActionAdd}">
+                                                            <c:Icon
+                                                                Drawing="{StaticResource General.Add}"
+                                                                Height="11"
+                                                                Width="11" />
+                                                        </Button>
+                                                        <Button
                                                             AutomationProperties.Name="{l:Tr RouteStepRemove}"
                                                             Classes="Tool Small"
                                                             Command="{Binding RemoveCommand}"
@@ -759,7 +769,19 @@
                     </Border>
                     <Border Classes="Section" IsVisible="{Binding HasSelectedStep}">
                         <StackPanel>
-                            <TextBlock Classes="SectionTitle" Text="{Binding ActionsTitle}" />
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="SectionTitle" Text="{Binding ActionsTitle}" />
+                                <Button
+                                    AutomationProperties.Name="{l:Tr RouteActionAdd}"
+                                    Classes="Tool Small"
+                                    Command="{Binding ChooseActionCommand}"
+                                    Grid.Column="1"
+                                    IsVisible="{Binding CanAddActions}"
+                                    Margin="0,8,14,0"
+                                    ToolTip.Tip="{l:Tr RouteActionAdd}">
+                                    <c:Icon Drawing="{StaticResource General.Add}" Height="13" Width="13" />
+                                </Button>
+                            </Grid>
                             <TextBlock
                                 Classes="Dim"
                                 IsVisible="{Binding HasNoActions}"
@@ -868,30 +890,6 @@
                                                     TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <ItemsControl ItemsSource="{Binding OfferedActions}" Margin="8,6,8,8">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="routes:RouteActionChoiceViewModel">
-                                        <Button
-                                            AutomationProperties.Name="{Binding Name}"
-                                            Classes="Outline Small"
-                                            Command="{Binding AddCommand}"
-                                            Margin="0,0,6,6">
-                                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <c:Icon
-                                                    Drawing="{StaticResource General.Add}"
-                                                    Height="11"
-                                                    Width="11" />
-                                                <TextBlock Text="{Binding Name}" />
-                                            </StackPanel>
-                                        </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
