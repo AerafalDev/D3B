@@ -17,6 +17,7 @@ using D3B.Data.Packs;
 using D3B.Data.Spells;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Data.WorldMaps;
 using D3B.Scripts.Unity;
 
 namespace D3B.Scripts.Extract;
@@ -106,6 +107,7 @@ internal static class ExtractCommand
             .Concat(StatesExtractor.Inputs(client))
             .Concat(MonstersExtractor.Inputs(client))
             .Concat(BreedsExtractor.Inputs(client))
+            .Concat(WorldMapsExtractor.Inputs(client))
             .Distinct(StringComparer.OrdinalIgnoreCase);
         var fingerprint = InputFingerprint.Compute(client, manifest, inputs);
         var extractor = typeof(GamePack).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
@@ -137,10 +139,11 @@ internal static class ExtractCommand
         var banks = BanksExtractor.Read(client, atlas, graph);
         var icons = IconsExtractor.Read(client, items, jobs, spells, breeds, monsters, atlas);
         var fights = new FightTables(spells, states, effects, monsters, breeds, characteristics);
+        var (worldMaps, worldMapTiles) = WorldMapsExtractor.Read(client);
 
         WorldExtractor.Check(graph, atlas, maps);
 
-        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks, fights));
+        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks, fights, worldMaps));
 
         Console.WriteLine($"Read in {reading.Elapsed.TotalSeconds:F1} s");
 
@@ -178,9 +181,14 @@ internal static class ExtractCommand
             writer.Add(MonsterCatalog.EntryName, monsters);
             writer.Add(BreedCatalog.EntryName, breeds);
             writer.Add(CharacteristicCatalog.EntryName, characteristics);
+            writer.Add(WorldMapCatalog.EntryName, worldMaps);
 
             foreach (var map in maps)
                 writer.Add(MapData.EntryName(map.Id), map);
+
+            // Already JPEG files: zstd finds nothing to take out, so each tile is its own small frame, read alone.
+            foreach (var (name, jpeg) in worldMapTiles)
+                writer.Add(name, jpeg);
 
             writer.Complete();
         }

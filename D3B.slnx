@@ -48,6 +48,7 @@
     <File Path="scripts/extract/TextsExtractor.cs" />
     <File Path="scripts/extract/WorldExtractor.cs" />
     <File Path="scripts/extract/WorldGraphReader.cs" />
+    <File Path="scripts/extract/WorldMapsExtractor.cs" />
   </Folder>
   <Folder Name="/scripts/fights/">
     <File Path="scripts/fights/CapturedFights.cs" />
@@ -119,6 +120,7 @@
     <File Path="scripts/schema/WireEncodings.cs" />
   </Folder>
   <Folder Name="/scripts/unity/">
+    <File Path="scripts/unity/AddressablesCatalog.cs" />
     <File Path="scripts/unity/ClientInstall.cs" />
     <File Path="scripts/unity/GitHubCli.cs" />
     <File Path="scripts/unity/I18nFile.cs" />
