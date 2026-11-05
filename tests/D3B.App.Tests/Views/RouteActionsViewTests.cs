@@ -27,6 +27,12 @@ public sealed class RouteActionsViewTests
         return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RouteActionsViewTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
     }
 
+    // The language is the window's one, shared by every test of the session: it is set, and read, on the interface's thread alone.
+    private static Task<T> OnTheUIThreadAsync<T>(Func<Task<T>> action)
+    {
+        return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RouteActionsViewTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
+    }
+
     // Maps 1 to 5 of the route world, each of walkable cells, those on the edge leading off, and a door's element on cell 300.
     private static GamePack PackOfMaps(TemporaryDirectory directory)
     {
@@ -64,25 +70,25 @@ public sealed class RouteActionsViewTests
         await store.OpenedAsync();
 
         var runner = await TestHosts.RunningAsync(store.Host);
-        var localizer = Localizer.Instance;
-
-        localizer.Use(Localizer.English);
-
-        var main = new MainViewModel(runner, localizer);
-
-        main.Refresh();
-        main.Routes.Use(TestRouteWorld.Services(store.Assets) with { Maps = new GameMaps(pack) });
-
-        var editor = (await main.Routes.CreateAsync(""))!;
-
-        editor.TraceSquare(1, 0, isDrag: false);
-        editor.TraceSquare(3, 0, isDrag: false);
-        editor.Select(0);
-        editor.OfferedActions.Single(action => action.Node == RouteActions.Exit).AddCommand.Execute(null);
-        editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
-
-        var result = await OnTheUIThreadAsync(() =>
+        var result = await OnTheUIThreadAsync(async () =>
         {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+            main.Routes.Use(TestRouteWorld.Services(store.Assets) with { Maps = new GameMaps(pack) });
+
+            var editor = (await main.Routes.CreateAsync(""))!;
+
+            editor.TraceSquare(1, 0, isDrag: false);
+            editor.TraceSquare(3, 0, isDrag: false);
+            editor.Select(0);
+            editor.OfferedActions.Single(action => action.Node == RouteActions.Exit).AddCommand.Execute(null);
+            editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
+
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 
             window.Show();
@@ -113,6 +119,7 @@ public sealed class RouteActionsViewTests
             var after = Texts(properties);
 
             window.Close();
+            localizer.Use(Localizer.English);
 
             return (texts, after, picked.Map?.Id, main.Dialogs.IsOpen, editor.Steps[0].ActionsText, editor.IsDirty);
         });
@@ -139,24 +146,24 @@ public sealed class RouteActionsViewTests
         await store.OpenedAsync();
 
         var runner = await TestHosts.RunningAsync(store.Host);
-        var localizer = Localizer.Instance;
-
-        localizer.Use(Localizer.English);
-
-        var main = new MainViewModel(runner, localizer);
-
-        main.Refresh();
-        main.Routes.Use(TestRouteWorld.Services(store.Assets));
-
-        var editor = (await main.Routes.CreateAsync(""))!;
-
-        editor.TraceSquare(1, 0, isDrag: false);
-        editor.Select(0);
-        editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
-
-        var field = editor.Actions[0].Parts.Single(part => part.IsToken).Field!;
-        var shown = await OnTheUIThreadAsync(() =>
+        var shown = await OnTheUIThreadAsync(async () =>
         {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+            main.Routes.Use(TestRouteWorld.Services(store.Assets));
+
+            var editor = (await main.Routes.CreateAsync(""))!;
+
+            editor.TraceSquare(1, 0, isDrag: false);
+            editor.Select(0);
+            editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
+
+            var field = editor.Actions[0].Parts.Single(part => part.IsToken).Field!;
             var alone = new SettingsFormView { DataContext = field };
             var whole = new SettingsFormView { DataContext = editor.Actions[0].Editor };
             var window = new Window { Content = new StackPanel { Children = { alone, whole } }, Width = 500, Height = 400 };
