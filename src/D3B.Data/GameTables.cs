@@ -7,6 +7,7 @@ using D3B.Data.Interactives;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.Monsters;
+using D3B.Data.Npcs;
 using D3B.Data.Packs;
 using D3B.Data.Spells;
 using D3B.Data.WorldMaps;
@@ -21,6 +22,7 @@ public sealed class GameTables
     private readonly Lazy<JobCatalog> _jobs;
     private readonly Lazy<InteractiveCatalog> _interactives;
     private readonly Lazy<BankCatalog> _banks;
+    private readonly Lazy<NpcCatalog> _npcs;
     private readonly Lazy<IconCatalog> _icons;
     private readonly Lazy<SpellCatalog> _spells;
     private readonly Lazy<SpellStateCatalog> _states;
@@ -54,6 +56,11 @@ public sealed class GameTables
     /// <exception cref="KeyNotFoundException">The pack holds no banks.</exception>
     /// <exception cref="PackFormatException">Their entry is damaged.</exception>
     public BankCatalog Banks => _banks.Value;
+
+    /// <summary>Gets the non-player characters with the texts of the questions they ask and the replies they offer (D385).</summary>
+    /// <exception cref="KeyNotFoundException">The pack holds no NPCs.</exception>
+    /// <exception cref="PackFormatException">Their entry is damaged.</exception>
+    public NpcCatalog Npcs => _npcs.Value;
 
     /// <summary>Gets the icons of the items a harvest names and of the professions.</summary>
     /// <exception cref="KeyNotFoundException">The pack holds no icons.</exception>
@@ -107,6 +114,7 @@ public sealed class GameTables
         _jobs = new Lazy<JobCatalog>(() => pack.Read<JobCatalog>(JobCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _interactives = new Lazy<InteractiveCatalog>(() => pack.Read<InteractiveCatalog>(InteractiveCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _banks = new Lazy<BankCatalog>(() => pack.Read<BankCatalog>(BankCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
+        _npcs = new Lazy<NpcCatalog>(() => pack.Read<NpcCatalog>(NpcCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _icons = new Lazy<IconCatalog>(() => pack.Read<IconCatalog>(IconCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _spells = new Lazy<SpellCatalog>(() => pack.Read<SpellCatalog>(SpellCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _states = new Lazy<SpellStateCatalog>(() => pack.Read<SpellStateCatalog>(SpellStateCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);

@@ -19,6 +19,7 @@
 #:include extract/MapReader.cs
 #:include extract/MapsExtractor.cs
 #:include extract/MonstersExtractor.cs
+#:include extract/NpcsExtractor.cs
 #:include extract/SpellsExtractor.cs
 #:include extract/StatesExtractor.cs
 #:include extract/TextsExtractor.cs

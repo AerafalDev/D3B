@@ -15,7 +15,7 @@ internal sealed partial class NpcRepliesFieldViewModel : SettingFieldViewModel, 
     public partial IReadOnlyList<int> Value { get; private set; } = [];
 
     /// <summary>Gets what the button says: the replies, else that there is none.</summary>
-    public string Text => Value.Count == 0 ? Editor.Localizer["NpcRepliesNone"] : string.Join(", ", Value);
+    public string Text => Value.Count == 0 ? Editor.Localizer["NpcRepliesNone"] : Editor.Localizer.Summary(Value.Select(reply => NameOf(reply)));
 
     /// <summary>Gets whether a reply is picked.</summary>
     public bool HasValue => Value.Count > 0;
@@ -63,7 +63,7 @@ internal sealed partial class NpcRepliesFieldViewModel : SettingFieldViewModel, 
         var known = npcs.OnMap(map.Id).FirstOrDefault(candidate => candidate.Npc.NpcId == npc)
             ?? new KnownNpc(new KnownMapNpc(map.Id, npc, 0, null, null, 0, default, default), [], []);
 
-        dialogs.Show(new RepliesPickerViewModel(dialogs, known, Value, Editor.Localizer, Editor.Place, Set));
+        dialogs.Show(new RepliesPickerViewModel(dialogs, known, Value, Editor.Localizer, Editor.NpcNames ?? new NpcNames(Editor.Localizer, null, null), Editor.Place, Set));
     }
 
     /// <summary>Takes the replies back, as another NPC is chosen.</summary>
@@ -77,6 +77,11 @@ internal sealed partial class NpcRepliesFieldViewModel : SettingFieldViewModel, 
     private void Clear()
     {
         Set([]);
+    }
+
+    private string NameOf(int reply)
+    {
+        return Editor.NpcNames?.Reply(reply, 28) ?? Editor.Localizer.Format("RepliesReply", reply);
     }
 
     private void Set(IReadOnlyList<int> replies)

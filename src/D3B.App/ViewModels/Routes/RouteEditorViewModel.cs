@@ -911,7 +911,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
                 {
                     var made = definition;
                     var index = i;
-                    var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, services.Game, names, localizer, services.Provider, [], _page.Dialogs) { Map = map, Npcs = npcs, Place = places.Place };
+                    var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, services.Game, names, localizer, services.Provider, [], _page.Dialogs) { Map = map, Npcs = npcs, NpcNames = new NpcNames(localizer, services.Provider?.GetService<GameTables>(), services.Texts), Place = places.Place };
 
                     created.Edited += (_, _) => ActionEdited(index, made, created);
                     editor = created;

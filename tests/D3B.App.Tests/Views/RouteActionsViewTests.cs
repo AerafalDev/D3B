@@ -193,13 +193,13 @@ public sealed class RouteActionsViewTests
         var at = DateTimeOffset.UnixEpoch;
         var known = new KnownNpcs();
 
-        known.Saw(1, -20_000, 1_088, 302, 3, at);
-        known.Asked(1, 1_088, 30_637, [36_979], true, at);
-        known.Asked(1, 1_088, 30_638, [36_977, 36_978], false, at);
-        known.Answered(1, 1_088, KnownNpcs.Talk, KnownNpcs.Talk, NpcOutcomeKind.Question, 30_637, at);
-        known.Answered(1, 1_088, 30_637, 36_979, NpcOutcomeKind.Question, 30_638, at);
-        known.Answered(1, 1_088, 30_638, 36_977, NpcOutcomeKind.MapChange, 2, at);
-        known.Answered(1, 1_088, 30_638, 36_978, NpcOutcomeKind.End, 0, at);
+        known.Saw(1, -20_000, TestGameData.NpcId, 302, 3, at);
+        known.Asked(1, TestGameData.NpcId, 30_637, [36_979], true, at);
+        known.Asked(1, TestGameData.NpcId, 30_638, [36_977, 36_978], false, at);
+        known.Answered(1, TestGameData.NpcId, KnownNpcs.Talk, KnownNpcs.Talk, NpcOutcomeKind.Question, 30_637, at);
+        known.Answered(1, TestGameData.NpcId, 30_637, 36_979, NpcOutcomeKind.Question, 30_638, at);
+        known.Answered(1, TestGameData.NpcId, 30_638, 36_977, NpcOutcomeKind.MapChange, 2, at);
+        known.Answered(1, TestGameData.NpcId, 30_638, 36_978, NpcOutcomeKind.End, 0, at);
 
         return known;
     }
@@ -210,11 +210,12 @@ public sealed class RouteActionsViewTests
         await using var store = new TestStore();
         using var directory = new TemporaryDirectory();
         using var pack = PackOfMaps(directory);
+        using var data = new TestGameData();
 
         await store.OpenedAsync();
 
         var runner = await TestHosts.RunningAsync(store.Host);
-        var provider = new ServiceCollection().AddSingleton(LearnedNpcs()).BuildServiceProvider();
+        var provider = new ServiceCollection().AddSingleton(LearnedNpcs()).AddSingleton(data.Tables).BuildServiceProvider();
         var result = await OnTheUIThreadAsync(async () =>
         {
             var localizer = Localizer.Instance;
@@ -224,7 +225,7 @@ public sealed class RouteActionsViewTests
             var main = new MainViewModel(runner, localizer);
 
             main.Refresh();
-            main.Routes.Use(TestRouteWorld.Services(store.Assets) with { Maps = new GameMaps(pack), Provider = provider });
+            main.Routes.Use(TestRouteWorld.Services(store.Assets) with { Maps = new GameMaps(pack), Provider = provider, Texts = data.Texts });
 
             var editor = (await main.Routes.CreateAsync(""))!;
 
@@ -258,12 +259,13 @@ public sealed class RouteActionsViewTests
             Dispatcher.UIThread.RunJobs();
 
             var picker = Assert.IsType<RepliesPickerViewModel>(main.Dialogs.Current);
-            var first = picker.Choices.Select(choice => (choice.Reply, choice.Outcome)).ToList();
+            var asked = picker.Question;
+            var first = picker.Choices.Select(choice => (choice.Reply, choice.Name, choice.Outcome)).ToList();
 
             Drawings.Draw(window, "route-actions-replies-picker");
             picker.Choices.Single().ChooseCommand.Execute(null);
 
-            var second = picker.Choices.Select(choice => (choice.Reply, choice.Outcome)).ToList();
+            var second = picker.Choices.Select(choice => (choice.Reply, choice.Name, choice.Outcome)).ToList();
 
             picker.Choices.Single(choice => choice.Reply == 36_977).ChooseCommand.Execute(null);
 
@@ -282,19 +284,21 @@ public sealed class RouteActionsViewTests
             window.Close();
             localizer.Use(Localizer.English);
 
-            return (before, offered, afterNpc, first, second, ended, picked, cleared);
+            return (before, offered, afterNpc, asked, first, second, ended, picked, cleared, picker.Title);
         });
 
         Assert.Equal((true, false, "Talk to NPC choose, replying none"), result.before);
-        Assert.Equal([("NPC 1088", "Cell 302 · seen once · 2 questions known")], result.offered);
-        Assert.Equal((1088, true, "Talk to NPC NPC 1088, replying none", false), result.afterNpc);
-        Assert.Equal([(36979, "leads to question 30638")], result.first);
-        Assert.Equal([(36977, "moves the character to map 2"), (36978, "ends the dialog")], result.second);
+        Assert.Equal([("Master Anemo", "Cell 302 · seen once · 2 questions known")], result.offered);
+        Assert.Equal((1088, true, "Talk to NPC Master Anemo, replying none", false), result.afterNpc);
+        Assert.Equal("Replies given to Master Anemo", result.Title);
+        Assert.Equal("Welcome! Do you want to leave Incarnam?", result.asked);
+        Assert.Equal([(36979, "I want to leave for Astrub", "leads to “Are you sure you want to leave?”")], result.first);
+        Assert.Equal([(36977, "Yes, let's go", "moves the character to map 2"), (36978, "No, I stay", "ends the dialog")], result.second);
         Assert.False(result.ended.HasChoices);
         Assert.Equal("Nothing more is known after the last reply.", result.ended.Status);
-        Assert.Equal(["1. Reply 36979: leads to question 30638", "2. Reply 36977: moves the character to map 2"], result.ended.Item3);
+        Assert.Equal(["1. I want to leave for Astrub: leads to “Are you sure you want to leave?”", "2. Yes, let's go: moves the character to map 2"], result.ended.Item3);
         Assert.Equal([36979, 36977], result.picked.Item1);
-        Assert.Equal("Talk to NPC NPC 1088, replying 36979, 36977", result.picked.Sentence);
+        Assert.Equal("Talk to NPC Master Anemo, replying I want to leave for Astrub, Yes, let's go", result.picked.Sentence);
         Assert.True(result.picked.IsDirty);
         Assert.Null(result.cleared.Value);
         Assert.Empty(result.cleared.Item2);

@@ -1,4 +1,5 @@
 using D3B.Data.Banks;
+using D3B.Data.Npcs;
 using D3B.Data.Breeds;
 using D3B.Data.Characteristics;
 using D3B.Data.Effects;
@@ -87,6 +88,14 @@ internal static class TestTables
     }
 
     /// <summary>One bank; banker 100 has two chest replies, banker 6394 one.</summary>
+    public static NpcCatalog Npcs()
+    {
+        return new NpcCatalog(
+            new Npc[] { new(1088, 5001), new(4398, 5002) },
+            new NpcText[] { new(36_977, 6001), new(36_979, 6002) },
+            new NpcText[] { new(30_637, 7001) });
+    }
+
     public static BankCatalog Banks()
     {
         return new BankCatalog(

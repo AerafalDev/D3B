@@ -14,7 +14,7 @@ internal sealed partial class NpcFieldViewModel : SettingFieldViewModel, IPickin
     public partial int? Value { get; private set; }
 
     /// <summary>Gets what the button says: the NPC, else that none is picked.</summary>
-    public string Text => Value is { } npc ? Editor.Localizer.Format("NpcNumber", npc) : Editor.Localizer["NpcChoose"];
+    public string Text => Value is { } npc ? NameOf(npc) : Editor.Localizer["NpcChoose"];
 
     /// <summary>Gets whether an NPC is picked.</summary>
     public bool HasValue => Value is not null;
@@ -58,7 +58,7 @@ internal sealed partial class NpcFieldViewModel : SettingFieldViewModel, IPickin
         var choices = npcs.OnMap(map.Id)
             .Select(known => (
                 known.Npc.NpcId,
-                localizer.Format("NpcNumber", known.Npc.NpcId),
+                NameOf(known.Npc.NpcId),
                 localizer.Format("NpcDetail", known.Npc.Cell is { } cell ? cell.ToString(localizer.Culture) : "?", localizer.Plural("NpcSeen", known.Npc.Seen), localizer.Plural("NpcQuestions", known.Questions.Length)),
                 known.Npc.NpcId == Value))
             .ToList();
@@ -70,6 +70,11 @@ internal sealed partial class NpcFieldViewModel : SettingFieldViewModel, IPickin
     private void Clear()
     {
         Set(null);
+    }
+
+    private string NameOf(int npc)
+    {
+        return Editor.NpcNames?.Npc(npc) ?? Editor.Localizer.Format("NpcNumber", npc);
     }
 
     private void Set(int? npc)

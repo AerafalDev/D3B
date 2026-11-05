@@ -50,6 +50,9 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets or sets what the bots learned of the NPCs of the maps, which a setting of an NPC picks among (D384).</summary>
     public KnownNpcs? Npcs { get; set; }
 
+    /// <summary>Gets or sets what names the NPCs and reads their questions and replies; without it they are named by their ids (D385).</summary>
+    public NpcNames? NpcNames { get; set; }
+
     /// <summary>Gets or sets how a map is named, where a reply leads to one.</summary>
     public Func<long, string> Place { get; set; } = map => map.ToString(System.Globalization.CultureInfo.CurrentCulture);
 

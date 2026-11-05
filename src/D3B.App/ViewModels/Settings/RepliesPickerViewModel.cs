@@ -12,9 +12,13 @@ namespace D3B.App.ViewModels.Settings;
 /// </remarks>
 internal sealed partial class RepliesPickerViewModel : ObservableObject
 {
+    // How much of a question's text stands in a line saying where a reply leads.
+    private const int QuestionLength = 70;
+
     private readonly Dialogs _dialogs;
     private readonly KnownNpc _known;
     private readonly Localizer _localizer;
+    private readonly NpcNames _names;
     private readonly Func<long, string> _place;
     private readonly Action<IReadOnlyList<int>> _picked;
     private readonly List<int> _chain;
@@ -60,17 +64,19 @@ internal sealed partial class RepliesPickerViewModel : ObservableObject
     /// <param name="known">The NPC, with what the bots learned of its dialogs.</param>
     /// <param name="chain">The replies given until now.</param>
     /// <param name="localizer">The app's texts.</param>
+    /// <param name="names">Reads the questions, the replies and the NPC from the pack's texts.</param>
     /// <param name="place">Names a map, as the atlas knows it.</param>
     /// <param name="picked">What the chain does once the dialog is done.</param>
-    public RepliesPickerViewModel(Dialogs dialogs, KnownNpc known, IEnumerable<int> chain, Localizer localizer, Func<long, string> place, Action<IReadOnlyList<int>> picked)
+    public RepliesPickerViewModel(Dialogs dialogs, KnownNpc known, IEnumerable<int> chain, Localizer localizer, NpcNames names, Func<long, string> place, Action<IReadOnlyList<int>> picked)
     {
         _dialogs = dialogs;
         _known = known;
         _localizer = localizer;
+        _names = names;
         _place = place;
         _picked = picked;
         _chain = [.. chain];
-        Title = localizer.Format("RepliesPickerTitle", known.Npc.NpcId);
+        Title = localizer.Format("RepliesPickerTitle", names.Npc(known.Npc.NpcId));
         DoneText = localizer["RepliesDone"];
         BackText = localizer["RepliesBack"];
         CancelText = localizer["Cancel"];
@@ -110,7 +116,9 @@ internal sealed partial class RepliesPickerViewModel : ObservableObject
             .OrderByDescending(outcome => outcome.Count)
             .Select(outcome => outcome.Kind switch
             {
-                NpcOutcomeKind.Question => _localizer.Format("RepliesLeadsToQuestion", outcome.Target),
+                NpcOutcomeKind.Question => _names.TryQuestion((int)outcome.Target, out var text)
+                    ? _localizer.Format("RepliesLeadsToText", NpcNames.Clip(text, QuestionLength))
+                    : _localizer.Format("RepliesLeadsToQuestion", outcome.Target),
                 NpcOutcomeKind.End => _localizer["RepliesEndsDialog"],
                 NpcOutcomeKind.MapChange => _localizer.Format("RepliesMovesTo", _place(outcome.Target)),
                 _ => _localizer.Format("RepliesOpensExchange", outcome.Target),
@@ -127,7 +135,7 @@ internal sealed partial class RepliesPickerViewModel : ObservableObject
 
         foreach (var (reply, index) in _chain.Select((reply, index) => (reply, index)))
         {
-            given.Add(_localizer.Format("RepliesGiven", index + 1, reply, question is { } asked ? OutcomeOf(asked, reply) : _localizer["RepliesNothingKnown"]));
+            given.Add(_localizer.Format("RepliesGiven", index + 1, _names.Reply(reply, 60), question is { } asked ? OutcomeOf(asked, reply) : _localizer["RepliesNothingKnown"]));
             question = question is { } before ? NextQuestion(before, reply) : null;
         }
 
@@ -143,7 +151,7 @@ internal sealed partial class RepliesPickerViewModel : ObservableObject
             return;
         }
 
-        Question = _localizer.Format("RepliesQuestion", current);
+        Question = _names.Question(current);
         Status = _localizer["RepliesPickOne"];
         Choices =
         [
@@ -151,7 +159,7 @@ internal sealed partial class RepliesPickerViewModel : ObservableObject
                 .Where(row => row.MessageId == current)
                 .SelectMany(row => row.Replies)
                 .Distinct()
-                .Select(reply => new ReplyChoiceViewModel(reply, _localizer.Format("RepliesReply", reply), OutcomeOf(current, reply), Choose)),
+                .Select(reply => new ReplyChoiceViewModel(reply, _names.Reply(reply), OutcomeOf(current, reply), Choose)),
         ];
     }
 

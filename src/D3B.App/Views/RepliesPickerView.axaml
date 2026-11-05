@@ -24,7 +24,9 @@
         <TextBlock
             Classes="Bright"
             IsVisible="{Binding HasChoices}"
-            Text="{Binding Question}" />
+            MaxWidth="480"
+            Text="{Binding Question}"
+            TextWrapping="Wrap" />
         <TextBlock
             Classes="Dim"
             Text="{Binding Status}"
@@ -43,7 +45,11 @@
                         MinHeight="48"
                         Padding="12,6">
                         <StackPanel Spacing="1">
-                            <TextBlock Classes="Bright" Text="{Binding Name}" />
+                            <TextBlock
+                                Classes="Bright"
+                                MaxWidth="460"
+                                Text="{Binding Name}"
+                                TextWrapping="Wrap" />
                             <TextBlock
                                 Classes="Dim"
                                 FontSize="11.5"

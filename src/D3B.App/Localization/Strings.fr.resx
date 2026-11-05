@@ -2703,7 +2703,7 @@
     <value>Aucune réponse</value>
   </data>
   <data name="RepliesPickerTitle" xml:space="preserve">
-    <value>Réponses données au PNJ {0}</value>
+    <value>Réponses données à {0}</value>
   </data>
   <data name="RepliesQuestion" xml:space="preserve">
     <value>Question {0}</value>
@@ -2712,7 +2712,7 @@
     <value>Réponse {0}</value>
   </data>
   <data name="RepliesGiven" xml:space="preserve">
-    <value>{0}. Réponse {1} : {2}</value>
+    <value>{0}. {1} : {2}</value>
   </data>
   <data name="RepliesPickOne" xml:space="preserve">
     <value>Choisissez la réponse à donner. Sans réponse, le dialogue est ouvert puis quitté.</value>
@@ -2746,5 +2746,8 @@
   </data>
   <data name="RepliesBack" xml:space="preserve">
     <value>Retour</value>
+  </data>
+  <data name="RepliesLeadsToText" xml:space="preserve">
+    <value>mène à « {0} »</value>
   </data>
 </root>

@@ -489,7 +489,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 10 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369):
+- A pack of format 11 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -519,6 +519,8 @@ Built at step 2 (D24 to D33):
     (`MonsterCatalog`); the breeds, their spells, roles and costs (`BreedCatalog`); the characteristics and the Lua
     formulas scaling a monster's, kept and not run (`CharacteristicCatalog`). Their flags have the bits the client's code
     gives them, in D3B's own enums (D183). A cast names its level by id, a monster fighter its monster and grade (D184);
+  - the NPCs, with the text naming each, and the questions they ask and the replies they offer with the text each reads, from format 11
+    (`NpcCatalog`, `GameTables.Npcs`, D385): the server sends ids alone (D383), which the studio shows as these texts (`NpcNames`);
   - in French and English, the texts these name (`GameTexts`).
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
@@ -815,14 +817,21 @@ The target:
     beyond is kept (`Details`). An anchor holds its actions (`RouteAnchor.Actions`, D378): nodes of the catalog, each with the
     values that differ from its defaults, in its file under `actions`; two anchors are equal by what they hold.
   - `RouteActions` (`D3B.Bot.Routes`): the actions a route plays on a map, nodes `route.harvest`, `route.fight`, `route.door`,
-    `route.exit`, `route.zaap` and `route.bag`, and the behaviors' `wait`, with their values (`RouteExitValues`, `RouteDoorValues`,
-    `RouteHarvestValues`, `RouteFightValues`) and sentences; waiting alone plays today, the rest wait for 7d3c (D377, D382).
-    `RouteActionCalls` turns a call into the node's values and back. `SettingKind.Cell` is a cell of the map, picked on
-    `CellPicker` in a dialog (D121, D378).
+    `route.exit`, `route.zaap`, `route.bag` and `route.npc`, and the behaviors' `wait`, with their values (`RouteExitValues`,
+    `RouteDoorValues`, `RouteHarvestValues`, `RouteFightValues`, `RouteNpcValues`) and sentences; each plays (D384): `ForceExit`,
+    `TakeDoor` and `EnterBag` through `ForcedMoves` (`D3B.Bot.Movement`, which sends what `MapChange` sends and shares its
+    helpers), `HarvestHere` and `FightHere` through `MapHarvest` and `MapFight` (the activity's own choice of the next element is
+    `MapHarvest.Candidates`), `TalkToNpc` through `NpcTalk` (`D3B.Bot.Npcs`), and the zaap in `GameRouteStage`, which is given the
+    route's next step (`RouteRunner`, `RouteCursor.NextAnchor`). An action that cannot be played throws `RouteActionException`: the
+    stage says why in the journal and the route fails. `RouteActionCalls` turns a call into the node's values and back.
+    `SettingKind.Cell` is a cell of the map, picked on `CellPicker` in a dialog (D121, D378); `SettingKind.Npc` and
+    `SettingKind.NpcReply` are an NPC and the replies given to it, picked among what `KnownNpcs` holds for the step's map in
+    `NpcPickerViewModel` and `RepliesPickerViewModel`, never typed and shown by their texts (D298, D384, D385); the three fields are `IPickingField`s, whose token
+    in a sentence opens its dialog.
   - **The run** (D379): `RouteCursor` (the course: loop, one way, there and back, and where the run is), `RouteRuns` (a cursor
     per character, route and run), `RouteRunner` (to each anchor by the character's own path, the actions played, a map out of
     reach passed or failing) over `IRouteStage`, which `GameRouteStage` makes real; the node `route.follow` (`FollowRoute`) plays
-    it in a behavior's step. Not yet tried on a client.
+    it in a behavior's step. Tried on the test game, not yet on a client (D384).
   - `RoutePlanner` (`D3B.Bot.Routes`): the legs between anchors by the world's path (`WorldPathfinder`), as a subscribed
     character with every zaap of the game known and one taken where it saves 5 changes (D378), each leg kept by its two
     maps; `RouteLeg` lists the maps crossed and the zaaps taken, or says none leads.

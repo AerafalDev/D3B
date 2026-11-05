@@ -2703,7 +2703,7 @@
     <value>No reply</value>
   </data>
   <data name="RepliesPickerTitle" xml:space="preserve">
-    <value>Replies given to NPC {0}</value>
+    <value>Replies given to {0}</value>
   </data>
   <data name="RepliesQuestion" xml:space="preserve">
     <value>Question {0}</value>
@@ -2712,7 +2712,7 @@
     <value>Reply {0}</value>
   </data>
   <data name="RepliesGiven" xml:space="preserve">
-    <value>{0}. Reply {1}: {2}</value>
+    <value>{0}. {1}: {2}</value>
   </data>
   <data name="RepliesPickOne" xml:space="preserve">
     <value>Pick the reply to give. With none, the dialog is opened and left.</value>
@@ -2746,5 +2746,8 @@
   </data>
   <data name="RepliesBack" xml:space="preserve">
     <value>Back</value>
+  </data>
+  <data name="RepliesLeadsToText" xml:space="preserve">
+    <value>leads to “{0}”</value>
   </data>
 </root>
