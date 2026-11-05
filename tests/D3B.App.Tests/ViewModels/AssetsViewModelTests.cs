@@ -65,7 +65,7 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
         Assert.Contains(assets.Rows, row => row is { IsProblem: true, Problem.Length: > 0 });
         Assert.All(assets.Rows.Where(row => row.IsGiven), row => Assert.Equal(1, row.Depth));
         Assert.Equal("Used by 1", assets.Rows.Single(row => row.Name == "Walker").CountTip);
-        Assert.Equal(["Profile"], assets.Kinds.Where(kind => kind.IsEnabled).Select(kind => kind.Name));
+        Assert.Equal(["Profile", "Route"], assets.Kinds.Where(kind => kind.IsEnabled).Select(kind => kind.Name));
         Assert.Equal("7e", assets.Kinds.Single(kind => kind.Kind is AssetKind.Behavior).Session);
     }
 

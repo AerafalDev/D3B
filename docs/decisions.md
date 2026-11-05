@@ -8069,6 +8069,95 @@ D324. The mockup: `docs/mockups/route-7d.html`.*
 - **Rejected.** A ribbon with a glow, chevrons running along it and badges with a halo; the lit maps without a line; a
   metro line with white stations and an animated flow: each too far from the app.
 
+## D372: The world's map as a control of its own: tiles on demand, a bounded cache, the coarsest zoom always under
+
+*2026-11-05, step 7, session 7d2, the lead's. Builds D308, D369, D371.*
+
+- **The view** is `WorldMapView`, an Avalonia control in `D3B.App.Controls.WorldMaps` that draws the world's image, the route over
+  it and what the pointer is on, and knows nothing of routes: it reports what is pressed (`StationSelected`, `StationMoved`,
+  `SquareTraced`, `PathPointPinned`, `SharedPressed`) and is given a `WorldMapScene`. Its arithmetic is apart and tested
+  without a screen: `WorldMapViewport` (scale and offset, zoom around a point, fit, keeping some of the image in view) and
+  `WorldMapTiling` (which tiles of a zoom a part of the image overlaps, and where a tile lies).
+- **Zoom** follows the wheel by easing: a target scale and a frame-by-frame step towards it around the pointer, 1 turn of the
+  wheel being 1.22, from 5 % to 250 % of the client's full size; the zoom drawn is `WorldMapCatalog.LevelFor` (D369), the
+  smallest one at least as large as the scale. A drag pans; the image never leaves the view whole.
+- **Tiles** are asked for by the view, nearest the centre first and a ring of 256 pixels beyond it, and loaded by
+  `TileStore<T>` on three threads of the pool, each decoded there (`Bitmap` from the JPEG) and never on the interface's
+  thread. What the view no longer wants is dropped from the queue before it starts. The pictures kept weigh at most 192 MiB
+  (4 bytes a pixel), the least recently drawn going first, never one wanted or pinned; a tile that failed is not asked for
+  again. A picture let go is disposed after the frame that may still draw it.
+- **No hole while a tile loads**: the world at its coarsest zoom, 4 tiles for the main world, is pinned and always drawn first,
+  then the zoom drawn just before, then the one asked for, so that a wheel turn shows the coarser pictures, blurred, in the
+  place of the sea. Tiles are placed on whole pixels, so that two never leave a seam.
+- **One world at a time** (D299): the view shows the layer it is given, `World`; changing it fits the view again.
+- **Checked** by drawing the real pack of 3.7.13.17 in a headless window, 1,100 by 720 pixels, a route of 4 stations around
+  Astrub at 80 %, and by the tests on a made-up world: the tiles, the pills, the line and the shared marks drawn as the mockup's
+  by eye; no timing was taken, which the owner's first look at the real app will give.
+- **Rejected.**
+  - One bitmap per world, stitched: a tile of 1,024 pixels is 4 MB decoded, and world 1 at its finest alone 386 MB.
+  - Decoding on the interface's thread: a pan asks for several tiles at once.
+  - A zoom applied at once at each wheel turn, as the mockup's: the owner asked for it smooth.
+
+## D373: Routes: anchors that are the truth, the world's path between them, and the layer of each map
+
+*2026-11-05, step 7, session 7d2, the lead's, within what the owner chose in D299 and D371. Builds D299, D371.*
+
+- **The asset** (`RouteAsset`, file `<name>.route.json`, format 1): `anchors`, each a map's id and whether the user pinned it,
+  `mode` (`loop`, the default, `oneWay`, `roundTrip`) and `unreachable` (`skip`, the default, `fail`); values left as their
+  defaults are not written. What a file holds that this version does not read, in the route and in each anchor, is kept as
+  it is, so that 7d3's actions and a file made by hand lose nothing. Until 7d2 a route was a
+  `PlannedAsset`, kept whole: a file written then reads as it was.
+- **The path** between two anchors is `RoutePlanner`'s: the quickest, by the world's graph, from any zone of one map to any
+  zone of the other, as a subscribed character with nothing else known, so that a door or a scroll with a criterion nothing
+  answers stays closed and no zaap is taken (a route is made for any character; zaaps join it when 7d3 knows what a
+  route's character knows). It lists the maps crossed between, or says that none leads (red), or that the two are one map.
+  A loop of three anchors or more closes on the first; two go and come back. Each leg is kept by its two maps, so that
+  moving an anchor searches two legs again; the searches run off the interface's thread and the scene stays as it was until
+  they answer.
+- **Adding an anchor**: a press with the Trace tool adds the map there; a drag adds the maps it crosses only when each is a
+  neighbour of the last anchor by a real exit, else the path fills the gap (D299). A click on a point of the path pins it,
+  an anchor between the two it lay between. A station dragged takes the map of the coordinates it is let go on. Typing
+  `x, y` (also `[x; y]`, `x y`) or a map's id of five digits or more adds the map; a map of another world switches the layer.
+  Where several maps share coordinates a typed pair, or a click on the mark, asks which (D299), and a press that cannot ask
+  takes the one the world leaves the most ways from (`RoutePlanner.Primary`).
+- **The layer of a map** (`WorldMapIndex`): a map of a world is on its world; an inside, which the client draws on none, lives in
+  the layer of the world its sub-area's other maps are on, else of the least world with a map at its coordinates. Measured on
+  3.7.13.17: of 3,676 insides, 2,608 have a sub-area on one world (2,499 stand on a square of it), and 3,596 share coordinates
+  with some world's map; the rule places them, and at most 80 stay with no layer, which no map of the editor shows. A square
+  lists its world's maps first, then its insides, by ascending id.
+- **The tab** is the route's editor (`RouteEditorViewModel`, `RouteView`): the map fills it, the world, the tools, the zoom and the
+  typed input float on it as glass, as the mockup validated (D371); the course (loop, one way, there and back), what to do
+  with a map no path reaches (pass it or fail), the counts, the first gap and the steps, each with the way to the next, are
+  in the inspector (D324); a step chosen from the list is shown on the map, Delete removes it. It saves as the
+  profile's does: Ctrl S, a dot on the tab while it holds changes, a question before it closes with some.
+- **A new route** is made at once, an empty file named "New route" in the folder chosen, and opens in its tab, to be renamed in
+  the tree (D326): no dialog for a name that costs nothing to change.
+- **Rejected.**
+  - Anchors that keep coordinates: several maps share them, and a layer of the world's (D299).
+  - Searching the path on the interface's thread: a search is a Dijkstra over 11,331 vertices.
+  - A drag that adds every square it crosses: a fast drag would put anchors where the path leads anyway, and wrong maps on
+    shared coordinates.
+
+## D374: Why 348 maps stand outside their image, and what 7d2 leaves
+
+*2026-11-05, step 7, session 7d2, the lead's, from a measuring tool never committed. Builds D308; client.md, "The world's maps".*
+
+- **The 348** maps of a world that are not wholly inside its image by `WorldMap.PixelOf` are of three kinds: 249 at coordinates 0, 0
+  in 18 worlds whose origin lies outside the image, so that the map at 0, 0 begins off it; 70 of world 19, "World Maps", whose
+  image is a parchment of question marks, its origin 0, 0 unset; 29 outliers (12 of world 10, 9 stacked on 6, 13 in world 35, 8
+  others). 0, 0 is where 2,932 of the maps with a world stand, 2,889 of them off the world graph against 454 of the other 8,862:
+  they are insides given no coordinates. The sub-area, area and super area name for every map the world its own `worldMap`
+  says, so no other world holds the 348, and the client's drawing code was not read: what it draws for them is not measured.
+- **For the editor**: the 348 stay addressable, typed or chosen, and are drawn where the rule puts them, off the image for the
+  249 at 0, 0; the view keeps part of the image in sight, so that a far one is reached by its step in the inspector. How to show
+  them better is not decided: it waits for what the client draws, which is not measured. The 29 outliers and world 19's 70
+  are the ones whose place is left unmeasured.
+- **Left of the mockup for 7d3**: the actions of each map and their count on the pill, recording while the player plays, a route
+  run, zones; and for later, a zaap hop in a path (the planner takes none, above), reordering steps by dragging in the list,
+  undo, and an anchor's map on shared coordinates told from the map's image rather than from its zone.
+- **To judge with the owner on the real app**: the marks of shared coordinates, 273 squares of the main world alone, crowd the map
+  at 80 %; they might show from a greater zoom, or be dimmer, the lead's call once seen.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

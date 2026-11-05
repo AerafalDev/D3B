@@ -71,9 +71,9 @@ internal static class AssetKinds
     {
         return kind switch
         {
-            AssetKind.Profile => null,
+            AssetKind.Profile or AssetKind.Route => null,
             AssetKind.Behavior => "7e",
-            AssetKind.Route or AssetKind.Zone => "7d",
+            AssetKind.Zone => "7d3",
             AssetKind.List or AssetKind.Planning => "7f",
             _ => "7h",
         };

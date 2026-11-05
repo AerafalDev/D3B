@@ -13,6 +13,7 @@ using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
 using D3B.App.ViewModels.Properties;
+using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Statistics;
 using D3B.App.ViewModels.Studio;
 using D3B.Bot.Assets;
@@ -35,6 +36,7 @@ internal sealed partial class MainViewModel : ObservableObject
 {
     private const string WelcomeTab = "welcome";
     private const string ProfileTab = "profile:";
+    private const string RouteTab = "route:";
     private const string SettingsTab = "settings";
     private const string CharacterTab = "character:";
 
@@ -77,6 +79,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets the profiles, each edited in a tab of its own (D330).</summary>
     public ProfilesViewModel Profiles { get; }
+
+    /// <summary>Gets the routes, each edited on the world's map in a tab of its own (D371).</summary>
+    public RoutesViewModel Routes { get; }
 
     /// <summary>Gets the assets' panel (D326).</summary>
     public AssetsViewModel Assets { get; }
@@ -190,20 +195,22 @@ internal sealed partial class MainViewModel : ObservableObject
         _characterAccounts = new CharacterAccounts(localizer, Dialogs, Toasts);
         Bots = new BotsViewModel(localizer, ShowJournalOf, OpenCharacter, Toasts);
         Characters = new CharactersViewModel(localizer, Bots, _characterAccounts, key => RunBlock!.Choose(key), OpenCharacter);
+        Routes = new RoutesViewModel(localizer, Dialogs, Toasts) { Opened = OpenRouteTab, Closed = CloseRouteTab };
         Properties = new PropertiesViewModel(
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
-            new AssetPropertiesViewModel(localizer));
+            new AssetPropertiesViewModel(localizer) { RouteOf = Routes.Find });
         Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts) { Opened = OpenProfileTab, Closed = CloseProfileTab };
         Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles, preferences?.FoldedAssets)
         {
-            OpenAssetId = () => (Editor.Selected?.Content as ProfileViewModel) is { IsNew: false } open ? open.Id : null,
+            Routes = Routes,
+            OpenAssetId = () => Editor.Selected?.Content switch { ProfileViewModel { IsNew: false } open => open.Id, RouteEditorViewModel route => route.Id, _ => null },
             FoldsChanged = folded => _preferences?.RememberFoldedAssets(folded),
             CopyText = text => CopyText?.Invoke(text),
             Choose = ChooseAsset,
             Open = OpenAsset,
             ShowUsages = ShowUsages,
             Reveal = path => RevealFile?.Invoke(path),
-            IsUnsaved = id => Profiles.Find(id)?.IsDirty == true,
+            IsUnsaved = id => Profiles.Find(id)?.IsDirty == true || Routes.Find(id)?.IsDirty == true,
         };
         Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), new StatisticsViewModel(localizer));
         Bottom.HostFailure = () => IsFailed ? HostFailure : null;
@@ -272,12 +279,13 @@ internal sealed partial class MainViewModel : ObservableObject
 
         // The profiles first: the bots' cards offer them, and the characters name them.
         Profiles.Refresh(services);
+        Routes.Refresh(services);
         Bots.Refresh(services);
         Characters.Refresh(services);
         RunBlock.Refresh();
         Properties.Refresh(services);
         OnlineText = _localizer.Format("CharactersOnline", RunBlock.Online.Count);
-        IsSaved = !Profiles.IsAnyDirty;
+        IsSaved = !Profiles.IsAnyDirty && !Routes.IsAnyDirty;
         Assets.Refresh(services);
 
         // Only what shows reads what came since: the rest reads it all once shown again.
@@ -347,12 +355,22 @@ internal sealed partial class MainViewModel : ObservableObject
         Profiles.Find(id)?.Edit();
     }
 
-    /// <summary>Opens an asset in its tab: a profile today, the other kinds once their editors come (D306).</summary>
+    /// <summary>Opens a route on the world's map in its tab, the inspector showing it (D371).</summary>
+    /// <param name="id">The route's id.</param>
+    public void OpenRoute(string id)
+    {
+        ChooseAsset(id);
+        Routes.OpenRoute(id);
+    }
+
+    /// <summary>Opens an asset in its tab: a profile or a route today, the other kinds once their editors come (D306).</summary>
     /// <param name="id">The asset's id.</param>
     public void OpenAsset(string id)
     {
         if (Profiles.Find(id) is not null)
             OpenProfile(id);
+        else if (_host.Services?.GetService<AssetLibrary>()?.Find(id) is RouteAsset)
+            OpenRoute(id);
         else
             ChooseAsset(id);
     }
@@ -400,6 +418,7 @@ internal sealed partial class MainViewModel : ObservableObject
     public void SaveAll()
     {
         Profiles.SaveAll();
+        Routes.SaveAll();
     }
 
     /// <summary>Opens the project's folder in the system's file manager.</summary>
@@ -427,6 +446,7 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Says what the editor's tabs and the search are named, in the language chosen.</summary>
     private void Retell()
     {
+        Routes.Retell();
         Editor.Refresh();
         OnPropertyChanged(nameof(VersionText));
     }
@@ -516,6 +536,29 @@ internal sealed partial class MainViewModel : ObservableObject
             Modified = () => item.IsDirty,
         });
         Editor.Refresh();
+    }
+
+    private void OpenRouteTab(RouteEditorViewModel item)
+    {
+        Editor.Open(RouteTab + item.TabKey, () => new EditorTab(RouteTab + item.TabKey, () => item.Name, AssetKinds.IconOf(AssetKind.Route), item, needsHost: true)
+        {
+            Closing = () => CloseRoute(item),
+            Modified = () => item.IsDirty,
+        });
+        Editor.Refresh();
+    }
+
+    private void CloseRouteTab(RouteEditorViewModel item)
+    {
+        Editor.Drop(Editor.Items.FirstOrDefault(tab => tab.Content == item));
+    }
+
+    // The tab closes once its editor does: at once without changes, else once the question asked is answered.
+    private static bool CloseRoute(RouteEditorViewModel item)
+    {
+        item.CloseCommand.Execute(null);
+
+        return false;
     }
 
     private void CloseProfileTab(ProfileViewModel item)

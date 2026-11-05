@@ -584,9 +584,22 @@ that prints counts and sizes, and writes a few previews outside the repository.
   rectangle covers land and they stop at the coasts, the lone island's own among them. A map's world is its `worldMap` in
   `MapsInformationDataRoot`: −1 for 3,676 maps, 1 for 8,551, and 38 others, 3 to 640 each (world 11 holds none). Of the
   11,794 maps with a world, 11,446 lie wholly inside its image by that rule, all of world 1's 8,551 and the others' but
-  348, whose place is not measured. A
+  348, measured in session 7d2 (D374): 249 stand at coordinates 0, 0 in 18 worlds whose origin lies outside the image, so
+  that the map at 0, 0 begins off it (worlds 4 to 10, 12, 17, 18, 20, 22, 31 to 33 and 36 to 38; worlds 40 and 41 are the same,
+  with no map there); 70 are of world 19, "World Maps", invisible on the client's map, whose image is a parchment of question
+  marks and whose origin is 0, 0 as empty world 11's is (of its 640 maps, 554 stand at 0, 0 and 86 at the main world's
+  coordinates, 16 of which fit, by chance); 29 are outliers, 12 in world 10, 9 stacked on 6, 13 in world 35 and 8 others. The maps
+  at 0, 0 are the insides given no coordinates: 2,932 maps with a world stand there, 2,889 of them off the world graph against
+  454 of the other 8,862. Taking away those at 0, 0 and world 19's, 8,776 maps are placed and 8,747 fit. By the measuring tool
+  (never committed), a map's `worldMap` is the world its sub-area (`customWorldMapId`), else its area (`worldmapId` with
+  `hasWorldMap`), else its super area names, for all 11,794 maps with a world and so for the 348: no other world holds them. The
+  client's drawing code was not read, and bit 23 of `m_flags`, which its enum's order reads as `HasPriorityOnWorldmap`, is set on
+  5,218 of those 8,862 maps and on 3 of the 348: what the client draws for the 348 is not measured. A
   sub-area names a world of its own in `customWorldMapId` (−1 for 425 of 569; 144 name one of 37 worlds, 3 to 41), an
   area in `worldmapId` (0 for 55 of 70; 15 name 12 worlds).
+- **Insides and layers** (D373). Of 3,676 maps on no world, 2,608 have a sub-area whose other maps are all on one world (2,499
+  stand on a square of it), 3,596 share coordinates with a map of some world, and 80 share them with none: `WorldMapIndex` puts an
+  inside on the world of its sub-area, else the least world with a map at its coordinates.
 - **Coordinates shared.** In world 1, 8,551 maps stand on 6,222 coordinates: 273 hold two maps or more, 27 five or more,
   and one holds 1,820. World −1, on no world's map, holds 3,676 maps on 990 coordinates, 480 of them with two or more
   and 159 with five or more, up to 482; world 19 holds 640 on 70, 554 on one; world 12, 345 on 155.

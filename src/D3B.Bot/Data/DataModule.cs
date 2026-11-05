@@ -4,6 +4,7 @@ using D3B.Data.Maps;
 using D3B.Data.Packs;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Data.WorldMaps;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Data;
@@ -12,7 +13,8 @@ namespace D3B.Bot.Data;
 /// <remarks>
 /// <para>
 /// Registers <see cref="ClientBuild"/>, <see cref="PackSource"/>, <see cref="GamePack"/>, <see cref="GameTexts"/>,
-/// <see cref="GameMaps"/>, <see cref="GameWorld"/> and <see cref="GameTables"/>, every one a singleton that all bots share:
+/// <see cref="GameMaps"/>, <see cref="GameWorld"/>, <see cref="GameTables"/>, <see cref="WorldMapIndex"/> and
+/// <see cref="WorldMapTiles"/>, every one a singleton that all bots share:
 /// the stores are safe for any number of threads. The pack is opened when first asked for and closed when the host is
 /// disposed.
 /// </para>
@@ -43,5 +45,7 @@ public sealed class DataModule : IModule
         bot.Services.AddSingleton(services => new GameMaps(services.GetRequiredService<GamePack>()));
         bot.Services.AddSingleton(services => new GameWorld(services.GetRequiredService<GamePack>()));
         bot.Services.AddSingleton(services => new GameTables(services.GetRequiredService<GamePack>()));
+        bot.Services.AddSingleton(services => new WorldMapIndex(services.GetRequiredService<GameWorld>().Atlas));
+        bot.Services.AddSingleton(services => new WorldMapTiles(services.GetRequiredService<GamePack>()));
     }
 }

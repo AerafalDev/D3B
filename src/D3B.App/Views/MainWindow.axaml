@@ -14,6 +14,7 @@
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
     xmlns:ch="clr-namespace:D3B.App.ViewModels.Characters"
+    xmlns:routes="clr-namespace:D3B.App.ViewModels.Routes"
     xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
     xmlns:studio="clr-namespace:D3B.App.ViewModels.Studio"
     xmlns:views="clr-namespace:D3B.App.Views"
@@ -712,6 +713,9 @@
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="vm:ProfileViewModel">
                                                         <views:ProfileView />
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="routes:RouteEditorViewModel">
+                                                        <views:RouteView />
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="ch:CharacterTabViewModel">
                                                         <views:CharacterView />

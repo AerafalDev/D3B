@@ -111,6 +111,7 @@ public static class AssetFiles
         {
             AssetKind.Behavior => ReadBehavior(root) with { Id = id, Name = name, Path = path, Client = client },
             AssetKind.Profile => new ProfileAsset { Id = id, Name = name, Path = path, Client = client, Behavior = Text(root, "behavior"), Values = Values(root["values"]) },
+            AssetKind.Route => ReadRoute(root) with { Id = id, Name = name, Path = path, Client = client },
             _ => new PlannedAsset(kind) { Id = id, Name = name, Path = path, Client = client, Content = Rest(root) },
         };
     }
@@ -140,6 +141,9 @@ public static class AssetFiles
             case ProfileAsset profile:
                 root["behavior"] = profile.Behavior;
                 root["values"] = Values(profile.Values);
+                break;
+            case RouteAsset route:
+                WriteRoute(route, root);
                 break;
             case PlannedAsset planned:
                 foreach (var (key, node) in planned.Content)
@@ -241,6 +245,64 @@ public static class AssetFiles
         }
 
         return rest;
+    }
+
+    private static RouteAsset ReadRoute(JsonObject root)
+    {
+        var details = Rest(root);
+
+        details.Remove("anchors");
+        details.Remove("mode");
+        details.Remove("unreachable");
+
+        return new RouteAsset
+        {
+            Id = "",
+            Name = "",
+            Anchors = Items(root, "anchors", ReadAnchor),
+            Mode = Choice(root, "mode", RouteMode.Loop),
+            Unreachable = Choice(root, "unreachable", RouteUnreachable.Skip),
+            Details = details,
+        };
+    }
+
+    private static RouteAnchor ReadAnchor(JsonObject node)
+    {
+        var map = node["map"] is JsonValue value && value.TryGetValue<long>(out var id) && id > 0 ? id : throw new AssetFormatException("An anchor has no map, or its id is no number.");
+        var details = new JsonObject();
+
+        foreach (var (key, detail) in node)
+        {
+            if (key is not ("map" or "pinned"))
+                details[key] = detail?.DeepClone();
+        }
+
+        return new RouteAnchor { MapId = map, IsPinned = Flag(node, "pinned"), Details = details };
+    }
+
+    private static void WriteRoute(RouteAsset route, JsonObject root)
+    {
+        if (route.Mode != RouteMode.Loop)
+            root["mode"] = Camel(route.Mode);
+
+        if (route.Unreachable != RouteUnreachable.Skip)
+            root["unreachable"] = Camel(route.Unreachable);
+
+        foreach (var (key, node) in route.Details)
+            root[key] = node?.DeepClone();
+
+        root["anchors"] = new JsonArray([.. route.Anchors.Select(anchor =>
+        {
+            var json = new JsonObject { ["map"] = anchor.MapId };
+
+            if (anchor.IsPinned)
+                json["pinned"] = true;
+
+            foreach (var (key, node) in anchor.Details)
+                json[key] = node?.DeepClone();
+
+            return (JsonNode)json;
+        })]);
     }
 
     private static BehaviorAsset ReadBehavior(JsonObject root)

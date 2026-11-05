@@ -55,7 +55,7 @@ IntelliJ's icons, one title row and its run block, the docks remembered, the sta
 7c2); the characters as cards with their classes' heads and the client's glyphs, pack format 9 and mapping format 16, the
 inspector, a character's tab with its map live and its column, the maps in the search, and the studio's motions (step 7,
 session 7c3); the world's maps, 1,250 JPEG tiles of 40 worlds in the pack, format 10, and the route editor's mockup
-(step 7, session 7d). Everything else below is the target.
+(step 7, session 7d); the world's map as a view of its own, the route asset and the world's path between anchors, the route editor's tab and inspector section (step 7, session 7d2). Everything else below is the target.
 
 ## Overview
 
@@ -90,9 +90,9 @@ each step adds the references it needs.
 | `src/D3B.Core` | Modules and `BotBuilder`, shared abstractions. |
 | `src/D3B.Network` | Kestrel transport, framing, codec over `IDuplexPipe`. The only project referencing `Microsoft.AspNetCore.App`, with the host. |
 | `src/D3B.Protocol` | Classes generated from the readable `.proto` files, a build's mapping, its matching and audit, and the per-build translation. |
-| `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, world maps' tiles, items, spells, monsters, interactives, texts. |
+| `src/D3B.Data` | Data pack format and runtime readers: maps, cells, world graph, world maps' tiles and their coordinates' index, items, spells, monsters, interactives, texts. |
 | `src/D3B.Engine` | Pure logic with no I/O: cell and world pathfinding, line of sight, fight simulation. |
-| `src/D3B.Bot` | The bot's run time: actor, state, behaviors, recovery, activities and their settings, pages, the default modules, and the host's composition the app and `D3B.Host` share. |
+| `src/D3B.Bot` | The bot's run time: actor, state, behaviors, routes and the world's path between their anchors, recovery, activities and their settings, pages, the default modules, and the host's composition the app and `D3B.Host` share. |
 | `src/D3B.Host` | The bots' host without the app, for measurements: its entry point alone, with the database (D91, D100). |
 | `src/D3B.Storage` | D3B's database, SQLite through EF Core and its migrations: the accounts seen, what the bots learn, the runs and the characters' variables, which the app and `D3B.Host` share (D100, D312). |
 | `src/D3B.App` | The Avalonia desktop app, which runs the bots' host in its process (D91). |
@@ -796,6 +796,20 @@ The target:
   from the game, variables live for a run, a character or the bots together.
 - **Routes and zones** (D299, D308): built on the world's map drawn from the client's own images, clicked, painted,
   recorded while playing or typed; the maps clicked are anchors, those between found by the world's path.
+  Made in 7d2 (D372 to D374), without the recording, the actions of each map and the zones, which are 7d3:
+  - `RouteAsset` (`D3B.Bot.Assets`, file `<name>.route.json`): anchors, each a map's id and whether it was pinned, the course
+    (`RouteMode`: loop, one way, there and back) and what to do with a map no path reaches (`RouteUnreachable`); what a file holds
+    beyond is kept for 7d3 (`Details`).
+  - `RoutePlanner` (`D3B.Bot.Routes`): the legs between anchors by the world's path (`WorldPathfinder`), as a subscribed
+    character with nothing else known, each leg kept by its two maps; `RouteLeg` lists the maps crossed, or says none leads.
+  - `WorldMapIndex` (`D3B.Data.WorldMaps`, a singleton of `DataModule` beside `WorldMapTiles`): the maps on each coordinates
+    of each world's layer, an inside on the layer of its sub-area's world.
+  - `WorldMapView` (`D3B.App.Controls.WorldMaps`): the world's image from its tiles, zoom and pan eased, the route over it as the
+    mockup's pills and line (`WorldMapRouteLayer`); `TileStore<T>` its bounded cache and loader, `WorldMapViewport` and
+    `WorldMapTiling` its arithmetic.
+  - `RouteEditorViewModel` and `RouteView` (`D3B.App.ViewModels.Routes`, `D3B.App.Views`): a route's tab; `RoutesViewModel` holds
+    the editors open and what they read (`RouteServices`), made when first asked for; the inspector's section is
+    `AssetPropertiesViewModel.Route`.
 - **Profiles** (D300) are a behavior and the values they change. **Debugging** (D302): live, step by step, the history of
   each run, a simulation on the pack. **Sharing** (D303): files, behaviors given, a gallery later.
 - **The look** (D305, D311, D320): a dark creation tool, ShadUI themed again, IntelliJ's icons checked file by file
