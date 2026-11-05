@@ -26,7 +26,7 @@ public sealed class StoragePreparationTests
         Assert.True(File.Exists(storage.Settings.Path));
         Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
         Assert.Equal(context.Database.GetMigrations(), await context.Database.GetAppliedMigrationsAsync(TestContext.Current.CancellationToken));
-        Assert.Contains(storage.Log.GetSnapshot(), record => record.Message == $"Opened the database {storage.Settings.Path}: 0 accounts, 0 characters, 0 graphics learned, 0 resources' growing back, 0 fights' placements, 0 runs, 0 variables");
+        Assert.Contains(storage.Log.GetSnapshot(), record => record.Message == $"Opened the database {storage.Settings.Path}: 0 accounts, 0 characters, 0 graphics learned, 0 resources' growing back, 0 fights' placements, 0 NPCs, 0 NPC questions, 0 NPC outcomes, 0 runs, 0 variables");
     }
 
     [Fact]

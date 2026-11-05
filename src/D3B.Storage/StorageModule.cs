@@ -3,6 +3,7 @@ using D3B.Bot.Fights;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Hosting;
 using D3B.Bot.Interactives;
+using D3B.Bot.Npcs;
 using D3B.Bot.Network;
 using D3B.Bot.Runtime;
 using D3B.Core.Modules;
@@ -10,6 +11,7 @@ using D3B.Storage.Accounts;
 using D3B.Storage.Fights;
 using D3B.Storage.Graphics;
 using D3B.Storage.Harvests;
+using D3B.Storage.Npcs;
 using D3B.Storage.Profiles;
 using D3B.Storage.Runs;
 using D3B.Storage.Variables;
@@ -34,7 +36,8 @@ namespace D3B.Storage;
 /// characters keep, as <see cref="CharacterVariables"/> (D298).
 /// The <see cref="GraphicRecorder"/> keeps what the bots learn of the graphics, which they share as <see cref="GraphicSkills"/>,
 /// the <see cref="RegrowthRecorder"/> how long the resources take to grow back, as <see cref="Regrowths"/> (D145), the
-/// <see cref="PlacementRecorder"/> every fight's map and placement cells, as <see cref="FightPlacements"/> (D275), and the
+/// <see cref="PlacementRecorder"/> every fight's map and placement cells, as <see cref="FightPlacements"/> (D275), the
+/// <see cref="NpcRecorder"/> the NPCs of the maps and what the bots learned of their dialogs, as <see cref="KnownNpcs"/> (D383), and the
 /// <see cref="RunRecorder"/> each run of the bots' activities, which the <see cref="RunBook"/> gives the statistics (D146).
 /// </para>
 /// </remarks>
@@ -57,6 +60,9 @@ public sealed class StorageModule : IModule
         services.TryAddSingleton<FightPlacements>();
         services.AddSingleton<PlacementRecorder>();
         services.AddHostedService(provider => provider.GetRequiredService<PlacementRecorder>());
+        services.TryAddSingleton<KnownNpcs>();
+        services.AddSingleton<NpcRecorder>();
+        services.AddHostedService(provider => provider.GetRequiredService<NpcRecorder>());
         services.AddSingleton<RunBook>();
         services.AddSingleton(provider => new RunRecorder(provider.GetRequiredService<IDbContextFactory<StorageContext>>(), provider.GetRequiredService<RunBook>(), provider, provider.GetService<TimeProvider>() ?? TimeProvider.System, provider.GetRequiredService<ILogger<RunRecorder>>()));
         services.AddHostedService(provider => provider.GetRequiredService<RunRecorder>());

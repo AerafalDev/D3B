@@ -409,8 +409,30 @@ public sealed class CharacterEventsTests
     {
         var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(TestPlay.Information(396, TestPlay.InsideMapId)));
 
-        Assert.Equal([new MapNpc(TestPlay.BankerActorId, TestPlay.BankerNpcId, 259), new MapNpc(-20_000, 1_088, 302)], inside.Npcs.Values);
+        Assert.Equal([new MapNpc(TestPlay.BankerActorId, TestPlay.BankerNpcId, 259, 0), new MapNpc(-20_000, 1_088, 302, 0)], inside.Npcs.Values);
         Assert.Empty(Apply(inside, Server(new MapCurrentEvent { MapId = TestPlay.MapId })).Npcs);
+    }
+
+    [Fact]
+    public void AnNpcFacesTheWayTheServerSaysAndNowhereWhenItSaysNoCell()
+    {
+        var information = new MapInformationEvent { MapId = TestPlay.InsideMapId };
+
+        information.Actors.Add(new Actor
+        {
+            Id = -7,
+            Disposition = new ActorDisposition { CellId = 301, Direction = ActorDirection.Value5 },
+            Information = new ActorInformation { Roleplay = new RoleplayActor { Npc = new NpcActor { NpcId = 99 } } },
+        });
+        information.Actors.Add(new Actor
+        {
+            Id = -8,
+            Information = new ActorInformation { Roleplay = new RoleplayActor { Npc = new NpcActor { NpcId = 100 } } },
+        });
+
+        var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(information));
+
+        Assert.Equal([new MapNpc(-8, 100, null, null), new MapNpc(-7, 99, 301, 5)], inside.Npcs.Values);
     }
 
     [Fact]

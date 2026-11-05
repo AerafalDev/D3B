@@ -29,6 +29,24 @@ message ActorDisposition {
   optional int64 entity_id = 2;
 
   optional int32 cell_id = 3;
+
+  // The way the actor faces (D383): the build's schema types this field after the cell as an enum of 8 values, as many as
+  // the directions of D27, set on 656 of the 689 dispositions of a capture of 3.7.13.17. Without presence, so that a
+  // disposition that leaves it out faces value 0. Which value is which way is assumed to follow D27's order and is not
+  // measured.
+  ActorDirection direction = 4;
+}
+
+// The way an actor faces. Eight values, numbered as D27's directions, 0 east and clockwise: none is measured.
+enum ActorDirection {
+  ACTOR_DIRECTION_VALUE_0 = 0;
+  ACTOR_DIRECTION_VALUE_1 = 1;
+  ACTOR_DIRECTION_VALUE_2 = 2;
+  ACTOR_DIRECTION_VALUE_3 = 3;
+  ACTOR_DIRECTION_VALUE_4 = 4;
+  ACTOR_DIRECTION_VALUE_5 = 5;
+  ACTOR_DIRECTION_VALUE_6 = 6;
+  ACTOR_DIRECTION_VALUE_7 = 7;
 }
 
 // What an actor is.

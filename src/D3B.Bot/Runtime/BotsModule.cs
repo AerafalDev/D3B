@@ -6,6 +6,7 @@ using D3B.Bot.Inspection;
 using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
 using D3B.Bot.Network;
+using D3B.Bot.Npcs;
 using D3B.Bot.Pages;
 using D3B.Bot.Settings;
 using D3B.Core.Modules;
@@ -65,6 +66,10 @@ public sealed class BotsModule : IModule
         // Whoever fights, every fight begun teaches its placement cells and maps, which the server alone gives (D180, D275).
         bot.Services.TryAddSingleton<FightPlacements>();
         bot.Services.AddSingleton<IGameObserver>(services => new FightPlacementLearner(services.GetRequiredService<FightPlacements>(), services.GetRequiredService<GameWorld>(), services.GetRequiredService<TimeProvider>()));
+
+        // Whoever plays, every map teaches which NPCs stand on it, and every dialog where its replies lead, by ids: the server sends no text (D383).
+        bot.Services.TryAddSingleton<KnownNpcs>();
+        bot.Services.AddSingleton<IGameObserver>(services => new NpcLearner(services.GetRequiredService<KnownNpcs>(), services.GetRequiredService<TimeProvider>()));
 
         // Recording always, after the bots, so that the protocol inspector shows what came before it was opened (D115).
         bot.Services.AddSingleton(services => new FrameRecorder(services.GetRequiredService<TimeProvider>()));

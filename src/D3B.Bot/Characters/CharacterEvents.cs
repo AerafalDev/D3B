@@ -202,9 +202,7 @@ public static class CharacterEvents
         elements = information.StatedElements.Where(stated => stated.OnCurrentMap)
             .Aggregate(elements, (elements, stated) => elements.SetItem(stated.ElementId, Stated(elements, stated)));
 
-        var npcs = information.Actors.Where(actor => actor.Id is < 0 and >= int.MinValue && actor.Information?.Roleplay?.Npc is not null)
-            .Select(actor => new MapNpc((int)actor.Id, actor.Information.Roleplay.Npc.NpcId, actor.Disposition is { HasCellId: true } at && IsCell(at.CellId) ? at.CellId : null))
-            .ToImmutableSortedDictionary(npc => npc.ActorId, npc => npc);
+        var npcs = MapNpc.In(information.Actors).ToImmutableSortedDictionary(npc => npc.ActorId, npc => npc);
 
         var groups = information.Actors.Where(IsMonsterGroup).Aggregate(
             ImmutableSortedDictionary<long, MapMonsterGroup>.Empty,

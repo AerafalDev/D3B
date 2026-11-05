@@ -3,6 +3,7 @@ using D3B.Storage.Accounts;
 using D3B.Storage.Fights;
 using D3B.Storage.Graphics;
 using D3B.Storage.Harvests;
+using D3B.Storage.Npcs;
 using D3B.Storage.Runs;
 using D3B.Storage.Variables;
 using Microsoft.Data.Sqlite;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage;
 
-/// <summary>Opens the database before the host starts: creates it, applies its migrations, and reads the accounts, the graphics learned, the resources' growing back, the fights' placement cells, the runs and the characters' variables (D100, D138, D145, D146, D275, D298).</summary>
+/// <summary>Opens the database before the host starts: creates it, applies its migrations, and reads the accounts, the graphics learned, the resources' growing back, the fights' placement cells, the NPCs learned, the runs and the characters' variables (D100, D138, D145, D146, D275, D298, D383).</summary>
 /// <remarks>
 /// The migration that drops the profiles, presets and runs (D304) is preceded once by a copy of the database beside it,
 /// <c>d3b.before-studio.db</c>, the owner's choice: nothing it drops is lost for good.
@@ -30,11 +31,12 @@ internal sealed class StoragePreparation : IHostPreparation
     private readonly GraphicRecorder _graphics;
     private readonly RegrowthRecorder _regrowths;
     private readonly PlacementRecorder _placements;
+    private readonly NpcRecorder _npcs;
     private readonly RunBook _runs;
     private readonly VariableRecorder _variables;
     private readonly ILogger<StoragePreparation> _log;
 
-    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, GraphicRecorder graphics, RegrowthRecorder regrowths, PlacementRecorder placements, RunBook runs, VariableRecorder variables, ILogger<StoragePreparation> log)
+    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, GraphicRecorder graphics, RegrowthRecorder regrowths, PlacementRecorder placements, NpcRecorder npcs, RunBook runs, VariableRecorder variables, ILogger<StoragePreparation> log)
     {
         _settings = settings;
         _contexts = contexts;
@@ -42,6 +44,7 @@ internal sealed class StoragePreparation : IHostPreparation
         _graphics = graphics;
         _regrowths = regrowths;
         _placements = placements;
+        _npcs = npcs;
         _runs = runs;
         _variables = variables;
         _log = log;
@@ -70,11 +73,12 @@ internal sealed class StoragePreparation : IHostPreparation
             var graphics = await _graphics.LoadAsync(cancellationToken).ConfigureAwait(false);
             var regrowths = await _regrowths.LoadAsync(cancellationToken).ConfigureAwait(false);
             var placements = await _placements.LoadAsync(cancellationToken).ConfigureAwait(false);
+            var (npcs, questions, outcomes) = await _npcs.LoadAsync(cancellationToken).ConfigureAwait(false);
 
             var variables = await _variables.LoadAsync(cancellationToken).ConfigureAwait(false);
 
             await _runs.LoadAsync(cancellationToken).ConfigureAwait(false);
-            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, graphics, regrowths, placements, _runs.Runs.Count, variables);
+            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, graphics, regrowths, placements, npcs, questions, outcomes, _runs.Runs.Count, variables);
 
             return null;
         }

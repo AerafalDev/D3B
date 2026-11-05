@@ -343,6 +343,13 @@ seen so.
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
   elements the server lists on the map, whatever the activity. D3B's database keeps it from one run to the next.
+- **The NPCs of the maps and their dialogs** (D383), in `D3B.Bot.Npcs`: `KnownNpcs`, one per host, holds the NPCs the bots saw on
+  each map (`KnownMapNpc`: actor id, cell, direction, how often seen), the questions they asked with the replies offered
+  (`KnownNpcQuestion`) and what followed each reply (`KnownNpcOutcome`: another question, the end, a new map or an exchange,
+  counted); `NpcLearner`, an observer of the game connections, teaches it from every map's information and every dialog,
+  the requests of the player's client and D3B's own alike, a reply being followed by what comes within a second.
+  `KnownNpcs.OnMap` is the reading. Ids only: the server sends no NPC's name nor a dialog's text. D3B's database keeps it
+  from one run to the next.
 - **The journal** (D112, D113), in `D3B.Bot.Journal`: each bot's last 2,000 entries (`BotActor.Journal`), written by the
   behaviors once an action is over, with its outcome and duration: a walk asked for itself, a map change, a use, a
   travel, banking; then the bot's connection, pause, resuming and fights, and its activity's start, interruptions,
@@ -434,7 +441,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-16.binpb` (`MappingFile`, D342), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-17.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -704,7 +711,7 @@ D356), the pages of D101 and D162 gone.
 
 Built in session 5c (D99, D100), in `D3B.Storage`, which the app and `D3B.Host` add to the host's composition; the maps'
 graphics in session 6b (D138); the resources' growing back and the runs in session 6c (D145, D146); the fights' placement
-cells in session 9f3 (D275).
+cells in session 9f3 (D275); the NPCs and their dialogs in session 7d3b (D383).
 
 - **The database**: SQLite through EF Core, in `%LOCALAPPDATA%\D3B\d3b.db` or `Storage:Path`, its migrations applied
   before the host starts (`StoragePreparation`, an `IHostPreparation`); one that does not open stops the host, which says
@@ -734,6 +741,12 @@ cells in session 9f3 (D275).
   coordinates, the map fought on, the challengers' cells (red) and the defenders' (blue), how many fights began so and
   when the first and last did, read back before the host starts and written as the bots see fights begin, as the
   graphics are.
+- **The NPCs and their dialogs** (`NpcRecorder`, D383): `MapNpcs` (by map and NPC: actor id, cell and direction of the last
+  visit, how often seen, first and last time), `NpcQuestions` (by map, NPC, question and set of replies: how often asked and
+  how often it opened a dialog) and `NpcOutcomes` (by map, NPC, question and reply: what followed, another question, the
+  end, a new map or an exchange, counted), taught by `NpcLearner` from every game connection and read back into
+  `KnownNpcs` before the host starts, written as the bots see them, as the graphics are. Ids only: the server sends no name
+  nor text. Migration `Npcs`.
 - **Runs** (`RunRecorder`, `RunBook`, D146): each activity's run, its character, profile, times and outcome, the items it
   brought, the experience its character gained and its banks and fights; the recorder looks at the bots every 5 s and
   writes a run as it begins, banks, once a minute while its figures change, and once over. The book reads them back after
@@ -803,7 +816,7 @@ The target:
     values that differ from its defaults, in its file under `actions`; two anchors are equal by what they hold.
   - `RouteActions` (`D3B.Bot.Routes`): the actions a route plays on a map, nodes `route.harvest`, `route.fight`, `route.door`,
     `route.exit`, `route.zaap` and `route.bag`, and the behaviors' `wait`, with their values (`RouteExitValues`, `RouteDoorValues`,
-    `RouteHarvestValues`, `RouteFightValues`) and sentences; waiting alone plays today, the rest wait for 7d3b (D377).
+    `RouteHarvestValues`, `RouteFightValues`) and sentences; waiting alone plays today, the rest wait for 7d3c (D377, D382).
     `RouteActionCalls` turns a call into the node's values and back. `SettingKind.Cell` is a cell of the map, picked on
     `CellPicker` in a dialog (D121, D378).
   - **The run** (D379): `RouteCursor` (the course: loop, one way, there and back, and where the run is), `RouteRuns` (a cursor

@@ -152,6 +152,99 @@ namespace D3B.Storage.Migrations
                     b.ToTable("Regrowths", (string)null);
                 });
 
+            modelBuilder.Entity("D3B.Storage.Npcs.LearnedMapNpc", b =>
+                {
+                    b.Property<long>("MapId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NpcId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ActorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("Cell")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("Direction")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("FirstSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Seen")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("MapId", "NpcId");
+
+                    b.ToTable("MapNpcs", (string)null);
+                });
+
+            modelBuilder.Entity("D3B.Storage.Npcs.LearnedNpcOutcome", b =>
+                {
+                    b.Property<long>("MapId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NpcId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ReplyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Target")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("MapId", "NpcId", "MessageId", "ReplyId", "Kind", "Target");
+
+                    b.ToTable("NpcOutcomes", (string)null);
+                });
+
+            modelBuilder.Entity("D3B.Storage.Npcs.LearnedNpcQuestion", b =>
+                {
+                    b.Property<long>("MapId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NpcId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Replies")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("FirstSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Opened")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Seen")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("MapId", "NpcId", "MessageId", "Replies");
+
+                    b.ToTable("NpcQuestions", (string)null);
+                });
+
             modelBuilder.Entity("D3B.Storage.Runs.RunRecord", b =>
                 {
                     b.Property<int>("Id")
