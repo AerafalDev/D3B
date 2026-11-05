@@ -153,6 +153,30 @@ public sealed class WorldMapViewTests
     }
 
     [Fact]
+    public async Task AFastDragMissesNoMapAndAPillOverAMapDoesNotHideIt()
+    {
+        var traced = new List<(int X, int Y)>();
+
+        await OnTheUIThreadAsync(async () =>
+        {
+            var scene = new WorldMapScene([new WorldMapStation(2, 0, "A", false, false)], []);
+            var (window, view) = Show(Source(RedImage(), new int[1]), scene);
+
+            view.Tool = WorldMapTool.Trace;
+            view.SquareTraced += (x, y, _) => traced.Add((x, y));
+
+            window.MouseDown(view.RectOf(1, 0).Center, MouseButton.Left);
+            window.MouseMove(view.RectOf(4, 0).Center);
+            window.MouseUp(view.RectOf(4, 0).Center, MouseButton.Left);
+            await Task.Yield();
+
+            return 0;
+        });
+
+        Assert.Equal([(1, 0), (2, 0), (3, 0), (4, 0)], traced);
+    }
+
+    [Fact]
     public async Task TheWheelEasesTheZoomTowardsItsTargetAroundThePointer()
     {
         var (start, end) = await OnTheUIThreadAsync(async () =>

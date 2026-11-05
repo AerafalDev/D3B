@@ -384,12 +384,7 @@ internal sealed class WorldMapView : Control
                 return;
             case Drag.Paint:
                 SetHit(HitAt(at));
-
-                if (_hit.Kind is WorldMapHitKind.Square or WorldMapHitKind.PathPoint && (_hit.X, _hit.Y) != _lastSquare)
-                {
-                    _lastSquare = (_hit.X, _hit.Y);
-                    SquareTraced?.Invoke(_hit.X, _hit.Y, true);
-                }
+                Paint(at);
 
                 return;
             case Drag.Move:
@@ -692,6 +687,28 @@ internal sealed class WorldMapView : Control
         }
 
         return new WorldMapHit(WorldMapHitKind.Square, over.X, over.Y, -1, -1);
+    }
+
+    // A quick drag jumps over squares: the pointer's path is walked in steps of a third of a map, so that none is missed, and a
+    // pill or a mark lying over a square does not hide it.
+    private void Paint(Point to)
+    {
+        var from = _dragFrom;
+        var step = Math.Max(2, Math.Min(_world.MapWidth, _world.MapHeight) * _viewport.Scale / 3);
+        var steps = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(((to.X - from.X) * (to.X - from.X)) + ((to.Y - from.Y) * (to.Y - from.Y))) / step));
+
+        for (var i = 1; i <= steps; i++)
+        {
+            var point = new Point(from.X + ((to.X - from.X) * i / steps), from.Y + ((to.Y - from.Y) * i / steps));
+
+            if (SquareAt(point) is { } square && square != _lastSquare)
+            {
+                _lastSquare = square;
+                SquareTraced?.Invoke(square.X, square.Y, true);
+            }
+        }
+
+        _dragFrom = to;
     }
 
     private void SetHit(WorldMapHit hit)
