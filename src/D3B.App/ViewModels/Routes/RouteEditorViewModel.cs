@@ -35,6 +35,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     private readonly List<int> _sceneLegs = [];
     private RouteAsset _saved;
     private IReadOnlyList<RouteLeg> _legs = [];
+    private long _paintedFrom;
     private int _version;
     private Task _planning = Task.CompletedTask;
 
@@ -218,7 +219,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
             if (count == 0)
                 continue;
 
-            worlds.Add(new WorldChoiceViewModel(world.Id, WorldName(world), count, _page.Localizer.Plural("RouteWorldMaps", count), world.Id == Layer));
+            worlds.Add(new WorldChoiceViewModel(world.Id, WorldName(world), count, _page.Localizer.Plural("RouteWorldMaps", count), world.Id == Layer, UseLayer));
         }
 
         Worlds = worlds;
@@ -304,7 +305,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
     /// <summary>Adds an anchor on the map a trace pressed, or a drag crossed.</summary>
     /// <param name="x">The coordinates.</param>
     /// <param name="y">The coordinates.</param>
-    /// <param name="isDrag">Whether a drag crossed the coordinates: it adds an anchor only when the map is a neighbour of the last one by a real exit, else the path fills the gap (D299).</param>
+    /// <param name="isDrag">Whether a drag crossed the coordinates: it adds an anchor only when the map is a neighbour of the map crossed before by a real exit, else the path fills the gap (D299).</param>
     public void TraceSquare(int x, int y, bool isDrag)
     {
         var services = _page.Services!;
@@ -314,13 +315,18 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
             return;
 
         var map = services.Planner.Primary(maps);
+        var from = _paintedFrom;
+
+        // A drag goes on from the map it crossed last, whether or not that one became an anchor: a square no exit joins is left to
+        // the path, and the drag does not stop there.
+        _paintedFrom = map;
 
         if (_anchors.Exists(anchor => anchor.MapId == map))
             return;
 
-        if (isDrag && _anchors.Count > 0)
+        if (isDrag && from != 0)
         {
-            var leg = services.Planner.Find(_anchors[^1].MapId, map);
+            var leg = services.Planner.Find(from, map);
 
             if (leg.Kind != RouteLegKind.Path || !leg.Between.IsEmpty)
                 return;
@@ -418,13 +424,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject
         Choice = null;
         Relabel();
         FitRequested?.Invoke();
-    }
-
-    [RelayCommand]
-    private void ChooseWorld(WorldChoiceViewModel? world)
-    {
-        if (world is not null)
-            UseLayer(world.Id);
     }
 
     [RelayCommand]

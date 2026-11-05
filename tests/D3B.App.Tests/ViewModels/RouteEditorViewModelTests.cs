@@ -63,6 +63,42 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task APaintGoesOnFromTheMapItCrossedLastEvenWhereNoExitJoinedTheOneBefore()
+    {
+        var (_, editor) = await OpenAsync();
+
+        editor.TraceSquare(1, 0, isDrag: false);
+        editor.TraceSquare(3, 0, isDrag: true);
+        editor.TraceSquare(4, 0, isDrag: true);
+        await editor.Planned;
+
+        Assert.Equal([1L, 4L], editor.Steps.Select(step => step.MapId));
+    }
+
+    [Fact]
+    public async Task ChoosingAnotherWorldInTheMenuShowsItsLayerAndTheTypedIdOfItsMapSwitchesToIt()
+    {
+        var (_, editor) = await OpenAsync(1, 2);
+
+        Assert.Equal([1, 2], editor.Worlds.Select(world => world.Id));
+        Assert.Equal(2, editor.Scene.Stations.Count);
+
+        editor.Worlds[1].ChooseCommand.Execute(null);
+
+        Assert.Equal(2, editor.Layer);
+        Assert.Empty(editor.Scene.Stations);
+        Assert.Equal([false, true], editor.Worlds.Select(world => world.IsChosen));
+        Assert.Equal([true, true], editor.Steps.Select(step => step.IsElsewhere));
+
+        editor.Worlds[0].ChooseCommand.Execute(null);
+        editor.AddText = "00007";
+        editor.AddCommand.Execute(null);
+
+        Assert.Equal(2, editor.Layer);
+        Assert.Single(editor.Scene.Stations);
+    }
+
+    [Fact]
     public async Task APointOfThePathPinnedBecomesAnAnchorBetweenTheTwoItLayBetween()
     {
         var (_, editor) = await OpenAsync(1, 4);

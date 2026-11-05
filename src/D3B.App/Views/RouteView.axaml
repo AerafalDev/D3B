@@ -103,8 +103,7 @@
                                                 <Button
                                                     Classes="Row"
                                                     Click="OnWorldChosen"
-                                                    Command="{Binding $parent[UserControl].((vm:RouteEditorViewModel)DataContext).ChooseWorldCommand}"
-                                                    CommandParameter="{Binding}">
+                                                    Command="{Binding ChooseCommand}">
                                                     <Grid ColumnDefinitions="*,Auto,18">
                                                         <TextBlock
                                                             Foreground="{DynamicResource BrightColor}"
