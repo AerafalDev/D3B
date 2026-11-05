@@ -405,11 +405,13 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
 
         var action = Assert.Single(editor.Actions);
 
-        Assert.Equal("Leave by the top, or by cell none", action.Sentence);
+        Assert.Equal("Leave by the top, or by cell choose", action.Sentence);
         Assert.Equal((1, "1 action", 1), (editor.Steps[1].ActionCount, editor.Steps[1].ActionsText, editor.ActionTotal));
         Assert.Equal((0, ""), (editor.Steps[0].ActionCount, editor.Steps[0].ActionsText));
         Assert.True(editor.IsDirty);
-        Assert.True(action.IsOpen);
+        Assert.Equal(["Leave by ", "the top", ", or by cell ", "choose"], action.Parts.Select(part => part.Text));
+        Assert.Equal([false, true, false, true], action.Parts.Select(part => part.IsToken));
+        Assert.Equal([false, false, false, true], action.Parts.Select(part => part.IsCell));
         Assert.False(editor.HasNoActions);
     }
 
@@ -430,6 +432,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
 
         Assert.Same(action, editor.Actions[0]);
         Assert.Equal("Wait 12 s", action.Sentence);
+        Assert.Equal("12", action.Parts.Single(part => part.IsToken).Text);
         Assert.True(editor.CanUndo);
 
         editor.Undo();

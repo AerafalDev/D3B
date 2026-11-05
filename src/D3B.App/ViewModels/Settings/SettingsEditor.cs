@@ -35,6 +35,14 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets the behavior's values, which a profile changes, or <see langword="null"/> when the settings change nothing's (D300).</summary>
     public object? Defaults { get; }
 
+    /// <summary>Finds the field of a setting.</summary>
+    /// <param name="key">The setting's key.</param>
+    /// <returns>The field, or <see langword="null"/> when the settings declare none of that key.</returns>
+    public SettingFieldViewModel? FieldOf(string key)
+    {
+        return _fields.Find(field => field.Definition.Key == key);
+    }
+
     /// <summary>Gets or sets the map a node plays on, whose cells a setting of cells picks among (D377).</summary>
     public MapData? Map { get; set; }
 

@@ -2589,7 +2589,7 @@
     <value>Choose a cell</value>
   </data>
   <data name="CellNone" xml:space="preserve">
-    <value>none</value>
+    <value>choose</value>
   </data>
   <data name="CellClear" xml:space="preserve">
     <value>No cell</value>

@@ -43,7 +43,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private readonly List<int> _sceneLegs = [];
     private readonly List<Snapshot> _undo = [];
     private readonly List<Snapshot> _redo = [];
-    private readonly HashSet<int> _openActions = [];
     private RouteAsset _saved;
     private IReadOnlyList<RouteLeg> _legs = [];
     private long _paintedFrom;
@@ -551,11 +550,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
         var anchor = _anchors[SelectedIndex];
 
-        _openActions.Clear();
-
-        if (!definition.Values.IsEmpty)
-            _openActions.Add(anchor.Actions.Length);
-
         _anchors[SelectedIndex] = anchor with { Actions = anchor.Actions.Add(RouteActionCalls.Create(definition)) };
         Changed();
     }
@@ -764,18 +758,11 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         AddAction(node);
     }
 
-    private void ToggleAction(int index)
-    {
-        if (!_openActions.Add(index))
-            _openActions.Remove(index);
-    }
-
     private void RemoveAction(int index)
     {
         if (!HasSelectedStep || index < 0 || index >= _anchors[SelectedIndex].Actions.Length)
             return;
 
-        _openActions.Clear();
         _anchors[SelectedIndex] = _anchors[SelectedIndex] with { Actions = _anchors[SelectedIndex].Actions.RemoveAt(index) };
         Changed();
     }
@@ -790,8 +777,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         var actions = _anchors[SelectedIndex].Actions;
         var moved = actions[index];
 
-        _openActions.Clear();
-        _openActions.Add(to);
         _anchors[SelectedIndex] = _anchors[SelectedIndex] with { Actions = actions.RemoveAt(index).Insert(to, moved) };
         Changed();
     }
@@ -884,7 +869,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
                     editor = created;
                 }
 
-                Actions.Add(new RouteActionViewModel(i, anchor.Actions.Length, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), _openActions.Contains(i), ToggleAction, RemoveAction, MoveAction));
+                Actions.Add(new RouteActionViewModel(i, anchor.Actions.Length, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), RemoveAction, MoveAction));
             }
         }
 
@@ -1159,7 +1144,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     partial void OnSelectedIndexChanged(int value)
     {
         MarkSelected();
-        _openActions.Clear();
         BuildActions();
     }
 

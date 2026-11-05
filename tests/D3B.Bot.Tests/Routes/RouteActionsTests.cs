@@ -122,4 +122,20 @@ public sealed class RouteActionsTests : IAsyncDisposable
     {
         Assert.Equal(SettingProblemKind.Required, Assert.Single(Node(RouteActions.Harvest).Values.Check(new RouteHarvestValues())).Kind);
     }
+
+    [Fact]
+    public void EveryValueOfAnActionIsNamedByItsSentenceSinceTheInspectorEditsThemAsTokensOfIt()
+    {
+        foreach (var id in RouteActions.Offered)
+        {
+            var node = Node(id);
+
+            foreach (var language in new[] { "en", "fr" })
+            {
+                var sentence = node.Sentence.In(CultureInfo.GetCultureInfo(language));
+
+                Assert.All(node.Values.All, setting => Assert.Contains("{" + setting.Key + "}", sentence, StringComparison.Ordinal));
+            }
+        }
+    }
 }
