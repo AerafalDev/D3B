@@ -1897,6 +1897,10 @@ never an actor's id or name.
   places a message's bubble and mood. Nothing says what a reply does, nor where it leads. `NpcMessagesDataRoot`, 55,129
   messages, holds a text's key, its parameters, skin, bubble and mood. No table places an NPC on a map: the server does,
   with the map's information.
+- **Where an NPC faces** (session 7d3b, D383). An actor's disposition holds its cell, field 3, and a second field, 4, an enum of 8
+  values in the schema of 3.7.12.12 and 3.7.13.17: set on 656 of the 689 dispositions of one capture of 3.7.13.17, as a field
+  without presence that leaves out its value 0. Read as the direction of D27, 0 east and clockwise; the order is not measured.
+  A fifth field, an int64 on 173 of them, is not read.
 - **Transports.** The world map's hints of category 9, Transports, are 189: 45 zaaps, boats, carriers, drills, carts,
   bells and portals, each on a map; they name the place they lead to, never an NPC. "Portail vers Astrub" stands on
   map 153880835, in Incarnam, where the server places NPC 4398 of that name and Maître Anemo; "Portail vers Incarnam" on

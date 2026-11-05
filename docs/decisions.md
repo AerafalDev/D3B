@@ -8315,6 +8315,65 @@ and D374; the rest of the mockup stands.*
 - **Names of their own.** The picker names an action "Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap",
   "Go to the haven bag", from the app's texts, where the first words of a sentence ("Leave by") read badly alone.
 
+## D382: 7d3b learns the NPCs; the actions that talk to the game are 7d3c
+
+*2026-11-05, step 7, session 7d3b, the owner's. Amends D377.*
+
+| Session | Content |
+| --- | --- |
+| 7d3b | The NPCs of the maps the bots go through and the dialogs they learn, kept in the database and read by map (D383). No editor, no node. |
+| 7d3c | The actions that ask the game: a door, a forced exit, a zaap, the haven bag, a harvest, a fight, an NPC with its picker of NPCs and replies (D298, no free text); then a route run on a real client with the owner. D377's "7d3b". |
+| 7d4 | Unchanged (D376). |
+
+- **Why.** The NPC action's values, which NPC and which replies, are picked from what is known, and nothing was kept: the
+  picker of 7d3c needs this first, and it is a change of its own (a migration, a protocol field, a learner).
+
+## D383: The NPCs of the maps and their dialogs, learned from the game by ids, and the way they face
+
+*2026-11-05, step 7, session 7d3b, the owner's yes to the lead's proposal, the texts left to 7d3c (A). Builds D10, D11, D253, D275, D296.*
+
+- **What the game says, measured.** The server names an NPC by its id (`NpcActor.npc_id`), a question by its id and a reply
+  by its id (`NpcDialogQuestionEvent`, `NpcReply`): never a name nor a text. Those are the client's tables, and the pack
+  holds none of the NPCs' (D29 kept the bankers'). So what is kept is **ids and links**; no name, no question's text, no
+  reply's text, neither learned nor read from the client's files (D10, D11). They show in the studio from the pack, once a
+  pack entry holds them: 7d3c's decision, size measured then. Until it does, the picker names an NPC by its id and a reply by
+  what it leads to, the map's name coming from the atlas.
+- **Three tables**, migration `Npcs`, one row for each distinct observation with its count, never one for each event:
+  - `MapNpcs`, by map and NPC: the actor id, the cell and the direction of the last visit, how often a map's information
+    listed it, first and last time. By map and NPC, not by actor id, which is not known to hold from one visit to the next.
+  - `NpcQuestions`, by map, NPC, question and set of replies, in the order the server gave them (the same question offers
+    other replies with the character, D253): how often it was asked, how often it opened a dialog, first and last time.
+  - `NpcOutcomes`, by map, NPC, question, reply and what followed: another question (its id), the dialog's end, a new map
+    (its id), an exchange (its type), with how many times and the last. The action of talking itself is a reply 0 to a
+    question 0. A reply may have several outcomes, the level of the character deciding (D253): each is counted apart.
+- **Learned from every game connection**, the player's client's or D3B's own requests (`IGameObserver.OnSent`), by
+  `NpcLearner`. A reply is followed by what comes within a second: the next question, an exchange opened, or a map change,
+  before or after the dialog's end, which the server sends in the same millisecond (D253). A dialog's end with no map
+  change in that second counts as an end, recorded when the next frame shows the second went by. A reply the question did not
+  offer, or the server never answered, counts for nothing. An NPC the new map's information has not listed yet is not
+  learned from.
+- **The direction** (`ActorDisposition.direction`, field 4, an enum of 8 values in the build's schema, set on 656 of the 689
+  dispositions of a capture): read, mapping format 17 (`MappingFile.FormatVersion`). Without presence on the wire, so a
+  disposition without it faces the value 0. Which value is which way follows D27's order and is not measured. `MapNpc`
+  carries it (`MapNpc.Direction`), beside the cell.
+- **Read** with `KnownNpcs.OnMap(mapId)`: the NPCs known on a map, each with its questions and outcomes. A singleton of the
+  bots' module, read back from the database before the host starts, as `FightPlacements` is.
+- **Privacy.** Facts of the game's world only: no account, character, server, level, other player or chat. The database stays
+  on the machine. The first and last time with the map reveal, without a name, where the bots went, as the placements do;
+  forgetting an account does not forget them, as it does not forget the graphics.
+- **Size.** About 60 bytes a row. Five thousand maps of NPCs are under a megabyte; dialogs exist only where someone talked.
+  Talking to every NPC of the game would make about 4 MB.
+- **The mapping**, format 17 for 3.7.13.17 and 3.7.12.12 (the same schema bytes, D361): 224 messages, 497 fields, 31 enums and
+  216 values audited, no failure, written on this machine only. The release carrying it, `client-<version>`, is the
+  owner's to publish (`scripts/release.cs --publish`, D33); until then a host with the published mapping 16 fails its
+  version gate (D48), and a host reads the direction only with mapping 17.
+- **Left**: the NPCs' names and the dialogs' texts (7d3c); the character's level with an outcome; the NPCs' moves after the
+  map's information, which skip cells.
+- **Rejected.**
+  - The names and texts read from the client's files at run time, or copied into the database: D10's line.
+  - The dialog as a graph by NPC alone, whatever the map: one NPC's questions differ with where it stands (D253).
+  - The actor id in the key: a visit would add a row if it changes.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

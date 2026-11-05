@@ -2,13 +2,14 @@ using D3B.Storage.Accounts;
 using D3B.Storage.Fights;
 using D3B.Storage.Graphics;
 using D3B.Storage.Harvests;
+using D3B.Storage.Npcs;
 using D3B.Storage.Runs;
 using D3B.Storage.Variables;
 using Microsoft.EntityFrameworkCore;
 
 namespace D3B.Storage;
 
-/// <summary>D3B's database: the accounts and characters it saw, what the bots learned of the maps' graphics and the fights' placement cells, the runs, and the variables the characters keep (D100, D138, D275, D298).</summary>
+/// <summary>D3B's database: the accounts and characters it saw, what the bots learned of the maps' graphics, the NPCs and the fights' placement cells, the runs, and the variables the characters keep (D100, D138, D275, D298).</summary>
 /// <remarks>The profiles left it for the project's files at session 7b (D296, D304).</remarks>
 public sealed class StorageContext : DbContext
 {
@@ -26,6 +27,15 @@ public sealed class StorageContext : DbContext
 
     /// <summary>Gets the fights' placement cells, the map fought on and the one left, as the bots saw fights begin (D275).</summary>
     public DbSet<LearnedPlacement> Placements => Set<LearnedPlacement>();
+
+    /// <summary>Gets the NPCs the bots saw on the maps (D383).</summary>
+    public DbSet<LearnedMapNpc> MapNpcs => Set<LearnedMapNpc>();
+
+    /// <summary>Gets the questions the NPCs asked, with the replies they offered (D383).</summary>
+    public DbSet<LearnedNpcQuestion> NpcQuestions => Set<LearnedNpcQuestion>();
+
+    /// <summary>Gets what followed the replies given to the NPCs (D383).</summary>
+    public DbSet<LearnedNpcOutcome> NpcOutcomes => Set<LearnedNpcOutcome>();
 
     /// <summary>Gets the runs of the activities, for the statistics (D146).</summary>
     public DbSet<RunRecord> Runs => Set<RunRecord>();
@@ -70,6 +80,24 @@ public sealed class StorageContext : DbContext
         {
             placement.ToTable("Placements");
             placement.HasKey(learned => new { learned.FromMapId, learned.MapId, learned.RedCells, learned.BlueCells });
+        });
+
+        modelBuilder.Entity<LearnedMapNpc>(npc =>
+        {
+            npc.ToTable("MapNpcs");
+            npc.HasKey(learned => new { learned.MapId, learned.NpcId });
+        });
+
+        modelBuilder.Entity<LearnedNpcQuestion>(question =>
+        {
+            question.ToTable("NpcQuestions");
+            question.HasKey(learned => new { learned.MapId, learned.NpcId, learned.MessageId, learned.Replies });
+        });
+
+        modelBuilder.Entity<LearnedNpcOutcome>(outcome =>
+        {
+            outcome.ToTable("NpcOutcomes");
+            outcome.HasKey(learned => new { learned.MapId, learned.NpcId, learned.MessageId, learned.ReplyId, learned.Kind, learned.Target });
         });
 
         modelBuilder.Entity<RunRecord>(run =>
