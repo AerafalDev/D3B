@@ -327,6 +327,11 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         editor.TraceSquare(2, 0, isDrag: true);
         editor.TraceSquare(3, 0, isDrag: true);
         editor.EndGesture();
+
+        // The tests have no synchronization context: the plan of the gesture resumes on a pool thread, and the next trace
+        // would rebuild the steps at the same time as it does.
+        await editor.Planned;
+
         editor.TraceSquare(4, 0, isDrag: false);
 
         await editor.Planned;
