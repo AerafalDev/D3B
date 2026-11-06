@@ -8529,6 +8529,20 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
   A sub-area of interiors alone keeps them, being a dungeon.
 - **Not measured.** That no interior of such a sub-area holds a group; the owner's report is that the tour found none in them.
 
+## D389: The harvest's given profiles open the resource bags
+
+*2026-11-06, step 7, session 7d4, the owner's request after a player copied a given profile to turn the option on. Refines D168's presets and D148's upkeep.*
+
+- **Reported.** A player's character was disconnected overnight, full of pods even after its bank: its resource bags were never
+  opened, and the harvest's bank takes what was harvested, so the bags stayed and weighed. The given profiles left "Open the
+  resource bags" off, so the player copied one to edit it.
+- **Made.** The harvest's six presets (the automatic one and the five professions) set `OpenBags`. The profiles they make are
+  built from the code at each launch (`GivenAssets`), so every install has them at its next start; a profile a player copied
+  keeps its own value. The option's default for a new custom profile stays off.
+- **Not measured.** That the unopened bags were the cause of the disconnection: the player's capture was not read for it; the
+  code shows a full character after the bank stops the harvest with "still full" (`StillFull`), and the bag's weight explains
+  it.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

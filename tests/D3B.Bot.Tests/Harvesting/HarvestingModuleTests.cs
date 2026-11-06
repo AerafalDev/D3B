@@ -46,7 +46,7 @@ public sealed class HarvestingModuleTests
     }
 
     [Fact]
-    public void TheHarvestGivesAnAutomaticPresetAndOnePerProfessionThatHold()
+    public void TheHarvestGivesAnAutomaticPresetAndOnePerProfessionThatHoldAndOpenTheBags()
     {
         var settings = Harvest().Settings;
         var french = CultureInfo.GetCultureInfo("fr");
@@ -61,6 +61,7 @@ public sealed class HarvestingModuleTests
             var read = Assert.IsType<HarvestSettings>(settings.Read(preset.Json).Settings);
 
             Assert.Equal((HarvestMode.ByProfession, HarvestOrder.HighestLevel, HarvestPlace.Automatic), (read.Mode, read.Order, read.Place));
+            Assert.True(read.OpenBags);
             Assert.Empty(settings.Check(read));
         }
 
