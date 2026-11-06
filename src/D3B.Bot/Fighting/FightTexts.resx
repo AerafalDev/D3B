@@ -51,7 +51,7 @@
     <value>Monsters</value>
   </data>
   <data name="ModeHelp" xml:space="preserve">
-    <value>Automatic: the groups at the character's level. Chosen: a group holding one of the monsters, or a monster of one of the families.</value>
+    <value>Automatic: every group, in the place chosen for the character's level. Chosen: a group holding one of the monsters, or a monster of one of the families.</value>
   </data>
   <data name="ModeAutomatic" xml:space="preserve">
     <value>Automatic</value>
@@ -79,12 +79,6 @@
   </data>
   <data name="MonstersUnit" xml:space="preserve">
     <value>monsters</value>
-  </data>
-  <data name="OnlyWinnable" xml:space="preserve">
-    <value>Only the groups it beats</value>
-  </data>
-  <data name="OnlyWinnableHelp" xml:space="preserve">
-    <value>The AI judges each group before attacking it, as it judges a fight's risk; until the character's first fight, by the monsters' levels.</value>
   </data>
   <data name="SectionWhere" xml:space="preserve">
     <value>Where</value>
