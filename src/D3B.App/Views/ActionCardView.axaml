@@ -1,0 +1,130 @@
+<UserControl
+    x:Class="D3B.App.Views.ActionCardView"
+    x:ClassModifier="internal"
+    x:DataType="routes:RouteActionViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:routes="clr-namespace:D3B.App.ViewModels.Routes"
+    xmlns:v="clr-namespace:D3B.App.Views"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="Button.ValueToken">
+            <Setter Property="Background" Value="{DynamicResource TipColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="1,1" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="7,0" />
+        </Style>
+        <Style Selector="Button.ValueToken:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+        </Style>
+        <Style Selector="Button.ValueToken.Problem">
+            <Setter Property="BorderBrush" Value="{DynamicResource PausedEdgeColor}" />
+        </Style>
+    </UserControl.Styles>
+    <Border
+        Background="{DynamicResource CardBackgroundColor}"
+        BorderBrush="{DynamicResource BorderColor}"
+        BorderThickness="1"
+        CornerRadius="8"
+        Margin="8,2"
+        Padding="10,4,6,6">
+        <StackPanel Spacing="4">
+            <Grid ColumnDefinitions="*,Auto" MinHeight="30">
+                <ItemsControl
+                    AutomationProperties.Name="{Binding Sentence}"
+                    ItemsSource="{Binding Parts}"
+                    VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="routes:ActionPartViewModel">
+                            <Panel VerticalAlignment="Center">
+                                <TextBlock
+                                    Classes="Bright"
+                                    IsVisible="{Binding IsWords}"
+                                    Text="{Binding Text}"
+                                    VerticalAlignment="Center" />
+                                <Button
+                                    Classes="ValueToken"
+                                    Classes.Problem="{Binding HasProblem}"
+                                    Content="{Binding Text}"
+                                    IsVisible="{Binding IsPopup}">
+                                    <Button.Flyout>
+                                        <Flyout Placement="BottomEdgeAlignedLeft">
+                                            <StackPanel MinWidth="260" Spacing="8">
+                                                <TextBlock Classes="Muted" Text="{Binding Field.Label}" />
+                                                <v:SettingsFormView DataContext="{Binding Field}" />
+                                                <TextBlock
+                                                    Classes="Problem"
+                                                    IsVisible="{Binding Field.HasProblem}"
+                                                    Text="{Binding Field.Problem}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                                <Button
+                                    Classes="ValueToken"
+                                    Classes.Problem="{Binding HasProblem}"
+                                    Command="{Binding PickCommand}"
+                                    Content="{Binding Text}"
+                                    IsVisible="{Binding IsDialog}" />
+                            </Panel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="2"
+                    VerticalAlignment="Top">
+                    <c:Icon
+                        Drawing="{StaticResource Status.Warning}"
+                        Height="13"
+                        IsVisible="{Binding HasProblems}"
+                        Margin="0,6,4,0"
+                        Width="13" />
+                    <Button
+                        AutomationProperties.Name="{l:Tr MoveUp}"
+                        Classes="Tool Small"
+                        Command="{Binding MoveUpCommand}"
+                        IsEnabled="{Binding !IsFirst}"
+                        ToolTip.Tip="{l:Tr MoveUp}">
+                        <c:Icon Drawing="{StaticResource General.ChevronUp}" />
+                    </Button>
+                    <Button
+                        AutomationProperties.Name="{l:Tr MoveDown}"
+                        Classes="Tool Small"
+                        Command="{Binding MoveDownCommand}"
+                        IsEnabled="{Binding !IsLast}"
+                        ToolTip.Tip="{l:Tr MoveDown}">
+                        <c:Icon Drawing="{StaticResource General.ChevronDown}" />
+                    </Button>
+                    <Button
+                        AutomationProperties.Name="{l:Tr RouteActionRemove}"
+                        Classes="Tool Small"
+                        Command="{Binding RemoveCommand}"
+                        ToolTip.Tip="{l:Tr RouteActionRemove}">
+                        <c:Icon Drawing="{StaticResource General.Close}" Height="10" Width="10" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+            <TextBlock
+                Classes="Dim"
+                FontSize="11"
+                IsVisible="{Binding !IsPlayed}"
+                Text="{l:Tr RouteActionNotPlayed}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+    </Border>
+</UserControl>

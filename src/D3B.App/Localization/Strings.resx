@@ -2750,4 +2750,109 @@
   <data name="RepliesLeadsToText" xml:space="preserve">
     <value>leads to “{0}”</value>
   </data>
+  <data name="RouteChoose" xml:space="preserve">
+    <value>choose a route</value>
+  </data>
+  <data name="RouteGone" xml:space="preserve">
+    <value>{0} (missing)</value>
+  </data>
+  <data name="RoutePickerTitle" xml:space="preserve">
+    <value>Pick a route</value>
+  </data>
+  <data name="RoutePickerNone" xml:space="preserve">
+    <value>The project holds no route yet. Make one from the explorer's + menu, then pick it here.</value>
+  </data>
+  <data name="RouteClear" xml:space="preserve">
+    <value>Clear the route</value>
+  </data>
+  <data name="RoutePickerMapsOne" xml:space="preserve">
+    <value>{0} map</value>
+  </data>
+  <data name="RoutePickerMapsOther" xml:space="preserve">
+    <value>{0} maps</value>
+  </data>
+  <data name="SequenceNotAList" xml:space="preserve">
+    <value>This behavior is more than a list of steps (states, rules or branches): it opens in the behaviors' canvas, which comes later.</value>
+  </data>
+  <data name="SequenceNewName" xml:space="preserve">
+    <value>New list of steps</value>
+  </data>
+  <data name="SequenceNewNameNumbered" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="SequenceSaved" xml:space="preserve">
+    <value>“{0}” saved.</value>
+  </data>
+  <data name="SequenceSubtitle" xml:space="preserve">
+    <value>Steps played in order: follow a route, harvest, fight, wait.</value>
+  </data>
+  <data name="SequenceStepsTitle" xml:space="preserve">
+    <value>Steps</value>
+  </data>
+  <data name="SequenceAdd" xml:space="preserve">
+    <value>Add a step</value>
+  </data>
+  <data name="SequenceEmpty" xml:space="preserve">
+    <value>No step yet. Press + to add one.</value>
+  </data>
+  <data name="SequenceRepeats" xml:space="preserve">
+    <value>Start again at the end</value>
+  </data>
+  <data name="SequenceRepeatsHelp" xml:space="preserve">
+    <value>Off, the run ends once the last step is played.</value>
+  </data>
+  <data name="SequenceLoopWarning" xml:space="preserve">
+    <value>The route “{0}” is a loop: it never ends, so the steps after step {1} never play.</value>
+  </data>
+  <data name="SequenceNameFollow" xml:space="preserve">
+    <value>Follow a route</value>
+  </data>
+  <data name="SequenceNameNote" xml:space="preserve">
+    <value>Write a note</value>
+  </data>
+  <data name="SequenceNamePause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="SequenceNameStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="SequenceStepsDetailOne" xml:space="preserve">
+    <value>{0} step</value>
+  </data>
+  <data name="SequenceStepsDetailOther" xml:space="preserve">
+    <value>{0} steps</value>
+  </data>
+  <data name="SequenceEmptyDetail" xml:space="preserve">
+    <value>No step yet</value>
+  </data>
+  <data name="SequenceRepeatsDetail" xml:space="preserve">
+    <value>starts again at the end</value>
+  </data>
+  <data name="BehaviorNotAList" xml:space="preserve">
+    <value>More than a list of steps</value>
+  </data>
+  <data name="SequenceNewChoice" xml:space="preserve">
+    <value>A new list of steps</value>
+  </data>
+  <data name="SequenceNewChoiceDetail" xml:space="preserve">
+    <value>Made with the profile, named after it</value>
+  </data>
+  <data name="ProfilePlays" xml:space="preserve">
+    <value>Plays</value>
+  </data>
+  <data name="ProfilePlaysActivity" xml:space="preserve">
+    <value>An activity</value>
+  </data>
+  <data name="ProfilePlaysSteps" xml:space="preserve">
+    <value>A list of steps</value>
+  </data>
+  <data name="ProfileSteps" xml:space="preserve">
+    <value>List of steps</value>
+  </data>
+  <data name="ProfilePlaysTitle" xml:space="preserve">
+    <value>Plays</value>
+  </data>
+  <data name="ProfileEditSteps" xml:space="preserve">
+    <value>Edit the steps</value>
+  </data>
 </root>

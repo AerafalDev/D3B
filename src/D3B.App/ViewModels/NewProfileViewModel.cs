@@ -18,6 +18,24 @@ internal sealed partial class NewProfileViewModel : ObservableObject
     /// <summary>Gets whether the profile is a copy, its activity the other's.</summary>
     public bool IsCopy => _source is not null;
 
+    /// <summary>Gets the behaviors a profile may play besides the activities, a new list of steps first (D386).</summary>
+    public IReadOnlyList<BehaviorChoiceViewModel> Behaviors { get; }
+
+    /// <summary>Gets whether the profile may choose between an activity and a behavior: a copy plays what the other does.</summary>
+    public bool CanChoosePlay => !IsCopy;
+
+    /// <summary>Gets whether the profile plays an activity.</summary>
+    public bool PlaysActivity => !PlaysBehavior;
+
+    /// <summary>Gets or sets whether the profile plays a list of steps, new or the project's, rather than an activity (D386).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PlaysActivity))]
+    public partial bool PlaysBehavior { get; set; }
+
+    /// <summary>Gets or sets the behavior the profile plays, when it plays one.</summary>
+    [ObservableProperty]
+    public partial BehaviorChoiceViewModel? Behavior { get; set; }
+
     /// <summary>Gets or sets the profile's name.</summary>
     [ObservableProperty]
     public partial string Name { get; set; } = "";
@@ -47,6 +65,9 @@ internal sealed partial class NewProfileViewModel : ObservableObject
         _page = page;
         _source = source;
         Title = page.Localizer[source is null ? "NewProfile" : "DuplicateProfile"];
+        Behaviors = [new BehaviorChoiceViewModel(null, page.Localizer["SequenceNewChoice"], page.Localizer["SequenceNewChoiceDetail"]), .. page.Behaviors()];
+        Behavior = source?.BehaviorId is { } behavior ? Behaviors.FirstOrDefault(choice => choice.Id == behavior) : Behaviors[0];
+        PlaysBehavior = source?.IsBehaviorProfile == true;
         Activity = source?.SavedActivity ?? (Activities.Count > 0 ? Activities[0] : null);
         Name = source is null ? "" : page.CopyName(source.Name);
         Check(quiet: source is null);
@@ -61,12 +82,27 @@ internal sealed partial class NewProfileViewModel : ObservableObject
 
         // An empty name is no mistake while the dialog opens: the button waits for one.
         NameProblem = quiet && name.Length == 0 ? null : problem;
-        CanCreate = problem is null && Activity?.Definition is not null;
+        CanCreate = problem is null && (PlaysBehavior ? Behavior is not null : Activity?.Definition is not null);
     }
 
     [RelayCommand(CanExecute = nameof(CanCreate))]
     private void Create()
     {
+        if (PlaysBehavior)
+        {
+            if (Behavior is not { } behavior)
+                return;
+
+            _page.Dialogs.Close(this);
+
+            if (behavior.Id is { } id)
+                _page.CreateWithBehavior(Name.Trim(), id);
+            else
+                _ = _page.CreateWithNewListAsync(Name.Trim());
+
+            return;
+        }
+
         if (Activity is not { Definition: not null } activity)
             return;
 
@@ -86,6 +122,16 @@ internal sealed partial class NewProfileViewModel : ObservableObject
     }
 
     partial void OnActivityChanged(ActivityChoiceViewModel? value)
+    {
+        Check(quiet: Name.Length == 0);
+    }
+
+    partial void OnPlaysBehaviorChanged(bool value)
+    {
+        Check(quiet: Name.Length == 0);
+    }
+
+    partial void OnBehaviorChanged(BehaviorChoiceViewModel? value)
     {
         Check(quiet: Name.Length == 0);
     }

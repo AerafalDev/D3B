@@ -203,6 +203,15 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return Add(property, SettingKind.Npc, false, name);
     }
 
+    /// <summary>Declares a route of the project, by its id, picked among the project's routes (D386).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Route</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> Route(Expression<Func<TSettings, string?>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.Route, false, name);
+    }
+
     /// <summary>Declares the replies given to an NPC, in order, the n-th to the n-th question (D384).</summary>
     /// <param name="property">The property, such as <c>s =&gt; s.Replies</c>.</param>
     /// <param name="name">The setting's name, as the app shows it.</param>

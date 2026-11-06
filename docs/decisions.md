@@ -8451,6 +8451,54 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
 - **Rejected.** The texts read from the client's files at run time: D10's line, and the studio would need the installed client. Only the
   names and the replies, the lead's recommendation: the owner asked for the questions too.
 
+## D386: A profile plays a list of steps: routes and actions in order, made in the app
+
+*2026-11-06, step 7, session 7d3d, the owner's choice among three designs, as the lead recommended it. Within D297, D298, D300, D379 and D384; the canvas of 7e (D307) will open the same files.*
+
+- **The need.** The owner could put a route on a character only through the node `route.follow` of a behavior written by hand,
+  its route named by an id typed as text; the canvas that would make behaviors is 7e's. "A profile that uses several routes and
+  actions" had no path in the app.
+- **A behavior can be a list of steps** (`BehaviorSequence`, `BehaviorSequences`, `D3B.Bot.Behaviors`): one state, no condition,
+  whose actions follow one another by their way on, each a node of the catalog with its values, and whether the list starts again
+  at its end (`BehaviorState.Repeats`). It is a shape of the behavior's file (`<name>.behavior.json`), not a model of its own:
+  `BehaviorSequences.Read` says whether a behavior has that shape and gives its steps, `Write` makes the file's state and chain
+  (`step1`, `step2`, each wired to the next, placed in a row so that 7e opens it as it is). A behavior with a layer Always, a rule,
+  a variable, a public setting, a branch, a wire of data or several states is not a list: the list editor leaves it, and says it
+  is the canvas's. Playing is the behaviors' own (D297): the steps play in order, a step played is passed, a list that ends is
+  done, one that repeats goes round, an interruption goes on from the step it cut.
+- **The steps offered** (`BehaviorSequences.Offered`): follow a route, harvest, fight, go to the haven bag, wait, write a note,
+  pause, stop: the nodes whose values need no map to be set up. A door, a forced exit, an NPC and a zaap stay a route's actions,
+  where the step's map is known; a harvest or a fight in a list plays on the map the character is on. The whole activities
+  (harvesting by profession over a zone, hunting) are left out: their form is the profile's own, and a profile of the activity
+  already plays them; a list holds them with 7e's inspector.
+- **A route is picked, never typed** (D298): `SettingKind.Route`, a route's id as text, the value of `route.follow`; a token in its
+  sentence opens a dialog of the project's routes with their map counts (`RouteFieldViewModel`, `RoutePickerViewModel`, an
+  `IPickingField`). A route no longer in the project reads "(missing)" and the run ends with a note, as before (D379).
+  `BehaviorAsset.Uses` now lists the routes it follows, so that a route's "used by" shows the behaviors and deleting one says so.
+- **The editor** (`SequencesViewModel`, `SequenceEditorViewModel`, `SequenceView`, `D3B.App`): a behavior's tab, opened from the
+  explorer or by the Add menu's Behavior, which makes an empty list in the folder chosen. Each step is the node's sentence with its
+  values as tokens, the card shared with the route's actions (`RouteActionViewModel`, `ActionCardView`, taken out of the inspector),
+  moved, removed, added from the same dialog of actions; a check box says whether the list repeats; Save and Ctrl S write the file,
+  closing with changes asks first, the file taken again when it changes and nothing is unsaved. A step that cannot be saved (a route
+  not picked) blocks Save. A warning says when a loop is followed by another step, since a loop never ends and what follows would
+  never play. No undo yet (7e's).
+- **A profile plays a behavior of the project** (`ProfileViewModel.IsBehaviorProfile`): the new-profile dialog says whether the profile
+  plays an activity or a list of steps, a new one made with the profile and named after it, or one of the project's behaviors; the
+  profile's tab names its behavior and what it holds, with a button that opens the list; saving writes the profile with no value
+  changed (the list has no public setting yet) and keeps what a hand-written profile changed. A copy plays the same behavior.
+  Starting it on a character is the profiles' own, whatever the behavior (`ProfileStarter`).
+- **Not tried on a real client**, as D384: the owner and the game are needed. The list's playing is tried on the test game with
+  notes and waits, the editor and its dialogs on the headless window, drawn.
+- **Left.** The whole activities as steps, and a step's conditions, branches and variables (7e); public settings a profile changes
+  for a list (a route chosen by the profile): the canvas declares them, and the profile's form reads a behavior's settings; undo in
+  the list; a list as a node of another behavior (D296); reordering by dragging.
+- **Rejected.**
+  - A new activity "list of routes" in the profile's settings, the lead's other path: it doubles the model (an activity beside the
+    nodes), mixes neither a harvest nor a fight nor a wait with the routes, and 7e would still have to make the rest.
+  - The list private to the profile, edited in its tab with a hidden behavior: one gesture, but two profiles could not share a list
+    and the behavior would be invisible to the explorer and to 7e.
+  - The route's id typed, or kept in the profile's values by name: what D298 forbids.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

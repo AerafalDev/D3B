@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Settings;
+using D3B.Bot.Assets;
 using D3B.Bot.Behaviors;
 using D3B.Bot.Routes;
 using D3B.Bot.Settings;
@@ -43,6 +44,9 @@ internal sealed partial class RouteActionViewModel : ObservableObject
     /// <summary>Gets whether the run plays the action today (D377).</summary>
     public bool IsPlayed { get; }
 
+    /// <summary>Gets the action's place counted from 1, as a list of steps numbers it.</summary>
+    public int Number => Index + 1;
+
     /// <summary>Gets whether the action is the first of its step.</summary>
     public bool IsFirst => Index == 0;
 
@@ -78,7 +82,7 @@ internal sealed partial class RouteActionViewModel : ObservableObject
         _name = name;
         _remove = remove;
         _move = move;
-        IsPlayed = RouteActions.IsPlayed(nodeId);
+        IsPlayed = definition is not null && (RouteActions.IsPlayed(nodeId) || BehaviorSequences.Offered.Contains(nodeId) || definition.Role is NodeRole.Activity);
         Parts = Cut();
         Say();
     }
@@ -170,6 +174,8 @@ internal sealed partial class RouteActionViewModel : ObservableObject
                 return setting.GetValue(draft) is int cell ? cell.ToString(culture) : _localizer["CellNone"];
             case SettingKind.Number:
                 return Convert.ToString(setting.GetValue(draft), culture) ?? "";
+            case SettingKind.Route:
+                return setting.GetValue(draft) is string { Length: > 0 } route ? Editor.Library?.Find<RouteAsset>(route)?.Name ?? _localizer.Format("RouteGone", route) : _localizer["RouteChoose"];
             case SettingKind.Npc:
                 return setting.GetValue(draft) is int npc ? Editor.NpcNames?.Npc(npc) ?? _localizer.Format("NpcNumber", npc) : _localizer["NpcNone"];
             case SettingKind.NpcReply:

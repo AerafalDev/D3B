@@ -1,0 +1,106 @@
+<UserControl
+    x:Class="D3B.App.Views.SequenceView"
+    x:ClassModifier="internal"
+    x:DataType="vm:SequenceEditorViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:r="clr-namespace:D3B.App.ViewModels.Routes"
+    xmlns:v="clr-namespace:D3B.App.Views"
+    xmlns:vm="clr-namespace:D3B.App.ViewModels.Sequences"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <Grid
+            ColumnDefinitions="Auto,*,Auto"
+            DockPanel.Dock="Top"
+            Margin="20,18,20,0">
+            <Border
+                Background="#1F2A3D"
+                CornerRadius="10"
+                Height="38"
+                VerticalAlignment="Top"
+                Width="38">
+                <c:Icon
+                    Drawing="{StaticResource Toolwindows.Hierarchy}"
+                    Height="18"
+                    Tint="#7FA7FF"
+                    Width="18" />
+            </Border>
+            <StackPanel
+                Grid.Column="1"
+                Margin="14,0,12,0"
+                VerticalAlignment="Center">
+                <TextBlock
+                    Classes="Title"
+                    Text="{Binding Name}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    Classes="Dim"
+                    Text="{l:Tr SequenceSubtitle}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <Button
+                Classes="Primary"
+                Command="{Binding SaveCommand}"
+                Content="{l:Tr Save}"
+                Grid.Column="2"
+                VerticalAlignment="Top">
+                <ToolTip.Tip>
+                    <c:KeyTip Keys="Ctrl S" Text="{l:Tr Save}" />
+                </ToolTip.Tip>
+            </Button>
+        </Grid>
+        <ScrollViewer>
+            <StackPanel Margin="12,14,24,48" Spacing="10">
+                <Border
+                    Classes="Banner Info"
+                    IsVisible="{Binding HasWarning}"
+                    Margin="8,0"
+                    Padding="12,8">
+                    <TextBlock Text="{Binding Warning}" TextWrapping="Wrap" />
+                </Border>
+                <Grid ColumnDefinitions="*,Auto" Margin="8,0,14,0">
+                    <TextBlock Classes="SectionTitle" Text="{l:Tr SequenceStepsTitle}" />
+                    <Button
+                        AutomationProperties.Name="{l:Tr SequenceAdd}"
+                        Classes="Tool Small"
+                        Command="{Binding ChooseStepCommand}"
+                        Grid.Column="1"
+                        ToolTip.Tip="{l:Tr SequenceAdd}">
+                        <c:Icon Drawing="{StaticResource General.Add}" Height="13" Width="13" />
+                    </Button>
+                </Grid>
+                <TextBlock
+                    Classes="Dim"
+                    IsVisible="{Binding IsEmpty}"
+                    Margin="8,0"
+                    Text="{l:Tr SequenceEmpty}"
+                    TextWrapping="Wrap" />
+                <ItemsControl ItemsSource="{Binding Steps}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="r:RouteActionViewModel">
+                            <Grid ColumnDefinitions="28,*">
+                                <TextBlock
+                                    Classes="Dim"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,9,6,0"
+                                    Text="{Binding Number}"
+                                    VerticalAlignment="Top" />
+                                <v:ActionCardView Grid.Column="1" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <CheckBox
+                    Content="{l:Tr SequenceRepeats}"
+                    IsChecked="{Binding Repeats}"
+                    Margin="8,10,0,0" />
+                <TextBlock
+                    Classes="Dim"
+                    Margin="8,0"
+                    Text="{l:Tr SequenceRepeatsHelp}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

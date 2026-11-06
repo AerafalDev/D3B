@@ -2750,4 +2750,109 @@
   <data name="RepliesLeadsToText" xml:space="preserve">
     <value>mène à « {0} »</value>
   </data>
+  <data name="RouteChoose" xml:space="preserve">
+    <value>choisir un trajet</value>
+  </data>
+  <data name="RouteGone" xml:space="preserve">
+    <value>{0} (introuvable)</value>
+  </data>
+  <data name="RoutePickerTitle" xml:space="preserve">
+    <value>Choisir un trajet</value>
+  </data>
+  <data name="RoutePickerNone" xml:space="preserve">
+    <value>Le projet n'a pas encore de trajet. Crées-en un depuis le menu + de l'explorateur, puis choisis-le ici.</value>
+  </data>
+  <data name="RouteClear" xml:space="preserve">
+    <value>Retirer le trajet</value>
+  </data>
+  <data name="RoutePickerMapsOne" xml:space="preserve">
+    <value>{0} carte</value>
+  </data>
+  <data name="RoutePickerMapsOther" xml:space="preserve">
+    <value>{0} cartes</value>
+  </data>
+  <data name="SequenceNotAList" xml:space="preserve">
+    <value>Ce comportement est plus qu'une liste d'étapes (états, règles ou branches) : il s'ouvrira dans le canvas des comportements, qui arrive plus tard.</value>
+  </data>
+  <data name="SequenceNewName" xml:space="preserve">
+    <value>Nouvelle liste d'étapes</value>
+  </data>
+  <data name="SequenceNewNameNumbered" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="SequenceSaved" xml:space="preserve">
+    <value>« {0} » enregistrée.</value>
+  </data>
+  <data name="SequenceSubtitle" xml:space="preserve">
+    <value>Étapes jouées dans l'ordre : suivre un trajet, récolter, combattre, attendre.</value>
+  </data>
+  <data name="SequenceStepsTitle" xml:space="preserve">
+    <value>Étapes</value>
+  </data>
+  <data name="SequenceAdd" xml:space="preserve">
+    <value>Ajouter une étape</value>
+  </data>
+  <data name="SequenceEmpty" xml:space="preserve">
+    <value>Aucune étape pour l'instant. Appuie sur + pour en ajouter une.</value>
+  </data>
+  <data name="SequenceRepeats" xml:space="preserve">
+    <value>Recommencer à la fin</value>
+  </data>
+  <data name="SequenceRepeatsHelp" xml:space="preserve">
+    <value>Désactivé, la session se termine une fois la dernière étape jouée.</value>
+  </data>
+  <data name="SequenceLoopWarning" xml:space="preserve">
+    <value>Le trajet « {0} » est une boucle : il ne se termine jamais, donc les étapes après l'étape {1} ne se jouent jamais.</value>
+  </data>
+  <data name="SequenceNameFollow" xml:space="preserve">
+    <value>Suivre un trajet</value>
+  </data>
+  <data name="SequenceNameNote" xml:space="preserve">
+    <value>Écrire une note</value>
+  </data>
+  <data name="SequenceNamePause" xml:space="preserve">
+    <value>Mettre en pause</value>
+  </data>
+  <data name="SequenceNameStop" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="SequenceStepsDetailOne" xml:space="preserve">
+    <value>{0} étape</value>
+  </data>
+  <data name="SequenceStepsDetailOther" xml:space="preserve">
+    <value>{0} étapes</value>
+  </data>
+  <data name="SequenceEmptyDetail" xml:space="preserve">
+    <value>Aucune étape</value>
+  </data>
+  <data name="SequenceRepeatsDetail" xml:space="preserve">
+    <value>recommence à la fin</value>
+  </data>
+  <data name="BehaviorNotAList" xml:space="preserve">
+    <value>Plus qu'une liste d'étapes</value>
+  </data>
+  <data name="SequenceNewChoice" xml:space="preserve">
+    <value>Une nouvelle liste d'étapes</value>
+  </data>
+  <data name="SequenceNewChoiceDetail" xml:space="preserve">
+    <value>Créée avec le profil, à son nom</value>
+  </data>
+  <data name="ProfilePlays" xml:space="preserve">
+    <value>Joue</value>
+  </data>
+  <data name="ProfilePlaysActivity" xml:space="preserve">
+    <value>Une activité</value>
+  </data>
+  <data name="ProfilePlaysSteps" xml:space="preserve">
+    <value>Une liste d'étapes</value>
+  </data>
+  <data name="ProfileSteps" xml:space="preserve">
+    <value>Liste d'étapes</value>
+  </data>
+  <data name="ProfilePlaysTitle" xml:space="preserve">
+    <value>Joue</value>
+  </data>
+  <data name="ProfileEditSteps" xml:space="preserve">
+    <value>Modifier les étapes</value>
+  </data>
 </root>

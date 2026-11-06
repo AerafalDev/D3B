@@ -832,6 +832,14 @@ The target:
     per character, route and run), `RouteRunner` (to each anchor by the character's own path, the actions played, a map out of
     reach passed or failing) over `IRouteStage`, which `GameRouteStage` makes real; the node `route.follow` (`FollowRoute`) plays
     it in a behavior's step. Tried on the test game, not yet on a client (D384).
+  - **A list of steps** (D386), in `D3B.Bot.Behaviors`: `BehaviorSequences` reads a behavior as a list when it is one state of actions
+    chained by their way on, and writes a list into one (`BehaviorSequence`: the steps as `NodeCall`s and whether it repeats); the
+    behavior's file is the same the canvas of 7e opens. `BehaviorSequences.Offered` are the nodes a step may be: `route.follow`,
+    `route.harvest`, `route.fight`, `route.bag`, `wait`, `note`, `pause`, `stop`. `SettingKind.Route`, a route's id picked in
+    `RoutePickerViewModel` through `RouteFieldViewModel` (an `IPickingField`), is the value of `route.follow`; `BehaviorAsset.Uses`
+    lists the routes a behavior follows. `SequencesViewModel` holds the editors open, `SequenceEditorViewModel` and `SequenceView` are a
+    list's tab, its steps `RouteActionViewModel`s drawn by `ActionCardView`; the new-profile dialog (`NewProfileViewModel`) and the
+    profile's tab (`ProfileViewModel.IsBehaviorProfile`) play a list as they play an activity.
   - `RoutePlanner` (`D3B.Bot.Routes`): the legs between anchors by the world's path (`WorldPathfinder`), as a subscribed
     character with every zaap of the game known and one taken where it saves 5 changes (D378), each leg kept by its two
     maps; `RouteLeg` lists the maps crossed and the zaaps taken, or says none leads.
@@ -843,7 +851,8 @@ The target:
   - `RouteEditorViewModel` and `RouteView` (`D3B.App.ViewModels.Routes`, `D3B.App.Views`): a route's tab; `RoutesViewModel` holds
     the editors open and what they read (`RouteServices`), made when first asked for; the inspector's section is
     `AssetPropertiesViewModel.Route`.
-- **Profiles** (D300) are a behavior and the values they change. **Debugging** (D302): live, step by step, the history of
+- **Profiles** (D300) are a behavior and the values they change; in the app a profile plays an activity's given behavior, its
+  settings a form, or a behavior of the project, a list of steps made in the app (D386). **Debugging** (D302): live, step by step, the history of
   each run, a simulation on the pack. **Sharing** (D303): files, behaviors given, a gallery later.
 - **The look** (D305, D311, D320): a dark creation tool, ShadUI themed again, IntelliJ's icons checked file by file
   (D331), Inter, a canvas of D3B's own, as beautiful and practical as Unreal's Blueprints.
