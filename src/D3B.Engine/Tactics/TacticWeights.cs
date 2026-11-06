@@ -20,8 +20,9 @@ public sealed record TacticWeights
     /// <remarks>
     /// Measured live on the owner's first fights (D203): at a quarter, the AI kept out of reach of enemies it beat, walking away
     /// and passing turns; next turn's damage is weighed nearly as an enemy's life is, so that it trades a blow for a stronger one.
+    /// Raised from 0.8 to 0.9 (D390): a Crâ at level 2 still pushed its enemy away turn after turn instead of finishing it.
     /// </remarks>
-    public double Approach { get; init; } = 0.8;
+    public double Approach { get; init; } = 0.9;
 
     /// <summary>Gets how much dearer the fighter playing holds its own life than an ally's: its death ends its fight.</summary>
     public double Survival { get; init; } = 2;
