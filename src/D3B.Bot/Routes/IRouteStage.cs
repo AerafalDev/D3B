@@ -20,9 +20,10 @@ internal interface IRouteStage
 
     /// <summary>Plays an action on the map the character stands on.</summary>
     /// <param name="action">The action.</param>
+    /// <param name="next">The map of the route's next step, which a zaap is taken towards; <see langword="null"/> at the last.</param>
     /// <param name="cancellationToken">Stops the action.</param>
-    /// <returns>A task that completes once played.</returns>
-    Task PlayAsync(NodeCall action, CancellationToken cancellationToken);
+    /// <returns>Whether it was played; one that could not be fails the route, the stage having said why in the journal.</returns>
+    Task<bool> PlayAsync(NodeCall action, long? next, CancellationToken cancellationToken);
 
     /// <summary>Waits, by the bot's clock.</summary>
     /// <param name="time">How long.</param>

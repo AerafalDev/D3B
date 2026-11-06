@@ -7,6 +7,7 @@ using D3B.Data.Banks;
 using D3B.Data.Interactives;
 using D3B.Data.Jobs;
 using D3B.Data.Monsters;
+using D3B.Data.Npcs;
 using D3B.Data.Packs;
 using D3B.Data.Tests;
 using D3B.Data.Texts;
@@ -22,6 +23,9 @@ internal sealed class TestGameData : IDisposable
 {
     /// <summary>A monster the pack names.</summary>
     public const int Gobball = 3_271;
+
+    /// <summary>An NPC the pack names, with the texts of its portal's dialog.</summary>
+    public const int NpcId = 1_088;
 
     private static readonly (int Id, string French, string English)[] _names =
     [
@@ -41,6 +45,12 @@ internal sealed class TestGameData : IDisposable
         (504, "Entrer", "Enter"),
         (505, "Banquier", "Banker"),
         (506, "Bouftou", "Gobball"),
+        (510, "Maître Anemo", "Master Anemo"),
+        (511, "Je souhaite partir pour Astrub", "I want to leave for Astrub"),
+        (512, "Oui, partons", "Yes, let's go"),
+        (513, "Non, je reste", "No, I stay"),
+        (514, "Bienvenue ! Souhaites-tu quitter Incarnam ?", "Welcome! Do you want to leave Incarnam?"),
+        (515, "Es-tu sûr de vouloir partir ?", "Are you sure you want to leave?"),
     ];
 
     private readonly TemporaryDirectory _directory = new();
@@ -67,6 +77,10 @@ internal sealed class TestGameData : IDisposable
                 new[] { new Job(Job.Base, 200, Job.NoIcon), new Job(TestReferences.Lumberjack, 202, 1) },
                 new[] { new Skill(TestPlay.TreeSkillId, 503, TestReferences.Lumberjack, 289, 1, 1, false), new Skill(184, 504, Job.Base, Skill.NoItem, 0, 1, false) }));
             writer.Add(BankCatalog.EntryName, new BankCatalog(Array.Empty<Bank>(), new[] { new Banker(TestPlay.BankerNpcId, 505, 0, 1) }, new[] { TestPlay.ChestReplyId }));
+            writer.Add(NpcCatalog.EntryName, new NpcCatalog(
+                new[] { new Npc(NpcId, 510) },
+                new[] { new NpcText(36_977, 512), new NpcText(36_978, 513), new NpcText(36_979, 511) },
+                new[] { new NpcText(30_637, 514), new NpcText(30_638, 515) }));
             writer.Add(MonsterCatalog.EntryName, new MonsterCatalog(
                 new[] { new Monster { Id = Gobball, NameId = 506 } },
                 ReadOnlyMemory<MonsterGrade>.Empty,

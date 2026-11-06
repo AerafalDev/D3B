@@ -73,6 +73,17 @@ internal sealed class Localizer : INotifyPropertyChanged
         return Format(key + (one ? "One" : "Other"), count);
     }
 
+    /// <summary>Sums up values a token shows: the first three, and how many more there are.</summary>
+    /// <param name="values">The values, in their order.</param>
+    /// <returns>The text.</returns>
+    public string Summary(IEnumerable<string> values)
+    {
+        var all = values.ToList();
+        var shown = string.Join(", ", all.Take(3));
+
+        return all.Count > 3 ? Format("RouteAndMore", shown, all.Count - 3) : shown;
+    }
+
     /// <summary>Changes the language of every text.</summary>
     /// <param name="culture">The language: French when it is French, else English.</param>
     public void Use(CultureInfo culture)

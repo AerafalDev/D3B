@@ -8,10 +8,12 @@ using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
+using D3B.Bot.Npcs;
 using D3B.Bot.Routes;
 using D3B.Data.Tests;
 using D3B.Data.Maps;
 using D3B.Data.Packs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.Views;
 
@@ -182,5 +184,124 @@ public sealed class RouteActionsViewTests
         Assert.Equal(1, shown.Item2);
         Assert.DoesNotContain("Seconds", shown.Item3);
         Assert.Contains("Seconds", shown.Item4);
+    }
+
+    // What the bots learned on map 1 of the portal's dialog, as Incarnam's (D253): talking asks a question, whose reply asks another,
+    // whose first reply moves the character and whose second ends the dialog.
+    private static KnownNpcs LearnedNpcs()
+    {
+        var at = DateTimeOffset.UnixEpoch;
+        var known = new KnownNpcs();
+
+        known.Saw(1, -20_000, TestGameData.NpcId, 302, 3, at);
+        known.Asked(1, TestGameData.NpcId, 30_637, [36_979], true, at);
+        known.Asked(1, TestGameData.NpcId, 30_638, [36_977, 36_978], false, at);
+        known.Answered(1, TestGameData.NpcId, KnownNpcs.Talk, KnownNpcs.Talk, NpcOutcomeKind.Question, 30_637, at);
+        known.Answered(1, TestGameData.NpcId, 30_637, 36_979, NpcOutcomeKind.Question, 30_638, at);
+        known.Answered(1, TestGameData.NpcId, 30_638, 36_977, NpcOutcomeKind.MapChange, 2, at);
+        known.Answered(1, TestGameData.NpcId, 30_638, 36_978, NpcOutcomeKind.End, 0, at);
+
+        return known;
+    }
+
+    [Fact]
+    public async Task AnNpcAndTheRepliesGivenToItArePickedAmongWhatTheBotsLearnedNeverTyped()
+    {
+        await using var store = new TestStore();
+        using var directory = new TemporaryDirectory();
+        using var pack = PackOfMaps(directory);
+        using var data = new TestGameData();
+
+        await store.OpenedAsync();
+
+        var runner = await TestHosts.RunningAsync(store.Host);
+        var provider = new ServiceCollection().AddSingleton(LearnedNpcs()).AddSingleton(data.Tables).BuildServiceProvider();
+        var result = await OnTheUIThreadAsync(async () =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+            main.Routes.Use(TestRouteWorld.Services(store.Assets) with { Maps = new GameMaps(pack), Provider = provider, Texts = data.Texts });
+
+            var editor = (await main.Routes.CreateAsync(""))!;
+
+            editor.TraceSquare(1, 0, isDrag: false);
+            editor.Select(0);
+            editor.OfferedActions.Single(action => action.Node == RouteActions.Npc).AddCommand.Execute(null);
+
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var fields = editor.Actions[0].Editor!.Sections.SelectMany(section => section.Fields).ToList();
+            var npc = fields.OfType<NpcFieldViewModel>().Single();
+            var replies = fields.OfType<NpcRepliesFieldViewModel>().Single();
+            var before = (npc.CanPick, replies.CanPick, editor.Actions[0].Sentence);
+
+            npc.PickCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var npcPicker = Assert.IsType<NpcPickerViewModel>(main.Dialogs.Current);
+            var offered = npcPicker.Npcs.Select(choice => (choice.Name, choice.Detail)).ToList();
+
+            Drawings.Draw(window, "route-actions-npc-picker");
+            npcPicker.Npcs.Single().ChooseCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var afterNpc = (npc.Value, replies.CanPick, editor.Actions[0].Sentence, main.Dialogs.IsOpen);
+
+            replies.PickCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var picker = Assert.IsType<RepliesPickerViewModel>(main.Dialogs.Current);
+            var asked = picker.Question;
+            var first = picker.Choices.Select(choice => (choice.Reply, choice.Name, choice.Outcome)).ToList();
+
+            Drawings.Draw(window, "route-actions-replies-picker");
+            picker.Choices.Single().ChooseCommand.Execute(null);
+
+            var second = picker.Choices.Select(choice => (choice.Reply, choice.Name, choice.Outcome)).ToList();
+
+            picker.Choices.Single(choice => choice.Reply == 36_977).ChooseCommand.Execute(null);
+
+            var ended = (picker.Status, picker.HasChoices, picker.Given.ToList());
+
+            Drawings.Draw(window, "route-actions-replies-picked");
+            picker.DoneCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var picked = (replies.Value.ToList(), editor.Actions[0].Sentence, editor.IsDirty);
+
+            npc.ClearCommand.Execute(null);
+
+            var cleared = (npc.Value, replies.Value.ToList(), editor.Actions[0].Sentence);
+
+            window.Close();
+            localizer.Use(Localizer.English);
+
+            return (before, offered, afterNpc, asked, first, second, ended, picked, cleared, picker.Title);
+        });
+
+        Assert.Equal((true, false, "Talk to NPC choose, replying none"), result.before);
+        Assert.Equal([("Master Anemo", "Cell 302 · seen once · 2 questions known")], result.offered);
+        Assert.Equal((1088, true, "Talk to NPC Master Anemo, replying none", false), result.afterNpc);
+        Assert.Equal("Replies given to Master Anemo", result.Title);
+        Assert.Equal("Welcome! Do you want to leave Incarnam?", result.asked);
+        Assert.Equal([(36979, "I want to leave for Astrub", "leads to “Are you sure you want to leave?”")], result.first);
+        Assert.Equal([(36977, "Yes, let's go", "moves the character to map 2"), (36978, "No, I stay", "ends the dialog")], result.second);
+        Assert.False(result.ended.HasChoices);
+        Assert.Equal("Nothing more is known after the last reply.", result.ended.Status);
+        Assert.Equal(["1. I want to leave for Astrub: leads to “Are you sure you want to leave?”", "2. Yes, let's go: moves the character to map 2"], result.ended.Item3);
+        Assert.Equal([36979, 36977], result.picked.Item1);
+        Assert.Equal("Talk to NPC Master Anemo, replying I want to leave for Astrub, Yes, let's go", result.picked.Sentence);
+        Assert.True(result.picked.IsDirty);
+        Assert.Null(result.cleared.Value);
+        Assert.Empty(result.cleared.Item2);
+        Assert.Equal("Talk to NPC choose, replying none", result.cleared.Item3);
     }
 }

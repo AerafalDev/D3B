@@ -10,6 +10,7 @@ using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.Monsters;
+using D3B.Data.Npcs;
 using D3B.Data.Packs;
 using D3B.Data.Spells;
 using D3B.Data.Texts;
@@ -46,6 +47,7 @@ public sealed class PackFormatTests
         (8, "8a4430ff75cfa0a4f52eaa0fbb717cbfa7c45b4c0a23157e31da9d348359ebcc"),
         (9, "1ab3a85feff4d72ab0885e08568857695f6ad388bb28c36f026976bd75ccde8d"),
         (10, "53dd018f5218468a162c91ed2b22add526bd5029e09a9090235af07f9fdb75ef"),
+        (11, "f8ee4c1ccc2600633445615dbc0147dd2a4c6862bf2b4c4101e7a34e4ee10b6a"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -142,6 +144,7 @@ public sealed class PackFormatTests
         Append(hash, new JobCatalog(new Job[] { new(53, 54, 69) }, new Skill[] { new(55, 56, 57, 58, 59, 60, true) }));
         Append(hash, new InteractiveCatalog(new Interactive[] { new(61, 62) }));
         Append(hash, new BankCatalog(new Bank[] { new(63, 64) }, new Banker[] { new(65, 66, 0, 1) }, _replies));
+        Append(hash, new NpcCatalog(new Npc[] { new(231, 232) }, new NpcText[] { new(233, 234) }, new NpcText[] { new(235, 236) }));
         Append(hash, new IconCatalog(
             new IconTable(2, _itemIcons, Pixels(73, 2)),
             new IconTable(3, _jobIcons, Pixels(74, 3)),

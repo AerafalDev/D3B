@@ -841,7 +841,7 @@
                                                                         Classes.Problem="{Binding HasProblem}"
                                                                         Command="{Binding PickCommand}"
                                                                         Content="{Binding Text}"
-                                                                        IsVisible="{Binding IsCell}" />
+                                                                        IsVisible="{Binding IsDialog}" />
                                                                 </Panel>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>

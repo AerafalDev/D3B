@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using D3B.Data;
 using D3B.Data.Banks;
+using D3B.Data.Npcs;
 using D3B.Data.Breeds;
 using D3B.Data.Characteristics;
 using D3B.Data.Effects;
@@ -100,6 +101,7 @@ internal static class ExtractCommand
             .Concat(JobsExtractor.Inputs(client))
             .Concat(InteractivesExtractor.Inputs(client))
             .Concat(BanksExtractor.Inputs(client))
+            .Concat(NpcsExtractor.Inputs(client))
             .Concat(IconsExtractor.Inputs(client))
             .Concat(EffectsExtractor.Inputs(client))
             .Concat(CharacteristicsExtractor.Inputs(client))
@@ -137,13 +139,14 @@ internal static class ExtractCommand
         var atlas = WorldExtractor.ReadAtlas(client, items, jobs, monsters, monsterSubAreas);
         var interactives = InteractivesExtractor.Read(client);
         var banks = BanksExtractor.Read(client, atlas, graph);
+        var npcs = NpcsExtractor.Read(client, TextsExtractor.Held(client));
         var icons = IconsExtractor.Read(client, items, jobs, spells, breeds, monsters, atlas);
         var fights = new FightTables(spells, states, effects, monsters, breeds, characteristics);
         var (worldMaps, worldMapTiles) = WorldMapsExtractor.Read(client);
 
         WorldExtractor.Check(graph, atlas, maps);
 
-        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks, fights, worldMaps));
+        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks, npcs, fights, worldMaps));
 
         Console.WriteLine($"Read in {reading.Elapsed.TotalSeconds:F1} s");
 
@@ -174,6 +177,7 @@ internal static class ExtractCommand
             writer.Add(JobCatalog.EntryName, jobs);
             writer.Add(InteractiveCatalog.EntryName, interactives);
             writer.Add(BankCatalog.EntryName, banks);
+            writer.Add(NpcCatalog.EntryName, npcs);
             writer.Add(IconCatalog.EntryName, icons);
             writer.Add(SpellCatalog.EntryName, spells);
             writer.Add(SpellStateCatalog.EntryName, states);

@@ -43,6 +43,7 @@
     <File Path="scripts/extract/MapReader.cs" />
     <File Path="scripts/extract/MapsExtractor.cs" />
     <File Path="scripts/extract/MonstersExtractor.cs" />
+    <File Path="scripts/extract/NpcsExtractor.cs" />
     <File Path="scripts/extract/SpellsExtractor.cs" />
     <File Path="scripts/extract/StatesExtractor.cs" />
     <File Path="scripts/extract/TextsExtractor.cs" />

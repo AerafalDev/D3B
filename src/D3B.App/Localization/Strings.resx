@@ -2625,7 +2625,7 @@
     <value>Nothing is done on this map: the route goes through it.</value>
   </data>
   <data name="RouteActionNotPlayed" xml:space="preserve">
-    <value>Held by the route, not played yet.</value>
+    <value>Kept by the route, but this version does not play it.</value>
   </data>
   <data name="RouteActionRemove" xml:space="preserve">
     <value>Remove the action</value>
@@ -2659,5 +2659,95 @@
   </data>
   <data name="RouteNameBag" xml:space="preserve">
     <value>Go to the haven bag</value>
+  </data>
+  <data name="RouteNameNpc" xml:space="preserve">
+    <value>Talk to an NPC</value>
+  </data>
+  <data name="NpcChoose" xml:space="preserve">
+    <value>Choose an NPC</value>
+  </data>
+  <data name="NpcNone" xml:space="preserve">
+    <value>choose</value>
+  </data>
+  <data name="NpcNumber" xml:space="preserve">
+    <value>NPC {0}</value>
+  </data>
+  <data name="NpcClear" xml:space="preserve">
+    <value>No NPC</value>
+  </data>
+  <data name="NpcDetail" xml:space="preserve">
+    <value>Cell {0} · {1} · {2}</value>
+  </data>
+  <data name="NpcSeenOne" xml:space="preserve">
+    <value>seen once</value>
+  </data>
+  <data name="NpcSeenOther" xml:space="preserve">
+    <value>seen {0} times</value>
+  </data>
+  <data name="NpcQuestionsOne" xml:space="preserve">
+    <value>{0} question known</value>
+  </data>
+  <data name="NpcQuestionsOther" xml:space="preserve">
+    <value>{0} questions known</value>
+  </data>
+  <data name="NpcPickerTitle" xml:space="preserve">
+    <value>NPCs of this map</value>
+  </data>
+  <data name="NpcPickerNone" xml:space="preserve">
+    <value>The bots have not seen an NPC on this map yet. They learn the NPCs of the maps they go through.</value>
+  </data>
+  <data name="NpcRepliesNone" xml:space="preserve">
+    <value>none</value>
+  </data>
+  <data name="NpcRepliesClear" xml:space="preserve">
+    <value>No reply</value>
+  </data>
+  <data name="RepliesPickerTitle" xml:space="preserve">
+    <value>Replies given to {0}</value>
+  </data>
+  <data name="RepliesQuestion" xml:space="preserve">
+    <value>Question {0}</value>
+  </data>
+  <data name="RepliesReply" xml:space="preserve">
+    <value>Reply {0}</value>
+  </data>
+  <data name="RepliesGiven" xml:space="preserve">
+    <value>{0}. {1}: {2}</value>
+  </data>
+  <data name="RepliesPickOne" xml:space="preserve">
+    <value>Pick the reply to give. With none, the dialog is opened and left.</value>
+  </data>
+  <data name="RepliesLeadsToQuestion" xml:space="preserve">
+    <value>leads to question {0}</value>
+  </data>
+  <data name="RepliesEndsDialog" xml:space="preserve">
+    <value>ends the dialog</value>
+  </data>
+  <data name="RepliesMovesTo" xml:space="preserve">
+    <value>moves the character to {0}</value>
+  </data>
+  <data name="RepliesOpensExchange" xml:space="preserve">
+    <value>opens an exchange (type {0})</value>
+  </data>
+  <data name="RepliesNothingKnown" xml:space="preserve">
+    <value>nothing is known after it</value>
+  </data>
+  <data name="RepliesChainEnds" xml:space="preserve">
+    <value>Nothing more is known after the last reply.</value>
+  </data>
+  <data name="RepliesTalkMoves" xml:space="preserve">
+    <value>Talking to this NPC moves the character to {0}: there is no reply to give.</value>
+  </data>
+  <data name="RepliesNothingLearned" xml:space="preserve">
+    <value>The bots have not seen this NPC's dialog yet. They learn it as they, or you, talk to it.</value>
+  </data>
+  <data name="RepliesDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="RepliesBack" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="RepliesLeadsToText" xml:space="preserve">
+    <value>leads to “{0}”</value>
   </data>
 </root>

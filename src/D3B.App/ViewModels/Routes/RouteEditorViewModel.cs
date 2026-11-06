@@ -6,14 +6,19 @@ using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls.WorldMaps;
+using D3B.App.ViewModels.Maps;
 using D3B.App.ViewModels.Settings;
 using D3B.App.ViewModels.Studio;
 using D3B.Bot.Assets;
 using D3B.Bot.Behaviors;
+using D3B.Bot.Npcs;
 using D3B.Bot.Routes;
 using D3B.Bot.Settings;
+using D3B.Data;
 using D3B.Data.Maps;
+using D3B.Data.World;
 using D3B.Data.WorldMaps;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Routes;
 
@@ -844,6 +849,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             RouteActions.Exit => "RouteNameExit",
             RouteActions.Wait => "RouteNameWait",
             RouteActions.Zaap => "RouteNameZaap",
+            RouteActions.Npc => "RouteNameNpc",
             _ => "RouteNameBag",
         };
     }
@@ -892,6 +898,9 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
             services.Maps?.TryGet(anchor.MapId, out map);
 
+            var npcs = services.Provider?.GetService<KnownNpcs>();
+            var places = new MapNames(localizer, services.Provider?.GetService<GameWorld>(), services.Texts, services.Provider?.GetService<GameTables>());
+
             for (var i = 0; i < anchor.Actions.Length; i++)
             {
                 var call = anchor.Actions[i];
@@ -902,7 +911,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
                 {
                     var made = definition;
                     var index = i;
-                    var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, services.Game, names, localizer, services.Provider, [], _page.Dialogs) { Map = map };
+                    var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, services.Game, names, localizer, services.Provider, [], _page.Dialogs) { Map = map, Npcs = npcs, NpcNames = new NpcNames(localizer, services.Provider?.GetService<GameTables>(), services.Texts), Place = places.Place };
 
                     created.Edited += (_, _) => ActionEdited(index, made, created);
                     editor = created;

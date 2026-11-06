@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.Bot.Settings;
@@ -5,7 +6,7 @@ using D3B.Bot.Settings;
 namespace D3B.App.ViewModels.Settings;
 
 /// <summary>A cell of the map a node plays on, picked on the map's own cells in a dialog (D121, D377).</summary>
-internal sealed partial class CellFieldViewModel : SettingFieldViewModel
+internal sealed partial class CellFieldViewModel : SettingFieldViewModel, IPickingField
 {
     /// <summary>Gets the cell picked, or <see langword="null"/>.</summary>
     [ObservableProperty]
@@ -20,6 +21,9 @@ internal sealed partial class CellFieldViewModel : SettingFieldViewModel
 
     /// <summary>Gets whether the cell can be picked: the editor shows in a window, and the map is known.</summary>
     public bool CanPick => Editor.Dialogs is not null && Editor.Map is not null;
+
+    /// <inheritdoc/>
+    ICommand IPickingField.PickCommand => PickCommand;
 
     /// <summary>Initializes a new instance of the <see cref="CellFieldViewModel"/> class.</summary>
     /// <param name="definition">The setting.</param>

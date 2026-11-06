@@ -2,6 +2,7 @@ using D3B.Data.Banks;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
+using D3B.Data.Npcs;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Data.WorldMaps;
@@ -52,7 +53,7 @@ internal static class TextsExtractor
     }
 
     /// <summary>Gets the texts the tables name.</summary>
-    public static IReadOnlySet<int> Named(WorldAtlas atlas, ItemCatalog items, JobCatalog jobs, InteractiveCatalog interactives, BankCatalog banks, FightTables fights, WorldMapCatalog worldMaps)
+    public static IReadOnlySet<int> Named(WorldAtlas atlas, ItemCatalog items, JobCatalog jobs, InteractiveCatalog interactives, BankCatalog banks, NpcCatalog npcs, FightTables fights, WorldMapCatalog worldMaps)
     {
         var named = new HashSet<int>();
 
@@ -85,6 +86,15 @@ internal static class TextsExtractor
 
         foreach (var world in worldMaps.Worlds.Span)
             named.Add(world.NameId);
+
+        foreach (var npc in npcs.Npcs.Span)
+            named.Add(npc.NameId);
+
+        foreach (var reply in npcs.Replies.Span)
+            named.Add(reply.TextId);
+
+        foreach (var question in npcs.Questions.Span)
+            named.Add(question.TextId);
 
         named.UnionWith(fights.Named());
 

@@ -115,6 +115,44 @@ public sealed class RouteRunnerTests
     }
 
     [Fact]
+    public async Task AnActionIsPlayedWithTheMapOfTheNextStepOrNoneAtTheLast()
+    {
+        var stage = new FakeStage();
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, ["wait"]), (2, ["wait"]), (3, ["wait"]));
+
+        await RouteRunner.RunAsync(route, new RouteCursor(3, route.Mode), stage, TestContext.Current.CancellationToken);
+
+        Assert.Equal([2L, 3L, null], stage.Nexts);
+    }
+
+    [Fact]
+    public async Task ALoopsLastStepHasTheFirstForItsNext()
+    {
+        using var source = new CancellationTokenSource();
+        var stage = new FakeStage { OnPlay = _ => source.Cancel() };
+        var route = Route(RouteMode.Loop, RouteUnreachable.Skip, (1, []), (2, ["wait"]));
+        var cursor = new RouteCursor(2, route.Mode);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => RouteRunner.RunAsync(route, cursor, stage, source.Token));
+
+        Assert.Equal([1L], stage.Nexts);
+    }
+
+    [Fact]
+    public async Task AnActionThatCannotBePlayedFailsTheRouteWhereItStandsWithoutGoingOn()
+    {
+        var stage = new FakeStage { Failing = ["wait"] };
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, ["wait", "wait"]), (2, []));
+        var cursor = new RouteCursor(2, route.Mode);
+
+        var result = await RouteRunner.RunAsync(route, cursor, stage, TestContext.Current.CancellationToken);
+
+        Assert.Equal(RouteResult.Failed, result);
+        Assert.Equal(["go 1", "play wait"], stage.Log);
+        Assert.Equal((0, 0), (cursor.Anchor, cursor.Played));
+    }
+
+    [Fact]
     public async Task ACharacterThatCannotActWaitsAndTriesAgainThenGivesTheRunBackWhereItWas()
     {
         var stage = new FakeStage { Busy = true };
@@ -179,15 +217,20 @@ public sealed class RouteRunnerTests
             return Task.FromResult(Unreachable.Contains(map) ? TravelOutcome.NoPath : TravelOutcome.Arrived);
         }
 
-        public Task PlayAsync(NodeCall action, CancellationToken cancellationToken)
+        public List<long?> Nexts { get; } = [];
+
+        public HashSet<string> Failing { get; init; } = [];
+
+        public Task<bool> PlayAsync(NodeCall action, long? next, CancellationToken cancellationToken)
         {
             Log.Add("play " + action.Node);
+            Nexts.Add(next);
             OnPlay?.Invoke(action);
 
             // A play cut before it ends is not counted, as the node's own is not.
             cancellationToken.ThrowIfCancellationRequested();
 
-            return Task.CompletedTask;
+            return Task.FromResult(!Failing.Contains(action.Node));
         }
 
         public Task WaitAsync(TimeSpan time, CancellationToken cancellationToken)

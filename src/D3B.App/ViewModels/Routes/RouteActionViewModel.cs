@@ -170,6 +170,10 @@ internal sealed partial class RouteActionViewModel : ObservableObject
                 return setting.GetValue(draft) is int cell ? cell.ToString(culture) : _localizer["CellNone"];
             case SettingKind.Number:
                 return Convert.ToString(setting.GetValue(draft), culture) ?? "";
+            case SettingKind.Npc:
+                return setting.GetValue(draft) is int npc ? Editor.NpcNames?.Npc(npc) ?? _localizer.Format("NpcNumber", npc) : _localizer["NpcNone"];
+            case SettingKind.NpcReply:
+                return setting.GetValues(draft) is { Count: > 0 } replies ? _localizer.Summary(replies.Cast<int>().Select(reply => Editor.NpcNames?.Reply(reply, 28) ?? _localizer.Format("RepliesReply", reply))) : _localizer["NpcRepliesNone"];
         }
 
         if (!setting.IsList)

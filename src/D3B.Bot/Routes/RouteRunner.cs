@@ -12,7 +12,8 @@ namespace D3B.Bot.Routes;
 /// stops, so that a loop of unreachable maps does not spin.
 /// </para>
 /// <para>
-/// An action the run does not play yet fails the route before it moves, so that it does not walk to the third map to say so.
+/// An action the host does not know fails the route before it moves, so that it does not walk to the third map to say so; one
+/// that cannot be played on its map fails it there.
 /// </para>
 /// </remarks>
 internal static class RouteRunner
@@ -60,8 +61,13 @@ internal static class RouteRunner
                     passed = 0;
                     busy = 0;
 
+                    long? next = cursor.NextAnchor is >= 0 and var following ? route.Anchors[following].MapId : null;
+
                     for (; cursor.Played < anchor.Actions.Length; cursor.ActionPlayed())
-                        await stage.PlayAsync(anchor.Actions[cursor.Played], cancellationToken).ConfigureAwait(false);
+                    {
+                        if (!await stage.PlayAsync(anchor.Actions[cursor.Played], next, cancellationToken).ConfigureAwait(false))
+                            return RouteResult.Failed;
+                    }
 
                     cursor.Advance();
                     break;

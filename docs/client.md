@@ -1901,6 +1901,14 @@ never an actor's id or name.
   values in the schema of 3.7.12.12 and 3.7.13.17: set on 656 of the 689 dispositions of one capture of 3.7.13.17, as a field
   without presence that leaves out its value 0. Read as the direction of D27, 0 east and clockwise; the order is not measured.
   A fifth field, an int64 on 173 of them, is not read.
+- **NPCs' names and texts, sized and kept** (session 7d3c, D384, D385), on 3.7.13.17: 6,487 NPCs, each with its own name; 64,634 reply
+  pairs, 64,360 distinct texts of which 64,170 the text files hold; 47,942 message pairs, 47,652 distinct texts, 47,540 held.
+  Zstd level 19, French and English, an id of 4 bytes beside each text: the names 130 KB (96,524 and 91,720 bytes of text);
+  the replies 1.4 MB (2.67 and 2.35 MB of text); the messages 4.6 MB (9.56 and 8.63 MB of text), the pack of format 10 being
+  105 MB. Counted by a measuring tool never committed. No id of a reply or a question has two texts, whatever the NPC. The pack of
+  format 11 keeps all three: 6,487 NPCs, 64,170 replies and 47,540 questions whose text both languages hold, 111,625,358 bytes
+  against 105,494,687. NPC 4398 reads "Portail vers Astrub"; its reply 36979, "Hésiter avant de quitter Incarnam, vous avez encore
+  beaucoup à apprendre."; questions 30637 and 30638, "*brille d'une lumière aveuglante*".
 - **Transports.** The world map's hints of category 9, Transports, are 189: 45 zaaps, boats, carriers, drills, carts,
   bells and portals, each on a map; they name the place they lead to, never an NPC. "Portail vers Astrub" stands on
   map 153880835, in Incarnam, where the server places NPC 4398 of that name and Maître Anemo; "Portail vers Incarnam" on

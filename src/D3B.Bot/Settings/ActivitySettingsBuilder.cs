@@ -194,6 +194,24 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return Add(property, SettingKind.Cell, false, name, 0, MapData.CellCount - 1);
     }
 
+    /// <summary>Declares an NPC of the map a node plays on, or none, picked among those the bots learned there (D384).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Npc</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> Npc(Expression<Func<TSettings, int?>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.Npc, false, name);
+    }
+
+    /// <summary>Declares the replies given to an NPC, in order, the n-th to the n-th question (D384).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Replies</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> NpcReplies(Expression<Func<TSettings, IReadOnlyList<int>>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.NpcReply, true, name).Ordered();
+    }
+
     /// <summary>Declares several resources professions gather, by their items' ids, each once, which may be sought within a profession.</summary>
     /// <param name="property">The property, such as <c>s =&gt; s.Resources</c>.</param>
     /// <param name="name">The setting's name, as the app shows it.</param>

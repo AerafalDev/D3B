@@ -8374,6 +8374,83 @@ and D374; the rest of the mockup stands.*
   - The dialog as a graph by NPC alone, whatever the map: one NPC's questions differ with where it stands (D253).
   - The actor id in the key: a visit would add a row if it changes.
 
+## D384: The route's actions that talk to the game play, and an NPC is picked among what the bots learned
+
+*2026-11-06, step 7, session 7d3c, the lead's, within D377, D378, D379, D382 and D383. Builds D83, D253, D298; D385 gives the picker its
+texts. The mapping 17 was
+published to the release `client-3.7.13.17` at the owner's word, the first thing of the session: it carries D383's direction.*
+
+- **Each action plays**, by the stage that moves a real character (`GameRouteStage`), through the nodes of the catalog; one
+  that cannot be played fails the route where it stands, with a note in the journal (`RouteActionException`, the text
+  `RouteActionFailed`), the cursor staying on it. `RouteActions.IsPlayed` is every action the editor offers; `UnplayedAction`
+  is gone.
+  - **Forced exit** (`route.exit`, `ForcedMoves.LeaveAsync`): by a cell of the map's edge, whose own side the client's data
+    gives, else from the nearest walkable cell of the zone that leaves by the side asked for. It sends what a scroll sends,
+    the request for the neighbour that the map's data names, whether or not the world's graph goes that way, and is over once
+    the character is placed. A side with no neighbour, or a cell off the edge, sends nothing: `NoPath`.
+  - **Door** (`route.door`, `ForcedMoves.TakeDoorAsync`): the element the map's data stands on the cell, used from next to it
+    with the door's skill the server offers on it (184 when it does, else the only one), as a door of the graph is.
+  - **Zaap** (`route.zaap`, in `GameRouteStage`): the path from the character to the route's next step with a teleport
+    counting as one change, so as soon as it saves one; if it begins with a teleport, that teleport is taken as a journey
+    takes it (kamas, the zaaps known, a refusal remembered); else nothing is taken and the journal says so. A last step has no
+    next one: nothing is taken. This is why `IRouteStage.PlayAsync` is given the next step's map (`RouteCursor.NextAnchor`) and why a
+    zaap is a route's own action (`RouteOnlyAction`).
+  - **Haven bag** (`route.bag`, `ForcedMoves.EnterHavenBagAsync`): the request that leaves it (D83), naming the character's own
+    bag; a character already in one enters nothing.
+  - **Harvest** (`route.harvest`, `MapHarvest`): the resources of the list, in order then nearest, on the map, one element
+    after the other until none the character can harvest is left; one the server refuses, or answers busy to three times, is
+    left for the visit. `MapHarvest.Candidates` is the activity's own choice of the next element, taken out of it, so that both
+    choose alike.
+  - **Fight** (`route.fight`, `MapFight`): the groups the filter lets through, by their size and the monsters they hold, the
+    nearest first, until none is left. The route says which groups, so none is judged: neither the character's level nor
+    the AI's odds that the activity weighs (D236, D249). A fight that begins interrupts the step; the run goes on from the action,
+    played again, which attacks the groups left (D379).
+  - **NPC** (`route.npc`, `NpcTalk`): talks from where the character stands, as a banker is (D80), and gives the n-th reply to the
+    n-th question. A question the chain left asking is left, as the client leaves a dialog; a reply the question did not offer
+    leaves the dialog and fails (`Refused`). It is done when the dialog ended, or the character was moved and placed; a dialog
+    that ends with no new map in a second moved no one (D383's window). An exchange opened by a reply is not followed.
+- **The NPC picker, no free text** (D298): `SettingKind.Npc`, an NPC's id, and `SettingKind.NpcReply`, an ordered list of reply
+  ids, are the values of `route.npc`; a token in its sentence opens a dialog, as a cell's does (`IPickingField`). The NPCs offered
+  are those the bots saw on the step's map (`KnownNpcs.OnMap`), the replies those they saw offered, one question after
+  another from what talking led to, each with what followed it: a question, the end, a map named by its coordinates, an exchange.
+  The chain ends where nothing more is known, which the dialog says. Choosing another NPC takes the replies back. An NPC, a
+  question and a reply are shown by their texts, never by their ids (D385); the id stands only where the pack lacks the text.
+  A reply is in the list once.
+- **Tried**, as the other bot code is, on the test game of `TestPlay` (each primitive's requests and answers, as measured on
+  captures) and through `GameRouteStage` for an exit, a zaap and a failure; the dialogs and their picker on the headless window,
+  drawn. **Not tried on a real client**: the owner and the game are needed, and it is the second half of what D377 asked of
+  7d3c. The first run will say whether a forced exit from a cell the owner picked is followed, whether a harvest's last element
+  leaves a protector's fight to the activity, and what the portal's chain does on the owner's character.
+- **Rejected.**
+  - A zaap with a destination among its values: the route's next step already says where it goes, and a destination typed or picked
+    would need the zaaps' names, which the pack holds but a route need not.
+  - The fight's judgement by the AI's odds in a route: the owner's filter is what the sentence says it is.
+  - A forced exit and a door by a path of the graph: the point of forcing is that the graph does not hold the way.
+
+## D385: The NPCs' names and the dialogs' texts are in the pack, format 11
+
+*2026-11-06, step 7, session 7d3c, the owner's, said while the picker showed ids: "the replies, responses, questions, etc. must show the
+text, taken from the NPC messages or the texts". Settles the question the session raised (Q18, opened and closed within it): the lead had measured and recommended the names and the replies alone; the questions'
+texts are in too. Builds D10, D11, D25, D29, D383, D384.*
+
+- **What the pack holds.** One entry, `npcs/catalog` (`NpcCatalog`, `GameTables.Npcs`): the NPCs of the client's table with the text
+  naming each (`Npc`), the replies and the questions with the text each reads (`NpcText`), each table sorted by id and found by binary
+  search. The texts themselves are in the pack's French and English tables, which the extractor fills with the texts the catalog names
+  (`TextsExtractor.Named`). `GamePack.FormatVersion` is 11, its layout recorded in `PackFormatTests`.
+- **Measured** on 3.7.13.17 (client.md): 6,487 NPCs, 64,360 distinct replies, 47,652 distinct questions, and no id with two texts, so
+  one id is one text for every NPC (`NpcsExtractor` fails if a client changes that). A pair whose text a language lacks is left out, 190
+  replies and 112 questions: the studio names those by their ids. The texts cost about 6.1 MB compressed in both languages, 130 KB the
+  names, 1.4 MB the replies, 4.6 MB the questions, on a pack of 105 MB: the pack of format 11 is 111,625,358 bytes against 105,494,687.
+- **Read** by the studio through `NpcNames` (`D3B.App.ViewModels.Settings`): the app's language, the client's markup and line breaks
+  taken out, a long text cut at a word where a line is short (a token, the list of replies given) and whole where it has room (the question
+  asked, a reply to pick). A pack of a build before 11 holds none: the app does not start with it (D172), so the fallback to ids serves a text
+  a language lacks, not a missing table.
+- **The pack's release** is the owner's to publish, as the mapping's was: `scripts/release.cs --publish` adds `data-11.pack` to the release
+  `client-3.7.13.17`, beside `data-10.pack`, which stays for the hosts of format 10. Until it is published, a host of this version needs the
+  pack extracted on its machine (`scripts/extract.cs`).
+- **Rejected.** The texts read from the client's files at run time: D10's line, and the studio would need the installed client. Only the
+  names and the replies, the lead's recommendation: the owner asked for the questions too.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

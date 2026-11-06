@@ -12,8 +12,9 @@ namespace D3B.Bot.Routes;
 /// route's file and a behavior's name them alike and the canvas of 7e offers them too. The editor offers these.
 /// </para>
 /// <para>
-/// Waiting plays today. The others are declared, with their values and sentences, and held by the editor; their play, which
-/// asks the game for a door's use, a forced exit, a zaap, the haven bag, a harvest and a fight, is 7d3b's (D377).
+/// Each plays: waiting by the bot's clock, the others by asking the game, a door's use, a forced exit, a zaap, the haven bag,
+/// a harvest of the map, a fight of its groups and an NPC's dialog (D384). A zaap needs where the route goes next, so only
+/// a route plays it.
 /// </para>
 /// </remarks>
 public static class RouteActions
@@ -39,20 +40,23 @@ public static class RouteActions
     /// <summary>The id of the haven bag entered.</summary>
     public const string HavenBag = "route.bag";
 
+    /// <summary>The id of an NPC talked to, with the replies given to it (D384).</summary>
+    public const string Npc = "route.npc";
+
     /// <summary>The id of the node that follows a route, which a behavior plays (D379).</summary>
     public const string Follow = "route.follow";
 
     /// <summary>Gets the actions the editor offers, in the order of its menu.</summary>
-    public static ImmutableArray<string> Offered { get; } = [Harvest, Fight, Door, Exit, Wait, Zaap, HavenBag];
+    public static ImmutableArray<string> Offered { get; } = [Harvest, Fight, Door, Exit, Wait, Zaap, HavenBag, Npc];
 
-    /// <summary>Tells whether a route plays an action today.</summary>
+    /// <summary>Tells whether a route plays an action.</summary>
     /// <param name="node">The action's node id.</param>
     /// <returns>Whether the run plays it.</returns>
     public static bool IsPlayed(string node)
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return node == Wait;
+        return Offered.Contains(node);
     }
 
     /// <summary>Registers the actions' nodes.</summary>
@@ -66,12 +70,12 @@ public static class RouteActions
             node.Help(Text("RouteFollowHelp"));
             node.Values.Text(values => values.Route, Text("Route")).Required();
         });
-        services.AddNode<UnplayedAction<RouteHarvestValues>, RouteHarvestValues>(Harvest, Text("RouteHarvest"), node =>
+        services.AddNode<HarvestHere, RouteHarvestValues>(Harvest, Text("RouteHarvest"), node =>
         {
             node.Help(Text("RouteHarvestHelp"));
             node.Values.Resources(values => values.Resources, Text("Resources")).Ordered().Required();
         });
-        services.AddNode<UnplayedAction<RouteFightValues>, RouteFightValues>(Fight, Text("RouteFight"), node =>
+        services.AddNode<FightHere, RouteFightValues>(Fight, Text("RouteFight"), node =>
         {
             node.Help(Text("RouteFightHelp"));
             node.Values.Monsters(values => values.Monsters, Text("Monsters"));
@@ -79,19 +83,25 @@ public static class RouteActions
             node.Values.Number(values => values.MostMonsters, Text("MostMonsters"), 1, 8);
             node.Values.Rule(values => values.LeastMonsters <= values.MostMonsters, Text("RouteFightRule"));
         });
-        services.AddNode<UnplayedAction<RouteDoorValues>, RouteDoorValues>(Door, Text("RouteDoor"), node =>
+        services.AddNode<TakeDoor, RouteDoorValues>(Door, Text("RouteDoor"), node =>
         {
             node.Help(Text("RouteDoorHelp"));
             node.Values.Cell(values => values.Cell, Text("Cell")).Required();
         });
-        services.AddNode<UnplayedAction<RouteExitValues>, RouteExitValues>(Exit, Text("RouteExit"), node =>
+        services.AddNode<ForceExit, RouteExitValues>(Exit, Text("RouteExit"), node =>
         {
             node.Help(Text("RouteExitHelp"));
             node.Values.Choice(values => values.Direction, Text("Direction"), direction => Text($"Direction{direction}"));
             node.Values.Cell(values => values.Cell, Text("Cell"));
         });
-        services.AddNode<UnplayedAction<NoValues>, NoValues>(Zaap, Text("RouteZaap"), node => node.Help(Text("RouteZaapHelp")));
-        services.AddNode<UnplayedAction<NoValues>, NoValues>(HavenBag, Text("RouteBag"), node => node.Help(Text("RouteBagHelp")));
+        services.AddNode<RouteOnlyAction<NoValues>, NoValues>(Zaap, Text("RouteZaap"), node => node.Help(Text("RouteZaapHelp")));
+        services.AddNode<EnterBag, NoValues>(HavenBag, Text("RouteBag"), node => node.Help(Text("RouteBagHelp")));
+        services.AddNode<TalkToNpc, RouteNpcValues>(Npc, Text("RouteNpc"), node =>
+        {
+            node.Help(Text("RouteNpcHelp"));
+            node.Values.Npc(values => values.Npc, Text("Npc")).Required();
+            node.Values.NpcReplies(values => values.Replies, Text("NpcReplies"));
+        });
     }
 
     private static LocalizedText Text(string key)
