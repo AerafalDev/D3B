@@ -159,6 +159,9 @@ public sealed class HarvestingModule : IModule
         settings.Jobs = jobs;
         settings.Order = HarvestOrder.HighestLevel;
         settings.Place = HarvestPlace.Automatic;
+
+        // A resource bag left shut weighs on the character: the bank takes what was harvested, so it stays full once banked (D389).
+        settings.OpenBags = true;
     }
 
     /// <inheritdoc/>
