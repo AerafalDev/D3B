@@ -8543,6 +8543,19 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
   code shows a full character after the bank stops the harvest with "still full" (`StillFull`), and the bag's weight explains
   it.
 
+## D390: The AI weighs next turn's damage a little more, so that it flees less
+
+*2026-11-06, step 9, the owner's request after a player's Crâ kept pushing a monster away with Flèche de Recul and did not kill it. Refines D203's weights.*
+
+- **Reported.** A Crâ with 70 in Chance, against a monster resisting air and not water, spammed the air push arrow, did not kill
+  its enemy, and the owner confirmed that the AI flees too much. The pack gives the arrow 15 to 17 air damage and a push of two
+  cells; Flèche Glacée 12 to 14 water damage; the engine applies the element, the bonus and the resistance (`EffectFormulas`), so
+  the choice is the position's worth, not the damage.
+- **Made.** `TacticWeights.Approach`, the weight of the damage the AI may deal next turn from where it ends this one, goes from
+  0.8 to 0.9, the owner's call ("a little"). The other weights and the prudent set are unchanged.
+- **Not measured.** The change on a fight: the replay of the captured turns (`scripts/fights.cs --turns`) was not run, and the
+  player's capture was not read. If the AI still flees, the next step is to replay that capture and read the scores of its turns.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
