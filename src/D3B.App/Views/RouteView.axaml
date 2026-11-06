@@ -101,10 +101,7 @@
                                     <ItemsControl ItemsSource="{Binding Worlds}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="vm:WorldChoiceViewModel">
-                                                <Button
-                                                    Classes="Row"
-                                                    Click="OnWorldChosen"
-                                                    Command="{Binding ChooseCommand}">
+                                                <Button Classes="Row" Click="OnWorldChosen">
                                                     <Grid ColumnDefinitions="*,Auto,18">
                                                         <TextBlock
                                                             Foreground="{DynamicResource BrightColor}"

@@ -240,6 +240,11 @@ internal sealed partial class RouteView : UserControl
 
     private void OnWorldChosen(object? sender, RoutedEventArgs e)
     {
+        // The world's own command is run, not the button's: choosing rebuilds the list of worlds, which takes the row out of the
+        // menu, and closing the popup first takes the row out of the tree before its command runs.
+        var world = (sender as Control)?.DataContext as WorldChoiceViewModel;
+
         FlyoutRows.Close(sender);
+        world?.ChooseCommand.Execute(null);
     }
 }
