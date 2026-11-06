@@ -11,7 +11,8 @@ namespace D3B.Bot.Fighting;
 /// the place is the sub-area whose monsters are worth the most at its level, each 20 levels below the character halving a
 /// monster's worth and one above it worth nothing, as the harvest's place is chosen (D166), among those with at least
 /// <see cref="LeastMapsShown"/> maps the world graph reaches on a world map, else among the others (D245). Its maps are
-/// those the world graph reaches, but the isolated ones when the settings leave them out (D149, D245).
+/// those the world graph reaches, but the isolated ones when the settings leave them out (D149, D245), and the interiors of a
+/// sub-area that also holds maps on a world map, which a tour has no group to fight in (D388).
 /// </remarks>
 public sealed class HuntingGround
 {
@@ -57,8 +58,16 @@ public sealed class HuntingGround
             : settings.SubAreas.Count > 0 ? settings.SubAreas
             : [.. atlas.SubAreas.ToArray().Where(subArea => subArea.AreaId == settings.Area && subArea.MonsterCount > 0).Select(subArea => subArea.Id)];
         var wanted = subAreas.ToHashSet();
-        var all = atlas.Positions.ToArray()
+        var reached = atlas.Positions.ToArray()
             .Where(position => wanted.Contains(position.SubAreaId) && graph.Contains(position.MapId))
+            .ToArray();
+        var outdoors = reached.Where(position => position.WorldMap >= 0).Select(position => position.SubAreaId).ToHashSet();
+
+        // Measured (D388) on 3.7.13.17: of the 444 sub-areas holding monsters, 214 hold maps on a world map and interiors, such as
+        // the 22 of Incarnam's fields, where the tour climbed a militia's three floors for no group; the 68 whose maps are all
+        // interiors are dungeons, hunted whole.
+        var all = reached
+            .Where(position => position.WorldMap >= 0 || !outdoors.Contains(position.SubAreaId))
             .ToDictionary(position => position.MapId, position => position.SubAreaId);
         var isolated = IsolatedMaps.Of(graph, all);
         var maps = all.Where(pair => settings.IsolatedMaps || !isolated.Contains(pair.Key)).ToFrozenDictionary();

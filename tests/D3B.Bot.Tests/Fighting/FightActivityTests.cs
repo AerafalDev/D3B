@@ -252,6 +252,34 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void ASubAreaHoldingMapsOnAWorldMapLeavesItsInteriorsOutAndADungeonKeepsItsOwn()
+    {
+        // The fields have two maps on a world map and a building on none; the dungeon's maps are all on none.
+        const int fields = 10;
+        const int dungeon = 20;
+        MapPosition[] positions =
+        [
+            new(1, 0, 0, fields, 1, 0, 0),
+            new(2, 1, 0, fields, 1, 0, 0),
+            new(3, 2, 0, fields, -1, 0, 0),
+            new(4, 3, 0, dungeon, -1, 0, 0),
+            new(5, 4, 0, dungeon, -1, 0, 0),
+        ];
+        var graph = new WorldGraph(positions.Select(position => new WorldVertex(position.MapId, 1)).ToArray(), Array.Empty<WorldEdge>(), Array.Empty<WorldTransition>(), Array.Empty<string>());
+        var atlas = new WorldAtlas(
+            positions,
+            new[] { new SubArea(fields, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 0, 1), new SubArea(dungeon, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 1, 1) },
+            new[] { new Area(1, 0, 0) },
+            Array.Empty<Waypoint>(),
+            Array.Empty<int>(),
+            new[] { Larva, Larva });
+        var settings = new FightSettings { Place = FightPlace.Chosen, SubAreas = [fields, dungeon], IsolatedMaps = true };
+        var ground = HuntingGround.Of(settings, atlas, graph, _play.Tables.Monsters, 50, subscribed: true);
+
+        Assert.Equal([1L, 2L, 4L, 5L], ground.Maps.Keys.Order());
+    }
+
+    [Fact]
     public void AGroundChosenIsTheMapsOfItsSubAreasTheWorldReaches()
     {
         var ground = HuntingGround.Of(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId] }, _play.World.Atlas, _play.World.Graph, _play.Tables.Monsters, 50, subscribed: true);
