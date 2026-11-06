@@ -55,22 +55,22 @@ public sealed class FightActivityTests : IAsyncDisposable
 
     private FightActivity Activity(FightSettings settings)
     {
-        return new FightActivity(settings, _play.World, _play.Tables, _play.Maps);
+        return new FightActivity(settings, _play.World, _play.Tables);
     }
 
     [Fact]
-    public void AGroupIsAttackedWithinItsSizeNoMonsterLeftOutAndAsTheModeSays()
+    public void AGroupIsAttackedWithinItsSizeNoMonsterLeftOutAndAsTheModeSaysWhateverItsLevels()
     {
         var automatic = new FightSettings { LeastMonsters = 2, MostMonsters = 3, Excluded = [Bouftou] };
         var chosen = new FightSettings { Mode = FightMode.Chosen, Monsters = [Larva] };
 
-        Assert.True(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Larva, 30)), level: 30, _play.Tables.Monsters));
-        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Larva, 31)), level: 30, _play.Tables.Monsters));
-        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20)), level: 30, _play.Tables.Monsters));
-        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Bouftou, 10)), level: 30, _play.Tables.Monsters));
-        Assert.False(GroupJudge.Allows(automatic, Group(null, (Larva, 20), (Larva, 20)), level: 30, _play.Tables.Monsters));
-        Assert.True(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 90), (Larva, 90)), level: 30, _play.Tables.Monsters));
-        Assert.False(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 10)), level: 30, _play.Tables.Monsters));
+        Assert.True(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Larva, 30)), _play.Tables.Monsters));
+        Assert.True(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Larva, 31)), _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20)), _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(automatic, Group(GroupCell, (Larva, 20), (Bouftou, 10)), _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(automatic, Group(null, (Larva, 20), (Larva, 20)), _play.Tables.Monsters));
+        Assert.True(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 90), (Larva, 90)), _play.Tables.Monsters));
+        Assert.False(GroupJudge.Allows(chosen, Group(GroupCell, (Bouftou, 10)), _play.Tables.Monsters));
     }
 
     [Fact]
@@ -152,8 +152,8 @@ public sealed class FightActivityTests : IAsyncDisposable
         Assert.Null(ChosenMonsters.FamilyOf(monsters, 7));
         Assert.True(ChosenMonsters.Any(family));
         Assert.False(ChosenMonsters.Any(new FightSettings { Mode = FightMode.Chosen }));
-        Assert.True(GroupJudge.Allows(family, Group(GroupCell, (Bouftou, 10), (Larva, 10)), level: 30, monsters));
-        Assert.False(GroupJudge.Allows(family, Group(GroupCell, (Bouftou, 10)), level: 30, monsters));
+        Assert.True(GroupJudge.Allows(family, Group(GroupCell, (Bouftou, 10), (Larva, 10)), monsters));
+        Assert.False(GroupJudge.Allows(family, Group(GroupCell, (Bouftou, 10)), monsters));
     }
 
     [Fact]
@@ -273,7 +273,6 @@ public sealed class FightActivityTests : IAsyncDisposable
         {
             Mode = FightMode.Chosen,
             Monsters = [Larva],
-            OnlyWinnable = false,
             Place = FightPlace.Chosen,
             SubAreas = [TestPlay.SubAreaId],
             Heal = false,
@@ -297,7 +296,7 @@ public sealed class FightActivityTests : IAsyncDisposable
         connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
         await bot.ProcessedAsync();
 
-        var activity = Activity(new FightSettings { OnlyWinnable = false, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false });
+        var activity = Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false });
         var run = bot.StartActivity(activity);
 
         // Standing on the group's cell already, as measured after a fight: the attack is sent without a walk.
@@ -323,7 +322,7 @@ public sealed class FightActivityTests : IAsyncDisposable
         await bot.ProcessedAsync();
 
         var started = _play.Time.GetUtcNow();
-        var activity = Activity(new FightSettings { OnlyWinnable = false, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], HealBelow = 95 });
+        var activity = Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], HealBelow = 95 });
         var run = bot.StartActivity(activity);
 
         Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
@@ -355,7 +354,7 @@ public sealed class FightActivityTests : IAsyncDisposable
         connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
         await bot.ProcessedAsync();
 
-        var activity = Activity(new FightSettings { OnlyWinnable = false, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], HealBelow = 70 });
+        var activity = Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], HealBelow = 70 });
         var run = bot.StartActivity(activity);
 
         // The bread heals less than the loaf; the potion, whose use does more than heal, is never eaten.

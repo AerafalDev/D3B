@@ -8,10 +8,7 @@ using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data;
-using D3B.Data.Maps;
 using D3B.Data.World;
-using D3B.Engine.Fights;
-using D3B.Engine.Tactics;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Fighting;
@@ -20,7 +17,7 @@ namespace D3B.Bot.Fighting;
 /// <remarks>
 /// <para>
 /// Each step is chosen from the state (D87). Healed first under its share of life, on a map of the zone the character walks
-/// onto the cell of the nearest group the settings allow and the AI judges it beats, and attacks it, as the client does,
+/// onto the cell of the nearest group the settings allow, and attacks it, as the client does,
 /// measured (9g): the attack from the group's own cell, which a group leaves by walking 1 to 4 cells, so that the walk is
 /// made again; a group the server answers nothing for is left for the rest of the visit. A map with no such group is gone
 /// through, and the step travels to the nearest map of the zone still to go through, isolated maps last when the settings
@@ -53,8 +50,6 @@ public sealed class FightActivity : BotActivity
     private readonly WorldAtlas _atlas;
     private readonly WorldGraph _graph;
     private readonly GameTables _tables;
-    private readonly GameMaps _maps;
-    private readonly Lazy<FightTactics> _tactics;
     private readonly HashSet<long> _visited = [];
     private readonly HashSet<long> _unreachable = [];
     private readonly HashSet<long> _skipped = [];
@@ -71,8 +66,6 @@ public sealed class FightActivity : BotActivity
     private int _lost;
     private int _lostInARow;
     private int _banks;
-    private FightOdds? _attacked;
-    private double _lostAt;
 
     /// <inheritdoc/>
     public override string Name => "Fighting";
@@ -98,20 +91,16 @@ public sealed class FightActivity : BotActivity
     /// <param name="settings">Which groups to attack, where, the upkeep and the bank.</param>
     /// <param name="world">The installed build's world: the zone's maps.</param>
     /// <param name="tables">The installed build's tables: the monsters and spells.</param>
-    /// <param name="maps">The installed build's maps, which the AI imagines a group's fight on.</param>
-    public FightActivity(FightSettings settings, GameWorld world, GameTables tables, GameMaps maps)
+    public FightActivity(FightSettings settings, GameWorld world, GameTables tables)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tables);
-        ArgumentNullException.ThrowIfNull(maps);
 
         _settings = settings;
         _atlas = world.Atlas;
         _graph = world.Graph;
         _tables = tables;
-        _maps = maps;
-        _tactics = new Lazy<FightTactics>(() => new FightTactics(tables));
         _report = new ActivityReport { Doing = GameText.Of(FightTexts.Text("DoingStart")) };
     }
 
@@ -216,10 +205,6 @@ public sealed class FightActivity : BotActivity
     /// <inheritdoc/>
     public override InterruptionResponse OnFightOver(FightEnd? ending, InterruptionResponse response)
     {
-        var attacked = _attacked;
-
-        _attacked = null;
-
         if (ending is { } end)
         {
             foreach (var (item, quantity) in end.Items)
@@ -240,11 +225,6 @@ public sealed class FightActivity : BotActivity
         _lost++;
         _lostInARow++;
         _regaining = true;
-
-        // Measured (D266): two groups of 4 judged winnable, each to take the character's life in under half the turns it
-        // needed, lost one after the other. A group no less risky than one it lost to is left for the run (D267).
-        if (attacked is { } odds && GroupJudge.Share(odds) is var share && double.IsFinite(share))
-            _lostAt = Math.Max(_lostAt, share);
 
         Tally();
 
@@ -296,7 +276,7 @@ public sealed class FightActivity : BotActivity
     {
         var state = context.State;
 
-        if (state.Level is not { } level || state.Cell is not { } here || state.MapId is not { } mapId)
+        if (state.Cell is not { } here || state.MapId is not { } mapId)
             return null;
 
         // A group's identifier is its map's: the groups left are those of the map the character stands on.
@@ -306,24 +286,11 @@ public sealed class FightActivity : BotActivity
             _skippedOn = mapId;
         }
 
-        FightMap? map = null;
-
         // The nearest first: the shortest walk, before the group walks on.
         foreach (var group in state.MonsterGroups.Values.OrderBy(group => group.Cell is { } cell ? Engine.Maps.MapGeometry.Distance(here, cell) : int.MaxValue))
         {
-            if (_skipped.Contains(group.ActorId) || !GroupJudge.Allows(_settings, group, level, _tables.Monsters))
-                continue;
-
-            if (!_settings.OnlyWinnable)
+            if (!_skipped.Contains(group.ActorId) && GroupJudge.Allows(_settings, group, _tables.Monsters))
                 return group;
-
-            if (map is null && _maps.TryGet(mapId, out var data))
-                map = FightMap.Of(data);
-
-            if (map is not null && GroupJudge.Beats(group, state, map, _tables, _tactics.Value, _lostAt))
-                return group;
-
-            _skipped.Add(group.ActorId);
         }
 
         return null;
@@ -347,10 +314,6 @@ public sealed class FightActivity : BotActivity
 
             var fought = context.Expect((side, _, state) => state.Fight is not null);
 
-            _attacked = _settings.OnlyWinnable && _maps.TryGet(context.State.MapId ?? 0, out var data)
-                ? GroupJudge.OddsOf(now, context.State, FightMap.Of(data), _tables, _tactics.Value)
-                : null;
-
             await context.SendAsync(new AttackMonsterRequest { MonsterGroupId = group.ActorId }, cancellationToken).ConfigureAwait(false);
 
             // A fight beginning interrupts this step; a refusal is no answer at all, measured.
@@ -360,7 +323,6 @@ public sealed class FightActivity : BotActivity
             break;
         }
 
-        _attacked = null;
         _skipped.Add(group.ActorId);
     }
 

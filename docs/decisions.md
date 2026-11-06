@@ -8499,6 +8499,24 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
     and the behavior would be invisible to the explorer and to 7e.
   - The route's id typed, or kept in the profile's values by name: what D298 forbids.
 
+## D387: The fighting activity attacks every group the settings allow, with no judgement of its strength
+
+*2026-11-06, step 7, session 7d4, the owner's request after a level 1 character on Incarnam's maps took almost no fight. Supersedes D198's and D249's turning away of groups and D267's memory of a lost fight; D236's "Automatic" mode.*
+
+- **Measured by the owner's report.** A level 1 to 2 Cra, "Automatic" mode, "Only winnable groups" checked (the default), walked and took
+  doors but attacked few groups, some visits none. Two judgements compounded: "Automatic" refused any group with a monster above
+  the character's level, and the AI's odds turned away a group it expected to take the character's life in under a quarter of
+  the turns it needed (D249), or one no less risky than the last lost to (D267). Before the server gave the characteristics, the
+  odds fell back on the same level test.
+- **Made.** `FightSettings.OnlyWinnable` and its checkbox are removed, with the activity's use of the odds and of `_lostAt`;
+  "Automatic" attacks every group the settings' size and exclusions allow, in the place chosen for the character's level
+  (`GroupJudge.Allows` takes no level). The three-losses-in-a-row stop (D198), the heal under a share of life and the fight's
+  own prudence as it starts are unchanged. A saved profile's `OnlyWinnable` is ignored.
+- **Kept.** `GroupJudge.OddsOf`, `Beats`, `Winnable` and `Share` stay for `scripts/fights/HuntBench.cs`, which measures the AI's
+  odds against the fights played; nothing in `src/` calls them.
+- **Risk.** A character may now attack a group it loses to; a lost fight costs the regeneration, and three in a row stop the
+  activity. The place stays chosen for the level, which keeps most groups within reach.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

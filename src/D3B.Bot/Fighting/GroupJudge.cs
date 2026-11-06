@@ -13,7 +13,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Fighting;
 
-/// <summary>Which group of a map the fighting activity attacks: those its settings allow, and of those the ones the AI judges the character beats (D198, D236).</summary>
+/// <summary>Which group of a map the fighting activity attacks: those its settings allow (D236), and the odds the AI gives the character against a group (D198, D249).</summary>
 /// <remarks>
 /// Measured on the captures (9g): every monster of a map's groups is a grade of the pack's at that grade's level, so a group
 /// is imagined as a fight from the pack alone, its monsters at their grades' life, points, characteristics and spells. The
@@ -36,10 +36,9 @@ public static class GroupJudge
     /// <summary>Tells whether the settings allow attacking a group.</summary>
     /// <param name="settings">The activity's settings.</param>
     /// <param name="group">The group.</param>
-    /// <param name="level">The character's level.</param>
     /// <param name="monsters">The pack's monsters, which give a monster's family (D247).</param>
     /// <returns>Whether they allow it.</returns>
-    public static bool Allows(FightSettings settings, MapMonsterGroup group, int level, MonsterCatalog monsters)
+    public static bool Allows(FightSettings settings, MapMonsterGroup group, MonsterCatalog monsters)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(group);
@@ -53,9 +52,8 @@ public static class GroupJudge
         if (group.Monsters.Any(monster => settings.Excluded.Contains(monster.MonsterId)))
             return false;
 
-        return settings.Mode is FightMode.Chosen
-            ? group.Monsters.Any(monster => ChosenMonsters.Holds(settings, monsters, monster.MonsterId))
-            : group.Monsters.All(monster => monster.Level <= level);
+        // No judgement of the group's strength: the owner asked that no group be left alone for it (D387).
+        return settings.Mode is not FightMode.Chosen || group.Monsters.Any(monster => ChosenMonsters.Holds(settings, monsters, monster.MonsterId));
     }
 
     /// <summary>Tells whether the AI expects the character to beat a group: the group would not take its life in under a quarter of the turns it takes to beat the group, over the fight's course (D249).</summary>

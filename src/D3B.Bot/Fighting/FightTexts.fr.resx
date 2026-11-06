@@ -51,7 +51,7 @@
     <value>Monstres</value>
   </data>
   <data name="ModeHelp" xml:space="preserve">
-    <value>Automatique : les groupes au niveau du perso. Choisis : un groupe qui contient l'un des monstres, ou un monstre de l'une des familles.</value>
+    <value>Automatique : tous les groupes, au lieu choisi pour le niveau du perso. Choisis : un groupe qui contient l'un des monstres, ou un monstre de l'une des familles.</value>
   </data>
   <data name="ModeAutomatic" xml:space="preserve">
     <value>Automatique</value>
@@ -79,12 +79,6 @@
   </data>
   <data name="MonstersUnit" xml:space="preserve">
     <value>monstres</value>
-  </data>
-  <data name="OnlyWinnable" xml:space="preserve">
-    <value>Seulement les groupes gagnables</value>
-  </data>
-  <data name="OnlyWinnableHelp" xml:space="preserve">
-    <value>L'IA juge chaque groupe avant de l'attaquer, comme elle juge le risque d'un combat ; avant le premier combat du perso, par le niveau des monstres.</value>
   </data>
   <data name="SectionWhere" xml:space="preserve">
     <value>Où</value>

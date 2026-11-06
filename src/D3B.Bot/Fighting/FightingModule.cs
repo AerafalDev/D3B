@@ -39,7 +39,6 @@ public sealed class FightingModule : IModule
             .Help(FightTexts.Text("ExcludedHelp"));
         settings.Number(s => s.LeastMonsters, FightTexts.Text("LeastMonsters"), 1, 8).Unit(FightTexts.Text("MonstersUnit"));
         settings.Number(s => s.MostMonsters, FightTexts.Text("MostMonsters"), 1, 8).Unit(FightTexts.Text("MonstersUnit"));
-        settings.Flag(s => s.OnlyWinnable, FightTexts.Text("OnlyWinnable")).Help(FightTexts.Text("OnlyWinnableHelp"));
 
         settings.Section(FightTexts.Text("SectionWhere"));
         settings.Choice(s => s.Place, FightTexts.Text("Place"), place => FightTexts.Text($"Place{place}")).Help(FightTexts.Text("PlaceHelp"));

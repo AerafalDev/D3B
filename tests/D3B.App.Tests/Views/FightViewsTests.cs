@@ -187,7 +187,7 @@ public sealed class FightViewsTests : IAsyncDisposable
         Assert.Equal(Enumerable.Range(0, Monsters).Where(index => index % SuperRaces == 2).Select(index => 1_000 + index), picker.Shown.Select(choice => (int)choice.Option.Value));
         Assert.False(picker.HasMore);
         Assert.Contains("Monstres par groupe, au moins", fightTexts);
-        Assert.Contains("Seulement les groupes gagnables", fightTexts);
+        Assert.DoesNotContain("Seulement les groupes gagnables", fightTexts);
         Assert.Contains("Character", accountTexts);
         Assert.DoesNotContain("Stratégie", accountTexts);
     }
