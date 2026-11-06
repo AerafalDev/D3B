@@ -8517,6 +8517,18 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
 - **Risk.** A character may now attack a group it loses to; a lost fight costs the regeneration, and three in a row stop the
   activity. The place stays chosen for the level, which keeps most groups within reach.
 
+## D388: The fighting tour leaves out the interiors of a sub-area that also holds maps on a world map
+
+*2026-11-06, step 7, session 7d4, the owner's request after a character on Incarnam's fields climbed a militia's three floors at each tour. Refines D236's ground and D245; the harvest keeps its own interiors (D149).*
+
+- **Measured** on the pack of 3.7.13.17: of the 444 sub-areas holding monsters, 214 hold maps on a world map and maps on none
+  (interiors), 162 only the first, 68 only interiors, the dungeons. Incarnam's fields (sub-area 29) hold 44 maps on a world map and
+  22 interiors. The ground took every map of the sub-area the world graph reaches, so the tour went through each building, the
+  nearest first, and again at the next tour.
+- **Made.** `HuntingGround.Of` leaves out the maps on no world map of a sub-area that holds some the world graph reaches on one.
+  A sub-area of interiors alone keeps them, being a dungeon.
+- **Not measured.** That no interior of such a sub-area holds a group; the owner's report is that the tour found none in them.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.
