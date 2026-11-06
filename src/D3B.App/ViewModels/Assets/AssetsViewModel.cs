@@ -115,6 +115,9 @@ internal sealed partial class AssetsViewModel : ObservableObject
     /// <summary>Gets or sets the routes, whose editors a route's row opens and whose new ones this makes (D371).</summary>
     public Routes.RoutesViewModel? Routes { get; set; }
 
+    /// <summary>Gets or sets the lists of steps, the behaviors this page makes and opens (D386).</summary>
+    public Sequences.SequencesViewModel? Sequences { get; set; }
+
     /// <summary>Gets or sets what remembers the folders folded, for the next start.</summary>
     public Action<IReadOnlyCollection<string>>? FoldsChanged { get; set; }
 
@@ -148,7 +151,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        return row.AssetKind is AssetKind.Profile or AssetKind.Route;
+        return row.AssetKind is AssetKind.Profile or AssetKind.Route or AssetKind.Behavior;
     }
 
     private static (string Before, string Found, string After) Split(string name, string filter)
@@ -718,6 +721,8 @@ internal sealed partial class AssetsViewModel : ObservableObject
             _profiles.NewIn(ChosenFolder);
         else if (kind is AssetKind.Route && Routes is { IsAvailable: true } routes)
             _ = routes.CreateAsync(ChosenFolder);
+        else if (kind is AssetKind.Behavior && Sequences is { IsAvailable: true } sequences)
+            _ = sequences.CreateAsync(ChosenFolder);
     }
 
     /// <summary>Starts a folder in the folder chosen, or at the root when nothing is, its name typed in place.</summary>

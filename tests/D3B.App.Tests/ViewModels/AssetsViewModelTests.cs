@@ -65,8 +65,38 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
         Assert.Contains(assets.Rows, row => row is { IsProblem: true, Problem.Length: > 0 });
         Assert.All(assets.Rows.Where(row => row.IsGiven), row => Assert.Equal(1, row.Depth));
         Assert.Equal("Used by 1", assets.Rows.Single(row => row.Name == "Walker").CountTip);
-        Assert.Equal(["Profile", "Route"], assets.Kinds.Where(kind => kind.IsEnabled).Select(kind => kind.Name));
-        Assert.Equal("7e", assets.Kinds.Single(kind => kind.Kind is AssetKind.Behavior).Session);
+        Assert.Equal(["Behavior", "Profile", "Route"], assets.Kinds.Where(kind => kind.IsEnabled).Select(kind => kind.Name));
+        Assert.Equal("7f", assets.Kinds.Single(kind => kind.Kind is AssetKind.List).Session);
+    }
+
+    [Fact]
+    public async Task ABehaviorIsMadeAsAnEmptyListInTheFolderChosenAndOpensFromItsRow()
+    {
+        await _store.OpenedAsync();
+
+        var (assets, _) = Panel();
+        var sequences = new D3B.App.ViewModels.Sequences.SequencesViewModel(_localizer, new Dialogs(), new Toasts());
+        var opened = new List<string>();
+
+        sequences.Refresh(_store.Host.Services);
+        sequences.Opened = editor => opened.Add(editor.Name);
+        assets.Sequences = sequences;
+        assets.New(AssetKind.Behavior);
+        await Waiting.UntilAsync(() => opened.Count == 1, TimeSpan.FromSeconds(10));
+        sequences.Refresh(null);
+        assets.Refresh(_store.Host.Services);
+
+        var row = assets.Rows.Single(item => item.Name == "New list of steps");
+
+        Assert.Equal(AssetKind.Behavior, row.AssetKind);
+        Assert.True(AssetsViewModel.CanOpen(row));
+
+        var asked = new List<string>();
+
+        assets.Open = asked.Add;
+        assets.OpenRow(row);
+
+        Assert.Equal([row.Id!], asked);
     }
 
     [Fact]

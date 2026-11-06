@@ -150,7 +150,7 @@ public sealed class SettingDefinition
         if (IsList && value is null)
             return Array.CreateInstance(ElementType, 0);
 
-        return Kind is SettingKind.Text ? value ?? "" : value;
+        return Kind is SettingKind.Text or SettingKind.Route ? value ?? "" : value;
     }
 
     /// <summary>Gives the setting a value in settings.</summary>
@@ -366,7 +366,7 @@ public sealed class SettingDefinition
         {
             SettingKind.Flag => JsonValue.Create((bool)value!),
             SettingKind.Number => JsonValue.Create((int)value!),
-            SettingKind.Text => JsonValue.Create((string)value!),
+            SettingKind.Text or SettingKind.Route => JsonValue.Create((string)value!),
             SettingKind.Choice when IsList => new JsonArray([.. GetValues(settings).Select(item => (JsonNode?)JsonValue.Create(NameOf(item)))]),
             SettingKind.Choice => JsonValue.Create(NameOf(value!)),
             _ when IsList => new JsonArray([.. GetValues(settings).Select(item => (JsonNode?)JsonValue.Create((int)item))]),
@@ -405,6 +405,10 @@ public sealed class SettingDefinition
 
                     return cell < Minimum || cell > Maximum ? Problem(SettingProblemKind.OutOfRange) : null;
                 }
+
+            case SettingKind.Route:
+                // The project holds the routes, which a setting does not see: it only checks that one is named (D386).
+                return IsRequired && string.IsNullOrWhiteSpace((string)value!) ? Problem(SettingProblemKind.Required) : null;
 
             case SettingKind.Text:
                 {
@@ -498,8 +502,8 @@ public sealed class SettingDefinition
         {
             (SettingKind.Flag, bool) => value,
             (SettingKind.Number, int) => value,
-            (SettingKind.Text, null) => "",
-            (SettingKind.Text, string) => value,
+            (SettingKind.Text or SettingKind.Route, null) => "",
+            (SettingKind.Text or SettingKind.Route, string) => value,
             (SettingKind.Choice, not null) when _enum!.IsInstanceOfType(value) => value,
             (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Cell or SettingKind.Npc, null or int) => value,
             _ => throw new ArgumentException($"The setting {Key} does not hold {value ?? "nothing"}.", nameof(value)),
@@ -521,7 +525,7 @@ public sealed class SettingDefinition
             case SettingKind.Number when node is JsonValue number && number.TryGetValue<int>(out var whole):
                 return (new(whole), true);
 
-            case SettingKind.Text when node is JsonValue text && text.TryGetValue<string>(out var words):
+            case SettingKind.Text or SettingKind.Route when node is JsonValue text && text.TryGetValue<string>(out var words):
                 return (new(words), true);
 
             case SettingKind.Choice when ChoiceOf(node) is { } choice:

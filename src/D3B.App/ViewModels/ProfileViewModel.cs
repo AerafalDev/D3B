@@ -19,6 +19,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
     private bool _loading;
     private (string Name, string? Activity, string? Settings) _baseline;
     private string? _defaults;
+    private string? _behaviorId;
 
     /// <summary>Gets what keys the profile's tab, the same once a new one is saved.</summary>
     public string TabKey { get; }
@@ -55,6 +56,22 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     /// <summary>Gets the activities a profile may run, named in the app's language.</summary>
     public IReadOnlyList<ActivityChoiceViewModel> Activities => _page.Activities;
+
+    /// <summary>Gets the id of the behavior the profile plays when that is not one activity whole, such as a list of steps; <see langword="null"/> otherwise (D386).</summary>
+    public string? BehaviorId => _behaviorId;
+
+    /// <summary>Gets whether the profile plays a behavior of the project that is not one activity whole, such as a list of steps (D386).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsActivityMissing))]
+    public partial bool IsBehaviorProfile { get; private set; }
+
+    /// <summary>Gets what the profile's behavior is made of, in words: its steps, and whether it starts again.</summary>
+    [ObservableProperty]
+    public partial string BehaviorDetail { get; private set; } = "";
+
+    /// <summary>Gets whether the behavior is a list of steps, whose editor the profile opens.</summary>
+    [ObservableProperty]
+    public partial bool CanEditSteps { get; private set; }
 
     /// <summary>Gets the activity the profile's behavior plays whole, if it still does.</summary>
     public ActivityChoiceViewModel? SavedActivity => _page.FormOf(_profile).Activity is { } saved ? Activities.FirstOrDefault(activity => activity.Definition?.Id == saved.Id) : null;
@@ -125,7 +142,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
     public bool HasError => Error is not null;
 
     /// <summary>Gets whether the activity edited is none the modules registered, as when the profile's is gone: it is chosen again.</summary>
-    public bool IsActivityMissing => EditActivity?.Definition is null;
+    public bool IsActivityMissing => !IsBehaviorProfile && EditActivity?.Definition is null;
 
     /// <summary>Initializes a new instance of the <see cref="ProfileViewModel"/> class.</summary>
     /// <param name="page">The profiles' page.</param>
@@ -199,7 +216,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
             return;
         }
 
-        Open(_profile?.Name ?? "", SavedActivity ?? (IsNew && Activities.Count > 0 ? Activities[0] : null), SavedSettings);
+        Open(_profile?.Name ?? "", IsBehaviorProfile ? null : SavedActivity ?? (IsNew && Activities.Count > 0 ? Activities[0] : null), SavedSettings);
     }
 
     /// <summary>Opens the editor of a profile never saved, its name and activity chosen.</summary>
@@ -209,6 +226,16 @@ internal sealed partial class ProfileViewModel : ObservableObject
     public void EditNew(string name, ActivityChoiceViewModel activity, string? settings)
     {
         Open(name, activity, settings);
+    }
+
+    /// <summary>Opens the editor of a profile never saved that plays a behavior of the project, its name chosen.</summary>
+    /// <param name="name">Its name.</param>
+    /// <param name="behaviorId">The behavior's id.</param>
+    public void EditNewBehavior(string name, string behaviorId)
+    {
+        _behaviorId = behaviorId;
+        ShowBehavior();
+        Open(name, null, null);
     }
 
     private void Open(string name, ActivityChoiceViewModel? activity, string? settings)
@@ -238,6 +265,11 @@ internal sealed partial class ProfileViewModel : ObservableObject
         var culture = _page.Localizer.Culture;
         var (definition, settings) = _page.FormOf(_profile);
 
+        if (_profile is not null)
+            _behaviorId = definition is null && _page.Assets?.Find<BehaviorAsset>(_profile.Behavior) is { } behavior ? behavior.Id : null;
+
+        ShowBehavior();
+
         // Computed from the profile kept, which saving a new one gives: the view hears it is new no more.
         OnPropertyChanged(nameof(IsNew));
         OnPropertyChanged(nameof(Id));
@@ -247,12 +279,56 @@ internal sealed partial class ProfileViewModel : ObservableObject
         AskDeleteCommand.NotifyCanExecuteChanged();
         Name = _profile is null ? "" : _profile.Title?.In(culture) ?? _profile.Name;
         RefreshTitle();
-        ActivityName = definition?.Name.In(culture) ?? _profile?.Behavior ?? "";
+        ActivityName = IsBehaviorProfile ? BehaviorName : definition?.Name.In(culture) ?? _profile?.Behavior ?? "";
 
-        Review = _profile is null ? null
+        Review = _profile is null || IsBehaviorProfile ? null
             : definition is null ? _page.Localizer.Format("BehaviorMissing", _profile.Behavior)
             : definition.Settings.Read(settings).Reset.Count > 0 ? _page.Localizer["ProfileNeedsReview"]
             : null;
+    }
+
+    private void ShowBehavior()
+    {
+        IsBehaviorProfile = _behaviorId is not null;
+
+        if (_behaviorId is null)
+        {
+            CanEditSteps = false;
+            BehaviorDetail = "";
+
+            return;
+        }
+
+        var behavior = _page.Assets?.Find<BehaviorAsset>(_behaviorId);
+        var sequence = behavior is null ? null : BehaviorSequences.Read(behavior);
+        var localizer = _page.Localizer;
+
+        CanEditSteps = sequence is not null && behavior is { IsGiven: false };
+        EditStepsCommand.NotifyCanExecuteChanged();
+
+        if (behavior is null)
+        {
+            BehaviorName = "";
+            BehaviorDetail = localizer.Format("BehaviorMissing", _behaviorId);
+            ChangedText = "";
+            HasChanges = false;
+
+            return;
+        }
+
+        BehaviorName = behavior.Title?.In(localizer.Culture) ?? behavior.Name;
+        BehaviorDetail = sequence is null ? localizer["BehaviorNotAList"]
+            : sequence.Steps.IsEmpty ? localizer["SequenceEmptyDetail"]
+            : localizer.Plural("SequenceStepsDetail", sequence.Steps.Length) + (sequence.Repeats ? " · " + localizer["SequenceRepeatsDetail"] : "");
+        ChangedText = "";
+        HasChanges = false;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditSteps))]
+    private void EditSteps()
+    {
+        if (_behaviorId is not null)
+            _page.OpenSequence(_behaviorId);
     }
 
     private void Load(string? settings)
@@ -367,12 +443,20 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     private void UpdateCanSave()
     {
-        CanSave = IsEditing && !IsReadOnly && NameProblem is null && EditActivity?.Definition is not null && Editor is { HasProblems: false };
+        CanSave = IsEditing && !IsReadOnly && NameProblem is null
+            && (IsBehaviorProfile ? _behaviorId is not null && _page.Assets?.Find<BehaviorAsset>(_behaviorId) is not null : EditActivity?.Definition is not null && Editor is { HasProblems: false });
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
+        if (IsBehaviorProfile)
+        {
+            await SaveBehaviorProfileAsync().ConfigureAwait(true);
+
+            return;
+        }
+
         if (_page.Assets is not { } assets || EditActivity?.Definition is not { } definition || Editor is not { } editor)
             return;
 
@@ -400,6 +484,34 @@ internal sealed partial class ProfileViewModel : ObservableObject
                 Folder);
             // The tab stays open on what was saved, as an editor's does.
             _baseline = (EditName.Trim(), EditActivity?.Definition?.Id, editor.Write());
+            IsDirty = false;
+            Error = null;
+            Show();
+            CheckName();
+            _page.Saved(this);
+        }
+        catch (ArgumentException exception)
+        {
+            Error = exception.Message;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            Error = _page.Localizer.Format("SaveFailed", exception.GetBaseException().Message);
+        }
+    }
+
+    private async Task SaveBehaviorProfileAsync()
+    {
+        if (_page.Assets is not { } assets || _behaviorId is null)
+            return;
+
+        try
+        {
+            // What the profile changes of its behavior stays as it is: the list of steps has no public setting to change (D386).
+            var profile = new ProfileAsset { Id = _profile?.Id ?? AssetLibrary.NewId(), Name = EditName.Trim(), Path = _profile?.Path, Behavior = _behaviorId };
+
+            _profile = await assets.SaveAsync(_profile is null ? profile : profile with { Values = _profile.Values }, CancellationToken.None, Folder);
+            _baseline = (EditName.Trim(), null, null);
             IsDirty = false;
             Error = null;
             Show();

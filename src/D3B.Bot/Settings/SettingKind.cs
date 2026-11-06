@@ -47,4 +47,7 @@ public enum SettingKind
 
     /// <summary>The replies given to an NPC, by their ids in the client's tables, the n-th to the n-th question, picked among those the bots saw offered (D298, D384).</summary>
     NpcReply,
+
+    /// <summary>A route of the project, by its id, picked among the project's routes and never typed (D298, D386); an empty text when none is picked.</summary>
+    Route,
 }

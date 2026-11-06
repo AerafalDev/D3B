@@ -23,6 +23,7 @@ internal sealed partial class MainWindow : ShadUI.Window
         .Register<GamePickerView, GamePickerViewModel>()
         .Register<CellPickerView, CellPickerViewModel>()
         .Register<NpcPickerView, NpcPickerViewModel>()
+        .Register<RoutePickerView, RoutePickerViewModel>()
         .Register<RepliesPickerView, RepliesPickerViewModel>()
         .Register<RouteActionPickerView, RouteActionPickerViewModel>()
         .Register<NewProfileView, NewProfileViewModel>();
@@ -226,6 +227,9 @@ internal sealed partial class MainWindow : ShadUI.Window
                 break;
             case NpcPickerViewModel npcs:
                 _dialogManager.CreateDialog(npcs).WithMinWidth(420).WithMaxWidth(480).Show();
+                break;
+            case RoutePickerViewModel routes:
+                _dialogManager.CreateDialog(routes).WithMinWidth(420).WithMaxWidth(480).Show();
                 break;
             case RepliesPickerViewModel replies:
                 _dialogManager.CreateDialog(replies).WithMinWidth(480).WithMaxWidth(560).Show();

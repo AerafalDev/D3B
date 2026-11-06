@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Activities;
+using D3B.Bot.Assets;
 using D3B.Bot.Npcs;
 using D3B.Bot.Settings;
 using D3B.Data;
@@ -49,6 +50,9 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     /// <summary>Gets or sets what the bots learned of the NPCs of the maps, which a setting of an NPC picks among (D384).</summary>
     public KnownNpcs? Npcs { get; set; }
+
+    /// <summary>Gets the project, whose routes a setting of a route picks among (D386); <see langword="null"/> when the host does not run.</summary>
+    public AssetLibrary? Library => Services?.GetService<AssetLibrary>();
 
     /// <summary>Gets or sets what names the NPCs and reads their questions and replies; without it they are named by their ids (D385).</summary>
     public NpcNames? NpcNames { get; set; }
@@ -481,6 +485,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Flag, _) => new FlagFieldViewModel(setting, this),
             (SettingKind.Cell, _) => new CellFieldViewModel(setting, this),
             (SettingKind.Npc, _) => new NpcFieldViewModel(setting, this),
+            (SettingKind.Route, _) => new RouteFieldViewModel(setting, this),
             (SettingKind.NpcReply, _) => new NpcRepliesFieldViewModel(setting, this),
             (SettingKind.Number, _) => new NumberFieldViewModel(setting, this),
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),

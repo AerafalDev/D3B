@@ -22,7 +22,42 @@
                 IsVisible="{Binding HasNameProblem}"
                 Text="{Binding NameProblem}" />
         </StackPanel>
-        <StackPanel Spacing="8">
+        <StackPanel IsVisible="{Binding CanChoosePlay}" Spacing="8">
+            <TextBlock Classes="Label" Text="{l:Tr ProfilePlays}" />
+            <StackPanel Orientation="Horizontal" Spacing="18">
+                <RadioButton
+                    Content="{l:Tr ProfilePlaysActivity}"
+                    GroupName="Plays"
+                    IsChecked="{Binding PlaysActivity, Mode=OneWay}" />
+                <RadioButton
+                    Content="{l:Tr ProfilePlaysSteps}"
+                    GroupName="Plays"
+                    IsChecked="{Binding PlaysBehavior}" />
+            </StackPanel>
+        </StackPanel>
+        <StackPanel IsVisible="{Binding PlaysBehavior}" Spacing="8">
+            <TextBlock Classes="Label" Text="{l:Tr ProfileSteps}" />
+            <ComboBox
+                AutomationProperties.Name="{l:Tr ProfileSteps}"
+                HorizontalAlignment="Stretch"
+                IsEnabled="{Binding !IsCopy}"
+                ItemsSource="{Binding Behaviors}"
+                SelectedItem="{Binding Behavior}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BehaviorChoiceViewModel">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Classes="Dim"
+                                FontSize="11.5"
+                                Text="{Binding Detail}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+        <StackPanel IsVisible="{Binding PlaysActivity}" Spacing="8">
             <TextBlock Classes="Label" Text="{l:Tr Activity}" />
             <ComboBox
                 AutomationProperties.Name="{l:Tr Activity}"

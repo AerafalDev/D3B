@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
+using D3B.App.ViewModels.Sequences;
 using D3B.App.ViewModels.Settings;
 using D3B.Bot.Activities;
 using D3B.Bot.Assets;
@@ -78,6 +79,9 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <summary>Gets or sets what closes a profile's tab once its editor closes.</summary>
     public Action<ProfileViewModel>? Closed { get; set; }
 
+    /// <summary>Gets or sets the lists of steps, which a profile plays and its page opens (D386).</summary>
+    public SequencesViewModel? Sequences { get; set; }
+
     /// <summary>Gets whether an editor holds changes not saved.</summary>
     public bool IsAnyDirty => _open.Any(item => item.IsDirty);
 
@@ -135,6 +139,31 @@ internal sealed partial class ProfilesViewModel : ObservableObject
 
         if (relabel || Assets.Version != _profilesVersion || (Accounts?.Version ?? 0) != _accountsVersion)
             Sync(relabel);
+    }
+
+    /// <summary>Gets the behaviors of the project a profile may play besides the activities: the lists of steps, and what the canvas will make (D386).</summary>
+    /// <returns>The behaviors, by name.</returns>
+    public IReadOnlyList<BehaviorChoiceViewModel> Behaviors()
+    {
+        if (Assets is not { } assets)
+            return [];
+
+        var culture = Localizer.Culture;
+
+        return
+        [
+            .. assets.OfType<BehaviorAsset>()
+                .Where(behavior => !behavior.IsGiven)
+                .OrderBy(behavior => behavior.Name, StringComparer.CurrentCultureIgnoreCase)
+                .Select(behavior => new BehaviorChoiceViewModel(behavior.Id, behavior.Name, BehaviorSequences.Read(behavior) is { } list ? Localizer.Plural("SequenceStepsDetail", list.Steps.Length) : Localizer["BehaviorNotAList"])),
+        ];
+    }
+
+    /// <summary>Opens a behavior's editor: the list of steps, in its tab.</summary>
+    /// <param name="id">The behavior's id.</param>
+    public void OpenSequence(string id)
+    {
+        Sequences?.OpenList(id);
     }
 
     /// <summary>Finds an activity the modules registered.</summary>
@@ -267,6 +296,33 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     public void Create(string name, ActivityChoiceViewModel activity, string? settings)
     {
         new ProfileViewModel(this, null) { Folder = _newFolder }.EditNew(name, activity, settings);
+    }
+
+    /// <summary>Opens the editor of a new profile that plays a behavior of the project.</summary>
+    /// <param name="name">Its name.</param>
+    /// <param name="behaviorId">The behavior's id.</param>
+    public void CreateWithBehavior(string name, string behaviorId)
+    {
+        new ProfileViewModel(this, null) { Folder = _newFolder }.EditNewBehavior(name, behaviorId);
+    }
+
+    /// <summary>Makes a new, empty list of steps, opens its editor, and opens the editor of a new profile that plays it.</summary>
+    /// <param name="name">The profile's name, which the list takes too when no list has it.</param>
+    /// <returns>A task that completes once both are open.</returns>
+    public async Task CreateWithNewListAsync(string name)
+    {
+        if (Sequences is not { } sequences)
+            return;
+
+        var folder = _newFolder;
+        var free = Assets?.IsTaken(AssetKind.Behavior, name) == false;
+
+        if (await sequences.MakeAsync(folder, free ? name : null).ConfigureAwait(true) is not { } list)
+            return;
+
+        _newFolder = folder;
+        CreateWithBehavior(name, list.Id);
+        sequences.OpenList(list.Id);
     }
 
     /// <summary>Asks the name of a copy of a profile, which then opens in the editor.</summary>

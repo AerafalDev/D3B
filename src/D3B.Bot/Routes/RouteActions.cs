@@ -68,7 +68,7 @@ public static class RouteActions
         services.AddNode<FollowRoute, RouteFollowValues>(Follow, Text("RouteFollow"), node =>
         {
             node.Help(Text("RouteFollowHelp"));
-            node.Values.Text(values => values.Route, Text("Route")).Required();
+            node.Values.Route(values => values.Route, Text("Route")).Required();
         });
         services.AddNode<HarvestHere, RouteHarvestValues>(Harvest, Text("RouteHarvest"), node =>
         {

@@ -126,6 +126,7 @@
                                 VerticalAlignment="Center" />
                             <TextBlock
                                 Classes="Dim"
+                                IsVisible="{Binding !IsBehaviorProfile}"
                                 Margin="0,0,6,0"
                                 Text="·"
                                 VerticalAlignment="Center" />
@@ -283,6 +284,32 @@
             </Border>
             <ScrollViewer Name="Form">
                 <StackPanel IsEnabled="{Binding !IsReadOnly}" Margin="12,4,24,48">
+                    <Border
+                        Background="{DynamicResource CardBackgroundColor}"
+                        BorderBrush="{DynamicResource BorderColor}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        IsVisible="{Binding IsBehaviorProfile}"
+                        Margin="12,18,0,0"
+                        Padding="16,14">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="SideTitle" Text="{l:Tr ProfilePlaysTitle}" />
+                            <TextBlock
+                                Classes="Bright"
+                                Text="{Binding BehaviorName}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Classes="Dim"
+                                Text="{Binding BehaviorDetail}"
+                                TextWrapping="Wrap" />
+                            <Button
+                                Classes="Outline"
+                                Command="{Binding EditStepsCommand}"
+                                Content="{l:Tr ProfileEditSteps}"
+                                HorizontalAlignment="Left"
+                                IsVisible="{Binding CanEditSteps}" />
+                        </StackPanel>
+                    </Border>
                     <TextBlock
                         Classes="Muted"
                         IsVisible="{Binding Editor.IsEmpty, FallbackValue=False}"
@@ -296,6 +323,7 @@
             BorderBrush="{DynamicResource BorderColor}"
             BorderThickness="1,0,0,0"
             Grid.Column="1"
+            IsVisible="{Binding !IsBehaviorProfile}"
             Name="Side"
             Width="280">
             <ScrollViewer>
