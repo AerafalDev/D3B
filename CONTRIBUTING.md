@@ -28,8 +28,8 @@ Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md). Vulnerab
 - **For a fix**, open the pull request directly, or an issue first if the cause is unclear.
 - **For a feature or a change of design**, open an issue first, so that we agree on the approach before you spend time
   on it. D3B follows a [roadmap](docs/roadmap.md), and each choice is recorded with its reasons in
-  [docs/decisions.md](docs/decisions.md): read the entries about the area you touch, since they often explain why the
-  obvious way was not taken.
+  [docs/decisions.md](docs/decisions.md), found through [docs/decisions-index.md](docs/decisions-index.md): read the entries
+  about the area you touch, since they often explain why the obvious way was not taken.
 - **Everything in the repository is in English**: code, comments, docs, commits and pull requests. Issues may be written
   in English or French.
 
@@ -116,8 +116,8 @@ dotnet build scripts/<tool>.cs        # each tool you changed
 - **Performance** changes come with numbers from the benchmarks:
   `dotnet run -c Release --project benchmarks/D3B.Engine.Benchmarks` or `benchmarks/D3B.Network.Benchmarks`.
 - **Docs follow the code.** A change of behavior updates the README or `docs/` where they describe it. A change of
-  direction is recorded as a new entry at the end of `docs/decisions.md`: entries are never rewritten, a later one
-  supersedes an earlier one. Propose it in your pull request; the maintainer may renumber it.
+  direction is recorded as a new entry at the end of `docs/decisions.md`, with its line in `docs/decisions-index.md`:
+  entries are never rewritten, a later one supersedes an earlier one. Propose it in your pull request; the maintainer may renumber it.
 
 ## Commits and pull requests
 

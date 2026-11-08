@@ -1,61 +1,11 @@
 # Architecture
 
-Where the bot is going. The reasons behind each choice are in [decisions.md](decisions.md), and the order of work is in
-[roadmap.md](roadmap.md). Built so far: the solution, the module model in `D3B.Core`, and a host that builds its
-modules, starts and stops (step 1); the data pack format in `D3B.Data`, the tools that inspect the client, extract
-its maps, world graph and game tables with the texts they name, and publish a build's pack, and the data module, whose
-pack the host finds or downloads before it starts (step 2); the network module, whose relay takes each client's
-connection phase through D3B, with its framing measured and its captures (step 3, session 3b); the tool writing each
-build's obfuscated protocol schema, read from the client's code (step 3, session 3c); the readable protocol of the
-connection phase, and the tool matching it with a build's schema into the build's mapping, audited (step 3, session 3d);
-the translation of the connection phase, the version gate, the release of schemas and mappings, and the relay decoding
-the connection phase (step 3, session 3e); the server selection's answer rewritten, and the game connection matched with
-its server by its ticket, relayed and captured apart (step 3, session 3f); the readable protocol of the game's first
-messages, its matching with pins the tool proposes, and the translation of game frames through their type URL (step 3,
-session 3g); the game connection read through the translation for the modules that observe it, and D3B's requests sent
-to the game server between the client's frames, recorded in the captures and replayed in tests (step 3, session 3h); the
-bots' run time, one actor per character a game connection chose, fed by the game it observes, with the character's state
-and its snapshots, the player taking the character over, and the first behavior, walking on a map along cell paths found
-in `D3B.Engine` (step 4, session 4a); paths through the world in `D3B.Engine`, their criteria answered on three values,
-the account's subscription, and the behaviors changing maps and travelling from map to map (step 4, session 4b); the
-map's elements in the state, using them until the use is over, doors in the path through the world, and requests held
-until the client drew the map (step 4, session 4c); the map's NPCs, dialogs and the bank's exchange in the state, the
-journey to a banker, banking, and the player's leaving told from the client's (step 4, session 4d); the zaaps the
-character knows and the haven bag in the state, teleporting from where the character stands in the path through the
-world, leaving the haven bag, and a walk the client does not follow settled where the server has the character (step 4,
-session 4e); floors in cell paths, and activities chaining behaviors, interrupted by the player, a disconnection or a
-fight, the character recovered and taken back by the client's new connection (step 4, session 4f); the desktop app,
-which runs the bots' host in its process, with its bots page in French and English, dark by default, and the catalogue
-of the activities it starts (step 5, session 5a); activities and pages named in the app's language, and the modules'
-pages in the app's rail (step 5, session 5b); activities' settings, which their modules describe in code, of every kind
-and of the game's values; the accounts the relay sees and the profiles, in SQLite through EF Core, which the app and
-`D3B.Host` share; and the app's accounts and profiles pages, its rail always shown (step 5, session 5c); the external
-plugins removed, and Lua scripts in their place at step 7, removed since (D116, D119), an activity's error on the bot's
-card staying; each bot's journal of its actions, the host's problems and each bot's game frames kept in memory, and the
-app's logs page and protocol inspector, live or replaying a capture (step 5, session 5e); the live map (step 5, session
-5d); the harvesting module, its activity touring a zone and banking full, an activity's report on the bot's card and the
-map page, and the profile editor grown with suggestions, a zone's mini-map and a preview (step 6, session 6a); the icons of
-the resources and professions in a pack of format 4, drawn on the tiles, lists, card and map, and the maps' graphics the
-bots learn, which send a tour to the probable maps first (step 6, session 6b); the resources of `Base` placed by the graphics
-learned, a zone's isolated maps, fights told by their timing and followed as the profile says, the resources' growing
-back learned and kept, and each run kept for a statistics page (step 6, session 6c); the app redesigned (step 6, session
-6d); the harvest's resources by profession, its place chosen by each character's levels, zaaps only when they save enough
-maps, and profiles given (step 6, session 6e); the app published by CI with Velopack, shipping its client build's pack,
-schema and mapping, and updating itself from the repository's releases, the host downloading nothing (step 6, session
-6f); the fight's protocol measured and mapped, the fight's state in the bot's, and the fight on the app's map (step 9,
-session 9a); the fight's data in the pack, format 5, its flags read in the client's code, and the monsters named on the
-map (step 9, session 9b); the rules of a cast in `D3B.Engine`, its range, line of sight, zones, target masks, conditions,
-costs and cooldowns, and walking in a fight with its tackle, checked on every cast and walk captured (step 9, session 9c);
-what the server announces of a fight named, mapping format 10, and kept in the fight's state, its buffs, states,
-modifiers, cooldowns, casts and moves, and the effects' engine in `D3B.Engine`, every effect as data and Bubble's formulas
-measured by a bench replaying every captured fight (step 9, session 9d); the studio's model and its run time, the project's
-assets in files, behaviors of priority states over short actions run as one activity, nodes declared by the modules,
-variables, profiles as variants and the database started from zero (step 7, session 7b); the studio's frame, dark only,
-IntelliJ's icons, one title row and its run block, the docks remembered, the status bar and the search (step 7, session
-7c2); the characters as cards with their classes' heads and the client's glyphs, pack format 9 and mapping format 16, the
-inspector, a character's tab with its map live and its column, the maps in the search, and the studio's motions (step 7,
-session 7c3); the world's maps, 1,250 JPEG tiles of 40 worlds in the pack, format 10, and the route editor's mockup
-(step 7, session 7d); the world's map as a view of its own, the route asset and the world's path between anchors, the route editor's tab and inspector section (step 7, session 7d2). Everything else below is the target.
+Where the bot is going, and how what exists is built. The reasons behind each choice are in [decisions.md](decisions.md),
+found through [decisions-index.md](decisions-index.md); the order of work and what each step did are in
+[roadmap.md](roadmap.md); where the project stands today is in [status.md](status.md). The sections below describe the code
+as it is, step by step, with the decisions that made it: the solution and the module model, the data pack, the relay and the
+protocol, the bots' run time (state, behaviors, activities, banking, harvesting, fights), the desktop app and its studio, the
+database, the engine and its AI. What a section marks as "the target" is not built yet.
 
 ## Overview
 
@@ -334,16 +284,15 @@ seen so.
   `CharacteristicTotals`, D263). The strategies of 9g, a profile each character played, are gone (D244).
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
-  settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), and the AI judges it beats
-  (`GroupJudge`, the group's fight imagined from the pack's grades and the character from its characteristics out of
-  fights, its breed the one whose spells the server listed, before its first fight too, over its course, only a group
-  that would beat the character four times faster turned away, D249, D263, and after a fight lost against a group it
-  attacked, for the run, a group no less risky, D267),
+  settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), with no judgement of its
+  strength: the group's size and exclusions are all the settings ask, and the place is chosen for the character's level (D387,
+  which supersedes D249's and D267's turning away of groups; `GroupJudge.OddsOf` and the rest stay for `scripts/fights/HuntBench.cs`
+  alone, nothing in `src/` calls them),
   and sends `AttackMonsterRequest`, measured from the group's own cell (D239); a group the server answers nothing for is left
   for the visit. Else it travels to the nearest map of the zone left, stopping on the first map of the zone on its way
   that holds such a group, gone through or not (D259), isolated maps last when the settings take them
   (`HuntingGround`: the sub-areas chosen, or the one whose monsters are worth the most at the character's level among
-  those of at least 10 maps on a world map; the maps reached only far round left out, `IsolatedMaps`, shared with
+  those of at least 10 maps on a world map; a sub-area that also holds maps on a world map loses its interiors, D388; the maps reached only far round left out, `IsolatedMaps`, shared with
   harvesting's zone), the tour starting again once every map was; chosen by the activity, the ground is a rotation of sub-areas
   as harvesting's (`HuntingGround.Rank`, `FightRotationZone`, D391). Its fights are its own, the AI playing them; it counts
   them won and lost, banks its loot, and answers a lost fight as harvesting does. Its sub-areas are suggested by the
