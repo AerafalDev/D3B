@@ -217,6 +217,52 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void TheRankHoldsEveryPlaceWorthHuntingTheOnesWithTenMapsFirstEachByItsWorth()
+    {
+        const int den = 30;
+        const int plain = 31;
+        const int meadow = 32;
+        const int tofu = 98;
+        MonsterGrade[] grades = [new() { Grade = 1, Level = 5 }, new() { Grade = 1, Level = 10 }];
+        var monsters = new MonsterCatalog(
+            new Monster[] { new() { Id = tofu, FirstGrade = 0, GradeCount = 1 }, new() { Id = Larva, FirstGrade = 1, GradeCount = 1 } },
+            grades,
+            Array.Empty<MonsterSpell>(),
+            Array.Empty<byte>(),
+            Array.Empty<MonsterRatio>(),
+            Array.Empty<MonsterRace>(),
+            Array.Empty<MonsterRace>());
+        MapPosition[] positions =
+        [
+            new(1, 0, 0, den, -1, 0, 0),
+            .. Enumerable.Range(0, HuntingGround.LeastMapsShown).Select(index => new MapPosition(10 + index, (short)index, 0, plain, 1, 0, 0)),
+            .. Enumerable.Range(0, HuntingGround.LeastMapsShown).Select(index => new MapPosition(30 + index, (short)index, 1, meadow, 1, 0, 0)),
+        ];
+        var graph = new WorldGraph(positions.Select(position => new WorldVertex(position.MapId, 1)).ToArray(), Array.Empty<WorldEdge>(), Array.Empty<WorldTransition>(), Array.Empty<string>());
+        var atlas = new WorldAtlas(
+            positions,
+            new[]
+            {
+                new SubArea(den, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 0, 2),
+                new SubArea(plain, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 2, 1),
+                new SubArea(meadow, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 3, 1),
+            },
+            new[] { new Area(1, 0, 0) },
+            Array.Empty<Waypoint>(),
+            Array.Empty<int>(),
+            new[] { Larva, tofu, Larva, Larva });
+
+        var ranked = HuntingGround.Rank(new FightSettings(), atlas, graph, monsters, 12, subscribed: true);
+
+        // The plain and the meadow hold one larva each, worth the same: the lower id first; the den's two monsters are worth more but it holds one map.
+        Assert.Equal([plain, meadow, den], ranked.Select(candidate => candidate.SubAreaId));
+        Assert.Equal(ranked[0].Score, ranked[1].Score);
+        Assert.True(ranked[2].Score > ranked[0].Score);
+        Assert.Equal([plain], HuntingGround.Of(new FightSettings(), atlas, graph, monsters, 12, subscribed: true).SubAreas);
+        Assert.Equal([meadow], HuntingGround.In(new FightSettings(), atlas, graph, [meadow]).SubAreas);
+    }
+
+    [Fact]
     public void AMapOfTheGroundReachedOnlyFarRoundIsLeftOutUnlessTheSettingsTakeIt()
     {
         // Maps 1 to 3 hold together; map 5 is two changes from 3, through 4 of another sub-area, and map 9 five, through 4 and 6 to 8.

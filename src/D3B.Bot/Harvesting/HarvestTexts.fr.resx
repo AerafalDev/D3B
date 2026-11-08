@@ -372,7 +372,7 @@
     <value>Ordre</value>
   </data>
   <data name="OrderHelp" xml:space="preserve">
-    <value>Sur chaque carte ; les autres ressources de la carte suivent.</value>
+    <value>Sur chaque carte ; les autres ressources de la carte suivent. Un métier après l\'autre : le métier récolté le moins récemment d\'abord, et les zones choisies par l\'activité sont réparties entre les métiers.</value>
   </data>
   <data name="OrderNearest" xml:space="preserve">
     <value>Au plus près</value>
@@ -380,11 +380,14 @@
   <data name="OrderHighestLevel" xml:space="preserve">
     <value>Plus haut niveau d'abord</value>
   </data>
+  <data name="OrderBalanced" xml:space="preserve">
+    <value>Un métier après l'autre</value>
+  </data>
   <data name="Place" xml:space="preserve">
     <value>Lieu</value>
   </data>
   <data name="PlaceHelp" xml:space="preserve">
-    <value>Automatique : la sous-zone la plus riche en ce que chaque perso sait récolter à son niveau, revue à chaque tournée.</value>
+    <value>Automatique : les sous-zones les plus riches en ce que chaque perso peut récolter à ses niveaux, parcourues tour à tour.</value>
   </data>
   <data name="PlaceAutomatic" xml:space="preserve">
     <value>Automatique</value>
@@ -397,6 +400,15 @@
   </data>
   <data name="SafeLevelHelp" xml:space="preserve">
     <value>Laisse les sous-zones d'un niveau supérieur au sien, dont les monstres l'agresseraient.</value>
+  </data>
+  <data name="Rotation" xml:space="preserve">
+    <value>Sous-zones en rotation</value>
+  </data>
+  <data name="RotationUnit" xml:space="preserve">
+    <value>sous-zones</value>
+  </data>
+  <data name="RotationHelp" xml:space="preserve">
+    <value>L'activité parcourt tour à tour ce nombre de sous-zones, tirées parmi les dix plus riches qu'elle atteint, et les tire de nouveau une fois chacune parcourue, pour que les ressources repoussent entre-temps ; les zones de la meilleure ressource de chaque métier en font toujours partie. 1 reste dans la plus riche. Les sous-zones qui valent moins du quart de la plus riche sont écartées.</value>
   </data>
   <data name="ZaapSaving" xml:space="preserve">
     <value>Zaap s'il évite au moins</value>

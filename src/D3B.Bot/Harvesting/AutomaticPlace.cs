@@ -49,6 +49,35 @@ public static class AutomaticPlace
         GraphicPlaces places,
         GraphicSkills graphics)
     {
+        return Reckon(targets, level, jobLevels, safeLevel, isolatedMaps, atlas, graph, places, graphics).Candidates;
+    }
+
+    /// <summary>Ranks the sub-areas where a character may harvest, and finds where each profession's highest-level resource grows most (D391).</summary>
+    /// <param name="targets">The skills the settings use (<see cref="HarvestZone.TargetsOf"/>).</param>
+    /// <param name="level">The character's level; 0 when unknown, which leaves no sub-area out for its level.</param>
+    /// <param name="jobLevels">Its professions' levels, by profession; one not given counts as the first level.</param>
+    /// <param name="safeLevel">Whether to leave out the sub-areas above the character's level.</param>
+    /// <param name="isolatedMaps">Whether the tour goes through the maps reached from their sub-area's main part only far round (D149): when not, they count for nothing.</param>
+    /// <param name="atlas">The atlas, placing the maps in their sub-areas.</param>
+    /// <param name="graph">The world graph, holding the maps a character may travel to.</param>
+    /// <param name="places">Where each graphic is drawn.</param>
+    /// <param name="graphics">What the host learned of the graphics.</param>
+    /// <returns>The ranking, <see cref="Rank"/>'s sub-areas and each profession's top sub-area.</returns>
+    /// <remarks>
+    /// The sum of the resources' worth favours the most advanced profession, so that the richest sub-areas alone would all be its:
+    /// the tops let an activity keep the zone of each profession's best resource in its rotation (D391).
+    /// </remarks>
+    public static PlaceRanking Reckon(
+        IEnumerable<HarvestTarget> targets,
+        int level,
+        IReadOnlyDictionary<int, int> jobLevels,
+        bool safeLevel,
+        bool isolatedMaps,
+        WorldAtlas atlas,
+        WorldGraph graph,
+        GraphicPlaces places,
+        GraphicSkills graphics)
+    {
         ArgumentNullException.ThrowIfNull(targets);
         ArgumentNullException.ThrowIfNull(jobLevels);
         ArgumentNullException.ThrowIfNull(atlas);
@@ -59,6 +88,7 @@ public static class AutomaticPlace
         // What the character can harvest now, by resource: its skills, and its worth at the profession's level.
         var worths = new Dictionary<int, double>();
         var skills = new Dictionary<int, HashSet<int>>();
+        var jobItems = new Dictionary<int, List<(int Level, int ItemId)>>();
 
         foreach (var target in targets)
         {
@@ -75,6 +105,11 @@ public static class AutomaticPlace
                 skills[target.ItemId] = gathering = [];
 
             gathering.Add(target.SkillId);
+
+            if (!jobItems.TryGetValue(target.JobId, out var items))
+                jobItems[target.JobId] = items = [];
+
+            items.Add((target.Level, target.ItemId));
         }
 
         var maps = new Dictionary<int, int>();
@@ -92,14 +127,14 @@ public static class AutomaticPlace
                 maps[position.SubAreaId] = maps.GetValueOrDefault(position.SubAreaId) + 1;
         }
 
-        var offered = new List<(long MapId, int SubAreaId, double Worth)>();
+        var offered = new List<(long MapId, int SubAreaId, double Worth, int ItemId)>();
 
         foreach (var (item, gathering) in skills)
         {
             foreach (var map in places.MapsOffering(gathering, graphics))
             {
                 if (atlas.TryGetPosition(map, out var position) && maps.ContainsKey(position.SubAreaId))
-                    offered.Add((map, position.SubAreaId, worths[item]));
+                    offered.Add((map, position.SubAreaId, worths[item], item));
             }
         }
 
@@ -107,11 +142,19 @@ public static class AutomaticPlace
         // is drawn on, every one isolated, which the tour left out; it went through 6 maps without ore.
         var isolated = isolatedMaps || offered.Count is 0 ? FrozenSet<long>.Empty : IsolatedOf(offered.Select(map => map.SubAreaId).ToHashSet(), atlas, graph);
         var scores = new Dictionary<int, double>();
+        var placed = new Dictionary<int, Dictionary<int, int>>();
 
-        foreach (var (map, subAreaId, worth) in offered)
+        foreach (var (map, subAreaId, worth, item) in offered)
         {
-            if (!isolated.Contains(map))
-                scores[subAreaId] = scores.GetValueOrDefault(subAreaId) + worth;
+            if (isolated.Contains(map))
+                continue;
+
+            scores[subAreaId] = scores.GetValueOrDefault(subAreaId) + worth;
+
+            if (!placed.TryGetValue(item, out var where))
+                placed[item] = where = [];
+
+            where[subAreaId] = where.GetValueOrDefault(subAreaId) + 1;
         }
 
         if (scores.Count is 0)
@@ -129,11 +172,35 @@ public static class AutomaticPlace
             }
         }
 
-        return [.. scores
+        var candidates = scores
             .Select(score => new PlaceCandidate(score.Key, score.Value, maps[score.Key]))
             .OrderByDescending(candidate => candidate.Score)
             .ThenBy(candidate => atlas.TryGetSubArea(candidate.SubAreaId, out var subArea) ? subArea.Level : 0)
-            .ThenBy(candidate => candidate.SubAreaId)];
+            .ThenBy(candidate => candidate.SubAreaId)
+            .ToArray();
+
+        return new PlaceRanking(candidates, TopsOf(jobItems, placed));
+    }
+
+    // The highest-level resource of a profession that grows anywhere the tour goes, and the sub-area drawing it on the most maps.
+    private static Dictionary<int, int> TopsOf(Dictionary<int, List<(int Level, int ItemId)>> jobItems, Dictionary<int, Dictionary<int, int>> placed)
+    {
+        var tops = new Dictionary<int, int>();
+
+        foreach (var (job, items) in jobItems)
+        {
+            foreach (var (_, item) in items.OrderByDescending(pair => pair.Level).ThenBy(pair => pair.ItemId))
+            {
+                if (!placed.TryGetValue(item, out var where) || where.Count is 0)
+                    continue;
+
+                tops[job] = where.OrderByDescending(pair => pair.Value).ThenBy(pair => pair.Key).First().Key;
+
+                break;
+            }
+        }
+
+        return tops;
     }
 
     private static FrozenSet<long> IsolatedOf(HashSet<int> subAreas, WorldAtlas atlas, WorldGraph graph)

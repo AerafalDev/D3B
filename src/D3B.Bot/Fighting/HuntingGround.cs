@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using D3B.Bot.Activities;
 using D3B.Bot.Movement;
 using D3B.Data.Monsters;
 using D3B.Data.World;
@@ -54,9 +55,26 @@ public sealed class HuntingGround
         ArgumentNullException.ThrowIfNull(monsters);
 
         IReadOnlyList<int> subAreas = settings.Place is FightPlace.Automatic
-            ? Best(settings, atlas, graph, monsters, level, subscribed) is { } best ? [best] : []
+            ? Rank(settings, atlas, graph, monsters, level, subscribed) is [var best, ..] ? [best.SubAreaId] : []
             : settings.SubAreas.Count > 0 ? settings.SubAreas
             : [.. atlas.SubAreas.ToArray().Where(subArea => subArea.AreaId == settings.Area && subArea.MonsterCount > 0).Select(subArea => subArea.Id)];
+
+        return In(settings, atlas, graph, subAreas);
+    }
+
+    /// <summary>Gets the ground made of given sub-areas: their maps a character travels to, the isolated ones apart.</summary>
+    /// <param name="settings">The activity's settings.</param>
+    /// <param name="atlas">The world's sub-areas and maps.</param>
+    /// <param name="graph">The world graph, which says the maps a character travels to.</param>
+    /// <param name="subAreas">The sub-areas.</param>
+    /// <returns>The ground; the activity's rotation makes one of each sub-area it draws (D391).</returns>
+    public static HuntingGround In(FightSettings settings, WorldAtlas atlas, WorldGraph graph, IReadOnlyList<int> subAreas)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(atlas);
+        ArgumentNullException.ThrowIfNull(graph);
+        ArgumentNullException.ThrowIfNull(subAreas);
+
         var wanted = subAreas.ToHashSet();
         var reached = atlas.Positions.ToArray()
             .Where(position => wanted.Contains(position.SubAreaId) && graph.Contains(position.MapId))
@@ -101,8 +119,21 @@ public sealed class HuntingGround
         return highest >= level ? 1 : Math.Pow(0.5, (level - highest) / (double)HalvingLevels);
     }
 
-    private static int? Best(FightSettings settings, WorldAtlas atlas, WorldGraph graph, MonsterCatalog monsters, int level, bool subscribed)
+    /// <summary>Ranks the sub-areas the activity may choose for a character, the richest first (D391).</summary>
+    /// <param name="settings">The activity's settings.</param>
+    /// <param name="atlas">The world's sub-areas and maps.</param>
+    /// <param name="graph">The world graph, which says the maps a character travels to.</param>
+    /// <param name="monsters">The pack's monsters, at their grades' levels.</param>
+    /// <param name="level">The character's level.</param>
+    /// <param name="subscribed">Whether the character's account is subscribed, which opens the sub-areas a basic account cannot enter.</param>
+    /// <returns>The sub-areas holding a monster worth hunting, those with at least <see cref="LeastMapsShown"/> maps on a world map first, each by its worth, then the nearest to the character's level.</returns>
+    public static IReadOnlyList<RotationCandidate> Rank(FightSettings settings, WorldAtlas atlas, WorldGraph graph, MonsterCatalog monsters, int level, bool subscribed)
     {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(atlas);
+        ArgumentNullException.ThrowIfNull(graph);
+        ArgumentNullException.ThrowIfNull(monsters);
+
         var excluded = settings.Excluded.ToHashSet();
         var shown = new Dictionary<int, int>();
 
@@ -115,8 +146,8 @@ public sealed class HuntingGround
                 shown[position.SubAreaId] = shown.GetValueOrDefault(position.SubAreaId) + 1;
         }
 
-        (int? Id, double Worth, int Gap) wide = (null, 0, int.MaxValue);
-        (int? Id, double Worth, int Gap) narrow = (null, 0, int.MaxValue);
+        var wide = new List<(int Id, double Worth, int Gap)>();
+        var narrow = new List<(int Id, double Worth, int Gap)>();
 
         foreach (var subArea in atlas.SubAreas.Span)
         {
@@ -131,21 +162,18 @@ public sealed class HuntingGround
                     worth += WorthOf(monsters, monster, level);
             }
 
-            var candidate = (subArea.Id, worth, level - subArea.Level);
+            if (worth <= 0)
+                continue;
 
-            if (shown.GetValueOrDefault(subArea.Id) >= LeastMapsShown)
-                wide = Richer(candidate, wide);
-            else
-                narrow = Richer(candidate, narrow);
+            (shown.GetValueOrDefault(subArea.Id) >= LeastMapsShown ? wide : narrow).Add((subArea.Id, worth, level - subArea.Level));
         }
 
-        return wide.Id ?? narrow.Id;
-    }
-
-    private static (int? Id, double Worth, int Gap) Richer((int Id, double Worth, int Gap) candidate, (int? Id, double Worth, int Gap) best)
-    {
         // The richest first, then the nearest to the character's level.
-        return candidate.Worth > best.Worth || (candidate.Worth > 0 && candidate.Worth == best.Worth && candidate.Gap < best.Gap) ? candidate : best;
+        return
+        [
+            .. wide.OrderByDescending(candidate => candidate.Worth).ThenBy(candidate => candidate.Gap).ThenBy(candidate => candidate.Id).Select(candidate => new RotationCandidate(candidate.Id, candidate.Worth)),
+            .. narrow.OrderByDescending(candidate => candidate.Worth).ThenBy(candidate => candidate.Gap).ThenBy(candidate => candidate.Id).Select(candidate => new RotationCandidate(candidate.Id, candidate.Worth)),
+        ];
     }
 
     /// <summary>Tells whether a monster is met in a map's groups, which bombs and what the bestiary hides never are.</summary>

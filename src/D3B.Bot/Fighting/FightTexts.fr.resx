@@ -87,7 +87,16 @@
     <value>Lieu</value>
   </data>
   <data name="PlaceHelp" xml:space="preserve">
-    <value>Automatique : la sous-zone qui a le plus de monstres au niveau du perso, revue à chaque tournée.</value>
+    <value>Automatique : les sous-zones qui ont le plus de monstres au niveau du perso, chassées tour à tour.</value>
+  </data>
+  <data name="Rotation" xml:space="preserve">
+    <value>Sous-zones en rotation</value>
+  </data>
+  <data name="RotationUnit" xml:space="preserve">
+    <value>sous-zones</value>
+  </data>
+  <data name="RotationHelp" xml:space="preserve">
+    <value>L'activité chasse tour à tour dans ce nombre de sous-zones, tirées parmi les dix plus riches, et les tire de nouveau une fois chacune parcourue ; la plus riche en fait toujours partie. 1 reste dans la plus riche. Les sous-zones qui valent moins du quart de la plus riche sont écartées.</value>
   </data>
   <data name="PlaceAutomatic" xml:space="preserve">
     <value>Automatique</value>

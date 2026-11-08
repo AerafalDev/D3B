@@ -372,7 +372,7 @@
     <value>Order</value>
   </data>
   <data name="OrderHelp" xml:space="preserve">
-    <value>On each map; the map's other resources follow.</value>
+    <value>On each map; the map\'s other resources follow. In turn: the profession harvested least lately first, and the zones the activity chooses are shared between the professions.</value>
   </data>
   <data name="OrderNearest" xml:space="preserve">
     <value>Nearest first</value>
@@ -380,11 +380,14 @@
   <data name="OrderHighestLevel" xml:space="preserve">
     <value>Highest level first</value>
   </data>
+  <data name="OrderBalanced" xml:space="preserve">
+    <value>Each profession in turn</value>
+  </data>
   <data name="Place" xml:space="preserve">
     <value>Place</value>
   </data>
   <data name="PlaceHelp" xml:space="preserve">
-    <value>Automatic: the sub-area richest in what each character can harvest at its levels, chosen again each tour.</value>
+    <value>Automatic: the sub-areas richest in what each character can harvest at its levels, gone through in turn.</value>
   </data>
   <data name="PlaceAutomatic" xml:space="preserve">
     <value>Automatic</value>
@@ -397,6 +400,15 @@
   </data>
   <data name="SafeLevelHelp" xml:space="preserve">
     <value>Leaves out the sub-areas above the character's level, whose monsters would attack it.</value>
+  </data>
+  <data name="Rotation" xml:space="preserve">
+    <value>Sub-areas in rotation</value>
+  </data>
+  <data name="RotationUnit" xml:space="preserve">
+    <value>sub-areas</value>
+  </data>
+  <data name="RotationHelp" xml:space="preserve">
+    <value>The activity goes through that many of the richest ten it can reach, one after the other, drawn again once each was gone through, so that the resources grow back meanwhile; the zones of each profession's best resource are always among them. 1 stays in the richest. Sub-areas worth under a quarter of the richest are left out.</value>
   </data>
   <data name="ZaapSaving" xml:space="preserve">
     <value>Zaap if it saves at least</value>

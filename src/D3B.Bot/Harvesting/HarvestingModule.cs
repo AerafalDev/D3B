@@ -72,6 +72,10 @@ public sealed class HarvestingModule : IModule
         settings.Flag(s => s.SafeLevel, HarvestTexts.Text("SafeLevel"))
             .Help(HarvestTexts.Text("SafeLevelHelp"))
             .VisibleWhen(s => s.Place is HarvestPlace.Automatic);
+        settings.Number(s => s.Rotation, HarvestTexts.Text("Rotation"), 1, PlaceRotation.PoolSize)
+            .Unit(HarvestTexts.Text("RotationUnit"))
+            .Help(HarvestTexts.Text("RotationHelp"))
+            .VisibleWhen(s => s.Place is HarvestPlace.Automatic);
         settings.Area(s => s.Area, HarvestTexts.Text("Area"))
             .Help(HarvestTexts.Text("AreaHelp"))
             .VisibleWhen(s => s.Place is HarvestPlace.Chosen);
@@ -118,12 +122,12 @@ public sealed class HarvestingModule : IModule
         settings.Preview((s, services, players) => services.GetRequiredService<HarvestPreviews>().Of(s, players));
         settings.ReadsEarlier(ReadEarlier);
 
-        settings.Preset("auto", HarvestTexts.Text("PresetAuto"), s => Automatic(s, Professions));
-        settings.Preset("lumberjack", HarvestTexts.Text("PresetLumberjack"), s => Automatic(s, [2]));
-        settings.Preset("miner", HarvestTexts.Text("PresetMiner"), s => Automatic(s, [24]));
-        settings.Preset("alchemist", HarvestTexts.Text("PresetAlchemist"), s => Automatic(s, [26]));
-        settings.Preset("farmer", HarvestTexts.Text("PresetFarmer"), s => Automatic(s, [28]));
-        settings.Preset("fisherman", HarvestTexts.Text("PresetFisherman"), s => Automatic(s, [36]));
+        settings.Preset("auto", HarvestTexts.Text("PresetAuto"), s => Automatic(s, Professions, HarvestOrder.Balanced));
+        settings.Preset("lumberjack", HarvestTexts.Text("PresetLumberjack"), s => Automatic(s, [2], HarvestOrder.HighestLevel));
+        settings.Preset("miner", HarvestTexts.Text("PresetMiner"), s => Automatic(s, [24], HarvestOrder.HighestLevel));
+        settings.Preset("alchemist", HarvestTexts.Text("PresetAlchemist"), s => Automatic(s, [26], HarvestOrder.HighestLevel));
+        settings.Preset("farmer", HarvestTexts.Text("PresetFarmer"), s => Automatic(s, [28], HarvestOrder.HighestLevel));
+        settings.Preset("fisherman", HarvestTexts.Text("PresetFisherman"), s => Automatic(s, [36], HarvestOrder.HighestLevel));
     }
 
     private static IReadOnlyList<int> Wanted(HarvestSettings settings, GameReferences game)
@@ -153,11 +157,11 @@ public sealed class HarvestingModule : IModule
         }
     }
 
-    private static void Automatic(HarvestSettings settings, IReadOnlyList<int> jobs)
+    private static void Automatic(HarvestSettings settings, IReadOnlyList<int> jobs, HarvestOrder order)
     {
         settings.Mode = HarvestMode.ByProfession;
         settings.Jobs = jobs;
-        settings.Order = HarvestOrder.HighestLevel;
+        settings.Order = order;
         settings.Place = HarvestPlace.Automatic;
 
         // A resource bag left shut weighs on the character: the bank takes what was harvested, so it stays full once banked (D389).
