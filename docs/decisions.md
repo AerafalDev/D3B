@@ -8664,7 +8664,7 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
 
 *2026-11-09, step 7, session 7r, the owner's: the app is "not practical at all", to be redesigned from A to Z, the example being
 that a route needs each of its steps configured by hand; the owner chose the global redesign with mockups of the whole app,
-as 7c did (D319), over a tour of the journeys. **Proposed, not yet validated: the owner's choices will be D396.** Builds
+as 7c did (D319), over a tour of the journeys. **Proposed; the owner chose the engine and variant B in D396.** Builds
 D295, D319 to D328, D371, D375 to D381, D386; reads D394 (session 7d4, commit `f0c0cd2`, not merged when this was written). The
 mockup: `docs/mockups/studio-7r.html`, four scenes (keys 1 to 4), three ways of setting a route's steps (keys A, B, C), N for
 the notes on what changed.*
@@ -8744,6 +8744,25 @@ the notes on what changed.*
   - The intent-first redesign with missions and a start page: turned down by the owner (above).
   - A tour of the journeys with fixes in place: each fix is in the proposal, but the owner chose the global redesign.
   - Two modes, "simple" and "studio": it doubles the screens to keep, and the studio is the product (D295).
+
+## D396: The studio as a game engine, and a route's steps set in a sequencer: the owner's choices
+
+*2026-11-09, step 7, session 7r, the owner's choices among the mockup's options, as the lead recommended the second. Settles the
+first two of D395's questions; the rest of D395 stands as proposed.*
+
+- **Direction chosen: the engine.** The studio's centre is one persistent viewport on the world, with the Outliner, the Details
+  panel, the Content browser, the Play in Editor and an asset editor for a profile, as `docs/mockups/studio-7r.html` draws them
+  (D395). The first, intent-first proposal stays turned down.
+- **A route's steps: variant B, the Sequencer.** Under the viewport, a ruler of steps and a track per action; an action is a clip
+  drawn across the steps it covers, its edges dragged, copied with Shift; the playhead is the character. The Details panel keeps
+  the clip's sentence and its range, and the properties of the steps chosen (variant A's "Add to the selection" stays only where
+  the Details already list a step's own figures). Variant A as the main path and variant C (components) are not made.
+  The model stays D395's: a clip is derived by grouping equal consecutive actions of the anchors, `RouteAnchor.Actions` and the
+  file unchanged (D378), to be tested in 7r3 on every kind of action before the editor writes through it.
+- **Still to decide, one at a time**: the words (profile, route, sequence, as the mockup has them, or others); the order of the
+  sessions 7r2 to 7r6 (D395's table is the lead's). Nothing of it blocks 7r2's start on the frame, which holds none of the
+  words in question but the Add menu's.
+- **Next**: session 7r2, the engine's frame, in a session of its own; no code was written in 7r.
 
 ## Open questions
 

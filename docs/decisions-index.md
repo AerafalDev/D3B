@@ -448,4 +448,5 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 ## Step 7, the redesign (D395)
 
-- [D395](decisions.md#d395-7r-the-studios-redesign-what-hurts-today-and-the-studio-seen-as-a-game-engine) 7r, the studio's redesign: what hurts today, and the studio seen as a game engine; proposed, awaiting the owner (2026-11-09)
+- [D395](decisions.md#d395-7r-the-studios-redesign-what-hurts-today-and-the-studio-seen-as-a-game-engine) 7r, the studio's redesign: what hurts today, and the studio seen as a game engine (2026-11-09)
+- [D396](decisions.md#d396-the-studio-as-a-game-engine-and-a-routes-steps-set-in-a-sequencer-the-owners-choices) The studio as a game engine, and a route's steps set in a sequencer: the owner's choices (2026-11-09)

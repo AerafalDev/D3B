@@ -35,11 +35,11 @@ As of 2026-11-09, after D395 (D394, session 7d4, is on its own branch, not merge
 
 ## Next
 
-1. **Session 7r, the studio's redesign** (D395): designed and mocked up as a game engine (`docs/mockups/studio-7r.html`; a first
-   intent-first proposal was turned down), proposed to the owner and not yet validated; the owner's choices (the direction, A, B or C
-   for a route's steps, the words, the order) are D396. Nothing of it is coded: 7r2 to
-   7r6 follow once the first is answered. It comes before 7e, so that the canvas does not grow on a design the owner finds
-   impractical (a route needs each step set by hand; running it takes about fourteen gestures in four editors).
+1. **Session 7r2, the engine's frame** (D395, D396): the studio redesigned as a game engine (`docs/mockups/studio-7r.html`), the owner
+   chose the engine and the Sequencer for a route's steps; the world viewport as the centre with its tools, the Outliner, the Details
+   panel, Play in Editor. Nothing of 7r is coded yet. Still open: the words (profile, route, sequence) and the order of 7r2 to 7r6.
+   It comes before 7e, so that the canvas does not grow on a design the owner finds impractical (a route needs each step set by
+   hand; running it takes about fourteen gestures in four editors).
 2. **Session 7d4** (D394, its own branch, commit `f0c0cd2`): undo and the keys of the other editors, steps dragged, zones and their
    editor; recording while playing and Simplify (7d4b) wait for the measure in game and then take their place in 7r3's workbench.
 3. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).
