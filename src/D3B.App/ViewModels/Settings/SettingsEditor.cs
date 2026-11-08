@@ -67,6 +67,15 @@ internal sealed partial class SettingsEditor : ObservableObject
     [ObservableProperty]
     public partial int ChangedCount { get; private set; }
 
+    /// <summary>Gets the field changed last by the hand, or <see langword="null"/> when the settings changed on their own.</summary>
+    public SettingFieldViewModel? LastEdited { get; private set; }
+
+    /// <summary>
+    /// Gets what the last change belongs to when it is a text or a number typed in, which an editor takes back in one with the
+    /// letters before it; <see langword="null"/> for any other change, each of which is its own.
+    /// </summary>
+    public string? TypingRun => LastEdited is TextFieldViewModel or NumberFieldViewModel ? LastEdited.Definition.Key : null;
+
     /// <summary>Gets the game's values the settings name, or <see langword="null"/> when the host has none.</summary>
     public GameReferences? Game { get; }
 
@@ -208,6 +217,15 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Checks the settings again, once a field changed.</summary>
     public void Changed()
     {
+        Changed(null);
+    }
+
+    /// <summary>Checks the settings again, once a field changed under the hand.</summary>
+    /// <param name="by">The field that changed, or <see langword="null"/> when the settings changed on their own.</param>
+    public void Changed(SettingFieldViewModel? by)
+    {
+        LastEdited = by;
+
         if (Draft is null)
             return;
 

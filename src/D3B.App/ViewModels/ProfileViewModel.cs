@@ -2,6 +2,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.ViewModels.Settings;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Activities;
 using D3B.Storage.Accounts;
 using D3B.Studio.Assets;
@@ -12,12 +13,13 @@ namespace D3B.App.ViewModels;
 
 /// <summary>A profile, edited in a tab of its own: its name, the behavior it is a variant of, its settings and what they change (D300, D330).</summary>
 /// <remarks>A profile given with the app is read only: copied to be changed (D296).</remarks>
-internal sealed partial class ProfileViewModel : ObservableObject
+internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
 {
     private readonly ProfilesViewModel _page;
     private ProfileAsset? _profile;
     private bool _loading;
     private (string Name, string? Activity, string? Settings) _baseline;
+    private UndoHistory<ProfileDraft> _history = new(new ProfileDraft(string.Empty, null, null), SameDraft);
     private string? _defaults;
     private string? _behaviorId;
 
@@ -41,6 +43,12 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
     /// <summary>Gets whether the profile is shown but not changed: given with the app, it is copied to be changed (D296).</summary>
     public bool IsReadOnly => IsGiven;
+
+    /// <inheritdoc/>
+    public bool CanUndo => IsEditing && _history.CanUndo;
+
+    /// <inheritdoc/>
+    public bool CanRedo => IsEditing && _history.CanRedo;
 
     /// <summary>Gets the name of the behavior the profile is a variant of, as its header says it (D330).</summary>
     [ObservableProperty]
@@ -255,6 +263,8 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
         IsEditing = true;
         _baseline = (EditName.Trim(), EditActivity?.Definition?.Id, Editor?.Write());
+        _history = new UndoHistory<ProfileDraft>(Draft(), SameDraft);
+        Moved();
         CheckName();
         CheckDirty();
         _page.BeginEditing(this);
@@ -387,6 +397,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
         field.Definition.SetValue(draft, field.Definition.GetValue(defaults));
         Load(editor.Write());
         CheckDirty();
+        Record();
     }
 
     /// <summary>Gives every value the behavior's back: "Tout remettre" (D330).</summary>
@@ -398,6 +409,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
 
         Load(_defaults);
         CheckDirty();
+        Record();
     }
 
     /// <summary>Copies the profile, given with the app, into the project, and opens the copy.</summary>
@@ -412,6 +424,64 @@ internal sealed partial class ProfileViewModel : ObservableObject
     {
         CheckDirty();
         ShowChanges();
+        Record(Editor?.TypingRun);
+    }
+
+    /// <inheritdoc/>
+    public void Undo()
+    {
+        if (IsEditing && _history.TryUndo(out var state))
+            Restore(state);
+    }
+
+    /// <inheritdoc/>
+    public void Redo()
+    {
+        if (IsEditing && _history.TryRedo(out var state))
+            Restore(state);
+    }
+
+    private ProfileDraft Draft()
+    {
+        return new ProfileDraft(EditName, EditActivity?.Definition?.Id, Editor?.Write());
+    }
+
+    private void Record(string? run = null)
+    {
+        if (IsEditing && !_loading && _history.Record(Draft(), run))
+            Moved();
+    }
+
+    private void Restore(ProfileDraft state)
+    {
+        _loading = true;
+
+        try
+        {
+            EditName = state.Name;
+            EditActivity = Activities.FirstOrDefault(activity => activity.Definition?.Id == state.Activity) ?? EditActivity;
+            Load(state.Settings);
+        }
+        finally
+        {
+            _loading = false;
+        }
+
+        CheckName();
+        CheckDirty();
+        ShowChanges();
+        Moved();
+    }
+
+    private void Moved()
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+    }
+
+    private static bool SameDraft(ProfileDraft first, ProfileDraft second)
+    {
+        return first == second;
     }
 
     private void CheckDirty()
@@ -612,6 +682,7 @@ internal sealed partial class ProfileViewModel : ObservableObject
         RefreshTitle();
         CheckName();
         CheckDirty();
+        Record("name");
     }
 
     partial void OnEditActivityChanged(ActivityChoiceViewModel? value)
@@ -621,11 +692,15 @@ internal sealed partial class ProfileViewModel : ObservableObject
         {
             Load(null);
             CheckDirty();
+            Record();
         }
     }
 
     partial void OnIsEditingChanged(bool value)
     {
         UpdateCanSave();
+        Moved();
     }
+
+    private readonly record struct ProfileDraft(string Name, string? Activity, string? Settings);
 }

@@ -639,7 +639,7 @@
                                 Margin="14,4,14,8"
                                 Text="{l:Tr RouteStepsEmpty}"
                                 TextWrapping="Wrap" />
-                            <ItemsControl ItemsSource="{Binding Steps}">
+                            <ItemsControl c:ReorderDrag.Command="{Binding ReorderStepsCommand}" ItemsSource="{Binding Steps}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="routes:RouteStepViewModel">
                                         <StackPanel>
@@ -770,7 +770,7 @@
                                 Margin="14,4,14,8"
                                 Text="{l:Tr RouteActionsEmpty}"
                                 TextWrapping="Wrap" />
-                            <ItemsControl ItemsSource="{Binding Actions}">
+                            <ItemsControl c:ReorderDrag.Command="{Binding ReorderActionsCommand}" c:ReorderDrag.RemoveCommand="{Binding RemoveActionCommand}" ItemsSource="{Binding Actions}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="routes:RouteActionViewModel">
                                         <v:ActionCardView />

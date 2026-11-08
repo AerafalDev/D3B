@@ -74,6 +74,59 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task UndoTakesBackTheNameAndTheSettingsOfAProfileBeingEditedAndRedoDoesThemAgain()
+    {
+        await _store.OpenedAsync();
+
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
+
+        page.Refresh(_store.Host.Services);
+
+        var item = NewProfile(page, "Wood", TestStore.HarvestId);
+
+        Assert.False(item.CanUndo);
+
+        // A name typed letter by letter is one change to take back.
+        item.EditName = "Lu";
+        item.EditName = "Lumber";
+        item.EditName = "Lumberjack";
+
+        var job = Field<GameFieldViewModel>(item, "Job");
+
+        job.Selected = job.Options.Single(option => option.Name == "Lumberjack");
+
+        Assert.True(item.CanSave);
+        Assert.True(item.CanUndo);
+        Assert.False(item.CanRedo);
+
+        item.Undo();
+
+        Assert.Equal("Lumberjack", item.EditName);
+        Assert.Null(Field<GameFieldViewModel>(item, "Job").Selected);
+        Assert.False(item.CanSave);
+        Assert.True(item.CanRedo);
+
+        item.Undo();
+
+        Assert.Equal("Wood", item.EditName);
+        Assert.False(item.CanUndo);
+
+        item.Redo();
+        item.Redo();
+
+        Assert.Equal("Lumberjack", item.EditName);
+        Assert.Equal("Lumberjack", Field<GameFieldViewModel>(item, "Job").Selected?.Name);
+        Assert.True(item.CanSave);
+        Assert.False(item.CanRedo);
+
+        // A profile not being edited has nothing to take back.
+        item.Cancel();
+
+        Assert.False(item.CanUndo);
+        Assert.False(item.CanRedo);
+    }
+
+    [Fact]
     public async Task ANewProfileIsSavedOnceItsNameAndSettingsHold()
     {
         await _store.OpenedAsync();

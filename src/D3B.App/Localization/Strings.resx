@@ -2855,4 +2855,85 @@
   <data name="ProfileEditSteps" xml:space="preserve">
     <value>Edit the steps</value>
   </data>
+  <data name="ZoneNewName" xml:space="preserve">
+    <value>New zone</value>
+  </data>
+  <data name="ZoneNewNameNumbered" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="ZoneSaved" xml:space="preserve">
+    <value>Zone {0} saved</value>
+  </data>
+  <data name="ZoneMapName" xml:space="preserve">
+    <value>Map of the world with the zone</value>
+  </data>
+  <data name="ZoneToolSelect" xml:space="preserve">
+    <value>Move · V</value>
+  </data>
+  <data name="ZoneToolPaint" xml:space="preserve">
+    <value>Paint</value>
+  </data>
+  <data name="ZoneToolPaintTip" xml:space="preserve">
+    <value>Paint · B: click or paint maps into the zone</value>
+  </data>
+  <data name="ZoneToolErase" xml:space="preserve">
+    <value>Erase</value>
+  </data>
+  <data name="ZoneToolEraseTip" xml:space="preserve">
+    <value>Erase · E: take maps out of the zone</value>
+  </data>
+  <data name="ZoneToolSubArea" xml:space="preserve">
+    <value>Sub-area</value>
+  </data>
+  <data name="ZoneToolSubAreaTip" xml:space="preserve">
+    <value>Sub-area · R: add or take out the whole sub-area of a map</value>
+  </data>
+  <data name="ZoneHudNothing" xml:space="preserve">
+    <value>Hover a map</value>
+  </data>
+  <data name="ZoneHudSquare" xml:space="preserve">
+    <value>{0} · {1} · {2}</value>
+  </data>
+  <data name="ZoneStateHeld" xml:space="preserve">
+    <value>in the zone</value>
+  </data>
+  <data name="ZoneStateLeftOut" xml:space="preserve">
+    <value>left out</value>
+  </data>
+  <data name="ZoneStateOutside" xml:space="preserve">
+    <value>outside the zone</value>
+  </data>
+  <data name="ZoneSummaryMapsOne" xml:space="preserve">
+    <value>{0:N0} map</value>
+  </data>
+  <data name="ZoneSummaryMapsOther" xml:space="preserve">
+    <value>{0:N0} maps</value>
+  </data>
+  <data name="ZoneSummarySubAreasOne" xml:space="preserve">
+    <value>{0:N0} sub-area</value>
+  </data>
+  <data name="ZoneSummarySubAreasOther" xml:space="preserve">
+    <value>{0:N0} sub-areas</value>
+  </data>
+  <data name="ZoneSummaryLeftOutOne" xml:space="preserve">
+    <value>{0:N0} left out</value>
+  </data>
+  <data name="ZoneSummaryLeftOutOther" xml:space="preserve">
+    <value>{0:N0} left out</value>
+  </data>
+  <data name="ZoneEmptyHint" xml:space="preserve">
+    <value>Paint maps, or press a sub-area with the Sub-area tool.</value>
+  </data>
+  <data name="ZoneLegendHeld" xml:space="preserve">
+    <value>In the zone</value>
+  </data>
+  <data name="ZoneLegendLeftOut" xml:space="preserve">
+    <value>Left out</value>
+  </data>
+  <data name="ZoneSubAreasTitle" xml:space="preserve">
+    <value>Sub-areas held whole</value>
+  </data>
+  <data name="ZoneSubAreaRemove" xml:space="preserve">
+    <value>Take out of the zone</value>
+  </data>
 </root>

@@ -775,7 +775,7 @@ The target:
   from the game, variables live for a run, a character or the bots together.
 - **Routes and zones** (D299, D308): built on the world's map drawn from the client's own images, clicked, painted,
   recorded while playing or typed; the maps clicked are anchors, those between found by the world's path.
-  Made in 7d2 (D372 to D374), then 7d3 (D375 to D379), without the recording and the zones, which are 7d4:
+  Made in 7d2 (D372 to D374), then 7d3 (D375 to D379) and the zones in 7d4 (D394), without the recording, which is 7d4b:
   - `RouteAsset` (`D3B.Studio.Assets`, file `<name>.route.json`): anchors, each a map's id and whether it was pinned, the course
     (`RouteMode`: loop, one way, there and back) and what to do with a map no path reaches (`RouteUnreachable`); what a file holds
     beyond is kept (`Details`). An anchor holds its actions (`RouteAnchor.Actions`, D378): nodes of the catalog, each with the
@@ -804,6 +804,17 @@ The target:
     lists the routes a behavior follows. `SequencesViewModel` holds the editors open, `SequenceEditorViewModel` and `SequenceView` are a
     list's tab, its steps `RouteActionViewModel`s drawn by `ActionCardView`; the new-profile dialog (`NewProfileViewModel`) and the
     profile's tab (`ProfileViewModel.IsBehaviorProfile`) play a list as they play an activity.
+  - **Zones** (D394): `ZoneAsset` (`D3B.Studio.Assets`, file `<name>.zone.json`) holds sub-area ids, map ids and left-out map ids,
+    ascending, and what else the file holds (`Details`); `ZoneMaps.Resolve` and `Holds` give the maps it holds (its sub-areas' and
+    the maps named, less those left out). `ZonesViewModel` and `ZoneEditorViewModel` (`D3B.App.ViewModels.Zones`) hold the editors
+    open, in tabs (`ZoneView`) on the routes' `WorldMapView`, which draws a scene's `Squares` (`WorldMapZoneLayer`) and offers the tools
+    `Trace` (paint), `Erase` and `Region` (a whole sub-area) beside `Select`; what the editors read from the host is the routes'
+    `RouteServices`.
+  - **Undo, dragging and the keys of the editors** (D394), in `D3B.App`: `UndoHistory<T>` (`ViewModels/Studio`) holds the states of
+    the list of steps, the profile and the zone editors, `IUndoable` being what Edit's Undo and Redo follow; changes with the same
+    run (a field typed in, `SettingsEditor.TypingRun`; a gesture on the map) are one. `ReorderDrag` (`Controls`), attached to an
+    `ItemsControl` with `ReorderRequest` commands, drags rows, moves a focused row with Alt and the up and down arrows and removes it
+    with Delete; the route's steps and actions and a list's steps use it.
   - `RoutePlanner` (`D3B.Studio.Routes`): the legs between anchors by the world's path (`WorldPathfinder`), as a subscribed
     character with every zaap of the game known and one taken where it saves 5 changes (D378), each leg kept by its two
     maps; `RouteLeg` lists the maps crossed and the zaaps taken, or says none leads.

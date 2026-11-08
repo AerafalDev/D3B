@@ -3,8 +3,10 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using D3B.App.Controls;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Settings;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
@@ -17,11 +19,12 @@ namespace D3B.App.ViewModels.Sequences;
 /// Each step is a node of the catalog shown as the sentence it reads, its values tokens that edit them where they stand, as the
 /// actions of a route's steps are (D380). The file is the behavior's own, one state of chained actions, which the canvas of 7e opens too.
 /// </remarks>
-internal sealed partial class SequenceEditorViewModel : ObservableObject
+internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoable
 {
     private readonly SequencesViewModel _page;
     private BehaviorAsset _saved;
     private BehaviorSequence _baseline;
+    private readonly UndoHistory<BehaviorSequence> _history;
     private List<NodeCall> _steps;
     private bool _repeats;
     private RouteActionPickerViewModel? _picker;
@@ -57,6 +60,12 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject
     /// <summary>Gets whether the list has no step yet.</summary>
     public bool IsEmpty => _steps.Count == 0;
 
+    /// <inheritdoc/>
+    public bool CanUndo => _history.CanUndo;
+
+    /// <inheritdoc/>
+    public bool CanRedo => _history.CanRedo;
+
     /// <summary>Gets whether what is edited differs from what was saved.</summary>
     [ObservableProperty]
     public partial bool IsDirty { get; private set; }
@@ -87,6 +96,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject
         _baseline = Normalized(BehaviorSequences.Read(behavior) ?? BehaviorSequence.Empty);
         _steps = [.. _baseline.Steps];
         _repeats = _baseline.Repeats;
+        _history = new UndoHistory<BehaviorSequence>(_baseline, SameSequence);
         Name = behavior.Name;
         Offer();
         Build();
@@ -106,9 +116,40 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject
         _baseline = Normalized(sequence);
         _steps = [.. _baseline.Steps];
         _repeats = sequence.Repeats;
+        _history.Reset(Current());
         OnPropertyChanged(nameof(Repeats));
+        Moved();
         Build();
         CheckSave();
+    }
+
+    /// <inheritdoc/>
+    public void Undo()
+    {
+        if (_history.TryUndo(out var state))
+            Restore(state);
+    }
+
+    /// <inheritdoc/>
+    public void Redo()
+    {
+        if (_history.TryRedo(out var state))
+            Restore(state);
+    }
+
+    /// <summary>Moves a step to another place in the list: a drag, or the buttons and the keys.</summary>
+    /// <param name="from">The step's place now.</param>
+    /// <param name="to">The place it takes.</param>
+    public void MoveTo(int from, int to)
+    {
+        if (from < 0 || to < 0 || from >= _steps.Count || to >= _steps.Count || from == to)
+            return;
+
+        var moved = _steps[from];
+
+        _steps.RemoveAt(from);
+        _steps.Insert(to, moved);
+        Changed(rebuild: true);
     }
 
     /// <summary>Says the steps again, in the language chosen.</summary>
@@ -205,6 +246,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject
         AddStep(node);
     }
 
+    [RelayCommand]
     private void Remove(int index)
     {
         if (index < 0 || index >= _steps.Count)
@@ -214,18 +256,15 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject
         Changed(rebuild: true);
     }
 
+    [RelayCommand]
+    private void Reorder(ReorderRequest request)
+    {
+        MoveTo(request.From, request.To);
+    }
+
     private void Move(int index, int delta)
     {
-        var to = index + delta;
-
-        if (index < 0 || to < 0 || index >= _steps.Count || to >= _steps.Count)
-            return;
-
-        var moved = _steps[index];
-
-        _steps.RemoveAt(index);
-        _steps.Insert(to, moved);
-        Changed(rebuild: true);
+        MoveTo(index, index + delta);
     }
 
     private void StepEdited(int index, NodeDefinition definition, SettingsEditor editor)
@@ -236,20 +275,38 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject
         _steps[index] = RouteActionCalls.Make(definition, editor.Draft);
 
         // The forms stay as they are: rebuilding them under the hand that types in one would take its focus.
-        Changed();
+        Changed(run: editor.TypingRun is { } typing ? "step" + index.ToString(CultureInfo.InvariantCulture) + typing : null);
         Steps[index].Say();
         CheckSave();
     }
 
-    private void Changed(bool rebuild = false)
+    private void Changed(bool rebuild = false, string? run = null)
     {
+        _history.Record(Current(), run);
         IsDirty = !Current().IsSame(_baseline);
+        Moved();
 
         if (rebuild)
             Build();
 
         OnPropertyChanged(nameof(IsEmpty));
         CheckSave();
+    }
+
+    private void Restore(BehaviorSequence state)
+    {
+        _steps = [.. state.Steps];
+        _repeats = state.Repeats;
+        IsDirty = !state.IsSame(_baseline);
+        OnPropertyChanged(nameof(Repeats));
+        Moved();
+        Build();
+    }
+
+    private void Moved()
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
     }
 
     private void CheckSave()
@@ -326,6 +383,11 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject
         return _page.Game is { } game && game.Options(kind).FirstOrDefault(option => option.Id == id) is { } reference
             ? names.Name(kind, reference)
             : "#" + id.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private static bool SameSequence(BehaviorSequence first, BehaviorSequence second)
+    {
+        return first.IsSame(second);
     }
 
     private static string NameKeyOf(string node)

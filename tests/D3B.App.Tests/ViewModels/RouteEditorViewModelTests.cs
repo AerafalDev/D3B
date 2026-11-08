@@ -1,3 +1,4 @@
+using D3B.App.Controls;
 using D3B.App.Controls.WorldMaps;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
@@ -443,6 +444,50 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         editor.Undo();
 
         Assert.Equal("Wait 5 s", editor.Actions[0].Sentence);
+    }
+
+    [Fact]
+    public async Task AStepDraggedTakesItsNewPlaceIsChosenAndTheDragCanBeUndone()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.ReorderStepsCommand.Execute(new ReorderRequest(0, 2));
+        await editor.Planned;
+
+        Assert.Equal([2L, 3L, 1L, 4L], editor.Steps.Select(step => step.MapId));
+        Assert.Equal(2, editor.SelectedIndex);
+
+        // A drop on the place the step already has, or out of the route, changes nothing.
+        editor.ReorderStepsCommand.Execute(new ReorderRequest(2, 2));
+        editor.ReorderStepsCommand.Execute(new ReorderRequest(2, 9));
+        editor.ReorderStepsCommand.Execute(new ReorderRequest(-1, 0));
+
+        Assert.Equal([2L, 3L, 1L, 4L], editor.Steps.Select(step => step.MapId));
+
+        editor.Undo();
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L, 4L], editor.Steps.Select(step => step.MapId));
+        Assert.False(editor.CanUndo);
+    }
+
+    [Fact]
+    public async Task AnActionDraggedTakesItsNewPlaceInTheStep()
+    {
+        var (_, editor) = await OpenAsync(1, 3);
+
+        editor.Select(0);
+        editor.OfferedActions[4].AddCommand.Execute(null);
+        editor.OfferedActions[5].AddCommand.Execute(null);
+        editor.OfferedActions[6].AddCommand.Execute(null);
+
+        editor.ReorderActionsCommand.Execute(new ReorderRequest(0, 2));
+
+        Assert.Equal(["Take the zaap", "Go to the haven bag", "Wait 5 s"], editor.Actions.Select(action => action.Sentence));
+
+        editor.Undo();
+
+        Assert.Equal(["Wait 5 s", "Take the zaap", "Go to the haven bag"], editor.Actions.Select(action => action.Sentence));
     }
 
     [Fact]

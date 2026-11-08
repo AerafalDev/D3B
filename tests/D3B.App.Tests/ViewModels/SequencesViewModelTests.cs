@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json.Nodes;
+using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
@@ -204,6 +205,103 @@ public sealed class SequencesViewModelTests : IAsyncDisposable
         editor.Repeats = true;
 
         Assert.False(editor.IsDirty);
+    }
+
+    [Fact]
+    public async Task AStepDraggedTakesItsNewPlaceAndADropWhereItIsOrOutsideTheListChangesNothing()
+    {
+        var page = await PageAsync();
+        var list = await ListAsync("Order", Step("note", ("Text", "a")), Step("wait", ("Seconds", 5)), Step("stop"));
+        var editor = page.OpenList(list.Id)!;
+
+        editor.ReorderCommand.Execute(new ReorderRequest(0, 2));
+
+        Assert.Equal(["wait", "stop", "note"], editor.Steps.Select(step => step.NodeId));
+        Assert.True(editor.IsDirty);
+
+        editor.ReorderCommand.Execute(new ReorderRequest(1, 1));
+        editor.ReorderCommand.Execute(new ReorderRequest(1, 7));
+
+        Assert.Equal(["wait", "stop", "note"], editor.Steps.Select(step => step.NodeId));
+
+        editor.ReorderCommand.Execute(new ReorderRequest(2, 0));
+
+        Assert.Equal(["note", "wait", "stop"], editor.Steps.Select(step => step.NodeId));
+        Assert.False(editor.IsDirty);
+    }
+
+    [Fact]
+    public async Task UndoTakesBackEachChangeOfTheListAndRedoDoesItAgainAndUndoingToTheSavedListIsNotDirty()
+    {
+        var page = await PageAsync();
+        var list = await ListAsync("Order", Step("note", ("Text", "a")), Step("wait", ("Seconds", 5)));
+        var editor = page.OpenList(list.Id)!;
+
+        Assert.False(editor.CanUndo);
+
+        editor.Steps[1].MoveUpCommand.Execute(null);
+        editor.Steps[0].RemoveCommand.Execute(null);
+        editor.Repeats = true;
+
+        Assert.Equal((true, false), (editor.CanUndo, editor.CanRedo));
+
+        editor.Undo();
+
+        Assert.False(editor.Repeats);
+        Assert.Equal(["note"], editor.Steps.Select(step => step.NodeId));
+        Assert.True(editor.CanRedo);
+
+        editor.Undo();
+
+        Assert.Equal(["wait", "note"], editor.Steps.Select(step => step.NodeId));
+
+        editor.Undo();
+
+        Assert.Equal(["note", "wait"], editor.Steps.Select(step => step.NodeId));
+        Assert.False(editor.IsDirty);
+        Assert.False(editor.CanUndo);
+
+        editor.Redo();
+        editor.Redo();
+        editor.Redo();
+
+        Assert.Equal(["note"], editor.Steps.Select(step => step.NodeId));
+        Assert.True(editor.Repeats);
+        Assert.True(editor.IsDirty);
+        Assert.False(editor.CanRedo);
+
+        // A change after an undo leaves nothing to do again.
+        editor.Undo();
+        editor.Repeats = false;
+        editor.Steps[0].RemoveCommand.Execute(null);
+
+        Assert.False(editor.CanRedo);
+    }
+
+    [Fact]
+    public async Task ANumberTypedInAStepIsOneChangeToTakeBackHoweverManyKeysItTookAndAnotherFieldIsAnother()
+    {
+        var page = await PageAsync();
+        var list = await ListAsync("Waits", Step("wait", ("Seconds", 5)), Step("wait", ("Seconds", 6)));
+        var editor = page.OpenList(list.Id)!;
+
+        var first = Assert.IsType<NumberFieldViewModel>(editor.Steps[0].Editor!.FieldOf("Seconds"));
+        var second = Assert.IsType<NumberFieldViewModel>(editor.Steps[1].Editor!.FieldOf("Seconds"));
+
+        first.Value = 1;
+        first.Value = 12;
+        first.Value = 123;
+        second.Value = 9;
+
+        editor.Undo();
+
+        Assert.Equal(["Wait 123 s", "Wait 6 s"], editor.Steps.Select(step => step.Sentence));
+
+        editor.Undo();
+
+        Assert.Equal(["Wait 5 s", "Wait 6 s"], editor.Steps.Select(step => step.Sentence));
+        Assert.False(editor.IsDirty);
+        Assert.False(editor.CanUndo);
     }
 
     [Fact]

@@ -112,6 +112,7 @@ public static class AssetFiles
             AssetKind.Behavior => ReadBehavior(root) with { Id = id, Name = name, Path = path, Client = client },
             AssetKind.Profile => new ProfileAsset { Id = id, Name = name, Path = path, Client = client, Behavior = Text(root, "behavior"), Values = Values(root["values"]) },
             AssetKind.Route => ReadRoute(root) with { Id = id, Name = name, Path = path, Client = client },
+            AssetKind.Zone => ReadZone(root) with { Id = id, Name = name, Path = path, Client = client },
             _ => new PlannedAsset(kind) { Id = id, Name = name, Path = path, Client = client, Content = Rest(root) },
         };
     }
@@ -144,6 +145,9 @@ public static class AssetFiles
                 break;
             case RouteAsset route:
                 WriteRoute(route, root);
+                break;
+            case ZoneAsset zone:
+                WriteZone(zone, root);
                 break;
             case PlannedAsset planned:
                 foreach (var (key, node) in planned.Content)
@@ -306,6 +310,53 @@ public static class AssetFiles
 
             return (JsonNode)json;
         })]);
+    }
+
+    private static ZoneAsset ReadZone(JsonObject root)
+    {
+        var details = Rest(root);
+
+        details.Remove("subAreas");
+        details.Remove("maps");
+        details.Remove("excluded");
+
+        return new ZoneAsset
+        {
+            Id = "",
+            Name = "",
+            SubAreas = Numbers<int>(root, "subAreas"),
+            Maps = Numbers<long>(root, "maps"),
+            Excluded = Numbers<long>(root, "excluded"),
+            Details = details,
+        };
+    }
+
+    // Written ascending and without a repeat, so that a file reads the same however it was made.
+    private static ImmutableArray<T> Numbers<T>(JsonObject node, string key)
+        where T : struct, System.Numerics.INumber<T>
+    {
+        if (node[key] is null)
+            return [];
+
+        if (node[key] is not JsonArray items)
+            throw new AssetFormatException($"\"{key}\" is a JSON array.");
+
+        return [.. items.Select(item => item is JsonValue value && value.TryGetValue<T>(out var number) && number > T.Zero ? number : throw new AssetFormatException($"The items of \"{key}\" are ids.")).Distinct().Order()];
+    }
+
+    private static void WriteZone(ZoneAsset zone, JsonObject root)
+    {
+        foreach (var (key, node) in zone.Details)
+            root[key] = node?.DeepClone();
+
+        if (!zone.SubAreas.IsEmpty)
+            root["subAreas"] = new JsonArray([.. zone.SubAreas.Distinct().Order().Select(id => (JsonNode)JsonValue.Create(id))]);
+
+        if (!zone.Maps.IsEmpty)
+            root["maps"] = new JsonArray([.. zone.Maps.Distinct().Order().Select(id => (JsonNode)JsonValue.Create(id))]);
+
+        if (!zone.Excluded.IsEmpty)
+            root["excluded"] = new JsonArray([.. zone.Excluded.Distinct().Order().Select(id => (JsonNode)JsonValue.Create(id))]);
     }
 
     private static BehaviorAsset ReadBehavior(JsonObject root)

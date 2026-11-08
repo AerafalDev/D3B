@@ -66,12 +66,40 @@ public sealed class AssetFilesTests
     [Fact]
     public void AnAssetOfAKindALaterSessionMakesKeepsWhatItsFileHolds()
     {
-        const string json = """{"id":"z1","kind":"zone","format":1,"client":"3.7.12.12","maps":[1,2],"name":"ignored"}""";
-        var read = Assert.IsType<PlannedAsset>(AssetFiles.Read(json, "North", "North.zone.json", AssetKind.Zone));
+        const string json = """{"id":"l1","kind":"list","format":1,"client":"3.7.12.12","items":[1,2],"name":"ignored"}""";
+        var read = Assert.IsType<PlannedAsset>(AssetFiles.Read(json, "North", "North.list.json", AssetKind.List));
+
+        Assert.Equal(AssetKind.List, read.Kind);
+        Assert.Equal("[1,2]", read.Content["items"]!.ToJsonString());
+        Assert.Equal(json, JsonNode.Parse(AssetFiles.Write(read))!.ToJsonString());
+    }
+
+    [Fact]
+    public void AZoneKeepsItsSubAreasMapsAndLeftOutMapsAscendingAndWhatItsFileHoldsBesides()
+    {
+        const string json = """{"id":"z1","kind":"zone","format":1,"client":"3.7.12.12","subAreas":[9,3,3],"maps":[20,10],"excluded":[7],"color":"green"}""";
+        var read = Assert.IsType<ZoneAsset>(AssetFiles.Read(json, "North", "North.zone.json", AssetKind.Zone));
 
         Assert.Equal(AssetKind.Zone, read.Kind);
-        Assert.Equal("[1,2]", read.Content["maps"]!.ToJsonString());
-        Assert.Equal(json, JsonNode.Parse(AssetFiles.Write(read))!.ToJsonString());
+        Assert.Equal([3, 9], read.SubAreas);
+        Assert.Equal([10L, 20L], read.Maps);
+        Assert.Equal([7L], read.Excluded);
+        Assert.Equal("green", read.Details["color"]!.GetValue<string>());
+        Assert.Equal("""{"id":"z1","kind":"zone","format":1,"client":"3.7.12.12","color":"green","subAreas":[3,9],"maps":[10,20],"excluded":[7]}""", JsonNode.Parse(AssetFiles.Write(read))!.ToJsonString());
+
+        var empty = Assert.IsType<ZoneAsset>(AssetFiles.Read("""{"id":"z2","kind":"zone","format":1}""", "Empty", "Empty.zone.json", AssetKind.Zone));
+
+        Assert.True(empty.SubAreas.IsEmpty && empty.Maps.IsEmpty && empty.Excluded.IsEmpty);
+        Assert.Equal("""{"id":"z2","kind":"zone","format":1}""", JsonNode.Parse(AssetFiles.Write(empty))!.ToJsonString());
+    }
+
+    [Theory]
+    [InlineData("""{"id":"z","kind":"zone","format":1,"maps":"1"}""")]
+    [InlineData("""{"id":"z","kind":"zone","format":1,"maps":[0]}""")]
+    [InlineData("""{"id":"z","kind":"zone","format":1,"subAreas":["a"]}""")]
+    public void AZoneWhoseIdsAreNoIdsDoesNotRead(string json)
+    {
+        Assert.Throws<AssetFormatException>(() => AssetFiles.Read(json, "z", "z.zone.json", AssetKind.Zone));
     }
 
     [Theory]

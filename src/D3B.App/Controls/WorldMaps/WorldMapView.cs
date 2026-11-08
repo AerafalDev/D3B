@@ -202,25 +202,26 @@ internal sealed class WorldMapView : Control
         Settle();
     }
 
-    /// <summary>Shows the route whole, else the heart of the world.</summary>
+    /// <summary>Shows the route or the zone whole, else the heart of the world.</summary>
     public void FitScene()
     {
         if (!_hasWorld)
             return;
 
-        var stations = Scene.Stations;
+        // The route's stations, else the squares of a zone.
+        var places = Scene.Stations.Count > 0 ? Scene.Stations.Select(station => (station.X, station.Y)).ToList() : [.. (Scene.Squares ?? []).Select(square => (square.X, square.Y))];
 
-        if (stations.Count == 0)
+        if (places.Count == 0)
         {
             FitHeart();
 
             return;
         }
 
-        var left = stations.Min(station => _world.PixelOf(station.X, station.Y).X);
-        var top = stations.Min(station => _world.PixelOf(station.X, station.Y).Y);
-        var right = stations.Max(station => _world.PixelOf(station.X, station.Y).X) + _world.MapWidth;
-        var bottom = stations.Max(station => _world.PixelOf(station.X, station.Y).Y) + _world.MapHeight;
+        var left = places.Min(place => _world.PixelOf(place.X, place.Y).X);
+        var top = places.Min(place => _world.PixelOf(place.X, place.Y).Y);
+        var right = places.Max(place => _world.PixelOf(place.X, place.Y).X) + _world.MapWidth;
+        var bottom = places.Max(place => _world.PixelOf(place.X, place.Y).Y) + _world.MapHeight;
         var pad = 2 * Math.Max(_world.MapWidth, _world.MapHeight);
 
         _viewport.Fit(left - pad, top - pad, right - left + (2 * pad), bottom - top + (2 * pad), FitMargin);
@@ -277,9 +278,10 @@ internal sealed class WorldMapView : Control
         var typeface = new Typeface(GetValue(TextElement.FontFamilyProperty), FontStyle.Normal, FontWeight.Medium);
 
         WorldMapRouteLayer.Draw(context, Scene, mapWidth, mapHeight, RectOf, _hit, typeface);
+        WorldMapZoneLayer.Draw(context, Scene, mapWidth, RectOf);
 
         if (_hit.Kind is WorldMapHitKind.Square or WorldMapHitKind.Shared)
-            context.DrawRectangle(null, Tool is WorldMapTool.Trace ? _tracePen : _hoverPen, RectOf(_hit.X, _hit.Y).Deflate(1));
+            context.DrawRectangle(null, Tool is WorldMapTool.Select ? _hoverPen : _tracePen, RectOf(_hit.X, _hit.Y).Deflate(1));
     }
 
     /// <inheritdoc/>
@@ -367,11 +369,15 @@ internal sealed class WorldMapView : Control
                 PathPointPinned?.Invoke(hit.Leg, hit.X, hit.Y);
 
                 break;
+            case WorldMapHitKind.Square or WorldMapHitKind.Shared when Tool is WorldMapTool.Region:
+                SquareTraced?.Invoke(hit.X, hit.Y, false);
+
+                break;
             case WorldMapHitKind.Shared:
                 SharedPressed?.Invoke(hit.X, hit.Y, at);
 
                 break;
-            case WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace:
+            case WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace or WorldMapTool.Erase:
                 _lastSquare = (hit.X, hit.Y);
                 SquareTraced?.Invoke(hit.X, hit.Y, false);
                 StartDrag(e, Drag.Paint, at);
@@ -785,7 +791,8 @@ internal sealed class WorldMapView : Control
         {
             WorldMapHitKind.Station or WorldMapHitKind.Shared => new Cursor(StandardCursorType.Hand),
             WorldMapHitKind.PathPoint when Tool is WorldMapTool.Select => new Cursor(StandardCursorType.Hand),
-            WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace => new Cursor(StandardCursorType.Cross),
+            WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace or WorldMapTool.Erase => new Cursor(StandardCursorType.Cross),
+            WorldMapHitKind.Square or WorldMapHitKind.Shared when Tool is WorldMapTool.Region => new Cursor(StandardCursorType.Hand),
             _ => null,
         };
         InvalidateVisual();

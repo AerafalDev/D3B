@@ -2855,4 +2855,85 @@
   <data name="ProfileEditSteps" xml:space="preserve">
     <value>Modifier les étapes</value>
   </data>
+  <data name="ZoneNewName" xml:space="preserve">
+    <value>Nouvelle zone</value>
+  </data>
+  <data name="ZoneNewNameNumbered" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="ZoneSaved" xml:space="preserve">
+    <value>Zone {0} enregistrée</value>
+  </data>
+  <data name="ZoneMapName" xml:space="preserve">
+    <value>Carte du monde avec la zone</value>
+  </data>
+  <data name="ZoneToolSelect" xml:space="preserve">
+    <value>Déplacer · V</value>
+  </data>
+  <data name="ZoneToolPaint" xml:space="preserve">
+    <value>Peindre</value>
+  </data>
+  <data name="ZoneToolPaintTip" xml:space="preserve">
+    <value>Peindre · B : cliquer ou peindre des cartes dans la zone</value>
+  </data>
+  <data name="ZoneToolErase" xml:space="preserve">
+    <value>Effacer</value>
+  </data>
+  <data name="ZoneToolEraseTip" xml:space="preserve">
+    <value>Effacer · E : retirer des cartes de la zone</value>
+  </data>
+  <data name="ZoneToolSubArea" xml:space="preserve">
+    <value>Sous-zone</value>
+  </data>
+  <data name="ZoneToolSubAreaTip" xml:space="preserve">
+    <value>Sous-zone · R : ajouter ou retirer toute la sous-zone d’une carte</value>
+  </data>
+  <data name="ZoneHudNothing" xml:space="preserve">
+    <value>Survolez une carte</value>
+  </data>
+  <data name="ZoneHudSquare" xml:space="preserve">
+    <value>{0} · {1} · {2}</value>
+  </data>
+  <data name="ZoneStateHeld" xml:space="preserve">
+    <value>dans la zone</value>
+  </data>
+  <data name="ZoneStateLeftOut" xml:space="preserve">
+    <value>exclue</value>
+  </data>
+  <data name="ZoneStateOutside" xml:space="preserve">
+    <value>hors de la zone</value>
+  </data>
+  <data name="ZoneSummaryMapsOne" xml:space="preserve">
+    <value>{0:N0} carte</value>
+  </data>
+  <data name="ZoneSummaryMapsOther" xml:space="preserve">
+    <value>{0:N0} cartes</value>
+  </data>
+  <data name="ZoneSummarySubAreasOne" xml:space="preserve">
+    <value>{0:N0} sous-zone</value>
+  </data>
+  <data name="ZoneSummarySubAreasOther" xml:space="preserve">
+    <value>{0:N0} sous-zones</value>
+  </data>
+  <data name="ZoneSummaryLeftOutOne" xml:space="preserve">
+    <value>{0:N0} exclue</value>
+  </data>
+  <data name="ZoneSummaryLeftOutOther" xml:space="preserve">
+    <value>{0:N0} exclues</value>
+  </data>
+  <data name="ZoneEmptyHint" xml:space="preserve">
+    <value>Peignez des cartes, ou cliquez une sous-zone avec l’outil Sous-zone.</value>
+  </data>
+  <data name="ZoneLegendHeld" xml:space="preserve">
+    <value>Dans la zone</value>
+  </data>
+  <data name="ZoneLegendLeftOut" xml:space="preserve">
+    <value>Exclue</value>
+  </data>
+  <data name="ZoneSubAreasTitle" xml:space="preserve">
+    <value>Sous-zones entières</value>
+  </data>
+  <data name="ZoneSubAreaRemove" xml:space="preserve">
+    <value>Retirer de la zone</value>
+  </data>
 </root>

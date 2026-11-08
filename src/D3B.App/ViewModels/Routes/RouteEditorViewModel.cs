@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using D3B.App.Controls;
 using D3B.App.Controls.WorldMaps;
 using D3B.App.ViewModels.Maps;
 using D3B.App.ViewModels.Settings;
@@ -473,9 +474,14 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     /// <param name="delta">How many places towards the end, negative towards the start.</param>
     public void MoveSelected(int delta)
     {
-        var from = SelectedIndex;
-        var to = from + delta;
+        MoveStep(SelectedIndex, SelectedIndex + delta);
+    }
 
+    /// <summary>Moves a step to another place in the route, and chooses it: a drag in the inspector's list.</summary>
+    /// <param name="from">The step's place now.</param>
+    /// <param name="to">The place it takes.</param>
+    public void MoveStep(int from, int to)
+    {
         if (from < 0 || from >= _anchors.Count || to < 0 || to >= _anchors.Count || to == from)
             return;
 
@@ -485,6 +491,18 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         _anchors.Insert(to, anchor);
         SelectedIndex = to;
         Changed();
+    }
+
+    [RelayCommand]
+    private void ReorderSteps(ReorderRequest request)
+    {
+        MoveStep(request.From, request.To);
+    }
+
+    [RelayCommand]
+    private void ReorderActions(ReorderRequest request)
+    {
+        MoveAction(request.From, request.To - request.From);
     }
 
     /// <summary>Chooses another step and shows it on the map: the page keys.</summary>
@@ -788,6 +806,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         _page.Dialogs.Show(_picker);
     }
 
+    [RelayCommand]
     private void RemoveAction(int index)
     {
         if (!HasSelectedStep || index < 0 || index >= _anchors[SelectedIndex].Actions.Length)
