@@ -15,9 +15,9 @@ using D3B.Bot.Hosting;
 using D3B.Bot.Inspection;
 using D3B.Bot.Pages;
 using D3B.Bot.Tests.Activities;
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
+using D3B.Studio.Tests.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

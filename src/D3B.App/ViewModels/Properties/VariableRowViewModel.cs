@@ -2,8 +2,8 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using CommunityToolkit.Mvvm.ComponentModel;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Characters;
+using D3B.Studio.Behaviors;
 
 namespace D3B.App.ViewModels.Properties;
 

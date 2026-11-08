@@ -5,7 +5,7 @@ owed. The reasons are in [decisions.md](decisions.md), found through [decisions-
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-08, after D392. App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-08, after D393. App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -52,10 +52,12 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
 
 ## Known debt
 
-- `D3B.Bot` holds the bots' run time, harvesting, fighting and the studio's model (behaviors, routes, assets, settings): about
-  24,000 lines in 365 files. Splitting the studio's model from it is worth deciding before 7e to 7i add the canvas, nodes and
-  debugging.
-- `D3B.Storage` references `D3B.Bot`, and `D3B.App` reaches `D3B.Bot` only through it.
+- `D3B.Bot` is about 17,900 lines in 224 files and `D3B.Studio` about 6,300 in 141 (D393). The border is the compiler's, one way:
+  `D3B.Studio` references `D3B.Bot`, which knows nothing of it. Left over: `D3B.Studio.Routes` reaches the harvest and the fight
+  through `MapHarvest` and `MapFight`, now public, so a module of `D3B.Bot` cannot declare nodes (the node API is the studio's):
+  a future module in a project of its own can. Nine members and types of `D3B.Bot` became public so that the studio could use them
+  (`BotContext.Actor`, `BotActor.Time`, `Log`, `PauseAfterStep`, `SettingDefinition.TryRead`, `ActivitySettingsBuilder`'s
+  constructor and `Build`, `MapHarvest`, `MapFight`): a narrower seam would be a task of its own.
 - Files over 900 lines: `FightJudge`, `RouteEditorViewModel`, `AssetsViewModel`, `HarvestActivity`.
 - `GroupJudge.OddsOf`, `Beats`, `Winnable` and `Share` are called by nothing in `src/` since D387, only by
   `scripts/fights/HuntBench.cs` and their tests. D387 kept them on purpose, for that bench: if the bench is dropped, they go

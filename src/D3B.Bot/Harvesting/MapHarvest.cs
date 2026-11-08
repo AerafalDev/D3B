@@ -11,7 +11,7 @@ namespace D3B.Bot.Harvesting;
 /// The activity chooses its next element with this and goes on through its zone; a route's action (D384) harvests what the
 /// map offers of its list and goes on to the route's next step, the route and not the zone deciding where.
 /// </remarks>
-internal static class MapHarvest
+public static class MapHarvest
 {
     // An element the server keeps answering "busy" to is left, so that the harvest does not spin on it.
     private const int MostBusy = 3;

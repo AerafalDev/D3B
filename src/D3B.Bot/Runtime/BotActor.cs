@@ -4,7 +4,6 @@ using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Journal;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
@@ -141,9 +140,11 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 
     internal BankDirectory Banks => _banks.Value;
 
-    internal TimeProvider Time { get; }
+    /// <summary>Gets the clock the bot reckons its times by.</summary>
+    public TimeProvider Time { get; }
 
-    internal ILogger Log => _log;
+    /// <summary>Gets the bot's log.</summary>
+    public ILogger Log => _log;
 
     /// <summary>Gets how long the bot's behaviors wait now, which the app may change while they run (D151).</summary>
     internal BotDelays Delays => _delays();
@@ -237,7 +238,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     }
 
     /// <summary>Pauses the bot once its step is over, such as after a fight an activity's settings pause it after: it starts nothing until <see cref="Resume"/> (D144).</summary>
-    internal void PauseAfterStep()
+    public void PauseAfterStep()
     {
         Post(new Pausing(FromApp: false));
     }

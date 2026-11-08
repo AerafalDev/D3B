@@ -10,7 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Assets;
-using D3B.Bot.Assets;
+using D3B.Studio.Assets;
 
 namespace D3B.App.Views;
 

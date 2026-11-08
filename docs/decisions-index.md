@@ -441,3 +441,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D390](decisions.md#d390-the-ai-weighs-next-turns-damage-a-little-more-so-that-it-flees-less) The AI weighs next turn's damage a little more, so that it flees less (2026-11-06)
 - [D391](decisions.md#d391-the-automatic-profiles-go-through-several-sub-areas-in-turn-and-the-harvest-varies-its-professions) The automatic profiles go through several sub-areas in turn, and the harvest varies its professions (2026-11-08)
 - [D392](decisions.md#d392-the-harvests-journey-stops-on-a-crossed-map-where-a-wanted-element-is-offered-and-the-harvest-rotates-through-ten-sub-areas) The harvest's journey stops on a crossed map where a wanted element is offered, and the harvest rotates through ten sub-areas (2026-11-08)
+
+## Architecture (D393)
+
+- [D393](decisions.md#d393-the-studios-model-leaves-d3bbot-for-a-project-of-its-own-d3bstudio) The studio's model leaves `D3B.Bot` for a project of its own, `D3B.Studio` (2026-11-08)

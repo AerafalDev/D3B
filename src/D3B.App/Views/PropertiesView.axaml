@@ -5,7 +5,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
-    xmlns:ba="clr-namespace:D3B.Bot.Assets;assembly=D3B.Bot"
+    xmlns:ba="clr-namespace:D3B.Studio.Assets;assembly=D3B.Studio"
     xmlns:p="clr-namespace:D3B.App.ViewModels.Properties"
     xmlns:routes="clr-namespace:D3B.App.ViewModels.Routes"
     xmlns:v="clr-namespace:D3B.App.Views"

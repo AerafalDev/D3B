@@ -1,5 +1,5 @@
-using D3B.Bot.Behaviors;
 using D3B.Bot.Tests.Runtime;
+using D3B.Studio.Behaviors;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;

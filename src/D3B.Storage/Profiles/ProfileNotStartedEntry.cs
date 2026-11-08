@@ -1,5 +1,5 @@
-using D3B.Bot.Behaviors;
 using D3B.Bot.Journal;
+using D3B.Studio.Behaviors;
 
 namespace D3B.Storage.Profiles;
 

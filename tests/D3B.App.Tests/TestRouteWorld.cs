@@ -1,12 +1,12 @@
 using D3B.App.ViewModels.Routes;
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
-using D3B.Bot.Behaviors.Nodes;
-using D3B.Bot.Routes;
 using D3B.Data.World;
 using D3B.Data.WorldMaps;
 using D3B.Engine.World;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
+using D3B.Studio.Behaviors.Nodes;
+using D3B.Studio.Routes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests;

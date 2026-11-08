@@ -7,12 +7,12 @@ using D3B.App.Localization;
 using D3B.App.ViewModels.Sequences;
 using D3B.App.ViewModels.Settings;
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
 using D3B.Data.Texts;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;

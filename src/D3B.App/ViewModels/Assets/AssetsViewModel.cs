@@ -4,8 +4,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
-using D3B.Bot.Assets;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Assets;

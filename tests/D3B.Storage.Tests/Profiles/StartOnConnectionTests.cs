@@ -1,9 +1,9 @@
-using D3B.Bot.Behaviors;
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
 using D3B.Protocol.Game;
 using D3B.Storage.Profiles;
+using D3B.Studio.Behaviors;
+using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.Storage.Tests.Profiles;
 

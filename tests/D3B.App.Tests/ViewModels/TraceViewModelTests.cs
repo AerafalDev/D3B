@@ -1,8 +1,8 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels.Bottom;
 using D3B.Bot.Activities;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Localization;
+using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

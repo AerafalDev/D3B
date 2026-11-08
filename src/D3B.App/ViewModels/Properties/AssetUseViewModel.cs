@@ -1,5 +1,5 @@
-using D3B.Bot.Assets;
 using D3B.Bot.Characters;
+using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels.Properties;
 

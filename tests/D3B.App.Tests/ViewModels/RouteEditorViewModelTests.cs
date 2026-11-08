@@ -3,7 +3,7 @@ using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
-using D3B.Bot.Assets;
+using D3B.Studio.Assets;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -476,7 +476,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
     public async Task TheActionsAreSavedWithTheRouteAndReadBackAndAnActionNobodyKnowsIsKeptAsItIs()
     {
         var (routes, editor) = await OpenAsync(1, 3);
-        var unknown = new D3B.Bot.Behaviors.NodeCall("later.thing", System.Collections.Immutable.ImmutableSortedDictionary<string, System.Text.Json.Nodes.JsonNode?>.Empty.Add("Mood", "calm"));
+        var unknown = new D3B.Studio.Behaviors.NodeCall("later.thing", System.Collections.Immutable.ImmutableSortedDictionary<string, System.Text.Json.Nodes.JsonNode?>.Empty.Add("Mood", "calm"));
 
         var saved = await _store.Assets.SaveAsync((_store.Assets.Find<RouteAsset>("r1")!) with { Anchors = [new RouteAnchor { MapId = 1, Actions = [unknown] }, new RouteAnchor { MapId = 3 }] }, TestContext.Current.CancellationToken);
 

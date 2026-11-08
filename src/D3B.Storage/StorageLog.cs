@@ -1,4 +1,4 @@
-using D3B.Bot.Behaviors;
+using D3B.Studio.Behaviors;
 using Microsoft.Extensions.Logging;
 
 namespace D3B.Storage;

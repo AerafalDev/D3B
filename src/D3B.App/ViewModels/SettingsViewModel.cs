@@ -5,11 +5,11 @@ using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels.AppSettings;
-using D3B.Bot.Assets;
 using D3B.Bot.Data;
 using D3B.Bot.Runtime;
 using D3B.Network.Relay;
 using D3B.Storage;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

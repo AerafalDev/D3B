@@ -5,10 +5,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
-using D3B.Bot.Routes;
 using D3B.Bot.Settings;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
+using D3B.Studio.Routes;
 
 namespace D3B.App.ViewModels.Sequences;
 

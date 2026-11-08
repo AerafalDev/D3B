@@ -1,11 +1,11 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Assets;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
+using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -353,10 +353,10 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
 
         var (assets, _) = Panel();
 
-        assets.ToggleKind(D3B.Bot.Assets.AssetKind.Profile);
+        assets.ToggleKind(D3B.Studio.Assets.AssetKind.Profile);
 
         Assert.True(assets.IsFiltered);
-        Assert.DoesNotContain(assets.Rows, row => row.AssetKind is D3B.Bot.Assets.AssetKind.Profile);
+        Assert.DoesNotContain(assets.Rows, row => row.AssetKind is D3B.Studio.Assets.AssetKind.Profile);
 
         assets.ShowAllKinds();
         assets.CollapseAll();

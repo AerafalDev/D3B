@@ -1,8 +1,8 @@
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using D3B.Bot.Assets;
 using D3B.Bot.Settings;
+using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels.Settings;
 

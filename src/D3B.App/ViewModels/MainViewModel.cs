@@ -17,12 +17,12 @@ using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Sequences;
 using D3B.App.ViewModels.Statistics;
 using D3B.App.ViewModels.Studio;
-using D3B.Bot.Assets;
 using D3B.Bot.Characters;
 using D3B.Bot.Pages;
 using D3B.Data;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;

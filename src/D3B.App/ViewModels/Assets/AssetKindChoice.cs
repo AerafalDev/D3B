@@ -1,5 +1,5 @@
 using Avalonia.Media;
-using D3B.Bot.Assets;
+using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels.Assets;
 

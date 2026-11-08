@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
 using D3B.Bot.Npcs;
 using D3B.Bot.Settings;
 using D3B.Data;
@@ -12,6 +11,7 @@ using D3B.Data.Maps;
 using D3B.Data.Monsters;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Settings;

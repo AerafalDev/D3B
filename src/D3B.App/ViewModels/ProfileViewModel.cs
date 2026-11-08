@@ -3,9 +3,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.ViewModels.Settings;
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;

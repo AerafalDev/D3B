@@ -1,6 +1,6 @@
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
+using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.Storage.Tests.Accounts;
 

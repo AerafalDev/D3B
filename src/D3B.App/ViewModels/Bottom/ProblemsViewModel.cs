@@ -3,10 +3,10 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
-using D3B.Bot.Assets;
 using D3B.Bot.Characters;
 using D3B.Bot.Hosting;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
