@@ -8759,9 +8759,9 @@ first two of D395's questions; the rest of D395 stands as proposed.*
   the Details already list a step's own figures). Variant A as the main path and variant C (components) are not made.
   The model stays D395's: a clip is derived by grouping equal consecutive actions of the anchors, `RouteAnchor.Actions` and the
   file unchanged (D378), to be tested in 7r3 on every kind of action before the editor writes through it.
-- **Still to decide, one at a time**: the words (profile, route, sequence, as the mockup has them, or others); the order of the
-  sessions 7r2 to 7r6 (D395's table is the lead's). Nothing of it blocks 7r2's start on the frame, which holds none of the
-  words in question but the Add menu's.
+- **The words stay**, the owner's choice: profile, route, sequence (and zone, character), as the mockup and the app already have
+  them; "mission" and the intent-first vocabulary are dropped. The Add menu offers Profile, Route, Zone, Sequence, Folder.
+- **Still to decide**: the order of the sessions 7r2 to 7r6 (D395's table is the lead's). Nothing blocks 7r2's start.
 - **Next**: session 7r2, the engine's frame, in a session of its own; no code was written in 7r.
 
 ## Open questions
