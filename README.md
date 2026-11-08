@@ -227,7 +227,9 @@ flowchart LR
 
 | Document | Content |
 | --- | --- |
+| [docs/status.md](docs/status.md) | Where the project stands: what exists, what is not measured, what comes next, the known debt. |
 | [docs/decisions.md](docs/decisions.md) | The brief, every decision with its reasons and what it rejected, and the open questions. |
+| [docs/decisions-index.md](docs/decisions-index.md) | One line per decision, grouped by step, linking to its entry. |
 | [docs/architecture.md](docs/architecture.md) | How D3B is built: projects, modules, run time, protocol, data, app, fights. |
 | [docs/roadmap.md](docs/roadmap.md) | The steps in order, what each one did, and the next one. |
 | [docs/client.md](docs/client.md) | What the official client holds that D3B uses, measured. |
