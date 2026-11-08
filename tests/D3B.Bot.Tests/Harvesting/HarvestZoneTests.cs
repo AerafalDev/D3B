@@ -220,6 +220,11 @@ public sealed class HarvestZoneTests : IAsyncDisposable
         Assert.All(zone.Targets.Values, target => Assert.Equal(0, target.Priority));
         Assert.DoesNotContain(184, zone.Harvests.Keys);
         Assert.True(highest[TestPlay.ChestnutSkillId].Priority < highest[TestPlay.TreeSkillId].Priority);
+
+        // Taking the professions in turn starts from the highest level first, which the activity then orders by profession (D391).
+        var balanced = HarvestZone.TargetsOf(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [TestPlay.Lumberjack], Order = HarvestOrder.Balanced }, _play.Tables.Jobs);
+
+        Assert.Equal(highest, balanced);
     }
 
     [Fact]

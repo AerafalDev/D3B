@@ -283,6 +283,16 @@ seen so.
   nothing (`HarvestPlace`, `AutomaticPlace`, D166, D264), its name before
   the tour on the card; a zaap only when it saves the profile's number of maps, 5 by default (`HarvestSettings.ZaapSaving`,
   D167). The module reads a profile stored before as it harvested, and gives six presets (D168).
+- **Harvesting, rotating** (D391): a place the activity chooses is several sub-areas in turn, not one (`HarvestSettings.Rotation`, 5
+  by default). `AutomaticPlace.Reckon` ranks the sub-areas and gives each profession's top, the sub-area drawing its highest-level
+  resource on the most maps; `PlaceRotation.Draw`, shared with the fight, draws the rotation from the ten richest the character
+  reaches (`SubAreaReach`), those worth under a quarter of the richest left out, the tops kept up to half the count and the rest
+  drawn at random, the richer likelier, an unreachable one replaced by the next. Each zone of the rotation has its own tour
+  (`HarvestRotationZone`); a tour done or held back by growing resources, `HarvestRotation.Next` goes to the zone left longest ago
+  that has maps to go through, and the activity waits only when none has (`WakeAt`); once every zone was left, the rotation is
+  drawn again at the character's levels. The preset of every profession sets `HarvestOrder.Balanced`: the tops are taken in the
+  order of the professions harvested least lately and `HarvestBalance`, which counts the last 50 harvests by profession, gives
+  the resources of a map their priority.
 - **Fights** (D179), in `D3B.Bot.Fights`: the character's state holds its fight (`CharacterState.Fight`, `FightState`) from
   the fight's context to the roleplay's: its phase, the character's team and both teams' placement cells, whether the
   character is ready, the fighters by id (`Fighter`: team, cell, life and most life, AP and MP, level, breed or monster and
@@ -333,7 +343,8 @@ seen so.
   that holds such a group, gone through or not (D259), isolated maps last when the settings take them
   (`HuntingGround`: the sub-areas chosen, or the one whose monsters are worth the most at the character's level among
   those of at least 10 maps on a world map; the maps reached only far round left out, `IsolatedMaps`, shared with
-  harvesting's zone), the tour starting again once every map was. Its fights are its own, the AI playing them; it counts
+  harvesting's zone), the tour starting again once every map was; chosen by the activity, the ground is a rotation of sub-areas
+  as harvesting's (`HuntingGround.Rank`, `FightRotationZone`, D391). Its fights are its own, the AI playing them; it counts
   them won and lost, banks its loot, and answers a lost fight as harvesting does. Its sub-areas are suggested by the
   monsters chosen (`GameReferences.SubAreasLiving`). `FightPreviews`, one per host, says in the profile editor what the
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared

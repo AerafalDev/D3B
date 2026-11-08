@@ -8556,6 +8556,46 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
 - **Not measured.** The change on a fight: the replay of the captured turns (`scripts/fights.cs --turns`) was not run, and the
   player's capture was not read. If the AI still flees, the next step is to replay that capture and read the scores of its turns.
 
+## D391: The automatic profiles go through several sub-areas in turn, and the harvest varies its professions
+
+*2026-11-08, step 9, the owner's request after the automatic harvest and the five professions' kept to one zone, redoing the same maps, and the automatic harvest focused on one profession. Refines D145, D166, D236, D264.*
+
+- **Reported.** The owner's characters stayed in one zone and redid its maps, instead of leaving it to let the resources grow
+  back, and the automatic harvest harvested mostly one profession. Read in the code: the place was chosen again at the end of a
+  tour, the ranking moves only with a level gained, so the same sub-area came back and the activity waited for it (D145); the
+  fighting activity had the same pattern. The ranking sums the resources' worth, which favours the most advanced profession,
+  and the automatic profile harvested the highest level first (D165), which only orders a map.
+- **A rotation.** Where the activity chooses the place, harvesting and fighting go through several sub-areas in turn, a setting
+  "Sub-areas in rotation" of 1 to 10, 5 by default, in the place's section; a profile stored before has none and takes 5, so it
+  rotates from the next update, and 1 is the old behavior. The sub-areas are drawn from the ten richest the character can travel
+  to (`PlaceRotation`): those worth under a quarter of the richest are left out so that a rotation does not send the character
+  far for a few maps, an unreachable one is replaced by the next of the ranking, and a rotation holds fewer when the pool does.
+  The owner's words: the draw is at random, "but take care if the profession's high-level resources are in it, and do not
+  ignore the others". So up to half the count, rounded up, are given: for the harvest the zone of each profession's
+  highest-level resource (`AutomaticPlace.Reckon`'s tops), for the fight the richest sub-area; the others are drawn from the
+  pool, the richer likelier, none left out. The same for "Automatic harvest", the five professions' and "Automatic fight".
+- **The order of the rotation.** Each zone keeps its own tour (`HarvestRotationZone`, `FightRotationZone`), so that what was
+  gone through and what grows back is as it was left. A tour done, or held back by resources still growing, the activity goes to
+  the zone left longest ago that has maps to go through (`HarvestRotation.Next`), and waits only when none has: every zone still
+  grows back, or a tour of it harvested nothing a minute ago (D128, D145); a zone the character cannot reach is dropped, the
+  activity ending when none is left. Once every zone was left the rotation is drawn again, at the character's levels now and
+  with what the host has learned since (D166).
+- **The professions in turn.** `HarvestOrder.Balanced`, "One profession after the other": the professions' zones are shared (the
+  tops are taken in the order of the professions harvested least lately, so that a rotation of 3 over 5 professions gives each
+  its turn) and, on a map, the profession harvested least lately comes first, then its highest level (`HarvestBalance`: the last 50
+  harvests count, a harvest lasting about the same whatever it gathers, D128). It is the preset "Automatic harvest"'s order; the
+  professions' own presets keep the highest level first and, having one profession, are unchanged but for their rotation. The
+  given profiles are built from the code at each launch (D389), so every install has it; a copy keeps its own order.
+- **Not measured.** In game, and the choice of 5, 10, a quarter and 50 on the owner's characters: they are the lead's reckoning,
+  not measures. The rotation draws with `Random`, which D2's ban on random timings does not touch, since it chooses places, not
+  moments. The profile editor's preview still draws the first sub-area of each character.
+- **Rejected.**
+  - The rotation the 5 richest alone: all of the most advanced profession's.
+  - A priority on the map alone: a map's resources are all harvested, the order only orders them, and the zones stayed one
+    profession's.
+  - The nearest ready zone next: it could rotate between two neighbours.
+  - A separate "share the professions" setting beside the order: two settings for one choice.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

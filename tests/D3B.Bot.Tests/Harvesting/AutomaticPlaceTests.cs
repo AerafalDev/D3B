@@ -132,6 +132,25 @@ public sealed class AutomaticPlaceTests : IAsyncDisposable
     }
 
     [Fact]
+    public void EachProfessionsTopIsTheSubAreaDrawingItsHighestLevelResourceOnTheMostMaps()
+    {
+        var graphics = new GraphicSkills();
+        var settings = Lumberjack(safeLevel: false);
+        var targets = HarvestZone.TargetsOf(settings, _play.Tables.Jobs).Values;
+        var levels = new Dictionary<int, int> { [TestPlay.Lumberjack] = 50 };
+
+        // While no graphic is learned, what the sub-areas list says nothing of where a resource grows most.
+        Assert.Empty(AutomaticPlace.Reckon(targets, 50, levels, false, false, _play.World.Atlas, _play.World.Graph, _play.Places, graphics).Tops);
+
+        graphics.Learn(TestPlay.TreeGfxId, [TestPlay.TreeSkillId]);
+
+        var ranking = AutomaticPlace.Reckon(targets, 50, levels, false, false, _play.World.Atlas, _play.World.Graph, _play.Places, graphics);
+
+        Assert.Equal(TestPlay.SubAreaId, ranking.Tops[TestPlay.Lumberjack]);
+        Assert.Equal(AutomaticPlace.Rank(targets, 50, levels, false, false, _play.World.Atlas, _play.World.Graph, _play.Places, graphics), ranking.Candidates);
+    }
+
+    [Fact]
     public void NothingTheCharacterCanHarvestAtItsLevelsLeavesNoPlace()
     {
         Assert.Empty(Rank(new HarvestSettings { Resources = [TestPlay.Chestnut], Place = HarvestPlace.Automatic }, 50, 1));

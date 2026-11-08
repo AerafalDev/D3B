@@ -22,7 +22,8 @@ namespace D3B.Bot.Fighting;
 /// made again; a group the server answers nothing for is left for the rest of the visit. A map with no such group is gone
 /// through, and the step travels to the nearest map of the zone still to go through, isolated maps last when the settings
 /// take them (D149, D245), stopping on the first map of the zone on its way that holds such a group; once every map was, the
-/// tour starts again, the groups having come back.
+/// tour starts again, the groups having come back. When the activity chooses the place it hunts in several sub-areas in turn
+/// (<see cref="PlaceRotation"/>, D391), each keeping its own tour, and goes on to the one left longest ago.
 /// </para>
 /// <para>
 /// A fight is the activity's own: the AI plays it (<see cref="BotActivity.FightsItsFights"/>), then the run answers it. A
@@ -50,12 +51,12 @@ public sealed class FightActivity : BotActivity
     private readonly WorldAtlas _atlas;
     private readonly WorldGraph _graph;
     private readonly GameTables _tables;
-    private readonly HashSet<long> _visited = [];
-    private readonly HashSet<long> _unreachable = [];
+    private readonly Random _random;
     private readonly HashSet<long> _skipped = [];
     private readonly HashSet<int> _unusable = [];
     private readonly Dictionary<int, long> _loot = [];
-    private HuntingGround? _ground;
+    private List<FightRotationZone> _grounds = [];
+    private FightRotationZone? _current;
     private long? _skippedOn;
     private ActivityReport? _report;
     private ActivityStatistics? _statistics;
@@ -91,7 +92,8 @@ public sealed class FightActivity : BotActivity
     /// <param name="settings">Which groups to attack, where, the upkeep and the bank.</param>
     /// <param name="world">The installed build's world: the zone's maps.</param>
     /// <param name="tables">The installed build's tables: the monsters and spells.</param>
-    public FightActivity(FightSettings settings, GameWorld world, GameTables tables)
+    /// <param name="random">The draw of the sub-areas the activity hunts in turn when it chooses the place (D391); the shared one when none is given.</param>
+    public FightActivity(FightSettings settings, GameWorld world, GameTables tables, Random? random = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(world);
@@ -101,6 +103,7 @@ public sealed class FightActivity : BotActivity
         _atlas = world.Atlas;
         _graph = world.Graph;
         _tables = tables;
+        _random = random ?? Random.Shared;
         _report = new ActivityReport { Doing = GameText.Of(FightTexts.Text("DoingStart")) };
     }
 
@@ -126,9 +129,9 @@ public sealed class FightActivity : BotActivity
         if (await HealAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
 
-        var ground = GroundOf(context);
+        var current = CurrentOf(context);
 
-        if (ground.Maps.ContainsKey(mapId))
+        if (current.Ground.Maps.ContainsKey(mapId))
         {
             if (GroupTo(context) is { } group)
             {
@@ -137,10 +140,10 @@ public sealed class FightActivity : BotActivity
                 return true;
             }
 
-            _visited.Add(mapId);
+            current.Visited.Add(mapId);
         }
 
-        await GoOnAsync(context, ground, cancellationToken).ConfigureAwait(false);
+        await GoOnAsync(context, current, cancellationToken).ConfigureAwait(false);
 
         return true;
     }
@@ -252,24 +255,70 @@ public sealed class FightActivity : BotActivity
         _regaining = false;
     }
 
-    private HuntingGround GroundOf(BotContext context)
+    private FightRotationZone CurrentOf(BotContext context)
     {
-        if (_ground is { } ground)
-            return ground;
+        if (_current is { } current)
+            return current;
 
-        var state = context.State;
+        Draw(context);
 
-        ground = HuntingGround.Of(_settings, _atlas, _graph, _tables.Monsters, state.Level ?? 1, state.SubscriptionEnd is { } end && end > context.Time.GetUtcNow());
-
-        if (ground.Maps.Count is 0)
+        if (_current is not { } first)
             throw Failure("No sub-area holds monsters to fight at the character's level.", "FailNowhere");
 
-        _ground = ground;
+        Say(first);
 
-        if (ground.SubAreas is [var subArea])
+        return first;
+    }
+
+    // Draws the sub-areas the activity hunts in turn, the ones it already went through keeping their maps (D391).
+    private void Draw(BotContext context)
+    {
+        var state = context.State;
+        var level = state.Level ?? 1;
+        var subscribed = state.SubscriptionEnd is { } end && end > context.Time.GetUtcNow();
+        var drawn = new List<FightRotationZone>();
+
+        if (_settings.Place is FightPlace.Automatic)
+        {
+            var ranking = HuntingGround.Rank(_settings, _atlas, _graph, _tables.Monsters, level, subscribed);
+            var ids = ranking.Count is 0
+                ? []
+                : PlaceRotation.Draw(ranking, [ranking[0].SubAreaId], _settings.Rotation, SubAreaReach.Of(context, _atlas), _random);
+
+            // None reachable: the richest, which the journey will say it cannot reach.
+            foreach (var subArea in ids.Count is 0 && ranking.Count > 0 ? [ranking[0].SubAreaId] : ids)
+            {
+                var member = _grounds.Find(ground => ground.SubAreaId == subArea) ?? new FightRotationZone(subArea, HuntingGround.In(_settings, _atlas, _graph, [subArea]));
+
+                if (member.Ground.Maps.Count is 0)
+                    continue;
+
+                member.Done = false;
+                drawn.Add(member);
+            }
+        }
+        else
+        {
+            var ground = HuntingGround.Of(_settings, _atlas, _graph, _tables.Monsters, level, subscribed);
+
+            if (ground.Maps.Count > 0)
+                drawn.Add(_grounds.Find(member => member.SubAreaId is null) ?? new FightRotationZone(null, ground));
+        }
+
+        // Nothing drawn: the grounds the activity has stay, as a level gained moves nothing for want of a sub-area (D166).
+        if (drawn.Count is 0)
+            return;
+
+        _grounds = drawn;
+
+        if (_current is null || !drawn.Contains(_current))
+            _current = drawn[0];
+    }
+
+    private void Say(FightRotationZone zone)
+    {
+        if (zone.Ground.SubAreas is [var subArea])
             Publish(GameText.Of(FightTexts.Text("DoingPlace"), GameTextValue.SubArea(subArea)));
-
-        return ground;
     }
 
     private MapMonsterGroup? GroupTo(BotContext context)
@@ -326,29 +375,19 @@ public sealed class FightActivity : BotActivity
         _skipped.Add(group.ActorId);
     }
 
-    private async Task GoOnAsync(BotContext context, HuntingGround ground, CancellationToken cancellationToken)
+    private async Task GoOnAsync(BotContext context, FightRotationZone current, CancellationToken cancellationToken)
     {
-        var remaining = ground.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map)).ToHashSet();
+        var ground = current.Ground;
+        var remaining = ground.Maps.Keys.Where(map => !current.Visited.Contains(map) && !current.Unreachable.Contains(map)).ToHashSet();
 
         if (remaining.Count is 0)
         {
-            var here = context.State.MapId;
-
-            _visited.Clear();
-            _skipped.Clear();
-
-            // A level gained since moves the place the activity chose at the next tour (D166).
-            if (_settings.Place is FightPlace.Automatic)
-                _ground = null;
-
-            // A zone the character stands on alone: the next tour would start where it is, the groups not back yet.
-            if (here is { } mapId && GroundOf(context).Maps.Keys.All(map => map == mapId || _unreachable.Contains(map)))
-                await context.WaitUntilAsync(state => state.MonsterGroups.Count > 0, _respawnDelay, cancellationToken).ConfigureAwait(false);
+            await RotateAsync(context, current, cancellationToken).ConfigureAwait(false);
 
             return;
         }
 
-        var inZone = context.State.MapId is { } current && ground.Maps.ContainsKey(current);
+        var inZone = context.State.MapId is { } here && ground.Maps.ContainsKey(here);
 
         // Isolated maps last, once the others were gone through (D149).
         var near = remaining.Where(map => !ground.Isolated.Contains(map)).ToHashSet();
@@ -374,16 +413,56 @@ public sealed class FightActivity : BotActivity
                 if (++_failedJourneys >= MostFailedJourneys)
                 {
                     foreach (var map in sought)
-                        _unreachable.Add(map);
+                        current.Unreachable.Add(map);
 
                     _failedJourneys = 0;
 
-                    if (ground.Maps.Keys.All(_unreachable.Contains))
-                        throw Failure("No map of the zone can be reached.", "FailUnreachable");
+                    if (ground.Maps.Keys.All(current.Unreachable.Contains))
+                    {
+                        // A ground of the rotation the character cannot reach is left for the others; the activity ends when none is left (D391).
+                        if (_grounds.Count < 2 || _settings.Place is not FightPlace.Automatic)
+                            throw Failure("No map of the zone can be reached.", "FailUnreachable");
+
+                        _grounds.Remove(current);
+                        _current = _grounds[0];
+                    }
                 }
 
                 break;
         }
+    }
+
+    // The ground has no map left to go through: the next tour is made in the ground of the rotation left longest ago, and the groups
+    // have come back in the ones left (D391).
+    private async Task RotateAsync(BotContext context, FightRotationZone current, CancellationToken cancellationToken)
+    {
+        var here = context.State.MapId;
+
+        current.Visited.Clear();
+        _skipped.Clear();
+        current.CompletedAt = context.Time.GetUtcNow();
+        current.Done = true;
+
+        // A level gained since moves the place the activity chose at the next round (D166).
+        if (_settings.Place is FightPlace.Automatic && _grounds.TrueForAll(ground => ground.Done))
+            Draw(context);
+
+        var next = _grounds
+            .Select((ground, index) => (ground, index))
+            .Where(pair => pair.ground.Ground.Maps.Keys.Any(map => !pair.ground.Unreachable.Contains(map)))
+            .OrderBy(pair => pair.ground.CompletedAt ?? DateTimeOffset.MinValue)
+            .ThenBy(pair => pair.index)
+            .Select(pair => pair.ground)
+            .FirstOrDefault() ?? current;
+
+        if (next != _current)
+            Say(next);
+
+        _current = next;
+
+        // A zone the character stands on alone: the next tour would start where it is, the groups not back yet.
+        if (here is { } mapId && _grounds.TrueForAll(ground => ground.Ground.Maps.Keys.All(map => map == mapId || ground.Unreachable.Contains(map))))
+            await context.WaitUntilAsync(state => state.MonsterGroups.Count > 0, _respawnDelay, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<bool> HealAsync(BotContext context, CancellationToken cancellationToken)

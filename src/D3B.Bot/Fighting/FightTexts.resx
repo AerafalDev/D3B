@@ -87,7 +87,16 @@
     <value>Place</value>
   </data>
   <data name="PlaceHelp" xml:space="preserve">
-    <value>Automatic: the sub-area holding the most monsters at the character's level, chosen again at each tour.</value>
+    <value>Automatic: the sub-areas holding the most monsters at the character\'s level, hunted in turn.</value>
+  </data>
+  <data name="Rotation" xml:space="preserve">
+    <value>Sub-areas in rotation</value>
+  </data>
+  <data name="RotationUnit" xml:space="preserve">
+    <value>sub-areas</value>
+  </data>
+  <data name="RotationHelp" xml:space="preserve">
+    <value>The activity hunts in that many of the richest ten, one after the other, drawn again once each was gone through; the richest is always among them. 1 stays in the richest. Sub-areas worth under a quarter of the richest are left out.</value>
   </data>
   <data name="PlaceAutomatic" xml:space="preserve">
     <value>Automatic</value>

@@ -42,6 +42,10 @@ public sealed class FightingModule : IModule
 
         settings.Section(FightTexts.Text("SectionWhere"));
         settings.Choice(s => s.Place, FightTexts.Text("Place"), place => FightTexts.Text($"Place{place}")).Help(FightTexts.Text("PlaceHelp"));
+        settings.Number(s => s.Rotation, FightTexts.Text("Rotation"), 1, PlaceRotation.PoolSize)
+            .Unit(FightTexts.Text("RotationUnit"))
+            .Help(FightTexts.Text("RotationHelp"))
+            .VisibleWhen(s => s.Place is FightPlace.Automatic);
         settings.Area(s => s.Area, FightTexts.Text("Area"))
             .Help(FightTexts.Text("AreaHelp"))
             .VisibleWhen(s => s.Place is FightPlace.Chosen);

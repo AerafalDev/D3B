@@ -143,7 +143,8 @@ public sealed class HarvestZone
         {
             var chosen = settings.Jobs.ToHashSet();
             var excluded = settings.Excluded.ToHashSet();
-            var highest = settings.Order is HarvestOrder.HighestLevel;
+            // Balanced starts from the highest level first; the activity puts the professions in their turn (HarvestBalance, D391).
+            var highest = settings.Order is HarvestOrder.HighestLevel or HarvestOrder.Balanced;
 
             return harvests
                 .Where(skill => chosen.Contains(skill.JobId) && !excluded.Contains(skill.GatheredItemId))

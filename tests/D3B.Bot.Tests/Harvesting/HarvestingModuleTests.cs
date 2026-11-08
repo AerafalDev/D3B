@@ -60,13 +60,34 @@ public sealed class HarvestingModuleTests
         {
             var read = Assert.IsType<HarvestSettings>(settings.Read(preset.Json).Settings);
 
-            Assert.Equal((HarvestMode.ByProfession, HarvestOrder.HighestLevel, HarvestPlace.Automatic), (read.Mode, read.Order, read.Place));
+            // Only the preset of every profession shares the zones between them (D391); a profession's own keeps its highest level first.
+            var order = preset.Key is "auto" ? HarvestOrder.Balanced : HarvestOrder.HighestLevel;
+
+            Assert.Equal((HarvestMode.ByProfession, order, HarvestPlace.Automatic, 5), (read.Mode, read.Order, read.Place, read.Rotation));
             Assert.True(read.OpenBags);
             Assert.Empty(settings.Check(read));
         }
 
         Assert.Equal(HarvestingModule.Professions, Assert.IsType<HarvestSettings>(settings.Read(settings.Presets[0].Json).Settings).Jobs);
         Assert.Equal([2], Assert.IsType<HarvestSettings>(settings.Read(settings.Presets[1].Json).Settings).Jobs);
+    }
+
+    [Fact]
+    public void AProfileStoredBeforeTheRotationReadsAsFiveSubAreasInTurn()
+    {
+        var read = Assert.IsType<HarvestSettings>(Harvest().Settings.Read("""{ "Mode": "ByProfession", "Jobs": [2], "Order": "HighestLevel", "Place": "Automatic" }""").Settings);
+
+        Assert.Equal((5, HarvestOrder.HighestLevel), (read.Rotation, read.Order));
+    }
+
+    [Fact]
+    public void TheRotationIsOneToTenSubAreasAndAskedOfAnAutomaticPlaceOnly()
+    {
+        var settings = Harvest().Settings;
+
+        Assert.Empty(settings.Check(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [2], Place = HarvestPlace.Automatic, Rotation = 10 }));
+        Assert.NotEmpty(settings.Check(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [2], Place = HarvestPlace.Automatic, Rotation = 11 }));
+        Assert.NotEmpty(settings.Check(new HarvestSettings { Mode = HarvestMode.ByProfession, Jobs = [2], Place = HarvestPlace.Automatic, Rotation = 0 }));
     }
 
     [Fact]
