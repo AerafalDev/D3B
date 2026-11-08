@@ -8761,7 +8761,8 @@ first two of D395's questions; the rest of D395 stands as proposed.*
   file unchanged (D378), to be tested in 7r3 on every kind of action before the editor writes through it.
 - **The words stay**, the owner's choice: profile, route, sequence (and zone, character), as the mockup and the app already have
   them; "mission" and the intent-first vocabulary are dropped. The Add menu offers Profile, Route, Zone, Sequence, Folder.
-- **Still to decide**: the order of the sessions 7r2 to 7r6 (D395's table is the lead's). Nothing blocks 7r2's start.
+- **The sessions' order stays D395's**, the owner's choice: 7r2 the engine's frame, 7r3 the Sequencer, 7r4 following a run, 7r5 the
+  profile's asset editor, 7r6 sequences, laps and recording. Nothing is left to decide before 7r2. Nothing blocks 7r2's start.
 - **Next**: session 7r2, the engine's frame, in a session of its own; no code was written in 7r.
 
 ## Open questions

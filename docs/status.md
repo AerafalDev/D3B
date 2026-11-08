@@ -37,7 +37,7 @@ As of 2026-11-09, after D395 (D394, session 7d4, is on its own branch, not merge
 
 1. **Session 7r2, the engine's frame** (D395, D396): the studio redesigned as a game engine (`docs/mockups/studio-7r.html`), the owner
    chose the engine and the Sequencer for a route's steps; the world viewport as the centre with its tools, the Outliner, the Details
-   panel, Play in Editor. Nothing of 7r is coded yet. The words stay (profile, route, sequence); still open: the order of 7r2 to 7r6.
+   panel, Play in Editor. Nothing of 7r is coded yet. The words stay (profile, route, sequence) and the order is D395's: 7r2 to 7r6.
    It comes before 7e, so that the canvas does not grow on a design the owner finds impractical (a route needs each step set by
    hand; running it takes about fourteen gestures in four editors).
 2. **Session 7d4** (D394, its own branch, commit `f0c0cd2`): undo and the keys of the other editors, steps dragged, zones and their
