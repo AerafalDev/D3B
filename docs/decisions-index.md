@@ -445,3 +445,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## Architecture (D393)
 
 - [D393](decisions.md#d393-the-studios-model-leaves-d3bbot-for-a-project-of-its-own-d3bstudio) The studio's model leaves `D3B.Bot` for a project of its own, `D3B.Studio` (2026-11-08)
+
+## Step 7, the redesign (D395)
+
+- [D395](decisions.md#d395-7r-the-studios-redesign-what-hurts-today-and-the-studio-seen-as-a-game-engine) 7r, the studio's redesign: what hurts today, and the studio seen as a game engine; proposed, awaiting the owner (2026-11-09)

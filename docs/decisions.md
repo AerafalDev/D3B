@@ -8660,6 +8660,91 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
     lies about its assembly.
   - Leaving the studio's tests in `D3B.Bot.Tests`: nothing to move, but a test project would cover two projects.
 
+## D395: 7r, the studio's redesign: what hurts today, and the studio seen as a game engine
+
+*2026-11-09, step 7, session 7r, the owner's: the app is "not practical at all", to be redesigned from A to Z, the example being
+that a route needs each of its steps configured by hand; the owner chose the global redesign with mockups of the whole app,
+as 7c did (D319), over a tour of the journeys. **Proposed, not yet validated: the owner's choices will be D396.** Builds
+D295, D319 to D328, D371, D375 to D381, D386; reads D394 (session 7d4, commit `f0c0cd2`, not merged when this was written). The
+mockup: `docs/mockups/studio-7r.html`, four scenes (keys 1 to 4), three ways of setting a route's steps (keys A, B, C), N for
+the notes on what changed.*
+
+- **Method.** The app's current screens were drawn by its own headless tests (`D3B_DRAWINGS`, `Drawings.Draw`) and read beside
+  the code; the numbers below are counted from the dialogs and view models, not timed.
+- **What hurts, by journey.**
+  - *Make a route that does something on each map.* Draw it (one click a map), then for each step: choose it, "+", a dialog of
+    eight actions, a token, a popover, a picker dialog for the resources, back: five to seven gestures a step, the same ones on
+    each map when the route harvests the same resources throughout (8 steps: about 50). All of it in the inspector, 340 pixels wide,
+    while the map above stays on its own; no copy, no several steps at once, no value for the whole route. Recording, which was
+    to do most of it, is not there (7d4b).
+  - *Run that route on a character.* The route is not a thing a character can play. Add a behavior (a "list of steps"), add the
+    step "follow the route", pick the route; add a profile ("plays: an activity or a list of steps"), pick the list; give the
+    profile to the character from the card's right-click menu or the inspector; press play. About fourteen gestures in four
+    editors before the first step, with four names for one idea (route, list of steps, behavior, profile). A looping route
+    followed by another step is a warning on the list ("the steps after step 1 never play"): the model leaking.
+  - *Start a harvest or a fight.* The card shows no profile and no play button; the profile is chosen from a right-click menu, the
+    character from the card, the play from the title row or F5, three places for one intention. The welcome tab is an empty page of
+    shortcuts, the inspector reads "Choose something to see its properties" most of the time.
+  - *Set a profile.* The harvest profile is one scrolling form of 22 settings in five sections, over more than a screen, beside a
+    preview that is a thumbnail; "Variant of Harvesting, 4 values changed" speaks the model, not the player; the place is picked
+    by name and token, never on the map the studio now draws; the rare settings (rotation, safe level, zaap saving, isolated
+    maps, after a lost fight) weigh as much as the three that matter.
+  - *Follow a character.* Its tab shows the live map and what it does, but nothing knows a route is being played: no step 3 of 8,
+    no marker on the route's own tab, nothing on the card (`RouteRuns` is not read by the app).
+  - *Zones.* Painted on the map (D394), then read by nothing: a harvest or a hunt still takes its sub-areas by name.
+- **The causes**, four. The app is built from the model outward (an editor per kind of asset, in tabs) and not around the
+  world the bots play in; the work happens in the inspector, a side panel, where the centre holds a map or a form; configuring is
+  by step and by action, never for the route or for several steps; and what runs is not seen where it is edited.
+- **A first proposal turned down.** Built around the player's intent (a "mission" on each card, a start page, the route as a
+  strip of cards, the mission read as a sentence), it drew the owner's answer that they did not like the design at all: it should
+  be seen as an engine, routes should be really practical, or else an all-in-one that does everything, intuitive and practical.
+  Replaced by what follows.
+- **The proposal: the studio as a game engine** (D295 already says so; the shell of 7c has the engine's panels, not its idea).
+  One persistent **viewport on the world** (the map of D308 to D372) is the studio's centre, not a tab per route: characters
+  live on it with their names, routes with their steps, zones, all selectable; its toolbar holds the tools (*Select*, *Route* to
+  trace, *Zone* to paint, *Record* for 7d4b) and the **Play in Editor**: the chosen character plays its profile, the world stays
+  under the eyes, the viewport gets a green frame, the title's run block stays. An **Outliner** lists what is in the world
+  (characters, routes with their steps as children, zones, each with an eye; a click selects in the viewport and the viewport
+  selects in the list); the project's **Content** keeps the assets' tree (D326, D351); the **Details** panel shows the
+  selection and sets the same fields for several objects at once (steps framed in the viewport, or Shift-clicked in the
+  Outliner); the bottom dock holds Journal, Trace, Problems and, for a route, the Sequencer. What a step does is drawn in the
+  viewport as small dots under its node, so that a route reads at a glance. A profile opens as an **asset editor** in a tab:
+  categories, the rare settings under "Advanced" in each, a bar and an arrow on what differs from the model, and the map beside
+  it to pick the place (and zones, which gives them their use). Kept: the look, scale, panels, search, settings, the route's
+  line (D371, D375), the sentences and tokens (D380), undo and the keys (D394).
+- **Setting a route's steps, three variants** over one model, to choose one: an action becomes a *clip*, an action over a range of
+  steps, derived by grouping equal consecutive actions of the anchors, so that `RouteAnchor.Actions` and the file stay as they
+  are (D378); "everywhere" is a clip over every step.
+  - **A, Details (Unreal's):** frame steps in the viewport; the Details panel lists the actions of the selection, "on 2 of 3
+    steps" where they differ, "Add to the 3 steps", "Copy those of step 3"; the route's own Details carry "on every step".
+  - **B, Sequencer (Unreal's Sequencer, Unity's Timeline), the lead's recommendation:** under the viewport, a ruler of steps and
+    a track per action (Harvest, Fight, Door, NPC…): a clip is drawn across the steps it covers, its edges dragged, copied with
+    Shift; one gesture sets ash and chestnut on seven steps; the green playhead is the character, so following a run is nearly
+    free (7r4); hovering a column lights its step in the viewport. The Details panel keeps the clip's sentence and range.
+  - **C, Components (Unity's):** the route and its steps are objects of a hierarchy; actions are components added with "Add
+    component"; those on the route hold for all its steps, a step adds its own, a selection of steps takes one together.
+- **Sessions** (each ends with an app that works; the order is the lead's, to be confirmed):
+
+  | Session | Content |
+  | --- | --- |
+  | 7r2 | The engine's frame: the world viewport as the centre with its tools, the Outliner, the Details panel, the Play in Editor frame; the route, zone and character tabs become selections of it; a route dragged onto a character, or its Play, makes the list and profile behind it, visible in the project (D386). |
+  | 7r3 | Setting a route's steps with the variant chosen, the clips derived from the anchors, the palette in place of the dialog, several steps at once, copy; recording (7d4b) in the toolbar after the measure in game. |
+  | 7r4 | Following a run: the cursor told to the app, the playhead or the lit step, the character's marker on its route, the card's and the Outliner's progress. Tried with the owner on a client. |
+  | 7r5 | The profile's asset editor: categories, Advanced, the place picked on the map, zones read by the harvest's and the hunt's place. |
+  | 7r6 | Sequences as blocks, laps and "until" for a route (a change of `RouteRunner`, to confirm), then 7e's canvas on the same files. |
+
+- **Not measured**: whether the sequencer is what the owner means by practical (their use is the check, as in every step of 7);
+  that grouping equal consecutive actions loses nothing a route's file holds (to test on every route kind in 7r3); the cost of the
+  host telling the app the run's step (7r4 reads `RouteRuns`, which no view model reads yet). Not in the mockup: the Outliner's
+  drag onto a character, and the route-played-alone path of 7r2.
+- **Left to the owner, one decision at a time**, in this order: (1) the engine direction itself; (2) A, B or C for the steps;
+  (3) the words (profile, route, sequence, as the mockup has them, or others); (4) the sessions' order. Nothing is coded before
+  the first two are answered.
+- **Rejected.**
+  - The intent-first redesign with missions and a start page: turned down by the owner (above).
+  - A tour of the journeys with fixes in place: each fix is in the proposal, but the owner chose the global redesign.
+  - Two modes, "simple" and "studio": it doubles the screens to keep, and the studio is the product (D295).
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

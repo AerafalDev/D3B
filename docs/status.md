@@ -5,7 +5,7 @@ owed. The reasons are in [decisions.md](decisions.md), found through [decisions-
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-08, after D393. App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D395 (D394, session 7d4, is on its own branch, not merged when D395 was written). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -35,11 +35,16 @@ As of 2026-11-08, after D393. App 0.8.1, client build 3.7.13.17, pack format 11,
 
 ## Next
 
-1. **Session 7d4**: recording while playing and Simplify, the zones and their editor, undo and the keys of the other editors,
-   steps reordered by dragging (D376).
-2. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).
+1. **Session 7r, the studio's redesign** (D395): designed and mocked up as a game engine (`docs/mockups/studio-7r.html`; a first
+   intent-first proposal was turned down), proposed to the owner and not yet validated; the owner's choices (the direction, A, B or C
+   for a route's steps, the words, the order) are D396. Nothing of it is coded: 7r2 to
+   7r6 follow once the first is answered. It comes before 7e, so that the canvas does not grow on a design the owner finds
+   impractical (a route needs each step set by hand; running it takes about fourteen gestures in four editors).
+2. **Session 7d4** (D394, its own branch, commit `f0c0cd2`): undo and the keys of the other editors, steps dragged, zones and their
+   editor; recording while playing and Simplify (7d4b) wait for the measure in game and then take their place in 7r3's workbench.
+3. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).
    The breeds, set aside since 9f5, come back once these are done (D306).
-3. **Then** step 9's remaining mechanisms, and steps 10 to 13 (several accounts, marketplace and crafting, treasure hunts and
+4. **Then** step 9's remaining mechanisms, and steps 10 to 13 (several accounts, marketplace and crafting, treasure hunts and
    dungeons, the owner's profession scripts).
 
 A measure in game with the owner, of the list above, is worth a session of its own before 7e grows the code further.
