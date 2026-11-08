@@ -141,6 +141,14 @@ internal sealed class HarvestTour
         _visited.Add(mapId);
     }
 
+    /// <summary>Gets whether a map was gone through in this tour.</summary>
+    /// <param name="mapId">The map.</param>
+    /// <returns>Whether it was.</returns>
+    public bool IsVisited(long mapId)
+    {
+        return _visited.Contains(mapId);
+    }
+
     /// <summary>Marks a map the way to failed: left out of the rest of the tour.</summary>
     /// <param name="mapId">The map.</param>
     public void Unreach(long mapId)

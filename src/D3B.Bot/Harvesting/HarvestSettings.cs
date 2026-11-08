@@ -22,7 +22,7 @@ public sealed class HarvestSettings
     public HarvestPlace Place { get; set; } = HarvestPlace.Chosen;
 
     /// <summary>Gets or sets how many sub-areas the activity goes through in turn when it chooses the place, drawn from the richest ten it can reach; 1 stays in the richest (D391).</summary>
-    public int Rotation { get; set; } = 5;
+    public int Rotation { get; set; } = 10;
 
     /// <summary>Gets or sets whether the place the activity chooses is never above the character's level, so that its monsters do not overwhelm it.</summary>
     public bool SafeLevel { get; set; } = true;
