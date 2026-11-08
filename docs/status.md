@@ -58,5 +58,6 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
 - `D3B.Storage` references `D3B.Bot`, and `D3B.App` reaches `D3B.Bot` only through it.
 - Files over 900 lines: `FightJudge`, `RouteEditorViewModel`, `AssetsViewModel`, `HarvestActivity`.
 - `GroupJudge.OddsOf`, `Beats`, `Winnable` and `Share` are called by nothing in `src/` since D387, only by
-  `scripts/fights/HuntBench.cs`.
+  `scripts/fights/HuntBench.cs` and their tests. D387 kept them on purpose, for that bench: if the bench is dropped, they go
+  with their tests; `Allows` and `Character` are alive.
 - `docs/decisions.md` is about 700 KB: read the index and the entries about the area worked on, never the whole file.
