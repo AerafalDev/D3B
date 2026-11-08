@@ -61,9 +61,80 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         return new CharacterState { Key = TestPlay.Key, Name = "Character", Weight = weight, MaxWeight = maxWeight };
     }
 
-    private HarvestActivity Activity(HarvestSettings settings)
+    private HarvestActivity Activity(HarvestSettings settings, Regrowths? regrowths = null)
     {
-        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics, _play.Places, new Regrowths(), _play.Time);
+        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics, _play.Places, regrowths ?? new Regrowths(), _play.Time);
+    }
+
+    // The tour goes to the east map, through the middle one, which holds the tree: a journey from the north map crosses it.
+    private async Task<(TestConnection Connection, HarvestActivity Activity, ActivityRun Run)> CrossingTheMiddleMapAsync(Regrowths regrowths)
+    {
+        var (connection, bot) = await _play.EnterAsync(300, TestPlay.NorthMapId);
+
+        _sightings.Seen(TestPlay.EastMapId, [TestPlay.Ash], _play.Time.GetUtcNow());
+
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }, regrowths);
+        var run = bot.StartActivity(activity);
+
+        Assert.True(await TestWalks.WalkedAsync(_play, connection, 1) >= 532);
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.MapId }, await TestWalks.SentAsync(_play, connection, 2));
+        TestWalks.Arrive(connection, TestPlay.MapId, 20);
+
+        return (connection, activity, run);
+    }
+
+    [Fact]
+    public async Task AJourneyCrossingAMapHoldingAWantedElementStopsThereAndHarvestsIt()
+    {
+        var (connection, activity, run) = await CrossingTheMiddleMapAsync(new Regrowths());
+
+        // The character walks to the tree, not to the cell leading east, then harvests it.
+        Assert.NotEqual(TestPlay.ActionCell, await TestWalks.WalkedAsync(_play, connection, 3));
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await TestWalks.SentAsync(_play, connection, 4));
+        Assert.Equal(TestPlay.MapId, activity.Report!.Focus!.MapId);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AMapTheTourHoldsBackAsGrowingIsHarvestedWhenTheJourneyCrossesItAndTheServerOffersTheElement()
+    {
+        // Seen harvested a minute ago, a resource that takes an hour by the reckoning: the tour holds the map back, and the server
+        // offers the tree on it anyway, as it grew back faster than the reckoning or unseen.
+        var regrowths = new Regrowths();
+
+        regrowths.Remember(TestPlay.TreeSkillId, new Regrowth(TimeSpan.FromHours(1), 1, null));
+        _sightings.SeenElements(TestPlay.MapId, [new SightedElement(TestPlay.TreeElementId, TestPlay.TreeSkillId, TestPlay.Ash, false, _play.Time.GetUtcNow() - TimeSpan.FromMinutes(1))], _play.Time.GetUtcNow());
+
+        var (connection, activity, run) = await CrossingTheMiddleMapAsync(regrowths);
+
+        // The character walks to the tree, not to the cell leading east, then harvests it.
+        Assert.NotEqual(TestPlay.ActionCell, await TestWalks.WalkedAsync(_play, connection, 3));
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await TestWalks.SentAsync(_play, connection, 4));
+        Assert.Equal(TestPlay.MapId, activity.Report!.Focus!.MapId);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AnElementTheServerRefusesIsLeftAndTheTourGoesOnToTheEastMap()
+    {
+        var (connection, _, run) = await CrossingTheMiddleMapAsync(new Regrowths());
+
+        // The tree is refused: the map is gone through, and the journey goes on from it instead of stopping again.
+        Assert.NotEqual(TestPlay.ActionCell, await TestWalks.WalkedAsync(_play, connection, 3));
+        Assert.IsType<InteractiveUseRequest>(await TestWalks.SentAsync(_play, connection, 4));
+        connection.Server(new InteractiveUseErrorEvent { ElementId = TestPlay.TreeElementId });
+
+        Assert.Equal(TestPlay.ActionCell, await TestWalks.WalkedAsync(_play, connection, 5));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
     [Fact]

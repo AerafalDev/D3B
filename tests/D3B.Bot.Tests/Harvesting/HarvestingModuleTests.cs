@@ -63,7 +63,7 @@ public sealed class HarvestingModuleTests
             // Only the preset of every profession shares the zones between them (D391); a profession's own keeps its highest level first.
             var order = preset.Key is "auto" ? HarvestOrder.Balanced : HarvestOrder.HighestLevel;
 
-            Assert.Equal((HarvestMode.ByProfession, order, HarvestPlace.Automatic, 5), (read.Mode, read.Order, read.Place, read.Rotation));
+            Assert.Equal((HarvestMode.ByProfession, order, HarvestPlace.Automatic, 10), (read.Mode, read.Order, read.Place, read.Rotation));
             Assert.True(read.OpenBags);
             Assert.Empty(settings.Check(read));
         }
@@ -73,11 +73,11 @@ public sealed class HarvestingModuleTests
     }
 
     [Fact]
-    public void AProfileStoredBeforeTheRotationReadsAsFiveSubAreasInTurn()
+    public void AProfileStoredBeforeTheRotationReadsAsTenSubAreasInTurn()
     {
         var read = Assert.IsType<HarvestSettings>(Harvest().Settings.Read("""{ "Mode": "ByProfession", "Jobs": [2], "Order": "HighestLevel", "Place": "Automatic" }""").Settings);
 
-        Assert.Equal((5, HarvestOrder.HighestLevel), (read.Rotation, read.Order));
+        Assert.Equal((10, HarvestOrder.HighestLevel), (read.Rotation, read.Order));
     }
 
     [Fact]

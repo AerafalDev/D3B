@@ -8596,6 +8596,35 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
   - The nearest ready zone next: it could rotate between two neighbours.
   - A separate "share the professions" setting beside the order: two settings for one choice.
 
+## D392: The harvest's journey stops on a crossed map where a wanted element is offered, and the harvest rotates through ten sub-areas
+
+*2026-11-08, step 9, the owner's report that the harvest passed by resources that had grown back without taking them, and his words "ten, not five" for the harvest's zones. Refines D128, D145, D256, D259, D391.*
+
+- **Reported and read in the code.** The character went past resources on maps it crossed. Two causes. The journey of `HarvestActivity`
+  to the tour's next map had no stop, whereas the fighting activity stops on the first map of its zone holding a group (D259), so a
+  map crossed was never harvested, only a map the tour aimed at, on arrival. And `HarvestTour.ReadyAt` holds a map back, `Growing`,
+  until the harvest plus the longest growing back seen whole (D145), so a resource that grew back faster, or unseen, kept its map out
+  of the tour, a map nothing then aimed at. Not measured in game: the owner's report and the code.
+- **Made.** The journey of the harvest ends, as arrived, on the first map of the zone it crosses that the tour has not gone through
+  where the server offers an element the character can harvest, the map's own information read (`MapHarvest.Candidates` on that map,
+  with a list of its own, so that the elements left skipped on the map the character stands on are not touched). The step there is
+  the usual one: it harvests, then the map is gone through. A map held back as growing is no longer a barrier: the reckoned time still
+  chooses where to go and when to wait, but the server's word on a map the character is on wins, as on arrival before. The values
+  of D145 are unchanged.
+- **No loop.** The predicate is never asked of the map the journey starts from, nor of a map gone through in this tour, so an element
+  refused, taken by another or out of reach is left for the visit and cannot call the character back; every stop harvests or
+  marks its map gone through, so a tour still ends. The rotation's days (D391) are untouched: a stop is in the current zone only,
+  and what it harvests counts in the tour of that zone like any harvest (`HasHarvested`, the balance's last 50).
+- **The rotation of 10.** `HarvestSettings.Rotation` defaults to 10 instead of 5, the setting's maximum and the size of the pool the
+  rotation is drawn from; a profile stored before without the setting reads as 10, and the presets with it. The fight keeps 5. A
+  profile that stores a number keeps it.
+- **Rejected.**
+  - A shorter reckoned time for growing back (the shortest seen instead of the longest): the stop makes the guess matter only for
+    where to go, and the shortest would send the character to maps still empty.
+  - A stop on the maps the tour has already gone through: a resource grown back within a tour is rare, and a refused element would
+    call the character back.
+  - A stop on a map of another zone of the rotation: the zone chooses what is harvested.
+
 ## Open questions
 
 Settled questions leave this table, and the decision that settles one says so.

@@ -283,7 +283,7 @@ seen so.
   nothing (`HarvestPlace`, `AutomaticPlace`, D166, D264), its name before
   the tour on the card; a zaap only when it saves the profile's number of maps, 5 by default (`HarvestSettings.ZaapSaving`,
   D167). The module reads a profile stored before as it harvested, and gives six presets (D168).
-- **Harvesting, rotating** (D391): a place the activity chooses is several sub-areas in turn, not one (`HarvestSettings.Rotation`, 5
+- **Harvesting, rotating** (D391): a place the activity chooses is several sub-areas in turn, not one (`HarvestSettings.Rotation`, 10
   by default). `AutomaticPlace.Reckon` ranks the sub-areas and gives each profession's top, the sub-area drawing its highest-level
   resource on the most maps; `PlaceRotation.Draw`, shared with the fight, draws the rotation from the ten richest the character
   reaches (`SubAreaReach`), those worth under a quarter of the richest left out, the tops kept up to half the count and the rest
@@ -292,7 +292,8 @@ seen so.
   that has maps to go through, and the activity waits only when none has (`WakeAt`); once every zone was left, the rotation is
   drawn again at the character's levels. The preset of every profession sets `HarvestOrder.Balanced`: the tops are taken in the
   order of the professions harvested least lately and `HarvestBalance`, which counts the last 50 harvests by profession, gives
-  the resources of a map their priority.
+  the resources of a map their priority. The journey to the tour's next map stops on the first map of the zone it crosses, not
+  yet gone through, where the server offers a wanted element, even one the tour holds back as growing (D392).
 - **Fights** (D179), in `D3B.Bot.Fights`: the character's state holds its fight (`CharacterState.Fight`, `FightState`) from
   the fight's context to the roleplay's: its phase, the character's team and both teams' placement cells, whether the
   character is ready, the fighters by id (`Fighter`: team, cell, life and most life, AP and MP, level, breed or monster and
