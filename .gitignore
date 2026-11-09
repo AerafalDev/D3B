@@ -20,3 +20,8 @@ Thumbs.db
 
 # Third-party references, never committed (D3)
 vendor/
+
+# Claude Code, personal
+.claude/worktrees/
+.claude/settings.local.json
+CLAUDE.local.md

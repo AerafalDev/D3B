@@ -5,7 +5,7 @@ owed. The reasons are in [decisions.md](decisions.md), found through [decisions-
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D397 (D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D398 (D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -21,6 +21,10 @@ As of 2026-11-09, after D397 (D394, session 7d4, merged into 7r2's branch). App 
   behaviors and profiles as variants, the world's map drawn from the client's images, routes with their actions, a profile
   playing a list of routes and steps made in the app (D386), zones painted on the same map (D394), Undo and Redo in the route, the
   list of steps and the profile editors, and rows dragged or moved by the keys (D394).
+- **A versioned Claude Code setup** (D398): `.claude/` holds C# hooks that ask before a push or a `gh` write and refuse
+  what the client produces, skills for C#, the studio's UI, tests, Git and the rest, and two agents. The hooks are tested in
+  `tests/D3B.Hooks.Tests`; the write guard and the Git guard were seen refusing inside a session, the "ask" answers and the
+  Stop hook's block not yet.
 - **Published**: the installer and updates through Velopack (D171); the client build's pack, schema and mapping as the release
   `client-3.7.13.17` (D365).
 
@@ -39,6 +43,9 @@ As of 2026-11-09, after D397 (D394, session 7d4, merged into 7r2's branch). App 
 
 ## Next
 
+0. **A large refactoring and tidy-up session**, asked by the owner: the code's remaining debt (below), the architecture and
+   the docs (`decisions.md` is about 700 KB; `status.md`, `architecture.md` and `client.md` are long). It is a session of
+   its own, planned with the owner before it starts; no step of the roadmap is begun in it.
 1. **Session 7r3, the Sequencer** (D395, D396, D397): a route's steps set in a ruler of steps with a track a kind of action, a clip
    drawn across the steps it covers, derived from the anchors (`RouteAnchor.Actions` and the file unchanged), the palette in place
    of the dialog, several steps selected at once with the same fields set for all, copy; recording in the toolbar waits for the

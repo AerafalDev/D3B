@@ -8,10 +8,10 @@ The repository is the only memory between sessions: never assume an earlier sess
 1. This file.
 2. [docs/status.md](docs/status.md): where the project stands, what is not measured, what comes next, the known debt.
 3. [docs/decisions-index.md](docs/decisions-index.md): one line per decision. Open the entries of [docs/decisions.md](docs/decisions.md)
-   about the area you work on, plus the brief and the open questions at its ends; the file is too long to read whole.
+   about the area you work on, plus the brief and the open questions at its ends; the file is about 700 KB, never read it whole.
 4. [docs/architecture.md](docs/architecture.md): how the code is built, section by section: read the ones you touch.
 5. [docs/roadmap.md](docs/roadmap.md): the steps and the next one.
-6. [docs/client.md](docs/client.md), when the task touches the official client's content: what it holds, measured.
+6. [docs/client.md](docs/client.md), when the task touches the official client's content: what it holds, measured. Grep its headings.
 7. The actual state of the repository (`git log`, `git status`, the code).
 
 ## Working agreement
@@ -20,80 +20,74 @@ The repository is the only memory between sessions: never assume an earlier sess
 - Talk to the project owner in French. Everything in the repository is in English.
 - **Decisions.** Settle local, reversible choices alone. For an important or hard-to-reverse one: analyse, research,
   compare, recommend, then ask the owner, one decision at a time. Say plainly when an idea is bad, premature or a
-  source of debt. Record each decision in `docs/decisions.md` and add its line to `docs/decisions-index.md`. Entries are
-  append-only: a later entry supersedes an earlier one.
+  source of debt. Record each decision with `/decision`: an entry in `docs/decisions.md` and its line in
+  `docs/decisions-index.md`. Entries are append-only: a later entry supersedes an earlier one.
 - **Done** means code, the tests it needs (for `src/` only, since scripts have none, D10), docs, and benchmarks or
   specific checks when relevant, with every check green. The docs are the roadmap, `docs/status.md`, the index and the
   architecture sections the change touches.
 - **Scope.** One roadmap step per session, or part of one. Every new large task starts in a new session. No
   refactoring outside the task without a reason.
 - **Delivery.** One branch and one pull request per session. Never push, open a pull request or merge without an
-  explicit go from the owner.
-- **Closing a session.** Report what was done, the decisions taken, the remaining risks, the project's state, the
-  recommended next task, and a prompt for the next session, ready to copy and paste.
-- Use the installed skills when they help: the `dotnet` skills (C#, MSBuild, tests, refactoring), `git-workflow` for
-  Git, `reverse-engineer-anything` for the official client and its protocol, and `diagnosing-bugs` for hard bugs.
+  explicit go from the owner: a hook asks again at each. `/ship` prepares the branch, `/review` has a fresh agent read it.
+- **Closing a session.** `/close-session`: report what was done, the decisions taken, the remaining risks, the project's
+  state, the recommended next task, and a prompt for the next session, ready to copy and paste.
+
+## Never
+
+- What D2 puts out of scope: evading Ankama's detection, mass account creation, subscription or payment automation,
+  disabling Ankama Shield, one proxy per account to hide multi-accounting.
+- Copying the references in `vendor/`: they are read for ideas (D3). The only exception is code the owner wrote in BillBot.
+- Committing anything extracted from the official client: no assets, data, dumps, per-build mappings or packs. Packs and
+  mappings ship as release artifacts (D10, D11, D24). The readable `.proto` files and the pinned pairs are ours.
+- Putting an AI attribution in a commit or a pull request (a `Co-Authored-By` trailer, a "Generated with" line): a hook refuses it.
+- Showing a capture's content: it holds the account's login ticket. Describe it with `scripts/capture.cs`.
 
 ## Conventions
 
-- Never add what D2 puts out of scope: evading Ankama's detection, mass account creation, subscription or payment
-  automation, disabling Ankama Shield, one proxy per account to hide multi-accounting.
-- The references in `vendor/` are read for ideas, never copied (D3). The only exception is code the owner wrote
-  in BillBot.
-- Nothing extracted from the official client is ever committed: no assets, data, dumps, per-build mappings or packs.
-  Packs and mappings ship as release artifacts (D10, D11, D24). The readable `.proto` files and the pinned pairs are ours
-  and are committed.
 - Build and configuration files (`.csproj`, `.props`, `.targets`, `global.json`) carry no comments. Their rationale
   goes in the docs.
 - Code comments explain why a constraint exists, not what the code does.
 - Tools (D10): a file-based app in `scripts/` whose entry file starts with `#!/usr/bin/env dotnet` (CA2266), with its
   code pulled in through `#:include` from a lowercase folder (`scripts/unity/` for what several tools share),
   `#:package` without a version (central package management), and `#:property PublishAot=false` when a package is not
-  AOT-compatible. Every script file is listed in the solution, so that it shows in the IDE.
+  AOT-compatible. Every script file is listed in the solution, so that it shows in the IDE. `/new-tool` has the steps.
 - `CONTRIBUTING.md` restates these conventions and the C# style below for outside contributors, and the README the
   commands below for users: a change here changes them too (D204).
 
 ## C# style
 
-These rules apply to `src/`, `tests/`, `benchmarks/` and `scripts/`.
+These rules apply to `src/`, `tests/`, `benchmarks/`, `scripts/` and `.claude/hooks/`. The build enforces the first two;
+the rest is yours to keep.
 
-- One type per file, and one folder per namespace.
 - Methods, constructors, operators and local functions have block bodies, never `=>`. Properties, indexers and
-  accessors may use `=>`. The build enforces it (IDE0021 to IDE0024, IDE0061).
+  accessors may use `=>` (IDE0021 to IDE0024, IDE0061).
+- Test methods are PascalCase sentences without underscores, such as `AModuleTypeIsBuiltOnce` (CA1707).
+- One type per file, and one folder per namespace.
 - Members go in this order: constants, static fields, fields, static properties, properties and indexers, events, static
   constructor, constructors, static methods, methods, operators, nested types. No primary constructors.
-- Test methods are PascalCase sentences without underscores, such as `AModuleTypeIsBuiltOnce`. The build enforces it
-  (CA1707).
 
 ## Commands
 
 ```sh
-dotnet build                               # warnings are errors
+dotnet build                               # warnings are errors; about 20 s
 dotnet test                                # every test project, on Microsoft.Testing.Platform
 dotnet format --verify-no-changes          # CI checks it
 dotnet run --project src/D3B.App           # the desktop app, which runs the bots' host in its process (D91); closing it disconnects the clients
-dotnet run --project src/D3B.Host          # the same host without the app, until Ctrl+C; needs the installed build's pack, schema and mapping on this machine (D172)
-                                           # both keep accounts and what the bots learn in %LOCALAPPDATA%\D3B\d3b.db, migrated before the host starts; --Storage:Path <file> names another (D100)
-                                           # and the project's assets, profiles and behaviors, in %LOCALAPPDATA%\D3B\studio; --Studio:Path <folder> names another (D296, D314)
-                                           # while it runs, clients started from the launcher go through its relay, connection phase and game (D35, D52)
-                                           # --Network:Captures:Enabled true records them, the game connection's in captures\game (D53), which the app's inspector replays (D115)
-                                           # --Fights:Alone true has the AI play every fight of the bots, whatever their activity says (D235, D244)
-dotnet tool restore                        # the local tools of .config/dotnet-tools.json (D204); then: dotnet tool run dotnet-ef migrations add <Name> --project src/D3B.Storage --startup-project src/D3B.Storage --output-dir Migrations
-dotnet run --file scripts/inspect.cs -- summary   # describes the installed client; --help lists the commands
-dotnet run --file scripts/extract.cs       # writes the installed client's pack to %LOCALAPPDATA%\D3B\data; --help for options
-dotnet run --file scripts/release.cs       # dry run of publishing that build's pack, schema and mapping to release client-<version>; --publish does it (D33, D50)
-dotnet run --file scripts/embed.cs -- --client-version <v> --output <dir>   # a build's pack, schema and mapping beside the published app, from its release or --packs <dir> (D172)
-dotnet tool run vpk pack --packId D3B.App ...  # the app's installer, as .github/workflows/release.yml makes it on a tag v<version>; the README has the commands (D171)
-dotnet run --file scripts/client.cs        # which configuration the client reads, Ankama's or D3B's; restore gives it Ankama's back after a crash
-dotnet run --file scripts/capture.cs       # describes the captures by structure, never content; --frames shows each frame's protobuf shape
-                                           # --schema <file> reads them with a schema, field by field
-                                           # --messages lists the game's messages in order by their type URLs, --mapping <file> naming them (D178)
-dotnet run --file scripts/schema.cs        # writes the installed build's obfuscated protocol schema beside its pack; --proto <dir> as .proto text
-dotnet run --file scripts/mapping.cs       # matches the readable .proto files with that schema, audits, writes the build's mapping beside it
-dotnet run --file scripts/fights.cs        # replays the captured fights: what D3B.Engine foresees of each cast against the server's actions (D196); --details
-                                           # --turns replays each turn the characters played through the AI, its foresight against what came; --live counts what D3B did (D206)
-                                           # --enemy-life <n> has --turns plan against enemies of n times their life, bigger than any captured (D288)
-dotnet run --file scripts/icons.cs         # takes the IntelliJ icons the studio draws, each one's Apache 2.0 notice checked, into src/D3B.App/Themes/IntelliJIcons.axaml (D331); --check compares
-dotnet run -c Release --project benchmarks/D3B.Network.Benchmarks   # BenchmarkDotNet; --filter '*' runs them all
-dotnet run -c Release --project benchmarks/D3B.Engine.Benchmarks    # world paths, a fight's rules, its effects and the AI's turn on the installed build's pack; D3B_PACK names another
+dotnet run --project src/D3B.Host          # the same host without the app; needs the installed build's pack, schema and mapping (D172)
+dotnet run --file scripts/<tool>.cs -- --help   # the tools of scripts/, each described by its own help
 ```
+
+The README has the rest: the host's options, the installer, the local tools. Two tools change things: `scripts/release.cs`
+publishes only with `--publish`, and `scripts/client.cs -- restore` gives the client Ankama's configuration back after a
+crash. The shell is Git Bash on Windows.
+
+## The project's Claude setup (D398)
+
+- Skills in `.claude/skills/`: `/decision`, `/ship`, `/review`, `/close-session`, `/new-tool`, and, loaded when the task
+  fits, `csharp`, `test-first`, `studio-ui`, `git`, `read-client`, `diagnosing-bugs`, `csharp-refactoring` and `benchmarks`. Agents: `reviewer`, which reads a diff fresh, and `explorer`,
+  which studies the client and `vendor/` and writes only under `artifacts/studies/`.
+- Hooks, C# apps in `.claude/hooks/` tested in `tests/D3B.Hooks.Tests`: pushes, `gh` writes and `git clean` ask first;
+  pushes to `main`, forced pushes, `git reset --hard` and AI attributions in commits are refused, so are writes of what the client or a machine
+  produced; the C# written is formatted; a turn that left changed code ends on a green `dotnet build`.
+- Once per machine, copy `.claude/settings.local.example.json` to `.claude/settings.local.json`: it turns off the plugins
+  and skills claude.ai syncs into every session.

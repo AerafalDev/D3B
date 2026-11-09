@@ -68,6 +68,21 @@ jobs:
       - name: Build the icons tool
         run: dotnet build scripts/icons.cs
 
+      - name: Build the Stop hook
+        run: dotnet build .claude/hooks/check-turn.cs
+
+      - name: Build the format hook
+        run: dotnet build .claude/hooks/format-file.cs
+
+      - name: Build the Git guard
+        run: dotnet build .claude/hooks/guard-git.cs
+
+      - name: Build the explorer's guard
+        run: dotnet build .claude/hooks/guard-studies.cs
+
+      - name: Build the write guard
+        run: dotnet build .claude/hooks/guard-writes.cs
+
       - name: Check formatting
         run: dotnet format --verify-no-changes --no-restore
 

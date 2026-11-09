@@ -1128,3 +1128,7 @@ character's (D279). The character's spells by the
   theme's palette and the cell under the pointer described; its layout's cells found back from their centres (D120 to
   D122).
 - Time is controlled through `FakeTimeProvider`.
+- The Claude Code hooks (D398) are tested where they ship from: `tests/D3B.Hooks.Tests` compiles the files of
+  `.claude/hooks/shared/`, which hold every decision, and checks them on commands and paths as Claude Code sends them: which
+  pushes are refused or asked, which writes are refused, which changes need a build, a build that fails only on files the
+  running app holds. The entry files in `.claude/hooks/` only read the input and report; CI builds each.
