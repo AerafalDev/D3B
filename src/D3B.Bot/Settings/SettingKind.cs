@@ -50,4 +50,7 @@ public enum SettingKind
 
     /// <summary>A route of the project, by its id, picked among the project's routes and never typed (D298, D386); an empty text when none is picked.</summary>
     Route,
+
+    /// <summary>A zone of the project, by its id, picked among the project's zones and never typed (D415); an empty text when none is picked.</summary>
+    Zone,
 }

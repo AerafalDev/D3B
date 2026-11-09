@@ -85,6 +85,9 @@ public sealed class HarvestingModule : IModule
             .SuggestedBy(Wanted)
             .Help(HarvestTexts.Text("SubAreasHelp"))
             .VisibleWhen(s => s.Place is HarvestPlace.Chosen);
+        settings.Zone(s => s.Zone, HarvestTexts.Text("Zone"))
+            .Help(HarvestTexts.Text("ZoneHelp"))
+            .VisibleWhen(s => s.Place is HarvestPlace.Zone);
         settings.Flag(s => s.IsolatedMaps, HarvestTexts.Text("IsolatedMaps")).Help(HarvestTexts.Text("IsolatedMapsHelp"));
         settings.Number(s => s.ZaapSaving, HarvestTexts.Text("ZaapSaving"), 1, 30)
             .Unit(HarvestTexts.Text("ZaapSavingUnit"))
@@ -121,7 +124,8 @@ public sealed class HarvestingModule : IModule
 
         settings.Rule(s => s.Mode is not HarvestMode.ByProfession || s.Jobs.Count > 0, HarvestTexts.Text("RuleJobs"));
         settings.Rule(s => s.Mode is not HarvestMode.List || s.Resources.Count > 0, HarvestTexts.Text("RuleWhat"));
-        settings.Rule(s => s.Place is HarvestPlace.Automatic || s.Area is not null || s.SubAreas.Count > 0, HarvestTexts.Text("RuleWhere"));
+        settings.Rule(s => s.Place is not HarvestPlace.Chosen || s.Area is not null || s.SubAreas.Count > 0, HarvestTexts.Text("RuleWhere"));
+        settings.Rule(s => s.Place is not HarvestPlace.Zone || s.Zone.Length > 0, HarvestTexts.Text("RuleZone"));
         settings.Preview((s, services, players) => services.GetRequiredService<HarvestPreviews>().Of(s, players));
         settings.ReadsEarlier(ReadEarlier);
 

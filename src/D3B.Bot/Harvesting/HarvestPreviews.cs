@@ -1,3 +1,4 @@
+using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
@@ -32,6 +33,7 @@ public sealed class HarvestPreviews
     private readonly HarvestSightings _sightings;
     private readonly GraphicSkills _graphics;
     private readonly GraphicPlaces _places;
+    private readonly IPlaceZones? _zones;
     private readonly Lazy<WorldPathfinder> _pathfinder;
     private readonly Lazy<HashSet<int>> _reachable;
     private readonly Lock _lock = new();
@@ -45,7 +47,8 @@ public sealed class HarvestPreviews
     /// <param name="sightings">What the host's bots saw of the maps.</param>
     /// <param name="graphics">What the host learned of the maps' graphics.</param>
     /// <param name="places">Where each graphic is drawn, which places the resources of <c>Base</c> (D150).</param>
-    public HarvestPreviews(GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places)
+    /// <param name="zones">The project's zones (D415), for settings whose place is one; none, a zone is not found.</param>
+    public HarvestPreviews(GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places, IPlaceZones? zones = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tables);
@@ -60,6 +63,7 @@ public sealed class HarvestPreviews
         _sightings = sightings;
         _graphics = graphics;
         _places = places;
+        _zones = zones;
         _pathfinder = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas, NpcWays.Measured), LazyThreadSafetyMode.ExecutionAndPublication);
         _reachable = new Lazy<HashSet<int>>(() => ReachableSubAreas(world, tables), LazyThreadSafetyMode.ExecutionAndPublication);
     }
@@ -121,7 +125,7 @@ public sealed class HarvestPreviews
         var who = string.Join(';', players.Select(player => $"{player.Name}:{player.Level}:{string.Join(',', player.JobLevels.OrderBy(job => job.Key).Select(job => $"{job.Key}={job.Value}"))}"));
 
         return $"{settings.Mode}|{string.Join(',', settings.Jobs)}|{string.Join(',', settings.Excluded)}|{settings.Order}|{string.Join(',', settings.Resources)}|"
-            + $"{settings.Place}|{settings.SafeLevel}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{settings.IsolatedMaps}|{who}|{_sightings.Count}|{_graphics.Count}";
+            + $"{settings.Place}|{settings.SafeLevel}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{settings.IsolatedMaps}|{PlaceZoneKey.Of(_zones, settings.Zone, settings.Place is HarvestPlace.Zone)}|{who}|{_sightings.Count}|{_graphics.Count}";
     }
 
     /// <summary>Reckons what settings lead to.</summary>
@@ -204,8 +208,13 @@ public sealed class HarvestPreviews
             }
         }
 
+        IReadOnlySet<long>? within = null;
+
+        if (settings.Place is HarvestPlace.Zone && (_zones is null || !_zones.TryResolve(settings.Zone, out within)))
+            return null;
+
         var zone = chosen is null
-            ? HarvestZone.Of(settings, atlas, _world.Graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(settings, _tables.Jobs, _places, _graphics))
+            ? HarvestZone.Of(settings, atlas, _world.Graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(settings, _tables.Jobs, _places, _graphics), within: within)
             : HarvestZone.Of(settings, atlas, _world.Graph, _tables.Jobs, _maps, chosen: chosen);
 
         if (zone.Targets.Count is 0 || zone.SubAreas.Count is 0)

@@ -28,6 +28,9 @@ public sealed class FightSettings
     /// <summary>Gets or sets how many sub-areas the activity hunts in turn when it chooses the place, drawn from the richest ten; 1 stays in the richest (D391).</summary>
     public int Rotation { get; set; } = 5;
 
+    /// <summary>Gets or sets the zone of the project to hunt in, by its id, when <see cref="Place"/> is <see cref="FightPlace.Zone"/> (D415).</summary>
+    public string Zone { get; set; } = "";
+
     /// <summary>Gets or sets the area to hunt in: alone, its sub-areas where monsters live.</summary>
     public int? Area { get; set; }
 

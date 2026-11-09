@@ -14,7 +14,7 @@ A part of [the decisions](README.md); each decision has one line in [the index](
   typed (`SettingKind.Zone`, as `SettingKind.Route` for a route, D386). A profile stored before reads as it did and nothing of it is
   rewritten. The activities reach the zone through a seam of `D3B.Bot`, `IPlaceZones`, which `D3B.Storage` implements over the asset
   library and `ZoneMaps.Resolve`; a host without it, or a zone gone from the project, ends the run with a note, as a missing route does (D379).
-  The zone is read at each tour, so that a zone changed while a bot plays is taken at its next tour.
+  The zone is read when the activity starts (a preview reads it at each call): a zone changed while a bot plays is taken at its next start.
 - **The profile's editor** (session 7r5b, the second pull request). A profile's form has four categories, What, Where, Bank and Care and
   fights (Upkeep and Fight merged, as the mockup draws them). A setting may be marked rare (`Advanced()`, one mark per setting, easy to
   change by use): a category folds its rare settings under "Advanced", which says "Advanced · N changed" with an amber dot when some
@@ -34,6 +34,7 @@ A part of [the decisions](README.md); each decision has one line in [the index](
   (7r5b): the editor above.
 - **Not built**: the zone as a filter of the Automatic place (the ranking of sub-areas would count a part of one), painting in the
   profile's tab, a zone for a list of steps' profile.
+- **Words.** In French the setting "Zone" already named the game's area, which would have made two zones: it is now "Région", and the place "Chosen" reads "Sub-areas" ("Sous-zones"); the stored names do not change.
 - **Rejected.**
   - The zone replacing the area and the sub-areas: one way to choose and fewer settings, but every stored profile naming sub-areas would
     have to be turned into a zone file, which writes the owner's files; the owner turned it down.

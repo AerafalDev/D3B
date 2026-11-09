@@ -34,6 +34,18 @@ public sealed class HarvestZoneTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AZoneNamedStandsForItsMapsAloneWhateverTheSettingsNameAsAnArea()
+    {
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Area = 2, SubAreas = [99] };
+        var zone = HarvestZone.Of(settings, _play.World.Atlas, _play.World.Graph, _play.Tables.Jobs, _play.Maps, within: new HashSet<long> { TestPlay.NorthMapId, TestPlay.InsideMapId, 123_456_789 });
+
+        Assert.Equal([TestPlay.SubAreaId], zone.SubAreas);
+        Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.InsideMapId }.Order(), zone.Maps.Keys.Order());
+        Assert.Equal([TestPlay.InsideMapId], zone.Insides);
+        Assert.Equal([TestPlay.NorthMapId], new HarvestTour(new HarvestSightings(), new GraphicSkills()).Remaining(zone));
+    }
+
+    [Fact]
     public void SubAreasChosenStandForThemselvesOfAnyArea()
     {
         var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Ash], Area = 2, SubAreas = [TestPlay.SubAreaId] });

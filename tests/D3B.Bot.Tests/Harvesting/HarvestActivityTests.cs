@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
+using D3B.Bot.Tests.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Bot.Harvesting;
@@ -62,9 +63,9 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         return new CharacterState { Key = TestPlay.Key, Name = "Character", Weight = weight, MaxWeight = maxWeight };
     }
 
-    private HarvestActivity Activity(HarvestSettings settings, Regrowths? regrowths = null, BankingPreferences? banking = null)
+    private HarvestActivity Activity(HarvestSettings settings, Regrowths? regrowths = null, BankingPreferences? banking = null, IPlaceZones? zones = null)
     {
-        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics, _play.Places, regrowths ?? new Regrowths(), _play.Time, banking: banking);
+        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics, _play.Places, regrowths ?? new Regrowths(), _play.Time, banking: banking, zones: zones);
     }
 
     // The tour goes to the east map, through the middle one, which holds the tree: a journey from the north map crosses it.
@@ -373,6 +374,44 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         var failure = Assert.IsType<ActivityException>(run.Failure);
 
         Assert.Equal("The zone holds no map to harvest.", Say(failure.Reason!));
+    }
+
+    [Fact]
+    public async Task AZoneOfTheProjectIsTheTourOfAProfileWhosePlaceIsOne()
+    {
+        var (_, bot) = await _play.EnterAsync(300, TestPlay.NorthMapId);
+        var zones = new TestPlaceZones().Add("woods", TestPlay.NorthMapId, TestPlay.EastMapId);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Zone = "woods", SubAreas = [999] }, zones: zones);
+        var run = bot.StartActivity(activity);
+        var report = await ReportedAsync(activity, report => report.Focus is not null);
+
+        Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.EastMapId }.Order(), report.Focus!.Zone.Select(map => map.MapId).Order());
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Theory]
+    [InlineData("gone")]
+    [InlineData("")]
+    public async Task AZoneNoLongerInTheProjectFailsTheActivitySayingSo(string zone)
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Zone = zone }, zones: new TestPlaceZones().Add("woods", TestPlay.MapId)));
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal("The zone this profile names is not in the project.", Say(Assert.IsType<ActivityException>(run.Failure).Reason!));
+    }
+
+    [Fact]
+    public async Task AZoneHoldingNoMapTheCharacterCanTravelToFailsTheActivityAsAnEmptyZoneDoes()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Zone = "empty" }, zones: new TestPlaceZones().Add("empty")));
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal("The zone holds no map to harvest.", Say(Assert.IsType<ActivityException>(run.Failure).Reason!));
     }
 
     [Fact]

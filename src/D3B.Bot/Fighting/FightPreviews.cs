@@ -21,6 +21,7 @@ public sealed class FightPreviews
 {
     private readonly GameWorld _world;
     private readonly GameTables _tables;
+    private readonly IPlaceZones? _zones;
     private readonly Lazy<WorldPathfinder> _pathfinder;
     private readonly Lock _lock = new();
     private string? _key;
@@ -29,21 +30,23 @@ public sealed class FightPreviews
     /// <summary>Initializes a new instance of the <see cref="FightPreviews"/> class.</summary>
     /// <param name="world">The installed build's world.</param>
     /// <param name="tables">The installed build's tables: the monsters and the banks.</param>
-    public FightPreviews(GameWorld world, GameTables tables)
+    /// <param name="zones">The project's zones (D415), for settings whose place is one; none, a zone is not found.</param>
+    public FightPreviews(GameWorld world, GameTables tables, IPlaceZones? zones = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tables);
 
         _world = world;
         _tables = tables;
+        _zones = zones;
         _pathfinder = new Lazy<WorldPathfinder>(() => new WorldPathfinder(world.Graph, world.Atlas, NpcWays.Measured), LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
-    private static string KeyOf(FightSettings settings, IReadOnlyList<PreviewPlayer> players)
+    private string KeyOf(FightSettings settings, IReadOnlyList<PreviewPlayer> players)
     {
         var who = string.Join(';', players.Select(player => $"{player.Name}:{player.Level}"));
 
-        return $"{settings.Mode}|{string.Join(',', settings.Monsters)}|{string.Join(',', settings.Families)}|{string.Join(',', settings.Excluded)}|{settings.Place}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{settings.IsolatedMaps}|{who}";
+        return $"{settings.Mode}|{string.Join(',', settings.Monsters)}|{string.Join(',', settings.Families)}|{string.Join(',', settings.Excluded)}|{settings.Place}|{settings.Area}|{string.Join(',', settings.SubAreas)}|{settings.IsolatedMaps}|{PlaceZoneKey.Of(_zones, settings.Zone, settings.Place is FightPlace.Zone)}|{who}";
     }
 
     /// <summary>Reckons what settings lead to.</summary>
@@ -129,8 +132,13 @@ public sealed class FightPreviews
         }
         else
         {
+            IReadOnlySet<long>? within = null;
+
+            if (settings.Place is FightPlace.Zone && (_zones is null || !_zones.TryResolve(settings.Zone, out within)))
+                return null;
+
             // The level counts only for a place the activity chooses.
-            ground = HuntingGround.Of(settings, atlas, _world.Graph, monsters, 1, subscribed: true);
+            ground = HuntingGround.Of(settings, atlas, _world.Graph, monsters, 1, subscribed: true, within);
 
             if (ground.SubAreas.Count is 0)
                 return null;

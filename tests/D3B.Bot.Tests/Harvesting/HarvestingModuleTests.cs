@@ -35,6 +35,22 @@ public sealed class HarvestingModuleTests
     }
 
     [Fact]
+    public void AZonePlaceIsStoredWithItsZoneNeedsAZoneAndLeavesAProfileOfBeforeAsItWas()
+    {
+        var settings = Harvest().Settings;
+        var before = Assert.IsType<HarvestSettings>(settings.Read("""{"Resources":[312],"Place":"Chosen","SubAreas":[7]}""").Settings);
+        var zone = Assert.IsType<HarvestSettings>(settings.Read("""{"Resources":[312],"Place":"Zone","Zone":"woods"}""").Settings);
+
+        Assert.Equal((HarvestPlace.Chosen, ""), (before.Place, before.Zone));
+        Assert.Equal([7], before.SubAreas);
+        Assert.Equal((HarvestPlace.Zone, "woods"), (zone.Place, zone.Zone));
+        Assert.Contains("\"Zone\":\"woods\"", settings.Write(zone).Replace(" ", ""));
+        Assert.Empty(settings.Check(zone));
+        Assert.Single(settings.Check(new HarvestSettings { Resources = [312], Place = HarvestPlace.Zone }));
+        Assert.Empty(settings.Check(before));
+    }
+
+    [Fact]
     public void AProfileThatStoredItsShareOfPodsKeepsBankingByItAndANewOneFollowsTheGeneralSettings()
     {
         var settings = Harvest().Settings;

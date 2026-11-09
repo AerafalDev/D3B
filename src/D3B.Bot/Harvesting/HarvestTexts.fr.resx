@@ -60,7 +60,7 @@
     <value>Dans l'ordre, la première d'abord, de tout métier ou sans métier.</value>
   </data>
   <data name="Area" xml:space="preserve">
-    <value>Zone</value>
+    <value>Région</value>
   </data>
   <data name="AreaHelp" xml:space="preserve">
     <value>Seule, elle vaut ses sous-zones où poussent les ressources.</value>
@@ -99,7 +99,7 @@
     <value>Choisis des ressources.</value>
   </data>
   <data name="RuleWhere" xml:space="preserve">
-    <value>Choisis une zone ou des sous-zones.</value>
+    <value>Choisis une région ou des sous-zones.</value>
   </data>
   <data name="FigureNumber" xml:space="preserve">
     <value>{0}</value>
@@ -399,13 +399,13 @@
     <value>Lieu</value>
   </data>
   <data name="PlaceHelp" xml:space="preserve">
-    <value>Automatique : les sous-zones les plus riches en ce que chaque perso peut récolter à ses niveaux, parcourues tour à tour.</value>
+    <value>Automatique : les sous-zones les plus riches en ce que chaque perso peut récolter à ses niveaux, parcourues tour à tour. Sous-zones : celles que tu nommes. Zone : les cartes d'une zone du projet.</value>
   </data>
   <data name="PlaceAutomatic" xml:space="preserve">
     <value>Automatique</value>
   </data>
   <data name="PlaceChosen" xml:space="preserve">
-    <value>Choisi</value>
+    <value>Sous-zones</value>
   </data>
   <data name="SafeLevel" xml:space="preserve">
     <value>Pas au-dessus de son niveau</value>
@@ -484,5 +484,20 @@
   </data>
   <data name="MessageAutomatic" xml:space="preserve">
     <value>Le lieu se choisit aux niveaux de chaque perso qui joue ce profil : donne-le à un perso, page Comptes, pour le voir.</value>
+  </data>
+  <data name="PlaceZone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="Zone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="ZoneHelp" xml:space="preserve">
+    <value>Le perso ne récolte que sur les cartes de cette zone, qu'il parcourt en tournée, et s'y rend seul. Les zones se dessinent sur la carte du monde.</value>
+  </data>
+  <data name="RuleZone" xml:space="preserve">
+    <value>Choisis une zone.</value>
+  </data>
+  <data name="FailZoneGone" xml:space="preserve">
+    <value>La zone que ce profil nomme n'est plus dans le projet.</value>
   </data>
 </root>

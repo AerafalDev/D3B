@@ -27,6 +27,9 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets whether the place the activity chooses is never above the character's level, so that its monsters do not overwhelm it.</summary>
     public bool SafeLevel { get; set; } = true;
 
+    /// <summary>Gets or sets the zone of the project to harvest in, by its id, when <see cref="Place"/> is <see cref="HarvestPlace.Zone"/> (D415).</summary>
+    public string Zone { get; set; } = "";
+
     /// <summary>Gets or sets the area to harvest in: alone, its sub-areas where the resources grow.</summary>
     public int? Area { get; set; }
 

@@ -4,6 +4,7 @@ using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
 using D3B.Bot.Settings;
+using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
 
 namespace D3B.Bot.Tests.Harvesting;
@@ -26,9 +27,26 @@ public sealed class HarvestPreviewsTests : IAsyncDisposable
         return string.Format(_english, format.In(_english), [.. text.Values.Select(value => value.Text ?? value.Id.ToString(_english))]);
     }
 
-    private HarvestPreviews Previews(GraphicSkills? graphics = null)
+    private HarvestPreviews Previews(GraphicSkills? graphics = null, IPlaceZones? zones = null)
     {
-        return new HarvestPreviews(_play.World, _play.Tables, _play.Maps, new HarvestSightings(), graphics ?? new GraphicSkills(), _play.Places);
+        return new HarvestPreviews(_play.World, _play.Tables, _play.Maps, new HarvestSightings(), graphics ?? new GraphicSkills(), _play.Places, zones);
+    }
+
+    [Fact]
+    public void ThePreviewOfAZonePlaceDrawsTheZonesMapsAndIsReckonedAgainWhenTheZoneChanges()
+    {
+        var zones = new TestPlaceZones().Add("woods", TestPlay.NorthMapId, TestPlay.MapId);
+        var previews = Previews(zones: zones);
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Zone = "woods" };
+        var before = previews.Of(settings)!;
+
+        Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.MapId }.Order(), before.Zone.Select(map => map.MapId).Order());
+
+        zones.Add("woods", TestPlay.NorthMapId, TestPlay.MapId, TestPlay.EastMapId);
+
+        Assert.Equal(3, previews.Of(settings)!.Zone.Length);
+        Assert.Null(previews.Of(new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Zone = "gone" }));
+        Assert.Null(Previews().Of(settings));
     }
 
     [Fact]
