@@ -598,4 +598,45 @@ public sealed class SequencerViewModelTests : IAsyncDisposable
         Assert.False(editor.Sequencer.HasNoCommonAction);
         Assert.Empty(editor.Sequencer.CommonActions);
     }
+
+    [Fact]
+    public async Task EditingTheSecondOfTheActionsStepsShareChangesThatActionAndNotTheFirst()
+    {
+        var wait = Default(RouteActions.Wait);
+        var fight = Call(RouteActions.Fight, new RouteFightValues());
+        var (_, editor) = await OpenAsync(Step(1, wait, fight), Step(2, wait), Step(3, wait, fight));
+        var sequencer = editor.Sequencer;
+
+        editor.SelectSteps([0, 2]);
+
+        var card = sequencer.CommonActions[1];
+        var least = card.Editor!.Sections.SelectMany(section => section.Fields).OfType<NumberFieldViewModel>().First();
+
+        least.Value = 2;
+
+        Assert.All([0, 2], step =>
+        {
+            Assert.True(RouteAnchor.SameCall(editor.CurrentAnchors[step].Actions[0], wait));
+            Assert.Equal(RouteActions.Fight, editor.CurrentAnchors[step].Actions[1].Node);
+            Assert.False(RouteAnchor.SameCall(editor.CurrentAnchors[step].Actions[1], fight));
+        });
+        Assert.Same(card, sequencer.CommonActions[1]);
+    }
+
+    [Fact]
+    public async Task AClipMovedToOtherStepsGetsItsCardMadeAgainForTheMapOfItsFirstStep()
+    {
+        var door = Call(RouteActions.Door, new RouteDoorValues { Cell = 312 });
+        var (_, editor) = await OpenAsync(Step(1, door), Step(2, door), Step(3), Step(4));
+        var sequencer = editor.Sequencer;
+
+        sequencer.PressClip(sequencer.Scene.Tracks[0].Clips[0].Id);
+
+        var before = sequencer.ClipCard;
+
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.Alt));
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.Alt));
+
+        Assert.NotSame(before, sequencer.ClipCard);
+    }
 }

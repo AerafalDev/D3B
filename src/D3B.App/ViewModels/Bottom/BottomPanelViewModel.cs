@@ -124,12 +124,20 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
         if (ReferenceEquals(sequencer, Sequencer))
             return;
 
+        var first = Sequencer is null;
+
         Sequencer = sequencer;
 
-        if (sequencer is not null)
+        // Selecting a route shows its Sequencer; going from one route to another leaves the tab the user is on.
+        if (sequencer is not null && first)
+        {
             Show(BottomTab.Sequencer);
-        else if (Tab is BottomTab.Sequencer)
+        }
+        else if (sequencer is null && Tab is BottomTab.Sequencer)
+        {
             Tab = BottomTab.Journal;
+            Refresh(_services());
+        }
     }
 
     /// <summary>Shows a character's run in the trace, as its tab's "See the trace" asks.</summary>

@@ -50,6 +50,10 @@ Builds D295, D299, D371, D375, D378, D395 to D397.*
   pixels at 900, where the mockup gave it 292); whether the Sequencer is what the owner means by practical; a screen reader on the grid
   (the names are set, no reader was run); the cost of making the clips and their sentences at each change of a big route. All of it is
   tested on view models and in the headless window, not seen by the owner in the app.
+- **Known limits.** Ctrl D puts the copy right after the clip, so that it touches it and reads as one longer clip (at the route's
+  end it only extends it): a copy that lands apart is the Shift drag. Setting the actions several steps share edits the first of
+  equal actions on each step, not a second one. Going from one route to another keeps the bottom panel's tab: the Sequencer is shown
+  by the first route selected only.
 - **Left**: recording in the toolbar (the measure in game, D395), the playhead and following a run (7r4), the map's frame, hovering a
   column lighting its step, a panel taller for the Sequencer, an automation peer with the clips as children, the cards' buttons in
   the Details styled as the studio's.

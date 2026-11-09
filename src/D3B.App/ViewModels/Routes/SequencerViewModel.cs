@@ -338,7 +338,7 @@ internal sealed partial class SequencerViewModel : ObservableObject
         var anchors = _route.CurrentAnchors;
         var steps = _route.SelectedSteps;
         var common = steps.Count > 1 && steps.All(step => step < anchors.Count) ? RouteClips.CommonCalls(anchors, steps) : [];
-        var key = (_selected is { } clip ? KeyOf(clip.Call) + "/" + clip.Layer.ToString(_page.Localizer.Culture) : "") + "#" + string.Join(',', steps) + "#" + string.Join('/', common.Select(KeyOf));
+        var key = (_selected is { } clip && clip.First < anchors.Count ? KeyOf(clip.Call) + "/" + clip.Layer.ToString(_page.Localizer.Culture) + "@" + anchors[clip.First].MapId.ToString(_page.Localizer.Culture) : "") + "#" + string.Join(',', steps) + "#" + string.Join('/', common.Select(KeyOf));
 
         if (key == _cardsKey)
             return;
@@ -348,8 +348,13 @@ internal sealed partial class SequencerViewModel : ObservableObject
         CommonActions.Clear();
         _common = [.. common];
 
-        foreach (var call in common)
-            CommonActions.Add(Card(call, anchors[steps[0]].MapId, CommonEdited, _ => { }));
+        for (var i = 0; i < common.Length; i++)
+        {
+            // Each card is a step of one action to the form, which says index 0: its place among the cards is the one told here.
+            var place = i;
+
+            CommonActions.Add(Card(common[i], anchors[steps[0]].MapId, (_, definition, editor) => CommonEdited(place, definition, editor), _ => { }));
+        }
 
         OnPropertyChanged(nameof(HasNoCommonAction));
     }

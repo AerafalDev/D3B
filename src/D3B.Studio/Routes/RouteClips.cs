@@ -251,7 +251,13 @@ public static class RouteClips
 
     private static RouteAnchor With(RouteAnchor anchor, RouteClip clip)
     {
-        return Count(anchor, clip.Call) > clip.Layer ? anchor : anchor with { Actions = anchor.Actions.Add(clip.Call) };
+        var actions = anchor.Actions;
+
+        // A clip on a layer above 0 needs the layers under it on the step too, or it would read as layer 0.
+        for (var held = Count(anchor, clip.Call); held <= clip.Layer; held++)
+            actions = actions.Add(clip.Call);
+
+        return actions == anchor.Actions ? anchor : anchor with { Actions = actions };
     }
 
     private static RouteAnchor Without(RouteAnchor anchor, RouteClip clip)

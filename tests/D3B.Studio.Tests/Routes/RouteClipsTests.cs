@@ -362,6 +362,19 @@ public sealed class RouteClipsTests : IAsyncDisposable
         }
     }
 
+    [Fact]
+    public void StretchingTheSecondOfTwoEqualActionsOverAStepThatHoldsNoneGivesThatStepTwoSoTheClipKeepsItsLayer()
+    {
+        var anchors = Route(Step(1, _ash, _ash), Step(2), Step(3));
+        var second = RouteClips.Derive(anchors).Single(clip => clip.Layer == 1);
+
+        var stretched = RouteClips.Reshape(anchors, second, 0, 1);
+        var clips = RouteClips.Derive(stretched);
+
+        Assert.Equal([_ash, _ash], stretched[1].Actions, new SameCalls());
+        Assert.Equal([(0, 1, 0), (0, 1, 1)], clips.Select(clip => (clip.First, clip.Last, clip.Layer)));
+    }
+
     private static string Describe(NodeCall call)
     {
         return call.Node + string.Concat(call.Values.Select(pair => $"|{pair.Key}={pair.Value}"));
