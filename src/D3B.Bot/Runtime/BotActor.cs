@@ -12,6 +12,7 @@ using D3B.Network.Relay;
 using D3B.Protocol.Game;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
+using static D3B.Bot.Runtime.BotInput;
 
 namespace D3B.Bot.Runtime;
 
@@ -50,9 +51,9 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 
     private const long NeverEnded = long.MinValue;
 
-    private readonly Channel<Input> _inbox = Channel.CreateUnbounded<Input>(new UnboundedChannelOptions { SingleReader = true });
+    private readonly Channel<BotInput> _inbox = Channel.CreateUnbounded<BotInput>(new UnboundedChannelOptions { SingleReader = true });
     private readonly List<GameExpectation> _expectations = [];
-    private readonly List<Waiter> _waiters = [];
+    private readonly List<BotWaiter> _waiters = [];
     private readonly List<Starting> _parked = [];
     private readonly Lock _activityLock = new();
     private readonly ILogger _log;
@@ -184,7 +185,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     {
         ArgumentNullException.ThrowIfNull(behavior);
 
-        return RunBehaviorAsync(behavior, Readiness.Now, cancellationToken);
+        return RunBehaviorAsync(behavior, BotReadiness.Now, cancellationToken);
     }
 
     /// <summary>Lets the bot act again after the player took the character over.</summary>
@@ -279,7 +280,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     {
         ArgumentNullException.ThrowIfNull(condition);
 
-        var waiter = new Waiter(condition, cancellationToken);
+        var waiter = new BotWaiter(condition, cancellationToken);
 
         if (!_inbox.Writer.TryWrite(new Waiting(waiter)))
             waiter.Fail(new ObjectDisposedException(nameof(BotActor), "The bot was stopped."));
@@ -300,14 +301,14 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     /// <remarks>An activity's steps go this way, so that one waits, without a delay, for the client to come back, the player to resume the bot, or a fight to end.</remarks>
     internal Task<T> RunWhenReadyAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, CancellationToken cancellationToken)
     {
-        return RunBehaviorAsync(behavior, Readiness.OutOfFight, cancellationToken);
+        return RunBehaviorAsync(behavior, BotReadiness.OutOfFight, cancellationToken);
     }
 
     /// <summary>Runs a behavior once the bot can act in a fight: a game connection plays the character, in a fight not over, the player has not taken it over, and no behavior runs.</summary>
     /// <remarks>The AI's fight goes this way (D202): a step a fight cut ends first, and the player's hand in the fight interrupts it.</remarks>
     internal Task<T> RunInFightAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, CancellationToken cancellationToken)
     {
-        return RunBehaviorAsync(behavior, Readiness.InFight, cancellationToken);
+        return RunBehaviorAsync(behavior, BotReadiness.InFight, cancellationToken);
     }
 
     internal void Attach(GameSession session, CharacterState state)
@@ -364,12 +365,12 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
         return expectation;
     }
 
-    private async Task<T> RunBehaviorAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, Readiness readiness, CancellationToken cancellationToken)
+    private async Task<T> RunBehaviorAsync<T>(Func<BotContext, CancellationToken, Task<T>> behavior, BotReadiness readiness, CancellationToken cancellationToken)
     {
         var started = new TaskCompletionSource<RunningBehavior>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // A start that waits may be cancelled before the bot can act; the loop then never starts it (OnStarting).
-        using var registration = readiness is not Readiness.Now ? cancellationToken.Register(() => started.TrySetCanceled(cancellationToken)) : default;
+        using var registration = readiness is not BotReadiness.Now ? cancellationToken.Register(() => started.TrySetCanceled(cancellationToken)) : default;
 
         var posted = _inbox.Writer.TryWrite(new Starting(started, readiness, cancellationToken));
 
@@ -394,7 +395,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
         }
     }
 
-    private void Post(Input input)
+    private void Post(BotInput input)
     {
         // Once the bot is stopped, what comes is dropped: no behavior runs any more to need it.
         _inbox.Writer.TryWrite(input);
@@ -418,7 +419,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
         }
     }
 
-    private void Handle(Input input)
+    private void Handle(BotInput input)
     {
         switch (input)
         {
@@ -541,7 +542,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     {
         var started = starting.Started;
 
-        if (starting.Readiness is not Readiness.Now)
+        if (starting.Readiness is not BotReadiness.Now)
         {
             if (CanAct(starting.Readiness))
                 Start(starting);
@@ -582,12 +583,12 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
         _acting = true;
     }
 
-    private bool CanAct(Readiness readiness)
+    private bool CanAct(BotReadiness readiness)
     {
         if (_session is null || _paused || _behavior is not null)
             return false;
 
-        return readiness is Readiness.InFight
+        return readiness is BotReadiness.InFight
             ? _state.Fight is { Phase: not FightPhase.Ended }
             : _state is { MapId: not null, Cell: not null, IsFighting: false };
     }
@@ -718,90 +719,5 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
             expectation.Cancel();
 
         _expectations.RemoveAll(expectation => expectation.IsDone);
-    }
-
-    private abstract record Input;
-
-    private sealed record Seen(GameSession Session, RelayDirection Side, IMessage Message) : Input;
-
-    private sealed record Expecting(GameExpectation Expectation) : Input;
-
-    private sealed record Starting(TaskCompletionSource<RunningBehavior> Started, Readiness Readiness, CancellationToken CancellationToken) : Input;
-
-    private sealed record Waiting(Waiter Waiter) : Input;
-
-    private sealed record Finished(RunningBehavior Behavior) : Input;
-
-    private sealed record Resuming : Input;
-
-    private sealed record Pausing(bool FromApp) : Input;
-
-    private sealed record Attached(GameSession Session, CharacterState State) : Input;
-
-    private sealed record Detached(GameSession Session) : Input;
-
-    private sealed record Stopping : Input;
-
-    private sealed record Settling(TaskCompletionSource Settled) : Input;
-
-    private sealed record Processing(TaskCompletionSource Processed) : Input;
-
-    /// <summary>When a behavior may start.</summary>
-    private enum Readiness
-    {
-        /// <summary>Now, or never: it fails when the bot cannot act.</summary>
-        Now,
-
-        /// <summary>Once the bot can act on a map, out of a fight.</summary>
-        OutOfFight,
-
-        /// <summary>Once the bot can act in a fight not over.</summary>
-        InFight,
-    }
-
-    /// <summary>A condition someone waits for, tried by the bot's loop.</summary>
-    private sealed class Waiter
-    {
-        private readonly Func<BotActor, bool> _condition;
-        private readonly TaskCompletionSource _held = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly CancellationTokenRegistration _registration;
-
-        public Task Task => _held.Task;
-
-        public bool IsDone => _held.Task.IsCompleted;
-
-        public Waiter(Func<BotActor, bool> condition, CancellationToken cancellationToken)
-        {
-            _condition = condition;
-            _registration = cancellationToken.Register(() => _held.TrySetCanceled(cancellationToken));
-        }
-
-        public void Try(BotActor bot)
-        {
-            if (IsDone)
-                return;
-
-            bool held;
-
-            try
-            {
-                held = _condition(bot);
-            }
-            catch (Exception exception)
-            {
-                Fail(exception);
-
-                return;
-            }
-
-            if (held && _held.TrySetResult())
-                _registration.Dispose();
-        }
-
-        public void Fail(Exception exception)
-        {
-            if (_held.TrySetException(exception))
-                _registration.Dispose();
-        }
     }
 }
