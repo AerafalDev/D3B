@@ -7,7 +7,7 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring the codebase, read the entries of `docs/decisions.md` about the area you're touching, found through `docs/decisions-index.md`, and the matching section of `docs/architecture.md`.
+When exploring the codebase, read the entries of `docs/decisions/` about the area you're touching, found through `docs/decisions-index.md`, and the matching section of `docs/architecture.md`.
 
 ## Redact
 

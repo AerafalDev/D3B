@@ -7,8 +7,9 @@ The repository is the only memory between sessions: never assume an earlier sess
 
 1. This file.
 2. [docs/status.md](docs/status.md): where the project stands, what is not measured, what comes next, the known debt.
-3. [docs/decisions-index.md](docs/decisions-index.md): one line per decision. Open the entries of [docs/decisions.md](docs/decisions.md)
-   about the area you work on, plus the brief and the open questions at its ends; the file is about 700 KB, never read it whole.
+3. [docs/decisions-index.md](docs/decisions-index.md): one line per decision. Open the entries of [docs/decisions/](docs/decisions/README.md)
+   about the area you work on, one file for each group of the index, plus the [brief](docs/decisions/brief.md) and the
+   [open questions](docs/decisions/open-questions.md).
 4. [docs/architecture.md](docs/architecture.md): how the code is built, section by section: read the ones you touch.
 5. [docs/roadmap.md](docs/roadmap.md): the steps and the next one.
 6. [docs/client.md](docs/client.md) and [docs/client-game.md](docs/client-game.md) (its game connection, session by session), when
@@ -21,7 +22,7 @@ The repository is the only memory between sessions: never assume an earlier sess
 - Talk to the project owner in French. Everything in the repository is in English.
 - **Decisions.** Settle local, reversible choices alone. For an important or hard-to-reverse one: analyse, research,
   compare, recommend, then ask the owner, one decision at a time. Say plainly when an idea is bad, premature or a
-  source of debt. Record each decision with `/decision`: an entry in `docs/decisions.md` and its line in
+  source of debt. Record each decision with `/decision`: an entry in `docs/decisions/` and its line in
   `docs/decisions-index.md`. Entries are append-only: a later entry supersedes an earlier one.
 - **Done** means code, the tests it needs (for `src/` only, since scripts have none, D10), docs, and specific
   checks when relevant, with every check green. The docs are the roadmap, `docs/status.md`, the index and the

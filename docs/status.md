@@ -1,7 +1,7 @@
 # Status
 
 Where the project stands, on one page. Read it first: it says what exists, what is not measured, what comes next and what is
-owed. The reasons are in [decisions.md](decisions.md), found through [decisions-index.md](decisions-index.md); the steps and
+owed. The reasons are in [the decisions](decisions/README.md), found through [decisions-index.md](decisions-index.md); the steps and
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
@@ -53,9 +53,9 @@ As of 2026-11-09, after D408 (the fight AI after the players' reports, D407, sum
 
 ## Next
 
-0. **A large refactoring and tidy-up session**, asked by the owner: the code's remaining debt (below), the architecture and
-   the docs (`decisions.md` is about 700 KB; `status.md`, `architecture.md` and `client.md` are long). It is a session of
-   its own, planned with the owner before it starts; no step of the roadmap is begun in it.
+0. **The refactoring and tidy-up session** (D399 to D401) is mostly done: `decisions.md` is cut in files by group of the index,
+   `client.md` has its game connection apart, `AssetsViewModel`, `BotActor`, `HarvestActivity`, `WorldMapView` and `Imagination`
+   are under 900 lines, BenchmarkDotNet is gone. Left: `FightJudge` and `RouteEditorViewModel`, over 900 lines (debt, below).
 0. **Bug reports with the player's capture** (D409 to D411), designed, not begun: the game connection recorded by default, a
    `.d3breport` bundle with the capture cleaned at the export, sent by a private Discord webhook; BR1 to BR4 in the roadmap, BR1
    first. Nothing of it exists in code yet.
@@ -77,7 +77,7 @@ The measure in game is worth a session of its own before 7e grows the code furth
 
 Q5 (the fight formulas left: shields, AP and MP removed, erosion), Q12 (what quests, breed and the server's codes gate),
 Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that changes its schema). The table is at the end of
-[decisions.md](decisions.md#open-questions).
+[the open questions](decisions/open-questions.md#open-questions).
 
 ## Known debt
 
@@ -94,4 +94,4 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
 - `GroupJudge.OddsOf`, `Beats`, `Winnable` and `Share` are called by nothing in `src/` since D387, only by
   `scripts/fights/HuntBench.cs` and their tests. D387 kept them on purpose, for that bench: if the bench is dropped, they go
   with their tests; `Allows` and `Character` are alive.
-- `docs/decisions.md` is about 700 KB: read the index and the entries about the area worked on, never the whole file.
+- `docs/decisions/` is cut in files by group of the index, about 100 KB at most each (D401): read the index, then the file of the area worked on.

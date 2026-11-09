@@ -15,6 +15,6 @@
 
 - [ ] It follows the conventions of [CONTRIBUTING.md](https://github.com/AerafalDev/D3B/blob/main/CONTRIBUTING.md).
 - [ ] Changes to `src/` come with their tests.
-- [ ] The README and `docs/` describe the new behavior, and a change of direction has its entry in `docs/decisions.md`.
+- [ ] The README and `docs/` describe the new behavior, and a change of direction has its entry in `docs/decisions/`.
 - [ ] Nothing extracted from the client, no capture, no database and no login ticket is committed.
 - [ ] Nothing it adds is among what D3B never does (D2).

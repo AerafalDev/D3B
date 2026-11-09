@@ -45,7 +45,7 @@ public sealed class WriteGuardTests
     [InlineData("tests/D3B.Network.Tests/Captures/CaptureTests.cs")]
     [InlineData("tests/D3B.Protocol.Tests/Fixtures/fixture.proto")]
     [InlineData("scripts/capture/CaptureCommand.cs")]
-    [InlineData("docs/decisions.md")]
+    [InlineData("docs/decisions/README.md")]
     [InlineData(".claude/hooks/guard-git.cs")]
     [InlineData("tests/D3B.Hooks.Tests/WriteGuardTests.cs")]
     public void OrdinaryProjectFilesPass(string path)

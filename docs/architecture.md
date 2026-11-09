@@ -1,6 +1,6 @@
 # Architecture
 
-Where the bot is going, and how what exists is built. The reasons behind each choice are in [decisions.md](decisions.md),
+Where the bot is going, and how what exists is built. The reasons behind each choice are in [the decisions](decisions/README.md),
 found through [decisions-index.md](decisions-index.md); the order of work and what each step did are in
 [roadmap.md](roadmap.md); where the project stands today is in [status.md](status.md). The sections below describe the code
 as it is, step by step, with the decisions that made it: the solution and the module model, the data pack, the relay and the

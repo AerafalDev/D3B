@@ -5,9 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for the idea. The [roadmap](https://github.com/AerafalDev/D3B/blob/main/docs/roadmap.md) says what is planned and in which order, and [docs/decisions.md](https://github.com/AerafalDev/D3B/blob/main/docs/decisions.md) why things are as they are: a quick look there may answer part of it.
+        Thanks for the idea. The [roadmap](https://github.com/AerafalDev/D3B/blob/main/docs/roadmap.md) says what is planned and in which order, and [docs/decisions/](https://github.com/AerafalDev/D3B/blob/main/docs/decisions/README.md) why things are as they are: a quick look there may answer part of it.
 
-        D3B never adds [what D2 rules out](https://github.com/AerafalDev/D3B/blob/main/docs/decisions.md#d2-what-d3b-never-contains): evading Ankama's detection, creating accounts in bulk, automating subscriptions or payments, bypassing Ankama Shield, or a proxy per account to hide multi-accounting. Requests for these are closed.
+        D3B never adds [what D2 rules out](https://github.com/AerafalDev/D3B/blob/main/docs/decisions/d001-d018-foundation.md#d2-what-d3b-never-contains): evading Ankama's detection, creating accounts in bulk, automating subscriptions or payments, bypassing Ankama Shield, or a proxy per account to hide multi-accounting. Requests for these are closed.
 
   - type: textarea
     id: problem

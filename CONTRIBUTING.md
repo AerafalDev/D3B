@@ -9,7 +9,7 @@ Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md). Vulnerab
 
 ## Four rules that are never bent
 
-1. **Nothing from [D2](docs/decisions.md#d2-what-d3b-never-contains).** No evasion of Ankama's detection (simulated
+1. **Nothing from [D2](docs/decisions/d001-d018-foundation.md#d2-what-d3b-never-contains).** No evasion of Ankama's detection (simulated
    mistakes, timings shaped to avoid bans, forged hardware identifiers), no account creation in bulk, no subscription or
    payment automation, nothing that disables or bypasses Ankama Shield, no proxy per account to hide multi-accounting.
    A pull request adding one is closed, whatever else it brings.
@@ -21,14 +21,14 @@ Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md). Vulnerab
    capture's structure, never its content.
 4. **Ideas from other bots, never their code.** Other projects may be read for ideas, and the idea is then rewritten.
    Code under the GPL would change D3B's license, and code without a license cannot be reused at all
-   ([D3](docs/decisions.md#d3-the-references-in-vendor-give-ideas-never-code)).
+   ([D3](docs/decisions/d001-d018-foundation.md#d3-the-references-in-vendor-give-ideas-never-code)).
 
 ## Before you write code
 
 - **For a fix**, open the pull request directly, or an issue first if the cause is unclear.
 - **For a feature or a change of design**, open an issue first, so that we agree on the approach before you spend time
   on it. D3B follows a [roadmap](docs/roadmap.md), and each choice is recorded with its reasons in
-  [docs/decisions.md](docs/decisions.md), found through [docs/decisions-index.md](docs/decisions-index.md): read the entries
+  [docs/decisions/](docs/decisions/README.md), found through [docs/decisions-index.md](docs/decisions-index.md): read the entries
   about the area you touch, since they often explain why the obvious way was not taken.
 - **Everything in the repository is in English**: code, comments, docs, commits and pull requests. Issues may be written
   in English or French.
@@ -119,7 +119,7 @@ dotnet build .claude/hooks/<hook>.cs  # each hook you changed
   app's journal, is worth more than an argument.
 - **Performance** changes come with numbers: a measurement of your own, with the machine and the data it was taken on.
 - **Docs follow the code.** A change of behavior updates the README or `docs/` where they describe it. A change of
-  direction is recorded as a new entry at the end of `docs/decisions.md`, with its line in `docs/decisions-index.md`:
+  direction is recorded as a new entry at the end of the last file of `docs/decisions/`, with its line in `docs/decisions-index.md`:
   entries are never rewritten, a later one supersedes an earlier one. Propose it in your pull request; the maintainer may renumber it.
 
 ## Commits and pull requests

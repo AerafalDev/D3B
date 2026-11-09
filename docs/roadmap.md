@@ -2,7 +2,7 @@
 
 Steps in order. A step takes one or more sessions, and every new large task starts in a new session (D17). A step is
 done when its code, the tests it needs and its docs are in, and every check is green. Decisions go to
-[decisions.md](decisions.md). The "Settles" line of a step lists the open questions it closes.
+[the open questions](decisions/open-questions.md). The "Settles" line of a step lists the open questions it closes.
 
 | # | Step | Status |
 | --- | --- | --- |
