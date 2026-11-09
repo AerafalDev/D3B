@@ -338,7 +338,7 @@ internal static class IconsExtractor
         return (new IconTable(size, held, pixels), wanted.Except(held).ToList());
     }
 
-    private static UnityFields ReadFields(AssetsFileInstance file, AssetFileInfo info, string owner)
+    internal static UnityFields ReadFields(AssetsFileInstance file, AssetFileInfo info, string owner)
     {
         var tree = UnityTypeTree.From(file.file.Metadata.TypeTreeTypes[info.TypeIdOrIndex], owner);
         var reader = new UnityReader(UnityBundle.ReadObject(file, info), tree);
