@@ -5,7 +5,7 @@ owed. The reasons are in [decisions.md](decisions.md), found through [decisions-
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D407 (the fight AI after the players' reports; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D408 (the fight AI after the players' reports, D407, summons a last resort; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 

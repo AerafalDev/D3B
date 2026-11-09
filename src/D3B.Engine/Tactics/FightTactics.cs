@@ -40,6 +40,10 @@ public sealed class FightTactics
     // two life steals that kill and heal 3: the one with fewer actions wins (D407).
     private const double Tie = 1;
     private const int Finalists = 16;
+
+    // The breeds made of their summons: the Osamodas' beasts, the Roublard's bombs, the Steamer's turrets (D408).
+    private static readonly int[] _summonerBreeds = [2, 13, 15];
+
     private const int RepliesAnEnemy = 3;
     private const int ReplyCells = 12;
     private const int RootEnds = 3;
@@ -171,6 +175,22 @@ public sealed class FightTactics
             sum = unchecked(sum + ((long)state * -7046029254386353131L));
 
         return unchecked(sum + fighter.States.Length);
+    }
+
+    private bool SummonsAreLastResort(ImaginedFight fight, FightKnowledge knowledge)
+    {
+        return !(fight.Actor.BreedId is { } breed && _summonerBreeds.Contains(breed)) && knowledge.SpellsOf(fight.Actor.Id).Any(IsSummon);
+    }
+
+    private bool IsSummon(SpellLevel level)
+    {
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            if (_actions.Of(effect.EffectId).Kind is EffectKind.Summon)
+                return true;
+        }
+
+        return false;
     }
 
     private static HashSet<long> EnemiesAlive(ImaginedFight fight)
@@ -314,6 +334,11 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(knowledge);
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(limits);
+
+        // The owner's ask, for a fast farm (D408): but for a breed made of its summons, a summon is a last resort, brought when the
+        // turn has nothing else worth doing; they slow a fight and rarely win it.
+        if (SummonsAreLastResort(fight, knowledge) && Plan(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(IsSummon)), weights, limits, refused) is { IsEmpty: false } plain)
+            return plain;
 
         var clock = Stopwatch.StartNew();
         var judge = JudgeOf(fight, knowledge, weights);

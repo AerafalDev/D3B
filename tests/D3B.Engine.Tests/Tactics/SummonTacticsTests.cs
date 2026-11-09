@@ -13,6 +13,9 @@ public sealed class SummonTacticsTests
 {
     private const int Summon = 10;
     private const int Bite = 20;
+    private const int Blow = 30;
+    private const int Osamodas = 2;
+    private const int Sram = 4;
     private const int Monster = 900;
 
     private static readonly SpellCatalog _spells = Catalog();
@@ -32,11 +35,13 @@ public sealed class SummonTacticsTests
         [
             new SpellLevel { Id = 1010, SpellId = Summon, Grade = 1, ApCost = 2, MinRange = 1, Range = 2, StatesCriterion = SpellLevel.NoCriterion, Properties = SpellLevelProperties.NeedFreeCell, FirstEffect = 0, EffectCount = 1 },
             new SpellLevel { Id = 1020, SpellId = Bite, Grade = 1, ApCost = 3, MinRange = 1, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 1, EffectCount = 1 },
+            new SpellLevel { Id = 1030, SpellId = Blow, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 2, EffectCount = 1 },
         ];
         SpellEffect[] effects =
         [
             new SpellEffect { Uid = 1, EffectId = 181, TargetMask = 1, Triggers = 2, DiceNum = Monster, DiceSide = 1, Zone = point },
             new SpellEffect { Uid = 2, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 25, DiceSide = 30, Zone = point },
+            new SpellEffect { Uid = 3, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 20, DiceSide = 24, Zone = point },
         ];
         Spell[] spells = [.. levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 })];
 
@@ -116,5 +121,38 @@ public sealed class SummonTacticsTests
         var away = near.With(near.Fighters.Single(fighter => fighter.IsSummon) with { Cell = Off(-6, 0) });
 
         Assert.True(judge.Judge(near) > judge.Judge(away));
+    }
+
+    private static int[] Plan(int breed, params SpellLevel[] known)
+    {
+        // Five AP, an enemy two cells away: a blow of 3 AP, or summons of 2 AP, which the judge likes better.
+        var actor = Summoner() with { BreedId = breed, ActionPoints = 5, MovementPoints = 0 };
+        var enemy = Enemy(-1, Off(2, 0)) with { Life = 300, MaxLife = 300 };
+        var fight = new ImaginedFight { Map = Open(), Fighters = [actor, enemy], ActorId = 1, Round = 1 };
+        var knowledge = new FightKnowledge { Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(1, [.. known]).Add(enemy.Id, []) };
+
+        return [.. _tactics.Plan(fight, knowledge, TacticWeights.Default, TurnSearchLimits.Default with { Budget = TimeSpan.FromSeconds(30) }).Actions.Select(action => action.SpellId)];
+    }
+
+    [Fact]
+    public void ABreedThatDoesNotLiveBySummoningDoesNotSummonWhileItHasSomethingElseToDo()
+    {
+        // The owner's ask, for a fast farm: a summon slows a fight, and is a last resort but for a breed made of them.
+        var plan = Plan(Sram, Level(_spells, Summon), Level(_spells, Blow));
+
+        Assert.DoesNotContain(Summon, plan);
+        Assert.Contains(Blow, plan);
+    }
+
+    [Fact]
+    public void ABreedThatDoesNotLiveBySummoningSummonsWhenItCanDoNothingElse()
+    {
+        Assert.Contains(Summon, Plan(Sram, Level(_spells, Summon)));
+    }
+
+    [Fact]
+    public void AnOsamodasSummonsWhateverElseItCouldDo()
+    {
+        Assert.Contains(Summon, Plan(Osamodas, Level(_spells, Summon), Level(_spells, Blow)));
     }
 }

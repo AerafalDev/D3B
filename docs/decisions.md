@@ -9021,7 +9021,7 @@ the order of the sessions). Builds D295, D319 to D328, D371 to D375, D394 to D39
   its turn's damage (D270), not at all. A sweep of the blow a character gives up for two summons, 20 to 100 damage, chose the
   same plans at 0.8 and 0.9. A summon is worth more than a blow per AP by D270's measure (71 planned where the players brought 42), and the engine counts the summoner's slots (`CastRules`), so it summons again as soon as one dies, which
   reads as insisting. Neither *Chafer* nor *Arakne* is a summon of a breed in the pack: they are those of monsters (*Invocation de
-  Chaferfu*, *d'Arakne*), so the report's character plays a form or an item of which no capture exists. Nothing changed.
+  Chaferfu*, *d'Arakne*), so the report's character plays a form or an item of which no capture exists. Nothing changed here; the owner then asked for summons as a last resort (D408).
 - **Replayed** on the 5,056 turns of the 152 captures (`scripts/fights.cs --turns`, which takes `--weights` now, the judge's weights
   tried from the command line). With the curve and the tie, the numbers before in brackets: the AI's plan dealt more damage
   than the turn played in 1,998 turns (1,355; 1,655 with `Survival` 1.5 alone), as much in 2,202 (2,837); kills as many 4,845
@@ -9032,6 +9032,23 @@ the order of the sessions). Builds D295, D319 to D328, D371 to D375, D394 to D39
   instead of one in thirteen.
 - **Not measured in game**: the players' fights with the new curve; the owner is to say whether the AI plays less safely and
   whether the life steals are rarer.
+
+## D408: A summon is a last resort, but for the breeds made of their summons
+
+*2026-11-09, step 9, the owner's ask after the players' reports, "for a fast farm". Refines D270 and D407.*
+
+- **Asked.** The AI summoned whatever its breed, the summon being worth more than a blow per AP (D270, D407). The owner wants a
+  fast farm: only a breed whose summons are its kit, an Osamodas for one, summons as it likes; any other summons only when it
+  can do nothing else that turn.
+- **Made.** `FightTactics.Plan` searches the turn without the fighter playing's summoning spells first, unless its breed is one of
+  those made of summons; the plan it finds is played when it does something, and only an empty plan lets the search run again
+  with the summons. The breeds, the lead's reckoning to be corrected by the owner: the Osamodas (2), the Roublard (13), whose bombs
+  are its whole kit (D277), and the Steamer (15), whose turrets are. The Sadida's tree, the Féca's walls, the Enutrof's bag and the
+  rest are last resorts. A summon the fighter playing's *summon* brings is not touched: only the character's turn is searched so.
+  Three tests: a Sram with a blow and a summon strikes, one with a summon alone summons, an Osamodas with both summons.
+- **Rejected.** A weight on the summons' worth, by breed: a number to tune where the owner asks a rule. Summons after the blows
+  with the AP left: a farm that waits for its summons' turns.
+- **Not measured in game**: whether an Osamodas still farms as fast, and which other breeds the owner counts as summoners.
 
 ## Open questions
 
