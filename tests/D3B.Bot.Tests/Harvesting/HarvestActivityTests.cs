@@ -139,6 +139,34 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheTourWeighsTheLevelsTheCharacterHasAndAMapHoldingOnlyWhatItCannotHarvestIsNotProbable()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new JobExperiencesEvent { Jobs = { new JobExperience { JobId = TestPlay.Lumberjack, Level = 1 } } });
+        await WaitForAsync(() => bot.State.Jobs.ContainsKey(TestPlay.Lumberjack));
+
+        // A bot saw the chestnut, which asks the lumberjack's level 20, on the map north of the character's, who is level 1 (D417).
+        _sightings.SeenElements(TestPlay.NorthMapId, [new SightedElement(1, TestPlay.ChestnutSkillId, TestPlay.Chestnut, true)], DateTimeOffset.UnixEpoch);
+
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Chestnut, TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await connection.SentAsync(2));
+
+        var report = await ReportedAsync(activity, report => report.Progress is not null);
+
+        Assert.Equal("Tour 1, map 1 of 3", Say(report.Progress!.Text));
+        Assert.Contains(report.Focus!.Zone, map => map.MapId == TestPlay.NorthMapId && map.State is ZoneMapState.ToVisit);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
     public async Task TheWantedResourceIsHarvestedThenTheTourGoesOnToTheNextMap()
     {
         var (connection, bot) = await _play.EnterAsync(433);

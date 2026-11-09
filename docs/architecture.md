@@ -197,7 +197,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   foretold by its elements' graphics (`HarvestZone.Foresee`, D138), and a tour leaves out the maps seen empty, those
   whose graphics all offer none of its skills, and those without elements; an interior of a sub-area that also holds maps on a
   world map (`SubAreaInteriors`, `HarvestZone.Interiors`, the houses of a town, shared with `HuntingGround`) is gone through only
-  once seen holding a wanted resource or foretold by a graphic (D416). Full at its
+  once seen holding a wanted resource or foretold by a graphic (D416), and a map is probable only for what the character's level may
+  harvest (`HarvestTour.Know`, given at each step, D417). Full at its
   share of pods, it banks at the nearest bank, what the settings say, and the next step goes back; still full, it says
   why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
   app. Banking waits the client's display time, half a second measured, after the banker's question and after the bank

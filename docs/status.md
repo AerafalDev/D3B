@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D416 (the harvest's tour leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
+As of 2026-11-09, after D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
 
 ## What exists
 
@@ -53,10 +53,10 @@ As of 2026-11-09, after D416 (the harvest's tour leaves the houses of a town alo
   view models. A bank journey that outlives a refused zaap is the lead's reading of a player's report (Incarnam to Astrub, 1,500
   kamas the character lacked), not seen in game; the text the server answers to a zaap that cannot be paid, and the cost of a
   zaap leaving Incarnam's world map, are not measured.
-- The harvest leaving the houses of a town alone (D416): a player's report ("I still go into all the houses in Astrub"), read in the
-  code and measured on the pack and the owner's learned graphics, tested on the fake game, not seen in game. A mine whose graphics no
-  bot has learned is no longer discovered by a tour; the tour does not weigh the character's level, so a graphic shared with a
-  resource too high for it still brings some houses back (8 of Astrub's for a lumberjack, on the owner's database).
+- The harvest leaving the houses of a town alone (D416) and weighing the character's level (D417): a player's report ("I still go into
+  all the houses in Astrub"), read in the code and measured on the pack and the owner's learned graphics, tested on the fake game, not
+  seen in game. A mine whose graphics no bot has learned is no longer discovered by a tour; an outdoor map is never left out for the
+  level, only gone to later.
 - The players' reports answered by D407: the new curve of the character's life (above 60% a point is worth a quarter) and the
   plan with the fewest actions among equals, replayed on the captures but not played in game; what the server sends of an
   invisible fighter (no capture holds one: the AI keeps its last cell and `Combatant.IsVisible` is never unset); the damage of a
