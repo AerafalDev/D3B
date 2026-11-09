@@ -23,10 +23,6 @@
     <File Path=".claude/hooks/shared/TurnCheck.cs" />
     <File Path=".claude/hooks/shared/WriteGuard.cs" />
   </Folder>
-  <Folder Name="/benchmarks/">
-    <Project Path="benchmarks/D3B.Engine.Benchmarks/D3B.Engine.Benchmarks.csproj" />
-    <Project Path="benchmarks/D3B.Network.Benchmarks/D3B.Network.Benchmarks.csproj" />
-  </Folder>
   <Folder Name="/scripts/">
     <File Path="scripts/capture.cs" />
     <File Path="scripts/client.cs" />

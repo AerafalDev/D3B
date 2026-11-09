@@ -109,7 +109,7 @@ Tool preference:
 
 **Tag every debug log** with a unique prefix, e.g. `[DEBUG-a4f2]`. Cleanup at the end becomes a single grep. Untagged logs survive; tagged logs die.
 
-**Perf branch.** For performance regressions, logs are usually wrong. Instead: establish a baseline measurement (a BenchmarkDotNet run from `benchmarks/`, a `Stopwatch` harness, a profiler), then bisect. Measure first, fix second.
+**Perf branch.** For performance regressions, logs are usually wrong. Instead: establish a baseline measurement (a `Stopwatch` harness, a replayed capture through `scripts/fights.cs`, a profiler), then bisect. Measure first, fix second.
 
 ## Phase 5: Fix + regression test
 

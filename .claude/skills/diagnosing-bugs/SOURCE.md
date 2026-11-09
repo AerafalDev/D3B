@@ -5,4 +5,4 @@ skill `diagnosing-bugs` and its `hitl-loop.template.sh`; licence MIT, Copyright 
 
 Changed here: the line about the project's words points at `docs/decisions.md` and `docs/architecture.md`; the redaction
 rule names the captures' login tickets and the database; the loops that mean a web application (curl, a headless browser,
-`performance.now()`) became D3B's (a replayed capture, a headless Avalonia test, BenchmarkDotNet).
+`performance.now()`) became D3B's (a replayed capture, a headless Avalonia test, a `Stopwatch` harness; BenchmarkDotNet left with D400).

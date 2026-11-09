@@ -1,6 +1,6 @@
 ---
 name: csharp
-description: How C# is written in D3B - types, null, async, time, logging, collections, UI code - read from the source. Use before writing or changing C# in src/, tests/ or benchmarks/.
+description: How C# is written in D3B - types, null, async, time, logging, collections, UI code - read from the source. Use before writing or changing C# in src/ or tests/.
 ---
 
 `CLAUDE.md` gives the style rules and `.editorconfig` makes the build enforce them (warnings are errors). This skill is what
@@ -37,8 +37,8 @@ the rule and do not copy the code.
 ## Collections and speed
 
 - Store `ImmutableArray<T>` (179) and expose `IReadOnlyList<T>` (393); build a lookup once into a `FrozenDictionary` (40).
-- `Span<T>` and `stackalloc` live in the network and protocol hot paths, where benchmarks justify them. Elsewhere, write the
-  clear code first; a speed claim comes with numbers (`benchmarks` skill).
+- `Span<T>` and `stackalloc` live in the network and protocol hot paths, where speed matters. Elsewhere, write the
+  clear code first; a speed claim comes with numbers (a `Stopwatch` harness in a script, or the replayed captures).
 - A regular expression is a `[GeneratedRegex]`.
 
 ## The studio (`D3B.App`)

@@ -48,7 +48,7 @@ each step adds the references it needs.
 | `src/D3B.Storage` | D3B's database, SQLite through EF Core and its migrations: the accounts seen, what the bots learn, the runs and the characters' variables, which the app and `D3B.Host` share (D100, D312). It references `D3B.Studio`, so the references run `D3B.App` to `D3B.Storage` to `D3B.Studio` to `D3B.Bot` (D393). |
 | `src/D3B.App` | The Avalonia desktop app, which runs the bots' host in its process (D91). |
 | `scripts/` | Inspection, extraction, release and mapping tools, and the bench of the fights' effects, as file-based apps. |
-| `tests/`, `benchmarks/` | One test project per `src/` project that has logic; benchmarks for the codec and pathfinding. |
+| `tests/` | One test project per `src/` project that has logic. |
 
 ## Modules
 
@@ -385,7 +385,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   asking what is on a new map, so D3B never sends those; the bot learns that an action is over from what the server
   answers.
 - Framing, measured (D38): a varint length, then a protobuf message, in the clear. `FrameReader` reads frames from a
-  `SequenceReader<byte>` without copying; a benchmark in `benchmarks/D3B.Network.Benchmarks` measures it. The game
+  `SequenceReader<byte>` without copying; it was measured with BenchmarkDotNet, dropped in D400. The game
   connection's envelope carries an `Any` whose type URL is `type.ankama.com/` and the obfuscated message's name,
   measured (D56); the connection phase has none.
 - The obfuscated schema, built in session 3c (D39, D40): `scripts/schema.cs` reads the installed build's protocol from
@@ -894,7 +894,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   also teleports, from every map the server lets it teleport from and has not refused a teleport from, to the
   zaap of every map it knows one on whose cost it carries (`TeleportCost`), one change like the others (D83). It gives
   the cells each map is left from (`ExitCells`), a door's around its element. Built once per pack and shared; a search
-  keeps its state in its own arrays, and takes under 0.7 ms (`benchmarks/D3B.Engine.Benchmarks`).
+  keeps its state in its own arrays, and takes under 0.7 ms (measured with BenchmarkDotNet, dropped in D400).
 - The rules of a fight, in `D3B.Engine.Fights` (9c, D185 to D190), pure, on the pack's catalogs (D182):
   - `Combatant`, a fighter as the rules see it: team, cell, AP, MP, range, lock, dodge, life, summons, breed or monster,
     its grade and properties, summoner, states, and the buffs it holds by the spell that gave each (`HeldBuff`, D227). `CellSet`, a set of a map's cells as 560 bits, which the rules pass around
@@ -1049,7 +1049,7 @@ interface's recast (D292).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
   the captures turn by turn (9e2, D206 to D212). The simulator applies spell
-  effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
+  effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
   summons, those the AI brings and those the client controls (built, D269 to D271); the Roublard's bombs, their chains,
