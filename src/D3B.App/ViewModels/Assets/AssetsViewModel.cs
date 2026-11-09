@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
@@ -26,8 +25,8 @@ namespace D3B.App.ViewModels.Assets;
 internal sealed partial class AssetsViewModel : ObservableObject
 {
     private const int CopyAttempts = 50;
-    private const string FolderKey = "folder:";
-    private const string ProblemKey = "problem:";
+    private const string FolderKey = AssetPaths.FolderKey;
+    private const string ProblemKey = AssetPaths.ProblemKey;
 
     private readonly Localizer _localizer;
     private readonly Dialogs _dialogs;
@@ -125,7 +124,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     public Action<IReadOnlyCollection<string>>? FoldsChanged { get; set; }
 
     /// <summary>Gets every folder of the project, relative to its own, folded ones included.</summary>
-    public IReadOnlyList<string> AllFolderPaths => [.. AllFolders()];
+    public IReadOnlyList<string> AllFolderPaths => [.. AssetPaths.AllFolders(_assets)];
 
     /// <summary>Gets the project, once the host runs.</summary>
     public AssetLibrary? Assets => _assets;
@@ -155,23 +154,6 @@ internal sealed partial class AssetsViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(row);
 
         return row.AssetKind is AssetKind.Profile or AssetKind.Route or AssetKind.Behavior or AssetKind.Zone;
-    }
-
-    private static (string Before, string Found, string After) Split(string name, string filter)
-    {
-        var at = filter.Length == 0 ? -1 : name.IndexOf(filter, StringComparison.CurrentCultureIgnoreCase);
-
-        return at < 0 ? (name, "", "") : (name[..at], name.Substring(at, filter.Length), name[(at + filter.Length)..]);
-    }
-
-    private static string ParentOf(string folder)
-    {
-        return Path.GetDirectoryName(folder) ?? "";
-    }
-
-    private static bool IsIn(string folder, string parent)
-    {
-        return parent.Length == 0 || string.Equals(folder, parent, StringComparison.OrdinalIgnoreCase) || folder.StartsWith(parent + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Reads the project again, once it, its players, the language, the search or the selection changed.</summary>
@@ -305,7 +287,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
             return;
         }
 
-        var parent = row.IsFolder ? ParentOf(row.Folder) : row.Folder;
+        var parent = row.IsFolder ? AssetPaths.ParentOf(row.Folder) : row.Folder;
 
         if (Rows.FirstOrDefault(item => item.IsFolder && string.Equals(item.Folder, parent, StringComparison.OrdinalIgnoreCase)) is { } folder && !row.IsGiven)
             Click(folder);
@@ -352,7 +334,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
         if (asset.IsGiven)
             _givenFolded = false;
 
-        for (var folder = ParentOf(asset.Path ?? ""); folder.Length > 0; folder = ParentOf(folder))
+        for (var folder = AssetPaths.ParentOf(asset.Path ?? ""); folder.Length > 0; folder = AssetPaths.ParentOf(folder))
             _folded.Remove(folder);
 
         Filter = "";
@@ -361,7 +343,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
         _selected.Add(id);
         _anchor = id;
         FocusKey = id;
-        ChosenFolder = asset.IsGiven ? "" : ParentOf(asset.Path ?? "");
+        ChosenFolder = asset.IsGiven ? "" : AssetPaths.ParentOf(asset.Path ?? "");
         RememberFolds();
         Rebuild();
         Choose?.Invoke(id);
@@ -510,7 +492,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     public async Task DuplicateAsync(AssetRowViewModel? row = null)
     {
         foreach (var asset in Targets(row).Where(item => item.IsAsset && !item.IsGiven).Select(item => _assets?.Find(item.Id ?? "")).OfType<Asset>().ToList())
-            await WriteAsync(assets => assets.SaveAsync(asset with { Id = AssetLibrary.NewId(), Name = CopyName(asset.Kind, asset.Name), Path = null }, CancellationToken.None, ParentOf(asset.Path ?? ""))).ConfigureAwait(true);
+            await WriteAsync(assets => assets.SaveAsync(asset with { Id = AssetLibrary.NewId(), Name = CopyName(asset.Kind, asset.Name), Path = null }, CancellationToken.None, AssetPaths.ParentOf(asset.Path ?? ""))).ConfigureAwait(true);
     }
 
     /// <summary>Copies an asset given with D3B into the folder chosen, which then changes it (D296).</summary>
@@ -564,7 +546,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
             {
                 var moved = key[FolderKey.Length..];
 
-                if (folders.Any(other => !string.Equals(other, moved, StringComparison.OrdinalIgnoreCase) && IsIn(moved, other)))
+                if (folders.Any(other => !string.Equals(other, moved, StringComparison.OrdinalIgnoreCase) && AssetPaths.IsIn(moved, other)))
                     continue;
 
                 string? placed = null;
@@ -574,7 +556,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
                 if (placed is not null)
                     Follow(moved, placed);
             }
-            else if (_assets?.Find(key) is { Path: { } path } && !folders.Any(other => IsIn(ParentOf(path), other)))
+            else if (_assets?.Find(key) is { Path: { } path } && !folders.Any(other => AssetPaths.IsIn(AssetPaths.ParentOf(path), other)))
             {
                 await WriteAsync(assets => assets.MoveAsync(key, folder, CancellationToken.None)).ConfigureAwait(true);
             }
@@ -595,8 +577,8 @@ internal sealed partial class AssetsViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(folder);
 
         return keys.Any(key => key.StartsWith(FolderKey, StringComparison.Ordinal)
-            ? !IsIn(folder, key[FolderKey.Length..]) && !string.Equals(ParentOf(key[FolderKey.Length..]), folder, StringComparison.OrdinalIgnoreCase)
-            : _assets?.Find(key) is { IsGiven: false, Path: { } path } && !string.Equals(ParentOf(path), folder, StringComparison.OrdinalIgnoreCase));
+            ? !AssetPaths.IsIn(folder, key[FolderKey.Length..]) && !string.Equals(AssetPaths.ParentOf(key[FolderKey.Length..]), folder, StringComparison.OrdinalIgnoreCase)
+            : _assets?.Find(key) is { IsGiven: false, Path: { } path } && !string.Equals(AssetPaths.ParentOf(path), folder, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>Gets the keys of the rows a drag from a row takes: those chosen when it is one of them, else it alone.</summary>
@@ -650,7 +632,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        return [.. AllFolders().Prepend("").Where(folder => CanMove([row.Key], folder)).Select(folder => (folder, folder.Length == 0 ? _localizer["ProjectRoot"] : folder.Replace(Path.DirectorySeparatorChar, '/')))];
+        return [.. AssetPaths.AllFolders(_assets).Prepend("").Where(folder => CanMove([row.Key], folder)).Select(folder => (folder, folder.Length == 0 ? _localizer["ProjectRoot"] : folder.Replace(Path.DirectorySeparatorChar, '/')))];
     }
 
     /// <summary>Writes an asset's file elsewhere, where the user picks.</summary>
@@ -818,7 +800,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     [RelayCommand]
     public void CollapseAll()
     {
-        foreach (var folder in AllFolders())
+        foreach (var folder in AssetPaths.AllFolders(_assets))
             _folded.Add(folder);
 
         _givenFolded = true;
@@ -949,25 +931,25 @@ internal sealed partial class AssetsViewModel : ObservableObject
     {
         static string Moved(string folder, string from, string to)
         {
-            return IsIn(folder, from) && from.Length > 0 ? to + folder[from.Length..] : folder;
+            return AssetPaths.IsIn(folder, from) && from.Length > 0 ? to + folder[from.Length..] : folder;
         }
 
-        foreach (var folded in _folded.Where(folder => IsIn(folder, from)).ToList())
+        foreach (var folded in _folded.Where(folder => AssetPaths.IsIn(folder, from)).ToList())
         {
             _folded.Remove(folded);
             _folded.Add(Moved(folded, from, to));
         }
 
-        foreach (var key in _selected.Where(key => key.StartsWith(FolderKey, StringComparison.Ordinal) && IsIn(key[FolderKey.Length..], from)).ToList())
+        foreach (var key in _selected.Where(key => key.StartsWith(FolderKey, StringComparison.Ordinal) && AssetPaths.IsIn(key[FolderKey.Length..], from)).ToList())
         {
             _selected.Remove(key);
             _selected.Add(FolderKey + Moved(key[FolderKey.Length..], from, to));
         }
 
-        if (FocusKey is { } focus && focus.StartsWith(FolderKey, StringComparison.Ordinal) && IsIn(focus[FolderKey.Length..], from))
+        if (FocusKey is { } focus && focus.StartsWith(FolderKey, StringComparison.Ordinal) && AssetPaths.IsIn(focus[FolderKey.Length..], from))
             FocusKey = FolderKey + Moved(focus[FolderKey.Length..], from, to);
 
-        if (IsIn(ChosenFolder, from) && ChosenFolder.Length > 0)
+        if (AssetPaths.IsIn(ChosenFolder, from) && ChosenFolder.Length > 0)
             ChosenFolder = Moved(ChosenFolder, from, to);
 
         RememberFolds();
@@ -975,7 +957,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
 
     private string FreeFolderName(string parent)
     {
-        var taken = AllFolders().Where(folder => string.Equals(ParentOf(folder), parent, StringComparison.OrdinalIgnoreCase)).Select(Path.GetFileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var taken = AssetPaths.AllFolders(_assets).Where(folder => string.Equals(AssetPaths.ParentOf(folder), parent, StringComparison.OrdinalIgnoreCase)).Select(Path.GetFileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var name = _localizer["NewFolder"];
 
         for (var attempt = 2; taken.Contains(name) && attempt < CopyAttempts; attempt++)
@@ -995,164 +977,22 @@ internal sealed partial class AssetsViewModel : ObservableObject
         Refresh(null);
     }
 
-    private IEnumerable<string> AllFolders()
-    {
-        if (_assets is not { } assets)
-            return [];
-
-        var folders = new HashSet<string>(assets.Folders, StringComparer.OrdinalIgnoreCase);
-
-        foreach (var path in assets.Assets.Select(asset => asset.Path).Concat(assets.Problems.Select(problem => problem.Path)).OfType<string>())
-        {
-            for (var folder = ParentOf(path); folder.Length > 0; folder = ParentOf(folder))
-                folders.Add(folder);
-        }
-
-        return folders.Order(StringComparer.Create(CultureInfo.CurrentCulture, ignoreCase: true));
-    }
-
     private void Build()
     {
-        var rows = new List<AssetRowViewModel>();
+        var tree = _assets is { } assets
+            ? new AssetTreeBuilder(_localizer, assets, _book, new AssetTreeState(Filter, _hidden, _folded, _givenFolded, _selected, _cut, FocusKey, IsUnsaved)).Build()
+            : null;
 
-        if (_assets is { } assets)
+        if (tree is not null)
         {
-            var filter = Filter.Trim();
-            var searching = filter.Length > 0 || _hidden.Count > 0;
-            var folders = AllFolders().ToList();
-            var own = assets.Assets.Where(asset => !asset.IsGiven).ToList();
-            var given = assets.Assets.Where(asset => asset.IsGiven).ToList();
-
-            AddFolder("", 0, folders, own, assets.Problems, filter, searching, rows);
-
-            var givenRows = given.Select(asset => AssetRow(asset, 1, "", filter)).OfType<AssetRowViewModel>().ToList();
-
-            if (givenRows.Count > 0)
-            {
-                var unfolded = !_givenFolded || searching;
-
-                rows.Add(new AssetRowViewModel(AssetRowKind.Given, _localizer["GivenAssets"], 0) { Count = given.Count.ToString(_localizer.Culture), IsExpanded = unfolded });
-
-                if (unfolded)
-                    rows.AddRange(givenRows);
-            }
-
-            IsProjectEmpty = own.Count == 0 && folders.Count == 0 && assets.Problems.Count == 0;
-            FindsNothing = searching && rows.All(row => !row.IsAsset && !row.IsProblem);
+            IsProjectEmpty = tree.IsProjectEmpty;
+            FindsNothing = tree.FindsNothing;
         }
 
         Rows.Clear();
 
-        foreach (var row in rows)
+        foreach (var row in tree?.Rows ?? [])
             Rows.Add(row);
-    }
-
-    // A folder's rows, its own folders first, then its assets and the files that do not read; with a search or kinds
-    // hidden, only what holds the text, its folders unfolded to it.
-    private int AddFolder(string folder, int depth, List<string> folders, List<Asset> own, IReadOnlyList<AssetProblem> problems, string filter, bool searching, List<AssetRowViewModel> rows)
-    {
-        var count = 0;
-
-        foreach (var child in folders.Where(other => string.Equals(ParentOf(other), folder, StringComparison.OrdinalIgnoreCase)))
-        {
-            var unfolded = searching || !_folded.Contains(child);
-            var inner = new List<AssetRowViewModel>();
-            var held = AddFolder(child, depth + 1, folders, own, problems, filter, searching, inner);
-            var name = Path.GetFileName(child);
-
-            if (searching && inner.Count == 0 && !(filter.Length > 0 && name.Contains(filter, StringComparison.CurrentCultureIgnoreCase)))
-                continue;
-
-            var (before, found, after) = Split(name, filter);
-            var key = FolderKey + child;
-
-            rows.Add(new AssetRowViewModel(AssetRowKind.Folder, name, depth)
-            {
-                Key = key,
-                Folder = child,
-                Count = held > 0 ? held.ToString(_localizer.Culture) : "",
-                CountTip = held > 0 ? _localizer.Plural("FolderHolds", held) : null,
-                Tip = child.Replace(Path.DirectorySeparatorChar, '/'),
-                IsExpanded = unfolded,
-                IsSelected = _selected.Contains(key),
-                IsFocused = string.Equals(FocusKey, key, StringComparison.OrdinalIgnoreCase),
-                IsCut = _cut.Contains(key),
-                Before = before,
-                Found = found,
-                After = after,
-            });
-
-            if (unfolded)
-                rows.AddRange(inner);
-
-            count += held;
-        }
-
-        foreach (var asset in own.Where(asset => string.Equals(ParentOf(asset.Path ?? ""), folder, StringComparison.OrdinalIgnoreCase)))
-        {
-            count++;
-
-            if (AssetRow(asset, depth, folder, filter) is { } row)
-                rows.Add(row);
-        }
-
-        foreach (var problem in problems.Where(problem => string.Equals(ParentOf(problem.Path), folder, StringComparison.OrdinalIgnoreCase)))
-        {
-            var name = Path.GetFileName(problem.Path);
-
-            if (filter.Length > 0 && !name.Contains(filter, StringComparison.CurrentCultureIgnoreCase))
-                continue;
-
-            var (before, found, after) = Split(name, filter);
-            var key = ProblemKey + problem.Path;
-
-            rows.Add(new AssetRowViewModel(AssetRowKind.Problem, name, depth)
-            {
-                Key = key,
-                Folder = folder,
-                Problem = _localizer["AssetProblem" + problem.Kind],
-                Tip = _localizer["AssetProblem" + problem.Kind],
-                AssetKind = AssetFiles.TryKindOf(name, out var kind, out _) ? kind : null,
-                IsSelected = _selected.Contains(key),
-                IsFocused = string.Equals(FocusKey, key, StringComparison.OrdinalIgnoreCase),
-                Before = before,
-                Found = found,
-                After = after,
-            });
-        }
-
-        return count;
-    }
-
-    private AssetRowViewModel? AssetRow(Asset asset, int depth, string folder, string filter)
-    {
-        var name = asset.Title?.In(_localizer.Culture) ?? asset.Name;
-
-        if (_hidden.Contains(asset.Kind) || (filter.Length > 0 && !name.Contains(filter, StringComparison.CurrentCultureIgnoreCase)))
-            return null;
-
-        var users = _assets!.UsedBy(asset.Id).Count + (_book?.Characters.Count(character => character.Profile == asset.Id) ?? 0);
-        var (before, found, after) = Split(name, filter);
-        var kind = _localizer["AssetKind" + asset.Kind];
-
-        return new AssetRowViewModel(AssetRowKind.Asset, name, depth)
-        {
-            Key = asset.Id,
-            Id = asset.Id,
-            AssetKind = asset.Kind,
-            Folder = folder,
-            IsGiven = asset.IsGiven,
-            Count = users > 0 ? users.ToString(_localizer.Culture) : "",
-            CountTip = users > 0 ? _localizer.Plural("UsedByCount", users) : null,
-            Tip = asset.IsGiven ? $"{kind} · {_localizer["GivenAssets"]}" : $"{kind} · {asset.Path?.Replace(Path.DirectorySeparatorChar, '/')}",
-            IsUnsaved = IsUnsaved?.Invoke(asset.Id) == true,
-            IsSelected = _selected.Contains(asset.Id),
-            IsFocused = string.Equals(FocusKey, asset.Id, StringComparison.OrdinalIgnoreCase),
-            IsCut = _cut.Contains(asset.Id),
-            Before = before,
-            Found = found,
-            After = after,
-        };
     }
 
     private string CopyName(AssetKind kind, string name)
