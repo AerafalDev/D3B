@@ -8,6 +8,7 @@ using D3B.Studio.Assets;
 
 namespace D3B.App.Tests.ViewModels.World;
 
+[UiThread]
 public sealed class OutlinerViewModelTests : IAsyncDisposable
 {
     private readonly TestStore _store = new();

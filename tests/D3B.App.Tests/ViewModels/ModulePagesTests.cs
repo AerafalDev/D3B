@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class ModulePagesTests : IAsyncDisposable
 {
     private readonly TestPlay _play = new();

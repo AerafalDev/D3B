@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class SettingsViewModelTests : IAsyncDisposable
 {
     // The page is tested on the bots' delays as measured, the wait between two steps included.

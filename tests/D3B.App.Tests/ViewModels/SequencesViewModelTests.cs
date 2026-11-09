@@ -12,6 +12,7 @@ using D3B.Studio.Routes;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class SequencesViewModelTests : IAsyncDisposable
 {
     private readonly TestStore _store = new();

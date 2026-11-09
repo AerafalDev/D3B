@@ -8,6 +8,7 @@ using D3B.Bot.Hosting;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class UpdatesViewModelTests
 {
     private readonly Localizer _localizer = new(Localizer.English);

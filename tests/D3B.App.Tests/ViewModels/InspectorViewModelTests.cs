@@ -18,6 +18,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class InspectorViewModelTests : IAsyncDisposable
 {
     private readonly FrameRecorder _recorder = new(TimeProvider.System);
@@ -80,6 +81,9 @@ public sealed class InspectorViewModelTests : IAsyncDisposable
         var (connection, bot) = await _play.EnterAsync(433);
         var walk = bot.WalkAsync(388, TestContext.Current.CancellationToken);
 
+        // The connection keeps a request before the recorder is told of it: answering at once could record the server's event first.
+        await TestWalks.SentAsync(_play, connection, 1);
+        await Waiting.UntilAsync(() => _recorder.TryGet(TestPlay.Key, out var frames) && frames.All().Any(frame => frame.Source is FrameSource.D3B), TimeSpan.FromSeconds(10));
         await TestWalks.WalkedAsync(_play, connection, 1);
         await walk;
 

@@ -16,13 +16,6 @@ internal sealed class UiThreadContext : SynchronizationContext, IDisposable
         new Thread(Pump) { IsBackground = true, Name = "Test UI thread" }.Start();
     }
 
-    /// <summary>Moves what the caller does after an await of it onto the UI thread, where it stays through every await that follows.</summary>
-    /// <returns>An awaiter that resumes on the UI thread.</returns>
-    public Entry EnterAsync()
-    {
-        return new Entry(this);
-    }
-
     public override void Post(SendOrPostCallback d, object? state)
     {
         try
@@ -36,6 +29,34 @@ internal sealed class UiThreadContext : SynchronizationContext, IDisposable
         }
     }
 
+    public override void Send(SendOrPostCallback d, object? state)
+    {
+        using var done = new ManualResetEventSlim();
+        Exception? failure = null;
+
+        Post(
+            _ =>
+            {
+                try
+                {
+                    d(state);
+                }
+                catch (Exception exception)
+                {
+                    failure = exception;
+                }
+                finally
+                {
+                    done.Set();
+                }
+            },
+            null);
+        done.Wait();
+
+        if (failure is not null)
+            throw new InvalidOperationException("A callback sent to the test UI thread failed.", failure);
+    }
+
     public void Dispose()
     {
         _queue.CompleteAdding();
@@ -47,38 +68,5 @@ internal sealed class UiThreadContext : SynchronizationContext, IDisposable
 
         foreach (var (callback, state) in _queue.GetConsumingEnumerable())
             callback(state);
-    }
-
-    // A task would not do: its continuation may not run inline on a thread that has a context, so it would go to the pool.
-    internal readonly struct Entry : System.Runtime.CompilerServices.INotifyCompletion
-    {
-        private readonly UiThreadContext _context;
-
-        public Entry(UiThreadContext context)
-        {
-            _context = context;
-        }
-
-        public bool IsCompleted
-        {
-            get
-            {
-                return Current == _context;
-            }
-        }
-
-        public Entry GetAwaiter()
-        {
-            return this;
-        }
-
-        public void OnCompleted(Action continuation)
-        {
-            _context.Post(_ => continuation(), null);
-        }
-
-        public void GetResult()
-        {
-        }
     }
 }
