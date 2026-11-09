@@ -239,8 +239,13 @@ internal sealed class HarvestTour
         if (zone.Isolated.Contains(mapId) && !zone.IncludesIsolated)
             return true;
 
-        return _sightings.TryGet(mapId, out var sighting)
-            ? !sighting.Resources.Overlaps(zone.Wanted)
+        if (_sightings.TryGet(mapId, out var sighting))
+            return !sighting.Resources.Overlaps(zone.Wanted);
+
+        // An outdoor map never seen is gone to, to learn what it holds; a house of a town is not: a player's report is that the bot went
+        // into all of Astrub's, and a graphic nothing taught is a door or a piece of furniture more often than a resource (D416).
+        return zone.Interiors.Contains(mapId)
+            ? zone.Foresee(mapId, _graphics) is not MapForecast.Probable
             : zone.Foresee(mapId, _graphics) is MapForecast.Without;
     }
 

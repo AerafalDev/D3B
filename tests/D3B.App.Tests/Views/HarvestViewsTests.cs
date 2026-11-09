@@ -376,15 +376,15 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         await run.Completion;
 
         Assert.Contains("Harvesting", english);
-        Assert.Contains("1/4", english);
+        Assert.Contains("1/3", english);
         Assert.Contains("Ash · 0 / h", english);
         Assert.Equal(2, icons);
         Assert.Contains("Chestnut needs Lumberjack 20, the character is 1", english);
         Assert.Contains("Layers", english);
         Assert.Contains("The tour", english);
-        Assert.Contains("Harvesting Ash · Tour 1, map 1 of 4", english);
+        Assert.Contains("Harvesting Ash · Tour 1, map 1 of 3", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Récolte : Frêne · Tournée 1, carte 1 sur 4", french);
+        Assert.Contains("Récolte : Frêne · Tournée 1, carte 1 sur 3", french);
         Assert.Contains("Frêne · 0 / h", french);
         Assert.Contains("Châtaignier demande Bûcheron 20, le perso est 1", french);
         Assert.Contains("Calques", french);

@@ -55,22 +55,85 @@ public sealed class HarvestZoneTests : IAsyncDisposable
     }
 
     [Fact]
-    public void ATourGoesThroughTheWorldMapsMapsBeforeTheInsides()
+    public void ATourLeavesOutTheInteriorsOfASubAreaWithMapsOnTheWorldMapUnlessSomethingSaysTheyHoldAResource()
     {
         var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
         var sightings = new HarvestSightings();
         var tour = new HarvestTour(sightings, new GraphicSkills());
 
-        Assert.Equal(new[] { TestPlay.InsideMapId, TestPlay.OtherInsideMapId }.Order(), zone.Insides.Order());
+        Assert.Equal(new[] { TestPlay.InsideMapId, TestPlay.OtherInsideMapId }.Order(), zone.Interiors.Order());
         Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.MapId, TestPlay.EastMapId }.Order(), tour.Remaining(zone).Order());
+        Assert.Equal(3, tour.Total(zone));
 
         tour.Visit(TestPlay.NorthMapId);
         tour.Visit(TestPlay.MapId);
         sightings.Seen(TestPlay.EastMapId, [], DateTimeOffset.UnixEpoch);
 
-        // The maps of the world map gone through or seen empty, the insides come; the one without elements holds nothing.
+        // The maps of the world map gone through or seen empty, no building is entered: the houses of a town are measured to hold
+        // nothing, and a player's report is that the bot went into all of them (D416).
+        Assert.Empty(tour.Remaining(zone));
+        Assert.Equal(ZoneMapState.Empty, tour.Maps(zone).Single(map => map.MapId == TestPlay.InsideMapId).State);
+    }
+
+    [Fact]
+    public void AnInteriorSeenToHoldAResourceOrForetoldByAGraphicIsGoneThroughAfterTheMapsOfTheWorldMap()
+    {
+        var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var sightings = new HarvestSightings();
+        var graphics = new GraphicSkills();
+        var tour = new HarvestTour(sightings, graphics);
+
+        tour.Visit(TestPlay.NorthMapId);
+        tour.Visit(TestPlay.MapId);
+        tour.Visit(TestPlay.EastMapId);
+
+        // A mine is an interior of a sub-area that also holds maps on a world map: a bot that saw ore in it, or a graphic known to offer it, brings it back.
+        sightings.Seen(TestPlay.InsideMapId, [TestPlay.Ash], DateTimeOffset.UnixEpoch);
+
         Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
-        Assert.Equal(3, tour.Total(zone));
+        Assert.Equal(ZoneMapState.Probable, tour.Maps(zone).Single(map => map.MapId == TestPlay.InsideMapId).State);
+
+        sightings = new HarvestSightings();
+        tour = new HarvestTour(sightings, graphics);
+        tour.Visit(TestPlay.NorthMapId);
+        tour.Visit(TestPlay.MapId);
+        tour.Visit(TestPlay.EastMapId);
+        graphics.Learn(TestPlay.ChestGfxId, [TestPlay.TreeSkillId]);
+
+        Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
+
+        sightings.Seen(TestPlay.InsideMapId, [], DateTimeOffset.UnixEpoch);
+
+        // What the bot saw there wins over the graphic: it held nothing.
+        Assert.Empty(tour.Remaining(zone));
+    }
+
+    [Fact]
+    public void ASubAreaOfInteriorsAloneIsADungeonAndKeepsAllItsMaps()
+    {
+        const int dungeon = 30;
+        long[] ids = [1, 2, 3];
+        var graph = new WorldGraph(
+            ids.Select(id => new WorldVertex(id, 1)).ToArray(),
+            new[] { new WorldEdge(0, 1, 0, 1), new WorldEdge(1, 2, 1, 1) },
+            new[]
+            {
+                new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, 2, WorldTransition.None, WorldTransition.None),
+                new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, 3, WorldTransition.None, WorldTransition.None),
+            },
+            Array.Empty<string>());
+        var atlas = new WorldAtlas(
+            ids.Select((id, index) => new MapPosition(id, (short)index, 0, dungeon, -1, 0, 0)).ToArray(),
+            new[] { new SubArea(dungeon, 0, 1, 1, SubArea.NoZaap, true, 0, 1, 0, 0) },
+            new[] { new Area(1, 0, 0) },
+            Array.Empty<Waypoint>(),
+            new[] { TestPlay.Ash },
+            Array.Empty<int>());
+        var zone = HarvestZone.Of(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [dungeon] }, atlas, graph, _play.Tables.Jobs, _play.Maps);
+        var tour = new HarvestTour(new HarvestSightings(), new GraphicSkills());
+
+        Assert.Empty(zone.Interiors);
+        Assert.Equal([1L, 2L, 3L], tour.Remaining(zone).Order());
     }
 
     [Fact]
@@ -106,7 +169,7 @@ public sealed class HarvestZoneTests : IAsyncDisposable
 
         Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.MapId }.Order(), tour.Remaining(zone).Order());
         Assert.Equal(2, tour.Probable(zone));
-        Assert.Equal(3, tour.Total(zone));
+        Assert.Equal(2, tour.Total(zone));
 
         sightings.Seen(TestPlay.NorthMapId, [], DateTimeOffset.UnixEpoch);
 
@@ -114,13 +177,13 @@ public sealed class HarvestZoneTests : IAsyncDisposable
         var states = tour.Maps(zone).ToDictionary(map => map.MapId, map => map.State);
 
         Assert.Equal(
-            (ZoneMapState.Empty, ZoneMapState.Probable, ZoneMapState.Empty, ZoneMapState.ToVisit, ZoneMapState.Empty),
+            (ZoneMapState.Empty, ZoneMapState.Probable, ZoneMapState.Empty, ZoneMapState.Empty, ZoneMapState.Empty),
             (states[TestPlay.NorthMapId], states[TestPlay.MapId], states[TestPlay.EastMapId], states[TestPlay.InsideMapId], states[TestPlay.OtherInsideMapId]));
 
         tour.Visit(TestPlay.MapId);
 
-        // The probable maps gone through, the others of the world map come, then the insides.
-        Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
+        // The probable maps gone through, no interior nothing says holds a resource is left (D416).
+        Assert.Empty(tour.Remaining(zone));
     }
 
     [Fact]

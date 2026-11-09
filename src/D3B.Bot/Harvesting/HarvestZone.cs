@@ -50,6 +50,9 @@ public sealed class HarvestZone
     /// <summary>Gets the zone's maps on no world map, such as houses and mines, which a tour goes through last (D128).</summary>
     public FrozenSet<long> Insides { get; }
 
+    /// <summary>Gets the zone's interiors of a sub-area that also holds maps on a world map, such as the houses of a town: a tour goes through one only when something says it holds a resource (D416).</summary>
+    public FrozenSet<long> Interiors { get; }
+
     /// <summary>Gets the graphics of each map's interactive elements, as the pack draws them, each once.</summary>
     public FrozenDictionary<long, ImmutableArray<int>> Graphics { get; }
 
@@ -59,7 +62,7 @@ public sealed class HarvestZone
     /// <summary>Gets whether a tour goes through the isolated maps too, last, rather than leave them out.</summary>
     public bool IncludesIsolated { get; }
 
-    private HarvestZone(FrozenDictionary<int, HarvestTarget> targets, FrozenDictionary<int, int> harvests, FrozenSet<int> wanted, IReadOnlyList<int> subAreas, FrozenDictionary<long, int> maps, FrozenSet<long> insides, FrozenDictionary<long, ImmutableArray<int>> graphics, FrozenSet<long> isolated, bool includesIsolated)
+    private HarvestZone(FrozenDictionary<int, HarvestTarget> targets, FrozenDictionary<int, int> harvests, FrozenSet<int> wanted, IReadOnlyList<int> subAreas, FrozenDictionary<long, int> maps, FrozenSet<long> insides, FrozenSet<long> interiors, FrozenDictionary<long, ImmutableArray<int>> graphics, FrozenSet<long> isolated, bool includesIsolated)
     {
         Targets = targets;
         Harvests = harvests;
@@ -67,6 +70,7 @@ public sealed class HarvestZone
         SubAreas = subAreas;
         Maps = maps;
         Insides = insides;
+        Interiors = interiors;
         Graphics = graphics;
         Isolated = isolated;
         IncludesIsolated = includesIsolated;
@@ -97,6 +101,7 @@ public sealed class HarvestZone
         var maps = new Dictionary<long, int>();
         var insides = new HashSet<long>();
         var graphics = new Dictionary<long, ImmutableArray<int>>();
+        var reached = new List<MapPosition>();
 
         foreach (var position in atlas.Positions.Span)
         {
@@ -104,6 +109,7 @@ public sealed class HarvestZone
                 continue;
 
             maps[position.MapId] = group;
+            reached.Add(position);
 
             if (position.WorldMap < 0)
                 insides.Add(position.MapId);
@@ -120,6 +126,7 @@ public sealed class HarvestZone
             subAreas,
             maps.ToFrozenDictionary(),
             insides.ToFrozenSet(),
+            SubAreaInteriors.Of(reached),
             graphics.ToFrozenDictionary(),
             IsolatedMaps.Of(graph, maps),
             settings.IsolatedMaps);
