@@ -35,6 +35,27 @@ public sealed class HarvestingModuleTests
     }
 
     [Fact]
+    public void TheHarvestHasTheFourCategoriesOfAProfileInTheirOrder()
+    {
+        var sections = Harvest().Settings.All.Select(setting => setting.Section?.In(CultureInfo.InvariantCulture)).Distinct().ToList();
+
+        Assert.Equal(["What", "Where", "Bank", "Care and fights"], sections);
+    }
+
+    [Fact]
+    public void TheRareSettingsOfTheHarvestAreMarkedAdvancedAndTheOthersAreInView()
+    {
+        var settings = Harvest().Settings.All;
+
+        Assert.Equal(
+            ["AfterFight", "AfterLostFight", "DepositTo", "Excluded", "Food", "FullAt", "IsolatedMaps", "Order", "OwnBanking", "Rotation", "SafeLevel", "UseZaaps", "ZaapSaving"],
+            [.. settings.Where(setting => setting.IsAdvanced).Select(setting => setting.Key).Order()]);
+        Assert.Equal(
+            ["AiFights", "Area", "Deposit", "Heal", "HealBelow", "Jobs", "Mode", "OpenBags", "Place", "Resources", "SubAreas", "Zone"],
+            [.. settings.Where(setting => !setting.IsAdvanced).Select(setting => setting.Key).Order()]);
+    }
+
+    [Fact]
     public void AZonePlaceIsStoredWithItsZoneNeedsAZoneAndLeavesAProfileOfBeforeAsItWas()
     {
         var settings = Harvest().Settings;

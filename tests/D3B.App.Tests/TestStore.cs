@@ -49,7 +49,7 @@ internal sealed class TestStore : IAsyncDisposable
             settings.Section(LocalizedText.Invariant("How"));
             settings.Number(s => s.Walks, LocalizedText.Invariant("Walks"), 1, 100);
             settings.Flag(s => s.UseBank, LocalizedText.Invariant("Bank"));
-            settings.Text(s => s.Greeting, LocalizedText.Invariant("Greeting"), 10);
+            settings.Text(s => s.Greeting, LocalizedText.Invariant("Greeting"), 10).Advanced();
             settings.Choices(s => s.Order, LocalizedText.Invariant("Order"), focus => LocalizedText.Invariant($"On {focus}")).Ordered();
             settings.Number(s => s.Lowest, LocalizedText.Invariant("Lowest"), 0, 10);
             settings.Number(s => s.Highest, LocalizedText.Invariant("Highest"), 0, 10);

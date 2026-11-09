@@ -128,6 +128,39 @@ public sealed class WorldMapViewTests
     }
 
     [Fact]
+    public async Task AClickThatDoesNotDragTellsWhatLayUnderItAndADragOnTheSameSpotDoesNot()
+    {
+        var clicked = new List<WorldMapHit>();
+        var panned = await OnTheUIThreadAsync(async () =>
+        {
+            var backdrop = new WorldMapBackdrop([], [new WorldMapBackdropZone("a", "Ash", [(2, 0)], false)], []);
+            var (window, view) = Show(Source(RedImage(), new int[1]), WorldMapScene.Empty with { Backdrop = backdrop });
+
+            view.Clicked += clicked.Add;
+
+            var zone = view.RectOf(2, 0).Center;
+            var map = view.RectOf(3, 0).Center;
+
+            window.MouseDown(zone, MouseButton.Left);
+            window.MouseUp(zone, MouseButton.Left);
+            window.MouseDown(map, MouseButton.Left);
+            window.MouseUp(map, MouseButton.Left);
+
+            var before = view.RectOf(1, 0).Center;
+
+            window.MouseDown(zone, MouseButton.Left);
+            window.MouseMove(new Point(zone.X + 40, zone.Y + 30));
+            window.MouseUp(new Point(zone.X + 40, zone.Y + 30), MouseButton.Left);
+            await Task.Yield();
+
+            return view.RectOf(1, 0).Center != before;
+        });
+
+        Assert.Equal([(WorldMapHitKind.Zone, "a"), (WorldMapHitKind.Square, null)], clicked.Select(hit => (hit.Kind, hit.Id)));
+        Assert.True(panned);
+    }
+
+    [Fact]
     public async Task APressOnAStationWithControlOrShiftTellsTheKeysAndDoesNotCarryTheStationOff()
     {
         var chosen = new List<(int Station, KeyModifiers Keys)>();

@@ -82,13 +82,13 @@ internal sealed partial class ZoneFieldViewModel : SettingFieldViewModel, IPicki
             .Select(zone => (zone.Id, zone.Name, localizer.Plural("RoutePickerMaps", MapsOf(zone.Id)?.Count ?? 0), zone.Id == Value))
             .ToList();
 
-        dialogs.Show(new RoutePickerViewModel(dialogs, localizer["ZonePickerTitle"], localizer["ZonePickerNone"], localizer["ZoneClear"], localizer["Cancel"], choices, Value is not null, Set));
+        dialogs.Show(new RoutePickerViewModel(dialogs, localizer["ZonePickerTitle"], localizer["ZonePickerNone"], localizer["ZoneClear"], localizer["Cancel"], choices, Value is not null, Choose));
     }
 
     [RelayCommand]
     private void Clear()
     {
-        Set(null);
+        Choose(null);
     }
 
     private string? Read()
@@ -120,7 +120,9 @@ internal sealed partial class ZoneFieldViewModel : SettingFieldViewModel, IPicki
         return Editor.Library?.Find<ZoneAsset>(id) is { } zone ? zone.Name : Editor.Localizer.Format("ZoneGone", id);
     }
 
-    private void Set(string? zone)
+    /// <summary>Picks a zone, or none, as the dialog and the profile's map do.</summary>
+    /// <param name="zone">The zone's id, or <see langword="null"/> for none.</param>
+    public void Choose(string? zone)
     {
         Value = zone;
         Write(zone ?? "");

@@ -128,8 +128,8 @@
   <data name="ZaapSavingUnit" xml:space="preserve">
     <value>cartes</value>
   </data>
-  <data name="SectionUpkeep" xml:space="preserve">
-    <value>Entretien</value>
+  <data name="SectionCare" xml:space="preserve">
+    <value>Soins et combats</value>
   </data>
   <data name="Heal" xml:space="preserve">
     <value>Se soigner</value>
@@ -169,9 +169,6 @@
   </data>
   <data name="DepositAllButWorn" xml:space="preserve">
     <value>Tout sauf l'équipement</value>
-  </data>
-  <data name="SectionAfter" xml:space="preserve">
-    <value>Après un combat</value>
   </data>
   <data name="AfterLostFight" xml:space="preserve">
     <value>Après un combat perdu</value>

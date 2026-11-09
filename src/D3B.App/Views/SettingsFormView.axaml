@@ -8,6 +8,32 @@
     xmlns:s="clr-namespace:D3B.App.ViewModels.Settings"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
+        <Style Selector="StackPanel.Category">
+            <Setter Property="Margin" Value="0,22,0,0" />
+        </Style>
+        <Style Selector="Button.Fold">
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="Margin" Value="0,0,26,0" />
+        </Style>
+        <Style Selector="Button.Fold:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+        <Style Selector="Button.Fold c|Icon.FoldChevron">
+            <Setter Property="RenderTransform" Value="rotate(0deg)" />
+        </Style>
+        <Style Selector="Button.Fold.Open c|Icon.FoldChevron">
+            <Setter Property="RenderTransform" Value="rotate(180deg)" />
+        </Style>
+        <Style Selector="ItemsControl.AdvancedFields">
+            <Setter Property="Background" Value="#04FFFFFF" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
         <Style Selector="Grid.FieldRow">
             <Setter Property="MinHeight" Value="42" />
             <Setter Property="Margin" Value="0,3" />
@@ -106,6 +132,65 @@
             <Setter Property="BorderBrush" Value="{DynamicResource PausedEdgeColor}" />
         </Style>
     </UserControl.Styles>
+    <UserControl.Resources>
+        <DataTemplate x:DataType="s:SettingFieldViewModel" x:Key="FieldRow">
+            <Grid
+                Classes="FieldRow"
+                Classes.Changed="{Binding IsChanged}"
+                ColumnDefinitions="12,170,*,26"
+                RowDefinitions="Auto,Auto">
+                <Border
+                    Background="{DynamicResource AccentColor}"
+                    Classes="ChangeBar"
+                    CornerRadius="1"
+                    Grid.RowSpan="2"
+                    HorizontalAlignment="Left"
+                    Margin="0,12"
+                    Width="2" />
+                <TextBlock
+                    Classes="FieldLabel FieldName"
+                    Grid.Column="1"
+                    LineHeight="17"
+                    TextWrapping="Wrap"
+                    VerticalAlignment="Center">
+                    <Run Text="{Binding Label}" /><InlineUIContainer BaselineAlignment="Center">
+                        <c:Icon
+                            Classes="FieldHelp"
+                            Drawing="{StaticResource General.QuestionMark}"
+                            Height="14"
+                            IsVisible="{Binding HasHelp}"
+                            Margin="4,0,0,0"
+                            ToolTip.Tip="{Binding Help}"
+                            Width="14" />
+                    </InlineUIContainer>
+                </TextBlock>
+                <StackPanel
+                    Classes="FieldControl"
+                    Spacing="4"
+                    VerticalAlignment="Center">
+                    <ContentControl Content="{Binding}" />
+                    <TextBlock
+                        Classes="Problem"
+                        IsVisible="{Binding HasProblem}"
+                        Text="{Binding Problem}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <Button
+                    AutomationProperties.Name="{l:Tr ResetValue}"
+                    Classes="Tool Small FieldReset"
+                    Command="{Binding ResetCommand}"
+                    Grid.Column="3"
+                    ToolTip.Tip="{l:Tr ResetValue}"
+                    VerticalAlignment="Center">
+                    <c:Icon
+                        Drawing="{StaticResource General.Reset}"
+                        Height="13"
+                        Tint="{DynamicResource PausedColor}"
+                        Width="13" />
+                </Button>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
     <UserControl.DataTemplates>
         <DataTemplate x:DataType="s:FlagFieldViewModel">
             <CheckBox
@@ -674,79 +759,55 @@
             </ItemsControl.Styles>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="s:SettingSectionViewModel">
-                    <StackPanel Margin="0,22,0,0">
-                        <TextBlock
-                            FontSize="13"
-                            FontWeight="SemiBold"
-                            Foreground="{DynamicResource BrightColor}"
-                            IsVisible="{Binding HasTitle}"
-                            Margin="12,0,0,8"
-                            Text="{Binding Title}" />
-                        <ItemsControl ItemsSource="{Binding Fields}">
+                    <StackPanel Classes="Category">
+                        <Grid ColumnDefinitions="*,Auto" Margin="12,0,0,8">
+                            <TextBlock
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Foreground="{DynamicResource BrightColor}"
+                                IsVisible="{Binding HasTitle}"
+                                Text="{Binding Title}"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Classes="Fold"
+                                Classes.Open="{Binding ShowsAdvanced}"
+                                Command="{Binding ToggleAdvancedCommand}"
+                                Grid.Column="1"
+                                IsVisible="{Binding HasAdvanced}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse
+                                        Fill="{DynamicResource PausedColor}"
+                                        Height="6"
+                                        IsVisible="{Binding HasAdvancedChanges}"
+                                        VerticalAlignment="Center"
+                                        Width="6" />
+                                    <TextBlock Text="{Binding AdvancedText}" VerticalAlignment="Center" />
+                                    <c:Icon
+                                        Classes="FoldChevron"
+                                        Drawing="{StaticResource General.ChevronDown}"
+                                        Height="10"
+                                        VerticalAlignment="Center"
+                                        Width="10" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <ItemsControl ItemTemplate="{StaticResource FieldRow}" ItemsSource="{Binding InView}">
                             <ItemsControl.Styles>
                                 <Style Selector="ContentPresenter" x:DataType="s:SettingFieldViewModel">
                                     <Setter Property="IsVisible" Value="{Binding IsVisible}" />
                                 </Style>
                             </ItemsControl.Styles>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="s:SettingFieldViewModel">
-                                    <Grid
-                                        Classes="FieldRow"
-                                        Classes.Changed="{Binding IsChanged}"
-                                        ColumnDefinitions="12,170,*,26"
-                                        RowDefinitions="Auto,Auto">
-                                        <Border
-                                            Background="{DynamicResource AccentColor}"
-                                            Classes="ChangeBar"
-                                            CornerRadius="1"
-                                            Grid.RowSpan="2"
-                                            HorizontalAlignment="Left"
-                                            Margin="0,12"
-                                            Width="2" />
-                                        <TextBlock
-                                            Classes="FieldLabel FieldName"
-                                            Grid.Column="1"
-                                            LineHeight="17"
-                                            TextWrapping="Wrap"
-                                            VerticalAlignment="Center">
-                                            <Run Text="{Binding Label}" /><InlineUIContainer BaselineAlignment="Center">
-                                                <c:Icon
-                                                    Classes="FieldHelp"
-                                                    Drawing="{StaticResource General.QuestionMark}"
-                                                    Height="14"
-                                                    IsVisible="{Binding HasHelp}"
-                                                    Margin="4,0,0,0"
-                                                    ToolTip.Tip="{Binding Help}"
-                                                    Width="14" />
-                                            </InlineUIContainer>
-                                        </TextBlock>
-                                        <StackPanel
-                                            Classes="FieldControl"
-                                            Spacing="4"
-                                            VerticalAlignment="Center">
-                                            <ContentControl Content="{Binding}" />
-                                            <TextBlock
-                                                Classes="Problem"
-                                                IsVisible="{Binding HasProblem}"
-                                                Text="{Binding Problem}"
-                                                TextWrapping="Wrap" />
-                                        </StackPanel>
-                                        <Button
-                                            AutomationProperties.Name="{l:Tr ResetValue}"
-                                            Classes="Tool Small FieldReset"
-                                            Command="{Binding ResetCommand}"
-                                            Grid.Column="3"
-                                            ToolTip.Tip="{l:Tr ResetValue}"
-                                            VerticalAlignment="Center">
-                                            <c:Icon
-                                                Drawing="{StaticResource General.Reset}"
-                                                Height="13"
-                                                Tint="{DynamicResource PausedColor}"
-                                                Width="13" />
-                                        </Button>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl
+                            Classes="AdvancedFields"
+                            IsVisible="{Binding ShowsAdvanced}"
+                            ItemTemplate="{StaticResource FieldRow}"
+                            ItemsSource="{Binding Advanced}">
+                            <ItemsControl.Styles>
+                                <Style Selector="ContentPresenter" x:DataType="s:SettingFieldViewModel">
+                                    <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+                                </Style>
+                            </ItemsControl.Styles>
                         </ItemsControl>
                     </StackPanel>
                 </DataTemplate>

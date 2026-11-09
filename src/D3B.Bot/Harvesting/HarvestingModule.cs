@@ -59,9 +59,11 @@ public sealed class HarvestingModule : IModule
         settings.Resources(s => s.Excluded, HarvestTexts.Text("Excluded"))
             .Excluding()
             .Help(HarvestTexts.Text("ExcludedHelp"))
+            .Advanced()
             .VisibleWhen(s => s.Mode is HarvestMode.ByProfession);
         settings.Choice(s => s.Order, HarvestTexts.Text("Order"), order => HarvestTexts.Text($"Order{order}"))
             .Help(HarvestTexts.Text("OrderHelp"))
+            .Advanced()
             .VisibleWhen(s => s.Mode is HarvestMode.ByProfession);
         settings.Resources(s => s.Resources, HarvestTexts.Text("Resources"))
             .Ordered()
@@ -72,10 +74,12 @@ public sealed class HarvestingModule : IModule
         settings.Choice(s => s.Place, HarvestTexts.Text("Place"), place => HarvestTexts.Text($"Place{place}")).Help(HarvestTexts.Text("PlaceHelp"));
         settings.Flag(s => s.SafeLevel, HarvestTexts.Text("SafeLevel"))
             .Help(HarvestTexts.Text("SafeLevelHelp"))
+            .Advanced()
             .VisibleWhen(s => s.Place is HarvestPlace.Automatic);
         settings.Number(s => s.Rotation, HarvestTexts.Text("Rotation"), 1, PlaceRotation.PoolSize)
             .Unit(HarvestTexts.Text("RotationUnit"))
             .Help(HarvestTexts.Text("RotationHelp"))
+            .Advanced()
             .VisibleWhen(s => s.Place is HarvestPlace.Automatic);
         settings.Area(s => s.Area, HarvestTexts.Text("Area"))
             .Help(HarvestTexts.Text("AreaHelp"))
@@ -88,21 +92,23 @@ public sealed class HarvestingModule : IModule
         settings.Zone(s => s.Zone, HarvestTexts.Text("Zone"))
             .Help(HarvestTexts.Text("ZoneHelp"))
             .VisibleWhen(s => s.Place is HarvestPlace.Zone);
-        settings.Flag(s => s.IsolatedMaps, HarvestTexts.Text("IsolatedMaps")).Help(HarvestTexts.Text("IsolatedMapsHelp"));
+        settings.Flag(s => s.IsolatedMaps, HarvestTexts.Text("IsolatedMaps")).Help(HarvestTexts.Text("IsolatedMapsHelp")).Advanced();
         settings.Number(s => s.ZaapSaving, HarvestTexts.Text("ZaapSaving"), 1, 30)
             .Unit(HarvestTexts.Text("ZaapSavingUnit"))
-            .Help(HarvestTexts.Text("ZaapSavingHelp"));
+            .Help(HarvestTexts.Text("ZaapSavingHelp"))
+            .Advanced();
 
         settings.Section(HarvestTexts.Text("SectionBank"));
-        settings.Flag(s => s.OwnBanking, HarvestTexts.Text("OwnBanking")).Help(HarvestTexts.Text("OwnBankingHelp"));
-        settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent().VisibleWhen(s => s.OwnBanking);
-        settings.Flag(s => s.UseZaaps, HarvestTexts.Text("UseZaaps")).Help(HarvestTexts.Text("UseZaapsHelp")).VisibleWhen(s => s.OwnBanking);
+        settings.Flag(s => s.OwnBanking, HarvestTexts.Text("OwnBanking")).Help(HarvestTexts.Text("OwnBankingHelp")).Advanced();
+        settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent().Advanced().VisibleWhen(s => s.OwnBanking);
+        settings.Flag(s => s.UseZaaps, HarvestTexts.Text("UseZaaps")).Help(HarvestTexts.Text("UseZaapsHelp")).Advanced().VisibleWhen(s => s.OwnBanking);
         settings.Choice(s => s.Deposit, HarvestTexts.Text("Deposit"), deposit => HarvestTexts.Text(deposit is HarvestDeposit.Harvest ? "DepositHarvest" : "DepositAll"));
 
         settings.Choice(s => s.DepositTo, HarvestTexts.Text("DepositTo"), place => HarvestTexts.Text($"DepositTo{place}"))
-            .Help(HarvestTexts.Text("DepositToHelp"));
+            .Help(HarvestTexts.Text("DepositToHelp"))
+            .Advanced();
 
-        settings.Section(HarvestTexts.Text("SectionUpkeep"));
+        settings.Section(HarvestTexts.Text("SectionCare"));
         settings.Flag(s => s.OpenBags, HarvestTexts.Text("OpenBags")).Help(HarvestTexts.Text("OpenBagsHelp"));
         settings.Flag(s => s.Heal, HarvestTexts.Text("Heal"));
         settings.Number(s => s.HealBelow, HarvestTexts.Text("HealBelow"), 10, 95)
@@ -112,14 +118,16 @@ public sealed class HarvestingModule : IModule
             .Ordered()
             .OfItemTypes([.. Food.Types])
             .Help(HarvestTexts.Text("FoodHelp"))
+            .Advanced()
             .VisibleWhen(s => s.Heal);
 
-        settings.Section(HarvestTexts.Text("SectionFight"));
         settings.Flag(s => s.AiFights, HarvestTexts.Text("AiFights")).Help(HarvestTexts.Text("AiFightsHelp"));
         settings.Choice(s => s.AfterFight, HarvestTexts.Text("AfterFight"), after => HarvestTexts.Text($"AfterFight{after}"))
-            .Help(HarvestTexts.Text("AfterFightHelp"));
+            .Help(HarvestTexts.Text("AfterFightHelp"))
+            .Advanced();
         settings.Choice(s => s.AfterLostFight, HarvestTexts.Text("AfterLostFight"), after => HarvestTexts.Text($"AfterLostFight{after}"))
             .Help(HarvestTexts.Text("AfterLostFightHelp"))
+            .Advanced()
             .VisibleWhen(s => s.AiFights);
 
         settings.Rule(s => s.Mode is not HarvestMode.ByProfession || s.Jobs.Count > 0, HarvestTexts.Text("RuleJobs"));

@@ -50,6 +50,9 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
     /// <inheritdoc/>
     public bool CanRedo => IsEditing && _history.CanRedo;
 
+    /// <summary>Gets the world's map beside the form, where the place is picked (D415).</summary>
+    public ProfileMapViewModel Map { get; }
+
     /// <summary>Gets the name of the behavior the profile is a variant of, as its header says it (D330).</summary>
     [ObservableProperty]
     public partial string BehaviorName { get; private set; } = "";
@@ -160,6 +163,7 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
         _page = page;
         _profile = profile;
         TabKey = profile?.Id ?? Guid.NewGuid().ToString("N");
+        Map = new ProfileMapViewModel(page.Localizer, () => page.WorldServices(), zone => page.EditZone?.Invoke(zone));
         Show();
     }
 
@@ -197,6 +201,7 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
         UpdateCanSave();
 
         Editor?.Relabel();
+        Map.Relabel();
         CheckName();
     }
 
@@ -207,6 +212,7 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
         IsDirty = false;
         Error = null;
         Editor = null;
+        Map.Use(null);
         _page.EndEditing(this);
 
         if (!IsNew)
@@ -343,6 +349,9 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
 
     private void Load(string? settings)
     {
+        // The editor is made again at each value given back, undo or activity: the folds the hand opened stay as they were.
+        var opened = Editor?.Sections.Select(section => section.IsAdvancedOpen).ToList() ?? [];
+
         if (Editor is { } previous)
         {
             previous.PropertyChanged -= OnEditorChanged;
@@ -352,6 +361,7 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
         if (EditActivity?.Definition is not { } definition)
         {
             Editor = null;
+            Map.Use(null);
             UpdateCanSave();
 
             return;
@@ -368,6 +378,12 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
         };
         Editor.PropertyChanged += OnEditorChanged;
         Editor.Edited += OnEdited;
+
+        for (var index = 0; index < Math.Min(opened.Count, Editor.Sections.Count); index++)
+            Editor.Sections[index].IsAdvancedOpen = opened[index];
+
+        Map.Use(Editor);
+
         UpdateCanSave();
         ShowChanges();
     }

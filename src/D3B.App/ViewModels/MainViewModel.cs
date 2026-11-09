@@ -237,7 +237,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Properties = new PropertiesViewModel(
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
             new AssetPropertiesViewModel(localizer) { RouteOf = Routes.Find, ZoneOf = Zones.Find });
-        Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts) { Opened = OpenProfileTab, Closed = CloseProfileTab, Sequences = Sequences };
+        Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts) { Opened = OpenProfileTab, Closed = CloseProfileTab, Sequences = Sequences, WorldServices = () => Routes.Services, EditZone = EditZoneInWorld };
         Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles, preferences?.FoldedAssets)
         {
             Routes = Routes,
@@ -336,6 +336,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Routes.Refresh(services);
         Zones.Refresh();
         World.Refresh();
+        Profiles.RefreshMaps();
         Sequences.Refresh(services);
         Bots.Refresh(services);
         Characters.Refresh(services);
@@ -399,6 +400,15 @@ internal sealed partial class MainViewModel : ObservableObject
     public void ShowWorld()
     {
         Editor.Open(WorldTab, () => new EditorTab(WorldTab, () => _localizer["TabWorld"], "General.Language", World, needsHost: true));
+    }
+
+    /// <summary>Opens a zone for painting: the world's tab shows, the zone is selected and the Zone tool chosen, as the map beside a profile offers (D415).</summary>
+    /// <param name="id">The zone's id.</param>
+    public void EditZoneInWorld(string id)
+    {
+        ShowWorld();
+        Selection.SelectZone(id);
+        World.SetTool(WorldTool.Zone);
     }
 
     /// <summary>Shows the home page, the first tab, opened with the studio; it closes like the others and the Window menu opens it again (D406, D412).</summary>

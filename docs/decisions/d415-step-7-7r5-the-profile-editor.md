@@ -48,3 +48,42 @@ A part of [the decisions](README.md); each decision has one line in [the index](
   - Painting a new zone from the profile's tab: two editors of one thing, and the map would have to carry the tools.
   - Folding nothing, or folding Deposit and the heal's share too: the first leaves the form as long as today's, the second hides what is chosen most.
   - One branch and one pull request for the zones and the editor: a wide review, and the zones' reading would wait for the editor's look.
+
+## D418: 7r5b, the profile as an asset editor: four categories, an Advanced fold counted by what differs, the world's map beside the form
+
+*2026-11-10, step 7, session 7r5b, the owner's choices of D415 built as decided, and the owner's answer for the layout at the default size. Builds D395 to D397, D415; refines D330.*
+
+- **Made, the categories.** A profile's settings are in four categories in both modules, What, Where, Bank and Care and fights (the harvest's
+  Upkeep and Fight, the hunt's Upkeep and After, merged; the hunt's Bank now comes before Care, as the harvest's does; the harvest's two first
+  titles read What and Where, as the hunt's). The texts' keys are `SectionWhat`, `SectionWhere`, `SectionBank` and `SectionCare`.
+- **Made, Advanced.** `SettingBuilder.Advanced()` marks a setting rare (`SettingDefinition.IsAdvanced`), one mark per setting, set by the modules
+  as D415 lists them: harvest Order, Excluded, Rotation, Safe level, Isolated maps, Zaap saving, Bank by its own rules with its share of pods,
+  its zaap choice and the chest, Food, After a fight and After a lost fight; hunt the least and most monsters in a group, Excluded, Rotation,
+  Isolated maps, Zaap saving, the own banking rules, Food, After a lost fight. A category shows those in view, then a fold, "Advanced", that says
+  "Advanced · N changed" with an amber dot when N rare settings that show differ from the model (`SettingSectionViewModel`); a rare setting that
+  a condition hides is not counted, as the editor's own count leaves it out. The fold opens by itself while a rare setting has a problem, so that
+  none is hidden, and the folds the hand opened stay open when the editor is made again (a value given back, undo). The bar of sections that
+  followed the scroll is gone: four short categories need none.
+- **Made, the map beside** (`ProfileMapViewModel`, in the profile's tab). The world's map, read through the same services as the world's tab, shows
+  the project's zones tinted and the place the settings name outlined (`Scene.Squares`), in the world the place lies in. A click, a press let go
+  within four pixels (`WorldMapView.Clicked`; a longer one moves the map), picks: with the place Zone, the zone under the pointer
+  (`ZoneFieldViewModel.Choose`, the field and its words follow); with Sub-areas, the sub-area of the map clicked (`SubAreasFieldViewModel.ToggleSubArea`),
+  added or taken out, the sub-area of the map the world shows and not that of an inside sharing its coordinates; with Automatic, nothing, and
+  the map says so. The button "Edit in the world", shown with a zone picked, selects it in the world's Zone tool (`MainViewModel.EditZoneInWorld`).
+  Nothing is painted in the profile's tab. The name of the zone or sub-area under the pointer shows above the map.
+- **Layout** (the owner's answer, as recommended). At the default window (1440 pixels, the Outliner and the Details open, the tab about 790
+  pixels) the map is a column of 40% of the tab, between 300 and 460 pixels, and the form, in its narrow mode (labels above the fields), takes the
+  rest. Below 640 pixels the map leaves its column and lies above the form as a band, 150 pixels of map in at most 280 of height, scrolling inside.
+  The preview of the settings (the tour's mini-map with its probable, empty and isolated maps, the figures, who plays the profile) stays under
+  the map: it carries the states the world's map does not draw, and D397 asks for no feature lost.
+- **Not built.** A check that a sub-area clicked lies in the region chosen (the field's own "not within" problem says it); a menu of worlds on
+  the profile's map (it follows the place picked, and the field's dialog still picks a zone of another world); the band folding away; the tour
+  drawn on the map itself; a profile playing a list of steps has no map (it has no place).
+- **Not seen**, only tested on view models and headless windows: the tab in the running app (the map was drawn without tiles, its source empty
+  in tests), how a click and a drag tell apart under the owner's hand, how the folds and their count read, the band at a narrow window. The
+  marks of Advanced are the lead's application of D415's list, to be changed by use.
+- **Rejected.**
+  - The fold state kept in the profile or in `app.json`: it is the view's, per editor, and a profile's file is the player's behavior.
+  - A pick on the press: a drag to move the map would pick whatever lay under its start.
+  - The tour drawn over the map in place of the thumbnail: it would lose the probable, empty and isolated states, and the map would have to
+    wait for a preview the settings do not always give.

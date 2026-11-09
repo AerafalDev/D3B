@@ -128,8 +128,8 @@
   <data name="ZaapSavingUnit" xml:space="preserve">
     <value>maps</value>
   </data>
-  <data name="SectionUpkeep" xml:space="preserve">
-    <value>Upkeep</value>
+  <data name="SectionCare" xml:space="preserve">
+    <value>Care and fights</value>
   </data>
   <data name="Heal" xml:space="preserve">
     <value>Heal</value>
@@ -169,9 +169,6 @@
   </data>
   <data name="DepositAllButWorn" xml:space="preserve">
     <value>All but what is worn</value>
-  </data>
-  <data name="SectionAfter" xml:space="preserve">
-    <value>After a fight</value>
   </data>
   <data name="AfterLostFight" xml:space="preserve">
     <value>After a lost fight</value>

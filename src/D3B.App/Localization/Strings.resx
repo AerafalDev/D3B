@@ -371,6 +371,36 @@
   <data name="SettingNotWithin" xml:space="preserve">
     <value>Not within “{0}”</value>
   </data>
+  <data name="ProfileAdvanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="ProfileAdvancedChangedOne" xml:space="preserve">
+    <value>Advanced · {0:N0} changed</value>
+  </data>
+  <data name="ProfileAdvancedChangedOther" xml:space="preserve">
+    <value>Advanced · {0:N0} changed</value>
+  </data>
+  <data name="ProfileMapHintZone" xml:space="preserve">
+    <value>Click a zone to pick it.</value>
+  </data>
+  <data name="ProfileMapNoZone" xml:space="preserve">
+    <value>The project holds no zone yet: paint one in the world's Zone tool.</value>
+  </data>
+  <data name="ProfileMapHintSubAreas" xml:space="preserve">
+    <value>Click a sub-area to add it or take it out.</value>
+  </data>
+  <data name="ProfileMapHintAutomatic" xml:space="preserve">
+    <value>The bot chooses the place: pick Zone or Sub-areas to point it out on the map.</value>
+  </data>
+  <data name="ProfileMapEditZone" xml:space="preserve">
+    <value>Edit in the world</value>
+  </data>
+  <data name="ProfileMapTitle" xml:space="preserve">
+    <value>Map</value>
+  </data>
+  <data name="ProfileMapUnavailable" xml:space="preserve">
+    <value>The map shows once the studio is connected to the game's data.</value>
+  </data>
   <data name="JobNamed" xml:space="preserve">
     <value>Profession {0}</value>
   </data>

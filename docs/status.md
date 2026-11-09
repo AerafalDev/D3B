@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
+As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
 
 ## What exists
 
@@ -24,6 +24,8 @@ As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the 
   under the world (D413): a ruler of steps, a track a kind of action, a clip drawn across the steps it covers and stretched, moved,
   copied, deleted by the pointer or the keys, several steps selected at once, the Details setting a clip's values once for all its steps.
   The world's map also draws the client's own hints, zaaps, dungeons, workshops, banks and more, with a tick for each category (D414).
+  A profile opens as an asset editor (D418): four categories, the rare settings folded under "Advanced · N changed" with an amber dot, the world's
+  map beside the form to pick the zone or the sub-areas of its place.
 - **A versioned Claude Code setup** (D398): `.claude/` holds C# hooks that ask before a push or a `gh` write and refuse
   what the client produces, skills for C#, the studio's UI, tests, Git and the rest, and two agents. The hooks are tested in
   `tests/D3B.Hooks.Tests`; the write guard and the Git guard were seen refusing inside a session, the "ask" answers and the
@@ -38,6 +40,7 @@ As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the 
   pack of format 12 is extracted on the development machine and not published: the app of this change needs it (`scripts/release.cs --publish`,
   the owner's go).
 - The zones as a place (D415) are tested on the fake game and in the view models, not in game and not seen by the owner in the app: a harvest or a hunt through a zone's maps, the field that picks it and the words under it, and what the French "Région" (the game's area, once "Zone") reads like to them.
+- The profile as an asset editor (D418) is tested on view models and headless windows, not seen by the owner in the app: how the four categories and the "Advanced" folds read (the marks of each rare setting are the lead's application of D415's list), the map beside the form (its tiles were not drawn in tests: the source was empty), a click on the map against a drag, and the narrow band. A sub-area clicked outside the region chosen only raises the field's "not within" problem.
 - The Sequencer (D413) is tested on view models and in the headless window, not yet seen by the owner in the app: how a drag feels
   on a long ruler, how the tracks read at the bottom panel's height, whether it is what they mean by practical; no screen reader was
   run on its grid.
@@ -78,8 +81,7 @@ As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the 
 1. **Session 7r4, following a run** (D395): the cursor told to the app, the playhead on the Sequencer's ruler, the marker on the
    route, the progress on the Outliner. 7r3, the Sequencer, is made (D413); what it leaves is the map's frame, hovering a column
    lighting its step, a panel taller for the Sequencer, and recording in the toolbar, which waits for the measure in game. Then 7r5b
-   (the profile's asset editor: the four categories, Advanced, the world's map beside the form; 7r5's first part, the zones read, is
-   made, D415), 7r6 sequences and laps; all before 7e.
+   (the profile's asset editor, made: D415 and D418), 7r6 sequences and laps; all before 7e.
 2. **A measure in game with the owner**, before anything else of step 7: the list above, and what 7d4b will record.
 3. **Session 7d4b**: recording while playing and Simplify (D299, D394), once the events it reads are measured.
 4. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).

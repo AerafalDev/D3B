@@ -101,7 +101,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
         var dialogs = new List<bool>();
         var runner = await TestHosts.RunningAsync(host);
-        var (english, french, zone, icons) = await OnTheUIThreadAsync(() =>
+        var (folded, english, french, zone, icons) = await OnTheUIThreadAsync(() =>
         {
             var localizer = Localizer.Instance;
 
@@ -116,6 +116,11 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             main.Refresh();
             main.OpenProfile(main.Profiles.Items.Single(profile => profile.Name == "Ash and chestnut").Id);
             Dispatcher.UIThread.RunJobs();
+
+            // The rare settings are folded, the fold says how many differ from the model; the rest of the test reads them all.
+            var folded = Texts(window);
+
+            ProfileFolds.Open(main);
 
             var english = Texts(window);
             var zone = window.GetVisualDescendants().OfType<ZoneMapCanvas>().Single().Scene;
@@ -147,8 +152,13 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             localizer.Use(Localizer.English);
             window.Close();
 
-            return (english, french, zone, icons);
+            return (folded, english, french, zone, icons);
         });
+
+        Assert.DoesNotContain("Own banking rules", folded);
+        Assert.Contains(folded, text => text.StartsWith("Advanced · ", StringComparison.Ordinal) && text.EndsWith(" changed", StringComparison.Ordinal));
+        Assert.Contains("What", folded);
+        Assert.Contains("Care and fights", folded);
 
         // Each tile's resource, and its profession beside the level.
         Assert.Equal(4, icons);
@@ -263,6 +273,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             main.OpenProfile(main.Profiles.Items.Single(item => item.Name == "By profession").Id);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
+            ProfileFolds.Open(main);
 
             var english = Texts(window);
             var editor = main.Profiles.Editing!.Editor!;

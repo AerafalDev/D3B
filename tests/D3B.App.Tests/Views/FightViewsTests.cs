@@ -117,7 +117,7 @@ public sealed class FightViewsTests : IAsyncDisposable
         await accounts.SeeAsync(TestPlay.Account, [new ListedCharacter(TestPlay.CharacterId, "Character", 200)], _play.Time.GetUtcNow(), ct);
 
         var runner = await TestHosts.RunningAsync(host);
-        var (englishTexts, fightTexts, accountTexts, picker) = await OnTheUIThreadAsync<(List<string>, List<string>, List<string>, GamePickerViewModel?)>(() =>
+        var (folded, englishTexts, fightTexts, accountTexts, picker) = await OnTheUIThreadAsync<(List<string>, List<string>, List<string>, List<string>, GamePickerViewModel?)>(() =>
         {
             var localizer = Localizer.Instance;
 
@@ -131,6 +131,11 @@ public sealed class FightViewsTests : IAsyncDisposable
             main.Refresh();
             main.OpenProfile(main.Profiles.Items.Single(profile => profile.Name == "Larvae").Id);
             Dispatcher.UIThread.RunJobs();
+
+            // The rare settings are folded: the fold says so, and a test that reads them all opens it.
+            var folded = Texts(window);
+
+            ProfileFolds.Open(main);
 
             var englishTexts = Texts(window);
 
@@ -168,9 +173,11 @@ public sealed class FightViewsTests : IAsyncDisposable
             localizer.Use(Localizer.English);
             window.Close();
 
-            return (englishTexts, fightTexts, accountTexts, picker);
+            return (folded, englishTexts, fightTexts, accountTexts, picker);
         });
 
+        Assert.DoesNotContain("Monsters in a group, at least", folded);
+        Assert.Contains(folded, text => text.StartsWith("Advanced", StringComparison.Ordinal));
         Assert.Contains("Monsters to fight", englishTexts);
         Assert.Contains("maps to go through", englishTexts);
         Assert.Contains("levels of the monsters", englishTexts);

@@ -22,6 +22,13 @@ internal sealed partial class SubAreasFieldViewModel : GamesFieldViewModel
     /// <inheritdoc/>
     public override bool IsWide => true;
 
+    /// <summary>Adds a sub-area at the end, or takes it out when it is chosen, as a click on its suggestion or on the profile's map does.</summary>
+    /// <param name="id">The sub-area.</param>
+    public void ToggleSubArea(int id)
+    {
+        Toggle(id);
+    }
+
     /// <summary>Initializes a new instance of the <see cref="SubAreasFieldViewModel"/> class.</summary>
     /// <param name="definition">The setting.</param>
     /// <param name="editor">The editor it belongs to.</param>

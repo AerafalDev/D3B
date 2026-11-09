@@ -678,10 +678,20 @@ D356), the pages of D101 and D162 gone.
 - **A profile's tab** (D330, D352, `ProfileViewModel`, `ProfileView`): one tab per profile, several open, closed by its ×,
   which asks first when it holds changes, kept open once saved (`ProfilesViewModel.Open`, `EditorTab.Closing`). Its header:
   the name edited in place, the behavior it is a variant of, how many values it changes and "Tout remettre", the menu and
-  save. Its form, the activity's settings (`SettingsEditor` in `D3B.App.ViewModels.Settings`), checked as they change: the
-  sections in a bar that follows the scroll; a label and its control on a grid, labels above below 560 pixels; a value
-  that differs from the behavior's (`SettingsEditor.Defaults`) bold, a bar in the margin and an amber arrow giving it
-  back. Beside it, the preview: the zone's mini-map (`ZoneMapCanvas`), its legend and figures, the activity's word when it
+  save. Its form, the activity's settings (`SettingsEditor` in `D3B.App.ViewModels.Settings`), checked as they change, as an
+  asset editor (D415, D418): four categories (What, Where, Bank, Care and fights: the modules' `Section` titles, one per
+  category, `SettingSectionViewModel`), each with the settings in view and a fold, "Advanced", for those the module marked
+  rare (`SettingBuilder.Advanced()`, `SettingDefinition.IsAdvanced`); the fold says "Advanced · N changed" with an amber dot
+  when N rare settings that show differ from the behavior's, opens by itself while one has a problem, and stays as the hand
+  left it when the editor is made again (`ProfileViewModel.Load`); a label and its control on a grid, labels above below 560
+  pixels; a value that differs from the behavior's (`SettingsEditor.Defaults`) bold, a bar in the margin and an amber arrow giving it
+  back. Beside it, a column of 40% of the tab, 300 to 460 pixels (a band above the form below 640 pixels: `ProfileView`), the world's
+  map (`ProfileMapViewModel`, a `WorldMapView` over `RouteServices` given by `ProfilesViewModel.WorldServices`): the project's zones
+  tinted as the world's backdrop, the place the settings name outlined as the scene's squares, in the world the place lies in. Its
+  click (`WorldMapView.Clicked`, a press let go within four pixels) writes through the editor's own fields: the zone under the pointer
+  for the place Zone (`ZoneFieldViewModel.Choose`), the sub-area of the map clicked for Sub-areas (`SubAreasFieldViewModel.ToggleSubArea`);
+  "Edit in the world" selects the zone in the world's Zone tool (`MainViewModel.EditZoneInWorld`); nothing is painted there. Under it, the
+  preview: the zone's mini-map (`ZoneMapCanvas`), its legend and figures, the activity's word when it
   draws no zone (`SettingsPreview.Message`), and who plays it with what the settings lead to for each
   (`PlayerNoteViewModel`, D165 to D167). A new profile is named in a dialog with its activity (`NewProfileViewModel`);
   a given one shows read only and is copied into the project. Resources are rows in their order with their icons, chosen
