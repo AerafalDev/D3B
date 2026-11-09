@@ -11,7 +11,8 @@ The repository is the only memory between sessions: never assume an earlier sess
    about the area you work on, plus the brief and the open questions at its ends; the file is about 700 KB, never read it whole.
 4. [docs/architecture.md](docs/architecture.md): how the code is built, section by section: read the ones you touch.
 5. [docs/roadmap.md](docs/roadmap.md): the steps and the next one.
-6. [docs/client.md](docs/client.md), when the task touches the official client's content: what it holds, measured. Grep its headings.
+6. [docs/client.md](docs/client.md) and [docs/client-game.md](docs/client-game.md) (its game connection, session by session), when
+   the task touches the official client's content: what it holds, measured. Grep their headings.
 7. The actual state of the repository (`git log`, `git status`, the code).
 
 ## Working agreement
@@ -22,8 +23,8 @@ The repository is the only memory between sessions: never assume an earlier sess
   compare, recommend, then ask the owner, one decision at a time. Say plainly when an idea is bad, premature or a
   source of debt. Record each decision with `/decision`: an entry in `docs/decisions.md` and its line in
   `docs/decisions-index.md`. Entries are append-only: a later entry supersedes an earlier one.
-- **Done** means code, the tests it needs (for `src/` only, since scripts have none, D10), docs, and benchmarks or
-  specific checks when relevant, with every check green. The docs are the roadmap, `docs/status.md`, the index and the
+- **Done** means code, the tests it needs (for `src/` only, since scripts have none, D10), docs, and specific
+  checks when relevant, with every check green. The docs are the roadmap, `docs/status.md`, the index and the
   architecture sections the change touches.
 - **Scope.** One roadmap step per session, or part of one. Every new large task starts in a new session. No
   refactoring outside the task without a reason.
@@ -56,7 +57,7 @@ The repository is the only memory between sessions: never assume an earlier sess
 
 ## C# style
 
-These rules apply to `src/`, `tests/`, `benchmarks/`, `scripts/` and `.claude/hooks/`. The build enforces the first two;
+These rules apply to `src/`, `tests/`, `scripts/` and `.claude/hooks/`. The build enforces the first two;
 the rest is yours to keep.
 
 - Methods, constructors, operators and local functions have block bodies, never `=>`. Properties, indexers and
@@ -84,7 +85,7 @@ crash. The shell is Git Bash on Windows.
 ## The project's Claude setup (D398)
 
 - Skills in `.claude/skills/`: `/decision`, `/ship`, `/review`, `/close-session`, `/new-tool`, and, loaded when the task
-  fits, `csharp`, `test-first`, `studio-ui`, `git`, `read-client`, `diagnosing-bugs`, `csharp-refactoring` and `benchmarks`. Agents: `reviewer`, which reads a diff fresh, and `explorer`,
+  fits, `csharp`, `test-first`, `studio-ui`, `git`, `read-client`, `diagnosing-bugs`, and `csharp-refactoring`. Agents: `reviewer`, which reads a diff fresh, and `explorer`,
   which studies the client and `vendor/` and writes only under `artifacts/studies/`.
 - Hooks, C# apps in `.claude/hooks/` tested in `tests/D3B.Hooks.Tests`: pushes, `gh` writes and `git clean` ask first;
   pushes to `main`, forced pushes, `git reset --hard` and AI attributions in commits are refused, so are writes of what the client or a machine

@@ -56,7 +56,7 @@ To run the app from source, the host needs the installed client's pack, schema a
 - **Every feature is a module** (`IModule.Build(BotBuilder)`) that registers its services, activities, settings and
   pages. A new feature is a new module or grows an existing one; it does not reach into another module's internals.
 - **`src/D3B.Engine` is pure**: pathfinding, the rules of a fight, its effects and the AI's search, with no I/O, so that
-  they are tested and benchmarked on data alone.
+  they are tested on data alone.
 - **`scripts/` holds the tools**, file-based apps that read the official client, or, for `icons.cs`, take the IntelliJ
   Platform's icons the studio draws. They follow their own conventions, below, and have no tests.
 - **Tests mirror `src/`**: one test project per project with logic, in `tests/`.
@@ -70,7 +70,7 @@ The build enforces most of these: warnings are errors, the analyzers run in the 
 
 ### C#
 
-These apply to `src/`, `tests/`, `benchmarks/` and `scripts/`.
+These apply to `src/`, `tests/` and `scripts/`.
 
 - **One type per file, and one folder per namespace.**
 - **Block bodies** for methods, constructors, operators and local functions, never `=>`. Properties, indexers and
@@ -117,8 +117,7 @@ dotnet build .claude/hooks/<hook>.cs  # each hook you changed
 - **Behavior that only shows in the game** cannot be fully tested: say in the pull request how you checked it, on which
   client build, and what you saw. A measurement on your own fights or harvests, through `scripts/fights.cs` or the
   app's journal, is worth more than an argument.
-- **Performance** changes come with numbers from the benchmarks:
-  `dotnet run -c Release --project benchmarks/D3B.Engine.Benchmarks` or `benchmarks/D3B.Network.Benchmarks`.
+- **Performance** changes come with numbers: a measurement of your own, with the machine and the data it was taken on.
 - **Docs follow the code.** A change of behavior updates the README or `docs/` where they describe it. A change of
   direction is recorded as a new entry at the end of `docs/decisions.md`, with its line in `docs/decisions-index.md`:
   entries are never rewritten, a later one supersedes an earlier one. Propose it in your pull request; the maintainer may renumber it.

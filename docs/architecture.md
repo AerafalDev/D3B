@@ -48,7 +48,7 @@ each step adds the references it needs.
 | `src/D3B.Storage` | D3B's database, SQLite through EF Core and its migrations: the accounts seen, what the bots learn, the runs and the characters' variables, which the app and `D3B.Host` share (D100, D312). It references `D3B.Studio`, so the references run `D3B.App` to `D3B.Storage` to `D3B.Studio` to `D3B.Bot` (D393). |
 | `src/D3B.App` | The Avalonia desktop app, which runs the bots' host in its process (D91). |
 | `scripts/` | Inspection, extraction, release and mapping tools, and the bench of the fights' effects, as file-based apps. |
-| `tests/`, `benchmarks/` | One test project per `src/` project that has logic; benchmarks for the codec and pathfinding. |
+| `tests/` | One test project per `src/` project that has logic. |
 
 ## Modules
 
@@ -97,27 +97,14 @@ replaced them (D116, D119). Mods come as blueprints at step 7, after step 6 (Mod
 
 ## Bot run time
 
-Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharing with the player and the first
-behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
-map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank; in session 4e (D83,
-D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
-client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c
-(D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's
-resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D203), the bot fighting; in session 9e2
-(D213), the switch "The AI fights" kept for each character; in session 9g (D233 to D241), the strategies, which replace
-the switch, the monster groups on a map and the fighting activity; in session 9g2 (D244 to D249), the strategies removed,
-one AI for every character, the fighting activity's sub-areas suggested by its monsters, isolated maps, place, preview
-and families of monsters, every interactive transition followed, refused teleports remembered, and groups judged over the
-fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarnam's portal first; in session 9g5 (D257 to
-D260, D262), the food the inventory holds, the regeneration back to the share, a hunt's journey stopping on its zone's
-maps, no walk ending where the previous one did, and an element another harvested growing back from when it was first
-seen so.
+The bots run in `D3B.Bot`: what each part does today, with the decisions that made it so, found through
+[decisions-index.md](decisions-index.md). The order the parts were built in is in [roadmap.md](roadmap.md), by session.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
   client chose, its account the one the connection phase identified by the ticket (`GameSession.Account`, D65). A bot
   outlives its connections: a new one takes the old one's place, the state starting over from what the server sends.
-- **The actor**, `BotActor`: one `Channel<T>` inbox read by one loop, no lock on its state (D9). The inbox gets every
+- **The actor**, `BotActor`: one `Channel<T>` inbox read by one loop, no lock on its state (D9; its inbox messages are `BotInput`, a condition waited for `BotWaiter`, D399). The inbox gets every
   message of its character's game connection, both sides, from the relay's read loops; the loop turns each into the next
   state and tries it on the behaviors' expectations. Commands from the app come at step 5.
 - **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable snapshot of what the server said of the
@@ -385,7 +372,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   asking what is on a new map, so D3B never sends those; the bot learns that an action is over from what the server
   answers.
 - Framing, measured (D38): a varint length, then a protobuf message, in the clear. `FrameReader` reads frames from a
-  `SequenceReader<byte>` without copying; a benchmark in `benchmarks/D3B.Network.Benchmarks` measures it. The game
+  `SequenceReader<byte>` without copying; it was measured with BenchmarkDotNet, dropped in D400. The game
   connection's envelope carries an `Any` whose type URL is `type.ankama.com/` and the obfuscated message's name,
   measured (D56); the connection phase has none.
 - The obfuscated schema, built in session 3c (D39, D40): `scripts/schema.cs` reads the installed build's protocol from
@@ -635,6 +622,9 @@ D356), the pages of D101 and D162 gone.
   profile in its tab; the right click opens, finds what uses it, renames in place (F2), duplicates (Ctrl D), moves,
   exports, shows its file and deletes, a given asset copied into the project instead. Add makes a profile, a folder named
   in place, or imports a file; the kinds of later sessions show disabled with their session.
+  The view model keeps what is chosen, folded and cut; the rows are made by `AssetTreeBuilder` from that state
+  (`AssetTreeState`) and the project, the writes and their toasts are `AssetWriter`'s, and `AssetPaths` holds the
+  folders' arithmetic (D399).
 - **A profile's tab** (D330, D352, `ProfileViewModel`, `ProfileView`): one tab per profile, several open, closed by its ×,
   which asks first when it holds changes, kept open once saved (`ProfilesViewModel.Open`, `EditorTab.Closing`). Its header:
   the name edited in place, the behavior it is a variant of, how many values it changes and "Tout remettre", the menu and
@@ -894,7 +884,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   also teleports, from every map the server lets it teleport from and has not refused a teleport from, to the
   zaap of every map it knows one on whose cost it carries (`TeleportCost`), one change like the others (D83). It gives
   the cells each map is left from (`ExitCells`), a door's around its element. Built once per pack and shared; a search
-  keeps its state in its own arrays, and takes under 0.7 ms (`benchmarks/D3B.Engine.Benchmarks`).
+  keeps its state in its own arrays, and takes under 0.7 ms (measured with BenchmarkDotNet, dropped in D400).
 - The rules of a fight, in `D3B.Engine.Fights` (9c, D185 to D190), pure, on the pack's catalogs (D182):
   - `Combatant`, a fighter as the rules see it: team, cell, AP, MP, range, lock, dodge, life, summons, breed or monster,
     its grade and properties, summoner, states, and the buffs it holds by the spell that gave each (`HeldBuff`, D227). `CellSet`, a set of a map's cells as 560 bits, which the rules pass around
@@ -1049,7 +1039,7 @@ interface's recast (D292).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
   the captures turn by turn (9e2, D206 to D212). The simulator applies spell
-  effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested and benchmarked on its own.
+  effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
   summons, those the AI brings and those the client controls (built, D269 to D271); the Roublard's bombs, their chains,

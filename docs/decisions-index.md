@@ -459,3 +459,13 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## Claude Code setup (D398)
 
 - [D398](decisions.md#d398-the-projects-claude-code-setup-is-versioned-with-hooks-in-c-and-tests) The project's Claude Code setup is versioned, with hooks in C# and tests (2026-11-09)
+
+## Tidy-up (D399 to D401)
+
+- [D399](decisions.md#d399-d3bbot-stays-one-project-and-is-cut-by-files-and-the-six-files-over-900-lines-are-split) D3B.Bot stays one project and is cut by files, and the six files over 900 lines are split (2026-11-09)
+  - `D3B.Bot.Harvesting` and `D3B.Bot.Fighting` as projects of their own: a new surface to decide for about 4,700 lines.
+  - Layers by namespace guarded by an architecture test: the owner chose the files only.
+- [D400](decisions.md#d400-benchmarkdotnet-is-dropped) BenchmarkDotNet is dropped (2026-11-09)
+  - Removing the fight scripts too: they measure the AI's quality, not its speed.
+- [D401](decisions.md#d401-decisionsmd-is-cut-into-files-by-group-of-the-index) `decisions.md` is cut into files by group of the index (2026-11-09)
+  - Condensing old entries: it breaks the append-only rule and loses the reason.

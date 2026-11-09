@@ -3,7 +3,7 @@ name: read-client
 description: Read the official Dofus 3 client, its data or a capture of its protocol - which tool to run, and what never reaches the repository. Use before inspecting the installed client, a capture, a schema or a mapping.
 ---
 
-Start from what is already measured: `docs/client.md` is long, so grep its headings for the area, then read that section.
+Start from what is already measured: `docs/client.md` and `docs/client-game.md` are long, so grep their headings for the area, then read that section.
 
 | To learn | Run |
 | --- | --- |

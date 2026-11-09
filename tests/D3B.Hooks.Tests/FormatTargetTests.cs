@@ -5,7 +5,7 @@ public sealed class FormatTargetTests
     [Theory]
     [InlineData("src/D3B.Core/Modules/BotBuilder.cs")]
     [InlineData("tests/D3B.Core.Tests/TestBots.cs")]
-    [InlineData("benchmarks/D3B.Engine.Benchmarks/Program.cs")]
+    [InlineData("scripts/fights/CastBench.cs")]
     public void TheCSharpOfTheProjectsIsFormatted(string path)
     {
         Assert.True(FormatTarget.IsFormatted(path));

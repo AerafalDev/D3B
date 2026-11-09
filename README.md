@@ -162,6 +162,7 @@ in `%LOCALAPPDATA%\Ankama\Dofus-dofus3` and write under `%LOCALAPPDATA%\D3B`.
 | `client.cs` | Says which configuration the client reads, Ankama's or D3B's; `restore` gives it Ankama's back. |
 | `capture.cs` | Describes the captures by their structure, never their content. |
 | `fights.cs` | Replays the captured fights and compares what D3B foresees of each cast with what the server did. |
+| `docs.cs` | Finds the links of the Markdown files whose file or heading does not exist. |
 | `icons.cs` | Takes the IntelliJ Platform's icons the studio draws, checks each one's Apache 2.0 notice, writes them for Avalonia. |
 
 The repository's local tools, `dotnet-ef` for the database's migrations and Velopack's `vpk` for the installer, are
@@ -234,6 +235,7 @@ flowchart LR
 | [docs/architecture.md](docs/architecture.md) | How D3B is built: projects, modules, run time, protocol, data, app, fights. |
 | [docs/roadmap.md](docs/roadmap.md) | The steps in order, what each one did, and the next one. |
 | [docs/client.md](docs/client.md) | What the official client holds that D3B uses, measured. |
+| [docs/client-game.md](docs/client-game.md) | The client's game connection, measured session by session. |
 | [docs/mockups/studio-7c.html](docs/mockups/studio-7c.html) | The studio's interactive mockup, which the app's shell follows (D319). |
 
 ## Contributing
