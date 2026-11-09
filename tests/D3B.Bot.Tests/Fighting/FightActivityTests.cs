@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using D3B.Bot.Activities;
+using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fighting;
 using D3B.Bot.Fights;
@@ -11,6 +12,7 @@ using D3B.Data.World;
 using D3B.Engine.Fights;
 using D3B.Engine.Tactics;
 using D3B.Protocol.Game;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Tests.Fighting;
 
@@ -53,9 +55,36 @@ public sealed class FightActivityTests : IAsyncDisposable
         return new FightEnd(outcome, 0, 0, ImmutableSortedDictionary<int, int>.Empty);
     }
 
-    private FightActivity Activity(FightSettings settings)
+    private FightActivity Activity(FightSettings settings, BankingPreferences? banking = null)
     {
-        return new FightActivity(settings, _play.World, _play.Tables);
+        return new FightActivity(settings, _play.World, _play.Tables, banking: banking);
+    }
+
+    [Fact]
+    public void AFightProfileThatStoredItsShareOfPodsKeepsBankingByIt()
+    {
+        var services = new ServiceCollection();
+
+        FightingModule.Register(services);
+
+        var settings = Assert.Single(services.Select(descriptor => descriptor.ImplementationInstance).OfType<ActivityDefinition>()).Settings;
+
+        Assert.True(Assert.IsType<FightSettings>(settings.Read("""{"FullAt":80}""").Settings).OwnBanking);
+        Assert.False(Assert.IsType<FightSettings>(settings.Read("""{"Heal":true}""").Settings).OwnBanking);
+    }
+
+    [Fact]
+    public void AProfileBanksAtTheGeneralShareOfPodsUnlessItAsksForItsOwn()
+    {
+        var general = new BankingPreferences { FullAt = 98 };
+        var following = Activity(new FightSettings { FullAt = 60 }, general);
+        var own = Activity(new FightSettings { OwnBanking = true, FullAt = 60 }, general);
+        var state = new CharacterState { Key = TestPlay.Key, Name = "Character", Weight = 80, MaxWeight = 100 };
+
+        Assert.False(following.IsFull(state));
+        Assert.Equal(98, following.Watches[0].Threshold);
+        Assert.True(own.IsFull(state));
+        Assert.Equal(60, own.Watches[0].Threshold);
     }
 
     [Fact]

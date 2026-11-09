@@ -469,3 +469,7 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Removing the fight scripts too: they measure the AI's quality, not its speed.
 - [D401](decisions.md#d401-decisionsmd-is-cut-into-files-by-group-of-the-index) `decisions.md` is cut into files by group of the index (2026-11-09)
   - Condensing old entries: it breaks the append-only rule and loses the reason.
+
+## Banking settings (D405)
+
+- [D405](decisions.md#d405-banking-one-general-share-of-pods-and-zaap-rule-a-profiles-own-on-request-and-a-journey-that-outlives-a-refused-zaap) Banking: one general share of pods and zaap rule, a profile's own on request, and a journey that outlives a refused zaap (2026-11-09)

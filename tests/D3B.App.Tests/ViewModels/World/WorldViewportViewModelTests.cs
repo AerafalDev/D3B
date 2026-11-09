@@ -131,6 +131,23 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TracingOrPressingAStationOnTheMapNeverMovesTheMapUnderThePointer()
+    {
+        var (_, _, _, world) = await WorldAsync();
+        var revealed = new List<(int X, int Y)>();
+
+        world.SetTool(WorldTool.Route);
+        await world.Creating;
+        world.RevealRequested += (x, y) => revealed.Add((x, y));
+
+        world.TraceSquare(1, 0, isDrag: false);
+        world.TraceSquare(2, 0, isDrag: true);
+        world.SelectStation(0);
+
+        Assert.Empty(revealed);
+    }
+
+    [Fact]
     public async Task TheZoneToolPaintsTheZoneSelectedWithItsOwnToolsAndLeavesWhenSomethingElseIsSelected()
     {
         await _ui.EnterAsync();

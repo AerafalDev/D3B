@@ -74,6 +74,7 @@ public sealed class HarvestActivity : BotActivity
     private readonly Regrowths _regrowths;
     private readonly TimeProvider _time;
     private readonly Random _random;
+    private readonly BankingPreferences _banking;
     private readonly HarvestBalance _balance;
     private readonly Dictionary<int, long> _harvested = [];
     private readonly HashSet<int> _skipped = [];
@@ -105,6 +106,8 @@ public sealed class HarvestActivity : BotActivity
 
     private HarvestZone? Zone => _current?.Zone;
 
+    private int FullAt => _banking.FullAtOf(_settings.OwnBanking, _settings.FullAt);
+
     /// <inheritdoc/>
     public override string Name => "Harvesting";
 
@@ -116,8 +119,8 @@ public sealed class HarvestActivity : BotActivity
 
     /// <inheritdoc/>
     public override ImmutableArray<ActivityWatch> Watches => _settings.Heal
-        ? [new ActivityWatch(WatchedGauge.Pods, _settings.FullAt, WatchAction.Bank), new ActivityWatch(WatchedGauge.Life, _settings.HealBelow, WatchAction.Heal)]
-        : [new ActivityWatch(WatchedGauge.Pods, _settings.FullAt, WatchAction.Bank)];
+        ? [new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank), new ActivityWatch(WatchedGauge.Life, _settings.HealBelow, WatchAction.Heal)]
+        : [new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank)];
 
     /// <inheritdoc/>
     public override int TeleportChanges => _settings.ZaapSaving;
@@ -137,7 +140,8 @@ public sealed class HarvestActivity : BotActivity
     /// <param name="regrowths">What the host learned of the resources' growing back (D145).</param>
     /// <param name="time">The bots' clock.</param>
     /// <param name="random">The draw of the sub-areas the activity goes through in turn when it chooses the place (D391); the shared one when none is given.</param>
-    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places, Regrowths regrowths, TimeProvider time, Random? random = null)
+    /// <param name="banking">The general banking settings (D405); the defaults when none is given.</param>
+    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places, Regrowths regrowths, TimeProvider time, Random? random = null, BankingPreferences? banking = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(world);
@@ -160,6 +164,7 @@ public sealed class HarvestActivity : BotActivity
         _regrowths = regrowths;
         _time = time;
         _random = random ?? Random.Shared;
+        _banking = banking ?? new BankingPreferences();
         _balance = new HarvestBalance(settings.Jobs);
         _report = new ActivityReport { Doing = GameText.Of(HarvestTexts.Text("DoingStart")) };
     }
@@ -228,7 +233,7 @@ public sealed class HarvestActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        return state.MaxWeight > 0 && state.Weight * 100L >= (long)_settings.FullAt * state.MaxWeight;
+        return state.MaxWeight > 0 && state.Weight * 100L >= (long)FullAt * state.MaxWeight;
     }
 
     /// <inheritdoc/>
@@ -245,7 +250,7 @@ public sealed class HarvestActivity : BotActivity
 
         for (var attempt = 0; attempt < MostBankings; attempt++)
         {
-            var outcome = await context.BankAsync(stack => _settings.Deposit is HarvestDeposit.AllButWorn || deposited.Contains(stack.ItemId), 0, cancellationToken).ConfigureAwait(false);
+            var outcome = await context.BankAsync(stack => _settings.Deposit is HarvestDeposit.AllButWorn || deposited.Contains(stack.ItemId), 0, _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps), cancellationToken).ConfigureAwait(false);
 
             switch (outcome)
             {
@@ -392,7 +397,7 @@ public sealed class HarvestActivity : BotActivity
     private ActivityException StillFull(CharacterState state)
     {
         var key = _settings.Deposit is HarvestDeposit.Harvest ? "FailStillFullHarvest" : "FailStillFullAll";
-        var reason = GameText.Of(HarvestTexts.Text(key), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight), GameTextValue.Number(_settings.FullAt));
+        var reason = GameText.Of(HarvestTexts.Text(key), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight), GameTextValue.Number(FullAt));
 
         return new ActivityException($"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.", reason);
     }
