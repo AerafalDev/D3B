@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -16,11 +16,13 @@ As of 2026-11-09, after D408 (the fight AI after the players' reports, D407, sum
 - **Harvesting and the hunt** (steps 6 and 9): both choose their place by the character's levels and go through several
   sub-areas in turn (D391, D392); fights are played by one AI for every breed (D244), with the rules and effects of a fight
   measured on the owner's captures.
-- **The desktop app as a studio** (step 7, up to 7d4 and 7r2): dark, docked, seen as a game engine (D397: the world's map is the
+- **The desktop app as a studio** (step 7, up to 7d4, 7r2 and 7r3): dark, docked, seen as a game engine (D397: the world's map is the
   centre once a route or a zone is selected, with the characters, routes and zones on it, an Outliner and a Details panel; the studio opens on a home page, D406), the project's assets in files,
   behaviors and profiles as variants, the world's map drawn from the client's images, routes with their actions, a profile
   playing a list of routes and steps made in the app (D386), zones painted on the same map (D394), Undo and Redo in the route, the
-  list of steps and the profile editors, and rows dragged or moved by the keys (D394).
+  list of steps and the profile editors, and rows dragged or moved by the keys (D394). A route's steps are set in the Sequencer
+  under the world (D413): a ruler of steps, a track a kind of action, a clip drawn across the steps it covers and stretched, moved,
+  copied, deleted by the pointer or the keys, several steps selected at once, the Details setting a clip's values once for all its steps.
 - **A versioned Claude Code setup** (D398): `.claude/` holds C# hooks that ask before a push or a `gh` write and refuse
   what the client produces, skills for C#, the studio's UI, tests, Git and the rest, and two agents. The hooks are tested in
   `tests/D3B.Hooks.Tests`; the write guard and the Git guard were seen refusing inside a session, the "ask" answers and the
@@ -29,6 +31,10 @@ As of 2026-11-09, after D408 (the fight AI after the players' reports, D407, sum
   `client-3.7.13.17` (D365).
 
 ## Not measured in game
+
+- The Sequencer (D413) is tested on view models and in the headless window, not yet seen by the owner in the app: how a drag feels
+  on a long ruler, how the tracks read at the bottom panel's height, whether it is what they mean by practical; no screen reader was
+  run on its grid.
 
 - The routes' actions that talk to the game and the profiles playing a list of steps (7d3c, 7d3d): tried on the test game
   only; a real client with the owner is to do.
@@ -59,11 +65,10 @@ As of 2026-11-09, after D408 (the fight AI after the players' reports, D407, sum
 0. **Bug reports with the player's capture** (D409 to D411), designed, not begun: the game connection recorded by default, a
    `.d3breport` bundle with the capture cleaned at the export, sent by a private Discord webhook; BR1 to BR4 in the roadmap, BR1
    first. Nothing of it exists in code yet.
-1. **Session 7r3, the Sequencer** (D395, D396, D397): a route's steps set in a ruler of steps with a track a kind of action, a clip
-   drawn across the steps it covers, derived from the anchors (`RouteAnchor.Actions` and the file unchanged), the palette in place
-   of the dialog, several steps selected at once with the same fields set for all, copy; recording in the toolbar waits for the
-   measure in game. The frame it sits in, the world viewport with its Outliner and Details, is made (7r2). Then 7r4 following a
-   run, 7r5 the profile's asset editor, 7r6 sequences and laps; all before 7e.
+1. **Session 7r4, following a run** (D395): the cursor told to the app, the playhead on the Sequencer's ruler, the marker on the
+   route, the progress on the Outliner. 7r3, the Sequencer, is made (D413); what it leaves is the map's frame, hovering a column
+   lighting its step, a panel taller for the Sequencer, and recording in the toolbar, which waits for the measure in game. Then 7r5
+   the profile's asset editor, 7r6 sequences and laps; all before 7e.
 2. **A measure in game with the owner**, before anything else of step 7: the list above, and what 7d4b will record.
 3. **Session 7d4b**: recording while playing and Simplify (D299, D394), once the events it reads are measured.
 4. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).

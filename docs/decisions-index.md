@@ -494,3 +494,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D412](decisions/d412-the-home-pages-tab.md#d412-the-home-page-closes-like-the-other-tabs-and-the-window-menu-opens-it-again) The home page closes like the other tabs, and the Window menu opens it again (2026-11-09)
   - Keeping it pinned and only widening the label's padding: the owner asked for a cross.
+
+## Step 7, 7r3, the Sequencer (D413)
+
+- [D413](decisions/d413-step-7-7r3-the-sequencer.md#d413-7r3-the-sequencer-a-routes-steps-as-clips-on-tracks-set-by-gestures-keys-and-the-details) 7r3, the Sequencer: a route's steps as clips on tracks, set by gestures, keys and the Details (2026-11-09)
+  - Storing the clips in the route's file.
+  - Rebuilding the steps' actions from the clips at each edit.
+  - Dropping the actions' cards of a step from the Details.
+  - A track for each of the eight kinds at all times.
