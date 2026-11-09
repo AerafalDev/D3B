@@ -54,6 +54,9 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets the project, whose routes a setting of a route picks among (D386); <see langword="null"/> when the host does not run.</summary>
     public AssetLibrary? Library => Services?.GetService<AssetLibrary>();
 
+    /// <summary>Gets the project's zones, which a zone setting reads the maps of (D415).</summary>
+    public IPlaceZones? Zones => Services?.GetService<IPlaceZones>();
+
     /// <summary>Gets or sets what names the NPCs and reads their questions and replies; without it they are named by their ids (D385).</summary>
     public NpcNames? NpcNames { get; set; }
 
@@ -504,6 +507,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Cell, _) => new CellFieldViewModel(setting, this),
             (SettingKind.Npc, _) => new NpcFieldViewModel(setting, this),
             (SettingKind.Route, _) => new RouteFieldViewModel(setting, this),
+            (SettingKind.Zone, _) => new ZoneFieldViewModel(setting, this),
             (SettingKind.NpcReply, _) => new NpcRepliesFieldViewModel(setting, this),
             (SettingKind.Number, _) => new NumberFieldViewModel(setting, this),
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),

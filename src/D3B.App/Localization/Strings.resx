@@ -3113,4 +3113,25 @@
   <data name="SequencerCommonEmpty" xml:space="preserve">
     <value>No action is on all of them. Draw one on a track, across these steps, to put it on all.</value>
   </data>
+  <data name="ZoneChoose" xml:space="preserve">
+    <value>choose a zone</value>
+  </data>
+  <data name="ZoneGone" xml:space="preserve">
+    <value>{0} (missing)</value>
+  </data>
+  <data name="ZonePickerTitle" xml:space="preserve">
+    <value>Pick a zone</value>
+  </data>
+  <data name="ZonePickerNone" xml:space="preserve">
+    <value>The project holds no zone yet. Paint one with the Zone tool of the world's map, then pick it here.</value>
+  </data>
+  <data name="ZoneClear" xml:space="preserve">
+    <value>Clear the zone</value>
+  </data>
+  <data name="ZoneHoldsNoMap" xml:space="preserve">
+    <value>This zone holds no map yet.</value>
+  </data>
+  <data name="ZoneNotInProject" xml:space="preserve">
+    <value>This zone is not in the project.</value>
+  </data>
 </root>

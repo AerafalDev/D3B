@@ -3113,4 +3113,25 @@
   <data name="SequencerCommonEmpty" xml:space="preserve">
     <value>Aucune action n’est sur toutes. Tracez-en une sur une piste, au travers de ces étapes, pour la mettre sur toutes.</value>
   </data>
+  <data name="ZoneChoose" xml:space="preserve">
+    <value>choisir une zone</value>
+  </data>
+  <data name="ZoneGone" xml:space="preserve">
+    <value>{0} (introuvable)</value>
+  </data>
+  <data name="ZonePickerTitle" xml:space="preserve">
+    <value>Choisir une zone</value>
+  </data>
+  <data name="ZonePickerNone" xml:space="preserve">
+    <value>Le projet n'a pas encore de zone. Peins-en une avec l'outil Zone de la carte du monde, puis choisis-la ici.</value>
+  </data>
+  <data name="ZoneClear" xml:space="preserve">
+    <value>Retirer la zone</value>
+  </data>
+  <data name="ZoneHoldsNoMap" xml:space="preserve">
+    <value>Cette zone ne contient encore aucune carte.</value>
+  </data>
+  <data name="ZoneNotInProject" xml:space="preserve">
+    <value>Cette zone n'est plus dans le projet.</value>
+  </data>
 </root>
