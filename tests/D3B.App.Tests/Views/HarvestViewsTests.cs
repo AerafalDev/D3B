@@ -46,7 +46,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     {
         // The pages' icons, the pack's: D3B's logo, on the welcome and its tab, is the app's own (D231).
         return ((Visual)window.Content!).GetVisualDescendants().OfType<Image>()
-            .Count(image => image.IsEffectivelyVisible && image.Source is not null && !image.GetVisualAncestors().Any(parent => parent is WelcomeView || parent is Border { Classes: var classes } && classes.Contains("TabHost")));
+            .Count(image => image.IsEffectivelyVisible && image.Source is not null && !image.GetVisualAncestors().Any(parent => parent is HomeView || parent is Border { Classes: var classes } && classes.Contains("TabHost")));
     }
 
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
@@ -359,7 +359,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));
             Drawings.Draw(window, "tab-fr");
-            main.ShowWelcomeCommand.Execute(null);
+            main.ShowHomeCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));

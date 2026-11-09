@@ -1640,22 +1640,22 @@
   <data name="CharactersOnline" xml:space="preserve">
     <value>{0} online</value>
   </data>
-  <data name="Welcome" xml:space="preserve">
-    <value>Welcome</value>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
   </data>
-  <data name="WelcomeVersion" xml:space="preserve">
+  <data name="HomeVersion" xml:space="preserve">
     <value>{0} · client {1}</value>
   </data>
-  <data name="WelcomeSearch" xml:space="preserve">
+  <data name="HomeSearch" xml:space="preserve">
     <value>Search everywhere</value>
   </data>
-  <data name="WelcomeAssets" xml:space="preserve">
+  <data name="HomeAssets" xml:space="preserve">
     <value>Assets</value>
   </data>
-  <data name="WelcomeJournal" xml:space="preserve">
+  <data name="HomeJournal" xml:space="preserve">
     <value>Journal</value>
   </data>
-  <data name="WelcomePlay" xml:space="preserve">
+  <data name="HomePlay" xml:space="preserve">
     <value>Play</value>
   </data>
   <data name="HostFailedShort" xml:space="preserve">
@@ -3019,5 +3019,38 @@
   </data>
   <data name="ZoneContents" xml:space="preserve">
     <value>Contents</value>
+  </data>
+  <data name="HomeQuickActions" xml:space="preserve">
+    <value>Quick actions</value>
+  </data>
+  <data name="HomeNewProfile" xml:space="preserve">
+    <value>New profile</value>
+  </data>
+  <data name="HomeNewRoute" xml:space="preserve">
+    <value>New route</value>
+  </data>
+  <data name="HomeNewZone" xml:space="preserve">
+    <value>New zone</value>
+  </data>
+  <data name="HomeProjectFolder" xml:space="preserve">
+    <value>Project folder</value>
+  </data>
+  <data name="HomeSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="HomeCharacters" xml:space="preserve">
+    <value>Characters</value>
+  </data>
+  <data name="HomeNoCharacters" xml:space="preserve">
+    <value>No character yet. Log in to the game with the relay on, and your characters appear here.</value>
+  </data>
+  <data name="HomeRecent" xml:space="preserve">
+    <value>Recent</value>
+  </data>
+  <data name="HomeNoRecent" xml:space="preserve">
+    <value>Nothing yet. Make a route, a zone or a profile, and it is listed here.</value>
+  </data>
+  <data name="HomeShortcuts" xml:space="preserve">
+    <value>Shortcuts</value>
   </data>
 </root>

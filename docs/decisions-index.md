@@ -469,3 +469,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Removing the fight scripts too: they measure the AI's quality, not its speed.
 - [D401](decisions.md#d401-decisionsmd-is-cut-into-files-by-group-of-the-index) `decisions.md` is cut into files by group of the index (2026-11-09)
   - Condensing old entries: it breaks the append-only rule and loses the reason.
+
+## The home page (D406)
+
+- [D406](decisions.md#d406-the-studio-opens-on-a-home-page-the-world-appears-when-a-route-or-a-zone-is-selected) The studio opens on a home page; the world appears when a route or a zone is selected (2026-11-09)
+  - Opening on the last tab left, and a "recent" list kept in `app.json`: the first brings the world back at once, the second is a file to keep for what the file system says.
