@@ -84,7 +84,7 @@ crash. The shell is Git Bash on Windows.
 ## The project's Claude setup (D393)
 
 - Skills in `.claude/skills/`: `/decision`, `/ship`, `/review`, `/close-session`, `/new-tool`, and, loaded when the task
-  fits, `git`, `test-first`, `read-client` and `diagnosing-bugs`. Agents: `reviewer`, which reads a diff fresh, and `explorer`,
+  fits, `csharp`, `test-first`, `studio-ui`, `git`, `read-client`, `diagnosing-bugs`, `csharp-refactoring` and `benchmarks`. Agents: `reviewer`, which reads a diff fresh, and `explorer`,
   which studies the client and `vendor/` and writes only under `artifacts/studies/`.
 - Hooks, C# apps in `.claude/hooks/` tested in `tests/D3B.Hooks.Tests`: pushes, `gh` writes and `git clean` ask first;
   pushes to `main`, forced pushes, `git reset --hard` and AI attributions in commits are refused, so are writes of what the client or a machine

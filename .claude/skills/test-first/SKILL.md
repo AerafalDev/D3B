@@ -26,6 +26,23 @@ A bug fix starts with a test that fails on the bug.
 - `CsCheck` states a property that holds over many inputs, where examples would be a guess.
 - xUnit v3 on Microsoft.Testing.Platform; test methods are PascalCase sentences without underscores (CA1707).
 
+## The tests as the repository writes them
+
+Counted in `tests/` on 2026-11-09: 1,700 tests, almost all `[Fact]`, a `[Theory]` where one rule has many inputs.
+
+- One test project per project with logic, mirroring its folders (`tests/D3B.Bot.Tests/Harvesting` for
+  `src/D3B.Bot/Harvesting`). A helper that several tests share lives in the test project, beside them: `TestHosts`,
+  `TestGameData`, `TestStore`, `Waiting` in `D3B.App.Tests`; `TestInstall` in `D3B.Bot.Tests`.
+- Assertions are xUnit's own (`Assert.Equal`, `Assert.Null`, `Assert.Single`); no assertion library and no mocking library
+  is used. A double is a small class of the test project.
+- An async test passes `TestContext.Current.CancellationToken` to what it awaits.
+- Time under test is a `FakeTimeProvider` wherever the code takes a `TimeProvider`; waiting for something that runs uses the test project's `Waiting` helper, not a sleep.
+- The engine's rules are tested on data built by the test, or on fights as the captures measured them (`D3B.Engine.Tests`);
+  `CsCheck` states a property there.
+- A view is tested headless: the `studio-ui` skill says how.
+- Test methods are PascalCase sentences that state the behavior, `TheRunBlockShowsOnlyTheButtonsTheChosenCharactersStateAllows`,
+  and a file holds one class, named for what it tests, with `Tests` after it.
+
 ## Where tests do not go
 
 `scripts/` tools have none (D10). Behavior that only shows in the game cannot be tested: say how it was checked, on which

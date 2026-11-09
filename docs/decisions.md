@@ -8655,11 +8655,15 @@ texts are in too. Builds D10, D11, D25, D29, D383, D384.*
   those with no exception.
 - **Skills** (`.claude/skills/`): `/decision`, `/ship` (stops before the push and asks), `/review`, `/close-session` (the report
   and the prompt `CLAUDE.md` asks for), `/new-tool` (the listing in `D3B.slnx` and the CI step are easy to forget), and, loaded when
-  the task fits, `git` (the history's own habits: `<type>: <subject>` commits, `<type>/<name>` branches, merge commits, staging by name),
-  `test-first`, `read-client` (the tools, and what never reaches the repository) and `diagnosing-bugs`, taken from
-  mattpocock/skills at `4ae2317` (MIT, with its `SOURCE.md`) and turned to D3B's loops: a replayed capture, a headless Avalonia
-  test, BenchmarkDotNet, and never a login ticket. **Agents**: `reviewer` (read-only; the never-ever list, the tests, the docs)
-  and `explorer` (the client and `vendor/`, writing only the ignored studies).
+  the task fits: `csharp` (how the source writes types, null, async, time, logging and collections, counted on 886 files),
+  `test-first` (the loop, and the tests as the repository writes them), `studio-ui` (the studio's look, scale, texts in two
+  languages, view models and headless tests, from the "Desktop app" section), `git` (the history's own habits: Conventional
+  Commits, `<type>/<name>` branches, merge commits, staging by name, and no AI attribution, which the Git guard also refuses),
+  `read-client` (the tools, and what never reaches the repository), `diagnosing-bugs` and `csharp-refactoring` and
+  `benchmarks`, taken from mattpocock/skills at `4ae2317` and from dotnet/skills at `96c3d68` (MIT, each with its `SOURCE.md`)
+  and turned to D3B: a replayed capture, a headless Avalonia test, never a login ticket; the generated code and the stored
+  names a refactoring must not break; the repository's benchmark projects. **Agents**: `reviewer` (read-only; the never-ever
+  list, the tests, the docs) and `explorer` (the client and `vendor/`, writing only the ignored studies).
 - **Settings.** `autoMemoryEnabled` off, since the repository is the only memory; `dotnet build`, `test`, `format` and Git's
   reads allowed; reading a `.d3bcap` denied, since it holds a login ticket. The plugins and skills claude.ai syncs into every
   session cost context for nothing here: `.claude/settings.local.example.json` turns them off once per machine, as Claude Code
