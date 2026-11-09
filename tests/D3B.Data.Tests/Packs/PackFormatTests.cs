@@ -4,6 +4,7 @@ using D3B.Data.Banks;
 using D3B.Data.Breeds;
 using D3B.Data.Characteristics;
 using D3B.Data.Effects;
+using D3B.Data.Hints;
 using D3B.Data.Icons;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
@@ -48,6 +49,7 @@ public sealed class PackFormatTests
         (9, "1ab3a85feff4d72ab0885e08568857695f6ad388bb28c36f026976bd75ccde8d"),
         (10, "53dd018f5218468a162c91ed2b22add526bd5029e09a9090235af07f9fdb75ef"),
         (11, "f8ee4c1ccc2600633445615dbc0147dd2a4c6862bf2b4c4101e7a34e4ee10b6a"),
+        (12, "098d33e90f65d3bc6b3535c7b8f24466f19bfbe1008d6371f7e45f147dc18bc1"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -60,6 +62,7 @@ public sealed class PackFormatTests
     private static readonly int[] _monsterIcons = [212];
     private static readonly int[] _headIcons = [214];
     private static readonly int[] _glyphIcons = [216];
+    private static readonly int[] _hintIcons = [240];
     private static readonly int[] _levelIds = [97, 98];
     private static readonly int[] _zoneCells = [99, 100, 101];
     private static readonly string[] _strings = ["s0", "s1", "s2", "s3", "s4"];
@@ -235,6 +238,7 @@ public sealed class PackFormatTests
             new BreedStatCost[] { new(184, 188, 189) }));
         Append(hash, new CharacteristicCatalog(new Characteristic[] { new(190, 191, 192, 193, 194, true, false) }, _keywords, _formulaIds, _formulas));
         Append(hash, new WorldMapCatalog(new WorldMap[] { new(217, 218, 219, 220, 221.5f, 222.5f, 0.2f, 1.5f, 0.6f, 223, 224, true, 0, 2) }, new WorldMapLevel[] { new(100, 225, 226), new(75, 227, 228) }));
+        Append(hash, new HintCatalog(new Hint[] { new(241, 242, 243, 244, 245, 246, -247, -248, 249) }, new HintCategory[] { new(250, 251) }, new IconTable(2, _hintIcons, Pixels(252, 2))));
         Append(hash, new byte[] { 229, 230 });
 
         return Convert.ToHexStringLower(hash.GetHashAndReset());
