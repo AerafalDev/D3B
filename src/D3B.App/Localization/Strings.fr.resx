@@ -2069,6 +2069,21 @@
   <data name="SettingsChanged" xml:space="preserve">
     <value>Des valeurs changées</value>
   </data>
+  <data name="GroupBanking" xml:space="preserve">
+    <value>Banque</value>
+  </data>
+  <data name="SettingBankFullAtRow" xml:space="preserve">
+    <value>Aller à la banque quand les pods atteignent</value>
+  </data>
+  <data name="SettingBankFullAtRowDetail" xml:space="preserve">
+    <value>La part de ses pods à laquelle un bot va à la banque. Un profil qui demande ses propres règles de banque garde la sienne. Par défaut 90 %.</value>
+  </data>
+  <data name="SettingBankZaapsRow" xml:space="preserve">
+    <value>Prendre un zaap pour aller à la banque</value>
+  </data>
+  <data name="SettingBankZaapsRowDetail" xml:space="preserve">
+    <value>Désactivé, les bots vont toujours à pied à la banque. Activé, ils prennent un zaap s'il évite assez de cartes et s'ils peuvent le payer ; sinon ils marchent.</value>
+  </data>
   <data name="GroupBotDelays" xml:space="preserve">
     <value>Délais minimums des bots</value>
   </data>

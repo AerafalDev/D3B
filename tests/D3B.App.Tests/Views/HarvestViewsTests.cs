@@ -92,7 +92,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     {
         using var host = await HostAsync();
         var definition = host.Services.GetRequiredService<ActivityCatalog>().All.Single();
-        var settings = new HarvestSettings { Resources = [TestPlay.Ash, TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId], Heal = true, Food = [TestPlay.Bread] };
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash, TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId], Heal = true, Food = [TestPlay.Bread], OwnBanking = true };
 
         await host.Services.GetRequiredService<AssetLibrary>().SaveProfileAsync("Ash and chestnut", HarvestingModule.ActivityId, definition.Settings.Write(settings), TestContext.Current.CancellationToken);
 
@@ -165,6 +165,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("1 map", english);
         Assert.Contains("to the nearest bank", english);
         Assert.Contains("90%", english);
+        Assert.Contains("Own banking rules", english);
+        Assert.Contains("Take a zaap to the bank", english);
         Assert.Contains("What harvesting brings", english);
         Assert.Contains("Everything but what is worn", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));

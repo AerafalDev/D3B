@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using D3B.Bot.Activities;
+using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Bot.Harvesting;
@@ -61,9 +62,9 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         return new CharacterState { Key = TestPlay.Key, Name = "Character", Weight = weight, MaxWeight = maxWeight };
     }
 
-    private HarvestActivity Activity(HarvestSettings settings, Regrowths? regrowths = null)
+    private HarvestActivity Activity(HarvestSettings settings, Regrowths? regrowths = null, BankingPreferences? banking = null)
     {
-        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics, _play.Places, regrowths ?? new Regrowths(), _play.Time);
+        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics, _play.Places, regrowths ?? new Regrowths(), _play.Time, banking: banking);
     }
 
     // The tour goes to the east map, through the middle one, which holds the tree: a journey from the north map crosses it.
@@ -170,6 +171,66 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         run.Stop();
 
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public void AProfileBanksAtTheGeneralShareOfPodsUnlessItAsksForItsOwn()
+    {
+        var general = new BankingPreferences { FullAt = 98 };
+        var following = Activity(new HarvestSettings { FullAt = 60 }, banking: general);
+        var own = Activity(new HarvestSettings { OwnBanking = true, FullAt = 60 }, banking: general);
+
+        Assert.False(following.IsFull(Weighing(97, 100)));
+        Assert.True(following.IsFull(Weighing(98, 100)));
+        Assert.Equal(98, following.Watches[0].Threshold);
+        Assert.True(own.IsFull(Weighing(60, 100)));
+        Assert.Equal(60, own.Watches[0].Threshold);
+
+        // The share changed while the bot plays applies at its next step.
+        general.FullAt = 70;
+
+        Assert.True(following.IsFull(Weighing(70, 100)));
+    }
+
+    // On the east map, full, with 500 kamas and a zaap known in the bank's inside, which saves a change on foot (D405).
+    private async Task<TestConnection> FullAtTheEastMapAsync(BankingPreferences general, HarvestSettings settings)
+    {
+        var (connection, bot) = await _play.EnterAsync(300, TestPlay.EastMapId, TestPlay.SubscribedAccount);
+
+        connection.Server(new ZaapKnownListEvent { MapIds = { TestPlay.InsideMapId } });
+        connection.Server(new InventoryContentEvent { Kamas = 500 });
+        connection.Server(new InventoryWeightEvent { Weight = 99, MaxWeight = 100 });
+        await bot.ProcessedAsync();
+
+        _ = bot.StartActivity(Activity(settings, banking: general));
+
+        return connection;
+    }
+
+    [Fact]
+    public async Task AFullCharacterTakesAZaapToTheBankWhenTheGeneralSettingsAllowIt()
+    {
+        var connection = await FullAtTheEastMapAsync(new BankingPreferences { FullAt = 98 }, new HarvestSettings { Resources = [TestPlay.Ash], Area = 1, ZaapSaving = 1 });
+
+        Assert.Equal(new TeleportRequest { MapId = TestPlay.InsideMapId, Source = TeleporterType.Map }, await connection.SentAsync(1));
+    }
+
+    [Fact]
+    public async Task AFullCharacterWalksToTheBankWhenTheGeneralSettingsTakeNoZaap()
+    {
+        var connection = await FullAtTheEastMapAsync(new BankingPreferences { FullAt = 98, UseZaaps = false }, new HarvestSettings { Resources = [TestPlay.Ash], Area = 1, ZaapSaving = 1 });
+
+        Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        Assert.DoesNotContain(connection.Sent, request => request is TeleportRequest);
+    }
+
+    [Fact]
+    public async Task AProfileWithItsOwnBankingTakesNoZaapWhateverTheGeneralSettingsSay()
+    {
+        var connection = await FullAtTheEastMapAsync(new BankingPreferences { FullAt = 98 }, new HarvestSettings { Resources = [TestPlay.Ash], Area = 1, ZaapSaving = 1, OwnBanking = true, FullAt = 90, UseZaaps = false });
+
+        Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        Assert.DoesNotContain(connection.Sent, request => request is TeleportRequest);
     }
 
     [Fact]
@@ -337,7 +398,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     [Fact]
     public void ACharacterIsFullAtTheSettingsShareOfItsPods()
     {
-        var activity = Activity(new HarvestSettings { FullAt = 80 });
+        var activity = Activity(new HarvestSettings { OwnBanking = true, FullAt = 80 });
 
         Assert.False(activity.IsFull(Weighing(6_071, 7_590)));
         Assert.True(activity.IsFull(Weighing(6_072, 7_590)));

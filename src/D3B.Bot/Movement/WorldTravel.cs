@@ -19,14 +19,13 @@ namespace D3B.Bot.Movement;
 /// A character in its haven bag, which the world graph does not hold, leaves it first, back to where it entered it (D83).
 /// </para>
 /// <para>
-/// A journey fails after 3 failed changes, or after twice the first path's changes and 10 more, so that a character sent
+/// A journey fails after 3 failed changes, or after twice the first path's changes and 10 more (made again from the path on foot once a teleport failed), so that a character sent
 /// round in circles stops.
 /// </para>
 /// </remarks>
 public static class WorldTravel
 {
     private const int MostFailures = 3;
-    private const int SpareChanges = 10;
 
     /// <summary>Travels to a map, as the bot's behavior.</summary>
     /// <param name="bot">The bot.</param>
@@ -65,7 +64,19 @@ public static class WorldTravel
     /// tour's farthest maps. The rest of a shortest path is the shortest from where it stops, so that the journeys after it
     /// do not come back through the maps it left.
     /// </remarks>
-    public static async Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, CancellationToken cancellationToken)
+    public static Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, CancellationToken cancellationToken)
+    {
+        return context.TravelAsync(maps, stopAt, true, cancellationToken);
+    }
+
+    /// <summary>Travels to the nearest of several maps, within a behavior, by foot alone when teleports are not wanted.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="maps">The maps sought.</param>
+    /// <param name="stopAt">Whether the journey ends on a map it reached, the map's information received; never asked of the map it starts from.</param>
+    /// <param name="useTeleports">Whether the journey may teleport to a zaap; else it walks, whatever the zaaps the character knows (D405).</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the journey ended.</returns>
+    public static async Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(maps);
@@ -74,7 +85,7 @@ public static class WorldTravel
         var depth = action.Depth;
         var from = context.State.MapId;
         long? sought = maps.Count is 1 ? maps.First() : null;
-        var (outcome, changes) = await JourneyAsync(context, maps, stopAt, cancellationToken).ConfigureAwait(false);
+        var (outcome, changes) = await JourneyAsync(context, maps, stopAt, useTeleports, cancellationToken).ConfigureAwait(false);
 
         context.Record(action, (at, took) => new TravelEntry(at, depth, from, sought, context.State.MapId, changes, outcome, took));
 
@@ -117,13 +128,13 @@ public static class WorldTravel
         };
     }
 
-    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, CancellationToken cancellationToken)
+    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
     {
         var banned = new HashSet<int>();
-        var teleports = true;
+        var teleports = useTeleports;
         var failures = 0;
         var changes = 0;
-        int? mostChanges = null;
+        var budget = new JourneyBudget();
 
         while (true)
         {
@@ -156,9 +167,9 @@ public static class WorldTravel
                 return Over(context, state, TravelOutcome.NoPath, changes);
             }
 
-            mostChanges ??= 2 * path.Steps.Count + SpareChanges;
+            budget.Open(changes, path.Steps.Count);
 
-            if (changes >= mostChanges)
+            if (budget.IsSpent(changes))
                 return Over(context, state, TravelOutcome.Failed, changes);
 
             if (changes is 0 && failures is 0)
@@ -177,6 +188,9 @@ public static class WorldTravel
                     if (step.IsTeleport)
                     {
                         teleports = false;
+
+                        // The way on foot may be far longer than the one the teleport gave (D405).
+                        budget.Renew();
 
                         // Measured (D248): Incarnam's maps carry the flag, and the server refuses a teleport from them, text 416;
                         // the next journeys tried it again, and failed as many times.

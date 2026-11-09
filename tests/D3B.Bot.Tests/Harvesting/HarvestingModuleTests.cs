@@ -35,6 +35,21 @@ public sealed class HarvestingModuleTests
     }
 
     [Fact]
+    public void AProfileThatStoredItsShareOfPodsKeepsBankingByItAndANewOneFollowsTheGeneralSettings()
+    {
+        var settings = Harvest().Settings;
+        var before = Assert.IsType<HarvestSettings>(settings.Read("""{"Resources":[312],"FullAt":75,"UseZaaps":true}""").Settings);
+        var made = Assert.IsType<HarvestSettings>(settings.Read("""{"Resources":[312]}""").Settings);
+        var chosen = Assert.IsType<HarvestSettings>(settings.Read("""{"Resources":[312],"FullAt":75,"OwnBanking":false}""").Settings);
+
+        Assert.True(before.OwnBanking);
+        Assert.Equal(75, before.FullAt);
+        Assert.False(made.OwnBanking);
+        Assert.False(chosen.OwnBanking);
+        Assert.True(made.UseZaaps);
+    }
+
+    [Fact]
     public void AProfileThatHarvestedEverythingEachCharacterCanReadsAsEveryProfessionButBases()
     {
         var read = Assert.IsType<HarvestSettings>(Harvest().Settings.Read("""{"Resources":[],"EverythingKnown":true,"Area":1,"SubAreas":[]}""").Settings);
