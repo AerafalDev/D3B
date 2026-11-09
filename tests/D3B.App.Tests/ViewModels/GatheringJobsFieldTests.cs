@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class GatheringJobsFieldTests
 {
     private static (SettingsEditor Editor, GatheringJobsFieldViewModel Field, TestSettings Draft) Edit(TestSettings draft)

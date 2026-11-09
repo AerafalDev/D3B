@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class LogsViewModelTests : IAsyncDisposable
 {
     private static readonly DateTimeOffset _at = new(2026, 10, 29, 3, 17, 19, TimeSpan.Zero);

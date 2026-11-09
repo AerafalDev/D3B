@@ -8,6 +8,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class BotsViewModelTests : IAsyncDisposable
 {
     private readonly TestPlay _play = new();

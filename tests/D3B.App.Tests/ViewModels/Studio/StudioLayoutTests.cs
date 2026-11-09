@@ -4,6 +4,7 @@ using D3B.Data.Tests;
 
 namespace D3B.App.Tests.ViewModels.Studio;
 
+[UiThread]
 public sealed class StudioLayoutTests
 {
     [Fact]

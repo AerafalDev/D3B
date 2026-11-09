@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class TraceViewModelTests : IAsyncDisposable
 {
     private static readonly DateTimeOffset _first = new(2026, 11, 2, 10, 0, 0, TimeSpan.Zero);

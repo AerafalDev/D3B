@@ -10,6 +10,7 @@ using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class CharactersViewModelTests : IAsyncDisposable
 {
     private static readonly GameAccount _mule = new(42, "Mule", "0042");

@@ -24,6 +24,16 @@ public sealed record TacticWeights
     /// </remarks>
     public double Approach { get; init; } = 0.9;
 
+    /// <summary>Gets the share of its most life above which a fighter's life points are worth only <see cref="ComfortWorth"/> of what the curve gives.</summary>
+    /// <remarks>
+    /// Reported by players (D407): a life steal of 8 damage healing 4 beat a blow of 14 with the character at 97% of its life,
+    /// and one of 16 at 90%, since a point of its life was worth more than a point of damage even when nothing was lacking.
+    /// </remarks>
+    public double Comfort { get; init; } = 0.6;
+
+    /// <summary>Gets the part of a life point's worth that remains above <see cref="Comfort"/>, 1 keeping the curve whole.</summary>
+    public double ComfortWorth { get; init; } = 0.25;
+
     /// <summary>Gets how much dearer the fighter playing holds its own life than an ally's: its death ends its fight.</summary>
     public double Survival { get; init; } = 2;
 }

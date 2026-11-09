@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class ProblemsViewModelTests : IAsyncDisposable
 {
     private readonly TestStore _store = new();
