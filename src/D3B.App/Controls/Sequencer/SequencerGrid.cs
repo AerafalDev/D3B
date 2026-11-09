@@ -33,6 +33,7 @@ internal sealed class SequencerGrid : Control
     private static readonly IPen _line = new Pen(new SolidColorBrush(Colors.White, 0.07), 1);
     private static readonly IPen _faint = new Pen(new SolidColorBrush(Colors.White, 0.035), 1);
     private static readonly IPen _selected = new Pen(new SolidColorBrush(Color.Parse("#3B82F6")), 2);
+    private static readonly IPen _focus = new Pen(new SolidColorBrush(Color.Parse("#3B82F6"), 0.7), 1);
     private static readonly IPen _problem = new Pen(new SolidColorBrush(Color.Parse("#EA5D52")), 1.5);
 
     private bool _held;
@@ -84,9 +85,6 @@ internal sealed class SequencerGrid : Control
 
     /// <summary>Raised when a press held on a clip or a track is let go.</summary>
     public event Action? GestureEnded;
-
-    /// <summary>Raised when Delete or Backspace is pressed on the grid.</summary>
-    public event Action? DeleteRequested;
 
     /// <summary>Initializes static members of the <see cref="SequencerGrid"/> class.</summary>
     static SequencerGrid()
@@ -159,6 +157,9 @@ internal sealed class SequencerGrid : Control
 
         if (scene.Steps.Count == 0)
             return;
+
+        if (IsFocused)
+            context.DrawRectangle(null, _focus, new Rect(Bounds.Size).Deflate(1));
 
         var height = SequencerLayout.RulerHeight + scene.BodyHeight;
         var chosen = SelectedSteps ?? [];
@@ -259,15 +260,17 @@ internal sealed class SequencerGrid : Control
     }
 
     /// <inheritdoc/>
-    protected override void OnKeyDown(KeyEventArgs e)
+    protected override void OnGotFocus(FocusChangedEventArgs e)
     {
-        base.OnKeyDown(e);
+        base.OnGotFocus(e);
+        InvalidateVisual();
+    }
 
-        if (e.Key is Key.Delete or Key.Back)
-        {
-            DeleteRequested?.Invoke();
-            e.Handled = true;
-        }
+    /// <inheritdoc/>
+    protected override void OnLostFocus(FocusChangedEventArgs e)
+    {
+        base.OnLostFocus(e);
+        InvalidateVisual();
     }
 
     /// <inheritdoc/>

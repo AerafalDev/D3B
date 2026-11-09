@@ -372,6 +372,13 @@ internal sealed partial class MainViewModel : ObservableObject
         return Pages.Any(page => page.TryFailWith(exception));
     }
 
+    /// <summary>Shows the Sequencer of the route selected, in the bottom panel.</summary>
+    public void ShowSequencer()
+    {
+        if (Bottom.HasSequencer)
+            Bottom.Show(BottomTab.Sequencer);
+    }
+
     /// <summary>Shows the bottom panel, or closes it: Ctrl J.</summary>
     [RelayCommand]
     public void ToggleBottom()
@@ -640,6 +647,7 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandUndo", "Ctrl Z", Undo);
         yield return Command("CommandRedo", "Ctrl Y", Redo);
         yield return Command("CommandToggleJournal", "Ctrl J", ToggleBottom);
+        yield return Command("CommandShowSequencer", "", ShowSequencer);
         yield return Command("CommandGoToAssets", _localizer["KeysCtrlSpace"], GoToAssets);
         yield return Command("CommandDefaultLayout", "", Layout.Reset);
         yield return Command("CommandPlay", "F5", RunBlock.PlayOrPause);

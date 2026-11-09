@@ -359,4 +359,133 @@ public sealed class SequencerViewModelTests : IAsyncDisposable
         Assert.False(editor.IsDirty);
         Assert.False(editor.CanUndo);
     }
+
+    [Fact]
+    public async Task TheArrowsMoveTheStepChosenAndShiftReachesOutFromTheOneChosenFirst()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2), Step(3), Step(4));
+        var sequencer = editor.Sequencer;
+
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.None));
+        Assert.Equal([0], sequencer.SelectedSteps);
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.None));
+        Assert.Equal([1], sequencer.SelectedSteps);
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.Shift));
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.Shift));
+        Assert.Equal([1, 2, 3], sequencer.SelectedSteps);
+        Assert.True(sequencer.PressKey(Key.Left, KeyModifiers.None));
+        Assert.Equal([2], sequencer.SelectedSteps);
+        Assert.True(sequencer.PressKey(Key.End, KeyModifiers.None));
+        Assert.Equal([3], sequencer.SelectedSteps);
+        Assert.True(sequencer.PressKey(Key.Home, KeyModifiers.Shift));
+        Assert.Equal([0, 1, 2, 3], sequencer.SelectedSteps);
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.None));
+        Assert.Equal([1], sequencer.SelectedSteps);
+    }
+
+    [Fact]
+    public async Task ControlASelectsEveryStepAndTheArrowsStopAtTheEnds()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2), Step(3));
+        var sequencer = editor.Sequencer;
+
+        Assert.True(sequencer.PressKey(Key.A, KeyModifiers.Control));
+        Assert.Equal([0, 1, 2], sequencer.SelectedSteps);
+
+        sequencer.PressKey(Key.End, KeyModifiers.None);
+        sequencer.PressKey(Key.Right, KeyModifiers.None);
+
+        Assert.Equal([2], sequencer.SelectedSteps);
+    }
+
+    [Fact]
+    public async Task UpAndDownChooseTheClipsCoveringTheStepChosenOneAfterTheOtherAndEscapeLetsGo()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var fight = Call(RouteActions.Fight, new RouteFightValues());
+        var (_, editor) = await OpenAsync(Step(1, ash), Step(2, ash, fight), Step(3, fight));
+        var sequencer = editor.Sequencer;
+
+        editor.Select(1);
+
+        Assert.True(sequencer.PressKey(Key.Down, KeyModifiers.None));
+        Assert.Equal(RouteActions.Harvest, sequencer.Selected!.Call.Node);
+        Assert.True(sequencer.PressKey(Key.Down, KeyModifiers.None));
+        Assert.Equal(RouteActions.Fight, sequencer.Selected!.Call.Node);
+        Assert.True(sequencer.PressKey(Key.Up, KeyModifiers.None));
+        Assert.Equal(RouteActions.Harvest, sequencer.Selected!.Call.Node);
+        Assert.True(sequencer.PressKey(Key.Escape, KeyModifiers.None));
+        Assert.Equal(-1, sequencer.SelectedClip);
+        Assert.False(sequencer.PressKey(Key.Escape, KeyModifiers.None));
+    }
+
+    [Fact]
+    public async Task AltWithTheArrowsMovesTheClipSelectedAndWithShiftOrControlMovesItsLastOrFirstEdgeEachOneAChangeToUndo()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var (_, editor) = await OpenAsync(Step(1, ash), Step(2, ash), Step(3), Step(4));
+        var sequencer = editor.Sequencer;
+
+        sequencer.PressClip(sequencer.Scene.Tracks[0].Clips[0].Id);
+
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.Alt));
+        Assert.Equal((1, 2), (sequencer.Selected!.First, sequencer.Selected.Last));
+        Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.Alt | KeyModifiers.Shift));
+        Assert.Equal((1, 3), (sequencer.Selected!.First, sequencer.Selected.Last));
+        Assert.True(sequencer.PressKey(Key.Left, KeyModifiers.Alt | KeyModifiers.Control));
+        Assert.Equal((0, 3), (sequencer.Selected!.First, sequencer.Selected.Last));
+
+        editor.Undo();
+
+        Assert.Equal((1, 3), (sequencer.Scene.Tracks[0].Clips[0].First, sequencer.Scene.Tracks[0].Clips[0].Last));
+    }
+
+    [Fact]
+    public async Task AltWithTheArrowsDoesNothingWithoutAClip()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2));
+
+        Assert.False(editor.Sequencer.PressKey(Key.Right, KeyModifiers.Alt));
+        Assert.False(editor.Sequencer.PressKey(Key.Delete, KeyModifiers.None));
+    }
+
+    [Fact]
+    public async Task ControlDCopiesTheClipSelectedRightAfterItselfAndSelectsTheCopy()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var (_, editor) = await OpenAsync(Step(1, ash), Step(2, ash), Step(3), Step(4), Step(5));
+        var sequencer = editor.Sequencer;
+
+        sequencer.PressClip(sequencer.Scene.Tracks[0].Clips[0].Id);
+
+        Assert.True(sequencer.PressKey(Key.D, KeyModifiers.Control));
+        Assert.Equal([(0, 3)], sequencer.Scene.Tracks[0].Clips.Select(clip => (clip.First, clip.Last)));
+        Assert.Equal([1, 1, 1, 1, 0], editor.CurrentAnchors.Select(anchor => anchor.Actions.Length));
+        Assert.Equal((0, 3), (sequencer.Selected!.First, sequencer.Selected.Last));
+    }
+
+    [Fact]
+    public async Task DeleteTakesTheClipSelectedOffAndTheStatusSaysWhatIsSelected()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var (_, editor) = await OpenAsync(Step(1, ash), Step(2, ash), Step(3));
+        var sequencer = editor.Sequencer;
+
+        Assert.Equal("", sequencer.Status);
+
+        editor.Select(1);
+
+        Assert.Equal("Step 2 of 3", sequencer.Status);
+
+        editor.SelectSteps([0, 1]);
+
+        Assert.Equal("2 steps selected", sequencer.Status);
+
+        sequencer.PressClip(sequencer.Scene.Tracks[0].Clips[0].Id);
+
+        Assert.Contains("steps 1 to 2", sequencer.Status, StringComparison.Ordinal);
+
+        Assert.True(sequencer.PressKey(Key.Delete, KeyModifiers.None));
+        Assert.All(editor.CurrentAnchors, anchor => Assert.Empty(anchor.Actions));
+    }
 }

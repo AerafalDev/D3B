@@ -37,6 +37,11 @@
                         TextTrimming="CharacterEllipsis"
                         VerticalAlignment="Center" />
                     <TextBlock
+                        AutomationProperties.LiveSetting="Polite"
+                        Foreground="{DynamicResource AccentTextColor}"
+                        Text="{Binding Status}"
+                        VerticalAlignment="Center" />
+                    <TextBlock
                         Classes="RowLabel"
                         Text="{l:Tr SequencerHint}"
                         TextTrimming="CharacterEllipsis" />
@@ -105,7 +110,7 @@
                     <ItemsControl ItemsSource="{Binding Scene.Tracks}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="sq:SequencerTrack">
-                                <Border Height="{Binding Height}">
+                                <Border AutomationProperties.Name="{Binding Name}" Height="{Binding Height}">
                                     <Grid ColumnDefinitions="Auto,*" Margin="12,0,6,0">
                                         <Border
                                             Background="{Binding Brush}"
@@ -127,6 +132,8 @@
                     HorizontalScrollBarVisibility="Auto"
                     VerticalScrollBarVisibility="Disabled">
                     <sq:SequencerGrid
+                        AutomationProperties.HelpText="{l:Tr SequencerHint}"
+                        AutomationProperties.Name="{Binding AutomationName}"
                         HorizontalAlignment="Stretch"
                         Name="Grid"
                         Scene="{Binding Scene}"

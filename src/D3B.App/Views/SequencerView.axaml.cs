@@ -18,7 +18,7 @@ internal sealed partial class SequencerView : UserControl
         Grid.TrackPressed += OnTrackPressed;
         Grid.GestureMoved += OnGestureMoved;
         Grid.GestureEnded += OnGestureEnded;
-        Grid.DeleteRequested += OnDeleteRequested;
+        Grid.KeyDown += OnGridKeyDown;
     }
 
     private void OnStepPressed(int step, KeyModifiers modifiers)
@@ -52,9 +52,10 @@ internal sealed partial class SequencerView : UserControl
         (DataContext as SequencerViewModel)?.EndGesture();
     }
 
-    private void OnDeleteRequested()
+    private void OnGridKeyDown(object? sender, KeyEventArgs e)
     {
-        (DataContext as SequencerViewModel)?.RemoveSelectedClip();
+        if (DataContext is SequencerViewModel sequencer && sequencer.PressKey(e.Key, e.KeyModifiers))
+            e.Handled = true;
     }
 
     private void OnMenuRowClick(object? sender, RoutedEventArgs e)

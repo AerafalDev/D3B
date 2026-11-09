@@ -51,6 +51,33 @@ internal sealed partial class SequencerViewModel : ObservableObject
     /// <summary>Gets whether the palette has a kind left to add.</summary>
     public bool HasPalette => Palette.Count > 0;
 
+    /// <summary>Gets what is selected, said for a screen reader and under the eyes: the clip, else the steps.</summary>
+    public string Status
+    {
+        get
+        {
+            var localizer = _page.Localizer;
+            var count = _route.CurrentAnchors.Count;
+
+            if (_selected is { } clip)
+            {
+                var name = NameOf(clip.Call.Node);
+
+                return clip.Length == 1 ? localizer.Format("SequencerClipStatusOne", name, clip.First + 1) : localizer.Format("SequencerClipStatus", name, clip.First + 1, clip.Last + 1);
+            }
+
+            return _route.SelectedSteps.Count switch
+            {
+                0 => "",
+                1 => localizer.Format("SequencerStepStatus", _route.SelectedSteps[0] + 1, count),
+                var several => localizer.Format("SequencerStepsStatus", several),
+            };
+        }
+    }
+
+    /// <summary>Gets the name a screen reader says for the grid.</summary>
+    public string AutomationName => _page.Localizer.Format("SequencerAutomation", _route.Name);
+
     /// <summary>Gets the route's name.</summary>
     public string RouteName => _route.Name;
 
@@ -71,9 +98,15 @@ internal sealed partial class SequencerViewModel : ObservableObject
         route.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(RouteEditorViewModel.SelectedSteps))
+            {
                 OnPropertyChanged(nameof(SelectedSteps));
+                OnPropertyChanged(nameof(Status));
+            }
             else if (e.PropertyName is nameof(RouteEditorViewModel.Name))
+            {
                 OnPropertyChanged(nameof(RouteName));
+                OnPropertyChanged(nameof(AutomationName));
+            }
         };
         Rebuild();
     }
@@ -91,6 +124,61 @@ internal sealed partial class SequencerViewModel : ObservableObject
             _route.ToggleStep(step);
         else
             _route.Reveal(step);
+    }
+
+    /// <summary>Answers a key pressed on the grid.</summary>
+    /// <remarks>
+    /// Left and Right choose the step before and after (Shift reaches out), Home and End the first and the last, Ctrl A every
+    /// step; Up and Down choose the clips covering the step chosen one after the other, Escape lets go of the clip; Alt with Left
+    /// and Right moves the clip, with Shift its last edge, with Control its first; Ctrl D copies it right after itself, and
+    /// Delete takes it off.
+    /// </remarks>
+    /// <param name="key">The key.</param>
+    /// <param name="modifiers">The keys held.</param>
+    /// <returns>Whether the key did something.</returns>
+    public bool PressKey(Key key, KeyModifiers modifiers)
+    {
+        var last = _route.CurrentAnchors.Count - 1;
+        var active = _route.SelectedIndex;
+        var shift = modifiers.HasFlag(KeyModifiers.Shift);
+        var control = modifiers.HasFlag(KeyModifiers.Control);
+
+        if (last < 0)
+            return false;
+
+        if (modifiers.HasFlag(KeyModifiers.Alt) && key is Key.Left or Key.Right)
+            return ShiftClip(key is Key.Left ? -1 : 1, shift, control);
+
+        switch (key)
+        {
+            case Key.Left or Key.Right:
+                GoTo(active < 0 ? (key is Key.Right ? 0 : last) : Math.Clamp(active + (key is Key.Left ? -1 : 1), 0, last), shift);
+
+                return true;
+            case Key.Home or Key.End:
+                GoTo(key is Key.Home ? 0 : last, shift);
+
+                return true;
+            case Key.A when control:
+                Select(null);
+                _route.SelectSteps(Enumerable.Range(0, last + 1));
+
+                return true;
+            case Key.Up or Key.Down:
+                return NextClip(key is Key.Down ? 1 : -1);
+            case Key.D when control:
+                return DuplicateClip();
+            case Key.Escape when _selected is not null:
+                Select(null);
+
+                return true;
+            case Key.Delete or Key.Back when _selected is not null:
+                RemoveSelectedClip();
+
+                return true;
+            default:
+                return false;
+        }
     }
 
     /// <summary>Selects a clip, the steps selected left as they are.</summary>
@@ -199,6 +287,69 @@ internal sealed partial class SequencerViewModel : ObservableObject
         Rebuild();
     }
 
+    private void GoTo(int step, bool extend)
+    {
+        if (extend)
+            _route.ExtendTo(step);
+        else
+            _route.Reveal(step);
+    }
+
+    private bool NextClip(int direction)
+    {
+        var active = _route.SelectedIndex;
+        var here = active < 0 ? _clips : [.. _clips.Where(clip => clip.Covers(active))];
+        var candidates = here.IsEmpty ? _clips : here;
+
+        if (candidates.IsEmpty)
+            return false;
+
+        var at = _selected is null ? -1 : candidates.IndexOf(_selected);
+        var next = at < 0 ? (direction > 0 ? 0 : candidates.Length - 1) : Math.Clamp(at + direction, 0, candidates.Length - 1);
+
+        Select(candidates[next]);
+
+        return true;
+    }
+
+    private bool ShiftClip(int delta, bool lastEdge, bool firstEdge)
+    {
+        if (_selected is not { } clip)
+            return false;
+
+        var last = _route.CurrentAnchors.Count - 1;
+        var (first, to) = lastEdge ? (clip.First, Math.Clamp(clip.Last + delta, clip.First, last)) : firstEdge ? (Math.Clamp(clip.First + delta, 0, clip.Last), clip.Last) : (clip.First + delta, clip.Last + delta);
+
+        if (first < 0 || to > last || (first, to) == (clip.First, clip.Last))
+            return true;
+
+        _selected = clip with { First = first, Last = to };
+        _route.BeginGesture();
+        _route.ReplaceAnchors(RouteClips.Reshape(_route.CurrentAnchors, clip, first, to));
+        _route.EndGesture();
+
+        return true;
+    }
+
+    private bool DuplicateClip()
+    {
+        if (_selected is not { } clip)
+            return false;
+
+        var last = _route.CurrentAnchors.Count - 1;
+        var first = Math.Min(clip.Last + 1, last - clip.Length + 1);
+
+        if (first < 0)
+            return true;
+
+        _selected = clip with { First = clip.First, Last = Math.Max(clip.Last, first + clip.Length - 1) };
+        _route.BeginGesture();
+        _route.ReplaceAnchors(RouteClips.Draw(_route.CurrentAnchors, clip.Call, first, first + clip.Length - 1, clip.Layer));
+        _route.EndGesture();
+
+        return true;
+    }
+
     private static (NodeCall Call, int Layer, int First, int Last) Shifted(RouteClip clip, int delta, int lastStep)
     {
         var first = Math.Clamp(clip.First + delta, 0, Math.Max(0, lastStep - clip.Length + 1));
@@ -226,6 +377,7 @@ internal sealed partial class SequencerViewModel : ObservableObject
     {
         _selected = clip;
         SelectedClip = clip is null ? -1 : _clips.IndexOf(clip);
+        OnPropertyChanged(nameof(Status));
     }
 
     private void Rebuild()
@@ -261,6 +413,7 @@ internal sealed partial class SequencerViewModel : ObservableObject
         _clips = clips;
         Scene = new SequencerScene(steps, tracks);
         SelectedClip = Retarget();
+        OnPropertyChanged(nameof(Status));
         Palette = [.. _route.OfferedActions.Where(item => !tracks.Any(track => track.Node == item.Node)).Select(item => new RouteActionChoiceViewModel(item.Node, item.Name, item.Help, AddTrack))];
     }
 

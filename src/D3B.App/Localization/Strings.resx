@@ -3086,4 +3086,22 @@
   <data name="SequencerHint" xml:space="preserve">
     <value>Draw on a track to set an action across steps · drag its edges · Shift to copy</value>
   </data>
+  <data name="SequencerStepStatus" xml:space="preserve">
+    <value>Step {0} of {1}</value>
+  </data>
+  <data name="SequencerStepsStatus" xml:space="preserve">
+    <value>{0} steps selected</value>
+  </data>
+  <data name="SequencerClipStatus" xml:space="preserve">
+    <value>{0}, steps {1} to {2}</value>
+  </data>
+  <data name="SequencerClipStatusOne" xml:space="preserve">
+    <value>{0}, step {1}</value>
+  </data>
+  <data name="SequencerAutomation" xml:space="preserve">
+    <value>Sequencer of {0}</value>
+  </data>
+  <data name="CommandShowSequencer" xml:space="preserve">
+    <value>Show the Sequencer</value>
+  </data>
 </root>
