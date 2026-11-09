@@ -66,8 +66,8 @@ public sealed class ModulePagesTests : IAsyncDisposable
         Assert.Equal([true, false], icons);
         Assert.All(contents, Assert.Null);
         Assert.True(main.HasPages);
-        Assert.True(main.Editor.IsShown("welcome"));
-        Assert.Equal(["welcome"], main.Editor.Items.Select(tab => tab.Key));
+        Assert.True(main.Editor.IsShown("world"));
+        Assert.Equal(["world"], main.Editor.Items.Select(tab => tab.Key));
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public sealed class ModulePagesTests : IAsyncDisposable
             main.Refresh();
 
             var control = Assert.IsType<TestPage>(page.Content);
-            var shown = (unmade is null, main.Editor.IsShown("welcome"), main.Editor.IsShown(page.Route), page.IsSelected);
+            var shown = (unmade is null, main.Editor.IsShown("world"), main.Editor.IsShown(page.Route), page.IsSelected);
             var shownRefreshes = control.Refreshes;
 
             main.ShowWelcomeCommand.Execute(null);

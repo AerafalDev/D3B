@@ -175,6 +175,9 @@ internal sealed class WorldMapView : Control
     /// <summary>Raised when the mark of shared coordinates is pressed, with the coordinates and the point pressed.</summary>
     public event Action<int, int, Point>? SharedPressed;
 
+    /// <summary>Raised when a character, a step of another route or a map of another zone is pressed with the select tool (D397).</summary>
+    public event Action<WorldMapHit>? ObjectPressed;
+
     /// <summary>Moves the image, as the arrow keys do.</summary>
     /// <param name="dx">Pixels of the view to move it right.</param>
     /// <param name="dy">Pixels of the view to move it down.</param>
@@ -277,8 +280,19 @@ internal sealed class WorldMapView : Control
 
         var typeface = new Typeface(GetValue(TextElement.FontFamilyProperty), FontStyle.Normal, FontWeight.Medium);
 
+        var backdrop = Scene.Backdrop;
+
+        if (backdrop is not null)
+        {
+            WorldMapBackdropLayer.DrawZones(context, backdrop, mapWidth, RectOf);
+            WorldMapBackdropLayer.DrawRoutes(context, backdrop, mapWidth, RectOf, _hit, typeface);
+        }
+
         WorldMapRouteLayer.Draw(context, Scene, mapWidth, mapHeight, RectOf, _hit, typeface);
         WorldMapZoneLayer.Draw(context, Scene, mapWidth, RectOf);
+
+        if (backdrop is not null)
+            WorldMapBackdropLayer.DrawCharacters(context, backdrop, RectOf, _hit, typeface);
 
         if (_hit.Kind is WorldMapHitKind.Square or WorldMapHitKind.Shared)
             context.DrawRectangle(null, Tool is WorldMapTool.Select ? _hoverPen : _tracePen, RectOf(_hit.X, _hit.Y).Deflate(1));
@@ -371,6 +385,11 @@ internal sealed class WorldMapView : Control
                 break;
             case WorldMapHitKind.Square or WorldMapHitKind.Shared when Tool is WorldMapTool.Region:
                 SquareTraced?.Invoke(hit.X, hit.Y, false);
+
+                break;
+            case WorldMapHitKind.Character or WorldMapHitKind.RouteStep or WorldMapHitKind.Zone:
+                ObjectPressed?.Invoke(hit);
+                StartDrag(e, Drag.Pan, at);
 
                 break;
             case WorldMapHitKind.Shared:
@@ -727,6 +746,26 @@ internal sealed class WorldMapView : Control
                 return new WorldMapHit(WorldMapHitKind.Station, station.X, station.Y, i, -1);
         }
 
+        if (Tool is WorldMapTool.Select && scene.Backdrop is { } backdrop)
+        {
+            var centers = WorldMapBackdropLayer.CharacterCenters(backdrop.Characters, RectOf);
+
+            for (var i = backdrop.Characters.Count - 1; i >= 0; i--)
+            {
+                if (WorldMapBackdropLayer.HitsCharacter(centers[i], at))
+                    return new WorldMapHit(WorldMapHitKind.Character, backdrop.Characters[i].X, backdrop.Characters[i].Y, -1, -1, backdrop.Characters[i].Key);
+            }
+
+            foreach (var route in backdrop.Routes)
+            {
+                foreach (var step in route.Steps)
+                {
+                    if (WorldMapBackdropLayer.HitsStep(RectOf(step.X, step.Y).Center, at))
+                        return new WorldMapHit(WorldMapHitKind.RouteStep, step.X, step.Y, -1, -1, route.Id, step.Index);
+                }
+            }
+        }
+
         var reach = Math.Max(8, Math.Min(mapWidth, _world.MapHeight * _viewport.Scale) / 3);
 
         for (var leg = 0; leg < scene.Legs.Count; leg++)
@@ -747,6 +786,16 @@ internal sealed class WorldMapView : Control
 
         if (SquareAt(at) is not { } over)
             return WorldMapHit.None;
+
+        if (Tool is WorldMapTool.Select && scene.Backdrop is { Zones.Count: > 0 } zones)
+        {
+            // The zone listed last lies over the others, as it is drawn.
+            for (var i = zones.Zones.Count - 1; i >= 0; i--)
+            {
+                if (zones.Zones[i].Holds(over.X, over.Y))
+                    return new WorldMapHit(WorldMapHitKind.Zone, over.X, over.Y, -1, -1, zones.Zones[i].Id);
+            }
+        }
 
         if (ShowShared && mapWidth >= GridFrom && _source!.Index.MapsAt(World, over.X, over.Y).Length > 1)
         {

@@ -454,3 +454,4 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D395](decisions.md#d395-7r-the-studios-redesign-what-hurts-today-and-the-studio-seen-as-a-game-engine) 7r, the studio's redesign: what hurts today, and the studio seen as a game engine (2026-11-09)
 - [D396](decisions.md#d396-the-studio-as-a-game-engine-and-a-routes-steps-set-in-a-sequencer-the-owners-choices) The studio as a game engine, and a route's steps set in a sequencer: the owner's choices (2026-11-09)
+- [D397](decisions.md#d397-7r2-the-engines-frame-the-world-viewport-the-outliner-the-details-panel-and-play-in-editor) 7r2, the engine's frame: the world viewport, the Outliner, the Details panel and Play in Editor (2026-11-09)

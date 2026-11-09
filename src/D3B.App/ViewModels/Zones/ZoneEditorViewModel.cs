@@ -28,6 +28,9 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject, IUndoable
     private string? _run;
     private int _gestures;
 
+    /// <summary>Gets the zone as it is now, changes not saved included, for the world's map to draw it by while another is edited.</summary>
+    public ZoneAsset Current => _saved with { SubAreas = [.. _state.SubAreas], Maps = [.. _state.Maps], Excluded = [.. _state.Excluded] };
+
     /// <summary>Gets the zone's id.</summary>
     public string Id => _saved.Id;
 

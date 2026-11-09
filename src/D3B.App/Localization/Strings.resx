@@ -1409,8 +1409,8 @@
   <data name="MenuAbout" xml:space="preserve">
     <value>About D3B</value>
   </data>
-  <data name="PanelCharacters" xml:space="preserve">
-    <value>Characters</value>
+  <data name="PanelOutliner" xml:space="preserve">
+    <value>Outliner</value>
   </data>
   <data name="PanelAssets" xml:space="preserve">
     <value>Assets</value>
@@ -1418,8 +1418,8 @@
   <data name="PanelJournal" xml:space="preserve">
     <value>Journal</value>
   </data>
-  <data name="PanelInspector" xml:space="preserve">
-    <value>Inspector</value>
+  <data name="PanelDetails" xml:space="preserve">
+    <value>Details</value>
   </data>
   <data name="KeysCtrlSpace" xml:space="preserve">
     <value>Ctrl Space</value>
@@ -2935,5 +2935,89 @@
   </data>
   <data name="ZoneSubAreaRemove" xml:space="preserve">
     <value>Take out of the zone</value>
+  </data>
+  <data name="TabWorld" xml:space="preserve">
+    <value>World</value>
+  </data>
+  <data name="WorldMapName" xml:space="preserve">
+    <value>The world's map</value>
+  </data>
+  <data name="WorldToolSelect" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="WorldToolRoute" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="WorldToolRouteTip" xml:space="preserve">
+    <value>Trace the selected route, or a new one · B</value>
+  </data>
+  <data name="WorldToolZone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="WorldToolZoneTip" xml:space="preserve">
+    <value>Paint the selected zone, or a new one · B</value>
+  </data>
+  <data name="WorldToolRecord" xml:space="preserve">
+    <value>Record</value>
+  </data>
+  <data name="WorldToolRecordTip" xml:space="preserve">
+    <value>Record a route while a character plays it: coming with 7d4b</value>
+  </data>
+  <data name="WorldHudNothing" xml:space="preserve">
+    <value>Hover the world</value>
+  </data>
+  <data name="WorldHudCharacter" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="WorldHudRouteStep" xml:space="preserve">
+    <value>{0} · step {1} · {2}</value>
+  </data>
+  <data name="WorldHudZone" xml:space="preserve">
+    <value>{0} · zone · {1}</value>
+  </data>
+  <data name="WorldPlays" xml:space="preserve">
+    <value>{0} plays</value>
+  </data>
+  <data name="OutlinerCharacters" xml:space="preserve">
+    <value>Characters</value>
+  </data>
+  <data name="OutlinerRoutes" xml:space="preserve">
+    <value>Routes</value>
+  </data>
+  <data name="OutlinerZones" xml:space="preserve">
+    <value>Zones</value>
+  </data>
+  <data name="OutlinerStepsOne" xml:space="preserve">
+    <value>{0} step</value>
+  </data>
+  <data name="OutlinerStepsOther" xml:space="preserve">
+    <value>{0} steps</value>
+  </data>
+  <data name="OutlinerSearch" xml:space="preserve">
+    <value>Search the world</value>
+  </data>
+  <data name="OutlinerEmpty" xml:space="preserve">
+    <value>Nothing in the world yet: connect a character, or add a route or a zone from Content.</value>
+  </data>
+  <data name="OutlinerEye" xml:space="preserve">
+    <value>Show on the map</value>
+  </data>
+  <data name="OutlinerUnfold" xml:space="preserve">
+    <value>Show the steps</value>
+  </data>
+  <data name="SectionState" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="PropertyMap" xml:space="preserve">
+    <value>Map</value>
+  </data>
+  <data name="PropertyLife" xml:space="preserve">
+    <value>Life</value>
+  </data>
+  <data name="PropertyPods" xml:space="preserve">
+    <value>Pods</value>
+  </data>
+  <data name="ZoneContents" xml:space="preserve">
+    <value>Contents</value>
   </data>
 </root>

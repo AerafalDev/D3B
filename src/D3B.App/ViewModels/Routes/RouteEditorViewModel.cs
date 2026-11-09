@@ -66,6 +66,9 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     /// <summary>Gets the name of the route's tab.</summary>
     public string TabKey => _saved.Id;
 
+    /// <summary>Gets the route's anchors as they are now, changes not saved included, for the world's map to draw the route by while another is edited.</summary>
+    public IReadOnlyList<RouteAnchor> CurrentAnchors => _anchors;
+
     /// <summary>Gets the route's anchors as steps, in order.</summary>
     public ObservableCollection<RouteStepViewModel> Steps { get; } = [];
 
@@ -1155,7 +1158,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             if (!index.TryPlace(anchor.MapId, out var layer, out var x, out var y) || layer != Layer)
                 continue;
 
-            stations.Add(new WorldMapStation(x, y, Zone(anchor.MapId), anchor.IsPinned, i == SelectedIndex));
+            stations.Add(new WorldMapStation(x, y, Zone(anchor.MapId), anchor.IsPinned, i == SelectedIndex, RouteActionKinds.Of(anchor.Actions)));
             _stationAnchors.Add(i);
         }
 

@@ -22,6 +22,9 @@ internal sealed partial class EditorTab : ObservableObject
     /// <summary>Gets or sets what reads the picture the tab shows in place of its icon, such as a character's class's head (D325).</summary>
     public Func<Avalonia.Media.IImage?>? Picture { get; init; }
 
+    /// <summary>Gets whether the tab stays: the world's viewport is the studio's centre, never closed (D397).</summary>
+    public bool IsPinned { get; init; }
+
     /// <summary>Gets or sets what is asked before the tab closes by its ×: <see langword="false"/> keeps it, as an editor with changes asks first.</summary>
     public Func<bool>? Closing { get; init; }
 

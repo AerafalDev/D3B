@@ -92,13 +92,13 @@ public sealed class AppPreferencesTests
         var main = new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), preferences);
 
         main.Settings.UseFrenchCommand.Execute(null);
-        main.Layout.CloseCommand.Execute(StudioPanel.Inspector);
+        main.Layout.CloseCommand.Execute(StudioPanel.Details);
 
         var again = new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), AppPreferences.Load(path));
 
         Assert.Equal("fr", AppPreferences.Load(path).Language);
-        Assert.False(again.Layout.IsInspectorOpen);
-        Assert.True(again.Layout.IsCharactersOpen);
+        Assert.False(again.Layout.IsDetailsOpen);
+        Assert.True(again.Layout.IsOutlinerOpen);
 
         again.Layout.ResetCommand.Execute(null);
 

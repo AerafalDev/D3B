@@ -1409,8 +1409,8 @@
   <data name="MenuAbout" xml:space="preserve">
     <value>À propos de D3B</value>
   </data>
-  <data name="PanelCharacters" xml:space="preserve">
-    <value>Personnages</value>
+  <data name="PanelOutliner" xml:space="preserve">
+    <value>Outliner</value>
   </data>
   <data name="PanelAssets" xml:space="preserve">
     <value>Assets</value>
@@ -1418,8 +1418,8 @@
   <data name="PanelJournal" xml:space="preserve">
     <value>Journal</value>
   </data>
-  <data name="PanelInspector" xml:space="preserve">
-    <value>Inspecteur</value>
+  <data name="PanelDetails" xml:space="preserve">
+    <value>Détails</value>
   </data>
   <data name="KeysCtrlSpace" xml:space="preserve">
     <value>Ctrl Espace</value>
@@ -2935,5 +2935,89 @@
   </data>
   <data name="ZoneSubAreaRemove" xml:space="preserve">
     <value>Retirer de la zone</value>
+  </data>
+  <data name="TabWorld" xml:space="preserve">
+    <value>Monde</value>
+  </data>
+  <data name="WorldMapName" xml:space="preserve">
+    <value>La carte du monde</value>
+  </data>
+  <data name="WorldToolSelect" xml:space="preserve">
+    <value>Sélection</value>
+  </data>
+  <data name="WorldToolRoute" xml:space="preserve">
+    <value>Trajet</value>
+  </data>
+  <data name="WorldToolRouteTip" xml:space="preserve">
+    <value>Tracer le trajet choisi, ou un nouveau · B</value>
+  </data>
+  <data name="WorldToolZone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="WorldToolZoneTip" xml:space="preserve">
+    <value>Peindre la zone choisie, ou une nouvelle · B</value>
+  </data>
+  <data name="WorldToolRecord" xml:space="preserve">
+    <value>Enregistrer</value>
+  </data>
+  <data name="WorldToolRecordTip" xml:space="preserve">
+    <value>Enregistrer un trajet pendant qu'un personnage le joue : avec 7d4b</value>
+  </data>
+  <data name="WorldHudNothing" xml:space="preserve">
+    <value>Survolez le monde</value>
+  </data>
+  <data name="WorldHudCharacter" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="WorldHudRouteStep" xml:space="preserve">
+    <value>{0} · étape {1} · {2}</value>
+  </data>
+  <data name="WorldHudZone" xml:space="preserve">
+    <value>{0} · zone · {1}</value>
+  </data>
+  <data name="WorldPlays" xml:space="preserve">
+    <value>{0} joue</value>
+  </data>
+  <data name="OutlinerCharacters" xml:space="preserve">
+    <value>Personnages</value>
+  </data>
+  <data name="OutlinerRoutes" xml:space="preserve">
+    <value>Trajets</value>
+  </data>
+  <data name="OutlinerZones" xml:space="preserve">
+    <value>Zones</value>
+  </data>
+  <data name="OutlinerStepsOne" xml:space="preserve">
+    <value>{0} étape</value>
+  </data>
+  <data name="OutlinerStepsOther" xml:space="preserve">
+    <value>{0} étapes</value>
+  </data>
+  <data name="OutlinerSearch" xml:space="preserve">
+    <value>Rechercher dans le monde</value>
+  </data>
+  <data name="OutlinerEmpty" xml:space="preserve">
+    <value>Rien dans le monde pour l'instant : connectez un personnage, ou ajoutez un trajet ou une zone depuis Contenu.</value>
+  </data>
+  <data name="OutlinerEye" xml:space="preserve">
+    <value>Afficher sur la carte</value>
+  </data>
+  <data name="OutlinerUnfold" xml:space="preserve">
+    <value>Afficher les étapes</value>
+  </data>
+  <data name="SectionState" xml:space="preserve">
+    <value>État</value>
+  </data>
+  <data name="PropertyMap" xml:space="preserve">
+    <value>Carte</value>
+  </data>
+  <data name="PropertyLife" xml:space="preserve">
+    <value>Vie</value>
+  </data>
+  <data name="PropertyPods" xml:space="preserve">
+    <value>Pods</value>
+  </data>
+  <data name="ZoneContents" xml:space="preserve">
+    <value>Contenu</value>
   </data>
 </root>

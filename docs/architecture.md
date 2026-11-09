@@ -531,15 +531,44 @@ D356), the pages of D101 and D162 gone.
   glyphs from the pack, painted in the colour of the text around them by `GlyphIcon`, a neutral dot without the pack
   (D336, D343); a character's portrait is its class's head on its breed's colour, its initials without it (`Portrait`,
   `BreedColors`, D343).
-- **The docks** (D321, `StudioLayout` in `D3B.App.ViewModels.Studio`): on the left the characters over the assets, in the
-  centre the editor's tabs over the bottom panel, on the right the inspector, rounded panels with a hairline edge, 5
-  pixels apart, the one last pressed outlined in the accent. Every edge is dragged on its own (`DockSplitter`), within the
-  mockup's bounds, the line between characters and assets kept as a share; a panel closes by its × and opens again from
-  the Window menu, which gives the default layout back; Ctrl J shows or hides the bottom panel, Ctrl Space opens the
-  assets. A drag's end, a panel closed or opened, are remembered in `app.json`, the default never written.
-- **The editor's tabs** (`EditorTabs`, `EditorTab`): the welcome, D3B's logo and version, the first shortcuts and where the
-  host stands while it does not run (`WelcomeView`); each tab opened once, its view kept while it is open, closed by its ×,
-  its neighbour then shown. A tab that reads the host shows where the host stands until it runs (`HostStateView`).
+- **The docks** (D321, D397, `StudioLayout` in `D3B.App.ViewModels.Studio`): on the left the Outliner over the Content browser
+  (the assets' tree), in the centre the editor's tabs over the bottom panel, on the right the Details panel, rounded panels with
+  a hairline edge, 5 pixels apart, the one last pressed outlined in the accent. Every edge is dragged on its own
+  (`DockSplitter`), within the mockup's bounds, the line between Outliner and Content kept as a share; a panel closes by its ×
+  and opens again from the Window menu, which gives the default layout back; Ctrl J shows or hides the bottom panel, Ctrl Space
+  opens the assets. A drag's end, a panel closed or opened, are remembered in `app.json`, the default never written
+  (`StudioPanel.Outliner`, `Assets`, `Bottom`, `Details`; a file that closed the older `Characters` panel opens the Outliner).
+- **The editor's tabs** (`EditorTabs`, `EditorTab`): the world's tab first, pinned (`EditorTab.IsPinned`: no ×, `CloseAll`
+  keeps it), then those a page opens: a profile, a list of steps, a character, the settings, a module's page, the welcome (the
+  `ShowWelcome` command, no longer shown at start); each tab opened once, its view kept while it is open, closed by its ×, its
+  neighbour then shown. A tab that reads the host shows where the host stands until it runs (`HostStateView`). Route and zone
+  have no tab: they are selected in the world's (D397).
+- **The world, the studio's centre** (D395 to D397, `D3B.App.ViewModels.World`, the mockup `docs/mockups/studio-7r.html`): the
+  studio seen as a game engine. `WorldSelection` holds what is selected (nothing, a character, a route and one of its steps, a
+  zone) and tells when it changed; the viewport, the Outliner and the Details panel agree through it and never ask one another.
+  - `WorldViewportViewModel` and `WorldView` are the persistent tab of the centre: one `WorldMapView` (D372) that stays, the
+    toolbar over it (the world's layer, the tools **Select**, **Route**, **Zone** and **Record**, disabled until 7d4b, the typed
+    id of a step, the view's menu, zoom, fit), the HUD under the pointer and the legend of what is edited. The editors are kept as
+    D371, D375 and D394 made them (`RouteEditorViewModel`, `ZoneEditorViewModel`, `UndoHistory`): selecting a route or a zone,
+    from the map or the Outliner, opens its editor without a tab and gives it the map's gestures; the viewport forwards the
+    gestures (`SelectStation`, `TraceSquare`, `PinPathPoint`, `OpenChoice`, `BeginGesture`, the keys) to it and follows its
+    scene, layer and selected step. Select presses what is there (a character, a step, a zone: `WorldMapView.ObjectPressed`),
+    moves a step and pans; Route traces the selected route, or makes one on the first press when none is selected (`Creating`);
+    Zone paints the selected zone with Paint, Erase and Sub-area likewise; a tool needs what it works on, so a selection that
+    moves to something else leaves it. Keys: V select, B route or paint, E erase, R sub-area, Escape leave, and those of D375.
+    Edit's Undo and Redo follow the route or zone selected.
+  - The scene (`WorldMapScene`) holds what is edited, its stations and legs or its squares, and a `WorldMapBackdrop`: the other
+    routes as faint straight lines with a node a step (`WorldMapBackdropLayer`), the zones tinted, the characters as discs with
+    their names and, under a step's node, small dots by what it does (`WorldMapActionKind`, `RouteActionKinds`: harvest, fight,
+    door, NPC, else). The backdrop reads the project, the editors open (their changes not saved included) and the characters
+    (`WorldCharacterSnapshot`, from the bots); an eye closed in the Outliner leaves its route, zone or character off the map.
+    Its layer follows the selection: a route in another world shows that world.
+  - `OutlinerViewModel` and `OutlinerView`: the world as a list, characters (online first, offline dimmed, a dot of their state,
+    the step of their run), routes (each unfolds into its steps, with the dots of what they do), zones, each with an eye; a
+    search; a click selects here, a double click opens a character's tab, the right click on a character opens its menu
+    (`CharacterMenu`, which the cards had). The rows keep their objects between readings so that a scroll stays.
+  - **Play in Editor**: the run block keeps its place; while the chosen character plays, the viewport has a green frame and a
+    caption (`FrameText`), and the character's disc a green ring.
 - **The run block** (D322, D338, `RunBlockViewModel`): the chosen character's portrait with a dot of its state, its name and
   what it does live, a menu of the characters online, and only the buttons its state allows: none chosen, play disabled;
   stopped, play; playing, pause and stop; paused, play and stop; its edge green while it plays, amber paused. Play starts
@@ -571,24 +600,25 @@ D356), the pages of D101 and D162 gone.
   (choosing resources, a new profile), which the window shows through ShadUI's dialog host, closed by its buttons and
   Escape; `Toasts` says what was done and what a bot met, which the window shows through ShadUI's toasts. The view models
   only open, close and say, tested without a window.
-- **The characters' panel** (D323, D344, `CharactersViewModel` in `D3B.App.ViewModels.Characters`, `CharactersView`): a
-  card per character online, its bot's (`BotViewModel`): the portrait with the ring of its state (`PlayState`), its level
-  as a medal, its name and where it is, what it does with its glyph and progress, life and pods as gauges, the numbers in
-  tooltips; a fight tints it, the chosen one is outlined. The characters offline, those D3B knows and the bots whose
-  client left, are folded under their heading, a line each (`CharacterLineViewModel`). A click chooses the character for
-  the run block and the inspector, a double click or Enter opens its tab, the right click chooses it and opens its menu,
-  made as it opens: open, play, pause, stop, a profile, the start on connection, forgetting its account after a question
-  (`CharacterAccounts`). The profiles' menus list the project's, the given ones, then each activity with its defaults for
-  the session alone (`ProfileChoices`). What a bot meets while the app looks is a toast with a way to its journal or tab
-  (D162).
-- **The inspector** (D324, D345, `PropertiesViewModel` in `D3B.App.ViewModels.Properties`, `PropertiesView`): what is
-  chosen, under its search, which filters the rows; sections under a rule, faint labels whose column its edge resizes. A
-  character (`CharacterPropertiesViewModel`): its head, name, breed and level and a way to its tab; Game, its profile as a
-  field whose menu opens it or gives another, the start on connection with an arrow resetting it, the planning and fight
-  preferences disabled until 7f and 7h; Variables, the character's own, each with a dot of its type and its editor
-  (`VariableRowViewModel`), which sets what its behaviors read; Account, the account, its subscription and forgetting it.
-  An asset (`AssetPropertiesViewModel`), chosen in the assets' tree, a profile's tab or the search: its name, kind, file
-  and format, what it uses and what uses it, characters included.
+- **The characters** (D323, D344, D397, `CharactersViewModel` in `D3B.App.ViewModels.Characters`): the model behind the
+  Outliner's character rows, the run block and the menus: the bots (`BotViewModel`: the ring of its state `PlayState`, its
+  level, where it is, what it does and its progress, life and pods) and the characters offline (`CharacterLineViewModel`). The
+  cards of D323 are gone, the Outliner's rows say it shorter (D397). A click chooses the character for the run block and the
+  Details, a double click or Enter opens its tab, the right click chooses it and opens its menu, made as it opens: open, play,
+  pause, stop, a profile, the start on connection, forgetting its account after a question (`CharacterAccounts`). The profiles'
+  menus list the project's, the given ones, then each activity with its defaults for the session alone (`ProfileChoices`). What a
+  bot meets while the app looks is a toast with a way to its journal or tab (D162).
+- **The Details panel** (D324, D345, D397, `PropertiesViewModel` in `D3B.App.ViewModels.Properties`, `PropertiesView`; it was
+  the inspector): what is selected, under its search, which filters the rows; sections under a rule, faint labels whose column
+  its edge resizes. A character (`CharacterPropertiesViewModel`): its head, name, breed and level and a way to its tab; State,
+  where it stands, its life and pods; Game, its profile as a field whose menu opens it or gives another, the start on connection
+  with an arrow resetting it, the planning and fight preferences disabled until 7f and 7h; Variables, the character's own, each
+  with a dot of its type and its editor (`VariableRowViewModel`), which sets what its behaviors read; Account, the account, its
+  subscription and forgetting it. An asset (`AssetPropertiesViewModel`), selected in the world, the Content browser or the
+  search: its name, kind, file and format, what it uses and what uses it, characters included; for a route its course, what it
+  does with a map no path reaches, its steps with their count and gaps, and the actions of the step chosen (the editor's, until
+  the Sequencer of 7r3 sets them); for a zone its contents (`AssetPropertiesViewModel.Zone`: its size and sub-areas, each taken
+  out by its ×).
 - **A character's tab** (D325, D346, `CharacterTabViewModel`, `CharacterView`): the character's map live
   (`MapViewModel`, drawn for that character alone): its coordinates and place, the cell under the pointer and what stands
   there, its layers in a menu, its tour's mini-map, a map the search found in preview; and a column: what it does now,
@@ -807,7 +837,7 @@ The target:
   - **Zones** (D394): `ZoneAsset` (`D3B.Studio.Assets`, file `<name>.zone.json`) holds sub-area ids, map ids and left-out map ids,
     ascending, and what else the file holds (`Details`); `ZoneMaps.Resolve` and `Holds` give the maps it holds (its sub-areas' and
     the maps named, less those left out). `ZonesViewModel` and `ZoneEditorViewModel` (`D3B.App.ViewModels.Zones`) hold the editors
-    open, in tabs (`ZoneView`) on the routes' `WorldMapView`, which draws a scene's `Squares` (`WorldMapZoneLayer`) and offers the tools
+    open, selected in the world's viewport (D397; tabs of their own until then) on the routes' `WorldMapView`, which draws a scene's `Squares` (`WorldMapZoneLayer`) and offers the tools
     `Trace` (paint), `Erase` and `Region` (a whole sub-area) beside `Select`; what the editors read from the host is the routes'
     `RouteServices`.
   - **Undo, dragging and the keys of the editors** (D394), in `D3B.App`: `UndoHistory<T>` (`ViewModels/Studio`) holds the states of
@@ -823,9 +853,9 @@ The target:
   - `WorldMapView` (`D3B.App.Controls.WorldMaps`): the world's image from its tiles, zoom and pan eased, the route over it as the
     mockup's pills and line (`WorldMapRouteLayer`); `TileStore<T>` its bounded cache and loader, `WorldMapViewport` and
     `WorldMapTiling` its arithmetic.
-  - `RouteEditorViewModel` and `RouteView` (`D3B.App.ViewModels.Routes`, `D3B.App.Views`): a route's tab; `RoutesViewModel` holds
-    the editors open and what they read (`RouteServices`), made when first asked for; the inspector's section is
-    `AssetPropertiesViewModel.Route`.
+  - `RouteEditorViewModel` (`D3B.App.ViewModels.Routes`): a route's editor, whose map is the world's viewport (D397; `RouteView`'s
+    tab until then); `RoutesViewModel` holds the editors open and what they read (`RouteServices`), made when first asked for; the
+    Details panel's section is `AssetPropertiesViewModel.Route`.
 - **Profiles** (D300) are a behavior and the values they change; in the app a profile plays an activity's given behavior, its
   settings a form, or a behavior of the project, a list of steps made in the app (D386). **Debugging** (D302): live, step by step, the history of
   each run, a simulation on the pack. **Sharing** (D303): files, behaviors given, a gallery later.

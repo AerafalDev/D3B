@@ -5,7 +5,7 @@ owed. The reasons are in [decisions.md](decisions.md), found through [decisions-
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D396 (D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D397 (D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -16,7 +16,8 @@ As of 2026-11-09, after D396 (D394, session 7d4, merged into 7r2's branch). App 
 - **Harvesting and the hunt** (steps 6 and 9): both choose their place by the character's levels and go through several
   sub-areas in turn (D391, D392); fights are played by one AI for every breed (D244), with the rules and effects of a fight
   measured on the owner's captures.
-- **The desktop app as a studio** (step 7, up to 7d4): dark, docked, the characters as cards, the project's assets in files,
+- **The desktop app as a studio** (step 7, up to 7d4 and 7r2): dark, docked, seen as a game engine (D397: the world's map is the
+  centre, with the characters, routes and zones on it, an Outliner and a Details panel), the project's assets in files,
   behaviors and profiles as variants, the world's map drawn from the client's images, routes with their actions, a profile
   playing a list of routes and steps made in the app (D386), zones painted on the same map (D394), Undo and Redo in the route, the
   list of steps and the profile editors, and rows dragged or moved by the keys (D394).
@@ -38,10 +39,11 @@ As of 2026-11-09, after D396 (D394, session 7d4, merged into 7r2's branch). App 
 
 ## Next
 
-1. **Session 7r2, the engine's frame** (D395, D396): the studio redesigned as a game engine (`docs/mockups/studio-7r.html`), the owner
-   chose the engine and the Sequencer for a route's steps; the world viewport as the centre with its tools, the Outliner, the Details
-   panel, Play in Editor. The words stay (profile, route, sequence) and the order is D395's: 7r2 to 7r6. It comes before 7e, so that
-   the canvas does not grow on a design the owner finds impractical.
+1. **Session 7r3, the Sequencer** (D395, D396, D397): a route's steps set in a ruler of steps with a track a kind of action, a clip
+   drawn across the steps it covers, derived from the anchors (`RouteAnchor.Actions` and the file unchanged), the palette in place
+   of the dialog, several steps selected at once with the same fields set for all, copy; recording in the toolbar waits for the
+   measure in game. The frame it sits in, the world viewport with its Outliner and Details, is made (7r2). Then 7r4 following a
+   run, 7r5 the profile's asset editor, 7r6 sequences and laps; all before 7e.
 2. **A measure in game with the owner**, before anything else of step 7: the list above, and what 7d4b will record.
 3. **Session 7d4b**: recording while playing and Simplify (D299, D394), once the events it reads are measured.
 4. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).

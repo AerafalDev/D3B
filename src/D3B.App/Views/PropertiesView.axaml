@@ -8,6 +8,7 @@
     xmlns:ba="clr-namespace:D3B.Studio.Assets;assembly=D3B.Studio"
     xmlns:p="clr-namespace:D3B.App.ViewModels.Properties"
     xmlns:routes="clr-namespace:D3B.App.ViewModels.Routes"
+    xmlns:zones="clr-namespace:D3B.App.ViewModels.Zones"
     xmlns:v="clr-namespace:D3B.App.Views"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
@@ -319,6 +320,48 @@
                         </Grid>
                     </StackPanel>
                 </Border>
+                <Border Classes="Section" IsVisible="{Binding Character.HasState}">
+                    <StackPanel>
+                        <TextBlock Classes="SectionTitle" Text="{l:Tr SectionState}" />
+                        <Grid Classes="Prop">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyMap}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{Binding Character.Place}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid Classes="Prop" IsVisible="{Binding Character.HasLife}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyLife}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{Binding Character.LifeText}"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid Classes="Prop" IsVisible="{Binding Character.HasPods}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
+                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Classes="Key" Text="{l:Tr PropertyPods}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{Binding Character.PodsText}"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
                 <Border Classes="Section" IsVisible="{Binding Character.ShowsVariables}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
@@ -496,6 +539,58 @@
                         </StackPanel>
                     </Grid>
                 </Border>
+                <StackPanel
+                    DataContext="{Binding Asset.Zone}"
+                    IsVisible="{Binding $parent[UserControl].((p:PropertiesViewModel)DataContext).Asset.HasZone}"
+                    x:DataType="zones:ZoneEditorViewModel">
+                    <Border Classes="Section">
+                        <StackPanel>
+                            <TextBlock Classes="SectionTitle" Text="{l:Tr ZoneContents}" />
+                            <TextBlock
+                                Classes="Dim"
+                                IsVisible="{Binding IsEmpty}"
+                                Margin="14,0,14,8"
+                                Text="{l:Tr ZoneEmptyHint}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                IsVisible="{Binding !IsEmpty}"
+                                Margin="14,0,14,8"
+                                Text="{Binding Summary}"
+                                TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding SubAreas}" Margin="6,0,6,6">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="zones:ZoneSubAreaViewModel">
+                                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,1,2,1" MinHeight="28">
+                                            <TextBlock
+                                                Classes="Bright"
+                                                Text="{Binding Name}"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Classes="Dim"
+                                                FontSize="11"
+                                                Grid.Column="1"
+                                                Margin="12,0,6,0"
+                                                Text="{Binding Detail}"
+                                                VerticalAlignment="Center" />
+                                            <Button
+                                                AutomationProperties.Name="{l:Tr ZoneSubAreaRemove}"
+                                                Classes="Tool Small"
+                                                Command="{Binding RemoveCommand}"
+                                                Grid.Column="2"
+                                                ToolTip.Tip="{l:Tr ZoneSubAreaRemove}">
+                                                <c:Icon
+                                                    Drawing="{StaticResource General.Close}"
+                                                    Height="10"
+                                                    Width="10" />
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
                 <StackPanel
                     DataContext="{Binding Asset.Route}"
                     IsVisible="{Binding $parent[UserControl].((p:PropertiesViewModel)DataContext).Asset.HasRoute}"

@@ -15,6 +15,7 @@
     xmlns:l="clr-namespace:D3B.App.Localization"
     xmlns:ch="clr-namespace:D3B.App.ViewModels.Characters"
     xmlns:routes="clr-namespace:D3B.App.ViewModels.Routes"
+    xmlns:world="clr-namespace:D3B.App.ViewModels.World"
     xmlns:zones="clr-namespace:D3B.App.ViewModels.Zones"
     xmlns:sequences="clr-namespace:D3B.App.ViewModels.Sequences"
     xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
@@ -212,9 +213,9 @@
                     <MenuItem Classes="Heading" Header="{l:Tr MenuPanels}" />
                     <MenuItem
                         Command="{Binding Layout.ToggleCommand}"
-                        CommandParameter="{x:Static studio:StudioPanel.Characters}"
-                        Header="{l:Tr PanelCharacters}"
-                        IsChecked="{Binding Layout.IsCharactersOpen, Mode=OneWay}" />
+                        CommandParameter="{x:Static studio:StudioPanel.Outliner}"
+                        Header="{l:Tr PanelOutliner}"
+                        IsChecked="{Binding Layout.IsOutlinerOpen, Mode=OneWay}" />
                     <MenuItem
                         Command="{Binding Layout.ToggleCommand}"
                         CommandParameter="{x:Static studio:StudioPanel.Assets}"
@@ -229,9 +230,9 @@
                         Tag="Ctrl J" />
                     <MenuItem
                         Command="{Binding Layout.ToggleCommand}"
-                        CommandParameter="{x:Static studio:StudioPanel.Inspector}"
-                        Header="{l:Tr PanelInspector}"
-                        IsChecked="{Binding Layout.IsInspectorOpen, Mode=OneWay}" />
+                        CommandParameter="{x:Static studio:StudioPanel.Details}"
+                        Header="{l:Tr PanelDetails}"
+                        IsChecked="{Binding Layout.IsDetailsOpen, Mode=OneWay}" />
                     <Separator />
                     <MenuItem Classes="Heading" Header="{l:Tr MenuPages}" />
                     <MenuItem
@@ -488,8 +489,8 @@
                     </Grid.RowDefinitions>
                     <Border
                         Classes="Dock Compact"
-                        IsVisible="{Binding Layout.IsCharactersOpen}"
-                        Name="CharactersDock">
+                        IsVisible="{Binding Layout.IsOutlinerOpen}"
+                        Name="OutlinerDock">
                         <DockPanel>
                             <Border Classes="Strip" DockPanel.Dock="Top">
                                 <Grid ColumnDefinitions="Auto,*">
@@ -500,16 +501,16 @@
                                                 Orientation="Horizontal"
                                                 Spacing="7">
                                                 <c:Icon
-                                                    Drawing="{StaticResource General.User}"
+                                                    Drawing="{StaticResource Toolwindows.Structure}"
                                                     Height="14"
                                                     VerticalAlignment="Center"
                                                     Width="14" />
-                                                <TextBlock Classes="TabTitle" Text="{l:Tr PanelCharacters}" />
+                                                <TextBlock Classes="TabTitle" Text="{l:Tr PanelOutliner}" />
                                             </StackPanel>
                                             <Button
                                                 Classes="TabClose"
                                                 Command="{Binding Layout.CloseCommand}"
-                                                CommandParameter="{x:Static studio:StudioPanel.Characters}"
+                                                CommandParameter="{x:Static studio:StudioPanel.Outliner}"
                                                 ToolTip.Tip="{l:Tr Close}">
                                                 <c:Icon
                                                     Drawing="{StaticResource General.Close}"
@@ -530,7 +531,7 @@
                                 </Grid>
                             </Border>
                             <Panel>
-                                <views:CharactersView DataContext="{Binding Characters}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsRunning}" />
+                                <views:OutlinerView DataContext="{Binding Outliner}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsRunning}" />
                                 <views:HostStateView IsVisible="{Binding IsNotRunning}" />
                             </Panel>
                         </DockPanel>
@@ -686,6 +687,7 @@
                                                         Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).Editor.CloseCommand}"
                                                         CommandParameter="{Binding}"
                                                         Grid.Column="1"
+                                                        IsVisible="{Binding !IsPinned}"
                                                         ToolTip.Tip="{l:Tr Close}">
                                                         <c:Icon
                                                             Drawing="{StaticResource General.Close}"
@@ -719,11 +721,8 @@
                                                     <DataTemplate x:DataType="vm:ProfileViewModel">
                                                         <views:ProfileView />
                                                     </DataTemplate>
-                                                    <DataTemplate x:DataType="routes:RouteEditorViewModel">
-                                                        <views:RouteView />
-                                                    </DataTemplate>
-                                                    <DataTemplate x:DataType="zones:ZoneEditorViewModel">
-                                                        <views:ZoneView />
+                                                    <DataTemplate x:DataType="world:WorldViewportViewModel">
+                                                        <views:WorldView />
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="sequences:SequenceEditorViewModel">
                                                         <views:SequenceView />
@@ -803,7 +802,7 @@
                 <c:DockSplitter
                     Grid.Column="3"
                     HorizontalAlignment="Center"
-                    IsVisible="{Binding Layout.IsInspectorOpen}"
+                    IsVisible="{Binding Layout.IsDetailsOpen}"
                     LineBrush="{DynamicResource AccentColor}"
                     Margin="-1.5,0"
                     Name="RightSplitter"
@@ -813,8 +812,8 @@
                 <Border
                     Classes="Dock"
                     Grid.Column="4"
-                    IsVisible="{Binding Layout.IsInspectorOpen}"
-                    Name="InspectorDock">
+                    IsVisible="{Binding Layout.IsDetailsOpen}"
+                    Name="DetailsDock">
                     <DockPanel>
                         <Border Classes="Strip" DockPanel.Dock="Top">
                             <StackPanel Orientation="Horizontal">
@@ -829,12 +828,12 @@
                                                 Height="14"
                                                 VerticalAlignment="Center"
                                                 Width="14" />
-                                            <TextBlock Classes="TabTitle" Text="{l:Tr PanelInspector}" />
+                                            <TextBlock Classes="TabTitle" Text="{l:Tr PanelDetails}" />
                                         </StackPanel>
                                         <Button
                                             Classes="TabClose"
                                             Command="{Binding Layout.CloseCommand}"
-                                            CommandParameter="{x:Static studio:StudioPanel.Inspector}"
+                                            CommandParameter="{x:Static studio:StudioPanel.Details}"
                                             ToolTip.Tip="{l:Tr Close}">
                                             <c:Icon
                                                 Drawing="{StaticResource General.Close}"

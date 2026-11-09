@@ -73,7 +73,7 @@ internal sealed partial class EditorTabs : ObservableObject
     [RelayCommand]
     public void Close(EditorTab? tab)
     {
-        if (tab?.Closing is { } closing && !closing())
+        if (tab is null || tab.IsPinned || (tab.Closing is { } closing && !closing()))
             return;
 
         Drop(tab);
@@ -94,11 +94,13 @@ internal sealed partial class EditorTabs : ObservableObject
             Select(Items.Count == 0 ? null : Items[Math.Max(0, index - 1)]);
     }
 
-    /// <summary>Closes every tab.</summary>
+    /// <summary>Closes every tab but the pinned ones.</summary>
     [RelayCommand]
     public void CloseAll()
     {
-        Items.Clear();
-        Select(null);
+        foreach (var tab in Items.Where(tab => !tab.IsPinned).ToList())
+            Items.Remove(tab);
+
+        Select(Items.FirstOrDefault());
     }
 }

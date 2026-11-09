@@ -173,6 +173,34 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
         _openTab = openTab;
     }
 
+    /// <summary>Gets where the character stands: its place and coordinates, or why it has none (D397).</summary>
+    [ObservableProperty]
+    public partial string Place { get; private set; } = "";
+
+    /// <summary>Gets the character's life, said, or empty while it is not known.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLife))]
+    public partial string LifeText { get; private set; } = "";
+
+    /// <summary>Gets the share of pods the character carries, said, or empty.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPods))]
+    public partial string PodsText { get; private set; } = "";
+
+    /// <summary>Gets what the character does, said, or empty.</summary>
+    [ObservableProperty]
+    public partial string Doing { get; private set; } = "";
+
+    /// <summary>Gets whether the character is online, so that its state is known.</summary>
+    [ObservableProperty]
+    public partial bool HasState { get; private set; }
+
+    /// <summary>Gets whether the life is known.</summary>
+    public bool HasLife => LifeText.Length > 0;
+
+    /// <summary>Gets whether the pods are known.</summary>
+    public bool HasPods => PodsText.Length > 0;
+
     /// <summary>Shows a character.</summary>
     /// <param name="key">The character.</param>
     public void Show(CharacterKey key)
@@ -219,6 +247,11 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
         StartsOnConnection = known?.StartsOnConnection ?? false;
         _reading = false;
         OnPropertyChanged(nameof(IsStartChanged));
+        HasState = bot is { IsConnected: true };
+        Place = bot is null ? "" : bot.Coordinates is { Length: > 0 } coordinates && coordinates != "—" ? $"{coordinates} · {bot.Place}" : bot.Place;
+        LifeText = bot?.Life ?? "";
+        PodsText = bot is { HasLoad: true } ? bot.LoadPercentText : "";
+        Doing = bot is { IsActivityRunning: true } ? (bot.ProgressText.Length > 0 ? $"{bot.ActivityName} · {bot.ProgressText}" : bot.ActivityName) : "";
         RefreshVariables(key);
         RefreshAccount(key);
         ApplyFilter(_filter);
