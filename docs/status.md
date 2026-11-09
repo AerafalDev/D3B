@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D416 (the harvest's tour leaves the houses of a town alone), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D416 (the harvest's tour leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
 
 ## What exists
 
@@ -23,6 +23,7 @@ As of 2026-11-09, after D416 (the harvest's tour leaves the houses of a town alo
   list of steps and the profile editors, and rows dragged or moved by the keys (D394). A route's steps are set in the Sequencer
   under the world (D413): a ruler of steps, a track a kind of action, a clip drawn across the steps it covers and stretched, moved,
   copied, deleted by the pointer or the keys, several steps selected at once, the Details setting a clip's values once for all its steps.
+  The world's map also draws the client's own hints, zaaps, dungeons, workshops, banks and more, with a tick for each category (D414).
 - **A versioned Claude Code setup** (D398): `.claude/` holds C# hooks that ask before a push or a `gh` write and refuse
   what the client produces, skills for C#, the studio's UI, tests, Git and the rest, and two agents. The hooks are tested in
   `tests/D3B.Hooks.Tests`; the write guard and the Git guard were seen refusing inside a session, the "ask" answers and the
@@ -32,6 +33,10 @@ As of 2026-11-09, after D416 (the harvest's tour leaves the houses of a town alo
 
 ## Not measured in game
 
+- The hints on the map (D414) were seen only as headless renders of the real pack and tiles at four zooms, not in the app by the owner: how
+  the pictures read, whether the thresholds and priorities (the lead's reckoning) thin them as they wish, the name over the hovered one. The
+  pack of format 12 is extracted on the development machine and not published: the app of this change needs it (`scripts/release.cs --publish`,
+  the owner's go).
 - The Sequencer (D413) is tested on view models and in the headless window, not yet seen by the owner in the app: how a drag feels
   on a long ruler, how the tracks read at the bottom panel's height, whether it is what they mean by practical; no screen reader was
   run on its grid.

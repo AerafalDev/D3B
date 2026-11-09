@@ -65,6 +65,7 @@
     <Grid Background="#0C1A1C">
         <w:WorldMapView
             AutomationProperties.Name="{l:Tr WorldMapName}"
+            Hints="{Binding Hints.Visible}"
             Name="Map"
             Scene="{Binding Scene}"
             ShowGrid="{Binding ShowGrid}"
@@ -325,6 +326,25 @@
                                     <StackPanel Margin="6" Spacing="8">
                                         <CheckBox Content="{l:Tr RouteViewGrid}" IsChecked="{Binding ShowGrid}" />
                                         <CheckBox Content="{l:Tr RouteViewShared}" IsChecked="{Binding ShowShared}" />
+                                        <StackPanel IsVisible="{Binding Hints.IsAvailable}" Spacing="8">
+                                            <Border
+                                                Background="#17FFFFFF"
+                                                Height="1"
+                                                Margin="0,2" />
+                                            <CheckBox Content="{l:Tr WorldHints}" IsChecked="{Binding Hints.ShowHints}" />
+                                            <ItemsControl IsEnabled="{Binding Hints.ShowHints}" ItemsSource="{Binding Hints.Categories}" Margin="20,0,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:HintCategoryViewModel">
+                                                        <CheckBox IsChecked="{Binding IsOn}" Margin="0,0,0,8">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <TextBlock Text="{Binding Name}" />
+                                                                <TextBlock Classes="Dim" Text="{Binding Count}" />
+                                                            </StackPanel>
+                                                        </CheckBox>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </Flyout>

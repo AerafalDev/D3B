@@ -12,4 +12,5 @@ namespace D3B.App.Controls.WorldMaps;
 /// <param name="Layer">The layer shown.</param>
 /// <param name="Source">Where the maps are read from.</param>
 /// <param name="RectOf">What gives the rectangle of the map at coordinates, in the view's own.</param>
-internal readonly record struct WorldMapHitContext(WorldMap World, WorldMapViewport Viewport, WorldMapScene Scene, WorldMapTool Tool, bool ShowShared, int Layer, WorldMapSource Source, Func<int, int, Rect> RectOf);
+/// <param name="Hints">The points of interest drawn, or <see langword="null"/> for none (D414).</param>
+internal readonly record struct WorldMapHitContext(WorldMap World, WorldMapViewport Viewport, WorldMapScene Scene, WorldMapTool Tool, bool ShowShared, int Layer, WorldMapSource Source, Func<int, int, Rect> RectOf, IReadOnlyList<WorldMapHint>? Hints = null);

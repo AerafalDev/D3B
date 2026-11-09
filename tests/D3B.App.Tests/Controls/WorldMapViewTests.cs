@@ -225,4 +225,91 @@ public sealed class WorldMapViewTests
 
         Assert.True(end > start * 1.4, $"{start} to {end}.");
     }
+
+    private static RenderTargetBitmap GreenPicture()
+    {
+        var bitmap = new RenderTargetBitmap(new PixelSize(64, 64), new Vector(96, 96));
+        var green = new Border { Width = 64, Height = 64, Background = Brushes.Lime };
+
+        green.Measure(new Size(64, 64));
+        green.Arrange(new Rect(0, 0, 64, 64));
+        bitmap.Render(green);
+
+        return bitmap;
+    }
+
+    [Fact]
+    public async Task AHintIsDrawnWithItsPictureAndHoveringItIsAHitOnTheHintAndNotOnTheSquare()
+    {
+        var (before, over, after, middle) = await OnTheUIThreadAsync(async () =>
+        {
+            var (window, view) = Show(Source(RedImage(), new int[1]));
+            var picture = GreenPicture();
+            var center = view.RectOf(3, 0).Center;
+
+            await SettleAsync(() => PixelAt(window, (int)center.X, (int)center.Y).Red > 200);
+
+            var plain = PixelAt(window, (int)center.X, (int)center.Y);
+
+            view.Hints = [new WorldMapHint(7, "Zaap", "Transports", 0, 3, 0, 100, () => picture)];
+            Dispatcher.UIThread.RunJobs();
+            window.MouseMove(center);
+            await Task.Yield();
+
+            var hit = view.Hit;
+            var drawn = PixelAt(window, (int)center.X, (int)center.Y);
+
+            view.Hints = [];
+            Dispatcher.UIThread.RunJobs();
+            window.MouseMove(center + new Vector(1, 0));
+            await Task.Yield();
+
+            return (plain, hit, view.Hit, drawn);
+        });
+
+        Assert.True(before.Red > 200, $"The map's tile under the hint: {before}.");
+        Assert.Equal((WorldMapHitKind.Hint, "7", 3, 0), (over.Kind, over.Id, over.X, over.Y));
+        Assert.True(middle.Green > 200 && middle.Red < 80, $"The hint's picture over the tile: {middle}.");
+        Assert.Equal(WorldMapHitKind.Square, after.Kind);
+    }
+
+    [Fact]
+    public async Task APressOnAHintWithTheTraceToolIsAPressOnItsMapAndWithTheSelectToolItMovesTheImage()
+    {
+        var traced = new List<(int X, int Y, bool IsDrag)>();
+        var (moved, hit) = await OnTheUIThreadAsync(async () =>
+        {
+            var (window, view) = Show(Source(RedImage(), new int[1]));
+            var picture = GreenPicture();
+            var center = view.RectOf(3, 0).Center;
+
+            view.Hints = [new WorldMapHint(7, "Zaap", "Transports", 0, 3, 0, 100, () => picture)];
+            view.SquareTraced += (x, y, isDrag) => traced.Add((x, y, isDrag));
+            Dispatcher.UIThread.RunJobs();
+
+            // The select tool: the press is the start of a drag of the image.
+            var origin = view.RectOf(1, 0).Center;
+
+            window.MouseDown(center, MouseButton.Left);
+            window.MouseMove(center + new Vector(-40, 30));
+            window.MouseUp(center + new Vector(-40, 30), MouseButton.Left);
+            await Task.Yield();
+
+            var shifted = view.RectOf(1, 0).Center - origin;
+
+            view.Tool = WorldMapTool.Trace;
+
+            var again = view.RectOf(3, 0).Center;
+
+            window.MouseDown(again, MouseButton.Left);
+            window.MouseUp(again, MouseButton.Left);
+            await Task.Yield();
+
+            return (shifted, view.Hit);
+        });
+
+        Assert.Equal((-40, 30), (Math.Round(moved.X), Math.Round(moved.Y)));
+        Assert.Equal([(3, 0, false)], traced);
+        Assert.Equal(WorldMapHitKind.Hint, hit.Kind);
+    }
 }

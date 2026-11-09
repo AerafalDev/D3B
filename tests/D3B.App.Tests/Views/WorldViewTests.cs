@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -15,6 +16,7 @@ using D3B.Bot.Characters;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.Views;
 
@@ -209,6 +211,60 @@ public sealed class WorldViewTests
         Assert.False(result.unframed);
         Assert.Equal(["Ayuwoki", "Nolwenn"], result.characters);
         Assert.Equal(WorldTool.Select, result.escaped);
+    }
+
+    [Fact]
+    public async Task TheMapDrawsTheHintsThatTheMenusTicksChooseAndHoveringOneSaysWhatItIs()
+    {
+        await using var store = new TestStore();
+        using var data = new TestGameData();
+
+        await store.OpenedAsync();
+
+        var result = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var routes = new RoutesViewModel(localizer, new Dialogs(), new Toasts());
+
+            routes.Use(TestRouteWorld.Services(store.Assets) with { Texts = data.Texts, Provider = new ServiceCollection().AddSingleton(data.Tables).BuildServiceProvider() });
+
+            var zones = new ZonesViewModel(localizer, new Dialogs(), new Toasts(), () => routes.Services);
+            var world = new WorldViewportViewModel(localizer, routes, zones, new WorldSelection(), () => [], () => null);
+
+            world.Refresh();
+
+            var window = new Window { Content = new WorldView { DataContext = world }, Width = 1180, Height = 720 };
+
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var map = window.GetVisualDescendants().OfType<WorldMapView>().Single();
+            var all = map.Hints.Select(hint => hint.Id).Order().ToList();
+
+            Drawings.Draw(window, "world-hints");
+            world.Hints.Categories.Single(category => category.Id == 9).IsOn = false;
+            Dispatcher.UIThread.RunJobs();
+
+            var unticked = map.Hints.Select(hint => hint.Id).Order().ToList();
+
+            world.Hints.Categories.Single(category => category.Id == 9).IsOn = true;
+            Dispatcher.UIThread.RunJobs();
+            window.MouseMove(map.TranslatePoint(map.RectOf(3, 0).Center, window)!.Value);
+            Dispatcher.UIThread.RunJobs();
+
+            var hovered = (map.Hit.Kind, world.Hud);
+
+            window.Close();
+
+            return (all, unticked, hovered);
+        });
+
+        Assert.Equal([1, 2, 3], result.all);
+        Assert.Equal([2, 3], result.unticked);
+        Assert.Equal((WorldMapHitKind.Hint, "Zaap · Transports · 3,0"), result.hovered);
     }
 
     [Fact]

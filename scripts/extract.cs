@@ -9,6 +9,7 @@
 #:include extract/CharacteristicsExtractor.cs
 #:include extract/ClientMapLayout.cs
 #:include extract/EffectsExtractor.cs
+#:include extract/HintsExtractor.cs
 #:include extract/IconsExtractor.cs
 #:include extract/ExtractCommand.cs
 #:include extract/FightTables.cs

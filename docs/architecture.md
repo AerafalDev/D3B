@@ -448,7 +448,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 11 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385):
+- A pack of format 12 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -480,6 +480,8 @@ Built at step 2 (D24 to D33):
     gives them, in D3B's own enums (D183). A cast names its level by id, a monster fighter its monster and grade (D184);
   - the NPCs, with the text naming each, and the questions they ask and the replies they offer with the text each reads, from format 11
     (`NpcCatalog`, `GameTables.Npcs`, D385): the server sends ids alone (D383), which the studio shows as these texts (`NpcNames`);
+  - the hints of the world map, from format 12 (D414): the client's 835 hints with their category, picture number, name, map, world and level, the
+    6 categories, and the hints' pictures, 64 pixels in raw RGBA by picture number (`HintCatalog`, `GameTables.Hints`, an entry of its own);
   - in French and English, the texts these name (`GameTexts`).
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
@@ -568,6 +570,12 @@ D356), the pages of D101 and D162 gone.
     door, NPC, else). The backdrop reads the project, the editors open (their changes not saved included) and the characters
     (`WorldCharacterSnapshot`, from the bots); an eye closed in the Outliner leaves its route, zone or character off the map.
     Its layer follows the selection: a route in another world shows that world.
+  - **Hints** (D414) are a layer of their own, outside the scene, the selection and the Outliner: `WorldHintsViewModel` (a tick for each
+    of the client's categories and a switch, the pack's `HintCatalog` for the world shown, the names in the app's language, `HintPriority`)
+    gives `WorldMapView.Hints`, which `WorldMapHintLayer` draws between the other routes and the edited route: the client's pictures
+    (`GameIcons.Hint`, made when first drawn), those that would overlap thinned out by priority over every hint of the world, so that
+    panning never changes the choice, and the name of the hovered one written over it. The hit test finds a `WorldMapHitKind.Hint`, which
+    the Trace, Erase and Region tools take as the square it stands on and the Select tool pans over; the HUD says its category, level and coordinates.
   - `OutlinerViewModel` and `OutlinerView`: the world as a list, characters (online first, offline dimmed, a dot of their state,
     the step of their run), routes (each unfolds into its steps, with the dots of what they do), zones, each with an eye; a
     search; a click selects here, a double click opens a character's tab, the right click on a character opens its menu

@@ -3,6 +3,7 @@ using D3B.Data.Npcs;
 using D3B.Data.Breeds;
 using D3B.Data.Characteristics;
 using D3B.Data.Effects;
+using D3B.Data.Hints;
 using D3B.Data.Icons;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
@@ -24,6 +25,7 @@ internal static class TestTables
     private static readonly int[] _spellIcons = [11_556];
     private static readonly int[] _monsterIcons = [1];
     private static readonly int[] _headIcons = [80, 151];
+    private static readonly int[] _hintIcons = [411, 422];
     private static readonly int[] _glyphIcons = [(int)GameGlyph.Life];
     private static readonly int[] _levelIds = [1001, 1002, 2001];
     private static readonly int[] _zoneCells = [10, 11];
@@ -88,6 +90,14 @@ internal static class TestTables
     }
 
     /// <summary>One bank; banker 100 has two chest replies, banker 6394 one.</summary>
+    public static HintCatalog Hints()
+    {
+        return new HintCatalog(
+            new Hint[] { new(2737, 4, 411, 3431, 219_677_441, 1, -25, 36, 0), new(2747, 6, 422, 3432, 212_732_163, 1, -36, -60, 110) },
+            new HintCategory[] { new(4, 3060), new(6, 3062) },
+            new IconTable(2, _hintIcons, new byte[2 * 2 * 2 * 4]));
+    }
+
     public static NpcCatalog Npcs()
     {
         return new NpcCatalog(

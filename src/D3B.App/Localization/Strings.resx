@@ -2468,6 +2468,9 @@
   <data name="RouteViewSharedDetail" xml:space="preserve">
     <value>The marks for several maps on one square</value>
   </data>
+  <data name="WorldHints" xml:space="preserve">
+    <value>Points of interest</value>
+  </data>
   <data name="RouteZoomIn" xml:space="preserve">
     <value>Zoom in · +</value>
   </data>
@@ -2989,6 +2992,12 @@
   </data>
   <data name="WorldHudZone" xml:space="preserve">
     <value>{0} · zone · {1}</value>
+  </data>
+  <data name="WorldHudHint" xml:space="preserve">
+    <value>{0} · {1} · {2}</value>
+  </data>
+  <data name="WorldHudHintLevel" xml:space="preserve">
+    <value>{0} · {1} · level {2} · {3}</value>
   </data>
   <data name="WorldPlays" xml:space="preserve">
     <value>{0} plays</value>

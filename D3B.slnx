@@ -62,6 +62,7 @@
     <File Path="scripts/extract/EffectsExtractor.cs" />
     <File Path="scripts/extract/ExtractCommand.cs" />
     <File Path="scripts/extract/FightTables.cs" />
+    <File Path="scripts/extract/HintsExtractor.cs" />
     <File Path="scripts/extract/IconsExtractor.cs" />
     <File Path="scripts/extract/InputFingerprint.cs" />
     <File Path="scripts/extract/InteractivesExtractor.cs" />

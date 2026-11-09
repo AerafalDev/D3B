@@ -7,6 +7,7 @@ using D3B.App.ViewModels.Zones;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.ViewModels.World;
 
@@ -23,13 +24,15 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
         return _store.DisposeAsync();
     }
 
-    private async Task<(RoutesViewModel Routes, ZonesViewModel Zones, WorldSelection Selection, WorldViewportViewModel World)> WorldAsync()
+    private async Task<(RoutesViewModel Routes, ZonesViewModel Zones, WorldSelection Selection, WorldViewportViewModel World)> WorldAsync(TestGameData? data = null)
     {
         await _store.OpenedAsync();
 
         var routes = new RoutesViewModel(_localizer, new Dialogs(), new Toasts());
 
-        routes.Use(TestRouteWorld.Services(_store.Assets));
+        var services = TestRouteWorld.Services(_store.Assets);
+
+        routes.Use(data is null ? services : services with { Texts = data.Texts, Provider = new ServiceCollection().AddSingleton(data.Tables).BuildServiceProvider() });
 
         var zones = new ZonesViewModel(_localizer, new Dialogs(), new Toasts(), () => routes.Services);
         var selection = new WorldSelection();
@@ -304,6 +307,37 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
         world.Refresh();
 
         Assert.False(world.IsFramed);
+    }
+
+    [Fact]
+    public async Task TheHintsOfTheWorldShownFollowItsLayerAndTheirHoverSaysWhatTheyAre()
+    {
+        using var data = new TestGameData();
+
+        var (_, _, _, world) = await WorldAsync(data);
+
+        Assert.Equal([1, 2, 3], world.Hints.Visible.Select(hint => hint.Id).Order());
+
+        world.Hover(new WorldMapHit(WorldMapHitKind.Hint, 2, 0, -1, -1, "2"));
+
+        Assert.Equal("White Rat Larder · Dungeons · level 110 · 2,0", world.Hud);
+
+        world.UseLayer(2);
+
+        Assert.Equal([4], world.Hints.Visible.Select(hint => hint.Id));
+
+        world.Hover(new WorldMapHit(WorldMapHitKind.Hint, 1, 1, -1, -1, "4"));
+
+        Assert.Equal("Boat to Amakna · Transports · 1,1", world.Hud);
+    }
+
+    [Fact]
+    public async Task WithoutHintsInThePackTheMapDrawsNoneAndTheMenuOffersNone()
+    {
+        var (_, _, _, world) = await WorldAsync();
+
+        Assert.False(world.Hints.IsAvailable);
+        Assert.Empty(world.Hints.Visible);
     }
 
     [Fact]
