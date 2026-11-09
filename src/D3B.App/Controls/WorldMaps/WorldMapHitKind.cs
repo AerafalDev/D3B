@@ -26,4 +26,7 @@ internal enum WorldMapHitKind
 
     /// <summary>A map of a zone of the world's backdrop (D397).</summary>
     Zone,
+
+    /// <summary>A point of interest the world map draws, which is pressed as the map it stands on is (D414).</summary>
+    Hint,
 }

@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the hunt) and D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
 
 ## What exists
 
@@ -23,6 +23,7 @@ As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the 
   list of steps and the profile editors, and rows dragged or moved by the keys (D394). A route's steps are set in the Sequencer
   under the world (D413): a ruler of steps, a track a kind of action, a clip drawn across the steps it covers and stretched, moved,
   copied, deleted by the pointer or the keys, several steps selected at once, the Details setting a clip's values once for all its steps.
+  The world's map also draws the client's own hints, zaaps, dungeons, workshops, banks and more, with a tick for each category (D414).
 - **A versioned Claude Code setup** (D398): `.claude/` holds C# hooks that ask before a push or a `gh` write and refuse
   what the client produces, skills for C#, the studio's UI, tests, Git and the rest, and two agents. The hooks are tested in
   `tests/D3B.Hooks.Tests`; the write guard and the Git guard were seen refusing inside a session, the "ask" answers and the
@@ -32,6 +33,10 @@ As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the 
 
 ## Not measured in game
 
+- The hints on the map (D414) were seen only as headless renders of the real pack and tiles at four zooms, not in the app by the owner: how
+  the pictures read, whether the thresholds and priorities (the lead's reckoning) thin them as they wish, the name over the hovered one. The
+  pack of format 12 is extracted on the development machine and not published: the app of this change needs it (`scripts/release.cs --publish`,
+  the owner's go).
 - The zones as a place (D415) are tested on the fake game and in the view models, not in game and not seen by the owner in the app: a harvest or a hunt through a zone's maps, the field that picks it and the words under it, and what the French "Région" (the game's area, once "Zone") reads like to them.
 - The Sequencer (D413) is tested on view models and in the headless window, not yet seen by the owner in the app: how a drag feels
   on a long ruler, how the tracks read at the bottom panel's height, whether it is what they mean by practical; no screen reader was
@@ -49,6 +54,10 @@ As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the 
   view models. A bank journey that outlives a refused zaap is the lead's reading of a player's report (Incarnam to Astrub, 1,500
   kamas the character lacked), not seen in game; the text the server answers to a zaap that cannot be paid, and the cost of a
   zaap leaving Incarnam's world map, are not measured.
+- The harvest leaving the houses of a town alone (D416) and weighing the character's level (D417): a player's report ("I still go into
+  all the houses in Astrub"), read in the code and measured on the pack and the owner's learned graphics, tested on the fake game, not
+  seen in game. A mine whose graphics no bot has learned is no longer discovered by a tour; an outdoor map is never left out for the
+  level, only gone to later.
 - The players' reports answered by D407: the new curve of the character's life (above 60% a point is worth a quarter) and the
   plan with the fewest actions among equals, replayed on the captures but not played in game; what the server sends of an
   invisible fighter (no capture holds one: the AI keeps its last cell and `Combatant.IsVisible` is never unset); the damage of a

@@ -50,6 +50,9 @@ public sealed class HarvestZone
     /// <summary>Gets the zone's maps on no world map, such as houses and mines, which a tour goes through last (D128).</summary>
     public FrozenSet<long> Insides { get; }
 
+    /// <summary>Gets the zone's interiors of a sub-area that also holds maps on a world map, such as the houses of a town: a tour goes through one only when something says it holds a resource (D416).</summary>
+    public FrozenSet<long> Interiors { get; }
+
     /// <summary>Gets the graphics of each map's interactive elements, as the pack draws them, each once.</summary>
     public FrozenDictionary<long, ImmutableArray<int>> Graphics { get; }
 
@@ -59,7 +62,7 @@ public sealed class HarvestZone
     /// <summary>Gets whether a tour goes through the isolated maps too, last, rather than leave them out.</summary>
     public bool IncludesIsolated { get; }
 
-    private HarvestZone(FrozenDictionary<int, HarvestTarget> targets, FrozenDictionary<int, int> harvests, FrozenSet<int> wanted, IReadOnlyList<int> subAreas, FrozenDictionary<long, int> maps, FrozenSet<long> insides, FrozenDictionary<long, ImmutableArray<int>> graphics, FrozenSet<long> isolated, bool includesIsolated)
+    private HarvestZone(FrozenDictionary<int, HarvestTarget> targets, FrozenDictionary<int, int> harvests, FrozenSet<int> wanted, IReadOnlyList<int> subAreas, FrozenDictionary<long, int> maps, FrozenSet<long> insides, FrozenSet<long> interiors, FrozenDictionary<long, ImmutableArray<int>> graphics, FrozenSet<long> isolated, bool includesIsolated)
     {
         Targets = targets;
         Harvests = harvests;
@@ -67,6 +70,7 @@ public sealed class HarvestZone
         SubAreas = subAreas;
         Maps = maps;
         Insides = insides;
+        Interiors = interiors;
         Graphics = graphics;
         Isolated = isolated;
         IncludesIsolated = includesIsolated;
@@ -98,6 +102,7 @@ public sealed class HarvestZone
         var maps = new Dictionary<long, int>();
         var insides = new HashSet<long>();
         var graphics = new Dictionary<long, ImmutableArray<int>>();
+        var reached = new List<MapPosition>();
 
         foreach (var position in atlas.Positions.Span)
         {
@@ -105,6 +110,7 @@ public sealed class HarvestZone
                 continue;
 
             maps[position.MapId] = group;
+            reached.Add(position);
 
             if (position.WorldMap < 0)
                 insides.Add(position.MapId);
@@ -121,6 +127,7 @@ public sealed class HarvestZone
             subAreas,
             maps.ToFrozenDictionary(),
             insides.ToFrozenSet(),
+            SubAreaInteriors.Of(reached),
             graphics.ToFrozenDictionary(),
             IsolatedMaps.Of(graph, maps),
             settings.IsolatedMaps);
@@ -239,11 +246,13 @@ public sealed class HarvestZone
     /// <summary>Foretells what a map of the zone holds, from what the host learned of its elements' graphics (D138).</summary>
     /// <param name="mapId">The map.</param>
     /// <param name="graphics">What the host learned of the graphics.</param>
+    /// <param name="levelOf">The character's level in a profession; none when the level is not weighed, every skill then counting (D417).</param>
     /// <returns>
-    /// <see cref="MapForecast.Probable"/> when one of its graphics offers a skill the zone uses, <see cref="MapForecast.Without"/>
-    /// when every one is known and none does, a map without elements included, else <see cref="MapForecast.Unknown"/>.
+    /// <see cref="MapForecast.Probable"/> when one of its graphics offers a skill the zone uses, at the character's level, <see cref="MapForecast.Without"/>
+    /// when every one is known and none offers a skill the zone uses, a map without elements included, else <see cref="MapForecast.Unknown"/>:
+    /// a graphic that offers such a skill only above the character's level is not known to offer nothing, since a level gained brings it back.
     /// </returns>
-    public MapForecast Foresee(long mapId, GraphicSkills graphics)
+    public MapForecast Foresee(long mapId, GraphicSkills graphics, Func<int, int>? levelOf = null)
     {
         ArgumentNullException.ThrowIfNull(graphics);
 
@@ -256,11 +265,22 @@ public sealed class HarvestZone
         {
             if (!graphics.TryGet(gfxId, out var skills))
                 known = false;
-            else if (skills.Any(Targets.ContainsKey))
+            else if (skills.Any(skill => CanUse(skill, levelOf)))
                 return MapForecast.Probable;
+            else if (skills.Any(Targets.ContainsKey))
+                known = false;
         }
 
         return known ? MapForecast.Without : MapForecast.Unknown;
+    }
+
+    /// <summary>Tells whether a skill is one the zone uses, and the character may use at its level.</summary>
+    /// <param name="skillId">The skill.</param>
+    /// <param name="levelOf">The character's level in a profession; none when the level is not weighed.</param>
+    /// <returns>Whether it is.</returns>
+    public bool CanUse(int skillId, Func<int, int>? levelOf)
+    {
+        return Targets.TryGetValue(skillId, out var target) && (levelOf is null || levelOf(target.JobId) >= target.Level);
     }
 
     /// <summary>Gets the resources asked for that the zone's sub-areas list among their harvestables.</summary>

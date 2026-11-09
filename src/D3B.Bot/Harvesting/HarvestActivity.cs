@@ -190,6 +190,10 @@ public sealed class HarvestActivity : BotActivity
         var current = CurrentOf(context);
         var zone = current.Zone;
 
+        // The tours weigh the levels the character has now, so that a level gained brings a map back at once (D417).
+        foreach (var member in _rotation)
+            member.Tour.Know(state);
+
         if (await _upkeep.UpkeepAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
 

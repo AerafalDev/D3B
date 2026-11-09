@@ -495,6 +495,13 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D412](decisions/d412-the-home-pages-tab.md#d412-the-home-page-closes-like-the-other-tabs-and-the-window-menu-opens-it-again) The home page closes like the other tabs, and the Window menu opens it again (2026-11-09)
   - Keeping it pinned and only widening the label's padding: the owner asked for a cross.
 
+## Step 7, hints on the world map (D414)
+
+- [D414](decisions/d414-step-7-hints-on-the-world-map.md#d414-the-world-map-draws-the-clients-hints-its-own-table-and-pictures-in-the-pack-format-12-a-layer-of-its-own-with-a-tick-for-each-category) The world map draws the client's hints: its own table and pictures in the pack, format 12, a layer of its own with a tick for each category (2026-11-09)
+  - Only the table with D3B's own vector icons.
+  - Six kinds on and three off by default, with kinds of our own.
+  - A hint as a selection of the world: left for later, to leave 7r3's ground alone.
+
 ## Step 7, 7r3, the Sequencer (D413)
 
 - [D413](decisions/d413-step-7-7r3-the-sequencer.md#d413-7r3-the-sequencer-a-routes-steps-as-clips-on-tracks-set-by-gestures-keys-and-the-details) 7r3, the Sequencer: a route's steps as clips on tracks, set by gestures, keys and the Details (2026-11-09)
@@ -502,6 +509,16 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Rebuilding the steps' actions from the clips at each edit.
   - Dropping the actions' cards of a step from the Details.
   - A track for each of the eight kinds at all times.
+
+## Step 9, the harvest's interiors (D416)
+
+- [D416](decisions/d416-step-9-the-harvests-interiors.md#d416-the-harvests-tour-goes-into-an-interior-of-a-town-or-a-field-only-when-something-says-it-holds-a-resource) The harvest's tour goes into an interior of a town or a field only when something says it holds a resource (2026-11-09)
+  - The interiors left out always, a setting "Go into the buildings", the journeys avoiding interiors.
+
+## Step 9, the harvest's tour and the levels (D417)
+
+- [D417](decisions/d417-step-9-the-harvests-levels.md#d417-the-harvests-tour-weighs-the-characters-level-a-graphic-that-offers-only-what-it-cannot-harvest-makes-no-map-probable) The harvest's tour weighs the character's level: a graphic that offers only what it cannot harvest makes no map probable (2026-11-09)
+  - An outdoor map left out for the level, the growing back weighed by the level, the levels given once when the tour is made.
 
 ## Step 7, 7r5, the profile's editor (D415)
 

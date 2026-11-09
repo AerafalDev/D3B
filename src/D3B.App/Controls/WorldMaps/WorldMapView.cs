@@ -55,6 +55,9 @@ internal sealed class WorldMapView : Control
     /// <summary>Defines the <see cref="ShowShared"/> property.</summary>
     public static readonly StyledProperty<bool> ShowSharedProperty = AvaloniaProperty.Register<WorldMapView, bool>(nameof(ShowShared), true);
 
+    /// <summary>Defines the <see cref="Hints"/> property.</summary>
+    public static readonly StyledProperty<IReadOnlyList<WorldMapHint>> HintsProperty = AvaloniaProperty.Register<WorldMapView, IReadOnlyList<WorldMapHint>>(nameof(Hints), []);
+
     private static readonly IBrush _sea = new SolidColorBrush(Color.Parse("#0C1A1C"));
     private static readonly IPen _gridPen = new Pen(new SolidColorBrush(Colors.Black, 0.28), 1);
     private static readonly IPen _hoverPen = new Pen(new SolidColorBrush(Colors.White, 0.85), 2);
@@ -127,6 +130,13 @@ internal sealed class WorldMapView : Control
         set => SetValue(ShowSharedProperty, value);
     }
 
+    /// <summary>Gets or sets the points of interest drawn over the image, of which the view keeps what its zoom has room for (D414).</summary>
+    public IReadOnlyList<WorldMapHint> Hints
+    {
+        get => GetValue(HintsProperty);
+        set => SetValue(HintsProperty, value);
+    }
+
     /// <summary>Gets what lies under the pointer.</summary>
     public WorldMapHit Hit => _hit;
 
@@ -135,7 +145,7 @@ internal sealed class WorldMapView : Control
 
     static WorldMapView()
     {
-        AffectsRender<WorldMapView>(SceneProperty, ShowGridProperty, ShowSharedProperty, ToolProperty);
+        AffectsRender<WorldMapView>(SceneProperty, ShowGridProperty, ShowSharedProperty, ToolProperty, HintsProperty);
         ClipToBoundsProperty.OverrideDefaultValue<WorldMapView>(true);
         FocusableProperty.OverrideDefaultValue<WorldMapView>(true);
     }
@@ -290,13 +300,20 @@ internal sealed class WorldMapView : Control
             WorldMapBackdropLayer.DrawRoutes(context, backdrop, mapWidth, RectOf, _hit, typeface);
         }
 
+        if (Hints.Count > 0)
+        {
+            var hovered = _hit.Kind is WorldMapHitKind.Hint && int.TryParse(_hit.Id, NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : (int?)null;
+
+            WorldMapHintLayer.Draw(context, WorldMapHintLayer.Layout(Hints, RectOf, mapWidth), hovered, typeface, new Rect(Bounds.Size));
+        }
+
         WorldMapRouteLayer.Draw(context, Scene, mapWidth, mapHeight, RectOf, _hit, typeface);
         WorldMapZoneLayer.Draw(context, Scene, mapWidth, RectOf);
 
         if (backdrop is not null)
             WorldMapBackdropLayer.DrawCharacters(context, backdrop, RectOf, _hit, typeface);
 
-        if (_hit.Kind is WorldMapHitKind.Square or WorldMapHitKind.Shared)
+        if (_hit.Kind is WorldMapHitKind.Square or WorldMapHitKind.Shared or WorldMapHitKind.Hint)
             context.DrawRectangle(null, Tool is WorldMapTool.Select ? _hoverPen : _tracePen, RectOf(_hit.X, _hit.Y).Deflate(1));
     }
 
@@ -394,7 +411,7 @@ internal sealed class WorldMapView : Control
                 PathPointPinned?.Invoke(hit.Leg, hit.X, hit.Y);
 
                 break;
-            case WorldMapHitKind.Square or WorldMapHitKind.Shared when Tool is WorldMapTool.Region:
+            case WorldMapHitKind.Square or WorldMapHitKind.Shared or WorldMapHitKind.Hint when Tool is WorldMapTool.Region:
                 SquareTraced?.Invoke(hit.X, hit.Y, false);
 
                 break;
@@ -407,7 +424,7 @@ internal sealed class WorldMapView : Control
                 SharedPressed?.Invoke(hit.X, hit.Y, at);
 
                 break;
-            case WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace or WorldMapTool.Erase:
+            case WorldMapHitKind.Square or WorldMapHitKind.PathPoint or WorldMapHitKind.Hint when Tool is WorldMapTool.Trace or WorldMapTool.Erase:
                 _lastSquare = (hit.X, hit.Y);
                 SquareTraced?.Invoke(hit.X, hit.Y, false);
                 StartDrag(e, Drag.Paint, at);
@@ -732,7 +749,7 @@ internal sealed class WorldMapView : Control
 
     private WorldMapHitContext HitContext()
     {
-        return new WorldMapHitContext(_world, _viewport, Scene, Tool, ShowShared, World, _source!, _rectOf);
+        return new WorldMapHitContext(_world, _viewport, Scene, Tool, ShowShared, World, _source!, _rectOf, Hints);
     }
 
     // A quick drag jumps over squares: the pointer's path is walked in steps of a third of a map, so that none is missed, and a
@@ -767,8 +784,8 @@ internal sealed class WorldMapView : Control
         {
             WorldMapHitKind.Station or WorldMapHitKind.Shared => new Cursor(StandardCursorType.Hand),
             WorldMapHitKind.PathPoint when Tool is WorldMapTool.Select => new Cursor(StandardCursorType.Hand),
-            WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace or WorldMapTool.Erase => new Cursor(StandardCursorType.Cross),
-            WorldMapHitKind.Square or WorldMapHitKind.Shared when Tool is WorldMapTool.Region => new Cursor(StandardCursorType.Hand),
+            WorldMapHitKind.Square or WorldMapHitKind.PathPoint or WorldMapHitKind.Hint when Tool is WorldMapTool.Trace or WorldMapTool.Erase => new Cursor(StandardCursorType.Cross),
+            WorldMapHitKind.Square or WorldMapHitKind.Shared or WorldMapHitKind.Hint when Tool is WorldMapTool.Region => new Cursor(StandardCursorType.Hand),
             _ => null,
         };
         InvalidateVisual();

@@ -140,6 +140,34 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheTourWeighsTheLevelsTheCharacterHasAndAMapHoldingOnlyWhatItCannotHarvestIsNotProbable()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new JobExperiencesEvent { Jobs = { new JobExperience { JobId = TestPlay.Lumberjack, Level = 1 } } });
+        await WaitForAsync(() => bot.State.Jobs.ContainsKey(TestPlay.Lumberjack));
+
+        // A bot saw the chestnut, which asks the lumberjack's level 20, on the map north of the character's, who is level 1 (D417).
+        _sightings.SeenElements(TestPlay.NorthMapId, [new SightedElement(1, TestPlay.ChestnutSkillId, TestPlay.Chestnut, true)], DateTimeOffset.UnixEpoch);
+
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Chestnut, TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await connection.SentAsync(2));
+
+        var report = await ReportedAsync(activity, report => report.Progress is not null);
+
+        Assert.Equal("Tour 1, map 1 of 3", Say(report.Progress!.Text));
+        Assert.Contains(report.Focus!.Zone, map => map.MapId == TestPlay.NorthMapId && map.State is ZoneMapState.ToVisit);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
     public async Task TheWantedResourceIsHarvestedThenTheTourGoesOnToTheNextMap()
     {
         var (connection, bot) = await _play.EnterAsync(433);
@@ -164,7 +192,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         Assert.True(_sightings.TryGet(TestPlay.MapId, out var seen));
         Assert.Equal([TestPlay.Ash], seen.Resources);
         Assert.Contains(travelling.Focus!.Zone, map => map.MapId == TestPlay.MapId && map.State is ZoneMapState.Visited);
-        Assert.Equal("Tour 1, map 2 of 4", Say(travelling.Progress!.Text));
+        Assert.Equal("Tour 1, map 2 of 3", Say(travelling.Progress!.Text));
 
         // The journey to the nearest map of the tour begins with a walk to the edge, an action cell or the door.
         Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 3));
@@ -244,7 +272,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         await TestWalks.WalkedAsync(_play, connection, 1);
 
         Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await connection.SentAsync(2));
-        Assert.Equal($"{TestPlay.SubAreaId}, tour 1, map 1 of 4", Say(activity.Report!.Progress!.Text));
+        Assert.Equal($"{TestPlay.SubAreaId}, tour 1, map 1 of 3", Say(activity.Report!.Progress!.Text));
         Assert.Equal(5, activity.TeleportChanges);
 
         run.Stop();

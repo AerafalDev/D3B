@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using D3B.Bot.Activities;
+using D3B.Bot.Characters;
 using D3B.Bot.Interactives;
 
 namespace D3B.Bot.Harvesting;
@@ -29,6 +30,7 @@ internal sealed class HarvestTour
     private readonly GraphicSkills _graphics;
     private readonly Regrowths? _regrowths;
     private readonly TimeProvider _time;
+    private Func<int, int>? _levelOf;
 
     /// <summary>Gets the tour's number, from 1.</summary>
     public int Round { get; private set; } = 1;
@@ -50,6 +52,15 @@ internal sealed class HarvestTour
         _graphics = graphics;
         _regrowths = regrowths;
         _time = time ?? TimeProvider.System;
+    }
+
+    /// <summary>Takes the character's levels, which the tour weighs: a resource above the level of its profession makes no map probable, and no interior worth entering (D417).</summary>
+    /// <param name="state">The character's state; one whose professions the server has not described yet leaves the levels unweighed.</param>
+    public void Know(CharacterState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        _levelOf = state.Jobs.Count is 0 ? null : job => MapHarvest.LevelOf(state, job);
     }
 
     /// <summary>Gets how many maps a tour goes through: those not left out.</summary>
@@ -239,15 +250,29 @@ internal sealed class HarvestTour
         if (zone.Isolated.Contains(mapId) && !zone.IncludesIsolated)
             return true;
 
-        return _sightings.TryGet(mapId, out var sighting)
-            ? !sighting.Resources.Overlaps(zone.Wanted)
-            : zone.Foresee(mapId, _graphics) is MapForecast.Without;
+        if (_sightings.TryGet(mapId, out var sighting))
+            return zone.Interiors.Contains(mapId) ? !HoldsAResource(sighting, zone) : !sighting.Resources.Overlaps(zone.Wanted);
+
+        // An outdoor map never seen is gone to, to learn what it holds; a house of a town is not: a player's report is that the bot went
+        // into all of Astrub's, and a graphic nothing taught is a door or a piece of furniture more often than a resource (D416).
+        return zone.Interiors.Contains(mapId)
+            ? zone.Foresee(mapId, _graphics, _levelOf) is not MapForecast.Probable
+            : zone.Foresee(mapId, _graphics, _levelOf) is MapForecast.Without;
     }
 
     private bool IsProbable(long mapId, HarvestZone zone)
     {
         return _sightings.TryGet(mapId, out var sighting)
-            ? sighting.Resources.Overlaps(zone.Wanted)
-            : zone.Foresee(mapId, _graphics) is MapForecast.Probable;
+            ? HoldsAResource(sighting, zone)
+            : zone.Foresee(mapId, _graphics, _levelOf) is MapForecast.Probable;
+    }
+
+    // A map seen with its elements holds a resource when one is for the character's level; one seen by its resources alone, by them.
+    private bool HoldsAResource(MapSighting sighting, HarvestZone zone)
+    {
+        if (sighting.Elements.IsDefaultOrEmpty)
+            return sighting.Resources.Overlaps(zone.Wanted);
+
+        return sighting.Elements.Any(element => zone.CanUse(element.SkillId, _levelOf));
     }
 }

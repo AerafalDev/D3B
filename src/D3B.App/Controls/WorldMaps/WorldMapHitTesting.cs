@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 
 namespace D3B.App.Controls.WorldMaps;
@@ -90,6 +91,10 @@ internal static class WorldMapHitTesting
                     return new WorldMapHit(WorldMapHitKind.PathPoint, square.X, square.Y, -1, leg);
             }
         }
+
+        // Under the route and what it holds, over the map's own squares: the pictures lie there, as they are drawn.
+        if (c.Hints is { Count: > 0 } hints && WorldMapHintLayer.HitAt(WorldMapHintLayer.Layout(hints, c.RectOf, mapWidth), at) is { } hint)
+            return new WorldMapHit(WorldMapHitKind.Hint, hint.X, hint.Y, -1, -1, hint.Id.ToString(CultureInfo.InvariantCulture));
 
         if (SquareAt(at, c) is not { } over)
             return WorldMapHit.None;

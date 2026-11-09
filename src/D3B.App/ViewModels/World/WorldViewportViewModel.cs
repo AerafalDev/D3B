@@ -8,8 +8,10 @@ using D3B.App.Controls.WorldMaps;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Zones;
+using D3B.Data;
 using D3B.Data.WorldMaps;
 using D3B.Studio.Assets;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.World;
 
@@ -52,6 +54,9 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
 
     /// <summary>Gets whether the map can be drawn: the host runs and holds the world's maps.</summary>
     public bool IsAvailable => _source is not null;
+
+    /// <summary>Gets the points of interest the map draws, and the ticks that choose which (D414).</summary>
+    public WorldHintsViewModel Hints { get; }
 
     /// <summary>Gets the worlds the layer can show.</summary>
     public IReadOnlyList<WorldChoiceViewModel> Worlds { get; private set; } = [];
@@ -176,6 +181,7 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
         _selection = selection;
         _characters = characters;
         _framed = framed;
+        Hints = new WorldHintsViewModel(localizer);
         Hud = localizer["WorldHudNothing"];
         selection.Changed += OnSelectionChanged;
     }
@@ -221,6 +227,8 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
         {
             Source = new WorldMapSource(services.Catalog, services.Index, services.ReadTile);
             Layer = FirstLayer(services);
+            Hints.Use(services.Provider?.GetService<GameTables>(), services.Texts);
+            Hints.UseLayer(Layer);
             Relabel();
             Compose();
         }
@@ -243,6 +251,7 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
     public void Relabel()
     {
         Hud = _localizer["WorldHudNothing"];
+        Hints.Relabel();
 
         if (_routes.Services is not { } services)
             return;
@@ -271,6 +280,7 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
             return;
 
         Layer = world;
+        Hints.UseLayer(world);
         Route?.UseLayer(world);
         Zone?.UseLayer(world);
         Relabel();
@@ -417,6 +427,10 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
     {
         switch (hit.Kind)
         {
+            case WorldMapHitKind.Hint:
+                Hud = Hints.Describe(hit) ?? _localizer["WorldHudNothing"];
+
+                return;
             case WorldMapHitKind.Character:
                 Hud = Scene.Backdrop?.Characters.FirstOrDefault(character => character.Key == hit.Id) is { } character
                     ? _localizer.Format("WorldHudCharacter", character.Name, _localizer.Format("Coordinates", character.X, character.Y))

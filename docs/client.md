@@ -374,6 +374,37 @@ one bank. 7 banks have one inside a door without criterion leads into, 3 have tw
 Astrub, one door element leads to the bank and to such an inside, the criterion choosing. The bank of Astrub's inside
 holds two bankers, NPCs 520 and 522; the server places them, with no NPC in the client's data for that map.
 
+### Hints
+
+Measured on 3.7.13.17 on 2026-11-09 for the session that put the hints on the studio's map (D414), with `scripts/inspect.cs` and
+measuring tools never committed that print counts and write previews outside the repository.
+
+- **The table.** `World.HintsDataRoot` holds 835 hints (834 on 3.7.12.12) in 6 of its 12 categories (`HintCategoriesDataRoot`):
+  Lieux de classes 19, Hôtels de vente 45, Ateliers 154, Divers 297, Donjons 130 and Transports 190; the six others (conquest
+  territories, possessions, landmarks, anomalies, quests, repeatable quests) hold none. Every hint's map is in
+  `MapsInformationDataRoot`, with the hint's own `x`, `y` and sub-area: 835 of 835. Its `worldMapId` is its map's `worldMap` for
+  799; for 36 it is another, which is the world the client draws it on. `realMapId` is set on 144 hints, in the table for 8: not read.
+  679 hints are on world 1, 156 on 31 others (24 on world 2, 15 on 34, 14 on 37); on world 1 they stand on 587 coordinates, at
+  most 4 on one, and 83 maps hold two or more. The 835 names are in both languages.
+- **Kinds, by `gfx`** (the picture, which tells apart what a category mixes): the 18 workshops are one graphic a craft, 301 to 319
+  and 430, 478; 45 auction houses are 7 graphics; the 19 class places one a class, 10 to 180 and 470; the 130 dungeons are drawn
+  with 422 but one (474, Gargandyas); the 190 transports are 45 zaaps (410), 46 boats (413), 32 quays (433), 24 carriers (412), 13
+  drills (438) and about 30 others; Divers holds the 10 banks (401), 35 taverns (408), 36 emote spots (423, "Attitude …"), 14 spells
+  (441), 11 libraries, 9 town halls and castles, 9 militias, and 102 passages (900 to 903: "Passage vers…", "Sortie…", "Vers…").
+- **Zaaps.** The 45 hints of graphic 410 stand on the maps of 45 of the 63 waypoints of `WaypointsDataRoot`, every one activated.
+  The other 18 waypoints have no hint, 3 of them activated (32, 33 and 81): the client's world map draws hints only.
+- **Dungeons.** 130 hints on 127 maps in 121 sub-areas, 123 outdoor, each with its `level`, 10 to 200, the only hints that have
+  one but 6 others. `SubAreasDataRoot.dungeonId` is set on 185 sub-areas and `entranceMapIds` on none: the hint is the only
+  place the data says where a dungeon's door stands.
+- **Pictures.** Not in `Picto`: in the addressables bundle `aa/StandaloneWindows64/uidarkstone_assets_all.bundle` (2.2 MiB),
+  whose catalog lists them as `…/hints/<gfx>.png`, 143 addresses. The bundle holds 159 textures named by number, with a sprite of the
+  same name; 91 of the 92 graphics the hints name have one, only 475 ("Portail vers la Source", one hint) has not. 116 are 64 by 64
+  in DXT5, one level, streamed but for 470 (the Forgelance class place), held inline; the 18 other class places' are 62 by 62 in RGBA32,
+  one level, inline in the object, which ends with 16 bytes of an empty stream data (its offset is 8 bytes). Full colour with a shadow, drawn to be seen at 24 to 32
+  pixels: a zaap's stone arch with a swirl, a craft's tool or product, a skull for a dungeon, coins for a bank, a "K" tag on an
+  auction house's. The 68 others are the house signs, prices and other numbers no hint uses. 91 pictures are 1,490,944 bytes as RGBA;
+  the pack of format 12 is 111,872,773 bytes against format 11's 111,625,358, 247,415 more for the hints, their pictures and their texts.
+
 ### Fights' tables
 
 Laid out on 2026-10-30 for session 9a with `scripts/inspect.cs -- layout <bundle> <root> --references`, measured for

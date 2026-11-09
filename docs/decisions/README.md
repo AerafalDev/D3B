@@ -32,14 +32,20 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Step 7 (D369 to D389)](d369-d389-step-7.md): 21 decisions, 50 KB.
 - [Step 9 (D390 to D392)](d390-d392-step-9.md): 3 decisions, 8 KB.
 - [Architecture (D393)](d393-architecture.md): 1 decision, 3 KB.
+- [Step 9, the harvest's tour and the levels (D417)](d417-step-9-the-harvests-levels.md): 1 decision, 4 KB.
 - [Step 7, 7d4 (D394)](d394-step-7-7d4.md): 1 decision, 5 KB.
 - [Step 7, the redesign (D395 to D397)](d395-d397-step-7-the-redesign.md): 3 decisions, 17 KB.
 - [Claude Code setup (D398)](d398-claude-code-setup.md): 1 decision, 6 KB.
 - [Tidy-up (D399 to D401)](d399-d401-tidy-up.md): 3 decisions, 4 KB.
 - [Banking settings (D405)](d405-banking-settings.md): 1 decision, 3 KB.
+- [Step 9, the harvest's tour and the levels (D417)](d417-step-9-the-harvests-levels.md): 1 decision, 4 KB.
 - [The home page (D406)](d406-the-home-page.md): 1 decision, 3 KB.
+- [Step 9, the harvest's tour and the levels (D417)](d417-step-9-the-harvests-levels.md): 1 decision, 4 KB.
 - [Step 9, the players' reports (D407 to D408)](d407-d408-step-9-the-players-reports.md): 2 decisions, 7 KB.
 - [Bug reports (D409 to D411)](d409-d411-bug-reports.md): 3 decisions, 12 KB.
 - [The home page's tab (D412)](d412-the-home-pages-tab.md): 1 decision, 1 KB.
 - [Step 7, 7r3, the Sequencer (D413)](d413-step-7-7r3-the-sequencer.md): 1 decision, 7 KB.
+- [Step 7, hints on the world map (D414)](d414-step-7-hints-on-the-world-map.md): 1 decision, 4 KB.
+- [Step 9, the harvest's interiors (D416)](d416-step-9-the-harvests-interiors.md): 1 decision, 3 KB.
+- [Step 9, the harvest's tour and the levels (D417)](d417-step-9-the-harvests-levels.md): 1 decision, 4 KB.
 - [Step 7, 7r5, the profile's editor (D415)](d415-step-7-7r5-the-profile-editor.md): 1 decision, 5 KB.

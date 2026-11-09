@@ -83,13 +83,13 @@ public sealed class HuntingGround
         var reached = atlas.Positions.ToArray()
             .Where(position => wanted.Contains(position.SubAreaId) && graph.Contains(position.MapId))
             .ToArray();
-        var outdoors = reached.Where(position => position.WorldMap >= 0).Select(position => position.SubAreaId).ToHashSet();
+        var interiors = SubAreaInteriors.Of(reached);
 
         // Measured (D388) on 3.7.13.17: of the 444 sub-areas holding monsters, 214 hold maps on a world map and interiors, such as
         // the 22 of Incarnam's fields, where the tour climbed a militia's three floors for no group; the 68 whose maps are all
         // interiors are dungeons, hunted whole.
         var all = reached
-            .Where(position => position.WorldMap >= 0 || !outdoors.Contains(position.SubAreaId))
+            .Where(position => !interiors.Contains(position.MapId))
             .ToDictionary(position => position.MapId, position => position.SubAreaId);
         var isolated = IsolatedMaps.Of(graph, all);
         var maps = all.Where(pair => settings.IsolatedMaps || !isolated.Contains(pair.Key)).ToFrozenDictionary();
