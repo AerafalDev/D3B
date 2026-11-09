@@ -5,7 +5,7 @@ owed. The reasons are in [decisions.md](decisions.md), found through [decisions-
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-08, after D392. App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D393. App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -19,6 +19,10 @@ As of 2026-11-08, after D392. App 0.8.1, client build 3.7.13.17, pack format 11,
 - **The desktop app as a studio** (step 7, up to 7d3d): dark, docked, the characters as cards, the project's assets in files,
   behaviors and profiles as variants, the world's map drawn from the client's images, routes with their actions, and a profile
   playing a list of routes and steps made in the app (D386).
+- **A versioned Claude Code setup** (D393): `.claude/` holds C# hooks that ask before a push or a `gh` write and refuse
+  what the client produces, a few skills (`/decision`, `/ship`, `/review`, `/close-session`, `/new-tool`) and two agents. Its
+  hooks are tested in `tests/D3B.Hooks.Tests`; they have been exercised by hand with Claude Code's input, not yet seen firing
+  inside a session.
 - **Published**: the installer and updates through Velopack (D171); the client build's pack, schema and mapping as the release
   `client-3.7.13.17` (D365).
 
@@ -35,6 +39,10 @@ As of 2026-11-08, after D392. App 0.8.1, client build 3.7.13.17, pack format 11,
 
 ## Next
 
+0. **A large refactoring and tidy-up session**, asked by the owner for after D393: the architecture (the known debt below, starting
+   with the split of `D3B.Bot`), the code, and the docs (`decisions.md` is about 700 KB, `status.md`, `architecture.md` and
+   `client.md` are long). It is a session of its own, planned with the owner before it starts; no step of the roadmap is
+   begun in it.
 1. **Session 7d4**: recording while playing and Simplify, the zones and their editor, undo and the keys of the other editors,
    steps reordered by dragging (D376).
 2. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).

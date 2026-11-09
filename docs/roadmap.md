@@ -299,3 +299,8 @@ it grows. A client update before a session gets Q10's session first.
 - The scripts in `vendor/metiers` written again for D3B, what they call measured in D104: their routes by map, harvests
   and banking run as activities (D87), and tested end to end. How, the Lua API gone (D116), is decided at that step,
   after step 7's blueprints (D117).
+
+## Outside the steps
+
+- The project's Claude Code setup: `.claude/`, its hooks tested in `tests/D3B.Hooks.Tests`, and `CLAUDE.md`'s rewrite, done on
+  2026-11-09 (D393).

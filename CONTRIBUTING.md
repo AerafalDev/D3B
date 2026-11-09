@@ -60,6 +60,9 @@ To run the app from source, the host needs the installed client's pack, schema a
 - **`scripts/` holds the tools**, file-based apps that read the official client, or, for `icons.cs`, take the IntelliJ
   Platform's icons the studio draws. They follow their own conventions, below, and have no tests.
 - **Tests mirror `src/`**: one test project per project with logic, in `tests/`.
+- **`.claude/` holds the setup for Claude Code sessions**: skills, agents, and the hooks that guard the rules above
+  (nothing extracted from the client is written, nothing is pushed without an answer). The hooks are C# file-based apps whose
+  logic is tested in `tests/D3B.Hooks.Tests`. You do not need Claude Code to contribute.
 
 ## Conventions
 
@@ -107,6 +110,7 @@ dotnet build                          # warnings are errors
 dotnet test                           # every test project
 dotnet format --verify-no-changes     # the formatting CI checks
 dotnet build scripts/<tool>.cs        # each tool you changed
+dotnet build .claude/hooks/<hook>.cs  # each hook you changed
 ```
 
 - **Changes to `src/` come with their tests.** A bug fix comes with a test that failed before it.

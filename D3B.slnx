@@ -1,4 +1,28 @@
 <Solution>
+  <Folder Name="/.claude/hooks/">
+    <File Path=".claude/hooks/check-turn.cs" />
+    <File Path=".claude/hooks/format-file.cs" />
+    <File Path=".claude/hooks/guard-git.cs" />
+    <File Path=".claude/hooks/guard-studies.cs" />
+    <File Path=".claude/hooks/guard-writes.cs" />
+  </Folder>
+  <Folder Name="/.claude/hooks/shared/">
+    <File Path=".claude/hooks/shared/FormatTarget.cs" />
+    <File Path=".claude/hooks/shared/GitGuard.cs" />
+    <File Path=".claude/hooks/shared/HookDecision.cs" />
+    <File Path=".claude/hooks/shared/HookInput.cs" />
+    <File Path=".claude/hooks/shared/HookResult.cs" />
+    <File Path=".claude/hooks/shared/HookVerdict.cs" />
+    <File Path=".claude/hooks/shared/ProcessResult.cs" />
+    <File Path=".claude/hooks/shared/ProcessRunner.cs" />
+    <File Path=".claude/hooks/shared/ProjectFile.cs" />
+    <File Path=".claude/hooks/shared/ProjectPath.cs" />
+    <File Path=".claude/hooks/shared/ShellCommand.cs" />
+    <File Path=".claude/hooks/shared/ShellInvocation.cs" />
+    <File Path=".claude/hooks/shared/StudyGuard.cs" />
+    <File Path=".claude/hooks/shared/TurnCheck.cs" />
+    <File Path=".claude/hooks/shared/WriteGuard.cs" />
+  </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/D3B.Engine.Benchmarks/D3B.Engine.Benchmarks.csproj" />
     <Project Path="benchmarks/D3B.Network.Benchmarks/D3B.Network.Benchmarks.csproj" />
@@ -152,6 +176,7 @@
     <Project Path="tests/D3B.Core.Tests/D3B.Core.Tests.csproj" />
     <Project Path="tests/D3B.Data.Tests/D3B.Data.Tests.csproj" />
     <Project Path="tests/D3B.Engine.Tests/D3B.Engine.Tests.csproj" />
+    <Project Path="tests/D3B.Hooks.Tests/D3B.Hooks.Tests.csproj" />
     <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
     <Project Path="tests/D3B.Protocol.Tests/D3B.Protocol.Tests.csproj" />
     <Project Path="tests/D3B.Storage.Tests/D3B.Storage.Tests.csproj" />
