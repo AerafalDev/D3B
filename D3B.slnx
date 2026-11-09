@@ -26,6 +26,7 @@
   <Folder Name="/scripts/">
     <File Path="scripts/capture.cs" />
     <File Path="scripts/client.cs" />
+    <File Path="scripts/docs.cs" />
     <File Path="scripts/embed.cs" />
     <File Path="scripts/extract.cs" />
     <File Path="scripts/fights.cs" />
@@ -43,6 +44,12 @@
   </Folder>
   <Folder Name="/scripts/client/">
     <File Path="scripts/client/ClientCommand.cs" />
+  </Folder>
+  <Folder Name="/scripts/docs/">
+    <File Path="scripts/docs/BrokenLink.cs" />
+    <File Path="scripts/docs/DocsCommand.cs" />
+    <File Path="scripts/docs/HeadingSlugs.cs" />
+    <File Path="scripts/docs/LinkChecker.cs" />
   </Folder>
   <Folder Name="/scripts/embed/">
     <File Path="scripts/embed/EmbedCommand.cs" />

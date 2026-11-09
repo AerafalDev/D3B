@@ -65,6 +65,9 @@ jobs:
       - name: Build the embedding tool
         run: dotnet build scripts/embed.cs
 
+      - name: Build the docs tool
+        run: dotnet build scripts/docs.cs
+
       - name: Build the icons tool
         run: dotnet build scripts/icons.cs
 
