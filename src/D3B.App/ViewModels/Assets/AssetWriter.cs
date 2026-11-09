@@ -152,6 +152,39 @@ internal sealed class AssetWriter
             _toasts.Show(new Toast(imported.Count == 1 ? _localizer.Format("AssetImported", imported[0].Name) : _localizer.Plural("AssetsImported", imported.Count), Tone.Success));
     }
 
+    /// <summary>Moves assets and folders of the project, by their rows' keys, to a folder; what cannot go there stays.</summary>
+    /// <param name="keys">The rows' keys.</param>
+    /// <param name="folder">The folder, empty for the project's root.</param>
+    /// <param name="followed">What is told, as soon as a folder is moved, where it was and where it is now.</param>
+    /// <returns>A task that completes once moved.</returns>
+    public async Task MoveAsync(IReadOnlyCollection<string> keys, string folder, Action<string, string> followed)
+    {
+        // A folder chosen with what it holds moves alone, what it holds going with it.
+        var folders = keys.Where(key => key.StartsWith(AssetPaths.FolderKey, StringComparison.Ordinal)).Select(key => key[AssetPaths.FolderKey.Length..]).ToList();
+
+        foreach (var key in keys.Where(key => AssetPaths.CanMove(_library(), [key], folder)))
+        {
+            if (key.StartsWith(AssetPaths.FolderKey, StringComparison.Ordinal))
+            {
+                var moved = key[AssetPaths.FolderKey.Length..];
+
+                if (folders.Any(other => !string.Equals(other, moved, StringComparison.OrdinalIgnoreCase) && AssetPaths.IsIn(moved, other)))
+                    continue;
+
+                string? placed = null;
+
+                await WriteAsync(async assets => placed = await assets.MoveFolderAsync(moved, folder, CancellationToken.None).ConfigureAwait(true)).ConfigureAwait(true);
+
+                if (placed is not null)
+                    followed(moved, placed);
+            }
+            else if (_library()?.Find(key) is { Path: { } path } && !folders.Any(other => AssetPaths.IsIn(AssetPaths.ParentOf(path), other)))
+            {
+                await WriteAsync(assets => assets.MoveAsync(key, folder, CancellationToken.None)).ConfigureAwait(true);
+            }
+        }
+    }
+
     /// <summary>Deletes assets and folders of the project; the editors of the profiles deleted are left, and the characters that played them are left without one (D99).</summary>
     /// <param name="targets">The rows to delete.</param>
     /// <param name="profiles">The profiles, whose editors close.</param>

@@ -375,7 +375,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        if (PathOf(row) is { } path)
+        if (AssetPaths.RelativePathOf(_assets, row) is { } path)
             CopyText?.Invoke(path);
     }
 
@@ -521,30 +521,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(keys);
         ArgumentNullException.ThrowIfNull(folder);
 
-        // A folder chosen with what it holds moves alone, what it holds going with it.
-        var folders = keys.Where(key => key.StartsWith(FolderKey, StringComparison.Ordinal)).Select(key => key[FolderKey.Length..]).ToList();
-
-        foreach (var key in keys.Where(key => CanMove([key], folder)))
-        {
-            if (key.StartsWith(FolderKey, StringComparison.Ordinal))
-            {
-                var moved = key[FolderKey.Length..];
-
-                if (folders.Any(other => !string.Equals(other, moved, StringComparison.OrdinalIgnoreCase) && AssetPaths.IsIn(moved, other)))
-                    continue;
-
-                string? placed = null;
-
-                await _writer.WriteAsync(async assets => placed = await assets.MoveFolderAsync(moved, folder, CancellationToken.None).ConfigureAwait(true)).ConfigureAwait(true);
-
-                if (placed is not null)
-                    Follow(moved, placed);
-            }
-            else if (_assets?.Find(key) is { Path: { } path } && !folders.Any(other => AssetPaths.IsIn(AssetPaths.ParentOf(path), other)))
-            {
-                await _writer.WriteAsync(assets => assets.MoveAsync(key, folder, CancellationToken.None)).ConfigureAwait(true);
-            }
-        }
+        await _writer.MoveAsync(keys, folder, Follow).ConfigureAwait(true);
 
         _folded.Remove(folder);
         RememberFolds();
@@ -560,9 +537,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(keys);
         ArgumentNullException.ThrowIfNull(folder);
 
-        return keys.Any(key => key.StartsWith(FolderKey, StringComparison.Ordinal)
-            ? !AssetPaths.IsIn(folder, key[FolderKey.Length..]) && !string.Equals(AssetPaths.ParentOf(key[FolderKey.Length..]), folder, StringComparison.OrdinalIgnoreCase)
-            : _assets?.Find(key) is { IsGiven: false, Path: { } path } && !string.Equals(AssetPaths.ParentOf(path), folder, StringComparison.OrdinalIgnoreCase));
+        return AssetPaths.CanMove(_assets, keys, folder);
     }
 
     /// <summary>Gets the keys of the rows a drag from a row takes: those chosen when it is one of them, else it alone.</summary>
@@ -639,14 +614,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
         if (_assets is not { } assets)
             return;
 
-        var path = row is null ? assets.Folder : row.Kind switch
-        {
-            AssetRowKind.Asset => assets.Find(row.Id ?? "") is { } asset ? assets.FileOf(asset) : null,
-            AssetRowKind.Problem => Path.Combine(assets.Folder, row.Folder, row.Name),
-            _ => Path.Combine(assets.Folder, row.Folder),
-        };
-
-        if (path is not null)
+        if (AssetPaths.OnDiskOf(assets, row) is { } path)
             Reveal?.Invoke(path);
     }
 
@@ -666,17 +634,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
             return;
         }
 
-        var held = targets.Where(item => item.IsFolder).Sum(item => _assets?.AssetsIn(item.Folder).Count ?? 0);
-        var title = targets is [var single]
-            ? _localizer.Format(single.IsFolder ? "DeleteFolderTitle" : "DeleteAssetTitle", single.Name)
-            : _localizer.Plural("DeleteItemsTitle", targets.Count);
-        var users = targets.Where(item => item.IsAsset).Sum(item => _assets?.UsedBy(item.Id!).Count ?? 0);
-        var detail = string.Join(" ", new[]
-        {
-            held > 0 ? _localizer.Plural("DeleteFolderAssets", held) : targets.All(item => item.IsFolder) ? _localizer["DeleteFolderEmpty"] : null,
-            users > 0 ? _localizer.Plural("DeleteAssetUsers", users) : null,
-            _localizer["DeleteToRecycleBin"],
-        }.OfType<string>());
+        var (title, detail) = AssetDeletion.Describe(_localizer, _assets, targets);
 
         _dialogs.Ask(new QuestionViewModel(_dialogs, title, detail, _localizer["Delete"], _localizer["Cancel"], () => _ = DeleteAsync(targets), destructive: true));
     }
@@ -836,17 +794,6 @@ internal sealed partial class AssetsViewModel : ObservableObject
             return [row];
 
         return [.. Rows.Where(item => _selected.Contains(item.Key))];
-    }
-
-    private string? PathOf(AssetRowViewModel row)
-    {
-        return row.Kind switch
-        {
-            AssetRowKind.Asset => _assets?.Find(row.Id ?? "")?.Path?.Replace(Path.DirectorySeparatorChar, '/'),
-            AssetRowKind.Problem => Path.Combine(row.Folder, row.Name).Replace(Path.DirectorySeparatorChar, '/'),
-            AssetRowKind.Folder => row.Folder.Replace(Path.DirectorySeparatorChar, '/'),
-            _ => null,
-        };
     }
 
     private async Task DeleteAsync(IReadOnlyList<AssetRowViewModel> targets)
