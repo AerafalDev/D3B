@@ -12,14 +12,16 @@ namespace D3B.App.Tests.ViewModels.World;
 
 public sealed class WorldViewportViewModelTests : IAsyncDisposable
 {
+    private readonly UiThreadContext _ui = new();
     private readonly TestStore _store = new();
     private readonly Localizer _localizer = new(Localizer.English);
     private readonly List<WorldCharacterSnapshot> _characters = [];
     private string? _framed;
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        return _store.DisposeAsync();
+        await _store.DisposeAsync();
+        _ui.Dispose();
     }
 
     private async Task<(RoutesViewModel Routes, ZonesViewModel Zones, WorldSelection Selection, WorldViewportViewModel World)> WorldAsync()
@@ -47,6 +49,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     [Fact]
     public async Task TheRouteSelectedTakesTheMapsGesturesAndTheOthersStayDrawnAroundIt()
     {
+        await _ui.EnterAsync();
         var (_, _, selection, world) = await WorldAsync();
 
         await SaveRouteAsync("north", 1, 2);
@@ -83,6 +86,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     [Fact]
     public async Task APressOnAStepOfAnotherRouteSelectsItAndTheStepInItsEditor()
     {
+        await _ui.EnterAsync();
         var (_, _, selection, world) = await WorldAsync();
 
         await SaveRouteAsync("north", 1, 2);
@@ -103,6 +107,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     [Fact]
     public async Task TheRouteToolMakesARouteOnItsFirstPressWhenNoneIsSelectedAndTracesIt()
     {
+        await _ui.EnterAsync();
         var (routes, _, selection, world) = await WorldAsync();
 
         world.SetTool(WorldTool.Route);
@@ -128,6 +133,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     [Fact]
     public async Task TheZoneToolPaintsTheZoneSelectedWithItsOwnToolsAndLeavesWhenSomethingElseIsSelected()
     {
+        await _ui.EnterAsync();
         var (_, _, selection, world) = await WorldAsync();
 
         world.SetTool(WorldTool.Zone);
@@ -153,8 +159,42 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheMapIsComposedOnOneThreadWhateverTheEditorsPlanningResumesOn()
+    {
+        await _ui.EnterAsync();
+        var (_, _, selection, world) = await WorldAsync();
+        var threads = new System.Collections.Concurrent.ConcurrentBag<int>();
+
+        world.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(WorldViewportViewModel.Scene))
+                threads.Add(Environment.CurrentManagedThreadId);
+        };
+
+        await SaveRouteAsync("north", 1, 2);
+        await SaveRouteAsync("south", 3, 4);
+
+        for (var i = 0; i < 30; i++)
+        {
+            await _store.Assets.SaveAsync(new ZoneAsset { Id = "zone" + i, Name = "Zone " + i, Maps = [1, 2, 3] }, TestContext.Current.CancellationToken);
+        }
+
+        world.Refresh();
+
+        // Each editor opened plans its route off the thread and then redraws what it holds: that redraw is the map's, so it must come back.
+        selection.SelectRoute("north");
+        selection.SelectRoute("south");
+        await world.Route!.Planned;
+        selection.SelectRoute("north");
+        await world.Route!.Planned;
+
+        Assert.Single(threads.Distinct());
+    }
+
+    [Fact]
     public async Task AClosedEyeLeavesARouteAZoneOrACharacterOffTheMapAndTheEditorOfWhatIsSelectedKeepsItsOwnDrawing()
     {
+        await _ui.EnterAsync();
         var (_, _, selection, world) = await WorldAsync();
 
         await SaveRouteAsync("north", 1, 2);
@@ -181,6 +221,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     [Fact]
     public async Task SelectingARouteInAnotherWorldShowsThatWorldAndTheOtherRoutesAreDrawnInTheLayerShownOnly()
     {
+        await _ui.EnterAsync();
         var (_, _, selection, world) = await WorldAsync();
 
         await SaveRouteAsync("elsewhere", 7);
@@ -205,6 +246,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     [Fact]
     public async Task ACharacterIsDrawnOnItsMapAndSelectingItShowsItsWorldAndPutsTheMapOnIt()
     {
+        await _ui.EnterAsync();
         var (_, _, selection, world) = await WorldAsync();
         var here = new D3B.Bot.Characters.CharacterKey(1, 2);
         var there = new D3B.Bot.Characters.CharacterKey(1, 3);
@@ -240,6 +282,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     [Fact]
     public async Task TheFrameIsGreenAndNamesTheCharacterWhileItPlays()
     {
+        await _ui.EnterAsync();
         var (_, _, _, world) = await WorldAsync();
 
         Assert.False(world.IsFramed);
