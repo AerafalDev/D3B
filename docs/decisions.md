@@ -9096,7 +9096,7 @@ bundle holds and how the capture is cleaned, and whether what the bots learned t
 
 - **A report is one file**, `<code>.d3breport`, a zip of: `manifest.json` (the report's code `D3B-XXXX-XX`, when, the app, client
   build, pack and mapping versions, the area, the character reported as a number with its breed and level and the capture's
-  start so that the journal's times join the capture's, and every file with its size and SHA-256); `description.md`; the
+  start so that the journal's times join the capture's, and every file with its size and SHA-256); `message.md` (D411); the
   capture of the connection concerned, cleaned; the journal and the trace of that character as text (both are in memory only,
   2,000 entries and 1,000 decisions, D112, D350: a report snapshots them); the profile, routes and zones the character was
   playing and the settings that differ from the defaults; and `knowledge.json` (below). The player's descriptions are free
@@ -9150,6 +9150,39 @@ bundle holds and how the capture is cleaned, and whether what the bots learned t
   - A capture of only the last minutes, or a report with no capture for the game's areas: see D409 and the owner's demand that
     the capture is required.
   - Sending the capture raw, with only the ticket overwritten: what else of the account the connection holds is not known.
+
+## D411: A report carries an optional message of the player's own
+
+*2026-11-09, outside the steps, session "bug reports", the owner's requirement relayed by the lead session; the limits are the lead's, reversible. Refines D410.*
+
+The owner wants the player to be able to add a message of their own to a report, if they wish. The capture, the area and the
+character are what a report needs; the message is not.
+
+- **One free text, optional.** The `description.md` of D410 becomes `message.md`, and a report without one is accepted: the form
+  asks for it with a hint, "what you saw and what you expected", and says that nothing else is needed. It is the only free text
+  of a report; the area, the character and when stay choices of the form.
+- **Limit and language.** 1,500 characters, counted as the player types, never cut silently: the field stops there. Any
+  language: the maintainers read French and English, the hint says so, and nothing is translated.
+- **Personal data.** The message is the one part no cleaner reads, so the player is told, next to the field and in the
+  preview: do not write a password, a login, an email address or a phone number; the message is read by the maintainers and
+  kept as long as the rest of the report (D410). Nothing is detected or removed for them: a guess would give a false assurance.
+  The message goes to the maintainers as it is typed.
+- **Stored** as `message.md` in the bundle, UTF-8, listed in the manifest with its size and SHA-256, and `manifest.json` says
+  whether there is one (`hasMessage`). A report is one file, so the message is not a second file beside it.
+- **Shown** in the preview with the rest of what goes out, as typed, and unchecked removes it like any part (D410).
+- **Sent** inside the webhook's post, not as a message of its own: the post's embed has the code, the area and the versions as
+  fields and the whole message as its text (an embed holds 4,096 characters, the message at most 1,500), or "no message". The post
+  forbids every mention (`allowed_mentions` empty), so that a message holding `@everyone` pings no one; the file carries it too.
+- **Read** by the maintainer first: `scripts/report.cs` prints the message above the description of the capture, with its control
+  characters replaced, and unpacks it as `message.md` beside the capture. Like the rest of a report it is untrusted text, never
+  run and never rendered as anything but text.
+- **Rejected.**
+  - A required message: the capture is what a replay needs, and a player who has nothing to add would write filler.
+  - A field of `manifest.json` holding the text: the manifest is read by a program, the message by a person, and a text with
+    quotes and line breaks in a file is easier to read, to diff and to hash.
+  - The message as a Discord message of its own: it could part from its file, and an unmentioned ping is simpler to forbid in one post.
+  - Detecting emails or tokens in the text: a rule that misses a case reassures wrongly; the warning and the preview do the job.
+  - A limit of 4,000 characters or none: a report's message is read by a person among many, and Discord's own limits would decide for us.
 
 ## Open questions
 
