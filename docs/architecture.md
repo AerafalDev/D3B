@@ -97,27 +97,14 @@ replaced them (D116, D119). Mods come as blueprints at step 7, after step 6 (Mod
 
 ## Bot run time
 
-Built in session 4a (D65 to D69), in `D3B.Bot`: the actor, the state, the sharing with the player and the first
-behavior; in session 4b (D72 to D74), the subscription and the behaviors between maps; in session 4c (D75 to D77), the
-map's elements, using them, doors and the drawing of the map; in session 4d (D79 to D81), the bank; in session 4e (D83,
-D85), teleports and the haven bag; in session 4f (D87 to D89), activities, fights as interruptions, recovery and the
-client's new connection taking the bot back; in session 6a (D127 to D132), harvesting and an activity's report; in session 6c
-(D144 to D146, D149, D150), fights while harvesting, the growing back learned, runs' figures, isolated maps and Base's
-resources; in session 9a (D179), the fight's state; in session 9e (D198, D202, D203), the bot fighting; in session 9e2
-(D213), the switch "The AI fights" kept for each character; in session 9g (D233 to D241), the strategies, which replace
-the switch, the monster groups on a map and the fighting activity; in session 9g2 (D244 to D249), the strategies removed,
-one AI for every character, the fighting activity's sub-areas suggested by its monsters, isolated maps, place, preview
-and families of monsters, every interactive transition followed, refused teleports remembered, and groups judged over the
-fight's course; in session 9g3 (D253), the ways through an NPC's dialog, Incarnam's portal first; in session 9g5 (D257 to
-D260, D262), the food the inventory holds, the regeneration back to the share, a hunt's journey stopping on its zone's
-maps, no walk ending where the previous one did, and an element another harvested growing back from when it was first
-seen so.
+The bots run in `D3B.Bot`: what each part does today, with the decisions that made it so, found through
+[decisions-index.md](decisions-index.md). The order the parts were built in is in [roadmap.md](roadmap.md), by session.
 
 - **One bot per character** of an account (D65). `Bots`, in `D3B.Bot.Runtime`, registered by the bots module
   (`BotsModule`) as an `IGameObserver`, ties a game connection to the bot of the character its server confirms the
   client chose, its account the one the connection phase identified by the ticket (`GameSession.Account`, D65). A bot
   outlives its connections: a new one takes the old one's place, the state starting over from what the server sends.
-- **The actor**, `BotActor`: one `Channel<T>` inbox read by one loop, no lock on its state (D9). The inbox gets every
+- **The actor**, `BotActor`: one `Channel<T>` inbox read by one loop, no lock on its state (D9; its inbox messages are `BotInput`, a condition waited for `BotWaiter`, D399). The inbox gets every
   message of its character's game connection, both sides, from the relay's read loops; the loop turns each into the next
   state and tries it on the behaviors' expectations. Commands from the app come at step 5.
 - **The state**, `CharacterState` in `D3B.Bot.Characters`: an immutable snapshot of what the server said of the
@@ -635,6 +622,9 @@ D356), the pages of D101 and D162 gone.
   profile in its tab; the right click opens, finds what uses it, renames in place (F2), duplicates (Ctrl D), moves,
   exports, shows its file and deletes, a given asset copied into the project instead. Add makes a profile, a folder named
   in place, or imports a file; the kinds of later sessions show disabled with their session.
+  The view model keeps what is chosen, folded and cut; the rows are made by `AssetTreeBuilder` from that state
+  (`AssetTreeState`) and the project, the writes and their toasts are `AssetWriter`'s, and `AssetPaths` holds the
+  folders' arithmetic (D399).
 - **A profile's tab** (D330, D352, `ProfileViewModel`, `ProfileView`): one tab per profile, several open, closed by its ×,
   which asks first when it holds changes, kept open once saved (`ProfilesViewModel.Open`, `EditorTab.Closing`). Its header:
   the name edited in place, the behavior it is a variant of, how many values it changes and "Tout remettre", the menu and

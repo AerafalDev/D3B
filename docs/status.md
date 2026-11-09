@@ -74,7 +74,7 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
   a future module in a project of its own can. Nine members and types of `D3B.Bot` became public so that the studio could use them
   (`BotContext.Actor`, `BotActor.Time`, `Log`, `PauseAfterStep`, `SettingDefinition.TryRead`, `ActivitySettingsBuilder`'s
   constructor and `Build`, `MapHarvest`, `MapFight`): a narrower seam would be a task of its own.
-- Files over 900 lines: `FightJudge`, `RouteEditorViewModel`, `AssetsViewModel`, `HarvestActivity`.
+- Files over 900 lines (D399): `FightJudge` 1,357, `RouteEditorViewModel` 1,238, `HarvestActivity` 970, `Imagination` 955 and `WorldMapView` 930. `AssetsViewModel` (885) and `BotActor` (723) are cut. `D3B.Bot` stays one project: its core (`Runtime`, `Activities`, `Banks`, `Movement`, `Journal`, `Characters`) refers to itself both ways, `Harvesting` and `Fighting` are the leaves; `Fighting` reaches into `HarvestActivity.FoodTypes`.
 - Undo has two histories: the route editor keeps its own snapshots (D375), the list of steps, the profile and the zone editors use
   `UndoHistory` (D394). Moving the route onto it is a change of no use by itself; do it when the route editor is next opened for another reason.
 - The zones are read by nothing yet but `ZoneMaps` and their editor; the nodes and conditions of 7f are the ones to use them.
