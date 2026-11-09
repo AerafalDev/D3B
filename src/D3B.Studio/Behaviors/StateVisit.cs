@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Runtime;
 
@@ -20,7 +21,9 @@ internal sealed class StateVisit : IDisposable
     private readonly HashSet<string> _done = new(StringComparer.Ordinal);
     private readonly Dictionary<string, BotActivity> _activities = new(StringComparer.Ordinal);
     private readonly IServiceProvider _services;
+    private readonly ImmutableArray<string> _list;
     private volatile BotActivity? _current;
+    private volatile string? _at;
 
     /// <summary>Gets the leaf.</summary>
     public CompiledState State { get; }
@@ -34,10 +37,30 @@ internal sealed class StateVisit : IDisposable
     /// <summary>Gets the step being played, until it returns, for the trace to say which one a cut or a failure ended.</summary>
     public PlayedStep? InFlight { get; private set; }
 
+    /// <summary>Gets the step the leaf is at and how many it has, when it is a plain list of steps that follow one another with no branch: the step last begun, counted from 0 (D419).</summary>
+    public (int Step, int Total)? Place => _list.Length > 1 ? (_at is { } at ? Math.Max(0, _list.IndexOf(at)) : 0, _list.Length) : null;
+
     public StateVisit(CompiledState state, IServiceProvider services)
     {
         State = state;
         _services = services;
+        _list = ListOf(state);
+    }
+
+    private static ImmutableArray<string> ListOf(CompiledState state)
+    {
+        var ids = ImmutableArray.CreateBuilder<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var step = state.Entry; step is not null; step = step.Next)
+        {
+            if (step is not (CompiledStep.Action or CompiledStep.Activity) || step.Otherwise is not null || !seen.Add(step.Id))
+                return [];
+
+            ids.Add(step.Id);
+        }
+
+        return ids.ToImmutable();
     }
 
     /// <summary>Starts the leaf's actions again, once played to their end, for a state that repeats.</summary>
@@ -50,6 +73,7 @@ internal sealed class StateVisit : IDisposable
         }
 
         _done.Clear();
+        _at = null;
         IsFinished = false;
     }
 
@@ -100,6 +124,7 @@ internal sealed class StateVisit : IDisposable
                         }
 
                         _current = running;
+                        _at = activity.Id;
                         InFlight = new PlayedStep(activity.Definition.Name, null, false);
 
                         var goesOn = await running.StepAsync(context, cancellationToken).ConfigureAwait(false);
@@ -126,6 +151,7 @@ internal sealed class StateVisit : IDisposable
                         }
 
                         _current = null;
+                        _at = action.Id;
                         InFlight = new PlayedStep(action.Sentence, null, false);
                         await action.Node.RunAsync(new ActionContext(context, evaluation.View, control), values, cancellationToken).ConfigureAwait(false);
                         InFlight = null;

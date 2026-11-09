@@ -44,6 +44,9 @@
   <data name="Doing" xml:space="preserve">
     <value>State {0}</value>
   </data>
+  <data name="ListStep" xml:space="preserve">
+    <value>Step {0} of {1}</value>
+  </data>
   <data name="Branch" xml:space="preserve">
     <value>If {Condition}</value>
   </data>
