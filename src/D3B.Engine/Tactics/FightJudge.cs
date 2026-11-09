@@ -5,6 +5,7 @@ using D3B.Engine.Criteria;
 using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
+using static D3B.Engine.Tactics.JudgeTurns;
 
 namespace D3B.Engine.Tactics;
 
@@ -56,8 +57,6 @@ namespace D3B.Engine.Tactics;
 /// </remarks>
 public sealed class FightJudge
 {
-    private const int MostPoints = 24;
-    private const int MostCasts = 6;
     private const double AliveShare = 0.5;
     private const double KillTurns = 1.5;
 
@@ -71,9 +70,6 @@ public sealed class FightJudge
     // decoys that deal nothing first; worth nothing, 71, those that deal damage.
     private const double SummonLife = 0;
 
-    // Which of a fighter's damaging spells land is told by the bits of a number.
-    private const int Landings = 64;
-
     // The rounds a buff is weighed over at most, beyond the turns that follow it.
     private const int MostRounds = 4;
 
@@ -84,9 +80,6 @@ public sealed class FightJudge
     // of the 989 others; a mark keeps striking the enemy only as long as it stays.
     private const double StaysBeside = 82.0 / 122;
     private const double StaysAway = 21.0 / 989;
-
-    private const int ActionPoints = 1;
-    private const int MovementPoints = 23;
 
     private readonly Combatant[] _fighters;
     private readonly Dictionary<(int MonsterId, int Grade, long SummonerId), int> _summons = [];
@@ -229,106 +222,6 @@ public sealed class FightJudge
 
         // Above the comfortable share a point is worth only a part of what the curve would give.
         return most * (Math.Sqrt(comfort) + (_weights.ComfortWorth * (share - comfort) / (2 * Math.Sqrt(comfort))));
-    }
-
-    private static double Effective(Combatant fighter)
-    {
-        return fighter.Life + Math.Max(0, fighter.Characteristic(FightCharacteristic.Shield));
-    }
-
-    private static double Nearing(int distance, int reach)
-    {
-        // Where no spell lands yet, each cell nearer still counts a little, so that the fighter playing comes to the enemies
-        // it cannot strike yet instead of waiting where it stands.
-        return 0.5 * Math.Pow(0.85, Math.Max(0, distance - reach - 1));
-    }
-
-    private static ulong All(int count)
-    {
-        return count >= Landings ? ulong.MaxValue : (1UL << count) - 1;
-    }
-
-    private static int Range(SpellLevel[] levels, Combatant fighter)
-    {
-        var range = 0;
-
-        foreach (var level in levels)
-            range = Math.Max(range, SpellRange.MaxRange(level, Math.Max(0, fighter.RangeBonus)));
-
-        return range;
-    }
-
-    private static bool Damages(SpellCatalog spells, EffectActions actions, in SpellLevel level)
-    {
-        foreach (var effect in spells.EffectsOf(level))
-        {
-            if (actions.Of(effect.EffectId).Kind is EffectKind.Damage or EffectKind.Steal or EffectKind.FixedDamage)
-                return true;
-        }
-
-        return false;
-    }
-
-    private static double[] BestTurns(SpellLevel[] levels, double[] damages, ulong landing)
-    {
-        // The best damage for each number of AP, each spell that lands cast at most as its limits a turn and a target allow.
-        var best = new double[MostPoints + 1];
-
-        for (var index = 0; index < levels.Length; index++)
-        {
-            var level = levels[index];
-            var damage = damages[index];
-            var cost = Math.Max(1, (int)level.ApCost);
-
-            if (damage <= 0 || (landing & (1UL << index)) is 0)
-                continue;
-
-            var casts = MostCasts;
-
-            if (level.MaxCastPerTurn > 0)
-                casts = Math.Min(casts, level.MaxCastPerTurn);
-
-            if (level.MaxCastPerTarget > 0)
-                casts = Math.Min(casts, level.MaxCastPerTarget);
-
-            for (var cast = 0; cast < casts; cast++)
-            {
-                for (var points = MostPoints; points >= cost; points--)
-                    best[points] = Math.Max(best[points], best[points - cost] + damage);
-            }
-        }
-
-        return best;
-    }
-
-    private static int Signature(Combatant fighter)
-    {
-        // What a fighter's damage dealt and received reads: its characteristics but the shield, which blows take, and its states.
-        var hash = new HashCode();
-
-        foreach (var (id, value) in fighter.Characteristics)
-        {
-            if (id is not FightCharacteristic.Shield)
-                hash.Add((id, value));
-        }
-
-        foreach (var state in fighter.States)
-            hash.Add(state);
-
-        return hash.ToHashCode();
-    }
-
-    private static Combatant Without(Combatant fighter, ImaginedBuff buff)
-    {
-        if (buff.IsState)
-            return fighter with { States = fighter.States.Remove(buff.Change) };
-
-        return buff.Characteristic switch
-        {
-            ActionPoints => fighter with { ActionPoints = Math.Max(0, fighter.ActionPoints - buff.Change) },
-            MovementPoints => fighter with { MovementPoints = Math.Max(0, fighter.MovementPoints - buff.Change) },
-            _ => fighter with { Characteristics = fighter.Characteristics.SetItem(buff.Characteristic, EffectFormulas.ValueOf(fighter, buff.Characteristic) - buff.Change) },
-        };
     }
 
     private double Damage(in SpellLevel level, Combatant caster, Combatant target, Combatant[] pair)
