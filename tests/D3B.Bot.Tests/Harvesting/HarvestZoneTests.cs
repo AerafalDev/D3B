@@ -1,4 +1,6 @@
+using System.Collections.Immutable;
 using D3B.Bot.Activities;
+using D3B.Bot.Characters;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Tests.Runtime;
@@ -106,6 +108,98 @@ public sealed class HarvestZoneTests : IAsyncDisposable
 
         // What the bot saw there wins over the graphic: it held nothing.
         Assert.Empty(tour.Remaining(zone));
+    }
+
+    [Fact]
+    public void AGraphicThatOffersOnlyWhatTheCharactersLevelCannotUseForetellsNoResourceButIsNotKnownToOfferNone()
+    {
+        var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Chestnut, TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var graphics = new GraphicSkills();
+
+        // The tree's graphic offers the chestnut's skill alone, which asks level 20; the door's offers none a lumberjack uses.
+        graphics.Learn(TestPlay.TreeGfxId, [TestPlay.ChestnutSkillId]);
+        graphics.Learn(TestPlay.DoorGfxId, [WorldPathfinder.DoorSkillId]);
+
+        Assert.Equal(MapForecast.Probable, zone.Foresee(TestPlay.MapId, graphics));
+        Assert.Equal(MapForecast.Unknown, zone.Foresee(TestPlay.MapId, graphics, _ => 19));
+        Assert.Equal(MapForecast.Probable, zone.Foresee(TestPlay.MapId, graphics, _ => 20));
+
+        // A graphic known to offer nothing the zone uses stays without, whatever the level.
+        graphics.Learn(TestPlay.BushGfxId, [WorldPathfinder.DoorSkillId]);
+
+        Assert.Equal(MapForecast.Without, zone.Foresee(TestPlay.EastMapId, graphics, _ => 1));
+    }
+
+    [Fact]
+    public void ATourWeighsTheCharactersLevelAndALevelGainedBringsAMapBack()
+    {
+        var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId] });
+        var graphics = new GraphicSkills();
+        var tour = new HarvestTour(new HarvestSightings(), graphics);
+
+        // Measured on the owner's graphics (D417): graphic 682 of Astrub's houses offers a lumberjack's skill of level 90.
+        graphics.Learn(TestPlay.ChestGfxId, [TestPlay.ChestnutSkillId]);
+        graphics.Learn(TestPlay.TreeGfxId, [TestPlay.ChestnutSkillId]);
+        graphics.Learn(TestPlay.DoorGfxId, [WorldPathfinder.DoorSkillId]);
+        tour.Visit(TestPlay.NorthMapId);
+        tour.Visit(TestPlay.MapId);
+        tour.Visit(TestPlay.EastMapId);
+
+        Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
+
+        tour.Know(Lumberjack(19));
+
+        // The house and the tree of the map are the same graphic: nothing a lumberjack of 19 can cut, so no map is probable.
+        Assert.Empty(tour.Remaining(zone));
+        Assert.Equal(0, tour.Probable(zone));
+        Assert.Equal(ZoneMapState.Empty, tour.Maps(zone).Single(map => map.MapId == TestPlay.InsideMapId).State);
+
+        tour.Know(Lumberjack(20));
+
+        Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
+        Assert.Equal(ZoneMapState.Probable, tour.Maps(zone).Single(map => map.MapId == TestPlay.InsideMapId).State);
+
+        // A character whose professions the server has not described yet is not weighed.
+        tour.Know(new CharacterState { Key = TestPlay.Key, Name = "Character" });
+
+        Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
+    }
+
+    [Fact]
+    public void AMapSeenHoldingOnlyWhatTheLevelCannotUseComesAfterTheProbableOnesAndAnInteriorIsLeftOutUntilTheLevelIsGained()
+    {
+        var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Chestnut, TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var sightings = new HarvestSightings();
+        var tour = new HarvestTour(sightings, new GraphicSkills());
+
+        sightings.SeenElements(TestPlay.NorthMapId, [new SightedElement(1, TestPlay.ChestnutSkillId, TestPlay.Chestnut, true)], DateTimeOffset.UnixEpoch);
+        sightings.SeenElements(TestPlay.MapId, [new SightedElement(2, TestPlay.TreeSkillId, TestPlay.Ash, true)], DateTimeOffset.UnixEpoch);
+        sightings.Seen(TestPlay.EastMapId, [TestPlay.Ash], DateTimeOffset.UnixEpoch);
+        sightings.SeenElements(TestPlay.InsideMapId, [new SightedElement(3, TestPlay.ChestnutSkillId, TestPlay.Chestnut, true)], DateTimeOffset.UnixEpoch);
+
+        tour.Know(Lumberjack(1));
+
+        // The ash grows on a map and the chestnut, which asks level 20, on another: the first is gone to first, and the second, being
+        // outdoors, after it, as the server may offer it; the interior holding the chestnut alone is not entered.
+        Assert.Equal(new[] { TestPlay.MapId, TestPlay.EastMapId }.Order(), tour.Remaining(zone).Order());
+
+        tour.Visit(TestPlay.MapId);
+        tour.Visit(TestPlay.EastMapId);
+
+        Assert.Equal([TestPlay.NorthMapId], tour.Remaining(zone));
+
+        tour.Visit(TestPlay.NorthMapId);
+
+        Assert.Empty(tour.Remaining(zone));
+
+        tour.Know(Lumberjack(20));
+
+        Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
+    }
+
+    private static CharacterState Lumberjack(int level)
+    {
+        return new CharacterState { Key = TestPlay.Key, Name = "Character", Jobs = ImmutableSortedDictionary<int, CharacterJob>.Empty.Add(TestPlay.Lumberjack, new CharacterJob(TestPlay.Lumberjack, level, 0, 0, 0, [])) };
     }
 
     [Fact]

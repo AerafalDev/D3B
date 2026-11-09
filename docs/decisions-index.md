@@ -514,3 +514,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D416](decisions/d416-step-9-the-harvests-interiors.md#d416-the-harvests-tour-goes-into-an-interior-of-a-town-or-a-field-only-when-something-says-it-holds-a-resource) The harvest's tour goes into an interior of a town or a field only when something says it holds a resource (2026-11-09)
   - The interiors left out always, a setting "Go into the buildings", the journeys avoiding interiors.
+
+## Step 9, the harvest's tour and the levels (D417)
+
+- [D417](decisions/d417-step-9-the-harvests-levels.md#d417-the-harvests-tour-weighs-the-characters-level-a-graphic-that-offers-only-what-it-cannot-harvest-makes-no-map-probable) The harvest's tour weighs the character's level: a graphic that offers only what it cannot harvest makes no map probable (2026-11-09)
+  - An outdoor map left out for the level, the growing back weighed by the level, the levels given once when the tour is made.

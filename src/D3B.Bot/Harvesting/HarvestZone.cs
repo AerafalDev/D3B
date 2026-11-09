@@ -232,11 +232,13 @@ public sealed class HarvestZone
     /// <summary>Foretells what a map of the zone holds, from what the host learned of its elements' graphics (D138).</summary>
     /// <param name="mapId">The map.</param>
     /// <param name="graphics">What the host learned of the graphics.</param>
+    /// <param name="levelOf">The character's level in a profession; none when the level is not weighed, every skill then counting (D417).</param>
     /// <returns>
-    /// <see cref="MapForecast.Probable"/> when one of its graphics offers a skill the zone uses, <see cref="MapForecast.Without"/>
-    /// when every one is known and none does, a map without elements included, else <see cref="MapForecast.Unknown"/>.
+    /// <see cref="MapForecast.Probable"/> when one of its graphics offers a skill the zone uses, at the character's level, <see cref="MapForecast.Without"/>
+    /// when every one is known and none offers a skill the zone uses, a map without elements included, else <see cref="MapForecast.Unknown"/>:
+    /// a graphic that offers such a skill only above the character's level is not known to offer nothing, since a level gained brings it back.
     /// </returns>
-    public MapForecast Foresee(long mapId, GraphicSkills graphics)
+    public MapForecast Foresee(long mapId, GraphicSkills graphics, Func<int, int>? levelOf = null)
     {
         ArgumentNullException.ThrowIfNull(graphics);
 
@@ -249,11 +251,22 @@ public sealed class HarvestZone
         {
             if (!graphics.TryGet(gfxId, out var skills))
                 known = false;
-            else if (skills.Any(Targets.ContainsKey))
+            else if (skills.Any(skill => CanUse(skill, levelOf)))
                 return MapForecast.Probable;
+            else if (skills.Any(Targets.ContainsKey))
+                known = false;
         }
 
         return known ? MapForecast.Without : MapForecast.Unknown;
+    }
+
+    /// <summary>Tells whether a skill is one the zone uses, and the character may use at its level.</summary>
+    /// <param name="skillId">The skill.</param>
+    /// <param name="levelOf">The character's level in a profession; none when the level is not weighed.</param>
+    /// <returns>Whether it is.</returns>
+    public bool CanUse(int skillId, Func<int, int>? levelOf)
+    {
+        return Targets.TryGetValue(skillId, out var target) && (levelOf is null || levelOf(target.JobId) >= target.Level);
     }
 
     /// <summary>Gets the resources asked for that the zone's sub-areas list among their harvestables.</summary>
