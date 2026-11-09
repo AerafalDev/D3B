@@ -478,3 +478,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D406](decisions.md#d406-the-studio-opens-on-a-home-page-the-world-appears-when-a-route-or-a-zone-is-selected) The studio opens on a home page; the world appears when a route or a zone is selected (2026-11-09)
   - Opening on the last tab left, and a "recent" list kept in `app.json`: the first brings the world back at once, the second is a file to keep for what the file system says.
+
+## Step 9, the players' reports (D407)
+
+- [D407](decisions.md#d407-the-fight-ai-after-the-players-reports-a-refused-cast-is-weighed-anew-a-life-steal-is-no-longer-cast-for-a-heal-that-is-not-needed) The fight AI after the players' reports: a refused cast is weighed anew, a life steal is no longer cast for a heal that is not needed (2026-11-09)
+- [D408](decisions.md#d408-a-summon-is-a-last-resort-but-for-the-breeds-made-of-their-summons) A summon is a last resort, but for the breeds made of their summons (2026-11-09)
