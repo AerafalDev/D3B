@@ -37,15 +37,17 @@ public sealed class FightingModule : IModule
             .VisibleWhen(s => s.Mode is FightMode.Chosen);
         settings.Monsters(s => s.Excluded, FightTexts.Text("Excluded"))
             .Excluding()
-            .Help(FightTexts.Text("ExcludedHelp"));
-        settings.Number(s => s.LeastMonsters, FightTexts.Text("LeastMonsters"), 1, 8).Unit(FightTexts.Text("MonstersUnit"));
-        settings.Number(s => s.MostMonsters, FightTexts.Text("MostMonsters"), 1, 8).Unit(FightTexts.Text("MonstersUnit"));
+            .Help(FightTexts.Text("ExcludedHelp"))
+            .Advanced();
+        settings.Number(s => s.LeastMonsters, FightTexts.Text("LeastMonsters"), 1, 8).Unit(FightTexts.Text("MonstersUnit")).Advanced();
+        settings.Number(s => s.MostMonsters, FightTexts.Text("MostMonsters"), 1, 8).Unit(FightTexts.Text("MonstersUnit")).Advanced();
 
         settings.Section(FightTexts.Text("SectionWhere"));
         settings.Choice(s => s.Place, FightTexts.Text("Place"), place => FightTexts.Text($"Place{place}")).Help(FightTexts.Text("PlaceHelp"));
         settings.Number(s => s.Rotation, FightTexts.Text("Rotation"), 1, PlaceRotation.PoolSize)
             .Unit(FightTexts.Text("RotationUnit"))
             .Help(FightTexts.Text("RotationHelp"))
+            .Advanced()
             .VisibleWhen(s => s.Place is FightPlace.Automatic);
         settings.Area(s => s.Area, FightTexts.Text("Area"))
             .Help(FightTexts.Text("AreaHelp"))
@@ -58,10 +60,16 @@ public sealed class FightingModule : IModule
         settings.Zone(s => s.Zone, FightTexts.Text("Zone"))
             .Help(FightTexts.Text("ZoneHelp"))
             .VisibleWhen(s => s.Place is FightPlace.Zone);
-        settings.Flag(s => s.IsolatedMaps, FightTexts.Text("IsolatedMaps")).Help(FightTexts.Text("IsolatedMapsHelp"));
-        settings.Number(s => s.ZaapSaving, FightTexts.Text("ZaapSaving"), 1, 30).Unit(FightTexts.Text("ZaapSavingUnit"));
+        settings.Flag(s => s.IsolatedMaps, FightTexts.Text("IsolatedMaps")).Help(FightTexts.Text("IsolatedMapsHelp")).Advanced();
+        settings.Number(s => s.ZaapSaving, FightTexts.Text("ZaapSaving"), 1, 30).Unit(FightTexts.Text("ZaapSavingUnit")).Advanced();
 
-        settings.Section(FightTexts.Text("SectionUpkeep"));
+        settings.Section(FightTexts.Text("SectionBank"));
+        settings.Flag(s => s.OwnBanking, FightTexts.Text("OwnBanking")).Help(FightTexts.Text("OwnBankingHelp")).Advanced();
+        settings.Number(s => s.FullAt, FightTexts.Text("FullAt"), 50, 100).Percent().Advanced().VisibleWhen(s => s.OwnBanking);
+        settings.Flag(s => s.UseZaaps, FightTexts.Text("UseZaaps")).Help(FightTexts.Text("UseZaapsHelp")).Advanced().VisibleWhen(s => s.OwnBanking);
+        settings.Choice(s => s.Deposit, FightTexts.Text("Deposit"), deposit => FightTexts.Text($"Deposit{deposit}"));
+
+        settings.Section(FightTexts.Text("SectionCare"));
         settings.Flag(s => s.Heal, FightTexts.Text("Heal"));
         settings.Number(s => s.HealBelow, FightTexts.Text("HealBelow"), 10, 95)
             .Percent()
@@ -70,17 +78,12 @@ public sealed class FightingModule : IModule
             .Ordered()
             .OfItemTypes([.. Food.Types])
             .Help(FightTexts.Text("FoodHelp"))
+            .Advanced()
             .VisibleWhen(s => s.Heal);
 
-        settings.Section(FightTexts.Text("SectionBank"));
-        settings.Flag(s => s.OwnBanking, FightTexts.Text("OwnBanking")).Help(FightTexts.Text("OwnBankingHelp"));
-        settings.Number(s => s.FullAt, FightTexts.Text("FullAt"), 50, 100).Percent().VisibleWhen(s => s.OwnBanking);
-        settings.Flag(s => s.UseZaaps, FightTexts.Text("UseZaaps")).Help(FightTexts.Text("UseZaapsHelp")).VisibleWhen(s => s.OwnBanking);
-        settings.Choice(s => s.Deposit, FightTexts.Text("Deposit"), deposit => FightTexts.Text($"Deposit{deposit}"));
-
-        settings.Section(FightTexts.Text("SectionAfter"));
         settings.Choice(s => s.AfterLostFight, FightTexts.Text("AfterLostFight"), after => FightTexts.Text($"AfterLostFight{after}"))
-            .Help(FightTexts.Text("AfterLostFightHelp"));
+            .Help(FightTexts.Text("AfterLostFightHelp"))
+            .Advanced();
 
         settings.Rule(s => s.Mode is not FightMode.Chosen || ChosenMonsters.Any(s), FightTexts.Text("RuleMonsters"));
         settings.Rule(s => s.Place is not FightPlace.Chosen || s.Area is not null || s.SubAreas.Count > 0, FightTexts.Text("RuleWhere"));

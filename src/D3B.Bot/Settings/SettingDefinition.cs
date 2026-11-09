@@ -39,6 +39,9 @@ public sealed class SettingDefinition
     /// <summary>Gets whether the setting shows only when a condition of the activity's holds.</summary>
     public bool IsConditional => _visibleWhen is not null;
 
+    /// <summary>Gets whether the setting is a rare one, which the app folds under its category's "Advanced" and counts when it differs from the model (D415).</summary>
+    public bool IsAdvanced { get; private set; }
+
     /// <summary>Gets the setting's name, as the app shows it.</summary>
     public LocalizedText Name { get; }
 
@@ -331,6 +334,13 @@ public sealed class SettingDefinition
             return [.. by.GetValues(settings).Cast<int>()];
 
         return by.Kind is SettingKind.Monster ? [] : [.. game.Options(SettingKind.Resource).Select(resource => resource.Id)];
+    }
+
+    internal void SetAdvanced()
+    {
+        ThrowIfFrozen();
+
+        IsAdvanced = true;
     }
 
     internal void SetPercent()

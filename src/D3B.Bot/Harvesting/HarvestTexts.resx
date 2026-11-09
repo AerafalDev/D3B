@@ -45,10 +45,10 @@
     <value>Harvesting</value>
   </data>
   <data name="SectionWhat" xml:space="preserve">
-    <value>Harvest</value>
+    <value>What</value>
   </data>
   <data name="SectionWhere" xml:space="preserve">
-    <value>Place</value>
+    <value>Where</value>
   </data>
   <data name="SectionBank" xml:space="preserve">
     <value>Bank</value>
@@ -224,9 +224,6 @@
   <data name="FigureIsolatedLastMany" xml:space="preserve">
     <value>isolated maps, gone through last</value>
   </data>
-  <data name="SectionFight" xml:space="preserve">
-    <value>Fights</value>
-  </data>
   <data name="AfterFight" xml:space="preserve">
     <value>After a fight</value>
   </data>
@@ -287,8 +284,8 @@
   <data name="DepositToHelp" xml:space="preserve">
     <value>What the guild's chest refuses goes to its own.</value>
   </data>
-  <data name="SectionUpkeep" xml:space="preserve">
-    <value>Upkeep</value>
+  <data name="SectionCare" xml:space="preserve">
+    <value>Care and fights</value>
   </data>
   <data name="OpenBags" xml:space="preserve">
     <value>Open the resource bags</value>

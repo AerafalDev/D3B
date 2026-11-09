@@ -29,6 +29,15 @@ public sealed class SettingBuilder<TSettings>
         return this;
     }
 
+    /// <summary>Marks the setting as a rare one: the app folds it under its category's "Advanced", where a changed one is counted, never hidden (D415).</summary>
+    /// <returns>This builder.</returns>
+    public SettingBuilder<TSettings> Advanced()
+    {
+        _setting.SetAdvanced();
+
+        return this;
+    }
+
     /// <summary>Asks for a value: a text not blank, a value of the game chosen, a list not empty.</summary>
     /// <returns>This builder.</returns>
     /// <exception cref="InvalidOperationException">The setting is a flag or a number, which always has a value.</exception>
