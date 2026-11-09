@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 using D3B.Bot.Activities;
-using D3B.Bot.Harvesting;
+using D3B.Bot.Inventory;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
 using D3B.Core.Modules;
@@ -65,7 +65,7 @@ public sealed class FightingModule : IModule
             .VisibleWhen(s => s.Heal);
         settings.Items(s => s.Food, FightTexts.Text("Food"))
             .Ordered()
-            .OfItemTypes([.. HarvestActivity.FoodTypes])
+            .OfItemTypes([.. Food.Types])
             .Help(FightTexts.Text("FoodHelp"))
             .VisibleWhen(s => s.Heal);
 

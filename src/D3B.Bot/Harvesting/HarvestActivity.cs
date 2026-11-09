@@ -5,7 +5,6 @@ using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Bot.Interactives;
-using D3B.Bot.Inventory;
 using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
@@ -44,17 +43,8 @@ namespace D3B.Bot.Harvesting;
 public sealed class HarvestActivity : BotActivity
 {
     private const int MostLostInARow = 3;
-
-    // Tenths of a second a life point takes, when the server did not say: as measured in every capture (D153).
-    private const int RegainPoll = 5;
-
-    private static readonly TimeSpan _regainStep = TimeSpan.FromSeconds(10);
-
     private const int MostFailedJourneys = 3;
     private const int MostBankings = 3;
-
-    // Item type 100, "Sac de ressources": 73 items of the pack, opened by the same request as food (D148, D153).
-    private const int BagType = 100;
 
     private static readonly TimeSpan _busyDelay = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan _regrowthDelay = TimeSpan.FromSeconds(60);
@@ -76,33 +66,20 @@ public sealed class HarvestActivity : BotActivity
     private readonly Random _random;
     private readonly BankingPreferences _banking;
     private readonly HarvestBalance _balance;
-    private readonly Dictionary<int, long> _harvested = [];
+    private readonly HarvestUpkeep _upkeep;
+    private readonly HarvestReporter _reporter;
     private readonly HashSet<int> _skipped = [];
-    private readonly Dictionary<FightKind, int> _fights = [];
-    private readonly HashSet<int> _unusable = [];
     private List<HarvestRotationZone> _rotation = [];
     private HarvestRotationZone? _current;
     private FrozenSet<int>? _deposited;
     private long? _skippedOn;
     private int _failedJourneys;
-    private int _banks;
-    private ActivityReport? _report;
-    private ActivityStatistics? _statistics;
-    private DateTimeOffset? _startedAt;
-    private ImmutableSortedDictionary<int, CharacterJob>? _startJobs;
     private BotContext? _context;
     private int? _lastTarget;
-    private bool _healing;
-    private int _bags;
-    private int _eaten;
-    private string? _chestWarning;
     private FightKind? _fight;
     private int? _fightItem;
     private int _lostInARow;
     private bool _regaining;
-
-    /// <summary>Gets the item types offered as food: breads, measured to heal, and drinks, fish, meat, sweets and potions (D148, D153).</summary>
-    public static IReadOnlyList<int> FoodTypes { get; } = [12, 33, 37, 42, 49, 69, 79, 339];
 
     private HarvestZone? Zone => _current?.Zone;
 
@@ -112,10 +89,10 @@ public sealed class HarvestActivity : BotActivity
     public override string Name => "Harvesting";
 
     /// <inheritdoc/>
-    public override ActivityReport? Report => Volatile.Read(ref _report);
+    public override ActivityReport? Report => _reporter.Report;
 
     /// <inheritdoc/>
-    public override ActivityStatistics? Statistics => Volatile.Read(ref _statistics);
+    public override ActivityStatistics? Statistics => _reporter.Statistics;
 
     /// <inheritdoc/>
     public override ImmutableArray<ActivityWatch> Watches => _settings.Heal
@@ -166,7 +143,8 @@ public sealed class HarvestActivity : BotActivity
         _random = random ?? Random.Shared;
         _banking = banking ?? new BankingPreferences();
         _balance = new HarvestBalance(settings.Jobs);
-        _report = new ActivityReport { Doing = GameText.Of(HarvestTexts.Text("DoingStart")) };
+        _upkeep = new HarvestUpkeep(settings, tables, (state, doing) => Publish(state, doing));
+        _reporter = new HarvestReporter(settings, _upkeep);
     }
 
     private static int LevelOf(CharacterState state, int jobId)
@@ -195,8 +173,7 @@ public sealed class HarvestActivity : BotActivity
         ArgumentNullException.ThrowIfNull(context);
 
         _context = context;
-        _startedAt ??= context.Time.GetUtcNow();
-        _startJobs ??= context.State.Jobs;
+        _reporter.Begin(context);
 
         var state = context.State;
 
@@ -210,7 +187,7 @@ public sealed class HarvestActivity : BotActivity
         var current = CurrentOf(context);
         var zone = current.Zone;
 
-        if (await UpkeepAsync(context, cancellationToken).ConfigureAwait(false))
+        if (await _upkeep.UpkeepAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
 
         if (zone.Maps.ContainsKey(mapId))
@@ -255,7 +232,7 @@ public sealed class HarvestActivity : BotActivity
             switch (outcome)
             {
                 case BankOutcome.Done:
-                    _banks++;
+                    _reporter.Banked();
 
                     // Measured: what the settings leave in the inventory may weigh more than the share the character banks at;
                     // the activity says so, rather than go back to the bank at every step.
@@ -289,7 +266,7 @@ public sealed class HarvestActivity : BotActivity
 
             _fight = kind;
             _fightItem = kind is FightKind.Protector ? _lastTarget : null;
-            _fights[kind] = _fights.GetValueOrDefault(kind) + 1;
+            _reporter.Fought(kind);
         }
 
         var key = reason switch
@@ -300,14 +277,8 @@ public sealed class HarvestActivity : BotActivity
             _ => null,
         };
 
-        if (key is not null && Report is { } report)
-        {
-            Tally();
-
-            var counts = Zone is { } zone ? CountsOf(zone) : report.Counts;
-
-            Volatile.Write(ref _report, report with { Doing = GameText.Of(HarvestTexts.Text(key)), Counts = counts });
-        }
+        if (key is not null)
+            _reporter.Interrupted(Zone, GameText.Of(HarvestTexts.Text(key)));
 
         if (reason is not Interruption.Fight)
             return InterruptionResponse.Resume;
@@ -357,7 +328,7 @@ public sealed class HarvestActivity : BotActivity
         await Recovery.SettleAsync(context, cancellationToken).ConfigureAwait(false);
 
         if (_regaining)
-            await RegainAsync(context, cancellationToken).ConfigureAwait(false);
+            await _upkeep.RegainAsync(context, cancellationToken).ConfigureAwait(false);
 
         _regaining = false;
     }
@@ -374,116 +345,12 @@ public sealed class HarvestActivity : BotActivity
         };
     }
 
-    private async Task RegainAsync(BotContext context, CancellationToken cancellationToken)
-    {
-        // Food the profile carries heals at the next step (D148); else the life regenerates, a point each interval (D153).
-        var state = context.State;
-
-        if (_settings.Heal && Food.StackToEat(state, _settings.Food, _tables.Items, _unusable) is not null)
-            return;
-
-        for (var life = context.Life; life is { } now && state.MaxLife is { } most && now * 100L < (long)_settings.HealBelow * most; life = context.Life)
-        {
-            Publish(state, GameText.Of(HarvestTexts.Text("DoingRegain"), GameTextValue.Number(now), GameTextValue.Number(most)));
-
-            var interval = TimeSpan.FromMilliseconds(100 * (state.LifeRegenInterval ?? RegainPoll));
-            var missing = (((long)_settings.HealBelow * most) + 99) / 100 - now;
-
-            await Task.Delay(TimeSpan.FromTicks(Math.Min(interval.Ticks * Math.Max(1, missing), _regainStep.Ticks)), context.Time, cancellationToken).ConfigureAwait(false);
-            state = context.State;
-        }
-    }
-
     private ActivityException StillFull(CharacterState state)
     {
         var key = _settings.Deposit is HarvestDeposit.Harvest ? "FailStillFullHarvest" : "FailStillFullAll";
         var reason = GameText.Of(HarvestTexts.Text(key), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight), GameTextValue.Number(FullAt));
 
         return new ActivityException($"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.", reason);
-    }
-
-    private async Task<bool> UpkeepAsync(BotContext context, CancellationToken cancellationToken)
-    {
-        var state = context.State;
-
-        if (_settings.OpenBags && StackOf(state, stack => _tables.Items.TryGetItem(stack.ItemId, out var item) && item.TypeId == BagType) is { } bag)
-        {
-            Publish(state, GameText.Of(HarvestTexts.Text("DoingOpenBag"), GameTextValue.Item(bag.ItemId)));
-
-            if (await context.UseObjectAsync(bag.Uid, cancellationToken).ConfigureAwait(false) is ObjectUseOutcome.Used)
-                _bags++;
-            else
-                _unusable.Add(bag.Uid);
-
-            // Measured: used one after another, the objects went faster than the client showed them.
-            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
-
-            return true;
-        }
-
-        if (!_settings.Heal || context.Life is not { } life || state.MaxLife is not { } most || most <= 0)
-            return false;
-
-        // Once under the share, the character eats until its life is whole (D148), or regenerates up to the share (9g5).
-        if (life >= most || (!_healing && life * 100L >= (long)_settings.HealBelow * most))
-        {
-            _healing = false;
-
-            return false;
-        }
-
-        _healing = true;
-
-        if (Food.StackToEat(state, _settings.Food, _tables.Items, _unusable) is { } food)
-        {
-            Publish(state, GameText.Of(HarvestTexts.Text("DoingEat"), GameTextValue.Item(food.ItemId)));
-
-            // In one request: measured, the server eats only as much of the stack as the life lacks (D156).
-            var before = food.Quantity;
-
-            switch (await context.UseObjectsAsync(food.Uid, food.Quantity, cancellationToken).ConfigureAwait(false))
-            {
-                case ObjectUseOutcome.Used:
-                    _eaten += Math.Max(1, before - (context.State.Inventory.TryGetValue(food.Uid, out var left) ? left.Quantity : 0));
-                    break;
-                case ObjectUseOutcome.Refused:
-                    // Measured: the server refuses food at full life, which it knows better than the reckoning.
-                    _healing = false;
-                    break;
-                default:
-                    _unusable.Add(food.Uid);
-                    break;
-            }
-
-            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
-
-            return true;
-        }
-
-        // Nothing left to eat: measured, the life regenerates by itself a point each interval the server gave (D153). The
-        // owner's choice (9g5): nearly whole, the character waited its whole life back without looking at it again; it waits
-        // for the share it heals under alone, as after a lost fight (D198), looking again at least each 10 seconds.
-        var share = (((long)_settings.HealBelow * most) + 99) / 100;
-
-        if (life >= share)
-        {
-            _healing = false;
-
-            return false;
-        }
-
-        var point = TimeSpan.FromMilliseconds(100 * (state.LifeRegenInterval ?? RegainPoll));
-        var regenerating = TimeSpan.FromTicks(point.Ticks * (share - life));
-
-        Publish(state, GameText.Of(HarvestTexts.Text("DoingRegenerate"), GameTextValue.Number((long)Math.Ceiling(regenerating.TotalSeconds))));
-        await context.WaitUntilAsync(_ => false, regenerating < _regainStep ? regenerating : _regainStep, cancellationToken).ConfigureAwait(false);
-
-        return true;
-    }
-
-    private InventoryItem? StackOf(CharacterState state, Func<InventoryItem, bool> which)
-    {
-        return state.Inventory.Values.FirstOrDefault(stack => !stack.IsWorn && !_unusable.Contains(stack.Uid) && which(stack));
     }
 
     private async Task<bool> GuildChestAsync(BotContext context, FrozenSet<int> deposited, CancellationToken cancellationToken)
@@ -493,8 +360,8 @@ public sealed class HarvestActivity : BotActivity
 
         if (outcome is BankOutcome.Done)
         {
-            _banks++;
-            _chestWarning = null;
+            _reporter.Banked();
+            _reporter.ChestWarning = null;
 
             // Measured: what the harvest does not bring may weigh above the share; the character's own chest takes what is left.
             if (!IsFull(context.State))
@@ -507,7 +374,7 @@ public sealed class HarvestActivity : BotActivity
         else
         {
             // What the chest refused, or all when none was reached, goes to the character's own chest, and the card says so (D147).
-            _chestWarning = outcome is BankOutcome.Refused ? "WarningChestRefused" : "WarningChestNone";
+            _reporter.ChestWarning = outcome is BankOutcome.Refused ? "WarningChestRefused" : "WarningChestNone";
         }
 
         return false;
@@ -661,7 +528,7 @@ public sealed class HarvestActivity : BotActivity
             // The objects come within milliseconds of the harvest's end, in no set order (D75).
             await context.WaitUntilAsync(after => Carried(after, target.ItemId) != before, _objectsDelay, cancellationToken).ConfigureAwait(false);
 
-            _harvested[target.ItemId] = _harvested.GetValueOrDefault(target.ItemId) + Math.Max(0, Carried(context.State, target.ItemId) - before);
+            _reporter.Harvested(target.ItemId, Math.Max(0, Carried(context.State, target.ItemId) - before));
             _balance.Record(target.JobId);
             _current?.Tour.Harvested();
         }
@@ -837,139 +704,6 @@ public sealed class HarvestActivity : BotActivity
 
     private void Publish(CharacterState state, GameText doing, int? target = null, long? next = null)
     {
-        if (_current is not { } current)
-        {
-            Volatile.Write(ref _report, new ActivityReport { Doing = doing });
-
-            return;
-        }
-
-        var zone = current.Zone;
-        var tour = current.Tour;
-
-        Tally();
-
-        var total = tour.Total(zone);
-        var growing = tour.Growing(zone);
-
-        // The place the activity chose names itself first, the 5th value (D166).
-        var automatic = _settings.Place is HarvestPlace.Automatic && zone.SubAreas.Count > 0;
-        var values = new[]
-        {
-            GameTextValue.Number(tour.Round),
-            GameTextValue.Number(Math.Min(tour.Visited + 1, total)),
-            GameTextValue.Number(total),
-            GameTextValue.Number(growing),
-            GameTextValue.SubArea(automatic ? zone.SubAreas[0] : 0),
-        };
-        var key = (growing > 0, automatic) switch
-        {
-            (true, true) => "ProgressAtGrowing",
-            (true, false) => "ProgressGrowing",
-            (false, true) => "ProgressAt",
-            _ => "Progress",
-        };
-        var progress = new ActivityProgress(GameText.Of(HarvestTexts.Text(key), values), tour.Visited, total);
-
-        Volatile.Write(ref _report, new ActivityReport
-        {
-            Doing = doing,
-            Progress = progress,
-            Counts = CountsOf(zone),
-            Warnings = WarningsOf(zone, state),
-            Focus = new ActivityFocus
-            {
-                MapId = state.MapId,
-                TargetElementId = target,
-                WantedElementIds = [.. state.Elements.Values.Where(element => element.EnabledSkills.Any(skill => zone.Targets.ContainsKey(skill.SkillId))).Select(element => element.ElementId)],
-                NextMapId = next,
-                Zone = tour.Maps(zone),
-            },
-        });
-    }
-
-    private void Tally()
-    {
-        Volatile.Write(ref _statistics, new ActivityStatistics
-        {
-            Items = _harvested.ToImmutableDictionary(),
-            Banks = _banks,
-            Fights = _fights.ToImmutableDictionary(),
-        });
-    }
-
-    private ImmutableArray<ActivityCount> CountsOf(HarvestZone zone)
-    {
-        List<int> items = _settings.Mode is HarvestMode.ByProfession
-            ? [.. _harvested.Keys.Order()]
-            : [.. _settings.Resources.Where(zone.Wanted.Contains).Concat(_harvested.Keys.Where(item => !_settings.Resources.Contains(item))).Distinct()];
-
-        // A rate over less than a minute says little: shown once the activity ran that long (D146).
-        var hours = _context is { } context && _startedAt is { } started ? (context.Time.GetUtcNow() - started).TotalHours : 0;
-        var counts = items.Select(item => new ActivityCount(
-            hours >= 1.0 / 60
-                ? GameText.Of(HarvestTexts.Text("CountItemRate"), GameTextValue.Item(item), GameTextValue.Number(_harvested.GetValueOrDefault(item)), GameTextValue.Number((long)Math.Round(_harvested.GetValueOrDefault(item) / hours)))
-                : GameText.Of(HarvestTexts.Text("CountItem"), GameTextValue.Item(item), GameTextValue.Number(_harvested.GetValueOrDefault(item))),
-            item)).ToList();
-
-        if (_context?.State is { } now && _startJobs is { } before)
-        {
-            foreach (var job in now.Jobs.Values)
-            {
-                var gained = job.Experience - (before.TryGetValue(job.JobId, out var then) ? then.Experience : job.Experience);
-
-                if (gained > 0)
-                    counts.Add(new ActivityCount(GameText.Of(HarvestTexts.Text("CountExperience"), GameTextValue.Job(job.JobId), GameTextValue.Number(gained))));
-            }
-        }
-
-        if (_banks > 0)
-            counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountBanksOne"), HarvestTexts.Text("CountBanksMany"), _banks)));
-
-        if (_bags > 0)
-            counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountBagsOne"), HarvestTexts.Text("CountBagsMany"), _bags)));
-
-        if (_eaten > 0)
-            counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountEatenOne"), HarvestTexts.Text("CountEatenMany"), _eaten)));
-
-        var fights = _fights.Values.Sum();
-
-        if (fights > 0)
-            counts.Add(new ActivityCount(GameText.Counted(HarvestTexts.Text("CountFightsOne"), HarvestTexts.Text("CountFightsMany"), fights, GameTextValue.Number(_fights.GetValueOrDefault(FightKind.Protector)))));
-
-        return [.. counts];
-    }
-
-    private ImmutableArray<GameText> WarningsOf(HarvestZone zone, CharacterState state)
-    {
-        var warnings = new List<GameText>();
-
-        if (_chestWarning is { } chest)
-            warnings.Add(GameText.Of(HarvestTexts.Text(chest)));
-
-        if (_settings.Mode is HarvestMode.ByProfession)
-            return [.. warnings];
-
-        foreach (var item in _settings.Resources)
-        {
-            var lowest = zone.Targets.Values.Where(target => target.ItemId == item).OrderBy(target => target.Level).FirstOrDefault();
-
-            if (lowest.SkillId is 0)
-                continue;
-
-            var level = LevelOf(state, lowest.JobId);
-
-            if (level < lowest.Level)
-            {
-                warnings.Add(GameText.Of(
-                    HarvestTexts.Text("WarningLevel"),
-                    GameTextValue.Item(item),
-                    GameTextValue.Job(lowest.JobId),
-                    GameTextValue.Number(lowest.Level),
-                    GameTextValue.Number(level)));
-            }
-        }
-
-        return [.. warnings];
+        _reporter.Publish(_current, state, doing, target, next);
     }
 }

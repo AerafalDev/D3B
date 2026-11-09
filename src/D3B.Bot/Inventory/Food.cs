@@ -6,6 +6,9 @@ namespace D3B.Bot.Inventory;
 /// <summary>Which stack of the inventory a character eats to heal (D148, D256).</summary>
 public static class Food
 {
+    /// <summary>Gets the item types offered as food: breads, measured to heal, and drinks, fish, meat, sweets and potions (D148, D153).</summary>
+    public static IReadOnlyList<int> Types { get; } = [12, 33, 37, 42, 49, 69, 79, 339];
+
     /// <summary>Finds the stack to eat: the food a profile chose, else what the inventory holds that only heals.</summary>
     /// <param name="state">The character's state.</param>
     /// <param name="chosen">The food the profile chose, by item, the first carried eaten first.</param>
