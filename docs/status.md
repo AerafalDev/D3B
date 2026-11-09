@@ -56,6 +56,9 @@ As of 2026-11-09, after D408 (the fight AI after the players' reports, D407, sum
 0. **A large refactoring and tidy-up session**, asked by the owner: the code's remaining debt (below), the architecture and
    the docs (`decisions.md` is about 700 KB; `status.md`, `architecture.md` and `client.md` are long). It is a session of
    its own, planned with the owner before it starts; no step of the roadmap is begun in it.
+0. **Bug reports with the player's capture** (D409 to D411), designed, not begun: the game connection recorded by default, a
+   `.d3breport` bundle with the capture cleaned at the export, sent by a private Discord webhook; BR1 to BR4 in the roadmap, BR1
+   first. Nothing of it exists in code yet.
 1. **Session 7r3, the Sequencer** (D395, D396, D397): a route's steps set in a ruler of steps with a track a kind of action, a clip
    drawn across the steps it covers, derived from the anchors (`RouteAnchor.Actions` and the file unchanged), the palette in place
    of the dialog, several steps selected at once with the same fields set for all, copy; recording in the toolbar waits for the
