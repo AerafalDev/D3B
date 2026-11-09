@@ -10,6 +10,7 @@ using D3B.App.ViewModels.AppSettings;
 using D3B.App.ViewModels.Assets;
 using D3B.App.ViewModels.Bottom;
 using D3B.App.ViewModels.Characters;
+using D3B.App.ViewModels.Home;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
 using D3B.App.ViewModels.Properties;
@@ -37,7 +38,7 @@ namespace D3B.App.ViewModels;
 /// </remarks>
 internal sealed partial class MainViewModel : ObservableObject
 {
-    private const string WelcomeTab = "welcome";
+    private const string HomeTab = "home";
     private const string ProfileTab = "profile:";
     private const string WorldTab = "world";
     private const string SequenceTab = "sequence:";
@@ -70,7 +71,10 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets what is selected in the world, which the viewport, the Outliner and the Details panel share (D397).</summary>
     public WorldSelection Selection { get; } = new();
 
-    /// <summary>Gets the world's viewport, the studio's centre (D397).</summary>
+    /// <summary>Gets the home page, the first tab: quick actions, the characters and the assets changed last (D406).</summary>
+    public HomeViewModel Home { get; }
+
+    /// <summary>Gets the world's viewport, shown once a route or a zone is selected (D397, D406).</summary>
     public WorldViewportViewModel World { get; }
 
     /// <summary>Gets the Outliner: what the world holds, each with an eye (D397).</summary>
@@ -194,7 +198,7 @@ internal sealed partial class MainViewModel : ObservableObject
     public bool IsNotRunning => !IsRunning;
 
     /// <summary>Gets the app's version and the client build it ships, under the welcome's logo.</summary>
-    public string VersionText => _localizer.Format("WelcomeVersion", Updates.Version, Updates.ClientVersion);
+    public string VersionText => _localizer.Format("HomeVersion", Updates.Version, Updates.ClientVersion);
 
     // The world's tab undoes what the route or the zone selected in it does: its map is theirs (D397).
     private IUndoable? Undoable => Editor.Selected?.Content switch
@@ -267,10 +271,18 @@ internal sealed partial class MainViewModel : ObservableObject
         ClientText = localizer.Format("StatusClient", Updates.ClientVersion);
         World = new WorldViewportViewModel(localizer, Routes, Zones, Selection, () => Bots.Items.Select(bot => new WorldCharacterSnapshot(bot.Bot.Key, bot.Name, bot.Initials, bot.PortraitColor, bot.Bot.State.MapId, bot.IsPlaying || bot.IsFighting)), () => RunBlock.IsPlaying ? RunBlock.Name : null);
         Outliner = new OutlinerViewModel(localizer, Selection, World, Characters, Routes, Zones) { Show = ShowWorld };
+        Home = new HomeViewModel(localizer, Characters, () => _host.Services?.GetService<AssetLibrary>(), OpenAsset)
+        {
+            ProfileRequested = NewProfile,
+            RouteRequested = () => Routes.CreateAsync(""),
+            ZoneRequested = () => Zones.CreateAsync(""),
+            SettingsRequested = ShowSettings,
+            FolderRequested = OpenProjectFolder,
+        };
         Selection.Changed += OnSelectionChanged;
         World.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
         Editor.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
-        ShowWorld();
+        ShowHome();
     }
 
     private static IEnumerable<(string Key, SettingsSection Section)> SettingsFound()
@@ -329,6 +341,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Characters.Refresh(services);
         RunBlock.Refresh();
         Outliner.Refresh();
+        Home.Refresh();
         Properties.Refresh(services);
         OnlineText = _localizer.Format("CharactersOnline", RunBlock.Online.Count);
         IsSaved = !Profiles.IsAnyDirty && !Routes.IsAnyDirty && !Zones.IsAnyDirty && !Sequences.IsAnyDirty;
@@ -374,18 +387,18 @@ internal sealed partial class MainViewModel : ObservableObject
         FocusAssets?.Invoke();
     }
 
-    /// <summary>Shows the world's tab, the studio's centre: opened with the studio and never closed (D397).</summary>
+    /// <summary>Shows the world's tab: opened when a route or a zone is selected, not with the studio, and closed like any tab (D397, D406).</summary>
     [RelayCommand]
     public void ShowWorld()
     {
-        Editor.Open(WorldTab, () => new EditorTab(WorldTab, () => _localizer["TabWorld"], "General.Language", World, needsHost: true) { IsPinned = true });
+        Editor.Open(WorldTab, () => new EditorTab(WorldTab, () => _localizer["TabWorld"], "General.Language", World, needsHost: true));
     }
 
-    /// <summary>Shows the welcome's tab.</summary>
+    /// <summary>Shows the home page, the first tab, opened with the studio and never closed (D406).</summary>
     [RelayCommand]
-    public void ShowWelcome()
+    public void ShowHome()
     {
-        Editor.Open(WelcomeTab, () => new EditorTab(WelcomeTab, () => _localizer["Welcome"], null, this, needsHost: false));
+        Editor.Open(HomeTab, () => new EditorTab(HomeTab, () => _localizer["Home"], null, this, needsHost: false) { IsPinned = true });
     }
 
     /// <summary>Opens a character's tab: its map live and what it does (D325).</summary>

@@ -473,3 +473,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## Banking settings (D405)
 
 - [D405](decisions.md#d405-banking-one-general-share-of-pods-and-zaap-rule-a-profiles-own-on-request-and-a-journey-that-outlives-a-refused-zaap) Banking: one general share of pods and zaap rule, a profile's own on request, and a journey that outlives a refused zaap (2026-11-09)
+
+## The home page (D406)
+
+- [D406](decisions.md#d406-the-studio-opens-on-a-home-page-the-world-appears-when-a-route-or-a-zone-is-selected) The studio opens on a home page; the world appears when a route or a zone is selected (2026-11-09)
+  - Opening on the last tab left, and a "recent" list kept in `app.json`: the first brings the world back at once, the second is a file to keep for what the file system says.

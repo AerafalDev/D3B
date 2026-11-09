@@ -5,7 +5,7 @@ owed. The reasons are in [decisions.md](decisions.md), found through [decisions-
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D398 (D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D406 (the home page; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -17,7 +17,7 @@ As of 2026-11-09, after D398 (D394, session 7d4, merged into 7r2's branch). App 
   sub-areas in turn (D391, D392); fights are played by one AI for every breed (D244), with the rules and effects of a fight
   measured on the owner's captures.
 - **The desktop app as a studio** (step 7, up to 7d4 and 7r2): dark, docked, seen as a game engine (D397: the world's map is the
-  centre, with the characters, routes and zones on it, an Outliner and a Details panel), the project's assets in files,
+  centre once a route or a zone is selected, with the characters, routes and zones on it, an Outliner and a Details panel; the studio opens on a home page, D406), the project's assets in files,
   behaviors and profiles as variants, the world's map drawn from the client's images, routes with their actions, a profile
   playing a list of routes and steps made in the app (D386), zones painted on the same map (D394), Undo and Redo in the route, the
   list of steps and the profile editors, and rows dragged or moved by the keys (D394).
@@ -32,6 +32,7 @@ As of 2026-11-09, after D398 (D394, session 7d4, merged into 7r2's branch). App 
 
 - The routes' actions that talk to the game and the profiles playing a list of steps (7d3c, 7d3d): tried on the test game
   only; a real client with the owner is to do.
+- The home page (D406) is tested on view models and a headless window, not yet seen by the owner in the app: its look and whether the six recent assets and the characters are what they expect.
 - 7d4's editors (undo, dragging, the zones' tools) are tested on view models and headless windows, not yet by the owner's hand
   in the app: how a drag feels, the focus after a move by the keys, the zones painted at several zooms.
 - The owner's reports from game answered since 2026-11-06 (D387 to D392): the hunt attacking every group, the tour leaving
