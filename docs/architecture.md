@@ -200,6 +200,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
   app. Banking waits the client's display time, half a second measured, after the banker's question and after the bank
   opens, so that the client shows its windows before D3B closes them (D132, D151).
+  Its card and figures are `HarvestReporter`'s, and its bags, food and wait for life `HarvestUpkeep`'s; the food item types are `Food.Types` (D399).
 - **Harvesting, grown in 6c**: a resource of `Base`, such as a well's water, is asked for as any other, without a level,
   and placed by the graphics learned (`GameReferences.IsBase`, `PlacesOf`; `GraphicPlaces`, an index of every map's
   graphics built once, D150); a sub-area's maps reached only far round from its main part are isolated and left out
@@ -869,6 +870,7 @@ The target:
 - **The sessions** (D306, D319): 7b the model and run time, 7c the shell's design, 7c2 to 7c4 its code, 7d routes and
   zones, 7e and 7e2 the canvas, 7f the nodes and plannings, 7g debugging, 7h fight preferences, 7i sharing; profiles,
   presets and runs dropped at 7b (D304).
+    Its texts (`RouteTexts`), the scene its map draws (`RouteSceneBuilder`), its step rows (`RouteStepRows`) and the forms of a step's actions (`RouteActionForms`) are made apart (D399).
 
 ## Engine
 

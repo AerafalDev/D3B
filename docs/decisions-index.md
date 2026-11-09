@@ -484,6 +484,12 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D407](decisions.md#d407-the-fight-ai-after-the-players-reports-a-refused-cast-is-weighed-anew-a-life-steal-is-no-longer-cast-for-a-heal-that-is-not-needed) The fight AI after the players' reports: a refused cast is weighed anew, a life steal is no longer cast for a heal that is not needed (2026-11-09)
 - [D408](decisions.md#d408-a-summon-is-a-last-resort-but-for-the-breeds-made-of-their-summons) A summon is a last resort, but for the breeds made of their summons (2026-11-09)
 
+## Bug reports (D409 to D411)
+
+- [D409](decisions.md#d409-the-game-connection-is-recorded-by-default-with-a-retention) The game connection is recorded by default, with a retention (2026-11-09)
+- [D410](decisions.md#d410-a-bug-report-is-a-d3breport-bundle-sent-by-a-private-discord-webhook) A bug report is a `.d3breport` bundle, sent by a private Discord webhook (2026-11-09)
+- [D411](decisions.md#d411-a-report-carries-an-optional-message-of-the-players-own) A report carries an optional message of the player's own (2026-11-09)
+
 ## The home page's tab (D412)
 
 - [D412](decisions.md#d412-the-home-page-closes-like-the-other-tabs-and-the-window-menu-opens-it-again) The home page closes like the other tabs, and the Window menu opens it again (2026-11-09)
