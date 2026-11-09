@@ -312,3 +312,29 @@ it grows. A client update before a session gets Q10's session first.
 
 - The project's Claude Code setup: `.claude/`, its hooks tested in `tests/D3B.Hooks.Tests`, and `CLAUDE.md`'s rewrite, done on
   2026-11-09 (D398).
+- **Bug reports with the player's capture** (D409, D410), designed on 2026-11-09 and to do, in five sessions of their own, before
+  the owner's next round of reports from players if he wants them to come with a capture. A report is a `.d3breport` zip, sent by a
+  private Discord webhook; the game connection is recorded by default so that a capture exists when the bug does.
+
+  | # | Session | Holds |
+  | --- | --- | --- |
+  | BR1 | Record by default, and measure | The game connection recorded by default with the retention (D409): the setting, the sweep at the host's start, the first-start notice, tests. And the measure that the cleaner needs: which fields of a game connection name the account beyond the ticket, read with `scripts/capture.cs --frames --schema` on the owner's captures, written in `docs/client-game.md` by structure, never a value. |
+  | BR2 | The bundle and its reader | `CaptureScrubber` (same-length overwrite of the ticket and of the fields BR1 found, by schema, a test that no output holds the ticket's bytes), the report's collectors (manifest, journal, trace, profile and routes played, settings that differ, `knowledge.json` from the database) and its zip writer, in a project or a folder `D3B.Bot` already has, as BR2 settles; `scripts/report.cs` that unpacks, checks hashes and bounds, describes and replays a report. All tested without a real capture: tests build theirs (D63). |
+  | BR3 | The app's action | Help, Report a bug: the form (area, description, character, when), the preview and consent dialog (D410), the bundle written to a folder with its code, the folder opened and the code copied; no sending yet. Texts in both languages, view model and headless tests. |
+  | BR4 | The webhook | The sink: the URL read from a release asset published by `scripts/release.cs`, the multipart post, progress, result and failure, the size limit checked with one real send, the over-the-limit fallback of BR3; `PRIVACY.md`, the README, the bug form and CONTRIBUTING pointing to the in-app report. |
+  | BR5 | The knowledge merged | What the reports' `knowledge.json` brings into the project's data, who validates: a decision of its own first (D410, left). Not scheduled. |
+
+  Order: BR1, BR2, BR3, BR4; BR2 and BR3 may be swapped, and BR3 is useful alone (the owner can ask a player for the file).
+
+  **BR1's brief.** Goal: after it, a player who plays a session leaves a capture of its game connection on disk, bounded in age and
+  size, and the cleaner of BR2 knows what to overwrite. Read D409, D410, D37, D53, `src/D3B.Network/Captures/`,
+  `RelaySettings` and the Network section of the app's settings (`SettingsViewModel`). Do: (1) `Network:Captures:Enabled` on by
+  default for the game connection only, the connection phase's capture staying opt-in, a setting for the retention in days and
+  megabytes (7 and 1,024), the sweep at the host's start that deletes the oldest captures of `captures\game` and never one that is
+  open, the first-start notice on the home page and in the Network settings, in both languages; the README's options table and
+  `docs/architecture.md`'s Captures bullet follow. (2) Measure, on the owner's captures and without printing a value, which
+  strings of the game connection's frames name the account or its characters (the authentication request, the character list and
+  selection, the first events), by `scripts/capture.cs --frames --schema`; write the result by message and field in
+  `docs/client-game.md`. (3) Tests for the sweep (an old file, an oversize set, an open file kept) and for the setting's default.
+  Out of scope: the scrubber, the bundle and the app's action (BR2, BR3). Done: every check green, the docs and the index
+  updated; no capture content shown or committed.

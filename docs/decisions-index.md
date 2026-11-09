@@ -478,3 +478,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D406](decisions.md#d406-the-studio-opens-on-a-home-page-the-world-appears-when-a-route-or-a-zone-is-selected) The studio opens on a home page; the world appears when a route or a zone is selected (2026-11-09)
   - Opening on the last tab left, and a "recent" list kept in `app.json`: the first brings the world back at once, the second is a file to keep for what the file system says.
+
+## Bug reports (D409, D410)
+
+- [D409](decisions.md#d409-the-game-connection-is-recorded-by-default-with-a-retention) The game connection is recorded by default, with a retention (2026-11-09)
+- [D410](decisions.md#d410-a-bug-report-is-a-d3breport-bundle-sent-by-a-private-discord-webhook) A bug report is a `.d3breport` bundle, sent by a private Discord webhook (2026-11-09)
