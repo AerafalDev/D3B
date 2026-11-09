@@ -1,6 +1,9 @@
+using D3B.Bot.Activities;
 using D3B.Data.Tests;
 using D3B.Data.World;
 using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Studio.Tests.Assets;
 
@@ -76,5 +79,17 @@ public sealed class ProjectZonesTests : IDisposable
         Assert.True(zones.TryResolve("z1", out var maps));
         Assert.Equal([3L], maps);
         Assert.Equal(2, _atlasReads);
+    }
+
+    [Fact]
+    public void TheBehaviorsModuleGivesTheActivitiesTheProjectsZones()
+    {
+        var services = new ServiceCollection();
+
+        BehaviorsModule.Register(services, new StudioSettings { Path = _directory.Combine("studio") });
+
+        using var provider = services.BuildServiceProvider();
+
+        Assert.IsType<ProjectZones>(provider.GetRequiredService<IPlaceZones>());
     }
 }

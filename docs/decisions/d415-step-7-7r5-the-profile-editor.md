@@ -12,8 +12,8 @@ A part of [the decisions](README.md); each decision has one line in [the index](
 - **Made.** `HarvestPlace` and `FightPlace` gain a third value, `Zone`, beside Automatic and Chosen (the sub-areas, stored as it is: its
   name in the editor becomes "Sub-areas"), and the settings gain `Zone`, a zone's id as text, picked from the project's zones and never
   typed (`SettingKind.Zone`, as `SettingKind.Route` for a route, D386). A profile stored before reads as it did and nothing of it is
-  rewritten. The activities reach the zone through a seam of `D3B.Bot`, `IPlaceZones`, which `D3B.Storage` implements over the asset
-  library and `ZoneMaps.Resolve`; a host without it, or a zone gone from the project, ends the run with a note, as a missing route does (D379).
+  rewritten. The activities reach the zone through a seam of `D3B.Bot`, `IPlaceZones`, which `ProjectZones` implements in `D3B.Studio` over the asset
+  library and `ZoneMaps.Resolve` (it holds both; the owner's answer said `D3B.Storage`, which only references the studio); a host without it, or a zone gone from the project, ends the run with a note, as a missing route does (D379).
   The zone is read when the activity starts (a preview reads it at each call): a zone changed while a bot plays is taken at its next start.
 - **The profile's editor** (session 7r5b, the second pull request). A profile's form has four categories, What, Where, Bank and Care and
   fights (Upkeep and Fight merged, as the mockup draws them). A setting may be marked rare (`Advanced()`, one mark per setting, easy to
@@ -32,6 +32,10 @@ A part of [the decisions](README.md); each decision has one line in [the index](
   `HuntingGround` and the previews from a zone's maps, a missing or empty zone ending with a note) and a first way to pick the zone in
   today's form, a list of the project's zones with "N maps" and the words above, tested on the fake game. Part 2, a session of its own
   (7r5b): the editor above.
+- **Made in part 1** (2026-11-09): the above, and `ZoneFieldViewModel`, the zone's field in today's form: it reuses the route picker's dialog, shows
+  the map count and the plain words under the button, and the profile cannot be saved with a zone that holds no map or is gone. Tested on
+  the fake game, the settings' round trip, the view models and the real module's registration; **not seen in the running app**, and nothing
+  tried in game.
 - **Not built**: the zone as a filter of the Automatic place (the ranking of sub-areas would count a part of one), painting in the
   profile's tab, a zone for a list of steps' profile.
 - **Words.** In French the setting "Zone" already named the game's area, which would have made two zones: it is now "Région", and the place "Chosen" reads "Sub-areas" ("Sous-zones"); the stored names do not change.

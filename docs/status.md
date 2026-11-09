@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D415 (7r5 part 1, the zones read by the harvest and the hunt) and D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -32,6 +32,7 @@ As of 2026-11-09, after D413 (7r3, the Sequencer) and D408 (the fight AI after t
 
 ## Not measured in game
 
+- The zones as a place (D415) are tested on the fake game and in the view models, not in game and not seen by the owner in the app: a harvest or a hunt through a zone's maps, the field that picks it and the words under it, and what the French "Région" (the game's area, once "Zone") reads like to them.
 - The Sequencer (D413) is tested on view models and in the headless window, not yet seen by the owner in the app: how a drag feels
   on a long ruler, how the tracks read at the bottom panel's height, whether it is what they mean by practical; no screen reader was
   run on its grid.
@@ -67,8 +68,9 @@ As of 2026-11-09, after D413 (7r3, the Sequencer) and D408 (the fight AI after t
    first. Nothing of it exists in code yet.
 1. **Session 7r4, following a run** (D395): the cursor told to the app, the playhead on the Sequencer's ruler, the marker on the
    route, the progress on the Outliner. 7r3, the Sequencer, is made (D413); what it leaves is the map's frame, hovering a column
-   lighting its step, a panel taller for the Sequencer, and recording in the toolbar, which waits for the measure in game. Then 7r5
-   the profile's asset editor, 7r6 sequences and laps; all before 7e.
+   lighting its step, a panel taller for the Sequencer, and recording in the toolbar, which waits for the measure in game. Then 7r5b
+   (the profile's asset editor: the four categories, Advanced, the world's map beside the form; 7r5's first part, the zones read, is
+   made, D415), 7r6 sequences and laps; all before 7e.
 2. **A measure in game with the owner**, before anything else of step 7: the list above, and what 7d4b will record.
 3. **Session 7d4b**: recording while playing and Simplify (D299, D394), once the events it reads are measured.
 4. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).
@@ -95,7 +97,7 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
 - Files over 900 lines (D399): `FightJudge` 1,258 (from 1,365: its pure turn arithmetic is `JudgeTurns`; what is left is its score's terms, threat, approach, marks and buffs, which share its caches and are cut only with the replay of the captured fights, `scripts/fights.cs --turns`, compared before and after) and `RouteEditorViewModel` 1,044 (from 1,238: its texts, map scene, step rows and action forms are cut; its step actions, planning and the typed anchor are left). `AssetsViewModel` (885), `Imagination` (864, its pure fighter helpers are `ImaginedFighters`), `WorldMapView` (848, its hit test is `WorldMapHitTesting`), `BotActor` (723) and `HarvestActivity` (709) are cut. `D3B.Bot` stays one project: its core (`Runtime`, `Activities`, `Banks`, `Movement`, `Journal`, `Characters`) refers to itself both ways, `Harvesting` and `Fighting` are the leaves.
 - Undo has two histories: the route editor keeps its own snapshots (D375), the list of steps, the profile and the zone editors use
   `UndoHistory` (D394). Moving the route onto it is a change of no use by itself; do it when the route editor is next opened for another reason.
-- The zones are read by nothing yet but `ZoneMaps` and their editor; the nodes and conditions of 7f are the ones to use them.
+- The zones are read by the harvest and the hunt as a place (D415) and by their editor; a zone is not yet a filter of the Automatic place, and the nodes and conditions of 7f do not read them.
 - `GroupJudge.OddsOf`, `Beats`, `Winnable` and `Share` are called by nothing in `src/` since D387, only by
   `scripts/fights/HuntBench.cs` and their tests. D387 kept them on purpose, for that bench: if the bench is dropped, they go
   with their tests; `Allows` and `Character` are alive.
