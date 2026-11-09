@@ -190,6 +190,9 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     /// <summary>Gets whether a step is chosen, whose actions the inspector shows.</summary>
     public bool HasSelectedStep => SelectedIndex >= 0 && SelectedIndex < _anchors.Count;
 
+    /// <summary>Gets the route's steps set as clips on tracks (D395, D396).</summary>
+    public SequencerViewModel Sequencer { get; }
+
     /// <summary>Gets the steps selected, in order: several once Control or Shift chose more than one (D395); <see cref="SelectedIndex"/> is the one chosen last.</summary>
     public IReadOnlyList<int> SelectedSteps => _chosen.Steps;
 
@@ -251,9 +254,13 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         _current = Take();
         Hud = page.Localizer["RouteHudNothing"];
         Layer = FirstLayer();
+        Sequencer = new SequencerViewModel(this, page);
         Relabel();
         Rebuild();
     }
+
+    /// <summary>Raised when the route's steps were read again: they changed, or the language did.</summary>
+    public event Action? Rebuilt;
 
     /// <summary>Raised when the map should show the coordinates of a step, such as when it is chosen from the list.</summary>
     public event Action<int, int>? RevealRequested;
@@ -1000,6 +1007,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         var mode = Mode;
 
         _planning = PlanAsync(version, maps, mode);
+        Rebuilt?.Invoke();
     }
 
     private async Task PlanAsync(int version, List<long> maps, RouteMode mode)

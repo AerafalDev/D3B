@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
+using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Statistics;
 using D3B.App.ViewModels.Studio;
 using D3B.Bot.Characters;
@@ -35,7 +36,7 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
 
     /// <summary>Gets the tab shown.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsJournalShown), nameof(IsTraceShown), nameof(IsProblemsShown), nameof(IsProtocolShown), nameof(IsStatisticsShown))]
+    [NotifyPropertyChangedFor(nameof(IsSequencerShown), nameof(IsJournalShown), nameof(IsTraceShown), nameof(IsProblemsShown), nameof(IsProtocolShown), nameof(IsStatisticsShown))]
     public partial BottomTab Tab { get; private set; }
 
     /// <summary>Gets or sets the character the run block chose, whose run the trace shows until another is chosen in it.</summary>
@@ -44,6 +45,17 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
 
     /// <summary>Gets or sets what says why the host did not start, once it failed, which the problems tell.</summary>
     public Func<string?>? HostFailure { get; set; }
+
+    /// <summary>Gets the Sequencer of the route selected, or <see langword="null"/> when none is: its tab is there only then (D395).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSequencer))]
+    public partial SequencerViewModel? Sequencer { get; private set; }
+
+    /// <summary>Gets whether a route is selected, so that the Sequencer's tab is shown.</summary>
+    public bool HasSequencer => Sequencer is not null;
+
+    /// <summary>Gets whether the Sequencer shows.</summary>
+    public bool IsSequencerShown => Tab is BottomTab.Sequencer;
 
     /// <summary>Gets whether the journal shows.</summary>
     public bool IsJournalShown => Tab is BottomTab.Journal;
@@ -101,6 +113,23 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
                 Statistics.Refresh(services);
                 break;
         }
+    }
+
+    /// <summary>Follows the route selected: its Sequencer shows, in a tab the panel shows at once; without one the tab goes and another is shown.</summary>
+    /// <param name="route">The route's editor, or <see langword="null"/> when no route is selected.</param>
+    public void Follow(RouteEditorViewModel? route)
+    {
+        var sequencer = route?.Sequencer;
+
+        if (ReferenceEquals(sequencer, Sequencer))
+            return;
+
+        Sequencer = sequencer;
+
+        if (sequencer is not null)
+            Show(BottomTab.Sequencer);
+        else if (Tab is BottomTab.Sequencer)
+            Tab = BottomTab.Journal;
     }
 
     /// <summary>Shows a character's run in the trace, as its tab's "See the trace" asks.</summary>

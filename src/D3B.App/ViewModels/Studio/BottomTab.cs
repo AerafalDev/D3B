@@ -17,4 +17,7 @@ internal enum BottomTab
 
     /// <summary>The resources and runs by character and period.</summary>
     Statistics,
+
+    /// <summary>The selected route's steps set as clips on tracks, from 7r3.</summary>
+    Sequencer,
 }

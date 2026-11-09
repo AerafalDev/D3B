@@ -601,6 +601,9 @@ internal sealed partial class MainViewModel : ObservableObject
     // Edit's Undo and Redo follow the editor shown, and what it holds to take back or do again: in the world's tab, the route or the zone selected.
     private void FollowEditor(string? property)
     {
+        if (property is nameof(WorldViewportViewModel.Route))
+            Bottom.Follow(World.Route);
+
         if (property is not (nameof(EditorTabs.Selected) or nameof(WorldViewportViewModel.Route) or nameof(WorldViewportViewModel.Zone)))
             return;
 

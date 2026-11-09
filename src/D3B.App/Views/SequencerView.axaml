@@ -1,0 +1,135 @@
+<UserControl
+    x:Class="D3B.App.Views.SequencerView"
+    x:ClassModifier="internal"
+    x:DataType="r:SequencerViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:r="clr-namespace:D3B.App.ViewModels.Routes"
+    xmlns:sq="clr-namespace:D3B.App.Controls.Sequencer"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.TrackName">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.RowLabel">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.TrackKey">
+            <Setter Property="Width" Value="3" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Margin" Value="0,5" />
+        </Style>
+    </UserControl.Styles>
+    <DockPanel>
+        <Border Classes="Toolbar" DockPanel.Dock="Top">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel>
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource BrightColor}"
+                        Text="{Binding RouteName}"
+                        TextTrimming="CharacterEllipsis"
+                        VerticalAlignment="Center" />
+                </StackPanel>
+                <Button
+                    AutomationProperties.Name="{l:Tr SequencerAddTrack}"
+                    Classes="Dd"
+                    Grid.Column="1"
+                    IsEnabled="{Binding HasPalette}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <c:Icon
+                            Drawing="{StaticResource General.Add}"
+                            Height="12"
+                            Width="12" />
+                        <TextBlock Text="{l:Tr SequencerAddTrack}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button.Flyout>
+                        <Flyout FlyoutPresenterClasses="Bare" Placement="BottomEdgeAlignedRight">
+                            <Border Classes="MenuPopup" MinWidth="220">
+                                <ItemsControl ItemsSource="{Binding Palette}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="r:RouteActionChoiceViewModel">
+                                            <Button
+                                                Classes="MenuRow"
+                                                Click="OnMenuRowClick"
+                                                Command="{Binding AddCommand}">
+                                                <ToolTip.Tip>
+                                                    <TextBlock
+                                                        MaxWidth="280"
+                                                        Text="{Binding Help}"
+                                                        TextWrapping="Wrap" />
+                                                </ToolTip.Tip>
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
+        </Border>
+        <TextBlock
+            Foreground="{DynamicResource DimColor}"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding !HasSteps}"
+            Margin="16"
+            Text="{l:Tr SequencerEmpty}"
+            VerticalAlignment="Center" />
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding HasSteps}" VerticalScrollBarVisibility="Auto">
+            <Grid ColumnDefinitions="132,*">
+                <StackPanel>
+                    <Border Height="44">
+                        <TextBlock
+                            Classes="RowLabel"
+                            Margin="12,0,0,0"
+                            Text="{l:Tr SequencerSteps}" />
+                    </Border>
+                    <Border Height="30">
+                        <TextBlock
+                            Classes="RowLabel"
+                            Margin="12,0,0,0"
+                            Text="{l:Tr SequencerMovement}" />
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding Scene.Tracks}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="sq:SequencerTrack">
+                                <Border Height="{Binding Height}">
+                                    <Grid ColumnDefinitions="Auto,*" Margin="12,0,6,0">
+                                        <Border
+                                            Background="{Binding Brush}"
+                                            Classes="TrackKey"
+                                            Margin="0,5,8,5"
+                                            VerticalAlignment="Stretch" />
+                                        <TextBlock
+                                            Classes="TrackName"
+                                            Grid.Column="1"
+                                            Text="{Binding Name}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+                <ScrollViewer
+                    Grid.Column="1"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Disabled">
+                    <sq:SequencerGrid
+                        HorizontalAlignment="Stretch"
+                        Name="Grid"
+                        Scene="{Binding Scene}"
+                        SelectedClip="{Binding SelectedClip}"
+                        SelectedSteps="{Binding SelectedSteps}" />
+                </ScrollViewer>
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

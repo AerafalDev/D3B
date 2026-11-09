@@ -20,19 +20,27 @@ internal static class RouteActionKinds
 
         foreach (var call in actions)
         {
-            var kind = call.Node switch
-            {
-                RouteActions.Harvest => WorldMapActionKind.Harvest,
-                RouteActions.Fight => WorldMapActionKind.Fight,
-                RouteActions.Door or RouteActions.Exit => WorldMapActionKind.Door,
-                RouteActions.Npc => WorldMapActionKind.Npc,
-                _ => WorldMapActionKind.Other,
-            };
+            var kind = OfNode(call.Node);
 
             if (!kinds.Contains(kind))
                 kinds.Add(kind);
         }
 
         return kinds;
+    }
+
+    /// <summary>Tells what an action is in the few kinds the map's dots tell apart.</summary>
+    /// <param name="node">The action's node id.</param>
+    /// <returns>Its kind.</returns>
+    public static WorldMapActionKind OfNode(string node)
+    {
+        return node switch
+        {
+            RouteActions.Harvest => WorldMapActionKind.Harvest,
+            RouteActions.Fight => WorldMapActionKind.Fight,
+            RouteActions.Door or RouteActions.Exit => WorldMapActionKind.Door,
+            RouteActions.Npc => WorldMapActionKind.Npc,
+            _ => WorldMapActionKind.Other,
+        };
     }
 }

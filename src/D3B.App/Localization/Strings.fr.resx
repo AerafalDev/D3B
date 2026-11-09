@@ -3068,4 +3068,19 @@
   <data name="HomeShortcuts" xml:space="preserve">
     <value>Raccourcis</value>
   </data>
+  <data name="BottomSequencer" xml:space="preserve">
+    <value>Séquenceur</value>
+  </data>
+  <data name="SequencerSteps" xml:space="preserve">
+    <value>Étapes</value>
+  </data>
+  <data name="SequencerMovement" xml:space="preserve">
+    <value>Déplacement</value>
+  </data>
+  <data name="SequencerAddTrack" xml:space="preserve">
+    <value>Ajouter une piste</value>
+  </data>
+  <data name="SequencerEmpty" xml:space="preserve">
+    <value>Le trajet n’a pas encore d’étape. Tracez-le sur la carte.</value>
+  </data>
 </root>

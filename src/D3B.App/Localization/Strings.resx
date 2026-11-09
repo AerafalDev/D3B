@@ -3068,4 +3068,19 @@
   <data name="HomeShortcuts" xml:space="preserve">
     <value>Shortcuts</value>
   </data>
+  <data name="BottomSequencer" xml:space="preserve">
+    <value>Sequencer</value>
+  </data>
+  <data name="SequencerSteps" xml:space="preserve">
+    <value>Steps</value>
+  </data>
+  <data name="SequencerMovement" xml:space="preserve">
+    <value>Movement</value>
+  </data>
+  <data name="SequencerAddTrack" xml:space="preserve">
+    <value>Add a track</value>
+  </data>
+  <data name="SequencerEmpty" xml:space="preserve">
+    <value>The route has no step yet. Trace it on the map.</value>
+  </data>
 </root>
