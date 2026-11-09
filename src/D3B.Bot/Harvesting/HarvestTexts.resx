@@ -71,8 +71,20 @@
   <data name="SubAreasHelp" xml:space="preserve">
     <value>Those where the resources grow come first.</value>
   </data>
+  <data name="OwnBanking" xml:space="preserve">
+    <value>Own banking rules</value>
+  </data>
+  <data name="OwnBankingHelp" xml:space="preserve">
+    <value>Off, this profile banks as the app's settings say (Settings, Bots): the share of pods and whether a zaap is taken to the bank. On, it uses the two below.</value>
+  </data>
   <data name="FullAt" xml:space="preserve">
     <value>Pods full at</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Take a zaap to the bank</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>Off, the character always walks to the bank. On, it takes a zaap when it saves enough maps and it can pay for it; else it walks.</value>
   </data>
   <data name="Deposit" xml:space="preserve">
     <value>What goes</value>
@@ -417,7 +429,7 @@
     <value>maps</value>
   </data>
   <data name="ZaapSavingHelp" xml:space="preserve">
-    <value>On every journey, the bank's included; 1 takes a zaap as soon as it saves a map.</value>
+    <value>On every journey of the tour; the zaap to the bank is the Bank section's. 1 takes a zaap as soon as it saves a map.</value>
   </data>
   <data name="PlaceOne" xml:space="preserve">
     <value>{1}, {0} map</value>

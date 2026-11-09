@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using D3B.Bot.Activities;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Runtime;
@@ -69,7 +70,9 @@ public sealed class FightingModule : IModule
             .VisibleWhen(s => s.Heal);
 
         settings.Section(FightTexts.Text("SectionBank"));
-        settings.Number(s => s.FullAt, FightTexts.Text("FullAt"), 50, 100).Percent();
+        settings.Flag(s => s.OwnBanking, FightTexts.Text("OwnBanking")).Help(FightTexts.Text("OwnBankingHelp"));
+        settings.Number(s => s.FullAt, FightTexts.Text("FullAt"), 50, 100).Percent().VisibleWhen(s => s.OwnBanking);
+        settings.Flag(s => s.UseZaaps, FightTexts.Text("UseZaaps")).Help(FightTexts.Text("UseZaapsHelp")).VisibleWhen(s => s.OwnBanking);
         settings.Choice(s => s.Deposit, FightTexts.Text("Deposit"), deposit => FightTexts.Text($"Deposit{deposit}"));
 
         settings.Section(FightTexts.Text("SectionAfter"));
@@ -82,6 +85,14 @@ public sealed class FightingModule : IModule
         settings.Preview((s, services, players) => services.GetRequiredService<FightPreviews>().Of(s, players));
 
         settings.Preset("auto", FightTexts.Text("PresetAuto"), _ => { });
+        settings.ReadsEarlier(KeepOwnBanking);
+    }
+
+    // Before D405 a profile's share of pods was its own: one that stored it keeps banking by it.
+    private static void KeepOwnBanking(FightSettings settings, JsonObject stored)
+    {
+        if (!stored.ContainsKey(nameof(FightSettings.OwnBanking)) && stored.ContainsKey(nameof(FightSettings.FullAt)))
+            settings.OwnBanking = true;
     }
 
     private static IReadOnlyList<int> ChosenIn(FightSettings settings, GameReferences game)

@@ -37,6 +37,10 @@ As of 2026-11-09, after D398 (D394, session 7d4, merged into 7r2's branch). App 
 - The owner's reports from game answered since 2026-11-06 (D387 to D392): the hunt attacking every group, the tour leaving
   interiors out, the AI fleeing less, the rotation through ten sub-areas and the professions in turn. The numbers 5, 10, a
   quarter and 50 of D391 and D392 are the lead's reckoning.
+- Banking by the general settings (D405): the share of pods and the zaap rule are tested on the fake game and in the app's
+  view models. A bank journey that outlives a refused zaap is the lead's reading of a player's report (Incarnam to Astrub, 1,500
+  kamas the character lacked), not seen in game; the text the server answers to a zaap that cannot be paid, and the cost of a
+  zaap leaving Incarnam's world map, are not measured.
 - Step 9's mechanisms: the Roublard against big enemies with `Fights:Alone`, the Féca's glyphs, an Osamodas's summons and the
   fight map's preview, an aggression, stairs and portals, the inactivity popup, what the client shows once its turn's end goes
   unanswered (D367).

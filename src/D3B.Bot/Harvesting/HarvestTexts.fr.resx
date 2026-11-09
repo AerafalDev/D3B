@@ -71,8 +71,20 @@
   <data name="SubAreasHelp" xml:space="preserve">
     <value>Celles où poussent les ressources d'abord.</value>
   </data>
+  <data name="OwnBanking" xml:space="preserve">
+    <value>Règles de banque propres</value>
+  </data>
+  <data name="OwnBankingHelp" xml:space="preserve">
+    <value>Désactivé, ce profil banque comme le disent les réglages de l'application (Réglages, Bots) : la part de pods et le zaap vers la banque. Activé, il suit les deux réglages ci-dessous.</value>
+  </data>
   <data name="FullAt" xml:space="preserve">
     <value>Pods pleins à</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Prendre un zaap pour aller à la banque</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>Désactivé, le personnage va toujours à pied à la banque. Activé, il prend un zaap s'il évite assez de cartes et s'il peut le payer ; sinon il marche.</value>
   </data>
   <data name="Deposit" xml:space="preserve">
     <value>Ce qui part</value>
@@ -417,7 +429,7 @@
     <value>cartes</value>
   </data>
   <data name="ZaapSavingHelp" xml:space="preserve">
-    <value>Sur chaque trajet, celui de la banque compris ; 1 prend un zaap dès qu'il évite une carte.</value>
+    <value>Sur chaque trajet de la tournée ; le zaap vers la banque est celui de la section Banque. 1 prend un zaap dès qu'il évite une carte.</value>
   </data>
   <data name="PlaceOne" xml:space="preserve">
     <value>{1}, {0} carte</value>

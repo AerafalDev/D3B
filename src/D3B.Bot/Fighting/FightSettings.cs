@@ -49,8 +49,14 @@ public sealed class FightSettings
     /// <summary>Gets or sets the food to eat, by item, the first carried eaten first; none chosen, what the inventory holds that only heals, the smallest heal first; with none left the life regenerates by itself up to the share.</summary>
     public IReadOnlyList<int> Food { get; set; } = [];
 
-    /// <summary>Gets or sets how full the character is, in percent of its pods, once it banks.</summary>
+    /// <summary>Gets or sets whether the profile banks by its own rules, <see cref="FullAt"/> and <see cref="UseZaaps"/>, rather than by the general settings' (D405).</summary>
+    public bool OwnBanking { get; set; }
+
+    /// <summary>Gets or sets how full the character is, in percent of its pods, once it banks, when <see cref="OwnBanking"/> is on.</summary>
     public int FullAt { get; set; } = 90;
+
+    /// <summary>Gets or sets whether the character may take a zaap to the bank, when <see cref="OwnBanking"/> is on; else it walks (D405).</summary>
+    public bool UseZaaps { get; set; } = true;
 
     /// <summary>Gets or sets what goes to the bank.</summary>
     public FightDeposit Deposit { get; set; } = FightDeposit.Loot;

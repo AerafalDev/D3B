@@ -144,6 +144,7 @@ given on the command line:
 | `--Network:Captures:Enabled true` | Records each connection in `%LOCALAPPDATA%\D3B\captures`, which the app's protocol inspector replays. A capture holds the account's login ticket: never share one. |
 | `--Fights:Alone true` | Has the AI play every fight of the bots, the player's own included, whatever their activity says. |
 | `--Delays:Display 1.5` | The client's display time, in seconds; the other delays are under `Delays:` too. |
+| `--Banking:FullAt 98` | The share of pods, from 50 to 100, at which the bots go to the bank; `--Banking:UseZaaps false` has them walk there. A profile with its own banking rules ignores both. |
 
 ### Tools
 
