@@ -31,8 +31,8 @@ internal sealed class WorldMapView : Control
     private const double FitMargin = 28;
     private const double KeptOfImage = 160;
     private const double Prefetch = 256;
-    private const double GridFrom = 14;
-    private const double BadgeFrom = 96;
+    private const double GridFrom = WorldMapHitTesting.GridFrom;
+    private const double BadgeFrom = WorldMapHitTesting.BadgeFrom;
     private const double WheelStep = 1.22;
     private const double Ease = 14;
     private const double MaxSceneFit = 0.8;
@@ -64,6 +64,7 @@ internal sealed class WorldMapView : Control
     private static readonly IBrush _dot = new SolidColorBrush(Color.Parse("#E9AD3C"), 0.55);
 
     private readonly WorldMapViewport _viewport = new();
+    private readonly Func<int, int, Rect> _rectOf;
     private WorldMapSource? _source;
     private TileStore<Bitmap>? _store;
     private WorldMap _world;
@@ -142,6 +143,7 @@ internal sealed class WorldMapView : Control
     /// <summary>Initializes a new instance of the <see cref="WorldMapView"/> class.</summary>
     public WorldMapView()
     {
+        _rectOf = RectOf;
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
     }
 
@@ -694,7 +696,7 @@ internal sealed class WorldMapView : Control
             if (px > right || py > bottom || px + _world.MapWidth < left || py + _world.MapHeight < top)
                 continue;
 
-            var (center, radius) = SharedMark(square.X, square.Y, mapWidth);
+            var (center, radius) = WorldMapHitTesting.SharedMark(RectOf(square.X, square.Y), mapWidth);
 
             if (mapWidth < BadgeFrom)
             {
@@ -709,103 +711,19 @@ internal sealed class WorldMapView : Control
         }
     }
 
-    private (Point Center, double Radius) SharedMark(int x, int y, double mapWidth)
-    {
-        var rect = RectOf(x, y);
-        var k = mapWidth / 64;
-        var radius = mapWidth < BadgeFrom ? Math.Clamp(mapWidth / 16, 2.5, 4.5) : Math.Max(6, (8 * k) + 2.5);
-
-        return (new Point(rect.Right - 3 - radius, rect.Top + 3 + radius), radius);
-    }
-
     private (int X, int Y)? SquareAt(Point at)
     {
-        if (!_hasWorld)
-            return null;
-
-        var (ix, iy) = _viewport.ToImage(at.X, at.Y);
-        var x = (int)Math.Floor((ix - _world.OriginX) / _world.MapWidth);
-        var y = (int)Math.Floor((iy - _world.OriginY) / _world.MapHeight);
-
-        return _source!.Index.MapsAt(World, x, y).Length > 0 ? (x, y) : null;
+        return _hasWorld ? WorldMapHitTesting.SquareAt(at, HitContext()) : null;
     }
 
     private WorldMapHit HitAt(Point at)
     {
-        if (!_hasWorld)
-            return WorldMapHit.None;
+        return _hasWorld ? WorldMapHitTesting.HitAt(at, HitContext()) : WorldMapHit.None;
+    }
 
-        var scene = Scene;
-        var mapWidth = _world.MapWidth * _viewport.Scale;
-
-        for (var i = scene.Stations.Count - 1; i >= 0; i--)
-        {
-            var station = scene.Stations[i];
-
-            if (WorldMapRouteLayer.StationBounds(RectOf(station.X, station.Y).Center, mapWidth).Contains(at))
-                return new WorldMapHit(WorldMapHitKind.Station, station.X, station.Y, i, -1);
-        }
-
-        if (Tool is WorldMapTool.Select && scene.Backdrop is { } backdrop)
-        {
-            var centers = WorldMapBackdropLayer.CharacterCenters(backdrop.Characters, RectOf);
-
-            for (var i = backdrop.Characters.Count - 1; i >= 0; i--)
-            {
-                if (WorldMapBackdropLayer.HitsCharacter(centers[i], at))
-                    return new WorldMapHit(WorldMapHitKind.Character, backdrop.Characters[i].X, backdrop.Characters[i].Y, -1, -1, backdrop.Characters[i].Key);
-            }
-
-            foreach (var route in backdrop.Routes)
-            {
-                foreach (var step in route.Steps)
-                {
-                    if (WorldMapBackdropLayer.HitsStep(RectOf(step.X, step.Y).Center, at))
-                        return new WorldMapHit(WorldMapHitKind.RouteStep, step.X, step.Y, -1, -1, route.Id, step.Index);
-                }
-            }
-        }
-
-        var reach = Math.Max(8, Math.Min(mapWidth, _world.MapHeight * _viewport.Scale) / 3);
-
-        for (var leg = 0; leg < scene.Legs.Count; leg++)
-        {
-            var path = scene.Legs[leg];
-
-            if (path.Kind is not WorldMapLegKind.Path)
-                continue;
-
-            foreach (var square in path.Squares.Skip(1).Take(path.Squares.Count - 2))
-            {
-                var center = RectOf(square.X, square.Y).Center;
-
-                if (Math.Abs(center.X - at.X) <= reach && Math.Abs(center.Y - at.Y) <= reach && Math.Sqrt(((center.X - at.X) * (center.X - at.X)) + ((center.Y - at.Y) * (center.Y - at.Y))) <= reach)
-                    return new WorldMapHit(WorldMapHitKind.PathPoint, square.X, square.Y, -1, leg);
-            }
-        }
-
-        if (SquareAt(at) is not { } over)
-            return WorldMapHit.None;
-
-        if (Tool is WorldMapTool.Select && scene.Backdrop is { Zones.Count: > 0 } zones)
-        {
-            // The zone listed last lies over the others, as it is drawn.
-            for (var i = zones.Zones.Count - 1; i >= 0; i--)
-            {
-                if (zones.Zones[i].Holds(over.X, over.Y))
-                    return new WorldMapHit(WorldMapHitKind.Zone, over.X, over.Y, -1, -1, zones.Zones[i].Id);
-            }
-        }
-
-        if (ShowShared && mapWidth >= GridFrom && _source!.Index.MapsAt(World, over.X, over.Y).Length > 1)
-        {
-            var (center, radius) = SharedMark(over.X, over.Y, mapWidth);
-
-            if (Math.Sqrt(((center.X - at.X) * (center.X - at.X)) + ((center.Y - at.Y) * (center.Y - at.Y))) <= radius + (mapWidth < BadgeFrom ? 4 : 2))
-                return new WorldMapHit(WorldMapHitKind.Shared, over.X, over.Y, -1, -1);
-        }
-
-        return new WorldMapHit(WorldMapHitKind.Square, over.X, over.Y, -1, -1);
+    private WorldMapHitContext HitContext()
+    {
+        return new WorldMapHitContext(_world, _viewport, Scene, Tool, ShowShared, World, _source!, _rectOf);
     }
 
     // A quick drag jumps over squares: the pointer's path is walked in steps of a third of a map, so that none is missed, and a

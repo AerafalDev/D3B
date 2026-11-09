@@ -7,19 +7,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Controls.WorldMaps;
-using D3B.App.ViewModels.Maps;
 using D3B.App.ViewModels.Settings;
 using D3B.App.ViewModels.Studio;
-using D3B.Bot.Npcs;
-using D3B.Bot.Settings;
-using D3B.Data;
-using D3B.Data.Maps;
-using D3B.Data.World;
-using D3B.Data.WorldMaps;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Routes;
 
@@ -44,6 +36,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private static readonly Regex _mapId = MapIdPattern();
 
     private readonly RoutesViewModel _page;
+    private readonly RouteTexts _texts;
     private readonly List<RouteAnchor> _anchors;
     private readonly List<int> _stationAnchors = [];
     private readonly List<int> _sceneLegs = [];
@@ -237,6 +230,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         ArgumentNullException.ThrowIfNull(route);
 
         _page = page;
+        _texts = new RouteTexts(page);
         _saved = route;
         _anchors = [.. route.Anchors];
 
@@ -272,7 +266,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             if (count == 0)
                 continue;
 
-            worlds.Add(new WorldChoiceViewModel(world.Id, WorldName(world), count, _page.Localizer.Plural("RouteWorldMaps", count), world.Id == Layer, UseLayer));
+            worlds.Add(new WorldChoiceViewModel(world.Id, _texts.WorldName(world), count, _page.Localizer.Plural("RouteWorldMaps", count), world.Id == Layer, UseLayer));
         }
 
         Worlds = worlds;
@@ -320,8 +314,8 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
         Hud = hit.Kind switch
         {
-            WorldMapHitKind.Square or WorldMapHitKind.Shared => Describe(hit.X, hit.Y),
-            WorldMapHitKind.Station when hit.Station >= 0 && hit.Station < _stationAnchors.Count => HudOfStep(_stationAnchors[hit.Station]),
+            WorldMapHitKind.Square or WorldMapHitKind.Shared => _texts.Describe(Layer, hit.X, hit.Y),
+            WorldMapHitKind.Station when hit.Station >= 0 && hit.Station < _stationAnchors.Count => _texts.StepHud(_anchors, _stationAnchors[hit.Station]),
             WorldMapHitKind.PathPoint => localizer["RouteHudPath"],
             _ => localizer["RouteHudNothing"],
         };
@@ -426,7 +420,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             return;
 
         var localizer = _page.Localizer;
-        var items = maps.Select(map => new MapChoiceViewModel(map, Zone(map), IsInside(map), IsInside(map) ? localizer["RouteSharedInside"] : localizer["RouteSharedOutside"])).ToList();
+        var items = maps.Select(map => new MapChoiceViewModel(map, _texts.Zone(map), _texts.IsInside(map), _texts.IsInside(map) ? localizer["RouteSharedInside"] : localizer["RouteSharedOutside"])).ToList();
 
         Choice = new SharedChoiceViewModel(localizer.Format("RouteSharedTitle", maps.Length, localizer.Format("Coordinates", x, y)), items, at, Choose, CloseChoice);
     }
@@ -714,20 +708,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     [GeneratedRegex(@"^\d{5,}$", RegexOptions.CultureInvariant)]
     private static partial Regex MapIdPattern();
 
-    private static bool Contains(List<(int X, int Y)> squares, int x, int y)
-    {
-        return squares.Count > 0 && squares[^1] == (x, y);
-    }
-
-    private string WorldName(WorldMap world)
-    {
-        var services = _page.Services!;
-
-        return services.Texts is { } texts && texts.TryGet(_page.Localizer.GameLanguage, world.NameId, out var name)
-            ? name
-            : _page.Localizer.Format("RouteWorldNumber", world.Id);
-    }
-
     private int FirstLayer()
     {
         var services = _page.Services!;
@@ -739,52 +719,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         }
 
         return services.Catalog.TryGet(1, out _) ? 1 : services.Catalog.Worlds.Span[0].Id;
-    }
-
-    private bool IsInside(long map)
-    {
-        return _page.Services!.Atlas.TryGetPosition(map, out var position) && position.WorldMap < 0;
-    }
-
-    private string Place(long map)
-    {
-        var localizer = _page.Localizer;
-
-        if (!_page.Services!.Atlas.TryGetPosition(map, out var position))
-            return localizer.Format("MapNumber", map);
-
-        var coordinates = localizer.Format("Coordinates", position.X, position.Y);
-
-        return position.WorldMap < 0 ? localizer.Format("MapInside", coordinates) : coordinates;
-    }
-
-    private string Zone(long map)
-    {
-        var services = _page.Services!;
-        var localizer = _page.Localizer;
-
-        if (!services.Atlas.TryGetPosition(map, out var position))
-            return localizer.Format("MapNumber", map);
-
-        return services.Texts is { } texts && services.Atlas.TryGetSubArea(position.SubAreaId, out var subArea) && texts.TryGet(localizer.GameLanguage, subArea.NameId, out var name)
-            ? name
-            : localizer.Format("SubArea", position.SubAreaId);
-    }
-
-    private string Describe(int x, int y)
-    {
-        var maps = _page.Services!.Index.MapsAt(Layer, x, y);
-        var localizer = _page.Localizer;
-        var coordinates = localizer.Format("Coordinates", x, y);
-
-        if (maps.IsEmpty)
-            return coordinates;
-
-        var zone = Zone(maps[0]);
-
-        return maps.Length == 1
-            ? localizer.Format("RouteHudMap", coordinates, maps[0].ToString("N0", localizer.Culture), zone)
-            : localizer.Format("RouteHudMaps", coordinates, maps.Length, zone);
     }
 
     private void AddActionNode(string node)
@@ -861,21 +795,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         Actions[index].Say();
     }
 
-    private static string NameKeyOf(string node)
-    {
-        return node switch
-        {
-            RouteActions.Harvest => "RouteNameHarvest",
-            RouteActions.Fight => "RouteNameFight",
-            RouteActions.Door => "RouteNameDoor",
-            RouteActions.Exit => "RouteNameExit",
-            RouteActions.Wait => "RouteNameWait",
-            RouteActions.Zaap => "RouteNameZaap",
-            RouteActions.Npc => "RouteNameNpc",
-            _ => "RouteNameBag",
-        };
-    }
-
     private void OfferActions()
     {
         var catalog = _page.Services?.Nodes;
@@ -887,7 +806,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             foreach (var node in RouteActions.Offered)
             {
                 if (catalog.TryGet(node, out var definition))
-                    offered.Add(new RouteActionChoiceViewModel(node, _page.Localizer[NameKeyOf(node)], definition.Help?.In(culture) ?? "", AddActionNode));
+                    offered.Add(new RouteActionChoiceViewModel(node, _page.Localizer[RouteTexts.ActionNameKey(node)], definition.Help?.In(culture) ?? "", AddActionNode));
             }
         }
 
@@ -896,63 +815,17 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         OnPropertyChanged(nameof(CanAddActions));
     }
 
-    private string HudOfStep(int index)
-    {
-        var localizer = _page.Localizer;
-        var place = Place(_anchors[index].MapId);
-        var count = _anchors[index].Actions.Length;
-
-        return count == 0 ? localizer.Format("RouteHudStep", index + 1, place) : localizer.Format("RouteHudStepActions", index + 1, place, localizer.Plural("RouteActionsCount", count));
-    }
-
     private void BuildActions()
     {
         Actions.Clear();
 
-        var services = _page.Services!;
-
         if (HasSelectedStep)
         {
-            var anchor = _anchors[SelectedIndex];
-            var localizer = _page.Localizer;
-            var names = new GameNames(services.Texts, localizer);
-            MapData? map = null;
-
-            services.Maps?.TryGet(anchor.MapId, out map);
-
-            var npcs = services.Provider?.GetService<KnownNpcs>();
-            var places = new MapNames(localizer, services.Provider?.GetService<GameWorld>(), services.Texts, services.Provider?.GetService<GameTables>());
-
-            for (var i = 0; i < anchor.Actions.Length; i++)
-            {
-                var call = anchor.Actions[i];
-                NodeDefinition? definition = null;
-                SettingsEditor? editor = null;
-
-                if (services.Nodes is { } catalog && catalog.TryGet(call.Node, out definition))
-                {
-                    var made = definition;
-                    var index = i;
-                    var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, services.Game, names, localizer, services.Provider, [], _page.Dialogs) { Map = map, Npcs = npcs, NpcNames = new NpcNames(localizer, services.Provider?.GetService<GameTables>(), services.Texts), Place = places.Place };
-
-                    created.Edited += (_, _) => ActionEdited(index, made, created);
-                    editor = created;
-                }
-
-                Actions.Add(new RouteActionViewModel(i, anchor.Actions.Length, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), RemoveAction, MoveAction));
-            }
+            foreach (var row in RouteActionForms.Build(_page.Services!, _page.Localizer, _page.Dialogs, _anchors[SelectedIndex], ActionEdited, RemoveAction, MoveAction))
+                Actions.Add(row);
         }
 
         NotifyActions();
-    }
-
-    private string NameOf(GameNames names, SettingKind kind, int id)
-    {
-        var game = _page.Services!.Game;
-
-        return game is not null && game.Options(kind).FirstOrDefault(option => option.Id == id) is { } reference
-            ? names.Name(kind, reference)
-            : "#" + id.ToString(CultureInfo.InvariantCulture);
     }
 
     private void NotifyActions()
@@ -1096,37 +969,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
     private void BuildSteps()
     {
-        var services = _page.Services!;
-        var localizer = _page.Localizer;
-        var steps = new List<RouteStepViewModel>(_anchors.Count);
-
-        for (var i = 0; i < _anchors.Count; i++)
-        {
-            var anchor = _anchors[i];
-            var elsewhere = services.Index.TryPlace(anchor.MapId, out var layer, out _, out _) && layer != Layer;
-            var leg = i < _legs.Count ? _legs[i] : null;
-            var closing = i == _anchors.Count - 1;
-            string gap = "";
-            var broken = false;
-
-            if (leg is not null && (!closing || RoutePlanner.ClosesBack(Mode, _anchors.Count)))
-            {
-                (gap, broken) = leg.Kind switch
-                {
-                    RouteLegKind.Unreachable => (localizer["RouteGapNone"], true),
-                    RouteLegKind.Same => (localizer["RouteGapSame"], false),
-                    _ when leg.UsesZaap => (localizer["RouteGapZaap"], false),
-                    _ => (leg.Between.IsEmpty ? localizer["RouteGapNeighbours"] : localizer.Plural("RouteGapMaps", leg.Between.Length), false),
-                };
-
-                if (closing && !broken)
-                    gap = localizer.Format("RouteGapBack", gap);
-                else if (closing)
-                    gap = localizer["RouteGapNone"];
-            }
-
-            steps.Add(new RouteStepViewModel(i, anchor.MapId, Place(anchor.MapId), Zone(anchor.MapId), anchor.IsPinned, elsewhere, gap, broken, closing && gap.Length > 0, anchor.Actions.Length, anchor.Actions.Length == 0 ? "" : localizer.Plural("RouteActionsCount", anchor.Actions.Length), Reveal, Remove, OpenActionPicker) { IsSelected = i == SelectedIndex });
-        }
+        var steps = RouteStepRows.Build(_page.Services!, _page.Localizer, _texts, _anchors, _legs, Mode, Layer, SelectedIndex, Reveal, Remove, OpenActionPicker);
 
         Steps.Clear();
 
@@ -1144,50 +987,13 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
     private void BuildScene()
     {
-        var index = _page.Services!.Index;
-        var stations = new List<WorldMapStation>();
-        var legs = new List<WorldMapLeg>();
+        var built = RouteSceneBuilder.Build(_page.Services!, _texts, _anchors, _legs, Layer, SelectedIndex);
 
         _stationAnchors.Clear();
+        _stationAnchors.AddRange(built.StationAnchors);
         _sceneLegs.Clear();
-
-        for (var i = 0; i < _anchors.Count; i++)
-        {
-            var anchor = _anchors[i];
-
-            if (!index.TryPlace(anchor.MapId, out var layer, out var x, out var y) || layer != Layer)
-                continue;
-
-            stations.Add(new WorldMapStation(x, y, Zone(anchor.MapId), anchor.IsPinned, i == SelectedIndex, RouteActionKinds.Of(anchor.Actions)));
-            _stationAnchors.Add(i);
-        }
-
-        for (var j = 0; j < _legs.Count && j < _anchors.Count; j++)
-        {
-            var leg = _legs[j];
-
-            if (leg.Kind == RouteLegKind.Same || !index.TryPlace(leg.From, out var fromLayer, out var fx, out var fy) || !index.TryPlace(leg.To, out var toLayer, out var tx, out var ty) || fromLayer != Layer || toLayer != Layer)
-                continue;
-
-            List<(int X, int Y)> squares = [(fx, fy)];
-
-            foreach (var between in leg.Between)
-            {
-                if (index.TryPlace(between, out var layer, out var bx, out var by) && layer == Layer && !Contains(squares, bx, by))
-                    squares.Add((bx, by));
-            }
-
-            if (!Contains(squares, tx, ty))
-                squares.Add((tx, ty));
-
-            if (squares.Count < 2)
-                continue;
-
-            legs.Add(new WorldMapLeg(squares, leg.Kind == RouteLegKind.Unreachable ? WorldMapLegKind.Unreachable : WorldMapLegKind.Path, j == _anchors.Count - 1));
-            _sceneLegs.Add(j);
-        }
-
-        Scene = new WorldMapScene(stations, legs);
+        _sceneLegs.AddRange(built.SceneLegs);
+        Scene = built.Scene;
     }
 
     partial void OnToolChanged(WorldMapTool value)
