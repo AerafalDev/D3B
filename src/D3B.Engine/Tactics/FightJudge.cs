@@ -15,8 +15,9 @@ namespace D3B.Engine.Tactics;
 /// </para>
 /// <list type="bullet">
 /// <item><description>An ally's life, shields counted, worth less as it grows: a point healed on a fighter at a quarter of its
-/// life is worth twice one at its most, so that the AI heals who needs it; its being alive, half its most life; the fighter
-/// playing's counted <see cref="TacticWeights.Survival"/> times.</description></item>
+/// life is worth twice one at its most, so that the AI heals who needs it, and above <see cref="TacticWeights.Comfort"/> of
+/// its most life a quarter of that, so that it never trades damage for a heal it hardly needs (D407); its being alive, half its
+/// most life; the fighter playing's counted <see cref="TacticWeights.Survival"/> times.</description></item>
 /// <item><description>An enemy's life, each point weighed by how hard it hits, so that the AI turns on the dangerous ones; its
 /// being alive, one and a half of its best turn's damage, so that the AI finishes a fighter off.</description></item>
 /// <item><description>The threat: what each living enemy may take next from the ally it hits hardest, with the spells that
@@ -214,13 +215,20 @@ public sealed class FightJudge
         _rounds = Math.Clamp((int)Math.Ceiling(Math.Min(odds.TurnsToWin, odds.TurnsToLose)), 1, MostRounds);
     }
 
-    private static double LifeWorth(double life, int most)
+    private double LifeWorth(double life, int most)
     {
         if (most <= 0)
             return Math.Max(0, life);
 
         // Concave: a point is worth more the lower the life, so that heals go to who needs them.
-        return most * Math.Sqrt(Math.Clamp(life / most, 0, 2));
+        var share = Math.Clamp(life / most, 0, 2);
+        var comfort = Math.Clamp(_weights.Comfort, 0.01, 2);
+
+        if (share <= comfort)
+            return most * Math.Sqrt(share);
+
+        // Above the comfortable share a point is worth only a part of what the curve would give.
+        return most * (Math.Sqrt(comfort) + (_weights.ComfortWorth * (share - comfort) / (2 * Math.Sqrt(comfort))));
     }
 
     private static double Effective(Combatant fighter)

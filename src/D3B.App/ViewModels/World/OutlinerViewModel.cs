@@ -56,7 +56,7 @@ internal sealed partial class OutlinerViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsEmpty { get; private set; } = true;
 
-    /// <summary>Gets or sets what shows the world's tab once something is selected in the Outliner.</summary>
+    /// <summary>Gets or sets what shows the world's tab once a route, a step or a zone is selected in the Outliner.</summary>
     public Action? Show { get; set; }
 
     /// <summary>Initializes a new instance of the <see cref="OutlinerViewModel"/> class.</summary>
@@ -98,7 +98,7 @@ internal sealed partial class OutlinerViewModel : ObservableObject
         to.Dots = from.Dots;
     }
 
-    private static IBrush StateOf(PlayState state)
+    internal static IBrush StateOf(PlayState state)
     {
         return state switch
         {
@@ -196,7 +196,10 @@ internal sealed partial class OutlinerViewModel : ObservableObject
                 return;
         }
 
-        Show?.Invoke();
+        // A character is chosen where it is listed; the world shows for what lies on its map to edit: a route, a step, a zone (D406).
+        if (row.Kind is not OutlinerRowKind.Character)
+            Show?.Invoke();
+
         _signature = null;
         Refresh();
     }

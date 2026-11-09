@@ -15,7 +15,7 @@ internal sealed partial class EditorTabs : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
     public partial EditorTab? Selected { get; private set; }
 
-    /// <summary>Gets whether no tab is open, the editor showing the welcome's page alone.</summary>
+    /// <summary>Gets whether no tab is open, nothing to show.</summary>
     public bool IsEmpty => Selected is null;
 
     /// <summary>Shows a tab, opened if it is not.</summary>

@@ -85,7 +85,7 @@ public sealed class MainWindowTests : IAsyncDisposable
 
         Assert.Contains("Outliner", english);
         Assert.Contains("Characters", english);
-        Assert.Contains("World", english);
+        Assert.Contains("Home", english);
         Assert.Contains("Character", english);
         Assert.Contains("Stopped", english);
         Assert.Contains("Running", english);
@@ -93,7 +93,7 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.DoesNotContain("Connected", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Personnages", french);
-        Assert.Contains("Monde", french);
+        Assert.Contains("Accueil", french);
         Assert.Contains("Arrêté", french);
         Assert.Contains("En marche", french);
         Assert.DoesNotContain("Running", french);
@@ -129,9 +129,9 @@ public sealed class MainWindowTests : IAsyncDisposable
             var reopened = (inspector.IsEffectivelyVisible, item.IsChecked);
 
             main.ShowSettingsCommand.Execute(null);
-            main.ShowWelcomeCommand.Execute(null);
+            main.ShowHomeCommand.Execute(null);
             main.ShowSettingsCommand.Execute(null);
-            main.Editor.CloseCommand.Execute(main.Editor.Items.Single(tab => tab.Key == "welcome"));
+            main.Editor.CloseCommand.Execute(main.Editor.Items.Single(tab => tab.Key == "home"));
 
             var tabs = (main.Editor.Items.Select(tab => tab.Key).ToList(), main.Editor.Selected?.Key);
 
@@ -142,8 +142,8 @@ public sealed class MainWindowTests : IAsyncDisposable
 
         Assert.Equal((false, 0d), closed);
         Assert.Equal((true, true), reopened);
-        // The world's tab stays first, pinned: the editor keeps a tab per page beside it.
-        Assert.Equal(["world", "settings"], tabs.Item1);
+        // The home page stays first, pinned: the editor keeps a tab per page beside it.
+        Assert.Equal(["home", "settings"], tabs.Item1);
         Assert.Equal("settings", tabs.Item2);
     }
 
@@ -185,7 +185,7 @@ public sealed class MainWindowTests : IAsyncDisposable
 
             var french = Texts(window);
 
-            main.ShowWelcomeCommand.Execute(null);
+            main.ShowHomeCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
             shown.Add(control.IsEffectivelyVisible);
             localizer.Use(Localizer.English);
@@ -249,7 +249,7 @@ public sealed class MainWindowTests : IAsyncDisposable
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "profiles-edit-fr");
-            main.ShowWelcomeCommand.Execute(null);
+            main.ShowHomeCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));

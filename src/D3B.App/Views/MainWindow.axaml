@@ -701,7 +701,6 @@
                                 </ItemsControl>
                             </Border>
                             <Panel>
-                                <views:WelcomeView IsVisible="{Binding Editor.IsEmpty}" />
                                 <ItemsControl ItemsSource="{Binding Editor.Items}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -716,7 +715,7 @@
                                                 IsVisible="{Binding IsSelected}">
                                                 <ContentControl.DataTemplates>
                                                     <DataTemplate x:DataType="vm:MainViewModel">
-                                                        <views:WelcomeView />
+                                                        <views:HomeView />
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="vm:ProfileViewModel">
                                                         <views:ProfileView />

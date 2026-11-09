@@ -41,6 +41,10 @@ internal static class FightsCommand
             Description = "With --turns, multiplies the life of the characters' enemies in the fights the AI plans, for fights against bigger enemies than those captured (D288). Defaults to 1.",
             DefaultValueFactory = _ => 1,
         };
+        var weights = new Option<string?>("--weights")
+        {
+            Description = "With --turns, the judge's weights to try instead of the defaults, as Name=value pairs of TacticWeights separated by commas, such as Survival=1.5,Comfort=0.6 (D407).",
+        };
         var live = new Option<bool>("--live")
         {
             Description = "Counts what D3B did in the fights instead: who played each, how it ended, and what came of the AI's requests (D206).",
@@ -53,15 +57,16 @@ internal static class FightsCommand
             details,
             turns,
             enemyLife,
+            weights,
             live,
         };
 
-        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(data)?.FullName ?? PackLocations.DefaultRoot, result.GetValue(version), result.GetValue(details), result.GetValue(turns), result.GetValue(enemyLife), result.GetValue(live)));
+        command.SetAction(result => Run(result.GetValue(paths) ?? [], result.GetValue(data)?.FullName ?? PackLocations.DefaultRoot, result.GetValue(version), result.GetValue(details), result.GetValue(turns), result.GetValue(enemyLife), result.GetValue(weights), result.GetValue(live)));
 
         return command;
     }
 
-    private static int Run(string[] paths, string root, string? version, bool details, bool turns, double enemyLife, bool live)
+    private static int Run(string[] paths, string root, string? version, bool details, bool turns, double enemyLife, string? weights, bool live)
     {
         var client = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ankama", "Dofus-dofus3");
         var build = version is null ? ClientBuild.Read(client) : ClientBuild.Parse(version);
@@ -96,7 +101,7 @@ internal static class FightsCommand
         var maps = new GameMaps(pack);
         var translation = ProtocolTranslation.Create(ProtocolSchema.Load(schemaPath), MappingFile.Read(mappingPath));
         var bench = new CastBench(tables, maps, details ? Console.Out : null);
-        var turnBench = new TurnBench(tables, maps, TacticWeights.Default, TurnSearchLimits.Default, enemyLife);
+        var turnBench = new TurnBench(tables, maps, Weighed(weights), TurnSearchLimits.Default, enemyLife);
         var liveBench = new LiveBench();
         var huntBench = live ? new HuntBench(tables, maps) : null;
         var failed = 0;
@@ -142,5 +147,23 @@ internal static class FightsCommand
             bench.Tally.Write(Console.Out);
 
         return failed > 0 ? 1 : 0;
+    }
+
+    private static TacticWeights Weighed(string? pairs)
+    {
+        var weights = new TacticWeights();
+
+        foreach (var pair in (pairs ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = pair.Split('=', 2);
+            var property = typeof(TacticWeights).GetProperty(parts[0]);
+
+            if (property is null || parts.Length is not 2 || !double.TryParse(parts[1], System.Globalization.CultureInfo.InvariantCulture, out var value))
+                throw new ArgumentException($"'{pair}' is not a Name=value pair of TacticWeights.");
+
+            property.SetValue(weights, value);
+        }
+
+        return weights;
     }
 }

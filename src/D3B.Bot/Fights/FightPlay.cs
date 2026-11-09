@@ -22,8 +22,10 @@ namespace D3B.Bot.Fights;
 /// client controls plays its turns the same, with the same requests, which the server takes as the summon's (9f2).
 /// </para>
 /// <para>
-/// A cast the server does not answer within its delay counts as refused, and is not weighed again this turn; a walk not
-/// answered ends the turn. The client acknowledges the sequences and says it is ready for each turn by itself (client.md).
+/// A cast the server refuses with an error text is not weighed again this turn, on that cell, and the next turn weighs it anew:
+/// what it refuses depends on what it sees, such as a monster it cannot see. A cast it does not answer within its delay is not
+/// cast again this fight, for a spell it never answers is one the character cannot cast; a walk not answered ends the turn.
+/// The client acknowledges the sequences and says it is ready for each turn by itself (client.md).
 /// </para>
 /// </remarks>
 public static class FightPlay
@@ -218,12 +220,16 @@ public static class FightPlay
                 if (!await WalkAsync(context, tactics, imagined.Fight, action.Cell, cancellationToken).ConfigureAwait(false))
                     break;
             }
-            else if (!await CastAsync(context, self, action, cancellationToken).ConfigureAwait(false))
+            else if (await CastAsync(context, self, action, cancellationToken).ConfigureAwait(false) is var answer and not CastAnswer.Cast)
             {
                 // Measured live (D203): a spell the server leaves unanswered, such as a transformed character's own, is
-                // refused again on every cell: it is not cast again this fight, and refusals end the turn.
+                // refused again on every cell: it is not cast again this fight. One it refuses with a text depends on what
+                // the server sees (D407): a target invisible for some turns left the spell out of the whole fight, and the
+                // AI passed its turns once the monsters were seen again.
                 refused.Add((action.SpellId, action.Cell));
-                refusedSpells.Add(action.SpellId);
+
+                if (answer is CastAnswer.Unanswered)
+                    refusedSpells.Add(action.SpellId);
 
                 if (++refusals >= MostRefusedATurn)
                     break;
@@ -267,7 +273,7 @@ public static class FightPlay
         return true;
     }
 
-    private static async Task<bool> CastAsync(BotContext context, long self, TacticAction action, CancellationToken cancellationToken)
+    private static async Task<CastAnswer> CastAsync(BotContext context, long self, TacticAction action, CancellationToken cancellationToken)
     {
         // Measured (D218): the server frames a weapon's blow in a sequence of its own, which the client acknowledges as a spell's.
         var shown = Shown(context, self, action.SpellId is WeaponBlows.SpellId ? SequenceType.Weapon : SequenceType.Spell);
@@ -284,18 +290,18 @@ public static class FightPlay
         {
             FightLog.Refused(context.Log, self, action.SpellId, action.Cell, refusal.TextId);
 
-            return false;
+            return CastAnswer.Refused;
         }
 
         FightLog.Cast(context.Log, self, action.SpellId, action.Cell, answer is null ? "unanswered" : "cast");
 
         if (answer is null)
-            return false;
+            return CastAnswer.Unanswered;
 
         if (await shown.WaitAsync(context.Delays.Answer + context.Delays.Display, cancellationToken).ConfigureAwait(false) is null)
             FightLog.NotShown(context.Log, self, TacticActionKind.Cast);
 
-        return true;
+        return CastAnswer.Cast;
     }
 
     private static GameExpectation Shown(BotContext context, long self, SequenceType type)

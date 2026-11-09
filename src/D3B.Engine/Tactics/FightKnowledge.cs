@@ -33,6 +33,15 @@ public sealed record FightKnowledge
         return this with { Spells = Spells.ToImmutableDictionary(pair => pair.Key, pair => pair.Value.RemoveAll(level => spellIds.Contains(level.SpellId))) };
     }
 
+    /// <summary>Gets what is known, a fighter's spells changed.</summary>
+    /// <param name="fighterId">The fighter.</param>
+    /// <param name="spells">Its spells' levels.</param>
+    /// <returns>The knowledge with them.</returns>
+    public FightKnowledge With(long fighterId, ImmutableArray<SpellLevel> spells)
+    {
+        return this with { Spells = Spells.SetItem(fighterId, spells) };
+    }
+
     /// <summary>Gets the spells a fighter may cast.</summary>
     /// <param name="fighterId">The fighter.</param>
     /// <returns>Its spells' levels, none when not known.</returns>

@@ -42,7 +42,7 @@ public sealed class WorldViewTests
     }
 
     [Fact]
-    public async Task TheWorldTabIsTheCentreNeverClosedAndTheKeysChooseTheToolOfWhatIsSelected()
+    public async Task TheKeysChooseTheToolOfWhatIsSelectedInTheWorldTab()
     {
         await using var store = new TestStore();
 
@@ -65,12 +65,10 @@ public sealed class WorldViewTests
             window.Show();
             Dispatcher.UIThread.RunJobs();
 
-            var tab = main.Editor.Items.Single();
+            main.ShowWorld();
+            Dispatcher.UIThread.RunJobs();
 
-            main.Editor.Close(tab);
-            main.Editor.CloseAll();
-
-            var kept = (main.Editor.Items.Count, main.Editor.Selected == tab, tab.IsPinned);
+            var kept = (main.Editor.Items.Count, main.Editor.Selected?.Key, main.Editor.Selected?.IsPinned);
             var view = window.GetVisualDescendants().OfType<WorldView>().Single(item => item.IsEffectivelyVisible);
             var map = view.GetVisualDescendants().OfType<WorldMapView>().Single();
 
@@ -121,7 +119,7 @@ public sealed class WorldViewTests
             return (kept, tracing, stations, selecting, undone, erasing, subArea, painting, main.Editor.Items.Count);
         });
 
-        Assert.Equal((1, true, true), result.kept);
+        Assert.Equal((2, "world", false), result.kept);
         Assert.Equal((WorldTool.Route, WorldMapTool.Trace, true), result.tracing);
         Assert.Equal(2, result.stations);
         Assert.Equal((WorldTool.Select, WorldMapTool.Select, WorldMapTool.Select), result.selecting);
@@ -130,8 +128,8 @@ public sealed class WorldViewTests
         Assert.Equal((WorldMapTool.Region, WorldMapTool.Region), result.subArea);
         Assert.Equal((WorldTool.Zone, WorldMapTool.Trace), result.painting);
 
-        // No tab for the route nor the zone: the world's is the only one.
-        Assert.Equal(1, result.Item9);
+        // No tab for the route nor the zone: the home page and the world are the only two.
+        Assert.Equal(2, result.Item9);
     }
 
     [Fact]

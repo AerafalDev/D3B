@@ -35,7 +35,15 @@ namespace D3B.Engine.Tactics;
 public sealed class FightTactics
 {
     private const double Better = 0.01;
+
+    // Two plans that leave the same enemies alive and are worth the same within a point of life, such as one blow that kills and
+    // two life steals that kill and heal 3: the one with fewer actions wins (D407).
+    private const double Tie = 1;
     private const int Finalists = 16;
+
+    // The breeds made of their summons: the Osamodas' beasts, the Roublard's bombs, the Steamer's turrets (D408).
+    private static readonly int[] _summonerBreeds = [2, 13, 15];
+
     private const int RepliesAnEnemy = 3;
     private const int ReplyCells = 12;
     private const int RootEnds = 3;
@@ -167,6 +175,29 @@ public sealed class FightTactics
             sum = unchecked(sum + ((long)state * -7046029254386353131L));
 
         return unchecked(sum + fighter.States.Length);
+    }
+
+    private bool SummonsAreLastResort(ImaginedFight fight, FightKnowledge knowledge)
+    {
+        return !(fight.Actor.BreedId is { } breed && _summonerBreeds.Contains(breed)) && knowledge.SpellsOf(fight.Actor.Id).Any(IsSummon);
+    }
+
+    private bool IsSummon(SpellLevel level)
+    {
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            if (_actions.Of(effect.EffectId).Kind is EffectKind.Summon)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static HashSet<long> EnemiesAlive(ImaginedFight fight)
+    {
+        var team = fight.Actor.Team;
+
+        return [.. fight.Fighters.Where(fighter => fighter.IsAlive && fighter.Team != team).Select(fighter => fighter.Id)];
     }
 
     private static int Nearest(ImaginedFight fight, int team, int cell)
@@ -304,6 +335,11 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(limits);
 
+        // The owner's ask, for a fast farm (D408): but for a breed made of its summons, a summon is a last resort, brought when the
+        // turn has nothing else worth doing; they slow a fight and rarely win it.
+        if (SummonsAreLastResort(fight, knowledge) && Plan(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(IsSummon)), weights, limits, refused) is { IsEmpty: false } plain)
+            return plain;
+
         var clock = Stopwatch.StartNew();
         var judge = JudgeOf(fight, knowledge, weights);
         var weighed = 1;
@@ -354,6 +390,7 @@ public sealed class FightTactics
         var best = standing;
         var bestScore = double.NegativeInfinity;
         var standingScore = 0.0;
+        var scored = new List<(Finalist Finalist, double Score)>();
         var later = knowledge with { Cooldowns = knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
 
         foreach (var finalist in finalists.OrderByDescending(finalist => finalist.Score).Take(Finalists).Append(standing).Distinct())
@@ -362,6 +399,7 @@ public sealed class FightTactics
             var score = judge.JudgeReplied(replied, NextTurn(replied, later, judge, limits).Gain);
 
             weighed++;
+            scored.Add((finalist, score));
 
             if (finalist == standing)
                 standingScore = score;
@@ -373,7 +411,29 @@ public sealed class FightTactics
             }
         }
 
-        return new TurnPlan(best.Actions, bestScore, standingScore, weighed, clock.Elapsed);
+        // Ending the turn now keeps its tie; between plans that act and leave the same enemies alive, the one with the fewest actions
+        // wins one within a point.
+        var chosen = best;
+        var chosenScore = bestScore;
+
+        if (best != standing)
+        {
+            var alive = EnemiesAlive(best.End);
+
+            foreach (var (finalist, score) in scored)
+            {
+                if (finalist == standing || score < bestScore - Tie || !EnemiesAlive(finalist.End).SetEquals(alive))
+                    continue;
+
+                if (finalist.Actions.Length < chosen.Actions.Length || (finalist.Actions.Length == chosen.Actions.Length && score > chosenScore + Better))
+                {
+                    chosen = finalist;
+                    chosenScore = score;
+                }
+            }
+        }
+
+        return new TurnPlan(chosen.Actions, chosenScore, standingScore, weighed, clock.Elapsed);
     }
 
     /// <summary>Gets the fight once the fighter playing's summons, then the enemies, played their next turns after its, as greedily as the search imagines them.</summary>
