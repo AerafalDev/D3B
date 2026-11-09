@@ -36,6 +36,7 @@ internal sealed class WorldMapView : Control
     private const double WheelStep = 1.22;
     private const double Ease = 14;
     private const double MaxSceneFit = 0.8;
+    private const double ClickReach = 4;
 
     /// <summary>Defines the <see cref="Source"/> property.</summary>
     public static readonly StyledProperty<WorldMapSource?> SourceProperty = AvaloniaProperty.Register<WorldMapView, WorldMapSource?>(nameof(Source));
@@ -81,6 +82,8 @@ internal sealed class WorldMapView : Control
     private WorldMapHit _hit = WorldMapHit.None;
     private Drag _drag;
     private Point _dragFrom;
+    private Point _pressedAt;
+    private WorldMapHit _pressed = WorldMapHit.None;
     private int _dragStation = -1;
     private (int X, int Y) _lastSquare;
     private double _targetScale = 1;
@@ -189,6 +192,9 @@ internal sealed class WorldMapView : Control
 
     /// <summary>Raised when a character, a step of another route or a map of another zone is pressed with the select tool (D397).</summary>
     public event Action<WorldMapHit>? ObjectPressed;
+
+    /// <summary>Raised when the pointer is pressed and let go on the same spot with the select tool, with what lay under it: a drag is the map moved, not a click (D415).</summary>
+    public event Action<WorldMapHit>? Clicked;
 
     /// <summary>Moves the image, as the arrow keys do.</summary>
     /// <param name="dx">Pixels of the view to move it right.</param>
@@ -389,6 +395,8 @@ internal sealed class WorldMapView : Control
         var hit = HitAt(at);
 
         SetHit(hit);
+        _pressed = hit;
+        _pressedAt = at;
 
         switch (hit.Kind)
         {
@@ -490,6 +498,11 @@ internal sealed class WorldMapView : Control
         if (_drag is Drag.Move)
             StationMoveEnded?.Invoke();
 
+        // A press let go where it began, with nothing carried: the map was clicked, not moved.
+        if (_drag is Drag.Pan && Tool is WorldMapTool.Select && _pressed.Kind is not WorldMapHitKind.None && Math.Abs(e.GetPosition(this).X - _pressedAt.X) < ClickReach && Math.Abs(e.GetPosition(this).Y - _pressedAt.Y) < ClickReach)
+            Clicked?.Invoke(_pressed);
+
+        _pressed = WorldMapHit.None;
         _drag = Drag.None;
         _dragStation = -1;
         e.Pointer.Capture(null);

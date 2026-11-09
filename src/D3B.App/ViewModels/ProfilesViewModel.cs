@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Sequences;
+using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using D3B.Bot.Activities;
 using D3B.Bot.Runtime;
@@ -79,6 +80,12 @@ internal sealed partial class ProfilesViewModel : ObservableObject
     /// <summary>Gets or sets what closes a profile's tab once its editor closes.</summary>
     public Action<ProfileViewModel>? Closed { get; set; }
 
+    /// <summary>Gets or sets what gives the world's services, once the host runs: the map beside a profile reads the project's zones and the world's tiles from them (D415).</summary>
+    public Func<RouteServices?> WorldServices { get; set; } = () => null;
+
+    /// <summary>Gets or sets what opens a zone in the world's Zone tool, as the map beside a profile offers.</summary>
+    public Action<string>? EditZone { get; set; }
+
     /// <summary>Gets or sets the lists of steps, which a profile plays and its page opens (D386).</summary>
     public SequencesViewModel? Sequences { get; set; }
 
@@ -139,6 +146,13 @@ internal sealed partial class ProfilesViewModel : ObservableObject
 
         if (relabel || Assets.Version != _profilesVersion || (Accounts?.Version ?? 0) != _accountsVersion)
             Sync(relabel);
+    }
+
+    /// <summary>Reads the world again for the maps beside the profiles open: they show once the host runs, and follow the project's zones.</summary>
+    public void RefreshMaps()
+    {
+        foreach (var item in _open)
+            item.Map.Refresh();
     }
 
     /// <summary>Gets the behaviors of the project a profile may play besides the activities: the lists of steps, and what the canvas will make (D386).</summary>

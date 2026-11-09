@@ -380,6 +380,27 @@
   <data name="ProfileAdvancedChangedOther" xml:space="preserve">
     <value>Avancé · {0:N0} changés</value>
   </data>
+  <data name="ProfileMapHintZone" xml:space="preserve">
+    <value>Cliquez sur une zone pour la choisir.</value>
+  </data>
+  <data name="ProfileMapNoZone" xml:space="preserve">
+    <value>Le projet ne contient encore aucune zone : peignez-en une avec l'outil Zone du monde.</value>
+  </data>
+  <data name="ProfileMapHintSubAreas" xml:space="preserve">
+    <value>Cliquez sur une sous-zone pour l'ajouter ou la retirer.</value>
+  </data>
+  <data name="ProfileMapHintAutomatic" xml:space="preserve">
+    <value>Le bot choisit le lieu : choisissez Zone ou Sous-zones pour le désigner sur la carte.</value>
+  </data>
+  <data name="ProfileMapEditZone" xml:space="preserve">
+    <value>Modifier dans le monde</value>
+  </data>
+  <data name="ProfileMapTitle" xml:space="preserve">
+    <value>Carte</value>
+  </data>
+  <data name="ProfileMapUnavailable" xml:space="preserve">
+    <value>La carte s'affiche une fois le studio relié aux données du jeu.</value>
+  </data>
   <data name="JobNamed" xml:space="preserve">
     <value>Métier {0}</value>
   </data>

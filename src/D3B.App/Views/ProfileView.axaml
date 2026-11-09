@@ -5,6 +5,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:m="clr-namespace:D3B.App.Controls.WorldMaps"
     xmlns:s="clr-namespace:D3B.App.ViewModels.Settings"
     xmlns:v="clr-namespace:D3B.App.Views"
     xmlns:vm="clr-namespace:D3B.App.ViewModels"
@@ -48,26 +49,14 @@
         <Style Selector="Button.Link.Accent:pointerover /template/ ContentPresenter">
             <Setter Property="Foreground" Value="{DynamicResource AccentHoverColor}" />
         </Style>
-        <Style Selector="Button.SectionTab">
-            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="CornerRadius" Value="0" />
-            <Setter Property="FontSize" Value="12.5" />
+        <Style Selector="UserControl.Band Border#WideHost">
+            <Setter Property="IsVisible" Value="False" />
         </Style>
-        <Style Selector="Button.SectionTab:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+        <Style Selector="UserControl.Plays Border#WideHost, UserControl.Plays Border#BandHost">
+            <Setter Property="IsVisible" Value="False" />
         </Style>
-        <Style Selector="Button.SectionTab.On">
-            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
-        </Style>
-        <Style Selector="Button.SectionTab Border.Underline">
-            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
-        </Style>
-        <Style Selector="Button.SectionTab.On Border.Underline">
-            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        <Style Selector="UserControl:not(.Band) Border#BandHost">
+            <Setter Property="IsVisible" Value="False" />
         </Style>
         <Style Selector="Border.Preview">
             <Setter Property="Background" Value="{DynamicResource RecessColor}" />
@@ -238,51 +227,11 @@
             </StackPanel>
             <Border
                 BorderBrush="{DynamicResource BorderColor}"
-                BorderThickness="0,0,0,1"
+                BorderThickness="0,1,0,0"
                 DockPanel.Dock="Top"
+                MaxHeight="280"
                 Margin="0,12,0,0"
-                Padding="20,0">
-                <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Editor.Sections, FallbackValue={x:Null}}" Name="SectionBar">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="2" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.Styles>
-                        <Style Selector="ContentPresenter" x:DataType="s:SettingSectionViewModel">
-                            <Setter Property="IsVisible" Value="{Binding IsVisible}" />
-                        </Style>
-                    </ItemsControl.Styles>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="s:SettingSectionViewModel">
-                            <Button Classes="SectionTab" Click="OnSectionClick">
-                                <Panel>
-                                    <StackPanel
-                                        Orientation="Horizontal"
-                                        Spacing="6"
-                                        VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Title}" />
-                                        <Ellipse
-                                            Fill="{DynamicResource AccentColor}"
-                                            Height="5"
-                                            IsVisible="{Binding HasChanges}"
-                                            VerticalAlignment="Center"
-                                            Width="5" />
-                                    </StackPanel>
-                                    <Border
-                                        Classes="Underline"
-                                        CornerRadius="1"
-                                        Height="2"
-                                        Margin="0,0,0,-9"
-                                        VerticalAlignment="Bottom" />
-                                </Panel>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                </ScrollViewer>
-            </Border>
+                Name="BandHost" />
             <ScrollViewer Name="Form">
                 <StackPanel IsEnabled="{Binding !IsReadOnly}" Margin="12,4,24,48">
                     <Border
@@ -324,12 +273,54 @@
             BorderBrush="{DynamicResource BorderColor}"
             BorderThickness="1,0,0,0"
             Grid.Column="1"
-            IsVisible="{Binding !IsBehaviorProfile}"
-            Name="Side"
-            Width="280">
-            <ScrollViewer>
-                <StackPanel Margin="16" Spacing="10">
-                    <TextBlock Classes="SideTitle" Text="{l:Tr Preview}" />
+            Name="WideHost">
+            <Grid
+                IsVisible="{Binding !IsBehaviorProfile}"
+                Name="Side"
+                RowDefinitions="Auto,*">
+                <Grid
+                    ColumnDefinitions="*,Auto"
+                    Margin="16,12,16,6">
+                    <TextBlock Classes="SideTitle" Text="{l:Tr ProfileMapTitle}" />
+                    <TextBlock
+                        Classes="Dim"
+                        FontSize="11.5"
+                        Grid.Column="1"
+                        MaxWidth="200"
+                        Text="{Binding Map.Hovered}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel Margin="16,0,16,16" Spacing="10">
+                        <Border
+                            Classes="Preview"
+                            Height="280"
+                            IsVisible="{Binding Map.IsAvailable}"
+                            Name="MapFrame">
+                            <m:WorldMapView
+                                AutomationProperties.Name="{l:Tr WorldMapName}"
+                                Name="Map"
+                                Scene="{Binding Map.Scene}"
+                                Source="{Binding Map.Source}"
+                                World="{Binding Map.Layer}" />
+                        </Border>
+                        <TextBlock
+                            Classes="Dim"
+                            IsVisible="{Binding !Map.IsAvailable}"
+                            Text="{l:Tr ProfileMapUnavailable}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Classes="Dim"
+                            IsVisible="{Binding Map.HasHint}"
+                            Text="{Binding Map.Hint}"
+                            TextWrapping="Wrap" />
+                        <Button
+                            Classes="Outline"
+                            Command="{Binding Map.EditZoneCommand}"
+                            Content="{l:Tr ProfileMapEditZone}"
+                            HorizontalAlignment="Left"
+                            IsVisible="{Binding Map.CanEditZone}" />
+                    <TextBlock Classes="SideTitle" Text="{l:Tr Preview}" Margin="0,6,0,0" />
                     <Border Classes="Preview" IsVisible="{Binding Editor.HasZone, FallbackValue=False}">
                         <c:ZoneMapCanvas
                             Height="170"
@@ -457,8 +448,9 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>
