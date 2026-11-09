@@ -87,7 +87,7 @@
     <value>Place</value>
   </data>
   <data name="PlaceHelp" xml:space="preserve">
-    <value>Automatic: the sub-areas holding the most monsters at the character\'s level, hunted in turn.</value>
+    <value>Automatic: the sub-areas holding the most monsters at the character's level, hunted in turn. Sub-areas: those you name. Zone: the maps of one of the project's zones.</value>
   </data>
   <data name="Rotation" xml:space="preserve">
     <value>Sub-areas in rotation</value>
@@ -102,7 +102,7 @@
     <value>Automatic</value>
   </data>
   <data name="PlaceChosen" xml:space="preserve">
-    <value>Chosen</value>
+    <value>Sub-areas</value>
   </data>
   <data name="Area" xml:space="preserve">
     <value>Area</value>
@@ -343,5 +343,23 @@
   </data>
   <data name="FamiliesHelp" xml:space="preserve">
     <value>Such as the bouftous: a group is attacked when it holds a monster of one of them, as one holding a monster chosen.</value>
+  </data>
+  <data name="PlaceZone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="Zone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="ZoneHelp" xml:space="preserve">
+    <value>The character attacks groups only on the maps of this zone, going through them in a tour, and travels there by itself. Zones are drawn on the world's map.</value>
+  </data>
+  <data name="RuleZone" xml:space="preserve">
+    <value>Choose a zone.</value>
+  </data>
+  <data name="FailZoneGone" xml:space="preserve">
+    <value>The zone this profile names is not in the project.</value>
+  </data>
+  <data name="FailNoZone" xml:space="preserve">
+    <value>The zone holds no map to hunt on.</value>
   </data>
 </root>

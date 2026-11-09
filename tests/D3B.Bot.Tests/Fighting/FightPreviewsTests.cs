@@ -3,6 +3,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Fighting;
 using D3B.Bot.Localization;
 using D3B.Bot.Settings;
+using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
 
 namespace D3B.Bot.Tests.Fighting;
@@ -24,6 +25,23 @@ public sealed class FightPreviewsTests : IAsyncDisposable
         var format = text.Many is { } many && text.Count != 1 ? many : text.Format;
 
         return string.Format(_english, format.In(_english), [.. text.Values.Select(value => value.Text ?? value.Id.ToString(_english))]);
+    }
+
+    [Fact]
+    public void ThePreviewOfAZonePlaceDrawsTheZonesMapsAndIsReckonedAgainWhenTheZoneChanges()
+    {
+        var zones = new TestPlaceZones().Add("woods", TestPlay.NorthMapId);
+        var previews = new FightPreviews(_play.World, _play.Tables, zones);
+        var settings = new FightSettings { Place = FightPlace.Zone, Zone = "woods" };
+
+        Assert.Equal([TestPlay.NorthMapId], previews.Of(settings)!.Zone.Select(map => map.MapId));
+
+        zones.Add("woods", TestPlay.MapId);
+
+        // The same number of maps, another one: the preview is reckoned again.
+        Assert.Equal([TestPlay.MapId], previews.Of(settings)!.Zone.Select(map => map.MapId));
+        Assert.Null(previews.Of(new FightSettings { Place = FightPlace.Zone, Zone = "gone" }));
+        Assert.Null(new FightPreviews(_play.World, _play.Tables).Of(settings));
     }
 
     [Fact]

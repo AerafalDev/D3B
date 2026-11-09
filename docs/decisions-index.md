@@ -519,3 +519,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D417](decisions/d417-step-9-the-harvests-levels.md#d417-the-harvests-tour-weighs-the-characters-level-a-graphic-that-offers-only-what-it-cannot-harvest-makes-no-map-probable) The harvest's tour weighs the character's level: a graphic that offers only what it cannot harvest makes no map probable (2026-11-09)
   - An outdoor map left out for the level, the growing back weighed by the level, the levels given once when the tour is made.
+
+## Step 7, 7r5, the profile's editor (D415)
+
+- [D415](decisions/d415-step-7-7r5-the-profile-editor.md#d415-7r5-a-profile-names-a-zone-as-its-place-a-third-value-of-the-place-and-a-zone-setting-read-through-a-seam) 7r5, a profile names a zone as its place: a third value of the place and a zone setting, read through a seam (2026-11-09)
+  - The zone replacing the area and the sub-areas, stored profiles converted into zone files.
+  - Painting a new zone from the profile's tab.
+  - Folding nothing, or folding Deposit and the heal's share too.
+  - One pull request for the zones and the editor.

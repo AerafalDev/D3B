@@ -48,3 +48,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Step 7, hints on the world map (D414)](d414-step-7-hints-on-the-world-map.md): 1 decision, 4 KB.
 - [Step 9, the harvest's interiors (D416)](d416-step-9-the-harvests-interiors.md): 1 decision, 3 KB.
 - [Step 9, the harvest's tour and the levels (D417)](d417-step-9-the-harvests-levels.md): 1 decision, 4 KB.
+- [Step 7, 7r5, the profile's editor (D415)](d415-step-7-7r5-the-profile-editor.md): 1 decision, 5 KB.

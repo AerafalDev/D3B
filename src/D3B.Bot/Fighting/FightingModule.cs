@@ -55,6 +55,9 @@ public sealed class FightingModule : IModule
             .SuggestedByMonsters(ChosenIn)
             .Help(FightTexts.Text("SubAreasHelp"))
             .VisibleWhen(s => s.Place is FightPlace.Chosen);
+        settings.Zone(s => s.Zone, FightTexts.Text("Zone"))
+            .Help(FightTexts.Text("ZoneHelp"))
+            .VisibleWhen(s => s.Place is FightPlace.Zone);
         settings.Flag(s => s.IsolatedMaps, FightTexts.Text("IsolatedMaps")).Help(FightTexts.Text("IsolatedMapsHelp"));
         settings.Number(s => s.ZaapSaving, FightTexts.Text("ZaapSaving"), 1, 30).Unit(FightTexts.Text("ZaapSavingUnit"));
 
@@ -80,7 +83,8 @@ public sealed class FightingModule : IModule
             .Help(FightTexts.Text("AfterLostFightHelp"));
 
         settings.Rule(s => s.Mode is not FightMode.Chosen || ChosenMonsters.Any(s), FightTexts.Text("RuleMonsters"));
-        settings.Rule(s => s.Place is FightPlace.Automatic || s.Area is not null || s.SubAreas.Count > 0, FightTexts.Text("RuleWhere"));
+        settings.Rule(s => s.Place is not FightPlace.Chosen || s.Area is not null || s.SubAreas.Count > 0, FightTexts.Text("RuleWhere"));
+        settings.Rule(s => s.Place is not FightPlace.Zone || s.Zone.Length > 0, FightTexts.Text("RuleZone"));
         settings.Rule(s => s.LeastMonsters <= s.MostMonsters, FightTexts.Text("RuleSize"));
         settings.Preview((s, services, players) => services.GetRequiredService<FightPreviews>().Of(s, players));
 

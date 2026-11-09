@@ -87,7 +87,7 @@
     <value>Lieu</value>
   </data>
   <data name="PlaceHelp" xml:space="preserve">
-    <value>Automatique : les sous-zones qui ont le plus de monstres au niveau du perso, chassées tour à tour.</value>
+    <value>Automatique : les sous-zones qui ont le plus de monstres au niveau du perso, chassées tour à tour. Sous-zones : celles que tu nommes. Zone : les cartes d'une zone du projet.</value>
   </data>
   <data name="Rotation" xml:space="preserve">
     <value>Sous-zones en rotation</value>
@@ -102,10 +102,10 @@
     <value>Automatique</value>
   </data>
   <data name="PlaceChosen" xml:space="preserve">
-    <value>Choisi</value>
+    <value>Sous-zones</value>
   </data>
   <data name="Area" xml:space="preserve">
-    <value>Zone</value>
+    <value>Région</value>
   </data>
   <data name="AreaHelp" xml:space="preserve">
     <value>Seule, elle vaut ses sous-zones où vivent des monstres.</value>
@@ -192,7 +192,7 @@
     <value>Choisis au moins un monstre ou une famille.</value>
   </data>
   <data name="RuleWhere" xml:space="preserve">
-    <value>Choisis une zone ou des sous-zones.</value>
+    <value>Choisis une région ou des sous-zones.</value>
   </data>
   <data name="RuleSize" xml:space="preserve">
     <value>Le minimum de monstres ne dépasse pas le maximum.</value>
@@ -343,5 +343,23 @@
   </data>
   <data name="FamiliesHelp" xml:space="preserve">
     <value>Comme les bouftous : un groupe est attaqué s'il contient un monstre de l'une d'elles, comme s'il contient un monstre choisi.</value>
+  </data>
+  <data name="PlaceZone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="Zone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="ZoneHelp" xml:space="preserve">
+    <value>Le perso n'attaque des groupes que sur les cartes de cette zone, qu'il parcourt en tournée, et s'y rend seul. Les zones se dessinent sur la carte du monde.</value>
+  </data>
+  <data name="RuleZone" xml:space="preserve">
+    <value>Choisis une zone.</value>
+  </data>
+  <data name="FailZoneGone" xml:space="preserve">
+    <value>La zone que ce profil nomme n'est plus dans le projet.</value>
+  </data>
+  <data name="FailNoZone" xml:space="preserve">
+    <value>La zone ne contient aucune carte où chasser.</value>
   </data>
 </root>

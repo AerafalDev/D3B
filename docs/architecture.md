@@ -242,6 +242,14 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   order of the professions harvested least lately and `HarvestBalance`, which counts the last 50 harvests by profession, gives
   the resources of a map their priority. The journey to the tour's next map stops on the first map of the zone it crosses, not
   yet gone through, where the server offers a wanted element, even one the tour holds back as growing (D392).
+- **A zone as the place** (D415): `HarvestPlace.Zone` and `FightPlace.Zone`, beside Automatic and Chosen (the sub-areas, stored as before), with a
+  `Zone` setting, a zone's id (`SettingKind.Zone`, `ActivitySettingsBuilder.Zone`, a rule asking one). The zone is the studio's file, which `D3B.Bot`
+  does not see (D393), so the activities read it through `IPlaceZones` (`D3B.Bot.Activities`), an optional parameter of their constructors as
+  `BankingPreferences` is, which `ProjectZones` (`D3B.Studio.Assets`, registered by `BehaviorsModule`) implements over the `AssetLibrary` and
+  `ZoneMaps.Resolve`, the maps kept until the project's version changes. `HarvestZone.Of` and `HuntingGround.Of` take them as `within`: the
+  sub-areas are those the maps lie in, the maps those of the zone the world graph holds (the hunt keeps the interiors the zone names). The
+  activity reads it when it starts and a preview at each call (`PlaceZoneKey` tells a preview a zone changed); a zone gone ends the run with
+  `FailZoneGone`, one holding no map with `FailNoZone`.
 - **Fights** (D179), in `D3B.Bot.Fights`: the character's state holds its fight (`CharacterState.Fight`, `FightState`) from
   the fight's context to the roleplay's: its phase, the character's team and both teams' placement cells, whether the
   character is ready, the fighters by id (`Fighter`: team, cell, life and most life, AP and MP, level, breed or monster and
@@ -866,14 +874,14 @@ The target:
   - **A list of steps** (D386), in `D3B.Studio.Behaviors`: `BehaviorSequences` reads a behavior as a list when it is one state of actions
     chained by their way on, and writes a list into one (`BehaviorSequence`: the steps as `NodeCall`s and whether it repeats); the
     behavior's file is the same the canvas of 7e opens. `BehaviorSequences.Offered` are the nodes a step may be: `route.follow`,
-    `route.harvest`, `route.fight`, `route.bag`, `wait`, `note`, `pause`, `stop`. `SettingKind.Route`, a route's id picked in
+    `route.harvest`, `route.fight`, `route.bag`, `wait`, `note`, `pause`, `stop`. `SettingKind.Zone`, a zone's id picked as a route's is (D415, `ZoneFieldViewModel`, which says in words what the zone does and how many maps it holds, and blocks the profile when the zone holds none or is gone). `SettingKind.Route`, a route's id picked in
     `RoutePickerViewModel` through `RouteFieldViewModel` (an `IPickingField`), is the value of `route.follow`; `BehaviorAsset.Uses`
     lists the routes a behavior follows. `SequencesViewModel` holds the editors open, `SequenceEditorViewModel` and `SequenceView` are a
     list's tab, its steps `RouteActionViewModel`s drawn by `ActionCardView`; the new-profile dialog (`NewProfileViewModel`) and the
     profile's tab (`ProfileViewModel.IsBehaviorProfile`) play a list as they play an activity.
   - **Zones** (D394): `ZoneAsset` (`D3B.Studio.Assets`, file `<name>.zone.json`) holds sub-area ids, map ids and left-out map ids,
     ascending, and what else the file holds (`Details`); `ZoneMaps.Resolve` and `Holds` give the maps it holds (its sub-areas' and
-    the maps named, less those left out). `ZonesViewModel` and `ZoneEditorViewModel` (`D3B.App.ViewModels.Zones`) hold the editors
+    the maps named, less those left out); a harvest or a hunt reads them as its place (D415, `ProjectZones`). `ZonesViewModel` and `ZoneEditorViewModel` (`D3B.App.ViewModels.Zones`) hold the editors
     open, selected in the world's viewport (D397; tabs of their own until then) on the routes' `WorldMapView`, which draws a scene's `Squares` (`WorldMapZoneLayer`) and offers the tools
     `Trace` (paint), `Erase` and `Region` (a whole sub-area) beside `Select`; what the editors read from the host is the routes'
     `RouteServices`.

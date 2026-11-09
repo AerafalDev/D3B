@@ -65,6 +65,7 @@ public sealed class HarvestActivity : BotActivity
     private readonly TimeProvider _time;
     private readonly Random _random;
     private readonly BankingPreferences _banking;
+    private readonly IPlaceZones? _zones;
     private readonly HarvestBalance _balance;
     private readonly HarvestUpkeep _upkeep;
     private readonly HarvestReporter _reporter;
@@ -118,7 +119,8 @@ public sealed class HarvestActivity : BotActivity
     /// <param name="time">The bots' clock.</param>
     /// <param name="random">The draw of the sub-areas the activity goes through in turn when it chooses the place (D391); the shared one when none is given.</param>
     /// <param name="banking">The general banking settings (D405); the defaults when none is given.</param>
-    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places, Regrowths regrowths, TimeProvider time, Random? random = null, BankingPreferences? banking = null)
+    /// <param name="zones">The project's zones (D415), for a profile whose place is one; with none, such a profile fails saying its zone is not there.</param>
+    public HarvestActivity(HarvestSettings settings, GameWorld world, GameTables tables, GameMaps maps, HarvestSightings sightings, GraphicSkills graphics, GraphicPlaces places, Regrowths regrowths, TimeProvider time, Random? random = null, BankingPreferences? banking = null, IPlaceZones? zones = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(world);
@@ -142,6 +144,7 @@ public sealed class HarvestActivity : BotActivity
         _time = time;
         _random = random ?? Random.Shared;
         _banking = banking ?? new BankingPreferences();
+        _zones = zones;
         _balance = new HarvestBalance(settings.Jobs);
         _upkeep = new HarvestUpkeep(settings, tables, (state, doing) => Publish(state, doing));
         _reporter = new HarvestReporter(settings, _upkeep);
@@ -399,7 +402,12 @@ public sealed class HarvestActivity : BotActivity
             return _current;
         }
 
-        var zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(_settings, _tables.Jobs, _places, _graphics));
+        IReadOnlySet<long>? within = null;
+
+        if (_settings.Place is HarvestPlace.Zone && (_zones is null || !_zones.TryResolve(_settings.Zone, out within)))
+            throw Failure("The zone this profile names is not in the project.", "FailZoneGone");
+
+        var zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(_settings, _tables.Jobs, _places, _graphics), within: within);
 
         if (zone.Maps.Count is 0 || zone.Targets.Count is 0)
             throw Failure("The zone holds no map to harvest.", "FailNoZone");

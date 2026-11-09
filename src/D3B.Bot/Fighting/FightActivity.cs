@@ -53,6 +53,7 @@ public sealed class FightActivity : BotActivity
     private readonly GameTables _tables;
     private readonly Random _random;
     private readonly BankingPreferences _banking;
+    private readonly IPlaceZones? _zones;
     private readonly HashSet<long> _skipped = [];
     private readonly HashSet<int> _unusable = [];
     private readonly Dictionary<int, long> _loot = [];
@@ -97,7 +98,8 @@ public sealed class FightActivity : BotActivity
     /// <param name="tables">The installed build's tables: the monsters and spells.</param>
     /// <param name="random">The draw of the sub-areas the activity hunts in turn when it chooses the place (D391); the shared one when none is given.</param>
     /// <param name="banking">The general banking settings (D405); the defaults when none is given.</param>
-    public FightActivity(FightSettings settings, GameWorld world, GameTables tables, Random? random = null, BankingPreferences? banking = null)
+    /// <param name="zones">The project's zones (D415), for a profile whose place is one; with none, such a profile fails saying its zone is not there.</param>
+    public FightActivity(FightSettings settings, GameWorld world, GameTables tables, Random? random = null, BankingPreferences? banking = null, IPlaceZones? zones = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(world);
@@ -109,6 +111,7 @@ public sealed class FightActivity : BotActivity
         _tables = tables;
         _random = random ?? Random.Shared;
         _banking = banking ?? new BankingPreferences();
+        _zones = zones;
         _report = new ActivityReport { Doing = GameText.Of(FightTexts.Text("DoingStart")) };
     }
 
@@ -268,7 +271,7 @@ public sealed class FightActivity : BotActivity
         Draw(context);
 
         if (_current is not { } first)
-            throw Failure("No sub-area holds monsters to fight at the character's level.", "FailNowhere");
+            throw _settings.Place is FightPlace.Zone ? Failure("The zone holds no map to hunt on.", "FailNoZone") : Failure("No sub-area holds monsters to fight at the character's level.", "FailNowhere");
 
         Say(first);
 
@@ -304,7 +307,12 @@ public sealed class FightActivity : BotActivity
         }
         else
         {
-            var ground = HuntingGround.Of(_settings, _atlas, _graph, _tables.Monsters, level, subscribed);
+            IReadOnlySet<long>? within = null;
+
+            if (_settings.Place is FightPlace.Zone && (_zones is null || !_zones.TryResolve(_settings.Zone, out within)))
+                throw Failure("The zone this profile names is not in the project.", "FailZoneGone");
+
+            var ground = HuntingGround.Of(_settings, _atlas, _graph, _tables.Monsters, level, subscribed, within);
 
             if (ground.Maps.Count > 0)
                 drawn.Add(_grounds.Find(member => member.SubAreaId is null) ?? new FightRotationZone(null, ground));

@@ -399,13 +399,13 @@
     <value>Place</value>
   </data>
   <data name="PlaceHelp" xml:space="preserve">
-    <value>Automatic: the sub-areas richest in what each character can harvest at its levels, gone through in turn.</value>
+    <value>Automatic: the sub-areas richest in what each character can harvest at its levels, gone through in turn. Sub-areas: those you name. Zone: the maps of one of the project's zones.</value>
   </data>
   <data name="PlaceAutomatic" xml:space="preserve">
     <value>Automatic</value>
   </data>
   <data name="PlaceChosen" xml:space="preserve">
-    <value>Chosen</value>
+    <value>Sub-areas</value>
   </data>
   <data name="SafeLevel" xml:space="preserve">
     <value>Not above its level</value>
@@ -484,5 +484,20 @@
   </data>
   <data name="MessageAutomatic" xml:space="preserve">
     <value>The place is chosen at the levels of each character playing this profile: give it to one, on the Accounts page, to see it.</value>
+  </data>
+  <data name="PlaceZone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="Zone" xml:space="preserve">
+    <value>Zone</value>
+  </data>
+  <data name="ZoneHelp" xml:space="preserve">
+    <value>The character harvests only on the maps of this zone, going through them in a tour, and travels there by itself. Zones are drawn on the world's map.</value>
+  </data>
+  <data name="RuleZone" xml:space="preserve">
+    <value>Choose a zone.</value>
+  </data>
+  <data name="FailZoneGone" xml:space="preserve">
+    <value>The zone this profile names is not in the project.</value>
   </data>
 </root>

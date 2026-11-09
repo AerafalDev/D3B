@@ -84,8 +84,9 @@ public sealed class HarvestZone
     /// <param name="mapData">The maps, whose elements' graphics foretell what they hold.</param>
     /// <param name="placed">The maps the host's learned graphics place a resource of <c>Base</c> asked for on, which an area alone stands for with its sub-areas listing the others (D150).</param>
     /// <param name="chosen">The sub-areas the activity chose for the character, when it chooses the place (D166); the settings' area and sub-areas otherwise.</param>
+    /// <param name="within">The maps of a zone of the project, when the place is one (D415): the zone is those of them the world graph holds, in the sub-areas they lie in, whatever the settings' area and sub-areas say.</param>
     /// <returns>The zone, empty when the settings name no resource or no place.</returns>
-    public static HarvestZone Of(HarvestSettings settings, WorldAtlas atlas, WorldGraph graph, JobCatalog jobs, GameMaps mapData, IReadOnlySet<long>? placed = null, IReadOnlyList<int>? chosen = null)
+    public static HarvestZone Of(HarvestSettings settings, WorldAtlas atlas, WorldGraph graph, JobCatalog jobs, GameMaps mapData, IReadOnlySet<long>? placed = null, IReadOnlyList<int>? chosen = null, IReadOnlySet<long>? within = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(atlas);
@@ -96,7 +97,7 @@ public sealed class HarvestZone
         var harvests = jobs.Skills.ToArray().Where(skill => skill.GatheredItemId != Skill.NoItem).ToList();
         var targets = TargetsOf(settings, jobs);
         var wanted = targets.Values.Select(target => target.ItemId).ToFrozenSet();
-        var subAreas = chosen is null ? SubAreasOf(settings, atlas, wanted, placed) : [.. chosen.Distinct()];
+        var subAreas = within is not null ? SubAreasHolding(within, atlas, graph) : chosen is null ? SubAreasOf(settings, atlas, wanted, placed) : [.. chosen.Distinct()];
         var groups = subAreas.Select((subArea, index) => (subArea, index)).ToDictionary(pair => pair.subArea, pair => pair.index);
         var maps = new Dictionary<long, int>();
         var insides = new HashSet<long>();
@@ -105,7 +106,7 @@ public sealed class HarvestZone
 
         foreach (var position in atlas.Positions.Span)
         {
-            if (!groups.TryGetValue(position.SubAreaId, out var group) || !graph.Contains(position.MapId))
+            if (!groups.TryGetValue(position.SubAreaId, out var group) || !graph.Contains(position.MapId) || (within is not null && !within.Contains(position.MapId)))
                 continue;
 
             maps[position.MapId] = group;
@@ -128,7 +129,7 @@ public sealed class HarvestZone
             insides.ToFrozenSet(),
             SubAreaInteriors.Of(reached),
             graphics.ToFrozenDictionary(),
-            IsolatedMaps.Of(graph, maps),
+            within is not null ? FrozenSet<long>.Empty : IsolatedMaps.Of(graph, maps),
             settings.IsolatedMaps);
     }
 
@@ -183,6 +184,19 @@ public sealed class HarvestZone
         HashSet<int> skills = [.. TargetsOf(settings, jobs).Values.Where(target => target.JobId == Job.Base).Select(target => target.SkillId)];
 
         return skills.Count is 0 ? null : places.MapsOffering(skills, graphics);
+    }
+
+    private static List<int> SubAreasHolding(IReadOnlySet<long> maps, WorldAtlas atlas, WorldGraph graph)
+    {
+        var subAreas = new SortedSet<int>();
+
+        foreach (var map in maps)
+        {
+            if (atlas.TryGetPosition(map, out var position) && graph.Contains(map))
+                subAreas.Add(position.SubAreaId);
+        }
+
+        return [.. subAreas];
     }
 
     private static List<int> SubAreasOf(HarvestSettings settings, WorldAtlas atlas, FrozenSet<int> wanted, IReadOnlySet<long>? placed)

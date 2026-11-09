@@ -2,6 +2,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Hosting;
 using D3B.Bot.Runtime;
 using D3B.Core.Modules;
+using D3B.Data.World;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors.Nodes;
 using D3B.Studio.Routes;
@@ -15,7 +16,7 @@ namespace D3B.Studio.Behaviors;
 /// Registers the <see cref="AssetLibrary"/> of <c>Studio:Path</c> (<c>%LOCALAPPDATA%\D3B\studio</c> by default), read before the
 /// host starts with the behaviors and profiles given with the app (<see cref="GivenAssets"/>); the <see cref="NodeCatalog"/>, D3B's
 /// conditions, events and actions among them (<see cref="CoreNodes"/>), an activity's node for each activity; the variables the
-/// characters keep and the bots share; and the <see cref="ProfileStarter"/>. Requires the bots module.
+/// characters keep and the bots share; the <see cref="ProfileStarter"/>, and the project's zones the activities read (<see cref="ProjectZones"/>, D415). Requires the bots module.
 /// </remarks>
 public sealed class BehaviorsModule : IModule
 {
@@ -34,6 +35,7 @@ public sealed class BehaviorsModule : IModule
         services.TryAddSingleton<RouteRuns>();
         services.AddSingleton(provider => new NodeCatalog(provider.GetServices<NodeDefinition>(), provider.GetRequiredService<ActivityCatalog>(), provider));
         services.AddSingleton<ProfileStarter>();
+        services.AddSingleton<IPlaceZones>(provider => new ProjectZones(provider.GetRequiredService<AssetLibrary>(), () => provider.GetRequiredService<GameWorld>().Atlas));
         services.AddSingleton<IHostPreparation, AssetPreparation>();
         CoreNodes.Register(services);
         RouteActions.Register(services);

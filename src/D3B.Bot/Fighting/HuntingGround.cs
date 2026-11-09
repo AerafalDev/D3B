@@ -46,13 +46,17 @@ public sealed class HuntingGround
     /// <param name="monsters">The pack's monsters, at their grades' levels.</param>
     /// <param name="level">The character's level.</param>
     /// <param name="subscribed">Whether the character's account is subscribed, which opens the sub-areas a basic account cannot enter.</param>
+    /// <param name="within">The maps of a zone of the project, when the place is one (D415): the ground is those of them the world graph reaches, all of them, interiors too, since the zone names them.</param>
     /// <returns>The ground; without a sub-area when none holds a monster worth hunting.</returns>
-    public static HuntingGround Of(FightSettings settings, WorldAtlas atlas, WorldGraph graph, MonsterCatalog monsters, int level, bool subscribed)
+    public static HuntingGround Of(FightSettings settings, WorldAtlas atlas, WorldGraph graph, MonsterCatalog monsters, int level, bool subscribed, IReadOnlySet<long>? within = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(atlas);
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(monsters);
+
+        if (within is not null)
+            return Named(settings, atlas, graph, within);
 
         IReadOnlyList<int> subAreas = settings.Place is FightPlace.Automatic
             ? Rank(settings, atlas, graph, monsters, level, subscribed) is [var best, ..] ? [best.SubAreaId] : []
@@ -91,6 +95,16 @@ public sealed class HuntingGround
         var maps = all.Where(pair => settings.IsolatedMaps || !isolated.Contains(pair.Key)).ToFrozenDictionary();
 
         return new HuntingGround(subAreas, maps, isolated);
+    }
+
+    private static HuntingGround Named(FightSettings settings, WorldAtlas atlas, WorldGraph graph, IReadOnlySet<long> within)
+    {
+        var all = atlas.Positions.ToArray()
+            .Where(position => within.Contains(position.MapId) && graph.Contains(position.MapId))
+            .ToDictionary(position => position.MapId, position => position.SubAreaId);
+
+        // The owner painted these maps: none is left out for lying far round, whatever the setting says about isolated maps.
+        return new HuntingGround([.. all.Values.Distinct().Order()], all.ToFrozenDictionary(), FrozenSet<long>.Empty);
     }
 
     /// <summary>Gets what a monster is worth hunting for a character: whole at its level, halved each 20 levels below, nothing above.</summary>

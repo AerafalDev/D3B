@@ -8,4 +8,7 @@ public enum FightPlace
 
     /// <summary>The area and sub-areas the settings name.</summary>
     Chosen,
+
+    /// <summary>The maps of a zone of the project, which the settings name (D415).</summary>
+    Zone,
 }

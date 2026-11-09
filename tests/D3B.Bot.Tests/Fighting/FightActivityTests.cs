@@ -4,6 +4,7 @@ using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fighting;
 using D3B.Bot.Fights;
+using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Movement;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.Breeds;
@@ -55,9 +56,9 @@ public sealed class FightActivityTests : IAsyncDisposable
         return new FightEnd(outcome, 0, 0, ImmutableSortedDictionary<int, int>.Empty);
     }
 
-    private FightActivity Activity(FightSettings settings, BankingPreferences? banking = null)
+    private FightActivity Activity(FightSettings settings, BankingPreferences? banking = null, IPlaceZones? zones = null)
     {
-        return new FightActivity(settings, _play.World, _play.Tables, banking: banking);
+        return new FightActivity(settings, _play.World, _play.Tables, banking: banking, zones: zones);
     }
 
     [Fact]
@@ -327,6 +328,63 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AZoneNamedIsHuntedOnWhateverItsMapsAreInteriorsOfItsSubAreasIncluded()
+    {
+        // Map 1 and 2 are on a world map, 3 is an interior of the same sub-area, 4 lies in another sub-area, and 5 is out of the zone.
+        const int forest = 10;
+        const int other = 20;
+        long[] ids = [1, 2, 3, 4, 5];
+        int[] subAreaOf = [forest, forest, forest, other, forest];
+        sbyte[] worldMapOf = [1, 1, -1, 1, 1];
+        (int From, int To)[] links = [(0, 1), (0, 2), (1, 0), (2, 0), (2, 3), (3, 2), (3, 4), (4, 3)];
+        var graph = new WorldGraph(
+            ids.Select(id => new WorldVertex(id, 1)).ToArray(),
+            links.Select((link, index) => new WorldEdge(link.From, link.To, index, 1)).ToArray(),
+            links.Select(link => new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, ids[link.To], WorldTransition.None, WorldTransition.None)).ToArray(),
+            Array.Empty<string>());
+        var atlas = new WorldAtlas(
+            ids.Select((id, index) => new MapPosition(id, (short)index, 0, subAreaOf[index], worldMapOf[index], 0, 0)).ToArray(),
+            new[] { new SubArea(forest, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 0, 1), new SubArea(other, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 1, 0) },
+            new[] { new Area(1, 0, 0) },
+            Array.Empty<Waypoint>(),
+            Array.Empty<int>(),
+            new[] { Larva });
+        var settings = new FightSettings { Place = FightPlace.Zone, Area = 9, SubAreas = [99] };
+        var ground = HuntingGround.Of(settings, atlas, graph, _play.Tables.Monsters, 50, subscribed: true, within: new HashSet<long> { 1, 3, 4, 777 });
+
+        Assert.Equal([forest, other], ground.SubAreas);
+        Assert.Equal([1L, 3L, 4L], ground.Maps.Keys.Order());
+        Assert.Equal([forest, forest, other], ground.Maps.OrderBy(pair => pair.Key).Select(pair => pair.Value));
+    }
+
+    [Fact]
+    public void AZoneNamedKeepsTheMapsReachedOnlyFarRoundForTheOwnerPaintedThem()
+    {
+        // The isolated test's world: map 9 is five changes from the main part of its sub-area.
+        const int forest = 10;
+        const int other = 20;
+        long[] ids = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        int[] subAreaOf = [forest, forest, forest, other, forest, other, other, other, forest];
+        (int From, int To)[] links = [(0, 1), (1, 0), (1, 2), (2, 1), (2, 3), (3, 4), (3, 5), (5, 6), (6, 7), (7, 8)];
+        var graph = new WorldGraph(
+            ids.Select(id => new WorldVertex(id, 1)).ToArray(),
+            links.Select((link, index) => new WorldEdge(link.From, link.To, index, 1)).ToArray(),
+            links.Select(link => new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, ids[link.To], WorldTransition.None, WorldTransition.None)).ToArray(),
+            Array.Empty<string>());
+        var atlas = new WorldAtlas(
+            ids.Select((id, index) => new MapPosition(id, (short)index, 0, subAreaOf[index], 1, 0, 0)).ToArray(),
+            new[] { new SubArea(forest, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 0, 1), new SubArea(other, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 1, 0) },
+            new[] { new Area(1, 0, 0) },
+            Array.Empty<Waypoint>(),
+            Array.Empty<int>(),
+            new[] { Larva });
+        var ground = HuntingGround.Of(new FightSettings { Place = FightPlace.Zone }, atlas, graph, _play.Tables.Monsters, 50, subscribed: true, within: new HashSet<long> { 1, 2, 3, 5, 9 });
+
+        Assert.Equal([1L, 2L, 3L, 5L, 9L], ground.Maps.Keys.Order());
+        Assert.Empty(ground.Isolated);
+    }
+
+    [Fact]
     public void ASubAreaHoldingMapsOnAWorldMapLeavesItsInteriorsOutAndADungeonKeepsItsOwn()
     {
         // The fields have two maps on a world map and a building on none; the dungeon's maps are all on none.
@@ -389,6 +447,39 @@ public sealed class FightActivityTests : IAsyncDisposable
         run.Stop();
 
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AGroupOnAMapOfTheZoneTheProfileNamesIsAttacked()
+    {
+        var (connection, bot) = await _play.EnterAsync(GroupCell);
+
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+
+        var zones = new TestPlaceZones().Add("woods", TestPlay.MapId);
+        var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Zone, Zone = "woods", SubAreas = [999], Heal = false }, zones: zones));
+
+        Assert.Equal(new AttackMonsterRequest { MonsterGroupId = GroupId }, await connection.SentAsync(1));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Theory]
+    [InlineData("gone", "The zone this profile names is not in the project.")]
+    [InlineData("empty", "The zone holds no map to hunt on.")]
+    public async Task AZoneThatIsGoneOrHoldsNoMapFailsTheActivitySayingSo(string zone, string said)
+    {
+        var (_, bot) = await _play.EnterAsync(GroupCell);
+        var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Zone, Zone = zone, Heal = false }, zones: new TestPlaceZones().Add("empty")));
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+
+        var reason = Assert.IsType<ActivityException>(run.Failure).Reason!;
+
+        Assert.Equal(said, string.Format(System.Globalization.CultureInfo.GetCultureInfo("en"), reason.Format.In(System.Globalization.CultureInfo.GetCultureInfo("en"))));
     }
 
     [Fact]
