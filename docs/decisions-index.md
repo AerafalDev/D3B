@@ -527,3 +527,7 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Painting a new zone from the profile's tab.
   - Folding nothing, or folding Deposit and the heal's share too.
   - One pull request for the zones and the editor.
+- [D418](decisions/d415-step-7-7r5-the-profile-editor.md#d418-7r5b-the-profile-as-an-asset-editor-four-categories-an-advanced-fold-counted-by-what-differs-the-worlds-map-beside-the-form) 7r5b, the profile as an asset editor: four categories, an Advanced fold counted by what differs, the world's map beside the form (2026-11-10)
+  - The fold state kept in the profile or in app.json.
+  - A pick on the press instead of the click.
+  - The tour drawn over the map in place of the thumbnail.
