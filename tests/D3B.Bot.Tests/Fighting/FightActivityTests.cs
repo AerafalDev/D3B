@@ -358,6 +358,33 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AZoneNamedKeepsTheMapsReachedOnlyFarRoundForTheOwnerPaintedThem()
+    {
+        // The isolated test's world: map 9 is five changes from the main part of its sub-area.
+        const int forest = 10;
+        const int other = 20;
+        long[] ids = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        int[] subAreaOf = [forest, forest, forest, other, forest, other, other, other, forest];
+        (int From, int To)[] links = [(0, 1), (1, 0), (1, 2), (2, 1), (2, 3), (3, 4), (3, 5), (5, 6), (6, 7), (7, 8)];
+        var graph = new WorldGraph(
+            ids.Select(id => new WorldVertex(id, 1)).ToArray(),
+            links.Select((link, index) => new WorldEdge(link.From, link.To, index, 1)).ToArray(),
+            links.Select(link => new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, ids[link.To], WorldTransition.None, WorldTransition.None)).ToArray(),
+            Array.Empty<string>());
+        var atlas = new WorldAtlas(
+            ids.Select((id, index) => new MapPosition(id, (short)index, 0, subAreaOf[index], 1, 0, 0)).ToArray(),
+            new[] { new SubArea(forest, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 0, 1), new SubArea(other, 0, 1, 1, SubArea.NoZaap, true, 0, 0, 1, 0) },
+            new[] { new Area(1, 0, 0) },
+            Array.Empty<Waypoint>(),
+            Array.Empty<int>(),
+            new[] { Larva });
+        var ground = HuntingGround.Of(new FightSettings { Place = FightPlace.Zone }, atlas, graph, _play.Tables.Monsters, 50, subscribed: true, within: new HashSet<long> { 1, 2, 3, 5, 9 });
+
+        Assert.Equal([1L, 2L, 3L, 5L, 9L], ground.Maps.Keys.Order());
+        Assert.Empty(ground.Isolated);
+    }
+
+    [Fact]
     public void ASubAreaHoldingMapsOnAWorldMapLeavesItsInteriorsOutAndADungeonKeepsItsOwn()
     {
         // The fields have two maps on a world map and a building on none; the dungeon's maps are all on none.

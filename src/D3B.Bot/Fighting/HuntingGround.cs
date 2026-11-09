@@ -102,10 +102,9 @@ public sealed class HuntingGround
         var all = atlas.Positions.ToArray()
             .Where(position => within.Contains(position.MapId) && graph.Contains(position.MapId))
             .ToDictionary(position => position.MapId, position => position.SubAreaId);
-        var isolated = IsolatedMaps.Of(graph, all);
-        var maps = all.Where(pair => settings.IsolatedMaps || !isolated.Contains(pair.Key)).ToFrozenDictionary();
 
-        return new HuntingGround([.. all.Values.Distinct().Order()], maps, isolated);
+        // The owner painted these maps: none is left out for lying far round, whatever the setting says about isolated maps.
+        return new HuntingGround([.. all.Values.Distinct().Order()], all.ToFrozenDictionary(), FrozenSet<long>.Empty);
     }
 
     /// <summary>Gets what a monster is worth hunting for a character: whole at its level, halved each 20 levels below, nothing above.</summary>

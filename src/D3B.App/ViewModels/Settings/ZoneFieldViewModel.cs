@@ -103,7 +103,8 @@ internal sealed partial class ZoneFieldViewModel : SettingFieldViewModel, IPicki
 
     private string? ProblemOf()
     {
-        if (Value is not { } id)
+        // An editor that cannot see the project's zones cannot tell a zone is gone, as a route's does not.
+        if (Value is not { } id || Editor.Zones is null)
             return null;
 
         return MapsOf(id) switch

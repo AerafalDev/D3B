@@ -97,7 +97,7 @@ public sealed class HarvestZone
         var harvests = jobs.Skills.ToArray().Where(skill => skill.GatheredItemId != Skill.NoItem).ToList();
         var targets = TargetsOf(settings, jobs);
         var wanted = targets.Values.Select(target => target.ItemId).ToFrozenSet();
-        var subAreas = within is not null ? SubAreasHolding(within, atlas) : chosen is null ? SubAreasOf(settings, atlas, wanted, placed) : [.. chosen.Distinct()];
+        var subAreas = within is not null ? SubAreasHolding(within, atlas, graph) : chosen is null ? SubAreasOf(settings, atlas, wanted, placed) : [.. chosen.Distinct()];
         var groups = subAreas.Select((subArea, index) => (subArea, index)).ToDictionary(pair => pair.subArea, pair => pair.index);
         var maps = new Dictionary<long, int>();
         var insides = new HashSet<long>();
@@ -129,7 +129,7 @@ public sealed class HarvestZone
             insides.ToFrozenSet(),
             SubAreaInteriors.Of(reached),
             graphics.ToFrozenDictionary(),
-            IsolatedMaps.Of(graph, maps),
+            within is not null ? FrozenSet<long>.Empty : IsolatedMaps.Of(graph, maps),
             settings.IsolatedMaps);
     }
 
@@ -186,13 +186,13 @@ public sealed class HarvestZone
         return skills.Count is 0 ? null : places.MapsOffering(skills, graphics);
     }
 
-    private static List<int> SubAreasHolding(IReadOnlySet<long> maps, WorldAtlas atlas)
+    private static List<int> SubAreasHolding(IReadOnlySet<long> maps, WorldAtlas atlas, WorldGraph graph)
     {
         var subAreas = new SortedSet<int>();
 
         foreach (var map in maps)
         {
-            if (atlas.TryGetPosition(map, out var position))
+            if (atlas.TryGetPosition(map, out var position) && graph.Contains(map))
                 subAreas.Add(position.SubAreaId);
         }
 

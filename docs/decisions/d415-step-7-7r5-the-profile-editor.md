@@ -36,6 +36,9 @@ A part of [the decisions](README.md); each decision has one line in [the index](
   the map count and the plain words under the button, and the profile cannot be saved with a zone that holds no map or is gone. Tested on
   the fake game, the settings' round trip, the view models and the real module's registration; **not seen in the running app**, and nothing
   tried in game.
+- **A zone's maps are all taken** (found by the review): the rule that leaves out the maps reached only far round (D149) is not applied to a zone, so
+  that a map the owner painted is never dropped silently, whatever the setting "Isolated maps" says. Left: a hunt's preview counts the monsters of the
+  whole sub-areas a zone touches, and the activity names that sub-area as its place when there is one, not the zone's maps alone.
 - **Not built**: the zone as a filter of the Automatic place (the ranking of sub-areas would count a part of one), painting in the
   profile's tab, a zone for a list of steps' profile.
 - **Words.** In French the setting "Zone" already named the game's area, which would have made two zones: it is now "Région", and the place "Chosen" reads "Sub-areas" ("Sous-zones"); the stored names do not change.

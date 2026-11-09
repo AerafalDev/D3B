@@ -36,9 +36,10 @@ public sealed class FightPreviewsTests : IAsyncDisposable
 
         Assert.Equal([TestPlay.NorthMapId], previews.Of(settings)!.Zone.Select(map => map.MapId));
 
-        zones.Add("woods", TestPlay.NorthMapId, TestPlay.MapId);
+        zones.Add("woods", TestPlay.MapId);
 
-        Assert.Equal(2, previews.Of(settings)!.Zone.Length);
+        // The same number of maps, another one: the preview is reckoned again.
+        Assert.Equal([TestPlay.MapId], previews.Of(settings)!.Zone.Select(map => map.MapId));
         Assert.Null(previews.Of(new FightSettings { Place = FightPlace.Zone, Zone = "gone" }));
         Assert.Null(new FightPreviews(_play.World, _play.Tables).Of(settings));
     }

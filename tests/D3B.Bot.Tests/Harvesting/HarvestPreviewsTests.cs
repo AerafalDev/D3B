@@ -42,9 +42,10 @@ public sealed class HarvestPreviewsTests : IAsyncDisposable
 
         Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.MapId }.Order(), before.Zone.Select(map => map.MapId).Order());
 
-        zones.Add("woods", TestPlay.NorthMapId, TestPlay.MapId, TestPlay.EastMapId);
+        zones.Add("woods", TestPlay.NorthMapId, TestPlay.EastMapId);
 
-        Assert.Equal(3, previews.Of(settings)!.Zone.Length);
+        // The same number of maps, other ones: the preview is reckoned again.
+        Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.EastMapId }.Order(), previews.Of(settings)!.Zone.Select(map => map.MapId).Order());
         Assert.Null(previews.Of(new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Zone = "gone" }));
         Assert.Null(Previews().Of(settings));
     }

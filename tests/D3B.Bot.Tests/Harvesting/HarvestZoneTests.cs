@@ -48,6 +48,16 @@ public sealed class HarvestZoneTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AZoneWhoseMapsTheWorldGraphDoesNotHoldStandsForNoSubAreaEither()
+    {
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone };
+        var zone = HarvestZone.Of(settings, _play.World.Atlas, _play.World.Graph, _play.Tables.Jobs, _play.Maps, within: new HashSet<long> { 123_456_789 });
+
+        Assert.Empty(zone.SubAreas);
+        Assert.Empty(zone.Maps);
+    }
+
+    [Fact]
     public void SubAreasChosenStandForThemselvesOfAnyArea()
     {
         var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Ash], Area = 2, SubAreas = [TestPlay.SubAreaId] });
