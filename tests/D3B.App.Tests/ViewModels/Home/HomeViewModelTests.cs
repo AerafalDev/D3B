@@ -45,20 +45,26 @@ public sealed class HomeViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheHomePageStaysWhenEveryTabIsClosedAndIsNamedInTheAppsLanguage()
+    public async Task TheHomePageClosesLikeTheOthersAndTheWindowMenuOpensItAgainNamedInTheAppsLanguage()
     {
         var main = await StudioAsync();
 
         main.ShowSettings();
         main.Editor.Close(main.Editor.Items.Single(tab => tab.Key == "home"));
+
+        Assert.DoesNotContain(main.Editor.Items, tab => tab.Key == "home");
+
         main.Editor.CloseAll();
+
+        Assert.Empty(main.Editor.Items);
+
+        main.Settings.UseFrenchCommand.Execute(null);
+        main.ShowHomeCommand.Execute(null);
 
         Assert.Equal(["home"], main.Editor.Items.Select(tab => tab.Key));
         Assert.True(main.Editor.IsShown("home"));
-
-        main.Settings.UseFrenchCommand.Execute(null);
-
         Assert.Equal("Accueil", main.Editor.Items.Single().Title);
+        Assert.False(main.Editor.Items.Single().IsPinned);
 
         main.Settings.UseEnglishCommand.Execute(null);
     }

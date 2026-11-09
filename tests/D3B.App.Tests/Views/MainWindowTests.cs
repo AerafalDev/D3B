@@ -142,8 +142,8 @@ public sealed class MainWindowTests : IAsyncDisposable
 
         Assert.Equal((false, 0d), closed);
         Assert.Equal((true, true), reopened);
-        // The home page stays first, pinned: the editor keeps a tab per page beside it.
-        Assert.Equal(["home", "settings"], tabs.Item1);
+        // The home page closes like the others (D412): the editor keeps a tab per page.
+        Assert.Equal(["settings"], tabs.Item1);
         Assert.Equal("settings", tabs.Item2);
     }
 

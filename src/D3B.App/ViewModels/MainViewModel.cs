@@ -394,11 +394,11 @@ internal sealed partial class MainViewModel : ObservableObject
         Editor.Open(WorldTab, () => new EditorTab(WorldTab, () => _localizer["TabWorld"], "General.Language", World, needsHost: true));
     }
 
-    /// <summary>Shows the home page, the first tab, opened with the studio and never closed (D406).</summary>
+    /// <summary>Shows the home page, the first tab, opened with the studio; it closes like the others and the Window menu opens it again (D406, D412).</summary>
     [RelayCommand]
     public void ShowHome()
     {
-        Editor.Open(HomeTab, () => new EditorTab(HomeTab, () => _localizer["Home"], null, this, needsHost: false) { IsPinned = true });
+        Editor.Open(HomeTab, () => new EditorTab(HomeTab, () => _localizer["Home"], null, this, needsHost: false));
     }
 
     /// <summary>Opens a character's tab: its map live and what it does (D325).</summary>
