@@ -371,6 +371,15 @@
   <data name="SettingNotWithin" xml:space="preserve">
     <value>Hors de « {0} »</value>
   </data>
+  <data name="ProfileAdvanced" xml:space="preserve">
+    <value>Avancé</value>
+  </data>
+  <data name="ProfileAdvancedChangedOne" xml:space="preserve">
+    <value>Avancé · {0:N0} changé</value>
+  </data>
+  <data name="ProfileAdvancedChangedOther" xml:space="preserve">
+    <value>Avancé · {0:N0} changés</value>
+  </data>
   <data name="JobNamed" xml:space="preserve">
     <value>Métier {0}</value>
   </data>

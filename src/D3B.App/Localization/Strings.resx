@@ -371,6 +371,15 @@
   <data name="SettingNotWithin" xml:space="preserve">
     <value>Not within “{0}”</value>
   </data>
+  <data name="ProfileAdvanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="ProfileAdvancedChangedOne" xml:space="preserve">
+    <value>Advanced · {0:N0} changed</value>
+  </data>
+  <data name="ProfileAdvancedChangedOther" xml:space="preserve">
+    <value>Advanced · {0:N0} changed</value>
+  </data>
   <data name="JobNamed" xml:space="preserve">
     <value>Profession {0}</value>
   </data>

@@ -343,6 +343,9 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
 
     private void Load(string? settings)
     {
+        // The editor is made again at each value given back, undo or activity: the folds the hand opened stay as they were.
+        var opened = Editor?.Sections.Select(section => section.IsAdvancedOpen).ToList() ?? [];
+
         if (Editor is { } previous)
         {
             previous.PropertyChanged -= OnEditorChanged;
@@ -368,6 +371,10 @@ internal sealed partial class ProfileViewModel : ObservableObject, IUndoable
         };
         Editor.PropertyChanged += OnEditorChanged;
         Editor.Edited += OnEdited;
+
+        for (var index = 0; index < Math.Min(opened.Count, Editor.Sections.Count); index++)
+            Editor.Sections[index].IsAdvancedOpen = opened[index];
+
         UpdateCanSave();
         ShowChanges();
     }

@@ -585,4 +585,31 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         Assert.False(item.HasChanges);
         Assert.Equal("no value changed", item.ChangedText);
     }
+
+    [Fact]
+    public async Task ACategorysAdvancedFoldStaysOpenWhenAValueIsGivenBackAndTheEditorIsMadeAgain()
+    {
+        await _store.OpenedAsync();
+        await _store.Assets.SaveProfileAsync("Lumberjack", TestStore.HarvestId, TestStore.Settings(new TestSettings { Job = TestReferences.Lumberjack, Walks = 42, Greeting = "Hi" }), TestContext.Current.CancellationToken);
+
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
+
+        page.Refresh(_store.Host.Services);
+
+        var item = page.Items.Single(profile => profile.Name == "Lumberjack");
+
+        item.EditCommand.Execute(null);
+
+        var how = item.Editor!.Sections[2];
+
+        Assert.Equal(("Advanced · 1 changed", false), (how.AdvancedText, how.ShowsAdvanced));
+
+        how.ToggleAdvancedCommand.Execute(null);
+        Field<NumberFieldViewModel>(item, "Walks").ResetCommand.Execute(null);
+
+        // The editor was made again from the value given back: its sections are new, the fold the hand opened is kept.
+        Assert.NotSame(how, item.Editor.Sections[2]);
+        Assert.True(item.Editor.Sections[2].ShowsAdvanced);
+        Assert.False(item.Editor.Sections[0].IsAdvancedOpen);
+    }
 }
