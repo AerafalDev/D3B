@@ -169,6 +169,7 @@
     <Project Path="src/D3B.Network/D3B.Network.csproj" />
     <Project Path="src/D3B.Protocol/D3B.Protocol.csproj" />
     <Project Path="src/D3B.Storage/D3B.Storage.csproj" />
+    <Project Path="src/D3B.Studio/D3B.Studio.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/D3B.App.Tests/D3B.App.Tests.csproj" />
@@ -180,5 +181,6 @@
     <Project Path="tests/D3B.Network.Tests/D3B.Network.Tests.csproj" />
     <Project Path="tests/D3B.Protocol.Tests/D3B.Protocol.Tests.csproj" />
     <Project Path="tests/D3B.Storage.Tests/D3B.Storage.Tests.csproj" />
+    <Project Path="tests/D3B.Studio.Tests/D3B.Studio.Tests.csproj" />
   </Folder>
 </Solution>

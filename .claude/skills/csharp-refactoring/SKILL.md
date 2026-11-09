@@ -184,5 +184,6 @@ version change is a task of its own, never part of a refactor, and a change to t
   migrations) or in the studio's JSON assets can change a format when it is renamed or moved. Read how it is stored before
   the edit, and keep the stored name when it differs from the C# one.
 - **A moved type changes its namespace**, since each folder is one namespace and each file one type.
-- **Why it matters here**: `docs/status.md` lists the known debt, among it `D3B.Bot` at about 24,000 lines and four files
-  over 900 lines. Cut them along the seams the architecture names, one move per commit, and run the tests between moves.
+- **Why it matters here**: `docs/status.md` lists the known debt, among it files over 900 lines and the narrower seam between
+  `D3B.Bot` and `D3B.Studio` (D393). Cut along the seams the architecture names, one move per commit, and run the tests
+  between moves.

@@ -1,11 +1,11 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Assets;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
+using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -65,7 +65,7 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
         Assert.Contains(assets.Rows, row => row is { IsProblem: true, Problem.Length: > 0 });
         Assert.All(assets.Rows.Where(row => row.IsGiven), row => Assert.Equal(1, row.Depth));
         Assert.Equal("Used by 1", assets.Rows.Single(row => row.Name == "Walker").CountTip);
-        Assert.Equal(["Behavior", "Profile", "Route"], assets.Kinds.Where(kind => kind.IsEnabled).Select(kind => kind.Name));
+        Assert.Equal(["Behavior", "Profile", "Route", "Zone"], assets.Kinds.Where(kind => kind.IsEnabled).Select(kind => kind.Name));
         Assert.Equal("7f", assets.Kinds.Single(kind => kind.Kind is AssetKind.List).Session);
     }
 
@@ -353,10 +353,10 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
 
         var (assets, _) = Panel();
 
-        assets.ToggleKind(D3B.Bot.Assets.AssetKind.Profile);
+        assets.ToggleKind(D3B.Studio.Assets.AssetKind.Profile);
 
         Assert.True(assets.IsFiltered);
-        Assert.DoesNotContain(assets.Rows, row => row.AssetKind is D3B.Bot.Assets.AssetKind.Profile);
+        Assert.DoesNotContain(assets.Rows, row => row.AssetKind is D3B.Studio.Assets.AssetKind.Profile);
 
         assets.ShowAllKinds();
         assets.CollapseAll();

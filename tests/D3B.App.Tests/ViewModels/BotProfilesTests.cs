@@ -1,10 +1,10 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
-using D3B.Bot.Assets;
 using D3B.Bot.Tests.Activities;
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
+using D3B.Studio.Assets;
+using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.App.Tests.ViewModels;
 

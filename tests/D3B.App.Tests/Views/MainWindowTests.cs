@@ -15,9 +15,9 @@ using D3B.Bot.Hosting;
 using D3B.Bot.Inspection;
 using D3B.Bot.Pages;
 using D3B.Bot.Tests.Activities;
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
+using D3B.Studio.Tests.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -83,19 +83,20 @@ public sealed class MainWindowTests : IAsyncDisposable
             },
             TestContext.Current.CancellationToken);
 
+        Assert.Contains("Outliner", english);
         Assert.Contains("Characters", english);
-        Assert.Contains("Welcome", english);
+        Assert.Contains("World", english);
         Assert.Contains("Character", english);
-        Assert.Contains("200", english);
         Assert.Contains("Stopped", english);
+        Assert.Contains("Running", english);
         // Connected goes without saying: only a character that is not says it.
         Assert.DoesNotContain("Connected", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Personnages", french);
-        Assert.Contains("Bienvenue", french);
+        Assert.Contains("Monde", french);
         Assert.Contains("Arrêté", french);
         Assert.Contains("En marche", french);
-        Assert.DoesNotContain("Stopped", french);
+        Assert.DoesNotContain("Running", french);
     }
 
     [Fact]
@@ -113,14 +114,14 @@ public sealed class MainWindowTests : IAsyncDisposable
             window.Show();
             Dispatcher.UIThread.RunJobs();
 
-            var inspector = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "InspectorDock");
+            var inspector = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "DetailsDock");
             var cross = inspector.GetVisualDescendants().OfType<Button>().Single(button => button.Classes.Contains("TabClose"));
 
             cross.Command!.Execute(cross.CommandParameter);
             Dispatcher.UIThread.RunJobs();
 
             var closed = (inspector.IsEffectivelyVisible, window.FindControl<Grid>("Docks")!.ColumnDefinitions[4].Width.Value);
-            var item = window.GetVisualDescendants().OfType<Menu>().Single().GetLogicalDescendants().OfType<MenuItem>().Single(menu => Equals(menu.CommandParameter, StudioPanel.Inspector));
+            var item = window.GetVisualDescendants().OfType<Menu>().Single().GetLogicalDescendants().OfType<MenuItem>().Single(menu => Equals(menu.CommandParameter, StudioPanel.Details));
 
             item.Command!.Execute(item.CommandParameter);
             Dispatcher.UIThread.RunJobs();
@@ -141,7 +142,8 @@ public sealed class MainWindowTests : IAsyncDisposable
 
         Assert.Equal((false, 0d), closed);
         Assert.Equal((true, true), reopened);
-        Assert.Equal(["settings"], tabs.Item1);
+        // The world's tab stays first, pinned: the editor keeps a tab per page beside it.
+        Assert.Equal(["world", "settings"], tabs.Item1);
         Assert.Equal("settings", tabs.Item2);
     }
 
@@ -258,7 +260,7 @@ public sealed class MainWindowTests : IAsyncDisposable
             return (english, texts);
         });
 
-        Assert.Contains("Inspector", english);
+        Assert.Contains("Details", english);
         Assert.Contains("Aerafa", english);
         Assert.Contains("Walker", english);
         Assert.Contains("Auto start", english);
@@ -267,7 +269,7 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Preview", english);
         Assert.Contains("Save", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Inspecteur", french);
+        Assert.Contains("Détails", french);
         Assert.Contains("Variante de", french);
         Assert.Contains("Aperçu", french);
         Assert.Contains("Enregistrer", french);

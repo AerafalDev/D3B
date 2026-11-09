@@ -6,7 +6,9 @@ namespace D3B.App.Controls.WorldMaps;
 /// <param name="Y">The map's vertical coordinate.</param>
 /// <param name="Station">The station's place in the scene, for a station.</param>
 /// <param name="Leg">The leg's place in the scene, for a point of the path.</param>
-internal readonly record struct WorldMapHit(WorldMapHitKind Kind, int X, int Y, int Station, int Leg)
+/// <param name="Id">The key or id of the character, route or zone of the backdrop, for those.</param>
+/// <param name="Step">The step's place in its route, for a step of the backdrop.</param>
+internal readonly record struct WorldMapHit(WorldMapHitKind Kind, int X, int Y, int Station, int Leg, string? Id = null, int Step = -1)
 {
     /// <summary>Gets a hit on nothing.</summary>
     public static WorldMapHit None { get; } = new(WorldMapHitKind.None, 0, 0, -1, -1);

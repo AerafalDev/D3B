@@ -1,9 +1,6 @@
 using D3B.App.Controls;
 using D3B.App.Localization;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Movement;
-using D3B.Bot.Routes;
 using D3B.Bot.Settings;
 using D3B.Data;
 using D3B.Data.Maps;
@@ -11,6 +8,9 @@ using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Data.WorldMaps;
 using D3B.Engine.World;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
+using D3B.Studio.Routes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Routes;

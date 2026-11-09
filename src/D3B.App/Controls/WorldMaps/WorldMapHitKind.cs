@@ -17,4 +17,13 @@ internal enum WorldMapHitKind
 
     /// <summary>The mark of coordinates that several maps share, which a click asks to choose among.</summary>
     Shared,
+
+    /// <summary>A character of the world's backdrop (D397).</summary>
+    Character,
+
+    /// <summary>A step of a route of the world's backdrop (D397).</summary>
+    RouteStep,
+
+    /// <summary>A map of a zone of the world's backdrop (D397).</summary>
+    Zone,
 }

@@ -76,7 +76,7 @@
                     Margin="8,0"
                     Text="{l:Tr SequenceEmpty}"
                     TextWrapping="Wrap" />
-                <ItemsControl ItemsSource="{Binding Steps}">
+                <ItemsControl c:ReorderDrag.Command="{Binding ReorderCommand}" c:ReorderDrag.RemoveCommand="{Binding RemoveCommand}" ItemsSource="{Binding Steps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="r:RouteActionViewModel">
                             <Grid ColumnDefinitions="28,*">

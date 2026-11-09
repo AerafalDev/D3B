@@ -81,7 +81,7 @@ The README has the rest: the host's options, the installer, the local tools. Two
 publishes only with `--publish`, and `scripts/client.cs -- restore` gives the client Ankama's configuration back after a
 crash. The shell is Git Bash on Windows.
 
-## The project's Claude setup (D393)
+## The project's Claude setup (D398)
 
 - Skills in `.claude/skills/`: `/decision`, `/ship`, `/review`, `/close-session`, `/new-tool`, and, loaded when the task
   fits, `csharp`, `test-first`, `studio-ui`, `git`, `read-client`, `diagnosing-bugs`, `csharp-refactoring` and `benchmarks`. Agents: `reviewer`, which reads a diff fresh, and `explorer`,

@@ -4,8 +4,9 @@ description: Build or change a view of the D3B studio - Avalonia, ShadUI, Commun
 ---
 
 The studio is dark, docked and drawn from one scale. Read `docs/architecture.md`, section "Desktop app", and the mockup
-`docs/mockups/studio-7c.html` (the frame) or `docs/mockups/route-7d.html` (the routes) before drawing: they are the
-reference the owner judges against. The decisions behind them are D159 to D163 and D320 to D356 in the index.
+`docs/mockups/studio-7c.html` (the frame), `docs/mockups/route-7d.html` (the routes) and `docs/mockups/studio-7r.html` (the
+studio seen as an engine, with its world viewport) before drawing: they are the reference the owner judges against. The
+decisions behind them are D159 to D163, D320 to D356 and D395 to D397 in the index.
 
 ## The look
 

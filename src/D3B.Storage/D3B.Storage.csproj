@@ -6,7 +6,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\D3B.Bot\D3B.Bot.csproj" />
+    <ProjectReference Include="..\D3B.Studio\D3B.Studio.csproj" />
   </ItemGroup>
 
   <ItemGroup>

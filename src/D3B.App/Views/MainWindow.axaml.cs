@@ -53,7 +53,7 @@ internal sealed partial class MainWindow : ShadUI.Window
             splitter.DragCompleted += (_, _) => _main?.Layout.Remember();
 
         // The panel last pressed is outlined in the accent, as the mockup's focused panel.
-        foreach (var dock in new[] { CharactersDock, AssetsDock, EditorDock, BottomDock, InspectorDock })
+        foreach (var dock in new[] { OutlinerDock, AssetsDock, EditorDock, BottomDock, DetailsDock })
             dock.AddHandler(PointerPressedEvent, (_, _) => Focus(dock), RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
@@ -116,12 +116,12 @@ internal sealed partial class MainWindow : ShadUI.Window
 
         columns[0].Width = new GridLength(layout.IsLeftOpen ? layout.LeftWidth : 0);
         columns[1].Width = new GridLength(layout.IsLeftOpen ? Gap : 0);
-        columns[3].Width = new GridLength(layout.IsInspectorOpen ? Gap : 0);
-        columns[4].Width = new GridLength(layout.IsInspectorOpen ? layout.RightWidth : 0);
+        columns[3].Width = new GridLength(layout.IsDetailsOpen ? Gap : 0);
+        columns[4].Width = new GridLength(layout.IsDetailsOpen ? layout.RightWidth : 0);
 
         var left = LeftColumn.RowDefinitions;
 
-        left[0].Height = layout.AreBothLeftOpen ? new GridLength(layout.LeftShare, GridUnitType.Star) : new GridLength(layout.IsCharactersOpen ? 1 : 0, GridUnitType.Star);
+        left[0].Height = layout.AreBothLeftOpen ? new GridLength(layout.LeftShare, GridUnitType.Star) : new GridLength(layout.IsOutlinerOpen ? 1 : 0, GridUnitType.Star);
         left[1].Height = new GridLength(layout.AreBothLeftOpen ? Gap : 0);
         left[2].Height = layout.AreBothLeftOpen ? new GridLength(1 - layout.LeftShare, GridUnitType.Star) : new GridLength(layout.IsAssetsOpen ? 1 : 0, GridUnitType.Star);
 
@@ -133,7 +133,7 @@ internal sealed partial class MainWindow : ShadUI.Window
 
     private void Focus(Border dock)
     {
-        foreach (var other in new[] { CharactersDock, AssetsDock, EditorDock, BottomDock, InspectorDock })
+        foreach (var other in new[] { OutlinerDock, AssetsDock, EditorDock, BottomDock, DetailsDock })
             other.Classes.Set("Focused", other == dock);
     }
 

@@ -5,19 +5,20 @@ using System.Text.RegularExpressions;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using D3B.App.Controls;
 using D3B.App.Controls.WorldMaps;
 using D3B.App.ViewModels.Maps;
 using D3B.App.ViewModels.Settings;
 using D3B.App.ViewModels.Studio;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Npcs;
-using D3B.Bot.Routes;
 using D3B.Bot.Settings;
 using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Data.World;
 using D3B.Data.WorldMaps;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
+using D3B.Studio.Routes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Routes;
@@ -64,6 +65,9 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
     /// <summary>Gets the name of the route's tab.</summary>
     public string TabKey => _saved.Id;
+
+    /// <summary>Gets the route's anchors as they are now, changes not saved included, for the world's map to draw the route by while another is edited.</summary>
+    public IReadOnlyList<RouteAnchor> CurrentAnchors => _anchors;
 
     /// <summary>Gets the route's anchors as steps, in order.</summary>
     public ObservableCollection<RouteStepViewModel> Steps { get; } = [];
@@ -473,9 +477,14 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     /// <param name="delta">How many places towards the end, negative towards the start.</param>
     public void MoveSelected(int delta)
     {
-        var from = SelectedIndex;
-        var to = from + delta;
+        MoveStep(SelectedIndex, SelectedIndex + delta);
+    }
 
+    /// <summary>Moves a step to another place in the route, and chooses it: a drag in the inspector's list.</summary>
+    /// <param name="from">The step's place now.</param>
+    /// <param name="to">The place it takes.</param>
+    public void MoveStep(int from, int to)
+    {
         if (from < 0 || from >= _anchors.Count || to < 0 || to >= _anchors.Count || to == from)
             return;
 
@@ -485,6 +494,18 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         _anchors.Insert(to, anchor);
         SelectedIndex = to;
         Changed();
+    }
+
+    [RelayCommand]
+    private void ReorderSteps(ReorderRequest request)
+    {
+        MoveStep(request.From, request.To);
+    }
+
+    [RelayCommand]
+    private void ReorderActions(ReorderRequest request)
+    {
+        MoveAction(request.From, request.To - request.From);
     }
 
     /// <summary>Chooses another step and shows it on the map: the page keys.</summary>
@@ -788,6 +809,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         _page.Dialogs.Show(_picker);
     }
 
+    [RelayCommand]
     private void RemoveAction(int index)
     {
         if (!HasSelectedStep || index < 0 || index >= _anchors[SelectedIndex].Actions.Length)
@@ -1136,7 +1158,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             if (!index.TryPlace(anchor.MapId, out var layer, out var x, out var y) || layer != Layer)
                 continue;
 
-            stations.Add(new WorldMapStation(x, y, Zone(anchor.MapId), anchor.IsPinned, i == SelectedIndex));
+            stations.Add(new WorldMapStation(x, y, Zone(anchor.MapId), anchor.IsPinned, i == SelectedIndex, RouteActionKinds.Of(anchor.Actions)));
             _stationAnchors.Add(i);
         }
 

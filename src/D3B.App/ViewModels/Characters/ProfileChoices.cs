@@ -1,6 +1,6 @@
 using D3B.App.Localization;
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
+using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels.Characters;
 

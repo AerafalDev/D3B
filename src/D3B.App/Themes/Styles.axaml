@@ -12,6 +12,14 @@
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Hidden" />
     </Style>
+    <Style Selector="ContentPresenter.DropBefore">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+        <Setter Property="BorderThickness" Value="0,2,0,0" />
+    </Style>
+    <Style Selector="ContentPresenter.DropAfter">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+    </Style>
     <Style Selector="TextBlock.Caption">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />

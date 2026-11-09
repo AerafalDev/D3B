@@ -9,10 +9,10 @@ using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
 using D3B.Bot.Npcs;
-using D3B.Bot.Routes;
-using D3B.Data.Tests;
 using D3B.Data.Maps;
 using D3B.Data.Packs;
+using D3B.Data.Tests;
+using D3B.Studio.Routes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.Views;

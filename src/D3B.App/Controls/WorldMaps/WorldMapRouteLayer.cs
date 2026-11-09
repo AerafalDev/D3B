@@ -268,6 +268,8 @@ internal static class WorldMapRouteLayer
 
         if (station.IsPinned)
             context.DrawEllipse(_numberInk, null, center, radius * 0.38, radius * 0.38);
+
+        WorldMapBackdropLayer.DrawDots(context, center, radius + 4, station.Actions);
     }
 
     private static double Distance(Point a, Point b)

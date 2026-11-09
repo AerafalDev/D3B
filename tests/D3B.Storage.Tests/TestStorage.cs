@@ -1,6 +1,4 @@
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Hosting;
 using D3B.Bot.Localization;
 using D3B.Bot.Tests.Activities;
@@ -8,6 +6,8 @@ using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
 using D3B.Data.Tests;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

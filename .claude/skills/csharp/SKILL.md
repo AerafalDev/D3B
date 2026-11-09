@@ -4,24 +4,24 @@ description: How C# is written in D3B - types, null, async, time, logging, colle
 ---
 
 `CLAUDE.md` gives the style rules and `.editorconfig` makes the build enforce them (warnings are errors). This skill is what
-the build does not say. Each rule below was counted in `src/` on 2026-11-09 (886 files); when code you read breaks one, follow
+the build does not say. Each rule below was counted in `src/` on 2026-11-09 (914 files); when code you read breaks one, follow
 the rule and do not copy the code.
 
 ## Types
 
-- A class is `sealed` unless it is made to be inherited: 303 of them are. A type that leaves nothing is `internal`.
-- Data is a `record`, a `record struct` or a `readonly struct` (231, 36, 46), set with `init` or `required` properties
-  (559, 67), not with a long constructor. Primary constructors are not used (`CLAUDE.md`).
+- A class is `sealed` unless it is made to be inherited: 306 of them are. A type that leaves nothing is `internal`.
+- Data is a `record`, a `record struct` or a `readonly struct` (244, 39, 46), set with `init` or `required` properties
+  (571, 67), not with a long constructor. Primary constructors are not used (`CLAUDE.md`).
 - Public types and members of `src/` carry XML documentation: the build requires it. A comment says why a constraint
   exists, never what the line does.
-- Null is checked at the edge of a public member with `ArgumentNullException.ThrowIfNull` (658 uses), and `Nullable` is on.
+- Null is checked at the edge of a public member with `ArgumentNullException.ThrowIfNull` (672 uses), and `Nullable` is on.
 
 ## Async
 
-- A `CancellationToken` goes through every async call chain (243 uses) and ends at the call that can stop.
-- `ConfigureAwait(false)` on every `await` in `D3B.Bot` and `D3B.Storage` (269 of 270, 99 of 99). Not in `D3B.App`, whose code
-  goes back to the UI thread, nor in `D3B.Network`.
-- `async void` only for an Avalonia event handler in a view's code-behind (all 7 are there).
+- A `CancellationToken` goes through every async call chain (245 uses) and ends at the call that can stop.
+- `ConfigureAwait(false)` on every `await` in `D3B.Bot`, `D3B.Studio` and `D3B.Storage` (235 of 236, 34 of 34, 99 of 99). Not in
+  `D3B.App`, whose code goes back to the UI thread, nor in `D3B.Network`.
+- `async void` only for an Avalonia event handler, in a view's code-behind or a control of `D3B.App` (all 8 are there).
 - A bot's state belongs to its actor: one `Channel<T>` inbox read by one loop, no lock on that state (D9; `docs/architecture.md`,
   "The actor"). Read that section before adding a `lock` (43 exist).
 
@@ -36,14 +36,14 @@ the rule and do not copy the code.
 
 ## Collections and speed
 
-- Store `ImmutableArray<T>` (174) and expose `IReadOnlyList<T>` (375); build a lookup once into a `FrozenDictionary` (40).
+- Store `ImmutableArray<T>` (179) and expose `IReadOnlyList<T>` (393); build a lookup once into a `FrozenDictionary` (40).
 - `Span<T>` and `stackalloc` live in the network and protocol hot paths, where benchmarks justify them. Elsewhere, write the
   clear code first; a speed claim comes with numbers (`benchmarks` skill).
 - A regular expression is a `[GeneratedRegex]`.
 
 ## The studio (`D3B.App`)
 
-- View models use CommunityToolkit.Mvvm: `[ObservableProperty]` and `[RelayCommand]` on `partial` classes (419 and 175 uses).
+- View models use CommunityToolkit.Mvvm: `[ObservableProperty]` and `[RelayCommand]` on `partial` classes (463 and 192 uses).
   Views are `.axaml` with a thin code-behind; texts go through the `.resx` files, in French and English (D14).
 
 ## Generated code

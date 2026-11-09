@@ -79,7 +79,7 @@ public sealed class BotContext
     public ILogger Log => _bot.Log;
 
     /// <summary>Gets the bot the behavior runs on, for what its state does not hold, such as its connection and last fight.</summary>
-    internal BotActor Actor => _bot;
+    public BotActor Actor => _bot;
 
     internal BotContext(BotActor bot, RunningBehavior behavior)
     {

@@ -2,7 +2,6 @@ using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Hosting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Journal;
@@ -13,6 +12,7 @@ using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Protocol.Game;
 using D3B.Storage.Profiles;
+using D3B.Studio.Behaviors;
 using Microsoft.Extensions.Logging;
 
 namespace D3B.App.ViewModels.Logs;

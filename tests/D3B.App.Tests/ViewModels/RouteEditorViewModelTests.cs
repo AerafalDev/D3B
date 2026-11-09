@@ -1,9 +1,10 @@
+using D3B.App.Controls;
 using D3B.App.Controls.WorldMaps;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
-using D3B.Bot.Assets;
+using D3B.Studio.Assets;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -446,6 +447,50 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AStepDraggedTakesItsNewPlaceIsChosenAndTheDragCanBeUndone()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.ReorderStepsCommand.Execute(new ReorderRequest(0, 2));
+        await editor.Planned;
+
+        Assert.Equal([2L, 3L, 1L, 4L], editor.Steps.Select(step => step.MapId));
+        Assert.Equal(2, editor.SelectedIndex);
+
+        // A drop on the place the step already has, or out of the route, changes nothing.
+        editor.ReorderStepsCommand.Execute(new ReorderRequest(2, 2));
+        editor.ReorderStepsCommand.Execute(new ReorderRequest(2, 9));
+        editor.ReorderStepsCommand.Execute(new ReorderRequest(-1, 0));
+
+        Assert.Equal([2L, 3L, 1L, 4L], editor.Steps.Select(step => step.MapId));
+
+        editor.Undo();
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L, 4L], editor.Steps.Select(step => step.MapId));
+        Assert.False(editor.CanUndo);
+    }
+
+    [Fact]
+    public async Task AnActionDraggedTakesItsNewPlaceInTheStep()
+    {
+        var (_, editor) = await OpenAsync(1, 3);
+
+        editor.Select(0);
+        editor.OfferedActions[4].AddCommand.Execute(null);
+        editor.OfferedActions[5].AddCommand.Execute(null);
+        editor.OfferedActions[6].AddCommand.Execute(null);
+
+        editor.ReorderActionsCommand.Execute(new ReorderRequest(0, 2));
+
+        Assert.Equal(["Take the zaap", "Go to the haven bag", "Wait 5 s"], editor.Actions.Select(action => action.Sentence));
+
+        editor.Undo();
+
+        Assert.Equal(["Wait 5 s", "Take the zaap", "Go to the haven bag"], editor.Actions.Select(action => action.Sentence));
+    }
+
+    [Fact]
     public async Task ActionsAreRemovedMovedAndTakenBackLikeAnyChangeOfTheRoute()
     {
         var (_, editor) = await OpenAsync(1, 3);
@@ -476,7 +521,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
     public async Task TheActionsAreSavedWithTheRouteAndReadBackAndAnActionNobodyKnowsIsKeptAsItIs()
     {
         var (routes, editor) = await OpenAsync(1, 3);
-        var unknown = new D3B.Bot.Behaviors.NodeCall("later.thing", System.Collections.Immutable.ImmutableSortedDictionary<string, System.Text.Json.Nodes.JsonNode?>.Empty.Add("Mood", "calm"));
+        var unknown = new D3B.Studio.Behaviors.NodeCall("later.thing", System.Collections.Immutable.ImmutableSortedDictionary<string, System.Text.Json.Nodes.JsonNode?>.Empty.Add("Mood", "calm"));
 
         var saved = await _store.Assets.SaveAsync((_store.Assets.Find<RouteAsset>("r1")!) with { Anchors = [new RouteAnchor { MapId = 1, Actions = [unknown] }, new RouteAnchor { MapId = 3 }] }, TestContext.Current.CancellationToken);
 

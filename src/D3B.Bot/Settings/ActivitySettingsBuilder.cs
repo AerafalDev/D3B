@@ -27,7 +27,8 @@ public sealed class ActivitySettingsBuilder<TSettings>
     private Func<object, IServiceProvider, IReadOnlyList<PreviewPlayer>, SettingsPreview?>? _preview;
     private Action<object, JsonObject>? _earlier;
 
-    internal ActivitySettingsBuilder()
+    /// <summary>Starts a description with no setting.</summary>
+    public ActivitySettingsBuilder()
     {
     }
 
@@ -344,7 +345,7 @@ public sealed class ActivitySettingsBuilder<TSettings>
     /// preset is played as it is, so it must hold whole, rules included.
     /// </remarks>
     /// <exception cref="InvalidOperationException">The defaults are out of the settings' own bounds, or a preset does not hold.</exception>
-    internal ActivitySettings Build()
+    public ActivitySettings Build()
     {
         foreach (var setting in _settings)
             setting.Freeze();
