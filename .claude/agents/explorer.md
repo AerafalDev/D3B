@@ -15,7 +15,7 @@ sources must never reach the repository.
 
 The sources, in the order that settles a question:
 
-1. **What D3B already measured**: `docs/client.md` and `docs/client-game.md` (grep their headings), then `docs/decisions.md` through
+1. **What D3B already measured**: `docs/client.md` and `docs/client-game.md` (grep their headings), then `docs/decisions/` through
    `docs/decisions-index.md`.
 2. **The installed client**, through the tools: `scripts/inspect.cs` for its data, `scripts/capture.cs` for what the
    protocol carried (structure only: a capture holds a login ticket, and you never print one). `--help` lists the

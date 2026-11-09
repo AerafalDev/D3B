@@ -10,7 +10,7 @@ the project's spaces, so that all of them can take part.
   source, to .NET or to English.
 - **Discuss the work, not the person.** Disagree with reasons and, where you can, with measurements: a capture
   described by `scripts/capture.cs`, a bench run, a fight replayed. Say what is wrong and why, not who is wrong.
-- **Accept a no with its reasons.** Decisions are recorded with their reasons in `docs/decisions.md`. Any of them can be
+- **Accept a no with its reasons.** Decisions are recorded with their reasons in `docs/decisions/`. Any of them can be
   revisited with new evidence; the same request repeated without it cannot.
 - **Help newcomers find their way.** Point to the right document rather than telling someone to read the docs.
 - **Credit others' work**, including the ideas you took from another project.

@@ -45,7 +45,7 @@ stops, that line goes back to Ankama's.
 
 ## What D3B never does
 
-These are out of scope for good, in the code, its modules and its documentation ([D2](docs/decisions.md#d2-what-d3b-never-contains)):
+These are out of scope for good, in the code, its modules and its documentation ([D2](docs/decisions/d001-d018-foundation.md#d2-what-d3b-never-contains)):
 
 - evading Ankama's detection: simulated mistakes, timings shaped to avoid bans, forged hardware identifiers;
 - creating accounts in bulk;
@@ -231,7 +231,7 @@ flowchart LR
 | Document | Content |
 | --- | --- |
 | [docs/status.md](docs/status.md) | Where the project stands: what exists, what is not measured, what comes next, the known debt. |
-| [docs/decisions.md](docs/decisions.md) | The brief, every decision with its reasons and what it rejected, and the open questions. |
+| [docs/decisions/](docs/decisions/README.md) | The brief, every decision with its reasons and what it rejected, in files by group of the index, and the open questions. |
 | [docs/decisions-index.md](docs/decisions-index.md) | One line per decision, grouped by step, linking to its entry. |
 | [docs/architecture.md](docs/architecture.md) | How D3B is built: projects, modules, run time, protocol, data, app, fights. |
 | [docs/roadmap.md](docs/roadmap.md) | The steps in order, what each one did, and the next one. |

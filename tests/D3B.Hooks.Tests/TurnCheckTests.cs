@@ -34,7 +34,7 @@ public sealed class TurnCheckTests
     }
 
     [Theory]
-    [InlineData("docs/decisions.md")]
+    [InlineData("docs/decisions/README.md")]
     [InlineData("README.md")]
     [InlineData(".claude/skills/ship/SKILL.md")]
     [InlineData(".claude/settings.json")]

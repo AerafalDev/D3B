@@ -54,7 +54,7 @@ useful:
 
 - **Ankama's game, client, servers and protections.** Report those to Ankama, not here.
 - **Getting banned.** Using a bot breaches Ankama's terms of use, and D3B does nothing to hide it
-  ([D2](docs/decisions.md#d2-what-d3b-never-contains)). Ways for Ankama to detect D3B are not vulnerabilities.
+  ([D2](docs/decisions/d001-d018-foundation.md#d2-what-d3b-never-contains)). Ways for Ankama to detect D3B are not vulnerabilities.
 - **An attacker who already runs code as your Windows user.** Such a program can read and change everything D3B keeps.
 - **The unsigned installer.** SmartScreen warns about it, as the README says; signing waits for a certificate.
 

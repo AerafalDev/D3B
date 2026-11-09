@@ -6,7 +6,7 @@ tools: Read, Grep, Glob
 
 You review one branch of D3B, fresh: you know only the diff, the task and the repository you can read.
 
-Read the diff file whole. Then the task's step in `docs/roadmap.md`, the entries of `docs/decisions.md` you were given
+Read the diff file whole. Then the task's step in `docs/roadmap.md`, the entries of `docs/decisions/` you were given
 (found through `docs/decisions-index.md`), and whatever of the repository the diff touches or calls.
 
 Skip what the build holds: warnings are errors, the analyzers enforce the style, the formatting is checked by CI. Skip taste.
@@ -23,7 +23,7 @@ Look for:
 4. **Tests**: a behavior added in `src/` without a test; a test that cannot fail (it recomputes its expected value the way the
    code does); a failure case not tested; a bug fix whose test would also pass without the fix.
 5. **Docs**: a change of behavior, of a module or of direction that `docs/status.md`, `docs/roadmap.md`,
-   `docs/architecture.md` or a `docs/decisions.md` entry with its index line does not follow.
+   `docs/architecture.md` or a `docs/decisions/` entry with its index line does not follow.
 6. **Judgement no tool checks**: a comment that says what instead of why; a name that misleads; a type that allows a state
    the domain forbids; a module reaching into another's internals.
 
