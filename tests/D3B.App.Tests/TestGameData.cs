@@ -4,6 +4,8 @@ using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
 using D3B.Data;
 using D3B.Data.Banks;
+using D3B.Data.Hints;
+using D3B.Data.Icons;
 using D3B.Data.Interactives;
 using D3B.Data.Jobs;
 using D3B.Data.Monsters;
@@ -51,7 +53,16 @@ internal sealed class TestGameData : IDisposable
         (513, "Non, je reste", "No, I stay"),
         (514, "Bienvenue ! Souhaites-tu quitter Incarnam ?", "Welcome! Do you want to leave Incarnam?"),
         (515, "Es-tu sûr de vouloir partir ?", "Are you sure you want to leave?"),
+        (601, "Ateliers", "Workshops"),
+        (602, "Donjons", "Dungeons"),
+        (603, "Transports", "Transports"),
+        (611, "Zaap", "Zaap"),
+        (612, "Garde-manger du Rat Blanc", "White Rat Larder"),
+        (613, "Atelier des paysans", "Farmers' Workshop"),
+        (614, "Bateau vers Amakna", "Boat to Amakna"),
     ];
+
+    private static readonly int[] _hintPictures = [311, 410, 422];
 
     private readonly TemporaryDirectory _directory = new();
     private readonly GamePack _pack;
@@ -81,6 +92,16 @@ internal sealed class TestGameData : IDisposable
                 new[] { new Npc(NpcId, 510) },
                 new[] { new NpcText(36_977, 512), new NpcText(36_978, 513), new NpcText(36_979, 511) },
                 new[] { new NpcText(30_637, 514), new NpcText(30_638, 515) }));
+            writer.Add(HintCatalog.EntryName, new HintCatalog(
+                new Hint[]
+                {
+                    new(1, 9, 410, 611, 1, 1, 3, 0, 0),
+                    new(2, 6, 422, 612, 2, 1, 2, 0, 110),
+                    new(3, 3, 311, 613, 3, 1, 1, 0, 0),
+                    new(4, 9, 413, 614, 7, 2, 1, 1, 0),
+                },
+                new HintCategory[] { new(3, 601), new(6, 602), new(9, 603) },
+                new IconTable(2, _hintPictures, Enumerable.Range(0, _hintPictures.Length * 16).Select(value => (byte)(value + 1)).ToArray())));
             writer.Add(MonsterCatalog.EntryName, new MonsterCatalog(
                 new[] { new Monster { Id = Gobball, NameId = 506 } },
                 ReadOnlyMemory<MonsterGrade>.Empty,

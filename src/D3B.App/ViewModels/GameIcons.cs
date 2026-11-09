@@ -25,7 +25,10 @@ internal sealed class GameIcons
     private readonly Dictionary<int, Bitmap?> _monsters = [];
     private readonly Dictionary<int, Bitmap?> _heads = [];
     private readonly Dictionary<int, Bitmap?> _glyphs = [];
+    private readonly Dictionary<int, Bitmap?> _hints = [];
     private IconCatalog? _catalog;
+    private IconTable? _hintIcons;
+    private bool _hintsRead;
     private bool _read;
 
     private GameIcons(GameTables tables)
@@ -103,6 +106,42 @@ internal sealed class GameIcons
     public IImage? Glyph(GameGlyph glyph)
     {
         return Catalog() is { } catalog ? Cached(_glyphs, catalog.Glyphs, (int)glyph) : null;
+    }
+
+    /// <summary>Gets the client's own picture of a hint of the world map, in colour (D414).</summary>
+    /// <param name="gfx">The hint's graphic.</param>
+    /// <returns>It, or <see langword="null"/> when the pack keeps none of it.</returns>
+    public IImage? Hint(int gfx)
+    {
+        return HintPictures() is { } table ? Cached(_hints, table, gfx) : null;
+    }
+
+    /// <summary>Tells whether the pack keeps a picture of a hint, without making it.</summary>
+    /// <param name="gfx">The hint's graphic.</param>
+    /// <returns>Whether it does.</returns>
+    public bool HasHint(int gfx)
+    {
+        return HintPictures() is { } table && table.TryGet(gfx, out _);
+    }
+
+    private IconTable? HintPictures()
+    {
+        if (_hintsRead)
+            return _hintIcons;
+
+        _hintsRead = true;
+
+        try
+        {
+            _hintIcons = _tables.Hints.Icons;
+        }
+        catch (Exception exception) when (exception is KeyNotFoundException or PackFormatException)
+        {
+            // A pack without hints draws them with a plain mark.
+            _hintIcons = null;
+        }
+
+        return _hintIcons;
     }
 
     private IconCatalog? Catalog()
