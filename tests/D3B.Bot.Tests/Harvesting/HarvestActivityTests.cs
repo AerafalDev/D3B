@@ -163,7 +163,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         Assert.True(_sightings.TryGet(TestPlay.MapId, out var seen));
         Assert.Equal([TestPlay.Ash], seen.Resources);
         Assert.Contains(travelling.Focus!.Zone, map => map.MapId == TestPlay.MapId && map.State is ZoneMapState.Visited);
-        Assert.Equal("Tour 1, map 2 of 4", Say(travelling.Progress!.Text));
+        Assert.Equal("Tour 1, map 2 of 3", Say(travelling.Progress!.Text));
 
         // The journey to the nearest map of the tour begins with a walk to the edge, an action cell or the door.
         Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 3));
@@ -243,7 +243,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         await TestWalks.WalkedAsync(_play, connection, 1);
 
         Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await connection.SentAsync(2));
-        Assert.Equal($"{TestPlay.SubAreaId}, tour 1, map 1 of 4", Say(activity.Report!.Progress!.Text));
+        Assert.Equal($"{TestPlay.SubAreaId}, tour 1, map 1 of 3", Say(activity.Report!.Progress!.Text));
         Assert.Equal(5, activity.TeleportChanges);
 
         run.Stop();

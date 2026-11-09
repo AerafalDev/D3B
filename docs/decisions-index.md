@@ -509,3 +509,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Rebuilding the steps' actions from the clips at each edit.
   - Dropping the actions' cards of a step from the Details.
   - A track for each of the eight kinds at all times.
+
+## Step 9, the harvest's interiors (D416)
+
+- [D416](decisions/d416-step-9-the-harvests-interiors.md#d416-the-harvests-tour-goes-into-an-interior-of-a-town-or-a-field-only-when-something-says-it-holds-a-resource) The harvest's tour goes into an interior of a town or a field only when something says it holds a resource (2026-11-09)
+  - The interiors left out always, a setting "Go into the buildings", the journeys avoiding interiors.

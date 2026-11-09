@@ -43,3 +43,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The home page's tab (D412)](d412-the-home-pages-tab.md): 1 decision, 1 KB.
 - [Step 7, 7r3, the Sequencer (D413)](d413-step-7-7r3-the-sequencer.md): 1 decision, 7 KB.
 - [Step 7, hints on the world map (D414)](d414-step-7-hints-on-the-world-map.md): 1 decision, 4 KB.
+- [Step 9, the harvest's interiors (D416)](d416-step-9-the-harvests-interiors.md): 1 decision, 3 KB.
