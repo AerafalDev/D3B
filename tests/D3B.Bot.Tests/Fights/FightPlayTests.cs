@@ -263,6 +263,52 @@ public sealed class FightPlayTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ACastTheServerRefusedWithATextIsCastAgainTheNextTurn()
+    {
+        // Reported by players against invisible monsters: a cast refused for a turn (the target not seen) had the AI leave
+        // that spell out of the whole fight, and it passed its turns once the monsters were seen again.
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = await StartTurnAsync(connection, bot, monster);
+
+        var refused = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (refused.SpellId, refused.CellId));
+        connection.Server(new TextInformationEvent { TextId = 175, Type = TextInformationType.Error });
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 6));
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+        connection.Server(new FightTurnEvent { FighterId = Monster, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnEndEvent { FighterId = Monster });
+        connection.Server(new FightNewRoundEvent { Round = 2 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 2 });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        var again = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 7));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (again.SpellId, again.CellId));
+    }
+
+    [Fact]
+    public async Task ASpellTheServerLeavesUnansweredIsNotCastAgainThatFight()
+    {
+        // Measured live (D203): a transformed character's own spells go unanswered, on every cell.
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = await StartTurnAsync(connection, bot, monster);
+
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 6));
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+        connection.Server(new FightTurnEvent { FighterId = Monster, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnEndEvent { FighterId = Monster });
+        connection.Server(new FightNewRoundEvent { Round = 2 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 2 });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 7));
+    }
+
+    [Fact]
     public async Task ThePlayersTurnsEndGoesToTheServerAndPausesTheBot()
     {
         var (connection, bot) = await _play.EnterAsync(Far);

@@ -469,3 +469,7 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Removing the fight scripts too: they measure the AI's quality, not its speed.
 - [D401](decisions.md#d401-decisionsmd-is-cut-into-files-by-group-of-the-index) `decisions.md` is cut into files by group of the index (2026-11-09)
   - Condensing old entries: it breaks the append-only rule and loses the reason.
+
+## Step 9, the players' reports (D407)
+
+- [D407](decisions.md#d407-the-fight-ai-after-the-players-reports-a-refused-cast-is-weighed-anew-a-life-steal-is-no-longer-cast-for-a-heal-that-is-not-needed) The fight AI after the players' reports: a refused cast is weighed anew, a life steal is no longer cast for a heal that is not needed (2026-11-09)

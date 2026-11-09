@@ -5,7 +5,7 @@ owed. The reasons are in [decisions.md](decisions.md), found through [decisions-
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-09, after D398 (D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
+As of 2026-11-09, after D407 (the fight AI after the players' reports; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11, mapping format 17, all published.
 
 ## What exists
 
@@ -37,6 +37,11 @@ As of 2026-11-09, after D398 (D394, session 7d4, merged into 7r2's branch). App 
 - The owner's reports from game answered since 2026-11-06 (D387 to D392): the hunt attacking every group, the tour leaving
   interiors out, the AI fleeing less, the rotation through ten sub-areas and the professions in turn. The numbers 5, 10, a
   quarter and 50 of D391 and D392 are the lead's reckoning.
+- The players' reports answered by D407: the new curve of the character's life (above 60% a point is worth a quarter) and the
+  plan with the fewest actions among equals, replayed on the captures but not played in game; what the server sends of an
+  invisible fighter (no capture holds one: the AI keeps its last cell and `Combatant.IsVisible` is never unset); the damage of a
+  long push against a wall (the captures hold pushes of 1 to 4 cells, the pack's *Panache DoPou* pushes 10); the players'
+  *Chafer* and *Arakne* summons, which no breed of the pack casts.
 - Step 9's mechanisms: the Roublard against big enemies with `Fights:Alone`, the Féca's glyphs, an Osamodas's summons and the
   fight map's preview, an aggression, stairs and portals, the inactivity popup, what the client shows once its turn's end goes
   unanswered (D367).

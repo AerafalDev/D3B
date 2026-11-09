@@ -263,8 +263,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   waits for the server's answer and the client's acknowledgement, plans again, and ends its turn as soon as the plan is
   empty. A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
   spells its grade's (`FightState.IsOwnTurn`, D271). Every request waits `BotDelays.FightAction` first, the owner's
-  0.8 s (D368), and every wait ends with the fight. A cast the server refuses with an error text, or leaves unanswered, is not
-  cast again that fight. The player's placement, readiness, casts, walks and turn's ends pause the bot
+  0.8 s (D368), and every wait ends with the fight. A cast the server refuses with an error text is not weighed again that turn
+  on that cell, and the next turn weighs it anew, since what the server refuses depends on what it sees (D407); one it
+  leaves unanswered is not cast again that fight. The player's placement, readiness, casts, walks and turn's ends pause the bot
   (`PlayerActions`), not a turn's end the client marks as its own (D252): in its inactive state, whose first in a fight
   the journal says (`BotEvent.ClientInactive`, D366), and which the game session withholds from the server while the AI
   plays, so that the AI's turn goes on (`IRequestWithholder`, D367). An activity that fights its own has the fight
@@ -922,8 +923,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     hit weighed by its chance (`EffectFormulas.CriticalChance`, D207), each lasting buff kept with its rounds (D209); the
     spells its effects cast at once cast in turn on the fight as the effects before left it, states ended, a spell's
     buffs dispelled and a buff past its stacks replacing the oldest, as a Zobal's masks do (D227).
-  - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave, enemies' weighed by how
-    hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
+  - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
+    60% of its most (`TacticWeights.Comfort`, D407), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
     range and in sight (D208), bounded by a kill; the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
     over the rounds it lasts (D209); once the enemies
@@ -954,7 +955,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
-    turn (`NextTurn`, D210); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
+    turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
+    alive (D407); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
