@@ -7,18 +7,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Controls.WorldMaps;
-using D3B.App.ViewModels.Maps;
 using D3B.App.ViewModels.Settings;
 using D3B.App.ViewModels.Studio;
-using D3B.Bot.Npcs;
-using D3B.Bot.Settings;
-using D3B.Data;
-using D3B.Data.Maps;
-using D3B.Data.World;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Routes;
 
@@ -826,50 +819,13 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     {
         Actions.Clear();
 
-        var services = _page.Services!;
-
         if (HasSelectedStep)
         {
-            var anchor = _anchors[SelectedIndex];
-            var localizer = _page.Localizer;
-            var names = new GameNames(services.Texts, localizer);
-            MapData? map = null;
-
-            services.Maps?.TryGet(anchor.MapId, out map);
-
-            var npcs = services.Provider?.GetService<KnownNpcs>();
-            var places = new MapNames(localizer, services.Provider?.GetService<GameWorld>(), services.Texts, services.Provider?.GetService<GameTables>());
-
-            for (var i = 0; i < anchor.Actions.Length; i++)
-            {
-                var call = anchor.Actions[i];
-                NodeDefinition? definition = null;
-                SettingsEditor? editor = null;
-
-                if (services.Nodes is { } catalog && catalog.TryGet(call.Node, out definition))
-                {
-                    var made = definition;
-                    var index = i;
-                    var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, services.Game, names, localizer, services.Provider, [], _page.Dialogs) { Map = map, Npcs = npcs, NpcNames = new NpcNames(localizer, services.Provider?.GetService<GameTables>(), services.Texts), Place = places.Place };
-
-                    created.Edited += (_, _) => ActionEdited(index, made, created);
-                    editor = created;
-                }
-
-                Actions.Add(new RouteActionViewModel(i, anchor.Actions.Length, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), RemoveAction, MoveAction));
-            }
+            foreach (var row in RouteActionForms.Build(_page.Services!, _page.Localizer, _page.Dialogs, _anchors[SelectedIndex], ActionEdited, RemoveAction, MoveAction))
+                Actions.Add(row);
         }
 
         NotifyActions();
-    }
-
-    private string NameOf(GameNames names, SettingKind kind, int id)
-    {
-        var game = _page.Services!.Game;
-
-        return game is not null && game.Options(kind).FirstOrDefault(option => option.Id == id) is { } reference
-            ? names.Name(kind, reference)
-            : "#" + id.ToString(CultureInfo.InvariantCulture);
     }
 
     private void NotifyActions()
@@ -1013,37 +969,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
     private void BuildSteps()
     {
-        var services = _page.Services!;
-        var localizer = _page.Localizer;
-        var steps = new List<RouteStepViewModel>(_anchors.Count);
-
-        for (var i = 0; i < _anchors.Count; i++)
-        {
-            var anchor = _anchors[i];
-            var elsewhere = services.Index.TryPlace(anchor.MapId, out var layer, out _, out _) && layer != Layer;
-            var leg = i < _legs.Count ? _legs[i] : null;
-            var closing = i == _anchors.Count - 1;
-            string gap = "";
-            var broken = false;
-
-            if (leg is not null && (!closing || RoutePlanner.ClosesBack(Mode, _anchors.Count)))
-            {
-                (gap, broken) = leg.Kind switch
-                {
-                    RouteLegKind.Unreachable => (localizer["RouteGapNone"], true),
-                    RouteLegKind.Same => (localizer["RouteGapSame"], false),
-                    _ when leg.UsesZaap => (localizer["RouteGapZaap"], false),
-                    _ => (leg.Between.IsEmpty ? localizer["RouteGapNeighbours"] : localizer.Plural("RouteGapMaps", leg.Between.Length), false),
-                };
-
-                if (closing && !broken)
-                    gap = localizer.Format("RouteGapBack", gap);
-                else if (closing)
-                    gap = localizer["RouteGapNone"];
-            }
-
-            steps.Add(new RouteStepViewModel(i, anchor.MapId, _texts.Place(anchor.MapId), _texts.Zone(anchor.MapId), anchor.IsPinned, elsewhere, gap, broken, closing && gap.Length > 0, anchor.Actions.Length, anchor.Actions.Length == 0 ? "" : localizer.Plural("RouteActionsCount", anchor.Actions.Length), Reveal, Remove, OpenActionPicker) { IsSelected = i == SelectedIndex });
-        }
+        var steps = RouteStepRows.Build(_page.Services!, _page.Localizer, _texts, _anchors, _legs, Mode, Layer, SelectedIndex, Reveal, Remove, OpenActionPicker);
 
         Steps.Clear();
 
