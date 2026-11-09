@@ -43,6 +43,8 @@ public sealed class FollowRouteTests : IAsyncDisposable
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Null(runs.Position(bot.State.Key));
-        Assert.Equal(["after"], Notes(bot));
+        Assert.Equal(2, Notes(bot).Count);
+        Assert.Contains("Here", Notes(bot)[0], StringComparison.Ordinal);
+        Assert.Equal("after", Notes(bot)[1]);
     }
 }

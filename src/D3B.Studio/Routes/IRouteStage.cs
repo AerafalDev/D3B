@@ -31,6 +31,13 @@ internal interface IRouteStage
     /// <returns>A task that completes once the time passed.</returns>
     Task WaitAsync(TimeSpan time, CancellationToken cancellationToken);
 
+    /// <summary>Says that the run reached a step of its route: the character is on its map (D419).</summary>
+    /// <param name="route">The route's name.</param>
+    /// <param name="step">The step, from 1.</param>
+    /// <param name="steps">How many steps the route has.</param>
+    /// <param name="map">The step's map.</param>
+    void Reached(string route, int step, int steps, long map);
+
     /// <summary>Writes a note in the bot's journal.</summary>
     /// <param name="key">The text's key in the behaviors' texts.</param>
     /// <param name="values">The values of its placeholders.</param>

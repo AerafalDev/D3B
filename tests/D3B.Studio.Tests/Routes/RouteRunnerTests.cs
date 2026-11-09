@@ -223,6 +223,43 @@ public sealed class RouteRunnerTests
         Assert.Equal([false], arrivedOnTravel);
     }
 
+    [Fact]
+    public async Task TheStageIsToldEachStepTheRunReachesWithItsNumberAndItsMap()
+    {
+        var stage = new FakeStage { Unreachable = [2] };
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, []), (2, []), (3, []));
+
+        await RouteRunner.RunAsync(route, new RouteCursor(3, route.Mode), stage, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["North 1/3 map 1", "North 3/3 map 3"], stage.Arrivals);
+    }
+
+    [Fact]
+    public async Task ALoopTellsTheStepsOfItsFirstLapOnlySoThatTheJournalIsNotFilled()
+    {
+        using var source = new CancellationTokenSource();
+        FakeStage stage = null!;
+
+        stage = new FakeStage { OnTravel = _ => { if (stage.Log.Count >= 8) source.Cancel(); } };
+
+        var route = Route(RouteMode.Loop, RouteUnreachable.Skip, (1, []), (2, []), (3, []));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => RouteRunner.RunAsync(route, new RouteCursor(3, route.Mode), stage, source.Token));
+
+        Assert.Equal(["North 1/3 map 1", "North 2/3 map 2", "North 3/3 map 3"], stage.Arrivals);
+    }
+
+    [Fact]
+    public async Task ARouteThereAndBackTellsEveryStepOnItsWayBackToo()
+    {
+        var stage = new FakeStage();
+        var route = Route(RouteMode.RoundTrip, RouteUnreachable.Skip, (1, []), (2, []), (3, []));
+
+        await RouteRunner.RunAsync(route, new RouteCursor(3, route.Mode), stage, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["North 1/3 map 1", "North 2/3 map 2", "North 3/3 map 3", "North 2/3 map 2", "North 1/3 map 1"], stage.Arrivals);
+    }
+
     private sealed class FakeStage : IRouteStage
     {
         public List<string> Log { get; } = [];
@@ -254,6 +291,8 @@ public sealed class RouteRunnerTests
 
         public List<long?> Nexts { get; } = [];
 
+        public List<string> Arrivals { get; } = [];
+
         public HashSet<string> Failing { get; init; } = [];
 
         public Task<bool> PlayAsync(NodeCall action, long? next, CancellationToken cancellationToken)
@@ -273,6 +312,11 @@ public sealed class RouteRunnerTests
             Log.Add("wait");
 
             return Task.CompletedTask;
+        }
+
+        public void Reached(string route, int step, int steps, long map)
+        {
+            Arrivals.Add($"{route} {step}/{steps} map {map}");
         }
 
         public void Note(string key, params object[] values)

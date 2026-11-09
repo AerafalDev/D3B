@@ -398,6 +398,9 @@
   <data name="RouteUnreachableFails" xml:space="preserve">
     <value>L'étape {0} de la route, carte {1}, est hors d'atteinte : la route échoue.</value>
   </data>
+  <data name="RouteStepReached" xml:space="preserve">
+    <value>Route {0} : étape {1} sur {2}, carte {3}.</value>
+  </data>
   <data name="RouteUnreachablePassed" xml:space="preserve">
     <value>L'étape {0} de la route, carte {1}, est hors d'atteinte : passée.</value>
   </data>
