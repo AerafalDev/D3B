@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using Avalonia.Input;
+using D3B.App.Controls.Sequencer;
 using D3B.App.Controls.WorldMaps;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
@@ -180,5 +181,182 @@ public sealed class SequencerViewModelTests : IAsyncDisposable
 
         Assert.Equal(("mod.sing", "mod.sing"), (track.Node, track.Name));
         Assert.Equal(WorldMapActionKind.Other, track.Kind);
+    }
+
+    private static string[] Nodes(RouteEditorViewModel editor, int step)
+    {
+        return [.. editor.CurrentAnchors[step].Actions.Select(action => action.Node)];
+    }
+
+    [Fact]
+    public async Task APressAndADragOnATracksEmptyCellsDrawsAClipOfTheKindOverTheStepsCrossedAndSelectsIt()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2), Step(3), Step(4));
+        var sequencer = editor.Sequencer;
+
+        sequencer.AddTrack(RouteActions.Fight);
+        sequencer.BeginDraw(0, 1);
+        sequencer.Drag(3);
+        sequencer.Drag(2);
+        sequencer.EndGesture();
+
+        Assert.Equal([[], [RouteActions.Fight], [RouteActions.Fight], []], Enumerable.Range(0, 4).Select(step => Nodes(editor, step)));
+
+        var clip = Assert.Single(Assert.Single(sequencer.Scene.Tracks).Clips);
+
+        Assert.Equal((1, 2), (clip.First, clip.Last));
+        Assert.Equal(clip.Id, sequencer.SelectedClip);
+        Assert.True(editor.IsDirty);
+    }
+
+    [Fact]
+    public async Task APressOnAnEmptyCellWithNoDragDrawsAClipOfOneStep()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2));
+
+        editor.Sequencer.AddTrack(RouteActions.Door);
+        editor.Sequencer.BeginDraw(0, 1);
+        editor.Sequencer.EndGesture();
+
+        Assert.Equal([RouteActions.Door], Nodes(editor, 1));
+        Assert.Empty(Nodes(editor, 0));
+    }
+
+    [Fact]
+    public async Task AGestureIsOneChangeToUndoWhateverTheStepsItCrossed()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2), Step(3), Step(4));
+        var sequencer = editor.Sequencer;
+
+        sequencer.AddTrack(RouteActions.Fight);
+        sequencer.BeginDraw(0, 0);
+        sequencer.Drag(1);
+        sequencer.Drag(2);
+        sequencer.Drag(3);
+        sequencer.EndGesture();
+        editor.Undo();
+
+        Assert.All(editor.CurrentAnchors, anchor => Assert.Empty(anchor.Actions));
+        Assert.False(editor.CanUndo);
+        Assert.Empty(sequencer.Scene.Tracks.SelectMany(track => track.Clips));
+    }
+
+    [Fact]
+    public async Task ADrawnClipThatNeedsAValueSaysSoOnTheClip()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2));
+
+        editor.Sequencer.AddTrack(RouteActions.Harvest);
+        editor.Sequencer.BeginDraw(0, 0);
+        editor.Sequencer.EndGesture();
+
+        Assert.True(Assert.Single(Assert.Single(editor.Sequencer.Scene.Tracks).Clips).HasProblems);
+    }
+
+    [Fact]
+    public async Task DraggingAClipsRightEdgeAndItsLeftEdgeChangesTheStepsItCovers()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var (_, editor) = await OpenAsync(Step(1, ash), Step(2, ash), Step(3), Step(4));
+        var sequencer = editor.Sequencer;
+        var clip = sequencer.Scene.Tracks[0].Clips[0];
+
+        sequencer.BeginClip(clip.Id, SequencerEdge.Right, 1, KeyModifiers.None);
+        sequencer.Drag(3);
+        sequencer.EndGesture();
+
+        Assert.Equal((0, 3), (sequencer.Scene.Tracks[0].Clips[0].First, sequencer.Scene.Tracks[0].Clips[0].Last));
+
+        sequencer.BeginClip(sequencer.SelectedClip, SequencerEdge.Left, 0, KeyModifiers.None);
+        sequencer.Drag(2);
+        sequencer.EndGesture();
+
+        var now = Assert.Single(sequencer.Scene.Tracks[0].Clips);
+
+        Assert.Equal((2, 3), (now.First, now.Last));
+        Assert.Equal(now.Id, sequencer.SelectedClip);
+        Assert.Empty(Nodes(editor, 0));
+        Assert.Empty(Nodes(editor, 1));
+    }
+
+    [Fact]
+    public async Task DraggingAClipsBodyMovesItWithoutReorderingTheOtherActionsAndShiftCopiesIt()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var fight = Call(RouteActions.Fight, new RouteFightValues());
+        var (_, editor) = await OpenAsync(Step(1, ash, fight), Step(2, ash), Step(3, fight), Step(4));
+        var sequencer = editor.Sequencer;
+        var clip = sequencer.Scene.Tracks[0].Clips[0];
+
+        sequencer.BeginClip(clip.Id, SequencerEdge.None, 0, KeyModifiers.None);
+        sequencer.Drag(2);
+        sequencer.EndGesture();
+
+        Assert.Equal([RouteActions.Fight], Nodes(editor, 0));
+        Assert.Empty(Nodes(editor, 1));
+        Assert.Equal([RouteActions.Fight, RouteActions.Harvest], Nodes(editor, 2));
+        Assert.Equal([RouteActions.Harvest], Nodes(editor, 3));
+
+        var moved = sequencer.Scene.Tracks[0].Clips[0];
+
+        sequencer.BeginClip(moved.Id, SequencerEdge.None, 2, KeyModifiers.Shift);
+        sequencer.Drag(1);
+        sequencer.EndGesture();
+
+        Assert.Equal([RouteActions.Fight], Nodes(editor, 0));
+        Assert.Equal([RouteActions.Harvest], Nodes(editor, 1));
+        Assert.Equal([RouteActions.Fight, RouteActions.Harvest], Nodes(editor, 2));
+        Assert.Equal([RouteActions.Harvest], Nodes(editor, 3));
+    }
+
+    [Fact]
+    public async Task ADragPastTheEndsOfTheRouteKeepsTheClipInsideIt()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var (_, editor) = await OpenAsync(Step(1, ash), Step(2, ash), Step(3), Step(4));
+        var sequencer = editor.Sequencer;
+
+        sequencer.BeginClip(sequencer.Scene.Tracks[0].Clips[0].Id, SequencerEdge.None, 0, KeyModifiers.None);
+        sequencer.Drag(40);
+        sequencer.EndGesture();
+
+        var clip = sequencer.Scene.Tracks[0].Clips[0];
+
+        Assert.Equal((2, 3), (clip.First, clip.Last));
+    }
+
+    [Fact]
+    public async Task DeletingTheClipSelectedTakesItsActionOffEveryStepItCoversAndUndoGivesItBack()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var fight = Call(RouteActions.Fight, new RouteFightValues());
+        var (_, editor) = await OpenAsync(Step(1, ash, fight), Step(2, ash), Step(3));
+        var sequencer = editor.Sequencer;
+
+        sequencer.PressClip(sequencer.Scene.Tracks[0].Clips[0].Id);
+        sequencer.RemoveSelectedClip();
+
+        Assert.Equal([RouteActions.Fight], Nodes(editor, 0));
+        Assert.Empty(Nodes(editor, 1));
+        Assert.Equal(-1, sequencer.SelectedClip);
+
+        editor.Undo();
+
+        Assert.Equal([RouteActions.Harvest, RouteActions.Fight], Nodes(editor, 0));
+        Assert.Equal([RouteActions.Harvest], Nodes(editor, 1));
+    }
+
+    [Fact]
+    public async Task APressOnAClipNeverChangesTheRoute()
+    {
+        var ash = Call(RouteActions.Harvest, new RouteHarvestValues { Resources = [1] });
+        var (_, editor) = await OpenAsync(Step(1, ash), Step(2, ash));
+        var sequencer = editor.Sequencer;
+
+        sequencer.BeginClip(sequencer.Scene.Tracks[0].Clips[0].Id, SequencerEdge.None, 1, KeyModifiers.None);
+        sequencer.EndGesture();
+
+        Assert.False(editor.IsDirty);
+        Assert.False(editor.CanUndo);
     }
 }

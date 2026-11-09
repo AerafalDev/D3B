@@ -3083,4 +3083,7 @@
   <data name="SequencerEmpty" xml:space="preserve">
     <value>The route has no step yet. Trace it on the map.</value>
   </data>
+  <data name="SequencerHint" xml:space="preserve">
+    <value>Draw on a track to set an action across steps · drag its edges · Shift to copy</value>
+  </data>
 </root>

@@ -18,6 +18,9 @@ internal static class SequencerLayout
     /// <summary>The narrowest a step's column is drawn, so that a long route scrolls instead of crushing.</summary>
     public const double MinColumn = 56;
 
+    /// <summary>The width of the grip on each end of a clip, which a drag stretches.</summary>
+    public const double EdgeGrip = 8;
+
     /// <summary>The width of the names' column.</summary>
     public const double HeaderWidth = 132;
 }

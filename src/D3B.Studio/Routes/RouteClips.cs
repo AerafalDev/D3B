@@ -71,14 +71,15 @@ public static class RouteClips
     /// <param name="call">The action.</param>
     /// <param name="first">The first step of the range, from 0.</param>
     /// <param name="last">The last step of the range.</param>
+    /// <param name="layer">Which of the equal actions of a step it is, from 0: a copy of the second of two puts the second.</param>
     /// <returns>The route's steps after the edit.</returns>
     /// <exception cref="ArgumentOutOfRangeException">The range is backwards or leaves the route.</exception>
-    public static ImmutableArray<RouteAnchor> Draw(IReadOnlyList<RouteAnchor> anchors, NodeCall call, int first, int last)
+    public static ImmutableArray<RouteAnchor> Draw(IReadOnlyList<RouteAnchor> anchors, NodeCall call, int first, int last, int layer = 0)
     {
         ArgumentNullException.ThrowIfNull(anchors);
         ArgumentNullException.ThrowIfNull(call);
 
-        return Reshape(anchors, new RouteClip(call, first, first - 1, 0, 0), first, last);
+        return Reshape(anchors, new RouteClip(call, first, first - 1, layer, 0), first, last);
     }
 
     /// <summary>Moves a clip's edges: puts its action on the steps the range gains and takes it off those it leaves.</summary>

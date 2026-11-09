@@ -3083,4 +3083,7 @@
   <data name="SequencerEmpty" xml:space="preserve">
     <value>Le trajet n’a pas encore d’étape. Tracez-le sur la carte.</value>
   </data>
+  <data name="SequencerHint" xml:space="preserve">
+    <value>Tracez sur une piste pour poser une action sur des étapes · étirez ses bords · Maj pour copier</value>
+  </data>
 </root>

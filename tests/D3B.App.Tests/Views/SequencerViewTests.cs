@@ -120,4 +120,80 @@ public sealed class SequencerViewTests
         Assert.Equal([0, 2], result.clip.Item2);
         Assert.Equal((false, BottomTab.Journal), result.gone);
     }
+
+    [Fact]
+    public async Task APressAndADragOnATrackDrawsAClipAndADragOnItsEdgeStretchesItWithThePointer()
+    {
+        await using var store = new TestStore();
+
+        await store.OpenedAsync();
+
+        var runner = await TestHosts.RunningAsync(store.Host);
+
+        await store.Assets.SaveAsync(
+            new RouteAsset { Id = "r1", Name = "North", Anchors = [new RouteAnchor { MapId = 1 }, new RouteAnchor { MapId = 2 }, new RouteAnchor { MapId = 3 }, new RouteAnchor { MapId = 4 }] },
+            TestContext.Current.CancellationToken);
+
+        var result = await OnTheUIThreadAsync(async () =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+            main.Routes.Use(TestRouteWorld.Services(store.Assets));
+
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            window.Show();
+            main.World.Refresh();
+            main.Selection.SelectRoute("r1");
+            Dispatcher.UIThread.RunJobs();
+
+            var sequencer = main.Bottom.Sequencer!;
+
+            sequencer.AddTrack(RouteActions.Fight);
+            Dispatcher.UIThread.RunJobs();
+
+            var grid = window.GetVisualDescendants().OfType<SequencerGrid>().Single(item => item.IsEffectivelyVisible);
+            var row = SequencerLayout.RulerHeight + SequencerLayout.MovementHeight + 10;
+            Point At(int step, double edge = 0.5)
+            {
+                return grid.TranslatePoint(new Point(grid.ColumnWidth * (step + edge), row), window)!.Value;
+            }
+
+            // Drawn from the second step to the third.
+            window.MouseDown(At(1), MouseButton.Left);
+            window.MouseMove(At(2));
+            window.MouseUp(At(2), MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
+
+            var drawn = main.World.Route!.CurrentAnchors.Select(anchor => anchor.Actions.Length).ToList();
+
+            // Its right edge dragged to the fourth.
+            window.MouseDown(At(2, 0.97), MouseButton.Left);
+            window.MouseMove(At(3));
+            window.MouseUp(At(3), MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
+
+            var stretched = main.World.Route!.CurrentAnchors.Select(anchor => anchor.Actions.Length).ToList();
+
+            // Delete takes the clip off.
+            grid.Focus();
+            window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
+            Dispatcher.UIThread.RunJobs();
+
+            var deleted = main.World.Route!.CurrentAnchors.Select(anchor => anchor.Actions.Length).ToList();
+
+            window.Close();
+
+            return (drawn, stretched, deleted);
+        });
+
+        Assert.Equal([0, 1, 1, 0], result.drawn);
+        Assert.Equal([0, 1, 1, 1], result.stretched);
+        Assert.Equal([0, 0, 0, 0], result.deleted);
+    }
 }

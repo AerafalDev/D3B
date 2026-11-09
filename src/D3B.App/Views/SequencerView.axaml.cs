@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using D3B.App.Controls.Sequencer;
 using D3B.App.ViewModels.Routes;
 
 namespace D3B.App.Views;
@@ -14,6 +15,10 @@ internal sealed partial class SequencerView : UserControl
         InitializeComponent();
         Grid.StepPressed += OnStepPressed;
         Grid.ClipPressed += OnClipPressed;
+        Grid.TrackPressed += OnTrackPressed;
+        Grid.GestureMoved += OnGestureMoved;
+        Grid.GestureEnded += OnGestureEnded;
+        Grid.DeleteRequested += OnDeleteRequested;
     }
 
     private void OnStepPressed(int step, KeyModifiers modifiers)
@@ -22,10 +27,34 @@ internal sealed partial class SequencerView : UserControl
             sequencer.PressStep(step, modifiers);
     }
 
-    private void OnClipPressed(int clip)
+    private void OnClipPressed(int clip, SequencerEdge edge, int step, KeyModifiers modifiers)
     {
         if (DataContext is SequencerViewModel sequencer)
-            sequencer.PressClip(clip);
+            sequencer.BeginClip(clip, edge, step, modifiers);
+    }
+
+    private void OnTrackPressed(int track, int step)
+    {
+        if (DataContext is SequencerViewModel sequencer)
+        {
+            sequencer.ClearClip();
+            sequencer.BeginDraw(track, step);
+        }
+    }
+
+    private void OnGestureMoved(int step)
+    {
+        (DataContext as SequencerViewModel)?.Drag(step);
+    }
+
+    private void OnGestureEnded()
+    {
+        (DataContext as SequencerViewModel)?.EndGesture();
+    }
+
+    private void OnDeleteRequested()
+    {
+        (DataContext as SequencerViewModel)?.RemoveSelectedClip();
     }
 
     private void OnMenuRowClick(object? sender, RoutedEventArgs e)

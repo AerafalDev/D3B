@@ -3,6 +3,7 @@ using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls.Sequencer;
 using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
 
 namespace D3B.App.ViewModels.Routes;
@@ -22,6 +23,12 @@ internal sealed partial class SequencerViewModel : ObservableObject
     private readonly List<string> _added = [];
     private ImmutableArray<RouteClip> _clips = [];
     private RouteClip? _selected;
+    private SequencerGesture _gesture;
+    private ImmutableArray<RouteAnchor> _before = [];
+    private RouteClip? _held;
+    private NodeCall? _drawn;
+    private SequencerEdge _edge;
+    private int _from;
 
     /// <summary>Gets what is drawn.</summary>
     [ObservableProperty]
@@ -99,6 +106,86 @@ internal sealed partial class SequencerViewModel : ObservableObject
         Select(null);
     }
 
+    /// <summary>Starts a clip's gesture: a press on its edge stretches it, on its body moves it, or copies it with Shift. The clip is selected; the steps change as the pointer moves.</summary>
+    /// <param name="id">The clip's place in the scene.</param>
+    /// <param name="edge">The part pressed.</param>
+    /// <param name="step">The step under the pointer.</param>
+    /// <param name="modifiers">The keys held.</param>
+    public void BeginClip(int id, SequencerEdge edge, int step, KeyModifiers modifiers)
+    {
+        if (id < 0 || id >= _clips.Length)
+            return;
+
+        var clip = _clips[id];
+
+        Select(clip);
+        Begin(edge is not SequencerEdge.None ? SequencerGesture.Stretch : modifiers.HasFlag(KeyModifiers.Shift) ? SequencerGesture.Copy : SequencerGesture.Move, step);
+        _held = clip;
+        _edge = edge;
+    }
+
+    /// <summary>Starts drawing a clip on a track from an empty cell: the clip of the kind, with the node's own values, covers the steps the pointer crosses.</summary>
+    /// <param name="track">The track's place in the scene.</param>
+    /// <param name="step">The step pressed.</param>
+    public void BeginDraw(int track, int step)
+    {
+        if (track < 0 || track >= Scene.Tracks.Count || _page.Services?.Nodes is not { } catalog || !catalog.TryGet(Scene.Tracks[track].Node, out var definition))
+            return;
+
+        Begin(SequencerGesture.Draw, step);
+        _drawn = RouteActionCalls.Create(definition);
+        Drag(step);
+    }
+
+    /// <summary>Moves the gesture on to the step the pointer is over, the steps changed from what they were before it began.</summary>
+    /// <param name="step">The step, from 0.</param>
+    public void Drag(int step)
+    {
+        if (_gesture is SequencerGesture.None)
+            return;
+
+        var last = _before.Length - 1;
+        var (call, layer, first, to) = _gesture switch
+        {
+            SequencerGesture.Draw => (_drawn!, 0, Math.Min(_from, step), Math.Max(_from, step)),
+            SequencerGesture.Stretch when _edge is SequencerEdge.Left => (_held!.Call, _held.Layer, Math.Min(step, _held.Last), _held.Last),
+            SequencerGesture.Stretch => (_held!.Call, _held.Layer, _held.First, Math.Max(step, _held.First)),
+            _ => Shifted(_held!, step - _from, last),
+        };
+
+        first = Math.Clamp(first, 0, last);
+        to = Math.Clamp(to, first, last);
+        _selected = new RouteClip(call, first, to, layer, 0);
+        _route.ReplaceAnchors(_gesture switch
+        {
+            SequencerGesture.Move => RouteClips.Reshape(_before, _held!, first, to),
+            SequencerGesture.Stretch => RouteClips.Reshape(_before, _held!, first, to),
+            _ => RouteClips.Draw(_before, call, first, to, layer),
+        });
+    }
+
+    /// <summary>Ends the gesture: what it changed is one change to take back.</summary>
+    public void EndGesture()
+    {
+        if (_gesture is SequencerGesture.None)
+            return;
+
+        _gesture = SequencerGesture.None;
+        _held = null;
+        _drawn = null;
+        _route.EndGesture();
+    }
+
+    /// <summary>Takes the clip selected off every step it covers: Delete.</summary>
+    public void RemoveSelectedClip()
+    {
+        if (_selected is not { } clip || clip.Last >= _route.CurrentAnchors.Count)
+            return;
+
+        _selected = null;
+        _route.ReplaceAnchors(RouteClips.Remove(_route.CurrentAnchors, clip));
+    }
+
     /// <summary>Shows a track for a kind of action, empty until a clip is drawn on it.</summary>
     /// <param name="node">The action's node id.</param>
     public void AddTrack(string node)
@@ -112,11 +199,27 @@ internal sealed partial class SequencerViewModel : ObservableObject
         Rebuild();
     }
 
+    private static (NodeCall Call, int Layer, int First, int Last) Shifted(RouteClip clip, int delta, int lastStep)
+    {
+        var first = Math.Clamp(clip.First + delta, 0, Math.Max(0, lastStep - clip.Length + 1));
+
+        return (clip.Call, clip.Layer, first, first + clip.Length - 1);
+    }
+
     private static int Rank(string node)
     {
         var at = RouteActions.Offered.IndexOf(node);
 
         return at < 0 ? RouteActions.Offered.Length : at;
+    }
+
+    private void Begin(SequencerGesture gesture, int step)
+    {
+        EndGesture();
+        _route.BeginGesture();
+        _before = [.. _route.CurrentAnchors];
+        _gesture = gesture;
+        _from = step;
     }
 
     private void Select(RouteClip? clip)

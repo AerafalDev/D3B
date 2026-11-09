@@ -900,6 +900,17 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         OnPropertyChanged(nameof(CanAddActions));
     }
 
+    /// <summary>Replaces the steps by others of the same maps, as one change: the Sequencer's gestures, a clip drawn, moved or taken off.</summary>
+    /// <param name="anchors">The route's steps after the edit, the same number as before.</param>
+    public void ReplaceAnchors(IReadOnlyList<RouteAnchor> anchors)
+    {
+        ArgumentNullException.ThrowIfNull(anchors);
+
+        _anchors.Clear();
+        _anchors.AddRange(anchors);
+        Changed();
+    }
+
     private void AddAnchor(RouteAnchor anchor, int? at = null)
     {
         var index = Math.Clamp(at ?? _anchors.Count, 0, _anchors.Count);

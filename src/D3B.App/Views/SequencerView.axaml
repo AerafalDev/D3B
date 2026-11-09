@@ -29,13 +29,17 @@
     <DockPanel>
         <Border Classes="Toolbar" DockPanel.Dock="Top">
             <Grid ColumnDefinitions="*,Auto">
-                <StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="12">
                     <TextBlock
                         FontWeight="SemiBold"
                         Foreground="{DynamicResource BrightColor}"
                         Text="{Binding RouteName}"
                         TextTrimming="CharacterEllipsis"
                         VerticalAlignment="Center" />
+                    <TextBlock
+                        Classes="RowLabel"
+                        Text="{l:Tr SequencerHint}"
+                        TextTrimming="CharacterEllipsis" />
                 </StackPanel>
                 <Button
                     AutomationProperties.Name="{l:Tr SequencerAddTrack}"

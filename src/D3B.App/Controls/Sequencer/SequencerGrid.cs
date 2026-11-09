@@ -35,6 +35,9 @@ internal sealed class SequencerGrid : Control
     private static readonly IPen _selected = new Pen(new SolidColorBrush(Color.Parse("#3B82F6")), 2);
     private static readonly IPen _problem = new Pen(new SolidColorBrush(Color.Parse("#EA5D52")), 1.5);
 
+    private bool _held;
+    private int _lastStep = -1;
+
     /// <summary>Gets or sets what is drawn.</summary>
     public SequencerScene Scene
     {
@@ -70,8 +73,20 @@ internal sealed class SequencerGrid : Control
     /// <summary>Raised when a step is pressed, on the ruler, the zones' row or an empty cell: its place, from 0, and the keys held.</summary>
     public event Action<int, KeyModifiers>? StepPressed;
 
-    /// <summary>Raised when a clip is pressed: its place in the scene.</summary>
-    public event Action<int>? ClipPressed;
+    /// <summary>Raised when a clip is pressed: its place in the scene, the part pressed, the step under the pointer and the keys held. A drag follows.</summary>
+    public event Action<int, SequencerEdge, int, KeyModifiers>? ClipPressed;
+
+    /// <summary>Raised when an empty cell of a track is pressed: the track's place in the scene and the step. A drag follows.</summary>
+    public event Action<int, int>? TrackPressed;
+
+    /// <summary>Raised while a press is held, when the pointer comes over another step: the step, kept inside the route.</summary>
+    public event Action<int>? GestureMoved;
+
+    /// <summary>Raised when a press held on a clip or a track is let go.</summary>
+    public event Action? GestureEnded;
+
+    /// <summary>Raised when Delete or Backspace is pressed on the grid.</summary>
+    public event Action? DeleteRequested;
 
     /// <summary>Initializes static members of the <see cref="SequencerGrid"/> class.</summary>
     static SequencerGrid()
@@ -207,14 +222,52 @@ internal sealed class SequencerGrid : Control
 
         var at = e.GetPosition(this);
 
-        if (ClipAt(at) is { } clip)
-            ClipPressed?.Invoke(clip.Id);
+        if (ClipAt(at) is { } hit)
+        {
+            ClipPressed?.Invoke(hit.Clip.Id, hit.Edge, ColumnOf(at.X), e.KeyModifiers);
+            Hold(e, at);
+        }
+        else if (TrackAt(at) is { } track)
+        {
+            TrackPressed?.Invoke(track, ColumnOf(at.X));
+            Hold(e, at);
+        }
         else if (StepAt(at) is { } step)
+        {
             StepPressed?.Invoke(step, e.KeyModifiers);
+        }
         else
+        {
             return;
+        }
 
         e.Handled = true;
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        Let(e.Pointer);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+        Let(null);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        if (e.Key is Key.Delete or Key.Back)
+        {
+            DeleteRequested?.Invoke();
+            e.Handled = true;
+        }
     }
 
     /// <inheritdoc/>
@@ -222,7 +275,27 @@ internal sealed class SequencerGrid : Control
     {
         base.OnPointerMoved(e);
 
-        Cursor = ClipAt(e.GetPosition(this)) is null ? null : new Cursor(StandardCursorType.Hand);
+        var at = e.GetPosition(this);
+
+        if (_held)
+        {
+            var step = ColumnOf(at.X);
+
+            if (step != _lastStep)
+            {
+                _lastStep = step;
+                GestureMoved?.Invoke(step);
+            }
+
+            return;
+        }
+
+        Cursor = ClipAt(at) switch
+        {
+            { Edge: not SequencerEdge.None } => new Cursor(StandardCursorType.SizeWestEast),
+            not null => new Cursor(StandardCursorType.Hand),
+            _ => null,
+        };
     }
 
     private Rect ClipRect(SequencerClip clip, double trackTop)
@@ -244,7 +317,7 @@ internal sealed class SequencerGrid : Control
             Write(context, clip.Text, typeface, 11.5, _clipText, rect.X + 8, rect.Y + 4, rect.Width - 14, centered: false);
     }
 
-    private SequencerClip? ClipAt(Point at)
+    private (SequencerClip Clip, SequencerEdge Edge)? ClipAt(Point at)
     {
         var y = SequencerLayout.RulerHeight + SequencerLayout.MovementHeight;
 
@@ -252,14 +325,59 @@ internal sealed class SequencerGrid : Control
         {
             foreach (var clip in track.Clips)
             {
-                if (ClipRect(clip, y).Contains(at))
-                    return clip;
+                var rect = ClipRect(clip, y);
+
+                if (!rect.Contains(at))
+                    continue;
+
+                var grip = Math.Min(SequencerLayout.EdgeGrip, rect.Width / 3);
+
+                return (clip, at.X <= rect.X + grip ? SequencerEdge.Left : at.X >= rect.Right - grip ? SequencerEdge.Right : SequencerEdge.None);
             }
 
             y += track.Height;
         }
 
         return null;
+    }
+
+    private int? TrackAt(Point at)
+    {
+        var y = SequencerLayout.RulerHeight + SequencerLayout.MovementHeight;
+
+        for (var i = 0; i < Scene.Tracks.Count; i++)
+        {
+            if (at.Y >= y && at.Y < y + Scene.Tracks[i].Height && at.X >= 0 && at.X < Bounds.Width)
+                return i;
+
+            y += Scene.Tracks[i].Height;
+        }
+
+        return null;
+    }
+
+    private int ColumnOf(double x)
+    {
+        var width = ColumnWidth;
+
+        return width <= 0 ? 0 : Math.Clamp((int)Math.Floor(x / width), 0, Math.Max(0, Scene.Steps.Count - 1));
+    }
+
+    private void Hold(PointerPressedEventArgs e, Point at)
+    {
+        _held = true;
+        _lastStep = ColumnOf(at.X);
+        e.Pointer.Capture(this);
+    }
+
+    private void Let(IPointer? pointer)
+    {
+        if (!_held)
+            return;
+
+        _held = false;
+        pointer?.Capture(null);
+        GestureEnded?.Invoke();
     }
 
     private int? StepAt(Point at)
