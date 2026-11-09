@@ -3,6 +3,7 @@ using D3B.App.ViewModels.Studio;
 
 namespace D3B.App.Tests.ViewModels.Studio;
 
+[UiThread]
 public sealed class SearchViewModelTests
 {
     private readonly List<string> _ran = [];

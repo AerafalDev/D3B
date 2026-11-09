@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class BankingSettingsTests : IAsyncDisposable
 {
     private static readonly string[] _texts = ["SettingBankFullAtRow", "SettingBankFullAtRowDetail", "SettingBankZaapsRow", "SettingBankZaapsRowDetail", "GroupBanking"];

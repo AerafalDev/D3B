@@ -1125,6 +1125,7 @@ character's (D279). The character's spells by the
   through game sessions, D3B's requests included, and the inspector's fields and replays on captures the tests write
   (D115); the journal, the trace, the problems, the protocol and the statistics against bots played the same way, in
   both languages (D111, D353); the trace's lines after the behaviors the bots' tests play (D350).
+- A view model of the studio belongs to the UI thread: what it resumes after an await (the route editor's planning, a save, a creation) comes back to it. A test has no such thread and would resume those on the pool, beside its own steps (a `Dictionary` of the world's zones was written from two threads, a route editor's list modified while another thread read it): every test class of `tests/D3B.App.Tests/ViewModels` carries `[UiThread]`, which runs each of its tests with a `UiThreadContext`, a thread of its own that runs what is posted to it one step at a time. A new test class of a view model that plans, saves or creates takes the attribute too.
 - The app's dialogs and toasts are read from its view models (`Dialogs`, `Toasts`): a profile made, copied, closed with
   changes and deleted, an account forgotten from the characters' menu, a character's profile, start and variables from the
   inspector, resources chosen several at once, what a bot met said once; every icon is

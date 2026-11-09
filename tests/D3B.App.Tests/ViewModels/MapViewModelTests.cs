@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class MapViewModelTests : IAsyncDisposable
 {
     private const long OtherCharacterId = 70_002;

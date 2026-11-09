@@ -3,6 +3,7 @@ using D3B.App.ViewModels;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class RouteInspectorTests
 {
     [Fact]

@@ -8,6 +8,7 @@ using D3B.Studio.Assets;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class RouteEditorViewModelTests : IAsyncDisposable
 {
     private readonly TestStore _store = new();

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 namespace D3B.App.Tests.ViewModels;
 
 /// <summary>A profile whose behavior the project no longer holds, as one copied by hand without it, in a host that registers no activity.</summary>
+[UiThread]
 public sealed class GoneBehaviorTests : IAsyncDisposable
 {
     private const string ScriptId = "script:promenade.lua";

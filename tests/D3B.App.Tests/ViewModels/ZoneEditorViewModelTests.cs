@@ -6,6 +6,7 @@ using D3B.Studio.Assets;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class ZoneEditorViewModelTests : IAsyncDisposable
 {
     private readonly TestStore _store = new();

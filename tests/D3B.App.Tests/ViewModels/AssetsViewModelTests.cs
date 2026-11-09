@@ -9,6 +9,7 @@ using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.App.Tests.ViewModels;
 
+[UiThread]
 public sealed class AssetsViewModelTests : IAsyncDisposable
 {
     private readonly TestStore _store = new();

@@ -10,6 +10,7 @@ using D3B.Studio.Routes;
 
 namespace D3B.App.Tests.ViewModels.World;
 
+[UiThread]
 public sealed class WorldViewportViewModelTests : IAsyncDisposable
 {
     private readonly TestStore _store = new();
@@ -167,6 +168,38 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
         Assert.Equal(WorldTool.Select, world.Tool);
         Assert.Null(world.Zone);
         Assert.False(world.ShowsZoneTools);
+    }
+
+    [Fact]
+    public async Task TheMapIsComposedOnOneThreadWhateverTheEditorsPlanningResumesOn()
+    {
+        var (_, _, selection, world) = await WorldAsync();
+        var threads = new System.Collections.Concurrent.ConcurrentBag<int>();
+
+        world.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(WorldViewportViewModel.Scene))
+                threads.Add(Environment.CurrentManagedThreadId);
+        };
+
+        await SaveRouteAsync("north", 1, 2);
+        await SaveRouteAsync("south", 3, 4);
+
+        for (var i = 0; i < 30; i++)
+        {
+            await _store.Assets.SaveAsync(new ZoneAsset { Id = "zone" + i, Name = "Zone " + i, Maps = [1, 2, 3] }, TestContext.Current.CancellationToken);
+        }
+
+        world.Refresh();
+
+        // Each editor opened plans its route off the thread and then redraws what it holds: that redraw is the map's, so it must come back.
+        selection.SelectRoute("north");
+        selection.SelectRoute("south");
+        await world.Route!.Planned;
+        selection.SelectRoute("north");
+        await world.Route!.Planned;
+
+        Assert.Single(threads.Distinct());
     }
 
     [Fact]
