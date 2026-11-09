@@ -41,7 +41,18 @@ internal sealed class FollowRoute : ActionNode<RouteFollowValues>
 
         var key = bot.State.Key;
         var cursor = _runs.Of(key, route, context.View.Started);
-        var result = await RouteRunner.RunAsync(route, cursor, stage, cancellationToken).ConfigureAwait(false);
+        RouteResult result;
+
+        _runs.Begin(key, route, cursor);
+
+        try
+        {
+            result = await RouteRunner.RunAsync(route, cursor, stage, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _runs.End(key, cursor);
+        }
 
         if (result != RouteResult.Busy)
             _runs.Forget(key, route.Id);

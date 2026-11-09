@@ -188,6 +188,41 @@ public sealed class RouteRunnerTests
         Assert.Equal(["go 1", "play wait", "play wait", "go 2"], stage.Log);
     }
 
+    [Fact]
+    public async Task TheCursorIsTravellingWhileTheRunGoesToAnAnchorAndArrivedWhileItPlaysThere()
+    {
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, ["wait"]), (2, ["wait"]));
+        var cursor = new RouteCursor(2, route.Mode);
+        var seen = new List<string>();
+        var stage = new FakeStage
+        {
+            OnTravel = map => seen.Add($"go {map} arrived={cursor.Arrived}"),
+            OnPlay = _ => seen.Add($"play {cursor.Anchor} arrived={cursor.Arrived}"),
+        };
+
+        await RouteRunner.RunAsync(route, cursor, stage, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["go 1 arrived=False", "play 0 arrived=True", "go 2 arrived=False", "play 1 arrived=True"], seen);
+    }
+
+    [Fact]
+    public async Task ARunThatGoesOnAfterACutIsTravellingAgainUntilItHasArrivedAgain()
+    {
+        using var source = new CancellationTokenSource();
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, ["wait", "wait"]));
+        var cursor = new RouteCursor(1, route.Mode);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => RouteRunner.RunAsync(route, cursor, new FakeStage { OnPlay = _ => source.Cancel() }, source.Token));
+
+        Assert.True(cursor.Arrived);
+
+        var arrivedOnTravel = new List<bool>();
+
+        await RouteRunner.RunAsync(route, cursor, new FakeStage { OnTravel = _ => arrivedOnTravel.Add(cursor.Arrived) }, TestContext.Current.CancellationToken);
+
+        Assert.Equal([false], arrivedOnTravel);
+    }
+
     private sealed class FakeStage : IRouteStage
     {
         public List<string> Log { get; } = [];

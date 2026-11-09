@@ -55,9 +55,12 @@ internal static class RouteRunner
 
             var anchor = route.Anchors[cursor.Anchor];
 
+            cursor.Depart();
+
             switch (await stage.TravelAsync(anchor.MapId, cancellationToken).ConfigureAwait(false))
             {
                 case TravelOutcome.Arrived:
+                    cursor.Arrive();
                     passed = 0;
                     busy = 0;
 
