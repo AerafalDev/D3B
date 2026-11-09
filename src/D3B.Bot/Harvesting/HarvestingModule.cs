@@ -90,7 +90,9 @@ public sealed class HarvestingModule : IModule
             .Help(HarvestTexts.Text("ZaapSavingHelp"));
 
         settings.Section(HarvestTexts.Text("SectionBank"));
-        settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent();
+        settings.Flag(s => s.OwnBanking, HarvestTexts.Text("OwnBanking")).Help(HarvestTexts.Text("OwnBankingHelp"));
+        settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent().VisibleWhen(s => s.OwnBanking);
+        settings.Flag(s => s.UseZaaps, HarvestTexts.Text("UseZaaps")).Help(HarvestTexts.Text("UseZaapsHelp")).VisibleWhen(s => s.OwnBanking);
         settings.Choice(s => s.Deposit, HarvestTexts.Text("Deposit"), deposit => HarvestTexts.Text(deposit is HarvestDeposit.Harvest ? "DepositHarvest" : "DepositAll"));
 
         settings.Choice(s => s.DepositTo, HarvestTexts.Text("DepositTo"), place => HarvestTexts.Text($"DepositTo{place}"))
@@ -146,6 +148,8 @@ public sealed class HarvestingModule : IModule
     // Before D165, "everything each character can harvest" was a flag, every profession but Base's: a list stays a list.
     private static void ReadEarlier(HarvestSettings settings, JsonObject stored)
     {
+        KeepOwnBanking(settings, stored);
+
         if (!stored.ContainsKey(nameof(HarvestSettings.Mode))
             && stored.TryGetPropertyValue("EverythingKnown", out var node)
             && node is JsonValue value
@@ -155,6 +159,13 @@ public sealed class HarvestingModule : IModule
             settings.Mode = HarvestMode.ByProfession;
             settings.Jobs = Professions;
         }
+    }
+
+    // Before D405 a profile's share of pods was its own: one that stored it keeps banking by it.
+    private static void KeepOwnBanking(HarvestSettings settings, JsonObject stored)
+    {
+        if (!stored.ContainsKey(nameof(HarvestSettings.OwnBanking)) && stored.ContainsKey(nameof(HarvestSettings.FullAt)))
+            settings.OwnBanking = true;
     }
 
     private static void Automatic(HarvestSettings settings, IReadOnlyList<int> jobs, HarvestOrder order)

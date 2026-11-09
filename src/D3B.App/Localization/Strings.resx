@@ -2069,6 +2069,21 @@
   <data name="SettingsChanged" xml:space="preserve">
     <value>Values changed</value>
   </data>
+  <data name="GroupBanking" xml:space="preserve">
+    <value>Banking</value>
+  </data>
+  <data name="SettingBankFullAtRow" xml:space="preserve">
+    <value>Bank when pods reach</value>
+  </data>
+  <data name="SettingBankFullAtRowDetail" xml:space="preserve">
+    <value>The share of its pods at which a bot goes to the bank. A profile that asks for its own banking rules keeps its own. Default 90 %.</value>
+  </data>
+  <data name="SettingBankZaapsRow" xml:space="preserve">
+    <value>Take a zaap to the bank</value>
+  </data>
+  <data name="SettingBankZaapsRowDetail" xml:space="preserve">
+    <value>Off, bots always walk to the bank. On, they take a zaap when it saves enough maps and they can pay for it; else they walk.</value>
+  </data>
   <data name="GroupBotDelays" xml:space="preserve">
     <value>Bots' minimum delays</value>
   </data>

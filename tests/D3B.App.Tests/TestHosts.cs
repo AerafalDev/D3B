@@ -1,5 +1,6 @@
 using D3B.App.Hosting;
 using D3B.Bot.Activities;
+using D3B.Bot.Banks;
 using D3B.Bot.Hosting;
 using D3B.Bot.Pages;
 using D3B.Bot.Tests;
@@ -76,6 +77,7 @@ internal static class TestHosts
     private static void Register(IServiceCollection services, TestPlay play)
     {
         services.AddSingleton(play.Bots);
+        services.AddSingleton(new BankingPreferences());
         services.AddSingleton(play.World);
         services.AddSingleton(new ClientBuild(TestInstall.Version, null));
     }

@@ -59,7 +59,19 @@ public static class Banking
     /// <param name="kamas">How many kamas to put in, at most what the character carries once the bank is open.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How banking ended: the first step that did not end <see cref="BankOutcome.Done"/>, the bank being left whatever the deposit's outcome.</returns>
-    public static async Task<BankOutcome> BankAsync(this BotContext context, Func<InventoryItem, bool> stacks, long kamas, CancellationToken cancellationToken)
+    public static Task<BankOutcome> BankAsync(this BotContext context, Func<InventoryItem, bool> stacks, long kamas, CancellationToken cancellationToken)
+    {
+        return context.BankAsync(stacks, kamas, true, cancellationToken);
+    }
+
+    /// <summary>Goes to the nearest bank, puts stacks and kamas in it, and leaves it, within a behavior, taking a zaap only if it may.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="stacks">Tells the stacks to put in, among those the character carries and does not wear.</param>
+    /// <param name="kamas">How many kamas to put in, at most what the character carries once the bank is open.</param>
+    /// <param name="useZaaps">Whether the journey to the bank may teleport to a zaap; else the character walks (D405).</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How banking ended: the first step that did not end <see cref="BankOutcome.Done"/>, the bank being left whatever the deposit's outcome.</returns>
+    public static async Task<BankOutcome> BankAsync(this BotContext context, Func<InventoryItem, bool> stacks, long kamas, bool useZaaps, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(stacks);
@@ -68,7 +80,7 @@ public static class Banking
         using var action = context.BeginAction();
         var depth = action.Depth;
         var asked = (Stacks: 0, Kamas: 0L);
-        var outcome = await context.GoToBankerAsync(cancellationToken).ConfigureAwait(false);
+        var outcome = await context.GoToBankerAsync(useZaaps, cancellationToken).ConfigureAwait(false);
 
         if (outcome is BankOutcome.Done)
             outcome = await context.OpenBankAsync(cancellationToken).ConfigureAwait(false);
@@ -101,7 +113,21 @@ public static class Banking
     /// host's <see cref="BankDirectory"/>, which no bot seeks any more, and the journey goes on to the nearest other (D79).
     /// The doors' criteria are answered strictly, as on every journey (D76).
     /// </remarks>
-    public static async Task<BankOutcome> GoToBankerAsync(this BotContext context, CancellationToken cancellationToken)
+    public static Task<BankOutcome> GoToBankerAsync(this BotContext context, CancellationToken cancellationToken)
+    {
+        return context.GoToBankerAsync(true, cancellationToken);
+    }
+
+    /// <summary>Goes where a banker stands, teleporting to a zaap only if it may.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="useZaaps">Whether the journey may teleport to a zaap; else the character walks, whatever the zaaps it knows (D405).</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the journey ended: <see cref="BankOutcome.Done"/> once a banker stands on the character's map.</returns>
+    /// <remarks>
+    /// A zaap the character cannot pay is not taken (D83), and one the server refuses leaves every teleport out of the rest of the
+    /// journey, which goes on on foot (D74): only a walk that fails ends it.
+    /// </remarks>
+    public static async Task<BankOutcome> GoToBankerAsync(this BotContext context, bool useZaaps, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -132,7 +158,7 @@ public static class Banking
             if (sought.Count is 0)
                 return BankOutcome.NoBank;
 
-            switch (await context.TravelAsync(sought, cancellationToken).ConfigureAwait(false))
+            switch (await context.TravelAsync(sought, null, useZaaps, cancellationToken).ConfigureAwait(false))
             {
                 case TravelOutcome.Arrived:
                     break;

@@ -516,6 +516,86 @@
                                 </Panel>
                             </Border>
                         </StackPanel>
+                        <StackPanel Classes="Group" IsVisible="{Binding IsBankingShown}">
+                            <Grid Classes="GroupTitle">
+                                <TextBlock Classes="GroupTitle" Text="{l:Tr GroupBanking}" />
+                            </Grid>
+                            <StackPanel Classes="SRows">
+                                <Border Classes="SRow" IsVisible="{Binding BankFullAtRow.IsShown}">
+                                    <Panel>
+                                        <Border Classes="Rule" />
+                                        <Border Classes="Bar" IsVisible="{Binding IsBankFullAtChanged}" />
+                                        <Grid Classes="RowBody" ColumnDefinitions="*,Auto">
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Classes="RowTitle" Text="{Binding BankFullAtRow.Label}" />
+                                                <TextBlock Classes="RowLine" Text="{Binding BankFullAtRow.Detail}" />
+                                            </StackPanel>
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                Spacing="8"
+                                                VerticalAlignment="Center">
+                                                <Border Classes="Number">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <NumericUpDown
+                                                            AutomationProperties.Name="{Binding BankFullAtRow.Label}"
+                                                            FormatString="0"
+                                                            Increment="1"
+                                                            Maximum="{Binding BankFullAtMaximum}"
+                                                            Minimum="{Binding BankFullAtMinimum}"
+                                                            Value="{Binding BankFullAt}" />
+                                                        <TextBlock Classes="Unit" Text="%" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <Button
+                                                    AutomationProperties.Name="{l:Tr ResetDefault}"
+                                                    Classes="Reset"
+                                                    Classes.Shown="{Binding IsBankFullAtChanged}"
+                                                    Command="{Binding ResetBankFullAtCommand}"
+                                                    ToolTip.Tip="{l:Tr ResetDefault}">
+                                                    <c:Icon
+                                                        Drawing="{StaticResource General.Reset}"
+                                                        Height="13"
+                                                        Tint="#E9AD3C"
+                                                        Width="13" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Panel>
+                                </Border>
+                                <Border Classes="SRow" IsVisible="{Binding BankZaapsRow.IsShown}">
+                                    <Panel>
+                                        <Border Classes="Rule" />
+                                        <Border Classes="Bar" IsVisible="{Binding IsBankZaapsOff}" />
+                                        <Grid Classes="RowBody" ColumnDefinitions="*,Auto">
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Classes="RowTitle" Text="{Binding BankZaapsRow.Label}" />
+                                                <TextBlock Classes="RowLine" Text="{Binding BankZaapsRow.Detail}" />
+                                            </StackPanel>
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                Spacing="8"
+                                                VerticalAlignment="Center">
+                                                <CheckBox AutomationProperties.Name="{Binding BankZaapsRow.Label}" IsChecked="{Binding BankUseZaaps}" />
+                                                <Button
+                                                    AutomationProperties.Name="{l:Tr ResetDefault}"
+                                                    Classes="Reset"
+                                                    Classes.Shown="{Binding IsBankZaapsOff}"
+                                                    Command="{Binding ResetBankZaapsCommand}"
+                                                    ToolTip.Tip="{l:Tr ResetDefault}">
+                                                    <c:Icon
+                                                        Drawing="{StaticResource General.Reset}"
+                                                        Height="13"
+                                                        Tint="#E9AD3C"
+                                                        Width="13" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Panel>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
                         <StackPanel Classes="Group">
                             <Grid Classes="GroupTitle" ColumnDefinitions="*,Auto">
                                 <TextBlock

@@ -1,4 +1,5 @@
 using D3B.Bot.Activities;
+using D3B.Bot.Banks;
 using D3B.Bot.Data;
 using D3B.Bot.Fights;
 using D3B.Bot.Hosting;
@@ -43,6 +44,9 @@ public sealed class BotsModule : IModule
 
         // Read as the module is built, so that a delay below its measured value stops the host before it starts (D151).
         var delays = BotDelays.Read(bot.Configuration);
+
+        // Read as the module is built too: a share out of its bounds stops the host before it starts (D405).
+        bot.Services.AddSingleton(BankingPreferences.Read(bot.Configuration));
 
         bot.Services.AddSingleton(services => new Bots(
             services.GetRequiredService<GameMaps>(),

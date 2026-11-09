@@ -5,6 +5,7 @@ using D3B.App.Controls;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels.AppSettings;
+using D3B.Bot.Banks;
 using D3B.Bot.Data;
 using D3B.Bot.Runtime;
 using D3B.Network.Relay;
@@ -42,6 +43,8 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private readonly Toasts _toasts;
     private readonly string? _storedCaptures;
     private BotDelays _delays;
+    private BankingPreferences? _bankingLive;
+    private bool _bankingChanged;
     private RelayTimeouts _timeouts;
     private Bots? _bots;
     private bool _changed;
@@ -74,6 +77,18 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>Gets the relay's timeouts, which apply from the host's next start.</summary>
     public IReadOnlyList<DelayViewModel> RelayWaits { get; }
+
+    /// <summary>Gets the row of the share of pods at which the bots bank (D405).</summary>
+    public SettingsRowViewModel BankFullAtRow { get; }
+
+    /// <summary>Gets the row of whether the bots take a zaap to the bank (D405).</summary>
+    public SettingsRowViewModel BankZaapsRow { get; }
+
+    /// <summary>Gets the least share of pods the bots may bank at, for the box.</summary>
+    public decimal BankFullAtMinimum { get; } = BankingPreferences.LeastFullAt;
+
+    /// <summary>Gets the most share of pods the bots may bank at, for the box.</summary>
+    public decimal BankFullAtMaximum { get; } = BankingPreferences.MostFullAt;
 
     /// <summary>Gets the row of the captures.</summary>
     public SettingsRowViewModel Captures { get; }
@@ -121,6 +136,25 @@ internal sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ResetCapturesCommand))]
     public partial bool RecordsCaptures { get; set; }
+
+    /// <summary>Gets or sets the share of its pods, in percent, at which a bot banks, unless its profile asks for its own; emptied, it keeps the share it had (D405).</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ResetBankFullAtCommand))]
+    public partial decimal? BankFullAt { get; set; }
+
+    /// <summary>Gets or sets whether a bot may take a zaap to the bank, unless its profile asks for its own rules (D405).</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ResetBankZaapsCommand))]
+    public partial bool BankUseZaaps { get; set; } = true;
+
+    /// <summary>Gets whether the share of pods differs from its default.</summary>
+    public bool IsBankFullAtChanged => BankFullAt is { } share && share != BankingPreferences.DefaultFullAt;
+
+    /// <summary>Gets whether the search keeps a row of the banking group.</summary>
+    public bool IsBankingShown => BankFullAtRow.IsShown || BankZaapsRow.IsShown;
+
+    /// <summary>Gets whether the bots are kept from taking a zaap to the bank.</summary>
+    public bool IsBankZaapsOff => !BankUseZaaps;
 
     /// <summary>Gets whether the host records captures now, and where.</summary>
     [ObservableProperty]
@@ -205,6 +239,11 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
         _delays = Stored(() => BotDelays.Read(stored), BotDelays.Measured);
         _timeouts = Stored(() => RelayTimeouts.Read(stored), RelayTimeouts.Default);
+
+        var banking = Stored(() => BankingPreferences.Read(stored), new BankingPreferences());
+
+        BankFullAt = banking.FullAt;
+        BankUseZaaps = banking.UseZaaps;
         _storedCaptures = stored[RelaySettings.CapturesDirectoryKey];
         RecordsCaptures = bool.TryParse(stored[RelaySettings.CapturesEnabledKey], out var records) && records;
         SettingsPath = preferences?.Path ?? AppPreferences.DefaultPath;
@@ -214,6 +253,8 @@ internal sealed partial class SettingsViewModel : ObservableObject
         Sections = [.. Enum.GetValues<SettingsSection>().Select(section => new SettingsSectionViewModel(localizer, section))];
         Selected = Sections[0];
         Selected.IsSelected = true;
+        BankFullAtRow = new SettingsRowViewModel(localizer, "SettingBankFullAtRow");
+        BankZaapsRow = new SettingsRowViewModel(localizer, "SettingBankZaapsRow");
         Captures = new SettingsRowViewModel(localizer, "SettingCapturesRow");
         CapturesFolder = new SettingsRowViewModel(localizer, "SettingCapturesFolder", hasDetail: false);
         Language = new SettingsRowViewModel(localizer, "SettingLanguageRow", hasDetail: false);
@@ -275,6 +316,9 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
         if (_bots is null && services?.GetService<Bots>() is { } bots)
             Attach(bots);
+
+        if (_bankingLive is null && services?.GetService<BankingPreferences>() is { } banking)
+            AttachBanking(banking);
 
         var relay = services?.GetService<RelaySettings>();
 
@@ -342,7 +386,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     private IEnumerable<SettingsRowViewModel> Rows()
     {
-        return [Captures, CapturesFolder, Language, Layout, Project, Database, ClientData, Preferences, Version, Licences];
+        return [BankFullAtRow, BankZaapsRow, Captures, CapturesFolder, Language, Layout, Project, Database, ClientData, Preferences, Version, Licences];
     }
 
     private void Select(SettingsSectionViewModel section)
@@ -363,7 +407,8 @@ internal sealed partial class SettingsViewModel : ObservableObject
         foreach (var row in Rows())
             row.IsShown = row.Holds(filter);
 
-        Bots.IsShown = Delays().Any(delay => delay.IsShown);
+        OnPropertyChanged(nameof(IsBankingShown));
+        Bots.IsShown = Delays().Any(delay => delay.IsShown) || IsBankingShown;
         Network.IsShown = Captures.IsShown || CapturesFolder.IsShown;
         Appearance.IsShown = Language.IsShown || Layout.IsShown;
         Files.IsShown = Project.IsShown || Database.IsShown || ClientData.IsShown || Preferences.IsShown;
@@ -377,7 +422,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     private void MarkChanges()
     {
-        Bots.HasChanges = Display.IsRaised || HasRaisedDelays;
+        Bots.HasChanges = Display.IsRaised || HasRaisedDelays || IsBankFullAtChanged || !BankUseZaaps;
         Network.HasChanges = RecordsCaptures;
     }
 
@@ -416,12 +461,65 @@ internal sealed partial class SettingsViewModel : ObservableObject
         MarkChanges();
     }
 
+    private void AttachBanking(BankingPreferences live)
+    {
+        // Changed while the host got ready, the tab's settings win; else the bots', which its command line may have set.
+        _bankingLive = live;
+
+        if (_bankingChanged)
+        {
+            UseBanking();
+
+            return;
+        }
+
+        var remembered = _remembers;
+
+        _remembers = false;
+        BankFullAt = live.FullAt;
+        BankUseZaaps = live.UseZaaps;
+        _remembers = remembered;
+        MarkChanges();
+    }
+
+    // An emptied box, or one past its bounds, keeps the share the bots had; the next valid one is theirs at once.
+    private void UseBanking()
+    {
+        if (!_remembers || BankFullAt is not { } share || share < BankFullAtMinimum || share > BankFullAtMaximum)
+            return;
+
+        var banking = new BankingPreferences { FullAt = (int)share, UseZaaps = BankUseZaaps };
+
+        _bankingChanged = true;
+
+        if (_bankingLive is { } live)
+        {
+            live.FullAt = banking.FullAt;
+            live.UseZaaps = banking.UseZaaps;
+        }
+
+        _preferences?.RememberHost(banking.ToConfiguration());
+        MarkChanges();
+    }
+
     private void UseTimeouts(RelayTimeouts timeouts)
     {
         _timeouts = timeouts;
         _preferences?.RememberHost(timeouts.ToConfiguration());
         HasRaisedDelays = AnyRaised();
         MarkChanges();
+    }
+
+    partial void OnBankFullAtChanged(decimal? value)
+    {
+        OnPropertyChanged(nameof(IsBankFullAtChanged));
+        UseBanking();
+    }
+
+    partial void OnBankUseZaapsChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsBankZaapsOff));
+        UseBanking();
     }
 
     partial void OnFilterChanged(string value)
@@ -452,6 +550,18 @@ internal sealed partial class SettingsViewModel : ObservableObject
         HasRaisedDelays = AnyRaised();
         MarkChanges();
         _toasts.Show(new Toast(_localizer["DelaysRestored"], Tone.Success));
+    }
+
+    [RelayCommand(CanExecute = nameof(IsBankFullAtChanged))]
+    private void ResetBankFullAt()
+    {
+        BankFullAt = BankingPreferences.DefaultFullAt;
+    }
+
+    [RelayCommand(CanExecute = nameof(IsBankZaapsOff))]
+    private void ResetBankZaaps()
+    {
+        BankUseZaaps = true;
     }
 
     [RelayCommand(CanExecute = nameof(RecordsCaptures))]

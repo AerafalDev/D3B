@@ -167,6 +167,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`WorldInsides`), the bankers and their replies, the insides the server showed holding no banker, and the maps where a
   banker's question offered none of the bank's replies, refused for the run (D251). Walking, using,
   changing maps and travelling answer `Busy` during a dialog or an exchange, which the server refuses a walk during.
+  Whether the journey to the bank may teleport, and the share of pods at which a bot banks, are the host's general settings
+  (`BankingPreferences`, `Banking:FullAt` and `Banking:UseZaaps`, D405), which a profile answers with its own (`OwnBanking`,
+  `FullAt`, `UseZaaps` in `HarvestSettings` and `FightSettings`); a journey makes the changes it may again from the path on
+  foot once a teleport failed (`JourneyBudget`).
 - **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module, chooses each step
   from the state, a behavior's worth of work; its other hooks have defaults: when the character is full and how it is
   unloaded, what each interruption leads to, how the character is recovered. `BotActor.StartActivity` runs one at a
