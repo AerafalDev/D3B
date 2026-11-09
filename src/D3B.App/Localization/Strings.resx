@@ -3104,4 +3104,13 @@
   <data name="CommandShowSequencer" xml:space="preserve">
     <value>Show the Sequencer</value>
   </data>
+  <data name="SequencerExtend" xml:space="preserve">
+    <value>Extend to the whole route</value>
+  </data>
+  <data name="SequencerDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="SequencerCommonEmpty" xml:space="preserve">
+    <value>No action is on all of them. Draw one on a track, across these steps, to put it on all.</value>
+  </data>
 </root>

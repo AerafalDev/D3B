@@ -325,6 +325,43 @@ public sealed class RouteClipsTests : IAsyncDisposable
         });
     }
 
+    [Fact]
+    public void ActionsHeldByEverySelectedStepAreTheOnesTheyHaveInCommonInTheOrderOfTheFirst()
+    {
+        var anchors = Route(Step(1, _fight, _ash), Step(2, _ash, _fight, _door), Step(3, _oak, _fight), Step(4, _ash));
+
+        Assert.Equal([_fight, _ash], RouteClips.CommonCalls(anchors, [0, 1]), new SameCalls());
+        Assert.Equal([_fight], RouteClips.CommonCalls(anchors, [0, 1, 2]), new SameCalls());
+        Assert.Empty(RouteClips.CommonCalls(anchors, [0, 3, 2]));
+        Assert.Empty(RouteClips.CommonCalls(anchors, []));
+    }
+
+    [Fact]
+    public void ChangingAnActionOnSomeStepsLeavesTheOthersAndKeepsTheOrder()
+    {
+        var anchors = Route(Step(1, _fight, _ash), Step(2, _ash), Step(3, _ash, _fight), Step(4, _door));
+
+        var changed = RouteClips.RevalueOn(anchors, [0, 2, 3], _ash, _oak);
+
+        Assert.Equal([_fight, _oak], changed[0].Actions);
+        Assert.Equal([_ash], changed[1].Actions);
+        Assert.Equal([_oak, _fight], changed[2].Actions);
+        Assert.Same(anchors[3], changed[3]);
+    }
+
+    private sealed class SameCalls : IEqualityComparer<NodeCall>
+    {
+        public bool Equals(NodeCall? x, NodeCall? y)
+        {
+            return RouteAnchor.SameCall(x, y);
+        }
+
+        public int GetHashCode(NodeCall call)
+        {
+            return call.Node.GetHashCode(StringComparison.Ordinal);
+        }
+    }
+
     private static string Describe(NodeCall call)
     {
         return call.Node + string.Concat(call.Values.Select(pair => $"|{pair.Key}={pair.Value}"));

@@ -5,6 +5,7 @@ using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using D3B.Studio.Assets;
+using D3B.Studio.Routes;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -405,10 +406,10 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
 
         editor.Select(1);
 
-        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag", "Talk to an NPC"], editor.OfferedActions.Select(action => action.Name));
+        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag", "Talk to an NPC"], editor.Sequencer.Palette.Select(action => action.Name));
         Assert.True(editor.HasNoActions);
 
-        editor.OfferedActions[3].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Exit);
 
         var action = Assert.Single(editor.Actions);
 
@@ -428,7 +429,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         var (_, editor) = await OpenAsync(1, 3);
 
         editor.Select(0);
-        editor.OfferedActions[4].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Wait);
 
         var action = editor.Actions[0];
         var field = Assert.IsType<NumberFieldViewModel>(Assert.Single(action.Editor!.Sections.SelectMany(section => section.Fields)));
@@ -478,9 +479,9 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         var (_, editor) = await OpenAsync(1, 3);
 
         editor.Select(0);
-        editor.OfferedActions[4].AddCommand.Execute(null);
-        editor.OfferedActions[5].AddCommand.Execute(null);
-        editor.OfferedActions[6].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Wait);
+        editor.AddAction(RouteActions.Zaap);
+        editor.AddAction(RouteActions.HavenBag);
 
         editor.ReorderActionsCommand.Execute(new ReorderRequest(0, 2));
 
@@ -497,9 +498,9 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         var (_, editor) = await OpenAsync(1, 3);
 
         editor.Select(0);
-        editor.OfferedActions[4].AddCommand.Execute(null);
-        editor.OfferedActions[5].AddCommand.Execute(null);
-        editor.OfferedActions[6].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Wait);
+        editor.AddAction(RouteActions.Zaap);
+        editor.AddAction(RouteActions.HavenBag);
 
         Assert.Equal(["Wait 5 s", "Take the zaap", "Go to the haven bag"], editor.Actions.Select(action => action.Sentence));
         Assert.Equal((true, false), (editor.Actions[0].IsFirst, editor.Actions[0].IsLast));
@@ -534,7 +535,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         Assert.True(action.IsUnknown);
         Assert.Equal("Unknown action (later.thing)", action.Sentence);
 
-        editor.OfferedActions[4].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Wait);
         await editor.SaveCommand.ExecuteAsync(null);
 
         var anchor = routes.Services!.Library.Find<RouteAsset>("r1")!.Anchors[0];
@@ -542,35 +543,6 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         Assert.Equal(["later.thing", "wait"], anchor.Actions.Select(call => call.Node));
         Assert.Equal("calm", anchor.Actions[0].Values["Mood"]!.GetValue<string>());
         Assert.False(editor.IsDirty);
-    }
-
-    [Fact]
-    public async Task ThePlusOfAStepOrOfTheActionsOpensTheActionsToChooseFromAndChoosingOneAddsItAndClosesThem()
-    {
-        var (routes, editor) = await OpenAsync(1, 3);
-
-        editor.Steps[1].AddActionCommand.Execute(null);
-
-        var picker = Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current);
-
-        Assert.Equal(1, editor.SelectedIndex);
-        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag", "Talk to an NPC"], picker.Actions.Select(action => action.Name));
-        Assert.All(picker.Actions, action => Assert.NotEmpty(action.Help));
-
-        picker.Actions[4].AddCommand.Execute(null);
-
-        Assert.False(routes.Dialogs.IsOpen);
-        Assert.Equal(["Wait 5 s"], editor.Actions.Select(action => action.Sentence));
-
-        editor.ChooseActionCommand.Execute(null);
-
-        Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current);
-        Assert.Equal(1, editor.SelectedIndex);
-
-        Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current).CancelCommand.Execute(null);
-
-        Assert.False(routes.Dialogs.IsOpen);
-        Assert.Single(editor.Actions);
     }
 
     [Fact]

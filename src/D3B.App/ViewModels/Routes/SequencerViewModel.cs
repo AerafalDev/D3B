@@ -1,8 +1,11 @@
 using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls.Sequencer;
 using D3B.Studio.Assets;
+using D3B.App.ViewModels.Settings;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
 
@@ -29,6 +32,9 @@ internal sealed partial class SequencerViewModel : ObservableObject
     private NodeCall? _drawn;
     private SequencerEdge _edge;
     private int _from;
+    private string _cardsKey = "";
+    private bool _editing;
+    private List<NodeCall> _common = [];
 
     /// <summary>Gets what is drawn.</summary>
     [ObservableProperty]
@@ -41,6 +47,23 @@ internal sealed partial class SequencerViewModel : ObservableObject
     /// <summary>Gets the kinds of action a track can still be added for, which the palette offers.</summary>
     [ObservableProperty]
     public partial IReadOnlyList<RouteActionChoiceViewModel> Palette { get; private set; } = [];
+
+    /// <summary>Gets the values of the clip selected, as the sentence of its action: they are set once for every step the clip covers.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasClip))]
+    public partial RouteActionViewModel? ClipCard { get; private set; }
+
+    /// <summary>Gets the actions every step selected holds, each set once for all of them.</summary>
+    public ObservableCollection<RouteActionViewModel> CommonActions { get; } = [];
+
+    /// <summary>Gets whether a clip is selected.</summary>
+    public bool HasClip => ClipCard is not null;
+
+    /// <summary>Gets whether several steps are selected.</summary>
+    public bool HasSeveralSteps => _route.HasSeveralSteps;
+
+    /// <summary>Gets whether several steps are selected and no action is on all of them.</summary>
+    public bool HasNoCommonAction => HasSeveralSteps && CommonActions.Count == 0;
 
     /// <summary>Gets the steps selected, as the route editor holds them.</summary>
     public IReadOnlyList<int> SelectedSteps => _route.SelectedSteps;
@@ -56,21 +79,25 @@ internal sealed partial class SequencerViewModel : ObservableObject
     {
         get
         {
-            var localizer = _page.Localizer;
-            var count = _route.CurrentAnchors.Count;
+            if (_selected is not { } clip)
+                return StepsStatus;
 
-            if (_selected is { } clip)
-            {
-                var name = NameOf(clip.Call.Node);
+            var name = NameOf(clip.Call.Node);
 
-                return clip.Length == 1 ? localizer.Format("SequencerClipStatusOne", name, clip.First + 1) : localizer.Format("SequencerClipStatus", name, clip.First + 1, clip.Last + 1);
-            }
+            return clip.Length == 1 ? _page.Localizer.Format("SequencerClipStatusOne", name, clip.First + 1) : _page.Localizer.Format("SequencerClipStatus", name, clip.First + 1, clip.Last + 1);
+        }
+    }
 
+    /// <summary>Gets the steps selected, said in words.</summary>
+    public string StepsStatus
+    {
+        get
+        {
             return _route.SelectedSteps.Count switch
             {
                 0 => "",
-                1 => localizer.Format("SequencerStepStatus", _route.SelectedSteps[0] + 1, count),
-                var several => localizer.Format("SequencerStepsStatus", several),
+                1 => _page.Localizer.Format("SequencerStepStatus", _route.SelectedSteps[0] + 1, _route.CurrentAnchors.Count),
+                var several => _page.Localizer.Format("SequencerStepsStatus", several),
             };
         }
     }
@@ -100,7 +127,10 @@ internal sealed partial class SequencerViewModel : ObservableObject
             if (e.PropertyName is nameof(RouteEditorViewModel.SelectedSteps))
             {
                 OnPropertyChanged(nameof(SelectedSteps));
+                OnPropertyChanged(nameof(HasSeveralSteps));
                 OnPropertyChanged(nameof(Status));
+                OnPropertyChanged(nameof(StepsStatus));
+                BuildCards();
             }
             else if (e.PropertyName is nameof(RouteEditorViewModel.Name))
             {
@@ -264,7 +294,19 @@ internal sealed partial class SequencerViewModel : ObservableObject
         _route.EndGesture();
     }
 
+    /// <summary>Makes the clip selected cover the whole route.</summary>
+    [RelayCommand]
+    public void ExtendClip()
+    {
+        if (_selected is not { } clip)
+            return;
+
+        _selected = clip with { First = 0, Last = _route.CurrentAnchors.Count - 1 };
+        _route.ReplaceAnchors(RouteClips.Reshape(_route.CurrentAnchors, clip, 0, _route.CurrentAnchors.Count - 1));
+    }
+
     /// <summary>Takes the clip selected off every step it covers: Delete.</summary>
+    [RelayCommand]
     public void RemoveSelectedClip()
     {
         if (_selected is not { } clip || clip.Last >= _route.CurrentAnchors.Count)
@@ -285,6 +327,95 @@ internal sealed partial class SequencerViewModel : ObservableObject
 
         _added.Add(node);
         Rebuild();
+    }
+
+    // The forms of the clip selected and of the actions the steps selected share are made again when what they show changed, and not while a value is typed in them.
+    private void BuildCards()
+    {
+        if (_editing)
+            return;
+
+        var anchors = _route.CurrentAnchors;
+        var steps = _route.SelectedSteps;
+        var common = steps.Count > 1 && steps.All(step => step < anchors.Count) ? RouteClips.CommonCalls(anchors, steps) : [];
+        var key = (_selected is { } clip ? KeyOf(clip.Call) + "/" + clip.Layer.ToString(_page.Localizer.Culture) : "") + "#" + string.Join(',', steps) + "#" + string.Join('/', common.Select(KeyOf));
+
+        if (key == _cardsKey)
+            return;
+
+        _cardsKey = key;
+        ClipCard = _selected is { } selected && selected.Last < anchors.Count ? Card(selected.Call, anchors[selected.First].MapId, ClipEdited, _ => RemoveSelectedClip()) : null;
+        CommonActions.Clear();
+        _common = [.. common];
+
+        foreach (var call in common)
+            CommonActions.Add(Card(call, anchors[steps[0]].MapId, CommonEdited, _ => { }));
+
+        OnPropertyChanged(nameof(HasNoCommonAction));
+    }
+
+    private RouteActionViewModel Card(NodeCall call, long map, Action<int, NodeDefinition, SettingsEditor> edited, Action<int> remove)
+    {
+        var step = new RouteAnchor { MapId = map, Actions = [call] };
+        var rows = RouteActionForms.Build(_page.Services!, _page.Localizer, _page.Dialogs, step, edited, remove, (_, _) => { });
+
+        return rows[0];
+    }
+
+    private void ClipEdited(int index, NodeDefinition definition, SettingsEditor editor)
+    {
+        if (_selected is not { } clip || ClipCard is not { } card)
+            return;
+
+        var made = RouteActionCalls.Make(definition, editor.Draft);
+
+        if (RouteAnchor.SameCall(clip.Call, made))
+            return;
+
+        Edit(() =>
+        {
+            _selected = clip with { Call = made };
+            _route.ReplaceAnchors(RouteClips.Revalue(_route.CurrentAnchors, clip, made));
+        });
+        card.Say();
+        _cardsKey = "";
+    }
+
+    private void CommonEdited(int index, NodeDefinition definition, SettingsEditor editor)
+    {
+        if (index < 0 || index >= _common.Count || index >= CommonActions.Count)
+            return;
+
+        var made = RouteActionCalls.Make(definition, editor.Draft);
+        var was = _common[index];
+
+        if (RouteAnchor.SameCall(was, made))
+            return;
+
+        Edit(() => _route.ReplaceAnchors(RouteClips.RevalueOn(_route.CurrentAnchors, _route.SelectedSteps, was, made)));
+        _common[index] = made;
+        CommonActions[index].Say();
+        _cardsKey = "";
+    }
+
+    // The value typed stays in the form the hand is in: the cards are not made again under it.
+    private void Edit(Action change)
+    {
+        _editing = true;
+
+        try
+        {
+            change();
+        }
+        finally
+        {
+            _editing = false;
+        }
+    }
+
+    private static string KeyOf(NodeCall call)
+    {
+        return call.Node + string.Concat(call.Values.Select(pair => "|" + pair.Key + "=" + pair.Value?.ToJsonString()));
     }
 
     private void GoTo(int step, bool extend)
@@ -378,6 +509,7 @@ internal sealed partial class SequencerViewModel : ObservableObject
         _selected = clip;
         SelectedClip = clip is null ? -1 : _clips.IndexOf(clip);
         OnPropertyChanged(nameof(Status));
+        BuildCards();
     }
 
     private void Rebuild()
@@ -414,7 +546,8 @@ internal sealed partial class SequencerViewModel : ObservableObject
         Scene = new SequencerScene(steps, tracks);
         SelectedClip = Retarget();
         OnPropertyChanged(nameof(Status));
-        Palette = [.. _route.OfferedActions.Where(item => !tracks.Any(track => track.Node == item.Node)).Select(item => new RouteActionChoiceViewModel(item.Node, item.Name, item.Help, AddTrack))];
+        BuildCards();
+        Palette = [.. Offered().Where(item => !tracks.Any(track => track.Node == item.Node))];
     }
 
     // The clip selected is the one of the same action and layer that still covers some of its steps.
@@ -428,6 +561,18 @@ internal sealed partial class SequencerViewModel : ObservableObject
         _selected = now;
 
         return now is null ? -1 : _clips.IndexOf(now);
+    }
+
+    // The kinds of action the host knows, in the order of the editor's menu.
+    private IEnumerable<RouteActionChoiceViewModel> Offered()
+    {
+        var catalog = _page.Services?.Nodes;
+
+        foreach (var node in RouteActions.Offered)
+        {
+            if (catalog is not null && catalog.TryGet(node, out var definition))
+                yield return new RouteActionChoiceViewModel(node, NameOf(node), definition.Help?.In(_page.Localizer.Culture) ?? "", AddTrack);
+        }
     }
 
     private string NameOf(string node)

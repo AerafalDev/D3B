@@ -52,7 +52,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private bool _inGesture;
     private bool _gestureRecorded;
     private bool _keepActionForms;
-    private RouteActionPickerViewModel? _picker;
     private RouteStepSelection _chosen = RouteStepSelection.None;
 
     /// <summary>Gets the route's id.</summary>
@@ -69,9 +68,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
     /// <summary>Gets the actions of the step chosen, in order (D377).</summary>
     public ObservableCollection<RouteActionViewModel> Actions { get; } = [];
-
-    /// <summary>Gets the actions the menu offers to add to a step.</summary>
-    public IReadOnlyList<RouteActionChoiceViewModel> OfferedActions { get; private set; } = [];
 
     /// <summary>Gets the worlds the layer can show.</summary>
     public IReadOnlyList<WorldChoiceViewModel> Worlds { get; private set; } = [];
@@ -199,14 +195,14 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     /// <summary>Gets whether more than one step is selected.</summary>
     public bool HasSeveralSteps => _chosen.IsSeveral;
 
+    /// <summary>Gets whether one step alone is selected, whose own actions the Details list.</summary>
+    public bool HasSingleStep => HasSelectedStep && !HasSeveralSteps;
+
     /// <summary>Gets the title of the chosen step's actions, such as "Actions on step 3".</summary>
     public string ActionsTitle => HasSelectedStep ? _page.Localizer.Format("RouteActionsTitle", SelectedIndex + 1) : "";
 
     /// <summary>Gets whether the chosen step has no action.</summary>
     public bool HasNoActions => HasSelectedStep && Actions.Count == 0;
-
-    /// <summary>Gets whether actions can be added: the host holds the kinds of nodes.</summary>
-    public bool CanAddActions => HasSelectedStep && OfferedActions.Count > 0;
 
     /// <summary>Gets whether a gap no path crosses is said.</summary>
     public bool HasProblem => Problem is not null;
@@ -289,7 +285,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         OnPropertyChanged(nameof(Worlds));
         OnPropertyChanged(nameof(HasWorlds));
         Name = _saved.Name;
-        OfferActions();
         Rebuild();
     }
 
@@ -626,27 +621,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     }
 
     [RelayCommand]
-    private void ChooseAction()
-    {
-        if (HasSelectedStep)
-            OpenActionPicker(SelectedIndex);
-    }
-
-    [RelayCommand]
-    private void AddAction(string? node)
-    {
-        var catalog = _page.Services?.Nodes;
-
-        if (node is null || catalog is null || !catalog.TryGet(node, out var definition) || !HasSelectedStep)
-            return;
-
-        var anchor = _anchors[SelectedIndex];
-
-        _anchors[SelectedIndex] = anchor with { Actions = anchor.Actions.Add(RouteActionCalls.Create(definition)) };
-        Changed();
-    }
-
-    [RelayCommand]
     private void SetMode(RouteMode mode)
     {
         Mode = mode;
@@ -785,28 +759,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         return services.Catalog.TryGet(1, out _) ? 1 : services.Catalog.Worlds.Span[0].Id;
     }
 
-    private void AddActionNode(string node)
-    {
-        if (_picker is not null)
-        {
-            _page.Dialogs.Close(_picker);
-            _picker = null;
-        }
-
-        AddAction(node);
-    }
-
-    private void OpenActionPicker(int index)
-    {
-        Select(index);
-
-        if (OfferedActions.Count == 0)
-            return;
-
-        _picker = new RouteActionPickerViewModel(_page.Dialogs, _page.Localizer["RouteActionAdd"], _page.Localizer["Cancel"], OfferedActions);
-        _page.Dialogs.Show(_picker);
-    }
-
     [RelayCommand]
     private void RemoveAction(int index)
     {
@@ -859,26 +811,6 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         Actions[index].Say();
     }
 
-    private void OfferActions()
-    {
-        var catalog = _page.Services?.Nodes;
-        var culture = _page.Localizer.Culture;
-        var offered = new List<RouteActionChoiceViewModel>();
-
-        if (catalog is not null)
-        {
-            foreach (var node in RouteActions.Offered)
-            {
-                if (catalog.TryGet(node, out var definition))
-                    offered.Add(new RouteActionChoiceViewModel(node, _page.Localizer[RouteTexts.ActionNameKey(node)], definition.Help?.In(culture) ?? "", AddActionNode));
-            }
-        }
-
-        OfferedActions = offered;
-        OnPropertyChanged(nameof(OfferedActions));
-        OnPropertyChanged(nameof(CanAddActions));
-    }
-
     private void BuildActions()
     {
         Actions.Clear();
@@ -895,9 +827,9 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private void NotifyActions()
     {
         OnPropertyChanged(nameof(HasSelectedStep));
+        OnPropertyChanged(nameof(HasSingleStep));
         OnPropertyChanged(nameof(ActionsTitle));
         OnPropertyChanged(nameof(HasNoActions));
-        OnPropertyChanged(nameof(CanAddActions));
     }
 
     /// <summary>Replaces the steps by others of the same maps, as one change: the Sequencer's gestures, a clip drawn, moved or taken off.</summary>
@@ -995,6 +927,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
         OnPropertyChanged(nameof(SelectedSteps));
         OnPropertyChanged(nameof(HasSeveralSteps));
+        OnPropertyChanged(nameof(HasSingleStep));
         MarkSelected();
         BuildScene();
     }
@@ -1065,7 +998,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
     private void BuildSteps()
     {
-        var steps = RouteStepRows.Build(_page.Services!, _page.Localizer, _texts, _anchors, _legs, Mode, Layer, _chosen.Steps, Reveal, Remove, OpenActionPicker);
+        var steps = RouteStepRows.Build(_page.Services!, _page.Localizer, _texts, _anchors, _legs, Mode, Layer, _chosen.Steps, Reveal, Remove);
 
         Steps.Clear();
 
@@ -1120,6 +1053,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
         OnPropertyChanged(nameof(SelectedSteps));
         OnPropertyChanged(nameof(HasSeveralSteps));
+        OnPropertyChanged(nameof(HasSingleStep));
         MarkSelected();
         BuildActions();
     }

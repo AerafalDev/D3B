@@ -99,6 +99,11 @@ public sealed class SequencerViewTests
 
             Drawings.Draw(window, "sequencer");
 
+            main.World.Route!.SelectSteps([0, 1, 2]);
+            sequencer.ClearClip();
+            Dispatcher.UIThread.RunJobs();
+            Drawings.Draw(window, "sequencer-several");
+
             // Another selection takes the tab away and the journal comes back.
             main.Selection.SelectZone("none");
             Dispatcher.UIThread.RunJobs();

@@ -6,6 +6,7 @@ using D3B.App.Controls.WorldMaps;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
+using D3B.App.ViewModels.Settings;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
@@ -487,5 +488,114 @@ public sealed class SequencerViewModelTests : IAsyncDisposable
 
         Assert.True(sequencer.PressKey(Key.Delete, KeyModifiers.None));
         Assert.All(editor.CurrentAnchors, anchor => Assert.Empty(anchor.Actions));
+    }
+
+    private static NodeCall Default(string node)
+    {
+        var catalog = TestRouteWorld.Nodes();
+
+        Assert.True(catalog.TryGet(node, out var definition));
+
+        return RouteActionCalls.Create(definition);
+    }
+
+    private static NumberFieldViewModel Field(RouteActionViewModel card)
+    {
+        return Assert.IsType<NumberFieldViewModel>(Assert.Single(card.Editor!.Sections.SelectMany(section => section.Fields)));
+    }
+
+    [Fact]
+    public async Task TheValuesOfTheClipSelectedAreSetOnceForEveryStepItCoversAndTheFormIsNotMadeAgainUnderTheHand()
+    {
+        var wait = Default(RouteActions.Wait);
+        var (_, editor) = await OpenAsync(Step(1, wait), Step(2, wait), Step(3, wait), Step(4));
+        var sequencer = editor.Sequencer;
+
+        Assert.Null(sequencer.ClipCard);
+
+        sequencer.PressClip(sequencer.Scene.Tracks[0].Clips[0].Id);
+
+        var card = sequencer.ClipCard!;
+
+        Assert.True(sequencer.HasClip);
+        Assert.Equal("Wait 5 s", card.Sentence);
+
+        Field(card).Value = 12;
+
+        Assert.Same(card, sequencer.ClipCard);
+        Assert.Equal(3, editor.CurrentAnchors.Take(3).Count(anchor => RouteAnchor.SameCall(anchor.Actions[0], editor.CurrentAnchors[0].Actions[0])));
+        Assert.False(RouteAnchor.SameCall(editor.CurrentAnchors[0].Actions[0], wait));
+        Assert.Single(sequencer.Scene.Tracks[0].Clips);
+        Assert.Equal(sequencer.Scene.Tracks[0].Clips[0].Id, sequencer.SelectedClip);
+
+        editor.Undo();
+
+        Assert.True(RouteAnchor.SameCall(editor.CurrentAnchors[0].Actions[0], wait));
+
+        sequencer.ClearClip();
+
+        Assert.Null(sequencer.ClipCard);
+    }
+
+    [Fact]
+    public async Task TheClipSelectedCanBeExtendedToTheWholeRouteAndItsCardsXRemovesIt()
+    {
+        var wait = Default(RouteActions.Wait);
+        var (_, editor) = await OpenAsync(Step(1), Step(2, wait), Step(3), Step(4));
+        var sequencer = editor.Sequencer;
+
+        sequencer.PressClip(sequencer.Scene.Tracks[0].Clips[0].Id);
+        sequencer.ExtendClipCommand.Execute(null);
+
+        Assert.Equal([1, 1, 1, 1], editor.CurrentAnchors.Select(anchor => anchor.Actions.Length));
+        Assert.Equal((0, 3), (sequencer.Selected!.First, sequencer.Selected.Last));
+
+        sequencer.ClipCard!.RemoveCommand.Execute(null);
+
+        Assert.All(editor.CurrentAnchors, anchor => Assert.Empty(anchor.Actions));
+        Assert.Null(sequencer.ClipCard);
+    }
+
+    [Fact]
+    public async Task SeveralStepsSelectedShowTheActionsAllOfThemHoldAndAValueIsSetOnThemAloneOnceForAll()
+    {
+        var wait = Default(RouteActions.Wait);
+        var fight = Call(RouteActions.Fight, new RouteFightValues());
+        var (_, editor) = await OpenAsync(Step(1, wait, fight), Step(2, wait), Step(3, wait, fight), Step(4, wait));
+        var sequencer = editor.Sequencer;
+
+        editor.SelectSteps([0, 2]);
+
+        Assert.True(sequencer.HasSeveralSteps);
+        Assert.Equal("Wait 5 s", sequencer.CommonActions[0].Sentence);
+        Assert.StartsWith("Fight", sequencer.CommonActions[1].Sentence, StringComparison.Ordinal);
+        Assert.Equal(2, sequencer.CommonActions.Count);
+
+        var card = sequencer.CommonActions[0];
+
+        Field(card).Value = 20;
+
+        Assert.Same(card, sequencer.CommonActions[0]);
+        Assert.False(RouteAnchor.SameCall(editor.CurrentAnchors[0].Actions[0], wait));
+        Assert.True(RouteAnchor.SameCall(editor.CurrentAnchors[0].Actions[0], editor.CurrentAnchors[2].Actions[0]));
+        Assert.True(RouteAnchor.SameCall(editor.CurrentAnchors[1].Actions[0], wait));
+        Assert.True(RouteAnchor.SameCall(editor.CurrentAnchors[3].Actions[0], wait));
+    }
+
+    [Fact]
+    public async Task SeveralStepsWithNothingInCommonSayItAndOneStepShowsNoCommonCards()
+    {
+        var wait = Default(RouteActions.Wait);
+        var (_, editor) = await OpenAsync(Step(1, wait), Step(2), Step(3));
+
+        editor.SelectSteps([0, 1]);
+
+        Assert.True(editor.Sequencer.HasNoCommonAction);
+        Assert.Empty(editor.Sequencer.CommonActions);
+
+        editor.Select(0);
+
+        Assert.False(editor.Sequencer.HasNoCommonAction);
+        Assert.Empty(editor.Sequencer.CommonActions);
     }
 }

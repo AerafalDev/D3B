@@ -18,9 +18,8 @@ internal static class RouteStepRows
     /// <param name="selected">The steps selected.</param>
     /// <param name="reveal">What choosing a row does, given its step's place.</param>
     /// <param name="remove">What removing a row does, given its step's place.</param>
-    /// <param name="openActions">What a row's button that adds an action does, given its step's place.</param>
     /// <returns>The rows, in order.</returns>
-    public static List<RouteStepViewModel> Build(RouteServices services, Localizer localizer, RouteTexts texts, IReadOnlyList<RouteAnchor> anchors, IReadOnlyList<RouteLeg> legs, RouteMode mode, int shownLayer, IReadOnlyCollection<int> selected, Action<int> reveal, Action<int> remove, Action<int> openActions)
+    public static List<RouteStepViewModel> Build(RouteServices services, Localizer localizer, RouteTexts texts, IReadOnlyList<RouteAnchor> anchors, IReadOnlyList<RouteLeg> legs, RouteMode mode, int shownLayer, IReadOnlyCollection<int> selected, Action<int> reveal, Action<int> remove)
     {
         var steps = new List<RouteStepViewModel>(anchors.Count);
 
@@ -49,7 +48,7 @@ internal static class RouteStepRows
                     gap = localizer["RouteGapNone"];
             }
 
-            steps.Add(new RouteStepViewModel(i, anchor.MapId, texts.Place(anchor.MapId), texts.Zone(anchor.MapId), anchor.IsPinned, elsewhere, gap, broken, closing && gap.Length > 0, anchor.Actions.Length, anchor.Actions.Length == 0 ? "" : localizer.Plural("RouteActionsCount", anchor.Actions.Length), reveal, remove, openActions) { IsSelected = selected.Contains(i) });
+            steps.Add(new RouteStepViewModel(i, anchor.MapId, texts.Place(anchor.MapId), texts.Zone(anchor.MapId), anchor.IsPinned, elsewhere, gap, broken, closing && gap.Length > 0, anchor.Actions.Length, anchor.Actions.Length == 0 ? "" : localizer.Plural("RouteActionsCount", anchor.Actions.Length), reveal, remove) { IsSelected = selected.Contains(i) });
         }
 
         return steps;

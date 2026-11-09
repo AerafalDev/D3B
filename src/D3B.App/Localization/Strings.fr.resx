@@ -3104,4 +3104,13 @@
   <data name="CommandShowSequencer" xml:space="preserve">
     <value>Afficher le séquenceur</value>
   </data>
+  <data name="SequencerExtend" xml:space="preserve">
+    <value>Étendre à tout le trajet</value>
+  </data>
+  <data name="SequencerDelete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="SequencerCommonEmpty" xml:space="preserve">
+    <value>Aucune action n’est sur toutes. Tracez-en une sur une piste, au travers de ces étapes, pour la mettre sur toutes.</value>
+  </data>
 </root>

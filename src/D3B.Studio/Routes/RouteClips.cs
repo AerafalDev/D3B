@@ -156,6 +156,56 @@ public static class RouteClips
         return result.ToImmutable();
     }
 
+    /// <summary>Gives the actions that every one of some steps holds, as the steps selected together set them.</summary>
+    /// <param name="anchors">The route's steps.</param>
+    /// <param name="steps">The steps, from 0.</param>
+    /// <returns>The actions, each once, in the order of the first step; none when no step is given.</returns>
+    public static ImmutableArray<NodeCall> CommonCalls(IReadOnlyList<RouteAnchor> anchors, IReadOnlyCollection<int> steps)
+    {
+        ArgumentNullException.ThrowIfNull(anchors);
+        ArgumentNullException.ThrowIfNull(steps);
+
+        if (steps.Count == 0)
+            return [];
+
+        var first = anchors[steps.First()];
+        var common = new List<NodeCall>();
+
+        foreach (var call in first.Actions)
+        {
+            if (!common.Any(held => RouteAnchor.SameCall(held, call)) && steps.All(step => Count(anchors[step], call) > 0))
+                common.Add(call);
+        }
+
+        return [.. common];
+    }
+
+    /// <summary>Gives an action other values on some steps, where it stands, and leaves the others.</summary>
+    /// <param name="anchors">The route's steps.</param>
+    /// <param name="steps">The steps, from 0.</param>
+    /// <param name="call">The action as the steps hold it.</param>
+    /// <param name="replacement">The action with its new values.</param>
+    /// <returns>The route's steps after the edit.</returns>
+    public static ImmutableArray<RouteAnchor> RevalueOn(IReadOnlyList<RouteAnchor> anchors, IReadOnlyCollection<int> steps, NodeCall call, NodeCall replacement)
+    {
+        ArgumentNullException.ThrowIfNull(anchors);
+        ArgumentNullException.ThrowIfNull(steps);
+        ArgumentNullException.ThrowIfNull(call);
+        ArgumentNullException.ThrowIfNull(replacement);
+
+        var result = anchors.ToImmutableArray().ToBuilder();
+
+        foreach (var step in steps)
+        {
+            var at = IndexOf(result[step], call, 0);
+
+            if (at >= 0)
+                result[step] = result[step] with { Actions = result[step].Actions.SetItem(at, replacement) };
+        }
+
+        return result.ToImmutable();
+    }
+
     private static void CheckInside(IReadOnlyList<RouteAnchor> anchors, RouteClip clip)
     {
         if (clip.First < 0 || clip.Last < clip.First || clip.Last >= anchors.Count)
