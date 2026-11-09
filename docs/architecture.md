@@ -530,8 +530,8 @@ D356), the pages of D101 and D162 gone.
   and opens again from the Window menu, which gives the default layout back; Ctrl J shows or hides the bottom panel, Ctrl Space
   opens the assets. A drag's end, a panel closed or opened, are remembered in `app.json`, the default never written
   (`StudioPanel.Outliner`, `Assets`, `Bottom`, `Details`; a file that closed the older `Characters` panel opens the Outliner).
-- **The editor's tabs** (`EditorTabs`, `EditorTab`): the home page first, pinned (`EditorTab.IsPinned`: no ×, `CloseAll` keeps
-  it) and shown at start (D406), then those that something opens: the world (`ShowWorld`, opened once a route, a step or a zone is
+- **The editor's tabs** (`EditorTabs`, `EditorTab`): the home page first, shown at start (D406) and closed like any tab, the Window menu opening it again (D412;
+  `EditorTab.IsPinned` is for a tab that must not close: no ×, `CloseAll` keeps it), then those that something opens: the world (`ShowWorld`, opened once a route, a step or a zone is
   selected, from the Outliner, the assets, the search or the home page, closed like any tab), a profile, a list of steps, a
   character, the settings, a module's page; each tab opened once, its view kept while it is open, closed by its ×, its
   neighbour then shown. A tab that reads the host shows where the host stands until it runs (`HostStateView`). Route and zone

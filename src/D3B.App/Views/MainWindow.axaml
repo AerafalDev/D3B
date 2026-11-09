@@ -210,6 +210,8 @@
                         Tag="Ctrl ," />
                 </MenuItem>
                 <MenuItem Header="{l:Tr MenuWindow}">
+                    <MenuItem Command="{Binding ShowHomeCommand}" Header="{l:Tr Home}" />
+                    <Separator />
                     <MenuItem Classes="Heading" Header="{l:Tr MenuPanels}" />
                     <MenuItem
                         Command="{Binding Layout.ToggleCommand}"
@@ -649,6 +651,7 @@
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <Button
                                                         Classes="TabFace"
+                                                        Classes.Plain="{Binding IsPinned}"
                                                         Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).Editor.SelectCommand}"
                                                         CommandParameter="{Binding}">
                                                         <StackPanel Orientation="Horizontal" Spacing="7">

@@ -483,3 +483,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D407](decisions.md#d407-the-fight-ai-after-the-players-reports-a-refused-cast-is-weighed-anew-a-life-steal-is-no-longer-cast-for-a-heal-that-is-not-needed) The fight AI after the players' reports: a refused cast is weighed anew, a life steal is no longer cast for a heal that is not needed (2026-11-09)
 - [D408](decisions.md#d408-a-summon-is-a-last-resort-but-for-the-breeds-made-of-their-summons) A summon is a last resort, but for the breeds made of their summons (2026-11-09)
+
+## The home page's tab (D412)
+
+- [D412](decisions.md#d412-the-home-page-closes-like-the-other-tabs-and-the-window-menu-opens-it-again) The home page closes like the other tabs, and the Window menu opens it again (2026-11-09)
+  - Keeping it pinned and only widening the label's padding: the owner asked for a cross.
