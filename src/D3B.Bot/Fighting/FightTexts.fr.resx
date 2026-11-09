@@ -146,8 +146,20 @@
   <data name="SectionBank" xml:space="preserve">
     <value>Banque</value>
   </data>
+  <data name="OwnBanking" xml:space="preserve">
+    <value>Règles de banque propres</value>
+  </data>
+  <data name="OwnBankingHelp" xml:space="preserve">
+    <value>Désactivé, ce profil banque comme le disent les réglages de l'application (Réglages, Bots) : la part de pods et le zaap vers la banque. Activé, il suit les deux réglages ci-dessous.</value>
+  </data>
   <data name="FullAt" xml:space="preserve">
     <value>Pods pleins à</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Prendre un zaap pour aller à la banque</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>Désactivé, le personnage va toujours à pied à la banque. Activé, il prend un zaap s'il évite assez de cartes et s'il peut le payer ; sinon il marche.</value>
   </data>
   <data name="Deposit" xml:space="preserve">
     <value>Déposer</value>

@@ -1640,22 +1640,22 @@
   <data name="CharactersOnline" xml:space="preserve">
     <value>{0} en ligne</value>
   </data>
-  <data name="Welcome" xml:space="preserve">
-    <value>Bienvenue</value>
+  <data name="Home" xml:space="preserve">
+    <value>Accueil</value>
   </data>
-  <data name="WelcomeVersion" xml:space="preserve">
+  <data name="HomeVersion" xml:space="preserve">
     <value>{0} · client {1}</value>
   </data>
-  <data name="WelcomeSearch" xml:space="preserve">
+  <data name="HomeSearch" xml:space="preserve">
     <value>Chercher partout</value>
   </data>
-  <data name="WelcomeAssets" xml:space="preserve">
+  <data name="HomeAssets" xml:space="preserve">
     <value>Assets</value>
   </data>
-  <data name="WelcomeJournal" xml:space="preserve">
+  <data name="HomeJournal" xml:space="preserve">
     <value>Journal</value>
   </data>
-  <data name="WelcomePlay" xml:space="preserve">
+  <data name="HomePlay" xml:space="preserve">
     <value>Jouer</value>
   </data>
   <data name="HostFailedShort" xml:space="preserve">
@@ -2068,6 +2068,21 @@
   </data>
   <data name="SettingsChanged" xml:space="preserve">
     <value>Des valeurs changées</value>
+  </data>
+  <data name="GroupBanking" xml:space="preserve">
+    <value>Banque</value>
+  </data>
+  <data name="SettingBankFullAtRow" xml:space="preserve">
+    <value>Aller à la banque quand les pods atteignent</value>
+  </data>
+  <data name="SettingBankFullAtRowDetail" xml:space="preserve">
+    <value>La part de ses pods à laquelle un bot va à la banque. Un profil qui demande ses propres règles de banque garde la sienne. Par défaut 90 %.</value>
+  </data>
+  <data name="SettingBankZaapsRow" xml:space="preserve">
+    <value>Prendre un zaap pour aller à la banque</value>
+  </data>
+  <data name="SettingBankZaapsRowDetail" xml:space="preserve">
+    <value>Désactivé, les bots vont toujours à pied à la banque. Activé, ils prennent un zaap s'il évite assez de cartes et s'ils peuvent le payer ; sinon ils marchent.</value>
   </data>
   <data name="GroupBotDelays" xml:space="preserve">
     <value>Délais minimums des bots</value>
@@ -3019,5 +3034,38 @@
   </data>
   <data name="ZoneContents" xml:space="preserve">
     <value>Contenu</value>
+  </data>
+  <data name="HomeQuickActions" xml:space="preserve">
+    <value>Actions rapides</value>
+  </data>
+  <data name="HomeNewProfile" xml:space="preserve">
+    <value>Nouveau profil</value>
+  </data>
+  <data name="HomeNewRoute" xml:space="preserve">
+    <value>Nouvelle route</value>
+  </data>
+  <data name="HomeNewZone" xml:space="preserve">
+    <value>Nouvelle zone</value>
+  </data>
+  <data name="HomeProjectFolder" xml:space="preserve">
+    <value>Dossier du projet</value>
+  </data>
+  <data name="HomeSettings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="HomeCharacters" xml:space="preserve">
+    <value>Personnages</value>
+  </data>
+  <data name="HomeNoCharacters" xml:space="preserve">
+    <value>Aucun personnage pour l'instant. Connecte-toi au jeu avec le relais, et tes personnages apparaissent ici.</value>
+  </data>
+  <data name="HomeRecent" xml:space="preserve">
+    <value>Récents</value>
+  </data>
+  <data name="HomeNoRecent" xml:space="preserve">
+    <value>Rien pour l'instant. Crée une route, une zone ou un profil, et il sera listé ici.</value>
+  </data>
+  <data name="HomeShortcuts" xml:space="preserve">
+    <value>Raccourcis</value>
   </data>
 </root>

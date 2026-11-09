@@ -46,7 +46,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     {
         // The pages' icons, the pack's: D3B's logo, on the welcome and its tab, is the app's own (D231).
         return ((Visual)window.Content!).GetVisualDescendants().OfType<Image>()
-            .Count(image => image.IsEffectivelyVisible && image.Source is not null && !image.GetVisualAncestors().Any(parent => parent is WelcomeView || parent is Border { Classes: var classes } && classes.Contains("TabHost")));
+            .Count(image => image.IsEffectivelyVisible && image.Source is not null && !image.GetVisualAncestors().Any(parent => parent is HomeView || parent is Border { Classes: var classes } && classes.Contains("TabHost")));
     }
 
     private static Task<T> OnTheUIThreadAsync<T>(Func<T> action)
@@ -92,7 +92,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     {
         using var host = await HostAsync();
         var definition = host.Services.GetRequiredService<ActivityCatalog>().All.Single();
-        var settings = new HarvestSettings { Resources = [TestPlay.Ash, TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId], Heal = true, Food = [TestPlay.Bread] };
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash, TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId], Heal = true, Food = [TestPlay.Bread], OwnBanking = true };
 
         await host.Services.GetRequiredService<AssetLibrary>().SaveProfileAsync("Ash and chestnut", HarvestingModule.ActivityId, definition.Settings.Write(settings), TestContext.Current.CancellationToken);
 
@@ -165,6 +165,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("1 map", english);
         Assert.Contains("to the nearest bank", english);
         Assert.Contains("90%", english);
+        Assert.Contains("Own banking rules", english);
+        Assert.Contains("Take a zaap to the bank", english);
         Assert.Contains("What harvesting brings", english);
         Assert.Contains("Everything but what is worn", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
@@ -359,7 +361,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));
             Drawings.Draw(window, "tab-fr");
-            main.ShowWelcomeCommand.Execute(null);
+            main.ShowHomeCommand.Execute(null);
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             french.AddRange(Texts(window));

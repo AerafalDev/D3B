@@ -167,6 +167,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`WorldInsides`), the bankers and their replies, the insides the server showed holding no banker, and the maps where a
   banker's question offered none of the bank's replies, refused for the run (D251). Walking, using,
   changing maps and travelling answer `Busy` during a dialog or an exchange, which the server refuses a walk during.
+  Whether the journey to the bank may teleport, and the share of pods at which a bot banks, are the host's general settings
+  (`BankingPreferences`, `Banking:FullAt` and `Banking:UseZaaps`, D405), which a profile answers with its own (`OwnBanking`,
+  `FullAt`, `UseZaaps` in `HarvestSettings` and `FightSettings`); a journey makes the changes it may again from the path on
+  foot once a teleport failed (`JourneyBudget`).
 - **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module, chooses each step
   from the state, a behavior's worth of work; its other hooks have defaults: when the character is full and how it is
   unloaded, what each interruption leads to, how the character is recovered. `BotActor.StartActivity` runs one at a
@@ -511,7 +515,7 @@ D356), the pages of D101 and D162 gone.
   bar. Dark only (D320): `Themes/Colors.axaml` gives ShadUI's keys D3B's values and holds the studio's surfaces, from the
   window's near black up, one blue accent, green, amber and red for states. The app's own icon is the owner's logo (D231):
   `Assets/d3b.ico` for the window, the taskbar, the executable and the installer, `Assets/d3b.png` in the title row and
-  the welcome.
+  the home page.
 - **Icons** (D305, D331, D337): the IntelliJ Platform's, `Themes/IntelliJIcons.axaml`, which `scripts/icons.cs` writes, each
   file's Apache 2.0 notice checked, keyed as `General.Search`; `Icon` draws one on its grid of 16 in IntelliJ's colours,
   repaints its neutral greys with a `Tint`, and greys it while its control is disabled; Lucide's are gone (D355), `Icon`
@@ -526,15 +530,24 @@ D356), the pages of D101 and D162 gone.
   and opens again from the Window menu, which gives the default layout back; Ctrl J shows or hides the bottom panel, Ctrl Space
   opens the assets. A drag's end, a panel closed or opened, are remembered in `app.json`, the default never written
   (`StudioPanel.Outliner`, `Assets`, `Bottom`, `Details`; a file that closed the older `Characters` panel opens the Outliner).
-- **The editor's tabs** (`EditorTabs`, `EditorTab`): the world's tab first, pinned (`EditorTab.IsPinned`: no ×, `CloseAll`
-  keeps it), then those a page opens: a profile, a list of steps, a character, the settings, a module's page, the welcome (the
-  `ShowWelcome` command, no longer shown at start); each tab opened once, its view kept while it is open, closed by its ×, its
+- **The editor's tabs** (`EditorTabs`, `EditorTab`): the home page first, pinned (`EditorTab.IsPinned`: no ×, `CloseAll` keeps
+  it) and shown at start (D406), then those that something opens: the world (`ShowWorld`, opened once a route, a step or a zone is
+  selected, from the Outliner, the assets, the search or the home page, closed like any tab), a profile, a list of steps, a
+  character, the settings, a module's page; each tab opened once, its view kept while it is open, closed by its ×, its
   neighbour then shown. A tab that reads the host shows where the host stands until it runs (`HostStateView`). Route and zone
   have no tab: they are selected in the world's (D397).
+- **The home page** (D406, `HomeViewModel` and `HomeView`, in `D3B.App.ViewModels.Home`; the view's context is `MainViewModel`,
+  which holds the host's state it shows): the logo, the version, a pill of where the host stands and the banners of a host
+  starting, of a build the installed app does not ship and of a host that failed; quick actions (new profile, route, zone, the
+  project's folder, the settings, the first four disabled until the host runs); the characters (`HomeCharacterViewModel`, online
+  first, a click chooses one without leaving the page, a double click opens its tab); the six assets of the project changed last
+  (`HomeRecentViewModel`, the file's time, read again when `AssetLibrary.Version` moves, a click opens the asset where it is
+  edited); the shortcuts. The lists are read with the window's 250 ms refresh and replaced only when they differ. Selecting a
+  character in the Outliner does not show the world; a route, a step or a zone does.
 - **The world, the studio's centre** (D395 to D397, `D3B.App.ViewModels.World`, the mockup `docs/mockups/studio-7r.html`): the
   studio seen as a game engine. `WorldSelection` holds what is selected (nothing, a character, a route and one of its steps, a
   zone) and tells when it changed; the viewport, the Outliner and the Details panel agree through it and never ask one another.
-  - `WorldViewportViewModel` and `WorldView` are the persistent tab of the centre: one `WorldMapView` (D372) that stays, the
+  - `WorldViewportViewModel` and `WorldView` are the persistent view of the world, a tab opened by a selection: one `WorldMapView` (D372) that stays, the
     toolbar over it (the world's layer, the tools **Select**, **Route**, **Zone** and **Record**, disabled until 7d4b, the typed
     id of a step, the view's menu, zoom, fit), the HUD under the pointer and the legend of what is edited. The editors are kept as
     D371, D375 and D394 made them (`RouteEditorViewModel`, `ZoneEditorViewModel`, `UndoHistory`): selecting a route or a zone,
@@ -544,7 +557,8 @@ D356), the pages of D101 and D162 gone.
     moves a step and pans; Route traces the selected route, or makes one on the first press when none is selected (`Creating`);
     Zone paints the selected zone with Paint, Erase and Sub-area likewise; a tool needs what it works on, so a selection that
     moves to something else leaves it. Keys: V select, B route or paint, E erase, R sub-area, Escape leave, and those of D375.
-    Edit's Undo and Redo follow the route or zone selected.
+    Edit's Undo and Redo follow the route or zone selected. A step chosen on the map, a station pressed or a map traced, never
+    moves the map under the pointer; only a selection made from a list brings what it selects into view.
   - The scene (`WorldMapScene`) holds what is edited, its stations and legs or its squares, and a `WorldMapBackdrop`: the other
     routes as faint straight lines with a node a step (`WorldMapBackdropLayer`), the zones tinted, the characters as discs with
     their names and, under a step's node, small dots by what it does (`WorldMapActionKind`, `RouteActionKinds`: harvest, fight,
