@@ -572,4 +572,95 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         Assert.False(routes.Dialogs.IsOpen);
         Assert.Single(editor.Actions);
     }
+
+    [Fact]
+    public async Task ControlClickingStepsAddsThemToTheSelectionAndOnceMoreTakesThemOff()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.Select(0);
+        editor.ToggleStep(2);
+
+        Assert.Equal([0, 2], editor.SelectedSteps);
+        Assert.Equal(2, editor.SelectedIndex);
+        Assert.Equal([true, false, true, false], editor.Steps.Select(step => step.IsSelected));
+        Assert.Equal([true, false, true, false], editor.Scene.Stations.Select(station => station.IsSelected));
+
+        editor.ToggleStep(2);
+
+        Assert.Equal([0], editor.SelectedSteps);
+        Assert.Equal(0, editor.SelectedIndex);
+    }
+
+    [Fact]
+    public async Task ShiftClickingAStepSelectsTheStepsBetweenItAndTheOneChosenFirst()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.Select(1);
+        editor.ExtendTo(3);
+
+        Assert.Equal([1, 2, 3], editor.SelectedSteps);
+
+        editor.ExtendTo(0);
+
+        Assert.Equal([0, 1], editor.SelectedSteps);
+        Assert.Equal(0, editor.SelectedIndex);
+    }
+
+    [Fact]
+    public async Task SelectingAStepAloneLeavesTheOthers()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.SelectSteps([0, 1, 2]);
+        editor.Select(3);
+
+        Assert.Equal([3], editor.SelectedSteps);
+        Assert.Equal([false, false, false, true], editor.Steps.Select(step => step.IsSelected));
+    }
+
+    [Fact]
+    public async Task SelectingStepsThatAreNotInTheRouteKeepsOnlyThoseThatAre()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3);
+
+        editor.SelectSteps([2, 7, -1, 0]);
+
+        Assert.Equal([0, 2], editor.SelectedSteps);
+
+        editor.SelectSteps([9]);
+
+        Assert.Empty(editor.SelectedSteps);
+        Assert.Equal(-1, editor.SelectedIndex);
+    }
+
+    [Fact]
+    public async Task DeleteTakesOffEveryStepChosenAsOneChangeUndoGivesBackAndLeavesOneStepChosen()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.SelectSteps([0, 2]);
+        editor.RemoveSelected();
+        await editor.Planned;
+
+        Assert.Equal([2L, 4L], editor.Steps.Select(step => step.MapId));
+        Assert.Single(editor.SelectedSteps);
+
+        editor.Undo();
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L, 4L], editor.Steps.Select(step => step.MapId));
+    }
+
+    [Fact]
+    public async Task AStepMovedOrAddedLeavesOnlyTheStepChosenLast()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.SelectSteps([0, 1]);
+        editor.MoveSelected(1);
+
+        Assert.Single(editor.SelectedSteps);
+    }
 }

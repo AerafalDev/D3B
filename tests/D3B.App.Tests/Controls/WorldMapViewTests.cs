@@ -105,7 +105,7 @@ public sealed class WorldMapViewTests
             var scene = new WorldMapScene([new WorldMapStation(1, 0, "A", false, false), new WorldMapStation(4, 0, "B", false, false)], []);
             var (window, view) = Show(Source(RedImage(), new int[1]), scene);
 
-            view.StationSelected += chosen.Add;
+            view.StationSelected += (station, _) => chosen.Add(station);
 
             var station = view.RectOf(4, 0).Center;
 
@@ -125,6 +125,39 @@ public sealed class WorldMapViewTests
 
         Assert.Equal([1], chosen);
         Assert.Equal((-50, -50), (Math.Round(after.X - before.X), Math.Round(after.Y - before.Y)));
+    }
+
+    [Fact]
+    public async Task APressOnAStationWithControlOrShiftTellsTheKeysAndDoesNotCarryTheStationOff()
+    {
+        var chosen = new List<(int Station, KeyModifiers Keys)>();
+        var moved = new List<int>();
+
+        await OnTheUIThreadAsync(async () =>
+        {
+            var scene = new WorldMapScene([new WorldMapStation(1, 0, "A", false, false), new WorldMapStation(4, 0, "B", false, false)], []);
+            var (window, view) = Show(Source(RedImage(), new int[1]), scene);
+
+            view.StationSelected += (station, keys) => chosen.Add((station, keys));
+            view.StationMoved += (station, _, _) => moved.Add(station);
+
+            var station = view.RectOf(4, 0).Center;
+            var next = view.RectOf(3, 0).Center;
+
+            window.MouseDown(station, MouseButton.Left, RawInputModifiers.Control);
+            window.MouseMove(next, RawInputModifiers.Control);
+            window.MouseUp(next, MouseButton.Left, RawInputModifiers.Control);
+            station = view.RectOf(4, 0).Center;
+
+            window.MouseDown(station, MouseButton.Left, RawInputModifiers.Shift);
+            window.MouseUp(station, MouseButton.Left, RawInputModifiers.Shift);
+            await Task.Yield();
+
+            return true;
+        });
+
+        Assert.Equal([(1, KeyModifiers.Control), (1, KeyModifiers.Shift)], chosen);
+        Assert.Empty(moved);
     }
 
     [Fact]

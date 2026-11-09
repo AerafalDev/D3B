@@ -154,7 +154,7 @@ internal sealed class WorldMapView : Control
     public event Action? HitChanged;
 
     /// <summary>Raised when a station is pressed, with its place in the scene.</summary>
-    public event Action<int>? StationSelected;
+    public event Action<int, KeyModifiers>? StationSelected;
 
     /// <summary>Raised when a station is dragged onto other coordinates, with its place in the scene and the coordinates.</summary>
     public event Action<int, int, int>? StationMoved;
@@ -376,7 +376,16 @@ internal sealed class WorldMapView : Control
         switch (hit.Kind)
         {
             case WorldMapHitKind.Station:
-                StationSelected?.Invoke(hit.Station);
+                StationSelected?.Invoke(hit.Station, e.KeyModifiers);
+
+                // Control and Shift choose several steps: a station that joins them is not carried off by the press.
+                if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Shift)) != KeyModifiers.None)
+                {
+                    StartDrag(e, Drag.Pan, at);
+
+                    break;
+                }
+
                 _dragStation = hit.Station;
                 StartDrag(e, Drag.Move, at);
 
