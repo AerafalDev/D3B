@@ -5,6 +5,7 @@ using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using D3B.Studio.Assets;
+using D3B.Studio.Routes;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -405,10 +406,10 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
 
         editor.Select(1);
 
-        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag", "Talk to an NPC"], editor.OfferedActions.Select(action => action.Name));
+        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag", "Talk to an NPC"], editor.Sequencer.Palette.Select(action => action.Name));
         Assert.True(editor.HasNoActions);
 
-        editor.OfferedActions[3].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Exit);
 
         var action = Assert.Single(editor.Actions);
 
@@ -428,7 +429,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         var (_, editor) = await OpenAsync(1, 3);
 
         editor.Select(0);
-        editor.OfferedActions[4].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Wait);
 
         var action = editor.Actions[0];
         var field = Assert.IsType<NumberFieldViewModel>(Assert.Single(action.Editor!.Sections.SelectMany(section => section.Fields)));
@@ -478,9 +479,9 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         var (_, editor) = await OpenAsync(1, 3);
 
         editor.Select(0);
-        editor.OfferedActions[4].AddCommand.Execute(null);
-        editor.OfferedActions[5].AddCommand.Execute(null);
-        editor.OfferedActions[6].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Wait);
+        editor.AddAction(RouteActions.Zaap);
+        editor.AddAction(RouteActions.HavenBag);
 
         editor.ReorderActionsCommand.Execute(new ReorderRequest(0, 2));
 
@@ -497,9 +498,9 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         var (_, editor) = await OpenAsync(1, 3);
 
         editor.Select(0);
-        editor.OfferedActions[4].AddCommand.Execute(null);
-        editor.OfferedActions[5].AddCommand.Execute(null);
-        editor.OfferedActions[6].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Wait);
+        editor.AddAction(RouteActions.Zaap);
+        editor.AddAction(RouteActions.HavenBag);
 
         Assert.Equal(["Wait 5 s", "Take the zaap", "Go to the haven bag"], editor.Actions.Select(action => action.Sentence));
         Assert.Equal((true, false), (editor.Actions[0].IsFirst, editor.Actions[0].IsLast));
@@ -534,7 +535,7 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
         Assert.True(action.IsUnknown);
         Assert.Equal("Unknown action (later.thing)", action.Sentence);
 
-        editor.OfferedActions[4].AddCommand.Execute(null);
+        editor.AddAction(RouteActions.Wait);
         await editor.SaveCommand.ExecuteAsync(null);
 
         var anchor = routes.Services!.Library.Find<RouteAsset>("r1")!.Anchors[0];
@@ -545,31 +546,93 @@ public sealed class RouteEditorViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task ThePlusOfAStepOrOfTheActionsOpensTheActionsToChooseFromAndChoosingOneAddsItAndClosesThem()
+    public async Task ControlClickingStepsAddsThemToTheSelectionAndOnceMoreTakesThemOff()
     {
-        var (routes, editor) = await OpenAsync(1, 3);
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
 
-        editor.Steps[1].AddActionCommand.Execute(null);
+        editor.Select(0);
+        editor.ToggleStep(2);
 
-        var picker = Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current);
+        Assert.Equal([0, 2], editor.SelectedSteps);
+        Assert.Equal(2, editor.SelectedIndex);
+        Assert.Equal([true, false, true, false], editor.Steps.Select(step => step.IsSelected));
+        Assert.Equal([true, false, true, false], editor.Scene.Stations.Select(station => station.IsSelected));
 
-        Assert.Equal(1, editor.SelectedIndex);
-        Assert.Equal(["Harvest", "Fight", "Take a door", "Forced exit", "Wait", "Take the zaap", "Go to the haven bag", "Talk to an NPC"], picker.Actions.Select(action => action.Name));
-        Assert.All(picker.Actions, action => Assert.NotEmpty(action.Help));
+        editor.ToggleStep(2);
 
-        picker.Actions[4].AddCommand.Execute(null);
+        Assert.Equal([0], editor.SelectedSteps);
+        Assert.Equal(0, editor.SelectedIndex);
+    }
 
-        Assert.False(routes.Dialogs.IsOpen);
-        Assert.Equal(["Wait 5 s"], editor.Actions.Select(action => action.Sentence));
+    [Fact]
+    public async Task ShiftClickingAStepSelectsTheStepsBetweenItAndTheOneChosenFirst()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
 
-        editor.ChooseActionCommand.Execute(null);
+        editor.Select(1);
+        editor.ExtendTo(3);
 
-        Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current);
-        Assert.Equal(1, editor.SelectedIndex);
+        Assert.Equal([1, 2, 3], editor.SelectedSteps);
 
-        Assert.IsType<RouteActionPickerViewModel>(routes.Dialogs.Current).CancelCommand.Execute(null);
+        editor.ExtendTo(0);
 
-        Assert.False(routes.Dialogs.IsOpen);
-        Assert.Single(editor.Actions);
+        Assert.Equal([0, 1], editor.SelectedSteps);
+        Assert.Equal(0, editor.SelectedIndex);
+    }
+
+    [Fact]
+    public async Task SelectingAStepAloneLeavesTheOthers()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.SelectSteps([0, 1, 2]);
+        editor.Select(3);
+
+        Assert.Equal([3], editor.SelectedSteps);
+        Assert.Equal([false, false, false, true], editor.Steps.Select(step => step.IsSelected));
+    }
+
+    [Fact]
+    public async Task SelectingStepsThatAreNotInTheRouteKeepsOnlyThoseThatAre()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3);
+
+        editor.SelectSteps([2, 7, -1, 0]);
+
+        Assert.Equal([0, 2], editor.SelectedSteps);
+
+        editor.SelectSteps([9]);
+
+        Assert.Empty(editor.SelectedSteps);
+        Assert.Equal(-1, editor.SelectedIndex);
+    }
+
+    [Fact]
+    public async Task DeleteTakesOffEveryStepChosenAsOneChangeUndoGivesBackAndLeavesOneStepChosen()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.SelectSteps([0, 2]);
+        editor.RemoveSelected();
+        await editor.Planned;
+
+        Assert.Equal([2L, 4L], editor.Steps.Select(step => step.MapId));
+        Assert.Single(editor.SelectedSteps);
+
+        editor.Undo();
+        await editor.Planned;
+
+        Assert.Equal([1L, 2L, 3L, 4L], editor.Steps.Select(step => step.MapId));
+    }
+
+    [Fact]
+    public async Task AStepMovedOrAddedLeavesOnlyTheStepChosenLast()
+    {
+        var (_, editor) = await OpenAsync(1, 2, 3, 4);
+
+        editor.SelectSteps([0, 1]);
+        editor.MoveSelected(1);
+
+        Assert.Single(editor.SelectedSteps);
     }
 }

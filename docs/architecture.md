@@ -572,6 +572,21 @@ D356), the pages of D101 and D162 gone.
     (`CharacterMenu`, which the cards had). The rows keep their objects between readings so that a scroll stays.
   - **Play in Editor**: the run block keeps its place; while the chosen character plays, the viewport has a green frame and a
     caption (`FrameText`), and the character's disc a green ring.
+- **The Sequencer** (D395, D396, D413, `SequencerViewModel` in `D3B.App.ViewModels.Routes`, `SequencerView`, the control
+  `SequencerGrid` and its scene in `D3B.App.Controls.Sequencer`): a tab of the bottom panel (`BottomTab.Sequencer`,
+  `BottomPanelViewModel.Follow`) that exists while a route is selected. Each `RouteEditorViewModel` owns one; it reads the editor's
+  steps as clips (`RouteClips`) and follows it (`Rebuilt`), and holds the tracks the user added and the clip selected. The grid draws a
+  ruler, a row of the steps' zones and a track a kind of action in the map's colours (`WorldMapBackdropLayer.ColorOf`), clips in
+  lanes, the steps selected tinted; it knows nothing of routes and tells a press on a step, a clip (the part pressed) or an empty
+  cell, the pointer's move over steps, and the release. The view model turns them into a gesture (`SequencerGesture`: draw, stretch,
+  move, copy): the steps are recomputed at each move from what they were before it began and set through
+  `RouteEditorViewModel.ReplaceAnchors`, one change to undo (`BeginGesture`). `PressKey` answers the keys (arrows, Home, End, Ctrl A,
+  Up and Down between clips, Alt with the arrows to move or stretch, Ctrl D, Delete, Escape); `Status` says what is selected, for
+  the eyes and as a live region. The route editor keeps the steps selected as a value (`RouteStepSelection`: Control toggles, Shift
+  reaches out), `WorldSelection.Steps` holds them for the Outliner and the map, and a node pressed with Control or Shift joins them
+  without being carried off. The Details show a clip's action card (its values set once for every step it covers) and, for several
+  steps, the actions all of them hold (`RouteClips.CommonCalls`, set by `RevalueOn`); one step keeps its own cards. The palette ("Add
+  a track") lists the kinds the host knows; the dialog and the "+" of a route are gone, the sequences' editor keeps the picker.
 - **The run block** (D322, D338, `RunBlockViewModel`): the chosen character's portrait with a dot of its state, its name and
   what it does live, a menu of the characters online, and only the buttons its state allows: none chosen, play disabled;
   stopped, play; playing, pause and stop; paused, play and stop; its edge green while it plays, amber paused. Play starts
@@ -619,8 +634,8 @@ D356), the pages of D101 and D162 gone.
   with a dot of its type and its editor (`VariableRowViewModel`), which sets what its behaviors read; Account, the account, its
   subscription and forgetting it. An asset (`AssetPropertiesViewModel`), selected in the world, the Content browser or the
   search: its name, kind, file and format, what it uses and what uses it, characters included; for a route its course, what it
-  does with a map no path reaches, its steps with their count and gaps, and the actions of the step chosen (the editor's, until
-  the Sequencer of 7r3 sets them); for a zone its contents (`AssetPropertiesViewModel.Zone`: its size and sub-areas, each taken
+  does with a map no path reaches, its steps with their count and gaps, and the actions of the step chosen, a clip's values
+  and the actions several steps share (the Sequencer's, D413); for a zone its contents (`AssetPropertiesViewModel.Zone`: its size and sub-areas, each taken
   out by its ×).
 - **A character's tab** (D325, D346, `CharacterTabViewModel`, `CharacterView`): the character's map live
   (`MapViewModel`, drawn for that character alone): its coordinates and place, the cell under the pointer and what stands
@@ -816,6 +831,11 @@ The target:
     (`RouteMode`: loop, one way, there and back) and what to do with a map no path reaches (`RouteUnreachable`); what a file holds
     beyond is kept (`Details`). An anchor holds its actions (`RouteAnchor.Actions`, D378): nodes of the catalog, each with the
     values that differ from its defaults, in its file under `actions`; two anchors are equal by what they hold.
+  - `RouteClips` and `RouteClip` (`D3B.Studio.Routes`, D413): a route's steps read as clips for the Sequencer, never stored. A clip is
+    the longest run of consecutive steps that hold an equal action (`RouteAnchor.SameCall`), so that the file is as D378 made it; two
+    equal actions on a step are two clips (a `Layer`), clips of one kind that overlap stand in `Lane`s. `Derive` reads, and `Draw`,
+    `Reshape` (stretching and moving), `Remove`, `Revalue`, `RevalueOn` and `CommonCalls` edit by the least: an action added goes last,
+    the order of the others, the pins, the maps and `Details` are kept, a step the edit does not reach is the same object.
   - `RouteActions` (`D3B.Studio.Routes`): the actions a route plays on a map, nodes `route.harvest`, `route.fight`, `route.door`,
     `route.exit`, `route.zaap`, `route.bag` and `route.npc`, and the behaviors' `wait`, with their values (`RouteExitValues`,
     `RouteDoorValues`, `RouteHarvestValues`, `RouteFightValues`, `RouteNpcValues`) and sentences; each plays (D384): `ForceExit`,

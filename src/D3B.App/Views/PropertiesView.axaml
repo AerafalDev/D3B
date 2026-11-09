@@ -809,16 +809,6 @@
                                                             ToolTip.Tip="{l:Tr RouteStepElsewhere}"
                                                             Width="12" />
                                                         <Button
-                                                            AutomationProperties.Name="{l:Tr RouteActionAdd}"
-                                                            Classes="Tool Small"
-                                                            Command="{Binding AddActionCommand}"
-                                                            ToolTip.Tip="{l:Tr RouteActionAdd}">
-                                                            <c:Icon
-                                                                Drawing="{StaticResource General.Add}"
-                                                                Height="11"
-                                                                Width="11" />
-                                                        </Button>
-                                                        <Button
                                                             AutomationProperties.Name="{l:Tr RouteStepRemove}"
                                                             Classes="Tool Small"
                                                             Command="{Binding RemoveCommand}"
@@ -844,20 +834,53 @@
                             </ItemsControl>
                         </StackPanel>
                     </Border>
-                    <Border Classes="Section" IsVisible="{Binding HasSelectedStep}">
+                    <Border
+                        Classes="Section"
+                        DataContext="{Binding Sequencer}"
+                        IsVisible="{Binding HasClip}"
+                        x:DataType="routes:SequencerViewModel">
+                        <StackPanel>
+                            <TextBlock Classes="SectionTitle" Text="{Binding Status}" />
+                            <v:ActionCardView DataContext="{Binding ClipCard}" />
+                            <StackPanel
+                                Margin="14,4,14,8"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                                <Button Classes="Small" Command="{Binding ExtendClipCommand}">
+                                    <TextBlock Text="{l:Tr SequencerExtend}" />
+                                </Button>
+                                <Button Classes="Small" Command="{Binding RemoveSelectedClipCommand}">
+                                    <TextBlock Text="{l:Tr SequencerDelete}" />
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border
+                        Classes="Section"
+                        DataContext="{Binding Sequencer}"
+                        IsVisible="{Binding HasSeveralSteps}"
+                        x:DataType="routes:SequencerViewModel">
+                        <StackPanel>
+                            <TextBlock Classes="SectionTitle" Text="{Binding StepsStatus}" />
+                            <TextBlock
+                                Classes="Dim"
+                                IsVisible="{Binding HasNoCommonAction}"
+                                Margin="14,4,14,8"
+                                Text="{l:Tr SequencerCommonEmpty}"
+                                TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding CommonActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="routes:RouteActionViewModel">
+                                        <v:ActionCardView />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="Section" IsVisible="{Binding HasSingleStep}">
                         <StackPanel>
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Classes="SectionTitle" Text="{Binding ActionsTitle}" />
-                                <Button
-                                    AutomationProperties.Name="{l:Tr RouteActionAdd}"
-                                    Classes="Tool Small"
-                                    Command="{Binding ChooseActionCommand}"
-                                    Grid.Column="1"
-                                    IsVisible="{Binding CanAddActions}"
-                                    Margin="0,8,14,0"
-                                    ToolTip.Tip="{l:Tr RouteActionAdd}">
-                                    <c:Icon Drawing="{StaticResource General.Add}" Height="13" Width="13" />
-                                </Button>
                             </Grid>
                             <TextBlock
                                 Classes="Dim"

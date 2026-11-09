@@ -182,6 +182,23 @@
         <Border Classes="Strip" DockPanel.Dock="Top">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Border
+                        Classes="TabHost"
+                        Classes.On="{Binding IsSequencerShown}"
+                        IsVisible="{Binding HasSequencer}">
+                        <Button
+                            Classes="TabFace Plain"
+                            Command="{Binding ShowCommand}"
+                            CommandParameter="{x:Static studio:BottomTab.Sequencer}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <c:Icon
+                                    Drawing="{StaticResource Toolwindows.Structure}"
+                                    Height="14"
+                                    Width="14" />
+                                <TextBlock Classes="TabTitle" Text="{l:Tr BottomSequencer}" />
+                            </StackPanel>
+                        </Button>
+                    </Border>
                     <Border Classes="TabHost" Classes.On="{Binding IsJournalShown}">
                         <Button
                             Classes="TabFace Plain"
@@ -281,6 +298,7 @@
             </Grid>
         </Border>
         <Panel>
+            <views:SequencerView DataContext="{Binding Sequencer}" IsVisible="{Binding $parent[UserControl].((b:BottomPanelViewModel)DataContext).IsSequencerShown}" />
             <views:LogsView DataContext="{Binding Logs}" IsVisible="{Binding $parent[UserControl].((b:BottomPanelViewModel)DataContext).IsJournalShown}" />
             <views:TraceView DataContext="{Binding Trace}" IsVisible="{Binding $parent[UserControl].((b:BottomPanelViewModel)DataContext).IsTraceShown}" />
             <views:ProblemsView DataContext="{Binding Problems}" IsVisible="{Binding $parent[UserControl].((b:BottomPanelViewModel)DataContext).IsProblemsShown}" />

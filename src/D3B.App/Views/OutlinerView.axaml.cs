@@ -20,7 +20,7 @@ internal sealed partial class OutlinerView : UserControl
 
     private void OnRowTapped(object? sender, TappedEventArgs e)
     {
-        Choose(sender);
+        Choose(sender, e.KeyModifiers);
     }
 
     private void OnRowDoubleTapped(object? sender, TappedEventArgs e)
@@ -65,11 +65,11 @@ internal sealed partial class OutlinerView : UserControl
         CharacterMenu.Open(target, characters);
     }
 
-    private void Choose(object? sender)
+    private void Choose(object? sender, KeyModifiers modifiers = KeyModifiers.None)
     {
         if (DataContext is OutlinerViewModel panel && RowOf(sender) is { } row && sender is Control control)
         {
-            panel.Select(row);
+            panel.Select(row, modifiers);
             control.Focus();
         }
     }

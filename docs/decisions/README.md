@@ -41,3 +41,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Step 9, the players' reports (D407 to D408)](d407-d408-step-9-the-players-reports.md): 2 decisions, 7 KB.
 - [Bug reports (D409 to D411)](d409-d411-bug-reports.md): 3 decisions, 12 KB.
 - [The home page's tab (D412)](d412-the-home-pages-tab.md): 1 decision, 1 KB.
+- [Step 7, 7r3, the Sequencer (D413)](d413-step-7-7r3-the-sequencer.md): 1 decision, 7 KB.

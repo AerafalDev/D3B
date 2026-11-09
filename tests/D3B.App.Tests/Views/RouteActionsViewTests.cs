@@ -5,7 +5,6 @@ using Avalonia.VisualTree;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
-using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using D3B.App.Views;
 using D3B.Bot.Npcs;
@@ -88,8 +87,8 @@ public sealed class RouteActionsViewTests
             editor.TraceSquare(1, 0, isDrag: false);
             editor.TraceSquare(3, 0, isDrag: false);
             editor.Select(0);
-            editor.OfferedActions.Single(action => action.Node == RouteActions.Exit).AddCommand.Execute(null);
-            editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
+            editor.AddAction(RouteActions.Exit);
+            editor.AddAction(RouteActions.Wait);
 
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 
@@ -113,10 +112,6 @@ public sealed class RouteActionsViewTests
             Dispatcher.UIThread.RunJobs();
 
             Drawings.Draw(window, "route-actions");
-            editor.Steps[0].AddActionCommand.Execute(null);
-            Dispatcher.UIThread.RunJobs();
-            Drawings.Draw(window, "route-action-picker");
-            (main.Dialogs.Current as RouteActionPickerViewModel)?.CancelCommand.Execute(null);
 
             var after = Texts(properties);
 
@@ -163,7 +158,7 @@ public sealed class RouteActionsViewTests
 
             editor.TraceSquare(1, 0, isDrag: false);
             editor.Select(0);
-            editor.OfferedActions.Single(action => action.Node == RouteActions.Wait).AddCommand.Execute(null);
+            editor.AddAction(RouteActions.Wait);
 
             var field = editor.Actions[0].Parts.Single(part => part.IsToken).Field!;
             var alone = new SettingsFormView { DataContext = field };
@@ -231,7 +226,7 @@ public sealed class RouteActionsViewTests
 
             editor.TraceSquare(1, 0, isDrag: false);
             editor.Select(0);
-            editor.OfferedActions.Single(action => action.Node == RouteActions.Npc).AddCommand.Execute(null);
+            editor.AddAction(RouteActions.Npc);
 
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 

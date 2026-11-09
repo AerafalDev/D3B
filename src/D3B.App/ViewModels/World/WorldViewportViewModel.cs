@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Avalonia;
+using Avalonia.Input;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -331,9 +332,10 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
 
     /// <summary>Chooses a step from the map: its node was pressed.</summary>
     /// <param name="station">The station's place in the scene.</param>
-    public void SelectStation(int station)
+    /// <param name="modifiers">The keys held: Control and Shift choose several steps.</param>
+    public void SelectStation(int station, KeyModifiers modifiers = KeyModifiers.None)
     {
-        Route?.SelectStation(station);
+        Route?.SelectStation(station, modifiers);
     }
 
     /// <summary>Moves a step onto other coordinates, while it is dragged.</summary>
@@ -559,8 +561,8 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
 
         SetActive(route, zone);
 
-        if (route is not null && _selection.Step >= 0 && route.SelectedIndex != _selection.Step)
-            route.Select(_selection.Step);
+        if (route is not null && !_selection.Steps.IsEmpty && (route.SelectedIndex != _selection.Step || !route.SelectedSteps.SequenceEqual(_selection.Steps)))
+            route.SelectSteps(_selection.Steps, _selection.Step);
 
         if (!_fromMap)
             Show(changed, route, zone);
@@ -577,7 +579,7 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
         }
         else if (route is not null && route.SelectedIndex >= 0)
         {
-            route.Reveal(route.SelectedIndex);
+            route.ShowStep(route.SelectedIndex);
         }
         else if (zone is not null && changed)
         {
@@ -691,14 +693,14 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
                 OnPropertyChanged(nameof(HasChoice));
 
                 break;
-            case nameof(RouteEditorViewModel.SelectedIndex) when Route is { } route:
+            case nameof(RouteEditorViewModel.SelectedSteps) when Route is { } route:
                 // The editor chose the step itself (a map traced, a station pressed): the pointer is on the map and the map must stay
                 // under it. Only a step chosen from a list is brought into view, and the editor reveals it then.
                 _fromMap = true;
 
                 try
                 {
-                    _selection.SelectRoute(route.Id, route.SelectedIndex);
+                    _selection.SelectSteps(route.Id, route.SelectedSteps, route.SelectedIndex);
                 }
                 finally
                 {

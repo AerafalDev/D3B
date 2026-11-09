@@ -8,7 +8,6 @@ internal sealed partial class RouteStepViewModel : ObservableObject
 {
     private readonly Action<int> _select;
     private readonly Action<int> _remove;
-    private readonly Action<int> _addAction;
 
     /// <summary>Gets the step's place in the route, from 0.</summary>
     public int Index { get; }
@@ -73,8 +72,7 @@ internal sealed partial class RouteStepViewModel : ObservableObject
     /// <param name="actionsText">The count in words.</param>
     /// <param name="select">What choosing the step does, given its place.</param>
     /// <param name="remove">What removing the step does, given its place.</param>
-    /// <param name="addAction">What the button that adds an action does, given the step's place.</param>
-    public RouteStepViewModel(int index, long mapId, string place, string zone, bool isPinned, bool isElsewhere, string gap, bool isGapBroken, bool isGapBack, int actionCount, string actionsText, Action<int> select, Action<int> remove, Action<int> addAction)
+    public RouteStepViewModel(int index, long mapId, string place, string zone, bool isPinned, bool isElsewhere, string gap, bool isGapBroken, bool isGapBack, int actionCount, string actionsText, Action<int> select, Action<int> remove)
     {
         Index = index;
         MapId = mapId;
@@ -89,19 +87,12 @@ internal sealed partial class RouteStepViewModel : ObservableObject
         ActionsText = actionsText;
         _select = select;
         _remove = remove;
-        _addAction = addAction;
     }
 
     [RelayCommand]
     private void Select()
     {
         _select(Index);
-    }
-
-    [RelayCommand]
-    private void AddAction()
-    {
-        _addAction(Index);
     }
 
     [RelayCommand]
