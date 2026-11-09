@@ -3068,4 +3068,49 @@
   <data name="HomeShortcuts" xml:space="preserve">
     <value>Raccourcis</value>
   </data>
+  <data name="BottomSequencer" xml:space="preserve">
+    <value>Séquenceur</value>
+  </data>
+  <data name="SequencerSteps" xml:space="preserve">
+    <value>Étapes</value>
+  </data>
+  <data name="SequencerMovement" xml:space="preserve">
+    <value>Déplacement</value>
+  </data>
+  <data name="SequencerAddTrack" xml:space="preserve">
+    <value>Ajouter une piste</value>
+  </data>
+  <data name="SequencerEmpty" xml:space="preserve">
+    <value>Le trajet n’a pas encore d’étape. Tracez-le sur la carte.</value>
+  </data>
+  <data name="SequencerHint" xml:space="preserve">
+    <value>Tracez sur une piste pour poser une action sur des étapes · étirez ses bords · Maj pour copier</value>
+  </data>
+  <data name="SequencerStepStatus" xml:space="preserve">
+    <value>Étape {0} sur {1}</value>
+  </data>
+  <data name="SequencerStepsStatus" xml:space="preserve">
+    <value>{0} étapes sélectionnées</value>
+  </data>
+  <data name="SequencerClipStatus" xml:space="preserve">
+    <value>{0}, étapes {1} à {2}</value>
+  </data>
+  <data name="SequencerClipStatusOne" xml:space="preserve">
+    <value>{0}, étape {1}</value>
+  </data>
+  <data name="SequencerAutomation" xml:space="preserve">
+    <value>Séquenceur de {0}</value>
+  </data>
+  <data name="CommandShowSequencer" xml:space="preserve">
+    <value>Afficher le séquenceur</value>
+  </data>
+  <data name="SequencerExtend" xml:space="preserve">
+    <value>Étendre à tout le trajet</value>
+  </data>
+  <data name="SequencerDelete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="SequencerCommonEmpty" xml:space="preserve">
+    <value>Aucune action n’est sur toutes. Tracez-en une sur une piste, au travers de ces étapes, pour la mettre sur toutes.</value>
+  </data>
 </root>

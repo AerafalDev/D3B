@@ -241,9 +241,9 @@ internal sealed partial class WorldView : UserControl
         _world?.Press(hit);
     }
 
-    private void OnStationSelected(int station)
+    private void OnStationSelected(int station, KeyModifiers modifiers)
     {
-        _world?.SelectStation(station);
+        _world?.SelectStation(station, modifiers);
     }
 
     private void OnStationMoved(int station, int x, int y)

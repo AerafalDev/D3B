@@ -13,9 +13,9 @@ internal static class RouteSceneBuilder
     /// <param name="anchors">The route's anchors.</param>
     /// <param name="legs">The legs the planner found, as far as it has.</param>
     /// <param name="layer">The world shown.</param>
-    /// <param name="selected">The step chosen, or -1.</param>
+    /// <param name="selected">The steps selected.</param>
     /// <returns>The scene, with the step of each station and the leg of each path.</returns>
-    public static RouteSceneParts Build(RouteServices services, RouteTexts texts, IReadOnlyList<RouteAnchor> anchors, IReadOnlyList<RouteLeg> legs, int layer, int selected)
+    public static RouteSceneParts Build(RouteServices services, RouteTexts texts, IReadOnlyList<RouteAnchor> anchors, IReadOnlyList<RouteLeg> legs, int layer, IReadOnlyCollection<int> selected)
     {
         var index = services.Index;
         var stations = new List<WorldMapStation>();
@@ -30,7 +30,7 @@ internal static class RouteSceneBuilder
             if (!index.TryPlace(anchor.MapId, out var anchorLayer, out var x, out var y) || anchorLayer != layer)
                 continue;
 
-            stations.Add(new WorldMapStation(x, y, texts.Zone(anchor.MapId), anchor.IsPinned, i == selected, RouteActionKinds.Of(anchor.Actions)));
+            stations.Add(new WorldMapStation(x, y, texts.Zone(anchor.MapId), anchor.IsPinned, selected.Contains(i), RouteActionKinds.Of(anchor.Actions)));
             stationAnchors.Add(i);
         }
 

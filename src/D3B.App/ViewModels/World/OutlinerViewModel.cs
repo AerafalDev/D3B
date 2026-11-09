@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -169,6 +170,14 @@ internal sealed partial class OutlinerViewModel : ObservableObject
     [RelayCommand]
     public void Select(OutlinerRowViewModel? row)
     {
+        Select(row, KeyModifiers.None);
+    }
+
+    /// <summary>Selects what a row names; with Control or Shift on a step of the route selected, the step joins the selection (D395).</summary>
+    /// <param name="row">The row.</param>
+    /// <param name="modifiers">The keys held.</param>
+    public void Select(OutlinerRowViewModel? row, KeyModifiers modifiers)
+    {
         if (row is null)
             return;
 
@@ -181,6 +190,14 @@ internal sealed partial class OutlinerViewModel : ObservableObject
             case OutlinerRowKind.Route:
                 _expanded.Add(row.Id);
                 _selection.SelectRoute(row.Id);
+
+                break;
+            case OutlinerRowKind.Step when modifiers.HasFlag(KeyModifiers.Shift) && SelectedRoute(row.Id) is { } route:
+                route.ExtendTo(row.Step);
+
+                break;
+            case OutlinerRowKind.Step when modifiers.HasFlag(KeyModifiers.Control) && SelectedRoute(row.Id) is { } route:
+                route.ToggleStep(row.Step);
 
                 break;
             case OutlinerRowKind.Step:
@@ -202,6 +219,11 @@ internal sealed partial class OutlinerViewModel : ObservableObject
 
         _signature = null;
         Refresh();
+    }
+
+    private RouteEditorViewModel? SelectedRoute(string id)
+    {
+        return _selection.IsRoute(id) ? _routes.Find(id) : null;
     }
 
     /// <summary>Opens a character's tab, or shows a route or a zone whole on the map: a double click.</summary>
@@ -379,7 +401,7 @@ internal sealed partial class OutlinerViewModel : ObservableObject
                     Title = place,
                     Detail = zone,
                     Dots = DotsOf(RouteActionKinds.Of(anchor.Actions)),
-                    IsSelected = _selection.IsRoute(route.Id) && _selection.Step == index,
+                    IsSelected = _selection.IsStep(route.Id, index),
                 });
             }
         }

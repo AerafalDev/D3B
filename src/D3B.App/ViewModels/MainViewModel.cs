@@ -372,6 +372,13 @@ internal sealed partial class MainViewModel : ObservableObject
         return Pages.Any(page => page.TryFailWith(exception));
     }
 
+    /// <summary>Shows the Sequencer of the route selected, in the bottom panel.</summary>
+    public void ShowSequencer()
+    {
+        if (Bottom.HasSequencer)
+            Bottom.Show(BottomTab.Sequencer);
+    }
+
     /// <summary>Shows the bottom panel, or closes it: Ctrl J.</summary>
     [RelayCommand]
     public void ToggleBottom()
@@ -601,6 +608,9 @@ internal sealed partial class MainViewModel : ObservableObject
     // Edit's Undo and Redo follow the editor shown, and what it holds to take back or do again: in the world's tab, the route or the zone selected.
     private void FollowEditor(string? property)
     {
+        if (property is nameof(WorldViewportViewModel.Route))
+            Bottom.Follow(World.Route);
+
         if (property is not (nameof(EditorTabs.Selected) or nameof(WorldViewportViewModel.Route) or nameof(WorldViewportViewModel.Zone)))
             return;
 
@@ -637,6 +647,7 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandUndo", "Ctrl Z", Undo);
         yield return Command("CommandRedo", "Ctrl Y", Redo);
         yield return Command("CommandToggleJournal", "Ctrl J", ToggleBottom);
+        yield return Command("CommandShowSequencer", "", ShowSequencer);
         yield return Command("CommandGoToAssets", _localizer["KeysCtrlSpace"], GoToAssets);
         yield return Command("CommandDefaultLayout", "", Layout.Reset);
         yield return Command("CommandPlay", "F5", RunBlock.PlayOrPause);

@@ -3068,4 +3068,49 @@
   <data name="HomeShortcuts" xml:space="preserve">
     <value>Shortcuts</value>
   </data>
+  <data name="BottomSequencer" xml:space="preserve">
+    <value>Sequencer</value>
+  </data>
+  <data name="SequencerSteps" xml:space="preserve">
+    <value>Steps</value>
+  </data>
+  <data name="SequencerMovement" xml:space="preserve">
+    <value>Movement</value>
+  </data>
+  <data name="SequencerAddTrack" xml:space="preserve">
+    <value>Add a track</value>
+  </data>
+  <data name="SequencerEmpty" xml:space="preserve">
+    <value>The route has no step yet. Trace it on the map.</value>
+  </data>
+  <data name="SequencerHint" xml:space="preserve">
+    <value>Draw on a track to set an action across steps · drag its edges · Shift to copy</value>
+  </data>
+  <data name="SequencerStepStatus" xml:space="preserve">
+    <value>Step {0} of {1}</value>
+  </data>
+  <data name="SequencerStepsStatus" xml:space="preserve">
+    <value>{0} steps selected</value>
+  </data>
+  <data name="SequencerClipStatus" xml:space="preserve">
+    <value>{0}, steps {1} to {2}</value>
+  </data>
+  <data name="SequencerClipStatusOne" xml:space="preserve">
+    <value>{0}, step {1}</value>
+  </data>
+  <data name="SequencerAutomation" xml:space="preserve">
+    <value>Sequencer of {0}</value>
+  </data>
+  <data name="CommandShowSequencer" xml:space="preserve">
+    <value>Show the Sequencer</value>
+  </data>
+  <data name="SequencerExtend" xml:space="preserve">
+    <value>Extend to the whole route</value>
+  </data>
+  <data name="SequencerDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="SequencerCommonEmpty" xml:space="preserve">
+    <value>No action is on all of them. Draw one on a track, across these steps, to put it on all.</value>
+  </data>
 </root>

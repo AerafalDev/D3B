@@ -1,3 +1,4 @@
+using Avalonia.Input;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Characters;
@@ -139,5 +140,41 @@ public sealed class OutlinerViewModelTests : IAsyncDisposable
 
         Assert.Equal(before.Count + 1, outliner.Rows.Count);
         Assert.All(before, row => Assert.Contains(row, outliner.Rows));
+    }
+
+    [Fact]
+    public async Task ControlClickingStepsOfARouteSelectsSeveralAndShiftClickingSelectsThoseBetween()
+    {
+        var (outliner, selection, world) = await OutlinerAsync();
+
+        outliner.ToggleExpanded(outliner.Rows.Single(row => row.Key == "route:north"));
+
+        var steps = outliner.Rows.Where(row => row.Kind is OutlinerRowKind.Step).ToList();
+
+        outliner.Select(steps[0]);
+        outliner.Select(steps[2], KeyModifiers.Control);
+
+        Assert.Equal([0, 2], selection.Steps);
+        Assert.Equal([0, 2], world.Route!.SelectedSteps);
+        Assert.Equal([true, false, true], outliner.Rows.Where(row => row.Kind is OutlinerRowKind.Step).Select(row => row.IsSelected));
+
+        outliner.Select(steps[1]);
+        outliner.Select(steps[2], KeyModifiers.Shift);
+
+        Assert.Equal([1, 2], selection.Steps);
+    }
+
+    [Fact]
+    public async Task ControlClickingAStepOfAnotherRouteSelectsItAlone()
+    {
+        var (outliner, selection, _) = await OutlinerAsync();
+
+        outliner.ToggleExpanded(outliner.Rows.Single(row => row.Key == "route:north"));
+        outliner.ToggleExpanded(outliner.Rows.Single(row => row.Key == "route:south"));
+        outliner.Select(outliner.Rows.Single(row => row.Key == "step:north:0"));
+        outliner.Select(outliner.Rows.Single(row => row.Key == "step:south:1"), KeyModifiers.Control);
+
+        Assert.True(selection.IsRoute("south"));
+        Assert.Equal([1], selection.Steps);
     }
 }
