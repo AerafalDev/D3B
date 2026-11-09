@@ -1353,7 +1353,7 @@ held.*
 no longer settles it alone.*
 
 Measured on 3.7.12.12's schema and session 3f's four captures of the game connection
-([client.md](client.md#the-game-read-by-the-schema)):
+([client.md](client-game.md#the-game-read-by-the-schema)):
 
 - The game file holds 2,175 messages, 1,372 of which no field is typed by: the messages frames carry. 758 of these have
   a shape no other has; 117 are empty, 73 hold one `int32`, 48 one `bool`. Of the 63 messages the first milestone needs,
@@ -1460,7 +1460,7 @@ messages are 44, 33 messages of the game are partial (D55).
   before Q9.
 - **Measured** by the mapping tool, which decodes the game's captures with the mapping it just wrote: of 1,069 frames,
   178 understood whole, 69 more read, 822 carrying one of 106 messages the readable protocol lacks, none misread
-  ([client.md](client.md#the-game-mapped)).
+  ([client.md](client-game.md#the-game-mapped)).
 
 ## D59: Mapping format 2
 
@@ -1475,7 +1475,7 @@ build's release (D48), which the release tool publishes (D50).
 *2026-10-28, step 3, session 3h, chosen by the owner. Settles Q9.*
 
 Measured on the six captures of the game connection, then on a client of 3.7.12.12 in game through the host, D3B
-sending 18 requests of the first milestone's eight kinds itself ([client.md](client.md#the-game-acted-on)):
+sending 18 requests of the first milestone's eight kinds itself ([client.md](client-game.md#the-game-acted-on)):
 
 - **Request ids.** Every request of the first milestone, the client's and D3B's, carries the id -1; so does every
   response. The client counts other requests, which the readable protocol lacks: in a session of 26 minutes, nine of
@@ -1824,7 +1824,7 @@ Measured on the world graph of 3.7.12.12 ([client.md](client.md#world-graph)):
 *2026-10-28, step 4, session 4b*
 
 Measured on the eight captures of session 4a and three of a client of 3.7.12.12 in game through the host, the player's
-hands off, the bot asking for 30 map changes and travelling ([client.md](client.md#the-game-between-maps)):
+hands off, the bot asking for 30 map changes and travelling ([client.md](client-game.md#the-game-between-maps)):
 
 - **Where a map is left from** (`WorldPathfinder.ExitCells`): a map action from its cell; a scroll from the walkable cells
   of its zone on the edge in its direction that the client marks as leaving it straight, or along a diagonal next to it
@@ -1882,7 +1882,7 @@ hands off, the bot asking for 30 map changes and travelling ([client.md](client.
 *2026-10-28, step 4, session 4c*
 
 Measured on the captures of sessions 3g and 3h, then on a client of 3.7.12.12 in game through the host, the player's
-hands off, a measuring plugin, never committed, sending uses from chosen cells ([client.md](client.md#the-game-used)):
+hands off, a measuring plugin, never committed, sending uses from chosen cells ([client.md](client-game.md#the-game-used)):
 
 - **Where the client stands.** On a walkable neighbour of the element's cell, one of the eight, the first its walk
   reaches, never on the element's cell even when it can be walked on; where no neighbour can be walked on, as by water,
@@ -2023,7 +2023,7 @@ there (D29). At Astrub, one door element leads to the bank and to another inside
 
 Measured on the captures of sessions 3g and 3h, then on a client of 3.7.12.12 in game through the host, the player's
 hands off, a measuring plugin, never committed, sending the requests one by one, then the final behavior
-([client.md](client.md#the-game-banked)):
+([client.md](client-game.md#the-game-banked)):
 
 - **Talking.** NPC action 3 on the banker, naming the map and his actor id, from 10 cells away: the dialog and its
   question in the same millisecond, 28 ms later, with two replies, one of which the pack lists among his. The bank of
@@ -2092,7 +2092,7 @@ more map changes, and never ties a walk.*
 
 Measured on a game connection of the player using zaaps, the haven bag and the map, then on a client of 3.7.12.12 in
 game through the host, the player's hands off, a measuring plugin, never committed, sending the requests one by one
-([client.md](client.md#the-game-teleported)):
+([client.md](client-game.md#the-game-teleported)):
 
 - **Three ways to one request.** Using a zaap, skill 114, lists the zaaps the character knows with their costs; using
   the haven bag's zaap lists them too; and the client, when the player chooses a zaap on its map, teleports with no list
@@ -2171,7 +2171,7 @@ So:
 *2026-10-28, step 4, session 4e, chosen by the owner. Supersedes in part D69: a walk not confirmed now ends with the
 character on its last cell. Extended by D89: the server may still hold that walk, which a step aside lets go.*
 
-- **Measured** ([client.md](client.md#the-game-teleported)): of the 104 walks D3B sent in the 18 captures, the client
+- **Measured** ([client.md](client-game.md#the-game-teleported)): of the 104 walks D3B sent in the 18 captures, the client
   confirmed 97, the player stopped one, and the client never confirmed 6, which the server walked: two shown 30 and 90
   ms after a map's information (D73), one after a door used too soon (D77), two in the bank of Astrub 81 and 301 s after
   its information (4d), and one in 4e, 0.53 s after the information of a map the client had never drawn, along 14 plain
@@ -2195,7 +2195,7 @@ character on its last cell. Extended by D89: the server may still hold that walk
 
 Measured on the pack of 3.7.12.12, the 18 game connections captured before this session, then on a client of
 3.7.12.12 in game through the host, the player's hands off, a measuring plugin, never committed, sending chosen paths
-([client.md](client.md#the-game-interrupted)):
+([client.md](client-game.md#the-game-interrupted)):
 
 - **The pack.** A cell's `moveZone` is 0 or 1, 1 on 9,800 cells; 633 maps hold both, 469 of them in the world graph, and
   their cells of moveZone 1 are stairs. Every walkable cell's floor is a multiple of 10.
@@ -2267,7 +2267,7 @@ D3B does not take. BillBot has no master and followers.
 *2026-10-28, step 4, session 4f*
 
 Measured on a fight in a capture of session 4d and one through the host, the player attacking monsters
-([client.md](client.md#the-game-interrupted)):
+([client.md](client-game.md#the-game-interrupted)):
 
 - **The start.** The client walks to the group, then sends its confirmation and a request the readable protocol lacks,
   the attack, in one read. The server answers the confirmation, replaces the roleplay's context with the context of
@@ -2296,7 +2296,7 @@ So:
 
 *2026-10-28, step 4, session 4f. Extends D85.*
 
-Measured through the host ([client.md](client.md#the-game-interrupted)):
+Measured through the host ([client.md](client-game.md#the-game-interrupted)):
 
 - **A disconnection.** The client closed 1.7 s into a walk it had not confirmed: on its new connection, 22 s later, the
   server placed the character on the walk's first cell, and walked the next path at once. During an activity's journey,
@@ -2439,7 +2439,7 @@ language and the theme on the settings page alone. Its bots page superseded by D
 - **Tests**: the view models against bots played as `D3B.Bot.Tests` plays them (D67), the runner against a test
   install, and the window drawn by Avalonia.Headless with Skia, its texts read in both languages.
 - **Measured** on a client of 3.7.12.12 through the app, with a measuring plugin, never committed, whose patrol goes
-  between the character's map and a neighbour ([client.md](client.md#the-game-from-the-app)): the bot showed once the
+  between the character's map and a neighbour ([client.md](client-game.md#the-game-from-the-app)): the bot showed once the
   character was chosen; started from the app, 12 journeys arrived; the player's walk paused it twice, resumed from the
   app it went on; stopped from the app; closed, the app gave the client its configuration back.
 - **Rejected.**
@@ -2919,7 +2919,7 @@ goes with them, by D119.*
 
 Measured on a client of 3.7.12.12 through the app, in two runs, the scripts' folder holding the sample stroll,
 `promenade.lua`, and a script failing on purpose at its second step, never committed
-([client.md](client.md#the-game-from-the-app)):
+([client.md](client-game.md#the-game-from-the-app)):
 
 - **Listed**: the host read both, neither failing, and the bot's card offered them among its activities.
 - **Started from the card**, with its defaults, 10 walks: stopped from the card during its 9th walk, it ended at once,
@@ -2959,7 +2959,7 @@ Superseded by D353: tabs of the bottom panel.*
   French and English and opens a bot's journal from its card.
 - **Used on a client** of 3.7.12.12 through the app by the owner: the journal opened from the card, a stroll paused by
   the player and resumed, the filters, the inspector live and a capture replayed, no problem reported
-  ([client.md](client.md#the-game-from-the-app)).
+  ([client.md](client-game.md#the-game-from-the-app)).
 - **Rejected.**
   - One page of tabs, journal, script console and frames, the bot chosen at its top: one tab at a time, when the journal
     and the frames are read together.
@@ -3041,7 +3041,7 @@ protocol's messages.*
   another build is refused, saying which, since its frames name messages only its own mapping reads; a capture cut short
   says so.
 - **A frame's length**: `DecodedGameFrame.Length`, without its varint, which a row shows.
-- **Measured** on a client of 3.7.12.12 through the app ([client.md](client.md#the-game-from-the-app)): its capture of
+- **Measured** on a client of 3.7.12.12 through the app ([client.md](client-game.md#the-game-from-the-app)): its capture of
   298 frames replayed whole, the client's, the server's and D3B's 21; each frame not read showed its shape; the
   `AuthenticationRequest` came first, its ticket hidden; the character chosen, which ties the frames to their bot.
 
@@ -3136,7 +3136,7 @@ D108's source of activities, the owner's choice against the lead's recommendatio
 - **The user's folder** `%LOCALAPPDATA%\D3B\scripts` stays as it is: D3B neither reads nor writes it any more, and the
   owner deletes it.
 - **Measured** on a client of 3.7.12.12 through the app, on a copy of the database holding a profile that names
-  `script:promenade.lua`, its character's own, started on connection ([client.md](client.md#the-game-from-the-app)): the
+  `script:promenade.lua`, its character's own, started on connection ([client.md](client-game.md#the-game-from-the-app)): the
   host built its five modules, no scripting among them; the profile did not start on connection, which the bot's journal
   said; the card and the profiles page showed its activity gone; the inspector live and a capture replayed; closing the
   app gave the client its configuration back. Not measured on the client: deleting the profile, which the tests do; the
@@ -3228,7 +3228,7 @@ live map (5d)".*
 *2026-10-29, step 5, session 5d.*
 
 Measured on a client of 3.7.12.12 through the app, a game connection of 2 min 49 s, the player moving the character by
-hand and no activity started (D118), captures on ([client.md](client.md#the-game-from-the-app)):
+hand and no activity started (D118), captures on ([client.md](client-game.md#the-game-from-the-app)):
 
 - **Followed**, the owner reported, in every case: walks on the map of a zaap, the haven bag entered and left there, a
   scroll to a neighbour, the haven bag again from it, then a fight, and the map after it.
@@ -3423,7 +3423,7 @@ follow fixed routes by level. None measures how long a resource takes to grow ba
 *2026-10-29, step 6, session 6a.*
 
 Measured on a client of 3.7.12.12 through the app, captures on, four runs of the app, the owner's character harvesting
-nettles, its profile "Ortie" ([client.md](client.md#the-game-harvested)):
+nettles, its profile "Ortie" ([client.md](client-game.md#the-game-harvested)):
 
 - **From map to map**: harvests on one map after another, the tour going on to the nearest map still to go through.
 - **A fight** interrupted the activity, which went on once it was over, with no command.
@@ -3568,7 +3568,7 @@ Builds D128.*
 *2026-10-29, step 6, session 6b.*
 
 Measured on a client of 3.7.12.12 through the app, captures on, the owner's profile "Ortie", nettle and sage in Amakna
-([client.md](client.md#the-game-foretold)):
+([client.md](client-game.md#the-game-foretold)):
 
 - **The icons**: the owner saw them on the resource tiles and in the search adding one.
 - **Learning**: a first run, nothing learned before, entered 43 maps in 3 minutes and learned 35 graphics, which the database
@@ -3749,7 +3749,7 @@ page alone. Its page superseded by D354: a tab in sections.*
 ## D153: Upkeep and the guild's chest, measured: mapping format 7
 
 *2026-10-29, step 6, session 6c, in a session of its own. Amends D147 and D148 with what the owner's capture measured
-([client.md](client.md#the-game-kept-up)).*
+([client.md](client-game.md#the-game-kept-up)).*
 
 - **Named and pinned** for 3.7.12.12 (D54): `ObjectUseRequest`, one request to eat and to open a bag;
   `ObjectDeletedEvent`; the characteristics, partial (`CharacterStatsEvent`), holding the life; `LifeRegenEndEvent` and
@@ -3806,7 +3806,7 @@ lead recommended it. Builds D151, amends D147 and D148.*
 ## D156: Using several objects at once named: mapping format 8
 
 *2026-10-29, step 6, session 6c, in a session of its own, as the lead asked: healing ate 19 breads one by one on the
-client, and the owner asked for one request. Supersedes D153's "not named" ([client.md](client.md#the-game-kept-up)).*
+client, and the owner asked for one request. Supersedes D153's "not named" ([client.md](client-game.md#the-game-kept-up)).*
 
 - **Named and pinned** for 3.7.12.12 (D54): `ObjectUseMultipleRequest`, the stack's uid, the quantity to use, and a message
   no capture sets, holding a `map<bool, string>` and a list of `int64`, named neutrally (D42). Asked for the whole stack
@@ -4271,7 +4271,7 @@ D230 (9f's mechanisms after the fights' profiles).*
 
 ## D178: The fight's protocol, measured: mapping format 9
 
-*2026-10-30, step 9, session 9a, on captures the owner made ([client.md](client.md#the-game-fought)).*
+*2026-10-30, step 9, session 9a, on captures the owner made ([client.md](client-game.md#the-game-fought)).*
 
 - **Measured** on the 40 game connections of 3.7.12.12 captured, 11 fights among them, 4 the owner's with a Steamer for this
   session and 7 earlier, a Xelor's among them: 9 the player's attacks and 2 resources' protectors', 8 won and 3 lost. By structure, timing, and values
@@ -4473,7 +4473,7 @@ Read for ideas, never copied (D3): every formula and id of Dofus 2 is measured o
   fighter's `CastHistory`; they change nothing, keep nothing, and are built once per pack (`CastRules`, `FightMoves`).
   The bot's fight state (D179) does not feed them yet: 9e's AI does, once 9d gives it the states and cooldowns.
 - **Measured** on the 11 fights of the 40 game connections, replayed through the bot's `FightEvents` and the pack, with a
-  measuring tool never committed, printing counts only ([client.md](client.md#the-game-cast)). The 344 casts are 79 the
+  measuring tool never committed, printing counts only ([client.md](client-game.md#the-game-cast)). The 344 casts are 79 the
   fighters chose, each the first cast of a sequence of a spell of their own, and 265 that effects cast, at a fight's or
   a turn's start or within another cast, which no rule of a cast checks; one weapon's blow is not a spell's. The 79 pass
   every rule; so do the 32 walks.

@@ -11,7 +11,8 @@ The repository is the only memory between sessions: never assume an earlier sess
    about the area you work on, plus the brief and the open questions at its ends; the file is about 700 KB, never read it whole.
 4. [docs/architecture.md](docs/architecture.md): how the code is built, section by section: read the ones you touch.
 5. [docs/roadmap.md](docs/roadmap.md): the steps and the next one.
-6. [docs/client.md](docs/client.md), when the task touches the official client's content: what it holds, measured. Grep its headings.
+6. [docs/client.md](docs/client.md) and [docs/client-game.md](docs/client-game.md) (its game connection, session by session), when
+   the task touches the official client's content: what it holds, measured. Grep their headings.
 7. The actual state of the repository (`git log`, `git status`, the code).
 
 ## Working agreement
