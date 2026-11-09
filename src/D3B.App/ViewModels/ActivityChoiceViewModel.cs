@@ -1,7 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
+using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels;
 

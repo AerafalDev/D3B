@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using D3B.Bot.Assets;
 using D3B.Bot.Hosting;
 using D3B.Storage;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.Hosting;
 
 namespace D3B.App.Hosting;

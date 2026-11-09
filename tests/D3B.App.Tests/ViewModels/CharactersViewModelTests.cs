@@ -4,9 +4,9 @@ using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Properties;
 using D3B.Bot.Characters;
 using D3B.Bot.Network;
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Storage.Accounts;
+using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -153,7 +153,7 @@ public sealed class CharactersViewModelTests : IAsyncDisposable
         await _store.Play.EnterAsync(300);
         Refresh();
 
-        var variables = _store.Host.Services.GetService(typeof(D3B.Bot.Behaviors.CharacterVariables)) as D3B.Bot.Behaviors.CharacterVariables;
+        var variables = _store.Host.Services.GetService(typeof(D3B.Studio.Behaviors.CharacterVariables)) as D3B.Studio.Behaviors.CharacterVariables;
 
         variables!.Set(TestPlay.Key, "banque_faite", System.Text.Json.Nodes.JsonValue.Create(true));
         variables.Set(TestPlay.Key, "tours", System.Text.Json.Nodes.JsonValue.Create(12));

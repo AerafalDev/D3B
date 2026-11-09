@@ -1,8 +1,8 @@
 using System.Globalization;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Runtime;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 

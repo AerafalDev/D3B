@@ -218,7 +218,8 @@ flowchart LR
 | `src/D3B.Protocol` | The readable protocol, a build's mapping and the translation through it. |
 | `src/D3B.Data` | The pack's format and readers: maps, world graph, the world maps' tiles, items, spells, monsters, texts. |
 | `src/D3B.Engine` | Pathfinding, line of sight, the rules of a fight, its effects and the AI's search. |
-| `src/D3B.Bot` | The bots' run time: state, behaviors, activities, settings, and the host both apps share. |
+| `src/D3B.Bot` | The bots' run time: state, activities, settings, and the host both apps share. |
+| `src/D3B.Studio` | The studio's model: assets, behaviors and nodes, routes. |
 | `src/D3B.Storage` | The database, SQLite through EF Core: accounts, runs, what the bots learn and the characters' variables. |
 | `src/D3B.App` | The Avalonia desktop app. |
 | `src/D3B.Host` | The host without the app. |

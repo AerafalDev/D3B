@@ -14,15 +14,17 @@ using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
 using D3B.App.ViewModels.Properties;
 using D3B.App.ViewModels.Routes;
+using D3B.App.ViewModels.Zones;
 using D3B.App.ViewModels.Sequences;
 using D3B.App.ViewModels.Statistics;
 using D3B.App.ViewModels.Studio;
-using D3B.Bot.Assets;
+using D3B.App.ViewModels.World;
 using D3B.Bot.Characters;
 using D3B.Bot.Pages;
 using D3B.Data;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
@@ -37,7 +39,7 @@ internal sealed partial class MainViewModel : ObservableObject
 {
     private const string WelcomeTab = "welcome";
     private const string ProfileTab = "profile:";
-    private const string RouteTab = "route:";
+    private const string WorldTab = "world";
     private const string SequenceTab = "sequence:";
     private const string SettingsTab = "settings";
     private const string CharacterTab = "character:";
@@ -65,6 +67,15 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the editor's tabs.</summary>
     public EditorTabs Editor { get; } = new();
 
+    /// <summary>Gets what is selected in the world, which the viewport, the Outliner and the Details panel share (D397).</summary>
+    public WorldSelection Selection { get; } = new();
+
+    /// <summary>Gets the world's viewport, the studio's centre (D397).</summary>
+    public WorldViewportViewModel World { get; }
+
+    /// <summary>Gets the Outliner: what the world holds, each with an eye (D397).</summary>
+    public OutlinerViewModel Outliner { get; }
+
     /// <summary>Gets the title row's run block.</summary>
     public RunBlockViewModel RunBlock { get; }
 
@@ -85,6 +96,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets the routes, each edited on the world's map in a tab of its own (D371).</summary>
     public RoutesViewModel Routes { get; }
+
+    /// <summary>Gets the zones, whose editors open in tabs of their own (D394).</summary>
+    public ZonesViewModel Zones { get; }
 
     /// <summary>Gets the behaviors that are lists of steps, whose editors are open (D386).</summary>
     public SequencesViewModel Sequences { get; }
@@ -182,7 +196,13 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the app's version and the client build it ships, under the welcome's logo.</summary>
     public string VersionText => _localizer.Format("WelcomeVersion", Updates.Version, Updates.ClientVersion);
 
-    private IUndoable? Undoable => Editor.Selected?.Content as IUndoable;
+    // The world's tab undoes what the route or the zone selected in it does: its map is theirs (D397).
+    private IUndoable? Undoable => Editor.Selected?.Content switch
+    {
+        WorldViewportViewModel world => (IUndoable?)world.Route ?? world.Zone,
+        IUndoable undoable => undoable,
+        _ => null,
+    };
 
     private bool CanUndo => Undoable?.CanUndo == true;
 
@@ -207,24 +227,26 @@ internal sealed partial class MainViewModel : ObservableObject
         _characterAccounts = new CharacterAccounts(localizer, Dialogs, Toasts);
         Bots = new BotsViewModel(localizer, ShowJournalOf, OpenCharacter, Toasts);
         Characters = new CharactersViewModel(localizer, Bots, _characterAccounts, key => RunBlock!.Choose(key), OpenCharacter);
-        Routes = new RoutesViewModel(localizer, Dialogs, Toasts) { Opened = ShowRoute, Closed = CloseRouteTab };
+        Routes = new RoutesViewModel(localizer, Dialogs, Toasts) { Opened = ShowRoute, Closed = item => Unselect(item.Id) };
+        Zones = new ZonesViewModel(localizer, Dialogs, Toasts, () => Routes.Services) { Opened = ShowZone, Closed = item => Unselect(item.Id) };
         Sequences = new SequencesViewModel(localizer, Dialogs, Toasts) { Opened = OpenSequenceTab, Closed = CloseSequenceTab };
         Properties = new PropertiesViewModel(
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
-            new AssetPropertiesViewModel(localizer) { RouteOf = Routes.Find });
+            new AssetPropertiesViewModel(localizer) { RouteOf = Routes.Find, ZoneOf = Zones.Find });
         Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts) { Opened = OpenProfileTab, Closed = CloseProfileTab, Sequences = Sequences };
         Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles, preferences?.FoldedAssets)
         {
             Routes = Routes,
+            Zones = Zones,
             Sequences = Sequences,
-            OpenAssetId = () => Editor.Selected?.Content switch { ProfileViewModel { IsNew: false } open => open.Id, RouteEditorViewModel route => route.Id, SequenceEditorViewModel sequence => sequence.Id, _ => null },
+            OpenAssetId = () => Editor.Selected?.Content switch { ProfileViewModel { IsNew: false } open => open.Id, WorldViewportViewModel => Selection.Kind is WorldSelectionKind.Route or WorldSelectionKind.Zone ? Selection.AssetId : null, SequenceEditorViewModel sequence => sequence.Id, _ => null },
             FoldsChanged = folded => _preferences?.RememberFoldedAssets(folded),
             CopyText = text => CopyText?.Invoke(text),
             Choose = ChooseAsset,
             Open = OpenAsset,
             ShowUsages = ShowUsages,
             Reveal = path => RevealFile?.Invoke(path),
-            IsUnsaved = id => Profiles.Find(id)?.IsDirty == true || Routes.Find(id)?.IsDirty == true || Sequences.Find(id)?.IsDirty == true,
+            IsUnsaved = id => Profiles.Find(id)?.IsDirty == true || Routes.Find(id)?.IsDirty == true || Zones.Find(id)?.IsDirty == true || Sequences.Find(id)?.IsDirty == true,
         };
         Properties.Asset.Rename = Assets.RenameAssetAsync;
         Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), new StatisticsViewModel(localizer));
@@ -243,8 +265,12 @@ internal sealed partial class MainViewModel : ObservableObject
         Search = new SearchViewModel(localizer, SearchItems);
         Bots.Choose = RunBlock.Choose;
         ClientText = localizer.Format("StatusClient", Updates.ClientVersion);
+        World = new WorldViewportViewModel(localizer, Routes, Zones, Selection, () => Bots.Items.Select(bot => new WorldCharacterSnapshot(bot.Bot.Key, bot.Name, bot.Initials, bot.PortraitColor, bot.Bot.State.MapId, bot.IsPlaying || bot.IsFighting)), () => RunBlock.IsPlaying ? RunBlock.Name : null);
+        Outliner = new OutlinerViewModel(localizer, Selection, World, Characters, Routes, Zones) { Show = ShowWorld };
+        Selection.Changed += OnSelectionChanged;
+        World.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
         Editor.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
-        ShowWelcome();
+        ShowWorld();
     }
 
     private static IEnumerable<(string Key, SettingsSection Section)> SettingsFound()
@@ -296,13 +322,16 @@ internal sealed partial class MainViewModel : ObservableObject
         // The profiles first: the bots' cards offer them, and the characters name them.
         Profiles.Refresh(services);
         Routes.Refresh(services);
+        Zones.Refresh();
+        World.Refresh();
         Sequences.Refresh(services);
         Bots.Refresh(services);
         Characters.Refresh(services);
         RunBlock.Refresh();
+        Outliner.Refresh();
         Properties.Refresh(services);
         OnlineText = _localizer.Format("CharactersOnline", RunBlock.Online.Count);
-        IsSaved = !Profiles.IsAnyDirty && !Routes.IsAnyDirty && !Sequences.IsAnyDirty;
+        IsSaved = !Profiles.IsAnyDirty && !Routes.IsAnyDirty && !Zones.IsAnyDirty && !Sequences.IsAnyDirty;
         Assets.Refresh(services);
 
         // Only what shows reads what came since: the rest reads it all once shown again.
@@ -343,6 +372,13 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         Layout.Show(StudioPanel.Assets, true);
         FocusAssets?.Invoke();
+    }
+
+    /// <summary>Shows the world's tab, the studio's centre: opened with the studio and never closed (D397).</summary>
+    [RelayCommand]
+    public void ShowWorld()
+    {
+        Editor.Open(WorldTab, () => new EditorTab(WorldTab, () => _localizer["TabWorld"], "General.Language", World, needsHost: true) { IsPinned = true });
     }
 
     /// <summary>Shows the welcome's tab.</summary>
@@ -387,10 +423,19 @@ internal sealed partial class MainViewModel : ObservableObject
             OpenProfile(id);
         else if (_host.Services?.GetService<AssetLibrary>()?.Find(id) is RouteAsset)
             OpenRoute(id);
+        else if (_host.Services?.GetService<AssetLibrary>()?.Find(id) is ZoneAsset)
+            OpenZone(id);
         else if (_host.Services?.GetService<AssetLibrary>()?.Find(id) is BehaviorAsset)
             OpenSequence(id);
         else
             ChooseAsset(id);
+    }
+
+    /// <summary>Opens a zone on the world's map in its tab, the inspector showing it (D394).</summary>
+    /// <param name="id">The zone's id.</param>
+    public void OpenZone(string id)
+    {
+        Zones.OpenZone(id);
     }
 
     /// <summary>Opens a behavior that is a list of steps in its tab (D386).</summary>
@@ -445,6 +490,7 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         Profiles.SaveAll();
         Routes.SaveAll();
+        Zones.SaveAll();
         Sequences.SaveAll();
     }
 
@@ -488,7 +534,9 @@ internal sealed partial class MainViewModel : ObservableObject
     private void Retell()
     {
         Routes.Retell();
+        Zones.Retell();
         Sequences.Retell();
+        World.Relabel();
         Editor.Refresh();
         OnPropertyChanged(nameof(VersionText));
     }
@@ -537,15 +585,11 @@ internal sealed partial class MainViewModel : ObservableObject
             yield return new SearchItem(SearchScope.Settings, "setting:" + key, _localizer[key], _localizer["Section" + section], "General.Settings", "", "", () => ShowSettings(section));
     }
 
-    // Edit's Undo and Redo follow the editor shown, and what it holds to take back or do again.
+    // Edit's Undo and Redo follow the editor shown, and what it holds to take back or do again: in the world's tab, the route or the zone selected.
     private void FollowEditor(string? property)
     {
-        if (property is not nameof(EditorTabs.Selected))
+        if (property is not (nameof(EditorTabs.Selected) or nameof(WorldViewportViewModel.Route) or nameof(WorldViewportViewModel.Zone)))
             return;
-
-        // Choosing a route's tab again shows its parameters and steps in the inspector, as opening it does.
-        if (Editor.Selected?.Content is RouteEditorViewModel route)
-            ChooseAsset(route.Id);
 
         if (_followed is not null)
             _followed.PropertyChanged -= OnUndoableChanged;
@@ -600,7 +644,7 @@ internal sealed partial class MainViewModel : ObservableObject
     private void ShowUsages(string id)
     {
         ChooseAsset(id);
-        Layout.Show(StudioPanel.Inspector, true);
+        Layout.Show(StudioPanel.Details, true);
     }
 
     private void OpenProfileTab(ProfileViewModel item)
@@ -613,21 +657,46 @@ internal sealed partial class MainViewModel : ObservableObject
         Editor.Refresh();
     }
 
-    // The inspector shows a route as soon as its editor opens, a new one among them, and follows it as it is edited.
+    // A route or a zone opened is selected in the world, whose tab shows: the Details panel then shows it (D397).
     private void ShowRoute(RouteEditorViewModel item)
     {
-        OpenRouteTab(item);
+        if (!Selection.IsRoute(item.Id))
+            Selection.SelectRoute(item.Id);
+
+        ShowWorld();
         ChooseAsset(item.Id);
     }
 
-    private void OpenRouteTab(RouteEditorViewModel item)
+    private void ShowZone(ZoneEditorViewModel item)
     {
-        Editor.Open(RouteTab + item.TabKey, () => new EditorTab(RouteTab + item.TabKey, () => item.Name, AssetKinds.IconOf(AssetKind.Route), item, needsHost: true)
+        if (!Selection.IsZone(item.Id))
+            Selection.SelectZone(item.Id);
+
+        ShowWorld();
+        ChooseAsset(item.Id);
+    }
+
+    // An editor that ends, its asset gone, leaves nothing selected.
+    private void Unselect(string id)
+    {
+        if (Selection.AssetId == id)
+            Selection.Clear();
+    }
+
+    private void OnSelectionChanged()
+    {
+        switch (Selection.Kind)
         {
-            Closing = () => CloseRoute(item),
-            Modified = () => item.IsDirty,
-        });
-        Editor.Refresh();
+            case WorldSelectionKind.Character when Selection.Character is { } key:
+                if (RunBlock.ChosenKey != key)
+                    RunBlock.Choose(key);
+
+                break;
+            case WorldSelectionKind.Route or WorldSelectionKind.Zone when Selection.AssetId is { } id:
+                ChooseAsset(id);
+
+                break;
+        }
     }
 
     private void OpenSequenceTab(SequenceEditorViewModel item)
@@ -647,19 +716,6 @@ internal sealed partial class MainViewModel : ObservableObject
 
     // The tab closes once its editor does: at once without changes, else once the question asked is answered.
     private static bool CloseSequence(SequenceEditorViewModel item)
-    {
-        item.CloseCommand.Execute(null);
-
-        return false;
-    }
-
-    private void CloseRouteTab(RouteEditorViewModel item)
-    {
-        Editor.Drop(Editor.Items.FirstOrDefault(tab => tab.Content == item));
-    }
-
-    // The tab closes once its editor does: at once without changes, else once the question asked is answered.
-    private static bool CloseRoute(RouteEditorViewModel item)
     {
         item.CloseCommand.Execute(null);
 
@@ -703,6 +759,11 @@ internal sealed partial class MainViewModel : ObservableObject
 
     private void Chose(CharacterKey? key)
     {
+        if (key is { } selected)
+            Selection.SelectCharacter(selected);
+        else if (Selection.Kind is WorldSelectionKind.Character)
+            Selection.Clear();
+
         Characters.Chosen = key;
         Bottom.Chosen = key;
         Properties.ShowCharacter(key);

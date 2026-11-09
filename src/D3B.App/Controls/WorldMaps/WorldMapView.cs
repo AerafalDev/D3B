@@ -175,6 +175,9 @@ internal sealed class WorldMapView : Control
     /// <summary>Raised when the mark of shared coordinates is pressed, with the coordinates and the point pressed.</summary>
     public event Action<int, int, Point>? SharedPressed;
 
+    /// <summary>Raised when a character, a step of another route or a map of another zone is pressed with the select tool (D397).</summary>
+    public event Action<WorldMapHit>? ObjectPressed;
+
     /// <summary>Moves the image, as the arrow keys do.</summary>
     /// <param name="dx">Pixels of the view to move it right.</param>
     /// <param name="dy">Pixels of the view to move it down.</param>
@@ -202,25 +205,26 @@ internal sealed class WorldMapView : Control
         Settle();
     }
 
-    /// <summary>Shows the route whole, else the heart of the world.</summary>
+    /// <summary>Shows the route or the zone whole, else the heart of the world.</summary>
     public void FitScene()
     {
         if (!_hasWorld)
             return;
 
-        var stations = Scene.Stations;
+        // The route's stations, else the squares of a zone.
+        var places = Scene.Stations.Count > 0 ? Scene.Stations.Select(station => (station.X, station.Y)).ToList() : [.. (Scene.Squares ?? []).Select(square => (square.X, square.Y))];
 
-        if (stations.Count == 0)
+        if (places.Count == 0)
         {
             FitHeart();
 
             return;
         }
 
-        var left = stations.Min(station => _world.PixelOf(station.X, station.Y).X);
-        var top = stations.Min(station => _world.PixelOf(station.X, station.Y).Y);
-        var right = stations.Max(station => _world.PixelOf(station.X, station.Y).X) + _world.MapWidth;
-        var bottom = stations.Max(station => _world.PixelOf(station.X, station.Y).Y) + _world.MapHeight;
+        var left = places.Min(place => _world.PixelOf(place.X, place.Y).X);
+        var top = places.Min(place => _world.PixelOf(place.X, place.Y).Y);
+        var right = places.Max(place => _world.PixelOf(place.X, place.Y).X) + _world.MapWidth;
+        var bottom = places.Max(place => _world.PixelOf(place.X, place.Y).Y) + _world.MapHeight;
         var pad = 2 * Math.Max(_world.MapWidth, _world.MapHeight);
 
         _viewport.Fit(left - pad, top - pad, right - left + (2 * pad), bottom - top + (2 * pad), FitMargin);
@@ -276,10 +280,22 @@ internal sealed class WorldMapView : Control
 
         var typeface = new Typeface(GetValue(TextElement.FontFamilyProperty), FontStyle.Normal, FontWeight.Medium);
 
+        var backdrop = Scene.Backdrop;
+
+        if (backdrop is not null)
+        {
+            WorldMapBackdropLayer.DrawZones(context, backdrop, mapWidth, RectOf);
+            WorldMapBackdropLayer.DrawRoutes(context, backdrop, mapWidth, RectOf, _hit, typeface);
+        }
+
         WorldMapRouteLayer.Draw(context, Scene, mapWidth, mapHeight, RectOf, _hit, typeface);
+        WorldMapZoneLayer.Draw(context, Scene, mapWidth, RectOf);
+
+        if (backdrop is not null)
+            WorldMapBackdropLayer.DrawCharacters(context, backdrop, RectOf, _hit, typeface);
 
         if (_hit.Kind is WorldMapHitKind.Square or WorldMapHitKind.Shared)
-            context.DrawRectangle(null, Tool is WorldMapTool.Trace ? _tracePen : _hoverPen, RectOf(_hit.X, _hit.Y).Deflate(1));
+            context.DrawRectangle(null, Tool is WorldMapTool.Select ? _hoverPen : _tracePen, RectOf(_hit.X, _hit.Y).Deflate(1));
     }
 
     /// <inheritdoc/>
@@ -367,11 +383,20 @@ internal sealed class WorldMapView : Control
                 PathPointPinned?.Invoke(hit.Leg, hit.X, hit.Y);
 
                 break;
+            case WorldMapHitKind.Square or WorldMapHitKind.Shared when Tool is WorldMapTool.Region:
+                SquareTraced?.Invoke(hit.X, hit.Y, false);
+
+                break;
+            case WorldMapHitKind.Character or WorldMapHitKind.RouteStep or WorldMapHitKind.Zone:
+                ObjectPressed?.Invoke(hit);
+                StartDrag(e, Drag.Pan, at);
+
+                break;
             case WorldMapHitKind.Shared:
                 SharedPressed?.Invoke(hit.X, hit.Y, at);
 
                 break;
-            case WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace:
+            case WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace or WorldMapTool.Erase:
                 _lastSquare = (hit.X, hit.Y);
                 SquareTraced?.Invoke(hit.X, hit.Y, false);
                 StartDrag(e, Drag.Paint, at);
@@ -721,6 +746,26 @@ internal sealed class WorldMapView : Control
                 return new WorldMapHit(WorldMapHitKind.Station, station.X, station.Y, i, -1);
         }
 
+        if (Tool is WorldMapTool.Select && scene.Backdrop is { } backdrop)
+        {
+            var centers = WorldMapBackdropLayer.CharacterCenters(backdrop.Characters, RectOf);
+
+            for (var i = backdrop.Characters.Count - 1; i >= 0; i--)
+            {
+                if (WorldMapBackdropLayer.HitsCharacter(centers[i], at))
+                    return new WorldMapHit(WorldMapHitKind.Character, backdrop.Characters[i].X, backdrop.Characters[i].Y, -1, -1, backdrop.Characters[i].Key);
+            }
+
+            foreach (var route in backdrop.Routes)
+            {
+                foreach (var step in route.Steps)
+                {
+                    if (WorldMapBackdropLayer.HitsStep(RectOf(step.X, step.Y).Center, at))
+                        return new WorldMapHit(WorldMapHitKind.RouteStep, step.X, step.Y, -1, -1, route.Id, step.Index);
+                }
+            }
+        }
+
         var reach = Math.Max(8, Math.Min(mapWidth, _world.MapHeight * _viewport.Scale) / 3);
 
         for (var leg = 0; leg < scene.Legs.Count; leg++)
@@ -741,6 +786,16 @@ internal sealed class WorldMapView : Control
 
         if (SquareAt(at) is not { } over)
             return WorldMapHit.None;
+
+        if (Tool is WorldMapTool.Select && scene.Backdrop is { Zones.Count: > 0 } zones)
+        {
+            // The zone listed last lies over the others, as it is drawn.
+            for (var i = zones.Zones.Count - 1; i >= 0; i--)
+            {
+                if (zones.Zones[i].Holds(over.X, over.Y))
+                    return new WorldMapHit(WorldMapHitKind.Zone, over.X, over.Y, -1, -1, zones.Zones[i].Id);
+            }
+        }
 
         if (ShowShared && mapWidth >= GridFrom && _source!.Index.MapsAt(World, over.X, over.Y).Length > 1)
         {
@@ -785,7 +840,8 @@ internal sealed class WorldMapView : Control
         {
             WorldMapHitKind.Station or WorldMapHitKind.Shared => new Cursor(StandardCursorType.Hand),
             WorldMapHitKind.PathPoint when Tool is WorldMapTool.Select => new Cursor(StandardCursorType.Hand),
-            WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace => new Cursor(StandardCursorType.Cross),
+            WorldMapHitKind.Square or WorldMapHitKind.PathPoint when Tool is WorldMapTool.Trace or WorldMapTool.Erase => new Cursor(StandardCursorType.Cross),
+            WorldMapHitKind.Square or WorldMapHitKind.Shared when Tool is WorldMapTool.Region => new Cursor(StandardCursorType.Hand),
             _ => null,
         };
         InvalidateVisual();

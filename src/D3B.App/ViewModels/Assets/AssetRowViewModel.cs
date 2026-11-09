@@ -1,6 +1,6 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using D3B.Bot.Assets;
+using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels.Assets;
 

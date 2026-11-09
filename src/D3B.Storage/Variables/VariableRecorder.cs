@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Threading.Channels;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Characters;
+using D3B.Studio.Behaviors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

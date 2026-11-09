@@ -5,7 +5,6 @@ using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Logs;
 using D3B.Bot.Activities;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
 using D3B.Data;

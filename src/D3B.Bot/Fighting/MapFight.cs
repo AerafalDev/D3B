@@ -18,7 +18,7 @@ namespace D3B.Bot.Fighting;
 /// and the bot resumed, and the groups left are fought. The action is over when no group the filter lets through is left.
 /// </para>
 /// </remarks>
-internal static class MapFight
+public static class MapFight
 {
     // Measured (9g): a group walks 1 to 4 cells at a time; the server answered nothing to an attack from 3 cells away.
     private const int MostWalksToAGroup = 3;

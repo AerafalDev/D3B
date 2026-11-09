@@ -2,10 +2,10 @@ using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
-using D3B.Bot.Assets;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.Tests;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

@@ -1,13 +1,13 @@
 using D3B.App.Hosting;
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Hosting;
 using D3B.Bot.Pages;
 using D3B.Bot.Tests;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data;
 using D3B.Storage;
+using D3B.Studio.Assets;
+using D3B.Studio.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

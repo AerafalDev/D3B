@@ -441,3 +441,17 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D390](decisions.md#d390-the-ai-weighs-next-turns-damage-a-little-more-so-that-it-flees-less) The AI weighs next turn's damage a little more, so that it flees less (2026-11-06)
 - [D391](decisions.md#d391-the-automatic-profiles-go-through-several-sub-areas-in-turn-and-the-harvest-varies-its-professions) The automatic profiles go through several sub-areas in turn, and the harvest varies its professions (2026-11-08)
 - [D392](decisions.md#d392-the-harvests-journey-stops-on-a-crossed-map-where-a-wanted-element-is-offered-and-the-harvest-rotates-through-ten-sub-areas) The harvest's journey stops on a crossed map where a wanted element is offered, and the harvest rotates through ten sub-areas (2026-11-08)
+
+## Architecture (D393)
+
+- [D393](decisions.md#d393-the-studios-model-leaves-d3bbot-for-a-project-of-its-own-d3bstudio) The studio's model leaves `D3B.Bot` for a project of its own, `D3B.Studio` (2026-11-08)
+
+## Step 7, 7d4 (D394)
+
+- [D394](decisions.md#d394-7d4-split-what-needs-no-client-now-undo-keys-dragging-zones-recording-and-simplify-after-the-measure-in-game) 7d4 split: what needs no client now (undo, keys, dragging, zones), recording and Simplify after the measure in game (2026-11-09)
+
+## Step 7, the redesign (D395)
+
+- [D395](decisions.md#d395-7r-the-studios-redesign-what-hurts-today-and-the-studio-seen-as-a-game-engine) 7r, the studio's redesign: what hurts today, and the studio seen as a game engine (2026-11-09)
+- [D396](decisions.md#d396-the-studio-as-a-game-engine-and-a-routes-steps-set-in-a-sequencer-the-owners-choices) The studio as a game engine, and a route's steps set in a sequencer: the owner's choices (2026-11-09)
+- [D397](decisions.md#d397-7r2-the-engines-frame-the-world-viewport-the-outliner-the-details-panel-and-play-in-editor) 7r2, the engine's frame: the world viewport, the Outliner, the Details panel and Play in Editor (2026-11-09)

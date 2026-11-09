@@ -32,7 +32,7 @@ public sealed class RouteInspectorTests
     }
 
     [Fact]
-    public async Task ChoosingARoutesTabAgainShowsItInTheInspectorInPlaceOfWhatWasThere()
+    public async Task SelectingARouteAgainShowsItInTheDetailsInPlaceOfWhatWasThere()
     {
         await using var store = new TestStore();
 
@@ -49,7 +49,7 @@ public sealed class RouteInspectorTests
 
         Assert.Same(second, main.Properties.Asset.Route);
 
-        main.Editor.Select(main.Editor.Items.Single(tab => tab.Content == first));
+        main.Selection.SelectRoute(first!.Id);
 
         Assert.Same(first, main.Properties.Asset.Route);
         Assert.Equal(first!.Id, main.Properties.Asset.Id);

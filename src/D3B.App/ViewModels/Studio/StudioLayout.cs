@@ -68,7 +68,7 @@ internal sealed partial class StudioLayout : ObservableObject
     /// <summary>Gets whether the characters show.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsLeftOpen), nameof(AreBothLeftOpen))]
-    public partial bool IsCharactersOpen { get; private set; } = true;
+    public partial bool IsOutlinerOpen { get; private set; } = true;
 
     /// <summary>Gets whether the assets show.</summary>
     [ObservableProperty]
@@ -81,13 +81,13 @@ internal sealed partial class StudioLayout : ObservableObject
 
     /// <summary>Gets whether the inspector shows.</summary>
     [ObservableProperty]
-    public partial bool IsInspectorOpen { get; private set; } = true;
+    public partial bool IsDetailsOpen { get; private set; } = true;
 
     /// <summary>Gets whether the left column shows, one of its panels at least.</summary>
-    public bool IsLeftOpen => IsCharactersOpen || IsAssetsOpen;
+    public bool IsLeftOpen => IsOutlinerOpen || IsAssetsOpen;
 
     /// <summary>Gets whether both of the left column's panels show, with the edge between them.</summary>
-    public bool AreBothLeftOpen => IsCharactersOpen && IsAssetsOpen;
+    public bool AreBothLeftOpen => IsOutlinerOpen && IsAssetsOpen;
 
     /// <summary>Gets whether every edge and panel is as by default.</summary>
     public bool IsDefault => ToState() is null;
@@ -115,10 +115,10 @@ internal sealed partial class StudioLayout : ObservableObject
     {
         return panel switch
         {
-            StudioPanel.Characters => IsCharactersOpen,
+            StudioPanel.Outliner => IsOutlinerOpen,
             StudioPanel.Assets => IsAssetsOpen,
             StudioPanel.Bottom => IsBottomOpen,
-            _ => IsInspectorOpen,
+            _ => IsDetailsOpen,
         };
     }
 
@@ -129,8 +129,8 @@ internal sealed partial class StudioLayout : ObservableObject
     {
         switch (panel)
         {
-            case StudioPanel.Characters:
-                IsCharactersOpen = open;
+            case StudioPanel.Outliner:
+                IsOutlinerOpen = open;
                 break;
             case StudioPanel.Assets:
                 IsAssetsOpen = open;
@@ -139,7 +139,7 @@ internal sealed partial class StudioLayout : ObservableObject
                 IsBottomOpen = open;
                 break;
             default:
-                IsInspectorOpen = open;
+                IsDetailsOpen = open;
                 break;
         }
 
@@ -220,10 +220,10 @@ internal sealed partial class StudioLayout : ObservableObject
 
         var closed = state.Closed ?? [];
 
-        IsCharactersOpen = !closed.Contains(nameof(StudioPanel.Characters));
+        IsOutlinerOpen = !closed.Contains(nameof(StudioPanel.Outliner));
         IsAssetsOpen = !closed.Contains(nameof(StudioPanel.Assets));
         IsBottomOpen = !closed.Contains(nameof(StudioPanel.Bottom));
-        IsInspectorOpen = !closed.Contains(nameof(StudioPanel.Inspector));
+        IsDetailsOpen = !closed.Contains(nameof(StudioPanel.Details));
     }
 
     private StudioLayoutState? ToState()

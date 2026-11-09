@@ -38,7 +38,7 @@ public sealed class StudioLayoutTests
     {
         var layout = new StudioLayout();
 
-        layout.Close(StudioPanel.Characters);
+        layout.Close(StudioPanel.Outliner);
 
         Assert.Equal((true, false), (layout.IsLeftOpen, layout.AreBothLeftOpen));
 
@@ -69,7 +69,7 @@ public sealed class StudioLayoutTests
 
         var again = new StudioLayout(AppPreferences.Load(path));
 
-        Assert.Equal((260d, false, true), (again.LeftWidth, again.IsBottomOpen, again.IsInspectorOpen));
+        Assert.Equal((260d, false, true), (again.LeftWidth, again.IsBottomOpen, again.IsDetailsOpen));
         Assert.False(again.IsDefault);
 
         again.Reset();
@@ -85,12 +85,12 @@ public sealed class StudioLayoutTests
         using var directory = new TemporaryDirectory();
         var path = directory.Combine("app.json");
         // Written by hand, or by an older D3B with other bounds.
-        File.WriteAllText(path, """{ "Layout": { "LeftWidth": 10, "RightWidth": -3, "LeftShare": 3, "BottomHeight": -5, "Closed": ["Characters", "Nothing"] } }""");
+        File.WriteAllText(path, """{ "Layout": { "LeftWidth": 10, "RightWidth": -3, "LeftShare": 3, "BottomHeight": -5, "Closed": ["Outliner", "Nothing"] } }""");
 
         var layout = new StudioLayout(AppPreferences.Load(path));
 
         Assert.Equal((StudioLayout.LeastLeftWidth, StudioLayout.LeastRightWidth, 0.9, StudioLayout.LeastBottomHeight), (layout.LeftWidth, layout.RightWidth, layout.LeftShare, layout.BottomHeight));
-        Assert.Equal((false, true), (layout.IsCharactersOpen, layout.IsAssetsOpen));
+        Assert.Equal((false, true), (layout.IsOutlinerOpen, layout.IsAssetsOpen));
     }
 
     [Fact]

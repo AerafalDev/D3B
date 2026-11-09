@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using D3B.Bot.Behaviors;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Bot.Localization;

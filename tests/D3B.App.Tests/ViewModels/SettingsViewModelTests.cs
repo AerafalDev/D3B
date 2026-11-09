@@ -185,14 +185,14 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         Assert.True(settings.IsFrench);
         Assert.Equal("Temps d'affichage", settings.Display.Label);
         Assert.Equal("Mesuré : 0,5 s", settings.Display.DefaultText);
-        Assert.Equal("Bienvenue", main.Editor.Selected?.Title);
+        Assert.Equal("Monde", main.Editor.Selected?.Title);
         Assert.Equal("fr", AppPreferences.Load(PreferencesPath).Language);
 
         settings.UseEnglishCommand.Execute(null);
 
         Assert.True(settings.IsEnglish);
         Assert.Equal("Display time", settings.Display.Label);
-        Assert.Equal("Welcome", main.Editor.Selected?.Title);
+        Assert.Equal("World", main.Editor.Selected?.Title);
     }
 
     [Fact]

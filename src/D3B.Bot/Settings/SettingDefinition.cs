@@ -374,7 +374,11 @@ public sealed class SettingDefinition
         };
     }
 
-    internal bool TryRead(object settings, JsonNode? node)
+    /// <summary>Reads the setting's value from a stored node into the settings; what does not read is left as it was.</summary>
+    /// <param name="settings">The settings object to fill.</param>
+    /// <param name="node">The stored value, if any.</param>
+    /// <returns><see langword="true"/> when the node read whole; <see langword="false"/> when it did not, or a list lost values.</returns>
+    public bool TryRead(object settings, JsonNode? node)
     {
         var read = IsList ? ReadList(node) : ReadOne(node);
 

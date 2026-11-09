@@ -78,7 +78,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
 
             Drawings.Draw(window, "studio-playing");
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("Run")), "part-run-playing");
-            Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "CharactersDock"), "part-characters");
+            Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "OutlinerDock"), "part-characters");
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "BottomDock"), "part-bottom");
             main.RunBlock.PauseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
@@ -179,10 +179,10 @@ public sealed class StudioViewsTests : IAsyncDisposable
             var editor = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "EditorDock");
             var before = (editor.Bounds.Width, editor.Bounds.Height);
 
-            main.Layout.Close(StudioPanel.Characters);
+            main.Layout.Close(StudioPanel.Outliner);
             main.Layout.Close(StudioPanel.Assets);
             main.Layout.Close(StudioPanel.Bottom);
-            main.Layout.Close(StudioPanel.Inspector);
+            main.Layout.Close(StudioPanel.Details);
             Dispatcher.UIThread.RunJobs();
             Drawings.Draw(window, "studio-closed");
 

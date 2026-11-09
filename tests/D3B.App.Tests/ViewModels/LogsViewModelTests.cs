@@ -111,7 +111,7 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         var (_, bot) = await _play.EnterAsync(300);
         var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
 
-        bot.Journal.Add(new ProfileNotStartedEntry(_at, "Promenade", D3B.Bot.Behaviors.ProfileStartFailure.BehaviorMissing, [], null));
+        bot.Journal.Add(new ProfileNotStartedEntry(_at, "Promenade", D3B.Studio.Behaviors.ProfileStartFailure.BehaviorMissing, [], null));
         page.Refresh(_host.Services);
 
         var line = page.Lines[^1];

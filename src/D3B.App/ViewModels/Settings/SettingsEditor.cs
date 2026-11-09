@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.Bot.Activities;
-using D3B.Bot.Assets;
 using D3B.Bot.Npcs;
 using D3B.Bot.Settings;
 using D3B.Data;
@@ -12,6 +11,7 @@ using D3B.Data.Maps;
 using D3B.Data.Monsters;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Settings;
@@ -66,6 +66,15 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets how many settings shown differ from the behavior's.</summary>
     [ObservableProperty]
     public partial int ChangedCount { get; private set; }
+
+    /// <summary>Gets the field changed last by the hand, or <see langword="null"/> when the settings changed on their own.</summary>
+    public SettingFieldViewModel? LastEdited { get; private set; }
+
+    /// <summary>
+    /// Gets what the last change belongs to when it is a text or a number typed in, which an editor takes back in one with the
+    /// letters before it; <see langword="null"/> for any other change, each of which is its own.
+    /// </summary>
+    public string? TypingRun => LastEdited is TextFieldViewModel or NumberFieldViewModel ? LastEdited.Definition.Key : null;
 
     /// <summary>Gets the game's values the settings name, or <see langword="null"/> when the host has none.</summary>
     public GameReferences? Game { get; }
@@ -208,6 +217,15 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Checks the settings again, once a field changed.</summary>
     public void Changed()
     {
+        Changed(null);
+    }
+
+    /// <summary>Checks the settings again, once a field changed under the hand.</summary>
+    /// <param name="by">The field that changed, or <see langword="null"/> when the settings changed on their own.</param>
+    public void Changed(SettingFieldViewModel? by)
+    {
+        LastEdited = by;
+
         if (Draft is null)
             return;
 

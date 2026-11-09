@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\D3B.Bot\D3B.Bot.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D3B.App.Tests" />
+    <InternalsVisibleTo Include="D3B.Storage.Tests" />
+    <InternalsVisibleTo Include="D3B.Studio.Tests" />
+  </ItemGroup>
+
+</Project>

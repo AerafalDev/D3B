@@ -2,8 +2,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Routes;
-using D3B.Bot.Assets;
+using D3B.App.ViewModels.Zones;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Properties;
@@ -74,6 +75,17 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasRoute))]
     public partial RouteEditorViewModel? Route { get; private set; }
+
+    /// <summary>Gets the editor of the zone shown, once it is open: its contents are the Details panel's (D397).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasZone))]
+    public partial ZoneEditorViewModel? Zone { get; private set; }
+
+    /// <summary>Gets or sets what finds a zone's open editor by its id.</summary>
+    public Func<string, ZoneEditorViewModel?>? ZoneOf { get; set; }
+
+    /// <summary>Gets whether the asset shown is a zone being edited.</summary>
+    public bool HasZone => Zone is not null;
 
     /// <summary>Gets or sets what finds a route's open editor by its id.</summary>
     public Func<string, RouteEditorViewModel?>? RouteOf { get; set; }
@@ -158,6 +170,7 @@ internal sealed partial class AssetPropertiesViewModel : ObservableObject
         File = asset.Path ?? _localizer["AssetBuiltIn"];
         Format = AssetFiles.Format.ToString(_localizer.Culture);
         Route = asset.Kind == AssetKind.Route ? RouteOf?.Invoke(id) : null;
+        Zone = asset.Kind == AssetKind.Zone ? ZoneOf?.Invoke(id) : null;
         Uses = [.. asset.Uses().Select(used => _assets.Find(used)).OfType<Asset>().Select(used => Use(used, asset))];
         UsedBy =
         [

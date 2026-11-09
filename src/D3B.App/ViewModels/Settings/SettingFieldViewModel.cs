@@ -136,13 +136,13 @@ internal abstract partial class SettingFieldViewModel : ObservableObject
             return;
 
         Definition.SetValue(Draft, value);
-        Editor.Changed();
+        Editor.Changed(this);
     }
 
     /// <summary>Tells the editor the field changed without a value to write, such as a number emptied.</summary>
     protected void Touched()
     {
         if (!_quiet)
-            Editor.Changed();
+            Editor.Changed(this);
     }
 }

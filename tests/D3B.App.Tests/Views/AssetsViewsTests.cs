@@ -8,9 +8,9 @@ using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Assets;
 using D3B.App.Views;
-using D3B.Bot.Tests.Behaviors;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
+using D3B.Studio.Tests.Behaviors;
 
 namespace D3B.App.Tests.Views;
 

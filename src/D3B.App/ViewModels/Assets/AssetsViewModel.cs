@@ -4,8 +4,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Localization;
-using D3B.Bot.Assets;
 using D3B.Storage.Accounts;
+using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Assets;
@@ -115,6 +115,9 @@ internal sealed partial class AssetsViewModel : ObservableObject
     /// <summary>Gets or sets the routes, whose editors a route's row opens and whose new ones this makes (D371).</summary>
     public Routes.RoutesViewModel? Routes { get; set; }
 
+    /// <summary>Gets or sets the zones, whose editors a zone's row opens and whose new ones this makes (D394).</summary>
+    public Zones.ZonesViewModel? Zones { get; set; }
+
     /// <summary>Gets or sets the lists of steps, the behaviors this page makes and opens (D386).</summary>
     public Sequences.SequencesViewModel? Sequences { get; set; }
 
@@ -151,7 +154,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        return row.AssetKind is AssetKind.Profile or AssetKind.Route or AssetKind.Behavior;
+        return row.AssetKind is AssetKind.Profile or AssetKind.Route or AssetKind.Behavior or AssetKind.Zone;
     }
 
     private static (string Before, string Found, string After) Split(string name, string filter)
@@ -183,7 +186,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
 
         IsAvailable = _assets is not null;
 
-        var unsaved = string.Join(',', _profiles.Open.Where(item => item.IsDirty).Select(item => item.Id).Concat(Routes?.Open.Where(item => item.IsDirty).Select(item => item.Id) ?? []));
+        var unsaved = string.Join(',', _profiles.Open.Where(item => item.IsDirty).Select(item => item.Id).Concat(Routes?.Open.Where(item => item.IsDirty).Select(item => item.Id) ?? []).Concat(Zones?.Open.Where(item => item.IsDirty).Select(item => item.Id) ?? []));
         var shown = string.Join('|', _assets?.Version, _book?.Version, _localizer.Culture.Name, Filter, string.Join(',', _folded), _givenFolded, string.Join(',', _selected), string.Join(',', _cut), string.Join(',', _hidden), FocusKey, unsaved);
 
         // A name being typed keeps its row: the tree waits for it.
@@ -723,6 +726,8 @@ internal sealed partial class AssetsViewModel : ObservableObject
             _ = routes.CreateAsync(ChosenFolder);
         else if (kind is AssetKind.Behavior && Sequences is { IsAvailable: true } sequences)
             _ = sequences.CreateAsync(ChosenFolder);
+        else if (kind is AssetKind.Zone && Zones is { IsAvailable: true } zones)
+            _ = zones.CreateAsync(ChosenFolder);
     }
 
     /// <summary>Starts a folder in the folder chosen, or at the root when nothing is, its name typed in place.</summary>
