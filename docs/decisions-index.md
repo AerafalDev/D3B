@@ -502,3 +502,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Rebuilding the steps' actions from the clips at each edit.
   - Dropping the actions' cards of a step from the Details.
   - A track for each of the eight kinds at all times.
+
+## Step 7, 7r5, the profile's editor (D415)
+
+- [D415](decisions/d415-step-7-7r5-the-profile-editor.md#d415-7r5-a-profile-names-a-zone-as-its-place-a-third-value-of-the-place-and-a-zone-setting-read-through-a-seam) 7r5, a profile names a zone as its place: a third value of the place and a zone setting, read through a seam (2026-11-09)
+  - The zone replacing the area and the sub-areas, stored profiles converted into zone files.
