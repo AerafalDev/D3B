@@ -678,7 +678,18 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
 
                 break;
             case nameof(RouteEditorViewModel.SelectedIndex) when Route is { } route:
-                _selection.SelectRoute(route.Id, route.SelectedIndex);
+                // The editor chose the step itself (a map traced, a station pressed): the pointer is on the map and the map must stay
+                // under it. Only a step chosen from a list is brought into view, and the editor reveals it then.
+                _fromMap = true;
+
+                try
+                {
+                    _selection.SelectRoute(route.Id, route.SelectedIndex);
+                }
+                finally
+                {
+                    _fromMap = false;
+                }
 
                 break;
             case nameof(RouteEditorViewModel.Layer) when Route is { } route:

@@ -543,7 +543,8 @@ D356), the pages of D101 and D162 gone.
     moves a step and pans; Route traces the selected route, or makes one on the first press when none is selected (`Creating`);
     Zone paints the selected zone with Paint, Erase and Sub-area likewise; a tool needs what it works on, so a selection that
     moves to something else leaves it. Keys: V select, B route or paint, E erase, R sub-area, Escape leave, and those of D375.
-    Edit's Undo and Redo follow the route or zone selected.
+    Edit's Undo and Redo follow the route or zone selected. A step chosen on the map, a station pressed or a map traced, never
+    moves the map under the pointer; only a selection made from a list brings what it selects into view.
   - The scene (`WorldMapScene`) holds what is edited, its stations and legs or its squares, and a `WorldMapBackdrop`: the other
     routes as faint straight lines with a node a step (`WorldMapBackdropLayer`), the zones tinted, the characters as discs with
     their names and, under a step's node, small dots by what it does (`WorldMapActionKind`, `RouteActionKinds`: harvest, fight,
