@@ -35,6 +35,7 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
     private readonly WorldSelection _selection;
     private readonly Func<IEnumerable<WorldCharacterSnapshot>> _characters;
     private readonly Func<string?> _framed;
+    private readonly FollowedRuns _followed;
     private readonly HashSet<string> _hidden = [];
     private readonly Dictionary<string, (ZoneAsset Zone, int Layer, IReadOnlyList<(int X, int Y)> Squares)> _zoneSquares = new(StringComparer.Ordinal);
     private WorldMapSource? _source;
@@ -173,8 +174,10 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
     /// <param name="selection">What is selected in the world.</param>
     /// <param name="characters">The characters online, whose places the map shows.</param>
     /// <param name="framed">Says the name of the character that plays, or <see langword="null"/> when none does.</param>
-    public WorldViewportViewModel(Localizer localizer, RoutesViewModel routes, ZonesViewModel zones, WorldSelection selection, Func<IEnumerable<WorldCharacterSnapshot>> characters, Func<string?> framed)
+    /// <param name="followed">The characters that follow a route now, which the map marks, or <see langword="null"/> for none (D419).</param>
+    public WorldViewportViewModel(Localizer localizer, RoutesViewModel routes, ZonesViewModel zones, WorldSelection selection, Func<IEnumerable<WorldCharacterSnapshot>> characters, Func<string?> framed, FollowedRuns? followed = null)
     {
+        _followed = followed ?? FollowedRuns.None;
         _localizer = localizer;
         _routes = routes;
         _zones = zones;
@@ -236,7 +239,7 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
         if (_routes.Services is not { } read)
             return;
 
-        FrameText = _framed() is { } name ? _localizer.Format("WorldPlays", name) : null;
+        FrameText = _framed() is { } name ? FrameSaid(name) : null;
 
         var signature = Signature(read);
 
@@ -531,6 +534,9 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
         foreach (var character in _characters())
             text.Append(CharacterKeys.Text(character.Key)).Append(':').Append(character.MapId).Append(':').Append(character.Playing).Append(';');
 
+        foreach (var run in _followed.All())
+            text.Append(CharacterKeys.Text(run.Position.Character)).Append(':').Append(run.Position.Route).Append(':').Append(run.Position.Anchor).Append(run.Position.Arrived).Append(run.Position.Returning).Append(';');
+
         return text.ToString();
     }
 
@@ -804,7 +810,56 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
             characters.Add(new WorldMapCharacter(CharacterKeys.Text(character.Key), character.Name, character.Initials, ColorOf(character.Color), place.X, place.Y, _selection.IsCharacter(character.Key), character.Playing));
         }
 
-        return new WorldMapBackdrop(routes, zones, characters);
+        return new WorldMapBackdrop(routes, zones, characters) { Runs = RunsOf(services) };
+    }
+
+    private string FrameSaid(string name)
+    {
+        if (_followed.All().FirstOrDefault(run => run.Name == name)?.Position is not { } route)
+            return _localizer.Format("WorldPlays", name);
+
+        var said = _localizer.Format("WorldPlaysStep", name, route.Step, route.Anchors);
+
+        if (route.Mode is RouteMode.Loop)
+            said += _localizer.Format("CardRouteLap", route.Lap);
+        else if (route.Returning)
+            said += _localizer["CardRouteBack"];
+
+        return said;
+    }
+
+    private List<WorldMapRun> RunsOf(RouteServices services)
+    {
+        var runs = new List<WorldMapRun>();
+
+        foreach (var run in _followed.All())
+        {
+            var position = run.Position;
+
+            if (_hidden.Contains("route:" + position.Route) || _hidden.Contains("character:" + CharacterKeys.Text(position.Character)))
+                continue;
+
+            IReadOnlyList<RouteAnchor>? anchors = _routes.Find(position.Route)?.CurrentAnchors ?? (IReadOnlyList<RouteAnchor>?)services.Library.Find<RouteAsset>(position.Route)?.Anchors;
+
+            if (anchors is null || position.Anchor >= anchors.Count || !services.Index.TryPlace(anchors[position.Anchor].MapId, out var layer, out var x, out var y) || layer != Layer)
+                continue;
+
+            int? fromX = null;
+            int? fromY = null;
+
+            // The leg being walked comes from the step before, which for a loop's first is its last and for a route going back is the one after.
+            var from = position.Returning ? position.Anchor + 1 : position.Anchor > 0 ? position.Anchor - 1 : position.Mode is RouteMode.Loop ? anchors.Count - 1 : -1;
+
+            if (from >= 0 && from < anchors.Count && from != position.Anchor && services.Index.TryPlace(anchors[from].MapId, out var fromLayer, out var px, out var py) && fromLayer == Layer)
+            {
+                fromX = px;
+                fromY = py;
+            }
+
+            runs.Add(new WorldMapRun(CharacterKeys.Text(position.Character), run.Initials, ColorOf(run.Color), x, y, fromX, fromY, position.Arrived));
+        }
+
+        return runs;
     }
 
     private IReadOnlyList<(int X, int Y)> SquaresOf(RouteServices services, ZoneAsset zone)

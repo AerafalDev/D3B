@@ -216,6 +216,41 @@ internal static class WorldMapBackdropLayer
         }
     }
 
+    /// <summary>Draws the characters that follow a route: the leg being walked dashed in their colour, and a ring on the step they go to, hollow until they are there (D419).</summary>
+    /// <param name="context">The drawing context.</param>
+    /// <param name="backdrop">What the world holds.</param>
+    /// <param name="rectOf">Gives the view's rectangle of the map at coordinates.</param>
+    /// <param name="typeface">The labels' typeface.</param>
+    public static void DrawRuns(DrawingContext context, WorldMapBackdrop backdrop, Func<int, int, Rect> rectOf, Typeface typeface)
+    {
+        var seen = new Dictionary<(int X, int Y), int>();
+
+        foreach (var run in backdrop.Runs)
+        {
+            var count = seen.GetValueOrDefault((run.X, run.Y));
+            var target = rectOf(run.X, run.Y).Center + new Point(count * CharacterSpacing, 0);
+
+            seen[(run.X, run.Y)] = count + 1;
+
+            if (!run.Arrived && run.FromX is { } fromX && run.FromY is { } fromY)
+            {
+                var leg = new Pen(new SolidColorBrush(run.Color, 0.9), 2.4, new DashStyle([2, 2.4], 0), PenLineCap.Round);
+
+                context.DrawLine(new Pen(_shade, 5.4, lineCap: PenLineCap.Round), rectOf(fromX, fromY).Center, target);
+                context.DrawLine(leg, rectOf(fromX, fromY).Center, target);
+            }
+
+            var ring = new Pen(new SolidColorBrush(run.Color), 2.6);
+
+            context.DrawEllipse(_shade, null, target, StepRadius + 8.5, StepRadius + 8.5);
+            context.DrawEllipse(run.Arrived ? new SolidColorBrush(run.Color, 0.35) : null, ring, target, StepRadius + 7, StepRadius + 7);
+
+            var initials = new FormattedText(run.Initials, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(typeface.FontFamily, weight: FontWeight.Bold), 9, _bright);
+
+            context.DrawText(initials, new Point(target.X - (initials.Width / 2), target.Y - StepRadius - 7 - initials.Height - 1));
+        }
+    }
+
     /// <summary>Draws the characters.</summary>
     /// <param name="context">The drawing context.</param>
     /// <param name="backdrop">What the world holds.</param>

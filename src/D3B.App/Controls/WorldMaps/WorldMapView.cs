@@ -317,6 +317,9 @@ internal sealed class WorldMapView : Control
         WorldMapZoneLayer.Draw(context, Scene, mapWidth, RectOf);
 
         if (backdrop is not null)
+            WorldMapBackdropLayer.DrawRuns(context, backdrop, RectOf, typeface);
+
+        if (backdrop is not null)
             WorldMapBackdropLayer.DrawCharacters(context, backdrop, RectOf, _hit, typeface);
 
         if (_hit.Kind is WorldMapHitKind.Square or WorldMapHitKind.Shared or WorldMapHitKind.Hint)

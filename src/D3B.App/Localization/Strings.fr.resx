@@ -3041,6 +3041,9 @@
   <data name="WorldHudHintLevel" xml:space="preserve">
     <value>{0} · {1} · niveau {2} · {3}</value>
   </data>
+  <data name="WorldPlaysStep" xml:space="preserve">
+    <value>{0} joue · étape {1}/{2}</value>
+  </data>
   <data name="WorldPlays" xml:space="preserve">
     <value>{0} joue</value>
   </data>

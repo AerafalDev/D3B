@@ -6,6 +6,9 @@ namespace D3B.App.Controls.WorldMaps;
 /// <param name="Characters">The characters, over everything.</param>
 internal sealed record WorldMapBackdrop(IReadOnlyList<WorldMapBackdropRoute> Routes, IReadOnlyList<WorldMapBackdropZone> Zones, IReadOnlyList<WorldMapCharacter> Characters)
 {
+    /// <summary>Gets the characters that follow a route, each marked on the step it goes to (D419).</summary>
+    public IReadOnlyList<WorldMapRun> Runs { get; init; } = [];
+
     /// <summary>Gets a backdrop with nothing in it.</summary>
     public static WorldMapBackdrop Empty { get; } = new([], [], []);
 }

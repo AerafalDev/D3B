@@ -4,6 +4,7 @@ using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.World;
 using D3B.App.ViewModels.Zones;
+using D3B.Bot.Characters;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
@@ -17,6 +18,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     private readonly TestStore _store = new();
     private readonly Localizer _localizer = new(Localizer.English);
     private readonly List<WorldCharacterSnapshot> _characters = [];
+    private readonly List<FollowedRun> _runs = [];
     private string? _framed;
 
     public ValueTask DisposeAsync()
@@ -36,7 +38,7 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
 
         var zones = new ZonesViewModel(_localizer, new Dialogs(), new Toasts(), () => routes.Services);
         var selection = new WorldSelection();
-        var world = new WorldViewportViewModel(_localizer, routes, zones, selection, () => _characters, () => _framed);
+        var world = new WorldViewportViewModel(_localizer, routes, zones, selection, () => _characters, () => _framed, new FollowedRuns(() => _runs));
 
         world.Refresh();
 
@@ -307,6 +309,93 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
         world.Refresh();
 
         Assert.False(world.IsFramed);
+    }
+
+    private static FollowedRun Following(string name, int anchor, bool arrived, RouteMode mode = RouteMode.OneWay, bool returning = false, long laps = 0)
+    {
+        var position = new RouteRunPosition(new CharacterKey(1, 2), "north", "North", mode, 3, anchor, arrived, 0, 0, laps, returning);
+
+        return new FollowedRun(position, name, name[..2].ToUpperInvariant(), null);
+    }
+
+    [Fact]
+    public async Task TheStepACharacterGoesToIsMarkedOnTheMapWithTheLegItWalksUntilItArrives()
+    {
+        var (_, _, _, world) = await WorldAsync();
+
+        await SaveRouteAsync("north", 1, 2, 3);
+        _runs.Add(Following("Ayuwoki", 1, false));
+        world.Refresh();
+
+        var steps = world.Scene.Backdrop!.Routes.Single().Steps;
+        var run = Assert.Single(world.Scene.Backdrop.Runs);
+
+        Assert.Equal((steps[1].X, steps[1].Y, steps[0].X, steps[0].Y, false, "AY"), (run.X, run.Y, run.FromX, run.FromY, run.Arrived, run.Initials));
+
+        _runs[0] = Following("Ayuwoki", 1, true);
+        world.Refresh();
+
+        Assert.True(Assert.Single(world.Scene.Backdrop.Runs).Arrived);
+
+        _runs.Clear();
+        world.Refresh();
+
+        Assert.Empty(world.Scene.Backdrop.Runs);
+    }
+
+    [Fact]
+    public async Task ARouteHiddenByItsEyeLeavesItsRunsOffTheMapAndTheFirstStepOfAOneWayRouteHasNoLeg()
+    {
+        var (_, _, _, world) = await WorldAsync();
+
+        await SaveRouteAsync("north", 1, 2, 3);
+        _runs.Add(Following("Ayuwoki", 0, false));
+        world.Refresh();
+
+        Assert.Null(Assert.Single(world.Scene.Backdrop!.Runs).FromX);
+
+        world.ToggleVisible("route:north");
+
+        Assert.Empty(world.Scene.Backdrop!.Runs);
+    }
+
+    [Fact]
+    public async Task TheLegOfALoopsFirstStepComesFromItsLastAndTheLegOfARouteGoingBackComesFromTheStepAfter()
+    {
+        var (_, _, _, world) = await WorldAsync();
+
+        await SaveRouteAsync("north", 1, 2, 3);
+        _runs.Add(Following("Ayuwoki", 0, false, RouteMode.Loop));
+        world.Refresh();
+
+        var steps = world.Scene.Backdrop!.Routes.Single().Steps;
+        var loop = Assert.Single(world.Scene.Backdrop.Runs);
+
+        Assert.Equal((steps[2].X, steps[2].Y), (loop.FromX, loop.FromY));
+
+        _runs[0] = Following("Ayuwoki", 1, false, RouteMode.RoundTrip, returning: true);
+        world.Refresh();
+
+        var back = Assert.Single(world.Scene.Backdrop.Runs);
+
+        Assert.Equal((steps[2].X, steps[2].Y), (back.FromX, back.FromY));
+    }
+
+    [Fact]
+    public async Task TheFrameSaysTheStepAndTheLapOfTheRouteTheCharacterFollows()
+    {
+        var (_, _, _, world) = await WorldAsync();
+
+        _framed = "Ayuwoki";
+        _runs.Add(Following("Ayuwoki", 1, true, RouteMode.Loop, laps: 2));
+        world.Refresh();
+
+        Assert.Equal("Ayuwoki plays · step 2/3 · lap 3", world.FrameText);
+
+        _runs.Clear();
+        world.Refresh();
+
+        Assert.Equal("Ayuwoki plays", world.FrameText);
     }
 
     [Fact]
