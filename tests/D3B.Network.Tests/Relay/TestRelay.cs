@@ -56,6 +56,8 @@ internal sealed class TestRelay : IAsyncDisposable
             ClientDirectory = Path.Combine(AppContext.BaseDirectory, "no-client"),
             RedirectDirectory = Path.Combine(AppContext.BaseDirectory, "no-redirect"),
             CapturesDirectory = capturesDirectory,
+            RecordsGame = capturesDirectory is not null,
+            RecordsConnection = capturesDirectory is not null,
             CloseTimeout = TimeSpan.FromSeconds(2),
             HoldTimeout = holdTimeout ?? TimeSpan.FromMilliseconds(500),
         };
