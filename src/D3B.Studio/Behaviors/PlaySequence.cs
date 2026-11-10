@@ -4,7 +4,7 @@ using D3B.Studio.Assets;
 
 namespace D3B.Studio.Behaviors;
 
-/// <summary>Plays a list of steps of the project as one step of another: its steps in order, once for each pass of the step (D420).</summary>
+/// <summary>Plays a list of steps of the project as one step of another: its steps in order, once for each pass of the step (D421).</summary>
 /// <remarks>
 /// <para>
 /// The list is compiled and walked by a visit of its own, the way a behavior's leaf is, so that its steps repeat, wait for a

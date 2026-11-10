@@ -627,7 +627,7 @@
             </Animation>
         </Style.Animations>
     </Style>
-    <!--  A value of a sentence, or a repeat, as a token that opens its choices where it stands (D380, D420).  -->
+    <!--  A value of a sentence, or a repeat, as a token that opens its choices where it stands (D380, D421).  -->
     <Style Selector="Button.ValueToken">
         <Setter Property="Background" Value="{DynamicResource TipColor}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />

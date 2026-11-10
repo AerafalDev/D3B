@@ -3,7 +3,7 @@ using D3B.Bot.Characters;
 
 namespace D3B.Studio.Behaviors;
 
-/// <summary>The lists of steps a character plays as steps of others, each with the place it has reached (D420).</summary>
+/// <summary>The lists of steps a character plays as steps of others, each with the place it has reached (D421).</summary>
 /// <remarks>
 /// As <see cref="Routes.RouteRuns"/> does for a route: a run cut by a fight or a bank goes on from the step it was at, and a
 /// character that stops and starts again begins over, told by the moment the run began.

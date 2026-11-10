@@ -1,6 +1,6 @@
 namespace D3B.Studio.Behaviors;
 
-/// <summary>How many times a step, or a list, is played (D420).</summary>
+/// <summary>How many times a step, or a list, is played (D421).</summary>
 public enum RepeatKind
 {
     /// <summary>One pass.</summary>

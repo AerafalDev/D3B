@@ -836,7 +836,7 @@ moved to `D3B.Studio` (D393), with no new interface:
   where they are) and starts `BehaviorActivity`, the one activity that runs any behavior: each step the leaf chosen, then
   its actions gone through from the first, goals passed, what the state says nothing of played once per visit
   (`StateVisit`), an activity's node delegating to today's activity; a leaf played to its end and chosen again is done
-  unless it repeats (`BehaviorState.Repeat`: a number of times, for ever or until a condition, D420); no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
+  unless it repeats (`BehaviorState.Repeat`: a number of times, for ever or until a condition, D421); no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
   urgent state cuts the step. Variables of the run, the character's (`CharacterVariables`, kept by `D3B.Storage`) and the
   bots' (`SharedVariables`). The journal says each state entered and each note; the trace, each decision (D350).
 - **The app** (D317, D352): a profile of a behavior playing one activity whole is edited as its settings (`ProfileForms`),
@@ -903,7 +903,7 @@ The target:
     lists the routes a behavior follows. `SequencesViewModel` holds the editors open, `SequenceEditorViewModel` and `SequenceView` are a
     list's tab, its steps `RouteActionViewModel`s drawn by `ActionCardView`; the new-profile dialog (`NewProfileViewModel`) and the
     profile's tab (`ProfileViewModel.IsBehaviorProfile`) play a list as they play an activity.
-  - **Repeats and sequences as steps** (D420): `StepRepeat` (`RepeatKind`: once, a number of times from 2 to 999, for ever, until a
+  - **Repeats and sequences as steps** (D421): `StepRepeat` (`RepeatKind`: once, a number of times from 2 to 999, for ever, until a
     condition; `NodeCall.Repeat` for a list's step, `GraphNode.Repeat` and `BehaviorState.Repeat` in the file, `"repeats": true` still
     for ever) is how a step or the list is played. The compiler makes an "until" a `CompiledCondition` of the step (`CompiledStep.Action.Until`)
     or the state; `StateVisit` counts the passes of each step and of the leaf and reads the condition before each pass (`CanPlayAgain`,

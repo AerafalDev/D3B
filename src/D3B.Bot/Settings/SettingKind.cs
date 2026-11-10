@@ -54,6 +54,6 @@ public enum SettingKind
     /// <summary>A zone of the project, by its id, picked among the project's zones and never typed (D415); an empty text when none is picked.</summary>
     Zone,
 
-    /// <summary>A list of steps of the project, played as a step of another, by its behavior's id, picked among the project's lists and never typed (D420); an empty text when none is picked.</summary>
+    /// <summary>A list of steps of the project, played as a step of another, by its behavior's id, picked among the project's lists and never typed (D421); an empty text when none is picked.</summary>
     Sequence,
 }

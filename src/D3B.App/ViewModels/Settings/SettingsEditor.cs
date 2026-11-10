@@ -147,7 +147,7 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets the window's dialogs, which a setting may open, such as choosing resources, if the editor shows in a window.</summary>
     public Dialogs? Dialogs { get; }
 
-    /// <summary>Gets or sets which lists of steps a step may play: the editor of a list leaves out those that would play it (D420); none, all.</summary>
+    /// <summary>Gets or sets which lists of steps a step may play: the editor of a list leaves out those that would play it (D421); none, all.</summary>
     public Func<BehaviorAsset, bool>? SequenceFilter { get; set; }
 
     /// <summary>Gets the characters that play the profile, with their professions' levels, as their bots last saw them.</summary>

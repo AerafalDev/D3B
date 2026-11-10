@@ -68,7 +68,7 @@ internal sealed class StateVisit : IDisposable
         return ids.ToImmutable();
     }
 
-    /// <summary>Tells whether the leaf's actions are to be played again, once played to their end: the state's repeat, its condition read now (D420).</summary>
+    /// <summary>Tells whether the leaf's actions are to be played again, once played to their end: the state's repeat, its condition read now (D421).</summary>
     /// <param name="evaluation">The bot as it is now.</param>
     /// <returns><see langword="true"/> when another pass is asked for.</returns>
     public bool CanPlayAgain(Evaluation evaluation)

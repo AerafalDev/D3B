@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace D3B.App.ViewModels.Sequences;
 
-/// <summary>A condition the "until" of a repeat can wait on, in the menu that chooses it (D420).</summary>
+/// <summary>A condition the "until" of a repeat can wait on, in the menu that chooses it (D421).</summary>
 internal sealed partial class RepeatConditionChoiceViewModel
 {
     private readonly Action<string> _choose;

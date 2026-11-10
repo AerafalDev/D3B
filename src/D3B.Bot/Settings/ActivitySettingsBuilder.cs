@@ -222,7 +222,7 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return Add(property, SettingKind.Zone, false, name);
     }
 
-    /// <summary>Declares a list of steps of the project, by its behavior's id, picked among the project's lists (D420).</summary>
+    /// <summary>Declares a list of steps of the project, by its behavior's id, picked among the project's lists (D421).</summary>
     /// <param name="property">The property, such as <c>s =&gt; s.Sequence</c>.</param>
     /// <param name="name">The setting's name, as the app shows it.</param>
     /// <returns>The setting's builder.</returns>

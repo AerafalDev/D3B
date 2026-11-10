@@ -1,8 +1,8 @@
-# Step 7, 7r6, repeats and sequences (D420)
+# Step 7, 7r6, repeats and sequences (D421)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md).
 
-## D420: 7r6, a step of a list repeats (once, a number of times, until a condition) and plays another list: the repeat is on the step
+## D421: 7r6, a step of a list repeats (once, a number of times, until a condition) and plays another list: the repeat is on the step
 
 *2026-11-10, step 7, session 7r6, the lead's, within the owner's choices of D396 (the engine, the words kept). The owner answered three
 questions one at a time, each as the lead recommended: where the repetition lives, what "until" reads and when, and how far blocks go.

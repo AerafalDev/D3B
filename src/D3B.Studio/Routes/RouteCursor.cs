@@ -30,7 +30,7 @@ public sealed class RouteCursor
     /// <param name="mode">How it goes through them.</param>
     /// <param name="firstLap">
     /// How many laps came before this run's: a step that repeats follows a loop one lap at a time, each pass a cursor of its own
-    /// that goes through the anchors once (D420), and says which lap it is.
+    /// that goes through the anchors once (D421), and says which lap it is.
     /// </param>
     public RouteCursor(int anchors, RouteMode mode, long firstLap = 0)
     {

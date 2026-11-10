@@ -7,7 +7,7 @@ using D3B.Studio.Behaviors;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>A list of steps of the project, played as a step of another, picked among the project's lists in a dialog, never typed (D298, D420).</summary>
+/// <summary>A list of steps of the project, played as a step of another, picked among the project's lists in a dialog, never typed (D298, D421).</summary>
 internal sealed partial class SequenceFieldViewModel : SettingFieldViewModel, IPickingField
 {
     /// <summary>Gets the id of the list picked, or <see langword="null"/>.</summary>

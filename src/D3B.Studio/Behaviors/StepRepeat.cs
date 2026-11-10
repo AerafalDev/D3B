@@ -1,6 +1,6 @@
 namespace D3B.Studio.Behaviors;
 
-/// <summary>How a step of a list, or the list itself, is repeated: once, a number of times, for ever or until a condition holds (D420).</summary>
+/// <summary>How a step of a list, or the list itself, is repeated: once, a number of times, for ever or until a condition holds (D421).</summary>
 /// <remarks>
 /// A pass is the step played to its end: a route followed once through its course (a loop's lap), a sequence played once. The
 /// condition of an <see cref="RepeatKind.Until"/> is read before each pass, the first included, and never in the middle of one.

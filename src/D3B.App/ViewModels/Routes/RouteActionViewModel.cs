@@ -39,7 +39,7 @@ internal sealed partial class RouteActionViewModel : ObservableObject
     /// <summary>Gets the sentence cut into words and tokens.</summary>
     public IReadOnlyList<ActionPartViewModel> Parts { get; }
 
-    /// <summary>Gets how the step of a list is repeated; none for an action of a route, which is played once (D420).</summary>
+    /// <summary>Gets how the step of a list is repeated; none for an action of a route, which is played once (D421).</summary>
     public StepRepeatViewModel? Repeat { get; init; }
 
     /// <summary>Gets whether the host does not know the action's node, which the file keeps as it is.</summary>

@@ -11,7 +11,7 @@ namespace D3B.Studio.Behaviors;
 /// </param>
 public sealed record NodeCall(string Node, ImmutableSortedDictionary<string, JsonNode?> Values)
 {
-    /// <summary>Gets how many times the call is played when it is a step of a list; a route's action or a condition is played once (D420).</summary>
+    /// <summary>Gets how many times the call is played when it is a step of a list; a route's action or a condition is played once (D421).</summary>
     public StepRepeat Repeat { get; init; } = StepRepeat.Once;
 
     /// <summary>Tells whether two calls are of the same node with the same values and the same repeat.</summary>

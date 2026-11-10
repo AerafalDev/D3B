@@ -334,7 +334,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         // A loop never ends: whatever follows it would never play.
         for (var index = 0; index < _steps.Count - 1; index++)
         {
-            // A step that repeats follows a loop one lap a pass and goes on (D420).
+            // A step that repeats follows a loop one lap a pass and goes on (D421).
             if (_steps[index].Repeat.Kind == RepeatKind.Once && _steps[index].Node == RouteActions.Follow && _steps[index].Values.TryGetValue(nameof(RouteFollowValues.Route), out var id) && id is JsonValue text && text.TryGetValue<string>(out var routeId) && library.Find<RouteAsset>(routeId) is { Mode: RouteMode.Loop } route)
                 return _page.Localizer.Format("SequenceLoopWarning", route.Name, index + 1);
         }

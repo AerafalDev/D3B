@@ -5,7 +5,7 @@ using D3B.Studio.Behaviors;
 
 namespace D3B.App.ViewModels.Sequences;
 
-/// <summary>How a step of a list, or the list, is repeated: once, a number of times, until a condition holds, for ever (D420).</summary>
+/// <summary>How a step of a list, or the list, is repeated: once, a number of times, until a condition holds, for ever (D421).</summary>
 /// <remarks>
 /// Said as a token that opens its choices where it stands, as the values of an action are. The condition of an "until" is a node
 /// of the catalog edited with the same sentence and tokens as a step.

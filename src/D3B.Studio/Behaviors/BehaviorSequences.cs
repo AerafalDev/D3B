@@ -19,7 +19,7 @@ public static class BehaviorSequences
     private const double Spacing = 260;
     private const double Margin = 40;
 
-    /// <summary>The id of the node that plays a list of the project as a step of another (D420).</summary>
+    /// <summary>The id of the node that plays a list of the project as a step of another (D421).</summary>
     public const string Play = "sequence.play";
 
     /// <summary>Gets the nodes the list editor offers as steps, in the order of its menu: those that need no map to be set up.</summary>
@@ -36,7 +36,7 @@ public static class BehaviorSequences
         "stop",
     ];
 
-    /// <summary>Gets the conditions a repeat of a list or of a step can wait on ("until"), in the order of its menu: those that read the character and need no variable (D420).</summary>
+    /// <summary>Gets the conditions a repeat of a list or of a step can wait on ("until"), in the order of its menu: those that read the character and need no variable (D421).</summary>
     public static ImmutableArray<string> OfferedConditions { get; } =
     [
         "pods.atLeast",
@@ -111,7 +111,7 @@ public static class BehaviorSequences
         return Referenced(behavior, RouteActions.Follow, nameof(RouteFollowValues.Route));
     }
 
-    /// <summary>Lists the lists a behavior plays as steps, by their behaviors' ids (D420).</summary>
+    /// <summary>Lists the lists a behavior plays as steps, by their behaviors' ids (D421).</summary>
     /// <param name="behavior">The behavior.</param>
     /// <returns>The lists' ids, each once, in the order they are first played.</returns>
     public static IReadOnlyList<string> SequencesOf(BehaviorAsset behavior)

@@ -13,7 +13,7 @@ public sealed record BehaviorState(string Id, string Name)
     /// <summary>Gets whether the state, once its conditions hold, cuts the step running, as an interruption does (D297).</summary>
     public bool IsUrgent { get; init; }
 
-    /// <summary>Gets how many times the state's actions are played from the first: once and then wait for another state, a number of times, for ever or until a condition holds (D420).</summary>
+    /// <summary>Gets how many times the state's actions are played from the first: once and then wait for another state, a number of times, for ever or until a condition holds (D421).</summary>
     public StepRepeat Repeat { get; init; } = StepRepeat.Once;
 
     /// <summary>Gets the states it holds, by priority, the first that holds chosen.</summary>
