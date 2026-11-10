@@ -3,6 +3,7 @@
     x:ClassModifier="internal"
     x:DataType="vm:ReportDialogViewModel"
     xmlns="https://github.com/avaloniaui"
+    xmlns:c="clr-namespace:D3B.App.Controls"
     xmlns:l="clr-namespace:D3B.App.Localization"
     xmlns:vm="clr-namespace:D3B.App.ViewModels.Reports"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -50,12 +51,23 @@
                     SelectedItem="{Binding Character}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:ReportCharacterChoice">
-                            <StackPanel>
-                                <TextBlock Text="{Binding Name}" />
-                                <TextBlock
-                                    Classes="Dim"
-                                    FontSize="11.5"
-                                    Text="{Binding Detail}" />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <c:Portrait
+                                    Color="{Binding PortraitColor}"
+                                    Head="{Binding Head}"
+                                    Height="28"
+                                    Initials="{Binding Initials}"
+                                    IsDimmed="{Binding IsDimmed}"
+                                    Radius="14"
+                                    VerticalAlignment="Center"
+                                    Width="28" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock
+                                        Classes="Dim"
+                                        FontSize="11.5"
+                                        Text="{Binding Detail}" />
+                                </StackPanel>
                             </StackPanel>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
@@ -200,22 +212,35 @@
                 <Button
                     Classes="Primary"
                     Command="{Binding SaveCommand}"
-                    Content="{l:Tr ReportSave}" />
+                    Content="{l:Tr ReportSave}"
+                    IsVisible="{Binding !CanSend}" />
+                <Button
+                    Classes="Primary"
+                    Command="{Binding SaveAndSendCommand}"
+                    Content="{l:Tr ReportSend}"
+                    IsVisible="{Binding CanSend}" />
             </StackPanel>
         </StackPanel>
 
-        <!--  Written: the code to give on Discord.  -->
+        <!--  Written: sent, or, when it cannot be, the code to give on Discord.  -->
         <StackPanel IsVisible="{Binding IsDone}" Spacing="12">
             <TextBlock
                 Classes="Bright"
                 FontWeight="SemiBold"
                 Text="{l:Tr ReportDoneTitle}" />
-            <TextBlock Text="{Binding DoneText}" TextWrapping="Wrap" />
-            <ProgressBar
+            <TextBlock
+                IsVisible="{Binding HasDoneText}"
+                Text="{Binding DoneText}"
+                TextWrapping="Wrap" />
+            <TextBlock
+                Classes="Dim"
                 IsVisible="{Binding IsSending}"
-                Maximum="1"
-                Minimum="0"
-                Value="{Binding SendProgress}" />
+                Text="{l:Tr ReportSending}" />
+            <!--  Indeterminate: the progress told is the file read, which ends long before the channel answers.  -->
+            <ProgressBar
+                Classes="Meter"
+                IsIndeterminate="True"
+                IsVisible="{Binding IsSending}" />
             <TextBlock
                 IsVisible="{Binding HasSendText}"
                 Text="{Binding SendText}"
@@ -228,15 +253,17 @@
                     Classes="Primary"
                     Command="{Binding SendCommand}"
                     Content="{l:Tr ReportSend}"
-                    IsVisible="{Binding CanSend}" />
+                    IsVisible="{Binding ShowsSend}" />
                 <Button
                     Classes="Outline"
                     Command="{Binding CopyCodeCommand}"
-                    Content="{l:Tr ReportCopyCode}" />
+                    Content="{l:Tr ReportCopyCode}"
+                    IsVisible="{Binding ShowsFallback}" />
                 <Button
                     Classes="Outline"
                     Command="{Binding OpenFolderCommand}"
-                    Content="{l:Tr ReportOpenFolder}" />
+                    Content="{l:Tr ReportOpenFolder}"
+                    IsVisible="{Binding ShowsFallback}" />
                 <Button
                     Classes="Outline"
                     Command="{Binding CancelCommand}"

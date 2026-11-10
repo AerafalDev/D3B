@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Reports;
@@ -36,7 +37,7 @@ public sealed class ReportDialogViewTests
 
                     localizer.Use(Localizer.English);
 
-                    var character = new ReportCharacterChoice(1, 11, "Aldebarane", "Level 80, online");
+                    var character = new ReportCharacterChoice(1, 11, "Aldebarane", "Level 80, online", "AL");
                     var dialog = new ReportDialogViewModel(
                         localizer,
                         new Dialogs(),
@@ -98,5 +99,32 @@ public sealed class ReportDialogViewTests
             if (Directory.Exists(folder))
                 Directory.Delete(folder, true);
         }
+    }
+
+    [Fact]
+    public async Task TheChosenCharacterShowsItsPortraitInTheListAndBeside()
+    {
+        var initials = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(ReportDialogViewTests).Assembly).Dispatch(
+            () =>
+            {
+                Localizer.Instance.Use(Localizer.English);
+
+                var character = new ReportCharacterChoice(1, 11, "Aldebarane", "Level 80, online", "AL");
+                var dialog = new ReportDialogViewModel(Localizer.Instance, new Dialogs(), [character], _ => new ReportSources { CharacterId = 11, CharacterName = "Aldebarane", App = "0.9.0", Client = "3.7.13.17", Folder = "." }, _ => { }, _ => { }, character);
+                var view = new ReportDialogView { DataContext = dialog };
+                var window = new Window { Content = view, Width = 700, Height = 900 };
+
+                window.Show();
+                Dispatcher.UIThread.RunJobs();
+
+                var shown = view.GetVisualDescendants().OfType<Portrait>().Select(portrait => portrait.Initials).ToList();
+
+                window.Close();
+
+                return shown;
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(["AL"], initials);
     }
 }

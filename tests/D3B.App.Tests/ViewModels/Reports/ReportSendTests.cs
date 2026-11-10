@@ -120,6 +120,70 @@ public sealed class ReportSendTests : IDisposable
     }
 
     [Fact]
+    public async Task OneClickInThePreviewSavesAndSendsAndAsksNothingOfThePlayerWhenItGoesThrough()
+    {
+        var sink = new FakeSink(new ReportSendResult(ReportSendStatus.Sent));
+        var copied = new List<string>();
+        var opened = new List<string>();
+        var dialog = new ReportDialogViewModel(_localizer, _dialogs, [], _ => new ReportSources { CharacterId = 0, CharacterName = "", App = "0.8.1", Client = "3.7.13.17", Folder = _directory.Combine("reports") }, copied.Add, opened.Add, null, _ => Task.FromResult<IReportSink?>(sink));
+
+        dialog.Area = dialog.Areas.Single(area => area.Area is ReportArea.App);
+        await dialog.NextCommand.ExecuteAsync(null);
+        await dialog.SaveAndSendCommand.ExecuteAsync(null);
+
+        Assert.True(dialog.IsDone);
+        Assert.True(dialog.IsSent);
+        Assert.Single(sink.Requests);
+        Assert.False(dialog.HasDoneText);
+        Assert.False(dialog.ShowsFallback);
+        Assert.Empty(copied);
+        Assert.Empty(opened);
+    }
+
+    [Fact]
+    public async Task TheSendButtonOfThePreviewIsEnabledOnceThePreviewIsReadyAndNotBefore()
+    {
+        var sink = new FakeSink(new ReportSendResult(ReportSendStatus.Sent));
+        var dialog = new ReportDialogViewModel(_localizer, _dialogs, [], _ => new ReportSources { CharacterId = 0, CharacterName = "", App = "0.8.1", Client = "3.7.13.17", Folder = _directory.Combine("reports") }, _ => { }, _ => { }, null, _ => Task.FromResult<IReportSink?>(sink));
+
+        dialog.Area = dialog.Areas.Single(area => area.Area is ReportArea.App);
+
+        Assert.False(dialog.SaveAndSendCommand.CanExecute(null));
+
+        await dialog.NextCommand.ExecuteAsync(null);
+
+        Assert.True(dialog.SaveAndSendCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task WhenTheSendFailsTheCodeAndTheFolderAreOfferedAndNothingIsOpenedBehindTheirBack()
+    {
+        var sink = new FakeSink(new ReportSendResult(ReportSendStatus.Unavailable));
+        var copied = new List<string>();
+        var opened = new List<string>();
+        var dialog = new ReportDialogViewModel(_localizer, _dialogs, [], _ => new ReportSources { CharacterId = 0, CharacterName = "", App = "0.8.1", Client = "3.7.13.17", Folder = _directory.Combine("reports") }, copied.Add, opened.Add, null, _ => Task.FromResult<IReportSink?>(sink));
+
+        dialog.Area = dialog.Areas.Single(area => area.Area is ReportArea.App);
+        await dialog.NextCommand.ExecuteAsync(null);
+        await dialog.SaveAndSendCommand.ExecuteAsync(null);
+
+        Assert.False(dialog.IsSent);
+        Assert.True(dialog.ShowsFallback);
+        Assert.Contains(dialog.Written!.Code, dialog.SendText, StringComparison.Ordinal);
+        Assert.Empty(copied);
+        Assert.Empty(opened);
+    }
+
+    [Fact]
+    public async Task AnAppThatCannotSendOffersTheCodeAndTheFolderFromTheStart()
+    {
+        var dialog = await SavedAsync(null, hasChannel: false);
+
+        Assert.True(dialog.ShowsFallback);
+        Assert.True(dialog.HasDoneText);
+    }
+
+    [Fact]
     public async Task AFailureIsToldInTheAppsLanguageWithNothingOfTheChannelsOwnWords()
     {
         var french = new Localizer(Localizer.French);

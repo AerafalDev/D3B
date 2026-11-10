@@ -144,7 +144,7 @@ public sealed class MainWindowDialogsTests : IAsyncDisposable
 
         Assert.Contains("Report a bug", form);
         Assert.Contains("Your message (optional)", form);
-        Assert.Contains("Save the report", preview);
+        Assert.Contains("Send to the maintainers", preview);
         Assert.Contains("Your message", preview);
         Assert.InRange(width, 520, 640);
     }
