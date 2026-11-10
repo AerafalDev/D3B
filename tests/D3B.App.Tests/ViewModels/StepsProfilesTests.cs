@@ -42,7 +42,7 @@ public sealed class StepsProfilesTests : IAsyncDisposable
 
     private async Task<BehaviorAsset> ListAsync(string name, params NodeCall[] steps)
     {
-        return await _store.Assets.SaveAsync(BehaviorSequences.Write(new BehaviorAsset { Id = AssetLibrary.NewId(), Name = name }, new BehaviorSequence([.. steps], false)), TestContext.Current.CancellationToken);
+        return await _store.Assets.SaveAsync(BehaviorSequences.Write(new BehaviorAsset { Id = AssetLibrary.NewId(), Name = name }, new BehaviorSequence([.. steps], StepRepeat.Once)), TestContext.Current.CancellationToken);
     }
 
     [Fact]

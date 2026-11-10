@@ -379,7 +379,7 @@ public static class AssetFiles
         {
             When = node["when"] is { } when ? ReadCondition(when) : null,
             IsUrgent = Flag(node, "urgent"),
-            Repeats = Flag(node, "repeats"),
+            Repeat = Flag(node, "repeats") ? StepRepeat.Forever : ReadRepeat(node["repeat"]),
             States = Items(node, "states", ReadState),
             Actions = node["actions"] is JsonObject actions ? ReadGraph(actions) : ActionGraph.Empty,
         };
@@ -391,6 +391,38 @@ public static class AssetFiles
         {
             When = node["when"] is { } when ? ReadCondition(when) : null,
             Actions = node["actions"] is JsonObject actions ? ReadGraph(actions) : ActionGraph.Empty,
+        };
+    }
+
+    private static StepRepeat ReadRepeat(JsonNode? node)
+    {
+        if (node is null)
+            return StepRepeat.Once;
+
+        if (node is not JsonObject repeat)
+            throw new AssetFormatException("\"repeat\" is a JSON object.");
+
+        if (repeat["times"] is { } times)
+        {
+            return times is JsonValue value && value.TryGetValue<int>(out var count) && count is >= 1 and <= StepRepeat.MostTimes
+                ? StepRepeat.Times(count)
+                : throw new AssetFormatException($"\"times\" is a whole number from 1 to {StepRepeat.MostTimes}.");
+        }
+
+        if (repeat["until"] is { } until)
+            return StepRepeat.Until(ReadCall(until as JsonObject ?? throw new AssetFormatException("\"until\" is a condition's node.")));
+
+        return Flag(repeat, "forever") ? StepRepeat.Forever : throw new AssetFormatException("A repeat is \"times\", \"until\" or \"forever\".");
+    }
+
+    private static JsonObject? WriteRepeat(StepRepeat repeat)
+    {
+        return repeat.Kind switch
+        {
+            RepeatKind.Times => new JsonObject { ["times"] = repeat.Count },
+            RepeatKind.Until => new JsonObject { ["until"] = WriteCall(repeat.Condition!) },
+            RepeatKind.Forever => new JsonObject { ["forever"] = true },
+            _ => null,
         };
     }
 
@@ -425,6 +457,7 @@ public static class AssetFiles
             Items(node, "nodes", item => new GraphNode(Text(item, "id"), Text(item, "node"), Values(item["values"]))
             {
                 IsDisabled = Flag(item, "disabled"),
+                Repeat = ReadRepeat(item["repeat"]),
                 Position = PositionOf(layout, Text(item, "id")),
             }),
             Items(node, "links", item => new GraphLink(Text(item, "from"), Text(item, "pin"), Text(item, "to"), OptionalText(item, "input"))));
@@ -475,8 +508,11 @@ public static class AssetFiles
         if (state.IsUrgent)
             json["urgent"] = true;
 
-        if (state.Repeats)
+        // Forever is the file's old flag, so that a list written before repeats had a count reads and writes as it was.
+        if (state.Repeat.Kind == RepeatKind.Forever)
             json["repeats"] = true;
+        else if (WriteRepeat(state.Repeat) is { } repeat)
+            json["repeat"] = repeat;
 
         if (state.States.Length > 0)
             json["states"] = new JsonArray([.. state.States.Select(child => (JsonNode)WriteState(child))]);
@@ -539,6 +575,9 @@ public static class AssetFiles
 
             if (node.IsDisabled)
                 item["disabled"] = true;
+
+            if (WriteRepeat(node.Repeat) is { } repeat)
+                item["repeat"] = repeat;
 
             if (node.Position != default)
                 layout[node.Id] = new JsonArray(node.Position.X, node.Position.Y);

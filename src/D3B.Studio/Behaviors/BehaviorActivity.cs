@@ -148,7 +148,7 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
             Enter(leaf, bot);
 
         // Played to its end and chosen again: the behavior is done, as StateTree's is, rather than wait on a state nothing changes.
-        if (_visit is { IsFinished: true, State.Repeats: false })
+        if (_visit is { IsFinished: true } finished && !finished.CanPlayAgain(Evaluate(bot, bot.State)))
             return false;
 
         using var cut = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

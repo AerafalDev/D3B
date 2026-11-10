@@ -2810,6 +2810,21 @@
   <data name="RepliesLeadsToText" xml:space="preserve">
     <value>leads to “{0}”</value>
   </data>
+  <data name="SequenceChoose" xml:space="preserve">
+    <value>choose a sequence</value>
+  </data>
+  <data name="SequencePickerTitle" xml:space="preserve">
+    <value>Pick a sequence</value>
+  </data>
+  <data name="SequencePickerNone" xml:space="preserve">
+    <value>The project holds no other list of steps to play here. Make one from the explorer's + menu, then pick it here.</value>
+  </data>
+  <data name="SequenceClear" xml:space="preserve">
+    <value>Clear the sequence</value>
+  </data>
+  <data name="SequenceNamePlay" xml:space="preserve">
+    <value>Play a sequence</value>
+  </data>
   <data name="RouteChoose" xml:space="preserve">
     <value>choose a route</value>
   </data>
@@ -2856,10 +2871,10 @@
     <value>No step yet. Press + to add one.</value>
   </data>
   <data name="SequenceRepeats" xml:space="preserve">
-    <value>Start again at the end</value>
+    <value>At the end of the list</value>
   </data>
   <data name="SequenceRepeatsHelp" xml:space="preserve">
-    <value>Off, the run ends once the last step is played.</value>
+    <value>Once, the run ends after the last step. Otherwise the list starts again: a number of times, until a condition holds or for ever.</value>
   </data>
   <data name="SequenceLoopWarning" xml:space="preserve">
     <value>The route “{0}” is a loop: it never ends, so the steps after step {1} never play.</value>
@@ -3190,6 +3205,45 @@
   </data>
   <data name="ZoneNotInProject" xml:space="preserve">
     <value>This zone is not in the project.</value>
+  </data>
+  <data name="RepeatLabel" xml:space="preserve">
+    <value>Repeat</value>
+  </data>
+  <data name="RepeatOnce" xml:space="preserve">
+    <value>once</value>
+  </data>
+  <data name="RepeatTimes" xml:space="preserve">
+    <value>{0} times</value>
+  </data>
+  <data name="RepeatForever" xml:space="preserve">
+    <value>for ever</value>
+  </data>
+  <data name="RepeatUntil" xml:space="preserve">
+    <value>until {0}</value>
+  </data>
+  <data name="RepeatKindOnce" xml:space="preserve">
+    <value>Once</value>
+  </data>
+  <data name="RepeatKindTimes" xml:space="preserve">
+    <value>A number of times</value>
+  </data>
+  <data name="RepeatKindUntil" xml:space="preserve">
+    <value>Until a condition holds</value>
+  </data>
+  <data name="RepeatKindForever" xml:space="preserve">
+    <value>For ever</value>
+  </data>
+  <data name="RepeatCount" xml:space="preserve">
+    <value>How many times</value>
+  </data>
+  <data name="RepeatCondition" xml:space="preserve">
+    <value>Condition</value>
+  </data>
+  <data name="RepeatConditionHelp" xml:space="preserve">
+    <value>Read before each pass, the first included: when it already holds, the step is passed.</value>
+  </data>
+  <data name="RepeatOf" xml:space="preserve">
+    <value>Repeat: {0}</value>
   </data>
   <data name="SettingCaptureDaysRow" xml:space="preserve">
     <value>Keep captures for</value>

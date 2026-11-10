@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
+As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
 
 ## What exists
 
@@ -39,7 +39,11 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
   and the home page's notice in headless windows, not seen by the owner in the app and not run on a client. The first start of the host after
   the change deletes the game's captures older than 7 days or beyond 1 GB: the owner's 153 captures, which `scripts/fights.cs` replays, would
   go, so he sets `Network:Captures:Retention:Days` to 0 (or copies `captures\game`) before it. The 7 days and the 1 GB are D409's, the lead's reckoning.
-
+- Repeats and sequences as steps (D421, 7r6) are tried on the fake game, view models and headless windows, not on a client and not by the owner
+  in the app: a route followed three times (the journal saying its steps in the first pass only), a loop followed until pods at least 90 % (a lap
+  long enough overshoots, the condition being read between passes), a list played inside a list with a fight in the middle of its second step, a
+  block that holds a route, the flyout of the repeat token and of the condition (the headless window opens no popup), and how the tokens read under
+  each step. The list is in D421; it joins the measure owed below.
 - Following a run (D419, 7r4) is tried on the fake game, view models and headless windows, not on a client: whether the position told is the
   position lived with real travel (zaaps, `Busy` waits, a map with no path), a fight or a bank cutting the route and the run resuming on the
   same step, a long action while the playhead stays on its step, two accounts on one route, 250 ms against a map every three seconds. The
@@ -75,6 +79,7 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
   invisible fighter (no capture holds one: the AI keeps its last cell and `Combatant.IsVisible` is never unset); the damage of a
   long push against a wall (the captures hold pushes of 1 to 4 cells, the pack's *Panache DoPou* pushes 10); the players'
   *Chafer* and *Arakne* summons, which no breed of the pack casts.
+- The Pandawa swapping Sobre and Saoul with Bombance or Picole instead of striking (D420): a player's report, reproduced on the imagined fight of the pack's spells and fixed in the judge (a state held as the search began is no gain), not seen in game: no capture holds a Pandawa casting either, so what the server sends back of the swap (the two states, the AP given back, state 1) is read in the pack. The player is to say whether it strikes now.
 - Step 9's mechanisms: the Roublard against big enemies with `Fights:Alone`, the Féca's glyphs, an Osamodas's summons and the
   fight map's preview, an aggression, stairs and portals, the inactivity popup, what the client shows once its turn's end goes
   unanswered (D367).
@@ -83,13 +88,14 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
 
 0. **The refactoring and tidy-up session** (D399 to D401) is mostly done: `decisions.md` is cut in files by group of the index,
    `client.md` has its game connection apart, `AssetsViewModel`, `BotActor`, `HarvestActivity`, `WorldMapView` and `Imagination`
-   are under 900 lines, BenchmarkDotNet is gone. Left: `FightJudge` and `RouteEditorViewModel`, over 900 lines (debt, below).
-0. **Bug reports with the player's capture** (D409 to D411): BR1 is made, the game connection is recorded by default with its
+   are under 900 lines, BenchmarkDotNet is gone. The two files that stayed over 900 lines, `FightJudge` and `RouteEditorViewModel`, are cut too.
+0. **Bug reports with the player's capture** (D409 to D411, D422): BR1 is made, the game connection is recorded by default with its
    retention and the notice (`Network:Captures:Game`, `CaptureRetention`), and what names the account in a capture is measured
    ([client-game.md](client-game.md#the-game-what-names-the-account)): it is more than the ticket and the list, so BR2's cleaner waits
    for the owner's answer on D410. Then a `.d3breport` bundle, the app's action and the Discord webhook (BR2 to BR4).
-1. **7r4, following a run, is made** (D419), to try in game with the owner's list; then **7r6**, sequences as blocks, laps and "until" (a change of
-   `RouteRunner`, to confirm), all before 7e. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already
+1. **7r4, following a run, and 7r6, repeats and sequences as steps, are made in code** (D419, D421), to try in game with the owner's lists; then 7e.
+   7r6 left: the condition read between two steps of a route, and, or and not in an "until" (7e's), a pass of a repeated one-way route on the card,
+   the lists that repeat a route shown on the route. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already
    passed dimmed on the map, and recording in the toolbar, which waits for the measure in game.
 2. **A measure in game with the owner**, before anything else of step 7: the list above, and what 7d4b will record.
 3. **Session 7d4b**: recording while playing and Simplify (D299, D394), once the events it reads are measured.
@@ -114,7 +120,7 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
   a future module in a project of its own can. Nine members and types of `D3B.Bot` became public so that the studio could use them
   (`BotContext.Actor`, `BotActor.Time`, `Log`, `PauseAfterStep`, `SettingDefinition.TryRead`, `ActivitySettingsBuilder`'s
   constructor and `Build`, `MapHarvest`, `MapFight`): a narrower seam would be a task of its own.
-- Files over 900 lines (D399): `FightJudge` 1,258 (from 1,365: its pure turn arithmetic is `JudgeTurns`; what is left is its score's terms, threat, approach, marks and buffs, which share its caches and are cut only with the replay of the captured fights, `scripts/fights.cs --turns`, compared before and after) and `RouteEditorViewModel` 1,044 (from 1,238: its texts, map scene, step rows and action forms are cut; its step actions, planning and the typed anchor are left). `AssetsViewModel` (885), `Imagination` (864, its pure fighter helpers are `ImaginedFighters`), `WorldMapView` (848, its hit test is `WorldMapHitTesting`), `BotActor` (723) and `HarvestActivity` (709) are cut. `D3B.Bot` stays one project: its core (`Runtime`, `Activities`, `Banks`, `Movement`, `Journal`, `Characters`) refers to itself both ways, `Harvesting` and `Fighting` are the leaves.
+- Files over 900 lines (D399): none any more. `FightJudge` (890, from 1,365: its pure turn arithmetic is `JudgeTurns`, its damage tables and landing caches `JudgeTables`, its odds `JudgeOdds`; its score's terms, threat, approach, marks and buffs stay in it, cut only with the replay of the captured fights, `scripts/fights.cs --turns`, compared before and after) and `RouteEditorViewModel` (886, from 1,238: its texts, map scene, step rows, action forms, undo history, path planning, typed anchor, trace and world menu are cut). `AssetsViewModel` (885), `Imagination` (864, its pure fighter helpers are `ImaginedFighters`), `WorldMapView` (848, its hit test is `WorldMapHitTesting`), `BotActor` (723) and `HarvestActivity` (709) are cut. `D3B.Bot` stays one project: its core (`Runtime`, `Activities`, `Banks`, `Movement`, `Journal`, `Characters`) refers to itself both ways, `Harvesting` and `Fighting` are the leaves.
 - Undo has two histories: the route editor keeps its own snapshots (D375), the list of steps, the profile and the zone editors use
   `UndoHistory` (D394). Moving the route onto it is a change of no use by itself; do it when the route editor is next opened for another reason.
 - The zones are read by the harvest and the hunt as a place (D415) and by their editor; a zone is not yet a filter of the Automatic place, and the nodes and conditions of 7f do not read them.

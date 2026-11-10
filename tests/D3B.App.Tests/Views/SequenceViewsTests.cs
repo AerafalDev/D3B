@@ -116,6 +116,50 @@ public sealed class SequenceViewsTests
     }
 
     [Fact]
+    public async Task EachStepAndTheListSayHowTheyRepeatInATokenThatOpensItsChoices()
+    {
+        await using var store = new TestStore();
+
+        await store.OpenedAsync();
+
+        var runner = await TestHosts.RunningAsync(store.Host);
+        var result = await OnTheUIThreadAsync(async () =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var editor = (await main.Sequences.CreateAsync(""))!;
+
+            editor.AddStepCommand.Execute("wait");
+            editor.AddStepCommand.Execute("stop");
+            editor.Steps[0].Repeat!.IsTimes = true;
+            editor.Steps[0].Repeat!.Count = 3;
+            editor.ListRepeat.IsUntil = true;
+            Dispatcher.UIThread.RunJobs();
+
+            var list = window.GetVisualDescendants().OfType<SequenceView>().Single(view => view.IsEffectivelyVisible);
+            var tokens = list.GetVisualDescendants().OfType<StepRepeatView>().Select(view => view.GetVisualDescendants().OfType<Button>().First().Content as string).ToList();
+
+            Drawings.Draw(window, "sequence-repeat");
+            window.Close();
+
+            return tokens;
+        });
+
+        Assert.Equal(["3 times", "once", "until pods at least 90 %"], result);
+    }
+
+    [Fact]
     public async Task AStepInTheFocusMovesWithAltAndTheArrowsAndIsRemovedWithDelete()
     {
         await using var store = new TestStore();

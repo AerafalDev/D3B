@@ -47,4 +47,35 @@ public sealed class FollowRouteTests : IAsyncDisposable
         Assert.Contains("Here", Notes(bot)[0], StringComparison.Ordinal);
         Assert.Equal("after", Notes(bot)[1]);
     }
+
+    [Fact]
+    public async Task ALoopFollowedByAStepThatRepeatsPlaysOneLapForEachPassThenTheNextStep()
+    {
+        var (_, bot) = await _behaviors.Play.EnterAsync(433);
+        var map = bot.State.MapId!.Value;
+        var route = new RouteAsset
+        {
+            Id = AssetLibrary.NewId(),
+            Name = "Round",
+            Mode = RouteMode.Loop,
+            Anchors = [new RouteAnchor { MapId = map, Actions = [new NodeCall("wait", Values(("Seconds", 1)))] }, new RouteAnchor { MapId = map, Actions = [new NodeCall("wait", Values(("Seconds", 1)))] }],
+        };
+
+        await _behaviors.Assets.SaveAsync(route, TestContext.Current.CancellationToken);
+
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("only", "Only") { Actions = Chain(Node("f", RouteActions.Follow, ("Route", route.Id)) with { Repeat = StepRepeat.Times(2) }, Note("b", "after")) }));
+
+        while (!run.Completion.IsCompleted)
+        {
+            _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+
+        // Said in the first lap only: the second pass is silent, and the step after it plays once both are done.
+        Assert.Equal(3, Notes(bot).Count);
+        Assert.Equal("after", Notes(bot)[2]);
+    }
 }

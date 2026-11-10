@@ -843,7 +843,7 @@ moved to `D3B.Studio` (D393), with no new interface:
   where they are) and starts `BehaviorActivity`, the one activity that runs any behavior: each step the leaf chosen, then
   its actions gone through from the first, goals passed, what the state says nothing of played once per visit
   (`StateVisit`), an activity's node delegating to today's activity; a leaf played to its end and chosen again is done
-  unless it repeats; no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
+  unless it repeats (`BehaviorState.Repeat`: a number of times, for ever or until a condition, D421); no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
   urgent state cuts the step. Variables of the run, the character's (`CharacterVariables`, kept by `D3B.Storage`) and the
   bots' (`SharedVariables`). The journal says each state entered and each note; the trace, each decision (D350).
 - **The app** (D317, D352): a profile of a behavior playing one activity whole is edited as its settings (`ProfileForms`),
@@ -910,6 +910,18 @@ The target:
     lists the routes a behavior follows. `SequencesViewModel` holds the editors open, `SequenceEditorViewModel` and `SequenceView` are a
     list's tab, its steps `RouteActionViewModel`s drawn by `ActionCardView`; the new-profile dialog (`NewProfileViewModel`) and the
     profile's tab (`ProfileViewModel.IsBehaviorProfile`) play a list as they play an activity.
+  - **Repeats and sequences as steps** (D421): `StepRepeat` (`RepeatKind`: once, a number of times from 2 to 999, for ever, until a
+    condition; `NodeCall.Repeat` for a list's step, `GraphNode.Repeat` and `BehaviorState.Repeat` in the file, `"repeats": true` still
+    for ever) is how a step or the list is played. The compiler makes an "until" a `CompiledCondition` of the step (`CompiledStep.Action.Until`)
+    or the state; `StateVisit` counts the passes of each step and of the leaf and reads the condition before each pass (`CanPlayAgain`,
+    the first pass too); a pass of a step that repeats ends the step. A step tells its node the pass (`ActionContext.Pass`): `FollowRoute`
+    asks `RouteRuns.Of(..., pass)` for a cursor of one lap when the route is a loop, `RouteCursor` taking the lap it is. `sequence.play`
+    (`PlaySequence`, `SettingKind.Sequence`, `SequenceFieldViewModel`) compiles a list of the project and walks it with a `StateVisit` kept
+    in `SequenceRuns` (one for a character and a list, outliving a cut, forgotten once played to its end); `SequenceRuns.TryBegin` refuses a
+    list that plays itself, `BehaviorSequences.Reaches` keeps the editor from offering one, and `BehaviorAsset.Uses` lists the lists played.
+    `StepRepeatViewModel` and `StepRepeatView` are the token under each step and under the list; the condition of an "until" is a
+    `RouteActionViewModel` drawn by `ActionSentenceView`, the sentence of `ActionCardView` taken out; `BehaviorSequences.OfferedConditions`
+    are the conditions offered.
   - **Zones** (D394): `ZoneAsset` (`D3B.Studio.Assets`, file `<name>.zone.json`) holds sub-area ids, map ids and left-out map ids,
     ascending, and what else the file holds (`Details`); `ZoneMaps.Resolve` and `Holds` give the maps it holds (its sub-areas' and
     the maps named, less those left out); a harvest or a hunt reads them as its place (D415, `ProjectZones`). `ZonesViewModel` and `ZoneEditorViewModel` (`D3B.App.ViewModels.Zones`) hold the editors
@@ -940,7 +952,7 @@ The target:
 - **The sessions** (D306, D319): 7b the model and run time, 7c the shell's design, 7c2 to 7c4 its code, 7d routes and
   zones, 7e and 7e2 the canvas, 7f the nodes and plannings, 7g debugging, 7h fight preferences, 7i sharing; profiles,
   presets and runs dropped at 7b (D304).
-    Its texts (`RouteTexts`), the scene its map draws (`RouteSceneBuilder`), its step rows (`RouteStepRows`) and the forms of a step's actions (`RouteActionForms`) are made apart (D399).
+    Its texts (`RouteTexts`), the scene its map draws (`RouteSceneBuilder`), its step rows (`RouteStepRows`), the forms of a step's actions (`RouteActionForms`), its menu of worlds (`RouteWorldChoices`) and the maps its trace adds (`RouteTrace`) are made apart; the rows of the chosen step's actions with their removing, moving and editing are `RouteActionList`, the path search and its summary `RoutePlanning` and `RouteLegSummary`, what is typed to add an anchor `RouteTypedAnchor`, and the undo and redo `RouteHistory` of `RouteSnapshot`s, a gesture counted as one (D399). The editor keeps the anchors, `Changed()` and the selection, and tells the collaborators back through callbacks.
 
 ## Engine
 
@@ -1013,9 +1025,11 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     60% of its most (`TacticWeights.Comfort`, D407), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
     range and in sight (D208), bounded by a kill; the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
-    over the rounds it lasts (D209); once the enemies
+    over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420); once the enemies
     replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
-    the bench what it measures (D206).
+    the bench what it measures (D206). What it reckons once from where the fight starts and keeps is `JudgeTables` (each
+    fighter's damaging spells, the damage of its best turn on every other for every number of AP, which spells land from where
+    it walks), the odds are `JudgeOdds`, and the pure turn arithmetic is `JudgeTurns` (D399).
   - `Summons`, in `D3B.Engine.Fights`: the fighter a summon brings, from its monster's grade and its summoner's
     characteristics, as the server makes it (D269); `MonsterSpells`, the levels a monster casts at a grade. A summon the
     search brings is judged as one of the fighters the judge starts with: its life a tenth of an ally's, its being alive
