@@ -459,8 +459,16 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   256 MiB an entry and 512 MiB in all by `ReportLimits`, expanded bytes counted as they come, only the names of
   `ReportFiles`, every file checked against the manifest). `ReportAssets` (`D3B.Studio`) gives the profile played and the
   assets it reaches, and `ReportKnowledge` (`D3B.Storage`) what the bots learned, by ids. `scripts/report.cs` unpacks
-  a report under `artifacts/reports/<code>/`, prints the message first and replays its fights; the app's action and the
-  webhook are BR3 and BR4.
+  a report under `artifacts/reports/<code>/`, prints the message first and replays its fights. The app's action (BR3, Help,
+  Report a bug) is `ReportDialogViewModel` in `D3B.App.ViewModels.Reports`, three steps in one dialog: the form (area,
+  character, the optional message of 1,500 characters that the field stops at, with the warning about personal data), the
+  preview and the report written. `ReportSourcesFactory` reads from the host what a character's report is made of: its
+  bot's journal and trace, the profile it plays through `AccountBook` and `ReportAssets`, what the bots learned, the
+  settings the player changed, and its capture, found by the id of its bot's last game connection
+  (`BotActor.ConnectionId`, `ReportCaptures.Find`: the relay ends a capture's name with it), read while the relay may still
+  hold it open. `ReportDraft` cleans the capture, makes each part a `ReportPartChoice` the player reads and unchecks (the
+  capture of a game's report is required and cannot be), and writes `<code>.d3breport` in `%LOCALAPPDATA%\D3B\reports`;
+  the code is copied and the folder opened. Nothing is sent: the webhook is BR4.
 
 ## Game data
 

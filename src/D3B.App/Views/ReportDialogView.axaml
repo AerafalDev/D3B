@@ -1,0 +1,216 @@
+<UserControl
+    x:Class="D3B.App.Views.ReportDialogView"
+    x:ClassModifier="internal"
+    x:DataType="vm:ReportDialogViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:l="clr-namespace:D3B.App.Localization"
+    xmlns:vm="clr-namespace:D3B.App.ViewModels.Reports"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.KeyBindings>
+        <KeyBinding Command="{Binding CancelCommand}" Gesture="Escape" />
+    </UserControl.KeyBindings>
+    <StackPanel
+        MaxWidth="640"
+        Margin="24"
+        Spacing="16">
+        <TextBlock Classes="Title" Text="{l:Tr ReportTitle}" />
+
+        <!--  The form: the area, the character and the message of the player's own.  -->
+        <StackPanel IsVisible="{Binding IsForm}" Spacing="12">
+            <TextBlock
+                Classes="Dim"
+                Text="{l:Tr ReportFormLead}"
+                TextWrapping="Wrap" />
+            <StackPanel Spacing="8">
+                <TextBlock Classes="Label" Text="{l:Tr ReportAreaLabel}" />
+                <ComboBox
+                    AutomationProperties.Name="{l:Tr ReportAreaLabel}"
+                    HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding Areas}"
+                    SelectedItem="{Binding Area}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ReportAreaChoice">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Label}" />
+                                <TextBlock
+                                    Classes="Dim"
+                                    FontSize="11.5"
+                                    Text="{Binding Detail}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel IsVisible="{Binding NeedsCharacter}" Spacing="8">
+                <TextBlock Classes="Label" Text="{l:Tr ReportCharacterLabel}" />
+                <ComboBox
+                    AutomationProperties.Name="{l:Tr ReportCharacterLabel}"
+                    HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding Characters}"
+                    SelectedItem="{Binding Character}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ReportCharacterChoice">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" />
+                                <TextBlock
+                                    Classes="Dim"
+                                    FontSize="11.5"
+                                    Text="{Binding Detail}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="Label" Text="{l:Tr ReportMessageLabel}" />
+                    <TextBlock
+                        Classes="Dim Figures"
+                        Grid.Column="1"
+                        Text="{Binding MessageCount}" />
+                </Grid>
+                <TextBox
+                    AcceptsReturn="True"
+                    AutomationProperties.Name="{l:Tr ReportMessageLabel}"
+                    Height="110"
+                    MaxLength="{Binding MessageLimit}"
+                    Text="{Binding Message}"
+                    TextWrapping="Wrap"
+                    PlaceholderText="{l:Tr ReportMessageHint}" />
+                <TextBlock
+                    Classes="Dim"
+                    FontSize="11.5"
+                    Text="{l:Tr ReportMessageWarning}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <TextBlock
+                Classes="Problem"
+                IsVisible="{Binding HasProblem}"
+                Text="{Binding Problem}"
+                TextWrapping="Wrap" />
+            <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Classes="Outline"
+                    Command="{Binding CancelCommand}"
+                    Content="{l:Tr ReportCancel}" />
+                <Button
+                    Classes="Primary"
+                    Command="{Binding NextCommand}"
+                    Content="{l:Tr ReportNext}" />
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock
+            Classes="Dim"
+            IsVisible="{Binding IsPreparing}"
+            Text="{l:Tr ReportPreparing}" />
+
+        <!--  The preview: every part, readable and removable.  -->
+        <StackPanel IsVisible="{Binding IsPreview}" Spacing="12">
+            <TextBlock
+                Classes="Dim"
+                Text="{l:Tr ReportPreviewLead}"
+                TextWrapping="Wrap" />
+            <TextBlock
+                Classes="Problem"
+                IsVisible="{Binding HasProblem}"
+                Text="{Binding Problem}"
+                TextWrapping="Wrap" />
+            <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Parts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ReportPartChoice">
+                            <StackPanel Margin="0,0,0,10" Spacing="4">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <CheckBox
+                                        AutomationProperties.Name="{Binding Title}"
+                                        Content="{Binding Title}"
+                                        IsChecked="{Binding IsIncluded}"
+                                        IsEnabled="{Binding CanChange}" />
+                                    <TextBlock
+                                        Classes="Dim Figures"
+                                        Grid.Column="1"
+                                        Text="{Binding Size}"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                                <TextBlock
+                                    Classes="Dim"
+                                    FontSize="11.5"
+                                    Margin="28,0,0,0"
+                                    Text="{Binding Detail}"
+                                    TextWrapping="Wrap" />
+                                <Expander
+                                    Header="{l:Tr ReportRead}"
+                                    IsVisible="{Binding HasPreview}"
+                                    Margin="28,0,0,0">
+                                    <ScrollViewer MaxHeight="140">
+                                        <SelectableTextBlock
+                                            Classes="Mono"
+                                            Text="{Binding Preview}"
+                                            TextWrapping="Wrap" />
+                                    </ScrollViewer>
+                                </Expander>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            <TextBlock
+                Classes="Dim"
+                FontSize="11.5"
+                Text="{l:Tr ReportCaptureNote}"
+                TextWrapping="Wrap" />
+            <TextBlock
+                Classes="Dim"
+                FontSize="11.5"
+                Text="{l:Tr ReportStillHolds}"
+                TextWrapping="Wrap" />
+            <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Classes="Outline"
+                    Command="{Binding BackCommand}"
+                    Content="{l:Tr ReportBack}" />
+                <Button
+                    Classes="Outline"
+                    Command="{Binding CancelCommand}"
+                    Content="{l:Tr ReportCancel}" />
+                <Button
+                    Classes="Primary"
+                    Command="{Binding SaveCommand}"
+                    Content="{l:Tr ReportSave}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!--  Written: the code to give on Discord.  -->
+        <StackPanel IsVisible="{Binding IsDone}" Spacing="12">
+            <TextBlock
+                Classes="Bright"
+                FontWeight="SemiBold"
+                Text="{l:Tr ReportDoneTitle}" />
+            <TextBlock Text="{Binding DoneText}" TextWrapping="Wrap" />
+            <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Classes="Outline"
+                    Command="{Binding CopyCodeCommand}"
+                    Content="{l:Tr ReportCopyCode}" />
+                <Button
+                    Classes="Outline"
+                    Command="{Binding OpenFolderCommand}"
+                    Content="{l:Tr ReportOpenFolder}" />
+                <Button
+                    Classes="Primary"
+                    Command="{Binding CancelCommand}"
+                    Content="{l:Tr ReportClose}" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

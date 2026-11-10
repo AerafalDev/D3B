@@ -35,6 +35,9 @@ As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another li
 
 ## Not measured in game
 
+- The report's dialog (BR3, D410, D411) is tested on view models, with captures the tests make, and in a headless window drawn in both languages
+  (form, preview, written): not opened by the owner from the Help menu, not tried on the capture of a real session through a running host
+  (which bot, which connection, which capture, the profile and the assets it reaches), and its look is not judged against a mockup.
 - The cleaner (BR2, D423) was run on 48 of the owner's real captures of 3.7.13.17: 45 were cleaned with no ticket, secret or name left in any
   output and 3 were refused for want of a character list the translation reads (the tool fails closed); on one of the largest, whose fights `scripts/fights.cs` replays with the same result as the original. What it leaves is said in D421
   (other players' names, numbers, timestamps, the GUIDs of unknown meaning, a name under 6 bytes in a frame too deep or cut short to walk); a
@@ -97,8 +100,8 @@ As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another li
 0. **Bug reports with the player's capture** (D409 to D411, D422, D423): BR1 and BR2 are made. The game connection is recorded by default
    with its retention and the notice (`Network:Captures:Game`, `CaptureRetention`); what names the account in a capture was measured
    ([client-game.md](client-game.md#the-game-what-names-the-account)) and the cleaner hides it by value (`CaptureScrubber`, D423); a report is
-   written and read as a zip with a manifest (`ReportWriter`, `ReportReader`) and `scripts/report.cs` unpacks one. Next the app's action (BR3),
-   then the Discord webhook (BR4).
+   written and read as a zip with a manifest (`ReportWriter`, `ReportReader`) and `scripts/report.cs` unpacks one. BR3 is made: Help, Report a
+   bug writes the file with its code, nothing is sent. Next the Discord webhook (BR4).
 1. **7r4, following a run, and 7r6, repeats and sequences as steps, are made in code** (D419, D421), to try in game with the owner's lists; then 7e.
    7r6 left: the condition read between two steps of a route, and, or and not in an "until" (7e's), a pass of a repeated one-way route on the card,
    the lists that repeat a route shown on the route. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already

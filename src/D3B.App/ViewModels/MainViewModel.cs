@@ -14,6 +14,7 @@ using D3B.App.ViewModels.Home;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
 using D3B.App.ViewModels.Properties;
+using D3B.App.ViewModels.Reports;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Zones;
 using D3B.App.ViewModels.Sequences;
@@ -558,6 +559,23 @@ internal sealed partial class MainViewModel : ObservableObject
     public void ShowShortcuts()
     {
         Search.Open(SearchScope.Commands);
+    }
+
+    /// <summary>Opens the dialog that makes a bug report: Help's Report a bug (D410).</summary>
+    [RelayCommand]
+    public void ShowReport()
+    {
+        var choices = ReportSourcesFactory.Choices(Characters, _localizer);
+        var chosen = choices.FirstOrDefault(choice => Characters.Chosen is { } key && choice.AccountId == key.AccountId && choice.Id == key.CharacterId);
+
+        Dialogs.Show(new ReportDialogViewModel(
+            _localizer,
+            Dialogs,
+            choices,
+            choice => ReportSourcesFactory.Read(_host.Services, choice, choices, _preferences, Updates.Version, ReportSourcesFactory.DefaultFolder),
+            text => CopyText?.Invoke(text),
+            folder => OpenFolder?.Invoke(folder),
+            chosen));
     }
 
     /// <summary>Closes the app: File's Quit.</summary>

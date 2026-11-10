@@ -3464,4 +3464,7 @@
   <data name="ReportPartMessageDetail" xml:space="preserve">
     <value>As you typed it.</value>
   </data>
+  <data name="ReportRead" xml:space="preserve">
+    <value>Read it</value>
+  </data>
 </root>

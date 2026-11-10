@@ -73,6 +73,10 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
     [ObservableProperty]
     public partial WrittenReport? Written { get; private set; }
 
+    /// <summary>Gets what the report written says: its code and what to do with it.</summary>
+    [ObservableProperty]
+    public partial string DoneText { get; private set; } = "";
+
     /// <summary>Gets the message's length against its limit.</summary>
     public string MessageCount => $"{Message.Length.ToString("N0", _localizer.Culture)} / {MessageLimit.ToString("N0", _localizer.Culture)}";
 
@@ -187,6 +191,7 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
         }
 
         Problem = null;
+        DoneText = _localizer.Format("ReportDoneLead", Written.Code);
         Step = ReportStep.Done;
         _copy(Written.Code);
         _openFolder(Path.GetDirectoryName(Written.Path)!);
