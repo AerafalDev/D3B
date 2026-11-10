@@ -537,6 +537,6 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D419](decisions/d419-step-7-7r4-following-a-run.md#d419-7r4-following-a-run-the-run-publishes-where-it-is-in-routeruns-the-app-reads-it-and-a-column-lit-is-the-playhead) 7r4, following a run: the run publishes where it is in `RouteRuns`, the app reads it, and a column lit is the playhead (2026-11-10)
   - A route's position in `ActivityReport`, the journal's events as the way the app learns it, a marker moved between columns by an estimate, only the chosen character followed, a journal line at each lap.
 
-## Bug reports, BR1 (D420)
+## Bug reports, BR1 (D422)
 
-- [D420](decisions/d420-bug-reports-br1-keys.md#d420-two-settings-for-the-captures-the-game-is-recorded-unless-turned-off-every-connection-only-when-asked-the-retention-is-applied-whether-or-not-the-game-is-recorded) Two settings for the captures: the game is recorded unless turned off, every connection only when asked; the retention is applied whether or not the game is recorded (2026-11-10)
+- [D422](decisions/d422-bug-reports-br1-keys.md#d422-two-settings-for-the-captures-the-game-is-recorded-unless-turned-off-every-connection-only-when-asked-the-retention-is-applied-whether-or-not-the-game-is-recorded) Two settings for the captures: the game is recorded unless turned off, every connection only when asked; the retention is applied whether or not the game is recorded (2026-11-10)
