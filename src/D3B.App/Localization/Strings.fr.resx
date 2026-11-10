@@ -2151,10 +2151,10 @@
     <value>Remettre {0}</value>
   </data>
   <data name="SettingCapturesRow" xml:space="preserve">
-    <value>Enregistrer les captures</value>
+    <value>Enregistrer mes sessions de jeu</value>
   </data>
   <data name="SettingCapturesRowDetail" xml:space="preserve">
-    <value>Garde les messages de chaque connexion de jeu pour les rejouer dans le Protocole. Ne les partage jamais : ils contiennent ta session.</value>
+    <value>Garde une capture de chaque session de jeu sur cet ordinateur, pour la rejouer et la joindre à un rapport de bug. Rien ne quitte cet ordinateur sans que tu envoies un rapport. Une capture contient le ticket de connexion de ta session : ne la partage jamais.</value>
   </data>
   <data name="SettingCapturesFolder" xml:space="preserve">
     <value>Dossier des captures</value>
@@ -3190,5 +3190,53 @@
   </data>
   <data name="ZoneNotInProject" xml:space="preserve">
     <value>Cette zone n'est plus dans le projet.</value>
+  </data>
+  <data name="SettingCaptureDaysRow" xml:space="preserve">
+    <value>Garder les captures</value>
+  </data>
+  <data name="SettingCaptureDaysRowDetail" xml:space="preserve">
+    <value>Les captures plus anciennes sont supprimées au démarrage de l'hôte. 0 les garde quel que soit leur âge.</value>
+  </data>
+  <data name="SettingCaptureMegabytesRow" xml:space="preserve">
+    <value>Taille maximale des captures</value>
+  </data>
+  <data name="SettingCaptureMegabytesRowDetail" xml:space="preserve">
+    <value>Tant que les captures dépassent cette taille, les plus anciennes sont supprimées au démarrage de l'hôte. 0 : aucune limite.</value>
+  </data>
+  <data name="UnitDays" xml:space="preserve">
+    <value>jours</value>
+  </data>
+  <data name="UnitMegabytes" xml:space="preserve">
+    <value>Mo</value>
+  </data>
+  <data name="CaptureDaysOne" xml:space="preserve">
+    <value>{0} jour</value>
+  </data>
+  <data name="CaptureDaysOther" xml:space="preserve">
+    <value>{0} jours</value>
+  </data>
+  <data name="CapturesKeptForever" xml:space="preserve">
+    <value>Conservées jusqu'à ce que tu les supprimes</value>
+  </data>
+  <data name="CapturesKeptBySize" xml:space="preserve">
+    <value>Conservées tant qu'elles tiennent dans {0} Mo</value>
+  </data>
+  <data name="CapturesKeptByAge" xml:space="preserve">
+    <value>Conservées {0}</value>
+  </data>
+  <data name="CapturesKeptBoth" xml:space="preserve">
+    <value>Conservées {0}, jusqu'à {1} Mo</value>
+  </data>
+  <data name="CapturesNoticeTitle" xml:space="preserve">
+    <value>Tes sessions de jeu sont maintenant enregistrées</value>
+  </data>
+  <data name="CapturesNoticeText" xml:space="preserve">
+    <value>Tes sessions de jeu sont enregistrées sur cet ordinateur, pour qu'un bug puisse être rejoué et signalé. Rien n'en sort sans que tu envoies un rapport. {0}. Tu peux l'arrêter dans les paramètres Réseau.</value>
+  </data>
+  <data name="CapturesNoticeSettings" xml:space="preserve">
+    <value>Paramètres Réseau</value>
+  </data>
+  <data name="CapturesNoticeUnderstood" xml:space="preserve">
+    <value>C'est compris</value>
   </data>
 </root>

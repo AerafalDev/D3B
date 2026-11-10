@@ -38,15 +38,19 @@ internal sealed class AppPreferences
     /// <summary>Gets the assets' folders folded, relative to the project's, as the tree was left (D358).</summary>
     public IReadOnlyList<string> FoldedAssets { get; private set; } = [];
 
+    /// <summary>Gets whether the player has read that the game sessions are recorded on this machine (D409).</summary>
+    public bool CapturesNoticeSeen { get; private set; }
+
     /// <summary>Gets the host's settings the app changed, by their configuration's keys, which it gives the host as it starts.</summary>
     public IReadOnlyDictionary<string, string?> Host => _host.ToDictionary(setting => setting.Key, string? (setting) => setting.Value, StringComparer.OrdinalIgnoreCase);
 
-    private AppPreferences(string path, string? language, StudioLayoutState? layout, IReadOnlyDictionary<string, string>? host, IReadOnlyList<string>? folded = null)
+    private AppPreferences(string path, string? language, StudioLayoutState? layout, IReadOnlyDictionary<string, string>? host, IReadOnlyList<string>? folded = null, bool capturesNoticeSeen = false)
     {
         Path = path;
         Language = language;
         Layout = layout;
         FoldedAssets = folded ?? [];
+        CapturesNoticeSeen = capturesNoticeSeen;
         _host = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (key, value) in host ?? new Dictionary<string, string>())
@@ -67,7 +71,7 @@ internal sealed class AppPreferences
         {
             var stored = JsonSerializer.Deserialize<Stored>(File.ReadAllText(path));
 
-            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host, stored?.FoldedAssets);
+            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host, stored?.FoldedAssets, stored?.CapturesNoticeSeen is true);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -101,6 +105,13 @@ internal sealed class AppPreferences
         Save();
     }
 
+    /// <summary>Remembers that the player has read the notice of the recorded sessions.</summary>
+    public void RememberCapturesNoticeSeen()
+    {
+        CapturesNoticeSeen = true;
+        Save();
+    }
+
     /// <summary>Remembers the host's settings, for its next start.</summary>
     /// <param name="settings">The settings by their configuration's keys; one with no value is forgotten, the host's default back.</param>
     public void RememberHost(IReadOnlyDictionary<string, string?> settings)
@@ -123,7 +134,7 @@ internal sealed class AppPreferences
         try
         {
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null, FoldedAssets.Count > 0 ? FoldedAssets : null), _json));
+            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null, FoldedAssets.Count > 0 ? FoldedAssets : null, CapturesNoticeSeen ? true : null), _json));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -131,5 +142,5 @@ internal sealed class AppPreferences
         }
     }
 
-    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host, IReadOnlyList<string>? FoldedAssets = null);
+    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host, IReadOnlyList<string>? FoldedAssets = null, bool? CapturesNoticeSeen = null);
 }

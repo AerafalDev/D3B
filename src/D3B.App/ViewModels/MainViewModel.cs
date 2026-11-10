@@ -283,6 +283,7 @@ internal sealed partial class MainViewModel : ObservableObject
             ZoneRequested = () => Zones.CreateAsync(""),
             SettingsRequested = ShowSettings,
             FolderRequested = OpenProjectFolder,
+            Notice = new CapturesNoticeViewModel(localizer, Settings, preferences) { SettingsRequested = () => ShowSettings(SettingsSection.Network) },
         };
         Selection.Changed += OnSelectionChanged;
         World.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);

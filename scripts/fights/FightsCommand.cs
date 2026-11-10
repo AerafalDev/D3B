@@ -91,7 +91,7 @@ internal static class FightsCommand
 
         if (files.Count is 0)
         {
-            Console.Error.WriteLine("No game capture to replay. The host records them with --Network:Captures:Enabled true.");
+            Console.Error.WriteLine("No game capture to replay. The host records game connections by default: was --Network:Captures:Game set to false?");
 
             return 2;
         }

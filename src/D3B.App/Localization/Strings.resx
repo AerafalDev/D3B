@@ -2151,10 +2151,10 @@
     <value>Reset to {0}</value>
   </data>
   <data name="SettingCapturesRow" xml:space="preserve">
-    <value>Record the connections</value>
+    <value>Record my game sessions</value>
   </data>
   <data name="SettingCapturesRowDetail" xml:space="preserve">
-    <value>Keeps each game connection's messages to replay them in the Protocol. Never share them: they hold your session.</value>
+    <value>Keeps a capture of each game session on this machine, to replay it and to attach it to a bug report. Nothing leaves this machine unless you send a report. A capture holds your session's login ticket: never share it.</value>
   </data>
   <data name="SettingCapturesFolder" xml:space="preserve">
     <value>Captures' folder</value>
@@ -3190,5 +3190,53 @@
   </data>
   <data name="ZoneNotInProject" xml:space="preserve">
     <value>This zone is not in the project.</value>
+  </data>
+  <data name="SettingCaptureDaysRow" xml:space="preserve">
+    <value>Keep captures for</value>
+  </data>
+  <data name="SettingCaptureDaysRowDetail" xml:space="preserve">
+    <value>Older captures are deleted when the host starts. 0 keeps them whatever their age.</value>
+  </data>
+  <data name="SettingCaptureMegabytesRow" xml:space="preserve">
+    <value>Captures' size limit</value>
+  </data>
+  <data name="SettingCaptureMegabytesRowDetail" xml:space="preserve">
+    <value>While captures take more, the oldest are deleted when the host starts. 0 sets no limit.</value>
+  </data>
+  <data name="UnitDays" xml:space="preserve">
+    <value>days</value>
+  </data>
+  <data name="UnitMegabytes" xml:space="preserve">
+    <value>MB</value>
+  </data>
+  <data name="CaptureDaysOne" xml:space="preserve">
+    <value>{0} day</value>
+  </data>
+  <data name="CaptureDaysOther" xml:space="preserve">
+    <value>{0} days</value>
+  </data>
+  <data name="CapturesKeptForever" xml:space="preserve">
+    <value>Kept until you delete them</value>
+  </data>
+  <data name="CapturesKeptBySize" xml:space="preserve">
+    <value>Kept as long as they fit in {0} MB</value>
+  </data>
+  <data name="CapturesKeptByAge" xml:space="preserve">
+    <value>Kept {0}</value>
+  </data>
+  <data name="CapturesKeptBoth" xml:space="preserve">
+    <value>Kept {0}, up to {1} MB</value>
+  </data>
+  <data name="CapturesNoticeTitle" xml:space="preserve">
+    <value>Your game sessions are now recorded</value>
+  </data>
+  <data name="CapturesNoticeText" xml:space="preserve">
+    <value>Your game sessions are recorded on this machine, so that a bug can be replayed and reported. Nothing leaves it unless you send a report. {0}. You can turn this off in the Network settings.</value>
+  </data>
+  <data name="CapturesNoticeSettings" xml:space="preserve">
+    <value>Network settings</value>
+  </data>
+  <data name="CapturesNoticeUnderstood" xml:space="preserve">
+    <value>Got it</value>
   </data>
 </root>

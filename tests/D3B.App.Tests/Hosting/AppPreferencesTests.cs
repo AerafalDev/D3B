@@ -28,6 +28,21 @@ public sealed class AppPreferencesTests
     }
 
     [Fact]
+    public void TheCapturesNoticeIsShownUntilThePlayerHasSeenIt()
+    {
+        using var directory = new TemporaryDirectory();
+        var path = directory.Combine("app.json");
+        var first = AppPreferences.Load(path);
+
+        Assert.False(first.CapturesNoticeSeen);
+
+        first.RememberCapturesNoticeSeen();
+
+        Assert.True(first.CapturesNoticeSeen);
+        Assert.True(AppPreferences.Load(path).CapturesNoticeSeen);
+    }
+
+    [Fact]
     public void AnOlderFilesThemeAndSidebarAreDroppedAtTheNextWrite()
     {
         using var directory = new TemporaryDirectory();
