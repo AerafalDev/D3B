@@ -139,7 +139,8 @@ internal sealed class BehaviorCompiler
                 Name = state.Name,
                 When = state.When is { } when ? Condition(when, at) : null,
                 IsUrgent = state.IsUrgent,
-                Repeats = state.Repeat.Kind == RepeatKind.Forever,
+                Repeat = state.Repeat,
+                Until = Until(state.Repeat, at),
                 States = States(state.States, at),
                 Entry = Graph(state.Actions, at, rule: false),
             });
@@ -183,6 +184,11 @@ internal sealed class BehaviorCompiler
         }
 
         return definition;
+    }
+
+    private CompiledCondition? Until(StepRepeat repeat, string where)
+    {
+        return repeat.Kind == RepeatKind.Until ? Condition(new NodeCondition(repeat.Condition!), where) : null;
     }
 
     private CompiledCondition Condition(Condition condition, string where)
@@ -352,7 +358,7 @@ internal sealed class BehaviorCompiler
                 var at = In(_where, id);
                 CompiledStep? step = definition.Role switch
                 {
-                    NodeRole.Action => new CompiledStep.Action { Id = id, Node = (IActionNode)_behavior._nodes.CodeOf(definition), Sentence = definition.Sentence, Values = _behavior.Bind(definition, node.Values, Wires(id), at) },
+                    NodeRole.Action => new CompiledStep.Action { Id = id, Node = (IActionNode)_behavior._nodes.CodeOf(definition), Sentence = definition.Sentence, Values = _behavior.Bind(definition, node.Values, Wires(id), at), Repeat = node.Repeat, Until = _behavior.Until(node.Repeat, at) },
                     NodeRole.Activity => new CompiledStep.Activity { Id = id, Definition = definition.Activity!, Settings = _behavior.Bind(definition, node.Values, Wires(id), at) },
                     NodeRole.Branch => Branch(definition, node, at),
                     NodeRole.SetVariable => SetVariable(node, at),

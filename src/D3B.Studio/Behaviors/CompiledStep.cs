@@ -33,6 +33,12 @@ internal abstract class CompiledStep
         public required BoundValues Values { get; init; }
 
         public bool IsInstant => Node.IsInstant;
+
+        /// <summary>Gets how many passes the action is played (D420).</summary>
+        public StepRepeat Repeat { get; init; } = StepRepeat.Once;
+
+        /// <summary>Gets the condition of an <see cref="RepeatKind.Until"/> repeat, compiled.</summary>
+        public CompiledCondition? Until { get; init; }
     }
 
     public sealed class Activity : CompiledStep

@@ -19,17 +19,22 @@ namespace D3B.Studio.Behaviors;
 internal sealed class StateVisit : IDisposable
 {
     private readonly HashSet<string> _done = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _passes = new(StringComparer.Ordinal);
     private readonly Dictionary<string, BotActivity> _activities = new(StringComparer.Ordinal);
     private readonly IServiceProvider _services;
     private readonly ImmutableArray<string> _list;
     private volatile BotActivity? _current;
     private volatile string? _at;
+    private bool _begun;
 
     /// <summary>Gets the leaf.</summary>
     public CompiledState State { get; }
 
     /// <summary>Gets whether the leaf's actions were played to their end.</summary>
     public bool IsFinished { get; private set; }
+
+    /// <summary>Gets how many times the leaf's actions were played to their end.</summary>
+    public int Passes { get; private set; }
 
     /// <summary>Gets the activity the last step played, which the behavior's activity speaks for, its report, fullness and fights.</summary>
     public BotActivity? Current => _current;
@@ -63,6 +68,20 @@ internal sealed class StateVisit : IDisposable
         return ids.ToImmutable();
     }
 
+    /// <summary>Tells whether the leaf's actions are to be played again, once played to their end: the state's repeat, its condition read now (D420).</summary>
+    /// <param name="evaluation">The bot as it is now.</param>
+    /// <returns><see langword="true"/> when another pass is asked for.</returns>
+    public bool CanPlayAgain(Evaluation evaluation)
+    {
+        return State.Repeat.Kind switch
+        {
+            RepeatKind.Forever => true,
+            RepeatKind.Times => Passes < State.Repeat.Count,
+            RepeatKind.Until => !State.Until!.Holds(evaluation),
+            _ => false,
+        };
+    }
+
     /// <summary>Starts the leaf's actions again, once played to their end, for a state that repeats.</summary>
     public void Restart()
     {
@@ -73,6 +92,7 @@ internal sealed class StateVisit : IDisposable
         }
 
         _done.Clear();
+        _passes.Clear();
         _at = null;
         IsFinished = false;
     }
@@ -90,6 +110,19 @@ internal sealed class StateVisit : IDisposable
         var step = State.Entry;
 
         InFlight = null;
+
+        // A state that repeats until a condition holds plays nothing when it already holds, as the steps do.
+        if (!_begun)
+        {
+            _begun = true;
+
+            if (State is { Repeat.Kind: RepeatKind.Until, Until: { } until } && until.Holds(evaluate()))
+            {
+                IsFinished = true;
+
+                return;
+            }
+        }
 
         while (step is not null)
         {
@@ -142,9 +175,19 @@ internal sealed class StateVisit : IDisposable
                     {
                         var values = action.Values.Resolve(evaluation)!;
                         var reached = action.Node.IsReached(evaluation.View, values);
+                        var repeats = action.Repeat.Kind != RepeatKind.Once;
 
-                        if (reached is true || (reached is null && _done.Contains(action.Id)))
+                        if (reached is true || ((reached is null || repeats) && _done.Contains(action.Id)))
                         {
+                            step = action.Next;
+
+                            continue;
+                        }
+
+                        // The condition is read before each pass, the first included: a step already satisfied is passed.
+                        if (action.Until is { } until && until.Holds(evaluation))
+                        {
+                            _done.Add(action.Id);
                             step = action.Next;
 
                             continue;
@@ -156,13 +199,25 @@ internal sealed class StateVisit : IDisposable
                         await action.Node.RunAsync(new ActionContext(context, evaluation.View, control), values, cancellationToken).ConfigureAwait(false);
                         InFlight = null;
 
-                        if (reached is null)
+                        var passes = _passes.GetValueOrDefault(action.Id) + 1;
+
+                        _passes[action.Id] = passes;
+
+                        var again = action.Repeat.Kind switch
+                        {
+                            RepeatKind.Times => passes < action.Repeat.Count,
+                            RepeatKind.Forever or RepeatKind.Until => true,
+                            _ => false,
+                        };
+
+                        if (!again && (reached is null || repeats))
                             _done.Add(action.Id);
 
-                        played(new PlayedStep(action.Sentence, null, true));
+                        played(new PlayedStep(action.Sentence, null, !again));
 
+                        // A pass of a step that repeats ends the step, instant or not, so that a loop of notes gives the bot's loop its turn.
                         // An action played at once is no step of its own: the way goes on, unless it paused or stopped the run.
-                        if (!action.IsInstant || halted())
+                        if (again || !action.IsInstant || halted())
                             return;
 
                         step = action.Next;
@@ -177,6 +232,7 @@ internal sealed class StateVisit : IDisposable
             }
         }
 
+        Passes++;
         IsFinished = true;
     }
 
