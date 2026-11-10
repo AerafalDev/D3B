@@ -12,6 +12,9 @@ public sealed record GraphNode(string Id, string Node, ImmutableSortedDictionary
     /// <summary>Gets whether the node is disabled rather than deleted: the way goes on through it (D311).</summary>
     public bool IsDisabled { get; init; }
 
+    /// <summary>Gets how many times the node is played when it is an action of a list (D420).</summary>
+    public StepRepeat Repeat { get; init; } = StepRepeat.Once;
+
     /// <summary>Gets where the node stands on the canvas.</summary>
     public NodePosition Position { get; init; }
 }

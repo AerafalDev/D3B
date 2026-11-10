@@ -50,7 +50,7 @@ public static class BehaviorSequences
         if (state.When is not null || state.IsUrgent || !state.States.IsEmpty)
             return null;
 
-        return StepsOf(state.Actions) is { } steps ? new BehaviorSequence(steps, state.Repeats) : null;
+        return StepsOf(state.Actions) is { } steps ? new BehaviorSequence(steps, state.Repeat) : null;
     }
 
     /// <summary>Writes a list of steps into a behavior, which keeps its identity, name and file.</summary>
@@ -69,7 +69,7 @@ public static class BehaviorSequences
         {
             var step = sequence.Steps[index];
 
-            nodes.Add(new GraphNode(IdOf(index), step.Node, step.Values) { Position = new NodePosition(Margin + (index * Spacing), Margin) });
+            nodes.Add(new GraphNode(IdOf(index), step.Node, step.Values) { Repeat = step.Repeat, Position = new NodePosition(Margin + (index * Spacing), Margin) });
 
             if (index > 0)
                 links.Add(new GraphLink(IdOf(index - 1), GraphPins.Next, IdOf(index)));
@@ -77,7 +77,7 @@ public static class BehaviorSequences
 
         var state = new BehaviorState(StateId, behavior.Name)
         {
-            Repeats = sequence.Repeats,
+            Repeat = sequence.Repeat,
             Actions = new ActionGraph(sequence.Steps.IsEmpty ? null : IdOf(0), nodes.ToImmutable(), links.ToImmutable()),
         };
 
@@ -147,7 +147,7 @@ public static class BehaviorSequences
             if (!byId.Remove(at, out var node))
                 return null;
 
-            steps.Add(new NodeCall(node.Node, node.Values));
+            steps.Add(new NodeCall(node.Node, node.Values) { Repeat = node.Repeat });
             at = next.GetValueOrDefault(at);
         }
 

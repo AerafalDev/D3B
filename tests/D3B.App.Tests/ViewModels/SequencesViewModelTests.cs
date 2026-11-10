@@ -41,7 +41,7 @@ public sealed class SequencesViewModelTests : IAsyncDisposable
 
     private async Task<BehaviorAsset> ListAsync(string name, params NodeCall[] steps)
     {
-        return await _store.Assets.SaveAsync(BehaviorSequences.Write(new BehaviorAsset { Id = AssetLibrary.NewId(), Name = name }, new BehaviorSequence([.. steps], false)), TestContext.Current.CancellationToken);
+        return await _store.Assets.SaveAsync(BehaviorSequences.Write(new BehaviorAsset { Id = AssetLibrary.NewId(), Name = name }, new BehaviorSequence([.. steps], StepRepeat.Once)), TestContext.Current.CancellationToken);
     }
 
     private static void Add(SequencesViewModel page, SequenceEditorViewModel editor, string name)
@@ -331,7 +331,7 @@ public sealed class SequencesViewModelTests : IAsyncDisposable
         var closed = new List<string>();
 
         page.Closed = item => closed.Add(item.Name);
-        await _store.Assets.SaveAsync(BehaviorSequences.Write(list, new BehaviorSequence([Step("note", ("Text", "a")), Step("stop")], true)), ct);
+        await _store.Assets.SaveAsync(BehaviorSequences.Write(list, new BehaviorSequence([Step("note", ("Text", "a")), Step("stop")], StepRepeat.Forever)), ct);
         page.Refresh(null);
 
         Assert.Equal(["note", "stop"], editor.Steps.Select(step => step.NodeId));
@@ -339,7 +339,7 @@ public sealed class SequencesViewModelTests : IAsyncDisposable
         Assert.False(editor.IsDirty);
 
         editor.Steps[0].RemoveCommand.Execute(null);
-        await _store.Assets.SaveAsync(BehaviorSequences.Write(list, new BehaviorSequence([Step("pause")], false)), ct);
+        await _store.Assets.SaveAsync(BehaviorSequences.Write(list, new BehaviorSequence([Step("pause")], StepRepeat.Once)), ct);
         page.Refresh(null);
 
         // Its own changes are kept over the file's.

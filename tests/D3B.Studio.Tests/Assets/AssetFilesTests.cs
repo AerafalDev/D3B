@@ -31,7 +31,7 @@ public sealed class AssetFilesTests
             Variables = [new BehaviorVariable("count", VariableType.Number, VariableScope.Character, 1), new BehaviorVariable("seen", VariableType.Flag, VariableScope.Run)],
             Always = [new BehaviorState("safe", "Safe") { When = new AnyCondition([When("life.atLeast", ("Percent", 10)), new NotCondition(When("flag.on", ("First", Variable("seen"))))]), IsUrgent = true, Actions = Chain(Node("p", "pause")) }],
             Rules = [new BehaviorRule("r", "Lost", new NodeCall("fight.over", Values(("Result", "Lost")))) { When = new AllCondition([]), Actions = Chain(Note("n", "lost")) }],
-            States = [new BehaviorState("work", "Work") { Repeats = true, States = [new BehaviorState("inner", "Inner") { Actions = graph }] }],
+            States = [new BehaviorState("work", "Work") { Repeat = StepRepeat.Forever, States = [new BehaviorState("inner", "Inner") { Actions = graph }] }],
         };
     }
 
@@ -49,6 +49,61 @@ public sealed class AssetFilesTests
         Assert.True(read.States[0].States[0].Actions.Nodes[2].IsDisabled);
         Assert.Null(read.Parameters[1].Value);
         Assert.Contains("\"layout\"", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheRepeatOfAStepAndOfAStateIsWrittenAndReadBackWhole()
+    {
+        var pods = new NodeCall("pods.atLeast", Values(("Percent", 90)));
+        var behavior = new BehaviorAsset
+        {
+            Id = "b2",
+            Name = "Repeats",
+            States =
+            [
+                new BehaviorState("main", "Main")
+                {
+                    Repeat = StepRepeat.Until(new NodeCall("level.atLeast", Values(("Level", 20)))),
+                    Actions = Chain(Node("a", "wait", ("Seconds", 5)) with { Repeat = StepRepeat.Times(3) }, Node("b", "wait", ("Seconds", 5)) with { Repeat = StepRepeat.Until(pods) }, Node("c", "wait", ("Seconds", 5))),
+                },
+            ],
+        };
+        var json = AssetFiles.Write(behavior);
+        var read = Assert.IsType<BehaviorAsset>(AssetFiles.Read(json, "Repeats", "Repeats.behavior.json", AssetKind.Behavior));
+        var state = Assert.Single(read.States);
+
+        Assert.Equal(json, AssetFiles.Write(read with { Path = null }));
+        Assert.True(state.Repeat.IsSame(behavior.States[0].Repeat));
+        Assert.Equal([RepeatKind.Times, RepeatKind.Until, RepeatKind.Once], state.Actions.Nodes.Select(node => node.Repeat.Kind));
+        Assert.Equal(3, state.Actions.Nodes[0].Repeat.Count);
+        Assert.Equal("pods.atLeast", state.Actions.Nodes[1].Repeat.Condition!.Node);
+
+        // A step that does not repeat leaves no trace in the file.
+        var plain = AssetFiles.Write(read with { Path = null, States = [new BehaviorState("main", "Main") { Actions = Chain(Node("c", "wait", ("Seconds", 5))) }] });
+
+        Assert.DoesNotContain("repeat", plain, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AStateThatRepeatsIsStillWrittenAsItAlwaysWas()
+    {
+        const string json = """{"id":"b3","kind":"behavior","format":1,"states":[{"id":"main","name":"Main","repeats":true}]}""";
+        var read = Assert.IsType<BehaviorAsset>(AssetFiles.Read(json, "Old", "Old.behavior.json", AssetKind.Behavior));
+
+        Assert.Equal(RepeatKind.Forever, read.States[0].Repeat.Kind);
+        Assert.Contains("\"repeats\": true", AssetFiles.Write(read with { Path = null }), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("""{"times":0}""")]
+    [InlineData("""{"times":100000}""")]
+    [InlineData("""{"until":{"values":{}}}""")]
+    [InlineData("""{}""")]
+    public void ARepeatThatSaysNothingUsefulIsRefused(string repeat)
+    {
+        var json = $$"""{"id":"b4","kind":"behavior","format":1,"states":[{"id":"main","name":"Main","repeat":{{repeat}}}]}""";
+
+        Assert.Throws<AssetFormatException>(() => AssetFiles.Read(json, "Bad", "Bad.behavior.json", AssetKind.Behavior));
     }
 
     [Fact]

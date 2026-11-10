@@ -43,11 +43,11 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
     [Fact]
     public void AListIsWrittenAsOneStateOfChainedActionsAndReadBackInOrder()
     {
-        var sequence = new BehaviorSequence([Step("note", ("Text", "a")), Step("wait", ("Seconds", 5)), Step("stop")], Repeats: true);
+        var sequence = new BehaviorSequence([Step("note", ("Text", "a")), Step("wait", ("Seconds", 5)), Step("stop")], Repeat: StepRepeat.Forever);
         var behavior = BehaviorSequences.Write(Empty(), sequence);
         var state = Assert.Single(behavior.States);
 
-        Assert.True(state.Repeats);
+        Assert.Equal(RepeatKind.Forever, state.Repeat.Kind);
         Assert.Equal("step1", state.Actions.Entry);
         Assert.Equal(["step1", "step2", "step3"], state.Actions.Nodes.Select(node => node.Id));
         Assert.Equal([("step1", "step2"), ("step2", "step3")], state.Actions.Links.Select(link => (link.From, link.To)));
@@ -75,7 +75,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
             Variables = [new BehaviorVariable("v", VariableType.Flag, VariableScope.Run)],
             Parameters = [new BehaviorParameter("p", 1)],
         };
-        var written = BehaviorSequences.Write(behavior, new BehaviorSequence([Step("stop")], false));
+        var written = BehaviorSequences.Write(behavior, new BehaviorSequence([Step("stop")], StepRepeat.Once));
 
         Assert.Equal((behavior.Id, behavior.Name), (written.Id, written.Name));
         Assert.Empty(written.Always);
@@ -123,14 +123,14 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
     [Fact]
     public void TwoListsAreTheSameWhenTheirStepsHoldTheSameValuesAndTheyRepeatAlike()
     {
-        var one = new BehaviorSequence([Step("wait", ("Seconds", 5))], false);
+        var one = new BehaviorSequence([Step("wait", ("Seconds", 5))], StepRepeat.Once);
 
-        Assert.True(one.IsSame(new BehaviorSequence([Step("wait", ("Seconds", 5))], false)));
-        Assert.False(one.IsSame(new BehaviorSequence([Step("wait", ("Seconds", 6))], false)));
-        Assert.False(one.IsSame(new BehaviorSequence([Step("wait", ("Seconds", 5))], true)));
-        Assert.False(one.IsSame(new BehaviorSequence([Step("pause", ("Seconds", 5))], false)));
-        Assert.False(one.IsSame(new BehaviorSequence([Step("wait", ("Seconds", 5)), Step("stop")], false)));
-        Assert.False(one.IsSame(new BehaviorSequence([Step("wait")], false)));
+        Assert.True(one.IsSame(new BehaviorSequence([Step("wait", ("Seconds", 5))], StepRepeat.Once)));
+        Assert.False(one.IsSame(new BehaviorSequence([Step("wait", ("Seconds", 6))], StepRepeat.Once)));
+        Assert.False(one.IsSame(new BehaviorSequence([Step("wait", ("Seconds", 5))], StepRepeat.Forever)));
+        Assert.False(one.IsSame(new BehaviorSequence([Step("pause", ("Seconds", 5))], StepRepeat.Once)));
+        Assert.False(one.IsSame(new BehaviorSequence([Step("wait", ("Seconds", 5)), Step("stop")], StepRepeat.Once)));
+        Assert.False(one.IsSame(new BehaviorSequence([Step("wait")], StepRepeat.Once)));
     }
 
     [Fact]
@@ -143,7 +143,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
             Step(RouteActions.Follow, ("Route", "route-a")),
             Step(RouteActions.Follow),
             Step("wait", ("Seconds", 5)),
-        ], false));
+        ], StepRepeat.Once));
 
         Assert.Equal(["route-a", "route-b"], behavior.Uses());
         Assert.Equal(["route-a", "route-b"], BehaviorSequences.RoutesOf(behavior));
@@ -156,7 +156,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
         await _behaviors.PreparedAsync();
 
         var route = await _behaviors.Assets.SaveAsync(new RouteAsset { Id = AssetLibrary.NewId(), Name = "Route" }, TestContext.Current.CancellationToken);
-        var list = await _behaviors.Assets.SaveAsync(BehaviorSequences.Write(Empty(), new BehaviorSequence([Step(RouteActions.Follow, ("Route", route.Id))], false)), TestContext.Current.CancellationToken);
+        var list = await _behaviors.Assets.SaveAsync(BehaviorSequences.Write(Empty(), new BehaviorSequence([Step(RouteActions.Follow, ("Route", route.Id))], StepRepeat.Once)), TestContext.Current.CancellationToken);
         var profile = await _behaviors.Assets.SaveAsync(new ProfileAsset { Id = AssetLibrary.NewId(), Name = "Profile", Behavior = list.Id }, TestContext.Current.CancellationToken);
 
         Assert.Equal([list.Id], _behaviors.Assets.UsedBy(route.Id).Select(asset => asset.Id));
@@ -168,7 +168,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
     {
         await _behaviors.PreparedAsync();
 
-        var sequence = new BehaviorSequence([Step(RouteActions.Follow, ("Route", "r")), Step("note", ("Text", "hello")), Step("wait", ("Seconds", 3))], Repeats: true);
+        var sequence = new BehaviorSequence([Step(RouteActions.Follow, ("Route", "r")), Step("note", ("Text", "hello")), Step("wait", ("Seconds", 3))], Repeat: StepRepeat.Forever);
         var saved = await _behaviors.Assets.SaveAsync(BehaviorSequences.Write(Empty(), sequence), TestContext.Current.CancellationToken);
 
         await _behaviors.Assets.ReloadAsync(TestContext.Current.CancellationToken);
@@ -206,7 +206,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
         await _behaviors.PreparedAsync();
 
         var (_, bot) = await _behaviors.Play.EnterAsync(300);
-        var behavior = BehaviorSequences.Write(Empty(), new BehaviorSequence([Step("note", ("Text", "first")), Step("wait", ("Seconds", 5)), Step("note", ("Text", "second"))], false));
+        var behavior = BehaviorSequences.Write(Empty(), new BehaviorSequence([Step("note", ("Text", "first")), Step("wait", ("Seconds", 5)), Step("note", ("Text", "second"))], StepRepeat.Once));
         var run = await _behaviors.StartAsync(bot, behavior);
 
         await UntilAsync(() => Notes(bot).Count == 1);
@@ -222,7 +222,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
         await _behaviors.PreparedAsync();
 
         var (_, bot) = await _behaviors.Play.EnterAsync(300);
-        var behavior = BehaviorSequences.Write(Empty(), new BehaviorSequence([Step("note", ("Text", "lap")), Step("wait", ("Seconds", 1))], true));
+        var behavior = BehaviorSequences.Write(Empty(), new BehaviorSequence([Step("note", ("Text", "lap")), Step("wait", ("Seconds", 1))], StepRepeat.Forever));
         var run = await _behaviors.StartAsync(bot, behavior);
 
         await UntilAsync(() => Notes(bot).Count == 1);
@@ -240,7 +240,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
         await _behaviors.PreparedAsync();
 
         var (_, bot) = await _behaviors.Play.EnterAsync(300);
-        var behavior = BehaviorSequences.Write(Empty(), new BehaviorSequence([Step(RouteActions.Follow, ("Route", "gone")), Step("note", ("Text", "after"))], false));
+        var behavior = BehaviorSequences.Write(Empty(), new BehaviorSequence([Step(RouteActions.Follow, ("Route", "gone")), Step("note", ("Text", "after"))], StepRepeat.Once));
         var run = await _behaviors.StartAsync(bot, behavior);
 
         // The route that cannot be followed ends the run, with a note saying so, and what follows it is never played.
@@ -254,7 +254,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
     {
         await _behaviors.PreparedAsync();
 
-        var behavior = BehaviorSequences.Write(Empty(), new BehaviorSequence([Step("nothing.like.it")], false));
+        var behavior = BehaviorSequences.Write(Empty(), new BehaviorSequence([Step("nothing.like.it")], StepRepeat.Once));
 
         Assert.Contains(BehaviorProblemKind.NodeUnknown, _behaviors.Compile(behavior).Problems.Select(problem => problem.Kind));
     }

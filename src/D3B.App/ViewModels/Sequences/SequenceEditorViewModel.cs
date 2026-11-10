@@ -26,7 +26,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
     private BehaviorSequence _baseline;
     private readonly UndoHistory<BehaviorSequence> _history;
     private List<NodeCall> _steps;
-    private bool _repeats;
+    private StepRepeat _repeat = StepRepeat.Once;
     private RouteActionPickerViewModel? _picker;
 
     /// <summary>Gets the behavior's id.</summary>
@@ -45,13 +45,13 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
     /// <summary>Gets or sets whether the list starts again once played to its end.</summary>
     public bool Repeats
     {
-        get => _repeats;
+        get => _repeat.Kind != RepeatKind.Once;
         set
         {
-            if (_repeats == value)
+            if (Repeats == value)
                 return;
 
-            _repeats = value;
+            _repeat = value ? StepRepeat.Forever : StepRepeat.Once;
             OnPropertyChanged();
             Changed();
         }
@@ -95,7 +95,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         _saved = behavior;
         _baseline = Normalized(BehaviorSequences.Read(behavior) ?? BehaviorSequence.Empty);
         _steps = [.. _baseline.Steps];
-        _repeats = _baseline.Repeats;
+        _repeat = _baseline.Repeat;
         _history = new UndoHistory<BehaviorSequence>(_baseline, SameSequence);
         Name = behavior.Name;
         Offer();
@@ -115,7 +115,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         _saved = behavior;
         _baseline = Normalized(sequence);
         _steps = [.. _baseline.Steps];
-        _repeats = sequence.Repeats;
+        _repeat = sequence.Repeat;
         _history.Reset(Current());
         OnPropertyChanged(nameof(Repeats));
         Moved();
@@ -225,14 +225,14 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         {
             Steps =
             [
-                .. sequence.Steps.Select(step => catalog.TryGet(step.Node, out var definition) ? RouteActionCalls.Make(definition, RouteActionCalls.Read(definition, step).Settings) : step),
+                .. sequence.Steps.Select(step => catalog.TryGet(step.Node, out var definition) ? RouteActionCalls.Make(definition, RouteActionCalls.Read(definition, step).Settings) with { Repeat = step.Repeat } : step),
             ],
         };
     }
 
     private BehaviorSequence Current()
     {
-        return new BehaviorSequence([.. _steps], _repeats);
+        return new BehaviorSequence([.. _steps], _repeat);
     }
 
     private void AddChosen(string node)
@@ -296,7 +296,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
     private void Restore(BehaviorSequence state)
     {
         _steps = [.. state.Steps];
-        _repeats = state.Repeats;
+        _repeat = state.Repeat;
         IsDirty = !state.IsSame(_baseline);
         OnPropertyChanged(nameof(Repeats));
         Moved();

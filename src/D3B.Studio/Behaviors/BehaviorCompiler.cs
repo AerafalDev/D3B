@@ -139,7 +139,7 @@ internal sealed class BehaviorCompiler
                 Name = state.Name,
                 When = state.When is { } when ? Condition(when, at) : null,
                 IsUrgent = state.IsUrgent,
-                Repeats = state.Repeats,
+                Repeats = state.Repeat.Kind == RepeatKind.Forever,
                 States = States(state.States, at),
                 Entry = Graph(state.Actions, at, rule: false),
             });
