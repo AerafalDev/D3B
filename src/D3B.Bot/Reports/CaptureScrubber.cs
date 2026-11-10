@@ -39,6 +39,23 @@ public sealed class CaptureScrubber
         _translation = translation;
     }
 
+    /// <summary>Cleans a capture into memory, as the only form of capture a report accepts.</summary>
+    /// <param name="capture">The capture, which is read and left as it is.</param>
+    /// <returns>The cleaned capture.</returns>
+    /// <exception cref="CaptureScrubException">The capture holds no character list the translation reads.</exception>
+    public CleanCapture Clean(Stream capture)
+    {
+        ArgumentNullException.ThrowIfNull(capture);
+
+        var output = new MemoryStream();
+        var result = Scrub(capture, output);
+        var bytes = output.ToArray();
+
+        using var reader = new CaptureReader(new MemoryStream(bytes));
+
+        return new CleanCapture(bytes, result, reader.Header.StartedAt);
+    }
+
     /// <summary>Copies a capture with the ticket, the opaque strings and the characters' names overwritten.</summary>
     /// <param name="capture">The capture, which is read and left as it is.</param>
     /// <param name="output">Where the copy is written; it is closed.</param>
