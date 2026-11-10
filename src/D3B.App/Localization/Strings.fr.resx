@@ -3338,9 +3338,6 @@
   <data name="ReportCharacterLabel" xml:space="preserve">
     <value>Quel personnage ?</value>
   </data>
-  <data name="ReportCharacterDetail" xml:space="preserve">
-    <value>Niveau {0}</value>
-  </data>
   <data name="ReportCharacterNoLevel" xml:space="preserve">
     <value>Niveau inconnu</value>
   </data>

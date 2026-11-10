@@ -34,15 +34,16 @@ internal static class ReportSourcesFactory
 
         string Detail(string level, bool online)
         {
-            var known = level.Length > 0 ? localizer.Format("ReportCharacterDetail", level) : localizer["ReportCharacterNoLevel"];
+            // The characters' level is already said, "Level 59": it is not said again.
+            var known = level.Length > 0 ? level : localizer["ReportCharacterNoLevel"];
 
             return $"{known}, {localizer[online ? "ReportCharacterOnline" : "ReportCharacterOffline"]}";
         }
 
         return
         [
-            .. characters.Online.Select(bot => new ReportCharacterChoice(bot.Bot.Key.AccountId, bot.Bot.Key.CharacterId, bot.Name, Detail(bot.Level, true))),
-            .. characters.Offline.Select(line => new ReportCharacterChoice(line.Key.AccountId, line.Key.CharacterId, line.Name, Detail(line.Level, false))),
+            .. characters.Online.Select(bot => new ReportCharacterChoice(bot.Bot.Key.AccountId, bot.Bot.Key.CharacterId, bot.Name, Detail(bot.Level, true), bot.Initials, bot.Head, bot.PortraitColor)),
+            .. characters.Offline.Select(line => new ReportCharacterChoice(line.Key.AccountId, line.Key.CharacterId, line.Name, Detail(line.Level, false), line.Initials, line.Head, line.PortraitColor, true)),
         ];
     }
 

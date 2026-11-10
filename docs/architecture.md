@@ -473,7 +473,9 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   (`BotActor.ConnectionId`, `ReportCaptures.Find`: the relay ends a capture's name with it), read while the relay may still
   hold it open. `ReportDraft` cleans the capture, makes each part a `ReportPartChoice` the player reads and unchecks (the
   capture of a game's report is required and cannot be), and writes `<code>.d3breport` in `%LOCALAPPDATA%\D3B\reports`;
-  the code is copied and the folder opened. Sending is a second click (BR4): `DiscordReportSink` posts the saved file to a private
+  in an app that cannot send, the code is copied and the folder opened. In an app that can, the preview's one button writes the file and sends it, and the code and the
+  folder are offered only when the send does not go through. A character is offered with its portrait and its level said once
+  (`ReportCharacterChoice`). Sending (BR4): `DiscordReportSink` posts the saved file to a private
   Discord webhook in one multipart post, an embed of the code, area, versions, character number and the message as its text, with
   no mention allowed, and every failure a `ReportSendResult` (too large, rate limited, channel gone, refused, unreachable) whose
   detail never holds the URL; a report over `DiscordReportSink.DefaultMaxFileBytes` (20 MiB, measured) is not posted, and the

@@ -94,7 +94,7 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
 
     /// <summary>Gets whether the report can be written: a report of the game keeps its capture.</summary>
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SaveCommand), nameof(SaveAndSendCommand))]
     public partial bool CanSave { get; private set; }
 
     /// <summary>Gets the report written, once it is.</summary>
@@ -104,11 +104,13 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
     /// <summary>Gets whether the report is being sent.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyPropertyChangedFor(nameof(ShowsFallback))]
     public partial bool IsSending { get; private set; }
 
     /// <summary>Gets whether the report was sent.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyPropertyChangedFor(nameof(ShowsFallback))]
     public partial bool IsSent { get; private set; }
 
     /// <summary>Gets how much of the file went, from 0 to 1.</summary>
@@ -117,7 +119,7 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
 
     /// <summary>Gets how the send went, or what to do instead, in words; null before one.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSendText))]
+    [NotifyPropertyChangedFor(nameof(HasSendText), nameof(ShowsFallback))]
     public partial string? SendText { get; private set; }
 
     /// <summary>Gets whether a send has something to say.</summary>
@@ -126,9 +128,16 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
     /// <summary>Gets whether this app can send at all.</summary>
     public bool CanSend => _channel is not null;
 
-    /// <summary>Gets what the report written says: its code and what to do with it.</summary>
+    /// <summary>Gets whether the way to hand the file over by hand shows, its code and its folder: when the app cannot send, or a send did not go through.</summary>
+    public bool ShowsFallback => !CanSend || (HasSendText && !IsSent && !IsSending);
+
+    /// <summary>Gets what the report written says, when it is to be handed over by hand: its code and what to do with it.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDoneText))]
     public partial string DoneText { get; private set; } = "";
+
+    /// <summary>Gets whether the report written has a text of its own to say.</summary>
+    public bool HasDoneText => DoneText.Length > 0;
 
     /// <summary>Gets the message's length against its limit.</summary>
     public string MessageCount => $"{Message.Length.ToString("N0", _localizer.Culture)} / {MessageLimit.ToString("N0", _localizer.Culture)}";
@@ -252,10 +261,24 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
         }
 
         Problem = null;
-        DoneText = _localizer.Format("ReportDoneLead", Written.Code);
         Step = ReportStep.Done;
+
+        // An app that sends needs no code nor folder from the player: they show only if the send fails.
+        if (CanSend)
+            return;
+
+        DoneText = _localizer.Format("ReportDoneLead", Written.Code);
         _copy(Written.Code);
         _openFolder(Path.GetDirectoryName(Written.Path)!);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSave))]
+    private async Task SaveAndSendAsync()
+    {
+        Save();
+
+        if (Written is not null)
+            await SendAsync().ConfigureAwait(true);
     }
 
     [RelayCommand(CanExecute = nameof(CanSendNow))]
