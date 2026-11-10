@@ -18,6 +18,7 @@ using D3B.Data.World;
 using D3B.Storage.Accounts;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
+using D3B.Studio.Routes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
@@ -38,6 +39,7 @@ internal sealed partial class BotViewModel : ObservableObject
     private const double LowLife = 50;
 
     private readonly IServiceProvider _services;
+    private readonly RouteRuns? _routeRuns;
     private readonly Localizer _localizer;
     private readonly GameWorld? _world;
     private readonly GameTexts? _texts;
@@ -289,6 +291,14 @@ internal sealed partial class BotViewModel : ObservableObject
     [ObservableProperty]
     public partial string Step { get; private set; } = "";
 
+    /// <summary>Gets where the character is on the route it follows now, or <see langword="null"/> while it follows none (D419).</summary>
+    [ObservableProperty]
+    public partial RouteRunPosition? Route { get; private set; }
+
+    /// <summary>Gets where the character is on its route, said: "North · step 4/8 · lap 3", or "to step 4/8" while it walks there.</summary>
+    [ObservableProperty]
+    public partial string RouteText { get; private set; } = "";
+
     /// <summary>Gets where the character is, in a word: the sub-area, a haven bag, a fight.</summary>
     [ObservableProperty]
     public partial string Where { get; private set; } = "";
@@ -351,6 +361,7 @@ internal sealed partial class BotViewModel : ObservableObject
         _assets = services.GetService<AssetLibrary>();
         _accounts = services.GetService<AccountBook>();
         _starter = services.GetService<ProfileStarter>();
+        _routeRuns = services.GetService<RouteRuns>();
         _nodes = services.GetService<NodeCatalog>();
         _says = new GameTextFormatter(localizer, _world, _texts, services.GetService<GameTables>());
         _icons = GameIcons.Of(services.GetService<GameTables>());
@@ -497,8 +508,11 @@ internal sealed partial class BotViewModel : ObservableObject
             _ => (_localizer["CardStopped"], GameGlyph.None),
         };
         ActivityGlyph = glyph is GameGlyph.None ? null : _icons?.Glyph(glyph);
+        Route = IsConnected ? _routeRuns?.Position(Bot.Key) : null;
+        RouteText = Route is { } route ? RouteSaid(route) : "";
         Step = PlayState switch
         {
+            PlayState.Playing when RouteText.Length > 0 => RouteText,
             PlayState.Fighting when state.Fight is { Round: > 0 } fight => _localizer.Format("CardRound", fight.Round),
             // The map it is on, not those it is done with: "3/14" on its third.
             PlayState.Playing when Bot.Activity?.Activity.Report?.Progress is { Total: > 0 } progress => _localizer.Format("CardStep", Math.Min(progress.Done + 1, progress.Total), progress.Total),
@@ -509,6 +523,18 @@ internal sealed partial class BotViewModel : ObservableObject
         WhereTip = Coordinates != NoValue ? _localizer.Format("CardWhereTip", Coordinates, Place) : Place;
         LifePercentText = HasLife ? _localizer.Format("LoadPercent", LifePercent / 100) : "";
         IsLifeLow = HasLife && LifePercent < LowLife;
+    }
+
+    private string RouteSaid(RouteRunPosition route)
+    {
+        var said = _localizer.Format(route.Arrived ? "CardRouteAt" : "CardRouteTo", route.Name, route.Step, route.Anchors);
+
+        if (route.Mode is RouteMode.Loop)
+            said += _localizer.Format("CardRouteLap", route.Lap);
+        else if (route.Returning)
+            said += _localizer["CardRouteBack"];
+
+        return said;
     }
 
     private string PlaceName(CharacterState state)

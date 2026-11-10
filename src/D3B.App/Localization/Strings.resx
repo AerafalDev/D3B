@@ -1766,6 +1766,18 @@
   <data name="CardRound" xml:space="preserve">
     <value>round {0}</value>
   </data>
+  <data name="CardRouteAt" xml:space="preserve">
+    <value>{0} · step {1}/{2}</value>
+  </data>
+  <data name="CardRouteBack" xml:space="preserve">
+    <value> · back</value>
+  </data>
+  <data name="CardRouteLap" xml:space="preserve">
+    <value> · lap {0}</value>
+  </data>
+  <data name="CardRouteTo" xml:space="preserve">
+    <value>{0} · to step {1}/{2}</value>
+  </data>
   <data name="CardStep" xml:space="preserve">
     <value>{0}/{1}</value>
   </data>
