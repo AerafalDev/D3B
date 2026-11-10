@@ -5,10 +5,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
 using D3B.App.Controls.WorldMaps;
-using D3B.App.ViewModels.Settings;
 using D3B.App.ViewModels.Studio;
 using D3B.Studio.Assets;
-using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
 
 namespace D3B.App.ViewModels.Routes;
@@ -35,9 +33,9 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private readonly List<int> _sceneLegs = [];
     private readonly RouteHistory _history;
     private readonly RoutePlanning _planning = new();
+    private readonly RouteActionList _actions;
     private RouteAsset _saved;
     private long _paintedFrom;
-    private bool _keepActionForms;
     private RouteStepSelection _chosen = RouteStepSelection.None;
 
     /// <summary>Gets the route's id.</summary>
@@ -53,7 +51,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     public ObservableCollection<RouteStepViewModel> Steps { get; } = [];
 
     /// <summary>Gets the actions of the step chosen, in order (D377).</summary>
-    public ObservableCollection<RouteActionViewModel> Actions { get; } = [];
+    public ObservableCollection<RouteActionViewModel> Actions => _actions.Rows;
 
     /// <summary>Gets the worlds the layer can show.</summary>
     public IReadOnlyList<WorldChoiceViewModel> Worlds { get; private set; } = [];
@@ -226,6 +224,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         _texts = new RouteTexts(page);
         _saved = route;
         _anchors = [.. route.Anchors];
+        _actions = new RouteActionList(page, _anchors, () => SelectedIndex, Changed, NotifyActions);
 
         var services = page.Services ?? throw new InvalidOperationException("The routes are edited once the host runs.");
 
@@ -542,7 +541,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     [RelayCommand]
     private void ReorderActions(ReorderRequest request)
     {
-        MoveAction(request.From, request.To - request.From);
+        _actions.Move(request.From, request.To - request.From);
     }
 
     /// <summary>Chooses another step and shows it on the map: the page keys.</summary>
@@ -724,66 +723,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     [RelayCommand]
     private void RemoveAction(int index)
     {
-        if (!HasSelectedStep || index < 0 || index >= _anchors[SelectedIndex].Actions.Length)
-            return;
-
-        _anchors[SelectedIndex] = _anchors[SelectedIndex] with { Actions = _anchors[SelectedIndex].Actions.RemoveAt(index) };
-        Changed();
-    }
-
-    private void MoveAction(int index, int delta)
-    {
-        var to = index + delta;
-
-        if (!HasSelectedStep || index < 0 || to < 0 || index >= _anchors[SelectedIndex].Actions.Length || to >= _anchors[SelectedIndex].Actions.Length)
-            return;
-
-        var actions = _anchors[SelectedIndex].Actions;
-        var moved = actions[index];
-
-        _anchors[SelectedIndex] = _anchors[SelectedIndex] with { Actions = actions.RemoveAt(index).Insert(to, moved) };
-        Changed();
-    }
-
-    private void ActionEdited(int index, NodeDefinition definition, SettingsEditor editor)
-    {
-        if (!HasSelectedStep || index >= _anchors[SelectedIndex].Actions.Length || index >= Actions.Count)
-            return;
-
-        var anchor = _anchors[SelectedIndex];
-        var made = RouteActionCalls.Make(definition, editor.Draft);
-
-        if (!RouteAnchor.SameCall(anchor.Actions[index], made))
-        {
-            _anchors[SelectedIndex] = anchor with { Actions = anchor.Actions.SetItem(index, made) };
-
-            // The forms stay as they are: rebuilding them under the hand that types in one would take its focus.
-            _keepActionForms = true;
-
-            try
-            {
-                Changed();
-            }
-            finally
-            {
-                _keepActionForms = false;
-            }
-        }
-
-        Actions[index].Say();
-    }
-
-    private void BuildActions()
-    {
-        Actions.Clear();
-
-        if (HasSelectedStep)
-        {
-            foreach (var row in RouteActionForms.Build(_page.Services!, _page.Localizer, _page.Dialogs, _anchors[SelectedIndex], ActionEdited, RemoveAction, MoveAction))
-                Actions.Add(row);
-        }
-
-        NotifyActions();
+        _actions.Remove(index);
     }
 
     private void NotifyActions()
@@ -889,8 +829,8 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         BuildSteps();
         BuildScene();
 
-        if (!_keepActionForms)
-            BuildActions();
+        if (!_actions.KeepsForms)
+            _actions.Build();
 
         _planning.Start(_page.Services!.Planner, _anchors.ConvertAll(anchor => anchor.MapId), Mode, OnPlanned);
         Rebuilt?.Invoke();
@@ -968,7 +908,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         OnPropertyChanged(nameof(HasSeveralSteps));
         OnPropertyChanged(nameof(HasSingleStep));
         MarkSelected();
-        BuildActions();
+        _actions.Build();
     }
 
     partial void OnLayerChanged(int value)
