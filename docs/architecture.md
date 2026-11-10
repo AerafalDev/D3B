@@ -468,7 +468,14 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   (`BotActor.ConnectionId`, `ReportCaptures.Find`: the relay ends a capture's name with it), read while the relay may still
   hold it open. `ReportDraft` cleans the capture, makes each part a `ReportPartChoice` the player reads and unchecks (the
   capture of a game's report is required and cannot be), and writes `<code>.d3breport` in `%LOCALAPPDATA%\D3B\reports`;
-  the code is copied and the folder opened. Nothing is sent: the webhook is BR4.
+  the code is copied and the folder opened. Sending is a second click (BR4): `DiscordReportSink` posts the saved file to a private
+  Discord webhook in one multipart post, an embed of the code, area, versions, character number and the message as its text, with
+  no mention allowed, and every failure a `ReportSendResult` (too large, rate limited, channel gone, refused, unreachable) whose
+  detail never holds the URL; a report over `DiscordReportSink.DefaultMaxFileBytes` (20 MiB, measured) is not posted, and the
+  dialog says the file is saved and to hand it over with its code. `ReportChannel` finds the webhook: the asset `webhook.txt` of the
+  release `report-channel`, read when a report is sent and kept in memory, or `D3B_REPORT_WEBHOOK`; `ReportWebhook` accepts only a
+  Discord webhook URL and hides its token when printed. `scripts/release.cs --report-webhook <file>` publishes the asset, replacing it
+  when the webhook is revoked. The URL is in no tracked file.
 
 ## Game data
 

@@ -134,6 +134,7 @@
   <Folder Name="/scripts/release/">
     <File Path="scripts/release/ReleaseAsset.cs" />
     <File Path="scripts/release/ReleaseCommand.cs" />
+    <File Path="scripts/release/ReportChannelRelease.cs" />
   </Folder>
   <Folder Name="/scripts/schema/">
     <File Path="scripts/schema/ClientCode.cs" />

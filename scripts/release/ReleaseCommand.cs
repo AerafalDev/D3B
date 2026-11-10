@@ -36,16 +36,21 @@ internal static class ReleaseCommand
         {
             Description = "Creates the release, or uploads the assets it lacks. Without it, nothing changes on GitHub.",
         };
-        var command = new RootCommand("Publishes the pack, schema and mapping of a Dofus 3 client build to the GitHub release of that build.")
+        var webhook = new Option<FileInfo?>("--report-webhook")
+        {
+            Description = "A file holding the URL of the private Discord webhook bug reports go to (D410): publishes it, and nothing else, as the asset of the release report-channel, replacing the one there. The URL is a secret: keep the file out of the repository; it is checked and never printed.",
+        };
+        var command = new RootCommand("Publishes the pack, schema and mapping of a Dofus 3 client build to the GitHub release of that build, or with --report-webhook the channel bug reports go to.")
         {
             client,
             version,
             packs,
             repository,
             publish,
+            webhook,
         };
 
-        command.SetAction(result => Run(
+        command.SetAction(result => result.GetValue(webhook) is { } channel ? ReportChannelRelease.Run(channel, result.GetValue(repository)!, result.GetValue(publish)) : Run(
             result.GetValue(client),
             result.GetValue(version),
             result.GetValue(packs)?.FullName ?? PackLocations.DefaultRoot,

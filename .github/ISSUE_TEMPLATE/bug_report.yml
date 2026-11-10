@@ -11,6 +11,8 @@ body:
         - Search the [existing issues](https://github.com/AerafalDev/D3B/issues?q=is%3Aissue): yours may be there.
         - A vulnerability goes through the [security policy](https://github.com/AerafalDev/D3B/security/policy), never an issue.
 
+        **For a bug of the game, use Help, Report a bug in the app**: it makes a report with a cleaned copy of your session's capture and gives you a code to quote here. What it holds and where it goes is in the [privacy page](https://github.com/AerafalDev/D3B/blob/main/PRIVACY.md).
+
         **Never paste a capture, a database or a login ticket.** A capture holds the account's ticket. To show what the protocol did, describe the capture with `scripts/capture.cs`, which prints its structure, never its content.
 
   - type: input

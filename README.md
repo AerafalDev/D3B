@@ -249,6 +249,10 @@ enforces and what can never be committed. Everyone taking part follows the [code
 report a vulnerability, follow the [security policy](SECURITY.md) rather than opening an issue. To talk about D3B, join
 its [Discord](https://discord.com/invite/6A6Vw9Mn24).
 
+**To report a bug of the game** (a fight, a harvest, a bank journey, an NPC), use Help, Report a bug in the app: it makes
+a report with a cleaned copy of your session's capture, which you read before anything is sent. What it holds, where it goes
+and for how long is in [PRIVACY.md](PRIVACY.md).
+
 ## License
 
 D3B is released under the [MIT license](LICENSE). The app ships third-party components under their own licenses, listed
