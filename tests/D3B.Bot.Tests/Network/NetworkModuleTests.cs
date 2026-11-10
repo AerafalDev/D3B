@@ -28,7 +28,7 @@ public sealed class NetworkModuleTests : IDisposable
         Assert.Equal(IPAddress.Parse("127.0.13.60"), settings.Address);
         Assert.Equal([0], settings.Ports);
         Assert.Equal([0], settings.GamePorts);
-        Assert.Equal(RelaySettings.DefaultCapturesDirectory, settings.CapturesDirectory);
+        Assert.Equal(_install.CapturesDirectory, settings.CapturesDirectory);
         Assert.Equal(_install.ClientDirectory, settings.ClientDirectory);
         Assert.Equal(_install.RedirectDirectory, settings.RedirectDirectory);
 
