@@ -627,4 +627,23 @@
             </Animation>
         </Style.Animations>
     </Style>
+    <!--  A value of a sentence, or a repeat, as a token that opens its choices where it stands (D380, D420).  -->
+    <Style Selector="Button.ValueToken">
+        <Setter Property="Background" Value="{DynamicResource TipColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Margin" Value="1,1" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="7,0" />
+    </Style>
+    <Style Selector="Button.ValueToken:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+    </Style>
+    <Style Selector="Button.ValueToken.Problem">
+        <Setter Property="BorderBrush" Value="{DynamicResource PausedEdgeColor}" />
+    </Style>
 </Styles>

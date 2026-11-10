@@ -56,6 +56,18 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
     }
 
     [Fact]
+    public void EveryConditionAnUntilOffersIsAConditionOfTheCatalogThatReadsNoVariable()
+    {
+        Assert.NotEmpty(BehaviorSequences.OfferedConditions);
+
+        foreach (var id in BehaviorSequences.OfferedConditions)
+        {
+            Assert.True(_behaviors.Nodes.TryGet(id, out var definition), id);
+            Assert.Equal(NodeRole.Condition, definition.Role);
+        }
+    }
+
+    [Fact]
     public void AnEmptyListAndABehaviorWithNoStateAreBothAListOfNoStep()
     {
         var written = BehaviorSequences.Write(Empty(), BehaviorSequence.Empty);

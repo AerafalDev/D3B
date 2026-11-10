@@ -32,6 +32,21 @@ public static class BehaviorSequences
         "stop",
     ];
 
+    /// <summary>Gets the conditions a repeat of a list or of a step can wait on ("until"), in the order of its menu: those that read the character and need no variable (D420).</summary>
+    public static ImmutableArray<string> OfferedConditions { get; } =
+    [
+        "pods.atLeast",
+        "life.atLeast",
+        "level.atLeast",
+        "job.levelAtLeast",
+        "kamas.atLeast",
+        "items.atLeast",
+        "subArea.in",
+        "area.in",
+        "fight.last",
+        "run.longerThan",
+    ];
+
     /// <summary>Reads a behavior as a list of steps.</summary>
     /// <param name="behavior">The behavior.</param>
     /// <returns>The list, or <see langword="null"/> when the behavior is more than one.</returns>

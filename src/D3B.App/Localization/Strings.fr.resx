@@ -2856,10 +2856,10 @@
     <value>Aucune étape pour l'instant. Appuie sur + pour en ajouter une.</value>
   </data>
   <data name="SequenceRepeats" xml:space="preserve">
-    <value>Recommencer à la fin</value>
+    <value>À la fin de la liste</value>
   </data>
   <data name="SequenceRepeatsHelp" xml:space="preserve">
-    <value>Désactivé, la session se termine une fois la dernière étape jouée.</value>
+    <value>Une fois, la session se termine après la dernière étape. Sinon la liste recommence : un nombre de fois, jusqu'à ce qu'une condition soit vraie ou pour toujours.</value>
   </data>
   <data name="SequenceLoopWarning" xml:space="preserve">
     <value>Le trajet « {0} » est une boucle : il ne se termine jamais, donc les étapes après l'étape {1} ne se jouent jamais.</value>
@@ -3187,6 +3187,45 @@
   </data>
   <data name="ZoneHoldsNoMap" xml:space="preserve">
     <value>Cette zone ne contient encore aucune carte.</value>
+  </data>
+  <data name="RepeatLabel" xml:space="preserve">
+    <value>Répéter</value>
+  </data>
+  <data name="RepeatOnce" xml:space="preserve">
+    <value>une fois</value>
+  </data>
+  <data name="RepeatTimes" xml:space="preserve">
+    <value>{0} fois</value>
+  </data>
+  <data name="RepeatForever" xml:space="preserve">
+    <value>pour toujours</value>
+  </data>
+  <data name="RepeatUntil" xml:space="preserve">
+    <value>jusqu'à : {0}</value>
+  </data>
+  <data name="RepeatKindOnce" xml:space="preserve">
+    <value>Une fois</value>
+  </data>
+  <data name="RepeatKindTimes" xml:space="preserve">
+    <value>Un nombre de fois</value>
+  </data>
+  <data name="RepeatKindUntil" xml:space="preserve">
+    <value>Jusqu'à ce qu'une condition soit vraie</value>
+  </data>
+  <data name="RepeatKindForever" xml:space="preserve">
+    <value>Pour toujours</value>
+  </data>
+  <data name="RepeatCount" xml:space="preserve">
+    <value>Combien de fois</value>
+  </data>
+  <data name="RepeatCondition" xml:space="preserve">
+    <value>Condition</value>
+  </data>
+  <data name="RepeatConditionHelp" xml:space="preserve">
+    <value>Lue avant chaque passe, la première comprise : déjà vraie, l'étape est passée.</value>
+  </data>
+  <data name="RepeatOf" xml:space="preserve">
+    <value>Répéter : {0}</value>
   </data>
   <data name="ZoneNotInProject" xml:space="preserve">
     <value>Cette zone n'est plus dans le projet.</value>
