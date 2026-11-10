@@ -48,6 +48,10 @@ Builds D295, D296, D297, D298, D307, D378, D379, D386, D395 to D397, D413, D419.
   fight in the middle of its second step, and the run resuming on that step; (4) a list played inside a list that follows a route, the
   playhead of the route still shown; (5) the flyout of the repeat token and of the condition, which the headless window cannot open, and
   the token's look under each step; (6) a long action (a harvest, a door) inside a block, interrupted by a bank.
+- **Found by the review, and kept.** A route that comes back `Busy` after ten tries ends the node, so the pass counts as played, as a step with
+  no repeat always did: `Follow R × 3` that meets it spends a pass without a lap (to decide after the measure). A repeat on a node that is
+  no action of a state's list (an activity, a rule's node) is read and written but not played, and no problem says so: the list editor never
+  offers one, the canvas of 7e will. A pause or a stop inside a played list cuts the step as it cuts any, so that a resume goes on in the list.
 - **Left.** The route's own "followed by": no sign on a route of the lists that repeat it; the pass of a repeated one-way route on the
   card (only a loop says its lap); the condition read between two steps of a route; and, or and not in an "until" (7e); a list with
   parameters played as a block (`BehaviorAsset.Parameters` make it a canvas); a block of actions inside a route's step; `SettingKind.Sequence`

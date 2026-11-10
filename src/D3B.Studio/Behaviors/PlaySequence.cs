@@ -88,9 +88,10 @@ internal sealed class PlaySequence : ActionNode<SequenceValues>
                 cancellationToken.ThrowIfCancellationRequested();
                 await visit.StepAsync(bot, Now, control, () => control.IsHalted, _ => { }, cancellationToken).ConfigureAwait(false);
 
-                // A pause or a stop in the list ends this step too, the list kept where it is for a resume.
+                // A pause or a stop in the list cuts this step as it cuts any: the run settles, and a resume plays the step again,
+                // which goes on in the list from where it was. Returning would tell the step it was played to its end.
                 if (control.IsHalted)
-                    return;
+                    throw new OperationCanceledException(cancellationToken);
 
                 await Task.Yield();
             }

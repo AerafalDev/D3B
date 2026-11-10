@@ -6,6 +6,7 @@ using D3B.App.ViewModels.Sequences;
 using D3B.App.ViewModels.Settings;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
+using D3B.Studio.Routes;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -164,6 +165,25 @@ public sealed class SequenceRepeatTests : IAsyncDisposable
         await editor.SaveCommand.ExecuteAsync(null);
 
         Assert.Equal([RepeatKind.Once, RepeatKind.Times], Saved(editor).Steps.Select(step => step.Repeat.Kind));
+    }
+
+    [Fact]
+    public async Task ALoopFollowedByAStepThatRepeatsNoLongerWarnsThatWhatFollowsNeverPlays()
+    {
+        await _store.OpenedAsync();
+        await _store.Assets.SaveAsync(new RouteAsset { Id = "r-loop", Name = "Round", Mode = RouteMode.Loop, Anchors = [new RouteAnchor { MapId = 1 }, new RouteAnchor { MapId = 2 }] }, TestContext.Current.CancellationToken);
+
+        var editor = await EditorAsync(StepRepeat.Once, Step(RouteActions.Follow, ("Route", "r-loop")), Step("stop"));
+
+        Assert.NotNull(editor.Warning);
+
+        editor.Steps[0].Repeat!.IsTimes = true;
+
+        Assert.Null(editor.Warning);
+
+        editor.Steps[0].Repeat!.IsOnce = true;
+
+        Assert.NotNull(editor.Warning);
     }
 
     [Fact]

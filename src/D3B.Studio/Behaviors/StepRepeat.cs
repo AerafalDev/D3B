@@ -10,13 +10,6 @@ public sealed class StepRepeat
     /// <summary>The most passes a count can ask for.</summary>
     public const int MostTimes = 999;
 
-    private StepRepeat(RepeatKind kind, int count, NodeCall? condition)
-    {
-        Kind = kind;
-        Count = count;
-        Condition = condition;
-    }
-
     /// <summary>Gets one pass, what a step does when nothing is said.</summary>
     public static StepRepeat Once { get; } = new(RepeatKind.Once, 1, null);
 
@@ -31,6 +24,13 @@ public sealed class StepRepeat
 
     /// <summary>Gets the condition of an <see cref="RepeatKind.Until"/>: a node of the catalog that reads the state.</summary>
     public NodeCall? Condition { get; }
+
+    private StepRepeat(RepeatKind kind, int count, NodeCall? condition)
+    {
+        Kind = kind;
+        Count = count;
+        Condition = condition;
+    }
 
     /// <summary>Makes a repeat of a number of passes.</summary>
     /// <param name="count">How many passes, between one and <see cref="MostTimes"/>.</param>

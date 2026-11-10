@@ -125,6 +125,23 @@ public sealed class PlaySequenceTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task APauseInASequenceGoesOnFromTheStepAfterItOnceResumedBeforeTheNextStepOfTheList()
+    {
+        var inner = await ListAsync("Inner", StepRepeat.Once, Note("a"), Step("pause"), Note("b"));
+        var outer = await ListAsync("Outer", StepRepeat.Once, Play(inner), Note("after"));
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, outer);
+
+        await UntilAsync(() => bot.IsPaused && run.Status is ActivityStatus.Waiting);
+        Assert.Equal(["a"], Notes(bot));
+
+        bot.Resume();
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(["a", "b", "after"], Notes(bot));
+    }
+
+    [Fact]
     public void ASequenceKeepsItsPlaceForARunThatIsCutAndStartsOverWhenTheRunBeginsAgain()
     {
         var runs = new SequenceRuns();
