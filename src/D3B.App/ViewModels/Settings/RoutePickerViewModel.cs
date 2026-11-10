@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace D3B.App.ViewModels.Settings;
 
 /// <summary>The dialog that picks a route among the project's: no id is typed (D298, D386).</summary>
-internal sealed partial class RoutePickerViewModel
+internal sealed partial class RoutePickerViewModel : IDialogViewModel
 {
     private readonly Dialogs _dialogs;
     private readonly Action<string?> _picked;

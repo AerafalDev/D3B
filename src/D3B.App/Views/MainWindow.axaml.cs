@@ -19,26 +19,36 @@ internal sealed partial class MainWindow : ShadUI.Window
     // The gap between two docks, which their edges sit in.
     private const double Gap = 5;
 
-    private readonly DialogManager _dialogManager = new DialogManager()
-        .Register<QuestionView, QuestionViewModel>()
-        .Register<GamePickerView, GamePickerViewModel>()
-        .Register<CellPickerView, CellPickerViewModel>()
-        .Register<NpcPickerView, NpcPickerViewModel>()
-        .Register<RoutePickerView, RoutePickerViewModel>()
-        .Register<RepliesPickerView, RepliesPickerViewModel>()
-        .Register<RouteActionPickerView, RouteActionPickerViewModel>()
-        .Register<NewProfileView, NewProfileViewModel>()
-        .Register<ReportDialogView, ReportDialogViewModel>();
+    private static readonly DialogKind[] _kinds =
+    [
+        DialogKind.Of<QuestionView, QuestionViewModel>(440),
+        DialogKind.Of<GamePickerView, GamePickerViewModel>(720, 560),
+        DialogKind.Of<CellPickerView, CellPickerViewModel>(800, 760),
+        DialogKind.Of<NpcPickerView, NpcPickerViewModel>(480, 420),
+        DialogKind.Of<RoutePickerView, RoutePickerViewModel>(480, 420),
+        DialogKind.Of<RepliesPickerView, RepliesPickerViewModel>(560, 480),
+        DialogKind.Of<RouteActionPickerView, RouteActionPickerViewModel>(480, 420),
+        DialogKind.Of<NewProfileView, NewProfileViewModel>(440),
+        DialogKind.Of<ReportDialogView, ReportDialogViewModel>(640, 520),
+    ];
 
+    private readonly DialogManager _dialogManager = new();
     private readonly ToastManager _toastManager = new();
     private MainViewModel? _main;
     private object? _dialog;
     private double _dragStart;
 
+    /// <summary>Gets the view models the window shows as dialogs.</summary>
+    internal static IReadOnlyList<Type> DialogViewModels => [.. _kinds.Select(kind => kind.ViewModel)];
+
     /// <summary>Initializes a new instance of the <see cref="MainWindow"/> class.</summary>
     public MainWindow()
     {
         InitializeComponent();
+
+        foreach (var kind in _kinds)
+            kind.Register(_dialogManager);
+
         DialogHost.Manager = _dialogManager;
         ToastHost.Manager = _toastManager;
 
@@ -216,33 +226,11 @@ internal sealed partial class MainWindow : ShadUI.Window
 
         _dialog = dialogs.Current;
 
-        switch (_dialog)
-        {
-            case QuestionViewModel question:
-                _dialogManager.CreateDialog(question).WithMaxWidth(440).Show();
-                break;
-            case GamePickerViewModel picker:
-                _dialogManager.CreateDialog(picker).WithMinWidth(560).WithMaxWidth(720).Show();
-                break;
-            case CellPickerViewModel cells:
-                _dialogManager.CreateDialog(cells).WithMinWidth(760).WithMaxWidth(800).Show();
-                break;
-            case NpcPickerViewModel npcs:
-                _dialogManager.CreateDialog(npcs).WithMinWidth(420).WithMaxWidth(480).Show();
-                break;
-            case RoutePickerViewModel routes:
-                _dialogManager.CreateDialog(routes).WithMinWidth(420).WithMaxWidth(480).Show();
-                break;
-            case RepliesPickerViewModel replies:
-                _dialogManager.CreateDialog(replies).WithMinWidth(480).WithMaxWidth(560).Show();
-                break;
-            case RouteActionPickerViewModel actions:
-                _dialogManager.CreateDialog(actions).WithMinWidth(420).WithMaxWidth(480).Show();
-                break;
-            case NewProfileViewModel profile:
-                _dialogManager.CreateDialog(profile).WithMaxWidth(440).Show();
-                break;
-        }
+        if (_dialog is null)
+            return;
+
+        // Every dialog view model has its row: a test holds the table complete, so a missing one fails there and not in a player's hands.
+        _kinds.Single(kind => kind.ViewModel == _dialog.GetType()).Show(_dialogManager, _dialog);
     }
 
     private void OnToastShown(Toast toast)
