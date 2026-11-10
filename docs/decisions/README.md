@@ -50,4 +50,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Step 9, the harvest's tour and the levels (D417)](d417-step-9-the-harvests-levels.md): 1 decision, 4 KB.
 - [Step 7, 7r5, the profile's editor (D415, D418)](d415-step-7-7r5-the-profile-editor.md): 2 decisions, 10 KB.
 - [Step 7, 7r4, following a run (D419)](d419-step-7-7r4-following-a-run.md): 1 decision, 8 KB.
+- [Step 9, the Pandawa's drink (D420)](d420-step-9-the-pandawas-drink.md): 1 decision, 5 KB.
 - [Step 7, 7r6, repeats and sequences (D421)](d421-step-7-7r6-repeats-and-sequences.md): 1 decision, 8 KB.

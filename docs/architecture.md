@@ -1018,7 +1018,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     60% of its most (`TacticWeights.Comfort`, D407), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
     range and in sight (D208), bounded by a kill; the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
-    over the rounds it lasts (D209); once the enemies
+    over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420); once the enemies
     replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206). What it reckons once from where the fight starts and keeps is `JudgeTables` (each
     fighter's damaging spells, the damage of its best turn on every other for every number of AP, which spells land from where
