@@ -2810,6 +2810,21 @@
   <data name="RepliesLeadsToText" xml:space="preserve">
     <value>leads to “{0}”</value>
   </data>
+  <data name="SequenceChoose" xml:space="preserve">
+    <value>choose a sequence</value>
+  </data>
+  <data name="SequencePickerTitle" xml:space="preserve">
+    <value>Pick a sequence</value>
+  </data>
+  <data name="SequencePickerNone" xml:space="preserve">
+    <value>The project holds no other list of steps to play here. Make one from the explorer's + menu, then pick it here.</value>
+  </data>
+  <data name="SequenceClear" xml:space="preserve">
+    <value>Clear the sequence</value>
+  </data>
+  <data name="SequenceNamePlay" xml:space="preserve">
+    <value>Play a sequence</value>
+  </data>
   <data name="RouteChoose" xml:space="preserve">
     <value>choose a route</value>
   </data>

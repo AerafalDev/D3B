@@ -2810,6 +2810,21 @@
   <data name="RepliesLeadsToText" xml:space="preserve">
     <value>mène à « {0} »</value>
   </data>
+  <data name="SequenceChoose" xml:space="preserve">
+    <value>choisir une séquence</value>
+  </data>
+  <data name="SequencePickerTitle" xml:space="preserve">
+    <value>Choisir une séquence</value>
+  </data>
+  <data name="SequencePickerNone" xml:space="preserve">
+    <value>Le projet n'a pas d'autre liste d'étapes à jouer ici. Crées-en une depuis le menu + de l'explorateur, puis choisis-la ici.</value>
+  </data>
+  <data name="SequenceClear" xml:space="preserve">
+    <value>Retirer la séquence</value>
+  </data>
+  <data name="SequenceNamePlay" xml:space="preserve">
+    <value>Jouer une séquence</value>
+  </data>
   <data name="RouteChoose" xml:space="preserve">
     <value>choisir un trajet</value>
   </data>

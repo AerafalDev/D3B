@@ -410,6 +410,24 @@
   <data name="RouteMissing" xml:space="preserve">
     <value>La route {0} n'est pas dans le projet.</value>
   </data>
+  <data name="SequencePlay" xml:space="preserve">
+    <value>Jouer la séquence {Sequence}</value>
+  </data>
+  <data name="SequencePlayHelp" xml:space="preserve">
+    <value>Joue une liste d'étapes du projet comme une seule étape : ses étapes dans l'ordre, une fois, autant de fois que cette étape se répète. Sa propre répétition est laissée à cette étape.</value>
+  </data>
+  <data name="Sequence" xml:space="preserve">
+    <value>Séquence</value>
+  </data>
+  <data name="SequenceMissing" xml:space="preserve">
+    <value>La séquence {0} n'est pas dans le projet, ou n'est pas une liste d'étapes : la session se termine.</value>
+  </data>
+  <data name="SequenceCycle" xml:space="preserve">
+    <value>La séquence {0} se joue elle-même, directement ou par d'autres : la session se termine.</value>
+  </data>
+  <data name="SequenceProblems" xml:space="preserve">
+    <value>La séquence {0} ne tient pas : {1}</value>
+  </data>
   <data name="RouteNpc" xml:space="preserve">
     <value>Parler au PNJ {Npc}, en répondant {Replies}</value>
   </data>

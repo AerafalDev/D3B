@@ -198,7 +198,7 @@ internal sealed class StateVisit : IDisposable
                         InFlight = new PlayedStep(action.Sentence, null, false);
                         var passes = _passes.GetValueOrDefault(action.Id) + 1;
 
-                        await action.Node.RunAsync(new ActionContext(context, evaluation.View, control) { Pass = repeats ? passes : 0 }, values, cancellationToken).ConfigureAwait(false);
+                        await action.Node.RunAsync(new ActionContext(context, evaluation.View, control) { Pass = repeats ? passes : 0, Variables = evaluation.Variables }, values, cancellationToken).ConfigureAwait(false);
                         InFlight = null;
 
                         _passes[action.Id] = passes;

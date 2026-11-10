@@ -105,7 +105,7 @@ public sealed class SequencesViewModelTests : IAsyncDisposable
 
         var editor = (await page.CreateAsync(""))!;
 
-        Assert.Equal(["Follow a route", "Harvest", "Fight", "Go to the haven bag", "Wait", "Write a note", "Pause", "Stop"], editor.OfferedSteps.Select(step => step.Name));
+        Assert.Equal(["Follow a route", "Play a sequence", "Harvest", "Fight", "Go to the haven bag", "Wait", "Write a note", "Pause", "Stop"], editor.OfferedSteps.Select(step => step.Name));
 
         Add(page, editor, "Follow a route");
 

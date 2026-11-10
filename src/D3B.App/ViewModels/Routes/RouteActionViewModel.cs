@@ -180,6 +180,8 @@ internal sealed partial class RouteActionViewModel : ObservableObject
                 return Convert.ToString(setting.GetValue(draft), culture) ?? "";
             case SettingKind.Route:
                 return setting.GetValue(draft) is string { Length: > 0 } route ? Editor.Library?.Find<RouteAsset>(route)?.Name ?? _localizer.Format("RouteGone", route) : _localizer["RouteChoose"];
+            case SettingKind.Sequence:
+                return setting.GetValue(draft) is string { Length: > 0 } sequence ? Editor.Library?.Find<BehaviorAsset>(sequence)?.Name ?? _localizer.Format("RouteGone", sequence) : _localizer["SequenceChoose"];
             case SettingKind.Npc:
                 return setting.GetValue(draft) is int npc ? Editor.NpcNames?.Npc(npc) ?? _localizer.Format("NpcNumber", npc) : _localizer["NpcNone"];
             case SettingKind.NpcReply:

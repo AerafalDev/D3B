@@ -438,6 +438,9 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
                 var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, _page.Game, names, localizer, _page.Provider, [], _page.Dialogs);
 
                 created.Edited += (_, _) => StepEdited(at, made, created);
+
+                // A list that plays this one, or this one itself, would never end: it is not offered.
+                created.SequenceFilter = candidate => candidate.Id != Id && _page.Library is { } library && !BehaviorSequences.Reaches(candidate, Id, other => library.Find<BehaviorAsset>(other));
                 editor = created;
             }
 
@@ -470,6 +473,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         return node switch
         {
             RouteActions.Follow => "SequenceNameFollow",
+            BehaviorSequences.Play => "SequenceNamePlay",
             RouteActions.Harvest => "RouteNameHarvest",
             RouteActions.Fight => "RouteNameFight",
             RouteActions.Wait => "RouteNameWait",

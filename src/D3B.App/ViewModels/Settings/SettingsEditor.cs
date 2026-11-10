@@ -147,6 +147,9 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets the window's dialogs, which a setting may open, such as choosing resources, if the editor shows in a window.</summary>
     public Dialogs? Dialogs { get; }
 
+    /// <summary>Gets or sets which lists of steps a step may play: the editor of a list leaves out those that would play it (D420); none, all.</summary>
+    public Func<BehaviorAsset, bool>? SequenceFilter { get; set; }
+
     /// <summary>Gets the characters that play the profile, with their professions' levels, as their bots last saw them.</summary>
     public IReadOnlyList<PreviewPlayer> Players { get; }
 
@@ -508,6 +511,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Npc, _) => new NpcFieldViewModel(setting, this),
             (SettingKind.Route, _) => new RouteFieldViewModel(setting, this),
             (SettingKind.Zone, _) => new ZoneFieldViewModel(setting, this),
+            (SettingKind.Sequence, _) => new SequenceFieldViewModel(setting, this),
             (SettingKind.NpcReply, _) => new NpcRepliesFieldViewModel(setting, this),
             (SettingKind.Number, _) => new NumberFieldViewModel(setting, this),
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),

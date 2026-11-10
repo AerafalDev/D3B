@@ -27,7 +27,7 @@ public sealed record BehaviorAsset : Asset
     /// <inheritdoc/>
     public override IReadOnlyList<string> Uses()
     {
-        // A behavior as a node of another, or a list as a value, comes with the sessions that make them (D306); the routes it follows are known (D386).
-        return BehaviorSequences.RoutesOf(this);
+        // The routes it follows (D386) and the lists it plays (D420); a whole behavior as a node of another comes with the canvas (D306).
+        return [.. BehaviorSequences.RoutesOf(this), .. BehaviorSequences.SequencesOf(this)];
     }
 }

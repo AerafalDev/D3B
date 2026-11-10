@@ -410,6 +410,24 @@
   <data name="RouteMissing" xml:space="preserve">
     <value>The route {0} is not in the project.</value>
   </data>
+  <data name="SequencePlay" xml:space="preserve">
+    <value>Play the sequence {Sequence}</value>
+  </data>
+  <data name="SequencePlayHelp" xml:space="preserve">
+    <value>Plays a list of steps of the project as one step: its steps in order, once, as many times as this step repeats. Its own repeat is left to this step.</value>
+  </data>
+  <data name="Sequence" xml:space="preserve">
+    <value>Sequence</value>
+  </data>
+  <data name="SequenceMissing" xml:space="preserve">
+    <value>The sequence {0} is not in the project, or is no list of steps: the run ends.</value>
+  </data>
+  <data name="SequenceCycle" xml:space="preserve">
+    <value>The sequence {0} plays itself, directly or through others: the run ends.</value>
+  </data>
+  <data name="SequenceProblems" xml:space="preserve">
+    <value>The sequence {0} does not hold: {1}</value>
+  </data>
   <data name="RouteNpc" xml:space="preserve">
     <value>Talk to NPC {Npc}, replying {Replies}</value>
   </data>

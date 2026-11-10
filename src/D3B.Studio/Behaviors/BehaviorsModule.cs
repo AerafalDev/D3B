@@ -33,6 +33,7 @@ public sealed class BehaviorsModule : IModule
         services.TryAddSingleton<CharacterVariables>();
         services.TryAddSingleton<SharedVariables>();
         services.TryAddSingleton<RouteRuns>();
+        services.TryAddSingleton<SequenceRuns>();
         services.AddSingleton(provider => new NodeCatalog(provider.GetServices<NodeDefinition>(), provider.GetRequiredService<ActivityCatalog>(), provider));
         services.AddSingleton<ProfileStarter>();
         services.AddSingleton<IPlaceZones>(provider => new ProjectZones(provider.GetRequiredService<AssetLibrary>(), () => provider.GetRequiredService<GameWorld>().Atlas));
