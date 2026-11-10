@@ -227,8 +227,7 @@ public sealed class DiscordReportSinkTests : IDisposable
             return Json(HttpStatusCode.OK);
         });
 
-        await sink.SendAsync(Request("x", 200_000), new Progress<long>(told.Add), TestContext.Current.CancellationToken);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await sink.SendAsync(Request("x", 200_000), new Immediately(told.Add), TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(told);
         Assert.Equal(200_000, told.Max());
@@ -262,6 +261,22 @@ public sealed class DiscordReportSinkTests : IDisposable
     public void AWebhooksToStringHidesItsToken()
     {
         Assert.DoesNotContain("TheSecretTokenOfTheTest", ReportWebhook.Parse(Url).ToString(), StringComparison.Ordinal);
+    }
+
+    // Progress<T> posts to the thread pool: a test reads what was told, so it is told at once.
+    private sealed class Immediately : IProgress<long>
+    {
+        private readonly Action<long> _told;
+
+        public Immediately(Action<long> told)
+        {
+            _told = told;
+        }
+
+        public void Report(long value)
+        {
+            _told(value);
+        }
     }
 
     private sealed class FakeHandler : HttpMessageHandler

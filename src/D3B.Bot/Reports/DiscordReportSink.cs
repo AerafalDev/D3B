@@ -17,8 +17,8 @@ namespace D3B.Bot.Reports;
 /// </remarks>
 public sealed class DiscordReportSink : IReportSink
 {
-    /// <summary>The most bytes of a file by default: 10 MiB, which Discord has long taken from a webhook.</summary>
-    public const long DefaultMaxFileBytes = 10L * 1024 * 1024;
+    /// <summary>The most bytes of a file by default: 20 MiB. Measured on 2026-11-10 on the owner's webhook with files of random bytes: 20 MiB was taken and 21.5 MiB refused (the post's size limit is not a published number, and it depends on the server's level).</summary>
+    public const long DefaultMaxFileBytes = 20L * 1024 * 1024;
 
     private const int TooLargeCode = 40005;
 
