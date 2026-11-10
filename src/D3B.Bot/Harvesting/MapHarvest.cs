@@ -58,18 +58,7 @@ public static class MapHarvest
             if (skipped.Contains(element.ElementId))
                 continue;
 
-            HarvestTarget? best = null;
-
-            foreach (var skill in element.EnabledSkills)
-            {
-                if (targets.TryGetValue(skill.SkillId, out var target) && LevelOf(state, target.JobId) >= target.Level
-                    && (best is null || target.Priority < best.Value.Priority))
-                {
-                    best = target;
-                }
-            }
-
-            if (best is not { } chosen)
+            if (BestTarget(state, targets, element) is not { } chosen)
                 continue;
 
             if (!ElementUse.TryGetCell(map, element.ElementId, out var elementCell)
@@ -85,6 +74,45 @@ public static class MapHarvest
         }
 
         return [.. found.OrderBy(candidate => candidate.Target.Priority).ThenBy(candidate => candidate.Steps).ThenBy(candidate => candidate.ElementId).Select(candidate => (candidate.ElementId, candidate.Target))];
+    }
+
+    /// <summary>Lists the zones of the map, other than the character's, where the wanted resources it cannot use from its own stand.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="targets">The skills wanted, by id.</param>
+    /// <param name="state">The character's state.</param>
+    /// <returns>The zones, in ascending order, one for each such element: its lowest zone, unless a zone already chosen for another one borders it; an element with a walkable neighbour in the character's zone is harvested from there, one with no walkable neighbour (water) names none.</returns>
+    /// <remarks>What a tour that left such elements behind goes to another zone of the map for (D425).</remarks>
+    public static IReadOnlyList<int> OtherZones(BotContext context, FrozenDictionary<int, HarvestTarget> targets, CharacterState state)
+    {
+        if (state.Cell is not { } cell || !context.Maps.TryGet(state.MapId!.Value, out var map))
+            return [];
+
+        var cells = map.Cells.Span;
+        var zone = cells[cell].Zone;
+        var left = new List<IReadOnlyList<int>>();
+
+        foreach (var element in state.Elements.Values)
+        {
+            if (BestTarget(state, targets, element) is null || !ElementUse.TryGetCell(map, element.ElementId, out var elementCell) || ElementCells.UsedFrom(cells, elementCell, zone).Count > 0)
+                continue;
+
+            var zones = ElementCells.NeighbourZones(cells, elementCell);
+
+            if (zones.Count > 0)
+                left.Add(zones);
+        }
+
+        // An element with fewest zones to choose from first; one a zone already chosen borders adds none. The character has none of these
+        // zones as its own, so each element lists only other zones.
+        var chosen = new SortedSet<int>();
+
+        foreach (var zones in left.OrderBy(zones => zones.Count))
+        {
+            if (!zones.Any(chosen.Contains))
+                chosen.Add(zones[0]);
+        }
+
+        return [.. chosen];
     }
 
     /// <summary>Harvests every element of the map that the targets name, one after the other, until none is left.</summary>
@@ -134,5 +162,22 @@ public static class MapHarvest
                     break;
             }
         }
+    }
+
+    // The target an element is harvested for, if it is offered one the character can harvest: the lowest priority wins.
+    private static HarvestTarget? BestTarget(CharacterState state, FrozenDictionary<int, HarvestTarget> targets, MapElement element)
+    {
+        HarvestTarget? best = null;
+
+        foreach (var skill in element.EnabledSkills)
+        {
+            if (targets.TryGetValue(skill.SkillId, out var target) && LevelOf(state, target.JobId) >= target.Level
+                && (best is null || target.Priority < best.Value.Priority))
+            {
+                best = target;
+            }
+        }
+
+        return best;
     }
 }

@@ -46,6 +46,9 @@ public sealed class HarvestActivity : BotActivity
     private const int MostFailedJourneys = 3;
     private const int MostBankings = 3;
 
+    // The way out of a map and back into its other zone: through one neighbour map it is two changes; a resource is not worth much more.
+    private const int MostZoneChanges = 6;
+
     private static readonly TimeSpan _busyDelay = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan _regrowthDelay = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan _objectsDelay = TimeSpan.FromSeconds(1);
@@ -73,7 +76,7 @@ public sealed class HarvestActivity : BotActivity
     private List<HarvestRotationZone> _rotation = [];
     private HarvestRotationZone? _current;
     private FrozenSet<int>? _deposited;
-    private long? _skippedOn;
+    private (long? Map, int? Zone) _skippedOn;
     private int _failedJourneys;
     private BotContext? _context;
     private int? _lastTarget;
@@ -170,6 +173,11 @@ public sealed class HarvestActivity : BotActivity
         return state.Elements.Values.Any(element => element.EnabledSkills.Any(skill => zone.Targets.TryGetValue(skill.SkillId, out var target) && LevelOf(state, target.JobId) >= target.Level));
     }
 
+    private static int? VertexOf(BotContext context, CharacterState state)
+    {
+        return state.MapId is { } mapId && state.Cell is { } cell && context.Maps.TryGet(mapId, out var map) && context.World.TryGetVertex(map, cell, out var vertex) ? vertex : null;
+    }
+
     /// <inheritdoc/>
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
@@ -201,10 +209,14 @@ public sealed class HarvestActivity : BotActivity
         {
             See(state, mapId, zone, context.Time.GetUtcNow());
 
+            if (VertexOf(context, state) is { } standing)
+                current.Tour.Enter(standing);
+
             if (await HarvestAsync(context, zone, cancellationToken).ConfigureAwait(false))
                 return true;
 
             current.Tour.Visit(mapId);
+            WantOtherZones(context, zone, current.Tour);
         }
 
         await GoOnAsync(context, current, cancellationToken).ConfigureAwait(false);
@@ -511,10 +523,11 @@ public sealed class HarvestActivity : BotActivity
     {
         var state = context.State;
 
-        if (_skippedOn != state.MapId)
+        // What was left for a visit stays left on that map and in that zone of it only: another zone of the map has other neighbours (D425).
+        if (_skippedOn != (state.MapId, VertexOf(context, state)))
         {
             _skipped.Clear();
-            _skippedOn = state.MapId;
+            _skippedOn = (state.MapId, VertexOf(context, state));
         }
 
         var candidates = Candidates(context, zone, state);
@@ -571,7 +584,7 @@ public sealed class HarvestActivity : BotActivity
         var tour = current.Tour;
         var remaining = tour.Remaining(zone);
 
-        if (remaining.Count is 0)
+        if (remaining.Count is 0 && tour.OtherZones.Count is 0)
         {
             await RotateAsync(context, current, cancellationToken).ConfigureAwait(false);
 
@@ -579,7 +592,8 @@ public sealed class HarvestActivity : BotActivity
         }
 
         var state = context.State;
-        var target = TargetOf(context, state, remaining, out var next);
+        FrozenSet<int> zones = [.. tour.OtherZones];
+        var target = TargetOf(context, state, remaining, zones, out var next);
         var inZone = state.MapId is { } mapId && zone.Maps.ContainsKey(mapId);
 
         Publish(state, GameText.Of(HarvestTexts.Text(inZone ? "DoingTravel" : "DoingReturn")), next: next);
@@ -593,7 +607,7 @@ public sealed class HarvestActivity : BotActivity
                 && MapHarvest.Candidates(context, TargetsOf(zone), crossed, []).Count > 0;
         }
 
-        switch (await context.TravelAsync(remaining, Harvestable, cancellationToken).ConfigureAwait(false))
+        switch (await context.TravelAsync(remaining, zones, Harvestable, cancellationToken).ConfigureAwait(false))
         {
             case TravelOutcome.Arrived:
                 _failedJourneys = 0;
@@ -601,6 +615,13 @@ public sealed class HarvestActivity : BotActivity
             case TravelOutcome.NoPath:
                 foreach (var map in remaining)
                     tour.Unreach(map);
+
+                foreach (var vertex in zones)
+                    tour.GiveUp(vertex);
+
+                // Only zones of maps already gone through were wanted: nothing of the tour is lost, the next step goes on without them.
+                if (remaining.Count is 0)
+                    break;
 
                 // A zone of the rotation the character cannot reach is left for the others; the activity ends when none is left (D391).
                 if (_rotation.Count > 1 && _settings.Place is HarvestPlace.Automatic)
@@ -617,8 +638,16 @@ public sealed class HarvestActivity : BotActivity
 
                 break;
             default:
-                if (target is { } failed)
-                    tour.Unreach(failed);
+                // A detour to a zone of a map already gone through is optional: its failure is given up and counts for nothing.
+                if (target is { } failed && zones.Contains(failed))
+                {
+                    tour.GiveUp(failed);
+
+                    break;
+                }
+
+                if (target is { } unreached)
+                    tour.Unreach(_graph.Vertices.Span[unreached].MapId);
 
                 if (++_failedJourneys >= MostFailedJourneys)
                     throw Failure("The way through the zone failed three times in a row.", "FailLost");
@@ -685,22 +714,50 @@ public sealed class HarvestActivity : BotActivity
         await context.WaitUntilAsync(state => HasWanted(zone, state), _regrowthDelay, cancellationToken).ConfigureAwait(false);
     }
 
-    private long? TargetOf(BotContext context, CharacterState state, HashSet<long> remaining, out long? next)
+    // The vertex the journey will end on, and the map it goes to first.
+    private int? TargetOf(BotContext context, CharacterState state, HashSet<long> remaining, FrozenSet<int> zones, out long? next)
     {
         next = null;
 
-        if (state.MapId is not { } mapId || state.Cell is not { } cell || !context.Maps.TryGet(mapId, out var map)
-            || !context.World.TryGetVertex(map, cell, out var vertex)
-            || !context.World.TryFind(vertex, remaining, WorldTravel.RulesOf(context), out var path))
-        {
+        if (VertexOf(context, state) is not { } vertex || !context.World.TryFind(vertex, remaining, zones, WorldTravel.RulesOf(context), out var path))
             return null;
+
+        next = path.Steps.Count > 0 ? _graph.Vertices.Span[path.Steps[0].To].MapId : null;
+
+        return path.To;
+    }
+
+    // A map done, the zones of it where a wanted resource stood that the character's own zone could not reach become places of the tour, once
+    // each: the graph has no edge between two zones of a map, so the journey leaves the map and comes back by another side (D425).
+    private void WantOtherZones(BotContext context, HarvestZone zone, HarvestTour tour)
+    {
+        var state = context.State;
+
+        if (state.MapId is not { } mapId || VertexOf(context, state) is not { } here)
+            return;
+
+        foreach (var other in MapHarvest.OtherZones(context, TargetsOf(zone), state))
+        {
+            if (!_graph.TryGetVertex(mapId, other, out var vertex))
+            {
+                BotLog.ZoneLeftAlone(context.Log, state.Key.CharacterId, mapId, other, MostZoneChanges);
+
+                continue;
+            }
+
+            if (tour.IsEntered(vertex) || tour.OtherZones.Contains(vertex))
+                continue;
+
+            if (context.World.TryFind(here, FrozenSet<long>.Empty, new HashSet<int> { vertex }, WorldTravel.RulesOf(context), out var path) && path.Steps.Count <= MostZoneChanges)
+            {
+                tour.WantZone(vertex);
+                BotLog.ZoneWanted(context.Log, state.Key.CharacterId, mapId, other, path.Steps.Count);
+            }
+            else
+            {
+                BotLog.ZoneLeftAlone(context.Log, state.Key.CharacterId, mapId, other, MostZoneChanges);
+            }
         }
-
-        var vertices = _graph.Vertices.Span;
-
-        next = path.Steps.Count > 0 ? vertices[path.Steps[0].To].MapId : null;
-
-        return vertices[path.To].MapId;
     }
 
     private async Task WaitGrowAsync(BotContext context, HarvestZone zone, DateTimeOffset ready, CancellationToken cancellationToken)

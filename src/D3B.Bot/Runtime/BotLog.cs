@@ -70,6 +70,12 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: element {Element} has no way to a cell beside it from zone {Zone} of its map")]
     public static partial void OutOfReach(ILogger logger, long character, int element, int zone);
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: the tour will go to zone {Zone} of map {Map}, {Changes} map changes away, for a resource the zone it stands in cannot reach")]
+    public static partial void ZoneWanted(ILogger logger, long character, long map, int zone, int changes);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: the tour leaves zone {Zone} of map {Map} alone: no way of at most {Most} map changes leads there from the zone it stands in")]
+    public static partial void ZoneLeftAlone(ILogger logger, long character, long map, int zone, int most);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: travels from map {From}, {Changes} map changes away")]
     public static partial void Travelling(ILogger logger, long character, long from, int changes);
 

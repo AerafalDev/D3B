@@ -160,7 +160,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   information received (D259). The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
   on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83). A teleport counts as as many map changes as
   the running activity says (`BotActivity.TeleportChanges`, `WorldPathRules.TeleportChanges`), so that a zaap is taken only
-  when it saves that many, and never on a tie with a walk (D167).
+  when it saves that many, and never on a tie with a walk (D167). A journey may also seek zones of maps, vertices of the world graph
+  (`TravelAsync(maps, zones, ...)`, D425): the character has arrived when its vertex, found from its cell, is one of them, so another zone
+  of its own map is reached by leaving the map and coming back.
 - **Banking** (D79, D80): `Banking`, in `D3B.Bot.Banks`, goes where a banker stands, the nearest bank's inside still
   sought, talks to him, gives the reply of his the question offers, puts the stacks asked for in by one request and the
   kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
@@ -198,7 +200,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   whose graphics all offer none of its skills, and those without elements; an interior of a sub-area that also holds maps on a
   world map (`SubAreaInteriors`, `HarvestZone.Interiors`, the houses of a town, shared with `HuntingGround`) is gone through only
   once seen holding a wanted resource or foretold by a graphic (D416), and a map is probable only for what the character's level may
-  harvest (`HarvestTour.Know`, given at each step, D417). Full at its
+  harvest (`HarvestTour.Know`, given at each step, D417). An element beside cells of another zone of its map only is out of reach from the
+  character's zone (`ElementCells.UsedFrom`, D424): once the map is done the tour wants that zone, a vertex of the graph, as one more place
+  (`MapHarvest.OtherZones`, `HarvestTour.OtherZones`, once per tour, a way of six map changes at most, D425), the visited, regrowth and sighting
+  sets staying keyed by map, and the elements left for a visit by map and zone. Full at its
   share of pods, it banks at the nearest bank, what the settings say, and the next step goes back; still full, it says
   why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
   app. Banking waits the client's display time, half a second measured, after the banker's question and after the bank
@@ -996,7 +1001,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - `ElementCells`: the cells a character uses an element from, as the client chooses them, the walkable neighbours of the
   element's cell in the character's zone; the zone's walkable cells nearest it only when the element has no walkable neighbour in any zone
   (water); none when its neighbours are all in another zone (D424), which `MapHarvest.Candidates` skips for the visit and `ElementUse`
-  answers `NoPath`.
+  answers `NoPath`; `NeighbourZones` lists the zones of an element's walkable neighbours (D425).
 - `CellPathfinder`: A* over the cells a character may walk on, a step across passing beside at least one walkable cell,
   steps weighed by the time the character takes, to one cell or the nearest of several; on a map with stairs, cells of
   moveZone 1, a step changes floor by 10 at most but along a stair (D86). `CellPath` gives the turning points a request
@@ -1007,7 +1012,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   bank's insides (D79).
 - `WorldPathfinder`, in `D3B.Engine.World`: Dijkstra's over the world graph's vertices, a zone of a map each, through
   scrolls, scrolls with an action, map actions and every interactive transition, doors, stairs, portals and "go to"s,
-  whose criteria are met (`WorldPathRules`, D248), each change costing the same, to the nearest of several maps; sub-areas
+  whose criteria are met (`WorldPathRules`, D248), each change costing the same, to the nearest of several maps or vertices, the graph having
+  no edge between two zones of a map, so that another zone of the start's own map is a path out and back (D425); sub-areas
   closed to accounts without a subscription are entered by subscribed ones only. It goes through the ways through an NPC's
   dialog it is given (`NpcWay`), which the client's graph does not hold, Incarnam's portal among them: from any vertex of
   the NPC's map to the only vertex of the map it leads to, one change as a scroll is, a step naming it below a teleport's

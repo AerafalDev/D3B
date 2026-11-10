@@ -84,6 +84,63 @@ public sealed class WorldTravelTests
         Assert.Single(connection.Sent);
     }
 
+    private static int[] SecondZone()
+    {
+        return [50, 51, 52];
+    }
+
+    private static HashSet<int> VertexOf(TestPlay play, int zone)
+    {
+        Assert.True(play.World.Graph.TryGetVertex(TestPlay.MapId, zone, out var vertex));
+
+        return [vertex];
+    }
+
+    [Fact]
+    public async Task AJourneyToAnotherZoneOfItsMapLeavesTheMapAndComesBack()
+    {
+        // The first zone has no edge to the second: east by the map action, then back by another side, into the second zone (D425).
+        await using var play = TestPlay.WithASecondZone(SecondZone());
+        var (connection, bot) = await play.EnterAsync(300);
+        var journey = bot.RunAsync((context, token) => context.TravelAsync(new HashSet<long>(), VertexOf(play, 2), null, token), TestContext.Current.CancellationToken);
+
+        Assert.Equal(TestPlay.ActionCell, await TestWalks.WalkedAsync(play, connection, 1, new MapCurrentEvent { MapId = TestPlay.EastMapId }));
+        connection.Server(TestPlay.Information(253, TestPlay.EastMapId));
+
+        Assert.Equal(TestPlay.EastOtherZoneActionCell, await TestWalks.WalkedAsync(play, connection, 2, new MapCurrentEvent { MapId = TestPlay.MapId }));
+        connection.Server(TestPlay.Information(51));
+
+        Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.Equal(TestPlay.MapId, bot.State.MapId);
+        Assert.Equal(51, bot.State.Cell);
+        Assert.Equal(2, connection.Sent.Count);
+    }
+
+    [Fact]
+    public async Task ACharacterInTheZoneSoughtHasArrived()
+    {
+        await using var play = TestPlay.WithASecondZone(SecondZone());
+        var (connection, bot) = await play.EnterAsync(51);
+
+        Assert.Equal(TravelOutcome.Arrived, await bot.RunAsync((context, token) => context.TravelAsync(new HashSet<long>(), VertexOf(play, 2), null, token), TestContext.Current.CancellationToken));
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
+    public async Task ANearerMapSoughtWinsOverAZoneOfTheCharactersMap()
+    {
+        // North is one change away, the other zone two.
+        await using var play = TestPlay.WithASecondZone(SecondZone());
+        var (connection, bot) = await play.EnterAsync(20);
+        var journey = bot.RunAsync((context, token) => context.TravelAsync(new HashSet<long> { TestPlay.NorthMapId }, VertexOf(play, 2), null, token), TestContext.Current.CancellationToken);
+
+        Assert.IsType<MapChangeRequest>(await connection.SentAsync(1));
+        TestWalks.Arrive(connection, TestPlay.NorthMapId, 300);
+
+        Assert.Equal(TravelOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.Equal(TestPlay.NorthMapId, bot.State.MapId);
+    }
+
     [Fact]
     public async Task ACharacterOnTheMapSoughtHasArrived()
     {
