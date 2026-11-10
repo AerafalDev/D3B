@@ -933,7 +933,7 @@ The target:
 - **The sessions** (D306, D319): 7b the model and run time, 7c the shell's design, 7c2 to 7c4 its code, 7d routes and
   zones, 7e and 7e2 the canvas, 7f the nodes and plannings, 7g debugging, 7h fight preferences, 7i sharing; profiles,
   presets and runs dropped at 7b (D304).
-    Its texts (`RouteTexts`), the scene its map draws (`RouteSceneBuilder`), its step rows (`RouteStepRows`) and the forms of a step's actions (`RouteActionForms`) are made apart (D399).
+    Its texts (`RouteTexts`), the scene its map draws (`RouteSceneBuilder`), its step rows (`RouteStepRows`), the forms of a step's actions (`RouteActionForms`), its menu of worlds (`RouteWorldChoices`) and the maps its trace adds (`RouteTrace`) are made apart; the rows of the chosen step's actions with their removing, moving and editing are `RouteActionList`, the path search and its summary `RoutePlanning` and `RouteLegSummary`, what is typed to add an anchor `RouteTypedAnchor`, and the undo and redo `RouteHistory` of `RouteSnapshot`s, a gesture counted as one (D399). The editor keeps the anchors, `Changed()` and the selection, and tells the collaborators back through callbacks.
 
 ## Engine
 
@@ -1008,7 +1008,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
     over the rounds it lasts (D209); once the enemies
     replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
-    the bench what it measures (D206).
+    the bench what it measures (D206). What it reckons once from where the fight starts and keeps is `JudgeTables` (each
+    fighter's damaging spells, the damage of its best turn on every other for every number of AP, which spells land from where
+    it walks), the odds are `JudgeOdds`, and the pure turn arithmetic is `JudgeTurns` (D399).
   - `Summons`, in `D3B.Engine.Fights`: the fighter a summon brings, from its monster's grade and its summoner's
     characteristics, as the server makes it (D269); `MonsterSpells`, the levels a monster casts at a grade. A summon the
     search brings is judged as one of the fighters the judge starts with: its life a tenth of an ally's, its being alive

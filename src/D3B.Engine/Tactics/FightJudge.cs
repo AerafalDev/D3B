@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using D3B.Data.Monsters;
 using D3B.Data.Spells;
-using D3B.Engine.Criteria;
 using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
@@ -81,36 +80,17 @@ public sealed class FightJudge
     private const double StaysBeside = 82.0 / 122;
     private const double StaysAway = 21.0 / 989;
 
-    private readonly Combatant[] _fighters;
-    private readonly Dictionary<(int MonsterId, int Grade, long SummonerId), int> _summons = [];
+    private readonly JudgeTables _tables;
+    private readonly JudgeOdds _odds;
     private readonly long _actorId;
     private readonly long _protectedId;
     private readonly int _team;
     private readonly TacticWeights _weights;
-    private readonly FightMoves _moves;
-    private readonly SpellCatalog _spells;
-    private readonly WeaponBlows _blows;
-    private readonly EffectActions _actions;
-    private readonly CastRules _rules;
-    private readonly SpellStateCatalog _states;
     private readonly Bombs? _bombs;
     private readonly SpellEffects? _effects;
     private readonly Imagination? _imagination;
-    private readonly int[] _signatures;
-    private readonly Dictionary<(int One, int Other, int Attacker, int Target), double[]> _changedDamage = [];
-    private readonly Dictionary<(int One, int Other, int Attacker, int Target, ulong Landing), double[]> _changedTurns = [];
-    private readonly SpellLevel[][] _levels;
-    private readonly double[][][] _levelDamage;
-    private readonly double[][][] _damage;
-    private readonly Dictionary<(int One, int Other, ulong Landing), double[]> _landingTurns = [];
-    private readonly Dictionary<(long Id, int Cell, int MovementPoints), int[]> _cells = [];
-    private readonly Dictionary<(int One, long Target, int From, int To, int MovementPoints, int Actor), ulong> _landing = [];
-    private readonly int[] _range;
-    private readonly bool[] _mobile;
-    private readonly double[] _hardest;
     private readonly int _actorTurnPoints;
     private readonly int _actorTurnMovement;
-    private readonly double _hardestOfAll;
     private readonly int _rounds;
 
     /// <summary>Initializes a new instance of the <see cref="FightJudge"/> class, from the fight as it stands when the search starts.</summary>
@@ -138,69 +118,20 @@ public sealed class FightJudge
         ArgumentNullException.ThrowIfNull(states);
         ArgumentNullException.ThrowIfNull(summons);
 
-        // A summon the search brings is judged as one of the fighters the judge starts with, by its monster, its grade and
-        // its summoner, whatever its cell: its characteristics are its summoner's share (Summons), the same wherever it stands.
-        _fighters = [.. start.Fighters, .. summons.Select(summon => summon.Summon)];
         _actorId = start.ActorId;
         _protectedId = start.Actor.SummonerId ?? start.ActorId;
         _team = start.Actor.Team;
         _weights = weights;
-        _moves = moves;
-        _spells = blows.Spells;
-        _blows = blows;
-        _actions = actions;
-        _rules = rules;
-        _states = states;
         _bombs = bombs;
         _effects = effects;
         _imagination = imagination;
-        _signatures = [.. _fighters.Select(Signature)];
-        _levels = new SpellLevel[_fighters.Length][];
-        _levelDamage = new double[_fighters.Length][][];
-        _damage = new double[_fighters.Length][][];
-        _range = new int[_fighters.Length];
-        _mobile = new bool[_fighters.Length];
-        _hardest = new double[_fighters.Length];
+        _tables = new JudgeTables(start, knowledge, blows, actions, rules, moves, states, summons);
+        _odds = new JudgeOdds(_tables, _team);
 
         var turn = knowledge.TurnPoints.TryGetValue(_actorId, out var points) ? points : (start.Actor.ActionPoints, start.Actor.MovementPoints);
 
         _actorTurnPoints = Math.Clamp(turn.Item1, 0, MostPoints);
         _actorTurnMovement = Math.Max(0, turn.Item2);
-
-        for (var one = 0; one < _fighters.Length; one++)
-        {
-            var fighter = _fighters[one];
-            var known = one < start.Fighters.Length ? knowledge.SpellsOf(fighter.Id) : summons[one - start.Fighters.Length].Levels;
-            var levels = known.Where(level => Damages(_spells, actions, level)).Select(level => CastRules.Modified(level, fighter)).Take(Landings).ToArray();
-
-            if (one >= start.Fighters.Length && fighter is { MonsterId: { } monster, Grade: { } grade, SummonerId: { } summoner })
-                _summons.TryAdd((monster, grade, summoner), one);
-
-            _levels[one] = levels;
-            _levelDamage[one] = new double[_fighters.Length][];
-            _damage[one] = new double[_fighters.Length][];
-            _mobile[one] = !fighter.IsStatic && (fighter.MonsterId is null || (fighter.MonsterProperties & Data.Monsters.MonsterProperties.CanMove) is not 0);
-            _range[one] = Range(levels, fighter);
-
-            for (var other = 0; other < _fighters.Length; other++)
-            {
-                if (fighter.Team == _fighters[other].Team)
-                {
-                    _levelDamage[one][other] = [];
-                    _damage[one][other] = [];
-
-                    continue;
-                }
-
-                Combatant[] pair = [fighter, _fighters[other]];
-
-                _levelDamage[one][other] = [.. levels.Select(level => Damage(level, fighter, _fighters[other], pair))];
-                _damage[one][other] = BestTurns(levels, _levelDamage[one][other], All(levels.Length));
-                _hardest[one] = Math.Max(_hardest[one], _damage[one][other][^1]);
-            }
-        }
-
-        _hardestOfAll = _hardest.DefaultIfEmpty(0).Max();
 
         // A buff is weighed over the rounds the fight is foreseen to last still, as its odds reckon them.
         var odds = Odds(start, knowledge);
@@ -224,110 +155,6 @@ public sealed class FightJudge
         return most * (Math.Sqrt(comfort) + (_weights.ComfortWorth * (share - comfort) / (2 * Math.Sqrt(comfort))));
     }
 
-    private double Damage(in SpellLevel level, Combatant caster, Combatant target, Combatant[] pair)
-    {
-        if (!Hurts(level, caster, target))
-            return 0;
-
-        // A critical hit weighed by its chance (D207), its level's critical effects if it has some.
-        var chance = EffectFormulas.CriticalChance(level, caster);
-        // A weapon's blow deals a weapon's damage, its critical hit adding the weapon's bonus (D220).
-        int? weaponBonus = WeaponBlows.IsBlow(level) ? _blows.CriticalBonusOf(level) : null;
-        var normal = Damage(_spells.EffectsOf(level), _actions, _rules, level, caster, target, pair, critical: false, weaponBonus);
-
-        if (chance <= 0)
-            return normal;
-
-        var critical = Damage(level.CriticalEffectCount > 0 ? _spells.CriticalEffectsOf(level) : _spells.EffectsOf(level), _actions, _rules, level, caster, target, pair, critical: true, weaponBonus);
-
-        return ((1 - chance) * normal) + (chance * critical);
-    }
-
-    private bool Hurts(in SpellLevel level, Combatant caster, Combatant target)
-    {
-        // What the states say of a blow: a caster that casts or deals nothing, a level its states forbid, such as a Zobal's
-        // spell of another mask (D228), a target that takes nothing, or not at this range.
-        if (!_rules.StatesAllow(level, caster))
-            return false;
-
-        foreach (var state in caster.States)
-        {
-            if (_states.TryGetState(state, out var found) && (found.Properties & SpellStateProperties.CantDealDamage) is not 0)
-                return false;
-        }
-
-        foreach (var state in target.States)
-        {
-            if (!_states.TryGetState(state, out var found))
-                continue;
-
-            var melee = level.Range <= 1;
-
-            if ((found.Properties & SpellStateProperties.Invulnerable) is not 0
-                || (melee && (found.Properties & SpellStateProperties.InvulnerableMelee) is not 0)
-                || (!melee && (found.Properties & SpellStateProperties.InvulnerableRange) is not 0))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private double[] Turns(int one, Combatant attacker, int other, Combatant target, ulong landing)
-    {
-        // The fighters as the search left them: the tables of the start, unless a buff changed what their damage reads.
-        var attackerSignature = ReferenceEquals(attacker.Characteristics, _fighters[one].Characteristics) && attacker.States == _fighters[one].States ? _signatures[one] : Signature(attacker);
-        var targetSignature = ReferenceEquals(target.Characteristics, _fighters[other].Characteristics) && target.States == _fighters[other].States ? _signatures[other] : Signature(target);
-
-        if (attackerSignature == _signatures[one] && targetSignature == _signatures[other])
-            return LandingTurns(one, other, landing);
-
-        var key = (one, other, attackerSignature, targetSignature);
-
-        if (!_changedDamage.TryGetValue(key, out var damages))
-        {
-            Combatant[] pair = [attacker, target];
-
-            _changedDamage[key] = damages = [.. _levels[one].Select(level => Damage(level, attacker, target, pair))];
-        }
-
-        if (!_changedTurns.TryGetValue((one, other, attackerSignature, targetSignature, landing), out var turns))
-            _changedTurns[(one, other, attackerSignature, targetSignature, landing)] = turns = BestTurns(_levels[one], damages, landing);
-
-        return turns;
-    }
-
-    private static double Damage(ReadOnlySpan<SpellEffect> effects, EffectActions actions, CastRules rules, in SpellLevel level, Combatant caster, Combatant target, Combatant[] pair, bool critical, int? weaponBonus)
-    {
-        var total = 0.0;
-
-        foreach (var effect in effects)
-        {
-            var action = actions.Of(effect.EffectId);
-
-            if (action.Kind is not (EffectKind.Damage or EffectKind.Steal or EffectKind.FixedDamage) || (effect.Properties & SpellEffectProperties.ForClientOnly) is not 0)
-                continue;
-
-            var selected = rules.MaskOf(effect).Selects(caster, target, pair);
-
-            if (selected is CriterionAnswer.False)
-                continue;
-
-            var roll = EffectFormulas.Roll(effect);
-            var element = EffectFormulas.Resolve(action.Element, caster);
-            var dealt = weaponBonus is { } bonus ? EffectFormulas.DealtByWeapon(roll, caster, element, critical, bonus) : EffectFormulas.Dealt(roll, caster, element, critical);
-            var value = action.Kind is EffectKind.FixedDamage
-                ? roll
-                : EffectFormulas.Received(dealt, caster, target, element, melee: level.Range <= 1, weapon: weaponBonus is not null);
-            var middle = (value.Min + value.Max) / 2.0;
-
-            total += selected is CriterionAnswer.True ? middle : middle / 2;
-        }
-
-        return total;
-    }
-
     /// <summary>Gets the damage a fighter may deal another in a turn with some AP, wherever both stand.</summary>
     /// <param name="attacker">The attacker.</param>
     /// <param name="target">The target.</param>
@@ -335,13 +162,13 @@ public sealed class FightJudge
     /// <returns>The damage, at the middle of the rolls; 0 for a fighter the judge did not start with.</returns>
     public double TurnDamage(long attacker, long target, int actionPoints)
     {
-        var one = IndexOf(attacker);
-        var other = IndexOf(target);
+        var one = _tables.IndexOf(attacker);
+        var other = _tables.IndexOf(target);
 
-        if (one < 0 || other < 0 || _damage[one][other].Length is 0)
+        if (one < 0 || other < 0 || _tables.DamageTable[one][other].Length is 0)
             return 0;
 
-        return _damage[one][other][Math.Clamp(actionPoints, 0, MostPoints)];
+        return _tables.DamageTable[one][other][Math.Clamp(actionPoints, 0, MostPoints)];
     }
 
     /// <summary>Judges a fight once the fighter playing's turn ends.</summary>
@@ -389,7 +216,7 @@ public sealed class FightJudge
 
             worth += fighter.Team == _team
                 ? AllyWorth(fighter, Effective(fighter))
-                : -Cost(fighter, IndexOf(fighter), Effective(fighter));
+                : -Cost(fighter, _tables.IndexOf(fighter), Effective(fighter));
         }
 
         return worth;
@@ -425,7 +252,7 @@ public sealed class FightJudge
         foreach (var fighter in fight.Fighters)
         {
             if (fighter.IsAlive && fighter.Team != _team)
-                Threaten(fight, fighter, IndexOf(fighter), feared);
+                Threaten(fight, fighter, _tables.IndexOf(fighter), feared);
         }
 
         for (var index = 0; index < fight.Fighters.Length; index++)
@@ -446,7 +273,7 @@ public sealed class FightJudge
         ArgumentNullException.ThrowIfNull(fight);
 
         var actor = fight.Find(_actorId);
-        var known = IndexOf(_actorId);
+        var known = _tables.IndexOf(_actorId);
 
         if (actor is not { IsAlive: true } || actor.Cell is Combatant.NoCell || known < 0)
             return 0;
@@ -455,9 +282,9 @@ public sealed class FightJudge
 
         foreach (var enemy in fight.Fighters)
         {
-            var target = IndexOf(enemy);
+            var target = _tables.IndexOf(enemy);
 
-            if (!enemy.IsAlive || enemy.Team == _team || enemy.Cell is Combatant.NoCell || target < 0 || _damage[known][target].Length is 0)
+            if (!enemy.IsAlive || enemy.Team == _team || enemy.Cell is Combatant.NoCell || target < 0 || _tables.DamageTable[known][target].Length is 0)
                 continue;
 
             var (damage, share) = NextTurn(fight, actor, known, enemy, target);
@@ -501,7 +328,7 @@ public sealed class FightJudge
             if (!fighter.IsAlive)
                 continue;
 
-            var known = IndexOf(fighter);
+            var known = _tables.IndexOf(fighter);
 
             if (fighter.Team == _team)
             {
@@ -541,7 +368,7 @@ public sealed class FightJudge
             var loss = Weight(ally) * (LifeWorth(effective, ally.MaxLife) - LifeWorth(effective - lost, ally.MaxLife));
 
             if (feared[index] >= effective)
-                loss += Alive(ally, IndexOf(ally));
+                loss += Alive(ally, _tables.IndexOf(ally));
 
             worth -= _weights.Threat * loss;
         }
@@ -552,15 +379,15 @@ public sealed class FightJudge
     private double Cost(Combatant enemy, int known, double life)
     {
         // Its life, each point weighed by how hard it hits, and its being alive, which a kill takes away.
-        var hardest = known < 0 ? 0 : _hardest[known];
-        var share = _hardestOfAll > 0 ? hardest / _hardestOfAll : 1;
+        var hardest = known < 0 ? 0 : _tables.Hardest[known];
+        var share = _tables.HardestOfAll > 0 ? hardest / _tables.HardestOfAll : 1;
 
         return ((0.6 + (0.4 * share)) * life) + (KillTurns * hardest) + (0.1 * enemy.MaxLife);
     }
 
     private double AllyWorth(Combatant ally, double life)
     {
-        return (Weight(ally) * LifeWorth(life, ally.MaxLife)) + Alive(ally, IndexOf(ally));
+        return (Weight(ally) * LifeWorth(life, ally.MaxLife)) + Alive(ally, _tables.IndexOf(ally));
     }
 
     private double Alive(Combatant ally, int known)
@@ -568,23 +395,9 @@ public sealed class FightJudge
         // A summon alive is worth the blows it deals with its own AP, as an enemy's being alive is (Cost): measured (D270), its
         // life counted as a character's had the AI summon 369 times on the turns its players summoned 42.
         if (ally.IsSummon)
-            return known < 0 ? 0 : KillTurns * TurnDamage(known, ally.ActionPoints);
+            return known < 0 ? 0 : KillTurns * _tables.TurnDamage(known, ally.ActionPoints);
 
         return Weight(ally) * AliveShare * ally.MaxLife;
-    }
-
-    private double TurnDamage(int known, int actionPoints)
-    {
-        // Its best turn's damage on the enemy it hurts most, with some AP, wherever both stand.
-        var best = 0.0;
-
-        foreach (var damage in _damage[known])
-        {
-            if (damage.Length > 0)
-                best = Math.Max(best, damage[Math.Clamp(actionPoints, 0, MostPoints)]);
-        }
-
-        return best;
     }
 
     private double Weight(Combatant ally)
@@ -595,7 +408,7 @@ public sealed class FightJudge
 
     private void Threaten(ImaginedFight fight, Combatant enemy, int known, Span<double> feared)
     {
-        if (known < 0 || enemy.Cell is Combatant.NoCell || _levels[known].Length is 0)
+        if (known < 0 || enemy.Cell is Combatant.NoCell || _tables.Levels[known].Length is 0)
             return;
 
         var best = 0.0;
@@ -614,17 +427,17 @@ public sealed class FightJudge
             if (!ally.IsAlive || ally.Team != _team || ally.Cell is Combatant.NoCell)
                 continue;
 
-            var target = IndexOf(ally);
+            var target = _tables.IndexOf(ally);
 
-            if (target < 0 || _damage[known][target].Length is 0)
+            if (target < 0 || _tables.DamageTable[known][target].Length is 0)
                 continue;
 
-            var landing = Lands(fight, enemy, known, ally, Math.Max(0, enemy.MovementPoints));
+            var landing = _tables.Lands(fight, enemy, known, ally, Math.Max(0, enemy.MovementPoints));
 
             if (landing is 0)
                 continue;
 
-            var damage = Turns(known, enemy, target, ally, landing)[Math.Clamp(enemy.ActionPoints, 0, MostPoints)];
+            var damage = _tables.Turns(known, enemy, target, ally, landing)[Math.Clamp(enemy.ActionPoints, 0, MostPoints)];
 
             if (damage > best)
             {
@@ -660,7 +473,7 @@ public sealed class FightJudge
         fight = NextTurnOf(fight);
 
         var actor = fight.Find(_actorId);
-        var known = IndexOf(_actorId);
+        var known = _tables.IndexOf(_actorId);
         var alive = actor is { IsAlive: true } && actor.Cell is not Combatant.NoCell && known >= 0;
         var best = 0.0;
         var bombs = 0.0;
@@ -672,7 +485,7 @@ public sealed class FightJudge
             if (!enemy.IsAlive || enemy.Team == _team || enemy.Cell is Combatant.NoCell)
                 continue;
 
-            var target = IndexOf(enemy);
+            var target = _tables.IndexOf(enemy);
             var life = Effective(enemy) - (index < sure.Length ? sure[index] : 0);
             var blast = index < blasted.Length ? Math.Min(blasted[index], Math.Max(0, life)) : 0;
 
@@ -685,7 +498,7 @@ public sealed class FightJudge
 
             bombs += blown;
 
-            if (!alive || target < 0 || _damage[known][target].Length is 0)
+            if (!alive || target < 0 || _tables.DamageTable[known][target].Length is 0)
                 continue;
 
             // Measured live (D203): next turn's damage unbounded outweighed a kill now, so that the AI spared a fighter at 14
@@ -751,7 +564,7 @@ public sealed class FightJudge
             var life = Effective(fighter);
 
             sure[index] = Math.Min(marked, life);
-            worth += Taken(fighter, IndexOf(fighter), life, sure[index]) + Lingering(fight, fighter, walls, marked, life - sure[index]);
+            worth += Taken(fighter, _tables.IndexOf(fighter), life, sure[index]) + Lingering(fight, fighter, walls, marked, life - sure[index]);
         }
 
         return worth;
@@ -825,9 +638,9 @@ public sealed class FightJudge
 
     private double Stays(ImaginedFight fight, Combatant enemy)
     {
-        var known = IndexOf(enemy);
+        var known = _tables.IndexOf(enemy);
 
-        if (known >= 0 && !_mobile[known])
+        if (known >= 0 && !_tables.Mobile[known])
             return 1;
 
         foreach (var other in fight.Fighters)
@@ -895,25 +708,25 @@ public sealed class FightJudge
     {
         // A summon that plays its own turn plays it next, before the enemies (9f2): what it may take off the enemy it would
         // hurt most from where it stands, as the approach weighs the fighter playing's next turn, a kill never outweighed.
-        if (known < 0 || _levels[known].Length is 0 || summon.Cell is Combatant.NoCell || (summon.MonsterProperties & MonsterProperties.CanPlay) is 0)
+        if (known < 0 || _tables.Levels[known].Length is 0 || summon.Cell is Combatant.NoCell || (summon.MonsterProperties & MonsterProperties.CanPlay) is 0)
             return 0;
 
         var best = 0.0;
 
         foreach (var enemy in fight.Fighters)
         {
-            var target = IndexOf(enemy);
+            var target = _tables.IndexOf(enemy);
 
-            if (!enemy.IsAlive || enemy.Team == _team || enemy.Cell is Combatant.NoCell || target < 0 || _damage[known][target].Length is 0)
+            if (!enemy.IsAlive || enemy.Team == _team || enemy.Cell is Combatant.NoCell || target < 0 || _tables.DamageTable[known][target].Length is 0)
                 continue;
 
-            var landing = Lands(fight, summon, known, enemy, Math.Max(0, summon.MovementPoints));
+            var landing = _tables.Lands(fight, summon, known, enemy, Math.Max(0, summon.MovementPoints));
 
             if (landing is 0)
                 continue;
 
             var life = Effective(enemy);
-            var damage = Math.Min(Turns(known, summon, target, enemy, landing)[Math.Clamp(summon.ActionPoints, 0, MostPoints)], life);
+            var damage = Math.Min(_tables.Turns(known, summon, target, enemy, landing)[Math.Clamp(summon.ActionPoints, 0, MostPoints)], life);
 
             best = Math.Max(best, Cost(enemy, target, life) - (damage >= life ? 0 : Cost(enemy, target, life - damage)));
         }
@@ -926,14 +739,14 @@ public sealed class FightJudge
         // Next turn the fighter playing walks with its turn's MP and casts with its turn's AP, those its lasting buffs add
         // among them, the spells that land then.
         var (points, movement) = NextTurnPoints(fight);
-        var landing = Lands(fight, actor, known, enemy, _mobile[known] ? movement : 0);
+        var landing = _tables.Lands(fight, actor, known, enemy, _tables.Mobile[known] ? movement : 0);
 
         if (landing is not 0)
-            return (Turns(known, actor, target, enemy, landing)[points], 1);
+            return (_tables.Turns(known, actor, target, enemy, landing)[points], 1);
 
-        var reach = _range[known] + (_mobile[known] ? movement : 0);
+        var reach = _tables.Range[known] + (_tables.Mobile[known] ? movement : 0);
 
-        return (Turns(known, actor, target, enemy, All(_levels[known].Length))[points], Nearing(MapGeometry.Distance(actor.Cell, enemy.Cell), reach));
+        return (_tables.Turns(known, actor, target, enemy, All(_tables.Levels[known].Length))[points], Nearing(MapGeometry.Distance(actor.Cell, enemy.Cell), reach));
     }
 
     private (int ActionPoints, int MovementPoints) NextTurnPoints(ImaginedFight fight)
@@ -980,7 +793,7 @@ public sealed class FightJudge
             if (buff.CasterId != _actorId || fight.Find(buff.FighterId) is not { IsAlive: true } fighter)
                 continue;
 
-            var known = IndexOf(fighter);
+            var known = _tables.IndexOf(fighter);
             var ours = buff.Duration < 0 ? _rounds - 1 : Math.Min(Math.Max(0, buff.Duration - 2), _rounds - 1);
             var theirs = buff.Duration < 0 ? _rounds - 1 : Math.Min(Math.Max(0, buff.Duration - 1), _rounds - 1);
 
@@ -1004,19 +817,19 @@ public sealed class FightJudge
 
         foreach (var enemy in fight.Fighters)
         {
-            var other = IndexOf(enemy);
+            var other = _tables.IndexOf(enemy);
 
             if (!enemy.IsAlive || enemy.Team == _team || other < 0)
                 continue;
 
-            if (_levels[known].Length > 0)
-                dealt = Math.Max(dealt, Turns(known, ally, other, enemy, All(_levels[known].Length))[points] - Turns(known, without, other, enemy, All(_levels[known].Length))[Math.Clamp(without.Id == _actorId ? points : without.ActionPoints, 0, MostPoints)]);
+            if (_tables.Levels[known].Length > 0)
+                dealt = Math.Max(dealt, _tables.Turns(known, ally, other, enemy, All(_tables.Levels[known].Length))[points] - _tables.Turns(known, without, other, enemy, All(_tables.Levels[known].Length))[Math.Clamp(without.Id == _actorId ? points : without.ActionPoints, 0, MostPoints)]);
 
-            if (_levels[other].Length > 0)
+            if (_tables.Levels[other].Length > 0)
             {
                 var enemyPoints = Math.Clamp(enemy.ActionPoints, 0, MostPoints);
 
-                taken += Weight(ally) * (Turns(other, enemy, known, without, All(_levels[other].Length))[enemyPoints] - Turns(other, enemy, known, ally, All(_levels[other].Length))[enemyPoints]);
+                taken += Weight(ally) * (_tables.Turns(other, enemy, known, without, All(_tables.Levels[other].Length))[enemyPoints] - _tables.Turns(other, enemy, known, ally, All(_tables.Levels[other].Length))[enemyPoints]);
             }
         }
 
@@ -1027,122 +840,29 @@ public sealed class FightJudge
     {
         // What the fighter playing deals the enemy more, and what the enemy deals the ally it hurts most less, each a turn.
         var actor = fight.Find(_actorId);
-        var self = IndexOf(_actorId);
+        var self = _tables.IndexOf(_actorId);
         double dealt = 0, taken = 0;
 
-        if (actor is { IsAlive: true } && self >= 0 && _levels[self].Length > 0)
-            dealt = Turns(self, actor, known, enemy, All(_levels[self].Length))[_actorTurnPoints] - Turns(self, actor, known, without, All(_levels[self].Length))[_actorTurnPoints];
+        if (actor is { IsAlive: true } && self >= 0 && _tables.Levels[self].Length > 0)
+            dealt = _tables.Turns(self, actor, known, enemy, All(_tables.Levels[self].Length))[_actorTurnPoints] - _tables.Turns(self, actor, known, without, All(_tables.Levels[self].Length))[_actorTurnPoints];
 
-        if (_levels[known].Length is 0)
+        if (_tables.Levels[known].Length is 0)
             return (dealt, 0);
 
         foreach (var ally in fight.Fighters)
         {
-            var other = IndexOf(ally);
+            var other = _tables.IndexOf(ally);
 
             if (!ally.IsAlive || ally.Team != _team || other < 0)
                 continue;
 
-            var before = Turns(known, without, other, ally, All(_levels[known].Length))[Math.Clamp(without.ActionPoints, 0, MostPoints)];
-            var after = Turns(known, enemy, other, ally, All(_levels[known].Length))[Math.Clamp(enemy.ActionPoints, 0, MostPoints)];
+            var before = _tables.Turns(known, without, other, ally, All(_tables.Levels[known].Length))[Math.Clamp(without.ActionPoints, 0, MostPoints)];
+            var after = _tables.Turns(known, enemy, other, ally, All(_tables.Levels[known].Length))[Math.Clamp(enemy.ActionPoints, 0, MostPoints)];
 
             taken = Math.Max(taken, Weight(ally) * (before - after));
         }
 
         return (dealt, taken);
-    }
-
-    private double[] LandingTurns(int one, int other, ulong landing)
-    {
-        if (landing == All(_levels[one].Length))
-            return _damage[one][other];
-
-        if (!_landingTurns.TryGetValue((one, other, landing), out var turns))
-            _landingTurns[(one, other, landing)] = turns = BestTurns(_levels[one], _levelDamage[one][other], landing);
-
-        return turns;
-    }
-
-    private ulong Lands(ImaginedFight fight, Combatant attacker, int one, Combatant target, int movementPoints)
-    {
-        // Which of the attacker's damaging spells land on the target from a cell it walks to: within range, and in sight for
-        // a level that tests it. The attacker leaves its cell; the fighter playing's stands where the fight has it.
-        var levels = _levels[one];
-        var actorCell = fight.Find(_actorId)?.Cell ?? Combatant.NoCell;
-        var key = (one, target.Id, attacker.Cell, target.Cell, movementPoints, actorCell);
-
-        if (levels.Length is 0 || attacker.Cell is Combatant.NoCell || target.Cell is Combatant.NoCell)
-            return 0;
-
-        if (_landing.TryGetValue(key, out var landing))
-            return landing;
-
-        var cells = CellsOf(fight, attacker, one, movementPoints);
-        var occupied = CastRules.OccupiedBy(fight.Fighters);
-
-        occupied.Remove(attacker.Cell);
-
-        for (var index = 0; index < levels.Length; index++)
-        {
-            var level = levels[index];
-            var sight = (level.Properties & SpellLevelProperties.CastTestLos) is not 0;
-
-            foreach (var cell in cells)
-            {
-                if (cell == target.Cell || !SpellRange.Reaches(level, attacker.RangeBonus, cell, target.Cell))
-                    continue;
-
-                if (sight && !LineOfSight.IsClear(fight.Map, occupied, cell, target.Cell))
-                    continue;
-
-                landing |= 1UL << index;
-
-                break;
-            }
-        }
-
-        _landing[key] = landing;
-
-        return landing;
-    }
-
-    private int[] CellsOf(ImaginedFight fight, Combatant walker, int one, int movementPoints)
-    {
-        if (!_mobile[one] || movementPoints <= 0)
-            return [walker.Cell];
-
-        var key = (walker.Id, walker.Cell, movementPoints);
-
-        if (_cells.TryGetValue(key, out var cells))
-            return cells;
-
-        // An enemy's walk is reckoned once wherever the fighter playing stands, which the search moves many times: without it.
-        IReadOnlyList<Combatant> fighters = walker.Id == _actorId ? fight.Fighters : [.. fight.Fighters.Where(fighter => fighter.Id != _actorId)];
-
-        _cells[key] = cells = [.. _moves.Reachable(fight.Map, fighters, walker with { MovementPoints = movementPoints }).Keys];
-
-        return cells;
-    }
-
-    private int IndexOf(Combatant fighter)
-    {
-        var index = IndexOf(fighter.Id);
-
-        if (index >= 0 || fighter is not { MonsterId: { } monster, Grade: { } grade, SummonerId: { } summoner })
-            return index;
-
-        return _summons.TryGetValue((monster, grade, summoner), out var summon) ? summon : -1;
-    }
-
-    private int IndexOf(long id)
-    {
-        for (var index = 0; index < _fighters.Length; index++)
-        {
-            if (_fighters[index].Id == id)
-                return index;
-        }
-
-        return -1;
     }
 
     /// <summary>Gets how the fight looks for the fighter playing's side: the turns each side takes to beat the other.</summary>
@@ -1151,39 +871,7 @@ public sealed class FightJudge
     /// <returns>The odds.</returns>
     public FightOdds Odds(ImaginedFight fight, FightKnowledge knowledge)
     {
-        ArgumentNullException.ThrowIfNull(fight);
-        ArgumentNullException.ThrowIfNull(knowledge);
-
-        double ours = 0, theirs = 0, ourLife = 0, theirLife = 0;
-
-        foreach (var fighter in fight.Fighters)
-        {
-            if (!fighter.IsAlive)
-                continue;
-
-            var known = IndexOf(fighter);
-            var points = knowledge.TurnPoints.TryGetValue(fighter.Id, out var turn) ? turn.ActionPoints : fighter.ActionPoints;
-            var best = 0.0;
-
-            for (var other = 0; known >= 0 && other < _fighters.Length; other++)
-            {
-                if (_damage[known][other].Length > 0 && fight.Find(_fighters[other].Id) is { IsAlive: true })
-                    best = Math.Max(best, _damage[known][other][Math.Clamp(points, 0, MostPoints)]);
-            }
-
-            if (fighter.Team == _team)
-            {
-                ours += best;
-                ourLife += Effective(fighter);
-            }
-            else
-            {
-                theirs += best;
-                theirLife += Effective(fighter);
-            }
-        }
-
-        return new FightOdds(ours > 0 ? theirLife / ours : double.PositiveInfinity, theirs > 0 ? ourLife / theirs : double.PositiveInfinity);
+        return _odds.Of(fight, knowledge);
     }
 
     /// <summary>Gets how the fight looks over its course: the enemies die one after another, each dealing its blows only while it lives (D249).</summary>
@@ -1197,62 +885,6 @@ public sealed class FightJudge
     /// </remarks>
     public FightOdds OddsOverTheFight(ImaginedFight fight, FightKnowledge knowledge)
     {
-        ArgumentNullException.ThrowIfNull(fight);
-        ArgumentNullException.ThrowIfNull(knowledge);
-
-        double ours = 0, ourLife = 0;
-        var enemies = new List<(double Damage, double Life)>();
-
-        foreach (var fighter in fight.Fighters)
-        {
-            if (!fighter.IsAlive)
-                continue;
-
-            var known = IndexOf(fighter);
-            var points = knowledge.TurnPoints.TryGetValue(fighter.Id, out var turn) ? turn.ActionPoints : fighter.ActionPoints;
-            var best = 0.0;
-
-            for (var other = 0; known >= 0 && other < _fighters.Length; other++)
-            {
-                if (_damage[known][other].Length > 0 && fight.Find(_fighters[other].Id) is { IsAlive: true })
-                    best = Math.Max(best, _damage[known][other][Math.Clamp(points, 0, MostPoints)]);
-            }
-
-            if (fighter.Team == _team)
-            {
-                ours += best;
-                ourLife += Effective(fighter);
-            }
-            else
-            {
-                enemies.Add((best, Math.Max(1, Effective(fighter))));
-            }
-        }
-
-        if (ours <= 0)
-        {
-            var theirs = enemies.Sum(enemy => enemy.Damage);
-
-            return new FightOdds(double.PositiveInfinity, theirs > 0 ? ourLife / theirs : double.PositiveInfinity);
-        }
-
-        enemies.Sort((a, b) => (b.Damage / b.Life).CompareTo(a.Damage / a.Life));
-
-        var rate = enemies.Sum(enemy => enemy.Damage);
-        double time = 0, taken = 0, lost = double.PositiveInfinity;
-
-        foreach (var (damage, life) in enemies)
-        {
-            var span = life / ours;
-
-            if (double.IsPositiveInfinity(lost) && rate > 0 && taken + (rate * span) >= ourLife)
-                lost = time + ((ourLife - taken) / rate);
-
-            taken += rate * span;
-            time += span;
-            rate -= damage;
-        }
-
-        return new FightOdds(time, lost);
+        return _odds.OverTheFight(fight, knowledge);
     }
 }
