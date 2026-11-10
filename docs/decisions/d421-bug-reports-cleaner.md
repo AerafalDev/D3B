@@ -14,8 +14,12 @@ character's name is 170 times in 8 messages, and the client sends two opaque str
   `CharacterListEvent` and `CharacterSelectionEvent`, and overwrites each string field of either side equal to one of them, then each remaining
   occurrence of a name of 6 bytes or more in the raw bytes (a shorter one could meet other data). Fields are renumbered at each build, so no field
   list would hold; a value does.
-- **Secrets, by shape.** In a frame the client or D3B sent, a string field of 32 characters or more made of digits and `a` to `f` is overwritten:
-  the ticket, `kod` and `kso` of 3.7.13.17, and what a next build adds of the same kind. Every other occurrence of the same value, either side, goes too.
+- **Secrets, by shape and by value.** In the bytes the client or D3B sent, any run of 32 characters or more made of digits and `a` to `f` is
+  overwritten, parsed frame or not, so a frame cut by the capture's end loses its secret too: the ticket, `kod` and `kso` of 3.7.13.17, and what a
+  next build adds of the same kind. The ticket is also read by what it is, from the authentication request, whatever its shape in a next build.
+  Every other occurrence of any of these values, either side, goes too.
+- **It checks itself.** Before the copy is returned, each secret and each name of 6 bytes or more is searched for in it; one still there refuses
+  the capture. A name under 6 bytes is only overwritten as a whole field of a frame the walk could read: a frame too deep or cut short may keep it.
 - **Same length.** Each is overwritten by a filler of its own byte length (a name by a distinct ASCII name, a secret by zeros), so no length and
   no frame changes and a replay reads the copy as it read the original. The player's file is never touched.
 - **It fails closed.** A capture whose list cannot be read, no list or a build with no mapping, is not cleaned: the cleaner says so and the

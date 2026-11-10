@@ -267,6 +267,16 @@ public sealed class ReportBundleTests
     }
 
     [Fact]
+    public void AReportThatTheReaderWouldRefuseIsNotWritten()
+    {
+        var parts = Enumerable.Range(0, ReportLimits.Default.MaxEntries).Select(index => new ReportPart($"assets/a{index}.json", [1])).ToList();
+
+        Assert.Throws<ArgumentException>(() => Written(Content() with { Parts = parts }));
+        Assert.Throws<ArgumentException>(() => Written(Content() with { Parts = [new ReportPart("assets/NUL.json", [1])] }));
+        Assert.Throws<ArgumentException>(() => Written(Content() with { Parts = [new ReportPart("assets/A.json", [1]), new ReportPart("assets/a.json", [1])] }));
+    }
+
+    [Fact]
     public void AFileThatIsNoZipIsRefusedNotCrashedOn()
     {
         Assert.Throws<ReportFormatException>(() => ReportReader.Read(new MemoryStream("MZ this is not a report"u8.ToArray())));

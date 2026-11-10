@@ -66,7 +66,7 @@ internal static class ReportCommand
         if (bundle.Message is { } message)
         {
             Console.WriteLine("Message of the player:");
-            Console.WriteLine(Indented(Printable(message)));
+            Console.WriteLine(Indented(Printable(message.ReplaceLineEndings("\n"))));
         }
         else
         {
@@ -108,12 +108,20 @@ internal static class ReportCommand
 
     private static void DescribeCapture(byte[] capture)
     {
-        using var reader = new CaptureReader(new MemoryStream(capture));
-        var records = reader.ReadAll().ToList();
-        var last = records.Count > 0 ? records[^1].Offset : TimeSpan.Zero;
-
         Console.WriteLine();
-        Console.WriteLine($"Capture of client {Printable(reader.Header.ClientVersion)}, started {reader.Header.StartedAt:yyyy-MM-dd HH:mm:ss zzz}: {records.Count:N0} records over {last:hh\\:mm\\:ss}, {records.Sum(record => (long)record.Data.Length):N0} bytes{(reader.IsTruncated ? ", cut short" : string.Empty)}");
+
+        try
+        {
+            using var reader = new CaptureReader(new MemoryStream(capture));
+            var records = reader.ReadAll().ToList();
+            var last = records.Count > 0 ? records[^1].Offset : TimeSpan.Zero;
+
+            Console.WriteLine($"Capture of client {Printable(reader.Header.ClientVersion)}, started {reader.Header.StartedAt:yyyy-MM-dd HH:mm:ss zzz}: {records.Count:N0} records over {last:hh\\:mm\\:ss}, {records.Sum(record => (long)record.Data.Length):N0} bytes{(reader.IsTruncated ? ", cut short" : string.Empty)}");
+        }
+        catch (CaptureFormatException exception)
+        {
+            Console.WriteLine($"The capture does not read: {Printable(exception.Message)}");
+        }
     }
 
     private static int Replay(string capture, string client)

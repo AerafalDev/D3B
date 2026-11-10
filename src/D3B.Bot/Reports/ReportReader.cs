@@ -1,11 +1,12 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace D3B.Bot.Reports;
 
 /// <summary>Reads a report as untrusted input: a zip anyone could have posted, bounded in its entries and their expanded size, whose files are checked against its manifest and never run (D410).</summary>
-public static class ReportReader
+public static partial class ReportReader
 {
     /// <summary>Reads and checks a report.</summary>
     /// <param name="input">The zip.</param>
@@ -33,7 +34,7 @@ public static class ReportReader
                 if (!ReportFiles.IsValid(entry.FullName))
                     throw new ReportFormatException($"The report holds '{Printable(entry.FullName)}', which is no file of a report.");
 
-                if (read.ContainsKey(entry.FullName))
+                if (read.Keys.Any(name => string.Equals(name, entry.FullName, StringComparison.OrdinalIgnoreCase)))
                     throw new ReportFormatException($"The report holds '{entry.FullName}' twice.");
 
                 var most = entry.FullName == ReportFiles.Manifest ? limits.MaxManifestBytes : limits.MaxEntryBytes;
@@ -86,8 +87,12 @@ public static class ReportReader
             throw new ReportFormatException("The manifest does not read.", exception);
         }
 
-        if (manifest is null || !ReportCode.IsValid(manifest.Code) || manifest.Files is null)
-            throw new ReportFormatException("The manifest has no valid code or no list of files.");
+        if (manifest is null || !ReportCode.IsValid(manifest.Code) || manifest.Files is null || manifest.Files.Any(file => file is null || !ReportFiles.IsValid(file.Name) || file.Sha256 is null || file.Size < 0))
+            throw new ReportFormatException("The manifest has no valid code, or a list of files with a file that is none.");
+
+        // It is printed by a tool and typed in a command: a version is numbers and dots, the rest is short text with nothing to break a line.
+        if (manifest.Client is null || !VersionPattern().IsMatch(manifest.Client) || !IsShort(manifest.App) || (manifest.Pack is not null && !IsShort(manifest.Pack)) || (manifest.Mapping is not null && !IsShort(manifest.Mapping)))
+            throw new ReportFormatException("The manifest names versions that are none.");
 
         var listed = new HashSet<string>(StringComparer.Ordinal);
 
@@ -106,8 +111,19 @@ public static class ReportReader
         if (manifest.HasMessage != read.ContainsKey(ReportFiles.Message))
             throw new ReportFormatException("The manifest and the report disagree on whether there is a message.");
 
+        if (read.TryGetValue(ReportFiles.Message, out var message) && (message.Length > ReportContent.MessageLimit * 3 || System.Text.Encoding.UTF8.GetString(message).Length > ReportContent.MessageLimit))
+            throw new ReportFormatException($"The message holds more than the {ReportContent.MessageLimit} characters a message may.");
+
         return new ReportBundle(manifest, read);
     }
+
+    private static bool IsShort(string? text)
+    {
+        return text is { Length: > 0 and <= 64 } && text.All(character => !char.IsControl(character));
+    }
+
+    [GeneratedRegex(@"^[0-9]+(\.[0-9]+){0,5}\z", RegexOptions.CultureInvariant)]
+    private static partial Regex VersionPattern();
 
     // A name from a stranger is printed with its control characters replaced.
     private static string Printable(string? text)

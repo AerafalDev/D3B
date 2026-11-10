@@ -37,8 +37,9 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
 
 - The cleaner (BR2, D421) was run on 48 of the owner's real captures of 3.7.13.17: 45 were cleaned with no ticket, secret or name left in any
   output and 3 were refused for want of a character list the translation reads (the tool fails closed); on one of the largest, whose fights `scripts/fights.cs` replays with the same result as the original. What it leaves is said in D421
-  (other players' names, numbers, timestamps, the GUIDs of unknown meaning); a next build's own opaque strings are found by shape only if they keep
-  it. The report is not yet made by the app, so no report was sent anywhere.
+  (other players' names, numbers, timestamps, the GUIDs of unknown meaning, a name under 6 bytes in a frame too deep or cut short to walk); a
+  next build's own opaque strings are found by shape only if they keep it, and the copy is searched for every secret it found before it is returned.
+  The report is not yet made by the app, so no report was sent anywhere. `scripts/report.cs --replay` ran on a report of a real capture.
 - Recording by default and its retention (BR1, D409) are tested on temporary files, the relay of the tests and view models, and the settings
   and the home page's notice in headless windows, not seen by the owner in the app and not run on a client. The first start of the host after
   the change deletes the game's captures older than 7 days or beyond 1 GB: the owner's 153 captures, which `scripts/fights.cs` replays, would

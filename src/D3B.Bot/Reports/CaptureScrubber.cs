@@ -85,6 +85,11 @@ public sealed class CaptureScrubber
         var nameIndex = names.Select((name, index) => (name, index)).ToDictionary(pair => Latin1(pair.name), pair => pair.index);
         var fields = 0;
         var secrets = new HashSet<string>(StringComparer.Ordinal);
+
+        // The ticket is read by what it is, whatever its shape in a next build; the shape finds the rest.
+        foreach (var ticket in TicketsOf(buffers[CaptureRecordKind.FromClient], frames[CaptureRecordKind.FromClient]))
+            secrets.Add(ticket);
+
         var replacements = new List<(byte[] Buffer, int Start, byte[] Filler)>();
 
         foreach (var kind in _streams)
@@ -99,11 +104,16 @@ public sealed class CaptureScrubber
 
                     if (spanLength <= MostNameLength && nameIndex.TryGetValue(Latin1(span), out var index))
                         replacements.Add((buffer, spanStart, NameFiller(index, spanLength)));
-                    else if (kind is not CaptureRecordKind.FromServer && IsSecret(span))
-                    {
-                        secrets.Add(Latin1(span));
-                        replacements.Add((buffer, spanStart, Zeros(spanLength)));
-                    }
+                }
+            }
+
+            // Runs, not fields: a frame cut short by the capture's end, or too deep to walk, is not parsed, and its secret must go too.
+            if (kind is not CaptureRecordKind.FromServer)
+            {
+                foreach (var (runStart, runLength) in HexRuns(buffer))
+                {
+                    secrets.Add(Latin1(buffer.AsSpan(runStart, runLength)));
+                    replacements.Add((buffer, runStart, Zeros(runLength)));
                 }
             }
         }
@@ -120,9 +130,42 @@ public sealed class CaptureScrubber
                 fields += OverwriteEverywhere(buffers, names[index], NameFiller(index, names[index].Length));
         }
 
+        Verify(buffers, secrets, names);
         Write(header, records, buffers, output);
 
         return new CaptureScrub(names.Count, secrets.Count, fields);
+    }
+
+    // The ticket of the authentication request, as the translation reads it: a text of 8 characters or more, so that a short field is no secret.
+    private List<string> TicketsOf(byte[] client, List<(int Start, int Length)> frames)
+    {
+        var tickets = new List<string>();
+
+        foreach (var (start, length) in frames)
+        {
+            if (_translation.DecodeGame(new ReadOnlySequence<byte>(client.AsMemory(start, length))).Content is AuthenticationRequest { Ticket.Length: >= 8 } request)
+                tickets.Add(Latin1(Encoding.UTF8.GetBytes(request.Ticket)));
+        }
+
+        return tickets;
+    }
+
+    // Fails closed: a secret, or a name of 6 bytes or more, still in the copy means the copy is not one to send.
+    private static void Verify(Dictionary<CaptureRecordKind, byte[]> buffers, HashSet<string> secrets, List<byte[]> names)
+    {
+        foreach (var secret in secrets)
+        {
+            var bytes = Encoding.Latin1.GetBytes(secret);
+
+            if (bytes.AsSpan().IndexOfAnyExcept((byte)'0') >= 0 && buffers.Values.Any(buffer => buffer.AsSpan().IndexOf(bytes) >= 0))
+                throw new CaptureScrubException("A secret of the capture was still in the copy after it was overwritten: it cannot go in a report.");
+        }
+
+        for (var index = 0; index < names.Count; index++)
+        {
+            if (names[index].Length >= LeastRawNameLength && !names[index].AsSpan().SequenceEqual(NameFiller(index, names[index].Length)) && buffers.Values.Any(buffer => buffer.AsSpan().IndexOf(names[index]) >= 0))
+                throw new CaptureScrubException("A name of the capture was still in the copy after it was overwritten: it cannot go in a report.");
+        }
     }
 
     private static byte[] Concatenate(List<CaptureRecord> records, CaptureRecordKind kind)
@@ -297,18 +340,26 @@ public sealed class CaptureScrubber
         return false;
     }
 
-    private static bool IsSecret(ReadOnlySpan<byte> span)
+    // A run of 32 digits and letters a to f or more: the ticket and the client's opaque strings.
+    private static List<(int Start, int Length)> HexRuns(byte[] buffer)
     {
-        if (span.Length < LeastSecretLength)
-            return false;
+        var runs = new List<(int, int)>();
+        var start = 0;
 
-        foreach (var value in span)
+        for (var position = 0; position <= buffer.Length; position++)
         {
-            if (!(value is >= (byte)'0' and <= (byte)'9' or >= (byte)'a' and <= (byte)'f'))
-                return false;
+            var isHex = position < buffer.Length && buffer[position] is >= (byte)'0' and <= (byte)'9' or >= (byte)'a' and <= (byte)'f';
+
+            if (isHex)
+                continue;
+
+            if (position - start >= LeastSecretLength)
+                runs.Add((start, position - start));
+
+            start = position + 1;
         }
 
-        return true;
+        return runs;
     }
 
     private static string Latin1(ReadOnlySpan<byte> bytes)
@@ -384,5 +435,9 @@ public sealed class CaptureScrubber
             writer.Copy(record with { Data = buffer.AsMemory(position, record.Data.Length) });
             positions[record.Kind] = position + record.Data.Length;
         }
+
+        // A write that failed, such as on a full disk, would leave a copy cut short that looks whole.
+        if (writer.Failure is { } failure)
+            throw new IOException("The cleaned capture could not be written: " + failure.Message, failure);
     }
 }

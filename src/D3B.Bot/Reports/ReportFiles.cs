@@ -39,6 +39,7 @@ public static partial class ReportFiles
         return name is not null && (_known.Contains(name) || AssetPattern().IsMatch(name));
     }
 
-    [GeneratedRegex(@"^assets/[A-Za-z0-9][A-Za-z0-9._-]{0,99}\.json\z", RegexOptions.CultureInvariant)]
+    // Not a name Windows keeps for a device (nul.json opens the device), and the folder is the same whatever the case of its files.
+    [GeneratedRegex(@"^assets/(?!(?:con|prn|aux|nul|com[1-9]|lpt[1-9])\.json\z)[A-Za-z0-9][A-Za-z0-9._-]{0,99}\.json\z", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex AssetPattern();
 }

@@ -448,10 +448,11 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   `CaptureFrames` reads a game connection's capture of the installed build through its translation.
 - Bug reports (D409 to D411, D421), in `D3B.Bot.Reports`: a report is one `.d3breport` zip. `CaptureScrubber` copies a
   capture with what names the account overwritten, by value and at the same length (`CaptureWriter.Copy` rewrites a
-  record at its own offset): the ticket and the client's other opaque strings by shape (32 characters or more of digits
-  and `a` to `f` in a frame the client or D3B sent), and the names of the characters of `CharacterListEvent` and
+  record at its own offset): the ticket and the client's other opaque strings by shape (a run of 32 characters or more of
+  digits and `a` to `f` in the bytes the client or D3B sent) and the ticket by value, and the names of the characters of `CharacterListEvent` and
   `CharacterSelectionEvent`, read through the translation, wherever a string field of either side equals one (and raw
-  bytes for a name of 6 bytes or more). A capture with no character list is refused (`CaptureScrubException`).
+  bytes for a name of 6 bytes or more). A capture with no character list, or whose copy still holds a secret or a name of 6 bytes
+  or more, is refused (`CaptureScrubException`).
   `CleanCapture` is the only form of capture `ReportContent` takes. `ReportTexts` writes the journal, the trace and the
   settings that differ as text, `ReportIdentity` turning the character's name into its number. `ReportWriter` writes the
   zip with `manifest.json` last (sizes, SHA-256, `hasMessage`); `ReportReader` reads one as untrusted input (64 entries,

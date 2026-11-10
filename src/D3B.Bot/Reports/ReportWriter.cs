@@ -38,11 +38,16 @@ public static class ReportWriter
 
         foreach (var part in content.Parts)
         {
-            if (!ReportFiles.IsValid(part.Name) || part.Name is ReportFiles.Manifest or ReportFiles.Message or ReportFiles.Capture || files.Any(file => file.Name == part.Name))
+            if (!ReportFiles.IsValid(part.Name) || part.Name is ReportFiles.Manifest or ReportFiles.Message or ReportFiles.Capture || files.Any(file => string.Equals(file.Name, part.Name, StringComparison.OrdinalIgnoreCase)))
                 throw new ArgumentException($"'{part.Name}' is no file a report can hold, or is there twice.", nameof(content));
 
             files.Add((part.Name, part.Data));
         }
+
+        var limits = ReportLimits.Default;
+
+        if (files.Count + 1 > limits.MaxEntries || files.Any(file => file.Data.Length > limits.MaxEntryBytes) || files.Sum(file => (long)file.Data.Length) > limits.MaxTotalBytes)
+            throw new ArgumentException("The report is past what the maintainer's reader accepts: too many files, or too large.", nameof(content));
 
         var manifest = new ReportManifest
         {

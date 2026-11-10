@@ -208,6 +208,73 @@ public sealed class CaptureScrubberTests
         Assert.Equal([11L, 12L, 13L], list.Characters.Select(character => character.Id));
         Assert.Equal(list.Characters[0].Basics.Name, Assert.Single(messages.OfType<CharacterSelectionEvent>()).Success.Character.Basics.Name);
         Assert.Equal(list.Characters[0].Basics.Name, Assert.Single(messages.OfType<MapInformationEvent>()).Actors[0].Information.Roleplay.Named.Name);
+
+        // Even the name of two letters is gone from every field that held it, and the stranger's stays.
+        Assert.DoesNotContain(list.Characters, character => character.Basics.Name == ShortName);
+        Assert.DoesNotContain(messages.OfType<MapInformationEvent>().Single().Actors, actor => actor.Information.Roleplay.Named.Name is ShortName or FirstName);
+        Assert.Contains(messages.OfType<MapInformationEvent>().Single().Actors, actor => actor.Information.Roleplay.Named.Name == Stranger);
+    }
+
+    [Fact]
+    public void ANameWithAccentsIsOverwrittenWhateverItsBytesAndKeepsItsByteLength()
+    {
+        const string Accented = "Éléonore-du-Nord";
+
+        var records = Session();
+
+        records[4] = (CaptureRecordKind.FromServer, Framed(TestGame.Event(new CharacterListEvent { Characters = { Character(11, Accented) } })));
+        records[6] = (CaptureRecordKind.FromServer, Framed(TestGame.Event(new CharacterSelectionEvent { Success = new CharacterSelectionEvent.Types.Success { Character = Character(11, Accented) } })));
+        records[7] = (CaptureRecordKind.FromServer, Framed(TestGame.Event(new MapInformationEvent { Actors = { Named(11, Accented) } })));
+
+        var capture = Capture(records);
+        var (output, _) = Scrub(capture);
+
+        Assert.True(Holds(capture, Accented));
+        Assert.False(Holds(output, Accented));
+        Assert.Equal(capture.Length, output.Length);
+    }
+
+    [Fact]
+    public void ASecretInAFrameD3BSentTheServerIsOverwrittenToo()
+    {
+        const string Injected = "fedcba9876543210fedcba9876543210fedcba98";
+
+        var records = Session();
+
+        records.Insert(9, (CaptureRecordKind.Injected, Framed(UnknownRequest(Injected))));
+
+        var (output, _) = Scrub(Capture(records));
+
+        Assert.False(Holds(output, Injected));
+    }
+
+    [Fact]
+    public void BytesThatAreNoFramesAreCopiedWithoutFailingAndTheSecretsAroundThemStillGo()
+    {
+        var records = Session();
+
+        // A length of six bytes of continuation, then one claiming more than the capture holds.
+        records.Insert(9, (CaptureRecordKind.FromClient, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01]));
+        records.Insert(9, (CaptureRecordKind.FromClient, [0xE8, 0x07, 0x0A, 0x20]));
+
+        var (output, _) = Scrub(Capture(records));
+
+        Assert.False(Holds(output, Ticket));
+        Assert.False(Holds(output, Opaque));
+    }
+
+    [Fact]
+    public void AFrameCutShortByTheEndOfTheCaptureLosesItsSecretToo()
+    {
+        var records = Session();
+        var frame = Framed(UnknownRequest("1122334455667788990011223344556677889900aabbccddeeff"));
+
+        // The frame is whole in the client's bytes but the capture ends inside it.
+        records.Insert(9, (CaptureRecordKind.FromClient, frame[..40]));
+
+        var (output, _) = Scrub(Capture(records));
+
+        Assert.False(Holds(output, "1122334455667788990011223344556677889900"));
     }
 
     [Fact]
@@ -305,6 +372,6 @@ public sealed class CaptureScrubberTests
         // The ticket, the opaque string; the names in the list (3), the selection (1), the actors (2), the text (1 of 2).
         Assert.Equal(3, result.Names);
         Assert.Equal(2, result.Secrets);
-        Assert.True(result.Fields >= 9);
+        Assert.Equal(9, result.Fields);
     }
 }
