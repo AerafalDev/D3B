@@ -446,6 +446,20 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   last 3,000 frames, both sides, and D3B's own requests, which observers see apart once sent (`IGameObserver.OnSent`).
   `FrameFields` gives a readable message's fields, the ticket hidden, or the shape of one the readable protocol lacks;
   `CaptureFrames` reads a game connection's capture of the installed build through its translation.
+- Bug reports (D409 to D411, D421), in `D3B.Bot.Reports`: a report is one `.d3breport` zip. `CaptureScrubber` copies a
+  capture with what names the account overwritten, by value and at the same length (`CaptureWriter.Copy` rewrites a
+  record at its own offset): the ticket and the client's other opaque strings by shape (32 characters or more of digits
+  and `a` to `f` in a frame the client or D3B sent), and the names of the characters of `CharacterListEvent` and
+  `CharacterSelectionEvent`, read through the translation, wherever a string field of either side equals one (and raw
+  bytes for a name of 6 bytes or more). A capture with no character list is refused (`CaptureScrubException`).
+  `CleanCapture` is the only form of capture `ReportContent` takes. `ReportTexts` writes the journal, the trace and the
+  settings that differ as text, `ReportIdentity` turning the character's name into its number. `ReportWriter` writes the
+  zip with `manifest.json` last (sizes, SHA-256, `hasMessage`); `ReportReader` reads one as untrusted input (64 entries,
+  256 MiB an entry and 512 MiB in all by `ReportLimits`, expanded bytes counted as they come, only the names of
+  `ReportFiles`, every file checked against the manifest). `ReportAssets` (`D3B.Studio`) gives the profile played and the
+  assets it reaches, and `ReportKnowledge` (`D3B.Storage`) what the bots learned, by ids. `scripts/report.cs` unpacks
+  a report under `artifacts/reports/<code>/`, prints the message first and replays its fights; the app's action and the
+  webhook are BR3 and BR4.
 
 ## Game data
 
