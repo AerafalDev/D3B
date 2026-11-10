@@ -8,6 +8,7 @@ using D3B.App.ViewModels.AppSettings;
 using D3B.Bot.Banks;
 using D3B.Bot.Data;
 using D3B.Bot.Runtime;
+using D3B.Network.Captures;
 using D3B.Network.Relay;
 using D3B.Storage;
 using D3B.Studio.Assets;
@@ -49,6 +50,8 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private bool _bankingChanged;
     private RelayTimeouts _timeouts;
     private Bots? _bots;
+    private decimal _keptDays = DefaultCaptureDays;
+    private decimal _keptMegabytes = DefaultCaptureMegabytes;
     private bool _changed;
     private bool _remembers;
     private CultureInfo? _labelled;
@@ -162,22 +165,22 @@ internal sealed partial class SettingsViewModel : ObservableObject
     public decimal CaptureLimitMinimum { get; } = 0;
 
     /// <summary>Gets the most days captures can be kept, ten years.</summary>
-    public decimal CaptureDaysMaximum { get; } = 3650;
+    public decimal CaptureDaysMaximum { get; } = CaptureRetention.MostDays;
 
     /// <summary>Gets the most megabytes captures can take, a terabyte.</summary>
-    public decimal CaptureMegabytesMaximum { get; } = 1_048_576;
+    public decimal CaptureMegabytesMaximum { get; } = CaptureRetention.MostMegabytes;
 
     /// <summary>Gets whether the game connection is not recorded, which is not the default.</summary>
     public bool IsCapturesOff => !RecordsCaptures;
 
     /// <summary>Gets whether the days differ from their default.</summary>
-    public bool IsCaptureDaysChanged => CaptureDays is { } days && days != DefaultCaptureDays;
+    public bool IsCaptureDaysChanged => _keptDays != DefaultCaptureDays;
 
     /// <summary>Gets whether the megabytes differ from their default.</summary>
-    public bool IsCaptureMegabytesChanged => CaptureMegabytes is { } megabytes && megabytes != DefaultCaptureMegabytes;
+    public bool IsCaptureMegabytesChanged => _keptMegabytes != DefaultCaptureMegabytes;
 
     /// <summary>Gets how long and how much of the captures are kept, in words.</summary>
-    public string RetentionText => RetentionOf(CaptureDays ?? DefaultCaptureDays, CaptureMegabytes ?? DefaultCaptureMegabytes);
+    public string RetentionText => RetentionOf(_keptDays, _keptMegabytes);
 
     /// <summary>Gets or sets the share of its pods, in percent, at which a bot banks, unless its profile asks for its own; emptied, it keeps the share it had (D405).</summary>
     [ObservableProperty]
@@ -288,8 +291,10 @@ internal sealed partial class SettingsViewModel : ObservableObject
         BankUseZaaps = banking.UseZaaps;
         _storedCaptures = stored[RelaySettings.CapturesDirectoryKey];
         RecordsCaptures = !bool.TryParse(stored[RelaySettings.GameCapturesEnabledKey], out var game) || game || (bool.TryParse(stored[RelaySettings.CapturesEnabledKey], out var all) && all);
-        CaptureDays = decimal.TryParse(stored[RelaySettings.CapturesRetentionDaysKey], NumberStyles.None, CultureInfo.InvariantCulture, out var days) ? days : DefaultCaptureDays;
-        CaptureMegabytes = decimal.TryParse(stored[RelaySettings.CapturesRetentionMegabytesKey], NumberStyles.None, CultureInfo.InvariantCulture, out var megabytes) ? megabytes : DefaultCaptureMegabytes;
+        _keptDays = decimal.TryParse(stored[RelaySettings.CapturesRetentionDaysKey], NumberStyles.None, CultureInfo.InvariantCulture, out var days) && days <= CaptureDaysMaximum ? days : DefaultCaptureDays;
+        _keptMegabytes = decimal.TryParse(stored[RelaySettings.CapturesRetentionMegabytesKey], NumberStyles.None, CultureInfo.InvariantCulture, out var megabytes) && megabytes <= CaptureMegabytesMaximum ? megabytes : DefaultCaptureMegabytes;
+        CaptureDays = _keptDays;
+        CaptureMegabytes = _keptMegabytes;
         SettingsPath = preferences?.Path ?? AppPreferences.DefaultPath;
         LicencesPath = File.Exists(notices) ? notices : NoticesPage;
         PackPath = localizer["PackPathUnknown"];
@@ -590,22 +595,41 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnCaptureDaysChanged(decimal? value)
     {
-        UseRetention(RelaySettings.CapturesRetentionDaysKey, value, DefaultCaptureDays, CaptureDaysMaximum);
+        if (UseRetention(RelaySettings.CapturesRetentionDaysKey, value, DefaultCaptureDays, CaptureDaysMaximum) is { } kept)
+            _keptDays = kept;
+
+        OnRetentionChanged();
     }
 
     partial void OnCaptureMegabytesChanged(decimal? value)
     {
-        UseRetention(RelaySettings.CapturesRetentionMegabytesKey, value, DefaultCaptureMegabytes, CaptureMegabytesMaximum);
+        if (UseRetention(RelaySettings.CapturesRetentionMegabytesKey, value, DefaultCaptureMegabytes, CaptureMegabytesMaximum) is { } kept)
+            _keptMegabytes = kept;
+
+        OnRetentionChanged();
     }
 
     // An emptied box, or one past its bounds, keeps what the host had; the next valid one is its own at once.
-    private void UseRetention(string key, decimal? value, decimal fallback, decimal maximum)
+    private decimal? UseRetention(string key, decimal? value, decimal fallback, decimal maximum)
     {
         if (!_remembers || value is not { } limit || limit < CaptureLimitMinimum || limit > maximum || limit != decimal.Truncate(limit))
-            return;
+            return null;
 
-        MarkChanges();
         _preferences?.RememberHost(new Dictionary<string, string?> { [key] = limit == fallback ? null : limit.ToString(CultureInfo.InvariantCulture) });
+
+        return limit;
+    }
+
+    private void OnRetentionChanged()
+    {
+        OnPropertyChanged(nameof(IsCaptureDaysChanged));
+        OnPropertyChanged(nameof(IsCaptureMegabytesChanged));
+        OnPropertyChanged(nameof(RetentionText));
+        ResetCaptureDaysCommand.NotifyCanExecuteChanged();
+        ResetCaptureMegabytesCommand.NotifyCanExecuteChanged();
+
+        if (_remembers)
+            MarkChanges();
     }
 
     private string RetentionOf(decimal days, decimal megabytes)

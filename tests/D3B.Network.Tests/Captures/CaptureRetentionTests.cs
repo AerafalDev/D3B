@@ -153,6 +153,8 @@ public sealed class CaptureRetentionTests
     [Theory]
     [InlineData("-1")]
     [InlineData("a week")]
+    [InlineData("99999999999")]
+    [InlineData("9000000000000")]
     public void ALimitThatIsNotAWholeNumberIsRefused(string value)
     {
         Assert.Throws<InvalidOperationException>(() => Read((RelaySettings.CapturesRetentionDaysKey, value)));

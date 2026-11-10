@@ -3231,7 +3231,7 @@
     <value>Tes sessions de jeu sont maintenant enregistrées</value>
   </data>
   <data name="CapturesNoticeText" xml:space="preserve">
-    <value>Tes sessions de jeu sont enregistrées sur cet ordinateur, pour qu'un bug puisse être rejoué et signalé. Rien n'en sort sans que tu envoies un rapport. {0}. Tu peux l'arrêter dans les paramètres Réseau.</value>
+    <value>Tes sessions de jeu sont enregistrées sur cet ordinateur, pour qu'un bug puisse être rejoué. Rien ne quitte cet ordinateur. {0}. Tu peux l'arrêter dans les paramètres Réseau.</value>
   </data>
   <data name="CapturesNoticeSettings" xml:space="preserve">
     <value>Paramètres Réseau</value>

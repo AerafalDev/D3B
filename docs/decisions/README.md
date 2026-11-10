@@ -50,3 +50,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Step 9, the harvest's tour and the levels (D417)](d417-step-9-the-harvests-levels.md): 1 decision, 4 KB.
 - [Step 7, 7r5, the profile's editor (D415, D418)](d415-step-7-7r5-the-profile-editor.md): 2 decisions, 10 KB.
 - [Step 7, 7r4, following a run (D419)](d419-step-7-7r4-following-a-run.md): 1 decision, 8 KB.
+- [Bug reports, BR1 (D420)](d420-bug-reports-br1-keys.md): 1 decision, 2 KB.

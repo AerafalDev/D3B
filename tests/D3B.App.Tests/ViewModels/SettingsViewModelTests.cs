@@ -227,6 +227,24 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
     }
 
+    [Fact]
+    public void AnEmptiedBoxKeepsTheValueAlreadySavedInTheWordsAndTheMarks()
+    {
+        var preferences = AppPreferences.Load(PreferencesPath);
+
+        preferences.RememberHost(new Dictionary<string, string?> { [RelaySettings.CapturesRetentionDaysKey] = "3" });
+
+        var settings = new SettingsViewModel(_localizer, preferences, _ => { }, new Toasts());
+
+        settings.CaptureDays = null;
+        settings.CaptureMegabytes = 99_999_999m;
+
+        Assert.True(settings.IsCaptureDaysChanged);
+        Assert.Equal("Kept 3 days, up to 1,024 MB", settings.RetentionText);
+        Assert.Equal("3", AppPreferences.Load(PreferencesPath).Host[RelaySettings.CapturesRetentionDaysKey]);
+        Assert.False(AppPreferences.Load(PreferencesPath).Host.ContainsKey(RelaySettings.CapturesRetentionMegabytesKey));
+    }
+
     [Theory]
     [InlineData(7, 1024, "Kept 7 days, up to 1,024 MB")]
     [InlineData(1, 100, "Kept 1 day, up to 100 MB")]

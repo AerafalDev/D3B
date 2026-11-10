@@ -154,6 +154,23 @@ public sealed class RelayTests
     }
 
     [Fact]
+    public async Task TheGameCapturesAreSweptEvenWhenTheGameIsNoLongerRecorded()
+    {
+        using var directory = new TemporaryDirectory();
+        var games = Directory.CreateDirectory(Path.Combine(directory.Path, "game")).FullName;
+        var old = Path.Combine(games, "old" + CaptureWriter.FileExtension);
+
+        File.WriteAllBytes(old, new byte[10]);
+        File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddDays(-30));
+
+        await using (await TestRelay.StartAsync(capturesDirectory: directory.Path, recordsCaptures: false))
+        {
+        }
+
+        Assert.False(File.Exists(old));
+    }
+
+    [Fact]
     public async Task EachConnectionIsRecordedWhenCapturesAreOn()
     {
         using var directory = new TemporaryDirectory();

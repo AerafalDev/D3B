@@ -10,6 +10,12 @@ namespace D3B.Network.Captures;
 /// </remarks>
 public sealed record CaptureRetention
 {
+    /// <summary>The most days a capture can be kept, ten years.</summary>
+    public const long MostDays = 3650;
+
+    /// <summary>The most megabytes captures can take, a terabyte.</summary>
+    public const long MostMegabytes = 1_048_576;
+
     private const long BytesInAMegabyte = 1024 * 1024;
 
     /// <summary>Gets the retention by default: seven days and a gigabyte.</summary>
@@ -31,8 +37,8 @@ public sealed record CaptureRetention
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var days = ReadWhole(configuration, daysKey, 7);
-        var megabytes = ReadWhole(configuration, megabytesKey, 1024);
+        var days = ReadWhole(configuration, daysKey, 7, MostDays);
+        var megabytes = ReadWhole(configuration, megabytesKey, 1024, MostMegabytes);
 
         return new CaptureRetention
         {
@@ -98,13 +104,13 @@ public sealed record CaptureRetention
         return new CaptureSweep(deleted, deletedBytes, kept.Count, total);
     }
 
-    private static long ReadWhole(IConfiguration configuration, string key, long fallback)
+    private static long ReadWhole(IConfiguration configuration, string key, long fallback, long most)
     {
         if (configuration[key] is not { Length: > 0 } text)
             return fallback;
 
-        if (!long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var value))
-            throw new InvalidOperationException($"{key} is '{text}', which is not a whole number of at least zero.");
+        if (!long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var value) || value > most)
+            throw new InvalidOperationException($"{key} is '{text}', which is not a whole number from 0 to {most}.");
 
         return value;
     }

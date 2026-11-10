@@ -36,7 +36,7 @@ public sealed class CapturesNoticeTests : IDisposable
         Assert.True(notice.IsShown);
         Assert.Contains("recorded on this machine", notice.Text, StringComparison.Ordinal);
         Assert.Contains("Kept 7 days, up to 1,024 MB", notice.Text, StringComparison.Ordinal);
-        Assert.Contains("report", notice.Text, StringComparison.Ordinal);
+        Assert.Contains("Nothing leaves this machine", notice.Text, StringComparison.Ordinal);
     }
 
     [Fact]

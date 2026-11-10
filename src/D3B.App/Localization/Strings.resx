@@ -3231,7 +3231,7 @@
     <value>Your game sessions are now recorded</value>
   </data>
   <data name="CapturesNoticeText" xml:space="preserve">
-    <value>Your game sessions are recorded on this machine, so that a bug can be replayed and reported. Nothing leaves it unless you send a report. {0}. You can turn this off in the Network settings.</value>
+    <value>Your game sessions are recorded on this machine, so that a bug can be replayed. Nothing leaves this machine. {0}. You can turn this off in the Network settings.</value>
   </data>
   <data name="CapturesNoticeSettings" xml:space="preserve">
     <value>Network settings</value>

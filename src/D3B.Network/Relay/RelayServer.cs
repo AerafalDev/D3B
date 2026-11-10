@@ -88,11 +88,12 @@ internal sealed class RelayServer : IHostedService, IDisposable
 
         _selections.OnListening([.. GameEndPoints.Select(endPoint => endPoint.Port)]);
 
+        // Swept even when the game is no longer recorded: what was left on disk still holds a login ticket (D420).
+        if (_settings.CapturesDirectory is { } captures)
+            SweepGameCaptures(Path.Combine(captures, "game"));
+
         if (_settings.GameCapturesDirectory is { } gameDirectory)
-        {
             RelayLog.RecordingGame(_log, gameDirectory);
-            SweepGameCaptures(gameDirectory);
-        }
 
         if (_settings.ConnectionCapturesDirectory is { } directory)
             RelayLog.Recording(_log, directory);
