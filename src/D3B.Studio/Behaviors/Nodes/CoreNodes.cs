@@ -107,6 +107,11 @@ public static class CoreNodes
             node.Help(Text("NoteHelp")).Example(Text("NoteExample"));
             node.Values.Text(values => values.Text, Text("NoteText"), 200).Required();
         });
+        services.AddNode<PlaySequence, SequenceValues>(BehaviorSequences.Play, Text("SequencePlay"), node =>
+        {
+            node.Help(Text("SequencePlayHelp"));
+            node.Values.Sequence(values => values.Sequence, Text("Sequence")).Required();
+        });
         services.AddNode<PauseBot, NoValues>("pause", Text("Pause"), node => node.Help(Text("PauseHelp")));
         services.AddNode<StopRun, NoValues>("stop", Text("Stop"), node => node.Help(Text("StopHelp")));
     }

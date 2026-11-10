@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
+using D3B.App.ViewModels.Sequences;
 using D3B.App.ViewModels.Settings;
 using D3B.Bot.Settings;
 using D3B.Studio.Assets;
@@ -37,6 +38,9 @@ internal sealed partial class RouteActionViewModel : ObservableObject
 
     /// <summary>Gets the sentence cut into words and tokens.</summary>
     public IReadOnlyList<ActionPartViewModel> Parts { get; }
+
+    /// <summary>Gets how the step of a list is repeated; none for an action of a route, which is played once (D421).</summary>
+    public StepRepeatViewModel? Repeat { get; init; }
 
     /// <summary>Gets whether the host does not know the action's node, which the file keeps as it is.</summary>
     public bool IsUnknown => _definition is null;
@@ -176,6 +180,8 @@ internal sealed partial class RouteActionViewModel : ObservableObject
                 return Convert.ToString(setting.GetValue(draft), culture) ?? "";
             case SettingKind.Route:
                 return setting.GetValue(draft) is string { Length: > 0 } route ? Editor.Library?.Find<RouteAsset>(route)?.Name ?? _localizer.Format("RouteGone", route) : _localizer["RouteChoose"];
+            case SettingKind.Sequence:
+                return setting.GetValue(draft) is string { Length: > 0 } sequence ? Editor.Library?.Find<BehaviorAsset>(sequence)?.Name ?? _localizer.Format("RouteGone", sequence) : _localizer["SequenceChoose"];
             case SettingKind.Npc:
                 return setting.GetValue(draft) is int npc ? Editor.NpcNames?.Npc(npc) ?? _localizer.Format("NpcNumber", npc) : _localizer["NpcNone"];
             case SettingKind.NpcReply:

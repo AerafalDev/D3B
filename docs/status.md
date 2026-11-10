@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-10, after D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
+As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
 
 ## What exists
 
@@ -35,6 +35,11 @@ As of 2026-11-10, after D420 (the Pandawa no longer swaps Sobre and Saoul instea
 
 ## Not measured in game
 
+- Repeats and sequences as steps (D421, 7r6) are tried on the fake game, view models and headless windows, not on a client and not by the owner
+  in the app: a route followed three times (the journal saying its steps in the first pass only), a loop followed until pods at least 90 % (a lap
+  long enough overshoots, the condition being read between passes), a list played inside a list with a fight in the middle of its second step, a
+  block that holds a route, the flyout of the repeat token and of the condition (the headless window opens no popup), and how the tokens read under
+  each step. The list is in D421; it joins the measure owed below.
 - Following a run (D419, 7r4) is tried on the fake game, view models and headless windows, not on a client: whether the position told is the
   position lived with real travel (zaaps, `Busy` waits, a map with no path), a fight or a bank cutting the route and the run resuming on the
   same step, a long action while the playhead stays on its step, two accounts on one route, 250 ms against a map every three seconds. The
@@ -83,8 +88,9 @@ As of 2026-11-10, after D420 (the Pandawa no longer swaps Sobre and Saoul instea
 0. **Bug reports with the player's capture** (D409 to D411), designed, not begun: the game connection recorded by default, a
    `.d3breport` bundle with the capture cleaned at the export, sent by a private Discord webhook; BR1 to BR4 in the roadmap, BR1
    first. Nothing of it exists in code yet.
-1. **7r4, following a run, is made** (D419), to try in game with the owner's list; then **7r6**, sequences as blocks, laps and "until" (a change of
-   `RouteRunner`, to confirm), all before 7e. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already
+1. **7r4, following a run, and 7r6, repeats and sequences as steps, are made in code** (D419, D421), to try in game with the owner's lists; then 7e.
+   7r6 left: the condition read between two steps of a route, and, or and not in an "until" (7e's), a pass of a repeated one-way route on the card,
+   the lists that repeat a route shown on the route. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already
    passed dimmed on the map, and recording in the toolbar, which waits for the measure in game.
 2. **A measure in game with the owner**, before anything else of step 7: the list above, and what 7d4b will record.
 3. **Session 7d4b**: recording while playing and Simplify (D299, D394), once the events it reads are measured.

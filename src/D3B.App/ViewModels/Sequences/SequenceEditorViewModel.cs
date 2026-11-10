@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
@@ -26,7 +27,8 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
     private BehaviorSequence _baseline;
     private readonly UndoHistory<BehaviorSequence> _history;
     private List<NodeCall> _steps;
-    private bool _repeats;
+    private StepRepeat _repeat = StepRepeat.Once;
+    private IReadOnlyList<(string NodeId, string Name)> _conditions = [];
     private RouteActionPickerViewModel? _picker;
 
     /// <summary>Gets the behavior's id.</summary>
@@ -45,17 +47,21 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
     /// <summary>Gets or sets whether the list starts again once played to its end.</summary>
     public bool Repeats
     {
-        get => _repeats;
+        get => _repeat.Kind != RepeatKind.Once;
         set
         {
-            if (_repeats == value)
+            if (Repeats == value)
                 return;
 
-            _repeats = value;
+            _repeat = value ? StepRepeat.Forever : StepRepeat.Once;
+            ListRepeat.Show(_repeat);
             OnPropertyChanged();
             Changed();
         }
     }
+
+    /// <summary>Gets how the list is played again once played to its end: not at all, a number of times, until a condition holds, for ever.</summary>
+    public StepRepeatViewModel ListRepeat { get; private set; }
 
     /// <summary>Gets whether the list has no step yet.</summary>
     public bool IsEmpty => _steps.Count == 0;
@@ -95,10 +101,11 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         _saved = behavior;
         _baseline = Normalized(BehaviorSequences.Read(behavior) ?? BehaviorSequence.Empty);
         _steps = [.. _baseline.Steps];
-        _repeats = _baseline.Repeats;
+        _repeat = _baseline.Repeat;
         _history = new UndoHistory<BehaviorSequence>(_baseline, SameSequence);
         Name = behavior.Name;
         Offer();
+        ListRepeat = MakeRepeat(_repeat, true, ListRepeatEdited);
         Build();
         CheckSave();
     }
@@ -115,8 +122,9 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         _saved = behavior;
         _baseline = Normalized(sequence);
         _steps = [.. _baseline.Steps];
-        _repeats = sequence.Repeats;
+        _repeat = sequence.Repeat;
         _history.Reset(Current());
+        ListRepeat.Show(_repeat);
         OnPropertyChanged(nameof(Repeats));
         Moved();
         Build();
@@ -156,6 +164,8 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
     public void Relabel()
     {
         Offer();
+        ListRepeat = MakeRepeat(_repeat, true, ListRepeatEdited);
+        OnPropertyChanged(nameof(ListRepeat));
         Build();
     }
 
@@ -225,14 +235,14 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         {
             Steps =
             [
-                .. sequence.Steps.Select(step => catalog.TryGet(step.Node, out var definition) ? RouteActionCalls.Make(definition, RouteActionCalls.Read(definition, step).Settings) : step),
+                .. sequence.Steps.Select(step => catalog.TryGet(step.Node, out var definition) ? RouteActionCalls.Make(definition, RouteActionCalls.Read(definition, step).Settings) with { Repeat = step.Repeat } : step),
             ],
         };
     }
 
     private BehaviorSequence Current()
     {
-        return new BehaviorSequence([.. _steps], _repeats);
+        return new BehaviorSequence([.. _steps], _repeat);
     }
 
     private void AddChosen(string node)
@@ -272,7 +282,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         if (index >= _steps.Count || index >= Steps.Count)
             return;
 
-        _steps[index] = RouteActionCalls.Make(definition, editor.Draft);
+        _steps[index] = RouteActionCalls.Make(definition, editor.Draft) with { Repeat = _steps[index].Repeat };
 
         // The forms stay as they are: rebuilding them under the hand that types in one would take its focus.
         Changed(run: editor.TypingRun is { } typing ? "step" + index.ToString(CultureInfo.InvariantCulture) + typing : null);
@@ -296,8 +306,9 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
     private void Restore(BehaviorSequence state)
     {
         _steps = [.. state.Steps];
-        _repeats = state.Repeats;
+        _repeat = state.Repeat;
         IsDirty = !state.IsSame(_baseline);
+        ListRepeat.Show(_repeat);
         OnPropertyChanged(nameof(Repeats));
         Moved();
         Build();
@@ -311,7 +322,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
 
     private void CheckSave()
     {
-        CanSave = IsDirty && Steps.All(step => !step.HasProblems);
+        CanSave = IsDirty && !ListRepeat.HasProblems && Steps.All(step => !step.HasProblems && step.Repeat?.HasProblems != true);
         Warning = LoopWarning();
     }
 
@@ -323,7 +334,8 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         // A loop never ends: whatever follows it would never play.
         for (var index = 0; index < _steps.Count - 1; index++)
         {
-            if (_steps[index].Node == RouteActions.Follow && _steps[index].Values.TryGetValue(nameof(RouteFollowValues.Route), out var id) && id is JsonValue text && text.TryGetValue<string>(out var routeId) && library.Find<RouteAsset>(routeId) is { Mode: RouteMode.Loop } route)
+            // A step that repeats follows a loop one lap a pass and goes on (D421).
+            if (_steps[index].Repeat.Kind == RepeatKind.Once && _steps[index].Node == RouteActions.Follow && _steps[index].Values.TryGetValue(nameof(RouteFollowValues.Route), out var id) && id is JsonValue text && text.TryGetValue<string>(out var routeId) && library.Find<RouteAsset>(routeId) is { Mode: RouteMode.Loop } route)
                 return _page.Localizer.Format("SequenceLoopWarning", route.Name, index + 1);
         }
 
@@ -346,6 +358,65 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
 
         OfferedSteps = offered;
         OnPropertyChanged(nameof(OfferedSteps));
+
+        var conditions = new List<(string NodeId, string Name)>();
+
+        if (_page.Nodes is { } nodes)
+        {
+            foreach (var node in BehaviorSequences.OfferedConditions)
+            {
+                // The menu says a condition as its sentence, a gap where each value goes.
+                if (nodes.TryGet(node, out var definition))
+                    conditions.Add((node, SlotPattern().Replace(definition.Sentence.In(culture), "…")));
+            }
+        }
+
+        _conditions = conditions;
+    }
+
+    [GeneratedRegex(@"\{\w+\}", RegexOptions.CultureInvariant)]
+    private static partial Regex SlotPattern();
+
+    private StepRepeatViewModel MakeRepeat(StepRepeat repeat, bool allowsForever, Action<StepRepeat, string?> changed)
+    {
+        return new StepRepeatViewModel(repeat, allowsForever, _conditions, _page.Localizer, ConditionCard, CreateCondition, changed);
+    }
+
+    private NodeCall? CreateCondition(string node)
+    {
+        return _page.Nodes is { } catalog && catalog.TryGet(node, out var definition) ? RouteActionCalls.Create(definition) : null;
+    }
+
+    // The condition of an "until" is a sentence with tokens, as a step is, without what moves or removes a step.
+    private RouteActionViewModel? ConditionCard(NodeCall call, Action<NodeCall, string?> edited)
+    {
+        if (_page.Nodes is not { } catalog || !catalog.TryGet(call.Node, out var definition))
+            return null;
+
+        var localizer = _page.Localizer;
+        var names = new GameNames(_page.Texts, localizer);
+        var editor = new SettingsEditor(definition.Values, RouteActionCalls.Read(definition, call).Settings, _page.Game, names, localizer, _page.Provider, [], _page.Dialogs);
+        var card = new RouteActionViewModel(0, 1, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), _ => { }, (_, _) => { });
+
+        editor.Edited += (_, _) => edited(RouteActionCalls.Make(definition, editor.Draft), editor.TypingRun);
+
+        return card;
+    }
+
+    private void StepRepeatEdited(int index, StepRepeat repeat, string? run)
+    {
+        if (index >= _steps.Count)
+            return;
+
+        _steps[index] = _steps[index] with { Repeat = repeat };
+        Changed(run: run is null ? null : "step" + index.ToString(CultureInfo.InvariantCulture) + run);
+    }
+
+    private void ListRepeatEdited(StepRepeat repeat, string? run)
+    {
+        _repeat = repeat;
+        OnPropertyChanged(nameof(Repeats));
+        Changed(run: run);
     }
 
     private void Build()
@@ -368,10 +439,18 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
                 var created = new SettingsEditor(made.Values, RouteActionCalls.Read(made, call).Settings, _page.Game, names, localizer, _page.Provider, [], _page.Dialogs);
 
                 created.Edited += (_, _) => StepEdited(at, made, created);
+
+                // A list that plays this one, or this one itself, would never end: it is not offered.
+                created.SequenceFilter = candidate => candidate.Id != Id && _page.Library is { } library && !BehaviorSequences.Reaches(candidate, Id, other => library.Find<BehaviorAsset>(other));
                 editor = created;
             }
 
-            Steps.Add(new RouteActionViewModel(index, _steps.Count, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), Remove, Move));
+            var place = index;
+
+            Steps.Add(new RouteActionViewModel(index, _steps.Count, call.Node, definition, editor, localizer, (kind, id) => NameOf(names, kind, id), Remove, Move)
+            {
+                Repeat = MakeRepeat(call.Repeat, false, (repeat, run) => StepRepeatEdited(place, repeat, run)),
+            });
         }
 
         OnPropertyChanged(nameof(IsEmpty));
@@ -395,6 +474,7 @@ internal sealed partial class SequenceEditorViewModel : ObservableObject, IUndoa
         return node switch
         {
             RouteActions.Follow => "SequenceNameFollow",
+            BehaviorSequences.Play => "SequenceNamePlay",
             RouteActions.Harvest => "RouteNameHarvest",
             RouteActions.Fight => "RouteNameFight",
             RouteActions.Wait => "RouteNameWait",

@@ -55,6 +55,18 @@ public sealed class BehaviorCompilerTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AnUntilThatIsNoConditionOrHasNoSuchValueIsSaidWhereItIs()
+    {
+        var behavior = Behavior(new BehaviorState("s", "S")
+        {
+            Repeat = StepRepeat.Until(new NodeCall("wait", Values())),
+            Actions = Chain(Node("a", "wait", ("Seconds", 1)) with { Repeat = StepRepeat.Until(new NodeCall("pods.atLeast", Values(("Hours", 1)))) }),
+        });
+
+        Assert.Equal([(BehaviorProblemKind.NodeMisplaced, "s"), (BehaviorProblemKind.ValueUnknown, "s/a")], Problems(behavior));
+    }
+
+    [Fact]
     public void ValuesOutOfTheirBoundsDoNotHold()
     {
         var behavior = Behavior(new BehaviorState("s", "S") { Actions = Chain(Node("w", "wait", ("Seconds", 0))) });

@@ -19,10 +19,14 @@ public static class BehaviorSequences
     private const double Spacing = 260;
     private const double Margin = 40;
 
+    /// <summary>The id of the node that plays a list of the project as a step of another (D421).</summary>
+    public const string Play = "sequence.play";
+
     /// <summary>Gets the nodes the list editor offers as steps, in the order of its menu: those that need no map to be set up.</summary>
     public static ImmutableArray<string> Offered { get; } =
     [
         RouteActions.Follow,
+        Play,
         RouteActions.Harvest,
         RouteActions.Fight,
         RouteActions.HavenBag,
@@ -30,6 +34,21 @@ public static class BehaviorSequences
         "note",
         "pause",
         "stop",
+    ];
+
+    /// <summary>Gets the conditions a repeat of a list or of a step can wait on ("until"), in the order of its menu: those that read the character and need no variable (D421).</summary>
+    public static ImmutableArray<string> OfferedConditions { get; } =
+    [
+        "pods.atLeast",
+        "life.atLeast",
+        "level.atLeast",
+        "job.levelAtLeast",
+        "kamas.atLeast",
+        "items.atLeast",
+        "subArea.in",
+        "area.in",
+        "fight.last",
+        "run.longerThan",
     ];
 
     /// <summary>Reads a behavior as a list of steps.</summary>
@@ -50,7 +69,7 @@ public static class BehaviorSequences
         if (state.When is not null || state.IsUrgent || !state.States.IsEmpty)
             return null;
 
-        return StepsOf(state.Actions) is { } steps ? new BehaviorSequence(steps, state.Repeats) : null;
+        return StepsOf(state.Actions) is { } steps ? new BehaviorSequence(steps, state.Repeat) : null;
     }
 
     /// <summary>Writes a list of steps into a behavior, which keeps its identity, name and file.</summary>
@@ -69,7 +88,7 @@ public static class BehaviorSequences
         {
             var step = sequence.Steps[index];
 
-            nodes.Add(new GraphNode(IdOf(index), step.Node, step.Values) { Position = new NodePosition(Margin + (index * Spacing), Margin) });
+            nodes.Add(new GraphNode(IdOf(index), step.Node, step.Values) { Repeat = step.Repeat, Position = new NodePosition(Margin + (index * Spacing), Margin) });
 
             if (index > 0)
                 links.Add(new GraphLink(IdOf(index - 1), GraphPins.Next, IdOf(index)));
@@ -77,7 +96,7 @@ public static class BehaviorSequences
 
         var state = new BehaviorState(StateId, behavior.Name)
         {
-            Repeats = sequence.Repeats,
+            Repeat = sequence.Repeat,
             Actions = new ActionGraph(sequence.Steps.IsEmpty ? null : IdOf(0), nodes.ToImmutable(), links.ToImmutable()),
         };
 
@@ -89,17 +108,59 @@ public static class BehaviorSequences
     /// <returns>The routes' ids, each once, in the order they are first followed.</returns>
     public static IReadOnlyList<string> RoutesOf(BehaviorAsset behavior)
     {
+        return Referenced(behavior, RouteActions.Follow, nameof(RouteFollowValues.Route));
+    }
+
+    /// <summary>Lists the lists a behavior plays as steps, by their behaviors' ids (D421).</summary>
+    /// <param name="behavior">The behavior.</param>
+    /// <returns>The lists' ids, each once, in the order they are first played.</returns>
+    public static IReadOnlyList<string> SequencesOf(BehaviorAsset behavior)
+    {
+        return Referenced(behavior, Play, nameof(SequenceValues.Sequence));
+    }
+
+    /// <summary>Tells whether a behavior plays a list, directly or through the lists it plays: such a list would play itself.</summary>
+    /// <param name="behavior">The behavior.</param>
+    /// <param name="target">The list's behavior id.</param>
+    /// <param name="find">Finds a behavior by its id, or <see langword="null"/> when the project has none.</param>
+    /// <returns>Whether <paramref name="target"/> is among the lists it plays, or those they play.</returns>
+    public static bool Reaches(BehaviorAsset behavior, string target, Func<string, BehaviorAsset?> find)
+    {
         ArgumentNullException.ThrowIfNull(behavior);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(find);
 
-        var routes = new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal) { behavior.Id };
+        var pending = new Stack<BehaviorAsset>([behavior]);
 
-        foreach (var node in Nodes(behavior.Always).Concat(Nodes(behavior.States)))
+        while (pending.TryPop(out var current))
         {
-            if (node.Node == RouteActions.Follow && node.Values.TryGetValue(nameof(RouteFollowValues.Route), out var value) && value is JsonValue text && text.TryGetValue<string>(out var route) && route.Length > 0 && !routes.Contains(route))
-                routes.Add(route);
+            foreach (var id in SequencesOf(current))
+            {
+                if (id == target)
+                    return true;
+
+                if (seen.Add(id) && find(id) is { } next)
+                    pending.Push(next);
+            }
         }
 
-        return routes;
+        return false;
+    }
+
+    private static List<string> Referenced(BehaviorAsset behavior, string node, string key)
+    {
+        ArgumentNullException.ThrowIfNull(behavior);
+
+        var ids = new List<string>();
+
+        foreach (var step in Nodes(behavior.Always).Concat(Nodes(behavior.States)))
+        {
+            if (step.Node == node && step.Values.TryGetValue(key, out var value) && value is JsonValue text && text.TryGetValue<string>(out var id) && id.Length > 0 && !ids.Contains(id))
+                ids.Add(id);
+        }
+
+        return ids;
     }
 
     private static IEnumerable<GraphNode> Nodes(ImmutableArray<BehaviorState> states)
@@ -147,7 +208,7 @@ public static class BehaviorSequences
             if (!byId.Remove(at, out var node))
                 return null;
 
-            steps.Add(new NodeCall(node.Node, node.Values));
+            steps.Add(new NodeCall(node.Node, node.Values) { Repeat = node.Repeat });
             at = next.GetValueOrDefault(at);
         }
 

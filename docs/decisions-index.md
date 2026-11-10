@@ -540,3 +540,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## Step 9, the Pandawa's drink (D420)
 
 - [D420](decisions/d420-step-9-the-pandawas-drink.md#d420-a-state-the-fighter-already-held-is-no-gain-when-a-cast-puts-it-back-the-pandawa-no-longer-swaps-sobre-and-saoul-instead-of-striking) A state the fighter already held is no gain when a cast puts it back: the Pandawa no longer swaps Sobre and Saoul instead of striking (2026-11-10)
+
+## Step 7, 7r6, repeats and sequences (D421)
+
+- [D421](decisions/d421-step-7-7r6-repeats-and-sequences.md#d421-7r6-a-step-of-a-list-repeats-once-a-number-of-times-until-a-condition-and-plays-another-list-the-repeat-is-on-the-step) 7r6, a step of a list repeats (once, a number of times, until a condition) and plays another list: the repeat is on the step (2026-11-10)
+  - Laps and "until" on the route's asset, a container "Repeat" step, a fixed list of "until" kinds, a played list expanded at compile time, the condition read between two steps of a route, a new kind of setting for the condition.

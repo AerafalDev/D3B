@@ -42,8 +42,8 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
     {
         var (connection, bot) = await _behaviors.Play.EnterAsync(300);
         var run = await _behaviors.StartAsync(bot, Behavior(
-            new BehaviorState("rich", "Rich") { When = When("kamas.atLeast", ("Amount", 10)), Repeats = true, Actions = Chain(Note("r", "rich"), Node("w", "wait", ("Seconds", 60))) },
-            new BehaviorState("poor", "Poor") { Repeats = true, Actions = Chain(Note("p", "poor"), Node("v", "wait", ("Seconds", 60))) }));
+            new BehaviorState("rich", "Rich") { When = When("kamas.atLeast", ("Amount", 10)), Repeat = StepRepeat.Forever, Actions = Chain(Note("r", "rich"), Node("w", "wait", ("Seconds", 60))) },
+            new BehaviorState("poor", "Poor") { Repeat = StepRepeat.Forever, Actions = Chain(Note("p", "poor"), Node("v", "wait", ("Seconds", 60))) }));
 
         await UntilAsync(() => Notes(bot).Count == 1);
         connection.Server(new KamasUpdateEvent { Kamas = 10 });
@@ -99,7 +99,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
     {
         var (_, bot) = await _behaviors.Play.EnterAsync(300);
         var run = await _behaviors.StartAsync(bot, Behavior(
-            new BehaviorState("loop", "Loop") { Repeats = true, Actions = Chain(Note("a", "again"), Node("w", "wait", ("Seconds", 1))) }));
+            new BehaviorState("loop", "Loop") { Repeat = StepRepeat.Forever, Actions = Chain(Note("a", "again"), Node("w", "wait", ("Seconds", 1))) }));
 
         await UntilAsync(() => Notes(bot).Count == 1);
         _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
@@ -108,6 +108,109 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         await run.Completion;
 
         Assert.Equal(["again", "again"], Notes(bot));
+    }
+
+    [Fact]
+    public async Task AStepThatRepeatsThreeTimesIsPlayedThreeTimesBeforeTheNext()
+    {
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("list", "List") { Actions = Chain(Note("a", "a") with { Repeat = StepRepeat.Times(3) }, Note("b", "b")) }));
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(["a", "a", "a", "b"], Notes(bot));
+    }
+
+    [Fact]
+    public async Task AStepRepeatedUntilAConditionIsNotPlayedWhenItAlreadyHolds()
+    {
+        var (connection, bot) = await _behaviors.Play.EnterAsync(300);
+
+        connection.Server(new KamasUpdateEvent { Kamas = 50 });
+        await bot.ProcessedAsync();
+
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("list", "List") { Actions = Chain(Note("a", "never") with { Repeat = StepRepeat.Until(new NodeCall("kamas.atLeast", Values(("Amount", 10)))) }, Note("b", "next")) }));
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(["next"], Notes(bot));
+    }
+
+    [Fact]
+    public async Task AStepRepeatedUntilAConditionGoesOnWhileItDoesNotHoldAndPassesOnceItDoes()
+    {
+        var (connection, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("list", "List")
+            {
+                Actions = Chain(Node("w", "wait", ("Seconds", 1)) with { Repeat = StepRepeat.Until(new NodeCall("kamas.atLeast", Values(("Amount", 10)))) }, Note("b", "after")),
+            }));
+
+        await UntilAsync(() => run.Status is ActivityStatus.Stepping);
+        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
+        await UntilAsync(() => run.Status is ActivityStatus.Stepping);
+        Assert.Empty(Notes(bot));
+
+        connection.Server(new KamasUpdateEvent { Kamas = 50 });
+        await bot.ProcessedAsync();
+
+        while (!run.Completion.IsCompleted)
+        {
+            _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(["after"], Notes(bot));
+    }
+
+    [Fact]
+    public async Task AStateThatRepeatsThreeTimesPlaysItsActionsThreeTimesThenIsDone()
+    {
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("list", "List") { Repeat = StepRepeat.Times(3), Actions = Chain(Note("a", "a"), Note("b", "b")) }));
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(["a", "b", "a", "b", "a", "b"], Notes(bot));
+    }
+
+    [Fact]
+    public async Task AStateThatRepeatsUntilAConditionPlaysNothingWhenItAlreadyHolds()
+    {
+        var (connection, bot) = await _behaviors.Play.EnterAsync(300);
+
+        connection.Server(new KamasUpdateEvent { Kamas = 50 });
+        await bot.ProcessedAsync();
+
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("list", "List") { Repeat = StepRepeat.Until(new NodeCall("kamas.atLeast", Values(("Amount", 10)))), Actions = Chain(Note("a", "a")) }));
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Empty(Notes(bot));
+    }
+
+    [Fact]
+    public async Task AStateThatRepeatsUntilAConditionPlaysAgainUntilItHolds()
+    {
+        var (connection, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("list", "List") { Repeat = StepRepeat.Until(new NodeCall("kamas.atLeast", Values(("Amount", 10)))), Actions = Chain(Note("a", "a"), Node("w", "wait", ("Seconds", 1))) }));
+
+        await UntilAsync(() => Notes(bot).Count == 1);
+        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
+        await UntilAsync(() => Notes(bot).Count == 2);
+
+        connection.Server(new KamasUpdateEvent { Kamas = 50 });
+        await bot.ProcessedAsync();
+
+        while (!run.Completion.IsCompleted)
+        {
+            _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(["a", "a"], Notes(bot).Take(2));
     }
 
     [Fact]
@@ -323,7 +426,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
     {
         var (_, bot) = await _behaviors.Play.EnterAsync(300);
         var run = await _behaviors.StartAsync(bot, Behavior(
-            new BehaviorState("loop", "Loop") { Repeats = true, Actions = Chain(Node("w", "wait", ("Seconds", 1)), Node("v", "wait", ("Seconds", 60))) }));
+            new BehaviorState("loop", "Loop") { Repeat = StepRepeat.Forever, Actions = Chain(Node("w", "wait", ("Seconds", 1)), Node("v", "wait", ("Seconds", 60))) }));
 
         await UntilAsync(() => run.Status is ActivityStatus.Stepping);
         _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
