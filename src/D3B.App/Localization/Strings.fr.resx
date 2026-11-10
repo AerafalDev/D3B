@@ -3467,4 +3467,7 @@
   <data name="ReportRead" xml:space="preserve">
     <value>Le lire</value>
   </data>
+  <data name="ReportMessageTooLong" xml:space="preserve">
+    <value>Ce texte dépasse {0} caractères : il n’a pas été ajouté.</value>
+  </data>
 </root>

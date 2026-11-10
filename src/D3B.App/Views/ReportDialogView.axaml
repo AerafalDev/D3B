@@ -73,16 +73,25 @@
                     AcceptsReturn="True"
                     AutomationProperties.Name="{l:Tr ReportMessageLabel}"
                     Height="110"
-                    MaxLength="{Binding MessageLimit}"
                     Text="{Binding Message}"
                     TextWrapping="Wrap"
                     PlaceholderText="{l:Tr ReportMessageHint}" />
+                <TextBlock
+                    Classes="Problem"
+                    IsVisible="{Binding HasMessageNotice}"
+                    Text="{Binding MessageNotice}"
+                    TextWrapping="Wrap" />
                 <TextBlock
                     Classes="Dim"
                     FontSize="11.5"
                     Text="{l:Tr ReportMessageWarning}"
                     TextWrapping="Wrap" />
             </StackPanel>
+            <TextBlock
+                Classes="Problem"
+                IsVisible="{Binding HasNoCharacter}"
+                Text="{l:Tr ReportNoCharacter}"
+                TextWrapping="Wrap" />
             <TextBlock
                 Classes="Problem"
                 IsVisible="{Binding HasProblem}"
@@ -161,11 +170,19 @@
             <TextBlock
                 Classes="Dim"
                 FontSize="11.5"
+                IsVisible="{Binding HasMessagePart}"
+                Text="{l:Tr ReportMessageWarning}"
+                TextWrapping="Wrap" />
+            <TextBlock
+                Classes="Dim"
+                FontSize="11.5"
+                IsVisible="{Binding NeedsCharacter}"
                 Text="{l:Tr ReportCaptureNote}"
                 TextWrapping="Wrap" />
             <TextBlock
                 Classes="Dim"
                 FontSize="11.5"
+                IsVisible="{Binding NeedsCharacter}"
                 Text="{l:Tr ReportStillHolds}"
                 TextWrapping="Wrap" />
             <StackPanel

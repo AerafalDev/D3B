@@ -98,6 +98,7 @@ internal sealed class ReportDraft
                 Title = localizer["ReportPartAssets"],
                 Detail = localizer.Format("ReportPartAssetsDetail", sources.Assets.Count),
                 Size = SizeOf(sources.Assets.Sum(asset => asset.Data.Length)),
+                Preview = Joined(sources.Assets),
                 Files = sources.Assets,
             });
         }
@@ -115,6 +116,7 @@ internal sealed class ReportDraft
                 Title = localizer["ReportPartKnowledge"],
                 Detail = localizer["ReportPartKnowledgeDetail"],
                 Size = SizeOf(learned.Data.Length),
+                Preview = Joined([learned]),
                 Files = [learned],
             });
         }
@@ -157,9 +159,22 @@ internal sealed class ReportDraft
         Directory.CreateDirectory(_sources.Folder);
 
         var path = Path.Combine(_sources.Folder, Code + ".d3breport");
+        var partial = path + ".part";
 
-        using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            ReportWriter.Write(content, stream);
+        // Written beside, then moved: a write that fails leaves no file that a second try would meet, and none that looks whole.
+        try
+        {
+            using (var stream = new FileStream(partial, FileMode.Create, FileAccess.Write, FileShare.None))
+                ReportWriter.Write(content, stream);
+
+            File.Move(partial, path);
+        }
+        catch
+        {
+            File.Delete(partial);
+
+            throw;
+        }
 
         return new WrittenReport(Code, path, new FileInfo(path).Length);
     }
@@ -192,6 +207,12 @@ internal sealed class ReportDraft
         {
             return (null, localizer.Format("ReportCaptureUnreadable", exception.Message));
         }
+    }
+
+    // The files a part holds, one after the other with their names, as the player reads them.
+    private static string Joined(IReadOnlyList<ReportPart> files)
+    {
+        return string.Join("\n\n", files.Select(file => $"// {file.Name}\n{Encoding.UTF8.GetString(file.Data)}"));
     }
 
     private static ReportPartChoice Text(string title, string detail, string name, string text)

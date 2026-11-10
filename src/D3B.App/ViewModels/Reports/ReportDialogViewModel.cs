@@ -35,7 +35,7 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
     /// <summary>Gets or sets what the report is about.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(NextCommand))]
-    [NotifyPropertyChangedFor(nameof(NeedsCharacter))]
+    [NotifyPropertyChangedFor(nameof(NeedsCharacter), nameof(HasNoCharacter))]
     public partial ReportAreaChoice? Area { get; set; }
 
     /// <summary>Gets or sets the character the report is about.</summary>
@@ -49,10 +49,35 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
         get => _message;
         set
         {
-            if (value.Length <= MessageLimit && SetProperty(ref _message, value))
+            if (value.Length > MessageLimit)
+            {
+                // Said, and the field given its text back: a player who pastes more is told what did not go in.
+                MessageNotice = _localizer.Format("ReportMessageTooLong", MessageLimit.ToString("N0", _localizer.Culture));
+                OnPropertyChanged();
+
+                return;
+            }
+
+            MessageNotice = null;
+
+            if (SetProperty(ref _message, value))
                 OnPropertyChanged(nameof(MessageCount));
         }
     }
+
+    /// <summary>Gets what the message was refused for, or null.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMessageNotice))]
+    public partial string? MessageNotice { get; private set; }
+
+    /// <summary>Gets whether a text was refused.</summary>
+    public bool HasMessageNotice => MessageNotice is not null;
+
+    /// <summary>Gets whether no character can be chosen though the report is about the game.</summary>
+    public bool HasNoCharacter => NeedsCharacter && Characters.Count is 0;
+
+    /// <summary>Gets whether the preview has a message, which the warning about personal data goes with.</summary>
+    public bool HasMessagePart => Draft?.Message is not null;
 
     /// <summary>Gets the step the dialog is at.</summary>
     [ObservableProperty]
@@ -126,28 +151,33 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
         Problem = null;
 
         var character = NeedsCharacter ? Character : null;
-        var sources = _sources(character);
-
-        if (sources is null)
-        {
-            Problem = _localizer["ReportNoHost"];
-
-            return;
-        }
 
         Step = ReportStep.Preparing;
 
         try
         {
+            // The sources are read from the host on this thread, the preparation off it: whatever either fails with, the form is given back.
+            var sources = _sources(character);
+
+            if (sources is null)
+            {
+                Problem = _localizer["ReportNoHost"];
+                Step = ReportStep.Form;
+
+                return;
+            }
+
             Draft = await ReportDraft.PrepareAsync(sources, Area!.Area, Message, _localizer, CancellationToken.None).ConfigureAwait(true);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             Problem = _localizer.Format("ReportNotPrepared", exception.Message);
             Step = ReportStep.Form;
 
             return;
         }
+
+        OnPropertyChanged(nameof(HasMessagePart));
 
         Parts.Clear();
 
@@ -171,6 +201,7 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
     private void Back()
     {
         Draft = null;
+        OnPropertyChanged(nameof(HasMessagePart));
         Problem = null;
         Parts.Clear();
         Step = ReportStep.Form;

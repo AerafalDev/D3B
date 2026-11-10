@@ -58,8 +58,11 @@ internal static class ReportSourcesFactory
     {
         ArgumentNullException.ThrowIfNull(choices);
 
-        if (services is null)
+        // A report of the game reads the host's session; one of the app, with no character, needs none.
+        if (services is null && choice is not null)
             return null;
+
+        services ??= new ServiceCollection().BuildServiceProvider();
 
         var key = choice is null ? default : new D3B.Bot.Characters.CharacterKey(choice.AccountId, choice.Id);
         var bots = services.GetService<Bots>();
@@ -75,7 +78,7 @@ internal static class ReportSourcesFactory
         {
             CharacterId = choice?.Id ?? 0,
             CharacterName = choice?.Name ?? string.Empty,
-            OtherNames = [.. choices.Where(other => other.Id != choice?.Id).Select(other => other.Name)],
+            OtherNames = [.. choices.Where(other => other.Id != choice?.Id || other.AccountId != choice?.AccountId).Select(other => other.Name)],
             Level = known?.Level ?? bot?.State.Level,
             Breed = known?.BreedId,
             CapturePath = games is not null ? ReportCaptures.Find(games, bot?.ConnectionId) : null,
