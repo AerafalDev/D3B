@@ -42,6 +42,9 @@ internal sealed partial class HomeViewModel : ObservableObject
     /// <summary>Gets the project's assets changed last, the newest first.</summary>
     public ObservableCollection<HomeRecentViewModel> Recents { get; } = [];
 
+    /// <summary>Gets the notice that the game sessions are recorded, or <see langword="null"/> when there is none to give.</summary>
+    public CapturesNoticeViewModel? Notice { get; init; }
+
     /// <summary>Gets or sets what makes a profile: a dialog asks its name and activity.</summary>
     public Action? ProfileRequested { get; set; }
 
@@ -91,6 +94,7 @@ internal sealed partial class HomeViewModel : ObservableObject
     /// <summary>Reads the characters and the assets again, and changes the lists where they differ.</summary>
     public void Refresh()
     {
+        Notice?.Refresh();
         RefreshCharacters();
         RefreshRecents();
     }

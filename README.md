@@ -141,7 +141,9 @@ given on the command line:
 | --- | --- |
 | `--Storage:Path <file>` | Uses another database file. |
 | `--Studio:Path <folder>` | Uses another project's folder, for its profiles and behaviors. |
-| `--Network:Captures:Enabled true` | Records each connection in `%LOCALAPPDATA%\D3B\captures`, which the app's protocol inspector replays. A capture holds the account's login ticket: never share one. |
+| `--Network:Captures:Game false` | Stops recording the game connection, which D3B records by default in `%LOCALAPPDATA%\D3B\captures\game`, so that a bug can be replayed and reported (the app's protocol inspector replays it too). A capture holds the account's login ticket: never share one. |
+| `--Network:Captures:Retention:Days 7`, `--Network:Captures:Retention:Megabytes 1024` | How long and how much of the game's captures are kept: the older ones, then the oldest while the rest is over the size, are deleted at each start of the host, never one still open. `0` lifts a limit. |
+| `--Network:Captures:Enabled true` | Also records the connection phase's captures, in `%LOCALAPPDATA%\D3B\captures`, which only the mapping tool reads and which hold the account's login token. |
 | `--Fights:Alone true` | Has the AI play every fight of the bots, the player's own included, whatever their activity says. |
 | `--Delays:Display 1.5` | The client's display time, in seconds; the other delays are under `Delays:` too. |
 | `--Banking:FullAt 98` | The share of pods, from 50 to 100, at which the bots go to the bank; `--Banking:UseZaaps false` has them walk there. A profile with its own banking rules ignores both. |

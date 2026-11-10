@@ -130,6 +130,47 @@ public sealed class RelayTests
     }
 
     [Fact]
+    public async Task StartingTheRelayDeletesTheGameCapturesKeptPastTheirRetention()
+    {
+        using var directory = new TemporaryDirectory();
+        var games = Directory.CreateDirectory(Path.Combine(directory.Path, "game")).FullName;
+        var old = Path.Combine(games, "old" + CaptureWriter.FileExtension);
+        var young = Path.Combine(games, "young" + CaptureWriter.FileExtension);
+        var connectionPhase = Path.Combine(directory.Path, "phase" + CaptureWriter.FileExtension);
+
+        foreach (var path in new[] { old, young, connectionPhase })
+            File.WriteAllBytes(path, new byte[10]);
+
+        File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddDays(-30));
+        File.SetLastWriteTimeUtc(connectionPhase, DateTime.UtcNow.AddDays(-30));
+
+        await using (await TestRelay.StartAsync(capturesDirectory: directory.Path))
+        {
+        }
+
+        Assert.False(File.Exists(old));
+        Assert.True(File.Exists(young));
+        Assert.True(File.Exists(connectionPhase));
+    }
+
+    [Fact]
+    public async Task TheGameCapturesAreSweptEvenWhenTheGameIsNoLongerRecorded()
+    {
+        using var directory = new TemporaryDirectory();
+        var games = Directory.CreateDirectory(Path.Combine(directory.Path, "game")).FullName;
+        var old = Path.Combine(games, "old" + CaptureWriter.FileExtension);
+
+        File.WriteAllBytes(old, new byte[10]);
+        File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddDays(-30));
+
+        await using (await TestRelay.StartAsync(capturesDirectory: directory.Path, recordsCaptures: false))
+        {
+        }
+
+        Assert.False(File.Exists(old));
+    }
+
+    [Fact]
     public async Task EachConnectionIsRecordedWhenCapturesAreOn()
     {
         using var directory = new TemporaryDirectory();

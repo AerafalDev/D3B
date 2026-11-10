@@ -35,6 +35,10 @@ As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another li
 
 ## Not measured in game
 
+- Recording by default and its retention (BR1, D409) are tested on temporary files, the relay of the tests and view models, and the settings
+  and the home page's notice in headless windows, not seen by the owner in the app and not run on a client. The first start of the host after
+  the change deletes the game's captures older than 7 days or beyond 1 GB: the owner's 153 captures, which `scripts/fights.cs` replays, would
+  go, so he sets `Network:Captures:Retention:Days` to 0 (or copies `captures\game`) before it. The 7 days and the 1 GB are D409's, the lead's reckoning.
 - Repeats and sequences as steps (D421, 7r6) are tried on the fake game, view models and headless windows, not on a client and not by the owner
   in the app: a route followed three times (the journal saying its steps in the first pass only), a loop followed until pods at least 90 % (a lap
   long enough overshoots, the condition being read between passes), a list played inside a list with a fight in the middle of its second step, a
@@ -85,9 +89,10 @@ As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another li
 0. **The refactoring and tidy-up session** (D399 to D401) is mostly done: `decisions.md` is cut in files by group of the index,
    `client.md` has its game connection apart, `AssetsViewModel`, `BotActor`, `HarvestActivity`, `WorldMapView` and `Imagination`
    are under 900 lines, BenchmarkDotNet is gone. The two files that stayed over 900 lines, `FightJudge` and `RouteEditorViewModel`, are cut too.
-0. **Bug reports with the player's capture** (D409 to D411), designed, not begun: the game connection recorded by default, a
-   `.d3breport` bundle with the capture cleaned at the export, sent by a private Discord webhook; BR1 to BR4 in the roadmap, BR1
-   first. Nothing of it exists in code yet.
+0. **Bug reports with the player's capture** (D409 to D411, D422): BR1 is made, the game connection is recorded by default with its
+   retention and the notice (`Network:Captures:Game`, `CaptureRetention`), and what names the account in a capture is measured
+   ([client-game.md](client-game.md#the-game-what-names-the-account)): it is more than the ticket and the list, so BR2's cleaner waits
+   for the owner's answer on D410. Then a `.d3breport` bundle, the app's action and the Discord webhook (BR2 to BR4).
 1. **7r4, following a run, and 7r6, repeats and sequences as steps, are made in code** (D419, D421), to try in game with the owner's lists; then 7e.
    7r6 left: the condition read between two steps of a route, and, or and not in an "until" (7e's), a pass of a repeated one-way route on the card,
    the lists that repeat a route shown on the route. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already

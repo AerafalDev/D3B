@@ -12,8 +12,17 @@ internal static partial class RelayLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Relaying the game servers on {EndPoint}")]
     public static partial void ListeningForGame(ILogger logger, IPEndPoint endPoint);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Recording captures in {Directory}; they hold accounts' login tickets: never share them")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Recording the connection phase's captures in {Directory}; they hold accounts' login tokens: never share them")]
     public static partial void Recording(ILogger logger, string directory);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Recording the game connections in {Directory}; the captures hold accounts' login tickets: never share them")]
+    public static partial void RecordingGame(ILogger logger, string directory);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Captures swept: {Deleted} deleted ({DeletedBytes} bytes), {Kept} kept ({KeptBytes} bytes)")]
+    public static partial void CapturesSwept(ILogger logger, int deleted, long deletedBytes, int kept, long keptBytes);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The captures in {Directory} could not be swept. {Reason}")]
+    public static partial void SweepFailed(ILogger logger, string directory, string reason);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Connection {ConnectionId} from {Client} closed: no server to relay it to. {Reason}")]
     public static partial void NoUpstream(ILogger logger, string connectionId, EndPoint? client, string reason);

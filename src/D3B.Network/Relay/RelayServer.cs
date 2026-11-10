@@ -28,6 +28,7 @@ internal sealed class RelayServer : IHostedService, IDisposable
     private readonly KestrelServer _server;
     private readonly List<ListenOptions> _listeners = [];
     private readonly List<ListenOptions> _gameListeners = [];
+    private readonly TimeProvider _time;
     private readonly ILogger _log;
 
     /// <summary>Gets the connection phase's endpoints, with the ports chosen when the settings ask for port 0.</summary>
@@ -36,10 +37,11 @@ internal sealed class RelayServer : IHostedService, IDisposable
     /// <summary>Gets the game listener's endpoints, with the ports chosen when the settings ask for port 0.</summary>
     public IReadOnlyList<IPEndPoint> GameEndPoints => [.. _gameListeners.Select(listener => listener.IPEndPoint!)];
 
-    public RelayServer(RelaySettings settings, GameServerSelections selections, IServiceProvider services, ILoggerFactory loggers)
+    public RelayServer(RelaySettings settings, GameServerSelections selections, IServiceProvider services, TimeProvider time, ILoggerFactory loggers)
     {
         _settings = settings;
         _selections = selections;
+        _time = time;
         _log = loggers.CreateLogger<RelayServer>();
 
         var options = new KestrelServerOptions { ApplicationServices = services, AddServerHeader = false };
@@ -86,8 +88,30 @@ internal sealed class RelayServer : IHostedService, IDisposable
 
         _selections.OnListening([.. GameEndPoints.Select(endPoint => endPoint.Port)]);
 
-        if (_settings.CapturesDirectory is { } directory)
+        // Swept even when the game is no longer recorded: what was left on disk still holds a login ticket (D422).
+        if (_settings.CapturesDirectory is { } captures)
+            SweepGameCaptures(Path.Combine(captures, "game"));
+
+        if (_settings.GameCapturesDirectory is { } gameDirectory)
+            RelayLog.RecordingGame(_log, gameDirectory);
+
+        if (_settings.ConnectionCapturesDirectory is { } directory)
             RelayLog.Recording(_log, directory);
+    }
+
+    private void SweepGameCaptures(string directory)
+    {
+        try
+        {
+            var sweep = _settings.CapturesRetention.Sweep(directory, _time);
+
+            RelayLog.CapturesSwept(_log, sweep.Deleted, sweep.DeletedBytes, sweep.Kept, sweep.KeptBytes);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // Keeping too many captures is no reason to keep the host from starting.
+            RelayLog.SweepFailed(_log, directory, exception.Message);
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

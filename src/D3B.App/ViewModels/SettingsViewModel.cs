@@ -8,6 +8,7 @@ using D3B.App.ViewModels.AppSettings;
 using D3B.Bot.Banks;
 using D3B.Bot.Data;
 using D3B.Bot.Runtime;
+using D3B.Network.Captures;
 using D3B.Network.Relay;
 using D3B.Storage;
 using D3B.Studio.Assets;
@@ -35,6 +36,8 @@ namespace D3B.App.ViewModels;
 internal sealed partial class SettingsViewModel : ObservableObject
 {
     private const string NoticesFile = "THIRD-PARTY-NOTICES.md";
+    private const decimal DefaultCaptureDays = 7;
+    private const decimal DefaultCaptureMegabytes = 1024;
     private const string NoticesPage = "https://github.com/AerafalDev/D3B/blob/main/THIRD-PARTY-NOTICES.md";
 
     private readonly Localizer _localizer;
@@ -47,6 +50,8 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private bool _bankingChanged;
     private RelayTimeouts _timeouts;
     private Bots? _bots;
+    private decimal _keptDays = DefaultCaptureDays;
+    private decimal _keptMegabytes = DefaultCaptureMegabytes;
     private bool _changed;
     private bool _remembers;
     private CultureInfo? _labelled;
@@ -96,6 +101,12 @@ internal sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Gets the row of the captures' folder.</summary>
     public SettingsRowViewModel CapturesFolder { get; }
 
+    /// <summary>Gets the row of how many days captures are kept (D409).</summary>
+    public SettingsRowViewModel CaptureDaysRow { get; }
+
+    /// <summary>Gets the row of how many megabytes captures may take (D409).</summary>
+    public SettingsRowViewModel CaptureMegabytesRow { get; }
+
     /// <summary>Gets the row of the language.</summary>
     public SettingsRowViewModel Language { get; }
 
@@ -132,10 +143,44 @@ internal sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool HasNoMatch { get; private set; }
 
-    /// <summary>Gets or sets whether the relay records captures from the host's next start.</summary>
+    /// <summary>Gets or sets whether the relay records the game connection from the host's next start; on by default (D409).</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCapturesOff))]
     [NotifyCanExecuteChangedFor(nameof(ResetCapturesCommand))]
-    public partial bool RecordsCaptures { get; set; }
+    public partial bool RecordsCaptures { get; set; } = true;
+
+    /// <summary>Gets or sets how many days captures are kept, 0 for as long as they fit; emptied, it keeps the days it had (D409).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCaptureDaysChanged), nameof(RetentionText))]
+    [NotifyCanExecuteChangedFor(nameof(ResetCaptureDaysCommand))]
+    public partial decimal? CaptureDays { get; set; } = DefaultCaptureDays;
+
+    /// <summary>Gets or sets how many megabytes captures may take together, 0 for no limit; emptied, it keeps the size it had (D409).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCaptureMegabytesChanged), nameof(RetentionText))]
+    [NotifyCanExecuteChangedFor(nameof(ResetCaptureMegabytesCommand))]
+    public partial decimal? CaptureMegabytes { get; set; } = DefaultCaptureMegabytes;
+
+    /// <summary>Gets the least a retention can be: 0, which lifts its limit.</summary>
+    public decimal CaptureLimitMinimum { get; } = 0;
+
+    /// <summary>Gets the most days captures can be kept, ten years.</summary>
+    public decimal CaptureDaysMaximum { get; } = CaptureRetention.MostDays;
+
+    /// <summary>Gets the most megabytes captures can take, a terabyte.</summary>
+    public decimal CaptureMegabytesMaximum { get; } = CaptureRetention.MostMegabytes;
+
+    /// <summary>Gets whether the game connection is not recorded, which is not the default.</summary>
+    public bool IsCapturesOff => !RecordsCaptures;
+
+    /// <summary>Gets whether the days differ from their default.</summary>
+    public bool IsCaptureDaysChanged => _keptDays != DefaultCaptureDays;
+
+    /// <summary>Gets whether the megabytes differ from their default.</summary>
+    public bool IsCaptureMegabytesChanged => _keptMegabytes != DefaultCaptureMegabytes;
+
+    /// <summary>Gets how long and how much of the captures are kept, in words.</summary>
+    public string RetentionText => RetentionOf(_keptDays, _keptMegabytes);
 
     /// <summary>Gets or sets the share of its pods, in percent, at which a bot banks, unless its profile asks for its own; emptied, it keeps the share it had (D405).</summary>
     [ObservableProperty]
@@ -245,7 +290,11 @@ internal sealed partial class SettingsViewModel : ObservableObject
         BankFullAt = banking.FullAt;
         BankUseZaaps = banking.UseZaaps;
         _storedCaptures = stored[RelaySettings.CapturesDirectoryKey];
-        RecordsCaptures = bool.TryParse(stored[RelaySettings.CapturesEnabledKey], out var records) && records;
+        RecordsCaptures = !bool.TryParse(stored[RelaySettings.GameCapturesEnabledKey], out var game) || game || (bool.TryParse(stored[RelaySettings.CapturesEnabledKey], out var all) && all);
+        _keptDays = decimal.TryParse(stored[RelaySettings.CapturesRetentionDaysKey], NumberStyles.None, CultureInfo.InvariantCulture, out var days) && days <= CaptureDaysMaximum ? days : DefaultCaptureDays;
+        _keptMegabytes = decimal.TryParse(stored[RelaySettings.CapturesRetentionMegabytesKey], NumberStyles.None, CultureInfo.InvariantCulture, out var megabytes) && megabytes <= CaptureMegabytesMaximum ? megabytes : DefaultCaptureMegabytes;
+        CaptureDays = _keptDays;
+        CaptureMegabytes = _keptMegabytes;
         SettingsPath = preferences?.Path ?? AppPreferences.DefaultPath;
         LicencesPath = File.Exists(notices) ? notices : NoticesPage;
         PackPath = localizer["PackPathUnknown"];
@@ -257,6 +306,8 @@ internal sealed partial class SettingsViewModel : ObservableObject
         BankZaapsRow = new SettingsRowViewModel(localizer, "SettingBankZaapsRow");
         Captures = new SettingsRowViewModel(localizer, "SettingCapturesRow");
         CapturesFolder = new SettingsRowViewModel(localizer, "SettingCapturesFolder", hasDetail: false);
+        CaptureDaysRow = new SettingsRowViewModel(localizer, "SettingCaptureDaysRow");
+        CaptureMegabytesRow = new SettingsRowViewModel(localizer, "SettingCaptureMegabytesRow");
         Language = new SettingsRowViewModel(localizer, "SettingLanguageRow", hasDetail: false);
         Layout = new SettingsRowViewModel(localizer, "SettingLayout");
         Project = new SettingsRowViewModel(localizer, "SettingProject");
@@ -324,12 +375,13 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
         if (relay is null)
             CapturesNow = "";
-        else if (relay.CapturesDirectory is { } directory)
+        else if (relay.GameCapturesDirectory is { } directory)
             CapturesNow = _localizer.Format("CapturesRecording", directory);
         else
             CapturesNow = _localizer["CapturesNotRecording"];
 
-        CapturesPath = relay?.CapturesDirectory ?? (string.IsNullOrWhiteSpace(_storedCaptures) ? RelaySettings.DefaultCapturesDirectory : _storedCaptures);
+        // The game's captures are the ones a player reports and replays: their folder is the one shown.
+        CapturesPath = Path.Combine(relay?.CapturesDirectory ?? (string.IsNullOrWhiteSpace(_storedCaptures) ? RelaySettings.DefaultCapturesDirectory : _storedCaptures), "game");
         ProjectPath = services?.GetService<AssetLibrary>()?.Folder ?? services?.GetService<StudioSettings>()?.Path ?? StudioSettings.DefaultPath;
         DatabasePath = services?.GetService<StorageSettings>()?.Path ?? StorageSettings.DefaultPath;
 
@@ -386,7 +438,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     private IEnumerable<SettingsRowViewModel> Rows()
     {
-        return [BankFullAtRow, BankZaapsRow, Captures, CapturesFolder, Language, Layout, Project, Database, ClientData, Preferences, Version, Licences];
+        return [BankFullAtRow, BankZaapsRow, Captures, CaptureDaysRow, CaptureMegabytesRow, CapturesFolder, Language, Layout, Project, Database, ClientData, Preferences, Version, Licences];
     }
 
     private void Select(SettingsSectionViewModel section)
@@ -409,7 +461,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
         OnPropertyChanged(nameof(IsBankingShown));
         Bots.IsShown = Delays().Any(delay => delay.IsShown) || IsBankingShown;
-        Network.IsShown = Captures.IsShown || CapturesFolder.IsShown;
+        Network.IsShown = Captures.IsShown || CaptureDaysRow.IsShown || CaptureMegabytesRow.IsShown || CapturesFolder.IsShown;
         Appearance.IsShown = Language.IsShown || Layout.IsShown;
         Files.IsShown = Project.IsShown || Database.IsShown || ClientData.IsShown || Preferences.IsShown;
         About.IsShown = Version.IsShown || Licences.IsShown;
@@ -423,7 +475,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private void MarkChanges()
     {
         Bots.HasChanges = Display.IsRaised || HasRaisedDelays || IsBankFullAtChanged || !BankUseZaaps;
-        Network.HasChanges = RecordsCaptures;
+        Network.HasChanges = IsCapturesOff || IsCaptureDaysChanged || IsCaptureMegabytesChanged;
     }
 
     private void Attach(Bots bots)
@@ -534,8 +586,63 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
         MarkChanges();
 
-        // Off is the relay's default: forgotten, the host's own configuration decides again.
-        _preferences?.RememberHost(new Dictionary<string, string?> { [RelaySettings.CapturesEnabledKey] = value ? bool.TrueString : null });
+        // On is the relay's default: forgotten, the host's own configuration decides again. Off also forgets the older choice
+        // to record every connection, which would go on recording the game's.
+        _preferences?.RememberHost(value
+            ? new Dictionary<string, string?> { [RelaySettings.GameCapturesEnabledKey] = null }
+            : new Dictionary<string, string?> { [RelaySettings.GameCapturesEnabledKey] = bool.FalseString, [RelaySettings.CapturesEnabledKey] = null });
+    }
+
+    partial void OnCaptureDaysChanged(decimal? value)
+    {
+        if (UseRetention(RelaySettings.CapturesRetentionDaysKey, value, DefaultCaptureDays, CaptureDaysMaximum) is { } kept)
+            _keptDays = kept;
+
+        OnRetentionChanged();
+    }
+
+    partial void OnCaptureMegabytesChanged(decimal? value)
+    {
+        if (UseRetention(RelaySettings.CapturesRetentionMegabytesKey, value, DefaultCaptureMegabytes, CaptureMegabytesMaximum) is { } kept)
+            _keptMegabytes = kept;
+
+        OnRetentionChanged();
+    }
+
+    // An emptied box, or one past its bounds, keeps what the host had; the next valid one is its own at once.
+    private decimal? UseRetention(string key, decimal? value, decimal fallback, decimal maximum)
+    {
+        if (!_remembers || value is not { } limit || limit < CaptureLimitMinimum || limit > maximum || limit != decimal.Truncate(limit))
+            return null;
+
+        _preferences?.RememberHost(new Dictionary<string, string?> { [key] = limit == fallback ? null : limit.ToString(CultureInfo.InvariantCulture) });
+
+        return limit;
+    }
+
+    private void OnRetentionChanged()
+    {
+        OnPropertyChanged(nameof(IsCaptureDaysChanged));
+        OnPropertyChanged(nameof(IsCaptureMegabytesChanged));
+        OnPropertyChanged(nameof(RetentionText));
+        ResetCaptureDaysCommand.NotifyCanExecuteChanged();
+        ResetCaptureMegabytesCommand.NotifyCanExecuteChanged();
+
+        if (_remembers)
+            MarkChanges();
+    }
+
+    private string RetentionOf(decimal days, decimal megabytes)
+    {
+        var size = megabytes.ToString("N0", _localizer.Culture);
+
+        return (days, megabytes) switch
+        {
+            (0, 0) => _localizer["CapturesKeptForever"],
+            (0, _) => _localizer.Format("CapturesKeptBySize", size),
+            (_, 0) => _localizer.Format("CapturesKeptByAge", _localizer.Plural("CaptureDays", (long)days)),
+            _ => _localizer.Format("CapturesKeptBoth", _localizer.Plural("CaptureDays", (long)days), size),
+        };
     }
 
     [RelayCommand(CanExecute = nameof(HasRaisedDelays))]
@@ -564,10 +671,22 @@ internal sealed partial class SettingsViewModel : ObservableObject
         BankUseZaaps = true;
     }
 
-    [RelayCommand(CanExecute = nameof(RecordsCaptures))]
+    [RelayCommand(CanExecute = nameof(IsCapturesOff))]
     private void ResetCaptures()
     {
-        RecordsCaptures = false;
+        RecordsCaptures = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(IsCaptureDaysChanged))]
+    private void ResetCaptureDays()
+    {
+        CaptureDays = DefaultCaptureDays;
+    }
+
+    [RelayCommand(CanExecute = nameof(IsCaptureMegabytesChanged))]
+    private void ResetCaptureMegabytes()
+    {
+        CaptureMegabytes = DefaultCaptureMegabytes;
     }
 
     [RelayCommand]

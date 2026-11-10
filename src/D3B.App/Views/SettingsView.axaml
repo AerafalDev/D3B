@@ -631,7 +631,7 @@
                             <Border Classes="SRow" IsVisible="{Binding Captures.IsShown}">
                                 <Panel>
                                     <Border Classes="Rule" />
-                                    <Border Classes="Bar" IsVisible="{Binding RecordsCaptures}" />
+                                    <Border Classes="Bar" IsVisible="{Binding IsCapturesOff}" />
                                     <Grid Classes="RowBody" ColumnDefinitions="*,Auto">
                                         <StackPanel VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal">
@@ -658,8 +658,102 @@
                                             <Button
                                                 AutomationProperties.Name="{l:Tr ResetDefault}"
                                                 Classes="Reset"
-                                                Classes.Shown="{Binding RecordsCaptures}"
+                                                Classes.Shown="{Binding IsCapturesOff}"
                                                 Command="{Binding ResetCapturesCommand}"
+                                                ToolTip.Tip="{l:Tr ResetDefault}">
+                                                <c:Icon
+                                                    Drawing="{StaticResource General.Reset}"
+                                                    Height="13"
+                                                    Tint="#E9AD3C"
+                                                    Width="13" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Panel>
+                            </Border>
+                            <Border Classes="SRow" IsVisible="{Binding CaptureDaysRow.IsShown}">
+                                <Panel>
+                                    <Border Classes="Rule" />
+                                    <Border Classes="Bar" IsVisible="{Binding IsCaptureDaysChanged}" />
+                                    <Grid Classes="RowBody" ColumnDefinitions="*,Auto">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Classes="RowTitle" Text="{Binding CaptureDaysRow.Label}" />
+                                                <Border Classes="Badge">
+                                                    <TextBlock Text="{l:Tr AppliesNextStart}" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Classes="RowLine" Text="{Binding CaptureDaysRow.Detail}" />
+                                        </StackPanel>
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            VerticalAlignment="Center">
+                                            <Border Classes="Number">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <NumericUpDown
+                                                        AutomationProperties.Name="{Binding CaptureDaysRow.Label}"
+                                                        FormatString="0"
+                                                        Increment="1"
+                                                        Maximum="{Binding CaptureDaysMaximum}"
+                                                        Minimum="{Binding CaptureLimitMinimum}"
+                                                        Value="{Binding CaptureDays}" />
+                                                    <TextBlock Classes="Unit" Text="{l:Tr UnitDays}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Button
+                                                AutomationProperties.Name="{l:Tr ResetDefault}"
+                                                Classes="Reset"
+                                                Classes.Shown="{Binding IsCaptureDaysChanged}"
+                                                Command="{Binding ResetCaptureDaysCommand}"
+                                                ToolTip.Tip="{l:Tr ResetDefault}">
+                                                <c:Icon
+                                                    Drawing="{StaticResource General.Reset}"
+                                                    Height="13"
+                                                    Tint="#E9AD3C"
+                                                    Width="13" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Panel>
+                            </Border>
+                            <Border Classes="SRow" IsVisible="{Binding CaptureMegabytesRow.IsShown}">
+                                <Panel>
+                                    <Border Classes="Rule" />
+                                    <Border Classes="Bar" IsVisible="{Binding IsCaptureMegabytesChanged}" />
+                                    <Grid Classes="RowBody" ColumnDefinitions="*,Auto">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Classes="RowTitle" Text="{Binding CaptureMegabytesRow.Label}" />
+                                                <Border Classes="Badge">
+                                                    <TextBlock Text="{l:Tr AppliesNextStart}" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Classes="RowLine" Text="{Binding CaptureMegabytesRow.Detail}" />
+                                        </StackPanel>
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            VerticalAlignment="Center">
+                                            <Border Classes="Number">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <NumericUpDown
+                                                        AutomationProperties.Name="{Binding CaptureMegabytesRow.Label}"
+                                                        FormatString="0"
+                                                        Increment="1"
+                                                        Maximum="{Binding CaptureMegabytesMaximum}"
+                                                        Minimum="{Binding CaptureLimitMinimum}"
+                                                        Value="{Binding CaptureMegabytes}" />
+                                                    <TextBlock Classes="Unit" Text="{l:Tr UnitMegabytes}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Button
+                                                AutomationProperties.Name="{l:Tr ResetDefault}"
+                                                Classes="Reset"
+                                                Classes.Shown="{Binding IsCaptureMegabytesChanged}"
+                                                Command="{Binding ResetCaptureMegabytesCommand}"
                                                 ToolTip.Tip="{l:Tr ResetDefault}">
                                                 <c:Icon
                                                     Drawing="{StaticResource General.Reset}"

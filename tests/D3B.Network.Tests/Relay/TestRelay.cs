@@ -42,7 +42,8 @@ internal sealed class TestRelay : IAsyncDisposable
     /// <param name="interceptor">What watches the connections.</param>
     /// <param name="findingGameServers">Whether game connections find their server through the selections, as the host's do, rather than the test's server always.</param>
     /// <param name="holdTimeout">How long a frame is held, half a second by default.</param>
-    public static async Task<TestRelay> StartAsync(bool withServer = true, string? capturesDirectory = null, IRelayInterceptor? interceptor = null, bool findingGameServers = false, TimeSpan? holdTimeout = null)
+    /// <param name="recordsCaptures">Whether connections are recorded in the captures directory, or it only holds what was left there.</param>
+    public static async Task<TestRelay> StartAsync(bool withServer = true, string? capturesDirectory = null, IRelayInterceptor? interceptor = null, bool findingGameServers = false, TimeSpan? holdTimeout = null, bool recordsCaptures = true)
     {
         var upstream = new TcpListener(IPAddress.Loopback, 0);
 
@@ -56,6 +57,8 @@ internal sealed class TestRelay : IAsyncDisposable
             ClientDirectory = Path.Combine(AppContext.BaseDirectory, "no-client"),
             RedirectDirectory = Path.Combine(AppContext.BaseDirectory, "no-redirect"),
             CapturesDirectory = capturesDirectory,
+            RecordsGame = capturesDirectory is not null && recordsCaptures,
+            RecordsConnection = capturesDirectory is not null && recordsCaptures,
             CloseTimeout = TimeSpan.FromSeconds(2),
             HoldTimeout = holdTimeout ?? TimeSpan.FromMilliseconds(500),
         };

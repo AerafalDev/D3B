@@ -1,3 +1,4 @@
+using D3B.Network.Captures;
 using System.Net;
 using D3B.Network.Relay;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +17,7 @@ public sealed class RelaySettingsTests
     }
 
     [Fact]
-    public void TheDefaultsAreD3BsAddressAndTheConnectionHostsPortsWithoutCaptures()
+    public void TheDefaultsAreD3BsAddressAndTheConnectionHostsPortsAndTheGameConnectionRecorded()
     {
         var settings = RelaySettings.Read(Configuration(), ClientDirectory);
 
@@ -25,7 +26,42 @@ public sealed class RelaySettingsTests
         Assert.Equal([5556], settings.GamePorts);
         Assert.Equal(ClientDirectory, settings.ClientDirectory);
         Assert.Equal(RelaySettings.DefaultRedirectDirectory, settings.RedirectDirectory);
-        Assert.Null(settings.CapturesDirectory);
+        Assert.Equal(RelaySettings.DefaultCapturesDirectory, settings.CapturesDirectory);
+        Assert.True(settings.RecordsGame);
+        Assert.False(settings.RecordsConnection);
+        Assert.Equal(Path.Combine(RelaySettings.DefaultCapturesDirectory, "game"), settings.GameCapturesDirectory);
+        Assert.Null(settings.ConnectionCapturesDirectory);
+        Assert.Equal(CaptureRetention.Default, settings.CapturesRetention);
+    }
+
+    [Fact]
+    public void TheConnectionPhaseIsRecordedOnlyWhenAskedForAndThenTheGameToo()
+    {
+        var settings = RelaySettings.Read(Configuration((RelaySettings.CapturesEnabledKey, "true"), (RelaySettings.GameCapturesEnabledKey, "false")), ClientDirectory);
+
+        Assert.True(settings.RecordsConnection);
+        Assert.True(settings.RecordsGame);
+        Assert.Equal(RelaySettings.DefaultCapturesDirectory, settings.ConnectionCapturesDirectory);
+    }
+
+    [Fact]
+    public void TheGameConnectionIsNotRecordedWhenTheSettingIsOff()
+    {
+        var settings = RelaySettings.Read(Configuration((RelaySettings.GameCapturesEnabledKey, "false")), ClientDirectory);
+
+        Assert.False(settings.RecordsGame);
+        Assert.False(settings.RecordsConnection);
+        Assert.Null(settings.GameCapturesDirectory);
+        Assert.Null(settings.ConnectionCapturesDirectory);
+    }
+
+    [Fact]
+    public void TheRetentionComesFromTheConfiguration()
+    {
+        var settings = RelaySettings.Read(Configuration((RelaySettings.CapturesRetentionDaysKey, "2"), (RelaySettings.CapturesRetentionMegabytesKey, "0")), ClientDirectory);
+
+        Assert.Equal(TimeSpan.FromDays(2), settings.CapturesRetention.MaxAge);
+        Assert.Null(settings.CapturesRetention.MaxBytes);
     }
 
     [Fact]
@@ -45,6 +81,7 @@ public sealed class RelaySettingsTests
         Assert.Equal([6000, 6001], settings.GamePorts);
         Assert.Equal(Path.Combine(AppContext.BaseDirectory, "captures"), settings.CapturesDirectory);
         Assert.Equal(Path.Combine(AppContext.BaseDirectory, "captures", "game"), settings.GameCapturesDirectory);
+        Assert.Equal(Path.Combine(AppContext.BaseDirectory, "captures"), settings.ConnectionCapturesDirectory);
         Assert.Equal(Path.Combine(AppContext.BaseDirectory, "client"), settings.RedirectDirectory);
     }
 

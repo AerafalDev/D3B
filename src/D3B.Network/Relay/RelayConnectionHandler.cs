@@ -382,7 +382,7 @@ internal sealed class RelayConnectionHandler
     private CaptureWriter? StartCapture(ConnectionContext connection, RelayRoute route, Upstream upstream, IPEndPoint server)
     {
         // Apart, so that the mapping tool, reading the connection phase's captures, never meets the game's (D43).
-        if ((route is RelayRoute.Game ? _settings.GameCapturesDirectory : _settings.CapturesDirectory) is not { } directory)
+        if ((route is RelayRoute.Game ? _settings.GameCapturesDirectory : _settings.ConnectionCapturesDirectory) is not { } directory)
             return null;
 
         var startedAt = _time.GetUtcNow();

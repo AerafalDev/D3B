@@ -427,9 +427,14 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   its oneofs hold and its length, never a value, a frame not understood being a warning, and rewrites the server
   selection's answer.
 - The official client logs in by itself, through Haapi and the login handshake. D3B never does (D23).
-- Captures (D37): with `Network:Captures:Enabled`, each connection's raw reads go to a `.d3bcap` file in
-  `%LOCALAPPDATA%\D3B\captures`, the game connection's in its `game` directory, apart from the connection phase's that
-  the mapping tool reads (D53), never committed. From format 2, the frames D3B sends the server are records of their
+- Captures (D37, D409): each connection's raw reads go to a `.d3bcap` file in `%LOCALAPPDATA%\D3B\captures`. The game
+  connection's go to its `game` directory, apart from the connection phase's that the mapping tool reads (D53), and
+  are recorded by default (`Network:Captures:Game`, on): `RelaySettings.RecordsGame` and `GameCapturesDirectory`. The
+  connection phase's holds the account's login token and stays opt-in (`Network:Captures:Enabled`, which records the
+  game's too; `RecordsConnection`, `ConnectionCapturesDirectory`). `CaptureRetention` (`Network:Captures:Retention:Days` and
+  `:Megabytes`, 7 and 1,024, 0 lifting a limit) is applied by `RelayServer` when it starts: it deletes `game`'s captures
+  past the age, then the oldest while the rest is over the size, and a capture still open never, since it opens each one
+  to nobody else before deleting it. Never committed. From format 2, the frames D3B sends the server are records of their
   own (D61). `CaptureReplay` plays one into pipes, D3B's frames into a pipe of their own when asked; tests build their
   own, and `scripts/capture.cs` describes them by structure. Decoded messages come from replaying them, for the
   protocol inspector and the replay tests (D63).
@@ -758,7 +763,9 @@ D356), the pages of D101 and D162 gone.
   through `{l:Tr Key}`.
 - **Preferences** (`AppPreferences`): the language and the studio's layout (`StudioLayoutState`), remembered in
   `%LOCALAPPDATA%\D3B\app.json`, read before the window shows (D101, D162); and the host's settings the settings' tab changed, by their configuration's keys and values,
-  such as `Delays:Display` or `Network:Captures:Enabled`, one given back its default forgotten (D151). The app reads the
+  such as `Delays:Display` or `Network:Captures:Game`, one given back its default forgotten (D151). It also
+  remembers that the notice of the recorded sessions was read (`CapturesNoticeSeen`, D409): the home page shows
+  `CapturesNoticeViewModel` until then, and the Network settings say the same always. The app reads the
   file before the host, which starts with them (`HostRunner`, `BotHost.CreateBuilder(args, settings)`), its own
   configuration and command line winning over them.
 

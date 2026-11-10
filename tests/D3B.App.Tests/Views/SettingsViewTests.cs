@@ -61,6 +61,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
             ClientDirectory = "no-client",
             RedirectDirectory = "no-redirect",
             CapturesDirectory = @"C:\Users\Player\AppData\Local\D3B\captures",
+            RecordsGame = true,
         });
 
         return builder.Build();
@@ -137,9 +138,9 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Contains("1.2 s", english);
         Assert.Contains("Server's answer", english);
         Assert.Contains("Reset all to default", english);
-        Assert.Contains("Record the connections", english);
-        Assert.Contains(@"Recording now, in C:\Users\Player\AppData\Local\D3B\captures", english);
-        Assert.Contains(@"C:\Users\Player\AppData\Local\D3B\captures", english);
+        Assert.Contains("Record my game sessions", english);
+        Assert.Contains(@"Recording now, in C:\Users\Player\AppData\Local\D3B\captures\game", english);
+        Assert.Contains(@"C:\Users\Player\AppData\Local\D3B\captures\game", english);
         Assert.Contains("Appearance", english);
         Assert.Contains("English", english);
         Assert.Contains("Database", english);
@@ -161,7 +162,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Equal(2, raised);
 
         // In the app's language, not the system's.
-        Assert.Equal(["90", "3.0", "1.0", "0.5", "10.0", "2.0", "1.0", "30.0", "0.5", "0.8", "20.0", "5.0", "5.0", "60.0"], boxes[0]);
+        Assert.Equal(["90", "3.0", "1.0", "0.5", "10.0", "2.0", "1.0", "30.0", "0.5", "0.8", "20.0", "5.0", "5.0", "60.0", "7", "1024"], boxes[0]);
         Assert.Equal("3,0", boxes[1][1]);
     }
 }

@@ -195,6 +195,32 @@
                     </StackPanel>
                 </Border>
 
+                <Border
+                    Classes="Banner Info"
+                    IsVisible="{Binding Home.Notice.IsShown}"
+                    Padding="16">
+                    <StackPanel Spacing="12">
+                        <TextBlock
+                            Classes="Bright"
+                            FontWeight="SemiBold"
+                            Text="{l:Tr CapturesNoticeTitle}" />
+                        <TextBlock Text="{Binding Home.Notice.Text}" TextWrapping="Wrap" />
+                        <StackPanel
+                            HorizontalAlignment="Right"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button
+                                Classes="Outline"
+                                Command="{Binding Home.Notice.OpenSettingsCommand}"
+                                Content="{l:Tr CapturesNoticeSettings}" />
+                            <Button
+                                Classes="Primary"
+                                Command="{Binding Home.Notice.UnderstandCommand}"
+                                Content="{l:Tr CapturesNoticeUnderstood}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
                 <!--  Where to start.  -->
                 <StackPanel IsVisible="{Binding !IsFailed}" Spacing="24">
                     <StackPanel Spacing="8">

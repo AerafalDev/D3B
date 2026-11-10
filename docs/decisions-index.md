@@ -545,3 +545,6 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D421](decisions/d421-step-7-7r6-repeats-and-sequences.md#d421-7r6-a-step-of-a-list-repeats-once-a-number-of-times-until-a-condition-and-plays-another-list-the-repeat-is-on-the-step) 7r6, a step of a list repeats (once, a number of times, until a condition) and plays another list: the repeat is on the step (2026-11-10)
   - Laps and "until" on the route's asset, a container "Repeat" step, a fixed list of "until" kinds, a played list expanded at compile time, the condition read between two steps of a route, a new kind of setting for the condition.
+## Bug reports, BR1 (D422)
+
+- [D422](decisions/d422-bug-reports-br1-keys.md#d422-two-settings-for-the-captures-the-game-is-recorded-unless-turned-off-every-connection-only-when-asked-the-retention-is-applied-whether-or-not-the-game-is-recorded) Two settings for the captures: the game is recorded unless turned off, every connection only when asked; the retention is applied whether or not the game is recorded (2026-11-10)

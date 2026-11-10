@@ -28,9 +28,10 @@ namespace D3B.Bot.Network;
 /// the debug level; D3B sends the server its requests through it, between the client's frames (D60 to D62).
 /// </para>
 /// <para>
-/// With <c>Network:Captures:Enabled</c>, each connection is recorded in <c>Network:Captures:Directory</c>
-/// (<c>%LOCALAPPDATA%\D3B\captures</c> by default), the game's in its <c>game</c> directory, with the installed client's
-/// version when the data module knows it.
+/// The game connections are recorded by default in the <c>game</c> directory of <c>Network:Captures:Directory</c>
+/// (<c>%LOCALAPPDATA%\D3B\captures</c> by default), kept for the days and megabytes of <c>Network:Captures:Retention</c>
+/// (D409); with <c>Network:Captures:Enabled</c> the connection phase is recorded in the directory itself. Captures
+/// hold the installed client's version when the data module knows it.
 /// </para>
 /// </remarks>
 public sealed class NetworkModule : IModule

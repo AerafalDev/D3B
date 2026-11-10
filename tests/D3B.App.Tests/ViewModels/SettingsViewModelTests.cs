@@ -156,21 +156,106 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task CapturesAreRememberedForTheNextStart()
+    public async Task CapturesAreRecordedByDefaultAndTurningThemOffIsRememberedForTheNextStart()
     {
         var settings = (await RunningAsync(AppPreferences.Load(PreferencesPath))).Settings;
 
-        Assert.False(settings.RecordsCaptures);
+        Assert.True(settings.RecordsCaptures);
+        Assert.False(settings.Network.HasChanges);
         Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
-
-        settings.RecordsCaptures = true;
-
-        Assert.Equal("True", AppPreferences.Load(PreferencesPath).Host[RelaySettings.CapturesEnabledKey]);
-        Assert.True(new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts()).RecordsCaptures);
 
         settings.RecordsCaptures = false;
 
+        Assert.Equal("False", AppPreferences.Load(PreferencesPath).Host[RelaySettings.GameCapturesEnabledKey]);
+        Assert.False(new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts()).RecordsCaptures);
+
+        settings.RecordsCaptures = true;
+
         Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
+    }
+
+    [Fact]
+    public void TurningCapturesOffAlsoForgetsTheOlderChoiceToRecordEveryConnection()
+    {
+        var preferences = AppPreferences.Load(PreferencesPath);
+
+        preferences.RememberHost(new Dictionary<string, string?> { [RelaySettings.CapturesEnabledKey] = "True" });
+
+        var settings = new SettingsViewModel(_localizer, preferences, _ => { }, new Toasts());
+
+        Assert.True(settings.RecordsCaptures);
+
+        settings.RecordsCaptures = false;
+
+        Assert.False(AppPreferences.Load(PreferencesPath).Host.ContainsKey(RelaySettings.CapturesEnabledKey));
+    }
+
+    [Fact]
+    public void TheRetentionOfCapturesIsRememberedWhenItDiffersFromTheDefault()
+    {
+        var settings = new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts());
+
+        Assert.Equal((7m, 1024m), (settings.CaptureDays, settings.CaptureMegabytes));
+
+        settings.CaptureDays = 3m;
+        settings.CaptureMegabytes = 0m;
+
+        var host = AppPreferences.Load(PreferencesPath).Host;
+
+        Assert.Equal(("3", "0"), (host[RelaySettings.CapturesRetentionDaysKey], host[RelaySettings.CapturesRetentionMegabytesKey]));
+        Assert.True(settings.Network.HasChanges);
+
+        var next = new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts());
+
+        Assert.Equal((3m, 0m), (next.CaptureDays, next.CaptureMegabytes));
+
+        settings.ResetCaptureDaysCommand.Execute(null);
+        settings.ResetCaptureMegabytesCommand.Execute(null);
+
+        Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
+        Assert.False(settings.Network.HasChanges);
+    }
+
+    [Fact]
+    public void AnEmptiedRetentionBoxOrOnePastItsBoundsChangesNothing()
+    {
+        var settings = new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts());
+
+        settings.CaptureDays = null;
+        settings.CaptureMegabytes = -5m;
+
+        Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
+    }
+
+    [Fact]
+    public void AnEmptiedBoxKeepsTheValueAlreadySavedInTheWordsAndTheMarks()
+    {
+        var preferences = AppPreferences.Load(PreferencesPath);
+
+        preferences.RememberHost(new Dictionary<string, string?> { [RelaySettings.CapturesRetentionDaysKey] = "3" });
+
+        var settings = new SettingsViewModel(_localizer, preferences, _ => { }, new Toasts());
+
+        settings.CaptureDays = null;
+        settings.CaptureMegabytes = 99_999_999m;
+
+        Assert.True(settings.IsCaptureDaysChanged);
+        Assert.Equal("Kept 3 days, up to 1,024 MB", settings.RetentionText);
+        Assert.Equal("3", AppPreferences.Load(PreferencesPath).Host[RelaySettings.CapturesRetentionDaysKey]);
+        Assert.False(AppPreferences.Load(PreferencesPath).Host.ContainsKey(RelaySettings.CapturesRetentionMegabytesKey));
+    }
+
+    [Theory]
+    [InlineData(7, 1024, "Kept 7 days, up to 1,024 MB")]
+    [InlineData(1, 100, "Kept 1 day, up to 100 MB")]
+    [InlineData(0, 1024, "Kept as long as they fit in 1,024 MB")]
+    [InlineData(7, 0, "Kept 7 days")]
+    [InlineData(0, 0, "Kept until you delete them")]
+    public void TheRetentionIsSaidInWords(int days, int megabytes, string expected)
+    {
+        var settings = new SettingsViewModel(_localizer, null, _ => { }, new Toasts()) { CaptureDays = days, CaptureMegabytes = megabytes };
+
+        Assert.Equal(expected, settings.RetentionText);
     }
 
     [Fact]
@@ -257,13 +342,13 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
 
         Assert.Equal((0.5m, false), (settings.Display.Value, settings.Bots.HasChanges));
 
-        settings.RecordsCaptures = true;
+        settings.RecordsCaptures = false;
 
         Assert.True(settings.Network.HasChanges);
 
         settings.ResetCapturesCommand.Execute(null);
 
-        Assert.Equal((false, false), (settings.RecordsCaptures, settings.Network.HasChanges));
+        Assert.Equal((true, false), (settings.RecordsCaptures, settings.Network.HasChanges));
         Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
     }
 

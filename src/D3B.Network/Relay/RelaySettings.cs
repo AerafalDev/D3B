@@ -1,10 +1,11 @@
 using System.Globalization;
 using System.Net;
+using D3B.Network.Captures;
 using Microsoft.Extensions.Configuration;
 
 namespace D3B.Network.Relay;
 
-/// <summary>Where the relay listens, where it keeps the client's configuration, whether it records captures, and how long it waits (D35 to D37, 3f, D151).</summary>
+/// <summary>Where the relay listens, where it keeps the client's configuration, whether it records captures and for how long they are kept, and how long it waits (D35 to D37, 3f, D151).</summary>
 public sealed class RelaySettings
 {
     /// <summary>The setting naming D3B's loopback address.</summary>
@@ -19,8 +20,17 @@ public sealed class RelaySettings
     /// <summary>The setting naming the directory where D3B keeps the configuration it gives the client.</summary>
     public const string RedirectDirectoryKey = "Network:Redirect:Directory";
 
-    /// <summary>The setting that turns the recording of captures on.</summary>
+    /// <summary>The setting that turns on the recording of every connection, the connection phase's too, which holds the account's login token (D37, D409).</summary>
     public const string CapturesEnabledKey = "Network:Captures:Enabled";
+
+    /// <summary>The setting that turns the recording of the game connection on or off; on by default (D409).</summary>
+    public const string GameCapturesEnabledKey = "Network:Captures:Game";
+
+    /// <summary>The setting naming how many days the game's captures are kept, 7 by default; 0 keeps them whatever their age (D409).</summary>
+    public const string CapturesRetentionDaysKey = "Network:Captures:Retention:Days";
+
+    /// <summary>The setting naming how many megabytes the game's captures may take together, 1,024 by default; 0 sets no limit (D409).</summary>
+    public const string CapturesRetentionMegabytesKey = "Network:Captures:Retention:Megabytes";
 
     /// <summary>The setting naming the directory captures are written to.</summary>
     public const string CapturesDirectoryKey = "Network:Captures:Directory";
@@ -59,12 +69,24 @@ public sealed class RelaySettings
     /// <summary>Gets the directory captures are written to, or null when none is recorded.</summary>
     /// <remarks>
     /// The game connection's captures go to its <see cref="GameCapturesDirectory"/>, apart from the connection phase's,
-    /// which the mapping tool reads (D43).
+    /// which the mapping tool reads (D43). It is set even when nothing is recorded now: it is where captures go when on.
     /// </remarks>
     public string? CapturesDirectory { get; init; }
 
-    /// <summary>Gets the directory the game connection's captures are written to, or null when none is recorded.</summary>
-    public string? GameCapturesDirectory => CapturesDirectory is { } directory ? Path.Combine(directory, "game") : null;
+    /// <summary>Gets whether the game connection is recorded, as it is by default (D409).</summary>
+    public bool RecordsGame { get; init; }
+
+    /// <summary>Gets whether the connection phase is recorded, which only the mapping tool reads and which holds the account's login token (D409).</summary>
+    public bool RecordsConnection { get; init; }
+
+    /// <summary>Gets the directory the game connection's captures are written to, or null when it is not recorded.</summary>
+    public string? GameCapturesDirectory => RecordsGame && CapturesDirectory is { } directory ? Path.Combine(directory, "game") : null;
+
+    /// <summary>Gets the directory the connection phase's captures are written to, or null when it is not recorded.</summary>
+    public string? ConnectionCapturesDirectory => RecordsConnection ? CapturesDirectory : null;
+
+    /// <summary>Gets how long and how much of the game's captures are kept, applied at each start of the host.</summary>
+    public CaptureRetention CapturesRetention { get; init; } = CaptureRetention.Default;
 
     /// <summary>Gets how long the relay tries each address of the server.</summary>
     public TimeSpan ConnectTimeout { get; init; } = RelayTimeouts.Default.Connect;
@@ -110,7 +132,8 @@ public sealed class RelaySettings
 
         var ports = ReadPorts(configuration, PortsKey);
         var gamePorts = ReadPorts(configuration, GamePortsKey);
-        var capturesEnabled = configuration[CapturesEnabledKey] is { } enabled && bool.TryParse(enabled, out var value) && value;
+        var recordsConnection = ReadFlag(configuration, CapturesEnabledKey, false);
+        var recordsGame = recordsConnection || ReadFlag(configuration, GameCapturesEnabledKey, true);
         var timeouts = RelayTimeouts.Read(configuration);
 
         return new RelaySettings
@@ -120,12 +143,20 @@ public sealed class RelaySettings
             GamePorts = gamePorts.Count is 0 ? DefaultGamePorts : gamePorts,
             ClientDirectory = clientDirectory,
             RedirectDirectory = PathOr(configuration[RedirectDirectoryKey], DefaultRedirectDirectory),
-            CapturesDirectory = capturesEnabled ? PathOr(configuration[CapturesDirectoryKey], DefaultCapturesDirectory) : null,
+            CapturesDirectory = PathOr(configuration[CapturesDirectoryKey], DefaultCapturesDirectory),
+            RecordsGame = recordsGame,
+            RecordsConnection = recordsConnection,
+            CapturesRetention = CaptureRetention.Read(configuration, CapturesRetentionDaysKey, CapturesRetentionMegabytesKey),
             ConnectTimeout = timeouts.Connect,
             CloseTimeout = timeouts.Close,
             HoldTimeout = timeouts.Hold,
             SelectionLifetime = timeouts.Selection,
         };
+    }
+
+    private static bool ReadFlag(IConfiguration configuration, string key, bool fallback)
+    {
+        return configuration[key] is { } text && bool.TryParse(text, out var value) ? value : fallback;
     }
 
     private static List<int> ReadPorts(IConfiguration configuration, string key)
