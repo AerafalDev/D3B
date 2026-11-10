@@ -800,6 +800,12 @@ public sealed class FightJudge
             if (known < 0 || (ours <= 0 && theirs <= 0))
                 continue;
 
+            // Reported by players (D420): a Pandawa swapping Sobre and Saoul with Picole was credited the Sobre it held all along, whole
+            // fight long, each time a cast put it back, while the one it started the search with is worth nothing; it swapped its states
+            // instead of striking, turn after turn, as the bot plans again before each cast. A state is a gain only where it was not.
+            if (buff.IsState && _tables.Fighters[known].HasState(buff.Change))
+                continue;
+
             var without = Without(fighter, buff);
             var (dealt, taken) = fighter.Team == _team ? AllyBuff(fight, known, fighter, without) : EnemyBuff(fight, known, fighter, without);
 

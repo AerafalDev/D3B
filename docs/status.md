@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
+As of 2026-11-10, after D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
 
 ## What exists
 
@@ -70,6 +70,7 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
   invisible fighter (no capture holds one: the AI keeps its last cell and `Combatant.IsVisible` is never unset); the damage of a
   long push against a wall (the captures hold pushes of 1 to 4 cells, the pack's *Panache DoPou* pushes 10); the players'
   *Chafer* and *Arakne* summons, which no breed of the pack casts.
+- The Pandawa swapping Sobre and Saoul with Bombance or Picole instead of striking (D420): a player's report, reproduced on the imagined fight of the pack's spells and fixed in the judge (a state held as the search began is no gain), not seen in game: no capture holds a Pandawa casting either, so what the server sends back of the swap (the two states, the AP given back, state 1) is read in the pack. The player is to say whether it strikes now.
 - Step 9's mechanisms: the Roublard against big enemies with `Fights:Alone`, the Féca's glyphs, an Osamodas's summons and the
   fight map's preview, an aggression, stairs and portals, the inactivity popup, what the client shows once its turn's end goes
   unanswered (D367).
