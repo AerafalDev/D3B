@@ -5,7 +5,7 @@ using D3B.Data.Maps;
 namespace D3B.App.ViewModels.Settings;
 
 /// <summary>The dialog that picks a cell on a map's own cells (D121, D377).</summary>
-internal sealed partial class CellPickerViewModel : ObservableObject
+internal sealed partial class CellPickerViewModel : ObservableObject, IDialogViewModel
 {
     private readonly Dialogs _dialogs;
     private readonly Action<int?> _picked;

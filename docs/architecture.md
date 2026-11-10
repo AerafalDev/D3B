@@ -684,7 +684,9 @@ D356), the pages of D101 and D162 gone.
   narrower. A setting's help is a tooltip on a mark beside its name.
 - **Dialogs and toasts** (D159, D162): `Dialogs` holds the dialog shown, a `QuestionViewModel` or a dialog's own view model
   (choosing resources, a new profile), which the window shows through ShadUI's dialog host, closed by its buttons and
-  Escape; `Toasts` says what was done and what a bot met, which the window shows through ShadUI's toasts. The view models
+  Escape. The window keeps one table of `DialogKind`s (the view, the view model and the width of each), which registers the views and shows
+  each dialog; `Dialogs.Show` takes an `IDialogViewModel`, and a test fails for a dialog view model with no row, which v0.9.0's Report a bug
+  lacked. `Toasts` says what was done and what a bot met, which the window shows through ShadUI's toasts. The view models
   only open, close and say, tested without a window.
 - **The characters** (D323, D344, D397, `CharactersViewModel` in `D3B.App.ViewModels.Characters`): the model behind the
   Outliner's character rows, the run block and the menus: the bots (`BotViewModel`: the ring of its state `PlayState`, its

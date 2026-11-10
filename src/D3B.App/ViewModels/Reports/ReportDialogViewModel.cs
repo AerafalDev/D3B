@@ -12,7 +12,7 @@ namespace D3B.App.ViewModels.Reports;
 /// folder, which opens, and copies its code. Nothing is sent until the player presses Send on the saved report; a report that cannot be sent stays
 /// saved, to hand over on Discord with its code. Closing the dialog, by any path, stops a send still going.
 /// </remarks>
-internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposable
+internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposable, IDialogViewModel
 {
     private readonly Localizer _localizer;
     private readonly Dialogs _dialogs;

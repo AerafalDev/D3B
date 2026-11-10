@@ -19,7 +19,7 @@ internal sealed partial class Dialogs : ObservableObject
 
     /// <summary>Shows a dialog, in place of any other.</summary>
     /// <param name="dialog">The dialog's view model.</param>
-    public void Show(object dialog)
+    public void Show(IDialogViewModel dialog)
     {
         ArgumentNullException.ThrowIfNull(dialog);
 

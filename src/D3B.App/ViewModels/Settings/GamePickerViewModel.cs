@@ -12,7 +12,7 @@ namespace D3B.App.ViewModels.Settings;
 /// <see cref="MostChips"/>, such as the monsters' super races, are a drop-down beside the search rather than chips, so that
 /// the dialog keeps its height (D245).
 /// </remarks>
-internal sealed partial class GamePickerViewModel : ObservableObject
+internal sealed partial class GamePickerViewModel : ObservableObject, IDialogViewModel
 {
     /// <summary>The most groups shown as chips: the professions that gather are 7, the monsters' super races some 40.</summary>
     public const int MostChips = 12;

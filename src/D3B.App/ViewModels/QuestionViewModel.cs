@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace D3B.App.ViewModels;
 
 /// <summary>A question the app asks before doing what cannot be undone, or loses what was not saved: its words and its answers.</summary>
-internal sealed partial class QuestionViewModel
+internal sealed partial class QuestionViewModel : IDialogViewModel
 {
     private readonly Dialogs _dialogs;
     private readonly Action _confirm;

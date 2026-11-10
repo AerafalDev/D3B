@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace D3B.App.ViewModels.Routes;
 
 /// <summary>The dialog that offers the actions a step may be given, one press adding it (D381).</summary>
-internal sealed partial class RouteActionPickerViewModel
+internal sealed partial class RouteActionPickerViewModel : IDialogViewModel
 {
     private readonly Dialogs _dialogs;
 

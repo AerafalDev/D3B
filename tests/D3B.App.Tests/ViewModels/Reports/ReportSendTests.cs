@@ -157,7 +157,7 @@ public sealed class ReportSendTests : IDisposable
     [Fact]
     public async Task ReplacingOrClosingTheDialogByAnyPathStopsASendStillGoing()
     {
-        foreach (var close in new Action<Dialogs, ReportDialogViewModel>[] { (dialogs, _) => dialogs.Close(), (dialogs, dialog) => dialogs.Close(dialog), (dialogs, _) => dialogs.Show(new object()) })
+        foreach (var close in new Action<Dialogs, ReportDialogViewModel>[] { (dialogs, _) => dialogs.Close(), (dialogs, dialog) => dialogs.Close(dialog), (dialogs, _) => dialogs.Show(new QuestionViewModel(dialogs, "Another", null, "Yes", "No", () => { })) })
         {
             var started = new TaskCompletionSource();
             var sink = new FakeSink(async token =>

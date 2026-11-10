@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace D3B.App.ViewModels.Settings;
 
 /// <summary>The dialog that picks an NPC among those the bots learned on a map: no id is typed (D298, D384).</summary>
-internal sealed partial class NpcPickerViewModel
+internal sealed partial class NpcPickerViewModel : IDialogViewModel
 {
     private readonly Dialogs _dialogs;
     private readonly Action<int?> _picked;

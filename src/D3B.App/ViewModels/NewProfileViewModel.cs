@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace D3B.App.ViewModels;
 
 /// <summary>The dialog starting a profile: its name and activity, from the activity's defaults or a copy of another's settings (D159).</summary>
-internal sealed partial class NewProfileViewModel : ObservableObject
+internal sealed partial class NewProfileViewModel : ObservableObject, IDialogViewModel
 {
     private readonly ProfilesViewModel _page;
     private readonly ProfileViewModel? _source;

@@ -51,7 +51,9 @@ As of 2026-11-10, after D425 (the harvest's tour goes into another zone of a map
   message; every post was deleted. Not done: a send from the app's dialog, the asset published and read from GitHub, a rate limit (the webhook's own limits were
   not reached), a webhook revoked.
 - The report's dialog (BR3, D410, D411) is tested on view models, with captures the tests make, and in a headless window drawn in both languages
-  (form, preview, written): not opened by the owner from the Help menu, not tried on the capture of a real session through a running host
+  (form, preview, written), and, since the fix after release v0.9.0, through the real `MainWindow` (Help, Report a bug, form, Preview). v0.9.0's Help item opened
+  nothing: the window's switch over its dialogs had no case for the report. Now one table (`DialogKind`) registers and shows each dialog, and a test
+  fails when a dialog view model (`IDialogViewModel`) has no row. The fix reaches players with the next release. Not opened by the owner from the Help menu, not tried on the capture of a real session through a running host
   (which bot, which connection, which capture, the profile and the assets it reaches), and its look is not judged against a mockup.
 - The cleaner (BR2, D423) was run on 48 of the owner's real captures of 3.7.13.17: 45 were cleaned with no ticket, secret or name left in any
   output and 3 were refused for want of a character list the translation reads (the tool fails closed); on one of the largest, whose fights `scripts/fights.cs` replays with the same result as the original. What it leaves is said in D421

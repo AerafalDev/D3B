@@ -10,7 +10,7 @@ namespace D3B.App.ViewModels.Settings;
 /// The chain starts from what talking to the NPC led to, then follows each reply to the question the bots saw it lead to. It
 /// ends where nothing more is known, or where the reply ended the dialog or moved the character.
 /// </remarks>
-internal sealed partial class RepliesPickerViewModel : ObservableObject
+internal sealed partial class RepliesPickerViewModel : ObservableObject, IDialogViewModel
 {
     // How much of a question's text stands in a line saying where a reply leads.
     private const int QuestionLength = 70;
