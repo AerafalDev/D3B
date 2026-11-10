@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -31,8 +30,6 @@ namespace D3B.App.ViewModels.Routes;
 /// </remarks>
 internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 {
-    private const int UndoDepth = 200;
-
     private static readonly Regex _coordinates = CoordinatesPattern();
     private static readonly Regex _mapId = MapIdPattern();
 
@@ -41,16 +38,12 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private readonly List<RouteAnchor> _anchors;
     private readonly List<int> _stationAnchors = [];
     private readonly List<int> _sceneLegs = [];
-    private readonly List<Snapshot> _undo = [];
-    private readonly List<Snapshot> _redo = [];
+    private readonly RouteHistory _history;
     private RouteAsset _saved;
     private IReadOnlyList<RouteLeg> _legs = [];
     private long _paintedFrom;
     private int _version;
     private Task _planning = Task.CompletedTask;
-    private Snapshot _current;
-    private bool _inGesture;
-    private bool _gestureRecorded;
     private bool _keepActionForms;
     private RouteStepSelection _chosen = RouteStepSelection.None;
 
@@ -220,10 +213,10 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     public bool IsSelecting => Tool == WorldMapTool.Select;
 
     /// <inheritdoc/>
-    public bool CanUndo => _undo.Count > 0;
+    public bool CanUndo => _history.CanUndo;
 
     /// <inheritdoc/>
-    public bool CanRedo => _redo.Count > 0;
+    public bool CanRedo => _history.CanRedo;
 
     /// <summary>Gets what the path search has not finished.</summary>
     public Task Planned => _planning;
@@ -247,7 +240,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         Name = route.Name;
         Mode = route.Mode;
         Unreachable = route.Unreachable;
-        _current = Take();
+        _history = new RouteHistory(Take());
         Hud = page.Localizer["RouteHudNothing"];
         Layer = FirstLayer();
         Sequencer = new SequencerViewModel(this, page);
@@ -307,9 +300,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
             Unreachable = route.Unreachable;
 
             // What was done belongs to the route as it was: undoing it onto another would make a mixture.
-            _undo.Clear();
-            _redo.Clear();
-            _current = Take();
+            _history.Reset(Take());
             Moved();
         }
 
@@ -574,37 +565,25 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     /// <summary>Starts a gesture, a press and what it does until it is let go: the changes it makes are one to undo.</summary>
     public void BeginGesture()
     {
-        _inGesture = true;
-        _gestureRecorded = false;
+        _history.BeginGesture();
     }
 
     /// <summary>Ends the gesture.</summary>
     public void EndGesture()
     {
-        _inGesture = false;
-        _gestureRecorded = false;
+        _history.EndGesture();
     }
 
     /// <inheritdoc/>
     public void Undo()
     {
-        if (_undo.Count == 0)
-            return;
-
-        _redo.Add(_current);
-        Restore(_undo[^1]);
-        _undo.RemoveAt(_undo.Count - 1);
+        _history.Undo(Restore);
     }
 
     /// <inheritdoc/>
     public void Redo()
     {
-        if (_redo.Count == 0)
-            return;
-
-        _undo.Add(_current);
-        Restore(_redo[^1]);
-        _redo.RemoveAt(_redo.Count - 1);
+        _history.Redo(Restore);
     }
 
     /// <summary>Changes the layer to a world.</summary>
@@ -860,27 +839,11 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
 
     private void Changed()
     {
-        var now = Take();
-
-        if (!now.Equals(_current))
+        if (_history.Record(Take(), out var before))
         {
-            // A gesture, a drag across many maps, is one change to take back, recorded at its first.
-            if (!_inGesture || !_gestureRecorded)
-            {
-                _undo.Add(_current);
-
-                if (_undo.Count > UndoDepth)
-                    _undo.RemoveAt(0);
-
-                _gestureRecorded = _inGesture;
-            }
-
-            _redo.Clear();
-
-            if (!_current.Anchors.Select(anchor => anchor.MapId).SequenceEqual(now.Anchors.Select(anchor => anchor.MapId)))
+            if (!before.Anchors.Select(anchor => anchor.MapId).SequenceEqual(_anchors.Select(anchor => anchor.MapId)))
                 Apply(RouteStepSelection.Only(SelectedIndex, _anchors.Count));
 
-            _current = now;
             Moved();
         }
 
@@ -888,18 +851,18 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
         RecomputeDirty();
     }
 
-    private Snapshot Take()
+    private RouteSnapshot Take()
     {
-        return new Snapshot([.. _anchors], Mode, Unreachable);
+        return new RouteSnapshot([.. _anchors], Mode, Unreachable);
     }
 
-    private void Restore(Snapshot state)
+    private void Restore(RouteSnapshot state)
     {
         _anchors.Clear();
         _anchors.AddRange(state.Anchors);
         Mode = state.Mode;
         Unreachable = state.Unreachable;
-        _current = state;
+        _history.Adopt(state);
         Choice = null;
         SelectedIndex = Math.Min(SelectedIndex, _anchors.Count - 1);
         Moved();
@@ -1062,18 +1025,5 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     {
         BuildSteps();
         BuildScene();
-    }
-
-    private readonly record struct Snapshot(ImmutableArray<RouteAnchor> Anchors, RouteMode Mode, RouteUnreachable Unreachable)
-    {
-        public bool Equals(Snapshot other)
-        {
-            return Mode == other.Mode && Unreachable == other.Unreachable && Anchors.AsSpan().SequenceEqual(other.Anchors.AsSpan());
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Anchors.Length, Mode, Unreachable);
-        }
     }
 }
