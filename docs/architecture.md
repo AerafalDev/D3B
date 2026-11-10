@@ -994,7 +994,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   sum of their coordinates' differences, by which the server measures a skill's range, and whether a cell of an edge
   leaves the map in a direction, which the paths and the app's map share (D121).
 - `ElementCells`: the cells a character uses an element from, as the client chooses them, the walkable neighbours of the
-  element's cell in the character's zone, else the zone's walkable cells nearest it.
+  element's cell in the character's zone; the zone's walkable cells nearest it only when the element has no walkable neighbour in any zone
+  (water); none when its neighbours are all in another zone (D424), which `MapHarvest.Candidates` skips for the visit and `ElementUse`
+  answers `NoPath`.
 - `CellPathfinder`: A* over the cells a character may walk on, a step across passing beside at least one walkable cell,
   steps weighed by the time the character takes, to one cell or the nearest of several; on a map with stairs, cells of
   moveZone 1, a step changes floor by 10 at most but along a stair (D86). `CellPath` gives the turning points a request

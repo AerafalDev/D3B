@@ -76,6 +76,7 @@ public static class MapHarvest
                 || !CellPathfinder.TryFindNearest(cells, cell, [.. ElementCells.UsedFrom(cells, elementCell, cells[cell].Zone)], out var path))
             {
                 skipped.Add(element.ElementId);
+                BotLog.OutOfReach(context.Log, state.Key.CharacterId, element.ElementId, cells[cell].Zone);
 
                 continue;
             }

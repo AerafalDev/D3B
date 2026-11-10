@@ -552,3 +552,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## Bug reports, the cleaner (D423)
 
 - [D423](decisions/d423-bug-reports-cleaner.md#d423-a-reports-capture-is-cleaned-by-value-the-ticket-and-the-clients-opaque-strings-by-shape-the-accounts-characters-names-wherever-they-occur) A report's capture is cleaned by value: the ticket and the client's opaque strings by shape, the account's characters' names wherever they occur (2026-11-10)
+
+## Step 9, the harvest and the zones of a map (D424)
+
+- [D424](decisions/d424-step-9-the-harvests-zones.md#d424-a-resource-is-used-only-from-a-cell-beside-it-in-the-characters-zone-one-in-another-zone-of-its-map-is-out-of-reach-and-the-tour-will-go-there-through-the-world-graph) A resource is used only from a cell beside it in the character's zone; one in another zone of its map is out of reach, and the tour will go there through the world graph (2026-11-10)
+  - The far cell kept for an element beside another zone, going to the other zone in the same change, skipping silently.

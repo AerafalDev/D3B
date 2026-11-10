@@ -67,6 +67,9 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: use of element {Element} with skill {Skill} over, {Outcome}")]
     public static partial void Used(ILogger logger, long character, int element, int skill, UseOutcome outcome);
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: element {Element} has no way to a cell beside it from zone {Zone} of its map")]
+    public static partial void OutOfReach(ILogger logger, long character, int element, int zone);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: travels from map {From}, {Changes} map changes away")]
     public static partial void Travelling(ILogger logger, long character, long from, int changes);
 

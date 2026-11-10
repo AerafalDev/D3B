@@ -150,6 +150,16 @@ public sealed class ElementUseTests
     }
 
     [Fact]
+    public async Task AnElementWhoseNeighboursAreAllInAnotherZoneHasNoPathAndNothingIsSent()
+    {
+        await using var play = TestPlay.WithASecondZone([.. Enumerable.Range(0, 8).Select(direction => MapGeometry.Neighbour(TestPlay.TreeCell, direction))]);
+        var (connection, bot) = await play.EnterAsync(433);
+
+        Assert.Equal(UseOutcome.NoPath, await bot.UseAsync(TestPlay.TreeElementId, TestPlay.TreeSkillId, TestContext.Current.CancellationToken));
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
     public async Task ACharacterUsingAnElementIsBusy()
     {
         await using var play = new TestPlay();
