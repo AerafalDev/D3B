@@ -117,6 +117,41 @@ public sealed class CaptureWriter : IDisposable
         }
     }
 
+    /// <summary>Records a record already read, at the offset it was recorded at: a copy of a capture, whole or changed, is the same capture.</summary>
+    /// <param name="record">The record, whose bytes may be changed but not their count.</param>
+    public void Copy(CaptureRecord record)
+    {
+        lock (_lock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            if (Failure is not null)
+                return;
+
+            try
+            {
+                var hasData = record.Kind is CaptureRecordKind.FromClient or CaptureRecordKind.FromServer or CaptureRecordKind.Injected;
+
+                if (!hasData && record.Kind is not (CaptureRecordKind.ClientClosed or CaptureRecordKind.ServerClosed))
+                    throw new ArgumentOutOfRangeException(nameof(record), record.Kind, "A record has a kind this format knows.");
+
+                WriteStart(record.Kind, record.Offset);
+
+                if (hasData)
+                {
+                    _writer.Write7BitEncodedInt(record.Data.Length);
+                    _writer.Write(record.Data.Span);
+                }
+
+                _writer.Flush();
+            }
+            catch (IOException exception)
+            {
+                Failure = exception;
+            }
+        }
+    }
+
     /// <summary>Records a side closing.</summary>
     /// <param name="kind"><see cref="CaptureRecordKind.ClientClosed"/> or <see cref="CaptureRecordKind.ServerClosed"/>.</param>
     public void WriteClosed(CaptureRecordKind kind)
@@ -167,8 +202,11 @@ public sealed class CaptureWriter : IDisposable
 
     private void WriteStart(CaptureRecordKind kind)
     {
-        var offset = _time.GetElapsedTime(_start);
+        WriteStart(kind, _time.GetElapsedTime(_start));
+    }
 
+    private void WriteStart(CaptureRecordKind kind, TimeSpan offset)
+    {
         _writer.Write((byte)kind);
         _writer.Write7BitEncodedInt64(offset.Ticks / TimeSpan.TicksPerMicrosecond);
     }

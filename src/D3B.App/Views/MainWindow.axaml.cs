@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using D3B.App.Controls;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Reports;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
 using ShadUI;
@@ -26,7 +27,8 @@ internal sealed partial class MainWindow : ShadUI.Window
         .Register<RoutePickerView, RoutePickerViewModel>()
         .Register<RepliesPickerView, RepliesPickerViewModel>()
         .Register<RouteActionPickerView, RouteActionPickerViewModel>()
-        .Register<NewProfileView, NewProfileViewModel>();
+        .Register<NewProfileView, NewProfileViewModel>()
+        .Register<ReportDialogView, ReportDialogViewModel>();
 
     private readonly ToastManager _toastManager = new();
     private MainViewModel? _main;

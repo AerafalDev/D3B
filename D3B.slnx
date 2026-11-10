@@ -30,11 +30,15 @@
     <File Path="scripts/embed.cs" />
     <File Path="scripts/extract.cs" />
     <File Path="scripts/fights.cs" />
+    <File Path="scripts/report.cs" />
     <File Path="scripts/icons.cs" />
     <File Path="scripts/inspect.cs" />
     <File Path="scripts/mapping.cs" />
     <File Path="scripts/release.cs" />
     <File Path="scripts/schema.cs" />
+  </Folder>
+  <Folder Name="/scripts/report/">
+    <File Path="scripts/report/ReportCommand.cs" />
   </Folder>
   <Folder Name="/scripts/capture/">
     <File Path="scripts/capture/CaptureCommand.cs" />
@@ -130,6 +134,7 @@
   <Folder Name="/scripts/release/">
     <File Path="scripts/release/ReleaseAsset.cs" />
     <File Path="scripts/release/ReleaseCommand.cs" />
+    <File Path="scripts/release/ReportChannelRelease.cs" />
   </Folder>
   <Folder Name="/scripts/schema/">
     <File Path="scripts/schema/ClientCode.cs" />

@@ -143,6 +143,7 @@ given on the command line:
 | `--Studio:Path <folder>` | Uses another project's folder, for its profiles and behaviors. |
 | `--Network:Captures:Game false` | Stops recording the game connection, which D3B records by default in `%LOCALAPPDATA%\D3B\captures\game`, so that a bug can be replayed and reported (the app's protocol inspector replays it too). A capture holds the account's login ticket: never share one. |
 | `--Network:Captures:Retention:Days 7`, `--Network:Captures:Retention:Megabytes 1024` | How long and how much of the game's captures are kept: the older ones, then the oldest while the rest is over the size, are deleted at each start of the host, never one still open. `0` lifts a limit. |
+| `D3B_REPORT_WEBHOOK` (environment variable) | The URL of a Discord webhook that bug reports are posted to instead of the one the release `report-channel` names: for a fork or a test. Never commit one. |
 | `--Network:Captures:Enabled true` | Also records the connection phase's captures, in `%LOCALAPPDATA%\D3B\captures`, which only the mapping tool reads and which hold the account's login token. |
 | `--Fights:Alone true` | Has the AI play every fight of the bots, the player's own included, whatever their activity says. |
 | `--Delays:Display 1.5` | The client's display time, in seconds; the other delays are under `Delays:` too. |
@@ -164,6 +165,7 @@ in `%LOCALAPPDATA%\Ankama\Dofus-dofus3` and write under `%LOCALAPPDATA%\D3B`.
 | `release.cs` | Publishes a build's pack, schema and mapping to its release; a dry run without `--publish`. |
 | `client.cs` | Says which configuration the client reads, Ankama's or D3B's; `restore` gives it Ankama's back. |
 | `capture.cs` | Describes the captures by their structure, never their content. |
+| `report.cs` | Unpacks a bug report a player sent (a `.d3breport`), checks it and prints its message first, then describes it; `--replay` replays its fights. |
 | `fights.cs` | Replays the captured fights and compares what D3B foresees of each cast with what the server did. |
 | `docs.cs` | Finds the links of the Markdown files whose file or heading does not exist. |
 | `icons.cs` | Takes the IntelliJ Platform's icons the studio draws, checks each one's Apache 2.0 notice, writes them for Avalonia. |
@@ -247,6 +249,10 @@ Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) fi
 enforces and what can never be committed. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md). To
 report a vulnerability, follow the [security policy](SECURITY.md) rather than opening an issue. To talk about D3B, join
 its [Discord](https://discord.com/invite/6A6Vw9Mn24).
+
+**To report a bug of the game** (a fight, a harvest, a bank journey, an NPC), use Help, Report a bug in the app: it makes
+a report with a cleaned copy of your session's capture, which you read before anything is sent. What it holds, where it goes
+and for how long is in [PRIVACY.md](PRIVACY.md).
 
 ## License
 

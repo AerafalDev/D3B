@@ -27,6 +27,20 @@ public sealed class BotActorTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheBotKeepsTheIdOfItsLastGameConnectionAfterItEnds()
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+
+        Assert.Equal(connection.Session.Id, bot.ConnectionId);
+
+        connection.Close();
+        await bot.ProcessedAsync();
+
+        Assert.False(bot.IsConnected);
+        Assert.Equal(connection.Session.Id, bot.ConnectionId);
+    }
+
+    [Fact]
     public async Task AnExpectationGetsTheMessageOnceTheStateHoldsIt()
     {
         var (connection, bot) = await _play.EnterAsync(300);

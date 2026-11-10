@@ -14,6 +14,7 @@ using D3B.App.ViewModels.Home;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
 using D3B.App.ViewModels.Properties;
+using D3B.App.ViewModels.Reports;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Zones;
 using D3B.App.ViewModels.Sequences;
@@ -22,7 +23,9 @@ using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.World;
 using D3B.Bot.Characters;
 using D3B.Bot.Pages;
+using D3B.Bot.Reports;
 using D3B.Data;
+using D3B.Data.Releases;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Studio.Assets;
@@ -558,6 +561,27 @@ internal sealed partial class MainViewModel : ObservableObject
     public void ShowShortcuts()
     {
         Search.Open(SearchScope.Commands);
+    }
+
+    /// <summary>Gets where reports go, or null for an app that sends none: the webhook a release asset names (D410).</summary>
+    public ReportChannel? ReportChannel { get; init; } = new(new HttpClient { Timeout = TimeSpan.FromMinutes(5) }, ReportChannel.AssetOf(ClientRelease.DefaultRepository), Environment.GetEnvironmentVariable(ReportChannel.EnvironmentVariable));
+
+    /// <summary>Opens the dialog that makes a bug report: Help's Report a bug (D410).</summary>
+    [RelayCommand]
+    public void ShowReport()
+    {
+        var choices = ReportSourcesFactory.Choices(Characters, _localizer);
+        var chosen = choices.FirstOrDefault(choice => Characters.Chosen is { } key && choice.AccountId == key.AccountId && choice.Id == key.CharacterId);
+
+        Dialogs.Show(new ReportDialogViewModel(
+            _localizer,
+            Dialogs,
+            choices,
+            choice => ReportSourcesFactory.Read(_host.Services, choice, choices, _preferences, Updates.Version, ReportSourcesFactory.DefaultFolder),
+            text => CopyText?.Invoke(text),
+            folder => OpenFolder?.Invoke(folder),
+            chosen,
+            ReportChannel is { } channel ? channel.GetSinkAsync : null));
     }
 
     /// <summary>Closes the app: File's Quit.</summary>

@@ -66,10 +66,23 @@ internal static class FightsCommand
         return command;
     }
 
+    // A bare version such as 3.7.13.17, or the text of a version file.
+    private static ClientBuild BuildOf(string version)
+    {
+        try
+        {
+            return new ClientBuild(version, null);
+        }
+        catch (ArgumentException)
+        {
+            return ClientBuild.Parse(version);
+        }
+    }
+
     private static int Run(string[] paths, string root, string? version, bool details, bool turns, double enemyLife, string? weights, bool live)
     {
         var client = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ankama", "Dofus-dofus3");
-        var build = version is null ? ClientBuild.Read(client) : ClientBuild.Parse(version);
+        var build = version is null ? ClientBuild.Read(client) : BuildOf(version);
         var packPath = PackLocations.PathOf(root, build);
         var schemaPath = SchemaFile.PathOf(root, build.Version);
         var mappingPath = MappingFile.PathOf(root, build.Version);

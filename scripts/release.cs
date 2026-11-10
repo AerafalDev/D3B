@@ -1,11 +1,13 @@
 #!/usr/bin/env dotnet
 #:package Google.Protobuf
 #:package System.CommandLine
+#:project ../src/D3B.Bot/D3B.Bot.csproj
 #:project ../src/D3B.Data/D3B.Data.csproj
 #:project ../src/D3B.Protocol/D3B.Protocol.csproj
 #:include unity/GitHubCli.cs
 #:include release/ReleaseAsset.cs
 #:include release/ReleaseCommand.cs
+#:include release/ReportChannelRelease.cs
 #:include unity/ClientInstall.cs
 
 using System.Globalization;
@@ -19,6 +21,9 @@ using D3B.Scripts.Release;
 // [--publish]; --help describes the options.
 // Without --publish it changes nothing on GitHub: it checks the files, writes their SHA-256 beside them, and says what it
 // would run. It runs the GitHub CLI, gh, logged in to an account that can write to the repository.
+// With --report-webhook <file> it publishes instead the URL of the private webhook bug reports go to (D410), as the asset
+// webhook.txt of the release report-channel, replaced when the webhook is: the URL is a secret, read from a file kept outside
+// the repository, checked and never printed.
 // Exit code: 0 on success, when the release already holds these files, and after a dry run; 1 when a file is not one to
 // publish, the release cannot take it, or gh failed; 2 when the client, the pack, the schema or the mapping is missing.
 

@@ -446,6 +446,36 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   last 3,000 frames, both sides, and D3B's own requests, which observers see apart once sent (`IGameObserver.OnSent`).
   `FrameFields` gives a readable message's fields, the ticket hidden, or the shape of one the readable protocol lacks;
   `CaptureFrames` reads a game connection's capture of the installed build through its translation.
+- Bug reports (D409 to D411, D423), in `D3B.Bot.Reports`: a report is one `.d3breport` zip. `CaptureScrubber` copies a
+  capture with what names the account overwritten, by value and at the same length (`CaptureWriter.Copy` rewrites a
+  record at its own offset): the ticket and the client's other opaque strings by shape (a run of 32 characters or more of
+  digits and `a` to `f` in the bytes the client or D3B sent) and the ticket by value, and the names of the characters of `CharacterListEvent` and
+  `CharacterSelectionEvent`, read through the translation, wherever a string field of either side equals one (and raw
+  bytes for a name of 6 bytes or more). A capture with no character list, or whose copy still holds a secret or a name of 6 bytes
+  or more, is refused (`CaptureScrubException`).
+  `CleanCapture` is the only form of capture `ReportContent` takes. `ReportTexts` writes the journal, the trace and the
+  settings that differ as text, `ReportIdentity` turning the character's name into its number. `ReportWriter` writes the
+  zip with `manifest.json` last (sizes, SHA-256, `hasMessage`); `ReportReader` reads one as untrusted input (64 entries,
+  256 MiB an entry and 512 MiB in all by `ReportLimits`, expanded bytes counted as they come, only the names of
+  `ReportFiles`, every file checked against the manifest). `ReportAssets` (`D3B.Studio`) gives the profile played and the
+  assets it reaches, and `ReportKnowledge` (`D3B.Storage`) what the bots learned, by ids. `scripts/report.cs` unpacks
+  a report under `artifacts/reports/<code>/`, prints the message first and replays its fights. The app's action (BR3, Help,
+  Report a bug) is `ReportDialogViewModel` in `D3B.App.ViewModels.Reports`, three steps in one dialog: the form (area,
+  character, the optional message of 1,500 characters that the field stops at, with the warning about personal data), the
+  preview and the report written. `ReportSourcesFactory` reads from the host what a character's report is made of: its
+  bot's journal and trace, the profile it plays through `AccountBook` and `ReportAssets`, what the bots learned, the
+  settings the player changed, and its capture, found by the id of its bot's last game connection
+  (`BotActor.ConnectionId`, `ReportCaptures.Find`: the relay ends a capture's name with it), read while the relay may still
+  hold it open. `ReportDraft` cleans the capture, makes each part a `ReportPartChoice` the player reads and unchecks (the
+  capture of a game's report is required and cannot be), and writes `<code>.d3breport` in `%LOCALAPPDATA%\D3B\reports`;
+  the code is copied and the folder opened. Sending is a second click (BR4): `DiscordReportSink` posts the saved file to a private
+  Discord webhook in one multipart post, an embed of the code, area, versions, character number and the message as its text, with
+  no mention allowed, and every failure a `ReportSendResult` (too large, rate limited, channel gone, refused, unreachable) whose
+  detail never holds the URL; a report over `DiscordReportSink.DefaultMaxFileBytes` (20 MiB, measured) is not posted, and the
+  dialog says the file is saved and to hand it over with its code. `ReportChannel` finds the webhook: the asset `webhook.txt` of the
+  release `report-channel`, read when a report is sent and kept in memory, or `D3B_REPORT_WEBHOOK`; `ReportWebhook` accepts only a
+  Discord webhook URL and hides its token when printed. `scripts/release.cs --report-webhook <file>` publishes the asset, replacing it
+  when the webhook is revoked. The URL is in no tracked file.
 
 ## Game data
 

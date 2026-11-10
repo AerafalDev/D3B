@@ -35,6 +35,19 @@ As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another li
 
 ## Not measured in game
 
+- The sending (BR4, D410) was run for real from a throwaway tool with the production sink: posts of 0.1 to 20 MiB of random bytes were taken by the owner's
+  webhook and 21.5 MiB and more refused (the limit is Discord's, depends on the server's level and may change: a refusal is a result, and the app says to hand
+  the file over); a cleaned report of a real capture came back from Discord byte for byte and read by `ReportReader`, with no mention made of an `@everyone` in its
+  message; every post was deleted. Not done: a send from the app's dialog, the asset published and read from GitHub, a rate limit (the webhook's own limits were
+  not reached), a webhook revoked.
+- The report's dialog (BR3, D410, D411) is tested on view models, with captures the tests make, and in a headless window drawn in both languages
+  (form, preview, written): not opened by the owner from the Help menu, not tried on the capture of a real session through a running host
+  (which bot, which connection, which capture, the profile and the assets it reaches), and its look is not judged against a mockup.
+- The cleaner (BR2, D423) was run on 48 of the owner's real captures of 3.7.13.17: 45 were cleaned with no ticket, secret or name left in any
+  output and 3 were refused for want of a character list the translation reads (the tool fails closed); on one of the largest, whose fights `scripts/fights.cs` replays with the same result as the original. What it leaves is said in D421
+  (other players' names, numbers, timestamps, the GUIDs of unknown meaning, a name under 6 bytes in a frame too deep or cut short to walk); a
+  next build's own opaque strings are found by shape only if they keep it, and the copy is searched for every secret it found before it is returned.
+  The report is not yet made by the app, so no report was sent anywhere. `scripts/report.cs --replay` ran on a report of a real capture.
 - Recording by default and its retention (BR1, D409) are tested on temporary files, the relay of the tests and view models, and the settings
   and the home page's notice in headless windows, not seen by the owner in the app and not run on a client. The first start of the host after
   the change deletes the game's captures older than 7 days or beyond 1 GB: the owner's 153 captures, which `scripts/fights.cs` replays, would
@@ -89,10 +102,13 @@ As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another li
 0. **The refactoring and tidy-up session** (D399 to D401) is mostly done: `decisions.md` is cut in files by group of the index,
    `client.md` has its game connection apart, `AssetsViewModel`, `BotActor`, `HarvestActivity`, `WorldMapView` and `Imagination`
    are under 900 lines, BenchmarkDotNet is gone. The two files that stayed over 900 lines, `FightJudge` and `RouteEditorViewModel`, are cut too.
-0. **Bug reports with the player's capture** (D409 to D411, D422): BR1 is made, the game connection is recorded by default with its
-   retention and the notice (`Network:Captures:Game`, `CaptureRetention`), and what names the account in a capture is measured
-   ([client-game.md](client-game.md#the-game-what-names-the-account)): it is more than the ticket and the list, so BR2's cleaner waits
-   for the owner's answer on D410. Then a `.d3breport` bundle, the app's action and the Discord webhook (BR2 to BR4).
+0. **Bug reports with the player's capture** (D409 to D411, D422, D423): BR1 and BR2 are made. The game connection is recorded by default
+   with its retention and the notice (`Network:Captures:Game`, `CaptureRetention`); what names the account in a capture was measured
+   ([client-game.md](client-game.md#the-game-what-names-the-account)) and the cleaner hides it by value (`CaptureScrubber`, D423); a report is
+   written and read as a zip with a manifest (`ReportWriter`, `ReportReader`) and `scripts/report.cs` unpacks one. BR3 is made: Help, Report a
+   bug writes the file with its code, and BR4 is made: a click sends it to a private Discord webhook (`DiscordReportSink`), read from the asset
+   `webhook.txt` of the release `report-channel`, which `scripts/release.cs --report-webhook` publishes (not yet published: the owner's go).
+   What is left is to see it in the app and to publish the asset.
 1. **7r4, following a run, and 7r6, repeats and sequences as steps, are made in code** (D419, D421), to try in game with the owner's lists; then 7e.
    7r6 left: the condition read between two steps of a route, and, or and not in an "until" (7e's), a pass of a repeated one-way route on the card,
    the lists that repeat a route shown on the route. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already

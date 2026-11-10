@@ -3293,4 +3293,208 @@
   <data name="CapturesNoticeUnderstood" xml:space="preserve">
     <value>C'est compris</value>
   </data>
+  <data name="MenuReport" xml:space="preserve">
+    <value>Signaler un bug…</value>
+  </data>
+  <data name="ReportTitle" xml:space="preserve">
+    <value>Signaler un bug</value>
+  </data>
+  <data name="ReportFormLead" xml:space="preserve">
+    <value>Un rapport contient ce qu’il faut à un mainteneur pour rejouer le bug. Rien n’est envoyé tant que tu n’appuies pas sur Envoyer, une fois le rapport enregistré.</value>
+  </data>
+  <data name="ReportAreaLabel" xml:space="preserve">
+    <value>De quoi s’agit-il ?</value>
+  </data>
+  <data name="ReportAreaFights" xml:space="preserve">
+    <value>Combats</value>
+  </data>
+  <data name="ReportAreaFightsDetail" xml:space="preserve">
+    <value>Un combat qui a mal tourné ou qui s’est figé</value>
+  </data>
+  <data name="ReportAreaHarvestAndBank" xml:space="preserve">
+    <value>Récolte et banque</value>
+  </data>
+  <data name="ReportAreaHarvestAndBankDetail" xml:space="preserve">
+    <value>La récolte, les pods, un trajet vers la banque</value>
+  </data>
+  <data name="ReportAreaMovingAndMaps" xml:space="preserve">
+    <value>Déplacements et cartes</value>
+  </data>
+  <data name="ReportAreaMovingAndMapsDetail" xml:space="preserve">
+    <value>La marche, les changements de carte, les zaaps</value>
+  </data>
+  <data name="ReportAreaNpcsAndDialogs" xml:space="preserve">
+    <value>PNJ et dialogues</value>
+  </data>
+  <data name="ReportAreaNpcsAndDialogsDetail" xml:space="preserve">
+    <value>Un PNJ, une question, une réponse</value>
+  </data>
+  <data name="ReportAreaApp" xml:space="preserve">
+    <value>L’application</value>
+  </data>
+  <data name="ReportAreaAppDetail" xml:space="preserve">
+    <value>Le studio lui-même : pas de jeu, pas de capture</value>
+  </data>
+  <data name="ReportCharacterLabel" xml:space="preserve">
+    <value>Quel personnage ?</value>
+  </data>
+  <data name="ReportCharacterDetail" xml:space="preserve">
+    <value>Niveau {0}</value>
+  </data>
+  <data name="ReportCharacterNoLevel" xml:space="preserve">
+    <value>Niveau inconnu</value>
+  </data>
+  <data name="ReportCharacterOnline" xml:space="preserve">
+    <value>en ligne</value>
+  </data>
+  <data name="ReportCharacterOffline" xml:space="preserve">
+    <value>hors ligne</value>
+  </data>
+  <data name="ReportNoCharacter" xml:space="preserve">
+    <value>Aucun personnage n’a joué cette session : lance l’hôte et un personnage d’abord.</value>
+  </data>
+  <data name="ReportMessageLabel" xml:space="preserve">
+    <value>Ton message (facultatif)</value>
+  </data>
+  <data name="ReportMessageHint" xml:space="preserve">
+    <value>Ce que tu as vu et ce que tu attendais. Rien d’autre n’est nécessaire. En français ou en anglais.</value>
+  </data>
+  <data name="ReportMessageWarning" xml:space="preserve">
+    <value>N’écris pas de mot de passe, d’identifiant, d’adresse e-mail ni de numéro de téléphone : les mainteneurs le lisent et le gardent aussi longtemps que le reste du rapport.</value>
+  </data>
+  <data name="ReportNext" xml:space="preserve">
+    <value>Aperçu</value>
+  </data>
+  <data name="ReportBack" xml:space="preserve">
+    <value>Retour</value>
+  </data>
+  <data name="ReportCancel" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="ReportSave" xml:space="preserve">
+    <value>Enregistrer le rapport</value>
+  </data>
+  <data name="ReportClose" xml:space="preserve">
+    <value>Fermer</value>
+  </data>
+  <data name="ReportPreparing" xml:space="preserve">
+    <value>Préparation du rapport…</value>
+  </data>
+  <data name="ReportPreviewLead" xml:space="preserve">
+    <value>Voici tout ce que contient le rapport. Lis-le, et décoche ce que tu ne veux pas donner. Rien n’est envoyé tant que tu n’appuies pas sur Envoyer, une fois le rapport enregistré.</value>
+  </data>
+  <data name="ReportCaptureNote" xml:space="preserve">
+    <value>La capture reste obligatoire pour un rapport du jeu : sans elle, le bug ne peut pas être rejoué.</value>
+  </data>
+  <data name="ReportStillHolds" xml:space="preserve">
+    <value>La capture contient encore les données du jeu lui-même : l’inventaire et les cartes de ton personnage, les noms des autres joueurs que le client a reçus, des nombres et des dates.</value>
+  </data>
+  <data name="ReportDoneTitle" xml:space="preserve">
+    <value>Rapport prêt</value>
+  </data>
+  <data name="ReportDoneLead" xml:space="preserve">
+    <value>Ton code est {0}. Il est copié, et le rapport est enregistré. Envoie-le maintenant, ou remets le fichier sur Discord avec le code.</value>
+  </data>
+  <data name="ReportCopyCode" xml:space="preserve">
+    <value>Copier le code</value>
+  </data>
+  <data name="ReportOpenFolder" xml:space="preserve">
+    <value>Ouvrir le dossier</value>
+  </data>
+  <data name="ReportNoHost" xml:space="preserve">
+    <value>L’hôte ne tourne pas : lance-le pour que le rapport puisse lire la session du personnage.</value>
+  </data>
+  <data name="ReportNotPrepared" xml:space="preserve">
+    <value>Le rapport n’a pas pu être préparé. {0}</value>
+  </data>
+  <data name="ReportNotWritten" xml:space="preserve">
+    <value>Le rapport n’a pas pu être écrit. {0}</value>
+  </data>
+  <data name="ReportNoCapture" xml:space="preserve">
+    <value>Ce personnage n’a pas de capture de sa session : elle a été supprimée, ou jamais enregistrée. Active l’enregistrement dans les paramètres Réseau et signale à nouveau après la prochaine session.</value>
+  </data>
+  <data name="ReportNoTranslation" xml:space="preserve">
+    <value>Cette version du client n’a pas de protocole avec lequel nettoyer la capture.</value>
+  </data>
+  <data name="ReportCaptureRefused" xml:space="preserve">
+    <value>La capture ne peut pas être nettoyée, elle ne peut donc pas aller dans un rapport. {0}</value>
+  </data>
+  <data name="ReportCaptureUnreadable" xml:space="preserve">
+    <value>La capture ne peut pas être lue. {0}</value>
+  </data>
+  <data name="ReportPartCapture" xml:space="preserve">
+    <value>Capture de la session</value>
+  </data>
+  <data name="ReportPartCaptureDetail" xml:space="preserve">
+    <value>{0} enregistrements sur {1}. Nettoyée : {2} noms de tes personnages et {3} secrets, dont le ticket de connexion, écrasés.</value>
+  </data>
+  <data name="ReportPartJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="ReportPartJournalDetail" xml:space="preserve">
+    <value>{0} entrées, en texte ; le personnage est désigné par son numéro.</value>
+  </data>
+  <data name="ReportPartTrace" xml:space="preserve">
+    <value>Décisions</value>
+  </data>
+  <data name="ReportPartTraceDetail" xml:space="preserve">
+    <value>{0} décisions, en texte ; le personnage est désigné par son numéro.</value>
+  </data>
+  <data name="ReportPartAssets" xml:space="preserve">
+    <value>Profil et routes</value>
+  </data>
+  <data name="ReportPartAssetsDetail" xml:space="preserve">
+    <value>{0} fichiers : le profil joué et ce qu’il utilise.</value>
+  </data>
+  <data name="ReportPartSettings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="ReportPartSettingsDetail" xml:space="preserve">
+    <value>{0} paramètres qui diffèrent des valeurs par défaut.</value>
+  </data>
+  <data name="ReportPartKnowledge" xml:space="preserve">
+    <value>Ce que les bots ont appris</value>
+  </data>
+  <data name="ReportPartKnowledgeDetail" xml:space="preserve">
+    <value>Placements de combat et dialogues de PNJ, par identifiants ; aucun nom, aucun compte.</value>
+  </data>
+  <data name="ReportPartMessage" xml:space="preserve">
+    <value>Ton message</value>
+  </data>
+  <data name="ReportPartMessageDetail" xml:space="preserve">
+    <value>Tel que tu l’as écrit.</value>
+  </data>
+  <data name="ReportRead" xml:space="preserve">
+    <value>Le lire</value>
+  </data>
+  <data name="ReportMessageTooLong" xml:space="preserve">
+    <value>Ce texte dépasse {0} caractères : il n’a pas été ajouté.</value>
+  </data>
+  <data name="ReportSend" xml:space="preserve">
+    <value>Envoyer aux mainteneurs</value>
+  </data>
+  <data name="ReportNoChannel" xml:space="preserve">
+    <value>Aucun canal d’envoi n’a pu être trouvé. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
+  <data name="ReportSendSent" xml:space="preserve">
+    <value>Envoyé. Les mainteneurs ont le rapport {0}.</value>
+  </data>
+  <data name="ReportSendTooLarge" xml:space="preserve">
+    <value>Le rapport fait {0} Mo, plus que ce que le canal accepte. Il est enregistré : remets le fichier sur Discord avec le code {1}.</value>
+  </data>
+  <data name="ReportSendRateLimited" xml:space="preserve">
+    <value>Le canal demande d’attendre {0} secondes. Réessaie ensuite.</value>
+  </data>
+  <data name="ReportSendGone" xml:space="preserve">
+    <value>Le canal n’accepte plus de rapports. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
+  <data name="ReportSendCancelled" xml:space="preserve">
+    <value>L’envoi a été annulé. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
+  <data name="ReportSendRefused" xml:space="preserve">
+    <value>Le canal a refusé le rapport. Il est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
+  <data name="ReportSendUnreachable" xml:space="preserve">
+    <value>Le rapport n’a pas pu être envoyé : le canal n’a pas pu être joint. Il est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
 </root>

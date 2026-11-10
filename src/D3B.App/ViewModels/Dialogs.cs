@@ -22,7 +22,14 @@ internal sealed partial class Dialogs : ObservableObject
     public void Show(object dialog)
     {
         ArgumentNullException.ThrowIfNull(dialog);
+
+        // A dialog that holds something running, such as a send, stops it when it is replaced.
+        var replaced = Current;
+
         Current = dialog;
+
+        if (!ReferenceEquals(replaced, dialog))
+            (replaced as IDisposable)?.Dispose();
     }
 
     /// <summary>Asks a question, answered by its buttons.</summary>
@@ -35,7 +42,10 @@ internal sealed partial class Dialogs : ObservableObject
     /// <summary>Closes the dialog shown, as cancelling it does.</summary>
     public void Close()
     {
+        var closed = Current;
+
         Current = null;
+        (closed as IDisposable)?.Dispose();
     }
 
     /// <summary>Closes a dialog, if it is still the one shown.</summary>
@@ -43,6 +53,6 @@ internal sealed partial class Dialogs : ObservableObject
     public void Close(object dialog)
     {
         if (ReferenceEquals(Current, dialog))
-            Current = null;
+            Close();
     }
 }

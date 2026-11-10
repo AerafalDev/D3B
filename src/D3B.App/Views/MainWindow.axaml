@@ -256,6 +256,7 @@
                         Command="{Binding ShowShortcutsCommand}"
                         Header="{l:Tr MenuShortcuts}"
                         Tag="Ctrl /" />
+                    <MenuItem Command="{Binding ShowReportCommand}" Header="{l:Tr MenuReport}" />
                     <MenuItem Command="{Binding ShowSettingsCommand}" Header="{l:Tr MenuAbout}" />
                 </MenuItem>
             </Menu>

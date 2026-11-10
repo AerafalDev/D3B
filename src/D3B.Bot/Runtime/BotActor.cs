@@ -69,6 +69,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     // The loop writes these, and anyone reads them.
     private volatile CharacterState _state;
     private volatile bool _connected;
+    private volatile string? _connectionId;
     private volatile bool _paused;
     private volatile bool _acting;
     private volatile bool _fightsAlone;
@@ -92,6 +93,9 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 
     /// <summary>Gets whether a game connection plays the character now.</summary>
     public bool IsConnected => _connected;
+
+    /// <summary>Gets the id of the last game connection that played the character, kept once it ended: the name its capture is found by (D410).</summary>
+    public string? ConnectionId => _connectionId;
 
     /// <summary>Gets whether the player took the character over from a behavior: the bot starts nothing until <see cref="Resume"/>.</summary>
     public bool IsPaused => _paused;
@@ -666,6 +670,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 
         _session = session;
         _state = state;
+        _connectionId = session.Id;
         _connected = true;
         BotLog.Attached(_log, Key.CharacterId, session.Id);
         Write(BotEvent.Connected);
