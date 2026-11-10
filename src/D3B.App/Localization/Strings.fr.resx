@@ -3473,6 +3473,9 @@
   <data name="ReportNoChannel" xml:space="preserve">
     <value>Aucun canal d’envoi n’a pu être trouvé. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
   </data>
+  <data name="ReportSending" xml:space="preserve">
+    <value>Envoi du rapport…</value>
+  </data>
   <data name="ReportSendSent" xml:space="preserve">
     <value>Envoyé. Les mainteneurs ont le rapport {0}.</value>
   </data>

@@ -110,7 +110,7 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
     /// <summary>Gets whether the report was sent.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
-    [NotifyPropertyChangedFor(nameof(ShowsFallback))]
+    [NotifyPropertyChangedFor(nameof(ShowsFallback), nameof(ShowsSend))]
     public partial bool IsSent { get; private set; }
 
     /// <summary>Gets how much of the file went, from 0 to 1.</summary>
@@ -127,6 +127,9 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
 
     /// <summary>Gets whether this app can send at all.</summary>
     public bool CanSend => _channel is not null;
+
+    /// <summary>Gets whether the button that sends shows: an app that sends, until the report is sent.</summary>
+    public bool ShowsSend => CanSend && !IsSent;
 
     /// <summary>Gets whether the way to hand the file over by hand shows, its code and its folder: when the app cannot send, or a send did not go through.</summary>
     public bool ShowsFallback => !CanSend || (HasSendText && !IsSent && !IsSending);

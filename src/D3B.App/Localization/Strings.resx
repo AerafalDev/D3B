@@ -3473,6 +3473,9 @@
   <data name="ReportNoChannel" xml:space="preserve">
     <value>No channel to send to could be found. The report is saved: hand the file over on Discord with the code {0}.</value>
   </data>
+  <data name="ReportSending" xml:space="preserve">
+    <value>Sending the report…</value>
+  </data>
   <data name="ReportSendSent" xml:space="preserve">
     <value>Sent. The maintainers have report {0}.</value>
   </data>

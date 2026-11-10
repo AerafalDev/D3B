@@ -232,11 +232,15 @@
                 IsVisible="{Binding HasDoneText}"
                 Text="{Binding DoneText}"
                 TextWrapping="Wrap" />
-            <ProgressBar
+            <TextBlock
+                Classes="Dim"
                 IsVisible="{Binding IsSending}"
-                Maximum="1"
-                Minimum="0"
-                Value="{Binding SendProgress}" />
+                Text="{l:Tr ReportSending}" />
+            <!--  Indeterminate: the progress told is the file read, which ends long before the channel answers.  -->
+            <ProgressBar
+                Classes="Meter"
+                IsIndeterminate="True"
+                IsVisible="{Binding IsSending}" />
             <TextBlock
                 IsVisible="{Binding HasSendText}"
                 Text="{Binding SendText}"
@@ -249,7 +253,7 @@
                     Classes="Primary"
                     Command="{Binding SendCommand}"
                     Content="{l:Tr ReportSend}"
-                    IsVisible="{Binding CanSend}" />
+                    IsVisible="{Binding ShowsSend}" />
                 <Button
                     Classes="Outline"
                     Command="{Binding CopyCodeCommand}"
