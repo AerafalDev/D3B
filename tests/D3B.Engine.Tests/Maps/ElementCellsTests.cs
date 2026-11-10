@@ -66,6 +66,24 @@ public sealed class ElementCellsTests
     }
 
     [Fact]
+    public void TheZonesOfAnElementsWalkableNeighboursAreListedInAscendingOrder()
+    {
+        var cells = TestCells.OpenBut(162);
+
+        cells[177] = new MapCell(MapCellProperties.Walkable, 0, 0, 0, 0, 3 << 4, 0);
+        cells[190] = new MapCell(MapCellProperties.Walkable, 0, 0, 0, 0, 2 << 4, 0);
+        cells[189] = new MapCell(MapCellProperties.Walkable, 0, 0, 0, 0, 2 << 4, 0);
+
+        Assert.Equal([1, 2, 3], ElementCells.NeighbourZones(cells, 176));
+    }
+
+    [Fact]
+    public void AnElementWithNoWalkableNeighbourHasNoZone()
+    {
+        Assert.Empty(ElementCells.NeighbourZones(TestCells.Where(cell => MapGeometry.Distance(cell, 408) >= 3), 408));
+    }
+
+    [Fact]
     public void AMapOfAnotherSizeOrACellOffItIsRejected()
     {
         Assert.Throws<ArgumentException>(() => ElementCells.UsedFrom(new MapCell[10], 0, 1));

@@ -553,7 +553,9 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D423](decisions/d423-bug-reports-cleaner.md#d423-a-reports-capture-is-cleaned-by-value-the-ticket-and-the-clients-opaque-strings-by-shape-the-accounts-characters-names-wherever-they-occur) A report's capture is cleaned by value: the ticket and the client's opaque strings by shape, the account's characters' names wherever they occur (2026-11-10)
 
-## Step 9, the harvest and the zones of a map (D424)
+## Step 9, the harvest and the zones of a map (D424, D425)
 
 - [D424](decisions/d424-step-9-the-harvests-zones.md#d424-a-resource-is-used-only-from-a-cell-beside-it-in-the-characters-zone-one-in-another-zone-of-its-map-is-out-of-reach-and-the-tour-will-go-there-through-the-world-graph) A resource is used only from a cell beside it in the character's zone; one in another zone of its map is out of reach, and the tour will go there through the world graph (2026-11-10)
   - The far cell kept for an element beside another zone, going to the other zone in the same change, skipping silently.
+- [D425](decisions/d424-step-9-the-harvests-zones.md#d425-the-harvests-tour-goes-into-another-zone-of-a-map-as-one-more-place-of-its-tour-once-per-tour-by-a-goal-of-vertices-its-sets-stay-keyed-by-map) The harvest's tour goes into another zone of a map as one more place of its tour, once per tour, by a goal of vertices; its sets stay keyed by map (2026-11-10)
+  - Keying every set of the tour by vertex, visiting the other zone before the map is done, wanting every zone an element borders, going whatever the way costs.

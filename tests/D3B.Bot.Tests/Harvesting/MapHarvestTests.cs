@@ -97,4 +97,45 @@ public sealed class MapHarvestTests
 
         Assert.Equal(TestPlay.TreeElementId, Assert.Single(candidates).ElementId);
     }
+
+    [Fact]
+    public async Task AResourceStandingInAnotherZoneNamesThatZone()
+    {
+        await using var play = TestPlay.WithASecondZone([.. Enumerable.Range(0, 8).Select(direction => MapGeometry.Neighbour(TestPlay.TreeCell, direction))]);
+        var (connection, bot) = await play.EnterAsync(433);
+        var zones = await bot.RunAsync((context, _) => Task.FromResult(MapHarvest.OtherZones(context, Targets(), context.State)), TestContext.Current.CancellationToken);
+
+        Assert.Equal([2], zones);
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
+    public async Task AResourceWithANeighbourInTheCharactersZoneNamesNoZone()
+    {
+        await using var play = TestPlay.WithASecondZone([.. Enumerable.Range(1, 7).Select(direction => MapGeometry.Neighbour(TestPlay.TreeCell, direction))]);
+        var (_, bot) = await play.EnterAsync(433);
+
+        Assert.Empty(await bot.RunAsync((context, _) => Task.FromResult(MapHarvest.OtherZones(context, Targets(), context.State)), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task AResourceTheCharacterCannotHarvestNamesNoZone()
+    {
+        await using var play = TestPlay.WithASecondZone([.. Enumerable.Range(0, 8).Select(direction => MapGeometry.Neighbour(TestPlay.TreeCell, direction))]);
+        var (_, bot) = await play.EnterAsync(433);
+
+        Assert.Empty(await bot.RunAsync((context, _) => Task.FromResult(MapHarvest.OtherZones(context, Targets(level: 200), context.State)), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task AResourceNotOfferedNamesNoZone()
+    {
+        await using var play = TestPlay.WithASecondZone([.. Enumerable.Range(0, 8).Select(direction => MapGeometry.Neighbour(TestPlay.TreeCell, direction))]);
+        var (connection, bot) = await play.EnterAsync(433);
+
+        connection.Server(new InteractiveElementUpdatedEvent { Element = TestPlay.Tree(enabled: false) });
+        await bot.ProcessedAsync();
+
+        Assert.Empty(await bot.RunAsync((context, _) => Task.FromResult(MapHarvest.OtherZones(context, Targets(), context.State)), TestContext.Current.CancellationToken));
+    }
 }

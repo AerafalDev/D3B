@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using D3B.Data.Maps;
 using D3B.Data.World;
@@ -199,9 +200,24 @@ public sealed class WorldPathfinder
     /// <exception cref="ArgumentOutOfRangeException">The graph has no such vertex.</exception>
     public bool TryFind(int from, IReadOnlySet<long> maps, WorldPathRules rules, [NotNullWhen(true)] out WorldPath? path)
     {
+        return TryFind(from, maps, FrozenSet<int>.Empty, rules, out path);
+    }
+
+    /// <summary>Finds the path with the fewest map changes from a vertex to any zone of one of several maps, or to one of several zones.</summary>
+    /// <param name="from">The vertex the character stands in.</param>
+    /// <param name="maps">The maps sought, any of their zones.</param>
+    /// <param name="zones">The vertices sought, each a zone of a map: the vertex a character stands in is one of them or not, so that another zone of its own map is reached by leaving the map and coming back (D425).</param>
+    /// <param name="rules">What the character may follow.</param>
+    /// <param name="path">The path, when there is one: no step when the vertex stands in the goal already.</param>
+    /// <returns>Whether any of them can be reached.</returns>
+    /// <remarks>The graph has no edge between two zones of one map (client.md), so the path to another zone of the start's map goes out through another map and back by another side.</remarks>
+    /// <exception cref="ArgumentOutOfRangeException">The graph has no such vertex.</exception>
+    public bool TryFind(int from, IReadOnlySet<long> maps, IReadOnlySet<int> zones, WorldPathRules rules, [NotNullWhen(true)] out WorldPath? path)
+    {
         ArgumentOutOfRangeException.ThrowIfNegative(from);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(from, Graph.Vertices.Length);
         ArgumentNullException.ThrowIfNull(maps);
+        ArgumentNullException.ThrowIfNull(zones);
         ArgumentNullException.ThrowIfNull(rules);
 
         var vertices = Graph.Vertices.Span;
@@ -224,7 +240,7 @@ public sealed class WorldPathfinder
             if (closed[vertex])
                 continue;
 
-            if (maps.Contains(vertices[vertex].MapId))
+            if (zones.Contains(vertex) || maps.Contains(vertices[vertex].MapId))
             {
                 reached = vertex;
 

@@ -26,6 +26,8 @@ internal sealed class HarvestTour
 {
     private readonly HashSet<long> _visited = [];
     private readonly HashSet<long> _unreachable = [];
+    private readonly HashSet<int> _wanted = [];
+    private readonly HashSet<int> _entered = [];
     private readonly HarvestSightings _sightings;
     private readonly GraphicSkills _graphics;
     private readonly Regrowths? _regrowths;
@@ -37,6 +39,9 @@ internal sealed class HarvestTour
 
     /// <summary>Gets whether anything was harvested in this tour.</summary>
     public bool HasHarvested { get; private set; }
+
+    /// <summary>Gets the vertices of the world graph, zones of maps already gone through, where a wanted resource was left that the character's own zone could not reach (D425).</summary>
+    public IReadOnlySet<int> OtherZones => _wanted;
 
     /// <summary>Gets how many maps this tour went through.</summary>
     public int Visited => _visited.Count;
@@ -167,6 +172,37 @@ internal sealed class HarvestTour
         _unreachable.Add(mapId);
     }
 
+    /// <summary>Gets whether the character stood in a zone, or gave it up, in this tour.</summary>
+    /// <param name="vertex">The zone's vertex in the world graph.</param>
+    /// <returns>Whether it did.</returns>
+    public bool IsEntered(int vertex)
+    {
+        return _entered.Contains(vertex);
+    }
+
+    /// <summary>Wants a zone of a map: the tour goes to it once, as one more place to go through beside the maps (D425).</summary>
+    /// <param name="vertex">The zone's vertex in the world graph. One the character stood in or gave up in this tour is not wanted again.</param>
+    public void WantZone(int vertex)
+    {
+        if (!_entered.Contains(vertex))
+            _wanted.Add(vertex);
+    }
+
+    /// <summary>Marks a zone the character stands in, so that this tour does not go there again.</summary>
+    /// <param name="vertex">The zone's vertex in the world graph.</param>
+    public void Enter(int vertex)
+    {
+        _entered.Add(vertex);
+        _wanted.Remove(vertex);
+    }
+
+    /// <summary>Gives up a zone wanted that cannot be got to: left out of the rest of the tour.</summary>
+    /// <param name="vertex">The zone's vertex in the world graph.</param>
+    public void GiveUp(int vertex)
+    {
+        Enter(vertex);
+    }
+
     /// <summary>Marks a harvest in this tour.</summary>
     public void Harvested()
     {
@@ -183,6 +219,8 @@ internal sealed class HarvestTour
 
         _visited.Clear();
         _unreachable.Clear();
+        _wanted.Clear();
+        _entered.Clear();
         HasHarvested = false;
         Round++;
 

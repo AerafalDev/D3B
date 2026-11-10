@@ -76,18 +76,43 @@ public static class WorldTravel
     /// <param name="useTeleports">Whether the journey may teleport to a zaap; else it walks, whatever the zaaps the character knows (D405).</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How the journey ended.</returns>
-    public static async Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
+    public static Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
+    {
+        return context.TravelAsync(maps, FrozenSet<int>.Empty, stopAt, useTeleports, cancellationToken);
+    }
+
+    /// <summary>Travels to the nearest of several maps or zones of maps, within a behavior, stopping on the first map of the way where the activity has work.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="maps">The maps sought, any of their zones.</param>
+    /// <param name="zones">The vertices of the world graph sought, each a zone of a map: another zone of the map the character stands on is reached by leaving the map and coming back, the graph holding no edge between two zones of one map (D425).</param>
+    /// <param name="stopAt">Whether the journey ends on a map it reached, the map's information received; never asked of the map it starts from.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the journey ended: <see cref="TravelOutcome.Arrived"/> on a map or a zone sought, or one <paramref name="stopAt"/> stopped on.</returns>
+    public static Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, CancellationToken cancellationToken)
+    {
+        return context.TravelAsync(maps, zones, stopAt, true, cancellationToken);
+    }
+
+    /// <summary>Travels to the nearest of several maps or zones of maps, within a behavior, by foot alone when teleports are not wanted.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="maps">The maps sought, any of their zones.</param>
+    /// <param name="zones">The vertices of the world graph sought, each a zone of a map (D425).</param>
+    /// <param name="stopAt">Whether the journey ends on a map it reached, the map's information received; never asked of the map it starts from.</param>
+    /// <param name="useTeleports">Whether the journey may teleport to a zaap; else it walks, whatever the zaaps the character knows (D405).</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the journey ended.</returns>
+    public static async Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(maps);
+        ArgumentNullException.ThrowIfNull(zones);
 
         using var action = context.BeginAction();
         var depth = action.Depth;
         var from = context.State.MapId;
-        long? sought = maps.Count is 1 ? maps.First() : null;
-        var (outcome, changes) = await JourneyAsync(context, maps, stopAt, useTeleports, cancellationToken).ConfigureAwait(false);
+        var (outcome, changes) = await JourneyAsync(context, maps, zones, stopAt, useTeleports, cancellationToken).ConfigureAwait(false);
 
-        context.Record(action, (at, took) => new TravelEntry(at, depth, from, sought, context.State.MapId, changes, outcome, took));
+        context.Record(action, (at, took) => new TravelEntry(at, depth, from, SoughtOf(context, maps, zones), context.State.MapId, changes, outcome, took));
 
         return outcome;
     }
@@ -128,7 +153,7 @@ public static class WorldTravel
         };
     }
 
-    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
+    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
     {
         var banned = new HashSet<int>();
         var teleports = useTeleports;
@@ -143,7 +168,7 @@ public static class WorldTravel
             if (state.MapId is not { } mapId || state.Cell is not { } cell || state.IsBusy)
                 return (changes is 0 && failures is 0 ? TravelOutcome.Busy : TravelOutcome.Failed, changes);
 
-            if (maps.Contains(mapId) || (changes > 0 && !state.IsInHavenBag && stopAt is not null && stopAt(state)))
+            if (IsSought(context, state, maps, zones) || (changes > 0 && !state.IsInHavenBag && stopAt is not null && stopAt(state)))
                 return Over(context, state, TravelOutcome.Arrived, changes);
 
             if (state.IsInHavenBag)
@@ -162,7 +187,7 @@ public static class WorldTravel
                 rules = rules with { KnownZaaps = FrozenSet<long>.Empty };
 
             if (!context.Maps.TryGet(mapId, out var map) || !context.World.TryGetVertex(map, cell, out var vertex)
-                || !context.World.TryFind(vertex, maps, rules, out var path))
+                || !context.World.TryFind(vertex, maps, zones, rules, out var path))
             {
                 return Over(context, state, TravelOutcome.NoPath, changes);
             }
@@ -213,6 +238,27 @@ public static class WorldTravel
                     break;
             }
         }
+    }
+
+    // The single map a journey seeks, for the journal: one map, or one zone's map; none when it seeks several.
+    private static long? SoughtOf(BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones)
+    {
+        if (maps.Count is 1 && zones.Count is 0)
+            return maps.First();
+
+        return maps.Count is 0 && zones.Count is 1 ? context.World.Graph.Vertices.Span[zones.First()].MapId : null;
+    }
+
+    private static bool IsSought(BotContext context, CharacterState state, IReadOnlySet<long> maps, IReadOnlySet<int> zones)
+    {
+        if (state.MapId is not { } mapId)
+            return false;
+
+        if (maps.Contains(mapId))
+            return true;
+
+        return zones.Count > 0 && state.Cell is { } cell && context.Maps.TryGet(mapId, out var map)
+            && context.World.TryGetVertex(map, cell, out var vertex) && zones.Contains(vertex);
     }
 
     private static (TravelOutcome Outcome, int Changes) Over(BotContext context, CharacterState state, TravelOutcome outcome, int changes)

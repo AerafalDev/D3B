@@ -58,6 +58,7 @@ internal sealed class TestPlay : IAsyncDisposable
     public const long OtherInsideMapId = 192_677_890;
     public const long HavenBagMapId = 162_791_424;
     public const int OtherActionCell = 400;
+    public const int EastOtherZoneActionCell = 100;
     public const int BankerNpcId = 520;
     public const int BankerActorId = -20_001;
     public const int ChestReplyId = 64_361;
@@ -160,11 +161,11 @@ internal sealed class TestPlay : IAsyncDisposable
     {
     }
 
-    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked, int[]? otherZone = null)
+    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked, int[]? otherZone = null, bool otherZoneIsEntered = true)
     {
         var path = _directory.Combine("data-3.pack");
 
-        File.WriteAllBytes(path, Pack(blocked, otherZone ?? []));
+        File.WriteAllBytes(path, Pack(blocked, otherZone ?? [], otherZoneIsEntered));
         _pack = GamePack.Open(path);
         Maps = new GameMaps(_pack);
         World = new GameWorld(_pack);
@@ -183,11 +184,18 @@ internal sealed class TestPlay : IAsyncDisposable
         return new TestPlay([], [new NpcWay(InsideMapId, WayNpcId, new[] { WayReplyId, WayLastReplyId }.ToFrozenSet(), NorthMapId)], []);
     }
 
-    /// <summary>A play whose first map has cells in a second roleplay zone, the character's own being the first (D424).</summary>
+    /// <summary>A play whose first map has cells in a second roleplay zone, the character's own being the first (D424); the second leaves east from the first of its cells, and is entered from east by a map action from <see cref="EastOtherZoneActionCell"/> (D425).</summary>
     /// <param name="otherZone">The cells of the second zone: walkable, but not the zone the character walks in.</param>
     public static TestPlay WithASecondZone(params int[] otherZone)
     {
         return new TestPlay([], [], [], otherZone);
+    }
+
+    /// <summary>A play like <see cref="WithASecondZone"/> whose second zone no way leads into: the graph holds its vertex, and nothing enters it.</summary>
+    /// <param name="otherZone">The cells of the second zone.</param>
+    public static TestPlay WithASecondZoneNoWayLeadsTo(params int[] otherZone)
+    {
+        return new TestPlay([], [], [], otherZone, false);
     }
 
     /// <summary>The character as the server's confirmation of the choice describes it.</summary>
@@ -290,7 +298,7 @@ internal sealed class TestPlay : IAsyncDisposable
         return pixels;
     }
 
-    private static byte[] Pack(int[] blocked, int[] otherZone)
+    private static byte[] Pack(int[] blocked, int[] otherZone, bool otherZoneIsEntered)
     {
         var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell, otherZone.Contains(cell) ? 2 : 1)).ToArray();
         var open = Enumerable.Range(0, MapData.CellCount).Select(cell => Walkable(cell)).ToArray();
@@ -305,7 +313,7 @@ internal sealed class TestPlay : IAsyncDisposable
             writer.Add(MapData.EntryName(EastMapId), new MapData(EastMapId, 0, 0, MapId, 0, open, new[] { new MapInteractive(BushElementId, 300, BushGfxId) }));
             writer.Add(MapData.EntryName(InsideMapId), new MapData(InsideMapId, 0, 0, 0, 0, open, new[] { new MapInteractive(ChestElementId, 300, ChestGfxId) }));
             writer.Add(MapData.EntryName(OtherInsideMapId), new MapData(OtherInsideMapId, 0, 0, 0, 0, open, Array.Empty<MapInteractive>()));
-            writer.Add(WorldGraph.EntryName, Graph());
+            writer.Add(WorldGraph.EntryName, Graph(otherZone, otherZoneIsEntered));
             writer.Add(WorldAtlas.EntryName, Atlas());
             writer.Add(BankCatalog.EntryName, new BankCatalog(new[] { new Bank(2_756, MapId) }, new[] { new Banker(BankerNpcId, 0, 0, 2) }, new[] { 64_360, ChestReplyId }));
             writer.Add(ItemCatalog.EntryName, new ItemCatalog(new[] { new Item(Ash, 403, 38, 1, 5, AshIconId), new Item(Bread, 468, 33, 1, 1, 0, 12, 12), new Item(Chestnut, 404, 38, 20, 5, ChestnutIconId), new Item(Loaf, 1_737, 33, 110, 1, 0, 30, 40), new Item(WheatBag, 7_941, 100, 1, 1, 0), new Item(ClassPotion, 16_147, 12, 1, 1, 0) }, Array.Empty<ItemType>()));
@@ -378,24 +386,44 @@ internal sealed class TestPlay : IAsyncDisposable
         return new MapCell(MapCellProperties.None, 0, 0, 0, 0, 0, 0);
     }
 
-    private static WorldGraph Graph()
+    private static WorldGraph Graph(int[] otherZone, bool otherZoneIsEntered)
     {
-        // Vertices in ascending order of map: north, the first, east, inside, the other inside.
-        WorldVertex[] vertices = [new(NorthMapId, 1), new(MapId, 1), new(EastMapId, 1), new(InsideMapId, 1), new(OtherInsideMapId, 1)];
-        WorldTransition[] transitions =
+        // Vertices in ascending order of map and zone: north, the first and its second zone if it has one, east, inside, the other inside.
+        List<(long Map, int Zone)> vertices = [(NorthMapId, 1), (MapId, 1), (EastMapId, 1), (InsideMapId, 1), (OtherInsideMapId, 1)];
+        List<((long Map, int Zone) From, (long Map, int Zone) To, WorldTransition Transition)> moves =
         [
-            Transition(WorldTransitionType.Scroll, 2, 539, MapId),
-            Transition(WorldTransitionType.Scroll, 6, 6, NorthMapId),
-            Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, NorthActionCell, NorthMapId),
-            Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, ActionCell, EastMapId),
-            new(WorldTransitionType.Interactive, WorldTransition.NoDirection, DoorCell, WorldPathfinder.DoorSkillId, InsideMapId, DoorElementId, WorldTransition.None),
-            new(WorldTransitionType.Interactive, WorldTransition.NoDirection, DoorCell, WorldPathfinder.DoorSkillId, OtherInsideMapId, DoorElementId, WorldTransition.None),
-            Transition(WorldTransitionType.Scroll, 4, 252, MapId),
-            Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, OtherActionCell, MapId),
+            ((NorthMapId, 1), (MapId, 1), Transition(WorldTransitionType.Scroll, 2, 539, MapId)),
+            ((MapId, 1), (NorthMapId, 1), Transition(WorldTransitionType.Scroll, 6, 6, NorthMapId)),
+            ((MapId, 1), (NorthMapId, 1), Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, NorthActionCell, NorthMapId)),
+            ((MapId, 1), (EastMapId, 1), Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, ActionCell, EastMapId)),
+            ((MapId, 1), (InsideMapId, 1), new(WorldTransitionType.Interactive, WorldTransition.NoDirection, DoorCell, WorldPathfinder.DoorSkillId, InsideMapId, DoorElementId, WorldTransition.None)),
+            ((MapId, 1), (OtherInsideMapId, 1), new(WorldTransitionType.Interactive, WorldTransition.NoDirection, DoorCell, WorldPathfinder.DoorSkillId, OtherInsideMapId, DoorElementId, WorldTransition.None)),
+            ((EastMapId, 1), (MapId, 1), Transition(WorldTransitionType.Scroll, 4, 252, MapId)),
+            ((OtherInsideMapId, 1), (MapId, 1), Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, OtherActionCell, MapId)),
         ];
-        WorldEdge[] edges = [new(0, 1, 0, 1), new(1, 0, 1, 2), new(1, 2, 3, 1), new(1, 3, 4, 1), new(1, 4, 5, 1), new(2, 1, 6, 1), new(4, 1, 7, 1)];
 
-        return new WorldGraph(vertices, edges, transitions, Array.Empty<string>());
+        // The graph holds no edge between two zones of a map: the second zone leaves east by a map action from its first cell, and is entered from east by another (D425).
+        if (otherZone.Length > 0)
+        {
+            vertices.Add((MapId, 2));
+            moves.Add(((MapId, 2), (EastMapId, 1), Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, otherZone[0], EastMapId)));
+
+            if (otherZoneIsEntered)
+                moves.Add(((EastMapId, 1), (MapId, 2), Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, EastOtherZoneActionCell, MapId)));
+        }
+
+        vertices.Sort();
+
+        var edges = new List<WorldEdge>();
+        var transitions = new List<WorldTransition>();
+
+        foreach (var group in moves.GroupBy(move => (From: vertices.IndexOf(move.From), To: vertices.IndexOf(move.To))).OrderBy(group => group.Key))
+        {
+            edges.Add(new WorldEdge(group.Key.From, group.Key.To, transitions.Count, group.Count()));
+            transitions.AddRange(group.Select(move => move.Transition));
+        }
+
+        return new WorldGraph(vertices.Select(vertex => new WorldVertex(vertex.Map, vertex.Zone)).ToArray(), edges.ToArray(), transitions.ToArray(), Array.Empty<string>());
     }
 
     private static WorldTransition Transition(WorldTransitionType type, int direction, int cell, long mapId)

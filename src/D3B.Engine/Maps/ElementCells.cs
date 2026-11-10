@@ -70,6 +70,33 @@ public static class ElementCells
         return used;
     }
 
+    /// <summary>Lists the zones an element can be used from: those of its walkable neighbours.</summary>
+    /// <param name="cells">The map's cells, by identifier.</param>
+    /// <param name="element">The element's cell.</param>
+    /// <returns>The zones of the walkable neighbours of the element's cell, each once, in ascending order; none when it has no walkable neighbour (water).</returns>
+    /// <exception cref="ArgumentException">The map does not have <see cref="MapData.CellCount"/> cells.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The element's cell does not exist.</exception>
+    public static IReadOnlyList<int> NeighbourZones(ReadOnlySpan<MapCell> cells, int element)
+    {
+        if (cells.Length != MapData.CellCount)
+            throw new ArgumentException($"A map has {MapData.CellCount} cells, not {cells.Length}.", nameof(cells));
+
+        ArgumentOutOfRangeException.ThrowIfNegative(element);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(element, MapData.CellCount);
+
+        var zones = new SortedSet<int>();
+
+        for (var direction = 0; direction < MapCell.DirectionCount; direction++)
+        {
+            var neighbour = MapGeometry.Neighbour(element, direction);
+
+            if (neighbour >= 0 && cells[neighbour].IsWalkable)
+                zones.Add(cells[neighbour].Zone);
+        }
+
+        return [.. zones];
+    }
+
     private static bool IsIn(MapCell cell, int zone)
     {
         return cell.IsWalkable && cell.Zone == zone;
