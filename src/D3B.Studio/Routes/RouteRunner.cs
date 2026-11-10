@@ -63,7 +63,7 @@ internal static class RouteRunner
                     cursor.Arrive();
 
                     // Said for the first lap only, so that a loop that goes on for hours does not fill the journal.
-                    if (cursor.Laps is 0)
+                    if (cursor.Laps is 0 && cursor.TryAnnounce())
                         stage.Reached(route.Name, cursor.Anchor + 1, route.Anchors.Length, anchor.MapId);
 
                     passed = 0;

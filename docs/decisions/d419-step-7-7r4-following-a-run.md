@@ -27,7 +27,7 @@ characters on one route, the scope, and how the trial in game is handled. Builds
   step after), dashed. The character's own disc stays where it really is.
 - **One marker for each character (the owner's third choice).** `FollowedRuns` (the app's, built from the bots' `Route`) reads every
   character that follows a route; the map marks each on its step (several on one step stand side by side), the Sequencer has a playhead
-  each, the Outliner's route row lists who is on it and its step rows carry their initials. A route hidden by its eye, or a character
+  each (one past the steps the route has now, after an edit, is left off), the Outliner's route row lists who is on it and its step rows carry their initials. A route hidden by its eye, or a character
   hidden, leaves its markers off the map.
 - **What each part says.** The card's step, the Outliner's character row and the Home page read `BotViewModel.Step`: "North · step 4/8 ·
   lap 3" (a loop, from 1), "North · to step 4/8" while walking there, "· back" on a route there and back; the run block's detail says it
@@ -37,7 +37,7 @@ characters on one route, the scope, and how the trial in game is handled. Builds
 - **Scope (the owner's fourth choice).** Two things 7r3 left came with it. Hovering a column of the Sequencer lights its step on the map
   (`SequencerViewModel.Hover`, `StepLit`, `WorldMapScene.LitStep`, drawn as a hovered node). And the run writes a line in the journal each
   time it reaches a step, "Route North: step 4 of 8, map 123.", **in the first lap of each run only** (`IRouteStage.Reached`,
-  `RouteRunner`: `cursor.Laps` is 0), so that a loop that goes on for hours does not fill the journal; a route one way or there and back
+  `RouteRunner`: `cursor.Laps` is 0, and once for each visit of a step: a run cut by a fight and resumed on the same step does not say it again), so that a loop that goes on for hours does not fill the journal; a route one way or there and back
   has every step said. The line does not name what the step does: the actions are in the route.
 - **The trial in game (the owner's fifth choice).** The code and its tests are delivered and 7r4 is **done in code, to try in game**, as
   7d3c and 7d3d are; the measure already owed (D384, D386) stays the same one, and this decision adds to it the list below.

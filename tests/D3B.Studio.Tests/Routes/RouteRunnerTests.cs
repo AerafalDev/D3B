@@ -260,6 +260,24 @@ public sealed class RouteRunnerTests
         Assert.Equal(["North 1/3 map 1", "North 2/3 map 2", "North 3/3 map 3", "North 2/3 map 2", "North 1/3 map 1"], stage.Arrivals);
     }
 
+    [Fact]
+    public async Task ARunResumedAfterACutDoesNotSayAgainTheStepItWasCutOn()
+    {
+        using var source = new CancellationTokenSource();
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, ["wait", "wait"]), (2, []));
+        var cursor = new RouteCursor(2, route.Mode);
+        var stage = new FakeStage { OnPlay = _ => source.Cancel() };
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => RouteRunner.RunAsync(route, cursor, stage, source.Token));
+
+        var resumed = new FakeStage();
+
+        await RouteRunner.RunAsync(route, cursor, resumed, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["North 1/2 map 1"], stage.Arrivals);
+        Assert.Equal(["North 2/2 map 2"], resumed.Arrivals);
+    }
+
     private sealed class FakeStage : IRouteStage
     {
         public List<string> Log { get; } = [];

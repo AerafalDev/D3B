@@ -529,7 +529,7 @@ internal sealed partial class SequencerViewModel : ObservableObject
     /// <summary>Reads who follows the route again, and moves the playheads where they differ (D419).</summary>
     public void Follow()
     {
-        var runs = _page.Followed.On(_route.Id);
+        var runs = _page.Followed.On(_route.Id).Where(run => run.Position.Anchor < _route.CurrentAnchors.Count).ToList();
         var heads = runs.Select(run => new SequencerPlayhead(run.Position.Anchor, run.Initials, run.Color is ISolidColorBrush solid ? solid.Color : Colors.Gray, run.Position.Arrived)).ToImmutableArray();
 
         if (heads.SequenceEqual(_playheads))
@@ -539,13 +539,6 @@ internal sealed partial class SequencerViewModel : ObservableObject
         Scene = Scene with { Playheads = heads };
         RunStatus = string.Join(", ", runs.Select(run => _page.Localizer.Format(run.Position.Arrived ? "CardRouteAt" : "CardRouteTo", run.Name, run.Position.Step, run.Position.Anchors)));
         OnPropertyChanged(nameof(IsFollowed));
-    }
-
-    /// <summary>Keeps the playhead in sight, or lets the user read elsewhere.</summary>
-    [RelayCommand]
-    public void ToggleKeepInSight()
-    {
-        KeepsInSight = !KeepsInSight;
     }
 
     /// <summary>Says the pointer is on the column of a step, or on none.</summary>
@@ -598,7 +591,7 @@ internal sealed partial class SequencerViewModel : ObservableObject
         }
 
         _clips = clips;
-        Scene = new SequencerScene(steps, tracks) { Playheads = _playheads };
+        Scene = new SequencerScene(steps, tracks) { Playheads = [.. _playheads.Where(head => head.Step < steps.Count)] };
         SelectedClip = Retarget();
         OnPropertyChanged(nameof(Status));
         BuildCards();

@@ -15,6 +15,18 @@ public sealed class RouteRuns
     private readonly ConcurrentDictionary<(CharacterKey Character, string Route), (DateTimeOffset Started, RouteCursor Cursor)> _runs = new();
     private readonly ConcurrentDictionary<CharacterKey, Following> _following = new();
 
+    private static RouteRunPosition? Read(CharacterKey character, Following following)
+    {
+        var at = following.Cursor.Snapshot();
+
+        if (at.IsDone)
+            return null;
+
+        var route = following.Route;
+
+        return new RouteRunPosition(character, route.Id, route.Name, route.Mode, route.Anchors.Length, at.Anchor, at.Arrived, at.Played, route.Anchors[at.Anchor].Actions.Length, at.Laps, at.Returning);
+    }
+
     /// <summary>Gets the cursor of a run, made when it has none.</summary>
     /// <param name="character">The character.</param>
     /// <param name="route">The route.</param>
@@ -82,18 +94,6 @@ public sealed class RouteRuns
     public void Forget(CharacterKey character, string route)
     {
         _runs.TryRemove((character, route), out _);
-    }
-
-    private static RouteRunPosition? Read(CharacterKey character, Following following)
-    {
-        var at = following.Cursor.Snapshot();
-
-        if (at.IsDone)
-            return null;
-
-        var route = following.Route;
-
-        return new RouteRunPosition(character, route.Id, route.Name, route.Mode, route.Anchors.Length, at.Anchor, at.Arrived, at.Played, route.Anchors[at.Anchor].Actions.Length, at.Laps, at.Returning);
     }
 
     private sealed record Following(RouteAsset Route, RouteCursor Cursor);

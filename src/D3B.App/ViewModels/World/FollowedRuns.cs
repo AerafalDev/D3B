@@ -5,6 +5,9 @@ internal sealed class FollowedRuns
 {
     private readonly Func<IEnumerable<FollowedRun>> _source;
 
+    /// <summary>Gets what follows nothing.</summary>
+    public static FollowedRuns None { get; } = new(() => []);
+
     /// <summary>Initializes a new instance of the <see cref="FollowedRuns"/> class.</summary>
     /// <param name="source">Reads the characters that follow a route.</param>
     public FollowedRuns(Func<IEnumerable<FollowedRun>> source)
@@ -13,9 +16,6 @@ internal sealed class FollowedRuns
 
         _source = source;
     }
-
-    /// <summary>Gets what follows nothing.</summary>
-    public static FollowedRuns None { get; } = new(() => []);
 
     /// <summary>Gets every character that follows a route now.</summary>
     /// <returns>The characters, in the order they were read.</returns>

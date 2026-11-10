@@ -22,6 +22,7 @@ public sealed class RouteCursor
     private long _visit;
     private int _played;
     private bool _arrived;
+    private long _announced = -1;
 
     /// <summary>Initializes a new instance of the <see cref="RouteCursor"/> class.</summary>
     /// <param name="anchors">How many anchors the route has.</param>
@@ -100,6 +101,21 @@ public sealed class RouteCursor
         lock (_gate)
         {
             _arrived = true;
+        }
+    }
+
+    /// <summary>Tells whether the arrival at this anchor is the first to be said: a run cut and resumed on the same anchor says it once.</summary>
+    /// <returns><see langword="true"/> once for each visit of an anchor.</returns>
+    public bool TryAnnounce()
+    {
+        lock (_gate)
+        {
+            if (_announced == _visit)
+                return false;
+
+            _announced = _visit;
+
+            return true;
         }
     }
 

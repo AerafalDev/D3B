@@ -310,8 +310,7 @@ internal sealed class SequencerGrid : Control
     {
         base.OnPointerExited(e);
 
-        if (!_held)
-            ColumnHovered?.Invoke(-1);
+        ColumnHovered?.Invoke(-1);
     }
 
     /// <inheritdoc/>

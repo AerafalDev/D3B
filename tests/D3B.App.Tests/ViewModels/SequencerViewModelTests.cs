@@ -688,15 +688,41 @@ public sealed class SequencerViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheSequencerKeepsThePlayheadInSightUnlessTheUserTurnsItOff()
+    public async Task ThePlayheadOfARunPastTheStepsTheRouteHasNowIsNotShown()
+    {
+        var (routes, editor) = await OpenAsync(Step(1), Step(2), Step(3));
+        var runs = new List<FollowedRun> { Following("Ayuwoki", "r1", 4, true, 5), Following("Bolgrim", "r1", 1, true, 5) };
+
+        routes.Followed = new FollowedRuns(() => runs);
+        editor.Sequencer.Follow();
+
+        Assert.Equal([1], editor.Sequencer.Scene.Playheads.Select(head => head.Step));
+        Assert.Equal("Bolgrim · step 2/5", editor.Sequencer.RunStatus);
+    }
+
+    [Fact]
+    public async Task ThePlayheadsSurviveAnEditOfTheRouteAndLeaveWhenTheirStepIsGone()
+    {
+        var (routes, editor) = await OpenAsync(Step(1), Step(2), Step(3));
+        var runs = new List<FollowedRun> { Following("Ayuwoki", "r1", 1, true) };
+
+        routes.Followed = new FollowedRuns(() => runs);
+        editor.Sequencer.Follow();
+        editor.Remove(2);
+
+        Assert.Equal([1], editor.Sequencer.Scene.Playheads.Select(head => head.Step));
+
+        editor.Remove(1);
+
+        Assert.Empty(editor.Sequencer.Scene.Playheads);
+    }
+
+    [Fact]
+    public async Task TheSequencerKeepsThePlayheadInSightByDefault()
     {
         var (_, editor) = await OpenAsync(Step(1), Step(2));
 
         Assert.True(editor.Sequencer.KeepsInSight);
-
-        editor.Sequencer.ToggleKeepInSight();
-
-        Assert.False(editor.Sequencer.KeepsInSight);
     }
 
     [Fact]
