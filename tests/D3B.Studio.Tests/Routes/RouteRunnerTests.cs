@@ -188,6 +188,96 @@ public sealed class RouteRunnerTests
         Assert.Equal(["go 1", "play wait", "play wait", "go 2"], stage.Log);
     }
 
+    [Fact]
+    public async Task TheCursorIsTravellingWhileTheRunGoesToAnAnchorAndArrivedWhileItPlaysThere()
+    {
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, ["wait"]), (2, ["wait"]));
+        var cursor = new RouteCursor(2, route.Mode);
+        var seen = new List<string>();
+        var stage = new FakeStage
+        {
+            OnTravel = map => seen.Add($"go {map} arrived={cursor.Arrived}"),
+            OnPlay = _ => seen.Add($"play {cursor.Anchor} arrived={cursor.Arrived}"),
+        };
+
+        await RouteRunner.RunAsync(route, cursor, stage, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["go 1 arrived=False", "play 0 arrived=True", "go 2 arrived=False", "play 1 arrived=True"], seen);
+    }
+
+    [Fact]
+    public async Task ARunThatGoesOnAfterACutIsTravellingAgainUntilItHasArrivedAgain()
+    {
+        using var source = new CancellationTokenSource();
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, ["wait", "wait"]));
+        var cursor = new RouteCursor(1, route.Mode);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => RouteRunner.RunAsync(route, cursor, new FakeStage { OnPlay = _ => source.Cancel() }, source.Token));
+
+        Assert.True(cursor.Arrived);
+
+        var arrivedOnTravel = new List<bool>();
+
+        await RouteRunner.RunAsync(route, cursor, new FakeStage { OnTravel = _ => arrivedOnTravel.Add(cursor.Arrived) }, TestContext.Current.CancellationToken);
+
+        Assert.Equal([false], arrivedOnTravel);
+    }
+
+    [Fact]
+    public async Task TheStageIsToldEachStepTheRunReachesWithItsNumberAndItsMap()
+    {
+        var stage = new FakeStage { Unreachable = [2] };
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, []), (2, []), (3, []));
+
+        await RouteRunner.RunAsync(route, new RouteCursor(3, route.Mode), stage, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["North 1/3 map 1", "North 3/3 map 3"], stage.Arrivals);
+    }
+
+    [Fact]
+    public async Task ALoopTellsTheStepsOfItsFirstLapOnlySoThatTheJournalIsNotFilled()
+    {
+        using var source = new CancellationTokenSource();
+        FakeStage stage = null!;
+
+        stage = new FakeStage { OnTravel = _ => { if (stage.Log.Count >= 8) source.Cancel(); } };
+
+        var route = Route(RouteMode.Loop, RouteUnreachable.Skip, (1, []), (2, []), (3, []));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => RouteRunner.RunAsync(route, new RouteCursor(3, route.Mode), stage, source.Token));
+
+        Assert.Equal(["North 1/3 map 1", "North 2/3 map 2", "North 3/3 map 3"], stage.Arrivals);
+    }
+
+    [Fact]
+    public async Task ARouteThereAndBackTellsEveryStepOnItsWayBackToo()
+    {
+        var stage = new FakeStage();
+        var route = Route(RouteMode.RoundTrip, RouteUnreachable.Skip, (1, []), (2, []), (3, []));
+
+        await RouteRunner.RunAsync(route, new RouteCursor(3, route.Mode), stage, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["North 1/3 map 1", "North 2/3 map 2", "North 3/3 map 3", "North 2/3 map 2", "North 1/3 map 1"], stage.Arrivals);
+    }
+
+    [Fact]
+    public async Task ARunResumedAfterACutDoesNotSayAgainTheStepItWasCutOn()
+    {
+        using var source = new CancellationTokenSource();
+        var route = Route(RouteMode.OneWay, RouteUnreachable.Skip, (1, ["wait", "wait"]), (2, []));
+        var cursor = new RouteCursor(2, route.Mode);
+        var stage = new FakeStage { OnPlay = _ => source.Cancel() };
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => RouteRunner.RunAsync(route, cursor, stage, source.Token));
+
+        var resumed = new FakeStage();
+
+        await RouteRunner.RunAsync(route, cursor, resumed, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["North 1/2 map 1"], stage.Arrivals);
+        Assert.Equal(["North 2/2 map 2"], resumed.Arrivals);
+    }
+
     private sealed class FakeStage : IRouteStage
     {
         public List<string> Log { get; } = [];
@@ -219,6 +309,8 @@ public sealed class RouteRunnerTests
 
         public List<long?> Nexts { get; } = [];
 
+        public List<string> Arrivals { get; } = [];
+
         public HashSet<string> Failing { get; init; } = [];
 
         public Task<bool> PlayAsync(NodeCall action, long? next, CancellationToken cancellationToken)
@@ -238,6 +330,11 @@ public sealed class RouteRunnerTests
             Log.Add("wait");
 
             return Task.CompletedTask;
+        }
+
+        public void Reached(string route, int step, int steps, long map)
+        {
+            Arrivals.Add($"{route} {step}/{steps} map {map}");
         }
 
         public void Note(string key, params object[] values)

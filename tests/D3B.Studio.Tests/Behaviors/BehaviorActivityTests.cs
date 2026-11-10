@@ -298,6 +298,87 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         Assert.Null(bot.Trace.All()[0].State);
     }
 
+    [Fact]
+    public async Task AListOfStepsReportsTheStepItIsAtAndHowManyThereAre()
+    {
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("only", "Only") { Actions = Chain(Note("a", "a"), Node("w", "wait", ("Seconds", 60)), Note("b", "b")) }));
+
+        await UntilAsync(() => Notes(bot).Count == 1 && run.Status is ActivityStatus.Stepping);
+
+        var progress = run.Activity.Report?.Progress;
+
+        Assert.Equal((1, 3), (progress?.Done, progress?.Total));
+        Assert.Equal([2L, 3L], progress?.Text.Values.Select(value => value.Id));
+
+        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(["a", "b"], Notes(bot));
+    }
+
+    [Fact]
+    public async Task AListThatRepeatsReportsItsFirstStepAgainWhenItStartsOver()
+    {
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("loop", "Loop") { Repeats = true, Actions = Chain(Node("w", "wait", ("Seconds", 1)), Node("v", "wait", ("Seconds", 60))) }));
+
+        await UntilAsync(() => run.Status is ActivityStatus.Stepping);
+        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
+        await UntilAsync(() => run.Activity.Report?.Progress?.Done == 1);
+
+        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
+        await UntilAsync(() => run.Activity.Report?.Progress?.Done == 0);
+
+        run.Stop();
+        await run.Completion;
+    }
+
+    [Fact]
+    public async Task AStateWithABranchIsNoListAndReportsNoProgress()
+    {
+        var (connection, bot) = await _behaviors.Play.EnterAsync(300);
+
+        connection.Server(new KamasUpdateEvent { Kamas = 50 });
+        await bot.ProcessedAsync();
+
+        var graph = new ActionGraph(
+            "if",
+            [
+                Node("if", NodeCatalog.Branch),
+                Node("rich", "kamas.atLeast", ("Amount", 10)),
+                Node("yes", "wait", ("Seconds", 60)),
+                Note("no", "no"),
+            ],
+            [
+                new GraphLink("rich", GraphPins.Value, "if", "Condition"),
+                new GraphLink("if", GraphPins.True, "yes"),
+                new GraphLink("if", GraphPins.False, "no"),
+            ]);
+        var branching = await _behaviors.StartAsync(bot, Behavior(new BehaviorState("only", "Only") { Actions = graph }));
+
+        await UntilAsync(() => branching.Status is ActivityStatus.Stepping);
+
+        Assert.Null(branching.Activity.Report?.Progress);
+        branching.Stop();
+        await branching.Completion;
+    }
+
+    [Fact]
+    public async Task AListOfASingleStepReportsNoProgress()
+    {
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var single = await _behaviors.StartAsync(bot, Behavior(new BehaviorState("one", "One") { Actions = Chain(Node("w", "wait", ("Seconds", 60))) }));
+
+        await UntilAsync(() => single.Status is ActivityStatus.Stepping);
+
+        Assert.Null(single.Activity.Report?.Progress);
+        single.Stop();
+        await single.Completion;
+    }
+
     [Theory]
     [InlineData(WatchedGauge.Pods, 90, 899, 1000, false)]
     [InlineData(WatchedGauge.Pods, 90, 900, 1000, true)]

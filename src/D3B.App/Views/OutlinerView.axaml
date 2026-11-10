@@ -36,6 +36,16 @@
         <Style Selector="Border.OutlinerRow.Dimmed">
             <Setter Property="Opacity" Value="0.55" />
         </Style>
+        <Style Selector="Border.RunBadge">
+            <Setter Property="BorderBrush" Value="{DynamicResource SuccessColor60}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="5,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.RunBadge.Arrived">
+            <Setter Property="Background" Value="{DynamicResource SuccessColor20}" />
+        </Style>
         <Style Selector="Button.Eye">
             <Setter Property="Opacity" Value="0.35" />
         </Style>
@@ -171,6 +181,16 @@
                                                 Text="{Binding Detail}"
                                                 TextTrimming="CharacterEllipsis"
                                                 VerticalAlignment="Center" />
+                                            <Border
+                                                Classes="RunBadge"
+                                                Classes.Arrived="{Binding IsArrived}"
+                                                IsVisible="{Binding IsFollowed}">
+                                                <TextBlock
+                                                    FontSize="10"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{DynamicResource SuccessColor}"
+                                                    Text="{Binding Followers}" />
+                                            </Border>
                                         </StackPanel>
                                         <ItemsControl
                                             Grid.Column="3"

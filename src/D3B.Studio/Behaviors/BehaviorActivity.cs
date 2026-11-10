@@ -55,7 +55,7 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
 
     /// <inheritdoc/>
     public override ActivityReport? Report => _visit is { } visit
-        ? visit.Current?.Report ?? new ActivityReport { Doing = GameText.Of(BehaviorTexts.Text("Doing"), GameTextValue.Of(visit.State.Name)) }
+        ? visit.Current?.Report ?? new ActivityReport { Doing = GameText.Of(BehaviorTexts.Text("Doing"), GameTextValue.Of(visit.State.Name)), Progress = ProgressOf(visit) }
         : null;
 
     /// <inheritdoc/>
@@ -85,6 +85,13 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         _shared = shared;
         _always = Outlined(behavior.Always);
         _states = Outlined(behavior.States);
+    }
+
+    private static ActivityProgress? ProgressOf(StateVisit visit)
+    {
+        return visit.Place is var (step, total)
+            ? new ActivityProgress(GameText.Of(BehaviorTexts.Text("ListStep"), GameTextValue.Number(step + 1), GameTextValue.Number(total)), step, total)
+            : null;
     }
 
     private static ImmutableArray<OutlineState> Outlined(ImmutableArray<CompiledState> states)

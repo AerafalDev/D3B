@@ -35,6 +35,10 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
 
 ## Not measured in game
 
+- Following a run (D419, 7r4) is tried on the fake game, view models and headless windows, not on a client: whether the position told is the
+  position lived with real travel (zaaps, `Busy` waits, a map with no path), a fight or a bank cutting the route and the run resuming on the
+  same step, a long action while the playhead stays on its step, two accounts on one route, 250 ms against a map every three seconds. The
+  list to look at, one by one, is in D419; it joins the measure already owed below.
 - The hints on the map (D414) were seen only as headless renders of the real pack and tiles at four zooms, not in the app by the owner: how
   the pictures read, whether the thresholds and priorities (the lead's reckoning) thin them as they wish, the name over the hovered one. The
   pack of format 12 is extracted on the development machine and not published: the app of this change needs it (`scripts/release.cs --publish`,
@@ -78,10 +82,9 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
 0. **Bug reports with the player's capture** (D409 to D411), designed, not begun: the game connection recorded by default, a
    `.d3breport` bundle with the capture cleaned at the export, sent by a private Discord webhook; BR1 to BR4 in the roadmap, BR1
    first. Nothing of it exists in code yet.
-1. **Session 7r4, following a run** (D395): the cursor told to the app, the playhead on the Sequencer's ruler, the marker on the
-   route, the progress on the Outliner. 7r3, the Sequencer, is made (D413); what it leaves is the map's frame, hovering a column
-   lighting its step, a panel taller for the Sequencer, and recording in the toolbar, which waits for the measure in game. Then 7r5b
-   (the profile's asset editor, made: D415 and D418), 7r6 sequences and laps; all before 7e.
+1. **7r4, following a run, is made** (D419), to try in game with the owner's list; then **7r6**, sequences as blocks, laps and "until" (a change of
+   `RouteRunner`, to confirm), all before 7e. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already
+   passed dimmed on the map, and recording in the toolbar, which waits for the measure in game.
 2. **A measure in game with the owner**, before anything else of step 7: the list above, and what 7d4b will record.
 3. **Session 7d4b**: recording while playing and Simplify (D299, D394), once the events it reads are measured.
 4. **7e and 7e2**: the canvas of behaviors, then 7f to 7i (nodes and planning, debugging, the AI's fight preferences, sharing).

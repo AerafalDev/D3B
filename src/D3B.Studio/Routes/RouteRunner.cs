@@ -55,9 +55,17 @@ internal static class RouteRunner
 
             var anchor = route.Anchors[cursor.Anchor];
 
+            cursor.Depart();
+
             switch (await stage.TravelAsync(anchor.MapId, cancellationToken).ConfigureAwait(false))
             {
                 case TravelOutcome.Arrived:
+                    cursor.Arrive();
+
+                    // Said for the first lap only, so that a loop that goes on for hours does not fill the journal.
+                    if (cursor.Laps is 0 && cursor.TryAnnounce())
+                        stage.Reached(route.Name, cursor.Anchor + 1, route.Anchors.Length, anchor.MapId);
+
                     passed = 0;
                     busy = 0;
 

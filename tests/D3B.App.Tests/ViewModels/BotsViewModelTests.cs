@@ -1,10 +1,14 @@
 using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Activities;
 using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
+using D3B.Studio.Assets;
+using D3B.Studio.Routes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -268,5 +272,94 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         page.Refresh(host.Services);
 
         Assert.Equal(nameof(TestActivity), Assert.Single(page.Items).ActivityName);
+    }
+
+    private static RouteAsset North(RouteMode mode)
+    {
+        return new RouteAsset { Id = "north", Name = "North", Mode = mode, Anchors = [new RouteAnchor { MapId = 1 }, new RouteAnchor { MapId = 2 }, new RouteAnchor { MapId = 3 }] };
+    }
+
+    [Fact]
+    public async Task ACharacterFollowingARouteSaysTheRoutesStepOnItsCardInsteadOfTheActivitys()
+    {
+        using var host = TestHosts.Of(_play);
+        var page = new BotsViewModel(_localizer);
+        var (_, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity();
+        var cursor = new RouteCursor(3, RouteMode.Loop);
+
+        bot.StartActivity(activity);
+        await activity.SteppingAsync(bot);
+        host.Services.GetRequiredService<RouteRuns>().Begin(bot.Key, North(RouteMode.Loop), cursor);
+        cursor.Advance();
+        page.Refresh(host.Services);
+
+        var item = Assert.Single(page.Items);
+
+        Assert.Equal("North · to step 2/3 · lap 1", item.Step);
+        Assert.Equal(item.Step, item.RouteText);
+        Assert.Equal(2, item.Route?.Step);
+
+        cursor.Arrive();
+        page.Refresh(host.Services);
+
+        Assert.Equal("North · step 2/3 · lap 1", item.Step);
+
+        host.Services.GetRequiredService<RouteRuns>().End(bot.Key, cursor);
+        page.Refresh(host.Services);
+
+        Assert.Equal("", item.Step);
+        Assert.Null(item.Route);
+    }
+
+    [Fact]
+    public async Task ARouteThereAndBackSaysItIsOnItsWayBackAndAOneWayRouteSaysNoLap()
+    {
+        using var host = TestHosts.Of(_play);
+        var page = new BotsViewModel(_localizer);
+        var (_, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity();
+        var runs = host.Services.GetRequiredService<RouteRuns>();
+        var cursor = new RouteCursor(3, RouteMode.RoundTrip);
+
+        bot.StartActivity(activity);
+        await activity.SteppingAsync(bot);
+        runs.Begin(bot.Key, North(RouteMode.RoundTrip), cursor);
+
+        for (var visit = 0; visit < 3; visit++)
+            cursor.Advance();
+
+        cursor.Arrive();
+        page.Refresh(host.Services);
+
+        Assert.Equal("North · step 2/3 · back", Assert.Single(page.Items).Step);
+
+        runs.End(bot.Key, cursor);
+        runs.Begin(bot.Key, North(RouteMode.OneWay), new RouteCursor(3, RouteMode.OneWay));
+        page.Refresh(host.Services);
+
+        Assert.Equal("North · to step 1/3", Assert.Single(page.Items).Step);
+    }
+
+    [Fact]
+    public async Task TheRunBlockSaysTheStepOfTheRouteTheChosenCharacterFollows()
+    {
+        using var host = TestHosts.Of(_play);
+        var page = new BotsViewModel(_localizer);
+        var (_, bot) = await _play.EnterAsync(300);
+        var activity = new TestActivity();
+        var cursor = new RouteCursor(3, RouteMode.OneWay);
+
+        bot.StartActivity(activity);
+        await activity.SteppingAsync(bot);
+        host.Services.GetRequiredService<RouteRuns>().Begin(bot.Key, North(RouteMode.OneWay), cursor);
+        cursor.Arrive();
+        page.Refresh(host.Services);
+
+        var block = new RunBlockViewModel(page, _localizer);
+
+        block.Choose(bot.Key);
+
+        Assert.Equal($"{nameof(TestActivity)} · North · step 1/3", block.Detail);
     }
 }

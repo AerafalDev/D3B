@@ -590,7 +590,12 @@ D356), the pages of D101 and D162 gone.
     search; a click selects here, a double click opens a character's tab, the right click on a character opens its menu
     (`CharacterMenu`, which the cards had). The rows keep their objects between readings so that a scroll stays.
   - **Play in Editor**: the run block keeps its place; while the chosen character plays, the viewport has a green frame and a
-    caption (`FrameText`), and the character's disc a green ring.
+    caption (`FrameText`, which says the step and lap of the route it follows), and the character's disc a green ring.
+  - **Following a run** (D419): `BotViewModel.Route` and `RouteText` read `RouteRuns` for the character ("North · step 4/8 · lap 3", "to step"
+    while walking there, "back"), which the card's `Step`, the Outliner's character row, the Home page and the run block's detail say. `FollowedRuns`
+    (`FollowedRun`: the position, the name, the initials and the colour) is what the Outliner (a badge of initials on the route row and on
+    the step rows, hollow while walking, filled once arrived), the viewport (`WorldMapBackdrop.Runs`, `WorldMapRun`: a ring on the step
+    gone to and the dashed leg from the step before, `WorldMapBackdropLayer.DrawRuns`) and the Sequencer read, one marker a character.
 - **The Sequencer** (D395, D396, D413, `SequencerViewModel` in `D3B.App.ViewModels.Routes`, `SequencerView`, the control
   `SequencerGrid` and its scene in `D3B.App.Controls.Sequencer`): a tab of the bottom panel (`BottomTab.Sequencer`,
   `BottomPanelViewModel.Follow`) that exists while a route is selected. Each `RouteEditorViewModel` owns one; it reads the editor's
@@ -606,8 +611,12 @@ D356), the pages of D101 and D162 gone.
   without being carried off. The Details show a clip's action card (its values set once for every step it covers) and, for several
   steps, the actions all of them hold (`RouteClips.CommonCalls`, set by `RevalueOn`); one step keeps its own cards. The palette ("Add
   a track") lists the kinds the host knows; the dialog and the "+" of a route are gone, the sequences' editor keeps the picker.
+  **Following a run** (D419): `SequencerViewModel.Follow` reads `RoutesViewModel.Followed` for the route and gives the scene a playhead a
+  character (`SequencerPlayhead`: a column outlined and dashed while the character walks to the step, filled with a bar and initials once
+  there), `RunStatus` says it in the toolbar, "Follow the run" (`KeepsInSight`) has the view scroll the ruler to the playhead
+  (`BringIntoView`); `Hover` and `StepLit` tell the viewport which column the pointer is on, which `WorldMapScene.LitStep` lights on the map.
 - **The run block** (D322, D338, `RunBlockViewModel`): the chosen character's portrait with a dot of its state, its name and
-  what it does live, a menu of the characters online, and only the buttons its state allows: none chosen, play disabled;
+  what it does live (the route's step when it follows one, D419), a menu of the characters online, and only the buttons its state allows: none chosen, play disabled;
   stopped, play; playing, pause and stop; paused, play and stop; its edge green while it plays, amber paused. Play starts
   what its card would, its own profile first, or resumes it; pause is `BotActor.Pause`, which cuts the step as the player's
   hand does and says it in the journal (`BotEvent.PausedFromApp`); stop ends the activity. F5 plays or pauses, F6 pauses,
@@ -880,7 +889,12 @@ The target:
   - **The run** (D379): `RouteCursor` (the course: loop, one way, there and back, and where the run is), `RouteRuns` (a cursor
     per character, route and run), `RouteRunner` (to each anchor by the character's own path, the actions played, a map out of
     reach passed or failing) over `IRouteStage`, which `GameRouteStage` makes real; the node `route.follow` (`FollowRoute`) plays
-    it in a behavior's step. Tried on the test game, not yet on a client (D384).
+    it in a behavior's step. Tried on the test game, not yet on a client (D384). **Told to the app** (D419): `RouteCursor` says it has arrived
+    (`Arrive`, `Depart` at each journey, `Advance` clears it) and hands its place in one reading under a lock (`RouteCursorSnapshot`);
+    `FollowRoute` registers the run in `RouteRuns` (`Begin`, and `End` in a `finally`) while the route plays, and `RouteRuns.Position` and
+    `Positions` give a `RouteRunPosition` per character (route, step, on its way or arrived, actions played, lap, going back) which the app
+    reads every 250 ms; the runner tells its stage each step reached (`IRouteStage.Reached`, a journal line in the first lap only). A
+    behavior that is a plain chain of two steps or more reports its step through `ActivityReport.Progress` (`StateVisit.Place`).
   - **A list of steps** (D386), in `D3B.Studio.Behaviors`: `BehaviorSequences` reads a behavior as a list when it is one state of actions
     chained by their way on, and writes a list into one (`BehaviorSequence`: the steps as `NodeCall`s and whether it repeats); the
     behavior's file is the same the canvas of 7e opens. `BehaviorSequences.Offered` are the nodes a step may be: `route.follow`,

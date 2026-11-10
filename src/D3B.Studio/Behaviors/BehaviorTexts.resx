@@ -44,6 +44,9 @@
   <data name="Doing" xml:space="preserve">
     <value>State {0}</value>
   </data>
+  <data name="ListStep" xml:space="preserve">
+    <value>Step {0} of {1}</value>
+  </data>
   <data name="Branch" xml:space="preserve">
     <value>If {Condition}</value>
   </data>
@@ -394,6 +397,9 @@
   </data>
   <data name="RouteUnreachableFails" xml:space="preserve">
     <value>Step {0} of the route, map {1}, is out of reach: the route fails.</value>
+  </data>
+  <data name="RouteStepReached" xml:space="preserve">
+    <value>Route {0}: step {1} of {2}, map {3}.</value>
   </data>
   <data name="RouteUnreachablePassed" xml:space="preserve">
     <value>Step {0} of the route, map {1}, is out of reach: passed.</value>

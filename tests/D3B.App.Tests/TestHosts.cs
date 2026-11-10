@@ -9,6 +9,7 @@ using D3B.Data;
 using D3B.Storage;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
+using D3B.Studio.Routes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -78,6 +79,7 @@ internal static class TestHosts
     {
         services.AddSingleton(play.Bots);
         services.AddSingleton(new BankingPreferences());
+        services.AddSingleton<RouteRuns>();
         services.AddSingleton(play.World);
         services.AddSingleton(new ClientBuild(TestInstall.Version, null));
     }

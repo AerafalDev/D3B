@@ -78,6 +78,59 @@ public sealed class RouteCursorTests
     }
 
     [Fact]
+    public void ACursorIsAtItsAnchorOnlyOnceTheRunSaysItArrivedAndLeavesItWhenItGoesOn()
+    {
+        var cursor = new RouteCursor(2, RouteMode.OneWay);
+
+        Assert.False(cursor.Arrived);
+
+        cursor.Arrive();
+
+        Assert.True(cursor.Arrived);
+
+        cursor.Depart();
+
+        Assert.False(cursor.Arrived);
+
+        cursor.Arrive();
+        cursor.Advance();
+
+        Assert.False(cursor.Arrived);
+    }
+
+    [Fact]
+    public void ARouteThereAndBackIsReturningOnceItHasBeenToTheLastAnchor()
+    {
+        var cursor = new RouteCursor(3, RouteMode.RoundTrip);
+        var returning = new List<bool>();
+
+        while (!cursor.IsDone)
+        {
+            returning.Add(cursor.Returning);
+            cursor.Advance();
+        }
+
+        Assert.Equal([false, false, false, true, true], returning);
+        Assert.False(new RouteCursor(3, RouteMode.Loop).Returning);
+    }
+
+    [Fact]
+    public void ASnapshotSaysWhereTheRunIsInOneReading()
+    {
+        var cursor = new RouteCursor(3, RouteMode.Loop);
+
+        for (var visit = 0; visit < 4; visit++)
+            cursor.Advance();
+
+        cursor.Arrive();
+        cursor.ActionPlayed();
+
+        var snapshot = cursor.Snapshot();
+
+        Assert.Equal((1, true, 1, 4L, 1L, false, false), (snapshot.Anchor, snapshot.Arrived, snapshot.Played, snapshot.Visits, snapshot.Laps, snapshot.Returning, snapshot.IsDone));
+    }
+
+    [Fact]
     public void ARunKeepsItsCursorAcrossInterruptionsAndAnotherRunStartsOver()
     {
         var runs = new RouteRuns();

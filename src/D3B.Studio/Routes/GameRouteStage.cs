@@ -71,6 +71,12 @@ internal sealed class GameRouteStage : IRouteStage
     }
 
     /// <inheritdoc/>
+    public void Reached(string route, int step, int steps, long map)
+    {
+        Note("RouteStepReached", route, step, steps, map);
+    }
+
+    /// <inheritdoc/>
     public void Note(string key, params object[] values)
     {
         var culture = CultureInfo.CurrentUICulture;

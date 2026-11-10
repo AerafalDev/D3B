@@ -77,6 +77,17 @@ internal sealed partial class OutlinerRowViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsDirty { get; set; }
 
+    /// <summary>Gets the initials of the characters that follow the route, or are at the step, or nothing (D419).</summary>
+    [ObservableProperty]
+    public partial string Followers { get; set; } = "";
+
+    /// <summary>Gets whether a character that follows is on the step's map, rather than on its way there.</summary>
+    [ObservableProperty]
+    public partial bool IsArrived { get; set; }
+
+    /// <summary>Gets whether a character follows the route, or is at the step.</summary>
+    public bool IsFollowed => Followers.Length > 0;
+
     /// <summary>Gets the small dots of what a step does.</summary>
     [ObservableProperty]
     public partial IReadOnlyList<IBrush> Dots { get; set; } = [];
@@ -103,6 +114,11 @@ internal sealed partial class OutlinerRowViewModel : ObservableObject
     {
         Key = key;
         Kind = kind;
+    }
+
+    partial void OnFollowersChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsFollowed));
     }
 
     partial void OnDotsChanged(IReadOnlyList<IBrush> value)

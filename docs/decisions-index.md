@@ -531,3 +531,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - The fold state kept in the profile or in app.json.
   - A pick on the press instead of the click.
   - The tour drawn over the map in place of the thumbnail.
+
+## Step 7, 7r4, following a run (D419)
+
+- [D419](decisions/d419-step-7-7r4-following-a-run.md#d419-7r4-following-a-run-the-run-publishes-where-it-is-in-routeruns-the-app-reads-it-and-a-column-lit-is-the-playhead) 7r4, following a run: the run publishes where it is in `RouteRuns`, the app reads it, and a column lit is the playhead (2026-11-10)
+  - A route's position in `ActivityReport`, the journal's events as the way the app learns it, a marker moved between columns by an estimate, only the chosen character followed, a journal line at each lap.

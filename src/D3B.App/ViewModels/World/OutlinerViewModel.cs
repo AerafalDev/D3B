@@ -40,6 +40,7 @@ internal sealed partial class OutlinerViewModel : ObservableObject
     private readonly CharactersViewModel _characters;
     private readonly RoutesViewModel _routes;
     private readonly ZonesViewModel _zones;
+    private readonly FollowedRuns _followed;
     private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
     private string? _signature;
 
@@ -67,8 +68,10 @@ internal sealed partial class OutlinerViewModel : ObservableObject
     /// <param name="characters">The characters, online and not.</param>
     /// <param name="routes">The routes.</param>
     /// <param name="zones">The zones.</param>
-    public OutlinerViewModel(Localizer localizer, WorldSelection selection, WorldViewportViewModel world, CharactersViewModel characters, RoutesViewModel routes, ZonesViewModel zones)
+    /// <param name="followed">The characters that follow a route now, or <see langword="null"/> for none (D419).</param>
+    public OutlinerViewModel(Localizer localizer, WorldSelection selection, WorldViewportViewModel world, CharactersViewModel characters, RoutesViewModel routes, ZonesViewModel zones, FollowedRuns? followed = null)
     {
+        _followed = followed ?? FollowedRuns.None;
         _localizer = localizer;
         _selection = selection;
         _world = world;
@@ -80,7 +83,7 @@ internal sealed partial class OutlinerViewModel : ObservableObject
 
     private static string Describe(OutlinerRowViewModel row)
     {
-        return string.Join('|', row.Key, row.Title, row.Detail, row.Count, row.IsSelected, row.IsExpanded, row.IsEyeOpen, row.IsDirty, row.IsDimmed, row.StateBrush is ISolidColorBrush state ? state.Color : null, row.Head is not null, row.Dots.Count);
+        return string.Join('|', row.Key, row.Title, row.Detail, row.Count, row.IsSelected, row.IsExpanded, row.IsEyeOpen, row.IsDirty, row.IsDimmed, row.Followers, row.IsArrived, row.StateBrush is ISolidColorBrush state ? state.Color : null, row.Head is not null, row.Dots.Count);
     }
 
     private static void Copy(OutlinerRowViewModel from, OutlinerRowViewModel to)
@@ -92,6 +95,8 @@ internal sealed partial class OutlinerViewModel : ObservableObject
         to.PortraitColor = from.PortraitColor;
         to.StateBrush = from.StateBrush;
         to.IsDimmed = from.IsDimmed;
+        to.Followers = from.Followers;
+        to.IsArrived = from.IsArrived;
         to.IsSelected = from.IsSelected;
         to.IsExpanded = from.IsExpanded;
         to.IsEyeOpen = from.IsEyeOpen;
@@ -358,6 +363,7 @@ internal sealed partial class OutlinerViewModel : ObservableObject
             return;
 
         var group = new List<OutlinerRowViewModel>();
+        var followed = _followed.All();
 
         foreach (var route in services.Library.Assets.OfType<RouteAsset>().OrderBy(route => route.Name, StringComparer.CurrentCultureIgnoreCase))
         {
@@ -371,6 +377,7 @@ internal sealed partial class OutlinerViewModel : ObservableObject
                 continue;
 
             var key = "route:" + route.Id;
+            var following = followed.Where(run => run.Position.Route == route.Id).ToList();
             var expanded = _expanded.Contains(route.Id) || (Filter.Trim().Length > 0 && stepMatches.Count > 0);
 
             group.Add(new OutlinerRowViewModel(key, OutlinerRowKind.Route)
@@ -378,7 +385,9 @@ internal sealed partial class OutlinerViewModel : ObservableObject
                 Id = route.Id,
                 Indent = ItemIndent,
                 Title = route.Name,
-                Detail = _localizer.Plural("OutlinerSteps", anchors.Count),
+                Detail = following.Count == 0 ? _localizer.Plural("OutlinerSteps", anchors.Count) : $"{_localizer.Plural("OutlinerSteps", anchors.Count)} · {string.Join(", ", following.Select(run => $"{run.Name} {_localizer.Format("CardStep", run.Position.Step, run.Position.Anchors)}"))}",
+                Followers = string.Join(' ', following.Select(run => run.Initials)),
+                IsArrived = following.Any(run => run.Position.Arrived),
                 IconKey = AssetKinds.IconOf(AssetKind.Route),
                 CanExpand = anchors.Count > 0,
                 IsExpanded = expanded && anchors.Count > 0,
@@ -401,6 +410,8 @@ internal sealed partial class OutlinerViewModel : ObservableObject
                     Title = place,
                     Detail = zone,
                     Dots = DotsOf(RouteActionKinds.Of(anchor.Actions)),
+                    Followers = string.Join(' ', following.Where(run => run.Position.Anchor == index).Select(run => run.Initials)),
+                    IsArrived = following.Any(run => run.Position.Anchor == index && run.Position.Arrived),
                     IsSelected = _selection.IsStep(route.Id, index),
                 });
             }

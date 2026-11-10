@@ -16,9 +16,13 @@ namespace D3B.Studio.Routes;
 /// </remarks>
 public sealed class RouteCursor
 {
+    private readonly Lock _gate = new();
     private readonly int _count;
     private readonly RouteMode _mode;
     private long _visit;
+    private int _played;
+    private bool _arrived;
+    private long _announced = -1;
 
     /// <summary>Initializes a new instance of the <see cref="RouteCursor"/> class.</summary>
     /// <param name="anchors">How many anchors the route has.</param>
@@ -73,22 +77,78 @@ public sealed class RouteCursor
     /// <summary>Gets how many laps of a loop the run has finished.</summary>
     public long Laps => _mode == RouteMode.Loop && _count > 0 ? _visit / _count : 0;
 
+    /// <summary>Gets whether a route there and back is on its way back, from the last anchor to the first.</summary>
+    public bool Returning => _mode == RouteMode.RoundTrip && _visit >= _count;
+
+    /// <summary>Gets whether the character is on the map of the anchor it goes to, rather than on its way there (D419).</summary>
+    public bool Arrived => _arrived;
+
     /// <summary>Gets how many of the anchor's actions the run has played.</summary>
-    public int Played { get; private set; }
+    public int Played => _played;
 
     /// <summary>Notes that one more action of the anchor was played.</summary>
     public void ActionPlayed()
     {
-        Played++;
+        lock (_gate)
+        {
+            _played++;
+        }
+    }
+
+    /// <summary>Notes that the character is on the anchor's map.</summary>
+    public void Arrive()
+    {
+        lock (_gate)
+        {
+            _arrived = true;
+        }
+    }
+
+    /// <summary>Tells whether the arrival at this anchor is the first to be said: a run cut and resumed on the same anchor says it once.</summary>
+    /// <returns><see langword="true"/> once for each visit of an anchor.</returns>
+    public bool TryAnnounce()
+    {
+        lock (_gate)
+        {
+            if (_announced == _visit)
+                return false;
+
+            _announced = _visit;
+
+            return true;
+        }
+    }
+
+    /// <summary>Notes that the character goes to the anchor, as a run does again after a cut.</summary>
+    public void Depart()
+    {
+        lock (_gate)
+        {
+            _arrived = false;
+        }
     }
 
     /// <summary>Goes on to the next anchor: the run was at this one, or passed it.</summary>
     public void Advance()
     {
-        if (IsDone)
-            return;
+        lock (_gate)
+        {
+            if (IsDone)
+                return;
 
-        _visit++;
-        Played = 0;
+            _visit++;
+            _played = 0;
+            _arrived = false;
+        }
+    }
+
+    /// <summary>Reads where the run is in one go, for another thread than the run's.</summary>
+    /// <returns>The run's place.</returns>
+    public RouteCursorSnapshot Snapshot()
+    {
+        lock (_gate)
+        {
+            return new RouteCursorSnapshot(Anchor, _arrived, _played, _visit, Laps, Returning, IsDone);
+        }
     }
 }

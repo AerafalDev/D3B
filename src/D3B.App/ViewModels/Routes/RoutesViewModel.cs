@@ -1,5 +1,6 @@
 using D3B.App.Controls;
 using D3B.App.Localization;
+using D3B.App.ViewModels.World;
 using D3B.Bot.Movement;
 using D3B.Bot.Settings;
 using D3B.Data;
@@ -50,6 +51,9 @@ internal sealed class RoutesViewModel
             return _services;
         }
     }
+
+    /// <summary>Gets or sets the characters that follow a route now, which the Sequencers mark (D419).</summary>
+    internal FollowedRuns Followed { get; set; } = FollowedRuns.None;
 
     /// <summary>Gets the routes whose editor is open.</summary>
     public IReadOnlyList<RouteEditorViewModel> Open => _open;

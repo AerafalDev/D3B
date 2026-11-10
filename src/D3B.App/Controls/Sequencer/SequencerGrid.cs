@@ -29,6 +29,7 @@ internal sealed class SequencerGrid : Control
     private static readonly IBrush _zone = new SolidColorBrush(Colors.White, 0.05);
     private static readonly IBrush _bright = new SolidColorBrush(Color.Parse("#F4F4F6"));
     private static readonly IBrush _muted = new SolidColorBrush(Color.Parse("#8E9099"));
+    private static readonly IBrush _ink = new SolidColorBrush(Color.Parse("#0B0B0D"));
     private static readonly IBrush _clipText = new SolidColorBrush(Color.Parse("#0A0E0B"));
     private static readonly IPen _line = new Pen(new SolidColorBrush(Colors.White, 0.07), 1);
     private static readonly IPen _faint = new Pen(new SolidColorBrush(Colors.White, 0.035), 1);
@@ -85,6 +86,9 @@ internal sealed class SequencerGrid : Control
 
     /// <summary>Raised when a press held on a clip or a track is let go.</summary>
     public event Action? GestureEnded;
+
+    /// <summary>Raised when the pointer is over another column, or leaves the columns (-1), so that the world's map can light the step (D419).</summary>
+    public event Action<int>? ColumnHovered;
 
     /// <summary>Initializes static members of the <see cref="SequencerGrid"/> class.</summary>
     static SequencerGrid()
@@ -172,6 +176,21 @@ internal sealed class SequencerGrid : Control
             context.DrawRectangle(_bandRuler, null, new Rect(step * width, 0, width, SequencerLayout.RulerHeight));
         }
 
+        foreach (var head in scene.Playheads)
+        {
+            var column = new Rect(head.Step * width, 0, width, height);
+
+            if (head.Arrived)
+            {
+                context.DrawRectangle(new SolidColorBrush(head.Color, 0.13), null, column);
+                context.DrawRectangle(new SolidColorBrush(head.Color), null, new Rect(column.X, 0, width, 3));
+            }
+            else
+            {
+                context.DrawRectangle(null, new Pen(new SolidColorBrush(head.Color, 0.9), 1.5, new DashStyle([3, 3], 0)), column.Deflate(1));
+            }
+        }
+
         for (var i = 0; i < scene.Steps.Count; i++)
         {
             var cell = new Rect(i * width, 0, width, SequencerLayout.RulerHeight);
@@ -185,6 +204,19 @@ internal sealed class SequencerGrid : Control
         }
 
         context.DrawLine(_line, new Point(0, SequencerLayout.RulerHeight), new Point(Bounds.Width, SequencerLayout.RulerHeight));
+
+        var onStep = new Dictionary<int, int>();
+
+        foreach (var head in scene.Playheads)
+        {
+            var count = onStep.GetValueOrDefault(head.Step);
+            var badge = new Rect(((head.Step + 1) * width) - 24 - (count * 24), 4, 22, 14);
+            var initials = new FormattedText(head.Initials, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, bold, 9, _ink);
+
+            onStep[head.Step] = count + 1;
+            context.DrawRectangle(new SolidColorBrush(head.Color), null, new RoundedRect(badge, 5));
+            context.DrawText(initials, new Point(badge.Center.X - (initials.Width / 2), badge.Center.Y - (initials.Height / 2)));
+        }
 
         for (var i = 0; i < scene.Steps.Count; i++)
         {
@@ -274,6 +306,14 @@ internal sealed class SequencerGrid : Control
     }
 
     /// <inheritdoc/>
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+
+        ColumnHovered?.Invoke(-1);
+    }
+
+    /// <inheritdoc/>
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
@@ -292,6 +332,8 @@ internal sealed class SequencerGrid : Control
 
             return;
         }
+
+        ColumnHovered?.Invoke(Scene.Steps.Count == 0 || at.X < 0 || at.X >= Bounds.Width ? -1 : ColumnOf(at.X));
 
         Cursor = ClipAt(at) switch
         {

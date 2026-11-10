@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Avalonia.Media;
 using D3B.App.Controls.Sequencer;
 using D3B.Studio.Assets;
 using D3B.App.ViewModels.Settings;
@@ -35,6 +36,8 @@ internal sealed partial class SequencerViewModel : ObservableObject
     private string _cardsKey = "";
     private bool _editing;
     private List<NodeCall> _common = [];
+    private ImmutableArray<SequencerPlayhead> _playheads = [];
+    private int _hovered = -1;
 
     /// <summary>Gets what is drawn.</summary>
     [ObservableProperty]
@@ -43,6 +46,17 @@ internal sealed partial class SequencerViewModel : ObservableObject
     /// <summary>Gets the clip selected, by its place in the scene, or -1 for none.</summary>
     [ObservableProperty]
     public partial int SelectedClip { get; private set; } = -1;
+
+    /// <summary>Gets who follows the route and how far, said: "Ayuwoki · step 2/3", or "to step 2/3" while it walks there; nothing while none does (D419).</summary>
+    [ObservableProperty]
+    public partial string RunStatus { get; private set; } = "";
+
+    /// <summary>Gets whether the ruler scrolls to keep the playhead in sight, as the user can turn off to read elsewhere.</summary>
+    [ObservableProperty]
+    public partial bool KeepsInSight { get; set; } = true;
+
+    /// <summary>Gets whether a character follows the route.</summary>
+    public bool IsFollowed => _playheads.Length > 0;
 
     /// <summary>Gets the kinds of action a track can still be added for, which the palette offers.</summary>
     [ObservableProperty]
@@ -110,6 +124,9 @@ internal sealed partial class SequencerViewModel : ObservableObject
 
     /// <summary>Gets the clip selected, or <see langword="null"/>.</summary>
     public RouteClip? Selected => _selected;
+
+    /// <summary>Raised when the pointer comes onto the column of a step, or leaves the columns (-1): the world's map lights the step.</summary>
+    public event Action<int>? StepLit;
 
     /// <summary>Initializes a new instance of the <see cref="SequencerViewModel"/> class.</summary>
     /// <param name="route">The route's editor.</param>
@@ -509,6 +526,32 @@ internal sealed partial class SequencerViewModel : ObservableObject
         _from = step;
     }
 
+    /// <summary>Reads who follows the route again, and moves the playheads where they differ (D419).</summary>
+    public void Follow()
+    {
+        var runs = _page.Followed.On(_route.Id).Where(run => run.Position.Anchor < _route.CurrentAnchors.Count).ToList();
+        var heads = runs.Select(run => new SequencerPlayhead(run.Position.Anchor, run.Initials, run.Color is ISolidColorBrush solid ? solid.Color : Colors.Gray, run.Position.Arrived)).ToImmutableArray();
+
+        if (heads.SequenceEqual(_playheads))
+            return;
+
+        _playheads = heads;
+        Scene = Scene with { Playheads = heads };
+        RunStatus = string.Join(", ", runs.Select(run => _page.Localizer.Format(run.Position.Arrived ? "CardRouteAt" : "CardRouteTo", run.Name, run.Position.Step, run.Position.Anchors)));
+        OnPropertyChanged(nameof(IsFollowed));
+    }
+
+    /// <summary>Says the pointer is on the column of a step, or on none.</summary>
+    /// <param name="step">The step, or -1.</param>
+    public void Hover(int step)
+    {
+        if (step == _hovered)
+            return;
+
+        _hovered = step;
+        StepLit?.Invoke(step);
+    }
+
     private void Select(RouteClip? clip)
     {
         _selected = clip;
@@ -548,7 +591,7 @@ internal sealed partial class SequencerViewModel : ObservableObject
         }
 
         _clips = clips;
-        Scene = new SequencerScene(steps, tracks);
+        Scene = new SequencerScene(steps, tracks) { Playheads = [.. _playheads.Where(head => head.Step < steps.Count)] };
         SelectedClip = Retarget();
         OnPropertyChanged(nameof(Status));
         BuildCards();

@@ -1766,6 +1766,18 @@
   <data name="CardRound" xml:space="preserve">
     <value>tour {0}</value>
   </data>
+  <data name="CardRouteAt" xml:space="preserve">
+    <value>{0} · étape {1}/{2}</value>
+  </data>
+  <data name="CardRouteBack" xml:space="preserve">
+    <value> · retour</value>
+  </data>
+  <data name="CardRouteLap" xml:space="preserve">
+    <value> · tour {0}</value>
+  </data>
+  <data name="CardRouteTo" xml:space="preserve">
+    <value>{0} · vers l’étape {1}/{2}</value>
+  </data>
   <data name="CardStep" xml:space="preserve">
     <value>{0}/{1}</value>
   </data>
@@ -3029,6 +3041,9 @@
   <data name="WorldHudHintLevel" xml:space="preserve">
     <value>{0} · {1} · niveau {2} · {3}</value>
   </data>
+  <data name="WorldPlaysStep" xml:space="preserve">
+    <value>{0} joue · étape {1}/{2}</value>
+  </data>
   <data name="WorldPlays" xml:space="preserve">
     <value>{0} joue</value>
   </data>
@@ -3115,6 +3130,9 @@
   </data>
   <data name="SequencerMovement" xml:space="preserve">
     <value>Déplacement</value>
+  </data>
+  <data name="SequencerKeepInSight" xml:space="preserve">
+    <value>Suivre le run</value>
   </data>
   <data name="SequencerAddTrack" xml:space="preserve">
     <value>Ajouter une piste</value>

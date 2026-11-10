@@ -7,6 +7,8 @@ using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.Settings;
+using D3B.App.ViewModels.World;
+using D3B.Bot.Characters;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
@@ -638,5 +640,102 @@ public sealed class SequencerViewModelTests : IAsyncDisposable
         Assert.True(sequencer.PressKey(Key.Right, KeyModifiers.Alt));
 
         Assert.NotSame(before, sequencer.ClipCard);
+    }
+
+    private static FollowedRun Following(string name, string route, int anchor, bool arrived, int anchors = 3)
+    {
+        var position = new RouteRunPosition(new CharacterKey(1, anchor), route, route, RouteMode.OneWay, anchors, anchor, arrived, 0, 0, 0, false);
+
+        return new FollowedRun(position, name, name[..2].ToUpperInvariant(), null);
+    }
+
+    [Fact]
+    public async Task ThePlayheadOfACharacterOnTheRouteIsOnTheStepItGoesToAndFilledOnceItIsThere()
+    {
+        var (routes, editor) = await OpenAsync(Step(1), Step(2), Step(3));
+        var runs = new List<FollowedRun> { Following("Ayuwoki", "r1", 1, false) };
+
+        routes.Followed = new FollowedRuns(() => runs);
+        editor.Sequencer.Follow();
+
+        Assert.Equal([(1, "AY", false)], editor.Sequencer.Scene.Playheads.Select(head => (head.Step, head.Initials, head.Arrived)));
+        Assert.Equal("Ayuwoki · to step 2/3", editor.Sequencer.RunStatus);
+
+        runs[0] = Following("Ayuwoki", "r1", 1, true);
+        editor.Sequencer.Follow();
+
+        Assert.Equal([(1, "AY", true)], editor.Sequencer.Scene.Playheads.Select(head => (head.Step, head.Initials, head.Arrived)));
+        Assert.Equal("Ayuwoki · step 2/3", editor.Sequencer.RunStatus);
+
+        runs.Clear();
+        editor.Sequencer.Follow();
+
+        Assert.Empty(editor.Sequencer.Scene.Playheads);
+        Assert.Equal("", editor.Sequencer.RunStatus);
+    }
+
+    [Fact]
+    public async Task EachCharacterOnTheRouteHasItsOwnPlayheadAndTheRunOfAnotherRouteIsNotShown()
+    {
+        var (routes, editor) = await OpenAsync(Step(1), Step(2), Step(3));
+        var runs = new List<FollowedRun> { Following("Ayuwoki", "r1", 0, true), Following("Bolgrim", "r1", 2, false), Following("Cael", "other", 1, true) };
+
+        routes.Followed = new FollowedRuns(() => runs);
+        editor.Sequencer.Follow();
+
+        Assert.Equal([(0, "AY"), (2, "BO")], editor.Sequencer.Scene.Playheads.Select(head => (head.Step, head.Initials)));
+        Assert.Equal("Ayuwoki · step 1/3, Bolgrim · to step 3/3", editor.Sequencer.RunStatus);
+    }
+
+    [Fact]
+    public async Task ThePlayheadOfARunPastTheStepsTheRouteHasNowIsNotShown()
+    {
+        var (routes, editor) = await OpenAsync(Step(1), Step(2), Step(3));
+        var runs = new List<FollowedRun> { Following("Ayuwoki", "r1", 4, true, 5), Following("Bolgrim", "r1", 1, true, 5) };
+
+        routes.Followed = new FollowedRuns(() => runs);
+        editor.Sequencer.Follow();
+
+        Assert.Equal([1], editor.Sequencer.Scene.Playheads.Select(head => head.Step));
+        Assert.Equal("Bolgrim · step 2/5", editor.Sequencer.RunStatus);
+    }
+
+    [Fact]
+    public async Task ThePlayheadsSurviveAnEditOfTheRouteAndLeaveWhenTheirStepIsGone()
+    {
+        var (routes, editor) = await OpenAsync(Step(1), Step(2), Step(3));
+        var runs = new List<FollowedRun> { Following("Ayuwoki", "r1", 1, true) };
+
+        routes.Followed = new FollowedRuns(() => runs);
+        editor.Sequencer.Follow();
+        editor.Remove(2);
+
+        Assert.Equal([1], editor.Sequencer.Scene.Playheads.Select(head => head.Step));
+
+        editor.Remove(1);
+
+        Assert.Empty(editor.Sequencer.Scene.Playheads);
+    }
+
+    [Fact]
+    public async Task TheSequencerKeepsThePlayheadInSightByDefault()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2));
+
+        Assert.True(editor.Sequencer.KeepsInSight);
+    }
+
+    [Fact]
+    public async Task HoveringAColumnTellsWhichStepToLightAndLeavingItTellsNone()
+    {
+        var (_, editor) = await OpenAsync(Step(1), Step(2));
+        var lit = new List<int>();
+
+        editor.Sequencer.StepLit += lit.Add;
+        editor.Sequencer.Hover(1);
+        editor.Sequencer.Hover(1);
+        editor.Sequencer.Hover(-1);
+
+        Assert.Equal([1, -1], lit);
     }
 }

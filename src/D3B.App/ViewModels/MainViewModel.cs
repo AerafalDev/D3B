@@ -74,6 +74,9 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the home page, the first tab: quick actions, the characters and the assets changed last (D406).</summary>
     public HomeViewModel Home { get; }
 
+    /// <summary>Gets the characters that follow a route now, which the Outliner, the map and the Sequencer show (D419).</summary>
+    internal FollowedRuns Followed { get; }
+
     /// <summary>Gets the world's viewport, shown once a route or a zone is selected (D397, D406).</summary>
     public WorldViewportViewModel World { get; }
 
@@ -269,8 +272,10 @@ internal sealed partial class MainViewModel : ObservableObject
         Search = new SearchViewModel(localizer, SearchItems);
         Bots.Choose = RunBlock.Choose;
         ClientText = localizer.Format("StatusClient", Updates.ClientVersion);
-        World = new WorldViewportViewModel(localizer, Routes, Zones, Selection, () => Bots.Items.Select(bot => new WorldCharacterSnapshot(bot.Bot.Key, bot.Name, bot.Initials, bot.PortraitColor, bot.Bot.State.MapId, bot.IsPlaying || bot.IsFighting)), () => RunBlock.IsPlaying ? RunBlock.Name : null);
-        Outliner = new OutlinerViewModel(localizer, Selection, World, Characters, Routes, Zones) { Show = ShowWorld };
+        Followed = new FollowedRuns(() => Bots.Items.Where(bot => bot.Route is not null).Select(bot => new FollowedRun(bot.Route!, bot.Name, bot.Initials, bot.PortraitColor)));
+        Routes.Followed = Followed;
+        World = new WorldViewportViewModel(localizer, Routes, Zones, Selection, () => Bots.Items.Select(bot => new WorldCharacterSnapshot(bot.Bot.Key, bot.Name, bot.Initials, bot.PortraitColor, bot.Bot.State.MapId, bot.IsPlaying || bot.IsFighting)), () => RunBlock.IsPlaying ? RunBlock.Name : null, Followed);
+        Outliner = new OutlinerViewModel(localizer, Selection, World, Characters, Routes, Zones, Followed) { Show = ShowWorld };
         Home = new HomeViewModel(localizer, Characters, () => _host.Services?.GetService<AssetLibrary>(), OpenAsset)
         {
             ProfileRequested = NewProfile,
@@ -340,6 +345,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Sequences.Refresh(services);
         Bots.Refresh(services);
         Characters.Refresh(services);
+        World.Route?.Sequencer.Follow();
         RunBlock.Refresh();
         Outliner.Refresh();
         Home.Refresh();

@@ -5,6 +5,9 @@ namespace D3B.App.Controls.Sequencer;
 /// <param name="Tracks">The tracks, under the ruler and the movement row.</param>
 internal sealed record SequencerScene(IReadOnlyList<SequencerStep> Steps, IReadOnlyList<SequencerTrack> Tracks)
 {
+    /// <summary>Gets the characters that follow the route, each marked on the column of the step it goes to (D419).</summary>
+    public IReadOnlyList<SequencerPlayhead> Playheads { get; init; } = [];
+
     /// <summary>Gets the scene of no route.</summary>
     public static SequencerScene Empty { get; } = new([], []);
 

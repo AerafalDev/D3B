@@ -156,6 +156,7 @@ internal sealed partial class RunBlockViewModel : ObservableObject
         Detail = State switch
         {
             RunState.Playing when chosen.Bot.State.IsFighting => _localizer["RunFighting"],
+            RunState.Playing when chosen.RouteText.Length > 0 => $"{chosen.ActivityName} · {chosen.RouteText}",
             RunState.Playing => chosen.ProgressText.Length > 0 ? $"{chosen.ActivityName} · {chosen.ProgressText}" : chosen.ActivityName,
             RunState.Paused => _localizer.Format("RunPausedDoing", chosen.ActivityName),
             _ when !chosen.IsConnected => _localizer["Disconnected"],
