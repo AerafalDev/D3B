@@ -78,6 +78,22 @@ public sealed class CaptureTests
     }
 
     [Fact]
+    public void RecordsCopiedKeepTheirKindAndOffsetSoTheCopyIsTheSameFile()
+    {
+        var capture = Session(new FakeTimeProvider());
+        using var reader = new CaptureReader(new MemoryStream(capture));
+        using var copy = new MemoryStream();
+
+        using (var writer = new CaptureWriter(copy, reader.Header, new FakeTimeProvider()))
+        {
+            foreach (var record in reader.ReadAll())
+                writer.Copy(record);
+        }
+
+        Assert.Equal(capture, copy.ToArray());
+    }
+
+    [Fact]
     public void ACaptureCutShortReadsUpToItsLastWholeRecord()
     {
         var time = new FakeTimeProvider();
