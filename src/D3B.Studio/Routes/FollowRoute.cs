@@ -40,7 +40,7 @@ internal sealed class FollowRoute : ActionNode<RouteFollowValues>
         }
 
         var key = bot.State.Key;
-        var cursor = _runs.Of(key, route, context.View.Started);
+        var cursor = _runs.Of(key, route, context.View.Started, context.Pass);
         RouteResult result;
 
         _runs.Begin(key, route, cursor);

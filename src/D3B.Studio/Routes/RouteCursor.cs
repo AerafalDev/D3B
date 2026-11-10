@@ -19,6 +19,7 @@ public sealed class RouteCursor
     private readonly Lock _gate = new();
     private readonly int _count;
     private readonly RouteMode _mode;
+    private readonly long _firstLap;
     private long _visit;
     private int _played;
     private bool _arrived;
@@ -27,12 +28,18 @@ public sealed class RouteCursor
     /// <summary>Initializes a new instance of the <see cref="RouteCursor"/> class.</summary>
     /// <param name="anchors">How many anchors the route has.</param>
     /// <param name="mode">How it goes through them.</param>
-    public RouteCursor(int anchors, RouteMode mode)
+    /// <param name="firstLap">
+    /// How many laps came before this run's: a step that repeats follows a loop one lap at a time, each pass a cursor of its own
+    /// that goes through the anchors once (D420), and says which lap it is.
+    /// </param>
+    public RouteCursor(int anchors, RouteMode mode, long firstLap = 0)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(anchors);
+        ArgumentOutOfRangeException.ThrowIfNegative(firstLap);
 
         _count = anchors;
         _mode = anchors < 2 ? RouteMode.OneWay : mode;
+        _firstLap = firstLap;
     }
 
     /// <summary>Gets whether the run has been to every anchor its course asks for.</summary>
@@ -75,7 +82,7 @@ public sealed class RouteCursor
     public long Visits => _visit;
 
     /// <summary>Gets how many laps of a loop the run has finished.</summary>
-    public long Laps => _mode == RouteMode.Loop && _count > 0 ? _visit / _count : 0;
+    public long Laps => _firstLap + (_mode == RouteMode.Loop && _count > 0 ? _visit / _count : 0);
 
     /// <summary>Gets whether a route there and back is on its way back, from the last anchor to the first.</summary>
     public bool Returning => _mode == RouteMode.RoundTrip && _visit >= _count;

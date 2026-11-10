@@ -79,6 +79,22 @@ public sealed class RouteRunsTests
     }
 
     [Fact]
+    public void ALoopFollowedInPassesGoesRoundOnceForEachPassAndCountsThePassAsTheLap()
+    {
+        var runs = new RouteRuns();
+        var route = Route(RouteMode.Loop, 0, 0);
+        var start = new DateTimeOffset(2026, 11, 10, 9, 0, 0, TimeSpan.Zero);
+        var cursor = runs.Of(_first, route, start, 3);
+
+        runs.Begin(_first, route, cursor);
+
+        Assert.Equal(3, runs.Position(_first)!.Lap);
+        Assert.Equal([0, 1], Enumerable.Range(0, 2).Select(_ => cursor.Anchor).Select(anchor => { cursor.Advance(); return anchor; }));
+        Assert.True(cursor.IsDone);
+        Assert.False(runs.Of(_second, route, start).IsDone);
+    }
+
+    [Fact]
     public void TwoCharactersOnTheSameRouteHaveEachTheirOwnPosition()
     {
         var runs = new RouteRuns();

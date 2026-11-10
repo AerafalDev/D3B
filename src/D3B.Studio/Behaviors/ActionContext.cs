@@ -13,6 +13,9 @@ public sealed class ActionContext
     /// <summary>Gets what the conditions read now.</summary>
     public BehaviorView View { get; }
 
+    /// <summary>Gets the pass of the step being played, from 1, when it is repeated; 0 when it is played once (D420).</summary>
+    public int Pass { get; internal init; }
+
     internal ActionContext(BotContext? bot, BehaviorView view, IBehaviorControl control)
     {
         Bot = bot;
