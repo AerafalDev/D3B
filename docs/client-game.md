@@ -1319,3 +1319,40 @@ character, never a name.
   pixels in DXT5 (format 12), one level, white on transparent: `heart`, `weight`, `crossedSwords`, `job`,
   `resources`, `pin`, `hourglass`, `kamas`, `experience`, `chest`, `havreSac`, `character`, `pause`, `success`,
   `zaap` and `skull` among them, and a `ShadowOutline` variant of many.
+
+## The game, what names the account
+
+Measured on 2026-11-10 for session BR1 (D409, D410), on the owner's captures of 3.7.13.17, by structure and counts only: one 42-minute
+connection read whole with `scripts/capture.cs --messages --frames --schema --mapping` (6,676 server frames, 715 client frames), then
+60 connections of 16 characters (100 KB to 6 MB each) walked by a throwaway tool never committed, which compared the text fields of the first
+90 frames of each side across captures and printed counts, never a value. Only text is measured: the numbers a frame holds (the character's
+id among them) are not. The type codes are this build's.
+
+- **The ticket** is the `AuthenticationRequest` (`knc`), field 1, 32 lowercase hexadecimal characters, in the client's first frame. It
+  occurs once in the whole connection: no other frame of either side holds its bytes (a count of the raw bytes, 1, equals the count of
+  the fields). It differs in every connection (60 of 60).
+- **Two other strings of the client are opaque and look like secrets.** `kod`, field 1, a request sent 50 ms after the character list is
+  asked for: 229 to 232 characters of digits and `a` to `f`, in 60 of 60 connections and 57 different values in the 60. Three more of the
+  same shape go later (`kof` and `koc`, 230 to 232 characters) and the server answers with one of 77 characters (`koh`). `kso`, field 1,
+  sent just before a character is chosen: 32 characters of the same alphabet as the ticket and another value, in 5 of the 60. None is
+  named by the readable protocol, none is ever in the server's frames, and what they are is not known: they change with each connection,
+  so they are of the session and not of the account, but they are as secret as the ticket looks.
+- **The characters' names** are the account's own. `CharacterListEvent` (`ksc`) lists every character of the account on the server, each
+  with its name as field 2.4.6; `CharacterSelectionEvent` (`ksb`) holds the chosen one's at 1.1.4.6; `ksw` (field 2), the answer to a
+  request (`ksm`) naming a character by its id, holds one of the list's, in 5 of the 60. The chosen character's name does not stay there:
+  in the connection read whole it occurs 174 times, in 8 places: the map's information (`jnj`, 164 times, the character being an actor of
+  each map it enters), an actor shown (`jns`), a text event (`lof`), `jei` (1.4.6, the same field as the list's), the list, the selection,
+  and a fighter shown or synchronised in a fight (`jwj`, `juo`). Every occurrence is a string field: a count of the raw bytes equals a
+  count of the fields. The names of the account's other characters occur in the list and `ksw` only.
+- **Stable per character, meaning not known.** Two GUIDs of one message (`lve`, 1.4 and 3.4, with a timestamp at 1.17 and 3.17) kept
+  their value from one session to the next for 3 of the 5 characters seen twice, with 20 values over 16 characters: whatever they
+  identify, they identify what is reported. `lvw` (field 2, a GUID), `lpp` (field 1, a GUID) and `izn` (field 1, ten digits) change
+  with every session, as do the two timestamps of the selection (`ksb`, 1.1.4.5.2 and 1.1.4.5.5, 59 and 60 different values in 60 captures).
+- **Content, not identity.** The 36-character GUIDs that `ico` repeats 136 times in a connection take 12 values over 25 connections: the
+  game's own ids. Other players' names on the maps are in the same fields as the character's own (`jnj`, `jns`): a name by value, not by field.
+- **What is not in the game connection** is a login or an account's name: the ticket is all it holds of the account, and the connection phase
+  that the report never holds is where the account is named (D65).
+
+What this means for a cleaner (BR2): overwriting the ticket and the list and selection fields would leave the chosen character's name 170
+times in the capture. A name has to be found by value, wherever it occurs in a string field, and the opaque strings of the client by their
+shape or their field; which GUIDs stand for the character is the question left.

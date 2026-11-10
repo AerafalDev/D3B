@@ -35,6 +35,11 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
 
 ## Not measured in game
 
+- Recording by default and its retention (BR1, D409) are tested on temporary files, the relay of the tests and view models, and the settings
+  and the home page's notice in headless windows, not seen by the owner in the app and not run on a client. The first start of the host after
+  the change deletes the game's captures older than 7 days or beyond 1 GB: the owner's 153 captures, which `scripts/fights.cs` replays, would
+  go, so he sets `Network:Captures:Retention:Days` to 0 (or copies `captures\game`) before it. The 7 days and the 1 GB are D409's, the lead's reckoning.
+
 - Following a run (D419, 7r4) is tried on the fake game, view models and headless windows, not on a client: whether the position told is the
   position lived with real travel (zaaps, `Busy` waits, a map with no path), a fight or a bank cutting the route and the run resuming on the
   same step, a long action while the playhead stays on its step, two accounts on one route, 250 ms against a map every three seconds. The
@@ -79,9 +84,10 @@ As of 2026-11-10, after D418 (7r5b, the profile as an asset editor), D415 (7r5 p
 0. **The refactoring and tidy-up session** (D399 to D401) is mostly done: `decisions.md` is cut in files by group of the index,
    `client.md` has its game connection apart, `AssetsViewModel`, `BotActor`, `HarvestActivity`, `WorldMapView` and `Imagination`
    are under 900 lines, BenchmarkDotNet is gone. Left: `FightJudge` and `RouteEditorViewModel`, over 900 lines (debt, below).
-0. **Bug reports with the player's capture** (D409 to D411), designed, not begun: the game connection recorded by default, a
-   `.d3breport` bundle with the capture cleaned at the export, sent by a private Discord webhook; BR1 to BR4 in the roadmap, BR1
-   first. Nothing of it exists in code yet.
+0. **Bug reports with the player's capture** (D409 to D411): BR1 is made, the game connection is recorded by default with its
+   retention and the notice (`Network:Captures:Game`, `CaptureRetention`), and what names the account in a capture is measured
+   ([client-game.md](client-game.md#the-game-what-names-the-account)): it is more than the ticket and the list, so BR2's cleaner waits
+   for the owner's answer on D410. Then a `.d3breport` bundle, the app's action and the Discord webhook (BR2 to BR4).
 1. **7r4, following a run, is made** (D419), to try in game with the owner's list; then **7r6**, sequences as blocks, laps and "until" (a change of
    `RouteRunner`, to confirm), all before 7e. What 7r3 and 7r4 leave: the map's frame, a panel taller for the Sequencer, the steps already
    passed dimmed on the map, and recording in the toolbar, which waits for the measure in game.
