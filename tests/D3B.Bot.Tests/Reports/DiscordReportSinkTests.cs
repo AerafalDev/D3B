@@ -192,6 +192,55 @@ public sealed class DiscordReportSinkTests : IDisposable
     }
 
     [Fact]
+    public async Task AReportMovedOrLockedSinceItWasWrittenIsAResultNotAnException()
+    {
+        var sink = Sink(_ => Task.FromResult(Json(HttpStatusCode.OK)));
+        var request = Request("x");
+
+        File.Delete(request.FilePath);
+
+        Assert.Equal(ReportSendStatus.Unavailable, (await sink.SendAsync(request, null, TestContext.Current.CancellationToken)).Status);
+    }
+
+    [Fact]
+    public async Task AnAnswerArrivingInPiecesIsReadWholeSoATooLargeAnd429AndTheIdAreStillTold()
+    {
+        static HttpResponseMessage InPieces(HttpStatusCode status, string json)
+        {
+            return new HttpResponseMessage(status) { Content = new StreamContent(new OneByteAtATime(Encoding.UTF8.GetBytes(json))) };
+        }
+
+        var large = await Sink(_ => Task.FromResult(InPieces(HttpStatusCode.BadRequest, """{"message":"Request entity too large","code":40005}"""))).SendAsync(Request("x"), null, TestContext.Current.CancellationToken);
+        var limited = await Sink(_ => Task.FromResult(InPieces(HttpStatusCode.TooManyRequests, """{"message":"You are being rate limited.","retry_after":4}"""))).SendAsync(Request("x"), null, TestContext.Current.CancellationToken);
+        var sent = await Sink(_ => Task.FromResult(InPieces(HttpStatusCode.OK, """{"id":"42","content":""}"""))).SendAsync(Request("x"), null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ReportSendStatus.TooLarge, large.Status);
+        Assert.Equal(TimeSpan.FromSeconds(4), limited.RetryAfter);
+        Assert.Equal("42", sent.MessageId);
+    }
+
+    [Fact]
+    public async Task ARateLimitWithOnlyAHeaderStillSaysHowLongToWait()
+    {
+        var response = Json(HttpStatusCode.TooManyRequests, "not json");
+
+        response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(7));
+
+        var result = await Sink(_ => Task.FromResult(response)).SendAsync(Request("x"), null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(TimeSpan.FromSeconds(7), result.RetryAfter);
+    }
+
+    [Fact]
+    public async Task ARefusalThatQuotesTheWebhookUrlCarriesNoTokenInItsDetail()
+    {
+        var result = await Sink(_ => Task.FromResult(Json(HttpStatusCode.BadRequest, """{"message":"bad post to /api/webhooks/123456789012345678/TheSecretTokenOfTheTest"}"""))).SendAsync(Request("x"), null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ReportSendStatus.Rejected, result.Status);
+        Assert.DoesNotContain("TheSecretTokenOfTheTest", result.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ARateLimitSaysHowLongToWait()
     {
         var result = await Sink(_ => Task.FromResult(Json(HttpStatusCode.TooManyRequests, """{"message":"You are being rate limited.","retry_after":2.5,"global":false}"""))).SendAsync(Request("x"), null, TestContext.Current.CancellationToken);
@@ -261,6 +310,25 @@ public sealed class DiscordReportSinkTests : IDisposable
     public void AWebhooksToStringHidesItsToken()
     {
         Assert.DoesNotContain("TheSecretTokenOfTheTest", ReportWebhook.Parse(Url).ToString(), StringComparison.Ordinal);
+    }
+
+    // A stream that gives one byte a read, as a slow network may cut an answer.
+    private sealed class OneByteAtATime : MemoryStream
+    {
+        public OneByteAtATime(byte[] bytes)
+            : base(bytes)
+        {
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            return base.Read(buffer, offset, Math.Min(count, 1));
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            return ValueTask.FromResult(base.Read(buffer.Span[..Math.Min(buffer.Length, 1)]));
+        }
     }
 
     // Progress<T> posts to the thread pool: a test reads what was told, so it is told at once.

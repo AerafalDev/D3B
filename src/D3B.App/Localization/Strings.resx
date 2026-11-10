@@ -3488,10 +3488,13 @@
   <data name="ReportSendGone" xml:space="preserve">
     <value>The channel no longer takes reports. The report is saved: hand the file over on Discord with the code {0}.</value>
   </data>
-  <data name="ReportSendFailed" xml:space="preserve">
-    <value>The report could not be sent. {0} It is saved: hand the file over on Discord with the code {1}.</value>
-  </data>
   <data name="ReportSendCancelled" xml:space="preserve">
     <value>Sending was cancelled. The report is saved: hand the file over on Discord with the code {0}.</value>
+  </data>
+  <data name="ReportSendRefused" xml:space="preserve">
+    <value>The channel refused the report. It is saved: hand the file over on Discord with the code {0}.</value>
+  </data>
+  <data name="ReportSendUnreachable" xml:space="preserve">
+    <value>The report could not be sent: the channel could not be reached. It is saved: hand the file over on Discord with the code {0}.</value>
   </data>
 </root>

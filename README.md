@@ -143,6 +143,7 @@ given on the command line:
 | `--Studio:Path <folder>` | Uses another project's folder, for its profiles and behaviors. |
 | `--Network:Captures:Game false` | Stops recording the game connection, which D3B records by default in `%LOCALAPPDATA%\D3B\captures\game`, so that a bug can be replayed and reported (the app's protocol inspector replays it too). A capture holds the account's login ticket: never share one. |
 | `--Network:Captures:Retention:Days 7`, `--Network:Captures:Retention:Megabytes 1024` | How long and how much of the game's captures are kept: the older ones, then the oldest while the rest is over the size, are deleted at each start of the host, never one still open. `0` lifts a limit. |
+| `D3B_REPORT_WEBHOOK` (environment variable) | The URL of a Discord webhook that bug reports are posted to instead of the one the release `report-channel` names: for a fork or a test. Never commit one. |
 | `--Network:Captures:Enabled true` | Also records the connection phase's captures, in `%LOCALAPPDATA%\D3B\captures`, which only the mapping tool reads and which hold the account's login token. |
 | `--Fights:Alone true` | Has the AI play every fight of the bots, the player's own included, whatever their activity says. |
 | `--Delays:Display 1.5` | The client's display time, in seconds; the other delays are under `Delays:` too. |

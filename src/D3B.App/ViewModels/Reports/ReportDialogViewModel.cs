@@ -8,8 +8,9 @@ namespace D3B.App.ViewModels.Reports;
 
 /// <summary>The dialog that makes a bug report: what it is about, a message of the player's own if they wish, what goes in it, and the file with its code (D410, D411).</summary>
 /// <remarks>
-/// Three steps in one dialog: the form, the preview where each part can be read and unchecked, and the report written. Nothing is sent: the file is
-/// written in a folder, which opens, and its code is copied, for the player to hand over on Discord (BR4 sends it by a webhook).
+/// Three steps in one dialog: the form, the preview where each part can be read and unchecked, and the report written. Saving writes the file in a
+/// folder, which opens, and copies its code. Nothing is sent until the player presses Send on the saved report; a report that cannot be sent stays
+/// saved, to hand over on Discord with its code. Closing the dialog, by any path, stops a send still going.
 /// </remarks>
 internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposable
 {
@@ -288,6 +289,11 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
         {
             SendText = _localizer.Format("ReportSendCancelled", written.Code);
         }
+        catch (Exception)
+        {
+            // The sink answers with results; whatever else goes wrong, the file is saved and the player is told so.
+            SendText = _localizer.Format("ReportSendUnreachable", written.Code);
+        }
         finally
         {
             IsSending = false;
@@ -309,7 +315,8 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
             ReportSendStatus.TooLarge => _localizer.Format("ReportSendTooLarge", (written.Size / 1024d / 1024d).ToString("0.#", _localizer.Culture), written.Code),
             ReportSendStatus.RateLimited => _localizer.Format("ReportSendRateLimited", Math.Ceiling(result.RetryAfter?.TotalSeconds ?? 5).ToString("0", _localizer.Culture)),
             ReportSendStatus.ChannelGone => _localizer.Format("ReportSendGone", written.Code),
-            _ => _localizer.Format("ReportSendFailed", result.Detail, written.Code),
+            ReportSendStatus.Rejected => _localizer.Format("ReportSendRefused", written.Code),
+            _ => _localizer.Format("ReportSendUnreachable", written.Code),
         };
     }
 

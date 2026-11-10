@@ -15,7 +15,7 @@ internal sealed class ProgressStream : Stream
 
     public override bool CanRead => true;
 
-    public override bool CanSeek => _inner.CanSeek;
+    public override bool CanSeek => false;
 
     public override bool CanWrite => false;
 

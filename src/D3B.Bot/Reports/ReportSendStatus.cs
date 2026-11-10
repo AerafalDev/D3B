@@ -12,7 +12,7 @@ public enum ReportSendStatus
     /// <summary>The channel asked to wait before another post.</summary>
     RateLimited,
 
-    /// <summary>The channel no longer exists or its URL was revoked: a newer app reads a new one.</summary>
+    /// <summary>The channel no longer exists or its URL was revoked: the app reads the asset again at the next send, which names a new one.</summary>
     ChannelGone,
 
     /// <summary>The channel refused the report.</summary>

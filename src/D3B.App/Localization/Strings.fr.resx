@@ -3488,10 +3488,13 @@
   <data name="ReportSendGone" xml:space="preserve">
     <value>Le canal n’accepte plus de rapports. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
   </data>
-  <data name="ReportSendFailed" xml:space="preserve">
-    <value>Le rapport n’a pas pu être envoyé. {0} Il est enregistré : remets le fichier sur Discord avec le code {1}.</value>
-  </data>
   <data name="ReportSendCancelled" xml:space="preserve">
     <value>L’envoi a été annulé. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
+  <data name="ReportSendRefused" xml:space="preserve">
+    <value>Le canal a refusé le rapport. Il est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
+  <data name="ReportSendUnreachable" xml:space="preserve">
+    <value>Le rapport n’a pas pu être envoyé : le canal n’a pas pu être joint. Il est enregistré : remets le fichier sur Discord avec le code {0}.</value>
   </data>
 </root>

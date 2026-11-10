@@ -37,6 +37,9 @@ A report is posted to a private channel of a Discord server that only D3B's main
 with its own [privacy policy](https://discord.com/privacy): it stores the file for as long as the maintainers leave it.
 The maintainers delete a report once its bug is fixed and at the latest 90 days after they received it.
 
+Pressing Send makes your computer contact two services: GitHub, to read where the channel is, and Discord, to post the report. Both
+see your IP address, as any website does; D3B sends them nothing else of you.
+
 Nobody else is meant to see a report, and what is in a report is never published: a capture holds data of Ankama's game
 and is never committed to the repository or used in a public test.
 

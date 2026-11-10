@@ -78,7 +78,7 @@ public sealed class ReportSendTests : IDisposable
     [InlineData(ReportSendStatus.TooLarge, "more than the channel takes")]
     [InlineData(ReportSendStatus.RateLimited, "wait 3 seconds")]
     [InlineData(ReportSendStatus.ChannelGone, "no longer takes reports")]
-    [InlineData(ReportSendStatus.Rejected, "could not be sent")]
+    [InlineData(ReportSendStatus.Rejected, "refused the report")]
     [InlineData(ReportSendStatus.Unavailable, "could not be sent")]
     public async Task AFailureSavesTheReportSaysWhatToDoWithItsCodeAndMayBeTriedAgain(ReportSendStatus status, string expected)
     {
@@ -117,6 +117,69 @@ public sealed class ReportSendTests : IDisposable
 
         Assert.False(dialog.CanSend);
         Assert.False(dialog.SendCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task AFailureIsToldInTheAppsLanguageWithNothingOfTheChannelsOwnWords()
+    {
+        var french = new Localizer(Localizer.French);
+        var dialog = new ReportDialogViewModel(
+            french,
+            _dialogs,
+            [],
+            _ => new ReportSources { CharacterId = 0, CharacterName = "", App = "0.8.1", Client = "3.7.13.17", Folder = _directory.Combine("reports") },
+            _ => { },
+            _ => { },
+            null,
+            _ => Task.FromResult<IReportSink?>(new FakeSink(new ReportSendResult(ReportSendStatus.Rejected, "Invalid Form Body from the channel"))));
+
+        dialog.Area = dialog.Areas.Single(area => area.Area is ReportArea.App);
+        await dialog.NextCommand.ExecuteAsync(null);
+        dialog.SaveCommand.Execute(null);
+        await dialog.SendCommand.ExecuteAsync(null);
+
+        Assert.StartsWith("Le canal a refusé le rapport.", dialog.SendText, StringComparison.Ordinal);
+        Assert.DoesNotContain("Invalid Form Body", dialog.SendText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASinkThatThrowsAnywayIsToldAsAnUnreachableChannelWithTheFileSaved()
+    {
+        var dialog = await SavedAsync(new FakeSink(_ => throw new InvalidOperationException("boom")));
+
+        await dialog.SendCommand.ExecuteAsync(null);
+
+        Assert.False(dialog.IsSent);
+        Assert.Contains("could not be reached", dialog.SendText, StringComparison.Ordinal);
+        Assert.True(File.Exists(dialog.Written!.Path));
+    }
+
+    [Fact]
+    public async Task ReplacingOrClosingTheDialogByAnyPathStopsASendStillGoing()
+    {
+        foreach (var close in new Action<Dialogs, ReportDialogViewModel>[] { (dialogs, _) => dialogs.Close(), (dialogs, dialog) => dialogs.Close(dialog), (dialogs, _) => dialogs.Show(new object()) })
+        {
+            var started = new TaskCompletionSource();
+            var sink = new FakeSink(async token =>
+            {
+                started.SetResult();
+                await Task.Delay(Timeout.Infinite, token);
+
+                return new ReportSendResult(ReportSendStatus.Sent);
+            });
+            var dialog = await SavedAsync(sink);
+
+            _dialogs.Show(dialog);
+
+            var sending = dialog.SendCommand.ExecuteAsync(null);
+
+            await started.Task;
+            close(_dialogs, dialog);
+            await sending;
+
+            Assert.False(dialog.IsSending);
+            Assert.False(dialog.IsSent);
+        }
     }
 
     [Fact]

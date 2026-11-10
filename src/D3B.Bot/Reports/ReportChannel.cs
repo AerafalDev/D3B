@@ -65,7 +65,32 @@ public sealed class ReportChannel
                 : await ReadAssetAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        return _webhook is null ? null : new DiscordReportSink(_http, _webhook, _maxFileBytes);
+        return _webhook is null ? null : new ForgettingSink(new DiscordReportSink(_http, _webhook, _maxFileBytes), () => _webhook = null);
+    }
+
+    // A webhook that is gone is forgotten, so that the next send reads the asset again: the owner revokes it and publishes another without a new app.
+    private sealed class ForgettingSink : IReportSink
+    {
+        private readonly IReportSink _inner;
+        private readonly Action _forget;
+
+        public ForgettingSink(IReportSink inner, Action forget)
+        {
+            _inner = inner;
+            _forget = forget;
+        }
+
+        public long MaxFileBytes => _inner.MaxFileBytes;
+
+        public async Task<ReportSendResult> SendAsync(ReportSendRequest request, IProgress<long>? progress, CancellationToken cancellationToken)
+        {
+            var result = await _inner.SendAsync(request, progress, cancellationToken).ConfigureAwait(false);
+
+            if (result.Status is ReportSendStatus.ChannelGone)
+                _forget();
+
+            return result;
+        }
     }
 
     private async Task<ReportWebhook?> ReadAssetAsync(CancellationToken cancellationToken)

@@ -47,13 +47,13 @@ public sealed class DiscordReportSink : IReportSink
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var length = new FileInfo(request.FilePath).Length;
-
-        if (length > MaxFileBytes)
-            return new ReportSendResult(ReportSendStatus.TooLarge, $"The report is {length:N0} bytes and the channel takes {MaxFileBytes:N0}.");
-
         try
         {
+            var length = new FileInfo(request.FilePath).Length;
+
+            if (length > MaxFileBytes)
+                return new ReportSendResult(ReportSendStatus.TooLarge, $"The report is {length:N0} bytes and the channel takes {MaxFileBytes:N0}.");
+
             await using var file = new ProgressStream(File.OpenRead(request.FilePath), progress);
             using var content = new MultipartFormDataContent();
             using var attachment = new StreamContent(file);
@@ -77,8 +77,9 @@ public sealed class DiscordReportSink : IReportSink
         {
             return new ReportSendResult(ReportSendStatus.Unavailable, "The channel did not answer in time.");
         }
-        catch (IOException exception)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
+            // The file the player was handed may have been moved, deleted or locked since it was written.
             return new ReportSendResult(ReportSendStatus.Unavailable, ReportWebhook.Hide(exception.Message));
         }
     }
@@ -159,7 +160,7 @@ public sealed class DiscordReportSink : IReportSink
         // A short answer: what a stranger's server sends back is read to a bound.
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         var buffer = new byte[16 * 1024];
-        var read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+        var read = await stream.ReadAtLeastAsync(buffer, buffer.Length, false, cancellationToken).ConfigureAwait(false);
 
         return Encoding.UTF8.GetString(buffer, 0, read);
     }

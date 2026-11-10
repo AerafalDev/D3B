@@ -84,6 +84,39 @@ public sealed class ReportChannelTests
     }
 
     [Fact]
+    public async Task AWebhookThatIsGoneIsForgottenSoThatTheNextSendReadsTheAssetAgain()
+    {
+        var asked = new List<Uri>();
+        var channel = new ReportChannel(
+            Client(request => request.RequestUri == _asset ? Text(Url) : Text("""{"code":10015,"message":"Unknown Webhook"}""", HttpStatusCode.NotFound), asked),
+            _asset);
+        var directory = Path.Combine(Path.GetTempPath(), "D3B.Tests", Guid.NewGuid().ToString("N"));
+
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            var file = Path.Combine(directory, "D3B-K7QM-4X.d3breport");
+
+            File.WriteAllBytes(file, [1]);
+
+            var manifest = new ReportManifest { Code = "D3B-K7QM-4X", CreatedAt = DateTimeOffset.UnixEpoch, App = "1", Client = "3.7", Area = ReportArea.App, Files = [] };
+            var sink = await channel.GetSinkAsync(TestContext.Current.CancellationToken);
+            var result = await sink!.SendAsync(new ReportSendRequest(file, manifest, null), null, TestContext.Current.CancellationToken);
+
+            Assert.Equal(ReportSendStatus.ChannelGone, result.Status);
+
+            await channel.GetSinkAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(2, asked.Count(uri => uri == _asset));
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
     public void TheLimitByDefaultIsTheOneMeasuredOnADiscordChannel()
     {
         Assert.Equal(20L * 1024 * 1024, DiscordReportSink.DefaultMaxFileBytes);
