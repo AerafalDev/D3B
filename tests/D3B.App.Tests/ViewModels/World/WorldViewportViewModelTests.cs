@@ -382,6 +382,31 @@ public sealed class WorldViewportViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheStepOfTheRouteSelectedThatTheSequencerHoversIsLitOnTheMap()
+    {
+        var (_, _, selection, world) = await WorldAsync();
+
+        await SaveRouteAsync("north", 1, 2, 3);
+        selection.SelectRoute("north");
+
+        Assert.Equal(-1, world.Scene.LitStep);
+
+        world.Route!.Sequencer.Hover(1);
+
+        Assert.Equal(1, world.Scene.LitStep);
+
+        world.Route.Sequencer.Hover(-1);
+
+        Assert.Equal(-1, world.Scene.LitStep);
+
+        world.Route.Sequencer.Hover(2);
+        selection.SelectRoute("north", 0);
+        selection.Clear();
+
+        Assert.Equal(-1, world.Scene.LitStep);
+    }
+
+    [Fact]
     public async Task TheFrameSaysTheStepAndTheLapOfTheRouteTheCharacterFollows()
     {
         var (_, _, _, world) = await WorldAsync();

@@ -41,6 +41,7 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
     private WorldMapSource? _source;
     private string _signature = "";
     private bool _fromMap;
+    private int _lit = -1;
 
     /// <summary>Gets where the map reads its worlds and tiles from, once the host runs.</summary>
     public WorldMapSource? Source
@@ -614,16 +615,19 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
                 old.PropertyChanged -= OnRouteChanged;
                 old.RevealRequested -= OnRevealRequested;
                 old.FitRequested -= OnFitRequested;
+                old.Sequencer.StepLit -= OnStepLit;
                 old.Tool = WorldMapTool.Select;
             }
 
             Route = route;
+            _lit = -1;
 
             if (route is not null)
             {
                 route.PropertyChanged += OnRouteChanged;
                 route.RevealRequested += OnRevealRequested;
                 route.FitRequested += OnFitRequested;
+                route.Sequencer.StepLit += OnStepLit;
                 AdoptLayerOf(route.Layer);
             }
         }
@@ -748,6 +752,12 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
         RevealRequested?.Invoke(x, y);
     }
 
+    private void OnStepLit(int step)
+    {
+        _lit = step;
+        Compose();
+    }
+
     private void OnFitRequested()
     {
         FitRequested?.Invoke();
@@ -760,7 +770,7 @@ internal sealed partial class WorldViewportViewModel : ObservableObject
 
     private void Compose()
     {
-        var baseScene = Route?.Scene ?? Zone?.Scene ?? WorldMapScene.Empty;
+        var baseScene = (Route?.Scene ?? Zone?.Scene ?? WorldMapScene.Empty) with { LitStep = Route is null ? -1 : _lit };
 
         Scene = _routes.Services is { } services ? baseScene with { Backdrop = BuildBackdrop(services) } : baseScene;
     }

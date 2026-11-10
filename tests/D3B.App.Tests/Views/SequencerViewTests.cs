@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Threading;
@@ -9,10 +10,12 @@ using D3B.App.Controls.Sequencer;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Studio;
+using D3B.Bot.Tests.Activities;
 using D3B.App.Views;
 using D3B.Studio.Assets;
 using D3B.Studio.Behaviors;
 using D3B.Studio.Routes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.Views;
 
@@ -124,6 +127,73 @@ public sealed class SequencerViewTests
         Assert.True(result.clip.Item1);
         Assert.Equal([0, 2], result.clip.Item2);
         Assert.Equal((false, BottomTab.Journal), result.gone);
+    }
+
+    [Fact]
+    public async Task ACharacterFollowingARouteIsMarkedOnTheRulerTheMapTheOutlinerAndTheFrameOfTheWholeWindow()
+    {
+        await using var store = new TestStore();
+
+        await store.OpenedAsync();
+
+        var runner = await TestHosts.RunningAsync(store.Host);
+        var route = new RouteAsset { Id = "r1", Name = "North", Mode = RouteMode.OneWay, Anchors = [new RouteAnchor { MapId = 1 }, new RouteAnchor { MapId = 2 }, new RouteAnchor { MapId = 3 }] };
+
+        await store.Assets.SaveAsync(route, TestContext.Current.CancellationToken);
+
+        var (_, bot) = await store.Play.EnterAsync(300);
+        var activity = new TestActivity();
+
+        bot.StartActivity(activity);
+        await activity.SteppingAsync(bot);
+
+        var cursor = new RouteCursor(3, RouteMode.OneWay);
+
+        store.Host.Services.GetRequiredService<RouteRuns>().Begin(bot.Key, route, cursor);
+        cursor.Advance();
+        cursor.Arrive();
+
+        var result = await OnTheUIThreadAsync(async () =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+            main.Routes.Use(TestRouteWorld.Services(store.Assets));
+            main.RunBlock.Choose(bot.Key);
+
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            main.World.Refresh();
+            main.Selection.SelectRoute("r1");
+            main.Refresh();
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var sequencer = main.Bottom.Sequencer!;
+            var view = window.GetVisualDescendants().OfType<SequencerView>().Single(item => item.IsEffectivelyVisible);
+            var shown = view.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text).ToList();
+            var outlined = main.Outliner.Rows.Single(row => row.Key == "route:r1");
+
+            Drawings.Draw(window, "sequencer-follow");
+
+            var played = (sequencer.Scene.Playheads.Select(head => (head.Step, head.Initials, head.Arrived)).ToList(), sequencer.RunStatus, shown.Contains("Character · step 2/3"));
+            var around = (outlined.Detail, outlined.Followers, main.World.FrameText, main.World.Scene.Backdrop!.Runs.Select(run => (run.Initials, run.Arrived)).ToList());
+
+            window.Close();
+
+            return (played, around);
+        });
+
+        Assert.Equal([(1, "CH", true)], result.played.Item1);
+        Assert.Equal(("Character · step 2/3", true), (result.played.RunStatus, result.played.Item3));
+        Assert.Equal(("3 steps · Character 2/3", "CH", "Character plays · step 2/3"), (result.around.Detail, result.around.Followers, result.around.FrameText));
+        Assert.Equal([("CH", true)], result.around.Item4);
     }
 
     [Fact]

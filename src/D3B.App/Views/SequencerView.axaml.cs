@@ -18,6 +18,8 @@ internal sealed partial class SequencerView : UserControl
         Grid.TrackPressed += OnTrackPressed;
         Grid.GestureMoved += OnGestureMoved;
         Grid.GestureEnded += OnGestureEnded;
+        Grid.ColumnHovered += OnColumnHovered;
+        DataContextChanged += OnDataContextChanged;
         Grid.KeyDown += OnGridKeyDown;
     }
 
@@ -56,6 +58,24 @@ internal sealed partial class SequencerView : UserControl
     {
         if (DataContext is SequencerViewModel sequencer && sequencer.PressKey(e.Key, e.KeyModifiers))
             e.Handled = true;
+    }
+
+    private void OnColumnHovered(int step)
+    {
+        (DataContext as SequencerViewModel)?.Hover(step);
+    }
+
+    // The ruler scrolls to the playhead when it moves, so that a long route is followed without a hand; a column already in view stays put.
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (DataContext is SequencerViewModel sequencer)
+            sequencer.PropertyChanged += (_, args) => OnSequencerChanged(sequencer, args.PropertyName);
+    }
+
+    private void OnSequencerChanged(SequencerViewModel sequencer, string? property)
+    {
+        if (property is nameof(SequencerViewModel.Scene) && sequencer.KeepsInSight && sequencer.Scene.Playheads.Count > 0)
+            Grid.BringIntoView(Grid.RectOfStep(sequencer.Scene.Playheads[0].Step));
     }
 
     private void OnMenuRowClick(object? sender, RoutedEventArgs e)

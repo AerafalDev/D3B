@@ -42,14 +42,31 @@
                         Text="{Binding Status}"
                         VerticalAlignment="Center" />
                     <TextBlock
+                        AutomationProperties.LiveSetting="Polite"
+                        Foreground="{DynamicResource SuccessColor}"
+                        IsVisible="{Binding IsFollowed}"
+                        Text="{Binding RunStatus}"
+                        TextTrimming="CharacterEllipsis"
+                        VerticalAlignment="Center" />
+                    <TextBlock
                         Classes="RowLabel"
+                        IsVisible="{Binding !IsFollowed}"
                         Text="{l:Tr SequencerHint}"
                         TextTrimming="CharacterEllipsis" />
                 </StackPanel>
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                <CheckBox
+                    AutomationProperties.Name="{l:Tr SequencerKeepInSight}"
+                    Content="{l:Tr SequencerKeepInSight}"
+                    IsChecked="{Binding KeepsInSight}"
+                    IsVisible="{Binding IsFollowed}"
+                    VerticalAlignment="Center" />
                 <Button
                     AutomationProperties.Name="{l:Tr SequencerAddTrack}"
                     Classes="Dd"
-                    Grid.Column="1"
                     IsEnabled="{Binding HasPalette}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <c:Icon
@@ -83,6 +100,7 @@
                         </Flyout>
                     </Button.Flyout>
                 </Button>
+                </StackPanel>
             </Grid>
         </Border>
         <TextBlock

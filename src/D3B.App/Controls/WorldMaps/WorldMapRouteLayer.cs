@@ -70,7 +70,7 @@ internal static class WorldMapRouteLayer
             DrawPinMark(context, rectOf(hover.X, hover.Y).Center);
 
         for (var i = 0; i < scene.Stations.Count; i++)
-            DrawStation(context, scene.Stations[i], mapWidth, rectOf, hover.Kind is WorldMapHitKind.Station && hover.Station == i);
+            DrawStation(context, scene.Stations[i], mapWidth, rectOf, (hover.Kind is WorldMapHitKind.Station && hover.Station == i) || scene.LitStep == i);
     }
 
     // The maps the route goes through are one shape: filled as a union, so that two beside each other do not double their tint, and

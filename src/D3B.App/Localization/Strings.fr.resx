@@ -3131,6 +3131,9 @@
   <data name="SequencerMovement" xml:space="preserve">
     <value>Déplacement</value>
   </data>
+  <data name="SequencerKeepInSight" xml:space="preserve">
+    <value>Suivre le run</value>
+  </data>
   <data name="SequencerAddTrack" xml:space="preserve">
     <value>Ajouter une piste</value>
   </data>
