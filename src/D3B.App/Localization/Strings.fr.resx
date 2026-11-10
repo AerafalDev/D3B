@@ -3300,7 +3300,7 @@
     <value>Signaler un bug</value>
   </data>
   <data name="ReportFormLead" xml:space="preserve">
-    <value>Un rapport contient ce qu’il faut à un mainteneur pour rejouer le bug. Rien n’est envoyé : c’est un fichier que tu remets sur Discord.</value>
+    <value>Un rapport contient ce qu’il faut à un mainteneur pour rejouer le bug. Rien n’est envoyé tant que tu n’appuies pas sur Envoyer, une fois le rapport enregistré.</value>
   </data>
   <data name="ReportAreaLabel" xml:space="preserve">
     <value>De quoi s’agit-il ?</value>
@@ -3381,7 +3381,7 @@
     <value>Préparation du rapport…</value>
   </data>
   <data name="ReportPreviewLead" xml:space="preserve">
-    <value>Voici tout ce que contient le rapport. Lis-le, et décoche ce que tu ne veux pas donner. Rien n’est envoyé.</value>
+    <value>Voici tout ce que contient le rapport. Lis-le, et décoche ce que tu ne veux pas donner. Rien n’est envoyé tant que tu n’appuies pas sur Envoyer, une fois le rapport enregistré.</value>
   </data>
   <data name="ReportCaptureNote" xml:space="preserve">
     <value>La capture reste obligatoire pour un rapport du jeu : sans elle, le bug ne peut pas être rejoué.</value>
@@ -3393,7 +3393,7 @@
     <value>Rapport prêt</value>
   </data>
   <data name="ReportDoneLead" xml:space="preserve">
-    <value>Ton code est {0}. Il est copié. Donne-le sur Discord avec le fichier.</value>
+    <value>Ton code est {0}. Il est copié, et le rapport est enregistré. Envoie-le maintenant, ou remets le fichier sur Discord avec le code.</value>
   </data>
   <data name="ReportCopyCode" xml:space="preserve">
     <value>Copier le code</value>
@@ -3469,5 +3469,29 @@
   </data>
   <data name="ReportMessageTooLong" xml:space="preserve">
     <value>Ce texte dépasse {0} caractères : il n’a pas été ajouté.</value>
+  </data>
+  <data name="ReportSend" xml:space="preserve">
+    <value>Envoyer aux mainteneurs</value>
+  </data>
+  <data name="ReportNoChannel" xml:space="preserve">
+    <value>Aucun canal d’envoi n’a pu être trouvé. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
+  <data name="ReportSendSent" xml:space="preserve">
+    <value>Envoyé. Les mainteneurs ont le rapport {0}.</value>
+  </data>
+  <data name="ReportSendTooLarge" xml:space="preserve">
+    <value>Le rapport fait {0} Mo, plus que ce que le canal accepte. Il est enregistré : remets le fichier sur Discord avec le code {1}.</value>
+  </data>
+  <data name="ReportSendRateLimited" xml:space="preserve">
+    <value>Le canal demande d’attendre {0} secondes. Réessaie ensuite.</value>
+  </data>
+  <data name="ReportSendGone" xml:space="preserve">
+    <value>Le canal n’accepte plus de rapports. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
+  </data>
+  <data name="ReportSendFailed" xml:space="preserve">
+    <value>Le rapport n’a pas pu être envoyé. {0} Il est enregistré : remets le fichier sur Discord avec le code {1}.</value>
+  </data>
+  <data name="ReportSendCancelled" xml:space="preserve">
+    <value>L’envoi a été annulé. Le rapport est enregistré : remets le fichier sur Discord avec le code {0}.</value>
   </data>
 </root>

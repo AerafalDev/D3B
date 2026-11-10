@@ -211,10 +211,24 @@
                 FontWeight="SemiBold"
                 Text="{l:Tr ReportDoneTitle}" />
             <TextBlock Text="{Binding DoneText}" TextWrapping="Wrap" />
+            <ProgressBar
+                IsVisible="{Binding IsSending}"
+                Maximum="1"
+                Minimum="0"
+                Value="{Binding SendProgress}" />
+            <TextBlock
+                IsVisible="{Binding HasSendText}"
+                Text="{Binding SendText}"
+                TextWrapping="Wrap" />
             <StackPanel
                 HorizontalAlignment="Right"
                 Orientation="Horizontal"
                 Spacing="8">
+                <Button
+                    Classes="Primary"
+                    Command="{Binding SendCommand}"
+                    Content="{l:Tr ReportSend}"
+                    IsVisible="{Binding CanSend}" />
                 <Button
                     Classes="Outline"
                     Command="{Binding CopyCodeCommand}"
@@ -224,7 +238,7 @@
                     Command="{Binding OpenFolderCommand}"
                     Content="{l:Tr ReportOpenFolder}" />
                 <Button
-                    Classes="Primary"
+                    Classes="Outline"
                     Command="{Binding CancelCommand}"
                     Content="{l:Tr ReportClose}" />
             </StackPanel>

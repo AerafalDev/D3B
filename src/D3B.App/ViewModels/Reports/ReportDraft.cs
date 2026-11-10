@@ -162,10 +162,12 @@ internal sealed class ReportDraft
         var partial = path + ".part";
 
         // Written beside, then moved: a write that fails leaves no file that a second try would meet, and none that looks whole.
+        ReportManifest manifest;
+
         try
         {
             using (var stream = new FileStream(partial, FileMode.Create, FileAccess.Write, FileShare.None))
-                ReportWriter.Write(content, stream);
+                manifest = ReportWriter.Write(content, stream);
 
             File.Move(partial, path);
         }
@@ -176,7 +178,7 @@ internal sealed class ReportDraft
             throw;
         }
 
-        return new WrittenReport(Code, path, new FileInfo(path).Length);
+        return new WrittenReport(Code, path, new FileInfo(path).Length, manifest, content.Message);
     }
 
     private static async Task<(CleanCapture? Clean, string? Problem)> CleanAsync(ReportSources sources, Localizer localizer, CancellationToken cancellationToken)

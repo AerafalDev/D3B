@@ -11,13 +11,15 @@ namespace D3B.App.ViewModels.Reports;
 /// Three steps in one dialog: the form, the preview where each part can be read and unchecked, and the report written. Nothing is sent: the file is
 /// written in a folder, which opens, and its code is copied, for the player to hand over on Discord (BR4 sends it by a webhook).
 /// </remarks>
-internal sealed partial class ReportDialogViewModel : ObservableObject
+internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposable
 {
     private readonly Localizer _localizer;
     private readonly Dialogs _dialogs;
     private readonly Func<ReportCharacterChoice?, ReportSources?> _sources;
     private readonly Action<string> _copy;
     private readonly Action<string> _openFolder;
+    private readonly Func<CancellationToken, Task<IReportSink?>>? _channel;
+    private CancellationTokenSource? _sending;
     private string _message = "";
 
     /// <summary>Gets the areas a report may be about.</summary>
@@ -98,6 +100,31 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
     [ObservableProperty]
     public partial WrittenReport? Written { get; private set; }
 
+    /// <summary>Gets whether the report is being sent.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    public partial bool IsSending { get; private set; }
+
+    /// <summary>Gets whether the report was sent.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    public partial bool IsSent { get; private set; }
+
+    /// <summary>Gets how much of the file went, from 0 to 1.</summary>
+    [ObservableProperty]
+    public partial double SendProgress { get; private set; }
+
+    /// <summary>Gets how the send went, or what to do instead, in words; null before one.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSendText))]
+    public partial string? SendText { get; private set; }
+
+    /// <summary>Gets whether a send has something to say.</summary>
+    public bool HasSendText => SendText is not null;
+
+    /// <summary>Gets whether this app can send at all.</summary>
+    public bool CanSend => _channel is not null;
+
     /// <summary>Gets what the report written says: its code and what to do with it.</summary>
     [ObservableProperty]
     public partial string DoneText { get; private set; } = "";
@@ -133,8 +160,10 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
     /// <param name="copy">Copies a text to the clipboard.</param>
     /// <param name="openFolder">Opens a folder.</param>
     /// <param name="character">The character to start on, if any.</param>
-    public ReportDialogViewModel(Localizer localizer, Dialogs dialogs, IReadOnlyList<ReportCharacterChoice> characters, Func<ReportCharacterChoice?, ReportSources?> sources, Action<string> copy, Action<string> openFolder, ReportCharacterChoice? character = null)
+    /// <param name="channel">Finds where the report goes, or null for an app that sends nothing; it gives null when no channel can be found.</param>
+    public ReportDialogViewModel(Localizer localizer, Dialogs dialogs, IReadOnlyList<ReportCharacterChoice> characters, Func<ReportCharacterChoice?, ReportSources?> sources, Action<string> copy, Action<string> openFolder, ReportCharacterChoice? character = null, Func<CancellationToken, Task<IReportSink?>>? channel = null)
     {
+        _channel = channel;
         _localizer = localizer;
         _dialogs = dialogs;
         _sources = sources;
@@ -228,6 +257,62 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
         _openFolder(Path.GetDirectoryName(Written.Path)!);
     }
 
+    [RelayCommand(CanExecute = nameof(CanSendNow))]
+    private async Task SendAsync()
+    {
+        var written = Written!;
+
+        IsSending = true;
+        SendProgress = 0;
+        SendText = null;
+        _sending = new CancellationTokenSource();
+
+        try
+        {
+            var sink = _channel is null ? null : await _channel(_sending.Token).ConfigureAwait(true);
+
+            if (sink is null)
+            {
+                SendText = _localizer.Format("ReportNoChannel", written.Code);
+
+                return;
+            }
+
+            var progress = new Progress<long>(sent => SendProgress = written.Size is 0 ? 1 : Math.Min(1, sent / (double)written.Size));
+            var result = await sink.SendAsync(new ReportSendRequest(written.Path, written.Manifest, written.Message), progress, _sending.Token).ConfigureAwait(true);
+
+            IsSent = result.IsSent;
+            SendText = TextOf(result, written);
+        }
+        catch (OperationCanceledException)
+        {
+            SendText = _localizer.Format("ReportSendCancelled", written.Code);
+        }
+        finally
+        {
+            IsSending = false;
+            _sending.Dispose();
+            _sending = null;
+        }
+    }
+
+    private bool CanSendNow()
+    {
+        return Written is not null && CanSend && !IsSending && !IsSent;
+    }
+
+    private string TextOf(ReportSendResult result, WrittenReport written)
+    {
+        return result.Status switch
+        {
+            ReportSendStatus.Sent => _localizer.Format("ReportSendSent", written.Code),
+            ReportSendStatus.TooLarge => _localizer.Format("ReportSendTooLarge", (written.Size / 1024d / 1024d).ToString("0.#", _localizer.Culture), written.Code),
+            ReportSendStatus.RateLimited => _localizer.Format("ReportSendRateLimited", Math.Ceiling(result.RetryAfter?.TotalSeconds ?? 5).ToString("0", _localizer.Culture)),
+            ReportSendStatus.ChannelGone => _localizer.Format("ReportSendGone", written.Code),
+            _ => _localizer.Format("ReportSendFailed", result.Detail, written.Code),
+        };
+    }
+
     [RelayCommand]
     private void CopyCode()
     {
@@ -242,9 +327,16 @@ internal sealed partial class ReportDialogViewModel : ObservableObject
             _openFolder(Path.GetDirectoryName(written.Path)!);
     }
 
+    /// <summary>Stops a send still going: closing the dialog does.</summary>
+    public void Dispose()
+    {
+        _sending?.Cancel();
+    }
+
     [RelayCommand]
     private void Cancel()
     {
+        Dispose();
         _dialogs.Close();
     }
 }

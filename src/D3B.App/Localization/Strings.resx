@@ -3300,7 +3300,7 @@
     <value>Report a bug</value>
   </data>
   <data name="ReportFormLead" xml:space="preserve">
-    <value>A report holds what a maintainer needs to replay the bug. Nothing is sent: it becomes a file you hand over on Discord.</value>
+    <value>A report holds what a maintainer needs to replay the bug. Nothing is sent until you press Send, once it is saved.</value>
   </data>
   <data name="ReportAreaLabel" xml:space="preserve">
     <value>What is it about?</value>
@@ -3381,7 +3381,7 @@
     <value>Preparing the report…</value>
   </data>
   <data name="ReportPreviewLead" xml:space="preserve">
-    <value>This is everything the report holds. Read it, and uncheck what you do not want to give. Nothing is sent.</value>
+    <value>This is everything the report holds. Read it, and uncheck what you do not want to give. Nothing is sent until you press Send, once it is saved.</value>
   </data>
   <data name="ReportCaptureNote" xml:space="preserve">
     <value>The capture stays required for a report of the game: without it the bug cannot be replayed.</value>
@@ -3393,7 +3393,7 @@
     <value>Report ready</value>
   </data>
   <data name="ReportDoneLead" xml:space="preserve">
-    <value>Your code is {0}. It is copied. Give it on Discord with the file.</value>
+    <value>Your code is {0}. It is copied, and the report is saved. Send it now, or hand the file over on Discord with the code.</value>
   </data>
   <data name="ReportCopyCode" xml:space="preserve">
     <value>Copy the code</value>
@@ -3469,5 +3469,29 @@
   </data>
   <data name="ReportMessageTooLong" xml:space="preserve">
     <value>That text is longer than {0} characters: it was not added.</value>
+  </data>
+  <data name="ReportSend" xml:space="preserve">
+    <value>Send to the maintainers</value>
+  </data>
+  <data name="ReportNoChannel" xml:space="preserve">
+    <value>No channel to send to could be found. The report is saved: hand the file over on Discord with the code {0}.</value>
+  </data>
+  <data name="ReportSendSent" xml:space="preserve">
+    <value>Sent. The maintainers have report {0}.</value>
+  </data>
+  <data name="ReportSendTooLarge" xml:space="preserve">
+    <value>The report is {0} MB, more than the channel takes. It is saved: hand the file over on Discord with the code {1}.</value>
+  </data>
+  <data name="ReportSendRateLimited" xml:space="preserve">
+    <value>The channel asks to wait {0} seconds. Try again then.</value>
+  </data>
+  <data name="ReportSendGone" xml:space="preserve">
+    <value>The channel no longer takes reports. The report is saved: hand the file over on Discord with the code {0}.</value>
+  </data>
+  <data name="ReportSendFailed" xml:space="preserve">
+    <value>The report could not be sent. {0} It is saved: hand the file over on Discord with the code {1}.</value>
+  </data>
+  <data name="ReportSendCancelled" xml:space="preserve">
+    <value>Sending was cancelled. The report is saved: hand the file over on Discord with the code {0}.</value>
   </data>
 </root>
