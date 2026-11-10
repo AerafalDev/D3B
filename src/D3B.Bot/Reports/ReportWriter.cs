@@ -64,7 +64,7 @@ public static class ReportWriter
             foreach (var (name, data) in files)
                 Add(zip, name, data);
 
-            Add(zip, ReportFiles.Manifest, JsonSerializer.SerializeToUtf8Bytes(manifest, ReportJson.Options));
+            Add(zip, ReportFiles.Manifest, JsonSerializer.SerializeToUtf8Bytes(manifest, ReportJson.Default.ReportManifest));
         }
 
         return manifest;

@@ -79,7 +79,7 @@ public static class ReportReader
 
         try
         {
-            manifest = JsonSerializer.Deserialize<ReportManifest>(manifestBytes, ReportJson.Options);
+            manifest = JsonSerializer.Deserialize(manifestBytes, ReportJson.Default.ReportManifest);
         }
         catch (Exception exception) when (exception is JsonException or NotSupportedException)
         {

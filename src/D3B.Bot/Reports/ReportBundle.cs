@@ -28,7 +28,7 @@ public sealed class ReportBundle
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
 
         Directory.CreateDirectory(directory);
-        File.WriteAllText(Path.Combine(directory, ReportFiles.Manifest), JsonSerializer.Serialize(Manifest, ReportJson.Options));
+        File.WriteAllText(Path.Combine(directory, ReportFiles.Manifest), JsonSerializer.Serialize(Manifest, ReportJson.Default.ReportManifest));
 
         foreach (var (name, bytes) in Files)
         {
