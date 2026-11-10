@@ -13,7 +13,9 @@ internal sealed class CompiledState
 
     public bool IsUrgent { get; init; }
 
-    public bool Repeats { get; init; }
+    public StepRepeat Repeat { get; init; } = StepRepeat.Once;
+
+    public CompiledCondition? Until { get; init; }
 
     public ImmutableArray<CompiledState> States { get; init; } = [];
 

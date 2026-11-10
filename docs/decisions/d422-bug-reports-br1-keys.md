@@ -1,8 +1,8 @@
-# Bug reports, BR1 (D420)
+# Bug reports, BR1 (D422)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md).
 
-## D420: Two settings for the captures: the game is recorded unless turned off, every connection only when asked; the retention is applied whether or not the game is recorded
+## D422: Two settings for the captures: the game is recorded unless turned off, every connection only when asked; the retention is applied whether or not the game is recorded
 
 *2026-11-10, step BR1, the lead's (reversible, settled alone, the owner to confirm). Refines D409, D37.*
 

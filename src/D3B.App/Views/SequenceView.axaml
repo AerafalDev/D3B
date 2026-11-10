@@ -86,15 +86,19 @@
                                     Margin="0,9,6,0"
                                     Text="{Binding Number}"
                                     VerticalAlignment="Top" />
-                                <v:ActionCardView Grid.Column="1" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <v:ActionCardView />
+                                    <v:StepRepeatView DataContext="{Binding Repeat}" />
+                                </StackPanel>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <CheckBox
-                    Content="{l:Tr SequenceRepeats}"
-                    IsChecked="{Binding Repeats}"
-                    Margin="8,10,0,0" />
+                <TextBlock
+                    Classes="SectionTitle"
+                    Margin="8,14,0,0"
+                    Text="{l:Tr SequenceRepeats}" />
+                <v:StepRepeatView DataContext="{Binding ListRepeat}" />
                 <TextBlock
                     Classes="Dim"
                     Margin="8,0"

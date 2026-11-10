@@ -1,6 +1,6 @@
 namespace D3B.Bot.Reports;
 
-/// <summary>A capture that cannot be cleaned, so that it cannot go in a report (D421).</summary>
+/// <summary>A capture that cannot be cleaned, so that it cannot go in a report (D423).</summary>
 public sealed class CaptureScrubException : Exception
 {
     /// <summary>Initializes a new instance of the <see cref="CaptureScrubException"/> class.</summary>

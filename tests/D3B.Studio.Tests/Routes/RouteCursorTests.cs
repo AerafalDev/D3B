@@ -30,6 +30,17 @@ public sealed class RouteCursorTests
     }
 
     [Fact]
+    public void AnOneWayCursorCountsFromTheLapItIsGivenSoThatARepeatedPassKnowsWhichOneItIs()
+    {
+        var cursor = new RouteCursor(3, RouteMode.OneWay, 2);
+
+        Assert.Equal(2L, cursor.Laps);
+        Assert.Equal([0, 1, 2], Visited(cursor, 10));
+        Assert.Equal(2L, cursor.Laps);
+        Assert.Equal(0L, new RouteCursor(3, RouteMode.OneWay).Laps);
+    }
+
+    [Fact]
     public void ALoopOfTwoGoesAndComesBack()
     {
         Assert.Equal([0, 1, 0, 1], Visited(new RouteCursor(2, RouteMode.Loop), 4));

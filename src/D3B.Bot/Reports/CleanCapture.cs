@@ -1,6 +1,6 @@
 namespace D3B.Bot.Reports;
 
-/// <summary>A capture that <see cref="CaptureScrubber"/> cleaned: the only capture a report accepts (D410, D421).</summary>
+/// <summary>A capture that <see cref="CaptureScrubber"/> cleaned: the only capture a report accepts (D410, D423).</summary>
 public sealed class CleanCapture
 {
     internal CleanCapture(byte[] bytes, CaptureScrub scrub, DateTimeOffset startedAt)

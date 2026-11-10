@@ -537,10 +537,18 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D419](decisions/d419-step-7-7r4-following-a-run.md#d419-7r4-following-a-run-the-run-publishes-where-it-is-in-routeruns-the-app-reads-it-and-a-column-lit-is-the-playhead) 7r4, following a run: the run publishes where it is in `RouteRuns`, the app reads it, and a column lit is the playhead (2026-11-10)
   - A route's position in `ActivityReport`, the journal's events as the way the app learns it, a marker moved between columns by an estimate, only the chosen character followed, a journal line at each lap.
 
-## Bug reports, BR1 (D420)
+## Step 9, the Pandawa's drink (D420)
 
-- [D420](decisions/d420-bug-reports-br1-keys.md#d420-two-settings-for-the-captures-the-game-is-recorded-unless-turned-off-every-connection-only-when-asked-the-retention-is-applied-whether-or-not-the-game-is-recorded) Two settings for the captures: the game is recorded unless turned off, every connection only when asked; the retention is applied whether or not the game is recorded (2026-11-10)
+- [D420](decisions/d420-step-9-the-pandawas-drink.md#d420-a-state-the-fighter-already-held-is-no-gain-when-a-cast-puts-it-back-the-pandawa-no-longer-swaps-sobre-and-saoul-instead-of-striking) A state the fighter already held is no gain when a cast puts it back: the Pandawa no longer swaps Sobre and Saoul instead of striking (2026-11-10)
 
-## Bug reports, the cleaner (D421)
+## Step 7, 7r6, repeats and sequences (D421)
 
-- [D421](decisions/d421-bug-reports-cleaner.md#d421-a-reports-capture-is-cleaned-by-value-the-ticket-and-the-clients-opaque-strings-by-shape-the-accounts-characters-names-wherever-they-occur) A report's capture is cleaned by value: the ticket and the client's opaque strings by shape, the account's characters' names wherever they occur (2026-11-10)
+- [D421](decisions/d421-step-7-7r6-repeats-and-sequences.md#d421-7r6-a-step-of-a-list-repeats-once-a-number-of-times-until-a-condition-and-plays-another-list-the-repeat-is-on-the-step) 7r6, a step of a list repeats (once, a number of times, until a condition) and plays another list: the repeat is on the step (2026-11-10)
+  - Laps and "until" on the route's asset, a container "Repeat" step, a fixed list of "until" kinds, a played list expanded at compile time, the condition read between two steps of a route, a new kind of setting for the condition.
+## Bug reports, BR1 (D422)
+
+- [D422](decisions/d422-bug-reports-br1-keys.md#d422-two-settings-for-the-captures-the-game-is-recorded-unless-turned-off-every-connection-only-when-asked-the-retention-is-applied-whether-or-not-the-game-is-recorded) Two settings for the captures: the game is recorded unless turned off, every connection only when asked; the retention is applied whether or not the game is recorded (2026-11-10)
+
+## Bug reports, the cleaner (D423)
+
+- [D423](decisions/d423-bug-reports-cleaner.md#d423-a-reports-capture-is-cleaned-by-value-the-ticket-and-the-clients-opaque-strings-by-shape-the-accounts-characters-names-wherever-they-occur) A report's capture is cleaned by value: the ticket and the client's opaque strings by shape, the account's characters' names wherever they occur (2026-11-10)

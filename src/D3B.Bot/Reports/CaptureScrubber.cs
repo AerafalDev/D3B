@@ -6,7 +6,7 @@ using D3B.Protocol.Translation;
 
 namespace D3B.Bot.Reports;
 
-/// <summary>Writes a copy of a game capture with what names the account overwritten, so that a report can carry it (D410, D421).</summary>
+/// <summary>Writes a copy of a game capture with what names the account overwritten, so that a report can carry it (D410, D423).</summary>
 /// <remarks>
 /// <para>
 /// The ticket and the client's other opaque strings are found by shape: in a frame the client or D3B sent, a string field of 32 characters or

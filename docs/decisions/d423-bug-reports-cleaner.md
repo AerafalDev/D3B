@@ -1,8 +1,8 @@
-# Bug reports, the cleaner (D421)
+# Bug reports, the cleaner (D423)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md).
 
-## D421: A report's capture is cleaned by value: the ticket and the client's opaque strings by shape, the account's characters' names wherever they occur
+## D423: A report's capture is cleaned by value: the ticket and the client's opaque strings by shape, the account's characters' names wherever they occur
 
 *2026-11-10, step BR2, the owner chose by value for the names (session BR1's question), the rest is the lead's and reversible. Refines D410, builds D409, D63.*
 

@@ -31,8 +31,12 @@ public sealed class RouteRuns
     /// <param name="character">The character.</param>
     /// <param name="route">The route.</param>
     /// <param name="started">When the run began.</param>
+    /// <param name="pass">
+    /// The pass of a step that repeats the route, from 1, or 0 when it does not: a loop is then followed one lap, the pass, rather
+    /// than for ever (D421).
+    /// </param>
     /// <returns>The cursor.</returns>
-    public RouteCursor Of(CharacterKey character, RouteAsset route, DateTimeOffset started)
+    public RouteCursor Of(CharacterKey character, RouteAsset route, DateTimeOffset started, int pass = 0)
     {
         ArgumentNullException.ThrowIfNull(route);
 
@@ -43,7 +47,9 @@ public sealed class RouteRuns
             if (_runs.TryGetValue(key, out var run) && run.Started == started)
                 return run.Cursor;
 
-            var cursor = new RouteCursor(route.Anchors.Length, route.Mode);
+            var cursor = pass > 0
+                ? new RouteCursor(route.Anchors.Length, route.Mode == RouteMode.Loop ? RouteMode.OneWay : route.Mode, pass - 1)
+                : new RouteCursor(route.Anchors.Length, route.Mode);
 
             _runs[key] = (started, cursor);
 
