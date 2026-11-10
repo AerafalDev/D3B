@@ -536,3 +536,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D419](decisions/d419-step-7-7r4-following-a-run.md#d419-7r4-following-a-run-the-run-publishes-where-it-is-in-routeruns-the-app-reads-it-and-a-column-lit-is-the-playhead) 7r4, following a run: the run publishes where it is in `RouteRuns`, the app reads it, and a column lit is the playhead (2026-11-10)
   - A route's position in `ActivityReport`, the journal's events as the way the app learns it, a marker moved between columns by an estimate, only the chosen character followed, a journal line at each lap.
+
+## Step 7, 7r6, repeats and sequences (D420)
+
+- [D420](decisions/d420-step-7-7r6-repeats-and-sequences.md#d420-7r6-a-step-of-a-list-repeats-once-a-number-of-times-until-a-condition-and-plays-another-list-the-repeat-is-on-the-step) 7r6, a step of a list repeats (once, a number of times, until a condition) and plays another list: the repeat is on the step (2026-11-10)
+  - Laps and "until" on the route's asset, a container "Repeat" step, a fixed list of "until" kinds, a played list expanded at compile time, the condition read between two steps of a route, a new kind of setting for the condition.
