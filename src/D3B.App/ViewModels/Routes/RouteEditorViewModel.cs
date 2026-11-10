@@ -7,7 +7,6 @@ using D3B.App.Controls;
 using D3B.App.Controls.WorldMaps;
 using D3B.App.ViewModels.Studio;
 using D3B.Studio.Assets;
-using D3B.Studio.Routes;
 
 namespace D3B.App.ViewModels.Routes;
 
@@ -33,9 +32,9 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     private readonly List<int> _sceneLegs = [];
     private readonly RouteHistory _history;
     private readonly RoutePlanning _planning = new();
+    private readonly RouteTrace _trace = new();
     private readonly RouteActionList _actions;
     private RouteAsset _saved;
-    private long _paintedFrom;
     private RouteStepSelection _chosen = RouteStepSelection.None;
 
     /// <summary>Gets the route's id.</summary>
@@ -252,18 +251,7 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     /// <summary>Says the worlds, the steps and the zones again, in the language chosen.</summary>
     public void Relabel()
     {
-        var services = _page.Services!;
-        var worlds = new List<WorldChoiceViewModel>();
-
-        foreach (var world in services.Catalog.Worlds.Span)
-        {
-            var count = services.Index.SquaresOf(world.Id).ToArray().Sum(square => square.Count);
-
-            if (count == 0)
-                continue;
-
-            worlds.Add(new WorldChoiceViewModel(world.Id, _texts.WorldName(world), count, _page.Localizer.Plural("RouteWorldMaps", count), world.Id == Layer, UseLayer));
-        }
+        var worlds = RouteWorldChoices.Build(_page, _texts, Layer, UseLayer);
 
         Worlds = worlds;
         LayerName = worlds.FirstOrDefault(world => world.Id == Layer)?.Name ?? _page.Localizer.Format("RouteWorldNumber", Layer);
@@ -365,31 +353,10 @@ internal sealed partial class RouteEditorViewModel : ObservableObject, IUndoable
     /// <param name="isDrag">Whether a drag crossed the coordinates: it adds an anchor only when the map is a neighbour of the map crossed before by a real exit, else the path fills the gap (D299).</param>
     public void TraceSquare(int x, int y, bool isDrag)
     {
-        var services = _page.Services!;
-        var maps = services.Index.MapsAt(Layer, x, y);
+        var map = _trace.Press(_page.Services!, Layer, x, y, isDrag, _anchors);
 
-        if (maps.IsEmpty)
-            return;
-
-        var map = services.Planner.Primary(maps);
-        var from = _paintedFrom;
-
-        // A drag goes on from the map it crossed last, whether or not that one became an anchor: a square no exit joins is left to
-        // the path, and the drag does not stop there.
-        _paintedFrom = map;
-
-        if (_anchors.Exists(anchor => anchor.MapId == map))
-            return;
-
-        if (isDrag && from != 0)
-        {
-            var leg = services.Planner.Find(from, map);
-
-            if (leg.Kind != RouteLegKind.Path || !leg.Between.IsEmpty)
-                return;
-        }
-
-        AddAnchor(new RouteAnchor { MapId = map });
+        if (map != 0)
+            AddAnchor(new RouteAnchor { MapId = map });
     }
 
     /// <summary>Pins a map of the path, which becomes an anchor between the two it lay between.</summary>
