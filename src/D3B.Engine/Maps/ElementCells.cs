@@ -7,7 +7,8 @@ namespace D3B.Engine.Maps;
 /// Measured on the client's uses (client.md): it walks to a walkable neighbour of the element's cell, one of the eight,
 /// never onto the element's cell, even when that can be walked on. When no neighbour can be walked on, as by water, it
 /// walks to the walkable cell nearest the element (<see cref="MapGeometry.Distance"/>). The server accepted every one of
-/// these, the client's and D3B's.
+/// these, the client's and D3B's. An element whose walkable neighbours all lie in another zone of the map is out of
+/// reach from this one: the nearest cell of the character's zone is no place to use it from (D424).
 /// </remarks>
 public static class ElementCells
 {
@@ -15,7 +16,7 @@ public static class ElementCells
     /// <param name="cells">The map's cells, by identifier.</param>
     /// <param name="element">The element's cell.</param>
     /// <param name="zone">The zone the character walks in (<see cref="MapCell.Zone"/>): only its cells can be reached.</param>
-    /// <returns>The walkable neighbours of the element's cell in the zone, or else the zone's walkable cells nearest it; none when the zone has no walkable cell.</returns>
+    /// <returns>The walkable neighbours of the element's cell in the zone; or, when it has no walkable neighbour in any zone, the zone's walkable cells nearest it; none when the zone has no walkable cell, or when the only walkable neighbours are in another zone.</returns>
     /// <exception cref="ArgumentException">The map does not have <see cref="MapData.CellCount"/> cells.</exception>
     /// <exception cref="ArgumentOutOfRangeException">The element's cell does not exist.</exception>
     public static IReadOnlyList<int> UsedFrom(ReadOnlySpan<MapCell> cells, int element, int zone)
@@ -27,16 +28,22 @@ public static class ElementCells
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(element, MapData.CellCount);
 
         var used = new List<int>();
+        var walledOff = true;
 
         for (var direction = 0; direction < MapCell.DirectionCount; direction++)
         {
             var neighbour = MapGeometry.Neighbour(element, direction);
 
-            if (neighbour >= 0 && IsIn(cells[neighbour], zone))
+            if (neighbour < 0 || !cells[neighbour].IsWalkable)
+                continue;
+
+            walledOff = false;
+
+            if (cells[neighbour].Zone == zone)
                 used.Add(neighbour);
         }
 
-        if (used.Count > 0)
+        if (used.Count > 0 || !walledOff)
             return used;
 
         var nearest = int.MaxValue;

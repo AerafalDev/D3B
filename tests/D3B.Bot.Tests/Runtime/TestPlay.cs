@@ -160,11 +160,11 @@ internal sealed class TestPlay : IAsyncDisposable
     {
     }
 
-    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked)
+    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked, int[]? otherZone = null)
     {
         var path = _directory.Combine("data-3.pack");
 
-        File.WriteAllBytes(path, Pack(blocked));
+        File.WriteAllBytes(path, Pack(blocked, otherZone ?? []));
         _pack = GamePack.Open(path);
         Maps = new GameMaps(_pack);
         World = new GameWorld(_pack);
@@ -181,6 +181,13 @@ internal sealed class TestPlay : IAsyncDisposable
     public static TestPlay ThroughAnNpc()
     {
         return new TestPlay([], [new NpcWay(InsideMapId, WayNpcId, new[] { WayReplyId, WayLastReplyId }.ToFrozenSet(), NorthMapId)], []);
+    }
+
+    /// <summary>A play whose first map has cells in a second roleplay zone, the character's own being the first (D424).</summary>
+    /// <param name="otherZone">The cells of the second zone: walkable, but not the zone the character walks in.</param>
+    public static TestPlay WithASecondZone(params int[] otherZone)
+    {
+        return new TestPlay([], [], [], otherZone);
     }
 
     /// <summary>The character as the server's confirmation of the choice describes it.</summary>
@@ -283,10 +290,10 @@ internal sealed class TestPlay : IAsyncDisposable
         return pixels;
     }
 
-    private static byte[] Pack(int[] blocked)
+    private static byte[] Pack(int[] blocked, int[] otherZone)
     {
-        var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell)).ToArray();
-        var open = Enumerable.Range(0, MapData.CellCount).Select(Walkable).ToArray();
+        var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell, otherZone.Contains(cell) ? 2 : 1)).ToArray();
+        var open = Enumerable.Range(0, MapData.CellCount).Select(cell => Walkable(cell)).ToArray();
         var info = new PackInfo { ClientVersion = TestInstall.Version, Fingerprint = "0123456789abcdef", ExtractorVersion = "0.0.0-test" };
 
         using var stream = new MemoryStream();
@@ -359,11 +366,11 @@ internal sealed class TestPlay : IAsyncDisposable
         return new SpellCatalog(spells, levels, levelIds, effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings, Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
     }
 
-    private static MapCell Walkable(int cell)
+    private static MapCell Walkable(int cell, int zone = 1)
     {
         var leaves = Enumerable.Range(0, MapCell.DirectionCount / 2).Select(side => 2 * side).Where(direction => MapGeometry.Neighbour(cell, direction) < 0);
 
-        return new MapCell(MapCellProperties.Walkable | MapCellProperties.LineOfSight, 0, 0, leaves.Sum(direction => 1 << direction), 0, 1 << 4, 0);
+        return new MapCell(MapCellProperties.Walkable | MapCellProperties.LineOfSight, 0, 0, leaves.Sum(direction => 1 << direction), 0, zone << 4, 0);
     }
 
     private static MapCell Wall()

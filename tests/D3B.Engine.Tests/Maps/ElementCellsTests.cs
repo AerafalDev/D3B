@@ -39,6 +39,33 @@ public sealed class ElementCellsTests
     }
 
     [Fact]
+    public void AnElementWhoseOnlyNeighboursAreInAnotherZoneIsNotUsedFromAFarCellOfTheCharactersZone()
+    {
+        // The element stands in the other zone's height (D424): the zone's cells two steps away are no place to use it from.
+        var cells = TestCells.OpenBut();
+
+        foreach (var direction in Enumerable.Range(0, MapCell.DirectionCount))
+            cells[MapGeometry.Neighbour(176, direction)] = new MapCell(MapCellProperties.Walkable, 0, 0, 0, 0, 2 << 4, 0);
+
+        Assert.Empty(ElementCells.UsedFrom(cells, 176, 1));
+        Assert.Equal(8, ElementCells.UsedFrom(cells, 176, 2).Count);
+    }
+
+    [Fact]
+    public void WaterAllAroundAnElementStillSendsTheCharacterToTheNearestCellsOfItsOwnZoneOnly()
+    {
+        var cells = TestCells.Where(cell => MapGeometry.Distance(cell, 408) >= 3);
+
+        foreach (var cell in Enumerable.Range(0, MapData.CellCount).Where(cell => MapGeometry.Distance(cell, 408) == 3))
+            cells[cell] = new MapCell(MapCellProperties.Walkable, 0, 0, 0, 0, 2 << 4, 0);
+
+        var used = ElementCells.UsedFrom(cells, 408, 1);
+
+        Assert.NotEmpty(used);
+        Assert.All(used, cell => Assert.Equal(4, MapGeometry.Distance(cell, 408)));
+    }
+
+    [Fact]
     public void AMapOfAnotherSizeOrACellOffItIsRejected()
     {
         Assert.Throws<ArgumentException>(() => ElementCells.UsedFrom(new MapCell[10], 0, 1));

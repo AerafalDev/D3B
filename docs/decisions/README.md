@@ -54,3 +54,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Step 7, 7r6, repeats and sequences (D421)](d421-step-7-7r6-repeats-and-sequences.md): 1 decision, 8 KB.
 - [Bug reports, BR1 (D422)](d422-bug-reports-br1-keys.md): 1 decision, 2 KB.
 - [Bug reports, the cleaner (D423)](d423-bug-reports-cleaner.md): 1 decision, 3 KB.
+- [Step 9, the harvest and the zones of a map (D424)](d424-step-9-the-harvests-zones.md): 1 decision, 5 KB.

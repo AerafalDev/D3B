@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
+As of 2026-11-10, after D424 (a resource in another zone of its map is out of reach, no longer used from afar), D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.8.1, client build 3.7.13.17, pack format 11 published, 12 extracted and not published (D414), mapping format 17.
 
 ## What exists
 
@@ -34,6 +34,11 @@ As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another li
   `client-3.7.13.17` (D365).
 
 ## Not measured in game
+
+- The harvest and the zones of a map (D424): a player's report ("it tries but cannot, unless it stands in front of the resource or comes back from
+  another side"), read in the code and measured on the pack (864 maps with more than one zone, 3,673 element and zone pairs on 607 maps), fixed and
+  tested on the fake game, not seen in game: that the server refuses a use from a cell two steps away, and that the tour no longer fails on those
+  maps. To look at in the client: maps 0, 3333, 3845, 133890, 134403 or 134404, a character in one zone and a resource beside the other's cells.
 
 - The sending (BR4, D410) was run for real from a throwaway tool with the production sink: posts of 0.1 to 20 MiB of random bytes were taken by the owner's
   webhook and 21.5 MiB and more refused (the limit is Discord's, depends on the server's level and may change: a refusal is a result, and the app says to hand
@@ -99,6 +104,8 @@ As of 2026-11-10, after D421 (7r6, a step of a list repeats and plays another li
 
 ## Next
 
+0. **The harvest going to another zone of its map** (D424 (b), chosen by the owner, not begun): out and back through the world graph; the plan
+   is in the notes of the session that made D424 (the pathfinder's goal is a set of maps, the tour's sets are keyed by map).
 0. **The refactoring and tidy-up session** (D399 to D401) is mostly done: `decisions.md` is cut in files by group of the index,
    `client.md` has its game connection apart, `AssetsViewModel`, `BotActor`, `HarvestActivity`, `WorldMapView` and `Imagination`
    are under 900 lines, BenchmarkDotNet is gone. The two files that stayed over 900 lines, `FightJudge` and `RouteEditorViewModel`, are cut too.

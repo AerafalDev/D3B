@@ -187,7 +187,9 @@ What an element is, the server says (above). Measured for session 6b on 31 captu
 
 **Zones.** The zones of a map's vertices are the high four bits of its walkable cells' `linkedZone`: equal sets on
 10,795 maps, and on the other 186 the cells hold zones the graph leaves out, zones with no way out. Zones run from 1 to
-15; 97.6% of maps have one. The extractor checks that every vertex's zone is a walkable cell's zone of its map.
+15; 97.6% of maps have one. The extractor checks that every vertex's zone is a walkable cell's zone of its map. On the 864 maps of the
+pack of 3.7.13.17 that hold several, zones are almost always parts of the map one cannot walk between (10 pairs of zones joined by a path
+among those tried), and 3,673 (element, zone) pairs on 607 maps have walkable neighbours in another zone only (D424).
 
 **Transitions.** Four types occur, powers of two, one per transition. The client's code may know others, such as
 zaaps; none is in the graph, and the extractor fails on one.

@@ -3,6 +3,7 @@ using D3B.Bot.Harvesting;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Movement;
 using D3B.Bot.Tests.Runtime;
+using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Harvesting;
@@ -71,5 +72,29 @@ public sealed class MapHarvestTests
         connection.Server(new InteractiveUseErrorEvent { ElementId = TestPlay.TreeElementId, SkillInstanceId = TestPlay.TreeInstanceId });
 
         Assert.Equal(0, await TestWalks.AdvanceUntilDoneAsync(play.Time, harvest));
+    }
+
+    [Fact]
+    public async Task AResourceStandingInAnotherZoneIsNotACandidateNorUsedFromAFar()
+    {
+        // The tree's cells around are the second zone's, the character walks in the first (D424).
+        await using var play = TestPlay.WithASecondZone([.. Enumerable.Range(0, 8).Select(direction => MapGeometry.Neighbour(TestPlay.TreeCell, direction))]);
+        var (connection, bot) = await play.EnterAsync(433);
+        var skipped = new HashSet<int>();
+
+        Assert.Empty(await bot.RunAsync((context, _) => Task.FromResult(MapHarvest.Candidates(context, Targets(), context.State, skipped)), TestContext.Current.CancellationToken));
+        Assert.Contains(TestPlay.TreeElementId, skipped);
+        Assert.Equal(0, await Harvest(bot, Targets()));
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
+    public async Task AResourceWithANeighbourInTheCharactersZoneStaysACandidateWhateverTheOtherNeighboursAre()
+    {
+        await using var play = TestPlay.WithASecondZone([.. Enumerable.Range(1, 7).Select(direction => MapGeometry.Neighbour(TestPlay.TreeCell, direction))]);
+        var (_, bot) = await play.EnterAsync(433);
+        var candidates = await bot.RunAsync((context, _) => Task.FromResult(MapHarvest.Candidates(context, Targets(), context.State, [])), TestContext.Current.CancellationToken);
+
+        Assert.Equal(TestPlay.TreeElementId, Assert.Single(candidates).ElementId);
     }
 }
