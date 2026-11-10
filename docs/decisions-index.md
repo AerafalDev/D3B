@@ -540,3 +540,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## Bug reports, BR1 (D420)
 
 - [D420](decisions/d420-bug-reports-br1-keys.md#d420-two-settings-for-the-captures-the-game-is-recorded-unless-turned-off-every-connection-only-when-asked-the-retention-is-applied-whether-or-not-the-game-is-recorded) Two settings for the captures: the game is recorded unless turned off, every connection only when asked; the retention is applied whether or not the game is recorded (2026-11-10)
+
+## Bug reports, the cleaner (D421)
+
+- [D421](decisions/d421-bug-reports-cleaner.md#d421-a-reports-capture-is-cleaned-by-value-the-ticket-and-the-clients-opaque-strings-by-shape-the-account-characters-names-wherever-they-occur) A report's capture is cleaned by value: the ticket and the client's opaque strings by shape, the account's characters' names wherever they occur (2026-11-10)
