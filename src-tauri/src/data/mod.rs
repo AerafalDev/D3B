@@ -6,6 +6,7 @@
 //! extracted from the client is ever committed (`docs/data.md`).
 
 mod game_data;
+mod graph;
 mod manifest;
 mod map_flag;
 #[cfg_attr(

@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use super::graph::WorldGraph;
 use super::manifest::{DataError, Manifest};
 use super::world::World;
 use super::world_maps::WorldMap;
@@ -13,6 +14,8 @@ pub struct GameData {
     pub world: World,
     /// The worlds of the map, whose tiles the webview loads from the folder.
     pub worlds: Vec<WorldMap>,
+    /// The ways between maps.
+    pub graph: WorldGraph,
 }
 
 impl GameData {
@@ -21,10 +24,12 @@ impl GameData {
         let manifest = Manifest::load(folder)?;
         let world = World::load(folder, &manifest)?;
         let worlds = manifest.read(folder, "worlds")?;
+        let graph = WorldGraph::load(folder, &manifest)?;
         Ok(Self {
             manifest,
             world,
             worlds,
+            graph,
         })
     }
 }
@@ -46,5 +51,6 @@ mod tests {
         assert_ne!(data.world.positions.len(), 0);
         assert_ne!(data.world.sub_areas.len(), 0);
         assert_ne!(data.worlds.len(), 0);
+        assert_ne!(data.graph.edges.len(), 0);
     }
 }
