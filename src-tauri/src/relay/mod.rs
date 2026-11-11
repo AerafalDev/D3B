@@ -8,6 +8,7 @@ mod ankama_config;
 mod connection_phase;
 mod error;
 mod frame;
+mod game_connection;
 mod handover;
 mod redirect;
 mod version_file;

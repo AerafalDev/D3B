@@ -62,7 +62,9 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   the connection phase (the launcher's `connectionPort` picks one) and 5556 for the game. The ports are fixed; when one
   cannot be taken, D3B does not redirect and the indicator names the port.
 - **Framing**: every byte, both ways, is in frames of a protobuf varint length (at most 5 bytes) then that many bytes.
-  A frame over 16 MiB, or a sixth length byte, closes the connection. Nothing is encrypted or compressed.
+  A frame over 16 MiB, or a sixth length byte, closes the connection; the relay reads frames in the connection phase
+  and the game connection's first frame, then copies the game's bytes untouched until the protocol needs its frames.
+  Nothing is encrypted or compressed.
 - **The connection phase**: the relay resolves Ankama's connection host at each connection (a load balancer) and
   connects on the port the client chose. Four frames: the identification (with the launcher's login token) and its
   answer, then the server selection and its answer, after which the server closes.
@@ -77,7 +79,8 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   relay reads that frame, finds a waiting ticket among its length-delimited values by the wire format alone, connects
   to that ticket's real host on the first real port (the client takes the first port listed), relays the frame first,
   then pipes both ways. No waiting ticket, or no whole
-  frame within 5 s: the connection is closed.
+  frame within 5 s: the connection is closed. The ticket is taken before the game server is reached, so a client
+  whose game server cannot be reached is refused, and so is a retry with the same ticket (not measured).
 - **Several clients and accounts** at once are matched by their tickets.
 - **Builds**: the relay reads no game mapping, so it carries any build. The only build-dependent step is the rewrite,
   whose field path held from an older build to 3.7.13.17 but is not measured beyond (Q17 of the C# version); on
