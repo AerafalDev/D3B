@@ -38,8 +38,14 @@ flowchart LR
 | `sub-areas.json` | `id`, `name`, `areaId`, `level`, `zaapMapId` (or `null`), `basicAccountAllowed`, `customWorldMapId`, `harvestables`, `monsters` | `SubAreaData`, 569 records |
 | `worlds.json` | `id`, `name`, `originX`, `originY`, `mapWidth`, `mapHeight`, `minScale`, `maxScale`, `startScale`, `width`, `height`, `visible`, `zooms` (`percent`, `width`, `height`, `columns`, `rows`) | `WorldMapsDataRoot`, 40 worlds, 161 zooms |
 | `tiles/<world>/<percent>/<n>.jpg` | one tile, JPEG 75 | 1,250 BC7 textures, 79.7 MB |
+| `maps/<id % 100>.json` | `id`, `top`, `bottom`, `left`, `right`; `flags` and `linkedZone`, 560 values each; `mapChange`, `floor`, `moveZone`, `arrow`, `speed` as `{cell: value}` where not zero; `elements` (`id`, `cellId` or -1, `gfxId`) | `ClientMapData` and `MapMetadata`, 17,623 maps, 46,490 elements, 63 MB |
 | `areas.json` | `id`, `name` (a text, or `null`), `superAreaId`, `worldmapId`, `hasWorldMap` | `AreaData`, 70 records |
 | `zaaps.json` | `id`, `mapId`, `subAreaId`, `activated` | `WaypointData`, 63 records |
+
+A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
+`nonWalkableDuringRP`, `farmCell`, `visible`, `havenbagCell`, `roleplayMonstersMovementBlocked`, `red`, `blue`: fields
+of the cell, not an enum of the client, so the order is ours (`data::maps::cell`). A map's interactive elements are in
+its record; the app reads a map's file when it needs the map, not at start.
 
 The app reads the whole folder once at start (`data::GameData`) and refuses it whole when a table cannot be read: the
 status bar then says it has no data, and its tooltip says why.

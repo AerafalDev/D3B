@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.Diagnostics;
 using System.Reflection;
 using D3B.Extractor.Code;
+using D3B.Extractor.Maps;
 using D3B.Extractor.Texts;
 using D3B.Extractor.World;
 using D3B.Extractor.WorldMaps;
@@ -104,6 +105,7 @@ internal static class ExtractCommand
 
         WorldTables.Extract(client, texts, code, folder, output);
         WorldMapTables.Extract(client, texts, folder, output);
+        MapTables.Extract(client, folder, output);
         folder.Complete(build.Version, Version);
 
         output.WriteLine($"Data: {path}, format {DataFolder.Format}, in {stopwatch.Elapsed.TotalSeconds:F1} s");
