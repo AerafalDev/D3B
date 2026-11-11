@@ -19,6 +19,10 @@ may quote the client's names and values, which never enter the repository.
    `main:docs/architecture.md`, and its code under `main:src/` (read for ideas, never copied).
 4. **Other references** the owner names (Bubble, other bots): hints only, never translated.
 
+To know what a client update changed (a spell, a breed, a mechanic, a zone), read the summary of every Dofus update
+at <https://www.dofuspourlesnoobs.com/mises-a-jour-dofus.html> first: it says where to look, never what the client
+does (that stays `verified` from the sources above).
+
 ## Rules
 
 - Every finding states its provenance: `verified` (a capture or the client's data, naming which) or `inferred` (the C#
