@@ -11,7 +11,7 @@ paths:
   owner's go. Its release triggers `release.yml`, which builds the six targets (Windows, macOS, Linux; x64 and ARM64),
   with the game data of the build named in `.github/game-data.json`, and attaches the installers and the updater's
   `latest.json`. Until `next` replaces `main`, releases are pre-releases.
-- **release-please runs as the owner's GitHub App** (secrets `RELEASE_APP_ID`, `RELEASE_APP_PRIVATE_KEY`), never with
+- **release-please runs as the owner's GitHub App** (variable `RELEASE_APP_CLIENT_ID`, secret `RELEASE_APP_PRIVATE_KEY`), never with
   `GITHUB_TOKEN`: GitHub runs no workflow on a PR that `GITHUB_TOKEN` opens, and the ruleset needs CI's checks.
 - **Formatting**: Biome expands every JSON object and array, as release-please's `JSON.stringify` writes them; keep it
   so, or the release PR fails the format check.
