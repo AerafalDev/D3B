@@ -67,13 +67,16 @@ pub fn relay_status(relay: tauri::State<'_, Relay>) -> RelayStatus {
     relay.status().into()
 }
 
-/// Ends the relayed connections and puts Ankama's configuration back in the client, before an update installs.
+/// Ends the relayed connections and puts Ankama's configuration back in the client, before an update installs; why it
+/// could not, when the `version` file stayed redirected. Off the main thread, since a refused write is tried again.
 #[tauri::command]
 #[specta::specta]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri hands commands their state by value")]
-pub fn relay_restore(relay: tauri::State<'_, Relay>) -> RelayStatus {
-    relay.stop();
-    relay.status().into()
+pub async fn relay_restore(relay: tauri::State<'_, Relay>) -> Result<(), String> {
+    let relay = relay.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || relay.stop())
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
 }
 
 /// Makes the app's relay, which tells the webview each change, and starts it on the installed client.
@@ -104,6 +107,7 @@ pub fn start(app: &tauri::App) {
 /// Puts the client's configuration back as the app ends.
 pub fn stop(app: &tauri::AppHandle) {
     if let Some(relay) = app.try_state::<Relay>() {
-        relay.stop();
+        // Nothing is left to tell at exit: the status already says it failed.
+        let _ = relay.stop();
     }
 }

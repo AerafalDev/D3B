@@ -10,8 +10,11 @@ export const commands = {
 	appInfo: () => __TAURI_INVOKE<AppInfo_Serialize>("app_info"),
 	/**  The relay's status now. */
 	relayStatus: () => __TAURI_INVOKE<RelayStatus_Serialize>("relay_status"),
-	/**  Ends the relayed connections and puts Ankama's configuration back in the client, before an update installs. */
-	relayRestore: () => __TAURI_INVOKE<RelayStatus_Serialize>("relay_restore"),
+	/**
+	 *  Ends the relayed connections and puts Ankama's configuration back in the client, before an update installs; why it
+	 *  could not, when the `version` file stayed redirected. Off the main thread, since a refused write is tried again.
+	 */
+	relayRestore: () => __TAURI_INVOKE<null>("relay_restore"),
 };
 
 /** Events */

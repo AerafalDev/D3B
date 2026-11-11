@@ -36,11 +36,12 @@ pub(crate) enum Handed {
     NotAsked,
 }
 
-/// Accepts connection phases on `listener`, each relayed to Ankama's connection host `host` on the port the client
-/// chose, until the task is aborted; its connections end with it. `report` hears how each one ended.
+/// Accepts connection phases on `listener`, each relayed to Ankama's connection host `host` (as the last configuration
+/// names it) on the port the client chose, until the task is aborted; its connections end with it. `report` hears how
+/// each one ended.
 pub(crate) async fn serve(
     listener: TcpListener,
-    host: String,
+    host: Arc<Mutex<String>>,
     handover: Arc<Mutex<Handover>>,
     report: impl Fn(Handed) + Clone + Send + 'static,
 ) {
@@ -52,7 +53,7 @@ pub(crate) async fn serve(
             tokio::time::sleep(Duration::from_millis(100)).await;
             continue;
         };
-        let host = host.clone();
+        let host = host.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone();
         let handover = Arc::clone(&handover);
         let report = report.clone();
         connections.spawn(async move {
