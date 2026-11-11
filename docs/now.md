@@ -18,7 +18,7 @@ _Updated 2026-11-11._
   - the first update: with v0.10.0 installed, the next release is downloaded at start, the bar offers to restart,
     Restart installs it; on another try, closing installs it.
 - **In progress**: the extractor in `tools/extractor`, as a stack of PRs, each table with its Rust reader. Done: the
-  .NET project, checked by CI and `bun run check`. To come: finding the client and reading its build; the
+  .NET project, checked by CI and `bun run check`, which finds the client and reads its build. To come: the
   manifest-only folder the app accepts; the type-tree reader; bundles, texts and the world tables; the worlds and
   their tiles; the maps' cells; their elements; the world graph; the `.tar.gz` archive and `data:fetch` reading it.
   Until the last one, `scripts/fetch-data.ts` still expects a `.zip`.

@@ -54,6 +54,11 @@ archive, `client-<build>.tar.gz`, beside it: the file the `data` skill publishes
   its README. Without it the app starts and says it has no game data.
 - **In a release**: `release.yml` reads the build from `.github/game-data.json`, downloads the asset into `data/`, and
   `tauri build` bundles it (`bundle.resources`). The app reads it from `resource_dir()/data`.
+- **The client's build** is its `Dofus_Data/StreamingAssets/version` file: three `Key=Value` lines ending in LF,
+  `Version` (digits and dots, such as `3.7.13.17`), `BuildDate` (ISO 8601 with its offset, such as
+  `2026-11-03T14:09:52+00:00`) and `ConfigUrl` (measured on 3.7.13.17, 113 bytes). The extractor refuses a key twice,
+  another date format, or a file over 4 KiB. The manifest's `extractor` is its version and commit, such as
+  `0.1.0+54ea8c5…`.
 - **The client's folder**, read by the extractor and by studies: `--client`, else the `DOFUS_CLIENT` environment
   variable, else `%LOCALAPPDATA%\Ankama\Dofus-dofus3` on Windows. On macOS and Linux it must be named: where their
   launchers install it, and whether they hold the same data, is not measured.
