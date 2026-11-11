@@ -2,14 +2,15 @@
 
 _Updated 2026-11-11._
 
-- **Step**: 1, the game data ([ROADMAP.md](../ROADMAP.md)), designed with the owner ([docs/data.md](data.md), ADR
-  0008); step 0 is done but for its measure.
+- **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
+  designed with the owner ([docs/relay.md](relay.md), ADR 0011). Steps 0 and 1 are done but for their measures below,
+  which the owner takes alongside: the owner started step 2 before them, on 2026-11-11.
 - **Done**: the rewrite starts on branch `next`, which will replace the C# version on `main`. The Tauri 2 + React 19
   shell, the typed IPC, the packed data's manifest, i18n FR/EN, the Claude setup (`CLAUDE.md`, `.claude/`), CI on
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
   signed updates through the `updater-next` channel ([docs/updates.md](updates.md)). **v0.10.0**, the first
   pre-release, is published with installers for the six targets and no game data yet. Decisions:
-  [docs/adr/](adr/README.md) 0001 to 0010.
+  [docs/adr/](adr/README.md) 0001 to 0011.
 - **Measured** by the owner, 2026-11-11, Windows x64: v0.10.0 installs per user, starts dark and in French, its status
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
   back.
@@ -37,7 +38,11 @@ _Updated 2026-11-11._
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go; `.github/game-data.json` names it, so the next release packs it.
   v0.11.0 shipped without data, named before.
+- **In progress**, the relay, as a stack of PRs against `next`: the dependencies, the `version` file and Ankama's
+  configuration; the redirect's lifecycle; framing, the wire walker and the handover; the connection phase and its
+  one rewrite; the game connection; the replay of the owner's captures; the IPC, the status-bar indicator and the
+  checklist. Nothing reaches the app before the last one.
 - **Next**: the owner removes Repository admin from the "Protected branches" ruleset's bypass list once CI is back;
-  then the first feature of step 2, the relay, designed with the owner (`feature`).
+  the owner measures the relay in game from its checklist, then the protocol and its per-build mapping.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

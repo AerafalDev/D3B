@@ -84,7 +84,7 @@ OS). It is the file the `data` skill publishes and `data:fetch` unpacks. The for
   its README. Without it the app starts and says it has no game data.
 - **In a release**: `release.yml` reads the build from `.github/game-data.json`, downloads the asset into `data/`, and
   `tauri build` bundles it (`bundle.resources`). The app reads it from `resource_dir()/data`.
-- **The client's build** is its `Dofus_Data/StreamingAssets/version` file: three `Key=Value` lines ending in LF,
+- **The client's build** is its `Dofus_Data/StreamingAssets/version` file: three `Key=Value` lines ending in CRLF,
   `Version` (digits and dots, such as `3.7.13.17`), `BuildDate` (ISO 8601 with its offset, such as
   `2026-11-03T14:09:52+00:00`) and `ConfigUrl` (measured on 3.7.13.17, 113 bytes). The extractor refuses a key twice,
   another date format, or a file over 4 KiB. The manifest's `extractor` is its version and commit, such as

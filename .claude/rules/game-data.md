@@ -21,7 +21,8 @@ paths:
   mapped message that does not re-encode to the same bytes is not trusted, and an unknown build stops the bot with a
   clear message, never a guess.
 - **The relay** never sends anything to the client of its own; it only inserts the bot's requests between the
-  client's frames, and only requests that start an action.
+  client's frames, and only requests that start an action. The one frame it changes is the server-selection answer,
+  whose game host and ports become the relay's ([docs/relay.md](../../docs/relay.md), ADR 0011).
 - **Captures** hold the account's login ticket: describe them by structure, never print their content.
 - Before coding a behaviour of the game, find its study (`study` skill): the C# version's measured docs
   (`docs/client.md`, `docs/client-game.md` on its `main`) are a source, verified against a capture when they decide.
