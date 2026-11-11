@@ -13,12 +13,12 @@ _Updated 2026-11-11._
   [docs/adr/](adr/README.md) 0001 to 0011.
 - **Measured** by the owner, 2026-11-11, Windows x64: v0.10.0 installs per user, starts dark and in French, its status
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
-  back.
+  back. Then the first update: the installed version downloaded v0.12.0 at start, the bar offered to restart, and
+  Restart started v0.12.0, whose bar names client 3.7.13.17 and says the relay is ready, and a client plays through it.
 - **Not measured**, by the owner:
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
-  - the first update: with v0.10.0 installed, the next release is downloaded at start, the bar offers to restart,
-    Restart installs it; on another try, closing installs it. It starts with a new identifier (ADR 0009), so its data
-    folders start empty;
+  - an update installed by closing the app (Restart is measured): with the next release, together with the relay's
+    item 10;
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
     items 1, 2 (every count as below, in 27.8 s) and 4 pass. Not measured yet: items 3 and 5.
     1. `dotnet run --project tools/extractor/src -- --help` lists `--client` and `--output`;
