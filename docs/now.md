@@ -34,7 +34,10 @@ _Updated 2026-11-11._
   but the maps, which it reads one file at a time.
 - **Debt**, from the review of step 1: the readers of maps, of the world graph and of the tiles are tested on the
   installed client only (skipped in CI); hand-built trees (`TypeTree.Build`) would test their failures in CI too.
-- **Next**: once step 1 is measured, publish `client-3.7.13.17` on the owner's go (`data` skill), then the first
-  feature of step 2, the relay, designed with the owner (`feature`).
+- **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
+  `client-3.7.13.17` release on the owner's go; `.github/game-data.json` names it, so the next release packs it.
+  v0.11.0 shipped without data, named before.
+- **Next**: the owner removes Repository admin from the "Protected branches" ruleset's bypass list once CI is back;
+  then the first feature of step 2, the relay, designed with the owner (`feature`).
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.
