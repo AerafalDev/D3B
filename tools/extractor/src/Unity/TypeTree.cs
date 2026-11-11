@@ -52,7 +52,12 @@ internal sealed class TypeTree
 
             if (i > 0)
             {
-                if (parents.Count is 0 || source[parents.Peek()].Level != source[i].Level - 1)
+                if (parents.Count is 0)
+                {
+                    throw new InvalidDataException($"The type tree of {name} has a second root at node {i}.");
+                }
+
+                if (source[parents.Peek()].Level != source[i].Level - 1)
                 {
                     throw new InvalidDataException($"The type tree of {name} skips a level at node {i}.");
                 }
@@ -91,19 +96,36 @@ internal sealed class TypeTree
         return new TypeTree(name, nodes);
     }
 
+    private static string FieldOf(string name)
+    {
+        return name.StartsWith(BackingFieldPrefix, StringComparison.Ordinal) && name.EndsWith(BackingFieldSuffix, StringComparison.Ordinal)
+            ? name[BackingFieldPrefix.Length..^BackingFieldSuffix.Length]
+            : name;
+    }
+
     /// <summary>Finds a child by its serialized name, or by the name of the property it backs.</summary>
     /// <returns>Its index, or -1.</returns>
+    /// <exception cref="InvalidDataException">Two children answer to the name: a field and a property's backing field.</exception>
     public int Child(int node, string name)
     {
+        var found = -1;
+
         foreach (var child in _nodes[node].Children)
         {
-            if (_nodes[child].Name == name || _nodes[child].Field == name)
+            if (_nodes[child].Field != name && _nodes[child].Name != name)
             {
-                return child;
+                continue;
             }
+
+            if (found is not -1)
+            {
+                throw new InvalidDataException($"{Name}.{_nodes[node].Name} has two fields named {name}: which one the extractor should read is not known.");
+            }
+
+            found = child;
         }
 
-        return -1;
+        return found;
     }
 
     /// <summary>Finds a child that must be there.</summary>
@@ -146,12 +168,5 @@ internal sealed class TypeTree
         var field = _nodes[node];
 
         return new InvalidDataException($"{Name}.{field.Name} is a {field.Type}, where the extractor expects {expected}: the client changed this type, so the extractor needs updating.");
-    }
-
-    private static string FieldOf(string name)
-    {
-        return name.StartsWith(BackingFieldPrefix, StringComparison.Ordinal) && name.EndsWith(BackingFieldSuffix, StringComparison.Ordinal)
-            ? name[BackingFieldPrefix.Length..^BackingFieldSuffix.Length]
-            : name;
     }
 }

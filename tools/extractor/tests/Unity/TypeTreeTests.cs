@@ -42,6 +42,22 @@ public sealed class TypeTreeTests
     }
 
     [Fact]
+    public void ATreeWithTwoRootsIsRefused()
+    {
+        var error = Assert.Throws<InvalidDataException>(() => TypeTree.Build("Test", [Node(0, "Test", "Base"), Node(0, "int", "a", 4)]));
+
+        Assert.Contains("second root", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFieldAndABackingFieldOfTheSameNameAreAmbiguous()
+    {
+        var tree = Of(One(Node(1, "int", "Id", 4)), One(Node(1, "int", "<Id>k__BackingField", 4)));
+
+        Assert.Throws<InvalidDataException>(() => tree.Child(0, "Id"));
+    }
+
+    [Fact]
     public void ATreeWithoutRootIsRefused()
     {
         Assert.Throws<InvalidDataException>(() => TypeTree.Build("Test", [Node(1, "int", "a", 4)]));
@@ -51,7 +67,9 @@ public sealed class TypeTreeTests
     [Fact]
     public void AnArrayWithoutSizeAndItemIsRefused()
     {
+        Assert.Throws<InvalidDataException>(() => TypeTree.Build("Test", [Node(0, "Test", "Base"), Array(1)]));
         Assert.Throws<InvalidDataException>(() => TypeTree.Build("Test", [Node(0, "Test", "Base"), Array(1), Node(2, "int", "size", 4)]));
+        Assert.Throws<InvalidDataException>(() => TypeTree.Build("Test", [Node(0, "Test", "Base"), Array(1), Node(2, "int", "size", 4), Node(2, "int", "data", 4), Node(2, "int", "more", 4)]));
     }
 
     [Fact]
