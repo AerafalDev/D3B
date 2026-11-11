@@ -9,7 +9,7 @@ _Updated 2026-11-11._
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
   signed updates through the `updater-next` channel ([docs/updates.md](updates.md)). **v0.10.0**, the first
   pre-release, is published with installers for the six targets and no game data yet. Decisions:
-  [docs/adr/](adr/README.md) 0001 to 0008.
+  [docs/adr/](adr/README.md) 0001 to 0009.
 - **Measured** by the owner, 2026-11-11, Windows x64: v0.10.0 installs per user, starts dark and in French, its status
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
   back.
@@ -20,9 +20,9 @@ _Updated 2026-11-11._
 - **In progress**: the extractor in `tools/extractor`, as a stack of PRs, each table with its Rust reader. Done: the
   .NET project, checked by CI and `bun run check`, which finds the client, reads its build and writes a manifest-only
   folder the app accepts; reading the client's bundles and data tables through their type trees, and its texts in
-  five languages; the areas and zaaps, which the app reads at start. To come: the map positions and sub-areas; the
-  worlds and their tiles; the maps' cells; their elements; the world graph; the `.tar.gz` archive and `data:fetch`
-  reading it. Until the last one, `scripts/fetch-data.ts` still expects a `.zip`.
+  five languages; the areas and zaaps, which the app reads at start; the names of the client's flag enums. To come:
+  the map positions and sub-areas; the worlds and their tiles; the maps' cells; their elements; the world graph; the
+  `.tar.gz` archive and `data:fetch` reading it. Until the last one, `scripts/fetch-data.ts` still expects a `.zip`.
 - **Next**: the owner runs the extractor on the installed client and the status bar names the build; then the first
   feature of step 2, the relay, designed with the owner (`feature`).
 - **Waiting on the owner**:

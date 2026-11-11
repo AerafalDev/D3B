@@ -13,3 +13,4 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0006](0006-releases-for-six-targets.md) | Releases for six targets through release-please, unsigned for now | accepted |
 | [0007](0007-the-updater-next-channel.md) | The rewrite updates from an `updater-next` channel, silently, with a restart bar | accepted |
 | [0008](0008-world-data-first-in-five-languages-as-a-tar-gz.md) | The data folder holds the world first, in five languages, and ships as a `.tar.gz` | accepted |
+| [0009](0009-flags-by-the-names-of-the-clients-enums.md) | Flags are written by the names the client's enums give them, read with Cpp2IL | accepted |

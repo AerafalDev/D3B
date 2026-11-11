@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="AssetsTools.NET" />
+    <PackageReference Include="Samboy063.Cpp2IL.Core" />
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 
