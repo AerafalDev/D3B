@@ -6,10 +6,21 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/node_modules", "!**/dist", "!**/target", "!src-tauri/gen", "!src/bindings.ts", "!data"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/target",
+      "!src-tauri/gen",
+      "!src/bindings.ts",
+      "!data"
+    ]
   },
   "formatter": {
-    "includes": ["**", "!**/*.md"],
+    "includes": [
+      "**",
+      "!**/*.md"
+    ],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 120
@@ -69,7 +80,10 @@
   },
   "overrides": [
     {
-      "includes": ["src/components/ui/**", "src/components/flow/**"],
+      "includes": [
+        "src/components/ui/**",
+        "src/components/flow/**"
+      ],
       "linter": {
         "enabled": false
       }
