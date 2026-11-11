@@ -66,11 +66,10 @@ fn config_url_value(line: &[u8]) -> Option<Range<usize>> {
     if line[..separator].trim_ascii() != VersionFile::KEY {
         return None;
     }
-    let rest = &line[separator + 1..];
-    let leading = rest.len() - rest.trim_ascii_start().len();
-    let trailing = rest.len() - rest.trim_ascii_end().len();
-    let start = separator + 1 + leading;
-    Some(start..(line.len() - trailing).max(start))
+    // Trimmed at the end first, so that an empty value never lets the line end count as leading spaces.
+    let value = line[separator + 1..].trim_ascii_end();
+    let leading = value.len() - value.trim_ascii_start().len();
+    Some(separator + 1 + leading..separator + 1 + value.len())
 }
 
 #[cfg(test)]
@@ -82,6 +81,48 @@ mod tests {
 
     fn parse(bytes: &[u8]) -> Result<VersionFile, RelayError> {
         VersionFile::parse(bytes.to_vec())
+    }
+
+    #[test]
+    fn writes_an_empty_value_on_its_own_line() {
+        for (bytes, expected) in [
+            (
+                &b"ConfigUrl=
+Version=1
+"[..],
+                &b"ConfigUrl=x
+Version=1
+"[..],
+            ),
+            (
+                b"ConfigUrl=   
+Version=1
+",
+                b"ConfigUrl=x   
+Version=1
+",
+            ),
+        ] {
+            let file = parse(bytes).unwrap_or_else(|error| panic!("{error}"));
+
+            assert_eq!(file.config_url(), "");
+            assert_eq!(file.with_config_url("x"), expected);
+        }
+    }
+
+    #[test]
+    fn keeps_an_equals_sign_inside_the_url() {
+        let file = parse(b"ConfigUrl=https://cdn.example.com/x.json?v=1\r\n").unwrap_or_else(|error| panic!("{error}"));
+
+        assert_eq!(file.config_url(), "https://cdn.example.com/x.json?v=1");
+    }
+
+    #[test]
+    fn accepts_a_file_of_exactly_the_limit() {
+        let mut bytes = b"ConfigUrl=a\n".to_vec();
+        bytes.resize(VersionFile::LIMIT, b' ');
+
+        assert!(parse(&bytes).is_ok());
     }
 
     #[test]

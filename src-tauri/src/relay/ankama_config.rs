@@ -6,14 +6,15 @@ use super::RelayError;
 
 /// Ankama's configuration, the JSON the client's `ConfigUrl` names: 768 bytes and 15 keys on 2026-10-27 (inferred,
 /// `main:docs/client.md`, "Configuration", 3.7.12.12). The client takes its connection host from `connectionHosts`;
-/// every other key (the chat, Haapi, the shop) is kept as Ankama wrote it.
+/// every other key (the chat, Haapi, the shop) keeps its value, though not its order or formatting.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AnkamaConfig {
     json: Map<String, Value>,
     host: ConnectionHost,
 }
 
-/// The one entry of `connectionHosts`, `<name>:<host>:<ports>`, ports `5555,443` as measured.
+/// The one entry of `connectionHosts`, `<name>:<host>:<ports>`, ports `5555,443` (inferred, `main:docs/client.md`,
+/// "Configuration", 3.7.12.12).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ConnectionHost {
     pub(crate) name: String,
@@ -105,8 +106,12 @@ impl ConnectionHost {
     }
 }
 
-/// Whether `host` is a DNS name or an IPv4 address: dot-separated labels of letters, digits and hyphens.
+/// Whether `host` is a DNS name or an IPv4 address: dot-separated labels of letters, digits and hyphens. A host of
+/// digits and dots only must be a full IPv4 address: a short form such as `127.1` would reach loopback unseen.
 pub(crate) fn is_host_name(host: &str) -> bool {
+    if host.bytes().all(|byte| byte.is_ascii_digit() || byte == b'.') {
+        return host.parse::<Ipv4Addr>().is_ok();
+    }
     host.len() <= 253
         && host.split('.').all(|label| {
             (1..=63).contains(&label.len())
@@ -185,18 +190,30 @@ mod tests {
 
     #[test]
     fn refuses_a_configuration_already_redirected() {
-        for host in ["127.0.13.59", "127.0.0.1", "localhost", "::1"] {
+        for host in ["127.0.13.59", "127.0.0.1", "localhost", "LocalHost"] {
             let text = format!(r#"{{"connectionHosts":["p:{host}:5555"]}}"#);
-            let result = AnkamaConfig::parse(&text);
-            // `::1` has colons, so it is not even a valid entry: refused either way.
             assert!(
-                matches!(
-                    result,
-                    Err(RelayError::AlreadyRedirected(_) | RelayError::ConnectionHostMalformed(_))
-                ),
+                matches!(AnkamaConfig::parse(&text), Err(RelayError::AlreadyRedirected(_))),
                 "{host}"
             );
         }
+    }
+
+    #[test]
+    fn refuses_its_own_copy() {
+        let config = AnkamaConfig::parse(CONFIG).unwrap_or_else(|error| panic!("{error}"));
+
+        let copy = AnkamaConfig::parse(&config.redirected_to(crate::relay::ADDRESS));
+
+        assert!(matches!(copy, Err(RelayError::AlreadyRedirected(_))), "{copy:?}");
+    }
+
+    #[test]
+    fn accepts_a_configuration_of_exactly_the_limit() {
+        let mut text = CONFIG.to_owned();
+        text.push_str(&" ".repeat(AnkamaConfig::LIMIT - CONFIG.len()));
+
+        assert!(AnkamaConfig::parse(&text).is_ok());
     }
 
     #[test]
@@ -223,6 +240,10 @@ mod tests {
             "p:host..example.com:5555",
             "p:host_1.example.com:5555",
             "p:host.example.com:5555:1",
+            "p:::1:5555",
+            "p:127.1:5555",
+            "p:2130706433:5555",
+            "p:1.2.3.4.5:5555",
         ] {
             assert!(
                 matches!(
@@ -232,6 +253,13 @@ mod tests {
                 "{entry}"
             );
         }
+    }
+
+    #[test]
+    fn accepts_an_ipv4_host() {
+        let host = ConnectionHost::parse("p:203.0.113.7:5555").unwrap_or_else(|error| panic!("{error}"));
+
+        assert_eq!(host.host, "203.0.113.7");
     }
 
     #[test]

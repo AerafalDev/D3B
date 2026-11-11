@@ -13,5 +13,5 @@ pub use error::RelayError;
 use std::net::Ipv4Addr;
 
 /// The loopback address the relay listens on: not `127.0.0.1`, so that no other local program's port is taken
-/// (inferred, `main:docs/client.md`, D34 and D36, measured on Windows x64).
+/// (inferred, `main:docs/client.md`, D34 and D36, on Windows x64).
 pub(crate) const ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 13, 59);
