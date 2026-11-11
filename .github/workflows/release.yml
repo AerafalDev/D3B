@@ -106,13 +106,21 @@ jobs:
           else
             echo "::warning::.github/game-data.json names no client build: this release ships without game data."
           fi
+      - name: Release id
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.release-please.outputs.tag }}
+        run: echo "id=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .id)" >> "$GITHUB_OUTPUT"
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ needs.release-please.outputs.tag }}
+          releaseId: ${{ steps.release.outputs.id }}
           projectPath: .
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config src-tauri/tauri.release.conf.json
           updaterJsonPreferNsis: true
