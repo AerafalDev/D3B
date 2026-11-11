@@ -13,7 +13,8 @@ committed. The rules for working with Claude Code are in [CLAUDE.md](CLAUDE.md) 
 
 ## Setup
 
-You need [Rust](https://rustup.rs), [Bun](https://bun.sh) 1.4 or later, Git, and
+You need [Rust](https://rustup.rs), [Bun](https://bun.sh) 1.4 or later, the [.NET 10 SDK](https://dotnet.microsoft.com/download)
+(for the game data extractor, which `bun run check` builds and tests), Git, and
 [Tauri's system dependencies](https://v2.tauri.app/start/prerequisites/) for your OS.
 
 ```sh

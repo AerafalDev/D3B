@@ -133,7 +133,7 @@ bun run app
 | --- | --- |
 | `bun run app` | The desktop app in development, with hot reload. |
 | `bun run dev` | The interface alone in a browser, without the back end. |
-| `bun run check` | Every check CI runs: format, lint, typecheck, tests, clippy. |
+| `bun run check` | Every check CI runs: format, lint, typecheck, tests, clippy, and the extractor's (needs the [.NET 10 SDK](https://dotnet.microsoft.com/download)). |
 | `bun run fix` | Applies the formatters' and linters' safe fixes. |
 | `bun run data:fetch <build>` | Downloads the game data of a client build into `data/` (needs the GitHub CLI). |
 | `bun tauri build` | The installers for your OS, in `src-tauri/target/release/bundle/`. |
@@ -144,6 +144,7 @@ bun run app
 | --- | --- |
 | `src/` | The interface: React 19, TypeScript, shadcn/ui, Tailwind CSS. |
 | `src-tauri/` | The back end in Rust: one folder per domain (data, relay, protocol, game, bot, storage) and the typed IPC. |
+| `tools/extractor/` | The .NET tool that extracts the game data from the installed client ([docs/data.md](docs/data.md)). |
 | `data/` | The packed game data, ignored by Git. |
 | `docs/` | Where the project stands, the [decisions](docs/adr/README.md) and a page per domain. |
 | `.claude/` | How we work with Claude Code: rules, skills, agents and hooks. |

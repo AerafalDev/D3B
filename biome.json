@@ -13,7 +13,8 @@
       "!**/target",
       "!src-tauri/gen",
       "!src/bindings.ts",
-      "!data"
+      "!data",
+      "!tools/extractor/tests/fixtures"
     ]
   },
   "formatter": {

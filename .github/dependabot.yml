@@ -43,6 +43,20 @@ updates:
         exclude-patterns: ["tauri", "tauri-*"]
     open-pull-requests-limit: 5
 
+  - package-ecosystem: nuget
+    directory: /tools/extractor
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: next
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      packages:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
