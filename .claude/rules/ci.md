@@ -11,6 +11,10 @@ paths:
   owner's go. Its release triggers `release.yml`, which builds the six targets (Windows, macOS, Linux; x64 and ARM64),
   with the game data of the build named in `.github/game-data.json`, and attaches the installers and the updater's
   `latest.json`. Until `next` replaces `main`, releases are pre-releases.
+- **release-please runs as the owner's GitHub App** (secrets `RELEASE_APP_ID`, `RELEASE_APP_PRIVATE_KEY`), never with
+  `GITHUB_TOKEN`: GitHub runs no workflow on a PR that `GITHUB_TOKEN` opens, and the ruleset needs CI's checks.
+- **Formatting**: Biome expands every JSON object and array, as release-please's `JSON.stringify` writes them; keep it
+  so, or the release PR fails the format check.
 - **No comments in workflows** (the owner's rule): a workflow reads by its step names; the reasons go in the ADRs and
   `docs/`. The one exception is the version after a pinned SHA (`@<sha> # v7.0.1`), which Dependabot reads and updates.
 - **Actions are pinned** to a full commit SHA; Dependabot raises them weekly.
