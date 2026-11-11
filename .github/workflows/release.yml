@@ -111,3 +111,24 @@ jobs:
           projectPath: .
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config src-tauri/tauri.release.conf.json
           includeUpdaterJson: true
+
+  channel:
+    name: Update channel
+    needs: [release-please, build]
+    if: needs.release-please.outputs.created == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Publish latest.json on the next channel
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.release-please.outputs.tag }}
+        run: |
+          gh release download "$TAG" --pattern latest.json --dir channel
+          if ! gh release view updater-next > /dev/null 2>&1; then
+            gh release create updater-next --prerelease --title "Update channel: next" --notes "The updater's manifest for the rewrite's pre-releases. Do not download from here."
+          fi
+          gh release upload updater-next channel/latest.json --clobber

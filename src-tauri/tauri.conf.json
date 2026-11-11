@@ -49,7 +49,7 @@
   },
   "plugins": {
     "updater": {
-      "endpoints": ["https://github.com/AerafalDev/D3B/releases/latest/download/latest.json"],
+      "endpoints": ["https://github.com/AerafalDev/D3B/releases/download/updater-next/latest.json"],
       "pubkey": "REPLACE_WITH_THE_UPDATER_PUBLIC_KEY"
     }
   }
