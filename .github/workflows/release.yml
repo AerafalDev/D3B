@@ -128,7 +128,10 @@ jobs:
           TAG: ${{ needs.release-please.outputs.tag }}
         run: |
           gh release download "$TAG" --pattern latest.json --dir channel
+          for platform in windows-x86_64 windows-aarch64 darwin-x86_64 darwin-aarch64 linux-x86_64 linux-aarch64; do
+            jq -e --arg p "$platform" '.platforms[$p]' channel/latest.json > /dev/null || { echo "::error::latest.json has no $platform"; exit 1; }
+          done
           if ! gh release view updater-next > /dev/null 2>&1; then
-            gh release create updater-next --prerelease --title "Update channel: next" --notes "The updater's manifest for the rewrite's pre-releases. Do not download from here."
+            gh release create updater-next --target next --prerelease --title "Update channel: next" --notes "The updater's manifest for the rewrite's pre-releases. Do not download from here."
           fi
           gh release upload updater-next channel/latest.json --clobber

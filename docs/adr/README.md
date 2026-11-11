@@ -11,3 +11,4 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0004](0004-typed-ipc-with-tauri-specta.md) | A typed IPC generated from Rust with tauri-specta | accepted |
 | [0005](0005-how-we-deliver.md) | Claude delivers through squash-merged PRs on protected branches | accepted |
 | [0006](0006-releases-for-six-targets.md) | Releases for six targets through release-please, unsigned for now | accepted |
+| [0007](0007-the-updater-next-channel.md) | The rewrite updates from an `updater-next` channel, silently, with a restart bar | accepted |

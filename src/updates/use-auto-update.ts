@@ -13,13 +13,19 @@ export function useAutoUpdate(): void {
     if (!isTauri() || import.meta.env.DEV) {
       return;
     }
-    const { checkAndDownload, installOnClose } = useUpdater.getState();
-    void checkAndDownload();
+    const updater = useUpdater.getState();
+    void updater.checkAndDownload();
 
+    // A JS close listener takes the close over: the window is destroyed unless the handler prevents it, which needs
+    // `core:window:allow-destroy` in the capabilities.
     const closing = getCurrentWindow().onCloseRequested(async (event) => {
-      if (useUpdater.getState().state.status === "ready") {
-        event.preventDefault();
-        await installOnClose();
+      const action = useUpdater.getState().closeAction();
+      if (action === "close") {
+        return;
+      }
+      event.preventDefault();
+      if (action === "install") {
+        await useUpdater.getState().installOnClose();
       }
     });
     return () => {

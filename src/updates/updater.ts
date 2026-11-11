@@ -1,3 +1,4 @@
+import { error as logError } from "@tauri-apps/plugin-log";
 import { exit, relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { create } from "zustand";
@@ -11,21 +12,29 @@ export type UpdateState =
   | { status: "installing"; version: string }
   | { status: "failed"; error: string };
 
+/** What closing the window must do: close, wait for an install under way, or install the downloaded update first. */
+export type CloseAction = "close" | "wait" | "install";
+
 interface UpdaterStore {
   state: UpdateState;
   /** Checks the channel and downloads a newer version in the background; does nothing while one is under way. */
   checkAndDownload: () => Promise<void>;
   /** Installs the downloaded version and starts it. */
   restart: () => Promise<void>;
-  /** Installs the downloaded version, if any, as the app closes. Returns whether it did. */
-  installOnClose: () => Promise<boolean>;
+  /** What a request to close the window must do now. */
+  closeAction: () => CloseAction;
+  /** Installs the downloaded version, if any, without restarting, then quits. */
+  installOnClose: () => Promise<void>;
 }
 
-// The Update object holds a handle in the back end; it stays outside the store, which keeps plain data only.
+// The Update object holds a handle in the back end; it stays outside the store, which keeps plain data only. It is
+// kept after a failed install, so that closing the app tries again.
 let downloaded: Update | null = null;
 
-function message(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+function fail(context: string, error: unknown): string {
+  const text = error instanceof Error ? error.message : String(error);
+  void logError(`update: ${context}: ${text}`).catch(() => {});
+  return text;
 }
 
 export const useUpdater = create<UpdaterStore>((set, get) => ({
@@ -49,13 +58,13 @@ export const useUpdater = create<UpdaterStore>((set, get) => ({
       downloaded = update;
       set({ state: { status: "ready", version: update.version, notes: update.body } });
     } catch (error) {
-      set({ state: { status: "failed", error: message(error) } });
+      set({ state: { status: "failed", error: fail("check or download", error) } });
     }
   },
 
   restart: async () => {
     const update = downloaded;
-    if (update === null) {
+    if (update === null || get().state.status === "installing") {
       return;
     }
     set({ state: { status: "installing", version: update.version } });
@@ -64,22 +73,29 @@ export const useUpdater = create<UpdaterStore>((set, get) => ({
       downloaded = null;
       await relaunch();
     } catch (error) {
-      set({ state: { status: "failed", error: message(error) } });
+      set({ state: { status: "ready", version: update.version, notes: update.body } });
+      fail("install", error);
     }
+  },
+
+  closeAction: () => {
+    if (get().state.status === "installing") {
+      return "wait";
+    }
+    return downloaded === null ? "close" : "install";
   },
 
   installOnClose: async () => {
     const update = downloaded;
-    if (update === null) {
-      return false;
-    }
-    downloaded = null;
-    try {
-      await update.install();
-    } catch {
-      // The app is closing: a failed install is retried at the next start, which downloads it again.
+    if (update !== null) {
+      set({ state: { status: "installing", version: update.version } });
+      try {
+        await update.install({ restartAfterInstall: false });
+        downloaded = null;
+      } catch (error) {
+        fail("install on close", error);
+      }
     }
     await exit(0);
-    return true;
   },
 }));
