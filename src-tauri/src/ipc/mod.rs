@@ -2,15 +2,23 @@
 //! [`builder`] by the `bindings_are_current` test, so the TypeScript side never declares an IPC type by hand.
 
 mod commands;
+mod relay;
 
 pub use commands::LoadedData;
+pub use relay::{start as start_relay, stop as stop_relay};
 
-use tauri_specta::{Builder, collect_commands};
+use tauri_specta::{Builder, collect_commands, collect_events};
 
 /// Every command and event of the app.
 #[must_use]
 pub fn builder() -> Builder<tauri::Wry> {
-    Builder::<tauri::Wry>::new().commands(collect_commands![commands::app_info])
+    Builder::<tauri::Wry>::new()
+        .commands(collect_commands![
+            commands::app_info,
+            relay::relay_status,
+            relay::relay_restore
+        ])
+        .events(collect_events![relay::RelayChanged])
 }
 
 #[cfg(test)]

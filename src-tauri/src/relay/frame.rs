@@ -8,6 +8,10 @@ pub(crate) const LIMIT: usize = 16 * 1024 * 1024;
 /// The length of the whole frame at the start of `bytes`, header included: every byte of both connections is in frames
 /// of a protobuf varint length, at most 5 bytes, then that many bytes (inferred, `main:docs/client.md`, D38,
 /// 3.7.12.12 and 3.7.13.17). `None` while the frame is not whole yet.
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "the capture replay reads frames with it, and the protocol will")
+)]
 pub(crate) fn whole(bytes: &[u8]) -> Result<Option<usize>, RelayError> {
     let Some((header, body)) = header(bytes)? else {
         return Ok(None);

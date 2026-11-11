@@ -32,13 +32,6 @@ pub(crate) enum Game {
 }
 
 /// Accepts game connections on `listener` until the task is aborted; its connections end with it.
-#[cfg_attr(
-    test,
-    expect(
-        dead_code,
-        reason = "it listens on the relay's address, so the app runs it and the owner measures it"
-    )
-)]
 pub(crate) async fn serve(
     listener: TcpListener,
     handover: Arc<Mutex<Handover>>,
