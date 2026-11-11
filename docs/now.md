@@ -4,8 +4,8 @@ _Updated 2026-11-11._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
   designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,
-  is designed with the owner on 2026-11-11 ([docs/protocol.md](protocol.md), ADR 0012). Steps 0 and 1 are done but for their measures below,
-  which the owner takes alongside: the owner started step 2 before them, on 2026-11-11.
+  is designed with the owner on 2026-11-11 ([docs/protocol.md](protocol.md), ADR 0012). Steps 0 and 1 are done but
+  for their measures below, which the owner takes alongside: the owner started step 2 before them, on 2026-11-11.
 - **Done**: the rewrite starts on branch `next`, which will replace the C# version on `main`. The Tauri 2 + React 19
   shell, the typed IPC, the packed data's manifest, i18n FR/EN, the Claude setup (`CLAUDE.md`, `.claude/`), CI on
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
