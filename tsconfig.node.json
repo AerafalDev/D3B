@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
     "target": "es2023",
-    "lib": ["ES2023"],
+    "lib": [
+      "ES2023"
+    ],
     "module": "nodenext",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "noEmit": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
@@ -15,5 +19,9 @@
     "noPropertyAccessFromIndexSignature": true,
     "erasableSyntaxOnly": true
   },
-  "include": ["vite.config.ts", "scripts/**/*.ts", ".claude/hooks/*.ts"]
+  "include": [
+    "vite.config.ts",
+    "scripts/**/*.ts",
+    ".claude/hooks/*.ts"
+  ]
 }

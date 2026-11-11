@@ -12,8 +12,16 @@
       "prerelease": true,
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
-        { "type": "toml", "path": "src-tauri/Cargo.toml", "jsonpath": "$.package.version" },
-        { "type": "json", "path": "src-tauri/tauri.conf.json", "jsonpath": "$.version" }
+        {
+          "type": "toml",
+          "path": "src-tauri/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "json",
+          "path": "src-tauri/tauri.conf.json",
+          "jsonpath": "$.version"
+        }
       ]
     }
   }
