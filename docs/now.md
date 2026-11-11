@@ -19,10 +19,9 @@ _Updated 2026-11-11._
     Restart installs it; on another try, closing installs it.
 - **In progress**: the extractor in `tools/extractor`, as a stack of PRs, each table with its Rust reader. Done: the
   .NET project, checked by CI and `bun run check`, which finds the client, reads its build and writes a manifest-only
-  folder the app accepts; the client's type trees, and reading objects through them field by field, arrays,
-  references and vectors included, and a record's fields read by name. To come: bundles, texts and the world tables; the worlds and their tiles; the maps' cells;
-  their elements; the world graph; the `.tar.gz` archive and `data:fetch` reading it. Until the last one,
-  `scripts/fetch-data.ts` still expects a `.zip`.
+  folder the app accepts; reading the client's bundles and data tables through their type trees. To come: texts and
+  the world tables; the worlds and their tiles; the maps' cells; their elements; the world graph; the `.tar.gz`
+  archive and `data:fetch` reading it. Until the last one, `scripts/fetch-data.ts` still expects a `.zip`.
 - **Next**: the owner runs the extractor on the installed client and the status bar names the build; then the first
   feature of step 2, the relay, designed with the owner (`feature`).
 - **Waiting on the owner**:

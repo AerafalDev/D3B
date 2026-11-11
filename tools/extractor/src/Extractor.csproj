@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AssetsTools.NET" />
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 

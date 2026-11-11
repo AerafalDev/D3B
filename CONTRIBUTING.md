@@ -28,7 +28,7 @@ bun run app
 
 `bun run check` runs everything CI checks and must pass before you open a pull request. The official client is
 needed to measure a change in game, not to build or test: tests that need real game data or captures are skipped when
-`D3B_DATA` or `D3B_CAPTURES` is not set.
+`D3B_DATA` or `D3B_CAPTURES` is not set, and the extractor's tests of the installed client when there is none.
 
 ## Making a change
 
