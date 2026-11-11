@@ -23,7 +23,8 @@ flowchart LR
   an install the close waits; with an update downloaded, it installs without restarting (Windows' installer would
   otherwise relaunch the app), then quits.
 - **Release**: `tauri.release.conf.json` makes the build sign its updater artifacts with the secrets
-  `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`; tauri-action attaches `latest.json`; the
+  `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`; tauri-action attaches `latest.json`, whose
+  Windows x64 entry is the NSIS installer (`updaterJsonPreferNsis`), the one players install, never the MSI; the
   `channel` job copies it onto the release `updater-next` once all six targets are built.
 
 ## The channel
