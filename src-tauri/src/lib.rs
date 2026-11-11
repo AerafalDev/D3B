@@ -3,13 +3,6 @@
 
 mod data;
 mod ipc;
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the app starts the relay from the last pull request of its stack"
-    )
-)]
 mod relay;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -41,10 +34,18 @@ pub fn run() {
             use tauri::Manager;
             app.manage(ipc::LoadedData::load(app.handle()));
             ipc.mount_events(app);
+            ipc::start_relay(app);
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .unwrap_or_else(|error| panic!("the app could not start: {error}"));
+        .build(tauri::generate_context!())
+        .unwrap_or_else(|error| panic!("the app could not start: {error}"))
+        .run(|app, event| {
+            // The client's configuration goes back to Ankama's whichever way the app ends but a crash, which the next
+            // start recovers from (docs/relay.md).
+            if let tauri::RunEvent::Exit = event {
+                ipc::stop_relay(app);
+            }
+        });
 }
 
 fn log_level() -> tauri_plugin_log::log::LevelFilter {

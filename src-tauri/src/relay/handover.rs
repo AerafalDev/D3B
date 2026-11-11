@@ -65,6 +65,7 @@ impl Handover {
     }
 
     /// How many game connections are waiting.
+    #[cfg_attr(not(test), expect(dead_code, reason = "only the tests count what waits"))]
     pub(crate) fn len(&self) -> usize {
         self.waiting.len()
     }

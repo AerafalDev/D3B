@@ -44,6 +44,14 @@ impl VersionFile {
         Ok(Self { bytes, value })
     }
 
+    /// The client's build, its `Version` value, such as `3.7.13.17`; `None` without one.
+    pub(crate) fn build(&self) -> Option<&str> {
+        self.bytes
+            .split_inclusive(|&byte| byte == b'\n')
+            .find_map(|line| value_of(line, b"Version").map(|range| &line[range]))
+            .and_then(|value| std::str::from_utf8(value).ok())
+    }
+
     /// The configuration URL the client loads.
     pub(crate) fn config_url(&self) -> &str {
         // `parse` checked that the value is UTF-8, so this never falls back.
@@ -62,8 +70,13 @@ impl VersionFile {
 
 /// Where the value of `line` lies when it is the `ConfigUrl` line, relative to the line, spaces trimmed.
 fn config_url_value(line: &[u8]) -> Option<Range<usize>> {
+    value_of(line, VersionFile::KEY)
+}
+
+/// Where the value of `line` lies when it is the line of `key`, relative to the line, spaces trimmed.
+fn value_of(line: &[u8], key: &[u8]) -> Option<Range<usize>> {
     let separator = line.iter().position(|&byte| byte == b'=')?;
-    if line[..separator].trim_ascii() != VersionFile::KEY {
+    if line[..separator].trim_ascii() != key {
         return None;
     }
     // Trimmed at the end first, so that an empty value never lets the line end count as leading spaces.
@@ -123,6 +136,20 @@ Version=1
         bytes.resize(VersionFile::LIMIT, b' ');
 
         assert!(parse(&bytes).is_ok());
+    }
+
+    #[test]
+    fn reads_the_build() {
+        assert_eq!(
+            parse(CRLF).unwrap_or_else(|error| panic!("{error}")).build(),
+            Some("3.7.13.17")
+        );
+        assert_eq!(
+            parse(b"ConfigUrl=a\n")
+                .unwrap_or_else(|error| panic!("{error}"))
+                .build(),
+            None
+        );
     }
 
     #[test]

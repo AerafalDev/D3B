@@ -126,6 +126,11 @@ impl Redirect {
         }
     }
 
+    /// The client's build, from its `version` file; `None` when it cannot be read.
+    pub(crate) fn client_build(&self) -> Option<String> {
+        self.read_version().ok()?.build().map(str::to_owned)
+    }
+
     /// Whether the `version` file still names D3B's copy; `false` once the launcher rewrote it (an update or a
     /// repair, both measured by the owner on 3.7.13.17, 2026-11-11), which calls for applying again.
     pub(crate) fn is_applied(&self) -> Result<bool, RelayError> {
@@ -163,13 +168,6 @@ impl Redirect {
 
 /// Downloads Ankama's configuration, at most [`AnkamaConfig::LIMIT`] bytes; `None` when it cannot be reached, so
 /// that the kept copy is used. Network only: not unit tested, measured in game (`docs/relay.md`).
-#[cfg_attr(
-    test,
-    expect(
-        dead_code,
-        reason = "it needs Ankama's server, so the app uses it and the owner measures it"
-    )
-)]
 pub(crate) async fn download(url: &str) -> Option<String> {
     const TIMEOUT: Duration = Duration::from_secs(10);
 

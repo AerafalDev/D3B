@@ -36,18 +36,12 @@ pub(crate) enum Handed {
     NotAsked,
 }
 
-/// Accepts connection phases on `listener`, each relayed to Ankama's connection host `host` on the port the client
-/// chose, until the task is aborted; its connections end with it. `report` hears how each one ended.
-#[cfg_attr(
-    test,
-    expect(
-        dead_code,
-        reason = "it listens on the relay's address, so the app runs it and the owner measures it"
-    )
-)]
+/// Accepts connection phases on `listener`, each relayed to Ankama's connection host `host` (as the last configuration
+/// names it) on the port the client chose, until the task is aborted; its connections end with it. `report` hears how
+/// each one ended.
 pub(crate) async fn serve(
     listener: TcpListener,
-    host: String,
+    host: Arc<Mutex<String>>,
     handover: Arc<Mutex<Handover>>,
     report: impl Fn(Handed) + Clone + Send + 'static,
 ) {
@@ -59,7 +53,7 @@ pub(crate) async fn serve(
             tokio::time::sleep(Duration::from_millis(100)).await;
             continue;
         };
-        let host = host.clone();
+        let host = host.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone();
         let handover = Arc::clone(&handover);
         let report = report.clone();
         connections.spawn(async move {
@@ -77,13 +71,6 @@ pub(crate) async fn serve(
 /// Connects to `host` on `port`, trying each of its addresses: Ankama's hosts are load balancers of three addresses,
 /// resolved at each connection (inferred, `main:docs/client.md`, "Configuration"). A loopback address is skipped, so
 /// the relay never connects to itself.
-#[cfg_attr(
-    test,
-    expect(
-        dead_code,
-        reason = "it reaches Ankama, so the app runs it and the owner measures it"
-    )
-)]
 pub(crate) async fn connect(host: &str, port: u16) -> std::io::Result<TcpStream> {
     /// How long a connection to one of Ankama's addresses may take.
     const CONNECT: Duration = Duration::from_secs(10);
