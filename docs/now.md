@@ -18,11 +18,11 @@ _Updated 2026-11-11._
   - the first update: with v0.10.0 installed, the next release is downloaded at start, the bar offers to restart,
     Restart installs it; on another try, closing installs it. It starts with a new identifier (ADR 0009), so its data
     folders start empty.
-- **In progress**: the extractor in `tools/extractor`, as a stack of PRs, each table with its Rust reader: the
-  skeleton writing a manifest-only folder; the type-tree reader; bundles, texts and the world tables; the worlds and
+- **In progress**: the extractor in `tools/extractor`, as a stack of PRs, each table with its Rust reader. Done: the
+  .NET project, checked by CI and `bun run check`. To come: finding the client and reading its build; the
+  manifest-only folder the app accepts; the type-tree reader; bundles, texts and the world tables; the worlds and
   their tiles; the maps' cells; their elements; the world graph; the `.tar.gz` archive and `data:fetch` reading it.
-  Until the last one, `scripts/fetch-data.ts` still expects a `.zip`. The skeleton adds the .NET 10 SDK to
-  `bun run check` and to the prerequisites (README, CONTRIBUTING, `.claude/rules/ci.md`).
+  Until the last one, `scripts/fetch-data.ts` still expects a `.zip`.
 - **Next**: the owner runs the extractor on the installed client and the status bar names the build; then the first
   feature of step 2, the relay, designed with the owner (`feature`).
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
