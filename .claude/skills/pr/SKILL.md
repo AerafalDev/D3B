@@ -5,7 +5,8 @@ description: Commit, check, review, open and squash-merge a pull request for the
 
 Claude merges its own PRs once everything is green (CLAUDE.md, Delivery). Each step passes before the next.
 
-1. **Branch**: never commit on `next` or `main`. `git switch -c <type>/<subject>` from an up-to-date `origin/next`
+1. **Branch**: never commit or push on `next` or `main` (`git push origin HEAD` there slips past the permission
+   denies; GitHub's ruleset refuses it anyway). `git switch -c <type>/<subject>` from an up-to-date `origin/next`
    (`git fetch` first), such as `feat/relay-framing`.
 2. **Commit** only what belongs to the change (`git status`, then `git add <paths>`): nothing under `data/` or
    `artifacts/`, nothing derived from the client. Messages are Conventional Commits:
