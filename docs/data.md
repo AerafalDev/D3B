@@ -28,12 +28,24 @@ flowchart LR
 - **Tiles** are JPEG files, `tiles/<world>/<zoom as a percentage>/<n>.jpg`, numbered from 1 row by row from the top
   left. The client holds them as BC7 textures (3.7.13.17, `main:docs/client.md`, "The world's maps"); the extractor
   decodes them and encodes them at JPEG quality 75, the owner's choice on the C# version.
-- The shape of each table is written down here when its reader lands.
+- **Flags** are the list of the names of the bits a record sets, in camelCase, as the client's enums name them, read
+  from its code with Cpp2IL (ADR [0010](adr/0010-flags-by-the-names-of-the-clients-enums.md)).
+- The shape of each table is written down here when its reader lands (`src-tauri/src/data/`, `deny_unknown_fields`).
+
+| File | One record | From the client (3.7.13.17) |
+| --- | --- | --- |
+| `map-positions.json` | `id`, `x`, `y`, `subAreaId`, `worldMap` (-1 for none), `name`, `flags` (`MapInformationFlags`) | `MapInformationData`, 15,470 records, 8.4 MB |
+| `sub-areas.json` | `id`, `name`, `areaId`, `level`, `zaapMapId` (or `null`), `basicAccountAllowed`, `customWorldMapId`, `harvestables`, `monsters` | `SubAreaData`, 569 records |
+| `areas.json` | `id`, `name` (a text, or `null`), `superAreaId`, `worldmapId`, `hasWorldMap` | `AreaData`, 70 records |
+| `zaaps.json` | `id`, `mapId`, `subAreaId`, `activated` | `WaypointData`, 63 records |
+
+The app reads the whole folder once at start (`data::GameData`) and refuses it whole when a table cannot be read: the
+status bar then says it has no data, and its tooltip says why.
 
 ## The extractor
 
 `tools/extractor`, a .NET 10 console app and its test project, being built as a stack of PRs (`docs/now.md`). The
-owner chose its libraries: AssetsTools.NET for the client's bundles, AssetRipper.TextureDecoder for the tiles' BC7,
+owner chose its libraries: AssetsTools.NET for the client's bundles, Cpp2IL for the names of its enums, AssetRipper.TextureDecoder for the tiles' BC7,
 SkiaSharp to encode them (with its Linux native assets for CI), System.CommandLine for its options, xUnit v3 for its
 tests. CI and `bun run check` build it and run its tests, which need no client. It reads the client's facts as they are and fails when the client contradicts what it relies on; what the
 bot derives from them (harvestables, bankers) is computed in Rust by the step that needs it.

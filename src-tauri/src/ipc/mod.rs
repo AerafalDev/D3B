@@ -3,6 +3,8 @@
 
 mod commands;
 
+pub use commands::LoadedData;
+
 use tauri_specta::{Builder, collect_commands};
 
 /// Every command and event of the app.
