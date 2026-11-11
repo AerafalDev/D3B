@@ -36,6 +36,8 @@ flowchart LR
 | --- | --- | --- |
 | `map-positions.json` | `id`, `x`, `y`, `subAreaId`, `worldMap` (-1 for none), `name`, `flags` (`MapInformationFlags`) | `MapInformationData`, 15,470 records, 8.4 MB |
 | `sub-areas.json` | `id`, `name`, `areaId`, `level`, `zaapMapId` (or `null`), `basicAccountAllowed`, `customWorldMapId`, `harvestables`, `monsters` | `SubAreaData`, 569 records |
+| `worlds.json` | `id`, `name`, `originX`, `originY`, `mapWidth`, `mapHeight`, `minScale`, `maxScale`, `startScale`, `width`, `height`, `visible`, `zooms` (`percent`, `width`, `height`, `columns`, `rows`) | `WorldMapsDataRoot`, 40 worlds, 161 zooms |
+| `tiles/<world>/<percent>/<n>.jpg` | one tile, JPEG 75 | 1,250 BC7 textures, 79.7 MB |
 | `areas.json` | `id`, `name` (a text, or `null`), `superAreaId`, `worldmapId`, `hasWorldMap` | `AreaData`, 70 records |
 | `zaaps.json` | `id`, `mapId`, `subAreaId`, `activated` | `WaypointData`, 63 records |
 

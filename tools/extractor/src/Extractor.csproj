@@ -8,8 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AssetRipper.TextureDecoder" />
     <PackageReference Include="AssetsTools.NET" />
     <PackageReference Include="Samboy063.Cpp2IL.Core" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 

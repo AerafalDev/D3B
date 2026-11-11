@@ -82,6 +82,11 @@ internal sealed class Fields
         return Get<long>(name);
     }
 
+    public ulong UInt64(string name)
+    {
+        return Get<ulong>(name);
+    }
+
     public short Int16(string name)
     {
         return Get<short>(name);

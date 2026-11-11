@@ -10,6 +10,7 @@ mod manifest;
 mod map_flag;
 mod text;
 mod world;
+mod world_maps;
 
 pub use game_data::GameData;
 pub use manifest::DataError;

@@ -21,7 +21,7 @@ _Updated 2026-11-11._
   .NET project, checked by CI and `bun run check`, which finds the client, reads its build and writes a manifest-only
   folder the app accepts; reading the client's bundles and data tables through their type trees, its texts in five
   languages, and the names of its flag enums; the map positions, sub-areas, areas and zaaps, which the app reads at
-  start. To come: the worlds and their tiles; the maps' cells; their elements; the world graph; the `.tar.gz` archive
+  start; the worlds of the map and their 1,250 tiles. To come: the maps' cells; their elements; the world graph; the `.tar.gz` archive
   and `data:fetch` reading it. Until the last one, `scripts/fetch-data.ts` still expects a `.zip`.
 - **Next**: the owner runs the extractor on the installed client and the status bar names the build; then the first
   feature of step 2, the relay, designed with the owner (`feature`).

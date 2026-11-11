@@ -13,6 +13,7 @@ internal sealed class Bundle : IDisposable
     private const uint AlignFlag = 0x4000;
 
     private readonly AssetsManager _manager = new();
+    private BundleFileInstance? _bundle;
     private readonly List<AssetsFileInstance> _files = [];
 
     /// <summary>Gets the bundle's full path.</summary>
@@ -37,6 +38,9 @@ internal sealed class Bundle : IDisposable
         try
         {
             var file = bundle._manager.LoadBundleFile(path, true);
+
+            bundle._bundle = file;
+
             var entries = file.file.BlockAndDirInfo.DirectoryInfos;
 
             // The directory flags say which entries are serialized files: AssetsTools.NET's own guess takes some .resS
@@ -62,13 +66,19 @@ internal sealed class Bundle : IDisposable
     /// <summary>The script objects of the bundle, in file order, each read when the caller reaches it.</summary>
     public IEnumerable<SerializedObject> MonoBehaviours()
     {
+        return Objects(AssetClassID.MonoBehaviour);
+    }
+
+    /// <summary>The objects of a class, such as <c>Texture2D</c>, in file order, each read when the caller reaches it.</summary>
+    public IEnumerable<SerializedObject> Objects(AssetClassID type)
+    {
         foreach (var file in _files)
         {
             var metadata = file.file.Metadata;
             var references = ReferenceTypesOf(metadata);
             var trees = new Dictionary<int, TypeTree>();
 
-            foreach (var info in metadata.GetAssetsOfType(AssetClassID.MonoBehaviour))
+            foreach (var info in metadata.GetAssetsOfType(type))
             {
                 if (!trees.TryGetValue(info.TypeIdOrIndex, out var tree))
                 {
@@ -82,9 +92,39 @@ internal sealed class Bundle : IDisposable
 
                 var data = reader.ReadBytes(checked((int)info.ByteSize));
 
-                yield return new SerializedObject { Name = NameOf(tree, data), Tree = tree, Data = data, ReferenceTypes = references };
+                yield return new SerializedObject { PathId = info.PathId, Name = NameOf(tree, data), Tree = tree, Data = data, ReferenceTypes = references };
             }
         }
+    }
+
+    /// <summary>Reads a range of a stream file of the bundle, such as the <c>.resS</c> that holds a texture's texels.</summary>
+    /// <param name="streamPath">The path a <c>m_StreamData</c> names, such as <c>archive:/CAB-x/CAB-x.resS</c>.</param>
+    /// <param name="offset">Where the range starts in the stream file.</param>
+    /// <param name="size">The range's length.</param>
+    /// <exception cref="InvalidDataException">The bundle holds no such file, or the range runs past its end.</exception>
+    public byte[] ReadStream(string streamPath, long offset, int size)
+    {
+        var file = _bundle!.file;
+        var name = streamPath[(streamPath.LastIndexOf('/') + 1)..];
+        var index = file.BlockAndDirInfo.DirectoryInfos.FindIndex(entry => entry.Name == name);
+
+        if (index is -1)
+        {
+            throw new InvalidDataException($"{Path} holds no {name}.");
+        }
+
+        file.GetFileRange(index, out var start, out var length);
+
+        if (offset < 0 || size < 0 || offset + size > length)
+        {
+            throw new InvalidDataException($"{name} holds {length} bytes, not {offset + size}.");
+        }
+
+        var reader = file.DataReader;
+
+        reader.Position = start + offset;
+
+        return reader.ReadBytes(size);
     }
 
     public void Dispose()
