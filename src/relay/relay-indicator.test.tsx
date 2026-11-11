@@ -60,6 +60,14 @@ describe("RelayIndicator", () => {
     expect(await tooltip("Relay ready · 0 in game")).toContain("3 connections went straight to Ankama");
   });
 
+  it("says one connection in the singular, and that quitting ends nothing when none is open", async () => {
+    show({ ...ready, notUnderstood: 1 });
+
+    const text = await tooltip("Relay ready · 0 in game");
+    expect(text).toContain("1 connection went straight to Ankama: its server choice");
+    expect(text).not.toContain("Quitting D3B");
+  });
+
   it("says another system is not measured", () => {
     show({ ...ready, state: "unsupported", clientBuild: null });
 

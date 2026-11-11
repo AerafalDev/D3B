@@ -28,6 +28,7 @@
     "client": "Client {{build}}",
     "startAfter": "Lance Dofus après D3B : un client lancé avant joue sans le relais.",
     "quitEnds": "Quitter D3B coupe ces connexions de jeu.",
-    "notUnderstood": "{{count}} connexions sont allées directement chez Ankama : leur choix de serveur n’a pas été compris."
+    "notUnderstood_one": "{{count}} connexion est allée directement chez Ankama : son choix de serveur n’a pas été compris.",
+    "notUnderstood_other": "{{count}} connexions sont allées directement chez Ankama : leur choix de serveur n’a pas été compris."
   }
 }

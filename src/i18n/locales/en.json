@@ -28,6 +28,7 @@
     "client": "Client {{build}}",
     "startAfter": "Start Dofus after D3B: a client started before it plays without the relay.",
     "quitEnds": "Quitting D3B ends these game connections.",
-    "notUnderstood": "{{count}} connections went straight to Ankama: their server choice was not understood."
+    "notUnderstood_one": "{{count}} connection went straight to Ankama: its server choice was not understood.",
+    "notUnderstood_other": "{{count}} connections went straight to Ankama: their server choice was not understood."
   }
 }
