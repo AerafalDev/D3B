@@ -1,0 +1,17 @@
+//! The relay between the official client and Ankama's servers, on the same machine (`docs/relay.md`, ADR 0011).
+//!
+//! At start it points the client's `ConfigUrl` at a copy of Ankama's configuration whose connection host is the relay
+//! on loopback, and puts the line back at quit. Every frame passes through untouched but the server-selection answer,
+//! whose game host and ports become the relay's. Nothing is sent to the game of the relay's own.
+
+mod ankama_config;
+mod error;
+mod version_file;
+
+pub use error::RelayError;
+
+use std::net::Ipv4Addr;
+
+/// The loopback address the relay listens on: not `127.0.0.1`, so that no other local program's port is taken
+/// (inferred, `main:docs/client.md`, D34 and D36, measured on Windows x64).
+pub(crate) const ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 13, 59);
