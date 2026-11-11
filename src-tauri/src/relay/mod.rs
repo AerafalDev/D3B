@@ -5,6 +5,7 @@
 //! whose game host and ports become the relay's. Nothing is sent to the game of the relay's own.
 
 mod ankama_config;
+mod connection_phase;
 mod error;
 mod frame;
 mod handover;
@@ -19,3 +20,7 @@ use std::net::Ipv4Addr;
 /// The loopback address the relay listens on: not `127.0.0.1`, so that no other local program's port is taken
 /// (inferred, `main:docs/client.md`, D34 and D36, on Windows x64).
 pub(crate) const ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 13, 59);
+
+/// The port of the relay's game listener, which the server-selection answer names in place of Ankama's (inferred,
+/// `main:docs/client-game.md`, "The game connection", measured on Windows x64).
+pub(crate) const GAME_PORT: u16 = 5556;
