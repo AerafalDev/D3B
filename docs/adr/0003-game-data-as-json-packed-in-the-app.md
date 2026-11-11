@@ -1,6 +1,6 @@
 # 0003. Game data as JSON from a .NET extractor, packed in the app
 
-- Status: accepted
+- Status: superseded by 0008
 - Date: 2026-11-11
 - Decided by: the owner
 
