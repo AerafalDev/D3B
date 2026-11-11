@@ -21,6 +21,11 @@
       "semicolons": "always"
     }
   },
+  "json": {
+    "formatter": {
+      "expand": "always"
+    }
+  },
   "css": {
     "parser": {
       "tailwindDirectives": true
