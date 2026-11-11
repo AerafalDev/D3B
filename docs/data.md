@@ -42,7 +42,11 @@ bot derives from them (harvestables, bankers) is computed in Rust by the step th
 dotnet run --project tools/extractor/src -- --help
 dotnet run --project tools/extractor/src                     # the installed client into artifacts/data/<build>/
 dotnet run --project tools/extractor/src -- --client <dir>   # another copy of the client
+dotnet run --project tools/extractor/src -- --output <dir>   # another data folder
 ```
+
+It writes the folder beside its target (`<target>.d3b-staging`), then swaps it in, and replaces only a folder that
+holds a `manifest.json`. A file's path and its name are unique ignoring case.
 
 Each run extracts everything again (41 s on the C# version, tiles included). The extractor also writes the folder's
 archive, `client-<build>.tar.gz`, beside it: the file the `data` skill publishes (the stack's last PR). The C# version's tools on `main`

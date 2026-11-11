@@ -54,7 +54,7 @@ public sealed class DataFolderTests
         DataFolder.Create(target).Complete("3.7.13.18", "0.1.0");
 
         Assert.False(File.Exists(Path.Combine(target, "old.json")));
-        Assert.False(Directory.Exists(target + ".tmp"));
+        Assert.Equal(["data"], Directory.GetDirectories(temporary.Path).Select(Path.GetFileName));
         Assert.Contains("3.7.13.18", File.ReadAllText(Path.Combine(target, DataFolder.ManifestFile)), StringComparison.Ordinal);
     }
 
@@ -78,6 +78,9 @@ public sealed class DataFolderTests
     [InlineData(@"maps\7.json")]
     [InlineData("C:/rooted.json")]
     [InlineData("manifest.json")]
+    [InlineData("maps./7.json")]
+    [InlineData("maps /7.json")]
+    [InlineData("maps/7?.json")]
     public void APathOutsideTheFolderIsRefused(string path)
     {
         using var temporary = new TemporaryFolder();
@@ -86,14 +89,57 @@ public sealed class DataFolderTests
         Assert.Throws<ArgumentException>(() => folder.Write(path, "[]"u8));
     }
 
-    [Fact]
-    public void AFileIsWrittenOnce()
+    [Theory]
+    [InlineData("areas.json")]
+    [InlineData("Areas.json")]
+    [InlineData("areas.jpg")]
+    public void APathOrNameIsWrittenOnceWhateverItsCase(string second)
     {
         using var temporary = new TemporaryFolder();
         var folder = DataFolder.Create(Path.Combine(temporary.Path, "data"));
 
         folder.Write("areas.json", "[]"u8);
 
-        Assert.Throws<ArgumentException>(() => folder.Write("areas.json", "[]"u8));
+        Assert.Throws<ArgumentException>(() => folder.Write(second, "[]"u8));
+    }
+
+    [Fact]
+    public void ATrailingSeparatorNamesTheSameFolder()
+    {
+        using var temporary = new TemporaryFolder();
+        var target = Path.Combine(temporary.Path, "data");
+
+        DataFolder.Create(target + Path.DirectorySeparatorChar).Complete("3.7.13.17", "0.1.0");
+        DataFolder.Create(target + "/").Complete("3.7.13.18", "0.1.0");
+
+        Assert.Equal([DataFolder.ManifestFile], Directory.GetFileSystemEntries(target).Select(Path.GetFileName));
+        Assert.Contains("3.7.13.18", File.ReadAllText(Path.Combine(target, DataFolder.ManifestFile)), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WhatACrashedRunLeftIsNotCarriedIntoTheNextFolder()
+    {
+        using var temporary = new TemporaryFolder();
+        var target = Path.Combine(temporary.Path, "data");
+        var crashed = DataFolder.Create(target);
+
+        crashed.Write("stale.json", "[]"u8);
+        DataFolder.Create(target).Complete("3.7.13.17", "0.1.0");
+
+        Assert.False(File.Exists(Path.Combine(target, "stale.json")));
+    }
+
+    [Fact]
+    public void ATargetThatStoppedBeingADataFolderIsNotReplaced()
+    {
+        using var temporary = new TemporaryFolder();
+        var target = Path.Combine(temporary.Path, "data");
+        var folder = DataFolder.Create(target);
+
+        Directory.CreateDirectory(target);
+        File.WriteAllText(Path.Combine(target, "notes.txt"), "mine");
+
+        Assert.Throws<IOException>(() => folder.Complete("3.7.13.17", "0.1.0"));
+        Assert.True(File.Exists(Path.Combine(target, "notes.txt")));
     }
 }
