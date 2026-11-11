@@ -67,8 +67,9 @@ _Updated 2026-11-11._
   replay of the owner's 225 captures (171 connection phases, 161 handed over, 54 game connections, no failure), the
   status-bar indicator and the restore before an update.
 - **Next**: the owner removes Repository admin from the "Protected branches" ruleset's bypass list once CI is back;
-  the owner measures the relay's items 10 and 11. The protocol's code waits for the owner's go, as a stack of seven
-  PRs against `next`: (1) the game connection split into frames both ways, with the tap; (2) `relay/capture/` and
+  the owner measures the relay's items 10 and 11 with the next release. The protocol's code, started on the owner's
+  go so that a release carries it, is a stack of seven PRs against `next`: (1) the game connection split into frames
+  both ways, with the tap (done in code); (2) `relay/capture/` and
   `D3B_RECORD`; (3) the connection's build from path 1.3.5, carried by the handover; (4) the extractor's protocol
   schema from the metadata; (5) the `protocol` domain: prost, our `.proto` files, the envelope, the pins of 3.7.13.17,
   the four outcomes; (6) the pins' audit and the capture replay; (7) the protocol task per connection, the gate, the

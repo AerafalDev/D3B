@@ -293,8 +293,17 @@ fn first_ticket(from_client: &[u8]) -> Option<Ticket> {
     Ticket::new(at(body(first), &[4, 2, 2, 1])?)
 }
 
-/// Replays a game connection, its ticket seeded into the handover: every byte reaches the other end untouched.
-async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<(), String> {
+/// The frames a game connection's tap gave, each side's encoded back in order, and how many.
+#[derive(Default)]
+struct Tapped {
+    client: Vec<u8>,
+    server: Vec<u8>,
+    frames: usize,
+}
+
+/// Replays a game connection, its ticket seeded into the handover: every byte reaches the other end untouched, and
+/// the tap gives every whole frame each side sent, in order. Returns how many frames it gave.
+async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<usize, String> {
     let from_client = joined(&capture.records, true);
     let mut handover = Handover::default();
     handover.put(
@@ -308,7 +317,23 @@ async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<(), Strin
     let handover = Mutex::new(handover);
     let (client, client_side) = tokio::io::duplex(1 << 20);
     let (server, server_side) = tokio::io::duplex(1 << 20);
-    let relay = game_connection::relay(client_side, &handover, |_| async move { Some(server_side) }, || {});
+    let tapped = Mutex::new(Tapped::default());
+    let tap = |side, body: &[u8]| {
+        let mut tapped = tapped.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        tapped.frames += 1;
+        let into = match side {
+            game_connection::Side::Client => &mut tapped.client,
+            game_connection::Side::Server => &mut tapped.server,
+        };
+        frame::encode(body, into);
+    };
+    let relay = game_connection::relay(
+        client_side,
+        &handover,
+        |_| async move { Some(server_side) },
+        || {},
+        &tap,
+    );
     let (relayed, (at_client, at_server)) = tokio::join!(relay, play(&capture.records, client, server));
     let from_server = joined(&capture.records, false);
     if !relayed || at_server != from_client || at_client != from_server {
@@ -320,7 +345,21 @@ async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<(), Strin
             from_server.len()
         ));
     }
-    Ok(())
+    let tapped = tapped.into_inner().unwrap_or_else(std::sync::PoisonError::into_inner);
+    // What the tap gave is each side's bytes up to its last whole frame, the capture's end cutting the rest.
+    for (side, sent, got) in [
+        ("client", &from_client, &tapped.client),
+        ("server", &from_server, &tapped.server),
+    ] {
+        let whole = sent.len() - frames(sent).1;
+        if got[..] != sent[..whole] {
+            return Err(format!(
+                "{name}: the tap gave {} bytes of the {side}'s {whole} in whole frames",
+                got.len()
+            ));
+        }
+    }
+    Ok(tapped.frames)
 }
 
 fn captures(folder: &Path) -> Vec<PathBuf> {
@@ -342,7 +381,7 @@ fn captures(folder: &Path) -> Vec<PathBuf> {
 async fn the_owners_captures_go_through_the_relay() {
     let folder = PathBuf::from(std::env::var_os("D3B_CAPTURES").unwrap_or_else(|| panic!("set D3B_CAPTURES")));
     let mut failures = Vec::new();
-    let (mut phases, mut over, mut games) = (0, 0, 0);
+    let (mut phases, mut over, mut games, mut tapped) = (0, 0, 0, 0);
     for path in captures(&folder) {
         let name = path.strip_prefix(&folder).unwrap_or(&path).display().to_string();
         let capture = match std::fs::read(&path)
@@ -358,7 +397,7 @@ async fn the_owners_captures_go_through_the_relay() {
         // A game connection by its content, whatever port the C# relay listened on: a ticket in its first frame.
         let result = if let Some(ticket) = first_ticket(&joined(&capture.records, true)) {
             games += 1;
-            game(&name, &capture, ticket).await
+            game(&name, &capture, ticket).await.map(|frames| tapped += frames)
         } else {
             phases += 1;
             connection_phase(&name, &capture)
@@ -370,7 +409,7 @@ async fn the_owners_captures_go_through_the_relay() {
         }
     }
     eprintln!(
-        "{phases} connection phases ({over} handed over), {games} game connections, {} failures",
+        "{phases} connection phases ({over} handed over), {games} game connections ({tapped} frames tapped), {} failures",
         failures.len()
     );
     assert!(phases + games > 0, "no capture in {}", folder.display());

@@ -63,8 +63,9 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   cannot be taken, D3B does not redirect and the indicator names the port.
 - **Framing**: every byte, both ways, is in frames of a protobuf varint length (at most 5 bytes) then that many bytes.
   A frame over 16 MiB, or a sixth length byte, closes the connection; the relay reads frames in the connection phase
-  and the game connection's first frame, then copies the game's bytes untouched. Once the protocol taps the game
-  connection, such a frame there stops only the tap, and the copy goes on ([protocol.md](protocol.md#the-tap)).
+  and the game connection's first frame, then copies the game's bytes untouched while it splits each way into frames
+  for the protocol; there such a frame stops only the splitting, and the copy goes on
+  ([protocol.md](protocol.md#the-tap)).
   Nothing is encrypted or compressed.
 - **The connection phase**: the relay resolves Ankama's connection host at each connection (a load balancer) and
   connects on the port the client chose. Four frames: the identification (with the launcher's login token) and its
@@ -120,4 +121,5 @@ The owner's C# captures (`.d3bcap` formats 1 and 2) are replayed through the rel
 equal bytes in, but the one rewritten frame per connection phase. The C# version recorded each side's bytes as read,
 before its own rewrite, so a capture holds the answer as Ankama sent it. A game capture's ticket, at path 4.2.2.1 of its
 first frame, is seeded into the handover. On 2026-11-11, the owner's 225 captures: 171 connection phases, 161 handed
-over, 54 game connections relayed byte for byte. Recording captures comes with the protocol feature.
+over, 54 game connections relayed byte for byte, their 3,048,392 frames split as each side sent them. Recording
+captures comes with the protocol feature.

@@ -1,6 +1,7 @@
 //! The game connection through the relay (`docs/relay.md`, "The connections"; inferred, `main:docs/client-game.md`,
 //! "The game connection", 3.7.12.12 and 3.7.13.17). The client speaks first, a frame holding its ticket; the relay
-//! finds where that ticket's game goes, connects there, relays the frame first, then every byte both ways untouched.
+//! finds where that ticket's game goes, connects there, relays the frame first, then every byte both ways untouched,
+//! splitting each way into frames for the protocol as it copies (`docs/protocol.md`, "The tap").
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -11,13 +12,23 @@ use tokio::task::JoinSet;
 use tokio::time::Instant;
 
 use super::connection_phase::connect;
-use super::frame;
+use super::frame::{self, Frames};
 use super::handover::{GameServer, Handover};
 
 /// How long the client's first frame may take to come whole; it speaks first, at once (inferred, 3.7.12.12).
 const FIRST_FRAME: Duration = Duration::from_secs(5);
 /// The most the first frame may hold; it is 76 bytes (inferred, 3.7.12.12).
 const FIRST_FRAME_LIMIT: usize = 64 * 1024;
+
+/// How much one read may take: a game server's frames are up to 88,581 bytes (verified, 3.7.13.17), most far smaller.
+const READ: usize = 64 * 1024;
+
+/// Which side sent a frame.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Side {
+    Client,
+    Server,
+}
 
 /// What happened to a game connection, for the relay's status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,7 +64,8 @@ pub(crate) async fn serve(
                 move || report(Game::Opened)
             };
             let connect = |server: GameServer| async move { connect(&server.host, server.port).await.ok() };
-            let relayed = relay(client, &handover, connect, opened).await;
+            // The protocol will read the frames here (docs/protocol.md); until then they are only split.
+            let relayed = relay(client, &handover, connect, opened, &|_, _| {}).await;
             report(if relayed { Game::Closed } else { Game::Refused });
         });
         while connections.try_join_next().is_some() {}
@@ -62,12 +74,14 @@ pub(crate) async fn serve(
 
 /// Relays one game connection: reads the client's first frame, takes its ticket's game server from `handover`,
 /// reaches it through `connect`, says so through `opened`, relays the bytes read so far, then both ways until both
-/// sides are done. `false` when it closed before reaching a game server.
+/// sides are done, giving `tap` the body of every frame each side sent, the first one included. `false` when it
+/// closed before reaching a game server.
 pub(crate) async fn relay<C, S, F>(
     mut client: C,
     handover: &Mutex<Handover>,
     connect: impl FnOnce(GameServer) -> F,
     opened: impl FnOnce(),
+    tap: &(impl Fn(Side, &[u8]) + Sync),
 ) -> bool
 where
     C: AsyncRead + AsyncWrite + Unpin,
@@ -94,8 +108,49 @@ where
     if server.write_all(&read).await.is_err() {
         return true;
     }
-    let _ = tokio::io::copy_bidirectional(&mut client, &mut server).await;
+    let mut from_client = Some(Frames::default());
+    tapped(&mut from_client, &read, &|body| tap(Side::Client, body));
+    let (client_read, client_write) = tokio::io::split(client);
+    let (server_read, server_write) = tokio::io::split(server);
+    // Both ways at once, the first error ending both, as `copy_bidirectional` did.
+    let _ = tokio::try_join!(
+        pump(client_read, server_write, from_client, |body| tap(Side::Client, body)),
+        pump(server_read, client_write, Some(Frames::default()), |body| tap(
+            Side::Server,
+            body
+        )),
+    );
     true
+}
+
+/// Copies `from` to `to` read by read, each read written before anything else, then split into frames for `tap`;
+/// once `from` ends, shuts `to` down and returns, the other way going on. A stream that is no longer in frames stops
+/// the frames, never the copy.
+async fn pump(
+    mut from: impl AsyncRead + Unpin,
+    mut to: impl AsyncWrite + Unpin,
+    mut frames: Option<Frames>,
+    tap: impl Fn(&[u8]),
+) -> std::io::Result<()> {
+    let mut buffer = vec![0; READ];
+    loop {
+        let count = from.read(&mut buffer).await?;
+        if count == 0 {
+            return to.shutdown().await;
+        }
+        to.write_all(&buffer[..count]).await?;
+        to.flush().await?;
+        tapped(&mut frames, &buffer[..count], &tap);
+    }
+}
+
+/// Gives `tap` the frames `bytes` completes; drops the reader at its first error, so that it gives nothing more.
+fn tapped(frames: &mut Option<Frames>, bytes: &[u8], tap: &impl Fn(&[u8])) {
+    if let Some(reader) = frames
+        && reader.push(bytes, tap).is_err()
+    {
+        *frames = None;
+    }
 }
 
 /// The bytes the client sent until its first frame is whole, within [`FIRST_FRAME`]; `None` when it is not, or is
@@ -209,15 +264,24 @@ mod tests {
     /// Relays a game connection over in-memory streams: the client's end, the game server's end (once connected) and
     /// the relay's result; `connected` says where the relay connected.
     fn game(handover: Mutex<Handover>) -> Relayed {
-        game_reaching(handover, true)
+        game_reaching(handover, true, Arc::default())
     }
 
-    /// As [`game`], with a game server that can be reached or not; the relay's result comes with how many times it
-    /// said the connection opened.
-    fn game_reaching(handover: Mutex<Handover>, reachable: bool) -> Relayed {
+    /// The frames the relay tapped, in order.
+    type Tapped = Arc<Mutex<Vec<(Side, Vec<u8>)>>>;
+
+    /// As [`game`], with a game server that can be reached or not and the frames tapped kept in `tapped`; the relay's
+    /// result comes with how many times it said the connection opened.
+    fn game_reaching(handover: Mutex<Handover>, reachable: bool, tapped: Tapped) -> Relayed {
         let (client, client_side) = tokio::io::duplex(1 << 16);
         let (connected, server) = tokio::sync::oneshot::channel();
         let relay = tokio::spawn(async move {
+            let tap = move |side, body: &[u8]| {
+                tapped
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .push((side, body.to_vec()));
+            };
             let mut opened = 0;
             let relayed = relay(
                 client_side,
@@ -231,6 +295,7 @@ mod tests {
                     Some(server_side)
                 },
                 || opened += 1,
+                &tap,
             )
             .await;
             (relayed, opened)
@@ -281,6 +346,157 @@ mod tests {
         );
         assert_eq!(received, first);
         assert_eq!(&answer, b"from the game");
+        assert_eq!(relay.await.ok(), Some((true, 1)));
+    }
+
+    /// Reads exactly `count` bytes from `stream`, within a second, so that a byte lost fails the test rather than hangs
+    /// it.
+    async fn received(stream: &mut DuplexStream, count: usize) -> Vec<u8> {
+        let mut bytes = vec![0; count];
+        let read = tokio::time::timeout(Duration::from_secs(1), stream.read_exact(&mut bytes)).await;
+        assert!(matches!(read, Ok(Ok(_))), "{read:?}");
+        bytes
+    }
+
+    fn frames_of(bodies: &[&[u8]]) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        for body in bodies {
+            frame::encode(body, &mut bytes);
+        }
+        bytes
+    }
+
+    fn tapped_from(tapped: &Tapped, side: Side) -> Vec<Vec<u8>> {
+        tapped
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .filter(|(from, _)| *from == side)
+            .map(|(_, body)| body.clone())
+            .collect()
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn taps_every_frame_both_ways_as_it_copies() {
+        let tapped = Tapped::default();
+        let (mut client, server, relay) = game_reaching(handover_waiting(), true, Arc::clone(&tapped));
+        let first = first(TICKET);
+        let large: Vec<u8> = (0..88_581_u32).map(|index| (index % 251) as u8).collect();
+        let from_server = frames_of(&[b"accepted", &large, b""]);
+        let from_client = frames_of(&[b"list", b"choose"]);
+
+        client.write_all(&first).await.unwrap_or_else(|error| panic!("{error}"));
+        let (_, mut server) = server.await.unwrap_or_else(|error| panic!("{error}"));
+        let at_server = received(&mut server, first.len()).await;
+        // The server's bytes in writes that cut frames anywhere, the client's in one.
+        let reading = tokio::spawn(async move {
+            let at_client = received(&mut client, 8 + 1 + 88_581 + 3 + 1).await;
+            (client, at_client)
+        });
+        for chunk in from_server.chunks(1_000) {
+            server.write_all(chunk).await.unwrap_or_else(|error| panic!("{error}"));
+        }
+        let (mut client, at_client) = reading.await.unwrap_or_else(|error| panic!("{error}"));
+        client
+            .write_all(&from_client)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        let rest = received(&mut server, from_client.len()).await;
+        drop(client);
+        drop(server);
+
+        assert_eq!(relay.await.ok(), Some((true, 1)));
+        assert_eq!(at_server, first);
+        assert_eq!(at_client, from_server);
+        assert_eq!(rest, from_client);
+        let header = frame::header(&first).ok().flatten().map_or(0, |(header, _)| header);
+        assert_eq!(
+            tapped_from(&tapped, Side::Client),
+            vec![first[header..].to_vec(), b"list".to_vec(), b"choose".to_vec()]
+        );
+        assert_eq!(
+            tapped_from(&tapped, Side::Server),
+            vec![b"accepted".to_vec(), large, Vec::new()]
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_stream_no_longer_in_frames_stops_the_tap_not_the_copy() {
+        let tapped = Tapped::default();
+        let (mut client, server, relay) = game_reaching(handover_waiting(), true, Arc::clone(&tapped));
+        let first = first(TICKET);
+        let mut from_server = frames_of(&[b"accepted"]);
+        from_server.extend_from_slice(&[0xff; 6]);
+        from_server.extend_from_slice(&frames_of(&[b"after"]));
+
+        client.write_all(&first).await.unwrap_or_else(|error| panic!("{error}"));
+        let (_, mut server) = server.await.unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, first.len()).await;
+        server
+            .write_all(&from_server)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        let at_client = received(&mut client, from_server.len()).await;
+        server
+            .write_all(&frames_of(&[b"later"]))
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        let later = received(&mut client, 6).await;
+        client
+            .write_all(&frames_of(&[b"still"]))
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        let still = received(&mut server, 6).await;
+        drop(client);
+        drop(server);
+
+        assert_eq!(relay.await.ok(), Some((true, 1)));
+        assert_eq!(at_client, from_server);
+        assert_eq!(later, frames_of(&[b"later"]));
+        assert_eq!(still, frames_of(&[b"still"]));
+        assert_eq!(tapped_from(&tapped, Side::Server), vec![b"accepted".to_vec()]);
+        assert_eq!(tapped_from(&tapped, Side::Client).len(), 2);
+    }
+
+    #[tokio::test]
+    async fn writes_each_read_before_the_tap_sees_it() {
+        let (mut from, from_side) = tokio::io::duplex(1 << 16);
+        let (to_side, mut to) = tokio::io::duplex(1 << 16);
+        let frame = frames_of(&[b"read"]);
+        from.write_all(&frame).await.unwrap_or_else(|error| panic!("{error}"));
+
+        // A tap that fails on the first frame: the bytes must already be on their way.
+        let pumped = tokio::spawn(pump(from_side, to_side, Some(Frames::default()), |_| panic!("tapped"))).await;
+
+        assert!(pumped.is_err(), "the tap was not reached");
+        assert_eq!(received(&mut to, frame.len()).await, frame);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_side_that_ends_ends_its_way_only() {
+        let (mut client, server, relay) = game(handover_waiting());
+        let first = first(TICKET);
+
+        client.write_all(&first).await.unwrap_or_else(|error| panic!("{error}"));
+        let (_, mut server) = server.await.unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, first.len()).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut rest = Vec::new();
+        let ended = tokio::time::timeout(Duration::from_secs(1), client.read_to_end(&mut rest)).await;
+        client
+            .write_all(&frames_of(&[b"after"]))
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        let after = received(&mut server, 6).await;
+        let open = !relay.is_finished();
+        client.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut last = Vec::new();
+        let closed = tokio::time::timeout(Duration::from_secs(1), server.read_to_end(&mut last)).await;
+
+        assert!(matches!(ended, Ok(Ok(0))), "{ended:?}");
+        assert_eq!(after, frames_of(&[b"after"]));
+        assert!(open, "the client's way ended with the server's");
+        assert!(matches!(closed, Ok(Ok(0))), "{closed:?}");
         assert_eq!(relay.await.ok(), Some((true, 1)));
     }
 
@@ -335,7 +551,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn closes_a_connection_whose_game_server_cannot_be_reached() {
-        let (mut client, _server, relay) = game_reaching(handover_waiting(), false);
+        let (mut client, _server, relay) = game_reaching(handover_waiting(), false, Arc::default());
 
         client
             .write_all(&first(TICKET))
