@@ -22,4 +22,16 @@ owner** before the next one starts. The current step is in [docs/now.md](docs/no
 7. Then, each in its own design: several accounts and groups, the marketplace and crafting, treasure hunts and
    dungeons, the profession scripts of `vendor/metiers` as the acceptance test.
 
+**Shared knowledge**, designed with the owner once step 2 reads the protocol: what only the server tells, learned
+from every player's sessions into a hosted database (free, its host to choose), and read back by every D3B. Nothing
+about players is ever sent: no character or account name.
+
+- **Fight placements**: the server draws a fight's map, often not the one left (107 of 163 fights), and its cells,
+  which the client's data does not flag. One row per map left, map fought on and set of cells: the map left with its
+  area, sub-area and coordinates, the map fought on, its red (challengers') and blue (defenders') cells, how often and
+  when seen (the C# version's `Placements`, `main:docs/decisions/d253-d292-step-9.md`, D275).
+- **NPCs on maps**: the map, the NPC, its actor id, cell and direction, how often and when seen, then their dialogues
+  for quests (`LearnedMapNpc`, `main:docs/decisions/d369-d389-step-7.md`, D383).
+- **Bug reports**, and what else the owner adds.
+
 When step 2 is measured on Windows, macOS and Linux, `next` replaces `main` and releases stop being pre-releases.
