@@ -90,7 +90,7 @@ pub(crate) async fn connect(host: &str, port: u16) -> std::io::Result<TcpStream>
 
     let mut last = std::io::Error::new(std::io::ErrorKind::NotFound, "the host has no address");
     let addresses: Vec<SocketAddr> = tokio::net::lookup_host((host, port)).await?.collect();
-    for address in addresses.into_iter().filter(|address| !address.ip().is_loopback()) {
+    for address in addresses.into_iter().filter(|address| !is_loopback(address)) {
         match tokio::time::timeout(CONNECT, TcpStream::connect(address)).await {
             Ok(Ok(stream)) => {
                 let _ = stream.set_nodelay(true);
@@ -103,7 +103,12 @@ pub(crate) async fn connect(host: &str, port: u16) -> std::io::Result<TcpStream>
     Err(last)
 }
 
-/// Relays one connection phase both ways until both sides are done.
+/// Whether `address` reaches this machine, an IPv4 address written as IPv6 included.
+fn is_loopback(address: &SocketAddr) -> bool {
+    address.ip().to_canonical().is_loopback()
+}
+
+/// Relays one connection phase both ways until both sides are done, or a length that is not a frame's closes it.
 pub(crate) async fn relay<C, S>(client: C, server: S, handover: &Mutex<Handover>) -> Handed
 where
     C: AsyncRead + AsyncWrite + Unpin,
@@ -113,15 +118,29 @@ where
     let (mut server_read, mut server_write) = tokio::io::split(server);
     let asked = AtomicBool::new(false);
     let upstream = async {
-        watch_requests(&mut client_read, &mut server_write, &asked).await;
+        let closing = watch_requests(&mut client_read, &mut server_write, &asked).await;
         let _ = server_write.shutdown().await;
+        closing
     };
     let downstream = async {
-        let handed = pass_answers(&mut server_read, &mut client_write, &asked, handover).await;
+        let ended = pass_answers(&mut server_read, &mut client_write, &asked, handover).await;
         let _ = client_write.shutdown().await;
-        handed
+        ended
     };
-    let ((), handed) = tokio::join!(upstream, downstream);
+    tokio::pin!(upstream, downstream);
+    // Both directions run in this one task, so the client's request is noted before the server's answer is read. A
+    // length that is not a frame's closes both at once (`docs/relay.md`, "The connections").
+    let handed = tokio::select! {
+        closing = &mut upstream => {
+            if closing { Handed::NotAsked } else { (&mut downstream).await.0 }
+        }
+        (handed, closing) = &mut downstream => {
+            if !closing {
+                (&mut upstream).await;
+            }
+            handed
+        }
+    };
     if handed == Handed::NotAsked && asked.load(Ordering::Relaxed) {
         return Handed::NotUnderstood;
     }
@@ -129,21 +148,26 @@ where
 }
 
 /// Copies the client's bytes to the server as they come, noting when a frame asks for a server. Frames are only read,
-/// never changed; past one that is not a frame, the rest is only copied.
-async fn watch_requests(from: &mut (impl AsyncRead + Unpin), to: &mut (impl AsyncWrite + Unpin), asked: &AtomicBool) {
+/// never changed; past one too large to hold, the rest is only copied. `true` when a length is not a frame's, which
+/// closes the connection.
+async fn watch_requests(
+    from: &mut (impl AsyncRead + Unpin),
+    to: &mut (impl AsyncWrite + Unpin),
+    asked: &AtomicBool,
+) -> bool {
     let mut buffer = Vec::new();
     let mut framed = true;
     // On the heap, so that each connection's task stays small.
     let mut chunk = vec![0; 8192];
     loop {
         let read = match from.read(&mut chunk).await {
-            Ok(0) | Err(_) => return,
+            Ok(0) | Err(_) => return false,
             Ok(read) => read,
         };
-        if to.write_all(&chunk[..read]).await.is_err() {
-            return;
-        }
         if !framed {
+            if to.write_all(&chunk[..read]).await.is_err() {
+                return false;
+            }
             continue;
         }
         buffer.extend_from_slice(&chunk[..read]);
@@ -155,27 +179,32 @@ async fn watch_requests(from: &mut (impl AsyncRead + Unpin), to: &mut (impl Asyn
                     }
                     buffer.drain(..header + body);
                 }
-                Ok(Some((_, body))) if body > HOLD_LIMIT => framed = false,
+                Ok(Some((_, body))) if body > HOLD_LIMIT => {
+                    framed = false;
+                    buffer = Vec::new();
+                    break;
+                }
                 Ok(_) => break,
-                Err(_) => framed = false,
+                Err(_) => return true,
             }
-            if !framed {
-                buffer = Vec::new();
-                break;
-            }
+        }
+        // Written once read, so that a length that is not a frame's never reaches the server.
+        if to.write_all(&chunk[..read]).await.is_err() {
+            return false;
         }
     }
 }
 
 /// Copies the server's bytes to the client a whole frame at a time, so that the selection's answer, once the client
-/// asked for a server, is rewritten when understood. A frame not whole within [`HOLD`] or over [`HOLD_LIMIT`], or
-/// bytes that are not a frame, pass as they came, and the rest is only copied.
+/// asked for a server, is rewritten when understood. A frame not whole within [`HOLD`] of its first byte, or over
+/// [`HOLD_LIMIT`], passes as it came, and the rest is only copied. Also `true` when a length is not a frame's, which
+/// closes the connection.
 async fn pass_answers(
     from: &mut (impl AsyncRead + Unpin),
     to: &mut (impl AsyncWrite + Unpin),
     asked: &AtomicBool,
     handover: &Mutex<Handover>,
-) -> Handed {
+) -> (Handed, bool) {
     let mut buffer: Vec<u8> = Vec::new();
     // On the heap, so that each connection's task stays small.
     let mut chunk = vec![0; 8192];
@@ -189,12 +218,13 @@ async fn pass_answers(
         let read = match read {
             Ok(Ok(0) | Err(_)) => {
                 let _ = to.write_all(&buffer).await;
-                return handed;
+                return (handed, false);
             }
             Ok(Ok(read)) => read,
-            Err(_) => return copy(&buffer, from, to, handed).await,
+            Err(_) => return (copy(&buffer, from, to, handed).await, false),
         };
         buffer.extend_from_slice(&chunk[..read]);
+        let mut completed = false;
         loop {
             match frame::header(&buffer) {
                 Ok(Some((header, body))) if buffer.len() >= header + body => {
@@ -202,25 +232,30 @@ async fn pass_answers(
                     let rewritten = (handed == Handed::NotAsked && asked.load(Ordering::Relaxed))
                         .then(|| rewrite_selection(&buffer[header..total], handover, Instant::now().into_std()))
                         .flatten();
+                    if rewritten.is_some() {
+                        // Handed over even if the client is gone: the ticket waits in the handover.
+                        handed = Handed::Over;
+                    }
                     let written = to.write_all(rewritten.as_deref().unwrap_or(&buffer[..total])).await;
                     if written.is_err() {
-                        return handed;
+                        return (handed, false);
                     }
                     buffer.drain(..total);
+                    completed = true;
                     if rewritten.is_some() {
-                        handed = Handed::Over;
-                        return copy(&buffer, from, to, handed).await;
+                        return (copy(&buffer, from, to, handed).await, false);
                     }
                 }
-                Ok(Some((_, body))) if body > HOLD_LIMIT => return copy(&buffer, from, to, handed).await,
+                Ok(Some((_, body))) if body > HOLD_LIMIT => return (copy(&buffer, from, to, handed).await, false),
                 Ok(_) => break,
-                Err(_) => return copy(&buffer, from, to, handed).await,
+                Err(_) => return (handed, true),
             }
         }
-        begun = if buffer.is_empty() {
-            None
-        } else {
-            Some(begun.unwrap_or_else(Instant::now))
+        // The hold runs from the first byte of the frame held, never through a silence between frames.
+        begun = match (buffer.is_empty(), completed, begun) {
+            (true, _, _) => None,
+            (false, false, Some(begun)) => Some(begun),
+            (false, _, _) => Some(Instant::now()),
         };
     }
 }
@@ -585,7 +620,11 @@ mod tests {
         ] {
             let handover = Mutex::new(Handover::default());
 
-            assert_eq!(rewrite_selection(&body, &handover, Instant::now()), None, "{body:?}");
+            assert_eq!(
+                rewrite_selection(&body, &handover, std::time::Instant::now()),
+                None,
+                "{body:?}"
+            );
             assert_eq!(
                 handover.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len(),
                 0
@@ -593,7 +632,7 @@ mod tests {
         }
         // The same answer written minimally is rewritten: only the padding stops it.
         let handover = Mutex::new(Handover::default());
-        assert!(rewrite_selection(&message(&[bytes(2, &response)]), &handover, Instant::now()).is_some());
+        assert!(rewrite_selection(&message(&[bytes(2, &response)]), &handover, std::time::Instant::now()).is_some());
     }
 
     #[test]
@@ -702,6 +741,147 @@ mod tests {
         assert_eq!(relay.await.ok(), Some((Handed::NotUnderstood, 0)));
     }
 
+    #[test]
+    fn never_connects_back_to_this_machine() {
+        for address in ["127.0.13.59:5555", "[::1]:5555", "[::ffff:127.0.13.59]:5555"] {
+            assert!(
+                is_loopback(&address.parse().unwrap_or_else(|error| panic!("{error}"))),
+                "{address}"
+            );
+        }
+        assert!(!is_loopback(
+            &"203.0.113.7:5555".parse().unwrap_or_else(|error| panic!("{error}"))
+        ));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_silence_before_the_selection_holds_nothing() {
+        let (mut client, mut server, relay) = phase();
+        let identified = framed(&message(&[bytes(2, &message(&[bytes(1, b"1"), bytes(3, b"account")]))]));
+        let request = framed(&selection_request());
+        let answer = framed(&answer());
+
+        send(&mut server, &identified).await;
+        assert_eq!(read_exactly(&mut client, identified.len()).await, identified);
+        // The player takes two minutes to choose a server.
+        tokio::time::sleep(Duration::from_secs(120)).await;
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &answer).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        assert_eq!(read_answer(&received).1, "127.0.13.59");
+        assert_eq!(relay.await.ok(), Some((Handed::Over, 1)));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn the_hold_starts_again_with_each_frame() {
+        let (mut client, mut server, relay) = phase();
+        let identified = framed(&message(&[bytes(2, &message(&[bytes(1, b"1"), bytes(3, b"account")]))]));
+        let request = framed(&selection_request());
+        let answer = framed(&answer());
+        let mut both = identified.clone();
+        both.extend_from_slice(&answer[..10]);
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &identified[..5]).await;
+        tokio::time::sleep(Duration::from_millis(4_900)).await;
+        send(&mut server, &both[5..]).await;
+        tokio::time::sleep(Duration::from_millis(600)).await;
+        send(&mut server, &answer[10..]).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        assert_eq!(&received[..identified.len()], identified);
+        assert_eq!(read_answer(&received[identified.len()..]).1, "127.0.13.59");
+        assert_eq!(relay.await.ok().map(|(handed, _)| handed), Some(Handed::Over));
+    }
+
+    #[tokio::test]
+    async fn bytes_after_the_answer_pass_too() {
+        let (mut client, mut server, relay) = phase();
+        let request = framed(&selection_request());
+        let mut answer_and_more = framed(&answer());
+        answer_and_more.extend_from_slice(b"\x03abc");
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &answer_and_more).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        let mut expected =
+            rewrite_selection(&answer(), &Mutex::default(), std::time::Instant::now()).unwrap_or_default();
+        expected.extend_from_slice(b"\x03abc");
+        assert_eq!(received, expected);
+        assert_eq!(relay.await.ok().map(|(handed, _)| handed), Some(Handed::Over));
+    }
+
+    #[tokio::test]
+    async fn a_frame_too_large_to_hold_passes_at_once() {
+        let (mut client, mut server, relay) = phase();
+        let request = framed(&selection_request());
+        let mut header = Vec::new();
+        wire::write_varint(HOLD_LIMIT as u64 + 1, &mut header);
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &header).await;
+        send(&mut server, b"start").await;
+
+        // Passed as it came, without waiting for the rest.
+        let early = tokio::time::timeout(Duration::from_millis(100), read_exactly(&mut client, header.len() + 5)).await;
+        assert!(early.is_ok(), "held");
+        drop(server);
+        drop(client);
+        assert_eq!(relay.await.ok().map(|(handed, _)| handed), Some(Handed::NotUnderstood));
+    }
+
+    /// Whether both ends see the relay close, within a second of paused time, though neither closed its side.
+    async fn closed_both_ways(client: &mut DuplexStream, server: &mut DuplexStream) -> bool {
+        let mut rest = Vec::new();
+        let client_closed = tokio::time::timeout(Duration::from_secs(1), client.read_to_end(&mut rest)).await;
+        let server_closed = tokio::time::timeout(Duration::from_secs(1), server.read_to_end(&mut rest)).await;
+        matches!(client_closed, Ok(Ok(_))) && matches!(server_closed, Ok(Ok(_))) && rest.is_empty()
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_server_length_that_is_not_a_frames_closes_the_connection() {
+        let (mut client, mut server, relay) = phase();
+
+        send(&mut server, &[0x80; 5]).await;
+
+        assert!(closed_both_ways(&mut client, &mut server).await);
+        assert!(relay.await.is_ok());
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_client_length_that_is_not_a_frames_closes_the_connection() {
+        let (mut client, mut server, relay) = phase();
+
+        send(&mut client, &[0x80; 5]).await;
+
+        assert!(closed_both_ways(&mut client, &mut server).await);
+        assert!(relay.await.is_ok());
+    }
+
     #[tokio::test(start_paused = true)]
     async fn a_frame_not_whole_in_time_passes_as_it_came() {
         let (mut client, mut server, relay) = phase();
@@ -711,8 +891,10 @@ mod tests {
         send(&mut client, &request).await;
         read_exactly(&mut server, request.len()).await;
         send(&mut server, &answer[..10]).await;
-        // Five seconds, as docs/relay.md says, written out so that the test pins it.
-        tokio::time::sleep(Duration::from_millis(5_001)).await;
+        // Five seconds, as docs/relay.md says, written out so that the test pins it: nothing before, all after.
+        let early = tokio::time::timeout(Duration::from_millis(4_999), read_exactly(&mut client, 10)).await;
+        assert!(early.is_err(), "passed before five seconds");
+        tokio::time::sleep(Duration::from_millis(2)).await;
 
         // Already there once the hold is over: the paused clock would otherwise move on to whenever they come.
         let held = tokio::time::timeout(Duration::from_millis(1), read_exactly(&mut client, 10)).await;
@@ -725,10 +907,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn bytes_that_are_not_frames_pass_untouched() {
+    async fn a_frame_that_is_not_a_message_passes_untouched() {
         let (mut client, mut server, relay) = phase();
-        let garbage = [0xff; 12];
+        let request = framed(&selection_request());
+        let garbage = framed(&[0xff; 12]);
 
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
         send(&mut server, &garbage).await;
         server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
         let mut received = Vec::new();
@@ -739,6 +924,6 @@ mod tests {
         drop(client);
 
         assert_eq!(received, garbage);
-        assert_eq!(relay.await.ok(), Some((Handed::NotAsked, 0)));
+        assert_eq!(relay.await.ok(), Some((Handed::NotUnderstood, 0)));
     }
 }
