@@ -1,5 +1,6 @@
-using D3B.Extractor.Unity;
+using D3B.Extractor.Code;
 using D3B.Extractor.Texts;
+using D3B.Extractor.Unity;
 using D3B.Extractor.World;
 
 namespace D3B.Extractor.Tests.World;
@@ -30,6 +31,29 @@ public sealed class WorldTablesTests
     }
 
     [Fact]
+    public void PositionsAreWrittenAsTheAppReadsThem()
+    {
+        MapPosition[] positions =
+        [
+            new() { Id = 191106048, X = -1, Y = -27, SubAreaId = 95, WorldMap = 1, Name = null, Flags = ["capabilityAllowTeleportTo", "capabilityAllowTeleportFrom"] },
+        ];
+
+        Assert.Equal(Fixture("map-positions.json"), WorldTables.WritePositions(positions));
+    }
+
+    [Fact]
+    public void SubAreasAreWrittenAsTheAppReadsThem()
+    {
+        SubArea[] subAreas =
+        [
+            new() { Id = 95, Name = _astrub, AreaId = 0, Level = 12, ZaapMapId = 191106048, BasicAccountAllowed = true, CustomWorldMapId = -1, Harvestables = [], Monsters = [31, 47] },
+            new() { Id = 96, Name = null, AreaId = 0, Level = 1, ZaapMapId = null, BasicAccountAllowed = false, CustomWorldMapId = 3, Harvestables = [289], Monsters = [] },
+        ];
+
+        Assert.Equal(Fixture("sub-areas.json"), WorldTables.WriteSubAreas(subAreas));
+    }
+
+    [Fact]
     public void AnEmptyTableIsAnEmptyArray()
     {
         Assert.Equal("[]\n"u8.ToArray(), WorldTables.WriteZaaps([]));
@@ -46,6 +70,22 @@ public sealed class WorldTablesTests
         Assert.NotEmpty(areas);
         Assert.Equal(areas.Select(area => area.Id).Order(), areas.Select(area => area.Id));
         Assert.NotEmpty(zaaps);
+    }
+
+    [Fact]
+    public void TheInstalledClientsPositionsAndSubAreasRead()
+    {
+        var client = Installed.Client();
+        var texts = TextFiles.Open(client);
+
+        using var code = ClientCode.Open(client);
+
+        var positions = WorldTables.ReadPositions(DataTable.Read(client, "mapsinformation"), texts, code.FlagEnum("MapInformationFlags"));
+        var subAreas = WorldTables.ReadSubAreas(DataTable.ReadById(client, "subareas"), texts);
+
+        Assert.NotEmpty(positions);
+        Assert.Contains(positions, position => position.Flags.Contains("capabilityAllowTeleportTo"));
+        Assert.Contains(subAreas, subArea => subArea.ZaapMapId is not null);
     }
 
     private static byte[] Fixture(string name)

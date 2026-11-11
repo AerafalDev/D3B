@@ -8,10 +8,17 @@ using LibCpp2IL.Logging;
 namespace D3B.Extractor.Code;
 
 /// <summary>The installed client's IL2CPP code and metadata, opened with Cpp2IL, for the names its enums give.</summary>
-/// <remarks>Cpp2IL keeps the client it opened in static state: a process opens one client at a time.</remarks>
+/// <remarks>
+/// Cpp2IL keeps the client it opened in static state: a process holds one open at a time, so that another opening, such
+/// as a test running beside, waits for this one to be disposed.
+/// </remarks>
 internal sealed class ClientCode : IDisposable
 {
     private const uint MetadataMagic = 0xFAB11BAF;
+
+    private static readonly SemaphoreSlim _gate = new(1, 1);
+
+    private static bool _initialized;
 
     private readonly ApplicationAnalysisContext _application;
 
@@ -42,16 +49,33 @@ internal sealed class ClientCode : IDisposable
 
         var version = MetadataVersionOf(metadata);
 
-        LibLogger.Writer = new SilentLogWriter();
+        _gate.Wait();
 
-        // Cpp2IL loads plugins from a folder it is given, the current one by default: the tool names one of its own
-        // output, which holds none, so that no assembly lying where the tool is run from is loaded.
-        Cpp2IlApi.Init(Path.Combine(AppContext.BaseDirectory, "cpp2il-plugins"));
-        Cpp2IlApi.InitializeLibCpp2Il(binary, metadata, Cpp2IlApi.DetermineUnityVersion(player, Path.Combine(client.Root, "Dofus_Data")), false);
+        try
+        {
+            // Cpp2IL registers its plugins once a process: a second Init fails. It loads them from a folder it is given,
+            // the current one by default: the tool names one of its own output, which holds none, so that no assembly
+            // lying where the tool is run from is loaded.
+            if (!_initialized)
+            {
+                LibLogger.Writer = new SilentLogWriter();
+                Cpp2IlApi.Init(Path.Combine(AppContext.BaseDirectory, "cpp2il-plugins"));
+                _initialized = true;
+            }
 
-        var application = Cpp2IlApi.CurrentAppContext ?? throw new InvalidDataException("Cpp2IL opened the client but built no application.");
+            Cpp2IlApi.InitializeLibCpp2Il(binary, metadata, Cpp2IlApi.DetermineUnityVersion(player, Path.Combine(client.Root, "Dofus_Data")), false);
 
-        return new ClientCode(application, version);
+            var application = Cpp2IlApi.CurrentAppContext ?? throw new InvalidDataException("Cpp2IL opened the client but built no application.");
+
+            return new ClientCode(application, version);
+        }
+        catch
+        {
+            Cpp2IlApi.ResetInternalState();
+            _gate.Release();
+
+            throw;
+        }
     }
 
     /// <summary>Reads the flags enum of a name, such as <c>MapInformationFlags</c>, wherever the client declares it.</summary>
@@ -82,6 +106,7 @@ internal sealed class ClientCode : IDisposable
     public void Dispose()
     {
         Cpp2IlApi.ResetInternalState();
+        _gate.Release();
     }
 
     private static int MetadataVersionOf(string path)

@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics;
 using System.Reflection;
+using D3B.Extractor.Code;
 using D3B.Extractor.Texts;
 using D3B.Extractor.World;
 
@@ -98,7 +99,9 @@ internal static class ExtractCommand
         var folder = DataFolder.Create(path);
         var texts = TextFiles.Open(client);
 
-        WorldTables.Extract(client, texts, folder, output);
+        using var code = ClientCode.Open(client);
+
+        WorldTables.Extract(client, texts, code, folder, output);
         folder.Complete(build.Version, Version);
 
         output.WriteLine($"Data: {path}, format {DataFolder.Format}, in {stopwatch.Elapsed.TotalSeconds:F1} s");

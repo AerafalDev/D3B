@@ -7,6 +7,7 @@
 
 mod game_data;
 mod manifest;
+mod map_flag;
 mod text;
 mod world;
 

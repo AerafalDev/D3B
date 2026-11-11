@@ -35,5 +35,7 @@ mod tests {
         let data = GameData::load(&folder).unwrap_or_else(|error| panic!("{error}"));
         assert_ne!(data.world.areas.len(), 0);
         assert_ne!(data.world.zaaps.len(), 0);
+        assert_ne!(data.world.positions.len(), 0);
+        assert_ne!(data.world.sub_areas.len(), 0);
     }
 }
