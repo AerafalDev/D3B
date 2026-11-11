@@ -7,6 +7,7 @@
 mod ankama_config;
 mod error;
 mod frame;
+mod handover;
 mod redirect;
 mod version_file;
 mod wire;
