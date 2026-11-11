@@ -205,29 +205,42 @@ mod tests {
         frame
     }
 
-    /// Relays a game connection over in-memory streams: the client's end, the game server's end (once connected) and
-    /// the relay's result; `connected` says where the relay connected.
-    fn game(
-        handover: Mutex<Handover>,
-    ) -> (
+    /// The client's end, the game server's end once the relay connected (with where it connected), and the relay's
+    /// result with how many times it said the connection opened.
+    type Relayed = (
         DuplexStream,
         tokio::sync::oneshot::Receiver<(GameServer, DuplexStream)>,
-        tokio::task::JoinHandle<bool>,
-    ) {
+        tokio::task::JoinHandle<(bool, usize)>,
+    );
+
+    /// Relays a game connection over in-memory streams: the client's end, the game server's end (once connected) and
+    /// the relay's result; `connected` says where the relay connected.
+    fn game(handover: Mutex<Handover>) -> Relayed {
+        game_reaching(handover, true)
+    }
+
+    /// As [`game`], with a game server that can be reached or not; the relay's result comes with how many times it
+    /// said the connection opened.
+    fn game_reaching(handover: Mutex<Handover>, reachable: bool) -> Relayed {
         let (client, client_side) = tokio::io::duplex(1 << 16);
         let (connected, server) = tokio::sync::oneshot::channel();
         let relay = tokio::spawn(async move {
-            relay(
+            let mut opened = 0;
+            let relayed = relay(
                 client_side,
                 &handover,
                 |game| async move {
+                    if !reachable {
+                        return None;
+                    }
                     let (server, server_side) = tokio::io::duplex(1 << 16);
                     let _ = connected.send((game, server));
                     Some(server_side)
                 },
-                || {},
+                || opened += 1,
             )
-            .await
+            .await;
+            (relayed, opened)
         });
         (client, server, relay)
     }
@@ -235,7 +248,9 @@ mod tests {
     #[tokio::test(start_paused = true)]
     async fn relays_the_first_frame_then_both_ways() {
         let (mut client, server, relay) = game(handover_waiting());
-        let first = first(TICKET);
+        let mut first = first(TICKET);
+        // A second frame in the same read, as the client may send it at once.
+        first.extend_from_slice(b"\x02hi");
 
         // Cut in two, as the network may cut it.
         client
@@ -273,7 +288,7 @@ mod tests {
         );
         assert_eq!(received, first);
         assert_eq!(&answer, b"from the game");
-        assert_eq!(relay.await.ok(), Some(true));
+        assert_eq!(relay.await.ok(), Some((true, 1)));
     }
 
     #[tokio::test]
@@ -285,7 +300,7 @@ mod tests {
             .await
             .unwrap_or_else(|error| panic!("{error}"));
 
-        assert_eq!(relay.await.ok(), Some(false));
+        assert_eq!(relay.await.ok(), Some((false, 0)));
         assert!(server.await.is_err(), "it connected somewhere");
         let mut rest = Vec::new();
         assert_eq!(client.read_to_end(&mut rest).await.ok(), Some(0));
@@ -304,7 +319,7 @@ mod tests {
 
         client.write_all(&first).await.unwrap_or_else(|error| panic!("{error}"));
 
-        assert_eq!(relay.await.ok(), Some(false));
+        assert_eq!(relay.await.ok(), Some((false, 0)));
     }
 
     #[tokio::test(start_paused = true)]
@@ -320,8 +335,38 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(4_999)).await;
         assert!(!relay.is_finished(), "closed before five seconds");
         tokio::time::sleep(Duration::from_millis(2)).await;
+        assert!(relay.is_finished(), "still open after five seconds");
 
-        assert_eq!(relay.await.ok(), Some(false));
+        assert_eq!(relay.await.ok(), Some((false, 0)));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn closes_a_connection_whose_game_server_cannot_be_reached() {
+        let (mut client, _server, relay) = game_reaching(handover_waiting(), false);
+
+        client
+            .write_all(&first(TICKET))
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+
+        assert_eq!(relay.await.ok(), Some((false, 0)));
+        let mut rest = Vec::new();
+        assert_eq!(client.read_to_end(&mut rest).await.ok(), Some(0));
+    }
+
+    #[tokio::test]
+    async fn accepts_a_first_frame_of_exactly_the_limit() {
+        let mut bytes = Vec::new();
+        wire::write_varint(FIRST_FRAME_LIMIT as u64, &mut bytes);
+        bytes.resize(bytes.len() + FIRST_FRAME_LIMIT, 0);
+        let (mut client, mut relay_side) = tokio::io::duplex(1 << 20);
+
+        client.write_all(&bytes).await.unwrap_or_else(|error| panic!("{error}"));
+
+        assert_eq!(
+            first_frame(&mut relay_side).await.map(|read| read.len()),
+            Some(bytes.len())
+        );
     }
 
     #[tokio::test(start_paused = true)]
@@ -336,7 +381,7 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(1)).await;
 
         assert!(relay.is_finished());
-        assert_eq!(relay.await.ok(), Some(false));
+        assert_eq!(relay.await.ok(), Some((false, 0)));
     }
 
     #[tokio::test(start_paused = true)]
@@ -353,6 +398,6 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(1)).await;
 
         assert!(relay.is_finished());
-        assert_eq!(relay.await.ok(), Some(false));
+        assert_eq!(relay.await.ok(), Some((false, 0)));
     }
 }
