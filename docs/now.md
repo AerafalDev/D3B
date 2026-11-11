@@ -14,9 +14,10 @@ _Updated 2026-11-11._
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
   back.
 - **Not measured**, by the owner:
-  - v0.10.0 on macOS, Linux and ARM64, by Discord testers ([docs/testing.md](testing.md)): the owner has none of them;
+  - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
   - the first update: with v0.10.0 installed, the next release is downloaded at start, the bar offers to restart,
-    Restart installs it; on another try, closing installs it;
+    Restart installs it; on another try, closing installs it. It starts with a new identifier (ADR 0009), so its data
+    folders start empty;
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
     items 1, 2 (every count as below, in 27.8 s) and 4 pass. Not measured yet: items 3 and 5.
     1. `dotnet run --project tools/extractor/src -- --help` lists `--client` and `--output`;
