@@ -5,9 +5,13 @@
 //! asset carries that folder; the release workflow puts it in `data/`, which Tauri bundles as a resource. Nothing
 //! extracted from the client is ever committed (`docs/data.md`).
 
+mod game_data;
 mod manifest;
+mod text;
+mod world;
 
-pub use manifest::Manifest;
+pub use game_data::GameData;
+pub use manifest::DataError;
 
 /// The format of the folder this version of the code reads. The extractor writes the same number in the manifest
 /// (`DataFolder.Format`); a different one is refused rather than half read.

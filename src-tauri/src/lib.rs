@@ -30,6 +30,8 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .invoke_handler(ipc.invoke_handler())
         .setup(move |app| {
+            use tauri::Manager;
+            app.manage(ipc::LoadedData::load(app.handle()));
             ipc.mount_events(app);
             Ok(())
         })

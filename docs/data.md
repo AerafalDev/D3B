@@ -28,7 +28,15 @@ flowchart LR
 - **Tiles** are JPEG files, `tiles/<world>/<zoom as a percentage>/<n>.jpg`, numbered from 1 row by row from the top
   left. The client holds them as BC7 textures (3.7.13.17, `main:docs/client.md`, "The world's maps"); the extractor
   decodes them and encodes them at JPEG quality 75, the owner's choice on the C# version.
-- The shape of each table is written down here when its reader lands.
+- The shape of each table is written down here when its reader lands (`src-tauri/src/data/`, `deny_unknown_fields`).
+
+| File | One record | From the client (3.7.13.17) |
+| --- | --- | --- |
+| `areas.json` | `id`, `name` (a text, or `null`), `superAreaId`, `worldmapId`, `hasWorldMap` | `AreaData`, 70 records |
+| `zaaps.json` | `id`, `mapId`, `subAreaId`, `activated` | `WaypointData`, 63 records |
+
+The app reads the whole folder once at start (`data::GameData`) and refuses it whole when a table cannot be read: the
+status bar then says it has no data, and its tooltip says why.
 
 ## The extractor
 

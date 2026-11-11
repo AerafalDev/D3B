@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
+use serde::de::DeserializeOwned;
 
 /// What a data folder holds, as the extractor describes it.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -47,6 +48,14 @@ pub enum DataError {
     },
     #[error("the data is in format {found}, this version of D3B reads format {expected}")]
     Format { found: u32, expected: u32 },
+    #[error("the manifest lists no table {0}")]
+    MissingTable(String),
+    #[error("{path} is not a valid table: {source}")]
+    Table {
+        path: PathBuf,
+        #[source]
+        source: serde_json::Error,
+    },
 }
 
 impl Manifest {
@@ -67,6 +76,21 @@ impl Manifest {
             DataError::Invalid { source, .. } => DataError::Invalid { path, source },
             other => other,
         })
+    }
+
+    /// Reads the table `name` of the data folder `folder`, as the manifest lists it.
+    pub fn read<T: DeserializeOwned>(&self, folder: &Path, name: &str) -> Result<Vec<T>, DataError> {
+        let table = self
+            .tables
+            .iter()
+            .find(|table| table.name == name)
+            .ok_or_else(|| DataError::MissingTable(name.to_owned()))?;
+        let path = folder.join(&table.path);
+        let text = std::fs::read_to_string(&path).map_err(|source| DataError::Io {
+            path: path.clone(),
+            source,
+        })?;
+        serde_json::from_str(&text).map_err(|source| DataError::Table { path, source })
     }
 
     /// Parses and checks a manifest's text.
@@ -125,6 +149,16 @@ mod tests {
     fn refuses_an_unknown_field() {
         let text = VALID.replace("\"build\"", "\"unknown\": 0, \"build\"");
         assert!(matches!(Manifest::parse(&text), Err(DataError::Invalid { .. })));
+    }
+
+    #[test]
+    fn says_which_table_the_manifest_lacks() {
+        let manifest = Manifest::parse(VALID).unwrap_or_else(|error| panic!("{error}"));
+        let folder = std::env::temp_dir();
+        assert!(matches!(
+            manifest.read::<u32>(&folder, "zaaps"),
+            Err(DataError::MissingTable(name)) if name == "zaaps"
+        ));
     }
 
     #[test]
