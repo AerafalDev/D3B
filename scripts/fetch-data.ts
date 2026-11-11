@@ -11,7 +11,7 @@ if (build === undefined || !/^\d+(\.\d+){1,3}$/.test(build)) {
 }
 
 const target = "data";
-const archive = join(target, `client-${build}.zip`);
+const archive = join(target, `client-${build}.tar.gz`);
 for (const entry of readdirSync(target)) {
   if (entry !== "README.md") {
     rmSync(join(target, entry), { recursive: true, force: true });
@@ -27,12 +27,12 @@ function run(command: string, args: string[]): void {
   }
 }
 
-run("gh", ["release", "download", `client-${build}`, "--pattern", `client-${build}.zip`, "--dir", target]);
-run("tar", ["-xf", archive, "-C", target]);
+run("gh", ["release", "download", `client-${build}`, "--pattern", `client-${build}.tar.gz`, "--dir", target]);
+run("tar", ["-xzf", archive, "-C", target]);
 rmSync(archive);
 
 if (!existsSync(join(target, "manifest.json"))) {
-  console.error(`client-${build}.zip has no manifest.json at its root`);
+  console.error(`client-${build}.tar.gz has no manifest.json at its root`);
   process.exit(1);
 }
 console.log(`data/ holds the data of client ${build}`);

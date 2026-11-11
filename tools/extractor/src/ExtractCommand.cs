@@ -113,7 +113,11 @@ internal static class ExtractCommand
         GraphTables.Extract(client, maps, positions, zaaps, folder, output);
         folder.Complete(build.Version, Version);
 
-        output.WriteLine($"Data: {path}, format {DataFolder.Format}, in {stopwatch.Elapsed.TotalSeconds:F1} s");
+        var archive = Path.Combine(Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(path))!, DataArchive.NameOf(build.Version));
+
+        DataArchive.Write(path, archive);
+
+        output.WriteLine($"Data: {path}, format {DataFolder.Format}; archive {archive}, {new FileInfo(archive).Length:N0} bytes; in {stopwatch.Elapsed.TotalSeconds:F1} s");
 
         return Done;
     }
