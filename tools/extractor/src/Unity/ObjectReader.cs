@@ -397,7 +397,7 @@ internal ref struct ObjectReader
 
         foreach (var child in children)
         {
-            var place = names.IndexOf(Tree[child].Name);
+            var place = names.IndexOf(Tree[child].Field);
 
             if (place < 0 || (seen & (1 << place)) is not 0)
             {

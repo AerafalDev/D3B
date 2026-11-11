@@ -249,13 +249,13 @@ public sealed class ObjectReaderTests
     public void ReferencesAreTheirIdentifiersInTheRegistry()
     {
         var tree = Of(
-            [Node(1, "vector", "elements"), Array(2), Node(3, "int", "size", 4), Node(3, "ReferencedObject", "data"), Node(4, "SInt64", "rid", 8)],
+            [Node(1, "vector", "elements"), Array(2), Node(3, "int", "size", 4), Node(3, "ReferencedObject", "data", align: true), Node(4, "SInt64", "rid", 8), Node(4, "UInt8", "kind", 1)],
             [Node(1, "managedReference", "main"), Node(2, "SInt64", "rid", 8)]);
-        byte[] data = [.. Bytes(2), .. BitConverter.GetBytes(5L), .. BitConverter.GetBytes(6L), .. BitConverter.GetBytes(-2L)];
+        byte[] data = [.. Bytes(2), .. BitConverter.GetBytes(5L), 9, 0, 0, 0, .. BitConverter.GetBytes(6L), 9, 0, 0, 0, .. BitConverter.GetBytes(-2L)];
         var reader = new ObjectReader(data, tree);
 
         Assert.Equal([5L, 6L], reader.ReadReferenceArray(1));
-        Assert.Equal(-2L, reader.ReadReference(6));
+        Assert.Equal(-2L, reader.ReadReference(7));
         reader.ExpectEnd();
     }
 
@@ -267,5 +267,100 @@ public sealed class ObjectReaderTests
         var reader = new ObjectReader(data, tree);
 
         Assert.Equal(new System.Numerics.Vector2(1f, 2f), reader.ReadVector2(1));
+    }
+
+    [Theory]
+    [InlineData("x", "x")]
+    [InlineData("x", "z")]
+    public void AVectorWithoutEachOfItsPartsOnceIsRefused(string first, string second)
+    {
+        var tree = Of([Node(1, "AleVector2", "position"), Node(2, "float", first, 4), Node(2, "float", second, 4)]);
+
+        Assert.Throws<InvalidDataException>(() =>
+        {
+            var reader = new ObjectReader(new byte[8], tree);
+
+            reader.ReadVector2(1);
+        });
+    }
+
+    [Fact]
+    public void AVectorOfFourPartsMayNameThemAsBackingFields()
+    {
+        var tree = Of([Node(1, "AleVector4", "color"), Node(2, "float", "<w>k__BackingField", 4), Node(2, "float", "x", 4), Node(2, "float", "y", 4), Node(2, "float", "z", 4)]);
+        byte[] data = [.. BitConverter.GetBytes(4f), .. BitConverter.GetBytes(1f), .. BitConverter.GetBytes(2f), .. BitConverter.GetBytes(3f)];
+        var reader = new ObjectReader(data, tree);
+
+        Assert.Equal(new System.Numerics.Vector4(1f, 2f, 3f, 4f), reader.ReadVector4(1));
+        reader.ExpectEnd();
+    }
+
+    [Fact]
+    public void FloatsStringsAndColoursAreReadWithTheirAlignment()
+    {
+        var tree = Of(Vector(1, "weights", "float", 4), [Node(1, "vector", "names"), Array(2, align: true), Node(3, "int", "size", 4), .. String(3, "data")], [Node(1, "AleColor", "tint"), Node(2, "unsigned int", "value", 4)]);
+        byte[] data = [.. Bytes(1), .. BitConverter.GetBytes(0.5f), .. Bytes(2, 1), (byte)'a', 0, 0, 0, .. Bytes(2), (byte)'b', (byte)'c', 0, 0, .. Bytes(unchecked((int)0xFF00FF00))];
+        var reader = new ObjectReader(data, tree);
+
+        Assert.Equal([0.5f], reader.ReadSingleArray(1));
+        Assert.Equal(["a", "bc"], reader.ReadStringArray(5));
+        Assert.Equal(0xFF00FF00u, reader.ReadPackedColor(tree.Child(0, "tint")));
+        reader.ExpectEnd();
+    }
+
+    [Fact]
+    public void AnArrayTheCallerReadsIsAlignedWhenItEnds()
+    {
+        var tree = Of(Vector(1, "bytes", "UInt8", 1), One(Node(1, "int", "last", 4)));
+        var reader = new ObjectReader([.. Bytes(3), 1, 2, 3, 0, .. Bytes(42)], tree);
+        var item = reader.BeginArray(1, out var count);
+        var sum = 0;
+
+        for (var i = 0; i < count; i++)
+        {
+            sum += reader.ReadByte(item);
+        }
+
+        reader.EndArray(1);
+
+        Assert.Equal(6, sum);
+        Assert.Equal(42, reader.ReadInt32(5));
+        reader.ExpectEnd();
+    }
+
+    [Fact]
+    public void ARawStringIsItsLengthThenItsBytesAligned()
+    {
+        var reader = new ObjectReader([.. Bytes(3), (byte)'M', (byte)'a', (byte)'p', 0, .. Bytes(1)], Of());
+
+        Assert.Equal("Map", reader.ReadRawString());
+        Assert.Equal(1, reader.RawInt32());
+        reader.ExpectEnd();
+    }
+
+    [Fact]
+    public void AnArrayOfAnotherItemTypeIsRefused()
+    {
+        var tree = Of(Vector(1, "weights", "float", 4));
+
+        Assert.Throws<InvalidDataException>(() =>
+        {
+            var reader = new ObjectReader(Bytes(0), tree);
+
+            reader.ReadInt32Array(1);
+        });
+    }
+
+    [Fact]
+    public void AReferenceWithMoreThanItsIdentifierIsRefused()
+    {
+        var tree = Of([Node(1, "managedReference", "main"), Node(2, "SInt64", "rid", 8), Node(2, "int", "extra", 4)]);
+
+        Assert.Throws<InvalidDataException>(() =>
+        {
+            var reader = new ObjectReader(new byte[12], tree);
+
+            reader.ReadReference(1);
+        });
     }
 }
