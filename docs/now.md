@@ -31,8 +31,8 @@ _Updated 2026-11-11._
     5. with `"format": 2` in `data/manifest.json`, the status bar says there is no data and its tooltip names the format.
   - **step 2, the relay** ([relay.md](relay.md)), on Windows x64 with client 3.7.13.17, from `bun run app` or the
     next release. Never paste a capture or a log line holding a ticket. Measured by the owner on 2026-11-11, Windows
-    x64, `bun run app` on `next` 4fa724f: items 1 to 9 and 12 pass. Not measured yet: items 10 (needs the next
-    release) and 11 (needs a Windows account whose name holds a space or an accent).
+    x64, `bun run app` on `next` 4fa724f: items 1 to 9 and 12 pass. Not measured yet: items 10 (v0.12.0 installed,
+    then the release after it) and 11 (needs a Windows account whose name holds a space or an accent).
     1. Close every client, start D3B: the bar says "Relay ready · 0 in game", its tooltip names client 3.7.13.17;
     2. start a client from the launcher, log in, choose a server and a character, enter the game: it plays as before,
        and the bar says 1 in game; walk to another map and open the inventory;
@@ -60,7 +60,8 @@ _Updated 2026-11-11._
   installed client only (skipped in CI); hand-built trees (`TypeTree.Build`) would test their failures in CI too.
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go; `.github/game-data.json` names it, so the next release packs it.
-  v0.11.0 shipped without data, named before.
+  v0.11.0 shipped without data, named before. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
+  and the relay, with installers for the six targets and its `latest.json` on `updater-next`.
 - **Done in code, step 2's relay**: the redirect, the connection phase and its one rewrite, the game connection, the
   replay of the owner's 225 captures (171 connection phases, 161 handed over, 54 game connections, no failure), the
   status-bar indicator and the restore before an update.
