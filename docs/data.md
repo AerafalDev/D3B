@@ -29,7 +29,7 @@ flowchart LR
   left. The client holds them as BC7 textures (3.7.13.17, `main:docs/client.md`, "The world's maps"); the extractor
   decodes them and encodes them at JPEG quality 75, the owner's choice on the C# version.
 - **Flags** are the list of the names of the bits a record sets, in camelCase, as the client's enums name them, read
-  from its code with Cpp2IL (ADR [0009](adr/0009-flags-by-the-names-of-the-clients-enums.md)).
+  from its code with Cpp2IL (ADR [0010](adr/0010-flags-by-the-names-of-the-clients-enums.md)).
 - The shape of each table is written down here when its reader lands (`src-tauri/src/data/`, `deny_unknown_fields`).
 
 | File | One record | From the client (3.7.13.17) |
