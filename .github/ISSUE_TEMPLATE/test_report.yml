@@ -1,0 +1,59 @@
+name: Test report
+description: The result of testing a release of D3B on your system, step by step.
+labels:
+  - test-report
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing. The steps are in docs/testing.md. Never attach a capture of the game connection or a log showing a login ticket.
+  - type: input
+    id: version
+    attributes:
+      label: D3B version
+      placeholder: "0.10.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - Windows x64
+        - Windows ARM64
+        - macOS Apple Silicon
+        - macOS Intel
+        - Linux x64
+        - Linux ARM64
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version
+      placeholder: "macOS 15.2, Ubuntu 24.04, Windows 11 24H2..."
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: Installer used
+      placeholder: ".dmg, .AppImage, .deb, .rpm, setup.exe, .msi"
+    validations:
+      required: true
+  - type: checkboxes
+    id: passed
+    attributes:
+      label: Steps that worked
+      options:
+        - label: "Install: it installed without error"
+        - label: "Start: the window opened, dark, in my language"
+        - label: "Status bar: it shows the version and the game data"
+        - label: "Close: the close button quits the app"
+        - label: "One instance: a second launch brings the running window back"
+        - label: "Update: the new version was downloaded, and Restart started it"
+  - type: textarea
+    id: problems
+    attributes:
+      label: What did not work
+      description: For each step left unticked, what you saw instead. Screenshots welcome.

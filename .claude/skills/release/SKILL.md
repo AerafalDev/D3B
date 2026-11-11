@@ -14,4 +14,5 @@ disable-model-invocation: true
 4. **Follow** the release workflow (`gh run watch`): six targets, the installers and `latest.json` attached to the
    release. A failed target is fixed on a branch and released again as a patch, never patched by hand on the
    release.
-5. **Report**: the release's URL and what it holds, and what the owner should measure on each OS they have.
+5. **Report**: the release's URL and what it holds, what the owner measures on Windows x64, and the round's checklist
+   for the Discord testers (`docs/testing.md`), as text ready to paste, in French.
