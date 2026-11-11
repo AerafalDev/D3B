@@ -116,6 +116,18 @@ public sealed class ObjectReaderTests
     }
 
     [Fact]
+    public void ArraysOfIntegersReadEveryItem()
+    {
+        var tree = Of(Vector(1, "cells", "int", 4), Vector(1, "keys", "SInt64", 8));
+        byte[] data = [.. Bytes(2, 10, -3, 1), .. BitConverter.GetBytes(long.MaxValue)];
+        var reader = new ObjectReader(data, tree);
+
+        Assert.Equal([10, -3], reader.ReadInt32Array(1));
+        Assert.Equal([long.MaxValue], reader.ReadInt64Array(5));
+        reader.ExpectEnd();
+    }
+
+    [Fact]
     public void SkippedFieldsAreSteppedOverWholeAndAligned()
     {
         var tree = Of(
@@ -200,7 +212,7 @@ public sealed class ObjectReaderTests
         {
             var reader = new ObjectReader(Bytes(1_000_000_000, 1), tree);
 
-            reader.Skip(1);
+            reader.ReadInt32Array(1);
         });
     }
 
@@ -231,5 +243,29 @@ public sealed class ObjectReaderTests
             reader.ReadInt32(1);
             reader.ExpectEnd();
         });
+    }
+
+    [Fact]
+    public void ReferencesAreTheirIdentifiersInTheRegistry()
+    {
+        var tree = Of(
+            [Node(1, "vector", "elements"), Array(2), Node(3, "int", "size", 4), Node(3, "ReferencedObject", "data"), Node(4, "SInt64", "rid", 8)],
+            [Node(1, "managedReference", "main"), Node(2, "SInt64", "rid", 8)]);
+        byte[] data = [.. Bytes(2), .. BitConverter.GetBytes(5L), .. BitConverter.GetBytes(6L), .. BitConverter.GetBytes(-2L)];
+        var reader = new ObjectReader(data, tree);
+
+        Assert.Equal([5L, 6L], reader.ReadReferenceArray(1));
+        Assert.Equal(-2L, reader.ReadReference(6));
+        reader.ExpectEnd();
+    }
+
+    [Fact]
+    public void AVectorIsReadByTheNamesOfItsParts()
+    {
+        var tree = Of([Node(1, "AleVector2", "position"), Node(2, "float", "y", 4), Node(2, "float", "x", 4)]);
+        byte[] data = [.. BitConverter.GetBytes(2f), .. BitConverter.GetBytes(1f)];
+        var reader = new ObjectReader(data, tree);
+
+        Assert.Equal(new System.Numerics.Vector2(1f, 2f), reader.ReadVector2(1));
     }
 }

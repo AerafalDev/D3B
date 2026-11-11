@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Numerics;
 using System.Text;
 
 namespace D3B.Extractor.Unity;
@@ -148,6 +149,181 @@ internal ref struct ObjectReader
         return text;
     }
 
+    /// <summary>Reads a string that has no node of its own, such as the type names of a reference registry.</summary>
+    public string ReadRawString()
+    {
+        var text = Encoding.UTF8.GetString(Take(Count(1)));
+
+        Align();
+
+        return text;
+    }
+
+    /// <summary>Reads a struct of two floats named <c>x</c> and <c>y</c>, such as <c>AleVector2</c>.</summary>
+    public Vector2 ReadVector2(int node)
+    {
+        var parts = ReadSingles(node, "a vector of x and y", "x", "y");
+
+        return new Vector2(parts[0], parts[1]);
+    }
+
+    /// <summary>Reads a struct of four floats named <c>x</c>, <c>y</c>, <c>z</c> and <c>w</c>, such as <c>AleVector4</c>.</summary>
+    public Vector4 ReadVector4(int node)
+    {
+        var parts = ReadSingles(node, "a vector of x, y, z and w", "x", "y", "z", "w");
+
+        return new Vector4(parts[0], parts[1], parts[2], parts[3]);
+    }
+
+    /// <summary>Reads one managed reference: its identifier in the object's registry.</summary>
+    public long ReadReference(int node)
+    {
+        var rid = Tree.Child(node, "rid");
+
+        if (rid is -1 || Tree[node].Children.Length is not 1)
+        {
+            throw Tree.Unexpected(node, "a managed reference");
+        }
+
+        var value = ReadInt64(rid);
+
+        AlignAfter(node);
+
+        return value;
+    }
+
+    /// <summary>Reads a struct holding one unsigned integer, such as <c>AleColor</c>.</summary>
+    public uint ReadPackedColor(int node)
+    {
+        if (Tree[node].Children.Length is not 1)
+        {
+            throw Tree.Unexpected(node, "a packed colour");
+        }
+
+        var value = ReadUInt32(Tree[node].Children[0]);
+
+        AlignAfter(node);
+
+        return value;
+    }
+
+    /// <summary>Reads an array, or a vector, of 32-bit integers, signed or not.</summary>
+    public int[] ReadInt32Array(int node)
+    {
+        var array = Items(node, "an array of 32-bit integers", "int", "SInt32", "unsigned int", "UInt32");
+        var values = new int[Count(4)];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = BinaryPrimitives.ReadInt32LittleEndian(Take(4));
+        }
+
+        EndItems(node, array);
+
+        return values;
+    }
+
+    /// <summary>Reads an array, or a vector, of 64-bit integers, signed or not, such as the keys of a dictionary.</summary>
+    public long[] ReadInt64Array(int node)
+    {
+        var array = Items(node, "an array of 64-bit integers", "SInt64", "long long", "UInt64", "unsigned long long");
+        var values = new long[Count(8)];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = BinaryPrimitives.ReadInt64LittleEndian(Take(8));
+        }
+
+        EndItems(node, array);
+
+        return values;
+    }
+
+    /// <summary>Reads an array, or a vector, of floats.</summary>
+    public float[] ReadSingleArray(int node)
+    {
+        var array = Items(node, "an array of floats", "float");
+        var values = new float[Count(4)];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = BinaryPrimitives.ReadSingleLittleEndian(Take(4));
+        }
+
+        EndItems(node, array);
+
+        return values;
+    }
+
+    /// <summary>Reads an array, or a vector, of strings.</summary>
+    public string[] ReadStringArray(int node)
+    {
+        var array = Items(node, "an array of strings", "string");
+        var item = Tree[array].Children[1];
+        var values = new string[Count(4)];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = ReadString(item);
+        }
+
+        EndItems(node, array);
+
+        return values;
+    }
+
+    /// <summary>Reads an array of managed references: their identifiers in the object's registry.</summary>
+    public long[] ReadReferenceArray(int node)
+    {
+        var array = Tree.ArrayOf(node);
+        var item = Tree[array].Children[1];
+        var rid = Tree.Child(item, "rid");
+
+        if (rid is -1)
+        {
+            throw Tree.Unexpected(node, "an array of managed references");
+        }
+
+        var values = new long[Count(8)];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            foreach (var child in Tree[item].Children)
+            {
+                if (child == rid)
+                {
+                    values[i] = ReadInt64(child);
+                }
+                else
+                {
+                    Skip(child);
+                }
+            }
+
+            AlignAfter(item);
+        }
+
+        EndItems(node, array);
+
+        return values;
+    }
+
+    /// <summary>Reads the count of an array whose items the caller reads, and gives the node of an item.</summary>
+    public int BeginArray(int node, out int count)
+    {
+        var array = Tree.ArrayOf(node);
+
+        count = Count(1);
+
+        return Tree[array].Children[1];
+    }
+
+    /// <summary>Finishes an array that <see cref="BeginArray"/> started.</summary>
+    public void EndArray(int node)
+    {
+        EndItems(node, Tree.ArrayOf(node));
+    }
+
     /// <summary>Moves to a four-byte boundary when the node asks for it.</summary>
     public void AlignAfter(int node)
     {
@@ -204,6 +380,63 @@ internal ref struct ObjectReader
         AlignAfter(node);
 
         return value;
+    }
+
+    /// <summary>Reads a struct of floats in the order it is serialized, each put in the place its name has in <paramref name="names"/>.</summary>
+    private float[] ReadSingles(int node, string expected, params ReadOnlySpan<string> names)
+    {
+        var children = Tree[node].Children;
+
+        if (children.Length != names.Length)
+        {
+            throw Tree.Unexpected(node, expected);
+        }
+
+        var values = new float[names.Length];
+        var seen = 0;
+
+        foreach (var child in children)
+        {
+            var place = names.IndexOf(Tree[child].Name);
+
+            if (place < 0 || (seen & (1 << place)) is not 0)
+            {
+                throw Tree.Unexpected(node, expected);
+            }
+
+            seen |= 1 << place;
+            values[place] = ReadSingle(child);
+        }
+
+        AlignAfter(node);
+
+        return values;
+    }
+
+    private readonly int Items(int node, string expected, params ReadOnlySpan<string> types)
+    {
+        var array = Tree.ArrayOf(node);
+        var item = Tree[Tree[array].Children[1]].Type;
+
+        foreach (var type in types)
+        {
+            if (item == type)
+            {
+                return array;
+            }
+        }
+
+        throw Tree.Unexpected(node, expected);
+    }
+
+    private void EndItems(int node, int array)
+    {
+        AlignAfter(array);
+
+        if (array != node)
+        {
+            AlignAfter(node);
+        }
     }
 
     /// <summary>Reads the count of an array, checked against the bytes left before anything is allocated for it.</summary>
