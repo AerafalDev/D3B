@@ -38,6 +38,12 @@ pub enum RelayError {
     NoAnkamaConfig,
     #[error("the client's version file changed while D3B redirected it")]
     VersionChanged,
+    #[error("a frame's length takes more than 5 bytes")]
+    FrameHeader,
+    #[error("a frame of {length} bytes is more than the {limit} one may hold")]
+    FrameTooLarge { length: usize, limit: usize },
+    #[error("a message is not in the protobuf wire format")]
+    Wire,
     #[error("cannot read or write {path}: {source}")]
     Io {
         path: PathBuf,
