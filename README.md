@@ -144,6 +144,13 @@ bun run app
 | `docs/` | Where the project stands, the [decisions](docs/adr/README.md) and a page per domain. |
 | `.claude/` | How we work with Claude Code: rules, skills, agents and hooks. |
 
+## Help test
+
+The maintainer tests on Windows x64. If you run macOS, Linux or an ARM64 machine, you can help: install the latest
+pre-release, follow the [checklist](docs/testing.md), and send the result with the
+[Test report](https://github.com/AerafalDev/D3B/issues/new?template=test_report.yml) form. Rounds are announced on the
+[Discord](https://discord.com/invite/6A6Vw9Mn24).
+
 ## Contributing
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: it covers the setup, the

@@ -19,7 +19,7 @@ wrong in the C# version; do not repeat it.
 - **Scope**: one behaviour per PR, at most 600 handwritten lines (`bun run pr:size`). A feature is a stack of PRs
   designed first (`feature` skill). A new large task starts in a new session. No refactoring outside the task.
 - **Done** means: tests with their failure cases, `bun run check` green, the domain page and `docs/now.md` updated,
-  evidence shown (`verify`). A feature is done only once the owner has **measured it in game** from its checklist;
+  evidence shown (`verify`). A feature is done only once it is **measured in game** from its checklist, by the owner on Windows x64 and by Discord testers on the other platforms ([docs/testing.md](docs/testing.md));
   until then `docs/now.md` lists it under "Not measured", and the next feature does not start.
 - **Delivery**: Claude branches, commits, pushes, opens the PR and squash-merges it once CI and the fresh review are
   green (`pr` skill). Branches `main` and `next` are protected: PRs only, squash only. Releases and anything published
