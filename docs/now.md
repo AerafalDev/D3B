@@ -3,14 +3,15 @@
 _Updated 2026-11-11._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
-  designed with the owner ([docs/relay.md](relay.md), ADR 0011). Steps 0 and 1 are done but for their measures below,
+  designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,
+  is designed with the owner on 2026-11-11 ([docs/protocol.md](protocol.md), ADR 0012). Steps 0 and 1 are done but for their measures below,
   which the owner takes alongside: the owner started step 2 before them, on 2026-11-11.
 - **Done**: the rewrite starts on branch `next`, which will replace the C# version on `main`. The Tauri 2 + React 19
   shell, the typed IPC, the packed data's manifest, i18n FR/EN, the Claude setup (`CLAUDE.md`, `.claude/`), CI on
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
   signed updates through the `updater-next` channel ([docs/updates.md](updates.md)). **v0.10.0**, the first
   pre-release, is published with installers for the six targets and no game data yet. Decisions:
-  [docs/adr/](adr/README.md) 0001 to 0011.
+  [docs/adr/](adr/README.md) 0001 to 0012.
 - **Measured** by the owner, 2026-11-11, Windows x64: v0.10.0 installs per user, starts dark and in French, its status
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
   back. Then the first update: the installed version downloaded v0.12.0 at start, the bar offered to restart, and
@@ -66,6 +67,11 @@ _Updated 2026-11-11._
   replay of the owner's 225 captures (171 connection phases, 161 handed over, 54 game connections, no failure), the
   status-bar indicator and the restore before an update.
 - **Next**: the owner removes Repository admin from the "Protected branches" ruleset's bypass list once CI is back;
-  the owner measures the relay in game from its checklist above, then the protocol and its per-build mapping.
+  the owner measures the relay's items 10 and 11. The protocol's code waits for the owner's go, as a stack of seven
+  PRs against `next`: (1) the game connection split into frames both ways, with the tap; (2) `relay/capture/` and
+  `D3B_RECORD`; (3) the connection's build from path 1.3.5, carried by the handover; (4) the extractor's protocol
+  schema from the metadata; (5) the `protocol` domain: prost, our `.proto` files, the envelope, the pins of 3.7.13.17,
+  the four outcomes; (6) the pins' audit and the capture replay; (7) the protocol task per connection, the gate, the
+  status and its tooltip. Its in-game checklist comes with PR 7.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.
