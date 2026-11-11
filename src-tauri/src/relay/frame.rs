@@ -229,6 +229,17 @@ mod tests {
     }
 
     #[test]
+    fn gives_a_frame_ending_in_the_read_that_starts_the_next() {
+        let mut bytes = Vec::new();
+        encode(b"first", &mut bytes);
+        encode(b"second", &mut bytes);
+
+        let bodies = pushed(&mut Frames::default(), &[&bytes[..3], &bytes[3..9], &bytes[9..]]);
+
+        assert_eq!(bodies.ok(), Some(vec![b"first".to_vec(), b"second".to_vec()]));
+    }
+
+    #[test]
     fn refuses_a_sixth_header_byte_after_whole_frames() {
         let mut bytes = Vec::new();
         encode(b"one", &mut bytes);

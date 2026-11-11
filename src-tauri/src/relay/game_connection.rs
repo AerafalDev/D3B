@@ -458,6 +458,20 @@ mod tests {
         assert_eq!(tapped_from(&tapped, Side::Client).len(), 2);
     }
 
+    #[tokio::test]
+    async fn writes_each_read_before_the_tap_sees_it() {
+        let (mut from, from_side) = tokio::io::duplex(1 << 16);
+        let (to_side, mut to) = tokio::io::duplex(1 << 16);
+        let frame = frames_of(&[b"read"]);
+        from.write_all(&frame).await.unwrap_or_else(|error| panic!("{error}"));
+
+        // A tap that fails on the first frame: the bytes must already be on their way.
+        let pumped = tokio::spawn(pump(from_side, to_side, Some(Frames::default()), |_| panic!("tapped"))).await;
+
+        assert!(pumped.is_err(), "the tap was not reached");
+        assert_eq!(received(&mut to, frame.len()).await, frame);
+    }
+
     #[tokio::test(start_paused = true)]
     async fn a_side_that_ends_ends_its_way_only() {
         let (mut client, server, relay) = game(handover_waiting());
