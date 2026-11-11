@@ -82,6 +82,7 @@ jobs:
           for sources in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
             if [ -f "$sources" ]; then sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' "$sources"; fi
           done
+          if [ -f /etc/apt/apt-mirrors.txt ]; then sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt; fi
           sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=10 update
           sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=10 install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev xdg-utils
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0

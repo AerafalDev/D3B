@@ -15,7 +15,8 @@ paths:
   `GITHUB_TOKEN`: GitHub runs no workflow on a PR that `GITHUB_TOKEN` opens, and the ruleset needs CI's checks.
 - **Formatting**: Biome expands every JSON object and array, as release-please's `JSON.stringify` writes them; keep it
   so, or the release PR fails the format check.
-- **Ubuntu's packages** come from `archive.ubuntu.com`, three tries of 10 s each, the step stopped after 10 min: on
+- **Ubuntu's packages** come from `archive.ubuntu.com`, Azure's mirror taken out of the sources and of
+  `/etc/apt/apt-mirrors.txt`, three tries of 10 s each, the step stopped after 10 min: on
   2026-11-11 the runners' own mirror, `azure.archive.ubuntu.com`, stopped answering and every job ran into its timeout.
 - **No comments in workflows** (the owner's rule): a workflow reads by its step names; the reasons go in the ADRs and
   `docs/`. The one exception is the version after a pinned SHA (`@<sha> # v7.0.1`), which Dependabot reads and updates.
