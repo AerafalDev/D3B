@@ -9,6 +9,11 @@
   "workspace": {
     "empty": "Choisissez un personnage pour le suivre."
   },
+  "updates": {
+    "ready": "D3B {{version}} est prêt.",
+    "restart": "Redémarrer pour mettre à jour",
+    "installing": "Installation…"
+  },
   "status": {
     "browserPreview": "Aperçu navigateur",
     "data": "Données : client {{build}}",
