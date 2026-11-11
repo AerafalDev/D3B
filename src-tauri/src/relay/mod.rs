@@ -6,8 +6,10 @@
 
 mod ankama_config;
 mod error;
+mod frame;
 mod redirect;
 mod version_file;
+mod wire;
 
 pub use error::RelayError;
 
