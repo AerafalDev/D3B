@@ -22,6 +22,9 @@ internal sealed class I18nFile
     /// <summary>Gets the number of numbered texts.</summary>
     public int Count => _offsets.Count;
 
+    /// <summary>Gets whether the file holds text 0, which tables name for no text (<c>main:docs/client.md</c>, "Texts").</summary>
+    public bool HoldsTextZero => _offsets.ContainsKey(0);
+
     private I18nFile(byte[] data, Dictionary<int, int> offsets, int textsStart)
     {
         _data = data;
@@ -58,12 +61,25 @@ internal sealed class I18nFile
 
             return new I18nFile(data, offsets, checked((int)reader.BaseStream.Position));
         }
-        catch (Exception exception) when (exception is EndOfStreamException or FormatException)
+        catch (Exception exception) when (exception is IOException or FormatException)
         {
-            throw new InvalidDataException($"The texts' tables end early: {exception.Message}", exception);
+            throw new InvalidDataException($"The texts' tables are not laid out as measured: {exception.Message}", exception);
         }
     }
 
+    /// <summary>Reads a table's count, checked against the bytes left before anything is allocated for it.</summary>
+    private static int ReadCount(BinaryReader reader, int entrySize)
+    {
+        var count = reader.ReadInt32();
+        var left = reader.BaseStream.Length - reader.BaseStream.Position;
+
+        if (count < 0 || count > left / entrySize)
+        {
+            throw new InvalidDataException($"A table of the texts claims {count} entries of {entrySize} bytes, with {left} bytes left.");
+        }
+
+        return count;
+    }
     /// <summary>Gets the text of an identifier, if the file holds it.</summary>
     /// <exception cref="InvalidDataException">The identifier's offset does not point to a whole text.</exception>
     public bool TryGet(int id, out string text)
@@ -88,23 +104,10 @@ internal sealed class I18nFile
 
             return true;
         }
-        catch (EndOfStreamException exception)
+        catch (Exception exception) when (exception is IOException or FormatException)
         {
-            throw new InvalidDataException($"Text {id} runs past the end of the file.", exception);
+            throw new InvalidDataException($"Text {id} runs past the end of the file, or its length is not one.", exception);
         }
     }
 
-    /// <summary>Reads a table's count, checked against the bytes left before anything is allocated for it.</summary>
-    private static int ReadCount(BinaryReader reader, int entrySize)
-    {
-        var count = reader.ReadInt32();
-        var left = reader.BaseStream.Length - reader.BaseStream.Position;
-
-        if (count < 0 || count > left / entrySize)
-        {
-            throw new InvalidDataException($"A table of the texts claims {count} entries of {entrySize} bytes, with {left} bytes left.");
-        }
-
-        return count;
-    }
 }

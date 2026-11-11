@@ -99,7 +99,7 @@ internal static class ExtractCommand
         output.WriteLine($"Client: {client.Root}, version {build}, extractor {Version}");
 
         // Everything is read before the target is replaced, so that a client the extractor misreads leaves it as it was.
-        var folder = DataFolder.Create(path);
+        using var folder = DataFolder.Create(path);
         var texts = TextFiles.Open(client);
 
         using var code = ClientCode.Open(client);
@@ -113,7 +113,10 @@ internal static class ExtractCommand
         GraphTables.Extract(client, maps, positions, zaaps, folder, output);
         folder.Complete(build.Version, Version);
 
-        var archive = Path.Combine(Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(path))!, DataArchive.NameOf(build.Version));
+        // The archive goes where Git ignores it, whatever --output names: it is derived from the client.
+        var archive = Path.GetFullPath(Path.Combine("artifacts", "data", DataArchive.NameOf(build.Version)));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(archive)!);
 
         DataArchive.Write(path, archive);
 

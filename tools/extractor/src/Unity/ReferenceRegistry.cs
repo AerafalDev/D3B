@@ -21,6 +21,9 @@ internal static class ReferenceRegistry
     {
         var tree = reader.Tree;
 
+        // Without its version, the registry's layout is a guess.
+        tree.Required(node, "version");
+
         foreach (var child in tree[node].Children)
         {
             switch (tree[child].Name)

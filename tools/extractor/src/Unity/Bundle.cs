@@ -55,14 +55,68 @@ internal sealed class Bundle : IDisposable
 
             return bundle;
         }
-        catch (Exception exception) when (exception is not InvalidDataException)
+        catch (Exception exception)
         {
             bundle.Dispose();
 
-            throw new InvalidDataException($"{path} is not a bundle the extractor reads: {exception.Message}", exception);
+            throw exception is InvalidDataException ? exception : new InvalidDataException($"{path} is not a bundle the extractor reads: {exception.Message}", exception);
         }
     }
 
+    private static TypeTree TreeOf(TypeTreeType type, string name)
+    {
+        var strings = type.StringBufferBytes;
+        var common = TypeTreeType.COMMON_STRING_TABLE;
+        var nodes = type.Nodes.Select(node => new FlatNode
+        {
+            Level = node.Level,
+            Type = node.GetTypeString(strings, common),
+            Name = node.GetNameString(strings, common),
+            ByteSize = node.ByteSize,
+            Align = (node.MetaFlags & AlignFlag) is not 0,
+            IsArray = node.TypeFlags.HasFlag(TypeTreeNodeFlags.Array),
+            IsRegistry = node.TypeFlags.HasFlag(TypeTreeNodeFlags.Registry),
+        });
+
+        return TypeTree.Build(name, [.. nodes]);
+    }
+
+    private static Dictionary<string, TypeTree> ReferenceTypesOf(AssetsFileMetadata metadata)
+    {
+        var types = new Dictionary<string, TypeTree>(StringComparer.Ordinal);
+
+        foreach (var type in metadata.RefTypes ?? [])
+        {
+            if (type.TypeReference is not { } reference)
+            {
+                continue;
+            }
+
+            var name = reference.Namespace.Length is 0 ? reference.ClassName : $"{reference.Namespace}.{reference.ClassName}";
+
+            types.TryAdd(name, TreeOf(type, reference.ClassName));
+        }
+
+        return types;
+    }
+
+    private static string NameOf(TypeTree tree, byte[] data)
+    {
+        // A MonoBehaviour's name follows its game object and enabled flag and its script, all of fixed size.
+        var reader = new ObjectReader(data, tree);
+
+        foreach (var child in tree[0].Children)
+        {
+            if (tree[child].Name == "m_Name")
+            {
+                return reader.ReadString(child);
+            }
+
+            reader.Skip(child);
+        }
+
+        return "";
+    }
     /// <summary>The script objects of the bundle, in file order, each read when the caller reaches it.</summary>
     public IEnumerable<SerializedObject> MonoBehaviours()
     {
@@ -132,58 +186,4 @@ internal sealed class Bundle : IDisposable
         _manager.UnloadAll(true);
     }
 
-    private static TypeTree TreeOf(TypeTreeType type, string name)
-    {
-        var strings = type.StringBufferBytes;
-        var common = TypeTreeType.COMMON_STRING_TABLE;
-        var nodes = type.Nodes.Select(node => new FlatNode
-        {
-            Level = node.Level,
-            Type = node.GetTypeString(strings, common),
-            Name = node.GetNameString(strings, common),
-            ByteSize = node.ByteSize,
-            Align = (node.MetaFlags & AlignFlag) is not 0,
-            IsArray = node.TypeFlags.HasFlag(TypeTreeNodeFlags.Array),
-            IsRegistry = node.TypeFlags.HasFlag(TypeTreeNodeFlags.Registry),
-        });
-
-        return TypeTree.Build(name, [.. nodes]);
-    }
-
-    private static Dictionary<string, TypeTree> ReferenceTypesOf(AssetsFileMetadata metadata)
-    {
-        var types = new Dictionary<string, TypeTree>(StringComparer.Ordinal);
-
-        foreach (var type in metadata.RefTypes ?? [])
-        {
-            if (type.TypeReference is not { } reference)
-            {
-                continue;
-            }
-
-            var name = reference.Namespace.Length is 0 ? reference.ClassName : $"{reference.Namespace}.{reference.ClassName}";
-
-            types.TryAdd(name, TreeOf(type, reference.ClassName));
-        }
-
-        return types;
-    }
-
-    private static string NameOf(TypeTree tree, byte[] data)
-    {
-        // A MonoBehaviour's name follows its game object and enabled flag and its script, all of fixed size.
-        var reader = new ObjectReader(data, tree);
-
-        foreach (var child in tree[0].Children)
-        {
-            if (tree[child].Name == "m_Name")
-            {
-                return reader.ReadString(child);
-            }
-
-            reader.Skip(child);
-        }
-
-        return "";
-    }
 }

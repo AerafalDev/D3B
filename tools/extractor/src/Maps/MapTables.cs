@@ -27,14 +27,14 @@ internal static class MapTables
             throw new InvalidDataException($"The client has no maps: {area} holds no bundle.");
         }
 
-        var maps = Read(bundles);
+        var (maps, twoGraphics) = Read(bundles);
 
         for (var shard = 0; shard < Shards; shard++)
         {
             folder.Write(PathOf(shard), Write(maps.Where(map => map.Id % Shards == shard)));
         }
 
-        output.WriteLine($"Maps: {maps.Count:N0}, {maps.Sum(map => map.Elements.Count):N0} interactive elements, {maps.SelectMany(map => map.Elements).Select(element => element.GfxId).Distinct().Count():N0} graphics");
+        output.WriteLine($"Maps: {maps.Count:N0}, {maps.Sum(map => map.Elements.Count):N0} interactive elements, {maps.SelectMany(map => map.Elements).Select(element => element.GfxId).Distinct().Count():N0} graphics; elements drawn twice on their cell with two graphics, kept with the lowest: {twoGraphics:N0}");
 
         return maps;
     }
@@ -98,9 +98,10 @@ internal static class MapTables
         });
     }
 
-    private static List<MapData> Read(string[] bundles)
+    private static (List<MapData> Maps, int TwoGraphics) Read(string[] bundles)
     {
         var maps = new ConcurrentBag<MapData>();
+        var twoGraphics = 0;
 
         try
         {
@@ -108,6 +109,8 @@ internal static class MapTables
             {
                 using var bundle = Bundle.Open(path);
                 MapReader? reader = null;
+
+                var readers = new List<MapReader>();
 
                 foreach (var map in bundle.MonoBehaviours())
                 {
@@ -120,22 +123,32 @@ internal static class MapTables
                     if (reader is null || !ReferenceEquals(reader.References, map.ReferenceTypes))
                     {
                         reader = new MapReader(map.ReferenceTypes);
+                        readers.Add(reader);
                     }
 
                     try
                     {
                         maps.Add(reader.Read(map));
                     }
-                    catch (Exception exception) when (exception is InvalidDataException or OverflowException)
+                    catch (Exception exception) when (exception is InvalidDataException or OverflowException or ArgumentException)
                     {
                         throw new InvalidDataException($"{Path.GetFileName(path)}, object {map.PathId}: {exception.Message}", exception);
                     }
                 }
+
+                Interlocked.Add(ref twoGraphics, readers.Sum(each => each.TwoGraphics));
             });
         }
-        catch (AggregateException exception) when (exception.InnerExceptions.All(inner => inner is InvalidDataException))
+        catch (AggregateException exception)
         {
-            ExceptionDispatchInfo.Throw(exception.InnerExceptions[0]);
+            var inner = exception.InnerExceptions[0];
+
+            if (inner is InvalidDataException or IOException)
+            {
+                ExceptionDispatchInfo.Throw(inner);
+            }
+
+            throw new InvalidDataException($"The maps cannot be read: {inner.Message}", inner);
         }
 
         var sorted = maps.OrderBy(map => map.Id).ToList();
@@ -148,6 +161,6 @@ internal static class MapTables
             }
         }
 
-        return sorted;
+        return (sorted, twoGraphics);
     }
 }

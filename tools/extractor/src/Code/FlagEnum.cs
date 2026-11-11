@@ -18,8 +18,8 @@ internal sealed class FlagEnum
         _bits = bits;
     }
 
-    /// <summary>Builds the enum from its members: each one bit, or zero for the member that names none.</summary>
-    /// <exception cref="InvalidDataException">A member sets several bits, or two members the same one.</exception>
+    /// <summary>Builds the enum from its members: those of one bit name it; zero and combinations of several are left out.</summary>
+    /// <exception cref="InvalidDataException">Two members name the same bit.</exception>
     public static FlagEnum From(string name, IEnumerable<(string Name, ulong Value)> members)
     {
         var bits = new List<(ulong Bit, string Name)>();

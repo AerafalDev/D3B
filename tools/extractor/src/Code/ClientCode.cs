@@ -1,5 +1,4 @@
 using System.Buffers.Binary;
-using System.Globalization;
 using System.Reflection;
 using Cpp2IL.Core;
 using Cpp2IL.Core.Model.Contexts;
@@ -16,23 +15,23 @@ internal sealed class ClientCode : IDisposable
 {
     private const uint MetadataMagic = 0xFAB11BAF;
 
+    // The metadata version Cpp2IL was measured to read on 3.7.13.17: another one fails here, by its number.
+    private const int MetadataVersion = 39;
+
     private static readonly SemaphoreSlim _gate = new(1, 1);
 
     private static bool _initialized;
 
     private readonly ApplicationAnalysisContext _application;
+    private bool _disposed;
 
-    /// <summary>Gets the version of the client's <c>global-metadata.dat</c>, from its header: 39 on 3.7.13.17.</summary>
-    public int MetadataVersion { get; }
-
-    private ClientCode(ApplicationAnalysisContext application, int metadataVersion)
+    private ClientCode(ApplicationAnalysisContext application)
     {
         _application = application;
-        MetadataVersion = metadataVersion;
     }
 
     /// <summary>Opens the client's code and metadata.</summary>
-    /// <exception cref="InvalidDataException">The client lacks a file of its code, or its metadata is not IL2CPP's.</exception>
+    /// <exception cref="InvalidDataException">The client lacks a file of its code, its metadata is not of the version measured, or Cpp2IL cannot read it.</exception>
     public static ClientCode Open(ClientInstall client)
     {
         var binary = Path.Combine(client.Root, "GameAssembly.dll");
@@ -48,6 +47,11 @@ internal sealed class ClientCode : IDisposable
         }
 
         var version = MetadataVersionOf(metadata);
+
+        if (version is not MetadataVersion)
+        {
+            throw new InvalidDataException($"The client's IL2CPP metadata is version {version}; the extractor reads version {MetadataVersion}.");
+        }
 
         _gate.Wait();
 
@@ -67,17 +71,56 @@ internal sealed class ClientCode : IDisposable
 
             var application = Cpp2IlApi.CurrentAppContext ?? throw new InvalidDataException("Cpp2IL opened the client but built no application.");
 
-            return new ClientCode(application, version);
+            return new ClientCode(application);
         }
-        catch
+        catch (Exception exception)
         {
-            Cpp2IlApi.ResetInternalState();
-            _gate.Release();
+            try
+            {
+                Cpp2IlApi.ResetInternalState();
+            }
+            finally
+            {
+                _gate.Release();
+            }
 
-            throw;
+            throw exception is InvalidDataException ? exception : new InvalidDataException($"Cpp2IL cannot read the client's code: {exception.Message}", exception);
         }
     }
 
+    /// <summary>A member's value as the bits it sets, whatever the enum's underlying type, without sign extension.</summary>
+    private static ulong ValueOf(string enumName, string member, object? value)
+    {
+        return value switch
+        {
+            sbyte number => (byte)number,
+            byte number => number,
+            short number => (ushort)number,
+            ushort number => number,
+            int number => (uint)number,
+            uint number => number,
+            long number => (ulong)number,
+            ulong number => number,
+            _ => throw new InvalidDataException($"{enumName}.{member} holds {value}, which is no integer."),
+        };
+    }
+
+    private static int MetadataVersionOf(string path)
+    {
+        Span<byte> header = stackalloc byte[8];
+
+        using (var stream = File.OpenRead(path))
+        {
+            stream.ReadExactly(header);
+        }
+
+        if (BinaryPrimitives.ReadUInt32LittleEndian(header) != MetadataMagic)
+        {
+            throw new InvalidDataException($"{path} is not IL2CPP metadata.");
+        }
+
+        return BinaryPrimitives.ReadInt32LittleEndian(header[4..]);
+    }
     /// <summary>Reads the flags enum of a name, such as <c>MapInformationFlags</c>, wherever the client declares it.</summary>
     /// <exception cref="InvalidDataException">No type or several bear the name, or it is no enum.</exception>
     public FlagEnum FlagEnum(string name)
@@ -98,31 +141,28 @@ internal sealed class ClientCode : IDisposable
 
         var members = type.Fields
             .Where(field => field.IsStatic && field.Attributes.HasFlag(FieldAttributes.Literal))
-            .Select(field => (field.Name, unchecked((ulong)Convert.ToInt64(field.ConstantValue, CultureInfo.InvariantCulture))));
+            .Select(field => (field.Name, ValueOf(type.FullName, field.Name, field.ConstantValue)));
 
         return Code.FlagEnum.From(type.FullName, members);
     }
 
     public void Dispose()
     {
-        Cpp2IlApi.ResetInternalState();
-        _gate.Release();
-    }
-
-    private static int MetadataVersionOf(string path)
-    {
-        Span<byte> header = stackalloc byte[8];
-
-        using (var stream = File.OpenRead(path))
+        if (_disposed)
         {
-            stream.ReadExactly(header);
+            return;
         }
 
-        if (BinaryPrimitives.ReadUInt32LittleEndian(header) != MetadataMagic)
-        {
-            throw new InvalidDataException($"{path} is not IL2CPP metadata.");
-        }
+        _disposed = true;
 
-        return BinaryPrimitives.ReadInt32LittleEndian(header[4..]);
+        try
+        {
+            Cpp2IlApi.ResetInternalState();
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
+
 }

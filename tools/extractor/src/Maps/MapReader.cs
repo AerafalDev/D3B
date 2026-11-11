@@ -21,6 +21,9 @@ internal sealed class MapReader
     private readonly Dictionary<long, (int Id, int CellId, int GfxId)> _referenced = [];
     private readonly List<(int Id, int CellId, int GfxId)> _elements = [];
 
+    /// <summary>Gets how many elements this reader found drawn twice on their cell with two graphics, kept with the lowest.</summary>
+    public int TwoGraphics { get; private set; }
+
     /// <summary>Gets the reference types of the file this reader reads the maps of.</summary>
     public IReadOnlyDictionary<string, TypeTree> References => _references;
 
@@ -35,7 +38,7 @@ internal sealed class MapReader
     /// <summary>Tells whether an object of this tree is a map: the bundles also hold the elements' definitions, which are not.</summary>
     public static bool IsMap(TypeTree tree)
     {
-        if (tree.Child(0, "id") is not -1 && tree.Child(0, "cellsData") is not -1 && tree.Child(0, "references") is not -1)
+        if (tree.Child(0, "id") is not -1 && tree.Child(0, "cellsData") is not -1 && tree.Child(0, "middlegroundMapElements") is not -1 && tree.Child(0, "references") is not -1)
         {
             return true;
         }
@@ -84,6 +87,11 @@ internal sealed class MapReader
         reader.ExpectEnd();
 
         var id = nested ? IdOf(map.Name) : record.Id;
+
+        if (id < 0)
+        {
+            throw new InvalidDataException($"A map's id is {id}: ids run from 0 (main:docs/client.md).");
+        }
 
         return new MapData
         {
@@ -136,6 +144,12 @@ internal sealed class MapReader
             {
                 throw new InvalidDataException($"{tree.Name}: a cell has no {required}: the client changed this type, so the extractor needs updating.");
             }
+        }
+
+        // ClientMapData names the altitude altitude, MapMetadata floor: one of them, once.
+        if (names.Count(name => name is "altitude" or "floor") is not 1)
+        {
+            throw new InvalidDataException($"{tree.Name}: a cell has no altitude, or two: the client changed this type, so the extractor needs updating.");
         }
 
         record.Flags = new ushort[count];
@@ -372,6 +386,8 @@ internal sealed class MapReader
                 {
                     throw new InvalidDataException($"Map {mapId} places interactive element {element.Id} on cells {result[^1].CellId} and {element.CellId}.");
                 }
+
+                TwoGraphics += result[^1].GfxId != element.GfxId ? 1 : 0;
 
                 continue;
             }

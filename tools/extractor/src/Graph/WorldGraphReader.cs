@@ -274,6 +274,12 @@ internal static class WorldGraphReader
 
         var interactive = name is "interactive";
 
+        // Directions run 0 to 7 clockwise from east, 255 for none; a transition is taken from one of its map's 560 cells.
+        if (direction is (< 0 or > 7) and not 255 || cell is < 0 or >= Maps.MapData.CellCount)
+        {
+            throw new InvalidDataException($"A {name} transition to map {map} names direction {direction} and cell {cell}.");
+        }
+
         // Only interactive transitions name a skill and an element: another type naming one is not what was measured.
         if (interactive ? skill < 0 || element is < 0 or > int.MaxValue : skill is not NoId || element is not NoId)
         {
