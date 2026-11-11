@@ -30,7 +30,9 @@ _Updated 2026-11-11._
        with no error in its tooltip;
     5. with `"format": 2` in `data/manifest.json`, the status bar says there is no data and its tooltip names the format.
   - **step 2, the relay** ([relay.md](relay.md)), on Windows x64 with client 3.7.13.17, from `bun run app` or the
-    next release. Never paste a capture or a log line holding a ticket.
+    next release. Never paste a capture or a log line holding a ticket. Measured by the owner on 2026-11-11, Windows
+    x64, `bun run app` on `next` 4fa724f: items 1 to 9 pass. Not measured yet: items 10 (needs the next release), 11
+    and 12.
     1. Close every client, start D3B: the bar says "Relay ready · 0 in game", its tooltip names client 3.7.13.17;
     2. start a client from the launcher, log in, choose a server and a character, enter the game: it plays as before,
        and the bar says 1 in game; walk to another map and open the inventory;
