@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches: [next, main]
 
@@ -73,7 +74,7 @@ jobs:
         with:
           bun-version-file: package.json
       - name: Size
-        if: ${{ !startsWith(github.head_ref, 'release-please--') }}
+        if: ${{ !startsWith(github.head_ref, 'release-please--') && !contains(github.event.pull_request.labels.*.name, 'size-exception') }}
         env:
           BASE_REF: ${{ github.base_ref }}
         run: bun scripts/check-pr-size.ts "origin/$BASE_REF"
