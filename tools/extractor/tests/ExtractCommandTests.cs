@@ -3,13 +3,44 @@ namespace D3B.Extractor.Tests;
 public sealed class ExtractCommandTests
 {
     [Fact]
-    public void TheExtractorNamesItsVersion()
+    public void TheClientsBuildIsNamed()
     {
-        var (code, output, _) = Run();
+        using var temporary = new TemporaryFolder();
+        var client = temporary.Client("Version=3.7.13.17\nBuildDate=2026-11-03T14:09:52+00:00\n");
+
+        var target = Path.Combine(temporary.Path, "out");
+
+        var (code, output, _) = Run("--client", client, "--output", target);
 
         Assert.Equal(ExtractCommand.Done, code);
-        Assert.Contains($"D3B extractor {ExtractCommand.Version}", output, StringComparison.Ordinal);
-        Assert.StartsWith("0.1.0", ExtractCommand.Version, StringComparison.Ordinal);
+        Assert.Contains("version 3.7.13.17, built 2026-11-03 14:09:52Z", output, StringComparison.Ordinal);
+        Assert.Contains("\"build\": \"3.7.13.17\"", File.ReadAllText(Path.Combine(target, DataFolder.ManifestFile)), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFolderWithoutClientExitsWithTwo()
+    {
+        using var temporary = new TemporaryFolder();
+
+        var (code, _, error) = Run("--client", temporary.Path);
+
+        Assert.Equal(ExtractCommand.NoClient, code);
+        Assert.Contains("No client", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AClientWithAnUnreadableVersionExitsWithOne()
+    {
+        using var temporary = new TemporaryFolder();
+        var client = temporary.Client("Version=three");
+
+        var target = Path.Combine(temporary.Path, "out");
+
+        var (code, _, error) = Run("--client", client, "--output", target);
+
+        Assert.Equal(ExtractCommand.Failed, code);
+        Assert.Contains("three", error, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(target));
     }
 
     [Fact]
