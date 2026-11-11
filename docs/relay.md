@@ -87,6 +87,16 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   another build it is tried with the shape checks above, which let a renumbered answer pass untouched rather than
   rewrite it wrongly (the owner, 2026-11-11). The version gate belongs to the protocol (step 2, next feature).
 
+## In the app
+
+- `relay::Relay` is started in `setup` on the installed client and stopped on `RunEvent::Exit`; the updater awaits the
+  `relay_restore` command before it installs. `relay_status` and the event `RelayChanged` carry its state (starting,
+  ready, failed with its reason, unsupported, stopped), the client's build, the game connections open and the answers
+  not understood.
+- The status bar's indicator (`src/relay/`) shows the state and the game connections; its tooltip the reason, the
+  client's build, that quitting ends the game connections, and to start the client after D3B.
+- A restore Windows refuses (a process holding `version`) is tried five times over about 3 s.
+
 ## Secrets
 
 The login token, the ticket and the game frames identify the account: they are never logged, shown, or written to disk.

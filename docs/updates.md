@@ -18,7 +18,9 @@ flowchart LR
   (`plugins.updater`). It refuses any update not signed by the project's private key.
 - **Front end**: `src/updates/`. `updater.ts` is the store (idle, checking, downloading, ready, installing, failed),
   `use-auto-update.ts` checks once at start and handles the close, `update-banner.tsx` is the bar. A failed install
-  keeps the update: the bar offers it again and closing tries again. Errors go to the app's log.
+  keeps the update: the bar offers it again and closing tries again. Errors go to the app's log. Before installing,
+  the store awaits `relay_restore`, which puts the client's configuration back: Windows' installer ends the app before
+  its exit hook runs ([relay.md](relay.md)).
 - **Closing**: the hook's close listener takes the close over, so the window needs `core:window:allow-destroy`. During
   an install the close waits; with an update downloaded, it installs without restarting (Windows' installer would
   otherwise relaunch the app), then quits.
