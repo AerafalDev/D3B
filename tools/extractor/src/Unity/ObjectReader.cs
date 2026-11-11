@@ -69,6 +69,11 @@ internal ref struct ObjectReader
         }
         else
         {
+            if (field.ByteSize < 0)
+            {
+                throw new InvalidDataException($"{Tree.Name}.{field.Name} is a {field.Type} of no fixed size, which cannot be skipped.");
+            }
+
             Take(field.ByteSize);
         }
 
@@ -162,6 +167,11 @@ internal ref struct ObjectReader
     /// <exception cref="InvalidDataException">Bytes are left.</exception>
     public readonly void ExpectEnd()
     {
+        if (Position > _data.Length)
+        {
+            throw new InvalidDataException($"{Tree.Name}: the object ends early.");
+        }
+
         if (Position != _data.Length)
         {
             throw new InvalidDataException($"{Tree.Name}: {_data.Length - Position} bytes are left after reading the object, so its layout was misread.");
