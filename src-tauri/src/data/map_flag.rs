@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 /// A bit of a map's `m_flags`, as the client's `MapInformationFlags` names it (3.7.13.17, read by the extractor from
-/// the client's code, ADR 0009). A name the app does not know refuses the data folder: a new bit needs a new release.
+/// the client's code, ADR 0010). A name the app does not know refuses the data folder: a new bit needs a new release.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum MapFlag {

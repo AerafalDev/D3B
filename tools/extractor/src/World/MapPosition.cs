@@ -19,6 +19,6 @@ internal sealed class MapPosition
     /// <summary>Gets the map's own name, which most maps lack.</summary>
     public required Text? Name { get; init; }
 
-    /// <summary>Gets the names of the bits its <c>m_flags</c> sets, as <c>MapInformationFlags</c> names them (ADR 0009).</summary>
+    /// <summary>Gets the names of the bits its <c>m_flags</c> sets, as <c>MapInformationFlags</c> names them (ADR 0010).</summary>
     public required IReadOnlyList<string> Flags { get; init; }
 }
