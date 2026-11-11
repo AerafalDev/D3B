@@ -273,7 +273,6 @@ mod tests {
     fn leaves_an_answer_of_another_shape() {
         let ports = packed(&[5555]);
         let short = b"0123456789abcdef";
-        let not_minimal = [0x0a, 0x81, 0x00];
         for body in [
             answer_with(&[bytes(1, short), bytes(2, b"game.example.com"), bytes(3, &ports)]),
             answer_with(&[bytes(1, TICKET), bytes(2, b"game_server"), bytes(3, &ports)]),
@@ -295,7 +294,6 @@ mod tests {
                 2,
                 &message(&[bytes(1, b"7"), bytes(4, &message(&[bytes(2, b"\x01")]))]),
             )]),
-            not_minimal.to_vec(),
             identification(),
             Vec::new(),
         ] {
@@ -307,6 +305,55 @@ mod tests {
                 0
             );
         }
+    }
+
+    /// A field whose length is written in two bytes where one is enough: read as the same value, but not encoded
+    /// back to the same bytes.
+    fn padded(number: u32, value: &[u8]) -> Vec<u8> {
+        let length = u8::try_from(value.len()).ok().filter(|&length| length < 0x80);
+        let length = length.unwrap_or_else(|| panic!("a value of one length byte"));
+        let mut out = Vec::new();
+        wire::write_varint(u64::from(number) << 3 | 2, &mut out);
+        out.extend_from_slice(&[length | 0x80, 0x00]);
+        out.extend_from_slice(value);
+        out
+    }
+
+    #[test]
+    fn leaves_an_answer_not_written_minimally_at_any_level() {
+        let ports = packed(&[5555, 443]);
+        let ticket = bytes(1, TICKET);
+        let host = bytes(2, b"game.example.com");
+        let ports = bytes(3, &ports);
+        let success = message(&[ticket, host, ports]);
+        let selection = message(&[bytes(1, &success)]);
+        let response = message(&[bytes(1, b"7"), bytes(4, &selection)]);
+
+        let mut padded_success = padded(1, TICKET);
+        padded_success.extend_from_slice(&message(&[host, ports]));
+        let padded_selection = padded(1, &success);
+        let mut padded_response = message(&[bytes(1, b"7")]);
+        padded_response.extend_from_slice(&padded(4, &selection));
+        for body in [
+            message(&[bytes(
+                2,
+                &message(&[bytes(1, b"7"), bytes(4, &message(&[bytes(1, &padded_success)]))]),
+            )]),
+            message(&[bytes(2, &message(&[bytes(1, b"7"), bytes(4, &padded_selection)]))]),
+            message(&[bytes(2, &padded_response)]),
+            padded(2, &response),
+        ] {
+            let handover = Mutex::new(Handover::default());
+
+            assert_eq!(rewrite_selection(&body, &handover, Instant::now()), None, "{body:?}");
+            assert_eq!(
+                handover.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len(),
+                0
+            );
+        }
+        // The same answer written minimally is rewritten: only the padding stops it.
+        let handover = Mutex::new(Handover::default());
+        assert!(rewrite_selection(&message(&[bytes(2, &response)]), &handover, Instant::now()).is_some());
     }
 
     #[test]
