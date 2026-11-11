@@ -1,60 +1,140 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "autoMemoryEnabled": false,
-  "env": {
-    "DOTNET_NOLOGO": "1",
-    "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
+  "attribution": {
+    "commit": "",
+    "pr": ""
   },
+  "autoMemoryEnabled": false,
   "permissions": {
     "allow": [
-      "Bash(dotnet build:*)",
-      "Bash(dotnet test:*)",
-      "Bash(dotnet format:*)",
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git show:*)",
-      "PowerShell(dotnet build:*)",
-      "PowerShell(dotnet test:*)",
-      "PowerShell(dotnet format:*)",
-      "PowerShell(git status:*)",
-      "PowerShell(git diff:*)",
-      "PowerShell(git log:*)",
-      "PowerShell(git show:*)"
+      "Bash(bun install --frozen-lockfile)",
+      "Bash(bun run *)",
+      "Bash(bunx biome *)",
+      "Bash(bunx vitest *)",
+      "Bash(bun scripts/*)",
+      "Bash(cargo check *)",
+      "Bash(cargo clippy *)",
+      "Bash(cargo fmt *)",
+      "Bash(cargo test *)",
+      "Bash(cargo tree *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git fetch *)",
+      "Bash(git switch *)",
+      "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git pull --ff-only*)",
+      "Bash(git rev-parse *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr edit *)",
+      "Bash(gh pr merge * --squash*)",
+      "Bash(gh run view *)",
+      "Bash(gh run list *)",
+      "Bash(gh run watch *)",
+      "PowerShell(bun run *)",
+      "PowerShell(bunx biome *)",
+      "PowerShell(cargo check *)",
+      "PowerShell(cargo clippy *)",
+      "PowerShell(cargo fmt *)",
+      "PowerShell(cargo test *)",
+      "PowerShell(git status *)",
+      "PowerShell(git diff *)",
+      "PowerShell(git log *)",
+      "WebFetch(domain:v2.tauri.app)",
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:doc.rust-lang.org)",
+      "WebFetch(domain:react.dev)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:reactflow.dev)",
+      "WebFetch(domain:vite.dev)",
+      "WebFetch(domain:bun.sh)",
+      "WebFetch(domain:biomejs.dev)",
+      "WebFetch(domain:docs.github.com)"
     ],
-    "deny": ["Read(**/*.d3bcap)"]
+    "ask": [
+      "Bash(gh release *)",
+      "Bash(gh api *)",
+      "Bash(git tag *)",
+      "Bash(git push * --tags*)",
+      "Bash(git push * v*)",
+      "PowerShell(gh release *)",
+      "PowerShell(gh api *)",
+      "PowerShell(git tag *)"
+    ],
+    "deny": [
+      "Bash(git push *--force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * -f*)",
+      "Bash(git push * main*)",
+      "Bash(git push * next*)",
+      "Bash(git push *:main*)",
+      "Bash(git push *:next*)",
+      "Bash(git push *--no-verify*)",
+      "Bash(git commit *--no-verify*)",
+      "Bash(git reset --hard*)",
+      "Bash(git reset * --hard*)",
+      "Bash(git clean -f*)",
+      "Bash(git clean -d*)",
+      "Bash(git checkout -- *)",
+      "Bash(git branch -D main*)",
+      "Bash(git branch -D next*)",
+      "Bash(git stash clear*)",
+      "Bash(gh pr merge * --merge*)",
+      "Bash(gh pr merge * --rebase*)",
+      "Bash(gh pr merge * --admin*)",
+      "Bash(gh repo delete *)",
+      "PowerShell(git push *--force*)",
+      "PowerShell(git push -f*)",
+      "PowerShell(git push * -f*)",
+      "PowerShell(git push * main*)",
+      "PowerShell(git push * next*)",
+      "PowerShell(git push *:main*)",
+      "PowerShell(git push *:next*)",
+      "PowerShell(git push *--no-verify*)",
+      "PowerShell(git commit *--no-verify*)",
+      "PowerShell(git reset --hard*)",
+      "PowerShell(git reset * --hard*)",
+      "PowerShell(git clean -f*)",
+      "PowerShell(git clean -d*)",
+      "PowerShell(git checkout -- *)",
+      "PowerShell(gh pr merge * --merge*)",
+      "PowerShell(gh pr merge * --rebase*)",
+      "PowerShell(gh pr merge * --admin*)",
+      "PowerShell(gh repo delete *)",
+      "Read(./.env*)",
+      "Read(**/*.d3bcap)",
+      "Edit(./.env*)"
+    ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.ts\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "dotnet run --file \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-writes.cs\"",
-            "timeout": 60
-          }
-        ]
-      },
-      {
-        "matcher": "Bash|PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "dotnet run --file \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-git.cs\"",
-            "timeout": 60
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "dotnet run --file \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-file.cs\"",
-            "timeout": 120
+            "command": "bun \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-file.ts\"",
+            "timeout": 10
           }
         ]
       }
@@ -64,8 +144,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "dotnet run --file \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-turn.cs\"",
-            "timeout": 300
+            "command": "bun \"$CLAUDE_PROJECT_DIR/.claude/hooks/end-of-turn.ts\"",
+            "timeout": 180
           }
         ]
       }

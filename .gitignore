@@ -1,27 +1,30 @@
-# Build output
+# Dependencies and build output
+node_modules/
+dist/
+target/
+src-tauri/gen/
+*.tsbuildinfo
+
+# Game data: extracted from Ankama's client, never committed (docs/data.md)
+data/*
+!data/README.md
+
+# Local work: studies, captures, scratch output, Claude Code worktrees
 artifacts/
-bin/
-obj/
-
-# Test results
-TestResults/
-BenchmarkDotNet.Artifacts/
-
-# IDEs and editors
-.vs/
-.vscode/
-.idea/
-*.user
-*.suo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Third-party references, never committed (D3)
-vendor/
-
-# Claude Code, personal
 .claude/worktrees/
 .claude/settings.local.json
-CLAUDE.local.md
+*.d3bcap
+
+# Secrets
+.env
+.env.*
+*.key
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,3 @@
+[install]
+# Every new dependency is pinned to an exact version; bun.lock is committed.
+exact = true

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What the main window may do. Every permission here is one the interface needs today.",
+  "windows": ["main"],
+  "permissions": ["core:default", "log:default", "opener:default", "process:allow-restart", "updater:default"]
+}

@@ -1,20 +1,24 @@
-## What and why
+## What
 
-<!-- What this pull request changes and why. Link the issue it closes, such as "Closes" followed by the issue's link. -->
+<!-- The one behaviour this pull request adds or fixes, in two or three lines. -->
 
-## How it was checked
+## Why
 
-<!-- The commands run, and for behavior that only shows in the game: the client build, what you did and what you saw. -->
+<!-- The issue, the roadmap step or the design it implements. -->
 
-- [ ] `dotnet build`
-- [ ] `dotnet test`
-- [ ] `dotnet format --verify-no-changes`
-- [ ] Checked in the game, as described above
+## Decisions
 
-## Checklist
+<!-- The choices it carries and who made them: the owner (link the question or the ADR), or settled alone because
+local and reversible. "None" otherwise. -->
 
-- [ ] It follows the conventions of [CONTRIBUTING.md](https://github.com/AerafalDev/D3B/blob/main/CONTRIBUTING.md).
-- [ ] Changes to `src/` come with their tests.
-- [ ] The README and `docs/` describe the new behavior, and a change of direction has its entry in `docs/decisions/`.
-- [ ] Nothing extracted from the client, no capture, no database and no login ticket is committed.
-- [ ] Nothing it adds is among what D3B never does (D2).
+## Evidence
+
+<!-- What was run and what it showed: `bun run check`, the tests added, a screenshot for an interface change. -->
+
+## In game
+
+<!-- What the owner must measure in game, step by step, or "nothing to measure". -->
+
+## Review
+
+<!-- The fresh reviewer's blocking findings and how each was fixed; the others, left for later. -->

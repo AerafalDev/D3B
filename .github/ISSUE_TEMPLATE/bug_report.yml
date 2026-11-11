@@ -1,109 +1,57 @@
 name: Bug report
-description: Something D3B does wrong, or does not do as documented.
+description: Something in D3B does not work as it should.
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report it. Before you do:
-
-        - Check that you run the [latest release](https://github.com/AerafalDev/D3B/releases/latest), or a recent `main`.
-        - Search the [existing issues](https://github.com/AerafalDev/D3B/issues?q=is%3Aissue): yours may be there.
-        - A vulnerability goes through the [security policy](https://github.com/AerafalDev/D3B/security/policy), never an issue.
-
-        **For a bug of the game, use Help, Report a bug in the app**: it makes a report with a cleaned copy of your session's capture and gives you a code to quote here. What it holds and where it goes is in the [privacy page](https://github.com/AerafalDev/D3B/blob/main/PRIVACY.md).
-
-        **Never paste a capture, a database or a login ticket.** A capture holds the account's ticket. To show what the protocol did, describe the capture with `scripts/capture.cs`, which prints its structure, never its content.
-
-  - type: input
-    id: version
-    attributes:
-      label: D3B version
-      description: On the app's settings page. Run from source, the commit instead.
-      placeholder: 0.2.0
-    validations:
-      required: true
-
-  - type: input
-    id: client
-    attributes:
-      label: Client build
-      description: The Dofus 3 client build, on the app's settings page.
-      placeholder: 3.7.13.17
-    validations:
-      required: true
-
-  - type: dropdown
-    id: run
-    attributes:
-      label: How D3B runs
-      options:
-        - The installed app
-        - From source, the app (src/D3B.App)
-        - From source, the host alone (src/D3B.Host)
-        - A tool in scripts/
-    validations:
-      required: true
-
-  - type: dropdown
-    id: area
-    attributes:
-      label: Area
-      options:
-        - Harvesting and banking
-        - Fights
-        - Moving, maps and travel
-        - The desktop app
-        - Connection, relay and protocol
-        - Game data and the tools in scripts/
-        - Installer and updates
-        - Something else
-    validations:
-      required: true
-
+        Thank you for reporting. Never attach a capture of the game connection or a log showing a login ticket: describe them instead.
   - type: textarea
-    id: happened
+    id: what
     attributes:
       label: What happened
-      description: What the bot or the app did. Screenshots of the app help.
+      description: What you did, what you expected, and what D3B did instead.
     validations:
       required: true
-
-  - type: textarea
-    id: expected
-    attributes:
-      label: What you expected
-    validations:
-      required: true
-
   - type: textarea
     id: steps
     attributes:
       label: Steps to reproduce
-      description: The profile and its settings, where the character was, and what you did, in order.
       placeholder: |
-        1. Started the "Auto lumberjack" profile on a level 40 character in Amakna.
-        2. The bot banked once, then...
+        1. Start D3B, then Dofus.
+        2. Choose a character.
+        3. ...
     validations:
       required: true
-
-  - type: textarea
-    id: journal
+  - type: input
+    id: version
     attributes:
-      label: The bot's journal
-      description: The relevant lines of the bot's journal, from the app's logs page. Remove anything that names your account if you prefer.
-      render: text
-
-  - type: textarea
-    id: more
+      label: D3B version
+      placeholder: "0.10.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
     attributes:
-      label: Anything else
-      description: Windows version, how often it happens, what you already tried.
-
-  - type: checkboxes
-    id: privacy
-    attributes:
-      label: Before submitting
+      label: System
       options:
-        - label: This report holds no capture, database or login ticket.
-          required: true
+        - Windows x64
+        - Windows ARM64
+        - macOS Apple Silicon
+        - macOS Intel
+        - Linux x64
+        - Linux ARM64
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: Client build
+      description: Shown in D3B's status bar.
+      placeholder: "3.7.13.17"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The relevant lines of D3B's log, with any ticket or account name removed.
+      render: text

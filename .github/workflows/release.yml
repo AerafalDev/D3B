@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    branches: [next]
 
 permissions:
   contents: read
@@ -12,68 +12,102 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Publish the app (win-x64)
-    runs-on: windows-latest
-    timeout-minutes: 40
+  release-please:
+    name: Release PR
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: write
-
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-
+      pull-requests: write
+    outputs:
+      created: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          fetch-depth: 0
+          target-branch: next
+          config-file: .github/release-config.json
+          manifest-file: .github/release-manifest.json
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: release-please
+    if: needs.release-please.outputs.created == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis,msi
+          - name: Windows ARM64
+            runner: windows-latest
+            target: aarch64-pc-windows-msvc
+            bundles: nsis
+          - name: macOS x64
+            runner: macos-latest
+            target: x86_64-apple-darwin
+            bundles: app,dmg
+          - name: macOS ARM64
+            runner: macos-latest
+            target: aarch64-apple-darwin
+            bundles: app,dmg
+          - name: Linux x64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundles: appimage,deb,rpm
+          - name: Linux ARM64
+            runner: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            bundles: appimage,deb,rpm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
           persist-credentials: false
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-
-      - name: Restore
+      - name: System libraries for Tauri
+        if: runner.os == 'Linux'
         run: |
-          dotnet restore
-          dotnet tool restore
-
-      - name: Read the versions
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev xdg-utils
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - name: Rust toolchain and target
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
-          $tag = $env:GITHUB_REF_NAME
-          if ($tag -notmatch '^v(\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?)$') { throw "The tag $tag is not v followed by a version." }
-          $version = $Matches[1]
-          $client = (dotnet msbuild src/D3B.App/D3B.App.csproj -getProperty:ClientVersion).Trim()
-          if ($client -notmatch '^\d+(\.\d+)+$') { throw "src/D3B.App names no client build: '$client'." }
-          "VERSION=$version" | Out-File $env:GITHUB_ENV -Append
-          "CLIENT_VERSION=$client" | Out-File $env:GITHUB_ENV -Append
-
-      - name: Build
-        run: dotnet build --no-restore -c Release
-
-      - name: Test
-        run: dotnet test --no-build -c Release
-
-      - name: Publish the app
-        run: dotnet publish src/D3B.App -c Release -r win-x64 --self-contained -o publish
-
-      - name: Embed the client build's files
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: dotnet run --file scripts/embed.cs -- --client-version $env:CLIENT_VERSION --output publish/data
-
-      - name: Download the previous release, for the delta
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: dotnet vpk download github --repoUrl "https://github.com/$env:GITHUB_REPOSITORY" --token $env:GH_TOKEN -o releases
-
-      - name: Pack
-        run: dotnet vpk pack --packId D3B.App --packVersion $env:VERSION --packDir publish --mainExe D3B.App.exe --packTitle D3B --packAuthors Aerafal --icon src/D3B.App/Assets/d3b.ico -o releases
-
-      - name: Upload
+          rustup toolchain install
+          rustup target add "$TARGET"
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: src-tauri
+          key: ${{ matrix.target }}
+      - run: bun install --frozen-lockfile
+      - name: Game data
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $prerelease = if ($env:VERSION.Contains('-')) { @('--pre') } else { @() }
-          dotnet vpk upload github --repoUrl "https://github.com/$env:GITHUB_REPOSITORY" --token $env:GH_TOKEN --tag $env:GITHUB_REF_NAME --releaseName "D3B $env:VERSION" --publish -o releases @prerelease
+          build="$(tr -d '[:space:]' < data-build.txt)"
+          if [ -n "$build" ] && [ "$build" != "none" ]; then
+            bun scripts/fetch-data.ts "$build"
+          else
+            echo "::warning::data-build.txt names no client build: this release ships without game data."
+          fi
+      - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ needs.release-please.outputs.tag }}
+          projectPath: .
+          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config src-tauri/tauri.release.conf.json
+          includeUpdaterJson: true

@@ -1,95 +1,74 @@
 # D3B
 
-An open-source bot for Dofus 3 (Unity), in .NET 10 on Windows, assembled from modules.
-The repository is the only memory between sessions: never assume an earlier session is remembered.
+An open-source desktop bot for Dofus 3 (Ankama's Unity client), rewritten from the C# version in Rust, Tauri 2,
+React 19 and TypeScript, for Windows, macOS and Linux. It plays a character through the official client, which it
+reaches through a relay on the machine: it observes, travels, harvests, banks and fights.
 
-## Read first
-
-1. This file.
-2. [docs/status.md](docs/status.md): where the project stands, what is not measured, what comes next, the known debt.
-3. [docs/decisions-index.md](docs/decisions-index.md): one line per decision. Open the entries of [docs/decisions/](docs/decisions/README.md)
-   about the area you work on, one file for each group of the index, plus the [brief](docs/decisions/brief.md) and the
-   [open questions](docs/decisions/open-questions.md).
-4. [docs/architecture.md](docs/architecture.md): how the code is built, section by section: read the ones you touch.
-5. [docs/roadmap.md](docs/roadmap.md): the steps and the next one.
-6. [docs/client.md](docs/client.md) and [docs/client-game.md](docs/client-game.md) (its game connection, session by session), when
-   the task touches the official client's content: what it holds, measured. Grep their headings.
-7. The actual state of the repository (`git log`, `git status`, the code).
+The repository is the only memory between sessions. Read, in this order: this file, [docs/now.md](docs/now.md) (the
+session-start hook prints it), [ROADMAP.md](ROADMAP.md), then the page of the domain you touch in `docs/` and the
+ADRs in force for it ([docs/adr/README.md](docs/adr/README.md)). [docs/lessons.md](docs/lessons.md) says what went
+wrong in the C# version; do not repeat it.
 
 ## Working agreement
 
-- The lead session acts as lead developer and architect, responsible for the project's overall coherence.
-- Talk to the project owner in French. Everything in the repository is in English.
-- **Decisions.** Settle local, reversible choices alone. For an important or hard-to-reverse one: analyse, research,
-  compare, recommend, then ask the owner, one decision at a time. Say plainly when an idea is bad, premature or a
-  source of debt. Record each decision with `/decision`: an entry in `docs/decisions/` and its line in
-  `docs/decisions-index.md`. Entries are append-only: a later entry supersedes an earlier one.
-- **Done** means code, the tests it needs (for `src/` only, since scripts have none, D10), docs, and specific
-  checks when relevant, with every check green. The docs are the roadmap, `docs/status.md`, the index and the
-  architecture sections the change touches.
-- **Scope.** One roadmap step per session, or part of one. Every new large task starts in a new session. No
-  refactoring outside the task without a reason.
-- **Delivery.** One branch and one pull request per session. Never push, open a pull request or merge without an
-  explicit go from the owner: a hook asks again at each. `/ship` prepares the branch, `/review` has a fresh agent read it.
-- **Closing a session.** `/close-session`: report what was done, the decisions taken, the remaining risks, the project's
-  state, the recommended next task, and a prompt for the next session, ready to copy and paste.
+- Talk to the owner in **French**. Everything in the repository is in **English**: code, docs, commits, PRs.
+- **The owner decides every choice that is not forced**: design, libraries, UX, architecture. Ask with
+  AskUserQuestion, at most four questions at a time, options with their trade-off, the recommendation first, saying
+  why and whether something better exists. Settle alone only what is local and reversible, and say so in the PR.
+- **Record** a decision costly to reverse as an ADR (`adr` skill), after the owner made it. Small choices go in the PR.
+- **Scope**: one behaviour per PR, at most 600 handwritten lines (`bun run pr:size`). A feature is a stack of PRs
+  designed first (`feature` skill). A new large task starts in a new session. No refactoring outside the task.
+- **Done** means: tests with their failure cases, `bun run check` green, the domain page and `docs/now.md` updated,
+  evidence shown (`verify`). A feature is done only once the owner has **measured it in game** from its checklist;
+  until then `docs/now.md` lists it under "Not measured", and the next feature does not start.
+- **Delivery**: Claude branches, commits, pushes, opens the PR and squash-merges it once CI and the fresh review are
+  green (`pr` skill). Branches `main` and `next` are protected: PRs only, squash only. Releases and anything published
+  outside GitHub's PRs wait for the owner's go.
+- No AI attribution in commits or PRs (settings turn it off; do not add it by hand).
 
 ## Never
 
-- What D2 puts out of scope: evading Ankama's detection, mass account creation, subscription or payment automation,
-  disabling Ankama Shield, one proxy per account to hide multi-accounting.
-- Copying the references in `vendor/`: they are read for ideas (D3). The only exception is code the owner wrote in BillBot.
-- Committing anything extracted from the official client: no assets, data, dumps, per-build mappings or packs. Packs and
-  mappings ship as release artifacts (D10, D11, D24). The readable `.proto` files and the pinned pairs are ours.
-- Putting an AI attribution in a commit or a pull request (a `Co-Authored-By` trailer, a "Generated with" line): a hook refuses it.
-- Showing a capture's content: it holds the account's login ticket. Describe it with `scripts/capture.cs`.
+- What D3B never does, in code, modules or docs: evading Ankama's detection (humanlike timings, simulated mistakes,
+  forged hardware identifiers), mass account creation, subscription or payment automation, bypassing Ankama Shield,
+  one proxy per account to hide multi-accounting. PRs adding any of these are closed.
+- Commit anything extracted from the official client: data, assets, dumps, schemas, mappings, captures. They live in
+  `data/` and `artifacts/` (ignored) and ship as release assets. Readable `.proto` files and pins we write are ours.
+- Show a capture's content: it holds the account's login ticket.
+- Copy code from the reference projects (the C# version's `vendor/`, Bubble, other bots): read for ideas only.
 
-## Conventions
+## Code
 
-- Build and configuration files (`.csproj`, `.props`, `.targets`, `global.json`) carry no comments. Their rationale
-  goes in the docs.
-- Code comments explain why a constraint exists, not what the code does.
-- Tools (D10): a file-based app in `scripts/` whose entry file starts with `#!/usr/bin/env dotnet` (CA2266), with its
-  code pulled in through `#:include` from a lowercase folder (`scripts/unity/` for what several tools share),
-  `#:package` without a version (central package management), and `#:property PublishAot=false` when a package is not
-  AOT-compatible. Every script file is listed in the solution, so that it shows in the IDE. `/new-tool` has the steps.
-- `CONTRIBUTING.md` restates these conventions and the C# style below for outside contributors, and the README the
-  commands below for users: a change here changes them too (D204).
-
-## C# style
-
-These rules apply to `src/`, `tests/`, `scripts/` and `.claude/hooks/`. The build enforces the first two;
-the rest is yours to keep.
-
-- Methods, constructors, operators and local functions have block bodies, never `=>`. Properties, indexers and
-  accessors may use `=>` (IDE0021 to IDE0024, IDE0061).
-- Test methods are PascalCase sentences without underscores, such as `AModuleTypeIsBuiltOnce` (CA1707).
-- One type per file, and one folder per namespace.
-- Members go in this order: constants, static fields, fields, static properties, properties and indexers, events, static
-  constructor, constructors, static methods, methods, operators, nested types. No primary constructors.
+- **One Rust crate**, `src-tauri`, one folder per domain under `src-tauri/src/` (`data`, `ipc`, then `relay`,
+  `protocol`, `game`, `bot`, `storage`). `ipc` is the only folder the webview talks to; the domains know nothing of
+  Tauri. The front end is `src/`, one folder per area.
+- **At most 10 code files per folder**, tests and the registry components (`src/components/ui`, `flow`) apart
+  (`bun run rules`). One subject per file.
+- The IPC is typed from Rust: `src/bindings.ts` is generated by `cargo test`, never edited.
+- Errors in normal use are typed results (`Result` with a `thiserror` enum in Rust, a discriminated union in TS);
+  panics and exceptions are bugs.
+- Comments say why, not what. Area rules load from `.claude/rules/` when you touch their files.
 
 ## Commands
 
 ```sh
-dotnet build                               # warnings are errors; about 20 s
-dotnet test                                # every test project, on Microsoft.Testing.Platform
-dotnet format --verify-no-changes          # CI checks it
-dotnet run --project src/D3B.App           # the desktop app, which runs the bots' host in its process (D91); closing it disconnects the clients
-dotnet run --project src/D3B.Host          # the same host without the app; needs the installed build's pack, schema and mapping (D172)
-dotnet run --file scripts/<tool>.cs -- --help   # the tools of scripts/, each described by its own help
+bun install --frozen-lockfile   # dependencies at the versions of bun.lock
+bun run app                     # the desktop app with hot reload (tauri dev)
+bun run dev                     # the front end alone in a browser, without the back end
+bun run check                   # everything CI checks: Biome, typecheck, Vitest, folder rule, fmt, clippy, cargo test
+bun run fix                     # Biome and rustfmt fixes
+bun run pr:size                 # handwritten lines against origin/next (limit 600)
+bun run data:fetch <build>      # the game data of a client build into data/
 ```
 
-The README has the rest: the host's options, the installer, the local tools. Two tools change things: `scripts/release.cs`
-publishes only with `--publish`, and `scripts/client.cs -- restore` gives the client Ankama's configuration back after a
-crash. The shell is Git Bash on Windows.
+Rust commands run from `src-tauri/` (or with `--manifest-path src-tauri/Cargo.toml`). The shell is PowerShell or Git
+Bash on Windows: paths may hold backslashes.
 
-## The project's Claude setup (D398)
+## The Claude setup
 
-- Skills in `.claude/skills/`: `/decision`, `/ship`, `/review`, `/close-session`, `/new-tool`, and, loaded when the task
-  fits, `csharp`, `test-first`, `studio-ui`, `git`, `read-client`, `diagnosing-bugs`, and `csharp-refactoring`. Agents: `reviewer`, which reads a diff fresh, and `explorer`,
-  which studies the client and `vendor/` and writes only under `artifacts/studies/`.
-- Hooks, C# apps in `.claude/hooks/` tested in `tests/D3B.Hooks.Tests`: pushes, `gh` writes and `git clean` ask first;
-  pushes to `main`, forced pushes, `git reset --hard` and AI attributions in commits are refused, so are writes of what the client or a machine
-  produced; the C# written is formatted; a turn that left changed code ends on a green `dotnet build`.
-- Once per machine, copy `.claude/settings.local.example.json` to `.claude/settings.local.json`: it turns off the plugins
-  and skills claude.ai syncs into every session.
+- Skills: `feature`, `study`, `tdd`, `verify`, `pr`, `adr`, `diagnose`, `dependency`, `run`, `data`, `release`,
+  `retro`, and `react-best-practices` as reference. Agents: `architect` and `reviewer` (read only),
+  `protocol-researcher` (writes only `artifacts/studies/`), `test-runner` (Haiku, returns failures only).
+- Hooks (`.claude/hooks/`, small Bun scripts): the session start prints `docs/now.md`; a file guard refuses writing
+  client-derived files and secrets; the end of a turn runs the fast checks of what changed. Hard git rules are
+  permission denies in `.claude/settings.json`, and GitHub's rulesets protect the branches.
+- A change to how we work goes through a PR to this file or `.claude/`, decided with the owner; `retro` proposes them.

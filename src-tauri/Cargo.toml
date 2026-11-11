@@ -1,0 +1,65 @@
+[package]
+name = "d3b"
+description = "D3B, a desktop bot for Dofus 3"
+version = "0.10.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+repository = "https://github.com/AerafalDev/D3B"
+publish = false
+
+[lib]
+# The suffix keeps the library apart from the binary on Windows (cargo issue 8519).
+name = "d3b_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-log = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-process = "2"
+tauri-plugin-window-state = "2"
+specta = { version = "=2.0.0-rc.28", features = ["derive"] }
+tauri-specta = { version = "=2.0.0-rc.28", features = ["derive", "typescript"] }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
+
+[dev-dependencies]
+specta-typescript = "0.0.15"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+unused_must_use = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+unwrap_used = "warn"
+expect_used = "warn"
+dbg_macro = "warn"
+todo = "warn"
+print_stdout = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = "symbols"
+panic = "abort"
+
+# Dependencies are optimised even in dev builds, so that data loading and the fight engine stay usable under `tauri dev`.
+[profile.dev.package."*"]
+opt-level = 2

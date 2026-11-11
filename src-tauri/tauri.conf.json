@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "D3B",
+  "version": "0.10.0",
+  "mainBinaryName": "d3b",
+  "identifier": "dev.aerafal.d3b",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "D3B",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 640,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src ipc: http://ipc.localhost; worker-src 'self' blob:",
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$RESOURCE/data/**"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "dmg", "app", "appimage", "deb", "rpm"],
+    "category": "Game",
+    "shortDescription": "A desktop bot for Dofus 3",
+    "longDescription": "D3B plays your character through the official Dofus 3 client: it observes, travels, harvests, banks and fights.",
+    "copyright": "MIT",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "resources": {
+      "../data/": "data/"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": ["https://github.com/AerafalDev/D3B/releases/latest/download/latest.json"],
+      "pubkey": "REPLACE_WITH_THE_UPDATER_PUBLIC_KEY"
+    }
+  }
+}

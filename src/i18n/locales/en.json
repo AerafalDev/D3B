@@ -1,0 +1,17 @@
+{
+  "app": {
+    "name": "D3B"
+  },
+  "characters": {
+    "title": "Characters",
+    "empty": "Start Dofus from Ankama's launcher: each character it plays shows here."
+  },
+  "workspace": {
+    "empty": "Choose a character to follow it."
+  },
+  "status": {
+    "browserPreview": "Browser preview",
+    "data": "Data: client {{build}}",
+    "noData": "No game data"
+  }
+}

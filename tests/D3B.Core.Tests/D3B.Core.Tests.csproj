@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\D3B.Core\D3B.Core.csproj" />
-  </ItemGroup>
-
-</Project>

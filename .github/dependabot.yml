@@ -1,0 +1,57 @@
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: next
+    commit-message:
+      prefix: build
+      include: scope
+    ignore:
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+    groups:
+      tauri:
+        patterns: ["@tauri-apps/*"]
+      development:
+        dependency-type: development
+      interface:
+        dependency-type: production
+        exclude-patterns: ["@tauri-apps/*"]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: next
+    commit-message:
+      prefix: build
+      include: scope
+    ignore:
+      - dependency-name: specta
+      - dependency-name: specta-typescript
+      - dependency-name: tauri-specta
+    groups:
+      tauri:
+        patterns: ["tauri", "tauri-*"]
+      crates:
+        patterns: ["*"]
+        exclude-patterns: ["tauri", "tauri-*"]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: next
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]
