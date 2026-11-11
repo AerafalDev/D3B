@@ -3,6 +3,14 @@
 
 mod data;
 mod ipc;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the app starts the relay from the last pull request of its stack"
+    )
+)]
+mod relay;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
