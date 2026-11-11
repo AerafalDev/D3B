@@ -35,6 +35,5 @@ _Updated 2026-11-11._
   installed client only (skipped in CI); hand-built trees (`TypeTree.Build`) would test their failures in CI too.
 - **Next**: once step 1 is measured, publish `client-3.7.13.17` on the owner's go (`data` skill), then the first
   feature of step 2, the relay, designed with the owner (`feature`).
-- **Waiting on the owner**:
-  - which Dofus 3 builds exist on macOS and Linux, and a machine to measure the relay on each.
-- **Open**: the identifier `dev.aerafal.d3b` was taken by default, to confirm before more people install the app.
+- **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
+  installed, whether its data is Windows', and the relay on each are measured by the first testers there.
