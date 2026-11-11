@@ -1,22 +1,25 @@
 //! The owner's captures replayed through the relay (`docs/relay.md`, "Tests"). They are the C# version's `.d3bcap`
 //! files, format 1 or 2 (inferred, `main:src/D3B.Network/Captures/CaptureLayout.cs`), which record each side's bytes as
-//! one read gave them, before any rewrite. They hold the account's login token and tickets: a failure names the file, a
-//! frame's index and lengths, never a byte of content. Ignored unless run with `D3B_CAPTURES` naming their folder.
+//! one read gave them, before any rewrite (`main:src/D3B.Network/Relay/RelayConnectionHandler.cs`, `PumpAsync`). They
+//! hold the account's login token and tickets: a failure names the file, a frame's index and lengths, never a byte of
+//! content. Ignored unless run with `D3B_CAPTURES` naming their folder.
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 
 use super::connection_phase::{self, Handed};
 use super::handover::{GameServer, Handover, Ticket};
-use super::wire::{self, Value};
-use super::{GAME_PORT, frame, game_connection};
+use super::wire::{self, Field, Value};
+use super::{ADDRESS, GAME_PORT, frame, game_connection};
 
-/// One capture: its listener's port and its records in order.
+/// The most one record holds, as the C# reader bounds it: only a damaged file reaches it.
+const RECORD_LIMIT: u64 = 64 * 1024 * 1024;
+
+/// One capture's records, in order.
 struct Capture {
-    port: u16,
     records: Vec<Record>,
 }
 
@@ -28,6 +31,17 @@ enum Record {
     Other,
 }
 
+/// A 7-bit length at the start of `bytes` and the bytes it took, bounded by [`RECORD_LIMIT`].
+fn length(bytes: &[u8]) -> Result<Option<(usize, usize)>, String> {
+    let Some((length, used)) = wire::read_varint(bytes) else {
+        return Ok(None);
+    };
+    if length > RECORD_LIMIT {
+        return Err(format!("a length of {length}, more than any record holds"));
+    }
+    Ok(usize::try_from(length).ok().map(|length| (length, used)))
+}
+
 /// Reads a capture: the magic `D3B-CAPT`, the format as a little-endian `i32`, the start as a little-endian `i64`,
 /// four strings after their 7-bit lengths (client version, listener, server host, server), then records of a kind
 /// byte, the microseconds since the start as a 7-bit number, and for bytes a 7-bit length and the bytes. A record cut
@@ -35,23 +49,19 @@ enum Record {
 fn read(bytes: &[u8]) -> Result<Capture, String> {
     let rest = bytes.strip_prefix(b"D3B-CAPT").ok_or("not a D3B capture")?;
     let (format, rest) = rest.split_first_chunk::<4>().ok_or("cut in its header")?;
-    if !matches!(i32::from_le_bytes(*format), 1 | 2) {
-        return Err(format!("format {}", i32::from_le_bytes(*format)));
+    let format = i32::from_le_bytes(*format);
+    if !matches!(format, 1 | 2) {
+        return Err(format!("format {format}"));
     }
     let (_, mut rest) = rest.split_first_chunk::<8>().ok_or("cut in its header")?;
-    let mut strings = Vec::new();
     for _ in 0..4 {
-        let (length, used) = wire::read_varint(rest).ok_or("cut in its header")?;
-        let length = usize::try_from(length).map_err(|_| "a header string too long")?;
-        let text = rest.get(used..used + length).ok_or("cut in its header")?;
-        strings.push(String::from_utf8_lossy(text).into_owned());
-        rest = &rest[used + length..];
+        let (length, used) = length(rest)?.ok_or("cut in its header")?;
+        let end = used
+            .checked_add(length)
+            .filter(|&end| end <= rest.len())
+            .ok_or("cut in its header")?;
+        rest = &rest[end..];
     }
-    let port = strings[1]
-        .rsplit(':')
-        .next()
-        .and_then(|port| port.parse().ok())
-        .unwrap_or(0);
     let mut records = Vec::new();
     while let Some((&kind, tail)) = rest.split_first() {
         let Some((_, used)) = wire::read_varint(tail) else {
@@ -60,13 +70,8 @@ fn read(bytes: &[u8]) -> Result<Capture, String> {
         let mut tail = &tail[used..];
         let record = match kind {
             1 | 2 | 5 => {
-                let Some((length, used)) = wire::read_varint(tail) else {
-                    break;
-                };
-                let Some(data) = usize::try_from(length)
-                    .ok()
-                    .and_then(|length| tail.get(used..used + length))
-                else {
+                let Some((length, used)) = length(tail)? else { break };
+                let Some(data) = used.checked_add(length).and_then(|end| tail.get(used..end)) else {
                     break;
                 };
                 tail = &tail[used + data.len()..];
@@ -82,7 +87,7 @@ fn read(bytes: &[u8]) -> Result<Capture, String> {
         records.push(record);
         rest = tail;
     }
-    Ok(Capture { port, records })
+    Ok(Capture { records })
 }
 
 fn joined(records: &[Record], client: bool) -> Vec<u8> {
@@ -106,13 +111,104 @@ fn frames(mut bytes: &[u8]) -> (Vec<&[u8]>, usize) {
     (frames, bytes.len())
 }
 
+fn body(frame: &[u8]) -> &[u8] {
+    let (header, body) = frame::header(frame).ok().flatten().unwrap_or_default();
+    frame.get(header..header + body).unwrap_or_default()
+}
+
+/// The fields of `message`, as far as they read.
+fn fields(message: &[u8]) -> Vec<Field<'_>> {
+    wire::fields(message).map_while(Result::ok).collect()
+}
+
+/// The value of the length-delimited field `number` of `message`.
+fn bytes(message: &[u8], number: u32) -> Option<&[u8]> {
+    fields(message).into_iter().find_map(|field| match field.value {
+        Value::Bytes(bytes) if field.number == number => Some(bytes),
+        _ => None,
+    })
+}
+
+/// The value at `path` of `message`, through length-delimited fields.
+fn at<'a>(message: &'a [u8], path: &[u32]) -> Option<&'a [u8]> {
+    path.iter().try_fold(message, |message, &number| bytes(message, number))
+}
+
+/// Whether the client chose a server, read by the test itself: a frame holding `request = 1 { server_selection = 4 }`.
+fn chose_a_server(from_client: &[u8]) -> bool {
+    frames(from_client)
+        .0
+        .iter()
+        .any(|frame| at(body(frame), &[1, 4]).is_some())
+}
+
+fn ports(packed: &[u8]) -> Vec<u64> {
+    let mut ports = Vec::new();
+    let mut rest = packed;
+    while let Some((port, used)) = wire::read_varint(rest) {
+        ports.push(port);
+        rest = &rest[used..];
+    }
+    ports
+}
+
+/// The fields of a server frame's `response`, but its `server_selection`.
+fn others(message: &[u8]) -> Vec<Field<'_>> {
+    fields(at(message, &[2]).unwrap_or_default())
+        .into_iter()
+        .filter(|field| field.number != 4)
+        .collect()
+}
+
+/// Whether `got` is `sent`, the selection's answer, with the relay's address and game port in place of Ankama's,
+/// every other field kept; and the handover holds Ankama's host and first port under its ticket.
+fn rewritten_well(sent: &[u8], got: &[u8], handover: &Mutex<Handover>) -> bool {
+    let (sent, got) = (body(sent), body(got));
+    let (Some(sent_success), Some(got_success)) = (at(sent, &[2, 4, 1]), at(got, &[2, 4, 1])) else {
+        return false;
+    };
+    let (Some(ticket), Some(host), Some(sent_ports)) =
+        (bytes(sent_success, 1), bytes(sent_success, 2), bytes(sent_success, 3))
+    else {
+        return false;
+    };
+    let relay_host = ADDRESS.to_string();
+    let first = ports(sent_ports)
+        .first()
+        .copied()
+        .and_then(|port| u16::try_from(port).ok());
+    let mut presented = Vec::new();
+    wire::encode(
+        &[Field {
+            number: 1,
+            value: Value::Bytes(ticket),
+        }],
+        &mut presented,
+    );
+    let waiting = handover
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .take_from(&presented, Instant::now());
+    fields(got).len() == 1
+        && fields(at(got, &[2, 4]).unwrap_or_default()).len() == 1
+        && others(sent) == others(got)
+        && bytes(got_success, 1) == Some(ticket)
+        && bytes(got_success, 2) == Some(relay_host.as_bytes())
+        && bytes(got_success, 3).map(ports) == Some(vec![u64::from(GAME_PORT)])
+        && fields(got_success).len() == 3
+        && waiting
+            == first.map(|port| GameServer {
+                host: String::from_utf8_lossy(host).into_owned(),
+                port,
+            })
+}
+
 /// Plays `records` on the client's and the server's ends, each client read waited for at the server's end, so that
-/// the relay sees them in their recorded order; then closes both and returns what each end received.
+/// the relay sees them in their recorded order; then closes both and returns what each end received. A wait longer
+/// than a second (of paused time) gives up, so that a byte held fails the replay rather than hangs it.
 async fn play(records: &[Record], mut client: DuplexStream, mut server: DuplexStream) -> (Vec<u8>, Vec<u8>) {
-    let (client_read, mut client_write) = tokio::io::split(&mut client);
-    let (server_read, mut server_write) = tokio::io::split(&mut server);
-    let mut client_read = client_read;
-    let mut server_read = server_read;
+    let (mut client_read, mut client_write) = tokio::io::split(&mut client);
+    let (mut server_read, mut server_write) = tokio::io::split(&mut server);
     let mut at_server = Vec::new();
     let to_client = async {
         let mut received = Vec::new();
@@ -127,7 +223,8 @@ async fn play(records: &[Record], mut client: DuplexStream, mut server: DuplexSt
                         break;
                     }
                     let mut forwarded = vec![0; data.len()];
-                    if server_read.read_exact(&mut forwarded).await.is_err() {
+                    let read = tokio::time::timeout(Duration::from_secs(1), server_read.read_exact(&mut forwarded));
+                    if !matches!(read.await, Ok(Ok(_))) {
                         break;
                     }
                     at_server.extend_from_slice(&forwarded);
@@ -149,18 +246,19 @@ async fn play(records: &[Record], mut client: DuplexStream, mut server: DuplexSt
 }
 
 /// Replays a connection phase: the client's bytes reach the server untouched, and the server's reach the client
-/// untouched but for one frame, the selection's answer, rewritten when the client asked for a server.
+/// untouched but for one frame, the selection's answer, rewritten when the client chose a server.
 async fn connection_phase(name: &str, capture: &Capture) -> Result<Handed, String> {
     let (client, client_side) = tokio::io::duplex(1 << 20);
     let (server, server_side) = tokio::io::duplex(1 << 20);
     let handover = Mutex::new(Handover::default());
     let relay = connection_phase::relay(client_side, server_side, &handover);
     let (handed, (at_client, at_server)) = tokio::join!(relay, play(&capture.records, client, server));
-    if at_server != joined(&capture.records, true) {
+    let from_client = joined(&capture.records, true);
+    if at_server != from_client {
         return Err(format!(
             "{name}: the server got {} bytes of the client's {}",
             at_server.len(),
-            joined(&capture.records, true).len()
+            from_client.len()
         ));
     }
     let sent = joined(&capture.records, false);
@@ -176,46 +274,28 @@ async fn connection_phase(name: &str, capture: &Capture) -> Result<Handed, Strin
     let changed: Vec<usize> = (0..sent_frames.len())
         .filter(|&index| sent_frames[index] != got_frames[index])
         .collect();
-    match (handed, changed.as_slice()) {
-        (Handed::Over, [index]) => {
-            let (header, _) = frame::header(got_frames[*index]).ok().flatten().unwrap_or_default();
-            let fields: Vec<_> = wire::fields(&got_frames[*index][header..])
-                .map_while(Result::ok)
-                .collect();
-            if fields.len() != 1 || handover.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len() != 1 {
-                return Err(format!("{name}: frame {index} was changed into something else"));
-            }
+    // The captures are of builds whose answer the relay reads (3.7.12.12 and 3.7.13.17): a client that chose a server
+    // must be handed over, and one that did not must see every byte as sent.
+    match (chose_a_server(&from_client), handed, changed.as_slice()) {
+        (true, Handed::Over, [index]) if rewritten_well(sent_frames[*index], got_frames[*index], &handover) => {
             Ok(handed)
         }
-        (Handed::NotAsked, []) => Ok(handed),
-        // The captures are of builds whose answer the relay reads (3.7.12.12 and 3.7.13.17): one not understood is a
-        // bug, not a new build.
-        (Handed::NotUnderstood, []) => Err(format!(
-            "{name}: the client chose a server and its answer was not understood"
+        (false, Handed::NotAsked, []) => Ok(handed),
+        (chose, handed, changed) => Err(format!(
+            "{name}: chose a server {chose}, {handed:?}, frames {changed:?} changed"
         )),
-        (handed, changed) => Err(format!("{name}: {handed:?} with frames {changed:?} changed")),
     }
 }
 
 /// The ticket of a game connection's first frame, at path 4.2.2.1 (inferred, `main:docs/client-game.md`, 3.7.13.17).
-fn first_ticket(bytes: &[u8]) -> Option<Ticket> {
-    let (header, body) = frame::header(bytes).ok().flatten()?;
-    let mut message = bytes.get(header..header + body)?;
-    for number in [4, 2, 2, 1] {
-        message = wire::fields(message)
-            .map_while(Result::ok)
-            .find_map(|field| match field.value {
-                Value::Bytes(bytes) if field.number == number => Some(bytes),
-                _ => None,
-            })?;
-    }
-    Ticket::new(message)
+fn first_ticket(from_client: &[u8]) -> Option<Ticket> {
+    let first = frames(from_client).0.into_iter().next()?;
+    Ticket::new(at(body(first), &[4, 2, 2, 1])?)
 }
 
 /// Replays a game connection, its ticket seeded into the handover: every byte reaches the other end untouched.
-async fn game(name: &str, capture: &Capture) -> Result<(), String> {
+async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<(), String> {
     let from_client = joined(&capture.records, true);
-    let ticket = first_ticket(&from_client).ok_or_else(|| format!("{name}: no ticket in the first frame"))?;
     let mut handover = Handover::default();
     handover.put(
         ticket,
@@ -257,7 +337,7 @@ fn captures(folder: &Path) -> Vec<PathBuf> {
     found
 }
 
-#[tokio::test]
+#[tokio::test(start_paused = true)]
 #[ignore = "needs the owner's captures: set D3B_CAPTURES to their folder"]
 async fn the_owners_captures_go_through_the_relay() {
     let folder = PathBuf::from(std::env::var_os("D3B_CAPTURES").unwrap_or_else(|| panic!("set D3B_CAPTURES")));
@@ -275,9 +355,10 @@ async fn the_owners_captures_go_through_the_relay() {
                 continue;
             }
         };
-        let result = if capture.port == GAME_PORT {
+        // A game connection by its content, whatever port the C# relay listened on: a ticket in its first frame.
+        let result = if let Some(ticket) = first_ticket(&joined(&capture.records, true)) {
             games += 1;
-            game(&name, &capture).await
+            game(&name, &capture, ticket).await
         } else {
             phases += 1;
             connection_phase(&name, &capture)
@@ -296,20 +377,51 @@ async fn the_owners_captures_go_through_the_relay() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
-#[test]
-fn reads_a_capture_and_stops_at_a_record_cut_short() {
+/// A capture of `format` holding `records`, after a header of our own.
+fn capture(format: i32, records: &[u8]) -> Vec<u8> {
     let mut bytes = b"D3B-CAPT".to_vec();
-    bytes.extend_from_slice(&2_i32.to_le_bytes());
+    bytes.extend_from_slice(&format.to_le_bytes());
     bytes.extend_from_slice(&0_i64.to_le_bytes());
     for text in ["3.7.13.17", "127.0.13.59:5556", "game.example.com", "203.0.113.7:5555"] {
         bytes.push(u8::try_from(text.len()).unwrap_or_default());
         bytes.extend_from_slice(text.as_bytes());
     }
-    bytes.extend_from_slice(&[1, 0, 3, b'a', b'b', b'c', 4, 7, 2, 9, 5, b'x']);
+    bytes.extend_from_slice(records);
+    bytes
+}
 
-    let capture = read(&bytes).unwrap_or_else(|error| panic!("{error}"));
+#[test]
+fn reads_a_capture_and_stops_at_a_record_cut_short() {
+    // A record of 128 bytes, its offset and its length in two bytes each.
+    let mut long = vec![2, 0x80, 0x01, 0x80, 0x01];
+    long.extend_from_slice(&[7; 128]);
+    let mut records = vec![1, 0, 3, b'a', b'b', b'c', 4, 7, 5, 9, 2, b'x', b'y'];
+    records.extend_from_slice(&long);
+    records.extend_from_slice(&[2, 9, 5, b'x']);
 
-    assert_eq!(capture.port, 5556);
-    assert!(capture.records == [Record::FromClient(b"abc".to_vec()), Record::Other]);
+    let read = read(&capture(2, &records)).unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        read.records
+            == [
+                Record::FromClient(b"abc".to_vec()),
+                Record::Other,
+                Record::Other,
+                Record::FromServer(vec![7; 128]),
+            ]
+    );
+}
+
+#[test]
+fn refuses_what_is_not_a_capture_it_reads() {
     assert!(read(b"NOT-CAPT").is_err());
+    assert!(read(&capture(0, &[])).is_err());
+    assert!(read(&capture(3, &[])).is_err());
+    assert!(read(&capture(2, &[6, 0])).is_err());
+    let mut huge = vec![1, 0];
+    wire::write_varint(RECORD_LIMIT + 1, &mut huge);
+    assert!(read(&capture(2, &huge)).is_err());
+    let mut overflowing = vec![1, 0];
+    wire::write_varint(u64::MAX, &mut overflowing);
+    assert!(read(&capture(1, &overflowing)).is_err());
 }
