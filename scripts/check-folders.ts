@@ -4,8 +4,8 @@ import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const LIMIT = 10;
-const ROOTS = ["src", "src-tauri/src", "scripts"];
-const CODE = /\.(rs|ts|tsx)$/;
+const ROOTS = ["src", "src-tauri/src", "scripts", "tools/extractor/src"];
+const CODE = /\.(rs|ts|tsx|cs)$/;
 const TEST = /(\.test\.tsx?$|^tests?\.rs$)/;
 // Copied from the shadcn and React Flow registries, updated by their CLI rather than by hand.
 const EXEMPT = new Set(["src/components/ui", "src/components/flow"]);

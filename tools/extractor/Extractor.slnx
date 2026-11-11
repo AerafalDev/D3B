@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/Extractor.csproj" />
+  <Project Path="tests/Extractor.Tests.csproj" />
+</Solution>

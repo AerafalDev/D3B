@@ -44,6 +44,15 @@ jobs:
       - run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Bindings are current
         run: git diff --exit-code -- src/bindings.ts
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: tools/extractor/global.json
+      - name: Extractor's format
+        working-directory: tools/extractor
+        run: dotnet format --verify-no-changes
+      - name: Extractor's tests
+        working-directory: tools/extractor
+        run: dotnet test
 
   pull-request:
     name: Pull request
