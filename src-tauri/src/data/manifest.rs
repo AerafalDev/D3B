@@ -16,11 +16,11 @@ pub struct Manifest {
     pub tables: Vec<Table>,
 }
 
-/// One JSON file of a data folder.
+/// One file of a data folder: a JSON table, a shard of one, or a world map tile.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Table {
-    /// The table's name, such as `items`.
+    /// Its path without the extension, such as `areas` or `maps/37`; unique in the folder.
     pub name: String,
     /// Its path, relative to the folder, with forward slashes.
     pub path: String,
@@ -101,6 +101,15 @@ mod tests {
         let manifest = Manifest::parse(VALID).unwrap_or_else(|error| panic!("{error}"));
         assert_eq!(manifest.build, "3.7.13.17");
         assert_eq!(manifest.tables.len(), 1);
+    }
+
+    #[test]
+    fn reads_what_the_extractor_writes() {
+        // The extractor's own tests write this file byte for byte (tools/extractor/tests/DataFolderTests.cs).
+        let text = include_str!("../../../tools/extractor/tests/fixtures/empty/manifest.json");
+        let manifest = Manifest::parse(text).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(manifest.build, "3.7.13.17");
+        assert_eq!(manifest.tables, Vec::<Table>::new());
     }
 
     #[test]

@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace D3B.Extractor;
@@ -38,20 +39,25 @@ internal static class ExtractCommand
         {
             Description = $@"The client's folder. Defaults to ${ClientInstall.Variable}, else %LOCALAPPDATA%\Ankama\Dofus-dofus3 on Windows.",
         };
+        var target = new Option<DirectoryInfo?>("--output")
+        {
+            Description = "The data folder to write. Defaults to artifacts/data/<build> under the current folder.",
+        };
         var command = new RootCommand("Extracts the game data of the installed Dofus 3 client into a JSON data folder.")
         {
             client,
+            target,
         };
 
         command.SetAction(result =>
         {
-            return Execute(result.GetValue(client)?.FullName, output, error);
+            return Execute(result.GetValue(client)?.FullName, result.GetValue(target)?.FullName, output, error);
         });
 
         return command;
     }
 
-    private static int Execute(string? clientFolder, TextWriter output, TextWriter error)
+    private static int Execute(string? clientFolder, string? target, TextWriter output, TextWriter error)
     {
         ClientInstall client;
 
@@ -68,7 +74,7 @@ internal static class ExtractCommand
 
         try
         {
-            return Extract(client, output);
+            return Extract(client, target, output);
         }
         catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException)
         {
@@ -78,11 +84,17 @@ internal static class ExtractCommand
         }
     }
 
-    private static int Extract(ClientInstall client, TextWriter output)
+    private static int Extract(ClientInstall client, string? target, TextWriter output)
     {
+        var stopwatch = Stopwatch.StartNew();
         var build = ClientBuild.Read(client);
+        var path = Path.GetFullPath(target ?? Path.Combine("artifacts", "data", build.Version));
 
         output.WriteLine($"Client: {client.Root}, version {build}, extractor {Version}");
+
+        DataFolder.Create(path).Complete(build.Version, Version);
+
+        output.WriteLine($"Data: {path}, format {DataFolder.Format}, in {stopwatch.Elapsed.TotalSeconds:F1} s");
 
         return Done;
     }
