@@ -48,7 +48,7 @@ public sealed class DataTableTests
     {
         var table = Table(keys: [1], values: [10], records: [(10, 1, 100)]);
 
-        Assert.Throws<InvalidDataException>(() => DataTable.Read(new SerializedObject { Name = "", Tree = table.Tree, Data = table.Data, ReferenceTypes = new Dictionary<string, TypeTree>() }));
+        Assert.Throws<InvalidDataException>(() => DataTable.Read(new SerializedObject { PathId = 1, Name = "", Tree = table.Tree, Data = table.Data, ReferenceTypes = new Dictionary<string, TypeTree>() }));
     }
 
     [Fact]
@@ -100,6 +100,7 @@ public sealed class DataTableTests
 
         return new SerializedObject
         {
+            PathId = 1,
             Name = "",
             Tree = TypeTree.Build("WaypointsDataRoot", nodes),
             Data = [.. data],

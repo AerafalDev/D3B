@@ -1,0 +1,3 @@
+[
+{"from":0,"to":1,"transitions":[{"type":"scroll","direction":6,"cellId":6,"skillId":null,"mapId":54164788,"elementId":null,"criterion":null},{"type":"interactive","direction":255,"cellId":300,"skillId":184,"mapId":54164788,"elementId":465453,"criterion":"PZ=1"}]}
+]

@@ -1,15 +1,21 @@
 use std::path::Path;
 
+use super::graph::WorldGraph;
 use super::manifest::{DataError, Manifest};
 use super::world::World;
+use super::world_maps::WorldMap;
 
 /// Everything a data folder holds, read and checked once when the app starts.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GameData {
     /// What the folder holds, and the client build it comes from.
     pub manifest: Manifest,
     /// The world's tables.
     pub world: World,
+    /// The worlds of the map, whose tiles the webview loads from the folder.
+    pub worlds: Vec<WorldMap>,
+    /// The ways between maps.
+    pub graph: WorldGraph,
 }
 
 impl GameData {
@@ -17,7 +23,14 @@ impl GameData {
     pub fn load(folder: &Path) -> Result<Self, DataError> {
         let manifest = Manifest::load(folder)?;
         let world = World::load(folder, &manifest)?;
-        Ok(Self { manifest, world })
+        let worlds = manifest.read(folder, "worlds")?;
+        let graph = WorldGraph::load(folder, &manifest)?;
+        Ok(Self {
+            manifest,
+            world,
+            worlds,
+            graph,
+        })
     }
 }
 
@@ -37,5 +50,7 @@ mod tests {
         assert_ne!(data.world.zaaps.len(), 0);
         assert_ne!(data.world.positions.len(), 0);
         assert_ne!(data.world.sub_areas.len(), 0);
+        assert_ne!(data.worlds.len(), 0);
+        assert_ne!(data.graph.edges.len(), 0);
     }
 }

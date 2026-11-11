@@ -6,10 +6,20 @@
 //! extracted from the client is ever committed (`docs/data.md`).
 
 mod game_data;
+mod graph;
 mod manifest;
 mod map_flag;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the map view of step 2 reads the maps it shows, one file at a time"
+    )
+)]
+mod maps;
 mod text;
 mod world;
+mod world_maps;
 
 pub use game_data::GameData;
 pub use manifest::DataError;
