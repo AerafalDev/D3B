@@ -65,6 +65,10 @@ Every release ships these installers. Releases of the rewrite are pre-releases u
 | **macOS** | `D3B_<version>_x64.dmg` (Intel) | `D3B_<version>_aarch64.dmg` (Apple Silicon) |
 | **Linux** | `.AppImage`, `.deb`, `.rpm` (`amd64`) | `.AppImage`, `.deb`, `.rpm` (`arm64`) |
 
+> [!NOTE]
+> Only **Windows x64** is tested so far. The other five builds come from the same code and CI, but nobody has run
+> them yet: if you can, [help test](#help-test).
+
 The Windows installer installs for the current user, without administrator rights. Each version ships the game data
 of one client build, so D3B works offline; when Ankama updates the client, a new version of D3B follows.
 
