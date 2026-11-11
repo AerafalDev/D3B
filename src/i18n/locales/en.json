@@ -18,5 +18,17 @@
     "browserPreview": "Browser preview",
     "data": "Data: client {{build}}",
     "noData": "No game data"
+  },
+  "relay": {
+    "starting": "Relay starting…",
+    "ready": "Relay ready · {{count}} in game",
+    "failed": "Relay off",
+    "unsupported": "Relay not measured on this system",
+    "stopped": "Relay stopped",
+    "client": "Client {{build}}",
+    "startAfter": "Start Dofus after D3B: a client started before it plays without the relay.",
+    "quitEnds": "Quitting D3B ends these game connections.",
+    "notUnderstood_one": "{{count}} connection went straight to Ankama: its server choice was not understood.",
+    "notUnderstood_other": "{{count}} connections went straight to Ankama: their server choice was not understood."
   }
 }

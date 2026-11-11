@@ -3,8 +3,9 @@ import { useTranslation } from "react-i18next";
 
 import { type AppInfo, commands } from "@/bindings.ts";
 import { isTauri } from "@/lib/tauri.ts";
+import { RelayIndicator } from "@/relay/relay-indicator.tsx";
 
-/** The bottom bar: the app's version and the client build its data comes from. */
+/** The bottom bar: the app's version, the client build its data comes from, and the relay. */
 export function StatusBar() {
   const { t } = useTranslation();
   const [info, setInfo] = useState<AppInfo | null>(null);
@@ -33,6 +34,7 @@ export function StatusBar() {
     <footer className="text-muted-foreground flex h-6 shrink-0 items-center gap-4 border-t px-3 text-xs">
       <span>D3B {info?.version ?? "dev"}</span>
       <span title={info?.dataError ?? undefined}>{data}</span>
+      <RelayIndicator />
     </footer>
   );
 }

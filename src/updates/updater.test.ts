@@ -6,11 +6,13 @@ const plugin = vi.hoisted(() => ({
   relaunch: vi.fn(),
   exit: vi.fn(),
   logError: vi.fn(async () => {}),
+  relayRestore: vi.fn(async () => void calls.push("restore")),
 }));
 
 vi.mock("@tauri-apps/plugin-updater", () => ({ check: plugin.check }));
 vi.mock("@tauri-apps/plugin-process", () => ({ relaunch: plugin.relaunch, exit: plugin.exit }));
 vi.mock("@tauri-apps/plugin-log", () => ({ error: plugin.logError }));
+vi.mock("@/bindings.ts", () => ({ commands: { relayRestore: plugin.relayRestore } }));
 
 const { useUpdater } = await import("./updater.ts");
 
@@ -30,6 +32,7 @@ describe("useUpdater", () => {
     calls.length = 0;
     plugin.relaunch.mockImplementation(async () => void calls.push("relaunch"));
     plugin.exit.mockImplementation(async () => void calls.push("exit"));
+    plugin.relayRestore.mockImplementation(async () => void calls.push("restore"));
     useUpdater.setState({ state: { status: "idle" } });
     plugin.check.mockResolvedValue(null);
     await useUpdater.getState().checkAndDownload();
@@ -80,7 +83,17 @@ describe("useUpdater", () => {
 
     await useUpdater.getState().restart();
 
+    expect(calls).toEqual(["restore", "install", "relaunch"]);
+  });
+
+  it("installs even when the client cannot be put back first, and logs it", async () => {
+    plugin.relayRestore.mockRejectedValue(new Error("version locked"));
+    await downloadVersion("0.11.0");
+
+    await useUpdater.getState().restart();
+
     expect(calls).toEqual(["install", "relaunch"]);
+    expect(plugin.logError).toHaveBeenCalledWith("update: restore the client before installing: version locked");
   });
 
   it("offers the update again, and installs it on close, when the restart's install fails", async () => {
@@ -110,6 +123,6 @@ describe("useUpdater", () => {
     await useUpdater.getState().installOnClose();
 
     expect(update.install).toHaveBeenCalledWith({ restartAfterInstall: false });
-    expect(calls).toEqual(["install", "exit"]);
+    expect(calls).toEqual(["restore", "install", "exit"]);
   });
 });

@@ -3,6 +3,8 @@ import { exit, relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { create } from "zustand";
 
+import { commands } from "@/bindings.ts";
+
 /** Where the update of the running app stands. */
 export type UpdateState =
   | { status: "idle" }
@@ -30,6 +32,16 @@ interface UpdaterStore {
 // The Update object holds a handle in the back end; it stays outside the store, which keeps plain data only. It is
 // kept after a failed install, so that closing the app tries again.
 let downloaded: Update | null = null;
+
+// On Windows the installer ends the app before its exit hook runs, so the relay puts the client's configuration back
+// first; otherwise a client started after the update could not connect (docs/relay.md).
+async function restoreClient(): Promise<void> {
+  try {
+    await commands.relayRestore();
+  } catch (error) {
+    fail("restore the client before installing", error);
+  }
+}
 
 function fail(context: string, error: unknown): string {
   const text = error instanceof Error ? error.message : String(error);
@@ -69,6 +81,7 @@ export const useUpdater = create<UpdaterStore>((set, get) => ({
     }
     set({ state: { status: "installing", version: update.version } });
     try {
+      await restoreClient();
       await update.install();
       downloaded = null;
       await relaunch();
@@ -90,6 +103,7 @@ export const useUpdater = create<UpdaterStore>((set, get) => ({
     if (update !== null) {
       set({ state: { status: "installing", version: update.version } });
       try {
+        await restoreClient();
         await update.install({ restartAfterInstall: false });
         downloaded = null;
       } catch (error) {
