@@ -5,7 +5,9 @@ owner** before the next one starts. The current step is in [docs/now.md](docs/no
 
 0. **Foundations**: the Tauri shell, typed IPC, packed data, i18n, the Claude setup, CI and releases for six targets.
 1. **Game data**: the .NET extractor, cleaned up (`tools/extractor`), writing one JSON folder per client build; its
-   `client-<build>` release; the app reads it (maps, world graph, items, monsters, spells, texts, world map tiles).
+   `client-<build>` release; the app reads it. The world first (maps, world graph, positions, sub-areas, areas, zaaps,
+   the world map and its tiles, texts in five languages); items, monsters and spells come with the step that reads
+   them (ADR 0008).
 2. **Observe** (milestone 1): the relay and the client's redirection, the protocol and its per-build mapping, and a
    live view of each character: where it is, its map, life, pods, what is around it, and a protocol inspector.
    Nothing is sent to the game yet.
