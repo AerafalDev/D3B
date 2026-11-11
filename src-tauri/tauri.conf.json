@@ -3,7 +3,7 @@
   "productName": "D3B",
   "version": "0.10.0",
   "mainBinaryName": "d3b",
-  "identifier": "dev.aerafal.d3b",
+  "identifier": "io.github.aerafaldev.d3b",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -43,6 +43,7 @@
       "deb",
       "rpm"
     ],
+    "publisher": "AerafalDev",
     "category": "Game",
     "shortDescription": "A desktop bot for Dofus 3",
     "longDescription": "D3B plays your character through the official Dofus 3 client: it observes, travels, harvests, banks and fights.",

@@ -16,7 +16,8 @@ _Updated 2026-11-11._
 - **Not measured**, by the owner:
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
   - the first update: with v0.10.0 installed, the next release is downloaded at start, the bar offers to restart,
-    Restart installs it; on another try, closing installs it.
+    Restart installs it; on another try, closing installs it. It starts with a new identifier (ADR 0009), so its data
+    folders start empty.
 - **In progress**: the extractor in `tools/extractor`, as a stack of PRs, each table with its Rust reader. Done: the
   .NET project, checked by CI and `bun run check`, which finds the client, reads its build and writes a manifest-only
   folder the app accepts; reading the client's bundles and data tables through their type trees, its texts in five
@@ -25,6 +26,5 @@ _Updated 2026-11-11._
   and `data:fetch` reading it. Until the last one, `scripts/fetch-data.ts` still expects a `.zip`.
 - **Next**: the owner runs the extractor on the installed client and the status bar names the build; then the first
   feature of step 2, the relay, designed with the owner (`feature`).
-- **Waiting on the owner**:
-  - which Dofus 3 builds exist on macOS and Linux, and a machine to measure the relay on each.
-- **Open**: the identifier `dev.aerafal.d3b` was taken by default, to confirm before more people install the app.
+- **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
+  installed, whether its data is Windows', and the relay on each are measured by the first testers there.

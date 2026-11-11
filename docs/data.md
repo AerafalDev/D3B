@@ -87,8 +87,8 @@ archive, `client-<build>.tar.gz`, beside it: the file the `data` skill publishes
   another date format, or a file over 4 KiB. The manifest's `extractor` is its version and commit, such as
   `0.1.0+54ea8c5…`.
 - **The client's folder**, read by the extractor and by studies: `--client`, else the `DOFUS_CLIENT` environment
-  variable, else `%LOCALAPPDATA%\Ankama\Dofus-dofus3` on Windows. On macOS and Linux it must be named: where their
-  launchers install it, and whether they hold the same data, is not measured.
+  variable, else `%LOCALAPPDATA%\Ankama\Dofus-dofus3` on Windows. On macOS and Linux, where Dofus 3 has native
+  clients, it must be named: where their launchers install it, and whether they hold the same data, is not measured.
 
 ## Rules
 
