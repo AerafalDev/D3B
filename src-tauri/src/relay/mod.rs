@@ -25,3 +25,6 @@ pub(crate) const ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 13, 59);
 /// The port of the relay's game listener, which the server-selection answer names in place of Ankama's (inferred,
 /// `main:docs/client-game.md`, "The game connection", measured on Windows x64).
 pub(crate) const GAME_PORT: u16 = 5556;
+
+#[cfg(test)]
+mod tests;
