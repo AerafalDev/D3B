@@ -12,4 +12,4 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0005](0005-how-we-deliver.md) | Claude delivers through squash-merged PRs on protected branches | accepted |
 | [0006](0006-releases-for-six-targets.md) | Releases for six targets through release-please, unsigned for now | accepted |
 | [0007](0007-the-updater-next-channel.md) | The rewrite updates from an `updater-next` channel, silently, with a restart bar | accepted |
-| [0008](0008-the-data-folder-and-its-archive.md) | The data folder holds the world first, in five languages, and ships as a `.tar.gz` | accepted |
+| [0008](0008-world-data-first-in-five-languages-as-a-tar-gz.md) | The data folder holds the world first, in five languages, and ships as a `.tar.gz` | accepted |

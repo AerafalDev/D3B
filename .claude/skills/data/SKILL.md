@@ -8,13 +8,13 @@ argument-hint: "[client build]"
 The data pipeline is in `docs/data.md`. Nothing here is ever committed.
 
 1. **Which build**: read the installed client's version (`Dofus_Data/StreamingAssets/version` under the client's
-   folder, `DOFUS_CLIENT` or the default per OS in `docs/data.md`).
-2. **Extract**: run the extractor (`tools/extractor`, a .NET tool) with its `--help` first; it writes
-   `artifacts/data/<build>/` with `manifest.json` and one JSON file per table. Until the extractor is ported, say so
-   and stop.
+   folder, `--client`, `DOFUS_CLIENT` or the default in `docs/data.md`).
+2. **Extract**: run the extractor with its `--help` first (`dotnet run --project tools/extractor/src -- --help`); it
+   writes `artifacts/data/<build>/` with `manifest.json`, one JSON file per table and the tiles, and its archive
+   `artifacts/data/client-<build>.tar.gz`. Until the extractor is complete (`docs/now.md`), say what it does not
+   extract yet.
 3. **Check**: the manifest's `format` equals `data::FORMAT`, every table's SHA-256 matches, and the app reads it:
    copy the folder into `data/` and run `bun run app`; the status bar names the build.
-4. **Publish, only on the owner's go**: zip the folder's content as `client-<build>.zip`, then
-   `gh release create client-<build> client-<build>.zip --prerelease --title "Game data <build>" --notes "..."`. A
-   published asset is never replaced: a fix is a new format.
+4. **Publish, only on the owner's go**: `gh release create client-<build> artifacts/data/client-<build>.tar.gz
+   --prerelease --title "Game data <build>" --notes "..."`. A published asset is never replaced: a fix is a new format.
 5. **Use it**: write the build in `.github/game-data.json` (`"build": "<build>"`) in a PR, so the next release packs it.

@@ -11,7 +11,8 @@ _Updated 2026-11-11._
 - **In progress**: the extractor in `tools/extractor`, as a stack of PRs, each table with its Rust reader: the
   skeleton writing a manifest-only folder; the type-tree reader; bundles, texts and the world tables; the worlds and
   their tiles; the maps' cells; their elements; the world graph; the `.tar.gz` archive and `data:fetch` reading it.
-  Until the last one, `scripts/fetch-data.ts` still expects a `.zip`.
+  Until the last one, `scripts/fetch-data.ts` still expects a `.zip`. The skeleton adds the .NET 10 SDK to
+  `bun run check` and to the prerequisites (README, CONTRIBUTING, `.claude/rules/ci.md`).
 - **Next**: the owner runs the extractor on the installed client and the status bar names the build; then the first
   feature of step 2, the relay, designed with the owner (`feature`).
 - **Waiting on the owner**:
