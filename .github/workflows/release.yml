@@ -95,11 +95,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          build="$(tr -d '[:space:]' < data-build.txt)"
-          if [ -n "$build" ] && [ "$build" != "none" ]; then
+          build="$(jq -r '.build // empty' .github/game-data.json)"
+          if [ -n "$build" ]; then
             bun scripts/fetch-data.ts "$build"
           else
-            echo "::warning::data-build.txt names no client build: this release ships without game data."
+            echo "::warning::.github/game-data.json names no client build: this release ships without game data."
           fi
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
         env:

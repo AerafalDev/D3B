@@ -7,7 +7,7 @@ disable-model-invocation: true
 1. **The release PR**: release-please keeps one open against `next` (`gh pr list --label "autorelease: pending"`).
    Read its changelog: a commit whose header says nothing is reworded in the notes, never hidden. The version comes
    from the commits (`feat` raises the minor, `fix` the patch, `!` the major while we are past 1.0).
-2. **The data**: `data-build.txt` names the client build to pack; check that its `client-<build>` release exists
+2. **The data**: `.github/game-data.json` names the client build to pack; check that its `client-<build>` release exists
    (`gh release view client-<build>`).
 3. **Ask the owner** for the go, with the version, the changelog and the data build. Only then merge the release PR
    (`gh pr merge <n> --squash`).

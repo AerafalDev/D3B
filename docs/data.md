@@ -9,7 +9,7 @@ flowchart LR
     client["Installed Dofus 3 client"] --> extractor["tools/extractor (.NET)"]
     extractor --> folder["JSON folder: manifest.json + tables + tiles"]
     folder -->|"owner's go, data skill"| asset["Release asset client-&lt;build&gt;.zip"]
-    asset -->|"release.yml, data-build.txt"| bundle["data/ bundled as a Tauri resource"]
+    asset -->|"release.yml, .github/game-data.json"| bundle["data/ bundled as a Tauri resource"]
     bundle --> app["src-tauri/src/data reads it at start"]
 ```
 
@@ -24,7 +24,7 @@ flowchart LR
 
 - **From source**: `bun run data:fetch <build>` downloads the release asset into `data/`, which Git ignores but for
   its README. Without it the app starts and says it has no game data.
-- **In a release**: `release.yml` reads the build from `data-build.txt`, downloads the asset into `data/`, and
+- **In a release**: `release.yml` reads the build from `.github/game-data.json`, downloads the asset into `data/`, and
   `tauri build` bundles it (`bundle.resources`). The app reads it from `resource_dir()/data`.
 - **The client's folder**, read only by the extractor: `%LOCALAPPDATA%\Ankama\Dofus-dofus3` on Windows; on macOS and
   Linux, to be measured (`docs/now.md`).

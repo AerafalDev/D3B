@@ -17,4 +17,4 @@ The data pipeline is in `docs/data.md`. Nothing here is ever committed.
 4. **Publish, only on the owner's go**: zip the folder's content as `client-<build>.zip`, then
    `gh release create client-<build> client-<build>.zip --prerelease --title "Game data <build>" --notes "..."`. A
    published asset is never replaced: a fix is a new format.
-5. **Use it**: write the build in `data-build.txt` in a PR, so the next release packs it.
+5. **Use it**: write the build in `.github/game-data.json` (`"build": "<build>"`) in a PR, so the next release packs it.

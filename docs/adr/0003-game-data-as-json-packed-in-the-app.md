@@ -17,7 +17,7 @@ format no other language reads, about 105 MB with the tiles. Ankama's data must 
   included.
 - **It ships as a release asset** `client-<build>.zip`, published on the owner's go and never replaced.
 - **It is packed in the app**, everything included (the tiles too): the release workflow downloads the build named in
-  `data-build.txt` into `data/`, which Tauri bundles as a resource. The app works offline.
+  `.github/game-data.json` into `data/`, which Tauri bundles as a resource. The app works offline.
 
 ## Rejected
 
