@@ -1,4 +1,4 @@
-# 0009. Flags are written by the names the client's enums give them, read with Cpp2IL
+# 0010. Flags are written by the names the client's enums give them, read with Cpp2IL
 
 - Status: accepted
 - Date: 2026-11-11
