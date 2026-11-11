@@ -30,6 +30,8 @@ _Updated 2026-11-11._
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>.tar.gz` that `data:fetch` reads; the app reads it all at start
   but the maps, which it reads one file at a time.
+- **Debt**, from the review of step 1: the readers of maps, of the world graph and of the tiles are tested on the
+  installed client only (skipped in CI); hand-built trees (`TypeTree.Build`) would test their failures in CI too.
 - **Next**: once step 1 is measured, publish `client-3.7.13.17` on the owner's go (`data` skill), then the first
   feature of step 2, the relay, designed with the owner (`feature`).
 - **Waiting on the owner**:
