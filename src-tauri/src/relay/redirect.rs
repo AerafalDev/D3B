@@ -74,47 +74,60 @@ impl Redirect {
     }
 
     /// Redirects the client: writes the state, then points `version` at D3B's copy. `downloaded` is Ankama's
-    /// configuration just read from `original`, or `None` when it could not be reached, in which case the kept one is
-    /// used. Nothing is touched when neither can be read. Returns Ankama's connection host, the one the relay
-    /// connects to.
+    /// configuration just read from `original`, or `None` when it could not be reached; the kept one is used then, and
+    /// also when what came is not a configuration at all (a proxy's page). A configuration D3B cannot relay is
+    /// refused, never replaced by the kept one: Ankama changed it. Nothing is touched when no configuration can be
+    /// read. Returns Ankama's connection host, the one the relay connects to.
     pub(crate) fn apply(&self, original: &Original, downloaded: Option<&str>) -> Result<ConnectionHost, RelayError> {
-        let kept = self.state.join(Self::ANKAMA);
-        let text = match downloaded {
-            Some(text) => text.to_owned(),
-            None => match std::fs::read_to_string(&kept) {
-                Ok(text) => text,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                    return Err(RelayError::NoAnkamaConfig);
-                }
-                Err(source) => return Err(RelayError::Io { path: kept, source }),
-            },
+        let (config, fresh) = match downloaded.map(|text| (text, AnkamaConfig::parse(text))) {
+            Some((text, Ok(config))) => (config, Some(text)),
+            Some((_, Err(RelayError::ConfigNotJson(_) | RelayError::ConfigTooLarge { .. }))) | None => {
+                (self.kept_config()?, None)
+            }
+            Some((_, Err(error))) => return Err(error),
         };
-        let config = AnkamaConfig::parse(&text)?;
 
-        // Read again: the launcher may have rewritten the file while the configuration downloaded.
-        let version = self.read_version()?;
-        let ours = self.copy_url();
-        if version.config_url() != original.url && version.config_url() != ours {
-            return Err(RelayError::VersionChanged);
-        }
-
+        // The launcher may have rewritten the file while the configuration downloaded.
+        self.check_unchanged(original)?;
         std::fs::create_dir_all(&self.state).map_err(|source| RelayError::Io {
             path: self.state.clone(),
             source,
         })?;
         write(&self.state.join(Self::ORIGINAL), original.url.as_bytes())?;
-        if downloaded.is_some() {
-            write(&kept, text.as_bytes())?;
+        if let Some(text) = fresh {
+            write(&self.state.join(Self::ANKAMA), text.as_bytes())?;
         }
         write(&self.state.join(Self::COPY), config.redirected_to(ADDRESS).as_bytes())?;
+
+        // Read last, just before writing, so that an update the launcher wrote meanwhile is not undone.
+        let version = self.check_unchanged(original)?;
+        let ours = self.copy_url();
         if version.config_url() != ours {
             write(&self.version, &version.with_config_url(&ours))?;
         }
         Ok(config.connection_host().clone())
     }
 
+    /// The `version` file, when it still names `original` or D3B's copy.
+    fn check_unchanged(&self, original: &Original) -> Result<VersionFile, RelayError> {
+        let version = self.read_version()?;
+        if version.config_url() != original.url && version.config_url() != self.copy_url() {
+            return Err(RelayError::VersionChanged);
+        }
+        Ok(version)
+    }
+
+    fn kept_config(&self) -> Result<AnkamaConfig, RelayError> {
+        let kept = self.state.join(Self::ANKAMA);
+        match std::fs::read_to_string(&kept) {
+            Ok(text) => AnkamaConfig::parse(&text),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Err(RelayError::NoAnkamaConfig),
+            Err(source) => Err(RelayError::Io { path: kept, source }),
+        }
+    }
+
     /// Whether the `version` file still names D3B's copy; `false` once the launcher rewrote it (an update or a
-    /// repair, measured by the owner), which calls for applying again.
+    /// repair, both measured by the owner on 3.7.13.17, 2026-11-11), which calls for applying again.
     pub(crate) fn is_applied(&self) -> Result<bool, RelayError> {
         Ok(self.read_version()?.config_url() == self.copy_url())
     }
@@ -187,10 +200,17 @@ fn write(path: &Path, bytes: &[u8]) -> Result<(), RelayError> {
         source,
     };
     std::fs::write(&temporary, bytes).map_err(io)?;
-    std::fs::rename(&temporary, path).map_err(io)
+    std::fs::rename(&temporary, path).map_err(|error| {
+        // A temporary file left beside the client's `version` is one more file in Ankama's folder for its repair to
+        // flag; the rename fails on Windows while another process holds the target.
+        let _ = std::fs::remove_file(&temporary);
+        io(error)
+    })
 }
 
-/// The `file:` URL of an absolute path: forward slashes, every byte but letters, digits and `-._~/:` percent-encoded.
+/// The `file:` URL of an absolute path: forward slashes, every byte but letters, digits and `-._~/:` percent-encoded,
+/// as .NET's `Uri.AbsoluteUri` writes it. Ours, not measured: whether the client reads a path with a space or an accent
+/// is on the relay's checklist (`docs/relay.md`).
 fn file_url(path: &Path) -> String {
     let text = path.to_string_lossy().replace('\\', "/");
     let mut url = String::from(if text.starts_with('/') { "file://" } else { "file:///" });
@@ -418,6 +438,72 @@ mod tests {
 
         assert!(matches!(error, Some(RelayError::VersionChanged)), "{error:?}");
         assert!(folders.version().contains("new.json"));
+        assert!(!folders.redirect.state.exists());
+    }
+
+    #[test]
+    fn uses_the_kept_configuration_when_the_download_is_not_one() {
+        let folders = Folders::new("proxy-page");
+        folders.apply(Some(CONFIG)).unwrap_or_else(|error| panic!("{error}"));
+        folders.launcher_writes(HTTPS);
+
+        let host = folders.apply(Some("<html>sign in to the network</html>"));
+
+        assert_eq!(
+            host.map(|host| host.host).ok().as_deref(),
+            Some("connection.example.com")
+        );
+        assert_eq!(folders.state("ankama-config.json").as_deref(), Some(CONFIG));
+    }
+
+    #[test]
+    fn refuses_a_new_configuration_it_cannot_relay_even_with_a_kept_one() {
+        let folders = Folders::new("changed-config");
+        folders.apply(Some(CONFIG)).unwrap_or_else(|error| panic!("{error}"));
+        folders.launcher_writes(HTTPS);
+        let two = r#"{"connectionHosts":["a:one.example.com:5555","b:two.example.com:5555"]}"#;
+
+        let error = folders.apply(Some(two)).err();
+
+        assert!(matches!(error, Some(RelayError::ConnectionHosts(2))), "{error:?}");
+        assert!(!folders.applied());
+    }
+
+    #[test]
+    fn restore_leaves_the_file_when_the_original_is_lost() {
+        let folders = Folders::new("restore-lost");
+        folders.apply(Some(CONFIG)).unwrap_or_else(|error| panic!("{error}"));
+        let redirected = folders.version();
+        std::fs::remove_file(folders.redirect.state.join("config-url")).unwrap_or_else(|error| panic!("{error}"));
+
+        let error = folders.redirect.restore().err();
+
+        assert!(matches!(error, Some(RelayError::OriginalLost)), "{error:?}");
+        assert_eq!(folders.version(), redirected);
+    }
+
+    #[test]
+    fn refuses_a_kept_url_that_is_not_ankamas() {
+        let folders = Folders::new("kept-elsewhere");
+        folders.apply(Some(CONFIG)).unwrap_or_else(|error| panic!("{error}"));
+        std::fs::write(folders.redirect.state.join("config-url"), "file:///C:/elsewhere.json")
+            .unwrap_or_else(|error| panic!("{error}"));
+
+        let error = folders.redirect.original_url().err();
+
+        assert!(matches!(error, Some(RelayError::OriginalLost)), "{error:?}");
+    }
+
+    #[test]
+    fn a_failed_rename_leaves_no_temporary_file() {
+        let folders = Folders::new("rename");
+        let target = folders.root.join("a-folder");
+        std::fs::create_dir_all(target.join("inside")).unwrap_or_else(|error| panic!("{error}"));
+
+        let error = write(&target, b"bytes").err();
+
+        assert!(matches!(error, Some(RelayError::Io { .. })), "{error:?}");
+        assert!(!folders.root.join("a-folder.d3b-tmp").exists());
     }
 
     #[test]
