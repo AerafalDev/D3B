@@ -17,7 +17,8 @@ _Updated 2026-11-11._
   - v0.10.0 on macOS, Linux and ARM64, by Discord testers ([docs/testing.md](testing.md)): the owner has none of them;
   - the first update: with v0.10.0 installed, the next release is downloaded at start, the bar offers to restart,
     Restart installs it; on another try, closing installs it;
-  - **step 1, the extractor**, on the installed client (Windows):
+  - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
+    items 1, 2 (every count as below, in 27.8 s) and 4 pass. Not measured yet: items 3 and 5.
     1. `dotnet run --project tools/extractor/src -- --help` lists `--client` and `--output`;
     2. `dotnet run --project tools/extractor/src` prints build 3.7.13.17 and 15,470 map positions, 569 sub-areas, 70
        areas, 63 zaaps, 40 worlds, 161 zooms, 1,250 tiles, 17,623 maps, 46,490 elements, 11,331 vertices, 30,917
