@@ -55,8 +55,8 @@ archive, `client-<build>.tar.gz`, beside it: the file the `data` skill publishes
 - **In a release**: `release.yml` reads the build from `.github/game-data.json`, downloads the asset into `data/`, and
   `tauri build` bundles it (`bundle.resources`). The app reads it from `resource_dir()/data`.
 - **The client's folder**, read by the extractor and by studies: `--client`, else the `DOFUS_CLIENT` environment
-  variable, else `%LOCALAPPDATA%\Ankama\Dofus-dofus3` on Windows. On macOS and Linux it must be named: where their
-  launchers install it, and whether they hold the same data, is not measured.
+  variable, else `%LOCALAPPDATA%\Ankama\Dofus-dofus3` on Windows. On macOS and Linux, where Dofus 3 has native
+  clients, it must be named: where their launchers install it, and whether they hold the same data, is not measured.
 
 ## Rules
 
