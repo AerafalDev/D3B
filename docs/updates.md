@@ -31,4 +31,8 @@ switch, the endpoint moves to `releases/latest/download/latest.json` and the `ch
 ## Not yet
 
 - A bot running will veto the restart and the install on close, once bots exist.
-- The first release needs the signing key (`docs/now.md`).
+
+## The signing key
+
+The owner holds the private key (`~/.tauri/d3b.key`) and its password; the repository holds them only as secrets.
+Losing either means installed apps can never be updated again: keep a backup outside this machine.
