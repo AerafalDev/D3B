@@ -15,9 +15,9 @@ _Updated 2026-11-11._
   back.
 - **Not measured**, by the owner:
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
-  - the first update: v0.10.0 has the old identifier (ADR 0009), so the owner uninstalls it and installs the next
-    release fresh; with that one installed, the release after is downloaded at start, the bar offers to restart,
-    Restart installs it; on another try, closing installs it.
+  - the first update: with v0.10.0 installed, the next release is downloaded at start, the bar offers to restart,
+    Restart installs it; on another try, closing installs it. It starts with a new identifier (ADR 0009), so its data
+    folders start empty.
 - **In progress**: the extractor in `tools/extractor`, as a stack of PRs, each table with its Rust reader: the
   skeleton writing a manifest-only folder; the type-tree reader; bundles, texts and the world tables; the worlds and
   their tiles; the maps' cells; their elements; the world graph; the `.tar.gz` archive and `data:fetch` reading it.
@@ -25,6 +25,5 @@ _Updated 2026-11-11._
   `bun run check` and to the prerequisites (README, CONTRIBUTING, `.claude/rules/ci.md`).
 - **Next**: the owner runs the extractor on the installed client and the status bar names the build; then the first
   feature of step 2, the relay, designed with the owner (`feature`).
-- **Waiting on the owner**:
-  - a machine to measure the relay on macOS and on Linux: Dofus 3 has a native client on both (the owner,
-    2026-11-11), whose install folder and data are not measured yet.
+- **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
+  installed, whether its data is Windows', and the relay on each are measured by the first testers there.
