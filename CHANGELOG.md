@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/AerafalDev/D3B/compare/v0.12.0...v0.13.0) (2026-11-11)
+
+
+### Features
+
+* **relay:** split the game connection into frames both ways as it is copied ([#155](https://github.com/AerafalDev/D3B/issues/155)) ([201dc88](https://github.com/AerafalDev/D3B/commit/201dc886054ff839521136ebd2d065ed6377f0e0))
+
 ## [0.12.0](https://github.com/AerafalDev/D3B/compare/v0.11.0...v0.12.0) (2026-11-11)
 
 
