@@ -39,6 +39,43 @@ mod tests {
     use super::*;
 
     #[test]
+    fn reads_a_folder_of_the_tables_the_extractor_writes() {
+        // The C# tests write these fixtures byte for byte: this checks the names the app and the extractor agree on.
+        let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("../tools/extractor/tests/fixtures/world");
+        let folder = std::env::temp_dir().join(format!("d3b-data-test-folder-{}", std::process::id()));
+        std::fs::create_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+        let names = [
+            "map-positions",
+            "sub-areas",
+            "areas",
+            "zaaps",
+            "worlds",
+            "world-graph-vertices",
+            "world-graph-edges",
+        ];
+        let mut tables = Vec::new();
+        for name in names {
+            std::fs::copy(
+                fixtures.join(format!("{name}.json")),
+                folder.join(format!("{name}.json")),
+            )
+            .unwrap_or_else(|error| panic!("{error}"));
+            tables.push(format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#));
+        }
+        let manifest = format!(
+            r#"{{"format":1,"build":"3.7.13.17","extractor":"0","tables":[{}]}}"#,
+            tables.join(",")
+        );
+        std::fs::write(folder.join(Manifest::FILE), manifest).unwrap_or_else(|error| panic!("{error}"));
+        let data = GameData::load(&folder);
+        std::fs::remove_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+        let data = data.unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(data.manifest.build, "3.7.13.17");
+        assert_eq!(data.world.zaaps.len(), 1);
+        assert_eq!(data.graph.edges.len(), 1);
+    }
+
+    #[test]
     fn reads_the_folder_the_app_ships_when_there_is_one() {
         // `data/` holds a real extraction only on a machine that fetched or extracted one: elsewhere there is nothing to read.
         let folder = Path::new(env!("CARGO_MANIFEST_DIR")).join("../data");

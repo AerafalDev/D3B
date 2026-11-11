@@ -23,8 +23,8 @@ flowchart LR
 - **Texts** are inline in each record, in the five languages of the client's `Content/I18n/*.bin` (3.7.12.12,
   `main:docs/client.md`): `{"fr", "en", "de", "es", "pt"}`. A text a record names but a language lacks fails the
   extraction, as in the C# version; its first measure is the texts' PR.
-- **Maps** are split in 100 files by the last two digits of their id: `maps/<id % 100>.json`. How evenly the ids
-  spread is measured by the maps' PR, before anything is published.
+- **Maps** are split in 100 files by the last two digits of their id: `maps/<id % 100>.json`. On 3.7.13.17
+  the files run from 434 KB to 873 KB: the ids spread well enough.
 - **Tiles** are JPEG files, `tiles/<world>/<zoom as a percentage>/<n>.jpg`, numbered from 1 row by row from the top
   left. The client holds them as BC7 textures (3.7.13.17, `main:docs/client.md`, "The world's maps"); the extractor
   decodes them and encodes them at JPEG quality 75, the owner's choice on the C# version.
@@ -71,8 +71,11 @@ dotnet run --project tools/extractor/src -- --output <dir>   # another data fold
 It writes the folder beside its target (`<target>.d3b-staging`), then swaps it in, and replaces only a folder that
 holds a `manifest.json`. A file's path and its name are unique ignoring case.
 
-Each run extracts everything again (41 s on the C# version, tiles included). The extractor also writes the folder's
-archive, `client-<build>.tar.gz`, beside it: the file the `data` skill publishes (the stack's last PR). The C# version's tools on `main`
+Each run extracts everything again, in about 25 s on 3.7.13.17, tiles included. It also writes the folder's archive,
+`artifacts/data/client-<build>.tar.gz` whatever `--output` names: the folder's files at its root in order of their
+paths, with a fixed date, so that two runs of one extractor on one OS give the same bytes (gzip's header names the
+OS). It is the file the `data` skill publishes and `data:fetch` unpacks. The format stays 1 until the first
+`client-<build>` is published: until then a shape may change without a bump. The C# version's tools on `main`
 (`scripts/extract/`, `scripts/unity/`) and its measures (`docs/client.md`) are the sources it was rewritten from.
 
 ## Where it lives

@@ -66,19 +66,6 @@ public sealed class FieldsTests
     }
 
     [Fact]
-    public void TwoFieldsOfOneNameAreAmbiguous()
-    {
-        var tree = Of(One(Node(1, "int", "id", 4)), One(Node(1, "int", "<id>k__BackingField", 4)));
-
-        Assert.Throws<InvalidDataException>(() =>
-        {
-            var reader = new ObjectReader(Bytes(1, 2), tree);
-
-            Fields.Read(ref reader, 0, "Test");
-        });
-    }
-
-    [Fact]
     public void FieldsNoTableReadAreSkippedWhole()
     {
         var record = Read([.. Vector(1, "bytes", "UInt8", 1), Node(1, "int", "id", 4)], [.. Bytes(3), 1, 2, 3, 0, .. Bytes(8)]);

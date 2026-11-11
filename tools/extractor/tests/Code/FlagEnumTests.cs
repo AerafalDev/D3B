@@ -36,6 +36,18 @@ public sealed class FlagEnumTests
 
         var flags = code.FlagEnum("MapInformationFlags");
 
-        Assert.NotEmpty(flags.Names(uint.MaxValue & 0b1100));
+        // The app's enum lists the same names (src-tauri/src/data/map_flag.rs): a change here refuses the folder there.
+        Assert.Equal(
+            [
+                "capabilityAllowChallenge", "capabilityAllowAggression", "capabilityAllowTeleportTo", "capabilityAllowTeleportFrom",
+                "capabilityAllowExchangesBetweenPlayers", "capabilityAllowHumanVendor", "capabilityAllowCollector", "capabilityAllowSoulCapture",
+                "capabilityAllowSoulSummon", "capabilityAllowTavernRegen", "capabilityAllowTombMode", "capabilityAllowTeleportEverywhere",
+                "capabilityAllowFightChallenges", "capabilityAllowMonsterRespawn", "capabilityAllowMonsterFight", "capabilityAllowMount",
+                "capabilityAllowObjectDisposal", "capabilityAllowUnderwater", "capabilityAllowPvp1V1", "capabilityAllowPvp3V3",
+                "capabilityAllowMonsterAggression", "outdoor", "showNameOnFingerpost", "hasPriorityOnWorldmap", "allowPrism", "isTransition",
+                "mapHasTemplate", "hasPublicPaddock", "forbidOverlayCharactersMode",
+            ],
+            flags.Names((1UL << 29) - 1));
+        Assert.Throws<InvalidDataException>(() => flags.Names(1UL << 29));
     }
 }

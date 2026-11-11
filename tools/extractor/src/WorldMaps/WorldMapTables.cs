@@ -168,10 +168,16 @@ internal static partial class WorldMapTables
 
     private static Dictionary<(int World, int Zoom, int Index), (int Width, int Height, int Bytes)> ReadTiles(Bundle bundle, IReadOnlyDictionary<string, string> addresses, Dictionary<int, int[]> zooms, DataFolder folder)
     {
-        var textures = bundle.Objects(AssetClassID.Texture2D).ToDictionary(texture => texture.PathId, Read);
-        var sprites = bundle.Objects(AssetClassID.Sprite).ToDictionary(sprite => sprite.PathId, Read);
-        var container = bundle.Objects(AssetClassID.AssetBundle).Select(Read).SingleOrDefault()
-            ?? throw new InvalidDataException($"{bundle.Path} holds no asset bundle object, so no container.");
+        var textures = ById(bundle, AssetClassID.Texture2D);
+        var sprites = ById(bundle, AssetClassID.Sprite);
+        var containers = bundle.Objects(AssetClassID.AssetBundle).Select(Read).ToList();
+
+        if (containers.Count is not 1)
+        {
+            throw new InvalidDataException($"{bundle.Path} holds {containers.Count} asset bundle objects, where the extractor reads one container.");
+        }
+
+        var container = containers[0];
         var located = new SortedDictionary<(int World, int Zoom, int Index), Fields>();
 
         foreach (var (key, texture, sprite) in Pairs(container, textures, sprites))
@@ -213,12 +219,21 @@ internal static partial class WorldMapTables
             {
                 Parallel.For(0, batch.Length, i =>
                 {
-                    encoded[i] = TileEncoder.Encode(blocks[i], batch[i].Value.Int32("m_Width"), batch[i].Value.Int32("m_Height"));
+                    var (world, zoom, index) = batch[i].Key;
+
+                    try
+                    {
+                        encoded[i] = TileEncoder.Encode(blocks[i], batch[i].Value.Int32("m_Width"), batch[i].Value.Int32("m_Height"));
+                    }
+                    catch (InvalidDataException exception)
+                    {
+                        throw new InvalidDataException($"Tile {index} of world {world} at {zoom} %: {exception.Message}", exception);
+                    }
                 });
             }
             catch (AggregateException exception) when (exception.InnerException is InvalidDataException inner)
             {
-                throw new InvalidDataException($"A tile of world {batch[0].Key.World} cannot be encoded: {inner.Message}", inner);
+                throw inner;
             }
 
             for (var i = 0; i < batch.Length; i++)
@@ -276,6 +291,21 @@ internal static partial class WorldMapTables
         }
 
         return bundle.ReadStream(stream.String("path"), checked((long)stream.UInt64("offset")), checked((int)size));
+    }
+
+    private static Dictionary<long, Fields> ById(Bundle bundle, AssetClassID type)
+    {
+        var assets = new Dictionary<long, Fields>();
+
+        foreach (var asset in bundle.Objects(type))
+        {
+            if (!assets.TryAdd(asset.PathId, Read(asset)))
+            {
+                throw new InvalidDataException($"{bundle.Path} holds two {type} objects of identifier {asset.PathId}.");
+            }
+        }
+
+        return assets;
     }
 
     private static Fields Read(SerializedObject asset)

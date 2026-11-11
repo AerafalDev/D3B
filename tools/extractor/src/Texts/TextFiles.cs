@@ -35,6 +35,12 @@ internal sealed class TextFiles
             throw new ArgumentException($"{read.Count} text files for {Languages.Count} languages.", nameof(files));
         }
 
+        // Tables name text 0 for no name; a file that holds one would make those records named, not nameless.
+        if (read.FindIndex(file => file.HoldsTextZero) is var index and >= 0)
+        {
+            throw new InvalidDataException($"The {Languages[index]} texts hold a text 0, which the extractor reads as no text.");
+        }
+
         return new TextFiles(read);
     }
 

@@ -75,7 +75,10 @@ internal static class DataTable
                 case "references":
                     ReferenceRegistry.Read(ref reader, table.Data, child, table.ReferenceTypes, (long id, string className, ref ObjectReader record) =>
                     {
-                        records[id] = Fields.Read(ref record, 0, className);
+                        if (!records.TryAdd(id, Fields.Read(ref record, 0, className)))
+                        {
+                            throw new InvalidDataException($"{tree.Name}: its registry holds record {id} twice.");
+                        }
 
                         return true;
                     });

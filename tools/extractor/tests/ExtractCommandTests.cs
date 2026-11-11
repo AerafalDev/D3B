@@ -29,6 +29,7 @@ public sealed class ExtractCommandTests
         Assert.Contains("version 3.7.13.17, built 2026-11-03 14:09:52Z", output, StringComparison.Ordinal);
         Assert.Contains("texts", error, StringComparison.Ordinal);
         Assert.False(Directory.Exists(target));
+        Assert.False(Directory.Exists(target + ".d3b-staging"));
     }
 
     [Fact]

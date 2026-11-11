@@ -10,7 +10,7 @@ namespace D3B.Extractor;
 /// takes its name, and only then is the old one deleted: the app never finds a folder half written, or half deleted,
 /// under the name it looks for.
 /// </remarks>
-internal sealed class DataFolder
+internal sealed class DataFolder : IDisposable
 {
     /// <summary>The format of the folders this extractor writes; <c>data::FORMAT</c> in the app must be the same.</summary>
     public const int Format = 1;
@@ -29,6 +29,7 @@ internal sealed class DataFolder
     private readonly string _staging;
     private readonly string _old;
     private readonly SortedDictionary<string, string> _hashes = new(StringComparer.Ordinal);
+    private bool _completed;
 
     // The folder's names and paths are unique ignoring case: Windows and macOS would put two of them in one file.
     private readonly HashSet<string> _names = new(StringComparer.OrdinalIgnoreCase);
@@ -95,7 +96,17 @@ internal sealed class DataFolder
         }
 
         Directory.Move(_staging, _target);
+        _completed = true;
         DeleteIfExists(_old);
+    }
+
+    /// <summary>Deletes what was written of a folder never completed, such as an extraction that failed.</summary>
+    public void Dispose()
+    {
+        if (!_completed)
+        {
+            DeleteIfExists(_staging);
+        }
     }
 
     private static string NameOf(string path)

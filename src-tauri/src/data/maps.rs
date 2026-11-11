@@ -74,10 +74,11 @@ pub fn read_shard(folder: &Path, manifest: &Manifest, shard: u32) -> Result<Vec<
     let maps: Vec<MapData> = manifest.read(folder, &format!("maps/{shard}"))?;
     for map in &maps {
         if map.flags.len() != CELL_COUNT || map.linked_zone.len() != CELL_COUNT {
-            return Err(DataError::MissingTable(format!(
-                "the {CELL_COUNT} cells of map {}",
-                map.id
-            )));
+            return Err(DataError::Cells {
+                map: map.id,
+                found: map.flags.len().min(map.linked_zone.len()),
+                expected: CELL_COUNT,
+            });
         }
     }
     Ok(maps)
@@ -124,6 +125,31 @@ mod tests {
             cell::BLUE,
         ];
         assert_eq!(bits.iter().fold(0, |all, bit| all | bit), 0b11_1111_1111);
+    }
+
+    #[test]
+    fn refuses_a_map_without_its_560_cells() {
+        let folder = std::env::temp_dir().join(format!("d3b-data-test-cells-{}", std::process::id()));
+        std::fs::create_dir_all(folder.join("maps")).unwrap_or_else(|error| panic!("{error}"));
+        std::fs::write(
+            folder.join("maps/7.json"),
+            MAPS.replacen("\"flags\":[35,", "\"flags\":[", 1),
+        )
+        .unwrap_or_else(|error| panic!("{error}"));
+        let manifest = Manifest::parse(
+            r#"{"format":1,"build":"0","extractor":"0","tables":[{"name":"maps/7","path":"maps/7.json","sha256":"00"}]}"#,
+        )
+        .unwrap_or_else(|error| panic!("{error}"));
+        let read = read_shard(&folder, &manifest, 7);
+        std::fs::remove_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+        assert!(matches!(
+            read,
+            Err(DataError::Cells {
+                map: 191_106_007,
+                found: 559,
+                ..
+            })
+        ));
     }
 
     #[test]

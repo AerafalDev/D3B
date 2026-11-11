@@ -11,6 +11,9 @@ namespace D3B.Extractor.Unity;
 internal sealed class Fields
 {
     private readonly Dictionary<string, object> _values = new(StringComparer.Ordinal);
+
+    // A field and a property's backing field of one name: an error only for a getter that asks for it.
+    private readonly HashSet<string> _ambiguous = new(StringComparer.Ordinal);
     private readonly string _owner;
 
     private Fields(string owner)
@@ -34,13 +37,129 @@ internal sealed class Fields
 
             if (value is not null && !fields._values.TryAdd(field.Field, value))
             {
-                throw new InvalidDataException($"{owner} has two fields named {field.Field}: which one the extractor should read is not known.");
+                fields._ambiguous.Add(field.Field);
             }
         }
 
         reader.AlignAfter(node);
 
         return fields;
+    }
+
+    private static object? ReadValue(ref ObjectReader reader, int node, string owner)
+    {
+        var tree = reader.Tree;
+        var field = tree[node];
+
+        // A registry inside a reference type's tree is never written there: the object's own registry holds them all.
+        if (field.IsRegistry)
+        {
+            return null;
+        }
+
+        switch (field.Type)
+        {
+            case "float":
+                return reader.ReadSingle(node);
+            case "int" or "SInt32":
+                return reader.ReadInt32(node);
+            case "unsigned int" or "UInt32":
+                return reader.ReadUInt32(node);
+            case "SInt64" or "long long":
+                return reader.ReadInt64(node);
+            case "UInt64" or "unsigned long long":
+                return reader.ReadUInt64(node);
+            case "SInt16" or "short":
+                return reader.ReadInt16(node);
+            case "UInt16" or "unsigned short":
+                return reader.ReadUInt16(node);
+            case "SInt8":
+                return reader.ReadSByte(node);
+
+            // The client stores flags and small numbers alike as UInt8: the getter says which it is.
+            case "UInt8":
+                return reader.ReadByte(node);
+            case "bool":
+                return reader.ReadBoolean(node);
+            case "string":
+                return reader.ReadString(node);
+            case "AleVector2" or "Vector2f":
+                return reader.ReadVector2(node);
+            case "AleVector4" or "Vector4f":
+                return reader.ReadVector4(node);
+            case "managedReference":
+                return reader.ReadReference(node);
+        }
+
+        var array = ArrayNode(tree, node);
+
+        if (array is -1)
+        {
+            if (field.Children.Length > 0)
+            {
+                return Read(ref reader, node, owner);
+            }
+
+            reader.Skip(node);
+
+            return null;
+        }
+
+        var item = tree[tree[array].Children[1]];
+
+        switch (item.Type)
+        {
+            case "string":
+                return reader.ReadStringArray(node);
+            case "float":
+                return reader.ReadSingleArray(node);
+            case "int" or "SInt32" or "unsigned int" or "UInt32":
+                return reader.ReadInt32Array(node);
+        }
+
+        if (item.Children.Length > 0)
+        {
+            return ReadItems(ref reader, node, owner);
+        }
+
+        // An array of another primitive, such as bytes, is not read by any table yet.
+        reader.Skip(node);
+
+        return null;
+    }
+
+    /// <summary>The array node of a field: the field itself, or its child for vectors; -1 for a field that holds none.</summary>
+    private static int ArrayNode(TypeTree tree, int node)
+    {
+        if (tree[node].IsArray)
+        {
+            return node;
+        }
+
+        foreach (var child in tree[node].Children)
+        {
+            if (tree[child].IsArray)
+            {
+                return child;
+            }
+        }
+
+        return -1;
+    }
+
+    private static List<Fields> ReadItems(ref ObjectReader reader, int node, string owner)
+    {
+        var item = reader.BeginArray(node, out var count);
+        var items = new List<Fields>(count);
+
+        for (var i = 0; i < count; i++)
+        {
+            items.Add(Read(ref reader, item, owner));
+        }
+
+        reader.EndArray(node);
+
+        return items;
     }
 
     /// <summary>Gets whether the object has a field, which some layouts of a class lack.</summary>
@@ -175,124 +294,13 @@ internal sealed class Fields
         return Get<Fields>(name);
     }
 
-    private static object? ReadValue(ref ObjectReader reader, int node, string owner)
-    {
-        var tree = reader.Tree;
-        var field = tree[node];
-
-        // A registry inside a reference type's tree is never written there: the object's own registry holds them all.
-        if (field.IsRegistry)
-        {
-            return null;
-        }
-
-        switch (field.Type)
-        {
-            case "float":
-                return reader.ReadSingle(node);
-            case "int" or "SInt32":
-                return reader.ReadInt32(node);
-            case "unsigned int" or "UInt32":
-                return reader.ReadUInt32(node);
-            case "SInt64" or "long long":
-                return reader.ReadInt64(node);
-            case "UInt64" or "unsigned long long":
-                return reader.ReadUInt64(node);
-            case "SInt16" or "short":
-                return reader.ReadInt16(node);
-            case "UInt16" or "unsigned short":
-                return reader.ReadUInt16(node);
-            case "SInt8":
-                return reader.ReadSByte(node);
-
-            // The client stores flags and small numbers alike as UInt8: the getter says which it is.
-            case "UInt8":
-                return reader.ReadByte(node);
-            case "bool":
-                return reader.ReadBoolean(node);
-            case "string":
-                return reader.ReadString(node);
-            case "AleVector2" or "Vector2f":
-                return reader.ReadVector2(node);
-            case "AleVector4" or "Vector4f":
-                return reader.ReadVector4(node);
-            case "managedReference":
-                return reader.ReadReference(node);
-        }
-
-        var array = ArrayNode(tree, node);
-
-        if (array is -1)
-        {
-            if (field.Children.Length > 0)
-            {
-                return Read(ref reader, node, owner);
-            }
-
-            reader.Skip(node);
-
-            return null;
-        }
-
-        var item = tree[tree[array].Children[1]];
-
-        switch (item.Type)
-        {
-            case "string":
-                return reader.ReadStringArray(node);
-            case "float":
-                return reader.ReadSingleArray(node);
-            case "int" or "SInt32" or "unsigned int" or "UInt32":
-                return reader.ReadInt32Array(node);
-        }
-
-        if (item.Children.Length > 0)
-        {
-            return ReadItems(ref reader, node, owner);
-        }
-
-        // An array of another primitive, such as bytes, is not read by any table yet.
-        reader.Skip(node);
-
-        return null;
-    }
-
-    /// <summary>The array node of a field: the field itself, or its child for vectors; -1 for a field that holds none.</summary>
-    private static int ArrayNode(TypeTree tree, int node)
-    {
-        if (tree[node].IsArray)
-        {
-            return node;
-        }
-
-        foreach (var child in tree[node].Children)
-        {
-            if (tree[child].IsArray)
-            {
-                return child;
-            }
-        }
-
-        return -1;
-    }
-
-    private static List<Fields> ReadItems(ref ObjectReader reader, int node, string owner)
-    {
-        var item = reader.BeginArray(node, out var count);
-        var items = new List<Fields>(count);
-
-        for (var i = 0; i < count; i++)
-        {
-            items.Add(Read(ref reader, item, owner));
-        }
-
-        reader.EndArray(node);
-
-        return items;
-    }
-
     private object Value(string name)
     {
+        if (_ambiguous.Contains(name))
+        {
+            throw new InvalidDataException($"{_owner} has two fields named {name}: which one the extractor should read is not known.");
+        }
+
         return _values.TryGetValue(name, out var value)
             ? value
             : throw new InvalidDataException($"{_owner} has no field {name}: the client changed this type, so the extractor needs updating.");

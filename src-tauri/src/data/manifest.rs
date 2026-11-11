@@ -50,6 +50,8 @@ pub enum DataError {
     Format { found: u32, expected: u32 },
     #[error("the manifest lists no table {0}")]
     MissingTable(String),
+    #[error("map {map} has {found} cells, where every map has {expected}")]
+    Cells { map: u32, found: usize, expected: usize },
     #[error("{path} is not a valid table: {source}")]
     Table {
         path: PathBuf,
@@ -159,6 +161,24 @@ mod tests {
             manifest.read::<u32>(&folder, "zaaps"),
             Err(DataError::MissingTable(name)) if name == "zaaps"
         ));
+    }
+
+    #[test]
+    fn says_which_listed_table_is_missing_or_unreadable() {
+        let folder = std::env::temp_dir().join(format!("d3b-data-test-tables-{}", std::process::id()));
+        std::fs::create_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+        std::fs::write(folder.join("items.json"), "{").unwrap_or_else(|error| panic!("{error}"));
+        let manifest = Manifest::parse(VALID).unwrap_or_else(|error| panic!("{error}"));
+        assert!(matches!(
+            manifest.read::<u32>(&folder, "items"),
+            Err(DataError::Table { .. })
+        ));
+        std::fs::remove_file(folder.join("items.json")).unwrap_or_else(|error| panic!("{error}"));
+        assert!(matches!(
+            manifest.read::<u32>(&folder, "items"),
+            Err(DataError::Io { .. })
+        ));
+        std::fs::remove_dir(&folder).unwrap_or_else(|error| panic!("{error}"));
     }
 
     #[test]
