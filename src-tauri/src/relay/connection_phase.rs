@@ -3,13 +3,275 @@
 //! their answers. Every byte passes untouched but the server-selection answer, whose game host and ports become the
 //! relay's, so that the game connection comes through it too.
 
-use std::sync::Mutex;
-use std::time::Instant;
+use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::task::JoinSet;
+use tokio::time::Instant;
 
 use super::ankama_config::is_host_name;
 use super::handover::{GameServer, Handover, Ticket};
 use super::wire::{self, Field, Value};
 use super::{ADDRESS, GAME_PORT, frame};
+
+/// How long a server frame may take to come whole once begun: the selection's answer came 29 ms after the request
+/// (inferred, 3.7.12.12).
+const HOLD: Duration = Duration::from_secs(5);
+/// The most of one server frame that is held; the answers are 455 and 83 bytes (inferred, 3.7.12.12).
+const HOLD_LIMIT: usize = 64 * 1024;
+
+/// What a connection phase did, for the relay's status.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Handed {
+    /// The selection's answer was rewritten: the game connection comes to the relay.
+    Over,
+    /// The client asked for a server and the answer was not understood: it passed untouched, so the game connection
+    /// goes straight to Ankama.
+    NotUnderstood,
+    /// The client never chose a server.
+    NotAsked,
+}
+
+/// Accepts connection phases on `listener`, each relayed to Ankama's connection host `host` on the port the client
+/// chose, until the task is aborted; its connections end with it. `report` hears how each one ended.
+#[cfg_attr(
+    test,
+    expect(
+        dead_code,
+        reason = "it listens on the relay's address, so the app runs it and the owner measures it"
+    )
+)]
+pub(crate) async fn serve(
+    listener: TcpListener,
+    host: String,
+    handover: Arc<Mutex<Handover>>,
+    report: impl Fn(Handed) + Clone + Send + 'static,
+) {
+    let port = listener.local_addr().map_or(0, |address| address.port());
+    let mut connections = JoinSet::new();
+    loop {
+        let Ok((client, _)) = listener.accept().await else {
+            // Out of sockets, say: wait rather than spin.
+            tokio::time::sleep(Duration::from_millis(100)).await;
+            continue;
+        };
+        let host = host.clone();
+        let handover = Arc::clone(&handover);
+        let report = report.clone();
+        connections.spawn(async move {
+            let Ok(server) = connect(&host, port).await else {
+                return;
+            };
+            let _ = client.set_nodelay(true);
+            let handed = relay(client, server, &handover).await;
+            report(handed);
+        });
+        while connections.try_join_next().is_some() {}
+    }
+}
+
+/// Connects to `host` on `port`, trying each of its addresses: Ankama's hosts are load balancers of three addresses,
+/// resolved at each connection (inferred, `main:docs/client.md`, "Configuration"). A loopback address is skipped, so
+/// the relay never connects to itself.
+#[cfg_attr(
+    test,
+    expect(
+        dead_code,
+        reason = "it reaches Ankama, so the app runs it and the owner measures it"
+    )
+)]
+pub(crate) async fn connect(host: &str, port: u16) -> std::io::Result<TcpStream> {
+    /// How long a connection to one of Ankama's addresses may take.
+    const CONNECT: Duration = Duration::from_secs(10);
+
+    let mut last = std::io::Error::new(std::io::ErrorKind::NotFound, "the host has no address");
+    let addresses: Vec<SocketAddr> = tokio::net::lookup_host((host, port)).await?.collect();
+    for address in addresses.into_iter().filter(|address| !is_loopback(address)) {
+        match tokio::time::timeout(CONNECT, TcpStream::connect(address)).await {
+            Ok(Ok(stream)) => {
+                let _ = stream.set_nodelay(true);
+                return Ok(stream);
+            }
+            Ok(Err(error)) => last = error,
+            Err(_) => last = std::io::Error::from(std::io::ErrorKind::TimedOut),
+        }
+    }
+    Err(last)
+}
+
+/// Whether `address` reaches this machine, an IPv4 address written as IPv6 included.
+fn is_loopback(address: &SocketAddr) -> bool {
+    address.ip().to_canonical().is_loopback()
+}
+
+/// Relays one connection phase both ways until both sides are done, or a length that is not a frame's closes it.
+pub(crate) async fn relay<C, S>(client: C, server: S, handover: &Mutex<Handover>) -> Handed
+where
+    C: AsyncRead + AsyncWrite + Unpin,
+    S: AsyncRead + AsyncWrite + Unpin,
+{
+    let (mut client_read, mut client_write) = tokio::io::split(client);
+    let (mut server_read, mut server_write) = tokio::io::split(server);
+    let asked = AtomicBool::new(false);
+    let upstream = async {
+        let closing = watch_requests(&mut client_read, &mut server_write, &asked).await;
+        let _ = server_write.shutdown().await;
+        closing
+    };
+    let downstream = async {
+        let ended = pass_answers(&mut server_read, &mut client_write, &asked, handover).await;
+        let _ = client_write.shutdown().await;
+        ended
+    };
+    tokio::pin!(upstream, downstream);
+    // Both directions run in this one task, so the client's request is noted before the server's answer is read. A
+    // length that is not a frame's closes both at once (`docs/relay.md`, "The connections").
+    let handed = tokio::select! {
+        closing = &mut upstream => {
+            if closing { Handed::NotAsked } else { (&mut downstream).await.0 }
+        }
+        (handed, closing) = &mut downstream => {
+            if !closing {
+                (&mut upstream).await;
+            }
+            handed
+        }
+    };
+    if handed == Handed::NotAsked && asked.load(Ordering::Relaxed) {
+        return Handed::NotUnderstood;
+    }
+    handed
+}
+
+/// Copies the client's bytes to the server as they come, noting when a frame asks for a server. Frames are only read,
+/// never changed; past one too large to hold, the rest is only copied. `true` when a length is not a frame's, which
+/// closes the connection.
+async fn watch_requests(
+    from: &mut (impl AsyncRead + Unpin),
+    to: &mut (impl AsyncWrite + Unpin),
+    asked: &AtomicBool,
+) -> bool {
+    let mut buffer = Vec::new();
+    let mut framed = true;
+    // On the heap, so that each connection's task stays small.
+    let mut chunk = vec![0; 8192];
+    loop {
+        let read = match from.read(&mut chunk).await {
+            Ok(0) | Err(_) => return false,
+            Ok(read) => read,
+        };
+        if !framed {
+            if to.write_all(&chunk[..read]).await.is_err() {
+                return false;
+            }
+            continue;
+        }
+        buffer.extend_from_slice(&chunk[..read]);
+        loop {
+            match frame::header(&buffer) {
+                Ok(Some((header, body))) if buffer.len() >= header + body => {
+                    if is_selection_request(&buffer[header..header + body]) {
+                        asked.store(true, Ordering::Relaxed);
+                    }
+                    buffer.drain(..header + body);
+                }
+                Ok(Some((_, body))) if body > HOLD_LIMIT => {
+                    framed = false;
+                    buffer = Vec::new();
+                    break;
+                }
+                Ok(_) => break,
+                Err(_) => return true,
+            }
+        }
+        // Written once read, so that a length that is not a frame's never reaches the server.
+        if to.write_all(&chunk[..read]).await.is_err() {
+            return false;
+        }
+    }
+}
+
+/// Copies the server's bytes to the client a whole frame at a time, so that the selection's answer, once the client
+/// asked for a server, is rewritten when understood. A frame not whole within [`HOLD`] of its first byte, or over
+/// [`HOLD_LIMIT`], passes as it came, and the rest is only copied. Also `true` when a length is not a frame's, which
+/// closes the connection.
+async fn pass_answers(
+    from: &mut (impl AsyncRead + Unpin),
+    to: &mut (impl AsyncWrite + Unpin),
+    asked: &AtomicBool,
+    handover: &Mutex<Handover>,
+) -> (Handed, bool) {
+    let mut buffer: Vec<u8> = Vec::new();
+    // On the heap, so that each connection's task stays small.
+    let mut chunk = vec![0; 8192];
+    let mut handed = Handed::NotAsked;
+    let mut begun: Option<Instant> = None;
+    loop {
+        let read = match begun {
+            Some(begun) => tokio::time::timeout_at(begun + HOLD, from.read(&mut chunk)).await,
+            None => Ok(from.read(&mut chunk).await),
+        };
+        let read = match read {
+            Ok(Ok(0) | Err(_)) => {
+                let _ = to.write_all(&buffer).await;
+                return (handed, false);
+            }
+            Ok(Ok(read)) => read,
+            Err(_) => return (copy(&buffer, from, to, handed).await, false),
+        };
+        buffer.extend_from_slice(&chunk[..read]);
+        let mut completed = false;
+        loop {
+            match frame::header(&buffer) {
+                Ok(Some((header, body))) if buffer.len() >= header + body => {
+                    let total = header + body;
+                    let rewritten = (handed == Handed::NotAsked && asked.load(Ordering::Relaxed))
+                        .then(|| rewrite_selection(&buffer[header..total], handover, Instant::now().into_std()))
+                        .flatten();
+                    if rewritten.is_some() {
+                        // Handed over even if the client is gone: the ticket waits in the handover.
+                        handed = Handed::Over;
+                    }
+                    let written = to.write_all(rewritten.as_deref().unwrap_or(&buffer[..total])).await;
+                    if written.is_err() {
+                        return (handed, false);
+                    }
+                    buffer.drain(..total);
+                    completed = true;
+                    if rewritten.is_some() {
+                        return (copy(&buffer, from, to, handed).await, false);
+                    }
+                }
+                Ok(Some((_, body))) if body > HOLD_LIMIT => return (copy(&buffer, from, to, handed).await, false),
+                Ok(_) => break,
+                Err(_) => return (handed, true),
+            }
+        }
+        // The hold runs from the first byte of the frame held, never through a silence between frames.
+        begun = match (buffer.is_empty(), completed, begun) {
+            (true, _, _) => None,
+            (false, false, Some(begun)) => Some(begun),
+            (false, _, _) => Some(Instant::now()),
+        };
+    }
+}
+
+/// Writes what is held, then copies the rest untouched.
+async fn copy(
+    held: &[u8],
+    from: &mut (impl AsyncRead + Unpin),
+    to: &mut (impl AsyncWrite + Unpin),
+    handed: Handed,
+) -> Handed {
+    if to.write_all(held).await.is_ok() {
+        let _ = tokio::io::copy(from, to).await;
+    }
+    handed
+}
 
 /// Whether a client frame's body asks for a server: `request = 1 { id = 1, server_selection = 4 }` (path 1.4,
 /// `artifacts/studies/relay.md`, addendum).
@@ -26,7 +288,7 @@ fn is_selection_request(body: &[u8]) -> bool {
 /// `response = 2 { id = 1, server_selection = 4 { success = 1 { ticket = 1, host = 2, ports = 3 } } }`, a ticket of
 /// 32 letters and digits, a host name, packed ports from 1 to 65535 (path 2.4.1, `artifacts/studies/relay.md`,
 /// addendum; the shape checks are the owner's choice for builds not measured, 2026-11-11).
-fn rewrite_selection(body: &[u8], handover: &Mutex<Handover>, now: Instant) -> Option<Vec<u8>> {
+fn rewrite_selection(body: &[u8], handover: &Mutex<Handover>, now: std::time::Instant) -> Option<Vec<u8>> {
     let response = whole(only(body, 2)?)?;
     let selection = bytes_of(&response, 4)?;
     let success = whole(only(selection, 1)?)?;
@@ -157,8 +419,11 @@ fn packed_ports(mut bytes: &[u8]) -> Option<Vec<u16>> {
     }
     (!ports.is_empty()).then_some(ports)
 }
+
 #[cfg(test)]
 mod tests {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
+
     use super::*;
 
     const TICKET: &[u8] = b"0123456789abcdef0123456789ABCDEF";
@@ -172,6 +437,12 @@ mod tests {
             number,
             value: Value::Bytes(value),
         }
+    }
+
+    fn framed(body: &[u8]) -> Vec<u8> {
+        let mut out = Vec::new();
+        frame::encode(body, &mut out);
+        out
     }
 
     fn packed(ports: &[u64]) -> Vec<u8> {
@@ -248,8 +519,8 @@ mod tests {
     fn rewrites_the_answer_to_the_relays_game_port() {
         let handover = Mutex::new(Handover::default());
 
-        let rewritten =
-            rewrite_selection(&answer(), &handover, Instant::now()).unwrap_or_else(|| panic!("not rewritten"));
+        let rewritten = rewrite_selection(&answer(), &handover, std::time::Instant::now())
+            .unwrap_or_else(|| panic!("not rewritten"));
 
         assert_eq!(
             read_answer(&rewritten),
@@ -259,7 +530,7 @@ mod tests {
         let waiting = handover
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .take_from(&first_frame, Instant::now());
+            .take_from(&first_frame, std::time::Instant::now());
         assert_eq!(
             waiting,
             Some(GameServer {
@@ -299,7 +570,11 @@ mod tests {
         ] {
             let handover = Mutex::new(Handover::default());
 
-            assert_eq!(rewrite_selection(&body, &handover, Instant::now()), None, "{body:?}");
+            assert_eq!(
+                rewrite_selection(&body, &handover, std::time::Instant::now()),
+                None,
+                "{body:?}"
+            );
             assert_eq!(
                 handover.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len(),
                 0
@@ -345,7 +620,11 @@ mod tests {
         ] {
             let handover = Mutex::new(Handover::default());
 
-            assert_eq!(rewrite_selection(&body, &handover, Instant::now()), None, "{body:?}");
+            assert_eq!(
+                rewrite_selection(&body, &handover, std::time::Instant::now()),
+                None,
+                "{body:?}"
+            );
             assert_eq!(
                 handover.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len(),
                 0
@@ -353,7 +632,7 @@ mod tests {
         }
         // The same answer written minimally is rewritten: only the padding stops it.
         let handover = Mutex::new(Handover::default());
-        assert!(rewrite_selection(&message(&[bytes(2, &response)]), &handover, Instant::now()).is_some());
+        assert!(rewrite_selection(&message(&[bytes(2, &response)]), &handover, std::time::Instant::now()).is_some());
     }
 
     #[test]
@@ -362,5 +641,289 @@ mod tests {
         assert!(!is_selection_request(&identification()));
         assert!(!is_selection_request(&answer()));
         assert!(!is_selection_request(&[0xff]));
+    }
+
+    /// A connection phase relayed over in-memory streams: the client's end and the server's end.
+    fn phase() -> (DuplexStream, DuplexStream, tokio::task::JoinHandle<(Handed, usize)>) {
+        let (client, client_side) = tokio::io::duplex(1 << 16);
+        let (server, server_side) = tokio::io::duplex(1 << 16);
+        let relay = tokio::spawn(async move {
+            let handover = Mutex::new(Handover::default());
+            let handed = relay(client_side, server_side, &handover).await;
+            let waiting = handover.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len();
+            (handed, waiting)
+        });
+        (client, server, relay)
+    }
+
+    async fn read_exactly(stream: &mut DuplexStream, length: usize) -> Vec<u8> {
+        let mut bytes = vec![0; length];
+        stream
+            .read_exact(&mut bytes)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        bytes
+    }
+
+    async fn send(stream: &mut DuplexStream, bytes: &[u8]) {
+        stream.write_all(bytes).await.unwrap_or_else(|error| panic!("{error}"));
+    }
+
+    #[tokio::test]
+    async fn relays_the_phase_and_rewrites_only_the_answer() {
+        let (mut client, mut server, relay) = phase();
+        let identification = framed(&identification());
+        let identified = framed(&message(&[bytes(2, &message(&[bytes(1, b"1"), bytes(3, b"account")]))]));
+        let request = framed(&selection_request());
+        let answer = framed(&answer());
+
+        send(&mut client, &identification).await;
+        assert_eq!(read_exactly(&mut server, identification.len()).await, identification);
+        send(&mut server, &identified).await;
+        assert_eq!(read_exactly(&mut client, identified.len()).await, identified);
+        send(&mut client, &request).await;
+        assert_eq!(read_exactly(&mut server, request.len()).await, request);
+        // The answer comes cut in two reads, as the network may cut it.
+        send(&mut server, &answer[..10]).await;
+        tokio::task::yield_now().await;
+        send(&mut server, &answer[10..]).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        assert_eq!(read_answer(&received).1, "127.0.13.59");
+        assert_eq!(relay.await.ok(), Some((Handed::Over, 1)));
+    }
+
+    #[tokio::test]
+    async fn an_answer_before_any_selection_passes_untouched() {
+        let (mut client, mut server, relay) = phase();
+        let answer = framed(&answer());
+
+        send(&mut server, &answer).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        assert_eq!(received, answer);
+        assert_eq!(relay.await.ok(), Some((Handed::NotAsked, 0)));
+    }
+
+    #[tokio::test]
+    async fn an_answer_not_understood_passes_untouched() {
+        let (mut client, mut server, relay) = phase();
+        let request = framed(&selection_request());
+        let error = framed(&message(&[bytes(
+            2,
+            &message(&[bytes(1, b"3"), bytes(4, &message(&[bytes(2, b"\x02")]))]),
+        )]));
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &error).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        assert_eq!(received, error);
+        assert_eq!(relay.await.ok(), Some((Handed::NotUnderstood, 0)));
+    }
+
+    #[test]
+    fn never_connects_back_to_this_machine() {
+        for address in ["127.0.13.59:5555", "[::1]:5555", "[::ffff:127.0.13.59]:5555"] {
+            assert!(
+                is_loopback(&address.parse().unwrap_or_else(|error| panic!("{error}"))),
+                "{address}"
+            );
+        }
+        assert!(!is_loopback(
+            &"203.0.113.7:5555".parse().unwrap_or_else(|error| panic!("{error}"))
+        ));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_silence_before_the_selection_holds_nothing() {
+        let (mut client, mut server, relay) = phase();
+        let identified = framed(&message(&[bytes(2, &message(&[bytes(1, b"1"), bytes(3, b"account")]))]));
+        let request = framed(&selection_request());
+        let answer = framed(&answer());
+
+        send(&mut server, &identified).await;
+        assert_eq!(read_exactly(&mut client, identified.len()).await, identified);
+        // The player takes two minutes to choose a server.
+        tokio::time::sleep(Duration::from_secs(120)).await;
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &answer).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        assert_eq!(read_answer(&received).1, "127.0.13.59");
+        assert_eq!(relay.await.ok(), Some((Handed::Over, 1)));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn the_hold_starts_again_with_each_frame() {
+        let (mut client, mut server, relay) = phase();
+        let identified = framed(&message(&[bytes(2, &message(&[bytes(1, b"1"), bytes(3, b"account")]))]));
+        let request = framed(&selection_request());
+        let answer = framed(&answer());
+        let mut both = identified.clone();
+        both.extend_from_slice(&answer[..10]);
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &identified[..5]).await;
+        tokio::time::sleep(Duration::from_millis(4_900)).await;
+        send(&mut server, &both[5..]).await;
+        tokio::time::sleep(Duration::from_millis(600)).await;
+        send(&mut server, &answer[10..]).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        assert_eq!(&received[..identified.len()], identified);
+        assert_eq!(read_answer(&received[identified.len()..]).1, "127.0.13.59");
+        assert_eq!(relay.await.ok().map(|(handed, _)| handed), Some(Handed::Over));
+    }
+
+    #[tokio::test]
+    async fn bytes_after_the_answer_pass_too() {
+        let (mut client, mut server, relay) = phase();
+        let request = framed(&selection_request());
+        let mut answer_and_more = framed(&answer());
+        answer_and_more.extend_from_slice(b"\x03abc");
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &answer_and_more).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        let mut expected =
+            rewrite_selection(&answer(), &Mutex::default(), std::time::Instant::now()).unwrap_or_default();
+        expected.extend_from_slice(b"\x03abc");
+        assert_eq!(received, expected);
+        assert_eq!(relay.await.ok().map(|(handed, _)| handed), Some(Handed::Over));
+    }
+
+    #[tokio::test]
+    async fn a_frame_too_large_to_hold_passes_at_once() {
+        let (mut client, mut server, relay) = phase();
+        let request = framed(&selection_request());
+        let mut header = Vec::new();
+        wire::write_varint(HOLD_LIMIT as u64 + 1, &mut header);
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &header).await;
+        send(&mut server, b"start").await;
+
+        // Passed as it came, without waiting for the rest.
+        let early = tokio::time::timeout(Duration::from_millis(100), read_exactly(&mut client, header.len() + 5)).await;
+        assert!(early.is_ok(), "held");
+        drop(server);
+        drop(client);
+        assert_eq!(relay.await.ok().map(|(handed, _)| handed), Some(Handed::NotUnderstood));
+    }
+
+    /// Whether both ends see the relay close, within a second of paused time, though neither closed its side.
+    async fn closed_both_ways(client: &mut DuplexStream, server: &mut DuplexStream) -> bool {
+        let mut rest = Vec::new();
+        let client_closed = tokio::time::timeout(Duration::from_secs(1), client.read_to_end(&mut rest)).await;
+        let server_closed = tokio::time::timeout(Duration::from_secs(1), server.read_to_end(&mut rest)).await;
+        matches!(client_closed, Ok(Ok(_))) && matches!(server_closed, Ok(Ok(_))) && rest.is_empty()
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_server_length_that_is_not_a_frames_closes_the_connection() {
+        let (mut client, mut server, relay) = phase();
+
+        send(&mut server, &[0x80; 5]).await;
+
+        assert!(closed_both_ways(&mut client, &mut server).await);
+        assert!(relay.await.is_ok());
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_client_length_that_is_not_a_frames_closes_the_connection() {
+        let (mut client, mut server, relay) = phase();
+
+        send(&mut client, &[0x80; 5]).await;
+
+        assert!(closed_both_ways(&mut client, &mut server).await);
+        assert!(relay.await.is_ok());
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_frame_not_whole_in_time_passes_as_it_came() {
+        let (mut client, mut server, relay) = phase();
+        let request = framed(&selection_request());
+        let answer = framed(&answer());
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &answer[..10]).await;
+        // Five seconds, as docs/relay.md says, written out so that the test pins it: nothing before, all after.
+        let early = tokio::time::timeout(Duration::from_millis(4_999), read_exactly(&mut client, 10)).await;
+        assert!(early.is_err(), "passed before five seconds");
+        tokio::time::sleep(Duration::from_millis(2)).await;
+
+        // Already there once the hold is over: the paused clock would otherwise move on to whenever they come.
+        let held = tokio::time::timeout(Duration::from_millis(1), read_exactly(&mut client, 10)).await;
+        assert_eq!(held.ok().as_deref(), Some(&answer[..10]));
+        send(&mut server, &answer[10..]).await;
+        assert_eq!(read_exactly(&mut client, answer.len() - 10).await, &answer[10..]);
+        drop(server);
+        drop(client);
+        assert_eq!(relay.await.ok().map(|(handed, _)| handed), Some(Handed::NotUnderstood));
+    }
+
+    #[tokio::test]
+    async fn a_frame_that_is_not_a_message_passes_untouched() {
+        let (mut client, mut server, relay) = phase();
+        let request = framed(&selection_request());
+        let garbage = framed(&[0xff; 12]);
+
+        send(&mut client, &request).await;
+        read_exactly(&mut server, request.len()).await;
+        send(&mut server, &garbage).await;
+        server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+        let mut received = Vec::new();
+        client
+            .read_to_end(&mut received)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        drop(client);
+
+        assert_eq!(received, garbage);
+        assert_eq!(relay.await.ok(), Some((Handed::NotUnderstood, 0)));
     }
 }
