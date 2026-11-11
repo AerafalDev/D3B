@@ -16,13 +16,15 @@ then comes in one frame of the connection phase, which must change for the game 
 - **The redirect** is the C# one: the `ConfigUrl` line points at a `file:` copy of Ankama's JSON with the connection
   host replaced by `127.0.13.59`; listeners on ports 5555 and 443 (connection phase) and 5556 (game), fixed. A port
   that cannot be taken stops the redirect with the port named.
-- **For the app's life**: applied at start, put back at quit and before an update installs, only if the line is still
-  D3B's; `version` polled every 2 s to apply again after the launcher rewrites it. No switch in the interface.
+- **For the app's life**: applied at start, put back at quit and before an update installs (the webview awaits a
+  restore command), only if the line is still D3B's; a `ConfigUrl` neither Ankama's `https:` nor D3B's is refused;
+  `version` polled every 2 s to apply again after the launcher rewrites it. No switch in the interface.
 - **The state** (the original URL, the last JSON from Ankama, the copy) lives in the app's local data folder, outside
   the install folder.
 - **One frame rewritten**, the server-selection answer (path 2.4.1, `host = 2`, `ports = 3`), by protobuf field path
-  with our own wire walker, only when it is read whole and encodes back to its own bytes; anything else passes
-  untouched. The game connection is routed by the ticket found by wire format alone. No game mapping, so any build.
+  with our own wire walker, only when it is read whole, encodes back to its own bytes and has the expected shape (a
+  32-character ticket, a host name, ports); anything else passes untouched. On a build not measured it is tried with
+  those checks. The game connection is routed by the ticket found by wire format alone. No game mapping, so any build.
 - **Tokio and reqwest** become direct dependencies (already in the lockfile through Tauri and its updater).
 - **Windows only** until a tester measures macOS and Linux; there the relay says it is not measured and redirects
   nothing.
@@ -38,5 +40,6 @@ then comes in one frame of the connection phase, which must change for the game 
 ## Consequences
 
 A client started before D3B is not relayed; one started after D3B crashed cannot connect until D3B starts again or
-the launcher repairs. Two D3B instances would share the one `version` file: the single-instance plugin keeps one per
-user. Each client update is measured again, since Ankama could refuse `file:` or check the file.
+the launcher repairs; quitting or updating D3B drops every relayed game connection. Two D3B instances would share
+the one `version` file: the single-instance plugin keeps one per user, and the C# D3B's redirect is refused. Each
+client update is measured again, since Ankama could refuse `file:` or check the file.
