@@ -5,7 +5,10 @@ argument-hint: "The behaviour, such as 'how the server answers a harvest request
 ---
 
 1. Look for an existing study in `artifacts/studies/`, then in the C# version's measured docs:
-   `git show main:docs/client.md`, `main:docs/client-game.md` (grep their headings first; they are large).
+   `git show main:docs/client.md`, `main:docs/client-game.md` (grep their headings first; they are large). When the
+   behaviour may have changed since a study was written, check the update notes
+   (<https://www.dofuspourlesnoobs.com/mises-a-jour-dofus.html>, a summary of every Dofus update) for the builds
+   between.
 2. Give the `protocol-researcher` agent the behaviour and the questions the feature needs answered. It writes
    `artifacts/studies/<subject>.md`, which Git ignores since it quotes the client.
 3. Read its summary. Each finding is `verified` (a capture or the client's data) or `inferred` (docs or another
