@@ -63,7 +63,8 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   cannot be taken, D3B does not redirect and the indicator names the port.
 - **Framing**: every byte, both ways, is in frames of a protobuf varint length (at most 5 bytes) then that many bytes.
   A frame over 16 MiB, or a sixth length byte, closes the connection; the relay reads frames in the connection phase
-  and the game connection's first frame, then copies the game's bytes untouched until the protocol needs its frames.
+  and the game connection's first frame, then copies the game's bytes untouched. Once the protocol taps the game
+  connection, such a frame there stops only the tap, and the copy goes on ([protocol.md](protocol.md#the-tap)).
   Nothing is encrypted or compressed.
 - **The connection phase**: the relay resolves Ankama's connection host at each connection (a load balancer) and
   connects on the port the client chose. Four frames: the identification (with the launcher's login token) and its
@@ -99,7 +100,8 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
 
 ## Secrets
 
-The login token, the ticket and the game frames identify the account: they are never logged, shown, or written to disk.
+The login token, the ticket and the game frames identify the account: they are never logged, shown, or written to disk,
+but in a capture the maintainer asks for with `D3B_RECORD` ([protocol.md](protocol.md#captures)).
 A ticket's `Debug` prints `<redacted>`; tests on captures print only file names, offsets and lengths.
 
 ## Platforms

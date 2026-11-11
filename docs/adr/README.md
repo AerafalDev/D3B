@@ -16,3 +16,4 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0009](0009-the-app-identifier-is-io-github-aerafaldev-d3b.md) | The app's identifier is `io.github.aerafaldev.d3b` | accepted |
 | [0010](0010-flags-by-the-names-of-the-clients-enums.md) | Flags are written by the names the client's enums give them, read with Cpp2IL | accepted |
 | [0011](0011-the-relay-redirects-configurl-and-rewrites-one-frame.md) | The relay redirects the client's `ConfigUrl` for the app's life and rewrites one frame by field path | accepted |
+| [0012](0012-pins-per-build-over-our-own-proto-files.md) | The protocol decodes with prost over our own `.proto` files, paired with each build by committed pins | accepted |
