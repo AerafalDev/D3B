@@ -79,7 +79,8 @@ export function RelayIndicator() {
         </span>
       </TooltipTrigger>
       {details.length > 0 && (
-        <TooltipContent>
+        // The registry's tooltip lays its children in a row: the lines go one under the other.
+        <TooltipContent className="max-w-md flex-col items-start gap-0.5">
           {details.map((line) => (
             <p key={line.text} className={cn(line.detail && "pl-3")}>
               {line.text}
