@@ -66,13 +66,11 @@ fn the_gate_reads_a_build_with_pins_only() {
 async fn counts_each_outcome_and_keeps_the_current_map() {
     let (tap, reports) = opened(Some("3.7.13.17"), 16);
 
-    tap.frame(Side::Server, &event("jow", &message(&[varint(1, 153_092_354)])));
-    tap.frame(
-        Side::Server,
-        &event("iqq", &message(&[varint(1, 1), varint(2, 2), varint(3, 3)])),
-    );
-    tap.frame(Side::Server, &event("jqk", &[]));
-    tap.frame(Side::Server, &event("jow", &message(&[bytes(1, b"x")])));
+    tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 153_092_354)]))));
+    let weight = event("iqq", &message(&[varint(1, 1), varint(2, 2), varint(3, 3)]));
+    tap.give(Side::Server, Some(&weight));
+    tap.give(Side::Server, Some(&event("jqk", &[])));
+    tap.give(Side::Server, Some(&event("jow", &message(&[bytes(1, b"x")]))));
     after(1_000).await;
 
     let reports = taken(&reports);
@@ -102,7 +100,7 @@ async fn reports_at_once_then_at_most_once_a_second_then_its_end() {
     assert_eq!(taken(&reports).len(), 1, "told at once");
 
     for _ in 0..100 {
-        tap.frame(Side::Server, &event("jqk", &[]));
+        tap.give(Side::Server, Some(&event("jqk", &[])));
         after(10).await;
     }
     let during = taken(&reports);
@@ -122,7 +120,7 @@ async fn a_frame_that_cannot_wait_is_dropped_and_counted() {
 
     // The task has not run yet: one frame waits, the two after it are dropped.
     for _ in 0..3 {
-        tap.frame(Side::Server, &event("jqk", &[]));
+        tap.give(Side::Server, Some(&event("jqk", &[])));
     }
     after(1_000).await;
 
@@ -138,7 +136,7 @@ async fn a_frame_that_cannot_wait_is_dropped_and_counted() {
 async fn a_connection_out_of_frames_is_lost() {
     let (tap, reports) = opened(Some("3.7.13.17"), 16);
 
-    tap.lost();
+    tap.give(Side::Client, None);
     after(1_000).await;
 
     let last = taken(&reports)
@@ -150,6 +148,25 @@ async fn a_connection_out_of_frames_is_lost() {
 }
 
 #[tokio::test(start_paused = true)]
+async fn a_connection_lost_reads_nothing_more() {
+    let (tap, reports) = opened(Some("3.7.13.17"), 16);
+
+    tap.give(Side::Server, None);
+    tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 1)]))));
+    after(1_000).await;
+
+    let last = taken(&reports)
+        .last()
+        .cloned()
+        .flatten()
+        .unwrap_or_else(|| panic!("no report"));
+    assert_eq!(
+        (last.state, last.counts, last.map_id),
+        (ProtocolState::Lost, Counts::default(), None)
+    );
+}
+
+#[tokio::test(start_paused = true)]
 async fn a_build_without_pins_reads_nothing() {
     for (build, state) in [
         (Some("3.7.14.1"), ProtocolState::Unmapped),
@@ -157,8 +174,8 @@ async fn a_build_without_pins_reads_nothing() {
     ] {
         let (tap, reports) = opened(build, 16);
 
-        tap.frame(Side::Server, &event("jow", &message(&[varint(1, 1)])));
-        tap.lost();
+        tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 1)]))));
+        tap.give(Side::Client, None);
         after(5_000).await;
         drop(tap);
         after(0).await;

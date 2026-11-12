@@ -66,22 +66,33 @@ struct Shared {
 #[derive(Debug)]
 pub(crate) struct Tap {
     frames: mpsc::Sender<(Side, Vec<u8>)>,
+    /// Whether the gate let the connection be read: one that is not copies nothing.
+    reading: bool,
     shared: Arc<Shared>,
     /// The task reading what the tap gives; it ends once the tap is dropped with its connection.
     _task: JoinHandle<()>,
 }
 
 impl Tap {
-    /// Hands the body of a frame `side` sent to the protocol, or counts it dropped when too many wait.
-    pub(crate) fn frame(&self, side: Side, body: &[u8]) {
-        if let Err(mpsc::error::TrySendError::Full(_)) = self.frames.try_send((side, body.to_vec())) {
-            self.shared.dropped.fetch_add(1, Ordering::Relaxed);
+    /// Hands the body of a frame `side` sent to the protocol, copied only once there is room for it, or counts it
+    /// dropped when too many wait; `None` says a side stopped being in frames, which stops the reading for good
+    /// (`docs/protocol.md`, "The tap").
+    pub(crate) fn give(&self, side: Side, body: Option<&[u8]>) {
+        let Some(body) = body else {
+            self.shared.lost.store(true, Ordering::Relaxed);
+            return;
+        };
+        if !self.reading || self.shared.lost.load(Ordering::Relaxed) {
+            return;
         }
-    }
-
-    /// Says the connection's bytes stopped being frames: no more will come.
-    pub(crate) fn lost(&self) {
-        self.shared.lost.store(true, Ordering::Relaxed);
+        match self.frames.try_reserve() {
+            Ok(permit) => permit.send((side, body.to_vec())),
+            Err(mpsc::error::TrySendError::Full(())) => {
+                self.shared.dropped.fetch_add(1, Ordering::Relaxed);
+            }
+            // The task is gone (only a bug ends it first): there is no one to count for.
+            Err(mpsc::error::TrySendError::Closed(())) => {}
+        }
     }
 }
 
@@ -114,6 +125,7 @@ fn open_with(build: Option<String>, waiting: usize, report: impl Fn(Option<Sessi
     let task = tokio::spawn(run(session, pins, received, Arc::clone(&shared), report));
     Tap {
         frames,
+        reading: state == ProtocolState::On,
         shared,
         _task: task,
     }
@@ -135,7 +147,6 @@ async fn run(
         tokio::select! {
             frame = frames.recv() => {
                 let Some((side, body)) = frame else { break };
-                // A connection not read takes its frames all the same, so that none is counted dropped.
                 if let Some(pins) = &pins {
                     read(&mut session, pins, side, &body);
                     changed = true;

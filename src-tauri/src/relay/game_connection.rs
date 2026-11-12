@@ -77,10 +77,7 @@ pub(crate) async fn serve(
                     let protocol = protocol::open(waiting.build.clone(), move |session| {
                         report(Game::Protocol(number, session));
                     });
-                    move |side, body: Option<&[u8]>| match body {
-                        Some(body) => protocol.frame(side, body),
-                        None => protocol.lost(),
-                    }
+                    move |side, body: Option<&[u8]>| protocol.give(side, body)
                 }
             };
             let connect = |server: GameServer| async move { connect(&server.host, server.port).await.ok() };
