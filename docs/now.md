@@ -109,8 +109,8 @@ _Updated 2026-11-12._
 - **The app's UI, rebuilt** (the owner, 2026-11-12): the interface on `next` (the characters list and view, the map's
   diamonds, the relay's indicator, the update bar, the status bar) is removed; the stores, the updater, i18n and the
   IPC stay. The new shell ([docs/shell.md](shell.md)) lands in PRs: dark only (#186), its parts in VS Code's layout as
-  discreet islands (Dark Modern, Inter, JetBrains' icons, parts that slide open and closed), then its title bar with the
-  command palette; then the features one at a time, each decided with the owner. The step-2 checklist items
+  discreet islands (Dark Modern, Inter, JetBrains' icons, parts that slide open and closed; #187), then its title bar
+  with the command palette; then the features one at a time, each decided with the owner. The step-2 checklist items
   that look at the UI wait for it. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

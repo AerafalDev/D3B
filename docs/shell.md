@@ -8,12 +8,13 @@ shown to him before the next (the owner, 2026-11-12). The step-2 interface it re
 VS Code's, part for part (`src/shell/`):
 
 - **Title bar** (35 px): the app's icon and menus, the command centre, the layout toggles, and on Windows the window's
-  buttons, drawn by the app since the window has no frame there. On macOS and Linux the system keeps its frame. It
-  comes with the next PR; until then the parts start at the window's top.
+  buttons, drawn by the app since the window has no frame there (`src-tauri/tauri.windows.conf.json`); its empty parts drag the
+  window and double-clicked maximise it. On macOS and Linux the system keeps its frame and buttons. The menus hold only
+  what works: File, Exit; View, the palette and the three parts.
 - **Activity bar** (48 px, left): empty; each entry comes with its feature.
 - **Primary side bar** (300 px, left), **panel** (260 px, under the editor area), **secondary side bar** (300 px,
   right): each resizable, and hidden by its header's button or VS Code's keys (Ctrl+B, Ctrl+J, Ctrl+Alt+B); the
-  title bar's toggles and View menu come with it. Hidden by a command, a part keeps its size for its return; dragged
+  title bar's toggles or the View menu. Hidden by a command, a part keeps its size for its return; dragged
   below its minimum it hides, and reopens at its last size before a command hid it, else at its minimum. Shown or
   hidden by a command, it slides open or closed in 200 ms (none when the system asks for less motion); a drag follows
   the pointer. Parts keep their pixel size when the window is resized; the editor area takes the rest. As in VS Code,
@@ -22,8 +23,8 @@ VS Code's, part for part (`src/shell/`):
   main shortcuts, these only when it is at least 480 px wide.
 - **Status bar** (22 px): the app's name after a small blue dot; its items come with their features.
 - **Command palette** (Ctrl+Shift+P, or the command centre): every command with its shortcut, filtered as one types,
-  dimming nothing behind it. It comes with the title bar.
-- **Shortcuts** are written as the platform and the language do (`Ctrl+Maj+B` in French, `⌘B` on macOS).
+  under the title bar, dimming nothing behind it.
+- **Shortcuts** are written as the platform and the language do (`Ctrl+Maj+P` in French, `⌘⇧P` on macOS).
 
 ## Look
 
@@ -52,7 +53,9 @@ are followed again by the first feature that shows them.
 
 ## Tests
 
-Vitest and Testing Library: the shortcuts (each part, a field focused, the key taken from the webview), the
-shortcuts' labels per platform and language, a part's hide button, and a part's collapse and slide against a fake panel (starting hidden, following the layout, the 200 ms
+Vitest and Testing Library: the shortcuts (each part, a field focused, the palette, the key taken from the webview),
+the shortcuts' labels per platform and language, a part's hide button, the title bar (the window's buttons on Windows
+only, restore once maximised, the toggles pressed while their part shows, the command centre), the palette (its
+commands, filtering, running one), and a part's collapse and slide against a fake panel (starting hidden, following the layout, the 200 ms
 slide, two quick toggles, a drag below the minimum). The layout itself is checked in the browser preview, not in
 happy-dom, which has no layout.
