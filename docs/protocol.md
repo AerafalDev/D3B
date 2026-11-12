@@ -52,7 +52,7 @@ Each is `inferred` unless said `verified`.
   at most once a second while something changed, and once more when the connection ends, which removes it. Half-close
   and errors behave as with `copy_bidirectional` today.
 - A dropped frame can leave the state stale (a dropped current map keeps the last one shown until the next): the
-  status shows the count, and the live view will say so.
+  status shows the count, and the live view says so ([game.md](game.md#the-state-of-a-character)).
 - `src-tauri/src/relay/` already holds 10 code files: the frame reader goes into `frame.rs`, the pumps into
   `game_connection.rs`, the build into `connection_phase.rs` and `handover.rs`, and captures into a new
   `relay/capture/` (the reader moved out of `tests.rs`, and the writer).
@@ -71,8 +71,10 @@ Each is `inferred` unless said `verified`.
   before any decoding, and a name both pinned and secret fails the pins' check. `protocol::pins` checks a file as it
   reads it: its build, a lowercase SHA-256, readable names among `protocol::message`'s, names of 1 to 8 lowercase
   letters, none pinned twice. 3.7.13.17's pin the live view's 15 messages, the pairs the C# version measured by play
-  (inferred, `main:src/D3B.Protocol/Pins/3.7.13.17.json`), and 5 secrets: the ticket's request (verified, the 54 game
-  connections' first frames) and the 4 the study found holding session secrets (inferred). `protocol::decoder` reads
+  (inferred, `main:src/D3B.Protocol/Pins/3.7.13.17.json`), and 6 secrets: the ticket's request (verified, the 54 game
+  connections' first frames), the 4 the study found holding session secrets (inferred), and `koh`, whose 231 frames
+  each carry a distinct hexadecimal secret (verified, the live view's study). The live view adds 2 pins,
+  `CharacterLevelUpEvent` and `KamasUpdateEvent` ([game.md](game.md)). `protocol::decoder` reads
   one frame with them: its envelope, a secret left undecoded, a pinned name decoded, then its outcome.
 - **The gate**: a connection whose build has pins is decoded; one without (**unmapped**), or with no build read
   (**unknown build**), has the protocol off and the reason in its status. Nothing else changes for it.
@@ -95,7 +97,7 @@ Each is `inferred` unless said `verified`.
   `.proto` keeps the build's `optional` and oneofs. A secret message's frames count as unknown.
 - **To start**, the messages the live view needs: the character chosen, the current map and its information (and its
   request), the context created and destroyed, actors shown, removed and moving, interactive and stated elements
-  updated, the characteristics, life regeneration, and the weight.
+  updated, the characteristics, life regeneration, the weight, a level gained and the kamas.
 
 ## A new build
 
@@ -138,6 +140,26 @@ build, lost), updated at most once a second, the counts of the four outcomes and
 these prove a name was paired with the right message. The relay's tooltip (`src/relay/`) shows each connection on two
 lines, the owner's choice (2026-11-12): who it is (its number, build, protocol and map), then, when it is read or
 lost, its counts; one line when it is not read. No new command.
+
+## The inspector
+
+The owner's choices of 2026-11-12, on the mockup: a character's **Protocol** tab ([game.md](game.md#in-the-app)) lists
+its connection's frames live, newest last, and shows the one clicked.
+
+- **Kept**: each connection's protocol task keeps its last 3,000 frames and 16 MiB at most, whichever comes first,
+  from its start, freed at its close (`protocol::session::frames`): each with its number, time, side, name, readable
+  name, outcome and size. A secret's frame keeps its name and size only, never its bytes. A frame the tap dropped is
+  not there; the count of dropped frames is.
+- **Streamed only while watched**: `inspector_watch(connection, true)` answers with the kept frames' summaries and
+  starts `InspectorFrames`, at most ten batches a second of at most 1,000 summaries each, with the count of those
+  skipped beyond (the peak measured is 737 frames a second, 93 KB, on one connection); `false`, the tab closed or the
+  connection closed stops it. `inspector_frame(connection, number)` answers one frame's detail, or that it is gone.
+- **A frame's detail**: a pinned message decoded, its fields by their names (players' names as the game shows them);
+  under it, the fields our `.proto` does not read. Any other frame, by the wire walker (`relay::wire`) alone: field
+  numbers, wire types, varints and lengths. **Text is never shown**, only its length: an unpinned message may hold
+  the chat, the account's nickname or names, and no list of them is kept per build. No bytes, no export, no copy.
+- **The list** shows the visible rows only (fixed row height, by hand), filters by side and by name, and pauses: the
+  list stops, a counter shows what arrived meanwhile.
 
 ## Tests
 

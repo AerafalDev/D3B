@@ -4,7 +4,8 @@ _Updated 2026-11-12._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
   designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,
-  is designed with the owner on 2026-11-11 ([docs/protocol.md](protocol.md), ADR 0012). Steps 0 and 1 are done but
+  is designed with the owner on 2026-11-11 ([docs/protocol.md](protocol.md), ADR 0012); its third, the live view of
+  each character and the protocol inspector, on 2026-11-12 ([docs/game.md](game.md)). Steps 0 and 1 are done but
   for their measures below, which the owner takes alongside: the owner started step 2 before them, on 2026-11-11.
 - **Done**: the rewrite starts on branch `next`, which will replace the C# version on `main`. The Tauri 2 + React 19
   shell, the typed IPC, the packed data's manifest, i18n FR/EN, the Claude setup (`CLAUDE.md`, `.claude/`), CI on
@@ -94,5 +95,13 @@ _Updated 2026-11-12._
   outcomes, the pins of 3.7.13.17 (done in code); (6) the pins' audit and the capture replay (done in code: 3.7.13.17's
   pins hold, no frame not trusted); (7) the protocol task per connection, the gate, the status and its tooltip (done in
   code). Its in-game checklist is under "Not measured".
+- **Next, the live view and the inspector** ([game.md](game.md), [protocol.md](protocol.md#the-inspector)), the
+  owner's choices of 2026-11-12: ids for monsters, NPCs and resources (their names come later), the map as diamonds,
+  the characters on the left with a View and a Protocol tab, text of unread frames never shown, 3,000 frames kept per
+  connection. A stack of eight PRs against `next`: (1) the protocol: the `.proto` files extended (actors, the
+  characteristics' values), the level gained and the kamas pinned, `koh` a secret; (2) `game`: who, where, life and its
+  regeneration, pods, kamas, level, context, staleness; (3) `game`: what is around, and the game's capture replay; (4)
+  the view through the IPC, `CharacterChanged` and `map_cells`; (5) the characters list and the view; (6) the map; (7)
+  the inspector's frames kept and streamed; (8) the inspector's tab, and the in-game checklist.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.
