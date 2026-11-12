@@ -4,6 +4,8 @@
 
 mod message;
 
+pub(crate) use message::Message;
+
 mod envelope;
 
 mod outcome;
