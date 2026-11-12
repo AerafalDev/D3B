@@ -1,7 +1,7 @@
 // The current map, what is on it, and what changes there: the live view's messages (docs/protocol.md, "Decoding").
 // Readable names and meanings are the C# version's (inferred, `main:src/D3B.Protocol/Game/` and
 // `main:docs/client-game.md`); field numbers and kinds were checked by hand against 3.7.13.17's schema (the
-// extractor's, 2026-11-12), which the pins' audit test checks next. A message marked partial declares only the fields
+// extractor's, 2026-11-12), which the pins' audit test checks. A message marked partial declares only the fields
 // D3B reads: the others are dropped on decoding, which makes its frames "read" rather than "understood".
 syntax = "proto3";
 
