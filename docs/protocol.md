@@ -46,7 +46,10 @@ Each is `inferred` unless said `verified`.
   through a bounded channel (about 1,024 frames) with `try_send`: when it is full the frame is dropped and counted,
   never waited for, so the protocol can never slow the game.
 - A framing error (a sixth length byte, a frame over 16 MiB) stops the tap for that connection, whose protocol is then
-  **lost**; the copy goes on. Half-close and errors behave as with `copy_bidirectional` today.
+  **lost**; the copy goes on. `protocol::session` is that task: the relay's `game_connection::serve` opens it once a
+  ticket is taken, with the build the handover carried; its gate reads a build with pins and leaves any other unread;
+  it counts each frame's outcome, keeps the map of the last `MapCurrentEvent`, and tells the relay's status at once,
+  then at most once a second while something changed, and once more when the connection ends, which removes it. Half-close and errors behave as with `copy_bidirectional` today.
 - A dropped frame can leave the state stale (a dropped current map keeps the last one shown until the next): the
   status shows the count, and the live view will say so.
 - `src-tauri/src/relay/` already holds 10 code files: the frame reader goes into `frame.rs`, the pumps into

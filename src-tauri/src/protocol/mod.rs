@@ -15,8 +15,8 @@ mod decoder;
 mod session;
 
 #[cfg(test)]
-pub(crate) use session::Counts;
-pub(crate) use session::{ProtocolState, Session, open};
+pub(crate) use session::{Counts, ProtocolState};
+pub(crate) use session::{Session, open};
 
 #[cfg(test)]
 mod audit;

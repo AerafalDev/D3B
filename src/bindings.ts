@@ -50,55 +50,6 @@ export type AppInfo_Serialize = {
 	os: string,
 };
 
-/**
- *  A game connection as the relay's tooltip shows it (`docs/protocol.md`, "In the app"): its counts saturate at
- *  `u32::MAX`, more frames than a connection carries in years.
- */
-export type GameConnectionStatus = GameConnectionStatus_Serialize | GameConnectionStatus_Deserialize;
-
-/**
- *  A game connection as the relay's tooltip shows it (`docs/protocol.md`, "In the app"): its counts saturate at
- *  `u32::MAX`, more frames than a connection carries in years.
- */
-export type GameConnectionStatus_Deserialize = {
-	number: number,
-	/**  The client's build its connection phase named. */
-	build?: string | null,
-	protocol: GameProtocol,
-	understood: number,
-	read: number,
-	unknown: number,
-	notTrusted: number,
-	/**  Frames the protocol fell too far behind to read. */
-	dropped: number,
-};
-
-/**
- *  A game connection as the relay's tooltip shows it (`docs/protocol.md`, "In the app"): its counts saturate at
- *  `u32::MAX`, more frames than a connection carries in years.
- */
-export type GameConnectionStatus_Serialize = {
-	number: number,
-	/**  The client's build its connection phase named. */
-	build: string | null,
-	protocol: GameProtocol,
-	understood: number,
-	read: number,
-	unknown: number,
-	notTrusted: number,
-	/**  Frames the protocol fell too far behind to read. */
-	dropped: number,
-};
-
-/**  Whether a game connection's frames are read. */
-export type GameProtocol = "on" | 
-/**  Its build has no pins. */
-"unmapped" | 
-/**  Its connection phase named no build. */
-"unknownBuild" | 
-/**  Its bytes stopped being frames. */
-"lost";
-
 /**  The relay's status changed. */
 export type RelayChanged = RelayChanged_Serialize | RelayChanged_Deserialize;
 
@@ -125,8 +76,6 @@ export type RelayStatus_Deserialize = {
 	gameConnections: number,
 	/**  The selection answers not understood since start, whose game went straight to Ankama. */
 	notUnderstood: number,
-	/**  What the protocol read of each game connection, in the order they opened. */
-	connections: GameConnectionStatus_Deserialize[],
 };
 
 /**  What the status bar shows of the relay. */
@@ -140,8 +89,6 @@ export type RelayStatus_Serialize = {
 	gameConnections: number,
 	/**  The selection answers not understood since start, whose game went straight to Ankama. */
 	notUnderstood: number,
-	/**  What the protocol read of each game connection, in the order they opened. */
-	connections: GameConnectionStatus_Serialize[],
 };
 
 /* Tauri Specta runtime */

@@ -14,7 +14,6 @@ const ready: RelayStatus = {
   clientBuild: "3.7.13.17",
   gameConnections: 0,
   notUnderstood: 0,
-  connections: [],
 };
 
 function show(status: RelayStatus | null) {

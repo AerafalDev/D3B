@@ -31,7 +31,7 @@ vi.mock("@/bindings.ts", () => ({
 const { useRelay } = await import("./relay-store.ts");
 
 function status(state: RelayStatus["state"], gameConnections = 0): RelayStatus {
-  return { state, reason: null, clientBuild: null, gameConnections, notUnderstood: 0, connections: [] };
+  return { state, reason: null, clientBuild: null, gameConnections, notUnderstood: 0 };
 }
 
 describe("useRelay", () => {
