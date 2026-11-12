@@ -56,7 +56,9 @@ _Updated 2026-11-12._
     11. if a Windows account with a space or an accent in its name is at hand: steps 1 and 2 there;
     12. after a disconnection in game (Wi-Fi off and on), the client reconnects through D3B.
   - **step 2, the protocol** ([protocol.md](protocol.md)), on Windows x64 with client 3.7.13.17, from `bun run app` on
-    `next` or the next release. Never paste a capture.
+    `next` or the next release. Never paste a capture. Measured by the owner on 2026-11-12, Windows x64, `bun run app`
+    on `next` b200248: items 1 to 6 pass; its two captures replayed through the relay byte for byte and through the
+    protocol with no frame not trusted. Not measured yet: item 7, at the next client patch.
     1. With 3.7.13.17's data in `data/` (the extractor's item 4), start D3B, then a client; enter the game: the relay's
        tooltip shows "Connexion 1 — 3.7.13.17, protocole actif, carte X,Y", X,Y the coordinates the game shows for the
        character's map, and below it the counts, "non fiables 0" and "perdus 0";
@@ -83,12 +85,14 @@ _Updated 2026-11-12._
   replay of the owner's 225 captures (171 connection phases, 161 handed over, 54 game connections, no failure), the
   status-bar indicator and the restore before an update.
 - **Next**: the owner measures the relay's item 10's Restart with the next release, and item 11 when an account is at
-  hand. The protocol's code is a stack of seven PRs against `next`: (1) the game connection split into frames both ways,
-  with the tap (done in code, in v0.13.0); (2) `relay/capture/` and `D3B_RECORD` (done in code); (3) the connection's
-  build from path 1.3.5, carried by the handover (done in code); (4) the extractor's protocol schema from the metadata
-  (done in code); (5) the `protocol` domain: prost, our `.proto` files, the envelope, the four outcomes, the pins of
-  3.7.13.17 (done in code); (6) the pins' audit and the capture replay (done in code: 3.7.13.17's pins hold, no frame
-  not trusted); (7) the protocol task per connection, the gate, the status and its tooltip (done in code). Its in-game
-  checklist is under "Not measured".
+  hand; the protocol's item 7 at the next client patch, with its pins (and, before it, `GameAssembly.dll`,
+  `global-metadata.dat` and `version` copied into `artifacts/` for Q17). Step 2's next feature waits for the owner. The
+  protocol's code was a stack of seven PRs against `next`, all merged (#155 to #171): (1) the game connection split into
+  frames both ways, with the tap (done in code, in v0.13.0); (2) `relay/capture/` and `D3B_RECORD` (done in code); (3)
+  the connection's build from path 1.3.5, carried by the handover (done in code); (4) the extractor's protocol schema
+  from the metadata (done in code); (5) the `protocol` domain: prost, our `.proto` files, the envelope, the four
+  outcomes, the pins of 3.7.13.17 (done in code); (6) the pins' audit and the capture replay (done in code: 3.7.13.17's
+  pins hold, no frame not trusted); (7) the protocol task per connection, the gate, the status and its tooltip (done in
+  code). Its in-game checklist is under "Not measured".
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.
