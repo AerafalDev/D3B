@@ -22,6 +22,7 @@ describe("the command palette", () => {
   it("lists the commands with their shortcuts", () => {
     render(<CommandPalette />);
     expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "Show all commandsCtrl+Shift+P",
       "Toggle the primary side barCtrl+B",
       "Toggle the panelCtrl+J",
       "Toggle the secondary side barCtrl+Alt+B",

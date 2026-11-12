@@ -32,22 +32,20 @@ export function CommandPalette() {
         <CommandInput placeholder={t("shell.palette.placeholder")} />
         <CommandList>
           <CommandEmpty>{t("shell.palette.empty")}</CommandEmpty>
-          {shellCommands
-            .filter((command) => command.id !== "palette")
-            .map((command) => (
-              <CommandItem
-                key={command.id}
-                value={t(`shell.commands.${command.id}`)}
-                onSelect={() => {
-                  setOpen(false);
-                  command.run();
-                }}
-                className="h-[26px] rounded-[4px] text-[13px] data-selected:bg-[#04395e]"
-              >
-                {t(`shell.commands.${command.id}`)}
-                <CommandShortcut className="text-text-muted tracking-normal">{shortcut(command.id)}</CommandShortcut>
-              </CommandItem>
-            ))}
+          {shellCommands.map((command) => (
+            <CommandItem
+              key={command.id}
+              value={t(`shell.commands.${command.id}`)}
+              onSelect={() => {
+                setOpen(false);
+                command.run();
+              }}
+              className="h-[26px] rounded-[4px] text-[13px] data-selected:bg-[#04395e]"
+            >
+              {t(`shell.commands.${command.id}`)}
+              <CommandShortcut className="text-text-muted tracking-normal">{shortcut(command.id)}</CommandShortcut>
+            </CommandItem>
+          ))}
         </CommandList>
       </Command>
     </CommandDialog>

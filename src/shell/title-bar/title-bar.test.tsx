@@ -32,6 +32,13 @@ vi.mock("@tauri-apps/api/window", () => ({
 const { TitleBar } = await import("./title-bar.tsx");
 const { useLayout } = await import("../layout-store.ts");
 
+const shown = { primarySideBar: true, panel: true, secondarySideBar: true };
+
+/** Opens a menu as a press of the mouse does: Radix opens a menu bar's menu on pointer down. */
+function openMenu(name: string) {
+  fireEvent.pointerDown(screen.getByRole("menuitem", { name }), { button: 0, ctrlKey: false, pointerType: "mouse" });
+}
+
 function renderBar() {
   return render(
     <TooltipProvider>
@@ -49,11 +56,11 @@ describe("the title bar", () => {
     window.platform = "windows";
     window.maximized = false;
     vi.clearAllMocks();
-    useLayout.setState({ visible: { primarySideBar: true, panel: true, secondarySideBar: true }, paletteOpen: false });
+    useLayout.setState({ visible: { ...shown }, paletteOpen: false });
   });
   afterEach(cleanup);
 
-  it("drives the window on Windows, and offers to restore it once maximised", async () => {
+  it("minimises, maximises and closes the window on Windows", () => {
     renderBar();
     fireEvent.click(screen.getByRole("button", { name: "Minimize" }));
     fireEvent.click(screen.getByRole("button", { name: "Maximize" }));
@@ -61,28 +68,60 @@ describe("the title bar", () => {
     expect(window.minimize).toHaveBeenCalledOnce();
     expect(window.toggleMaximize).toHaveBeenCalledOnce();
     expect(window.close).toHaveBeenCalledOnce();
+  });
 
+  it("offers to restore the window once it is maximised", async () => {
+    renderBar();
     window.maximized = true;
     await act(async () => window.resized?.());
     expect(await screen.findByRole("button", { name: "Restore" })).toBeTruthy();
   });
 
-  it("leaves the window's buttons to the system elsewhere", () => {
-    window.platform = "linux";
+  it.each(["linux", "mac"] as const)("leaves the window's buttons to the system on %s", (system) => {
+    window.platform = system;
     renderBar();
     expect(screen.queryByRole("button", { name: "Minimize" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
   });
 
-  it("toggles each part, pressed while it is shown, and opens the palette from the command centre", () => {
+  it("draws no menus on macOS, whose menu bar holds them", () => {
+    window.platform = "mac";
     renderBar();
-    const panel = screen.getByRole("button", { name: "Toggle the panel" });
-    expect(panel.getAttribute("aria-pressed")).toBe("true");
-    fireEvent.click(panel);
-    expect(useLayout.getState().visible.panel).toBe(false);
-    expect(panel.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.queryByRole("menuitem", { name: "File" })).toBeNull();
+  });
 
+  it.each([
+    ["Toggle the primary side bar", "primarySideBar"],
+    ["Toggle the panel", "panel"],
+    ["Toggle the secondary side bar", "secondarySideBar"],
+  ] as const)("%s from its toggle, pressed while its part shows", (name, part) => {
+    renderBar();
+    const toggle = screen.getByRole("button", { name });
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(toggle);
+    expect(useLayout.getState().visible).toEqual({ ...shown, [part]: false });
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("opens the palette from the command centre", () => {
+    renderBar();
     fireEvent.click(screen.getByRole("button", { name: "Show all commands (Ctrl+Shift+P)" }));
     expect(useLayout.getState().paletteOpen).toBe(true);
+  });
+
+  it("closes the window from File, Exit, through its close request so an update still installs", () => {
+    renderBar();
+    openMenu("File");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Exit" }));
+    expect(window.close).toHaveBeenCalledOnce();
+  });
+
+  it("checks in View each part shown, and hides that part only when chosen", () => {
+    renderBar();
+    openMenu("View");
+    const panel = screen.getByRole("menuitemcheckbox", { name: /^Panel/ });
+    expect(panel.getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(panel);
+    expect(useLayout.getState().visible).toEqual({ ...shown, panel: false });
   });
 });
