@@ -14,6 +14,7 @@ const ready: RelayStatus = {
   clientBuild: "3.7.13.17",
   gameConnections: 0,
   notUnderstood: 0,
+  connections: [],
 };
 
 function show(status: RelayStatus | null) {
@@ -66,6 +67,47 @@ describe("RelayIndicator", () => {
     const text = await tooltip("Relay ready · 0 in game");
     expect(text).toContain("1 connection went straight to Ankama: its server choice");
     expect(text).not.toContain("Quitting D3B");
+  });
+
+  it("shows a game connection read on two lines: who it is with its map, then its counts", async () => {
+    show({
+      ...ready,
+      gameConnections: 1,
+      connections: [
+        {
+          number: 1,
+          build: "3.7.13.17",
+          protocol: "on",
+          understood: 61204,
+          read: 55012,
+          unknown: 512330,
+          notTrusted: 0,
+          dropped: 3,
+          map: { x: 4, y: -18 },
+        },
+      ],
+    });
+
+    const text = await tooltip("Relay ready · 1 in game");
+    expect(text).toContain("Connection 1 — 3.7.13.17, protocol on, map 4,-18");
+    expect(text).toContain("understood 61,204 · read 55,012 · unknown 512,330 · not trusted 0 · dropped 3");
+  });
+
+  it("shows a game connection not read on one line, with why", async () => {
+    const off = { understood: 0, read: 0, unknown: 0, notTrusted: 0, dropped: 0, map: null };
+    show({
+      ...ready,
+      gameConnections: 2,
+      connections: [
+        { ...off, number: 2, build: "3.7.14.1", protocol: "unmapped" },
+        { ...off, number: 3, build: null, protocol: "unknownBuild" },
+      ],
+    });
+
+    const text = await tooltip("Relay ready · 2 in game");
+    expect(text).toContain("Connection 2 — 3.7.14.1, protocol off (build without pins)");
+    expect(text).toContain("Connection 3 — protocol off (unknown build)");
+    expect(text).not.toContain("understood");
   });
 
   it("says another system is not measured", () => {
