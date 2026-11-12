@@ -64,7 +64,12 @@ Each is `inferred` unless said `verified`.
 - **Pins**, `src-tauri/protocol/pins/<build>.json`: `{build, schemaSha256, messages: {Readable: "abc"}, secrets:
   ["abc"]}`, one entry per message a feature reads, embedded in the app. `secrets` names the build's messages that
   carry a session secret (the ticket's request, and those the study found holding secrets): their frames are dropped
-  before any decoding, and a name both pinned and secret fails the pins' check.
+  before any decoding, and a name both pinned and secret fails the pins' check. `protocol::pins` checks a file as it
+  reads it: its build, a lowercase SHA-256, readable names among `protocol::message`'s, names of 1 to 8 lowercase
+  letters, none pinned twice. 3.7.13.17's pin the live view's 15 messages, the pairs the C# version measured by play
+  (inferred, `main:src/D3B.Protocol/Pins/3.7.13.17.json`), and 5 secrets: the ticket's request (verified, the 54 game
+  connections' first frames) and the 4 the study found holding session secrets (inferred). `protocol::decoder` reads
+  one frame with them: its envelope, a secret left undecoded, a pinned name decoded, then its outcome.
 - **The gate**: a connection whose build has pins is decoded; one without (**unmapped**), or with no build read
   (**unknown build**), has the protocol off and the reason in its status. Nothing else changes for it.
 - **Four outcomes** per frame (`.claude/rules/game-data.md`: a mapped message that does not re-encode to the same

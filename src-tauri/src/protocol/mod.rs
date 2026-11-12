@@ -29,6 +29,24 @@ mod envelope;
 )]
 mod outcome;
 
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the protocol task of each game connection reads them, in the stack's next PRs"
+    )
+)]
+mod pins;
+
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the protocol task of each game connection reads frames with it, in the stack's next PRs"
+    )
+)]
+mod decoder;
+
 /// The messages of our `.proto` files, as `prost-build` writes them.
 // `allow`, not `expect`: which lints the generated code trips changes with prost's version, and an expectation left
 // unfulfilled would fail the build.
