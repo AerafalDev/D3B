@@ -1,13 +1,25 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/inter";
+@import "dockview-react/dist/styles/dockview.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: "Geist Variable", sans-serif;
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  /* The shell's colours, VS Code's Dark Modern theme (the owner's choice, 2026-11-12). */
+  --color-frame: var(--frame);
+  --color-bar: var(--bar);
+  --color-editor: var(--editor);
+  --color-line: var(--line);
+  --color-focus: var(--focus);
+  --color-hover: var(--hover);
+  --color-pressed: var(--pressed);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -72,7 +84,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.375rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -84,37 +96,86 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /*
+   * VS Code's Dark Modern, its parts as discreet islands (the owner, 2026-11-12): the window's frame a little darker
+   * than the parts, each part a card with a faint edge, the editor lighter, the text clear, the blue accent kept rare.
+   */
+  --frame: #111111;
+  --bar: #181818;
+  --editor: #1f1f1f;
+  --line: #232323;
+  --focus: #0078d4;
+  --hover: rgb(255 255 255 / 8%);
+  --pressed: rgb(255 255 255 / 12%);
+  --text: #d6d6d6;
+  --text-muted: #a8a8a8;
+  --text-faint: #6e7681;
+  --background: #212121;
+  --foreground: #d6d6d6;
+  --card: #212121;
+  --card-foreground: #d6d6d6;
+  --popover: #1f1f1f;
+  --popover-foreground: #d6d6d6;
+  --primary: #0078d4;
+  --primary-foreground: #ffffff;
+  --secondary: #313131;
+  --secondary-foreground: #d6d6d6;
+  --muted: #343434;
+  --muted-foreground: #a8a8a8;
+  --accent: #2a2d2e;
+  --accent-foreground: #ffffff;
+  --destructive: #f85149;
+  --border: #343434;
+  --input: #3c3c3c;
+  --ring: #0078d4;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #151515;
+  --sidebar-foreground: #d6d6d6;
+  --sidebar-primary: #0078d4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2a2d2e;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #343434;
+  --sidebar-ring: #0078d4;
+}
+
+/* A part opening or closing from a command slides, unless the system asks for less motion. */
+[data-group][data-animating] > [data-panel] {
+  transition: flex-grow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-group][data-animating] > [data-panel] {
+    transition: none;
+  }
+}
+
+/* Dockview's dark theme, set to Dark Modern's editor tabs: 35 px, the active one with a blue top line. */
+.d3b-dockview {
+  --dv-group-view-background-color: var(--editor);
+  --dv-tabs-and-actions-container-background-color: var(--bar);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--editor);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--bar);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--editor);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--bar);
+  --dv-tab-divider-color: var(--line);
+  --dv-activegroup-visiblepanel-tab-color: #ffffff;
+  --dv-activegroup-hiddenpanel-tab-color: var(--text-muted);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--text-muted);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--text-muted);
+  --dv-separator-border: var(--line);
+  --dv-paneview-header-border-color: var(--line);
+  --dv-tabs-and-actions-container-font-size: 13px;
+  --dv-tabs-and-actions-container-height: 35px;
+  --dv-active-sash-color: var(--focus);
+}
+
+/* Dockview's views scroll by default; an editor scrolls itself, so a view never flashes a scrollbar on resize. */
+.d3b-dockview .dv-view {
+  overflow: hidden;
 }
 
 @layer base {
@@ -123,8 +184,25 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* VS Code's interface size. */
+    font-size: 13px;
   }
   html {
     @apply font-sans;
+  }
+  /* VS Code's scrollbars: 10 px, no arrows, a translucent thumb. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(121 121 121 / 40%);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(100 100 100 / 70%);
   }
 }

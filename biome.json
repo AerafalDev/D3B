@@ -13,6 +13,7 @@
       "!**/target",
       "!src-tauri/gen",
       "!src/bindings.ts",
+      "!src/icons/expui",
       "!data",
       "!tools/extractor/tests/fixtures"
     ]

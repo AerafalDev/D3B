@@ -1,5 +1,30 @@
 {
   "app": {
     "name": "D3B"
+  },
+  "shell": {
+    "withShortcut": "{{label}} ({{shortcut}})",
+    "hide": {
+      "primarySideBar": "Hide the primary side bar",
+      "panel": "Hide the panel",
+      "secondarySideBar": "Hide the secondary side bar"
+    },
+    "empty": "Nothing here yet: its views come with the features.",
+    "parts": {
+      "activityBar": "Activity bar",
+      "primarySideBar": "Primary side bar",
+      "panel": "Panel",
+      "secondarySideBar": "Secondary side bar"
+    },
+    "commands": {
+      "primarySideBar": "Toggle the primary side bar",
+      "panel": "Toggle the panel",
+      "secondarySideBar": "Toggle the secondary side bar"
+    },
+    "keys": {
+      "ctrl": "Ctrl",
+      "shift": "Shift",
+      "alt": "Alt"
+    }
   }
 }
