@@ -198,10 +198,7 @@ impl Relay {
         if let Some(listener) = game {
             let relay = self.clone();
             let report = move |game| relay.update(|status| status.apply(Change::Game(game)));
-            let recording = record.map(|folder| Recording {
-                folder,
-                build: build.clone().unwrap_or_else(|| "unknown".into()),
-            });
+            let recording = record.map(|folder| Recording { folder });
             tasks.push(tokio::spawn(game_connection::serve(
                 listener, handover, recording, report,
             )));

@@ -20,11 +20,10 @@ use super::{FORMAT, FROM_CLIENT, FROM_SERVER, MAGIC};
 /// How many reads may wait for the disk before the capture is cut: about 64 MiB of the largest reads.
 const WAITING: usize = 1024;
 
-/// Where captures go and the build they name: the folder of `D3B_RECORD` and the installed client's build.
+/// Where captures go: the folder of `D3B_RECORD`.
 #[derive(Debug, Clone)]
 pub(crate) struct Recording {
     pub(crate) folder: PathBuf,
-    pub(crate) build: String,
 }
 
 /// The capture of one game connection, as it goes.
@@ -38,24 +37,21 @@ pub(crate) struct Recorder {
 }
 
 impl Recording {
-    /// Starts the capture of the `number`th game connection, to `server`, begun at `started`: a file
-    /// `<build>-<Unix milliseconds>-<number>.d3bcap` in the folder, `-cut` added to its name if the writer fell
-    /// behind. A folder or a file that cannot be written gives no capture, and the game goes on.
-    pub(crate) fn start(&self, server: &GameServer, started: SystemTime, number: u64) -> Recorder {
+    /// Starts the capture of the `number`th game connection, of the client's `build` (`unknown` when its connection
+    /// phase named none), to `server`, begun at `started`: a file `<build>-<Unix milliseconds>-<number>.d3bcap` in the
+    /// folder, `-cut` added to its name if the writer fell behind. A folder or a file that cannot be written gives no
+    /// capture, and the game goes on. The build is digits and dots (`connection_phase`), so it names no other folder.
+    pub(crate) fn start(&self, server: &GameServer, build: Option<&str>, started: SystemTime, number: u64) -> Recorder {
+        let build = build.unwrap_or("unknown");
         let millis = started.duration_since(UNIX_EPOCH).unwrap_or_default().as_millis();
-        let name = format!("{}-{millis}-{number}", self.build);
+        let name = format!("{build}-{millis}-{number}");
         let mut header = Vec::new();
         header.extend_from_slice(MAGIC);
         header.extend_from_slice(&FORMAT.to_le_bytes());
         header.extend_from_slice(&i64::try_from(millis).unwrap_or_default().to_le_bytes());
         let listener = format!("{ADDRESS}:{GAME_PORT}");
         let to = format!("{}:{}", server.host, server.port);
-        for text in [
-            self.build.as_str(),
-            listener.as_str(),
-            server.host.as_str(),
-            to.as_str(),
-        ] {
+        for text in [build, listener.as_str(), server.host.as_str(), to.as_str()] {
             wire::write_varint(text.len() as u64, &mut header);
             header.extend_from_slice(text.as_bytes());
         }
@@ -168,10 +164,7 @@ mod tests {
     }
 
     fn recording(folder: PathBuf) -> Recording {
-        Recording {
-            folder,
-            build: "3.7.13.17".into(),
-        }
+        Recording { folder }
     }
 
     fn server() -> GameServer {
@@ -186,7 +179,7 @@ mod tests {
         let folder = folder("order");
         let started = UNIX_EPOCH + Duration::from_millis(1_762_900_000_123);
 
-        let recorder = recording(folder.clone()).start(&server(), started, 7);
+        let recorder = recording(folder.clone()).start(&server(), Some("3.7.13.17"), started, 7);
         recorder.record(Side::Client, b"ticket");
         recorder.record(Side::Server, b"accepted");
         recorder.record(Side::Client, b"");
@@ -208,11 +201,31 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn names_a_capture_of_no_build_read_unknown() {
+        let folder = folder("unknown");
+
+        recording(folder.clone())
+            .start(&server(), None, UNIX_EPOCH, 3)
+            .finish()
+            .await;
+
+        let bytes = std::fs::read(folder.join("unknown-0-3.d3bcap")).unwrap_or_default();
+        let _ = std::fs::remove_dir_all(&folder);
+        assert_eq!(
+            read(&bytes).map(|capture| capture.build).ok().as_deref(),
+            Some("unknown")
+        );
+    }
+
+    #[tokio::test]
     async fn writes_the_header_of_format_2() {
         let folder = folder("header");
         let started = UNIX_EPOCH + Duration::from_millis(258);
 
-        recording(folder.clone()).start(&server(), started, 1).finish().await;
+        recording(folder.clone())
+            .start(&server(), Some("3.7.13.17"), started, 1)
+            .finish()
+            .await;
 
         let bytes = std::fs::read(folder.join("3.7.13.17-258-1.d3bcap")).unwrap_or_default();
         let _ = std::fs::remove_dir_all(&folder);
@@ -238,7 +251,7 @@ mod tests {
         let path = folder.join("3.7.13.17-0-1.d3bcap");
         std::fs::write(&path, b"earlier").unwrap_or_else(|error| panic!("{error}"));
 
-        let recorder = recording(folder.clone()).start(&server(), UNIX_EPOCH, 1);
+        let recorder = recording(folder.clone()).start(&server(), Some("3.7.13.17"), UNIX_EPOCH, 1);
         let cut = Arc::clone(&recorder.cut);
         recorder.record(Side::Client, b"later");
         recorder.finish().await;
@@ -276,7 +289,7 @@ mod tests {
     #[tokio::test]
     async fn names_a_cut_capture_as_cut_and_keeps_its_whole_records() {
         let folder = folder("named-cut");
-        let recorder = recording(folder.clone()).start(&server(), UNIX_EPOCH, 1);
+        let recorder = recording(folder.clone()).start(&server(), Some("3.7.13.17"), UNIX_EPOCH, 1);
 
         recorder.record(Side::Client, b"before");
         recorder.cut.store(true, Ordering::Relaxed);
@@ -295,7 +308,7 @@ mod tests {
         let folder = folder("blocked");
         std::fs::write(&folder, b"in the way").unwrap_or_else(|error| panic!("{error}"));
 
-        let recorder = recording(folder.join("inside")).start(&server(), UNIX_EPOCH, 1);
+        let recorder = recording(folder.join("inside")).start(&server(), Some("3.7.13.17"), UNIX_EPOCH, 1);
         let cut = Arc::clone(&recorder.cut);
         recorder.record(Side::Server, b"lost");
         recorder.finish().await;
