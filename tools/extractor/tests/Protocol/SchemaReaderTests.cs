@@ -4,6 +4,9 @@ namespace D3B.Extractor.Tests.Protocol;
 
 public sealed class SchemaReaderTests
 {
+    private const string RepeatedField = "Google.Protobuf.Collections.RepeatedField`1";
+    private const string MapField = "Google.Protobuf.Collections.MapField`2";
+
     private static readonly TypeShape.Property _parser = Getter("Google.Protobuf.MessageParser`1", Of("abc"));
     private static readonly TypeShape.Property _descriptor = Getter("Google.Protobuf.Reflection.MessageDescriptor");
 
@@ -24,7 +27,7 @@ public sealed class SchemaReaderTests
     public void ListsMapsMessagesAndEnumsAreReadWithTheirTypes()
     {
         var schema = SchemaReader.Read([
-            Message("abc", [1, 2, 3, 4, 5], Getter("Google.Protobuf.Collections.RepeatedField`1", Of("System.Int32")), Value("abd"), Value("abc.abe.abf"), Getter("Google.Protobuf.Collections.MapField`2", Of("System.String"), Of("abd")), Value("Google.Protobuf.WellKnownTypes.Any")),
+            Message("abc", [1, 2, 3, 4, 5], Getter(RepeatedField, Of("System.Int32")), Value("abd"), Value("abc.abe.abf"), Getter(MapField, Of("System.String"), Of("abd")), Value("Google.Protobuf.WellKnownTypes.Any")),
             Message("abd", []),
             Enum("abc.abe.abf", [0, 1, 2]),
             Enum("unused", [0]),
@@ -88,7 +91,9 @@ public sealed class SchemaReaderTests
     [Fact]
     public void AMessageNamingATypeOutsideTheSchemaFails()
     {
-        Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], Value("abz"))]));
+        var error = Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], Value("abz"))]));
+
+        Assert.Contains("of abz, which is no type", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -112,7 +117,7 @@ public sealed class SchemaReaderTests
     {
         var shapes = new[] { Message("abc", [1], Value("System.Int32"), Getter("abc.abe")), Enum("abc.abe", [0, 1, 2]) };
 
-        Assert.Throws<InvalidDataException>(() => SchemaReader.Read(shapes));
+        Assert.Contains("names field 2", Assert.Throws<InvalidDataException>(() => SchemaReader.Read(shapes)).Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -132,7 +137,7 @@ public sealed class SchemaReaderTests
     [Fact]
     public void APresenceAfterAListFails()
     {
-        Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], Getter("Google.Protobuf.Collections.RepeatedField`1", Of("System.Int32")), Getter("System.Boolean"))]));
+        Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], Getter(RepeatedField, Of("System.Int32")), Getter("System.Boolean"))]));
     }
 
     [Fact]
@@ -145,6 +150,89 @@ public sealed class SchemaReaderTests
     public void AGetterOnlyScalarThatIsNoPresenceFails()
     {
         Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], Getter("System.Int32"))]));
+    }
+
+    [Fact]
+    public void AListOrAMapInAOneofFails()
+    {
+        foreach (var collection in new[] { Getter(RepeatedField, Of("System.Int32")), Getter(MapField, Of("System.Int32"), Of("System.Int32")) })
+        {
+            var error = Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], collection, Getter("abc.abe")), Enum("abc.abe", [0, 1])]));
+
+            Assert.Contains("in the oneof abc.abe", error.Message, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void AScalarInAOneofWithoutItsPresenceFails()
+    {
+        var error = Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], Value("System.Int32"), Getter("abc.abe")), Enum("abc.abe", [0, 1])]));
+
+        Assert.Contains("without its presence", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TwoOneofsNamingOneFieldFail()
+    {
+        var shapes = new[] { Message("abc", [1], Value("abd"), Getter("abc.abe"), Getter("abc.abf")), Message("abd", []), Enum("abc.abe", [0, 1]), Enum("abc.abf", [0, 1]) };
+
+        var error = Assert.Throws<InvalidDataException>(() => SchemaReader.Read(shapes));
+
+        Assert.Contains("names field 1", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AMapKeyedByAFloatBytesAnEnumOrAMessageFails()
+    {
+        foreach (var key in new[] { "System.Single", "Google.Protobuf.ByteString", "abd", "abc.abe" })
+        {
+            var shapes = new[] { Message("abc", [1], Getter(MapField, Of(key), Of("System.Int32"))), Message("abd", []), Enum("abc.abe", [0]) };
+
+            var error = Assert.Throws<InvalidDataException>(() => SchemaReader.Read(shapes));
+
+            Assert.Contains("a map keyed by", error.Message, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void APresenceAfterAPresenceOrAMessageFails()
+    {
+        foreach (var before in new[] { new[] { Value("System.Int32"), Getter("System.Boolean") }, [Value("abd")] })
+        {
+            var error = Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], [.. before, Getter("System.Boolean")]), Message("abd", [])]));
+
+            Assert.Contains("presence that follows no scalar", error.Message, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void AGetterOnlyEnumNotDeclaredInTheMessageItselfFails()
+    {
+        foreach (var name in new[] { "abe", "abc.abd.abe" })
+        {
+            var error = Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], Value("System.Int32"), Getter(name)), Enum(name, [0, 1])]));
+
+            Assert.Contains("cannot be set", error.Message, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void AListOfNoTypeOrThatCanBeSetFails()
+    {
+        var untyped = Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], Getter(RepeatedField))]));
+        var settable = new TypeShape.Property { Type = Of(RepeatedField, Of("System.Int32")), HasSetter = true };
+        var set = Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", [1], settable)]));
+
+        Assert.Contains("no type the reader knows", untyped.Message, StringComparison.Ordinal);
+        Assert.Contains("can be set", set.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheHighestFieldNumberIsRead()
+    {
+        var schema = SchemaReader.Read([Message("abc", [(1 << 29) - 1], Value("System.Int32"))]);
+
+        Assert.Equal((1 << 29) - 1, Assert.Single(Assert.Single(schema.Messages).Fields).Number);
     }
 
     [Fact]

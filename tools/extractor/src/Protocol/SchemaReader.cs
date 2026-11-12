@@ -81,16 +81,18 @@ internal static class SchemaReader
                 continue;
             }
 
-            if (!property.HasSetter && types.TryGetValue(name, out var oneof) && oneof.IsEnum && name.StartsWith(message.Name + ".", StringComparison.Ordinal))
+            if (!property.HasSetter && types.TryGetValue(name, out var oneof) && oneof.IsEnum && IsNestedIn(name, message.Name))
             {
                 cases.Add(oneof);
 
                 continue;
             }
 
-            if (!property.HasSetter && name is not (Repeated or Map))
+            if (property.HasSetter == name is Repeated or Map)
             {
-                throw new InvalidDataException($"{message.Name} has a property of {property.Type} that cannot be set, which is no field the reader knows.");
+                var can = property.HasSetter ? "can" : "cannot";
+
+                throw new InvalidDataException($"{message.Name} has a property of {property.Type} that {can} be set, which is no field the reader knows.");
             }
 
             values.Add((property, false));
@@ -131,6 +133,11 @@ internal static class SchemaReader
 
     private static SchemaField ReadField(TypeShape message, int number, TypeRef type, bool present, string? oneof, Dictionary<string, TypeShape> types, SortedSet<string> held)
     {
+        if (oneof is not null && type.Name is Repeated or Map)
+        {
+            throw new InvalidDataException($"{message.Name} has field {number}, of {type}, in the oneof {oneof}, which protobuf does not allow.");
+        }
+
         if (type.Name is Repeated && type.Arguments.Count is 1)
         {
             var (kind, of) = KindOf(message, type.Arguments[0], types, held);
@@ -153,6 +160,13 @@ internal static class SchemaReader
 
         var (single, singleType) = KindOf(message, type, types, held);
 
+        // The code tracks the presence of every scalar and enum in a oneof (verified, 3.7.13.17): one without it is
+        // paired with the wrong property.
+        if (oneof is not null && !present && single is not "message")
+        {
+            throw new InvalidDataException($"{message.Name} has field {number}, of {type}, in the oneof {oneof} without its presence.");
+        }
+
         return new SchemaField
         {
             Number = number,
@@ -161,6 +175,12 @@ internal static class SchemaReader
             Label = present && oneof is null ? "optional" : null,
             Oneof = oneof,
         };
+    }
+
+    // A oneof's case enum is declared in its message itself, never in the `Types` class of its nested types.
+    private static bool IsNestedIn(string name, string message)
+    {
+        return name.StartsWith(message + ".", StringComparison.Ordinal) && !name.AsSpan(message.Length + 1).Contains('.');
     }
 
     // A field the wire writes as one value: a scalar or an enum, whose presence the code may track.

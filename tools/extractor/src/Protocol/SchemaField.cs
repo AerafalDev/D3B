@@ -9,8 +9,10 @@ internal sealed class SchemaField
     /// <summary>Gets its kind: <c>int32</c>, <c>int64</c>, <c>uint32</c>, <c>uint64</c>, <c>bool</c>, <c>string</c>, <c>float</c>, <c>double</c>, <c>bytes</c>, <c>enum</c>, <c>message</c> or <c>map</c>.</summary>
     /// <remarks>
     /// The metadata gives a field's C# type, not its protobuf type: a C# <c>int</c> is written <c>int32</c>, though
-    /// <c>sint32</c> and <c>sfixed32</c> are <c>int</c> too. None was met on 3.7.12.12 (inferred, the C# version's D40,
-    /// read from the machine code); the capture replay's re-encoding catches one (docs/protocol.md, "Decoding").
+    /// <c>sint32</c> and <c>sfixed32</c> are <c>int</c> too, and so for <c>long</c>, <c>uint</c> and <c>ulong</c> with
+    /// their <c>sint</c>, <c>fixed</c> and <c>sfixed</c> kinds. On 3.7.12.12 only <c>int32</c>, <c>int64</c> and
+    /// <c>uint32</c> were met (inferred, the C# version's D40, read from the machine code); the capture replay's
+    /// re-encoding catches another (docs/protocol.md, "Decoding").
     /// </remarks>
     public required string Kind { get; init; }
 
