@@ -177,12 +177,15 @@ pub async fn relay_restore(relay: tauri::State<'_, Relay>) -> Result<(), String>
 /// Makes the app's relay, which tells the webview each change, and starts it on the installed client.
 pub fn start(app: &tauri::App) {
     let handle = app.handle().clone();
-    let relay = Relay::new(move |status| {
-        // The data is managed before the relay starts (`lib.rs`); without it, no map is shown.
-        let data = handle.try_state::<LoadedData>();
-        let data = data.as_deref().and_then(|data| data.0.as_ref().ok());
-        let _ = RelayChanged(RelayStatus::new(status, data)).emit(&handle);
-    });
+    let relay = Relay::new(
+        move |status| {
+            // The data is managed before the relay starts (`lib.rs`); without it, no map is shown.
+            let data = handle.try_state::<LoadedData>();
+            let data = data.as_deref().and_then(|data| data.0.as_ref().ok());
+            let _ = RelayChanged(RelayStatus::new(status, data)).emit(&handle);
+        },
+        |_| Box::new(crate::protocol::Unobserved),
+    );
     app.manage(relay.clone());
     let paths = app.path();
     // The client's folder, as the extractor finds it (`docs/data.md`): `DOFUS_CLIENT`, else where the launcher

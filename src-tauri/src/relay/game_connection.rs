@@ -15,7 +15,7 @@ use super::capture::{Recorder, Recording};
 use super::connection_phase::connect;
 use super::frame::{self, Frames};
 use super::handover::{GameServer, Handover, Waiting};
-use crate::protocol::{self, Session};
+use crate::protocol::{self, Observer, Session};
 
 /// How long the client's first frame may take to come whole; it speaks first, at once (inferred, 3.7.12.12).
 const FIRST_FRAME: Duration = Duration::from_secs(5);
@@ -53,6 +53,7 @@ pub(crate) async fn serve(
     handover: Arc<Mutex<Handover>>,
     recording: Option<Recording>,
     report: impl Fn(Game) + Clone + Send + Sync + 'static,
+    observe: Arc<dyn Fn(u64) -> Box<dyn Observer> + Send + Sync>,
 ) {
     let recording = recording.map(Arc::new);
     let mut connections = JoinSet::new();
@@ -69,14 +70,14 @@ pub(crate) async fn serve(
         accepted += 1;
         let number = accepted;
         let recording = recording.clone();
+        let observe = Arc::clone(&observe);
         connections.spawn(async move {
             let opened = {
                 let report = report.clone();
                 move |waiting: &Waiting| {
                     report(Game::Opened);
-                    let protocol = protocol::open(waiting.build.clone(), move |session| {
-                        report(Game::Protocol(number, session));
-                    });
+                    let report = move |session| report(Game::Protocol(number, session));
+                    let protocol = protocol::open(waiting.build.clone(), report, observe(number));
                     move |side, body: Option<&[u8]>| protocol.give(side, body)
                 }
             };
