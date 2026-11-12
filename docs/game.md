@@ -70,9 +70,9 @@ never the reverse (ADR 0002).
 - **Elements** (verified): interactive elements (their interactive and skills, enabled or disabled) and stated
   elements (state 0 available, 2 being harvested, 1 harvested, the meanings inferred). Only those on the current map
   are kept (`on_current_map` false are the eight neighbouring maps'). An element's cell is in the map's data, by its
-  id (all 411,781 found). `InteractiveElementUpdatedEvent` and `StatedElementUpdatedEvent` replace the known one of its id, and add one
-  only when it says it is on the current map: updates do not say so reliably (verified: all 71,882 stated updates,
-  and 3,655 of 71,888 interactive ones, say they are not).
+  id (all 411,781 found). `InteractiveElementUpdatedEvent` and `StatedElementUpdatedEvent` replace the known one of
+  its id, and add one only when it says it is on the current map: updates do not say so reliably (verified: all
+  71,882 stated updates, and 3,655 of 71,888 interactive ones, say they are not).
 - **Every map information replaces what is around whole**, with or without a `MapCurrentEvent` before it: a
   profession's level-up sends the same map's information again (964 of 964).
 - **Names**, the owner's choice (2026-11-12): players by their name, as the game shows them; monsters, NPCs and
