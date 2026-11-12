@@ -11,10 +11,11 @@ use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::MissedTickBehavior;
 
-use super::decoder;
+use super::frames::Frame;
 use super::message::Message;
 use super::outcome::Outcome;
 use super::pins::Pins;
+use super::{decoder, envelope};
 use crate::relay::Side;
 
 /// How many frames may wait for the protocol before one more is dropped and counted (`docs/protocol.md`, "The tap").
@@ -36,6 +37,9 @@ pub(crate) trait Observer: Send + 'static {
     fn tick(&mut self, now: std::time::Instant, dropped: u64);
     /// The connection ended: told once, last.
     fn closed(&mut self);
+    /// Each frame read, a message or not, for the inspector (`docs/protocol.md`, "The inspector"); a connection whose
+    /// build has no pins reads none.
+    fn frame(&mut self, _frame: &Frame<'_>) {}
 }
 
 /// An observer that keeps nothing, for tests that do not read a connection's messages.
@@ -186,8 +190,20 @@ async fn run(
             frame = frames.recv() => {
                 let Some((side, body, dropped)) = frame else { break };
                 if let Some(pins) = &pins {
-                    if let Some(message) = read(&mut session, pins, side, &body) {
-                        observer.message(&message, tokio::time::Instant::now().into_std(), dropped);
+                    let at = tokio::time::Instant::now().into_std();
+                    let (outcome, message) = read(&mut session, pins, side, &body);
+                    let name = envelope::open(side, &body).map(|content| content.name);
+                    observer.frame(&Frame {
+                        side,
+                        at,
+                        name,
+                        readable: name.and_then(|name| pins.readable(name)),
+                        secret: name.is_some_and(|name| pins.is_secret(name)),
+                        outcome,
+                        body: &body,
+                    });
+                    if let Some(message) = message {
+                        observer.message(&message, at, dropped);
                     }
                     changed = true;
                 }
@@ -219,7 +235,7 @@ async fn run(
 }
 
 /// Reads one frame into `session`: its outcome counted, and the current map kept; the message, when one was decoded.
-fn read(session: &mut Session, pins: &Pins, side: Side, body: &[u8]) -> Option<Message> {
+fn read(session: &mut Session, pins: &Pins, side: Side, body: &[u8]) -> (Outcome, Option<Message>) {
     let (outcome, message) = decoder::read(pins, side, body);
     let counts = &mut session.counts;
     match outcome {
@@ -231,7 +247,7 @@ fn read(session: &mut Session, pins: &Pins, side: Side, body: &[u8]) -> Option<M
     if let Some(Message::MapCurrentEvent(current)) = &message {
         session.map_id = Some(current.map_id);
     }
-    message
+    (outcome, message)
 }
 
 #[cfg(test)]
