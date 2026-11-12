@@ -25,7 +25,7 @@ behaviour of the game is unknown, say so and ask for a study rather than guessin
 5. **Questions for the owner**: every choice that is not forced, as a question with 2 to 4 options, a one-line
    trade-off each, and your recommendation first, saying why and whether something better exists. Merge the small
    ones; say which are blocking.
-6. **Pull requests**: the stack in order, each one behaviour within about 600 handwritten lines.
+6. **Pull requests**: the stack in order, each one behaviour within about 1,000 handwritten lines.
 
 ## Strict rules
 

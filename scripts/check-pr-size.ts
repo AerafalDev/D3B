@@ -2,7 +2,7 @@
 // Usage: bun scripts/check-pr-size.ts [base], `origin/next` by default. Exits 1 over the limit.
 import { spawnSync } from "node:child_process";
 
-const LIMIT = 600;
+const LIMIT = 1000;
 // Generated, vendored or locked files: they do not count.
 const IGNORED = [
   /^bun\.lock$/,
