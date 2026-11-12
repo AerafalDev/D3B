@@ -55,8 +55,12 @@ Each is `inferred` unless said `verified`.
 
 ## Decoding
 
-- **Our readable `.proto` files** in `src-tauri/protocol/`, written by us with the field numbers checked against the
-  captures, compiled with `prost` by `prost-build` and `protox` in `build.rs` (no `protoc` to install).
+- **Our readable `.proto` files** in `src-tauri/protocol/game/` (`character.proto`, `maps.proto`, package
+  `d3b.game`), written by us with the field numbers checked against the captures, compiled with `prost` by
+  `prost-build` and `protox` in `build.rs` (no `protoc` to install) into `protocol::game`; `protocol::message::Message` holds
+  the live view's messages by their readable names. Names are the C# version's (inferred); a message declares only
+  the fields D3B reads (partial, so its frames are "read"), an enum it does not need is read as its number, and no map
+  is declared (prost's maps would not keep the client's order).
 - **Pins**, `src-tauri/protocol/pins/<build>.json`: `{build, schemaSha256, messages: {Readable: "abc"}, secrets:
   ["abc"]}`, one entry per message a feature reads, embedded in the app. `secrets` names the build's messages that
   carry a session secret (the ticket's request, and those the study found holding secrets): their frames are dropped
@@ -64,8 +68,9 @@ Each is `inferred` unless said `verified`.
 - **The gate**: a connection whose build has pins is decoded; one without (**unmapped**), or with no build read
   (**unknown build**), has the protocol off and the reason in its status. Nothing else changes for it.
 - **Four outcomes** per frame (`.claude/rules/game-data.md`: a mapped message that does not re-encode to the same
-  bytes is not trusted). prost writes a oneof after the plain fields and drops unknown fields, where the client writes
-  fields in number order, so the frame and its re-encoding are compared field by field in number order, read by
+  bytes is not trusted). prost 0.14 writes a oneof where its lowest field number would be, whichever member is set
+  (verified, 2026-11-12, `protocol::message`'s tests), and drops unknown fields, where the client writes fields in
+  number order, so the frame and its re-encoding are compared field by field in number order, read by
   `relay::wire`:
   - **understood**: decoded, and the same fields with the same bytes;
   - **read**: decoded, the same but for fields our `.proto` lacks, present in the frame only;
