@@ -11,7 +11,7 @@ pub(crate) enum Outcome {
     Understood,
     /// Decoded, the same but for fields our `.proto` lacks, present in the frame only.
     Read,
-    /// A name without a pin, a secret, or an envelope not as measured: passed on, never decoded.
+    /// A name without a pin, a secret message (counted here, never decoded), or an envelope not as measured.
     #[cfg_attr(
         test,
         expect(
@@ -24,21 +24,26 @@ pub(crate) enum Outcome {
     NotTrusted,
 }
 
-/// How many levels of nested messages are compared; the live view's deepest is 5 levels down. It bounds what a frame
-/// can cost.
+/// How many levels of nested messages are compared; the live view's deepest is 5 levels down.
 const DEPTH: usize = 16;
 
+/// How many fields one comparison may read, at every level, both sides together: the largest frame measured, 88,581
+/// bytes (3.7.13.17), holds fewer than 45,000 fields of two bytes. With [`DEPTH`] it bounds what a hostile frame
+/// costs, here 4 MiB of fields; past it, the frame is not trusted.
+const FIELD_LIMIT: usize = 1 << 17;
+
 /// How `encoded`, a decoded message encoded again, compares with `frame`, the bytes it was decoded from: `Understood`,
-/// `Read` or `NotTrusted`.
+/// `Read` or `NotTrusted`. An understood frame is compared as bytes first, with no allocation.
 pub(crate) fn compare(frame: &[u8], encoded: &[u8]) -> Outcome {
-    compared(frame, encoded, DEPTH)
+    let mut budget = FIELD_LIMIT;
+    compared(frame, encoded, DEPTH, &mut budget)
 }
 
-fn compared(frame: &[u8], encoded: &[u8], depth: usize) -> Outcome {
+fn compared(frame: &[u8], encoded: &[u8], depth: usize, budget: &mut usize) -> Outcome {
     if frame == encoded {
         return Outcome::Understood;
     }
-    let (Some(mut sent), Some(mut again)) = (sorted(frame), sorted(encoded)) else {
+    let (Some(mut sent), Some(mut again)) = (sorted(frame, budget), sorted(encoded, budget)) else {
         return Outcome::NotTrusted;
     };
     // Stable, so that a repeated field's values keep their order.
@@ -57,7 +62,7 @@ fn compared(frame: &[u8], encoded: &[u8], depth: usize) -> Outcome {
             return Outcome::NotTrusted;
         }
         for (sent, again) in group.iter().zip(&again[..same]) {
-            match field_outcome(sent, again, depth) {
+            match field_outcome(sent, again, depth, budget) {
                 Outcome::Understood => {}
                 Outcome::Read => outcome = Outcome::Read,
                 _ => return Outcome::NotTrusted,
@@ -71,16 +76,22 @@ fn compared(frame: &[u8], encoded: &[u8], depth: usize) -> Outcome {
 
 /// Two values of one field: equal, or two nested messages compared in turn. prost writes a scalar, a string or packed
 /// numbers as it read them, so differing bytes can only be a message.
-fn field_outcome(sent: &Field<'_>, again: &Field<'_>, depth: usize) -> Outcome {
+fn field_outcome(sent: &Field<'_>, again: &Field<'_>, depth: usize, budget: &mut usize) -> Outcome {
     match (sent.value, again.value) {
         (left, right) if left == right => Outcome::Understood,
-        (Value::Bytes(left), Value::Bytes(right)) if depth > 0 => compared(left, right, depth - 1),
+        (Value::Bytes(left), Value::Bytes(right)) if depth > 0 => compared(left, right, depth - 1, budget),
         _ => Outcome::NotTrusted,
     }
 }
 
-fn sorted(message: &[u8]) -> Option<Vec<Field<'_>>> {
-    wire::fields(message).collect::<Result<_, _>>().ok()
+/// The fields of `message`, each taken from `budget`; `None` when they are not fields, or more than it holds.
+fn sorted<'a>(message: &'a [u8], budget: &mut usize) -> Option<Vec<Field<'a>>> {
+    let mut fields = Vec::new();
+    for field in wire::fields(message) {
+        *budget = budget.checked_sub(1)?;
+        fields.push(field.ok()?);
+    }
+    Some(fields)
 }
 
 #[cfg(test)]
@@ -182,6 +193,24 @@ mod tests {
 
         assert_eq!(compare(&[0xff], &[]), Outcome::NotTrusted);
         assert_eq!(compare(&frame, &message(&[bytes(2, &[0x08])])), Outcome::NotTrusted);
+    }
+
+    #[test]
+    fn a_frame_of_more_fields_than_the_limit_is_not_trusted() {
+        // A frame of `count` fields 1 and one field 2, and its re-encoding without the field 2.
+        let pair = |count: usize| {
+            let mut fields = vec![varint(1, 0); count];
+            let encoded = message(&fields);
+            fields.push(varint(2, 0));
+            (message(&fields), encoded)
+        };
+        let half = FIELD_LIMIT / 2;
+
+        // Both sides count: `half - 1` and one more, then `half - 1`, fit; `half` and one, then `half`, do not.
+        let (frame, encoded) = pair(half - 1);
+        assert_eq!(compare(&frame, &encoded), Outcome::Read);
+        let (frame, encoded) = pair(half);
+        assert_eq!(compare(&frame, &encoded), Outcome::NotTrusted);
     }
 
     #[test]

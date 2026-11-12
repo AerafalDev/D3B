@@ -79,8 +79,11 @@ Each is `inferred` unless said `verified`.
 
   `protocol::envelope` opens a frame by the wire format alone, with no allocation: exactly the fields above, an id of
   0 left out, an empty message's `Any` without its value, a name of 1 to 8 lowercase letters (3.7.13.17's are 3).
-  `protocol::outcome` compares down to 16 levels of nested messages (the live view's deepest is 5); a repeated field
-  keeps its count and order, and a field prost wrote that the frame lacks is not trusted.
+  `protocol::outcome` compares down to 16 levels of nested messages (the live view's deepest is 5) and 131,072 fields in
+  all (4 MiB; the largest frame measured holds under 45,000); a repeated field keeps its count and order, and a field
+  prost wrote that the frame lacks is not trusted. With no schema at hand, "read" also covers a field our `.proto`
+  declares without the presence the build gives it, sent at 0, and a oneof sent twice: the audit test (PR 6) checks
+  that our `.proto` keeps the build's `optional` and oneofs. A secret message's frames count as unknown.
 - **To start**, the messages the live view needs: the character chosen, the current map and its information (and its
   request), the context created and destroyed, actors shown, removed and moving, interactive and stated elements
   updated, the characteristics, life regeneration, and the weight.

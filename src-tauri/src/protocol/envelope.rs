@@ -164,6 +164,8 @@ mod tests {
             (Side::Client, event),
             (Side::Server, both),
             (Side::Server, message(&[bytes(2, &message(&[bytes(1, &any)]))])),
+            (Side::Client, message(&[bytes(1, &message(&[id(2), bytes(2, &any)]))])),
+            (Side::Server, message(&[bytes(3, &message(&[bytes(2, &any)]))])),
             (Side::Client, Vec::new()),
             (Side::Client, vec![0xff]),
         ] {
@@ -180,6 +182,11 @@ mod tests {
             message(&[id(-1)]),
             message(&[id(-1), bytes(2, &[0xff])]),
             message(&[id(-1), bytes(2, &message(&[bytes(2, VALUE)]))]),
+            message(&[bytes(1, b"7"), bytes(2, &any)]),
+            message(&[
+                id(-1),
+                bytes(2, &message(&[bytes(1, b"type.ankama.com/kjt"), bytes(3, VALUE)])),
+            ]),
             message(&[
                 id(-1),
                 bytes(
@@ -191,6 +198,16 @@ mod tests {
             let request = message(&[bytes(4, &inner)]);
 
             assert_eq!(open(Side::Client, &request), None, "{inner:?}");
+        }
+    }
+
+    #[test]
+    fn opens_a_name_of_one_to_eight_letters() {
+        for name in ["k", "abcdefgh"] {
+            let url = format!("type.ankama.com/{name}");
+            let event = message(&[bytes(3, &message(&[bytes(1, &any(url.as_bytes(), VALUE))]))]);
+
+            assert_eq!(open(Side::Server, &event).map(|content| content.name), Some(name));
         }
     }
 
