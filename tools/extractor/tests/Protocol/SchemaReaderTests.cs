@@ -1,3 +1,4 @@
+using D3B.Extractor.Code;
 using D3B.Extractor.Protocol;
 
 namespace D3B.Extractor.Tests.Protocol;
@@ -239,6 +240,28 @@ public sealed class SchemaReaderTests
     public void TheSameTypeNamedTwiceFails()
     {
         Assert.Throws<InvalidDataException>(() => SchemaReader.Read([Message("abc", []), Message("abc", [])]));
+    }
+
+    [Fact]
+    public void TheInstalledClientGivesItsGameMessages()
+    {
+        var client = Installed.Client();
+
+        using var code = ClientCode.Open(client);
+
+        var schema = SchemaReader.Read(code.ProtocolTypes());
+        var messages = schema.Messages.ToDictionary(message => message.Name, StringComparer.Ordinal);
+
+        // 3.7.13.17 (verified, artifacts/studies/protocol.md, section 3): another build may differ, and this says by what.
+        Assert.Equal(2175, schema.Messages.Count);
+        Assert.Equal([(1, "int64", null)], Fields(messages["jow"]));
+        Assert.Equal([(1, "int32", "repeated"), (2, "int32", "optional"), (3, "bool", null), (4, "int64", null)], Fields(messages["jnz"]));
+        Assert.Equal([(1, "int32", null), (2, "int32", null)], Fields(messages["iqq"]));
+    }
+
+    private static IEnumerable<(int Number, string Kind, string? Label)> Fields(SchemaMessage message)
+    {
+        return message.Fields.Select(field => (field.Number, field.Kind, field.Label));
     }
 
     private static TypeRef Of(string name, params TypeRef[] arguments)
