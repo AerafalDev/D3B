@@ -5,10 +5,10 @@
 //! whose game host and ports become the relay's. Nothing is sent to the game of the relay's own.
 
 mod ankama_config;
-mod capture;
+pub(crate) mod capture;
 mod connection_phase;
 mod error;
-mod frame;
+pub(crate) mod frame;
 mod game_connection;
 mod handover;
 mod redirect;
