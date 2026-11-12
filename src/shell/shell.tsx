@@ -7,17 +7,17 @@ import { EditorArea } from "./parts/editor-area.tsx";
 import { PartFrame } from "./parts/part-frame.tsx";
 import { ResizablePart } from "./parts/resizable-part.tsx";
 import { StatusBar } from "./parts/status-bar.tsx";
-import { TitleBar } from "./title-bar/title-bar.tsx";
+import type { TitleBar } from "./title-bar/title-bar.tsx";
 import { useShellShortcuts } from "./use-shell-shortcuts.ts";
 
-// The 3 px gaps between the islands, turning blue once held under the pointer, as VS Code's sashes.
+// The 5 px gaps between the islands, turning blue once held under the pointer, as VS Code's sashes.
 const SASH =
-  "bg-transparent w-[3px] aria-[orientation=horizontal]:h-[3px] hover:bg-focus data-[separator=active]:bg-focus transition-colors delay-150";
+  "bg-transparent w-[5px] aria-[orientation=horizontal]:h-[5px] hover:bg-focus data-[separator=active]:bg-focus transition-colors delay-150";
 
 /**
  * The app's shell in VS Code's layout (the owner, 2026-11-12): the activity bar, the primary side bar, the editor area
- * over the panel, and the secondary side bar; the status bar. The title bar above them all. Each part is a discreet island
- * on the window's frame, 3 px apart (the owner's "2 / 3 sober").
+ * over the panel, and the secondary side bar; the status bar; the title bar above them all. Each part is a discreet
+ * island on the window's frame, 5 px apart (the owner's "2 / 3 sober", then a little more room).
  */
 export function Shell() {
   useShellShortcuts();
@@ -25,8 +25,14 @@ export function Shell() {
 
   return (
     <div className="bg-frame text-text flex h-svh flex-col overflow-hidden">
+<<<<<<< HEAD
       <TitleBar />
       <div className="flex min-h-0 flex-1 pr-[3px]">
+||||||| 960abec
+      <div className="flex min-h-0 flex-1 pr-[3px]">
+=======
+      <div className="flex min-h-0 flex-1 pr-[5px]">
+>>>>>>> feat/shell-islands
         <ActivityBar />
         <ResizablePanelGroup orientation="horizontal" className="min-w-0 flex-1">
           <ResizablePart part="primarySideBar" defaultSize={300} minSize={170}>
