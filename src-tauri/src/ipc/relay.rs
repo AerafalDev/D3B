@@ -8,6 +8,7 @@ use specta::Type;
 use tauri::Manager;
 use tauri_specta::Event;
 
+use crate::protocol::{ProtocolState, Session};
 use crate::relay::{self, Relay};
 
 /// What the status bar shows of the relay.
@@ -23,6 +24,60 @@ pub struct RelayStatus {
     pub game_connections: u32,
     /// The selection answers not understood since start, whose game went straight to Ankama.
     pub not_understood: u32,
+    /// What the protocol read of each game connection, in the order they opened.
+    pub connections: Vec<GameConnectionStatus>,
+}
+
+/// A game connection as the relay's tooltip shows it (`docs/protocol.md`, "In the app"): its counts saturate at
+/// `u32::MAX`, more frames than a connection carries in years.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct GameConnectionStatus {
+    pub number: u32,
+    /// The client's build its connection phase named.
+    pub build: Option<String>,
+    pub protocol: GameProtocol,
+    pub understood: u32,
+    pub read: u32,
+    pub unknown: u32,
+    pub not_trusted: u32,
+    /// Frames the protocol fell too far behind to read.
+    pub dropped: u32,
+}
+
+/// Whether a game connection's frames are read.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum GameProtocol {
+    On,
+    /// Its build has no pins.
+    Unmapped,
+    /// Its connection phase named no build.
+    UnknownBuild,
+    /// Its bytes stopped being frames.
+    Lost,
+}
+
+impl GameConnectionStatus {
+    fn new(number: u64, session: Session) -> Self {
+        let count = |count: u64| u32::try_from(count).unwrap_or(u32::MAX);
+        let counts = session.counts;
+        Self {
+            number: u32::try_from(number).unwrap_or(u32::MAX),
+            build: session.build,
+            protocol: match session.state {
+                ProtocolState::On => GameProtocol::On,
+                ProtocolState::Unmapped => GameProtocol::Unmapped,
+                ProtocolState::UnknownBuild => GameProtocol::UnknownBuild,
+                ProtocolState::Lost => GameProtocol::Lost,
+            },
+            understood: count(counts.understood),
+            read: count(counts.read),
+            unknown: count(counts.unknown),
+            not_trusted: count(counts.not_trusted),
+            dropped: count(counts.dropped),
+        }
+    }
 }
 
 /// Where the relay stands.
@@ -55,6 +110,11 @@ impl From<relay::Status> for RelayStatus {
             client_build: status.client_build,
             game_connections: status.game_connections,
             not_understood: status.not_understood,
+            connections: status
+                .connections
+                .into_iter()
+                .map(|connection| GameConnectionStatus::new(connection.number, connection.session))
+                .collect(),
         }
     }
 }
