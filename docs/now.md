@@ -101,7 +101,7 @@ _Updated 2026-11-12._
   connection. A stack of eight PRs against `next`: (1) the protocol: the `.proto` files extended (actors, the
   characteristics' values), the level gained and the kamas pinned, `koh` a secret (done in code: the 17 pins hold, no
   frame not trusted); (2) `game`, in two PRs: the characteristics
-  and life with its regeneration (done in code), then who, where, pods, kamas, level, context, staleness (done in code); (3) `game`: what is around, and the game's capture replay; (4)
+  and life with its regeneration (done in code), then who, where, pods, kamas, level, context, staleness (done in code); (3) `game`: what is around (done in code), then the game's capture replay; (4)
   the view through the IPC, `CharacterChanged` and `map_cells`; (5) the characters list and the view; (6) the map; (7)
   the inspector's frames kept and streamed; (8) the inspector's tab, and the in-game checklist.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
