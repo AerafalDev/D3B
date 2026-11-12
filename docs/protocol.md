@@ -154,7 +154,7 @@ its connection's frames live, newest last, and shows the one clicked.
   name, outcome and size. A secret's frame keeps its name and size only, never its bytes. A frame the tap dropped is
   not there; the count of dropped frames is.
 - **Streamed only while watched**: `inspector_watch(Some(connection))` answers with the kept frames' summaries and
-  starts `InspectorFrames`, at most ten batches a second of at most 1,000 summaries each, with the count of those
+  starts `InspectorFrames`, at most five batches a second (at the protocol's ticks) of at most 1,000 summaries each, with the count of those
   skipped beyond (the peaks measured on one connection: 737 frames in a second; 93 KB in another, one frame). One
   connection is watched at a time, the one whose tab is shown: `inspector_watch(None)`, a connection closed, or the
   front end starting (after a reload too) stops it. `inspector_frame(connection, number)` answers one frame's detail,

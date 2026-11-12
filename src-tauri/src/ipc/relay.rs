@@ -2,6 +2,7 @@
 //! installs, since on Windows the installer ends the app before its exit hook runs (`docs/relay.md`).
 
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -177,6 +178,8 @@ pub async fn relay_restore(relay: tauri::State<'_, Relay>) -> Result<(), String>
 /// Makes the app's relay, which tells the webview each change, and starts it on the installed client.
 pub fn start(app: &tauri::App) {
     let handle = app.handle().clone();
+    let inspector = Arc::new(super::inspector::Inspector::default());
+    app.manage(Arc::clone(&inspector));
     let relay = Relay::new(
         move |status| {
             // The data is managed before the relay starts (`lib.rs`); without it, no map is shown.
@@ -184,7 +187,7 @@ pub fn start(app: &tauri::App) {
             let data = data.as_deref().and_then(|data| data.0.as_ref().ok());
             let _ = RelayChanged(RelayStatus::new(status, data)).emit(&handle);
         },
-        super::character::follow(app.handle().clone()),
+        super::character::follow(app.handle().clone(), Arc::clone(&inspector)),
     );
     app.manage(relay.clone());
     let paths = app.path();

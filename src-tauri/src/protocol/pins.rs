@@ -139,6 +139,11 @@ impl Pins {
         self.readable.iter().map(|(name, readable)| (*readable, name.as_str()))
     }
 
+    /// Whether `name`, a message's name in the build, carries a session secret.
+    pub(crate) fn is_secret(&self, name: &str) -> bool {
+        self.secrets.contains(name)
+    }
+
     /// The readable name pinned to `name`, a message's name in the build; never a secret's, which [`Pins::parse`]
     /// refuses to pin, so that a secret's bytes are never decoded.
     pub(crate) fn readable(&self, name: &str) -> Option<&'static str> {

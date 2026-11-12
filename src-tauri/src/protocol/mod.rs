@@ -10,11 +10,18 @@ mod envelope;
 
 mod outcome;
 
+pub(crate) use outcome::Outcome;
+
 mod pins;
 
 mod decoder;
 
 mod session;
+
+mod frames;
+
+pub(crate) use frames::{Frame, Frames, Kept, detail};
+pub(crate) use pins::Pins;
 
 #[cfg(test)]
 pub(crate) use session::Counts;

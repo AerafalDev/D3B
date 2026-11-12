@@ -9,9 +9,9 @@ flowchart LR
     tap["relay: the game connection's tap"] -->|"each whole frame, bounded"| task["protocol::session, per connection"]
     task --> dec["decoder: envelope, pins, secrets"]
     dec -->|"a decoded message, its time; a tick"| obs["game::Live: a game::Character, the session's observer"]
-    task -->|"every frame, a secret as its name and size"| ring[("protocol::session::frames: 3,000 frames, 16 MiB")]
+    task -->|"every frame, a secret as its name and size"| ring[("ipc::inspector, protocol::Frames: 3,000 frames, 16 MiB")]
     obs -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
-    ring -->|"the one watched, at most 10 batches/s"| ev2["ipc: InspectorFrames"]
+    ring -->|"the one watched, at most 5 batches/s"| ev2["ipc: InspectorFrames"]
     maps["data: a map's cells, read on demand"] --> cmd["ipc: map_cells"]
     ev1 --> view["src/characters: the list, the view, the map"]
     cmd --> view

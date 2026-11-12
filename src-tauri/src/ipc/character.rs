@@ -6,7 +6,10 @@ use specta::Type;
 use tauri::Manager;
 use tauri_specta::Event;
 
+use std::sync::Arc;
+
 use super::LoadedData;
+use super::inspector::{self, Inspected, Inspector};
 use super::relay::MapAt;
 use crate::data::World;
 use crate::game::{ActorKind, Context, Live, Monster, Seen, View};
@@ -16,19 +19,24 @@ use crate::protocol::Observer;
 /// [`CharacterChanged`], its map named only when the game data's build is the one the connection named.
 pub(crate) fn follow(
     handle: tauri::AppHandle,
+    inspector: Arc<Inspector>,
 ) -> impl Fn(u64, Option<&str>) -> Box<dyn Observer> + Send + Sync + 'static {
     move |number, build| {
+        let connection = u32::try_from(number).unwrap_or(u32::MAX);
+        let streamed = handle.clone();
+        let send = Box::new(move |frames: &_| inspector::emit(&streamed, frames));
         let handle = handle.clone();
         let build = build.map(str::to_owned);
-        let connection = u32::try_from(number).unwrap_or(u32::MAX);
-        Box::new(Live::new(move |view: Option<View>| {
+        let named = build.clone();
+        let live = Box::new(Live::new(move |view: Option<View>| {
             let data = handle.try_state::<LoadedData>();
             let data = data.as_deref().and_then(|data| data.0.as_ref().ok());
             let data = data.map(|data| (data.manifest.build.as_str(), &data.world));
-            let world = world_for(data, build.as_deref());
+            let world = world_for(data, named.as_deref());
             let view = view.map(|view| CharacterView::new(&view, world));
             let _ = CharacterChanged { connection, view }.emit(&handle);
-        }))
+        }));
+        Box::new(Inspected::new(live, connection, build, Arc::clone(&inspector), send))
     }
 }
 

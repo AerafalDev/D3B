@@ -3,6 +3,7 @@
 
 mod character;
 mod commands;
+mod inspector;
 mod map;
 mod relay;
 
@@ -19,9 +20,15 @@ pub fn builder() -> Builder<tauri::Wry> {
             commands::app_info,
             relay::relay_status,
             relay::relay_restore,
-            map::map_cells
+            map::map_cells,
+            inspector::inspector_watch,
+            inspector::inspector_frame
         ])
-        .events(collect_events![relay::RelayChanged, character::CharacterChanged])
+        .events(collect_events![
+            relay::RelayChanged,
+            character::CharacterChanged,
+            inspector::InspectorFrames
+        ])
 }
 
 #[cfg(test)]

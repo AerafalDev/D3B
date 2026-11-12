@@ -20,11 +20,19 @@ export const commands = {
 	 *  or no such map.
 	 */
 	mapCells: (mapId: number) => __TAURI_INVOKE<MapCells>("map_cells", { mapId }),
+	/**
+	 *  Watches the frames of `connection`, or none: those kept now; the next come as `InspectorFrames`. The front end
+	 *  watches none as it starts, so that a reload leaves nothing streamed to no one.
+	 */
+	inspectorWatch: (connection: number | null) => __TAURI_INVOKE<FrameSummary_Serialize[]>("inspector_watch", { connection }),
+	/**  The detail of the `number`th frame of `connection`, or why there is none. */
+	inspectorFrame: (connection: number, number: number) => __TAURI_INVOKE<FrameDetail_Serialize>("inspector_frame", { connection, number }),
 };
 
 /** Events */
 export const events = {
 	characterChanged: makeEvent<CharacterChanged_Serialize, CharacterChanged_Deserialize>("character-changed"),
+	inspectorFrames: makeEvent<InspectorFrames_Serialize, InspectorFrames_Deserialize>("inspector-frames"),
 	relayChanged: makeEvent<RelayChanged_Serialize, RelayChanged_Deserialize>("relay-changed"),
 };
 
@@ -148,6 +156,55 @@ export type ElementAt = {
 	cell: number,
 };
 
+/**  A frame's detail: its summary and its lines (`protocol::detail`). */
+export type FrameDetail = FrameDetail_Serialize | FrameDetail_Deserialize;
+
+/**  A frame's detail: its summary and its lines (`protocol::detail`). */
+export type FrameDetail_Deserialize = {
+	summary: FrameSummary_Deserialize,
+	lines: string[],
+};
+
+/**  A frame's detail: its summary and its lines (`protocol::detail`). */
+export type FrameDetail_Serialize = {
+	summary: FrameSummary_Serialize,
+	lines: string[],
+};
+
+/**  A frame's outcome (`docs/protocol.md`, "Decoding"), or a secret, which is never decoded. */
+export type FrameOutcome = "understood" | "read" | "unknown" | "notTrusted" | "secret";
+
+/**  A frame as the inspector lists it. */
+export type FrameSummary = FrameSummary_Serialize | FrameSummary_Deserialize;
+
+/**  A frame as the inspector lists it. */
+export type FrameSummary_Deserialize = {
+	number: number,
+	/**  Milliseconds since the connection opened. */
+	millis: number,
+	fromClient: boolean,
+	/**  Its message's name in the build, when its envelope opened. */
+	name?: string | null,
+	/**  The readable name pinned to it. */
+	readable?: string | null,
+	outcome: FrameOutcome,
+	size: number,
+};
+
+/**  A frame as the inspector lists it. */
+export type FrameSummary_Serialize = {
+	number: number,
+	/**  Milliseconds since the connection opened. */
+	millis: number,
+	fromClient: boolean,
+	/**  Its message's name in the build, when its envelope opened. */
+	name: string | null,
+	/**  The readable name pinned to it. */
+	readable: string | null,
+	outcome: FrameOutcome,
+	size: number,
+};
+
 /**
  *  A game connection as the relay's tooltip shows it (`docs/protocol.md`, "In the app"): its counts saturate at
  *  `u32::MAX`, more frames than a connection carries in years.
@@ -205,6 +262,23 @@ export type GameProtocol = "on" |
 export type Gauge = {
 	value: number | null,
 	max: number | null,
+};
+
+/**  New frames of the connection watched; `skipped` more came than one batch carries. */
+export type InspectorFrames = InspectorFrames_Serialize | InspectorFrames_Deserialize;
+
+/**  New frames of the connection watched; `skipped` more came than one batch carries. */
+export type InspectorFrames_Deserialize = {
+	connection: number,
+	frames: FrameSummary_Deserialize[],
+	skipped: number,
+};
+
+/**  New frames of the connection watched; `skipped` more came than one batch carries. */
+export type InspectorFrames_Serialize = {
+	connection: number,
+	frames: FrameSummary_Serialize[],
+	skipped: number,
 };
 
 /**  An element the character may use, such as a resource, by its id and its kind's. */
