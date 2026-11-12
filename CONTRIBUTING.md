@@ -35,7 +35,7 @@ needed to measure a change in game, not to build or test: tests that need real g
 1. Branch from an up-to-date `next`: `git switch -c feat/<subject>`.
 2. Write the test first and watch it fail, then make it pass. Every behaviour has a test, and a test of its failure
    case.
-3. Keep the pull request to **one behaviour**, within about **600 handwritten lines** (`bun run pr:size`). Larger work
+3. Keep the pull request to **one behaviour**, within about **1,000 handwritten lines** (`bun run pr:size`). Larger work
    is a stack of pull requests.
 4. Run `bun run check`, then open the pull request against `next` with a
    [Conventional Commits](https://www.conventionalcommits.org) title, such as `feat(relay): hold the server selection`.

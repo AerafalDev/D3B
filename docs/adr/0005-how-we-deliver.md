@@ -14,7 +14,7 @@ wants Claude to commit, open and merge its own PRs, with the branches protected.
 - `main` and `next` are protected by GitHub rulesets: changes through PRs only, the CI check required, no force-push,
   no deletion. The repository allows squash merges only and deletes merged branches.
 - Claude branches from `origin/next`, commits in Conventional Commits, opens the PR, has a fresh `reviewer` agent read
-  it, waits for CI and squash-merges (`pr` skill). PRs carry one behaviour within 600 handwritten lines.
+  it, waits for CI and squash-merges (`pr` skill). PRs carry one behaviour within 1,000 handwritten lines (600 until 2026-11-12, raised by the owner).
 - No AI attribution in commits or PRs.
 - Releases, data releases and tags wait for the owner's go.
 - Every choice that is not forced is the owner's, asked with AskUserQuestion; costly ones become ADRs; a feature is

@@ -16,7 +16,7 @@ wrong in the C# version; do not repeat it.
   AskUserQuestion, at most four questions at a time, options with their trade-off, the recommendation first, saying
   why and whether something better exists. Settle alone only what is local and reversible, and say so in the PR.
 - **Record** a decision costly to reverse as an ADR (`adr` skill), after the owner made it. Small choices go in the PR.
-- **Scope**: one behaviour per PR, at most 600 handwritten lines (`bun run pr:size`); only the owner grants an
+- **Scope**: one behaviour per PR, at most 1,000 handwritten lines (`bun run pr:size`); only the owner grants an
   exception, which the PR then carries as the `size-exception` label, and CI skips its size. A feature is a stack of PRs
   designed first (`feature` skill). A new large task starts in a new session. No refactoring outside the task.
 - **Done** means: tests with their failure cases, `bun run check` green, the domain page and `docs/now.md` updated,
@@ -60,7 +60,7 @@ bun run dev                     # the front end alone in a browser, without the 
 bun run check                   # everything CI checks: Biome, typecheck, Vitest, folder rule, fmt, clippy, cargo test,
                                 # and the extractor (dotnet format, dotnet test; needs the .NET 10 SDK)
 bun run fix                     # Biome and rustfmt fixes
-bun run pr:size                 # handwritten lines against origin/next (limit 600)
+bun run pr:size                 # handwritten lines against origin/next (limit 1,000)
 bun run data:fetch <build>      # the game data of a client build into data/
 dotnet run --project tools/extractor/src -- --help   # the extractor (docs/data.md)
 ```
