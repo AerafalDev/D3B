@@ -1,5 +1,30 @@
 {
   "app": {
     "name": "D3B"
+  },
+  "shell": {
+    "withShortcut": "{{label}} ({{shortcut}})",
+    "hide": {
+      "primarySideBar": "Masquer la barre latérale principale",
+      "panel": "Masquer le panneau",
+      "secondarySideBar": "Masquer la barre latérale secondaire"
+    },
+    "empty": "Rien ici pour l'instant : ses vues arrivent avec les fonctionnalités.",
+    "parts": {
+      "activityBar": "Barre d'activité",
+      "primarySideBar": "Barre latérale principale",
+      "panel": "Panneau",
+      "secondarySideBar": "Barre latérale secondaire"
+    },
+    "commands": {
+      "primarySideBar": "Afficher ou masquer la barre latérale principale",
+      "panel": "Afficher ou masquer le panneau",
+      "secondarySideBar": "Afficher ou masquer la barre latérale secondaire"
+    },
+    "keys": {
+      "ctrl": "Ctrl",
+      "shift": "Maj",
+      "alt": "Alt"
+    }
   }
 }
