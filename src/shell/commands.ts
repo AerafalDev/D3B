@@ -2,9 +2,9 @@ import type { Platform } from "@/lib/platform.ts";
 import { useLayout } from "./layout-store.ts";
 
 /** The shell's commands, each named under `shell.commands` in the locales. */
-export type CommandId = "primarySideBar" | "panel" | "secondarySideBar";
+export type CommandId = "palette" | "primarySideBar" | "panel" | "secondarySideBar";
 
-/** A command a shortcut runs; the command palette and the menus list them once they come. */
+/** A command the palette lists, the menus offer and a shortcut runs. */
 export interface ShellCommand {
   id: CommandId;
   /** Its shortcut in react-hotkeys-hook's notation; `mod` is Cmd on macOS and Ctrl elsewhere. VS Code's keys. */
@@ -13,6 +13,7 @@ export interface ShellCommand {
 }
 
 export const shellCommands: readonly ShellCommand[] = [
+  { id: "palette", keys: "mod+shift+p", run: () => useLayout.getState().setPaletteOpen(true) },
   { id: "primarySideBar", keys: "mod+b", run: () => useLayout.getState().toggle("primarySideBar") },
   { id: "panel", keys: "mod+j", run: () => useLayout.getState().toggle("panel") },
   { id: "secondarySideBar", keys: "mod+alt+b", run: () => useLayout.getState().toggle("secondarySideBar") },

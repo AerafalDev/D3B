@@ -1,11 +1,13 @@
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { cn } from "@/lib/utils.ts";
+import { CommandPalette } from "./command-palette.tsx";
 import { useLayout } from "./layout-store.ts";
 import { ActivityBar } from "./parts/activity-bar.tsx";
 import { EditorArea } from "./parts/editor-area.tsx";
 import { PartFrame } from "./parts/part-frame.tsx";
 import { ResizablePart } from "./parts/resizable-part.tsx";
 import { StatusBar } from "./parts/status-bar.tsx";
+import { TitleBar } from "./title-bar/title-bar.tsx";
 import { useShellShortcuts } from "./use-shell-shortcuts.ts";
 
 // The 5 px gaps between the islands, turning blue once held under the pointer, as VS Code's sashes.
@@ -14,8 +16,8 @@ const SASH =
 
 /**
  * The app's shell in VS Code's layout (the owner, 2026-11-12): the activity bar, the primary side bar, the editor area
- * over the panel, and the secondary side bar; the status bar. The title bar comes next. Each part is a discreet island
- * on the window's frame, 5 px apart (the owner's "2 / 3 sober", then a little more room).
+ * over the panel, and the secondary side bar; the status bar; the title bar above them all. Each part is a discreet
+ * island on the window's frame, 5 px apart (the owner's "2 / 3 sober", then a little more room).
  */
 export function Shell() {
   useShellShortcuts();
@@ -23,6 +25,7 @@ export function Shell() {
 
   return (
     <div className="bg-frame text-text flex h-svh flex-col overflow-hidden">
+      <TitleBar />
       <div className="flex min-h-0 flex-1 pr-[5px]">
         <ActivityBar />
         <ResizablePanelGroup orientation="horizontal" className="min-w-0 flex-1">
@@ -48,6 +51,7 @@ export function Shell() {
         </ResizablePanelGroup>
       </div>
       <StatusBar />
+      <CommandPalette />
     </div>
   );
 }

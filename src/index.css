@@ -153,6 +153,12 @@
   }
 }
 
+/* VS Code's command palette dims nothing behind it. */
+[data-slot="dialog-overlay"]:has(+ .d3b-palette) {
+  background: transparent;
+  backdrop-filter: none;
+}
+
 /* Dockview's dark theme, set to Dark Modern's editor tabs: 35 px, the active one with a blue top line. */
 .d3b-dockview {
   --dv-group-view-background-color: var(--editor);

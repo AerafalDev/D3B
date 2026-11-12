@@ -4,7 +4,7 @@ import appIcon from "../../../src-tauri/icons/128x128.png";
 import type { CommandId } from "../commands.ts";
 import { useShortcut } from "../use-shortcut.ts";
 
-const SHOWN: readonly CommandId[] = ["primarySideBar", "panel", "secondarySideBar"];
+const SHOWN: readonly CommandId[] = ["palette", "primarySideBar", "panel", "secondarySideBar"];
 
 /**
  * What the editor area shows with no editor open, as VS Code's: the app's mark in relief and the main shortcuts, these

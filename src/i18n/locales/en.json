@@ -17,6 +17,7 @@
       "secondarySideBar": "Secondary side bar"
     },
     "commands": {
+      "palette": "Show all commands",
       "primarySideBar": "Toggle the primary side bar",
       "panel": "Toggle the panel",
       "secondarySideBar": "Toggle the secondary side bar"
@@ -25,6 +26,22 @@
       "ctrl": "Ctrl",
       "shift": "Shift",
       "alt": "Alt"
+    },
+    "menu": {
+      "file": "File",
+      "exit": "Exit",
+      "view": "View",
+      "commandPalette": "Command palette…"
+    },
+    "palette": {
+      "placeholder": "Type the name of a command",
+      "empty": "No matching command"
+    },
+    "window": {
+      "minimize": "Minimize",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "close": "Close"
     }
   }
 }

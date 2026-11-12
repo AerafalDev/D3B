@@ -23,9 +23,15 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }));
-        app = app
-            .plugin(tauri_plugin_updater::Builder::new().build())
-            .plugin(tauri_plugin_window_state::Builder::new().build());
+        // The window's state comes back at each start, but not its frame: it would restore the system frame a former
+        // version saved over the frameless window Windows now has (`tauri.windows.conf.json`, docs/shell.md).
+        let restored =
+            tauri_plugin_window_state::StateFlags::all() - tauri_plugin_window_state::StateFlags::DECORATIONS;
+        app = app.plugin(tauri_plugin_updater::Builder::new().build()).plugin(
+            tauri_plugin_window_state::Builder::new()
+                .with_state_flags(restored)
+                .build(),
+        );
     }
 
     app.plugin(tauri_plugin_log::Builder::new().level(log_level()).build())

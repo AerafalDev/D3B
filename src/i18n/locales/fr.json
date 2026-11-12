@@ -17,6 +17,7 @@
       "secondarySideBar": "Barre latérale secondaire"
     },
     "commands": {
+      "palette": "Afficher toutes les commandes",
       "primarySideBar": "Afficher ou masquer la barre latérale principale",
       "panel": "Afficher ou masquer le panneau",
       "secondarySideBar": "Afficher ou masquer la barre latérale secondaire"
@@ -25,6 +26,22 @@
       "ctrl": "Ctrl",
       "shift": "Maj",
       "alt": "Alt"
+    },
+    "menu": {
+      "file": "Fichier",
+      "exit": "Quitter",
+      "view": "Affichage",
+      "commandPalette": "Palette de commandes…"
+    },
+    "palette": {
+      "placeholder": "Tapez le nom d'une commande",
+      "empty": "Aucune commande correspondante"
+    },
+    "window": {
+      "minimize": "Réduire",
+      "maximize": "Agrandir",
+      "restore": "Restaurer",
+      "close": "Fermer"
     }
   }
 }

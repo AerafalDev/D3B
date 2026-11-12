@@ -12,7 +12,7 @@ function Shortcuts() {
 const start = { primarySideBar: true, panel: true, secondarySideBar: false };
 
 describe("the shell's shortcuts", () => {
-  beforeEach(() => useLayout.setState({ visible: { ...start } }));
+  beforeEach(() => useLayout.setState({ visible: { ...start }, paletteOpen: false }));
   afterEach(cleanup);
 
   it("toggle each part with VS Code's keys", () => {
@@ -27,6 +27,12 @@ describe("the shell's shortcuts", () => {
     render(<Shortcuts />);
     fireEvent.keyDown(screen.getByLabelText("field"), { key: "j", code: "KeyJ", ctrlKey: true });
     expect(useLayout.getState().visible.panel).toBe(false);
+  });
+
+  it("open the command palette", () => {
+    render(<Shortcuts />);
+    fireEvent.keyDown(document, { key: "P", code: "KeyP", ctrlKey: true, shiftKey: true });
+    expect(useLayout.getState().paletteOpen).toBe(true);
   });
 
   it("take the key from the webview, so Ctrl+J or Ctrl+P does nothing else", () => {
