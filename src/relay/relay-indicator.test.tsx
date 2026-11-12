@@ -93,6 +93,25 @@ describe("RelayIndicator", () => {
     expect(text).toContain("understood 61,204 · read 55,012 · unknown 512,330 · not trusted 0 · dropped 3");
   });
 
+  it("shows a connection lost with its counts, and one read without a map yet without one", async () => {
+    const counts = { understood: 5, read: 0, unknown: 7, notTrusted: 0, dropped: 0 };
+    show({
+      ...ready,
+      gameConnections: 2,
+      connections: [
+        { ...counts, number: 1, build: "3.7.13.17", protocol: "lost", map: null },
+        { ...counts, number: 2, build: "3.7.13.17", protocol: "on", map: null },
+      ],
+    });
+
+    const lines = (await tooltip("Relay ready · 2 in game")).split(/(?=Connection|understood|Quitting|Start)/);
+    expect(lines).toContain("Connection 1 — 3.7.13.17, protocol lost (unreadable frames)");
+    expect(lines).toContain("Connection 2 — 3.7.13.17, protocol on");
+    expect(lines.filter((line) => line.startsWith("understood 5"))).toHaveLength(2);
+    const indented = (await screen.findAllByText(/^understood 5/)).filter((line) => line.classList.contains("pl-3"));
+    expect(indented.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("shows a game connection not read on one line, with why", async () => {
     const off = { understood: 0, read: 0, unknown: 0, notTrusted: 0, dropped: 0, map: null };
     show({

@@ -16,7 +16,7 @@ const TONE: Record<RelayStatus["state"], string> = {
 };
 
 /** A tooltip's line, set in under the one before it when it details it. */
-type Line = { text: string; detail?: boolean };
+type Line = { key: string; text: string; detail?: boolean };
 
 /**
  * A game connection on two lines: who it is (its build, its protocol, its map), then, when it is read, its counts; one
@@ -32,7 +32,7 @@ function connectionLines(connection: GameConnectionStatus, t: TFunction, format:
         ? t("relay.connectionMap", { number, build, protocol, x: map.x, y: map.y })
         : t("relay.connectionBuild", { number, build, protocol });
   if (connection.protocol !== "on" && connection.protocol !== "lost") {
-    return [{ text: who }];
+    return [{ key: `connection-${number}`, text: who }];
   }
   const counts = t("relay.counts", {
     understood: format(connection.understood),
@@ -41,7 +41,10 @@ function connectionLines(connection: GameConnectionStatus, t: TFunction, format:
     notTrusted: format(connection.notTrusted),
     dropped: format(connection.dropped),
   });
-  return [{ text: who }, { text: counts, detail: true }];
+  return [
+    { key: `connection-${number}`, text: who },
+    { key: `counts-${number}`, text: counts, detail: true },
+  ];
 }
 
 /** The relay in the status bar: its state and game connections, and in its tooltip what the player needs to know. */
@@ -58,7 +61,7 @@ export function RelayIndicator() {
   const label =
     status.state === "ready" ? t("relay.ready", { count: status.gameConnections }) : t(`relay.${status.state}`);
   const numbers = new Intl.NumberFormat(i18n.language);
-  const plain = (text: string | null): Line[] => (text === null ? [] : [{ text }]);
+  const plain = (text: string | null): Line[] => (text === null ? [] : [{ key: text, text }]);
   const details: Line[] = [
     ...plain(status.reason ?? null),
     ...plain(status.clientBuild ? t("relay.client", { build: status.clientBuild }) : null),
@@ -82,7 +85,7 @@ export function RelayIndicator() {
         // The registry's tooltip lays its children in a row: the lines go one under the other.
         <TooltipContent className="max-w-md flex-col items-start gap-0.5">
           {details.map((line) => (
-            <p key={line.text} className={cn(line.detail && "pl-3")}>
+            <p key={line.key} className={cn(line.detail && "pl-3")}>
               {line.text}
             </p>
           ))}

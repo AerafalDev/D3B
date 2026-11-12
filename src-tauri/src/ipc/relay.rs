@@ -246,6 +246,31 @@ mod tests {
     }
 
     #[test]
+    fn a_connections_counts_saturate_and_its_state_is_named() {
+        let session = Session {
+            build: Some("3.7.13.17".into()),
+            state: ProtocolState::Lost,
+            counts: crate::protocol::Counts {
+                understood: u64::from(u32::MAX) + 1,
+                read: 2,
+                unknown: 3,
+                not_trusted: 4,
+                dropped: 5,
+            },
+            map_id: Some(153_092_354),
+        };
+
+        let status = GameConnectionStatus::new(u64::from(u32::MAX) + 7, session, None);
+
+        assert_eq!((status.number, status.understood), (u32::MAX, u32::MAX));
+        assert_eq!(
+            (status.read, status.unknown, status.not_trusted, status.dropped),
+            (2, 3, 4, 5)
+        );
+        assert_eq!((status.protocol, status.map), (GameProtocol::Lost, None));
+    }
+
+    #[test]
     fn shows_no_map_of_another_build_or_one_it_does_not_know() {
         let positions = [position(5, 1, 2)];
 
