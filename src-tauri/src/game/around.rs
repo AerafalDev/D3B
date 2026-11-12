@@ -114,11 +114,10 @@ impl Around {
         }
     }
 
-    /// An interactive element of the current map, new or changed.
+    /// An interactive element, new or changed: it replaces the known one of its id, and is added only when it says it
+    /// is on the current map. Updates do not say so reliably (verified: 3,655 of 71,888 `InteractiveElementUpdatedEvent`
+    /// and all 71,882 `StatedElementUpdatedEvent` say they are not), so a known element's update always applies.
     pub(crate) fn interactive(&mut self, element: &InteractiveElement) {
-        if !element.on_current_map {
-            return;
-        }
         let skills =
             |skills: &[crate::protocol::game::InteractiveSkill]| skills.iter().map(|skill| skill.skill_id).collect();
         let interactive = Interactive {
@@ -133,15 +132,13 @@ impl Around {
             .find(|known| known.element_id == element.element_id)
         {
             Some(known) => *known = interactive,
-            None => self.interactives.push(interactive),
+            None if element.on_current_map => self.interactives.push(interactive),
+            None => {}
         }
     }
 
-    /// A stated element of the current map, new or changed.
+    /// A stated element, new or changed, as [`Around::interactive`].
     pub(crate) fn stated(&mut self, element: &StatedElement) {
-        if !element.on_current_map {
-            return;
-        }
         let stated = Stated {
             element_id: element.element_id,
             cell: on_the_map(element.cell_id),
@@ -153,7 +150,8 @@ impl Around {
             .find(|known| known.element_id == element.element_id)
         {
             Some(known) => *known = stated,
-            None => self.stated.push(stated),
+            None if element.on_current_map => self.stated.push(stated),
+            None => {}
         }
     }
 }

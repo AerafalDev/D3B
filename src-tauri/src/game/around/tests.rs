@@ -154,14 +154,15 @@ fn actors_come_move_and_leave_by_their_id() {
 }
 
 #[test]
-fn an_element_update_replaces_its_own_on_the_current_map_only() {
+fn an_element_update_replaces_its_own_and_adds_one_of_the_current_map_only() {
     let mut around = Around::default();
     around.stated(&stated(1, true, 0));
     around.interactive(&interactive(1, true, &[45]));
 
-    around.stated(&stated(1, true, 2));
+    // Updates of a known element say it is not on the current map (verified, every stated one): they still apply.
+    around.stated(&stated(1, false, 2));
     around.stated(&stated(5, false, 1));
-    around.interactive(&interactive(1, true, &[]));
+    around.interactive(&interactive(1, false, &[]));
     around.interactive(&interactive(5, false, &[45]));
 
     assert_eq!(

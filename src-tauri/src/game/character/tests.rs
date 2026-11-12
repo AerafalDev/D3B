@@ -437,3 +437,41 @@ fn a_new_map_or_a_fight_clears_what_is_around() {
     fighting.apply(&shown, now, 0);
     assert_eq!(others(&fighting.view(now, 0)), NONE);
 }
+
+#[test]
+fn element_updates_change_what_is_around_out_of_fights() {
+    let now = Instant::now();
+    let update = |state| {
+        Message::StatedElementUpdatedEvent(game::StatedElementUpdatedEvent {
+            element: Some(game::StatedElement {
+                on_current_map: false,
+                element_id: 1,
+                cell_id: 287,
+                state,
+            }),
+        })
+    };
+    let interactive = Message::InteractiveElementUpdatedEvent(game::InteractiveElementUpdatedEvent {
+        element: Some(game::InteractiveElement {
+            on_current_map: true,
+            element_id: 2,
+            ..Default::default()
+        }),
+    });
+    let mut information = map_information(1, &[]);
+    if let Message::MapInformationEvent(map) = &mut information {
+        map.stated_elements.push(game::StatedElement {
+            on_current_map: true,
+            element_id: 1,
+            cell_id: 287,
+            state: 0,
+        });
+    }
+    let mut character = fed(&[chosen(ME, "Lyra", 87), information, update(2), interactive], now);
+    let around = character.view(now, 0).around;
+    assert_eq!((around.stated[0].state, around.interactives.len()), (2, 1));
+
+    character.apply(&context(true), now, 0);
+    character.apply(&update(1), now, 0);
+    assert_eq!(character.view(now, 0).around, Around::default());
+}
