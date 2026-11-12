@@ -27,6 +27,7 @@ pub(crate) struct Characteristics {
 }
 
 impl Characteristics {
+    /// The characteristics of `stats`. Every sum saturates: the numbers come from the wire, and a frame may hold any.
     pub(crate) fn read(stats: &CharacterStats) -> Self {
         let value = |id: i32| {
             stats
@@ -34,12 +35,12 @@ impl Characteristics {
                 .iter()
                 .filter(|characteristic| characteristic.id == id)
                 .map(|characteristic| characteristic.kind.as_ref().map_or(0, value))
-                .sum::<i64>()
+                .fold(0_i64, i64::saturating_add)
         };
-        let max_life = value(0) + value(11);
+        let max_life = value(0).saturating_add(value(11));
         Self {
             max_life,
-            life: max_life + value(97),
+            life: max_life.saturating_add(value(97)),
             action_points: value(1),
             movement_points: value(23),
             energy: value(29),
@@ -63,7 +64,7 @@ fn value(kind: &Kind) -> i64 {
             usable.number_5,
             usable.number_6,
         ],
-        Kind::Value(value) => return i64::from(value.number_1) + value.total,
+        Kind::Value(value) => return i64::from(value.number_1).saturating_add(value.total),
         Kind::Detailed(detailed) => &[
             detailed.number_1,
             detailed.number_2,
@@ -73,7 +74,7 @@ fn value(kind: &Kind) -> i64 {
             detailed.number_7,
         ],
     };
-    numbers.iter().copied().map(i64::from).sum()
+    numbers.iter().copied().map(i64::from).fold(0, i64::saturating_add)
 }
 
 /// The life now, and whether it is the client's count of a regeneration rather than a value the server sent.
@@ -84,7 +85,8 @@ pub(crate) struct LifeNow {
     pub estimated: bool,
 }
 
-/// One point back every `every`, counted from `since` (verified: within a point on all 634 regenerations ended).
+/// One point back every `every`, counted from `since` (3.7.13.17, verified: within a point of `LifeRegenEndEvent`'s
+/// count on all 634 regenerations ended, `artifacts/studies/live-view.md`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Regeneration {
     since: Instant,
@@ -105,8 +107,8 @@ impl Life {
         self.sent = Some((life, max_life));
     }
 
-    /// `LifeRegenStartEvent`: one point every `interval` tenths of a second from `at`; an interval of 0 or less
-    /// regenerates nothing.
+    /// `LifeRegenStartEvent`: one point every `interval` tenths of a second from `at` (the unit inferred, the C#
+    /// version; the count it gives verified, as above); an interval of 0 or less regenerates nothing.
     pub(crate) fn start(&mut self, interval: i32, at: Instant) {
         self.regeneration = u64::try_from(interval)
             .ok()
@@ -117,14 +119,19 @@ impl Life {
             });
     }
 
-    /// `LifeRegenEndEvent`: the life the server counted, and no regeneration.
+    /// `LifeRegenEndEvent`: the life the server counted, regenerated points included, and no regeneration (verified,
+    /// 634 of 634).
     pub(crate) fn end(&mut self, life: i64, max_life: i64) {
         self.sent = Some((life, max_life));
         self.regeneration = None;
     }
 
-    /// A fight starts: its life is no longer counted.
-    pub(crate) fn stop(&mut self) {
+    /// A fight starts at `now` (verified: each regeneration ends as a fight starts, 634 of 634): the points counted so
+    /// far are kept, and no more are counted.
+    pub(crate) fn stop(&mut self, now: Instant) {
+        if let Some(life) = self.at(now) {
+            self.sent = Some((life.life, life.max_life));
+        }
         self.regeneration = None;
     }
 
@@ -134,22 +141,17 @@ impl Life {
             .is_some_and(|life| life.estimated && life.life < life.max_life)
     }
 
-    /// The life at `now`: the life sent plus the points regenerated since the start, rounded down, at most the max.
+    /// The life at `now`: the life sent plus the points regenerated since the start, rounded down, never above the max.
     pub(crate) fn at(&self, now: Instant) -> Option<LifeNow> {
         let (life, max_life) = self.sent?;
-        let Some(regeneration) = self.regeneration else {
-            return Some(LifeNow {
-                life,
-                max_life,
-                estimated: false,
-            });
-        };
-        let elapsed = now.saturating_duration_since(regeneration.since);
-        let points = i64::try_from(elapsed.as_millis() / regeneration.every.as_millis()).unwrap_or(i64::MAX);
+        let points = self.regeneration.map_or(0, |regeneration| {
+            let elapsed = now.saturating_duration_since(regeneration.since);
+            i64::try_from(elapsed.as_millis() / regeneration.every.as_millis()).unwrap_or(i64::MAX)
+        });
         Some(LifeNow {
             life: life.saturating_add(points).min(max_life),
             max_life,
-            estimated: true,
+            estimated: self.regeneration.is_some(),
         })
     }
 }

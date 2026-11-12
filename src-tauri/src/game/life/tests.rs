@@ -48,10 +48,56 @@ fn reads_the_life_and_its_max_as_the_sum_of_three_characteristics() {
 
 #[test]
 fn a_life_never_lost_is_the_max() {
-    // Characteristic 97 sent empty, or not at all.
-    let read = Characteristics::read(&stats(vec![detailed(0, 0, 55), detailed(11, 400, 25)]));
+    // Characteristic 97 sent with no kind, or not at all.
+    let empty = Characteristic { id: 97, kind: None };
+    for characteristics in [
+        vec![detailed(0, 0, 55), detailed(11, 400, 25), empty],
+        vec![detailed(0, 0, 55), detailed(11, 400, 25)],
+    ] {
+        let read = Characteristics::read(&stats(characteristics));
 
-    assert_eq!((read.life, read.max_life), (480, 480));
+        assert_eq!((read.life, read.max_life), (480, 480));
+    }
+}
+
+#[test]
+fn every_number_of_a_detailed_characteristic_counts() {
+    let numbers = Characteristic {
+        id: 11,
+        kind: Some(Kind::Detailed(DetailedCharacteristic {
+            number_1: 1,
+            number_2: 2,
+            number_3: 4,
+            number_4: 8,
+            number_5: 16,
+            number_7: 32,
+        })),
+    };
+
+    assert_eq!(Characteristics::read(&stats(vec![numbers])).max_life, 63);
+}
+
+#[test]
+fn sums_from_the_wire_saturate_rather_than_overflow() {
+    let huge = |id| Characteristic {
+        id,
+        kind: Some(Kind::Value(CharacteristicValue {
+            number_1: 1,
+            total: i64::MAX,
+        })),
+    };
+    let lost = Characteristic {
+        id: 97,
+        kind: Some(Kind::Value(CharacteristicValue {
+            number_1: -1,
+            total: i64::MIN,
+        })),
+    };
+
+    let read = Characteristics::read(&stats(vec![huge(0), huge(11), huge(29), huge(29), lost]));
+
+    assert_eq!((read.max_life, read.energy), (i64::MAX, i64::MAX));
+    assert_eq!(read.life, i64::MAX.saturating_add(i64::MIN));
 }
 
 #[test]
@@ -59,27 +105,29 @@ fn reads_the_points_and_the_energy_of_each_kind() {
     let usable = |id, number_4, spent| Characteristic {
         id,
         kind: Some(Kind::Usable(UsableCharacteristic {
+            number_1: 100,
+            number_2: 200,
+            number_3: 400,
             number_4,
-            number_6: 1,
+            number_5: 800,
+            number_6: -1_500,
             spent,
-            ..Default::default()
         })),
     };
     let value = |id, total| Characteristic {
         id,
-        kind: Some(Kind::Value(CharacteristicValue { number_1: 0, total })),
+        kind: Some(Kind::Value(CharacteristicValue { number_1: 5, total })),
     };
 
     let read = Characteristics::read(&stats(vec![
         usable(1, 6, 3),
         usable(23, 3, 2),
-        value(29, 9_870),
-        value(47, 10_000),
-        Characteristic { id: 5, kind: None },
+        value(29, 9_865),
+        value(47, 9_995),
     ]));
 
     // The spent points (7) are not part of the value.
-    assert_eq!((read.action_points, read.movement_points), (7, 4));
+    assert_eq!((read.action_points, read.movement_points), (6, 3));
     assert_eq!((read.energy, read.max_energy), (9_870, 10_000));
 }
 
@@ -129,9 +177,10 @@ fn a_fight_stops_the_count() {
     life.sent(400, 480);
     life.start(5, start);
 
-    life.stop();
+    life.stop(start + Duration::from_secs(10));
 
-    assert_eq!(at(&life, start + Duration::from_secs(60)), (400, 480, false));
+    // The 20 points counted up to the fight are kept, and no more are counted.
+    assert_eq!(at(&life, start + Duration::from_secs(60)), (420, 480, false));
     assert!(!life.regenerating(start));
 }
 
@@ -159,4 +208,15 @@ fn no_life_is_known_before_the_server_sends_one() {
 
     assert_eq!(life.at(start + Duration::from_secs(1)), None);
     assert!(!life.regenerating(start));
+}
+
+#[test]
+fn a_life_sent_above_its_max_shows_the_max_either_way() {
+    let start = Instant::now();
+    let mut life = Life::default();
+    life.sent(500, 480);
+    assert_eq!(at(&life, start), (480, 480, false));
+
+    life.start(5, start);
+    assert_eq!(at(&life, start), (480, 480, true));
 }
