@@ -147,7 +147,4 @@ The pins' audit (`protocol::audit`, ignored unless run with `--ignored`; it read
 the folder `D3B_SCHEMAS` names) starts from each pinned pair and follows the messages their fields hold: every field
 our `.proto` declares must be in the build's message with its number, kind (an `int32` may read an enum), list,
 presence and oneof, each of our messages paired with one of the build's, the digest the pins'. `build.rs` describes
-our messages for it in `OUT_DIR/protocol-shapes.txt`. On 2026-11-12, 3.7.13.17's 15 pins hold. The protocol's replay
-(`protocol::replay`, `D3B_CAPTURES`) read the owner's 54 game connections of 3.7.13.17: of 3,048,392 frames, 282,806
-understood, 256,933 read, 2,508,653 unknown (messages not pinned) and none not trusted; each of the 15 messages was
-decoded, as many times as the study counted them.
+our messages for it in `OUT_DIR/protocol-shapes.txt`. On 2026-11-12, 3.7.13.17's 15 pins hold.
