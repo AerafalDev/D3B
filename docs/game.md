@@ -13,7 +13,7 @@ flowchart LR
     obs -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
     ring -->|"the one watched, at most 5 batches/s"| ev2["ipc: InspectorFrames"]
     maps["data: a map's cells, read on demand"] --> cmd["ipc: map_cells"]
-    ev1 --> view["src/characters: the list, the view, the map"]
+    ev1 --> view["src/characters: the store (its views return in the new shell)"]
     cmd --> view
     ev2 --> insp["src/inspector: the frames, a frame's detail"]
 ```
@@ -85,7 +85,8 @@ tick, sends its view when it changed.
 
 ## In the app
 
-The owner's choices of 2026-11-12, on the mockup:
+The owner removed this interface on 2026-11-12 to rebuild the app's UI in VS Code's layout; each piece below
+comes back in the new shell only once the owner decides it again. What it was, the owner's choices of 2026-11-12:
 
 - **The characters** on the left, one entry per game connection, from its open to its close: before a selection it
   shows the connection's number and its protocol's state; a connection whose protocol is off (a build without pins,

@@ -1,8 +1,8 @@
 # Updates
 
 The app updates itself from this repository's releases. At start it checks its channel, downloads a newer version in
-the background, and shows a bar offering to restart into it; if the player does not, the update installs as the app
-closes. Nothing is checked in development or in the browser preview.
+the background, and installs it as the app closes. A bar offering to restart into it sooner was removed on 2026-11-12
+with the old UI; it returns in the new shell. Nothing is checked in development or in the browser preview.
 
 ```mermaid
 flowchart LR
@@ -17,8 +17,9 @@ flowchart LR
 - **Back end**: `tauri-plugin-updater`, with its public key and endpoint in `src-tauri/tauri.conf.json`
   (`plugins.updater`). It refuses any update not signed by the project's private key.
 - **Front end**: `src/updates/`. `updater.ts` is the store (idle, checking, downloading, ready, installing, failed),
-  `use-auto-update.ts` checks once at start and handles the close, `update-banner.tsx` is the bar. A failed install
-  keeps the update: the bar offers it again and closing tries again. Errors go to the app's log. Before installing,
+  `use-auto-update.ts` checks once at start and handles the close. The bar that offered to restart was removed on
+  2026-11-12 with the old UI, until the new shell has one: meanwhile an update installs on close. A failed install
+  keeps the update: closing tries again. Errors go to the app's log. Before installing,
   the store awaits `relay_restore`, which puts the client's configuration back: Windows' installer ends the app before
   its exit hook runs ([relay.md](relay.md)).
 - **Closing**: the hook's close listener takes the close over, so the window needs `core:window:allow-destroy`. During
