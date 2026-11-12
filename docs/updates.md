@@ -1,8 +1,8 @@
 # Updates
 
 The app updates itself from this repository's releases. At start it checks its channel, downloads a newer version in
-the background, and installs it as the app closes. A bar offering to restart into it sooner was removed on 2026-11-12 with the old UI; it
-returns in the new shell. Nothing is checked in development or in the browser preview.
+the background, and installs it as the app closes. A bar offering to restart into it sooner was removed on 2026-11-12
+with the old UI; it returns in the new shell. Nothing is checked in development or in the browser preview.
 
 ```mermaid
 flowchart LR

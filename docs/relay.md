@@ -51,10 +51,11 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
 - **The client folder**: `DOFUS_CLIENT`, else `Ankama/Dofus-dofus3` in the user's local data folder, taken through
   `app.path()`, as the extractor does ([data.md](data.md)).
 - **What it cannot do**: a client started before D3B loaded Ankama's configuration and goes straight to Ankama for its
-  whole life; the interface tells the player to start the client after D3B (the indicator did until 2026-11-12). A client started while D3B is gone but the
-  line is still redirected (a crash) cannot connect until D3B starts again or the launcher repairs. Quitting or
-  updating D3B drops every relayed client's game connection, and its reconnection fails while D3B is gone (D88,
-  D91): the interface says so while connections are live (the indicator did until 2026-11-12).
+  whole life; the interface tells the player to start the client after D3B (the indicator did until 2026-11-12). A
+  client started while D3B is gone but the line is still redirected (a crash) cannot connect until D3B starts again
+  or the launcher repairs. Quitting or updating D3B drops every relayed client's game connection, and its
+  reconnection fails while D3B is gone (D88, D91): the interface says so while connections are live (the indicator
+  did until 2026-11-12).
 
 ## The connections
 
@@ -112,7 +113,8 @@ A ticket's `Debug` prints `<redacted>`; tests on captures print only file names,
 ## Platforms
 
 Windows x64 only for now (the owner, 2026-11-11). On macOS and Linux nothing is redirected and the relay's status says
-it is not measured on this platform (the indicator that showed it was removed on 2026-11-12 with the old UI): `127.0.13.59` may not exist on macOS, port 443 needs a privilege on Linux, and
+it is not measured on this platform (the indicator that showed it was removed on 2026-11-12 with the old UI): `127.0.13.59` may not exist on
+macOS, port 443 needs a privilege on Linux, and
 where the client keeps its `version` file is unknown. The first testers there report the study's facts
 ([testing.md](testing.md)).
 
