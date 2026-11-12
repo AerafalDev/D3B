@@ -71,9 +71,10 @@ _Updated 2026-11-12._
   status-bar indicator and the restore before an update.
 - **Next**: the owner measures the relay's item 10's Restart with the next release, and item 11 when an account is at
   hand. The protocol's code is a stack of seven PRs against `next`: (1) the game connection split into frames both
-  ways, with the tap (done in code, in v0.13.0); (2) `relay/capture/` and `D3B_RECORD`; (3) the connection's build from path 1.3.5, carried by the handover; (4) the extractor's protocol
-  schema from the metadata; (5) the `protocol` domain: prost, our `.proto` files, the envelope, the pins of 3.7.13.17,
-  the four outcomes; (6) the pins' audit and the capture replay; (7) the protocol task per connection, the gate, the
-  status and its tooltip. Its in-game checklist comes with PR 7.
+  ways, with the tap (done in code, in v0.13.0); (2) `relay/capture/` and `D3B_RECORD` (done in code); (3) the
+  connection's build from path 1.3.5, carried by the handover; (4) the extractor's protocol schema from the
+  metadata; (5) the `protocol` domain: prost, our `.proto` files, the envelope, the pins of 3.7.13.17, the four
+  outcomes; (6) the pins' audit and the capture replay; (7) the protocol task per connection, the gate, the status
+  and its tooltip. Its in-game checklist comes with PR 7.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

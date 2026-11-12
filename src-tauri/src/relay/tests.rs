@@ -258,6 +258,7 @@ async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<usize, St
         &handover,
         |_| async move { Some(server_side) },
         || {},
+        |_| None,
         &tap,
     );
     let (relayed, (at_client, at_server)) = tokio::join!(relay, play(&capture.records, client, server));

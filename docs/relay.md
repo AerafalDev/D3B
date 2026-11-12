@@ -121,5 +121,5 @@ The owner's C# captures (`.d3bcap` formats 1 and 2) are replayed through the rel
 equal bytes in, but the one rewritten frame per connection phase. The C# version recorded each side's bytes as read,
 before its own rewrite, so a capture holds the answer as Ankama sent it. A game capture's ticket, at path 4.2.2.1 of its
 first frame, is seeded into the handover. On 2026-11-11, the owner's 225 captures: 171 connection phases, 161 handed
-over, 54 game connections relayed byte for byte, their 3,048,392 frames split as each side sent them. Recording
-captures comes with the protocol feature.
+over, 54 game connections relayed byte for byte, their 3,048,392 frames split as each side sent them. D3B records
+its own captures with `D3B_RECORD` ([protocol.md](protocol.md#captures)).

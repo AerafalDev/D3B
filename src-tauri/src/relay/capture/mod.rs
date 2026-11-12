@@ -5,7 +5,12 @@
 //! 7-bit number, and for bytes a 7-bit length and the bytes as one read gave them. Nothing follows the last record, so
 //! a capture cut short reads up to its last whole record. A capture holds the account's ticket: it is never shown.
 
+mod writer;
+
+pub(crate) use writer::{Recorder, Recording};
+
 const MAGIC: &[u8; 8] = b"D3B-CAPT";
+const FORMAT: i32 = 2;
 /// A record of bytes the client sent.
 const FROM_CLIENT: u8 = 1;
 /// A record of bytes the server sent.
