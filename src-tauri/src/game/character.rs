@@ -3,6 +3,7 @@
 
 use std::time::Instant;
 
+use super::around::{Around, on_the_map};
 use super::life::{Characteristics, Life, LifeNow};
 use crate::protocol::Message;
 use crate::protocol::game::{
@@ -57,6 +58,7 @@ pub(crate) struct View {
     pub characteristics: Option<Characteristics>,
     pub pods: Option<Pods>,
     pub kamas: Option<i64>,
+    pub around: Around,
     pub stale: Stale,
 }
 
@@ -82,6 +84,7 @@ pub(crate) struct Character {
     life: Life,
     pods: Option<Pods>,
     kamas: Option<i64>,
+    around: Around,
     refreshed: Refreshed,
 }
 
@@ -130,6 +133,8 @@ impl Character {
                 Ok(GameContext::Fight) => {
                     self.context = Some(Context::Fight);
                     self.cell = None;
+                    // A fight's positions are not read yet: what was around is no longer there.
+                    self.around = Around::default();
                     self.life.stop(at);
                 }
                 Ok(GameContext::Roleplay) => self.context = Some(Context::Roleplay),
@@ -139,6 +144,7 @@ impl Character {
             Message::MapCurrentEvent(current) => {
                 if self.map_id != Some(current.map_id) {
                     self.cell = None;
+                    self.around = Around::default();
                 }
                 self.map_id = Some(current.map_id);
                 self.refreshed.map = dropped;
@@ -155,16 +161,34 @@ impl Character {
                         .and_then(|actor| actor.disposition.as_ref()?.cell_id)
                         .and_then(on_the_map)
                 });
+                // Every map information replaces what is around whole, the same map's too: a profession's level-up
+                // sends it again with no `MapCurrentEvent` (verified, 964 of 964).
+                self.around = Around::of_map(information, self.who.as_ref().map(|who| who.id));
                 self.refreshed.map = dropped;
             }
             // A walk lists every cell it crosses, from where the walker stood (verified, 93,822 of the character's 94,602
             // walks): it stops on the last. In a fight, pushes and teleports are not read yet, so walks are not either.
-            Message::MapMovementEvent(movement) => {
-                if self.context != Some(Context::Fight)
-                    && self.who.as_ref().is_some_and(|who| who.id == movement.actor_id)
-                    && let Some(last) = movement.cells.last().copied().and_then(on_the_map)
-                {
-                    self.cell = Some(last);
+            Message::MapMovementEvent(movement) if self.context != Some(Context::Fight) => {
+                if self.who.as_ref().is_some_and(|who| who.id == movement.actor_id) {
+                    if let Some(last) = movement.cells.last().copied().and_then(on_the_map) {
+                        self.cell = Some(last);
+                    }
+                } else {
+                    self.around.walked(movement.actor_id, &movement.cells);
+                }
+            }
+            Message::MapActorShownEvent(shown) if self.context != Some(Context::Fight) => {
+                self.around.shown(&shown.actors, self.who.as_ref().map(|who| who.id));
+            }
+            Message::MapActorRemovedEvent(removed) => self.around.removed(removed.actor_id),
+            Message::InteractiveElementUpdatedEvent(updated) if self.context != Some(Context::Fight) => {
+                if let Some(element) = &updated.element {
+                    self.around.interactive(element);
+                }
+            }
+            Message::StatedElementUpdatedEvent(updated) if self.context != Some(Context::Fight) => {
+                if let Some(element) = &updated.element {
+                    self.around.stated(element);
                 }
             }
             _ => {}
@@ -214,6 +238,7 @@ impl Character {
             characteristics: self.characteristics,
             pods: self.pods,
             kamas: self.kamas,
+            around: self.around.clone(),
             stale: Stale {
                 map: dropped > refreshed.map,
                 life: dropped > refreshed.life,
@@ -222,11 +247,6 @@ impl Character {
             },
         }
     }
-}
-
-/// `cell` when it is one of a map's 560 cells (3.7.13.17, `docs/data.md`): a frame may hold any number.
-fn on_the_map(cell: i32) -> Option<i32> {
-    (0..560).contains(&cell).then_some(cell)
 }
 
 #[cfg(test)]

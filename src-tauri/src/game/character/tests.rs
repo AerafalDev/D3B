@@ -359,3 +359,119 @@ fn a_context_is_roleplay_a_fight_or_unknown() {
     assert_eq!(fed(&[context(true)], now).view(now, 0).context, Some(Context::Fight));
     assert_eq!(fed(&[context(true), unknown], now).view(now, 0).context, None);
 }
+
+const NONE: [(i64, Option<i32>); 0] = [];
+
+fn others(view: &View) -> Vec<(i64, Option<i32>)> {
+    view.around.actors.iter().map(|actor| (actor.id, actor.cell)).collect()
+}
+
+#[test]
+fn what_is_around_comes_with_the_map_and_follows_its_events() {
+    let now = Instant::now();
+    let shown = Message::MapActorShownEvent(game::MapActorShownEvent {
+        actors: vec![Actor {
+            id: -5,
+            disposition: None,
+            information: None,
+        }],
+    });
+    let removed = Message::MapActorRemovedEvent(game::MapActorRemovedEvent { actor_id: -20 });
+    let mut character = fed(
+        &[
+            chosen(ME, "Lyra", 87),
+            map_information(1, &[(ME, 288), (-20, 150), (-21, 160)]),
+        ],
+        now,
+    );
+    assert_eq!(others(&character.view(now, 0)), [(-20, Some(150)), (-21, Some(160))]);
+
+    for message in [shown, removed, walk(-21, &[160, 174]), walk(ME, &[288, 302])] {
+        character.apply(&message, now, 0);
+    }
+
+    let view = character.view(now, 0);
+    assert_eq!(others(&view), [(-21, Some(174)), (-5, None)]);
+    assert_eq!(view.cell, Some(302));
+}
+
+#[test]
+fn the_same_maps_information_again_replaces_what_is_around() {
+    let now = Instant::now();
+    // A profession's level-up sends the map's information again, with no current map before it.
+    let character = fed(
+        &[
+            chosen(ME, "Lyra", 87),
+            map_information(1, &[(-20, 150), (-21, 160)]),
+            map_information(1, &[(-21, 165)]),
+        ],
+        now,
+    );
+
+    assert_eq!(others(&character.view(now, 0)), [(-21, Some(165))]);
+}
+
+#[test]
+fn a_new_map_or_a_fight_clears_what_is_around() {
+    let now = Instant::now();
+    let around = [chosen(ME, "Lyra", 87), map_information(1, &[(-20, 150)])];
+    let shown = Message::MapActorShownEvent(game::MapActorShownEvent {
+        actors: vec![Actor {
+            id: -6,
+            disposition: None,
+            information: None,
+        }],
+    });
+
+    let mut same = fed(&around, now);
+    same.apply(&current(1), now, 0);
+    assert_eq!(others(&same.view(now, 0)), [(-20, Some(150))]);
+
+    let mut moved = fed(&around, now);
+    moved.apply(&current(2), now, 0);
+    assert_eq!(others(&moved.view(now, 0)), NONE);
+
+    // In a fight, the fighters shown and their walks are not followed yet.
+    let mut fighting = fed(&around, now);
+    fighting.apply(&context(true), now, 0);
+    fighting.apply(&shown, now, 0);
+    assert_eq!(others(&fighting.view(now, 0)), NONE);
+}
+
+#[test]
+fn element_updates_change_what_is_around_out_of_fights() {
+    let now = Instant::now();
+    let update = |state| {
+        Message::StatedElementUpdatedEvent(game::StatedElementUpdatedEvent {
+            element: Some(game::StatedElement {
+                on_current_map: false,
+                element_id: 1,
+                cell_id: 287,
+                state,
+            }),
+        })
+    };
+    let interactive = Message::InteractiveElementUpdatedEvent(game::InteractiveElementUpdatedEvent {
+        element: Some(game::InteractiveElement {
+            on_current_map: true,
+            element_id: 2,
+            ..Default::default()
+        }),
+    });
+    let mut information = map_information(1, &[]);
+    if let Message::MapInformationEvent(map) = &mut information {
+        map.stated_elements.push(game::StatedElement {
+            on_current_map: true,
+            element_id: 1,
+            cell_id: 287,
+            state: 0,
+        });
+    }
+    let mut character = fed(&[chosen(ME, "Lyra", 87), information, update(2), interactive], now);
+    let around = character.view(now, 0).around;
+    assert_eq!((around.stated[0].state, around.interactives.len()), (2, 1));
+
+    character.apply(&context(true), now, 0);
+    character.apply(&update(1), now, 0);
+    assert_eq!(character.view(now, 0).around, Around::default());
+}

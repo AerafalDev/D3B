@@ -54,7 +54,7 @@ never the reverse (ADR 0002).
   `MapCurrentEvent` names the fight's map (634 of 634) and no map information follows. What is around is cleared.
   Life changes in a fight are not read (they need messages not pinned yet: step 6): it shows the last
   characteristics', those of the fight's start, then those sent at its end; a roleplay context and its map
-  information bring the rest back.
+  information bring the rest back. Meanwhile, actors shown, others' walks and element updates are not followed.
 - **Stale**: each part (map and around, life, pods, kamas) keeps the protocol's dropped count of its last refresh and
   is shown as stale while the connection has dropped more since. A protocol lost freezes the whole view, marked lost.
 
@@ -70,7 +70,9 @@ never the reverse (ADR 0002).
 - **Elements** (verified): interactive elements (their interactive and skills, enabled or disabled) and stated
   elements (state 0 available, 2 being harvested, 1 harvested, the meanings inferred). Only those on the current map
   are kept (`on_current_map` false are the eight neighbouring maps'). An element's cell is in the map's data, by its
-  id (all 411,781 found). `InteractiveElementUpdatedEvent` and `StatedElementUpdatedEvent` replace one by its id.
+  id (all 411,781 found). `InteractiveElementUpdatedEvent` and `StatedElementUpdatedEvent` replace the known one of
+  its id, and add one only when it says it is on the current map: updates do not say so reliably (verified: all
+  71,882 stated updates, and 3,655 of 71,888 interactive ones, say they are not).
 - **Every map information replaces what is around whole**, with or without a `MapCurrentEvent` before it: a
   profession's level-up sends the same map's information again (964 of 964).
 - **Names**, the owner's choice (2026-11-12): players by their name, as the game shows them; monsters, NPCs and
