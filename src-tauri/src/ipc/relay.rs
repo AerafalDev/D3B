@@ -184,7 +184,7 @@ pub fn start(app: &tauri::App) {
             let data = data.as_deref().and_then(|data| data.0.as_ref().ok());
             let _ = RelayChanged(RelayStatus::new(status, data)).emit(&handle);
         },
-        |_| Box::new(crate::protocol::Unobserved),
+        super::character::follow(app.handle().clone()),
     );
     app.manage(relay.clone());
     let paths = app.path();

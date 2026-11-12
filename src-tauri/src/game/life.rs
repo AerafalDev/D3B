@@ -135,12 +135,6 @@ impl Life {
         self.regeneration = None;
     }
 
-    /// Whether the life shown grows at `now`, so that the view changes without a message.
-    pub(crate) fn regenerating(&self, now: Instant) -> bool {
-        self.at(now)
-            .is_some_and(|life| life.estimated && life.life < life.max_life)
-    }
-
     /// The life at `now`: the life sent plus the points regenerated since the start, rounded down, never above the max.
     pub(crate) fn at(&self, now: Instant) -> Option<LifeNow> {
         let (life, max_life) = self.sent?;

@@ -8,7 +8,7 @@ the app shows it live, one entry per game connection, beside a protocol inspecto
 flowchart LR
     tap["relay: the game connection's tap"] -->|"each whole frame, bounded"| task["protocol::session, per connection"]
     task --> dec["decoder: envelope, pins, secrets"]
-    dec -->|"a decoded message, its time; a tick"| obs["game::Character, the session's observer"]
+    dec -->|"a decoded message, its time; a tick"| obs["game::Live: a game::Character, the session's observer"]
     task -->|"every frame, a secret as its name and size"| ring[("protocol::session::frames: 3,000 frames, 16 MiB")]
     obs -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
     ring -->|"the one watched, at most 10 batches/s"| ev2["ipc: InspectorFrames"]
@@ -23,10 +23,11 @@ the build's schema, the client's tables, and the C# version's docs), each `infer
 
 ## The state of a character
 
-`game::Character` is fed each decoded message with the time it was read, and a tick every 200 ms (time injected, so
-tests drive it). The protocol knows nothing of it: `protocol::session` hands its messages and ticks to an observer the
-relay's owner gives it when the connection opens, as it already hands its report, so `game` depends on `protocol` and
-never the reverse (ADR 0002).
+`game::Character` is fed each decoded message with the time it was read (time injected, so tests drive it). The
+protocol knows nothing of it: `protocol::session` hands its messages, a tick every 200 ms and its end to an observer
+the relay's owner gives it when the connection opens, as it already hands its report, so `game` depends on `protocol`
+and never the reverse (ADR 0002). That observer is `game::Live`: it keeps the connection's `Character` and, at each
+tick, sends its view when it changed.
 
 - **Who** (verified): `CharacterSelectionEvent` gives its id, name, level and breed. Characteristics read since the
   last selection are kept, since the first `CharacterStatsEvent` comes before it; everything else is reset to the new

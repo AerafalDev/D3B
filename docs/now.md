@@ -104,7 +104,7 @@ _Updated 2026-11-12._
   pods, kamas, level, context, staleness (done in code); (3) `game`, in two PRs: what is around, then the game's
   capture replay (done in code: lives within a point at all 634 fights, the character on all 66,166 maps, 99.35% of
   its walks from its known cell, 67,713 of 71,882 stated updates on a known element); (4) in two PRs: the session's observer,
-  then the view through the IPC, `CharacterChanged`; (5) the characters list and the view; (6) the map and `map_cells`; (7) the inspector's frames
+  then the view through the IPC, `CharacterChanged` (done in code); (5) the characters list and the view; (6) the map and `map_cells`; (7) the inspector's frames
   kept and streamed; (8) the inspector's tab, and the in-game checklist.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

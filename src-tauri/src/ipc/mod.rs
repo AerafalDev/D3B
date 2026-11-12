@@ -1,6 +1,7 @@
 //! The typed bridge to the webview: every command and event it may use. `src/bindings.ts` is generated from
 //! [`builder`] by the `bindings_are_current` test, so the TypeScript side never declares an IPC type by hand.
 
+mod character;
 mod commands;
 mod relay;
 
@@ -18,7 +19,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             relay::relay_status,
             relay::relay_restore
         ])
-        .events(collect_events![relay::RelayChanged])
+        .events(collect_events![relay::RelayChanged, character::CharacterChanged])
 }
 
 #[cfg(test)]

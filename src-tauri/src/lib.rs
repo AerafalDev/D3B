@@ -2,13 +2,6 @@
 //! and `ipc` is the only one the webview talks to.
 
 mod data;
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the protocol's session feeds it once the IPC shows it, PR (4) of docs/now.md"
-    )
-)]
 mod game;
 mod ipc;
 mod protocol;
