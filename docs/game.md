@@ -13,7 +13,7 @@ flowchart LR
     obs -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
     ring -->|"the one watched, at most 5 batches/s"| ev2["ipc: InspectorFrames"]
     maps["data: a map's cells, read on demand"] --> cmd["ipc: map_cells"]
-    ev1 --> view["src/characters: the store (its views return in the new shell)"]
+    ev1 --> view["src/characters: the store, the Characters view (the tab and the map come next)"]
     cmd --> view
     ev2 --> insp["src/inspector: the frames, a frame's detail"]
 ```
@@ -85,8 +85,19 @@ tick, sends its view when it changed.
 
 ## In the app
 
-The owner removed this interface on 2026-11-12 to rebuild the app's UI in VS Code's layout; each piece below
-comes back in the new shell only once the owner decides it again. What it was, the owner's choices of 2026-11-12:
+Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-12 from mock-ups:
+
+- **The Characters view** of the primary side bar (`src/characters/`): one row per game connection from its open
+  to its close, its avatar (its initials until the character renderer), name, level, place or state, and a dot:
+  green exploring, amber fighting, grey waiting or unread, red lost. Before a selection a row shows its connection's
+  number. Empty, the view says to start Dofus from Ankama's launcher.
+- **A character's tab**, layout "A", comes next: opened from its row, named after the character once known. On the left its
+  state: who (level, class, exploring or fighting), where (area, sub-area, coordinates, cell), life (marked while it
+  regenerates), pods, experience, energy, action and movement points, kamas, what is around (players, monster
+  groups, NPCs, resources), and a line when frames were dropped; on the right the character's map, which comes
+  next. A connection whose protocol is off says why; a lost one keeps its view, marked lost.
+
+The step-2 interface removed on 2026-11-12, for reference, was:
 
 - **The characters** on the left, one entry per game connection, from its open to its close: before a selection it
   shows the connection's number and its protocol's state; a connection whose protocol is off (a build without pins,
@@ -115,5 +126,6 @@ actor kind as "other"; a second selection, with characteristics before it; stale
 its known cell in at least 99% of them, and at least 90% of the stated elements' updates out of fights naming an element
 on the list. On 2026-11-12, over the owner's 54 connections: all 634 lives within a point, the character on all 66,166
 maps, 90,632 of 91,224 walks from its cell, and 67,713 of 71,882 updates on a known element. Vitest: the store per
-connection, an entry before its selection and one whose protocol is off, the estimated mark, the map's geometry (cells
-0, 13, 14 and 559).
+connection; a connection's state (lost, off, waiting, fighting, exploring); a place's name and the avatar's initials;
+the Characters view (its empty line, a row by name, level and place or by connection, an unread protocol, the row
+chosen).

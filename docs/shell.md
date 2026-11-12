@@ -15,16 +15,19 @@ VS Code's, part for part (`src/shell/`):
   and Linux the system keeps its frame and buttons; on macOS its menu bar holds the menus, so none is drawn. The menus
   hold only what works: File, Exit; View, the palette and the three parts. Measured by the owner on Windows 11
   (2026-11-12): our frame only, rounded corners, drag, double-click, the window's buttons.
-- **Activity bar** (48 px, left): empty; each entry comes with its feature.
+- **Activity bar** (48 px, left): one entry per view of the primary side bar (`src/shell/side-views.ts`), a 20 px
+  JetBrains icon; the view showing is a rounded pill, and choosing it again hides the side bar, as in VS Code. Today:
+  Characters.
 - **Primary side bar** (300 px, left), **panel** (260 px, under the editor area), **secondary side bar** (300 px,
   right): each resizable, and hidden by its header's button or VS Code's keys (Ctrl+B, Ctrl+J, Ctrl+Alt+B); the
   title bar's toggles or the View menu. Hidden by a command, a part keeps its size for its return; dragged
   below its minimum it hides, and reopens at its last size before a command hid it, else at its minimum. Shown or
   hidden by a command, it slides open or closed in 200 ms (none when the system asks for less motion); a drag follows
   the pointer. Parts keep their pixel size when the window is resized; the editor area takes the rest. As in VS Code,
-  the secondary side bar starts hidden. Before any view, each part says its views come with the features.
+  the secondary side bar starts hidden. The primary side bar's header names its view; a part without a view says its
+  views come with the features.
 - **Editor area**: tabs and splits by `dockview-react`. With no editor open it shows the app's mark in relief and the
-  main shortcuts, these only when it is at least 480 px wide.
+  main shortcuts, these only when it is at least 480 px wide. The first editor, a character's tab, comes next.
 - **Status bar** (22 px): the app's name after a small blue dot; its items come with their features.
 - **Command palette** (Ctrl+Shift+P, or the command centre): every command with its shortcut, itself included,
   filtered as one types, under the title bar, dimming nothing behind it.
@@ -39,9 +42,9 @@ The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout w
   title, activity and status bars lying on the frame. The gaps turn blue under the pointer, as VS Code's sashes.
 - **Colours**: VS Code's Dark Modern, the parts `#181818`, the editor `#1f1f1f`, text `#d6d6d6` and `#a8a8a8`; the
   blue accent `#0078d4` kept rare. Dark only: nothing switches to a light theme.
-- **Shapes, for the features to come**: the activity bar's active entry is a rounded pill, not VS Code's blue line; a
-  list's selection is a rounded grey row; a tab is a rounded pill holding its icon, its title and its close button,
-  the active one on a lighter ground (the owner's example: VS Code's "Release Notes" tab).
+- **Shapes**: the activity bar's active entry is a rounded pill, not VS Code's blue line; a list's selection is a
+  rounded grey row; a tab rises from its strip with rounded top corners and merges into the editor (the owner's
+  choice, coming with the first editor).
 - **Inter** at 13 px (`@fontsource-variable/inter`, OFL-1.1, the owner's go).
 - **JetBrains' icons**: IntelliJ Platform's new UI icons, dark variants copied unchanged into `src/icons/expui/`
   (Apache 2.0 and the project's NOTICE, in `src/icons/`); `src/icons/icons.ts` names those in use. They are not
@@ -61,6 +64,6 @@ Vitest and Testing Library: the shortcuts (each part, a field focused, the palet
 their labels per platform and language, a part's hide button, the title bar (the window's buttons on Windows only,
 restore once maximised, no menus on macOS, each toggle pressed while its part shows, the command centre, File > Exit
 through the close request, View's checked parts), the Windows window's config against the main one, the palette (its
-commands, filtering, running one), and a part's collapse and slide against a fake panel (starting hidden, first
+commands, filtering, running one), the activity bar (its pressed entry, hiding and showing the side bar), and a part's collapse and slide against a fake panel (starting hidden, first
 opening at its default size, hide and show, the 200 ms slide, two quick toggles, a drag below the minimum). The layout
 itself is checked in the browser preview, not in happy-dom, which has no layout.

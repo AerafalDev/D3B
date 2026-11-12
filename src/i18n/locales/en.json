@@ -43,5 +43,18 @@
       "restore": "Restore",
       "close": "Close"
     }
+  },
+  "characters": {
+    "title": "Characters",
+    "empty": "Start Dofus from Ankama's launcher: each character it plays shows here.",
+    "connection": "Connection {{number}}",
+    "level": "lvl {{level}}",
+    "state": {
+      "waiting": "Entering the game…",
+      "exploring": "Exploring",
+      "fighting": "In a fight",
+      "off": "Protocol not read",
+      "lost": "Protocol lost"
+    }
   }
 }
