@@ -56,7 +56,7 @@ Each is `inferred` unless said `verified`.
 ## Decoding
 
 - **Our readable `.proto` files** in `src-tauri/protocol/game/` (`character.proto`, `maps.proto`, package `d3b.game`),
-  written by us with the field numbers checked by hand against 3.7.13.17's schema (the audit test next), compiled with
+  written by us with the field numbers checked by hand against 3.7.13.17's schema, then by the audit test, compiled with
   `prost` by `prost-build` and `protox` in `build.rs` (no `protoc` to install) into `protocol::game`;
   `protocol::message::Message` holds the live view's messages by their readable names. Names are the C# version's
   (inferred); a message declares only the fields D3B reads (partial, so its frames are "read"), an enum it does not need
@@ -82,13 +82,13 @@ Each is `inferred` unless said `verified`.
   - **unknown**: a name without a pin, or an envelope not as above, passed on and counted;
   - **not trusted**: a pinned name whose bytes do not decode, or a declared field that re-encodes otherwise.
 
-  `protocol::envelope` opens a frame by the wire format alone, with no allocation: exactly the fields above, an id of
-  0 left out, an empty message's `Any` without its value, a name of 1 to 8 lowercase letters (3.7.13.17's are 3).
+  `protocol::envelope` opens a frame by the wire format alone, with no allocation: exactly the fields above, an id of 0
+  left out, an empty message's `Any` without its value, a name of 1 to 8 lowercase letters (3.7.13.17's are 3).
   `protocol::outcome` compares down to 16 levels of nested messages (the live view's deepest is 5) and 131,072 fields in
   all (4 MiB; the largest frame measured holds under 45,000); a repeated field keeps its count and order, and a field
   prost wrote that the frame lacks is not trusted. With no schema at hand, "read" also covers a field our `.proto`
-  declares without the presence the build gives it, sent at 0, and a oneof sent twice: the audit test (PR 6) checks
-  that our `.proto` keeps the build's `optional` and oneofs. A secret message's frames count as unknown.
+  declares without the presence the build gives it, sent at 0, and a oneof sent twice: the audit test checks that our
+  `.proto` keeps the build's `optional` and oneofs. A secret message's frames count as unknown.
 - **To start**, the messages the live view needs: the character chosen, the current map and its information (and its
   request), the context created and destroyed, actors shown, removed and moving, interactive and stated elements
   updated, the characteristics, life regeneration, and the weight.

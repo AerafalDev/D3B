@@ -196,6 +196,33 @@ fn our_proto_files_describe_every_message_of_ours() {
     for &readable in super::message::READABLE {
         assert!(ours.messages.contains_key(readable), "{readable}");
     }
+    let field = |number, kind: &str, label: Option<&str>, oneof: Option<&str>, of: Option<&str>| Field {
+        number,
+        kind: kind.to_owned(),
+        label: label.map(str::to_owned),
+        oneof: oneof.map(str::to_owned),
+        of: of.map(str::to_owned),
+    };
+    for (message, expected) in [
+        ("ActorDisposition", field(3, "int32", Some("optional"), None, None)),
+        (
+            "CharacterSelectionEvent.Success",
+            field(1, "message", None, None, Some("Character")),
+        ),
+        (
+            "Characteristic",
+            field(
+                3,
+                "message",
+                None,
+                Some("Characteristic.kind"),
+                Some("CharacteristicValue"),
+            ),
+        ),
+    ] {
+        assert!(ours.messages[message].contains(&expected), "{message}: {expected:?}");
+    }
+    assert_eq!(ours.enums["ContextCreationEvent.GameContext"], [0, 1]);
 }
 
 #[test]
@@ -321,6 +348,22 @@ field 3 int32 - - -";
                 "{needle}: {found:?}"
             );
         }
+    }
+
+    #[test]
+    fn a_message_of_ours_plain_where_the_builds_is_in_a_oneof_passes() {
+        // As our `Character.basics`: a message's presence is kept either way, prost writing back what it read.
+        let ours = "message Actor
+field 2 message - - Disposition
+message Disposition";
+
+        assert_eq!(problems(ours, THEIRS, &[("Actor", "abd")]), Vec::<String>::new());
+        let scalar = "message Actor
+field 3 int32 - - -";
+        assert!(
+            !problems(scalar, THEIRS, &[("Actor", "abd")]).is_empty(),
+            "a scalar's presence is compared"
+        );
     }
 
     #[test]

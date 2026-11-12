@@ -27,8 +27,9 @@ fn captures(folder: &Path) -> Vec<PathBuf> {
     found
 }
 
-/// The frames of a capture's records, each with the side that sent it, in the order they came whole.
-fn frames(records: &[Record]) -> Vec<(Side, Vec<u8>)> {
+/// The frames of a capture's records, each with the side that sent it, in the order they came whole. A capture cut
+/// mid-frame ends at its last whole one; A side whose bytes stop being frames fails the replay, with the capture's `name`.
+fn frames(name: &str, records: &[Record]) -> Vec<(Side, Vec<u8>)> {
     let (mut client, mut server) = (Frames::default(), Frames::default());
     let mut frames = Vec::new();
     for record in records {
@@ -37,8 +38,8 @@ fn frames(records: &[Record]) -> Vec<(Side, Vec<u8>)> {
             Record::FromServer(bytes) => (Side::Server, &mut server, bytes),
             Record::Other => continue,
         };
-        // The relay's replay checks every byte is in frames; a capture cut mid-frame ends at its last whole one.
-        let _ = reader.push(bytes, |body| frames.push((side, body.to_vec())));
+        let pushed = reader.push(bytes, |body| frames.push((side, body.to_vec())));
+        pushed.unwrap_or_else(|error| panic!("{name}: the {side:?} side is no longer in frames: {error}"));
     }
     frames
 }
@@ -54,7 +55,7 @@ fn the_owners_game_captures_read_through_the_protocol() {
         let name = path.strip_prefix(&folder).unwrap_or(&path).display().to_string();
         let bytes = std::fs::read(&path).unwrap_or_else(|error| panic!("{name}: {error}"));
         let capture = read(&bytes).unwrap_or_else(|error| panic!("{name}: {error}"));
-        let frames = frames(&capture.records);
+        let frames = frames(&name, &capture.records);
         // A game connection opens with a request in the game's envelope; a connection phase's frames are not one.
         let first = frames.iter().find(|(side, _)| *side == Side::Client);
         if first.is_none_or(|(side, body)| envelope::open(*side, body).is_none()) {
