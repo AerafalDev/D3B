@@ -90,5 +90,15 @@
     "state": "état {{state}}",
     "alone": "Monstre {{id}}",
     "level": "niv. {{level}}"
+  },
+  "map": {
+    "label": "La carte en losanges : cellules, ressources, acteurs et le personnage",
+    "unavailable": "Cette carte n'est pas dans les données du jeu.",
+    "legend": "Sombre : marchable · gris : obstacle · noir : bloque la vue · bleu : sortie · V vous · J joueur · M monstres · N PNJ · R ressource",
+    "letterMe": "V",
+    "letterPlayer": "J",
+    "letterMonsters": "M",
+    "letterNpc": "N",
+    "letterResource": "R"
   }
 }

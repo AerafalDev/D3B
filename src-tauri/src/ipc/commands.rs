@@ -19,20 +19,23 @@ pub struct AppInfo {
     pub os: String,
 }
 
-/// The packed data, read once at start, or why it could not be.
-pub struct LoadedData(pub Result<crate::data::GameData, String>);
+/// The packed data, read once at start, or why it could not be, and its folder, whose maps are read on demand.
+pub struct LoadedData(
+    pub Result<crate::data::GameData, String>,
+    pub Option<std::path::PathBuf>,
+);
 
 impl LoadedData {
     /// Reads the data folder Tauri bundles as a resource.
     pub fn load(app: &tauri::AppHandle) -> Self {
-        Self(
-            app.path()
-                .resource_dir()
-                .map_err(|error| error.to_string())
-                .and_then(|resources| {
-                    crate::data::GameData::load(&resources.join("data")).map_err(|error| error.to_string())
-                }),
-        )
+        let folder = app.path().resource_dir().map(|resources| resources.join("data"));
+        match folder {
+            Ok(folder) => Self(
+                crate::data::GameData::load(&folder).map_err(|error| error.to_string()),
+                Some(folder),
+            ),
+            Err(error) => Self(Err(error.to_string()), None),
+        }
     }
 }
 

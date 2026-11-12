@@ -69,6 +69,13 @@ pub fn shard_of(id: u32) -> String {
     format!("maps/{}", id % SHARDS)
 }
 
+/// Reads the map `id` from its file of the data folder `folder`, or `None` when the client holds no such map.
+pub fn read_map(folder: &Path, manifest: &Manifest, id: u32) -> Result<Option<MapData>, DataError> {
+    Ok(read_shard(folder, manifest, id % SHARDS)?
+        .into_iter()
+        .find(|map| map.id == id))
+}
+
 /// Reads the maps of the file `shard` (0 to 99) of the data folder `folder`.
 pub fn read_shard(folder: &Path, manifest: &Manifest, shard: u32) -> Result<Vec<MapData>, DataError> {
     let maps: Vec<MapData> = manifest.read(folder, &format!("maps/{shard}"))?;

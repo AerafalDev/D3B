@@ -12,6 +12,8 @@ const backEnd = vi.hoisted(() => ({ listener: null as Listener | null }));
 
 vi.mock("@/lib/tauri.ts", () => ({ isTauri: () => true }));
 vi.mock("@/bindings.ts", () => ({
+  // A map the data lacks: the view says so rather than drawing it.
+  commands: { mapCells: () => Promise.reject(new Error("no map 88213271 in the game data")) },
   events: {
     characterChanged: {
       listen: async (listener: Listener) => {
@@ -167,6 +169,7 @@ describe("the characters", () => {
     expect(screen.getByText("Monster 489 + 1")).toBeDefined();
     expect(screen.getByText("lvl 34–52")).toBeDefined();
     expect(screen.getByText("harvested")).toBeDefined();
+    expect(await screen.findByText("This map is not in the game data.")).toBeDefined();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Protocol" }));
     expect(await screen.findByText("The protocol inspector comes with a later version.")).toBeDefined();
   });

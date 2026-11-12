@@ -3,6 +3,7 @@
 
 mod character;
 mod commands;
+mod map;
 mod relay;
 
 pub use commands::LoadedData;
@@ -17,7 +18,8 @@ pub fn builder() -> Builder<tauri::Wry> {
         .commands(collect_commands![
             commands::app_info,
             relay::relay_status,
-            relay::relay_restore
+            relay::relay_restore,
+            map::map_cells
         ])
         .events(collect_events![relay::RelayChanged, character::CharacterChanged])
 }
