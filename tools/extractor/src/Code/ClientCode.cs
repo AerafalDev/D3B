@@ -2,11 +2,12 @@ using System.Buffers.Binary;
 using System.Reflection;
 using Cpp2IL.Core;
 using Cpp2IL.Core.Model.Contexts;
+using D3B.Extractor.Protocol;
 using LibCpp2IL.Logging;
 
 namespace D3B.Extractor.Code;
 
-/// <summary>The installed client's IL2CPP code and metadata, opened with Cpp2IL, for the names its enums give.</summary>
+/// <summary>The installed client's IL2CPP code and metadata, opened with Cpp2IL, for the names its enums give and the protocol's types.</summary>
 /// <remarks>
 /// Cpp2IL keeps the client it opened in static state: a process holds one open at a time, so that another opening, such
 /// as a test running beside, waits for this one to be disposed.
@@ -17,6 +18,10 @@ internal sealed class ClientCode : IDisposable
 
     // The metadata version Cpp2IL was measured to read on 3.7.13.17: another one fails here, by its number.
     private const int MetadataVersion = 39;
+
+    // The game connection's messages (verified, 3.7.13.17: 2,175 messages among 5,610 types); the connection phase's are
+    // read by the relay by field path (docs/relay.md).
+    private const string GameProtocol = "Ankama.Dofus.Protocol.Game";
 
     private static readonly SemaphoreSlim _gate = new(1, 1);
 
@@ -105,6 +110,44 @@ internal sealed class ClientCode : IDisposable
         };
     }
 
+    private static TypeShape ShapeOf(TypeAnalysisContext type)
+    {
+        var literals = type.Fields
+            .Where(field => field.IsStatic && field.Attributes.HasFlag(FieldAttributes.Literal))
+            .Where(field => type.IsEnumType || field.FieldType.FullName == "System.Int32")
+            .Select(field => (long)ValueOf(type.FullName, field.Name, field.ConstantValue))
+            .ToList();
+        var properties = type.Properties
+            .Where(property => !property.IsStatic)
+            .Select(property => new TypeShape.Property { Type = RefOf(property.PropertyType), HasSetter = property.Setter is not null })
+            .ToList();
+
+        return new TypeShape
+        {
+            Name = NameOf(type),
+            IsEnum = type.IsEnumType,
+            IsMessage = type.InterfaceContexts.Any(contract => contract.FullName == "Google.Protobuf.IBufferMessage"),
+            Literals = type.IsEnumType ? literals.Select(value => (long)(int)value).ToList() : literals,
+            Properties = properties,
+        };
+    }
+
+    private static TypeRef RefOf(TypeAnalysisContext type)
+    {
+        if (type is GenericInstanceTypeAnalysisContext generic)
+        {
+            return new TypeRef { Name = NameOf(generic.GenericType), Arguments = [.. generic.GenericArguments.Select(RefOf)] };
+        }
+
+        return new TypeRef { Name = NameOf(type) };
+    }
+
+    // Cpp2IL names a nested type after its declaring ones with '+'; the schema writes protobuf's dots.
+    private static string NameOf(TypeAnalysisContext type)
+    {
+        return type.FullName.Replace('+', '.');
+    }
+
     private static int MetadataVersionOf(string path)
     {
         Span<byte> header = stackalloc byte[8];
@@ -144,6 +187,33 @@ internal sealed class ClientCode : IDisposable
             .Select(field => (field.Name, ValueOf(type.FullName, field.Name, field.ConstantValue)));
 
         return Code.FlagEnum.From(type.FullName, members);
+    }
+
+    /// <summary>The shapes of the game protocol's types, nested ones included, from the metadata alone.</summary>
+    /// <exception cref="InvalidDataException">The client has no assembly of the game protocol, or several.</exception>
+    public IReadOnlyList<TypeShape> ProtocolTypes()
+    {
+        var assemblies = _application.Assemblies.Where(assembly => assembly.Definition?.AssemblyName.Name == GameProtocol).ToList();
+
+        if (assemblies.Count is not 1)
+        {
+            throw new InvalidDataException($"The client's code holds {assemblies.Count} assemblies named {GameProtocol}, where the extractor reads one.");
+        }
+
+        var shapes = new List<TypeShape>();
+        var pending = new Stack<TypeAnalysisContext>(assemblies[0].Types.Where(type => type.DeclaringType is null));
+
+        while (pending.TryPop(out var type))
+        {
+            foreach (var nested in type.NestedTypes)
+            {
+                pending.Push(nested);
+            }
+
+            shapes.Add(ShapeOf(type));
+        }
+
+        return shapes;
     }
 
     public void Dispose()

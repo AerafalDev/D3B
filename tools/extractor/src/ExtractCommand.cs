@@ -4,13 +4,14 @@ using System.Reflection;
 using D3B.Extractor.Code;
 using D3B.Extractor.Graph;
 using D3B.Extractor.Maps;
+using D3B.Extractor.Protocol;
 using D3B.Extractor.Texts;
 using D3B.Extractor.World;
 using D3B.Extractor.WorldMaps;
 
 namespace D3B.Extractor;
 
-/// <summary>The command that extracts the installed client's game data into the data folder of its build.</summary>
+/// <summary>The command that extracts the installed client's game data into the data folder of its build, and its protocol's schema.</summary>
 internal static class ExtractCommand
 {
     /// <summary>The exit code when the extraction succeeded.</summary>
@@ -104,6 +105,8 @@ internal static class ExtractCommand
 
         using var code = ClientCode.Open(client);
 
+        var schema = SchemaReader.Read(code.ProtocolTypes());
+
         var (positions, zaaps) = WorldTables.Extract(client, texts, code, folder, output);
 
         WorldMapTables.Extract(client, texts, folder, output);
@@ -120,6 +123,13 @@ internal static class ExtractCommand
 
         DataArchive.Write(path, archive);
 
+        // The schema is for the maintainer's audit of the pins, never shipped (docs/protocol.md, "A new build").
+        var protocol = Path.GetFullPath(Path.Combine("artifacts", "protocol", $"{build.Version}.json"));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(protocol)!);
+        schema.WriteTo(protocol, build.Version);
+
+        output.WriteLine($"Protocol: {protocol}, format {ProtocolSchema.Format}, {schema.Messages.Count:N0} messages, {schema.Enums.Count:N0} enums, SHA-256 {schema.Digest()}");
         output.WriteLine($"Data: {path}, format {DataFolder.Format}; archive {archive}, {new FileInfo(archive).Length:N0} bytes; in {stopwatch.Elapsed.TotalSeconds:F1} s");
 
         return Done;

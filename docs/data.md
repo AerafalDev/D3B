@@ -56,14 +56,15 @@ status bar then says it has no data, and its tooltip says why.
 ## The extractor
 
 `tools/extractor`, a .NET 10 console app and its test project, being built as a stack of PRs (`docs/now.md`). The
-owner chose its libraries: AssetsTools.NET for the client's bundles, Cpp2IL for the names of its enums, AssetRipper.TextureDecoder for the tiles' BC7,
+owner chose its libraries: AssetsTools.NET for the client's bundles, Cpp2IL for the names of its enums and its protocol's schema, AssetRipper.TextureDecoder for the tiles' BC7,
 SkiaSharp to encode them (with its Linux native assets for CI), System.CommandLine for its options, xUnit v3 for its
 tests. CI and `bun run check` build it and run its tests, which need no client. It reads the client's facts as they are and fails when the client contradicts what it relies on; what the
 bot derives from them (harvestables, bankers) is computed in Rust by the step that needs it.
 
 ```sh
 dotnet run --project tools/extractor/src -- --help
-dotnet run --project tools/extractor/src                     # the installed client into artifacts/data/<build>/
+dotnet run --project tools/extractor/src                     # the installed client into artifacts/data/<build>/,
+                                                             # and its protocol's schema (docs/protocol.md)
 dotnet run --project tools/extractor/src -- --client <dir>   # another copy of the client
 dotnet run --project tools/extractor/src -- --output <dir>   # another data folder
 ```

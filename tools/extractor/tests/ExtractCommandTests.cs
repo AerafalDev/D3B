@@ -14,6 +14,7 @@ public sealed class ExtractCommandTests
         Assert.True(code == ExtractCommand.Done, error);
         Assert.Contains($"version {ClientBuild.Read(client).Version}", output, StringComparison.Ordinal);
         Assert.Contains("\"path\": \"areas.json\"", File.ReadAllText(Path.Combine(target, DataFolder.ManifestFile)), StringComparison.Ordinal);
+        Assert.Matches(@"Protocol: .*artifacts.protocol.[0-9.]+\.json, format 1, [0-9,]+ messages, [0-9,]+ enums, SHA-256 [0-9a-f]{64}", output);
     }
 
     [Fact]

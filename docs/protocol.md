@@ -81,7 +81,15 @@ Each is `inferred` unless said `verified`.
    Cpp2IL (messages, field numbers, types, oneofs; no machine-code pass) and writes
    `artifacts/protocol/<build>.json`, with a `format` and the SHA-256 of its canonical form (keys and messages sorted).
    Nothing of it is committed or shipped. A change of that format updates every pinned build's `schemaSha256` in the
-   same PR.
+   same PR. The same command writes the data folder (the owner, 2026-11-12). Format 1 (`tools/extractor/src/Protocol/`)
+   lists the game connection's messages by name, a nested one after its declaring types with dots, each field's
+   number, kind (`int32`, `int64`, `uint32`, `bool`, `string`, `float`, `enum`, `message`, `map` on 3.7.13.17), its
+   type, `repeated` or `optional`, and its oneof; and the enums the fields hold, with their values. The canonical form
+   is compact and omits the build, so two builds of one schema share their digest. The metadata gives C# types: an
+   `int` is written `int32` though `sint32` and `sfixed32` are `int` too (none on 3.7.12.12, the C# version's D40); a
+   decode that does not re-encode the same bytes shows one. Measured on 3.7.13.17 (verified, 2026-11-12): 2,175
+   messages, 6,302 fields (401 `optional`, 770 `repeated`, 201 maps, 349 in oneofs), 422 enums, in the same run as
+   the data; two runs write the same bytes.
 2. When the digest equals a pinned build's, its pins are copied under the new build. Otherwise the pins are made again
    and the audit test (ignored unless that schema exists) checks that every pinned message and field exists with the
    same number and kind and that `schemaSha256` matches; a capture of the new build replayed must show no frame
