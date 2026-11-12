@@ -21,6 +21,27 @@ internal sealed class ProtocolSchema
 
     public required IReadOnlyList<SchemaEnum> Enums { get; init; }
 
+    private static void WriteField(Utf8JsonWriter json, SchemaField field)
+    {
+        json.WriteStartObject();
+        WriteIfAny(json, "key", field.Key);
+        json.WriteString("kind", field.Kind);
+        WriteIfAny(json, "label", field.Label);
+        json.WriteNumber("number", field.Number);
+        WriteIfAny(json, "oneof", field.Oneof);
+        WriteIfAny(json, "type", field.Type);
+        WriteIfAny(json, "value", field.Value);
+        json.WriteEndObject();
+    }
+
+    private static void WriteIfAny(Utf8JsonWriter json, string name, string? value)
+    {
+        if (value is not null)
+        {
+            json.WriteString(name, value);
+        }
+    }
+
     /// <summary>The schema's canonical form, the bytes its digest is taken from.</summary>
     public byte[] Canonical()
     {
@@ -46,27 +67,6 @@ internal sealed class ProtocolSchema
 
         System.IO.File.WriteAllBytes(staging, File(build));
         System.IO.File.Move(staging, path, overwrite: true);
-    }
-
-    private static void WriteField(Utf8JsonWriter json, SchemaField field)
-    {
-        json.WriteStartObject();
-        WriteIfAny(json, "key", field.Key);
-        json.WriteString("kind", field.Kind);
-        WriteIfAny(json, "label", field.Label);
-        json.WriteNumber("number", field.Number);
-        WriteIfAny(json, "oneof", field.Oneof);
-        WriteIfAny(json, "type", field.Type);
-        WriteIfAny(json, "value", field.Value);
-        json.WriteEndObject();
-    }
-
-    private static void WriteIfAny(Utf8JsonWriter json, string name, string? value)
-    {
-        if (value is not null)
-        {
-            json.WriteString(name, value);
-        }
     }
 
     // Keys are written in their sorted order, by hand, so that the form never depends on a serializer's choices.

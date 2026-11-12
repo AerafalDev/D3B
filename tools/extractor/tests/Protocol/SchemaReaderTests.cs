@@ -254,6 +254,10 @@ public sealed class SchemaReaderTests
 
         // 3.7.13.17 (verified, artifacts/studies/protocol.md, section 3): another build may differ, and this says by what.
         Assert.Equal(2175, schema.Messages.Count);
+        Assert.Equal(6302, schema.Messages.Sum(message => message.Fields.Count));
+        Assert.Equal(422, schema.Enums.Count);
+        Assert.Equal([0L, 1, 2, 3, 4, 5, 6, 7], schema.Enums.Single(item => item.Name == "kyp").Values);
+        Assert.Equal(("kjp.kjo.kjn", "enum"), (messages["kjp"].Fields[0].Type, messages["kjp"].Fields[0].Kind));
         Assert.Equal([(1, "int64", null)], Fields(messages["jow"]));
         Assert.Equal([(1, "int32", "repeated"), (2, "int32", "optional"), (3, "bool", null), (4, "int64", null)], Fields(messages["jnz"]));
         Assert.Equal([(1, "int32", null), (2, "int32", null)], Fields(messages["iqq"]));

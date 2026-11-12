@@ -73,12 +73,23 @@ public sealed class ProtocolSchemaTests
     }
 
     [Fact]
-    public void TwoBuildsOfOneSchemaShareTheirDigest()
+    public void TheCanonicalFormSortsMessagesFieldsAndEnumsWhateverTheirOrder()
     {
-        using var first = JsonDocument.Parse(_schema.File("3.7.13.17"));
-        using var second = JsonDocument.Parse(_schema.File("3.7.14.2"));
+        var shuffled = new ProtocolSchema
+        {
+            Messages =
+            [
+                new SchemaMessage { Name = "abd", Fields = [] },
+                new SchemaMessage { Name = "abc", Fields = [_schema.Messages[0].Fields[2], _schema.Messages[0].Fields[0], _schema.Messages[0].Fields[1]] },
+                new SchemaMessage { Name = "Abz", Fields = [] },
+            ],
+            Enums = [new SchemaEnum { Name = "abc.abe", Values = [0, 2] }, new SchemaEnum { Name = "Abc.abe", Values = [0] }],
+        };
+        var expected = Encoding.UTF8.GetString(_schema.Canonical())
+            .Replace("""{"enums":[""", """{"enums":[{"name":"Abc.abe","values":[0]},""", StringComparison.Ordinal)
+            .Replace("\"messages\":[", "\"messages\":[{\"fields\":[],\"name\":\"Abz\"},", StringComparison.Ordinal);
 
-        Assert.Equal(first.RootElement.GetProperty("sha256").GetString(), second.RootElement.GetProperty("sha256").GetString());
+        Assert.Equal(expected, Encoding.UTF8.GetString(shuffled.Canonical()));
     }
 
     [Fact]
