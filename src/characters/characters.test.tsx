@@ -113,15 +113,35 @@ describe("the characters", () => {
   afterEach(cleanup);
 
   it("keeps each connection's view until it closes, and forgets the selection with it", async () => {
-    useCharacters.getState().follow();
+    const stop = useCharacters.getState().follow();
     await changed({ connection: 1, view });
+    await changed({ connection: 2, view: { ...view, name: "Kordo" } });
     useCharacters.getState().select(1);
+
+    await changed({ connection: 2, view: null });
     expect(useCharacters.getState().views[1]?.name).toBe("Lyra");
+    expect(useCharacters.getState().selected).toBe(1);
 
     await changed({ connection: 1, view: null });
-
     expect(useCharacters.getState().views).toEqual({});
     expect(useCharacters.getState().selected).toBeNull();
+
+    // Once stopped, a change heard late is not kept.
+    stop();
+    backEnd.listener?.({ payload: { connection: 3, view } });
+    expect(useCharacters.getState().views).toEqual({});
+  });
+
+  it("says how to start before the relay told anything, and selects a character clicked", async () => {
+    useRelay.setState({ status: null, follow: () => () => {} });
+    const { unmount } = render(<CharacterList />);
+    expect(screen.getByText("Start Dofus from Ankama's launcher: each character it plays shows here.")).toBeDefined();
+    unmount();
+
+    relay([connection(1)]);
+    render(<CharacterList />);
+    fireEvent.click(screen.getByText("Connection 1"));
+    expect(useCharacters.getState().selected).toBe(1);
   });
 
   it("lists every connection, a character by its name and one before its selection by its number", async () => {
@@ -148,7 +168,7 @@ describe("the characters", () => {
     expect(screen.getByText("lvl 34–52")).toBeDefined();
     expect(screen.getByText("harvested")).toBeDefined();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Protocol" }));
-    expect(screen.getByRole("tab", { name: "Protocol" })).toBeDefined();
+    expect(await screen.findByText("The protocol inspector comes with a later version.")).toBeDefined();
   });
 
   it("asks to choose a character when none is", () => {
@@ -156,5 +176,20 @@ describe("the characters", () => {
     render(<CharacterView />);
 
     expect(screen.getByText("Choose a character to follow it.")).toBeDefined();
+  });
+
+  it("tells why a connection shows nothing, and marks a stale or lost one", () => {
+    relay([connection(1, "unknownBuild")]);
+    useCharacters.setState({ views: {}, selected: 1, follow: () => () => {} });
+    const { unmount } = render(<CharacterView />);
+    expect(screen.getAllByText("protocol off (unknown build)").length).toBeGreaterThan(0);
+    unmount();
+
+    relay([{ ...connection(1, "lost"), dropped: 1 }]);
+    const stale = { ...view, stale: { map: true, life: false, pods: false, kamas: false } };
+    useCharacters.setState({ views: { 1: stale }, selected: 1, follow: () => () => {} });
+    render(<CharacterView />);
+    expect(screen.getByText("Protocol lost: the view stays as it was")).toBeDefined();
+    expect(screen.getByText("May be out of date: 1 frame dropped")).toBeDefined();
   });
 });

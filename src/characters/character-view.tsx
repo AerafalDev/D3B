@@ -78,9 +78,11 @@ export function CharacterView() {
                   </span>
                 )}
                 <div className="flex gap-2 pt-1">
-                  <Badge variant={view.fighting ? "destructive" : "secondary"}>
-                    {t(view.fighting ? "characters.fight" : "view.roleplay")}
-                  </Badge>
+                  {view.fighting != null && (
+                    <Badge variant={view.fighting ? "destructive" : "secondary"}>
+                      {t(view.fighting ? "characters.fight" : "view.roleplay")}
+                    </Badge>
+                  )}
                   {lost && <Badge variant="outline">{t("view.lost")}</Badge>}
                 </div>
               </div>
@@ -130,7 +132,7 @@ export function CharacterView() {
                   <dd>{format(view.movementPoints)}</dd>
                 </dl>
                 {(view.stale.map || view.stale.life || view.stale.pods || view.stale.kamas) && (
-                  <p className="text-xs text-amber-500">{t("view.stale", { dropped: connection.dropped })}</p>
+                  <p className="text-xs text-amber-500">{t("view.stale", { count: connection.dropped, dropped: numbers.format(connection.dropped) })}</p>
                 )}
               </div>
             </section>

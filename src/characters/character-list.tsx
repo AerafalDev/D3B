@@ -2,9 +2,13 @@ import { Swords, Users } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils.ts";
+import type { GameConnectionStatus } from "@/bindings.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { useCharacters } from "./character-store.ts";
 import { GaugeBar } from "./gauge-bar.tsx";
+
+/** The same empty list each time, so that the store's selector gives a stable snapshot before the relay speaks. */
+const NONE: readonly GameConnectionStatus[] = [];
 
 /**
  * The characters on the left, one per game connection from its open to its close (`docs/game.md`, "In the app"): its
@@ -12,7 +16,7 @@ import { GaugeBar } from "./gauge-bar.tsx";
  */
 export function CharacterList() {
   const { t } = useTranslation();
-  const connections = useRelay((store) => store.status?.connections ?? []);
+  const connections = useRelay((store) => store.status?.connections ?? NONE);
   const views = useCharacters((store) => store.views);
   const selected = useCharacters((store) => store.selected);
   const select = useCharacters((store) => store.select);

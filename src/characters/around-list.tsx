@@ -34,8 +34,8 @@ export function AroundList({ view }: { view: CharacterView }) {
       <h3 className="font-semibold">{t("around.title")}</h3>
       <div>
         <h4 className="text-muted-foreground text-xs">{t("around.players", { count: players.length })}</h4>
-        {players.map(({ actor, name }) => (
-          <p key={actor.id} className="flex justify-between pl-2">
+        {players.map(({ actor, name }, index) => (
+          <p key={`${actor.id}-${index}`} className="flex justify-between pl-2">
             {name}
             <span className="text-muted-foreground text-xs">{cell(actor.cell)}</span>
           </p>
@@ -43,14 +43,19 @@ export function AroundList({ view }: { view: CharacterView }) {
       </div>
       <div>
         <h4 className="text-muted-foreground text-xs">{t("around.groups", { count: groups.length })}</h4>
-        {groups.map(({ actor, monsters }) => {
+        {groups.map(({ actor, monsters }, index) => {
           const levels = monsters.map((monster) => monster.level);
           const first = monsters[0];
           return (
-            <p key={actor.id} className="flex justify-between pl-2">
-              {first ? t("around.group", { id: first.id, others: monsters.length - 1 }) : t("around.emptyGroup")}
+            <p key={`${actor.id}-${index}`} className="flex justify-between pl-2">
+              {first
+                ? t(monsters.length > 1 ? "around.group" : "around.alone", { id: first.id, others: monsters.length - 1 })
+                : t("around.emptyGroup")}
               <span className="text-muted-foreground text-xs">
-                {levels.length > 0 && t("around.levels", { low: Math.min(...levels), high: Math.max(...levels) })}
+                {levels.length > 0 &&
+                  (Math.min(...levels) === Math.max(...levels)
+                    ? t("around.level", { level: Math.min(...levels) })
+                    : t("around.levels", { low: Math.min(...levels), high: Math.max(...levels) }))}
               </span>
             </p>
           );
@@ -58,8 +63,8 @@ export function AroundList({ view }: { view: CharacterView }) {
       </div>
       <div>
         <h4 className="text-muted-foreground text-xs">{t("around.npcs", { count: npcs.length })}</h4>
-        {npcs.map(({ actor, id }) => (
-          <p key={actor.id} className="flex justify-between pl-2">
+        {npcs.map(({ actor, id }, index) => (
+          <p key={`${actor.id}-${index}`} className="flex justify-between pl-2">
             {t("around.npc", { id })}
             <span className="text-muted-foreground text-xs">{cell(actor.cell)}</span>
           </p>

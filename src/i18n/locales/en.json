@@ -63,7 +63,8 @@
     "energy": "Energy",
     "actionPoints": "AP",
     "movementPoints": "MP",
-    "stale": "May be out of date: {{dropped}} frames dropped"
+    "stale_one": "May be out of date: {{dropped}} frame dropped",
+    "stale_other": "May be out of date: {{dropped}} frames dropped"
   },
   "around": {
     "title": "Around",
@@ -86,6 +87,8 @@
     "available": "available",
     "harvesting": "being harvested",
     "harvested": "harvested",
-    "state": "state {{state}}"
+    "state": "state {{state}}",
+    "alone": "Monster {{id}}",
+    "level": "lvl {{level}}"
   }
 }

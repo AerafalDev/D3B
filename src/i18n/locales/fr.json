@@ -63,7 +63,8 @@
     "energy": "Énergie",
     "actionPoints": "PA",
     "movementPoints": "PM",
-    "stale": "Peut être dépassé : {{dropped}} trames perdues"
+    "stale_one": "Peut être dépassé : {{dropped}} trame perdue",
+    "stale_other": "Peut être dépassé : {{dropped}} trames perdues"
   },
   "around": {
     "title": "Autour",
@@ -86,6 +87,8 @@
     "available": "disponible",
     "harvesting": "en récolte",
     "harvested": "récoltée",
-    "state": "état {{state}}"
+    "state": "état {{state}}",
+    "alone": "Monstre {{id}}",
+    "level": "niv. {{level}}"
   }
 }
