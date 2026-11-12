@@ -2,7 +2,6 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import "./index.css";
-import { ThemeProvider } from "@/components/theme-provider.tsx";
 import { Toaster } from "@/components/ui/sonner.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { App } from "./app/app.tsx";
@@ -17,11 +16,10 @@ if (root === null) {
 
 createRoot(root).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="dark">
-      <TooltipProvider delayDuration={300}>
-        <App />
-        <Toaster />
-      </TooltipProvider>
-    </ThemeProvider>
+    {/* Dark only (the owner): index.html sets the `dark` class once; nothing switches it. */}
+    <TooltipProvider delayDuration={300}>
+      <App />
+      <Toaster theme="dark" />
+    </TooltipProvider>
   </StrictMode>,
 );
