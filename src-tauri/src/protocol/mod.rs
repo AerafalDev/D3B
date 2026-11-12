@@ -18,7 +18,9 @@ mod session;
 
 #[cfg(test)]
 pub(crate) use session::Counts;
-pub(crate) use session::{Observer, ProtocolState, Session, Unobserved, open};
+#[cfg(test)]
+pub(crate) use session::Unobserved;
+pub(crate) use session::{Observer, ProtocolState, Session, open};
 
 #[cfg(test)]
 mod audit;

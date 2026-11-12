@@ -47,7 +47,7 @@ pub(crate) struct Stale {
 }
 
 /// The character as the app shows it at one moment.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct View {
     pub who: Option<Who>,
     pub context: Option<Context>,
@@ -219,11 +219,6 @@ impl Character {
             level: basics.level.unwrap_or_default(),
             breed: basics.look.map(|look| look.breed_id).unwrap_or_default(),
         });
-    }
-
-    /// Whether the view changes at `now` with no message: a regeneration counting.
-    pub(crate) fn changing(&self, now: Instant) -> bool {
-        self.life.regenerating(now)
     }
 
     /// The view at `now`, while the connection has dropped `dropped` frames.

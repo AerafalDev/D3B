@@ -142,8 +142,6 @@ fn regenerates_a_point_each_interval_rounded_down_up_to_the_max() {
     assert_eq!(at(&life, start + Duration::from_millis(499)), (400, 480, true));
     assert_eq!(at(&life, start + Duration::from_millis(1_250)), (402, 480, true));
     assert_eq!(at(&life, start + Duration::from_secs(3_600)), (480, 480, true));
-    assert!(life.regenerating(start));
-    assert!(!life.regenerating(start + Duration::from_secs(3_600)));
 }
 
 #[test]
@@ -181,7 +179,6 @@ fn a_fight_stops_the_count() {
 
     // The 20 points counted up to the fight are kept, and no more are counted.
     assert_eq!(at(&life, start + Duration::from_secs(60)), (420, 480, false));
-    assert!(!life.regenerating(start));
 }
 
 #[test]
@@ -207,7 +204,6 @@ fn no_life_is_known_before_the_server_sends_one() {
     life.start(5, start);
 
     assert_eq!(life.at(start + Duration::from_secs(1)), None);
-    assert!(!life.regenerating(start));
 }
 
 #[test]

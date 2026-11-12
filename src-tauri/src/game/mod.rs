@@ -7,5 +7,15 @@ mod character;
 
 mod life;
 
+mod live;
+
+pub(crate) use around::{ActorKind, Monster, Seen};
+#[cfg(test)]
+pub(crate) use character::Who;
+pub(crate) use character::{Context, View};
+#[cfg(test)]
+pub(crate) use life::Characteristics;
+pub(crate) use live::Live;
+
 #[cfg(test)]
 mod replay;

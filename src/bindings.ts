@@ -19,10 +19,27 @@ export const commands = {
 
 /** Events */
 export const events = {
+	characterChanged: makeEvent<CharacterChanged_Serialize, CharacterChanged_Deserialize>("character-changed"),
 	relayChanged: makeEvent<RelayChanged_Serialize, RelayChanged_Deserialize>("relay-changed"),
 };
 
 /* Types */
+export type ActorSeen = ActorSeen_Serialize | ActorSeen_Deserialize;
+
+export type ActorSeenKind = { kind: "player"; name: string } | { kind: "npc"; npcId: number } | { kind: "monsterGroup"; monsters: MonsterSeen[] } | { kind: "other" };
+
+export type ActorSeen_Deserialize = {
+	id: number | null,
+	kind: ActorSeenKind,
+	cell?: number | null,
+};
+
+export type ActorSeen_Serialize = {
+	id: number | null,
+	kind: ActorSeenKind,
+	cell: number | null,
+};
+
 /**  What the About dialog and the status bar show. */
 export type AppInfo = AppInfo_Serialize | AppInfo_Deserialize;
 
@@ -48,6 +65,72 @@ export type AppInfo_Serialize = {
 	dataError: string | null,
 	/**  `windows`, `macos` or `linux`. */
 	os: string,
+};
+
+/**  A connection's character changed; `view` is `None` once the connection closed. */
+export type CharacterChanged = CharacterChanged_Serialize | CharacterChanged_Deserialize;
+
+/**  A connection's character changed; `view` is `None` once the connection closed. */
+export type CharacterChanged_Deserialize = {
+	connection: number,
+	view?: CharacterView_Deserialize | null,
+};
+
+/**  A connection's character changed; `view` is `None` once the connection closed. */
+export type CharacterChanged_Serialize = {
+	connection: number,
+	view: CharacterView_Serialize | null,
+};
+
+/**  A character's view (`game::View`), its numbers as JavaScript reads them. */
+export type CharacterView = CharacterView_Serialize | CharacterView_Deserialize;
+
+/**  A character's view (`game::View`), its numbers as JavaScript reads them. */
+export type CharacterView_Deserialize = {
+	name?: string | null,
+	level?: number | null,
+	breed?: number | null,
+	fighting?: boolean | null,
+	place?: Place_Deserialize | null,
+	cell?: number | null,
+	life?: Gauge | null,
+	/**  Whether the life is the client's count of a regeneration. */
+	lifeEstimated: boolean,
+	pods?: Gauge | null,
+	kamas?: number | null,
+	actionPoints?: number | null,
+	movementPoints?: number | null,
+	energy?: Gauge | null,
+	/**  The experience from the level's floor to the next's. */
+	experience?: Gauge | null,
+	actors: ActorSeen_Deserialize[],
+	interactives: InteractiveSeen[],
+	stated: StatedSeen_Deserialize[],
+	stale: StaleParts,
+};
+
+/**  A character's view (`game::View`), its numbers as JavaScript reads them. */
+export type CharacterView_Serialize = {
+	name: string | null,
+	level: number | null,
+	breed: number | null,
+	fighting: boolean | null,
+	place: Place_Serialize | null,
+	cell: number | null,
+	life: Gauge | null,
+	/**  Whether the life is the client's count of a regeneration. */
+	lifeEstimated: boolean,
+	pods: Gauge | null,
+	kamas: number | null,
+	actionPoints: number | null,
+	movementPoints: number | null,
+	energy: Gauge | null,
+	/**  The experience from the level's floor to the next's. */
+	experience: Gauge | null,
+	actors: ActorSeen_Serialize[],
+	interactives: InteractiveSeen[],
+	stated: StatedSeen_Serialize[],
+	stale: StaleParts,
 };
 
 /**
@@ -103,10 +186,55 @@ export type GameProtocol = "on" |
 /**  Its bytes stopped being frames. */
 "lost";
 
+/**  A value and the most it can be. */
+export type Gauge = {
+	value: number | null,
+	max: number | null,
+};
+
+export type InteractiveSeen = {
+	elementId: number,
+	kindId: number,
+	/**  Whether one of its skills is enabled for the character. */
+	usable: boolean,
+};
+
 /**  A map's coordinates in the world, as the game shows them. */
 export type MapAt = {
 	x: number,
 	y: number,
+};
+
+/**  A monster of a group, its main one first. */
+export type MonsterSeen = {
+	id: number,
+	grade: number,
+	level: number,
+};
+
+/**  A name in the app's two languages. */
+export type Names = {
+	fr: string,
+	en: string,
+};
+
+/**  Where the character stands, named when the data is of its connection's build. */
+export type Place = Place_Serialize | Place_Deserialize;
+
+/**  Where the character stands, named when the data is of its connection's build. */
+export type Place_Deserialize = {
+	mapId: number | null,
+	at?: MapAt | null,
+	subArea?: Names | null,
+	area?: Names | null,
+};
+
+/**  Where the character stands, named when the data is of its connection's build. */
+export type Place_Serialize = {
+	mapId: number | null,
+	at: MapAt | null,
+	subArea: Names | null,
+	area: Names | null,
 };
 
 /**  The relay's status changed. */
@@ -152,6 +280,28 @@ export type RelayStatus_Serialize = {
 	notUnderstood: number,
 	/**  What the protocol read of each game connection, in the order they opened. */
 	connections: GameConnectionStatus_Serialize[],
+};
+
+/**  Which parts may be out of date: the protocol dropped frames since they were last refreshed. */
+export type StaleParts = {
+	map: boolean,
+	life: boolean,
+	pods: boolean,
+	kamas: boolean,
+};
+
+export type StatedSeen = StatedSeen_Serialize | StatedSeen_Deserialize;
+
+export type StatedSeen_Deserialize = {
+	elementId: number,
+	cell?: number | null,
+	state: number,
+};
+
+export type StatedSeen_Serialize = {
+	elementId: number,
+	cell: number | null,
+	state: number,
 };
 
 /* Tauri Specta runtime */

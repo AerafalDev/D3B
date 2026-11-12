@@ -38,9 +38,11 @@ pub(crate) trait Observer: Send + 'static {
     fn closed(&mut self);
 }
 
-/// An observer that keeps nothing: what a connection feeds until the game follows it.
+/// An observer that keeps nothing, for tests that do not read a connection's messages.
+#[cfg(test)]
 pub(crate) struct Unobserved;
 
+#[cfg(test)]
 impl Observer for Unobserved {
     fn message(&mut self, _: &Message, _: std::time::Instant, _: u64) {}
     fn tick(&mut self, _: std::time::Instant, _: u64) {}

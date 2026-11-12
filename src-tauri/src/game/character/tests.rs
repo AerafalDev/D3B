@@ -245,13 +245,12 @@ fn a_fight_stops_the_regeneration_and_forgets_the_cell() {
         ],
         start,
     );
-    assert!(character.changing(start));
+    assert_eq!(life(&character.view(start, 0)), Some((450, 480, true)));
 
     character.apply(&context(true), start, 0);
     let view = character.view(start + Duration::from_secs(10), 0);
     assert_eq!((view.context, view.cell), (Some(Context::Fight), None));
     assert_eq!(life(&view), Some((450, 480, false)));
-    assert!(!character.changing(start));
 
     // The characteristics a fight ends with still set the life.
     character.apply(&stats(480, 100, 1), start, 0);

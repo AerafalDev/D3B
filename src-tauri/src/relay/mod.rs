@@ -121,6 +121,9 @@ impl Status {
     }
 }
 
+/// Makes the observer of the `number`th game connection's decoded messages, given the build it named.
+pub(crate) type Observe = Arc<dyn Fn(u64, Option<&str>) -> Box<dyn Observer> + Send + Sync>;
+
 /// The relay for the app's life: redirects the client and carries its connections from [`Relay::start`] to
 /// [`Relay::stop`]. Every change of its [`Status`] is told to the `notify` it was made with.
 #[derive(Clone)]
@@ -132,8 +135,7 @@ struct Inner {
     status: Mutex<Status>,
     /// Told each change of the status, under its lock: it must not ask the relay for anything.
     notify: Box<dyn Fn(Status) + Send + Sync>,
-    /// Makes the observer of the `number`th game connection's decoded messages.
-    observe: Arc<dyn Fn(u64) -> Box<dyn Observer> + Send + Sync>,
+    observe: Observe,
     /// Set once by [`Relay::stop`]: nothing is redirected after it.
     stopped: AtomicBool,
     /// The redirect applied, to restore; its lock orders every write of `version`.
@@ -163,7 +165,7 @@ impl Relay {
     /// decoded messages to the observer `observe` makes for it.
     pub(crate) fn new(
         notify: impl Fn(Status) + Send + Sync + 'static,
-        observe: impl Fn(u64) -> Box<dyn Observer> + Send + Sync + 'static,
+        observe: impl Fn(u64, Option<&str>) -> Box<dyn Observer> + Send + Sync + 'static,
     ) -> Self {
         Self {
             inner: Arc::new(Inner {
@@ -358,7 +360,7 @@ fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
 mod status_tests {
     use super::*;
 
-    fn unobserved(_: u64) -> Box<dyn Observer> {
+    fn unobserved(_: u64, _: Option<&str>) -> Box<dyn Observer> {
         Box::new(crate::protocol::Unobserved)
     }
 
