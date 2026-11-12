@@ -1,8 +1,8 @@
 import { Swords, Users } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils.ts";
 import type { GameConnectionStatus } from "@/bindings.ts";
+import { cn } from "@/lib/utils.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { useCharacters } from "./character-store.ts";
 import { GaugeBar } from "./gauge-bar.tsx";

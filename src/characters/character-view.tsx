@@ -132,7 +132,9 @@ export function CharacterView() {
                   <dd>{format(view.movementPoints)}</dd>
                 </dl>
                 {(view.stale.map || view.stale.life || view.stale.pods || view.stale.kamas) && (
-                  <p className="text-xs text-amber-500">{t("view.stale", { count: connection.dropped, dropped: numbers.format(connection.dropped) })}</p>
+                  <p className="text-xs text-amber-500">
+                    {t("view.stale", { count: connection.dropped, dropped: numbers.format(connection.dropped) })}
+                  </p>
                 )}
               </div>
             </section>
