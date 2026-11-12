@@ -33,41 +33,48 @@ fn event(name: &str, value: &[u8]) -> Vec<u8> {
 /// What a session reported, in order.
 type Reports = Arc<Mutex<Vec<Option<Session>>>>;
 
-/// What an observer was told: a message by its readable name and the dropped count, a tick, or the end.
+/// What an observer was told, with its time in milliseconds of paused time: a message by its readable name and the
+/// frames dropped before it, a tick, or the end.
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Told {
-    Message(&'static str, u64),
-    Tick,
+    Message(&'static str, u64, u128),
+    Tick(u128),
     Closed,
 }
 
-#[derive(Default)]
-struct Recorder(Arc<Mutex<Vec<Told>>>);
+struct Recorder {
+    told: Arc<Mutex<Vec<Told>>>,
+    start: std::time::Instant,
+}
+
+impl Recorder {
+    fn push(&self, told: Told) {
+        self.told
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(told);
+    }
+
+    fn millis(&self, at: std::time::Instant) -> u128 {
+        at.saturating_duration_since(self.start).as_millis()
+    }
+}
 
 impl Observer for Recorder {
-    fn message(&mut self, message: &Message, _: std::time::Instant, dropped: u64) {
+    fn message(&mut self, message: &Message, at: std::time::Instant, dropped: u64) {
         let name = match message {
             Message::MapCurrentEvent(_) => "MapCurrentEvent",
             _ => "another",
         };
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .push(Told::Message(name, dropped));
+        self.push(Told::Message(name, dropped, self.millis(at)));
     }
 
-    fn tick(&mut self, _: std::time::Instant, _: u64) {
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .push(Told::Tick);
+    fn tick(&mut self, now: std::time::Instant, _: u64) {
+        self.push(Told::Tick(self.millis(now)));
     }
 
     fn closed(&mut self) {
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .push(Told::Closed);
+        self.push(Told::Closed);
     }
 }
 
@@ -83,8 +90,11 @@ fn observed(build: Option<&str>, waiting: usize) -> ((Tap, Reports), Arc<Mutex<V
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .push(session);
     };
-    let recorder = Recorder::default();
-    let observed = Arc::clone(&recorder.0);
+    let recorder = Recorder {
+        told: Arc::default(),
+        start: tokio::time::Instant::now().into_std(),
+    };
+    let observed = Arc::clone(&recorder.told);
     let tap = open_with(build.map(str::to_owned), waiting, report, Box::new(recorder));
     ((tap, reports), observed)
 }
@@ -244,13 +254,13 @@ async fn a_build_without_pins_reads_nothing() {
 async fn tells_its_observer_each_message_decoded_the_time_and_the_end() {
     let ((tap, _), observed) = observed(Some("3.7.13.17"), 1);
 
-    // The second frame cannot wait: it is dropped, and the messages read after it are told with that count.
+    // The second frame cannot wait: it is dropped, after the first was queued, so only frames after it carry it.
     tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 1)]))));
     tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 2)]))));
     after(0).await;
     // A message not pinned is not told.
     tap.give(Side::Server, Some(&event("jqk", &[])));
-    after(0).await;
+    after(50).await;
     tap.give(
         Side::Server,
         Some(&event("iqq", &message(&[varint(1, 1), varint(2, 2)]))),
@@ -258,14 +268,29 @@ async fn tells_its_observer_each_message_decoded_the_time_and_the_end() {
     after(0).await;
     assert_eq!(
         told(&observed),
-        [Told::Message("MapCurrentEvent", 1), Told::Message("another", 1)]
+        [Told::Message("MapCurrentEvent", 0, 0), Told::Message("another", 1, 50)]
     );
 
-    after(1_000).await;
-    assert_eq!(told(&observed), vec![Told::Tick; 5], "a tick every 200 ms");
+    after(950).await;
+    let ticks: Vec<_> = [200, 400, 600, 800, 1_000].into_iter().map(Told::Tick).collect();
+    assert_eq!(told(&observed), ticks, "a tick every 200 ms, at the time now");
 
     drop(tap);
     after(0).await;
+    assert_eq!(told(&observed), [Told::Closed]);
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_lost_connection_ticks_its_observer_no_more() {
+    let ((tap, _), observed) = observed(Some("3.7.13.17"), 16);
+    after(200).await;
+    assert_eq!(told(&observed), [Told::Tick(200)]);
+
+    tap.give(Side::Server, None);
+    after(1_000).await;
+    drop(tap);
+    after(0).await;
+
     assert_eq!(told(&observed), [Told::Closed]);
 }
 
@@ -278,5 +303,5 @@ async fn a_build_without_pins_tells_its_observer_no_message() {
     drop(tap);
     after(0).await;
 
-    assert_eq!(told(&observed), [Told::Tick, Told::Closed]);
+    assert_eq!(told(&observed), [Told::Tick(200), Told::Closed]);
 }

@@ -26,12 +26,15 @@ const TICK: Duration = Duration::from_millis(200);
 /// How many ticks, at most, between two reports of what changed: once a second.
 const REPORT_EVERY: u32 = 5;
 
-/// What one connection's decoded messages feed: told each as it is read, the time at every [`TICK`] while the
-/// connection lasts, and its end.
+/// What one connection's decoded messages feed, on the connection's protocol task: it must never block or wait, since
+/// the frames it holds up are dropped (`docs/protocol.md`, "The tap").
 pub(crate) trait Observer: Send + 'static {
-    /// `message`, read at `at` while the connection had dropped `dropped` frames.
+    /// `message`, read at `at`, when the connection had dropped `dropped` frames before it.
     fn message(&mut self, message: &Message, at: std::time::Instant, dropped: u64);
+    /// The time now and the frames dropped so far, every [`TICK`] while the connection is read: never once its protocol
+    /// is lost, so that what it shows stays as it was.
     fn tick(&mut self, now: std::time::Instant, dropped: u64);
+    /// The connection ended: told once, last.
     fn closed(&mut self);
 }
 
@@ -87,7 +90,8 @@ struct Shared {
 /// The relay's end of a connection's protocol: it hands frames over without waiting.
 #[derive(Debug)]
 pub(crate) struct Tap {
-    frames: mpsc::Sender<(Side, Vec<u8>)>,
+    /// Each frame with the frames dropped before it.
+    frames: mpsc::Sender<(Side, Vec<u8>, u64)>,
     /// Whether the gate let the connection be read: one that is not copies nothing.
     reading: bool,
     shared: Arc<Shared>,
@@ -108,7 +112,7 @@ impl Tap {
             return;
         }
         match self.frames.try_reserve() {
-            Ok(permit) => permit.send((side, body.to_vec())),
+            Ok(permit) => permit.send((side, body.to_vec(), self.shared.dropped.load(Ordering::Relaxed))),
             Err(mpsc::error::TrySendError::Full(())) => {
                 self.shared.dropped.fetch_add(1, Ordering::Relaxed);
             }
@@ -165,7 +169,7 @@ fn open_with(
 async fn run(
     mut session: Session,
     pins: Option<Pins>,
-    mut frames: mpsc::Receiver<(Side, Vec<u8>)>,
+    mut frames: mpsc::Receiver<(Side, Vec<u8>, u64)>,
     shared: Arc<Shared>,
     report: impl Fn(Option<Session>),
     mut observer: Box<dyn Observer>,
@@ -178,18 +182,20 @@ async fn run(
     loop {
         tokio::select! {
             frame = frames.recv() => {
-                let Some((side, body)) = frame else { break };
+                let Some((side, body, dropped)) = frame else { break };
                 if let Some(pins) = &pins {
-                    let dropped = shared.dropped.load(Ordering::Relaxed);
                     if let Some(message) = read(&mut session, pins, side, &body) {
                         observer.message(&message, tokio::time::Instant::now().into_std(), dropped);
                     }
                     changed = true;
                 }
             }
-            now = tick.tick() => {
+            _ = tick.tick() => {
                 let dropped = shared.dropped.load(Ordering::Relaxed);
-                observer.tick(now.into_std(), dropped);
+                // The time now, not the tick's due time: a frame read just before it must not be told later.
+                if !shared.lost.load(Ordering::Relaxed) {
+                    observer.tick(tokio::time::Instant::now().into_std(), dropped);
+                }
                 ticks = (ticks + 1) % REPORT_EVERY;
                 if ticks != 0 {
                     continue;
