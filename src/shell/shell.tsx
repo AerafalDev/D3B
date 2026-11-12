@@ -7,7 +7,7 @@ import { EditorArea } from "./parts/editor-area.tsx";
 import { PartFrame } from "./parts/part-frame.tsx";
 import { ResizablePart } from "./parts/resizable-part.tsx";
 import { StatusBar } from "./parts/status-bar.tsx";
-import type { TitleBar } from "./title-bar/title-bar.tsx";
+import { TitleBar } from "./title-bar/title-bar.tsx";
 import { useShellShortcuts } from "./use-shell-shortcuts.ts";
 
 // The 5 px gaps between the islands, turning blue once held under the pointer, as VS Code's sashes.
@@ -25,14 +25,8 @@ export function Shell() {
 
   return (
     <div className="bg-frame text-text flex h-svh flex-col overflow-hidden">
-<<<<<<< HEAD
       <TitleBar />
-      <div className="flex min-h-0 flex-1 pr-[3px]">
-||||||| 960abec
-      <div className="flex min-h-0 flex-1 pr-[3px]">
-=======
       <div className="flex min-h-0 flex-1 pr-[5px]">
->>>>>>> feat/shell-islands
         <ActivityBar />
         <ResizablePanelGroup orientation="horizontal" className="min-w-0 flex-1">
           <ResizablePart part="primarySideBar" defaultSize={300} minSize={170}>
