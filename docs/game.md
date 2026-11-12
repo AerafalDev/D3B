@@ -8,10 +8,10 @@ the app shows it live, one entry per game connection, beside a protocol inspecto
 flowchart LR
     tap["relay: the game connection's tap"] -->|"each whole frame, bounded"| task["protocol::session, per connection"]
     task --> dec["decoder: envelope, pins, secrets"]
-    dec -->|"a decoded message, its time"| ch["game::Character"]
+    dec -->|"a decoded message, its time; a tick"| obs["game::Character, the session's observer"]
     task -->|"every frame, a secret as its name and size"| ring[("protocol::session::frames: 3,000 frames, 16 MiB")]
-    ch -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
-    ring -->|"only while watched, at most 10 batches/s"| ev2["ipc: InspectorFrames"]
+    obs -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
+    ring -->|"the one watched, at most 10 batches/s"| ev2["ipc: InspectorFrames"]
     maps["data: a map's cells, read on demand"] --> cmd["ipc: map_cells"]
     ev1 --> view["src/characters: the list, the view, the map"]
     cmd --> view
@@ -23,33 +23,38 @@ the build's schema, the client's tables, and the C# version's docs), each `infer
 
 ## The state of a character
 
-`game::Character` is owned by its connection's protocol task, fed each decoded message with the time it was read
-(injected, so tests drive it), and never shared but as a snapshot.
+`game::Character` is fed each decoded message with the time it was read, and a tick every 200 ms (time injected, so
+tests drive it). The protocol knows nothing of it: `protocol::session` hands its messages and ticks to an observer the
+relay's owner gives it when the connection opens, as it already hands its report, so `game` depends on `protocol` and
+never the reverse (ADR 0002).
 
-- **Who** (verified): `CharacterSelectionEvent` gives its id, name, level and breed. A second one resets the state to
-  the new character (never seen: each of the 51 connections chose once). Characteristics read before it are kept: the
-  first `CharacterStatsEvent` comes before the selection.
+- **Who** (verified): `CharacterSelectionEvent` gives its id, name, level and breed. Characteristics read since the
+  last selection are kept, since the first `CharacterStatsEvent` comes before it; everything else is reset to the new
+  character (a second selection on one connection was never seen: each of the 51 connections chose once).
 - **Level** (verified, 36 of 36): `CharacterLevelUpEvent` (`kqp`) field 1 is the new level.
 - **Where** (verified): `MapCurrentEvent` sets the map; `MapInformationEvent` carries its own map id, which wins when
   they differ (a dropped `MapCurrentEvent`). The character's cell is its own actor in the map's information (its id is
   the selection's in all 66,171), then the last cell of each `MapMovementEvent` naming it; cells are plain numbers
-  from 0 to 559. The map's coordinates, sub-area and area come from the game data, only when its build is the
-  connection's.
+  from 0 to 559. A walk cut short keeps the last cell until the next walk or map information (the 0.8% of the
+  character's walks that did not start where the last one ended; the walk's cancel request is not read). The map's
+  coordinates, sub-area and area come from the game data, only when its build is the connection's.
 - **Life** (verified on all 634 `LifeRegenEndEvent`): from `CharacterStatsEvent`, a characteristic's value being the
   sum of its numbers, max life is characteristic 0 plus 11 (vitality), and life is max life plus 97 (life lost, never
   above 0). `LifeRegenStartEvent` starts a regeneration of one point per `interval` tenths of a second (always 5),
-  life then shown as min(max, life at the start + elapsed / interval, rounded down) and marked estimated;
-  characteristics read meanwhile replace the life at the start but keep its time; `LifeRegenEndEvent` sets life and
-  max and ends it; an interval of 0 regenerates nothing.
+  life then being min(max, life at the start + elapsed / interval, rounded down), marked estimated; characteristics
+  read meanwhile replace the life at the start but keep its time; `LifeRegenEndEvent` sets life and max and ends it;
+  an interval of 0 regenerates nothing. The estimate is computed in Rust at each tick: while it grows, the view
+  changes, and is sent, at most twice a second.
 - **Pods** (verified): `InventoryWeightEvent`, sent on entering the game and after every inventory change.
 - **Kamas** (verified, 480 of 480): `CharacterStatsEvent` field 6, then `KamasUpdateEvent` (`ith`) field 2.
 - **Also shown**, the owner's choice (2026-11-12): action points (characteristic 1), movement points (23), energy (29
   of 47), and experience, fields 8, 11 and 2 of the characteristics read as the level's floor, the experience and the
   next floor (the order is measured, its meaning inferred until the owner checks it in game).
-- **Fights**: a fight's `ContextCreationEvent` sets the context to fight; its `MapCurrentEvent` names the fight's map
-  (634 of 634) and no map information follows. What is around is cleared and life frozen as it was, until a
-  roleplay context and its map information come back. Positions and life in a fight need messages not pinned yet:
-  step 6.
+- **Fights**: a fight's `ContextCreationEvent` sets the context to fight and ends any regeneration; its
+  `MapCurrentEvent` names the fight's map (634 of 634) and no map information follows. What is around is cleared.
+  Life changes in a fight are not read (they need messages not pinned yet: step 6): it shows the last
+  characteristics', those of the fight's start, then those sent at its end; a roleplay context and its map
+  information bring the rest back.
 - **Stale**: each part (map and around, life, pods, kamas) keeps the protocol's dropped count of its last refresh and
   is shown as stale while the connection has dropped more since. A protocol lost freezes the whole view, marked lost.
 
@@ -57,10 +62,11 @@ the build's schema, the client's tables, and the C# version's docs), each `infer
 
 - **Actors** (verified): `Actor.information` (field 3) holds a roleplay kind, a oneof: a player (its name), an NPC (its
   id), a monster group (its main monster and the others, each with its id, grade and level; their levels all match the
-  client's monster grades), and two rare kinds, likely tax collectors and prisms, shown as "other". No field holds
-  another player's level. `MapActorShownEvent` adds or updates actors, `MapActorRemovedEvent` removes one (an unknown
-  id changes nothing), `MapMovementEvent` moves one to its last cell (an unknown actor is ignored; another player's
-  first cell is where it stood in 75% of walks, so others' cells are approximate until the next map information).
+  client's monster grades). Any other member, set or not declared (two rare ones, likely tax collectors and prisms;
+  never seen: a treasure hunt's NPC, a portal, a fighter), is shown as "other". No field holds another player's
+  level. `MapActorShownEvent` adds or updates actors, `MapActorRemovedEvent` removes one (an unknown id changes
+  nothing), `MapMovementEvent` moves one to its last cell (an unknown actor is ignored; another player's first cell
+  is where it stood in 75% of walks, so others' cells are approximate until the next map information).
 - **Elements** (verified): interactive elements (their interactive and skills, enabled or disabled) and stated
   elements (state 0 available, 2 being harvested, 1 harvested, the meanings inferred). Only those on the current map
   are kept (`on_current_map` false are the eight neighbouring maps'). An element's cell is in the map's data, by its
@@ -75,8 +81,10 @@ the build's schema, the client's tables, and the C# version's docs), each `infer
 
 The owner's choices of 2026-11-12, on the mockup:
 
-- **The characters** on the left, one per game connection, from its first state to its close: name, level, map, roleplay
-  or fight, a life bar. The one chosen fills the workspace with two tabs, **View** and **Protocol**.
+- **The characters** on the left, one entry per game connection, from its open to its close: before a selection it
+  shows the connection's number and its protocol's state; a connection whose protocol is off (a build without pins,
+  no build, lost) stays listed with the reason, its view and its frames empty. Then name, level, map, roleplay or
+  fight, a life bar. The one chosen fills the workspace with two tabs, **View** and **Protocol**.
 - **The view**: who and where (coordinates, sub-area, area, cell, roleplay or fight), life (estimated while it
   regenerates), pods, experience, kamas, energy, action and movement points, staleness; what is around grouped by
   kind; and the map.
@@ -92,8 +100,9 @@ connection's.
 
 Unit tests per message on synthetic decoded messages, with an injected clock: the regeneration rounded down and capped,
 ended by `LifeRegenEndEvent` and by a fight, characteristics during it, an interval of 0; a map information that
-replaces whole, the same map again, against a differing `MapCurrentEvent`; an unknown actor removed or moved; a second
-selection; staleness. The game's capture replay (`D3B_CAPTURES`) checks, by counts only: the life estimated at each
-`LifeRegenEndEvent` within one point of its own, the character's actor in every map information, and its cell equal to
-the next map information's in at least 99% of cases. Vitest: the store per connection, the estimated mark, the map's
-geometry (cells 0, 13, 14 and 559).
+replaces whole, the same map again, against a differing `MapCurrentEvent`; an unknown actor removed or moved; an
+unknown actor kind as "other"; a second selection, with characteristics before it; staleness. The game's capture
+replay (`D3B_CAPTURES`) checks, by counts only: the life estimated at each `LifeRegenEndEvent` within one point of its
+own, the character's actor in every map information, and each of the character's walks starting on its known cell
+in at least 99% of them. Vitest: the store per connection, an entry before its selection and one whose protocol is
+off, the estimated mark, the map's geometry (cells 0, 13, 14 and 559).
