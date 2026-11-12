@@ -26,4 +26,17 @@ describe("a part's frame", () => {
     fireEvent.click(screen.getByRole("button", { name: "Masquer le panneau" }));
     expect(useLayout.getState().visible).toEqual({ primarySideBar: true, panel: false, secondarySideBar: true });
   });
+
+  it("names its view in its header and shows it in place of the empty line", () => {
+    render(
+      <TooltipProvider>
+        <PartFrame part="primarySideBar" title="Personnages">
+          <p>la liste</p>
+        </PartFrame>
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole("heading", { name: "Personnages" })).toBeTruthy();
+    expect(screen.getByText("la liste")).toBeTruthy();
+    expect(screen.queryByText(/arrivent avec les fonctionnalités/)).toBeNull();
+  });
 });

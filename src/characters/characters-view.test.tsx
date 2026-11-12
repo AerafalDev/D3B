@@ -73,12 +73,14 @@ describe("the characters view", () => {
     expect(screen.getByRole("button").textContent).toContain("Protocol not read");
   });
 
-  it("chooses the character clicked, and marks it chosen", () => {
-    relay([connection(1)]);
+  it("chooses the character clicked, and marks it alone chosen", () => {
+    relay([connection(1), connection(2)]);
     useCharacters.setState({ views: { 1: lyra } });
     render(<CharactersView />);
-    fireEvent.click(screen.getByRole("button"));
-    expect(useCharacters.getState().selected).toBe(1);
-    expect(screen.getByRole("button").getAttribute("aria-current")).toBe("true");
+    const [first, second] = screen.getAllByRole("button");
+    fireEvent.click(second ?? document.body);
+    expect(useCharacters.getState().selected).toBe(2);
+    expect(second?.getAttribute("aria-current")).toBe("true");
+    expect(first?.hasAttribute("aria-current")).toBe(false);
   });
 });

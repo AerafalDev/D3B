@@ -6,6 +6,7 @@ describe("initials", () => {
   it("takes the name's first two letters, the second in lower case", () => {
     expect(initials("lyra")).toBe("Ly");
     expect(initials("Mi-Rabeau")).toBe("Mi");
+    expect(initials("LYRA")).toBe("Ly");
   });
 
   it("stands a question mark in for a name without letters", () => {

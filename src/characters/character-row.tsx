@@ -42,7 +42,10 @@ export function CharacterRow({ connection, view, selected, onOpen }: CharacterRo
         selected && "bg-[#2a2c30] hover:bg-[#2a2c30]",
       )}
     >
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2a2c30] text-[11px] font-medium">
+      <span
+        aria-hidden="true"
+        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#34373d] text-[11px] font-medium"
+      >
         {initials(name)}
       </span>
       <span className="flex min-w-0 flex-1 flex-col">

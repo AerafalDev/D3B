@@ -38,7 +38,7 @@ export function Shell() {
         <ResizablePanelGroup orientation="horizontal" className="min-w-0 flex-1">
           <ResizablePart part="primarySideBar" defaultSize={300} minSize={170}>
             <PartFrame part="primarySideBar" title={active === undefined ? undefined : t(active.title)}>
-              {ActiveView !== undefined && <ActiveView />}
+              {ActiveView === undefined ? undefined : <ActiveView />}
             </PartFrame>
           </ResizablePart>
           <ResizableHandle className={cn(SASH, !visible.primarySideBar && "hidden")} />
