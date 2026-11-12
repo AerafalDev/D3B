@@ -6,3 +6,6 @@ mod around;
 mod character;
 
 mod life;
+
+#[cfg(test)]
+mod replay;
