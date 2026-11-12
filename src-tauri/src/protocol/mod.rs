@@ -6,7 +6,7 @@
     not(test),
     expect(
         dead_code,
-        reason = "the decoder of a build's frames reads them, in the stack's next PRs"
+        reason = "the protocol task of each game connection reads frames with them, in the stack's next PRs"
     )
 )]
 mod message;
@@ -15,7 +15,7 @@ mod message;
     not(test),
     expect(
         dead_code,
-        reason = "the decoder of a build's frames reads them, in the stack's next PRs"
+        reason = "the protocol task of each game connection reads frames with them, in the stack's next PRs"
     )
 )]
 mod envelope;
@@ -24,7 +24,7 @@ mod envelope;
     not(test),
     expect(
         dead_code,
-        reason = "the decoder of a build's frames reads them, in the stack's next PRs"
+        reason = "the protocol task of each game connection reads frames with them, in the stack's next PRs"
     )
 )]
 mod outcome;

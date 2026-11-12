@@ -12,11 +12,8 @@ pub(crate) fn read(pins: &Pins, side: Side, body: &[u8]) -> (Outcome, Option<Mes
     let Some(content) = envelope::open(side, body) else {
         return (Outcome::Unknown, None);
     };
-    // A secret's bytes are never decoded, so that no session secret is ever held as a message.
-    let readable = (!pins.is_secret(content.name))
-        .then(|| pins.readable(content.name))
-        .flatten();
-    let Some(readable) = readable else {
+    // A secret is never pinned (`Pins::parse`): its bytes are never decoded, so no session secret is held as a message.
+    let Some(readable) = pins.readable(content.name) else {
         return (Outcome::Unknown, None);
     };
     match Message::decode(readable, content.value) {

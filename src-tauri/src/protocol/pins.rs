@@ -2,9 +2,11 @@
 //! ones, for the messages a feature reads, and the names of the build's messages that carry a session secret. They are
 //! ours, committed in `src-tauri/protocol/pins/<build>.json` and embedded in the app; a build without them is unmapped.
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
+use std::fmt;
 
 use serde::Deserialize;
+use serde::de::{Deserializer, MapAccess, Visitor};
 
 use super::message::READABLE;
 
@@ -49,7 +51,9 @@ pub(crate) enum PinsError {
 struct File {
     build: String,
     schema_sha256: String,
-    messages: BTreeMap<String, String>,
+    /// In the file's order and with every pair, a readable name given twice included: a map would keep the last.
+    #[serde(deserialize_with = "pairs")]
+    messages: Vec<(String, String)>,
     secrets: Vec<String>,
 }
 
@@ -88,10 +92,17 @@ impl Pins {
         }
         let secrets: HashSet<String> = file.secrets.into_iter().collect();
         let mut readable = HashMap::new();
+        let mut pinned = HashSet::new();
         for (ours, name) in file.messages {
             let Some(&ours) = READABLE.iter().find(|&&known| known == ours) else {
                 return Err(PinsError::NotOurs { build, readable: ours });
             };
+            if !pinned.insert(ours) {
+                return Err(PinsError::Twice {
+                    build,
+                    name: ours.to_owned(),
+                });
+            }
             if !is_name(&name) {
                 return Err(PinsError::Name { build, name });
             }
@@ -110,15 +121,34 @@ impl Pins {
         })
     }
 
-    /// The readable name pinned to `name`, a message's name in the build.
+    /// The readable name pinned to `name`, a message's name in the build; never a secret's, which [`Pins::parse`]
+    /// refuses to pin, so that a secret's bytes are never decoded.
     pub(crate) fn readable(&self, name: &str) -> Option<&'static str> {
         self.readable.get(name).copied()
     }
+}
 
-    /// Whether `name` carries a session secret, so that its frames are never decoded.
-    pub(crate) fn is_secret(&self, name: &str) -> bool {
-        self.secrets.contains(name)
+/// Reads a JSON object as its pairs, in order, every one kept.
+fn pairs<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<(String, String)>, D::Error> {
+    struct Pairs;
+
+    impl<'de> Visitor<'de> for Pairs {
+        type Value = Vec<(String, String)>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            formatter.write_str("an object of readable names to a build's names")
+        }
+
+        fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+            let mut pairs = Vec::new();
+            while let Some(pair) = map.next_entry()? {
+                pairs.push(pair);
+            }
+            Ok(pairs)
+        }
     }
+
+    deserializer.deserialize_map(Pairs)
 }
 
 /// Whether `name` is shaped as a build's message name: 1 to [`NAME_LIMIT`] lowercase letters.
@@ -153,7 +183,10 @@ mod tests {
         ours.sort_unstable();
         assert_eq!(pinned, ours);
         assert_eq!(pins.readable("jow"), Some("MapCurrentEvent"));
-        assert!(pins.is_secret("knc"), "the ticket's request is secret");
+        let mut secrets: Vec<&str> = pins.secrets.iter().map(String::as_str).collect();
+        secrets.sort_unstable();
+        // The ticket's request (verified) and the four the study found holding session secrets (inferred).
+        assert_eq!(secrets, ["knc", "koc", "kod", "kof", "kso"]);
         assert_eq!(pins.schema_sha256, DIGEST);
     }
 
@@ -169,8 +202,8 @@ mod tests {
 
         assert_eq!(pins.readable("jow"), Some("MapCurrentEvent"));
         assert_eq!(pins.readable("knc"), None);
-        assert!(pins.is_secret("knc"));
-        assert!(!pins.is_secret("jow"));
+        assert!(pins.secrets.contains("knc"));
+        assert!(!pins.secrets.contains("jow"));
     }
 
     #[test]
@@ -235,6 +268,14 @@ mod tests {
         assert!(matches!(
             parsed(r#""MapCurrentEvent": "jow", "MapInformationRequest": "jow""#, ""),
             Err(PinsError::Twice { name, .. }) if name == "jow"
+        ));
+    }
+
+    #[test]
+    fn refuses_a_readable_name_given_twice() {
+        assert!(matches!(
+            parsed(r#""MapCurrentEvent": "jow", "MapCurrentEvent": "jnj""#, ""),
+            Err(PinsError::Twice { name, .. }) if name == "MapCurrentEvent"
         ));
     }
 
