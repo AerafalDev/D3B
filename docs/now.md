@@ -1,6 +1,6 @@
 # Now
 
-_Updated 2026-11-11._
+_Updated 2026-11-12._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
   designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,
@@ -16,10 +16,11 @@ _Updated 2026-11-11._
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
   back. Then the first update: the installed version downloaded v0.12.0 at start, the bar offered to restart, and
   Restart started v0.12.0, whose bar names client 3.7.13.17 and says the relay is ready, and a client plays through it.
+  On 2026-11-12, an update installed by closing: v0.12.0 downloaded v0.13.0, closing D3B installed it and put
+  Ankama's `https:` `ConfigUrl` back in `version`; v0.13.0 then said ready, and a client played, walked, changed maps
+  and opened the inventory through it.
 - **Not measured**, by the owner:
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
-  - an update installed by closing the app (Restart is measured): with the next release, together with the relay's
-    item 10;
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
     items 1, 2 (every count as below, in 27.8 s) and 4 pass. Not measured yet: items 3 and 5.
     1. `dotnet run --project tools/extractor/src -- --help` lists `--client` and `--output`;
@@ -32,8 +33,9 @@ _Updated 2026-11-11._
     5. with `"format": 2` in `data/manifest.json`, the status bar says there is no data and its tooltip names the format.
   - **step 2, the relay** ([relay.md](relay.md)), on Windows x64 with client 3.7.13.17, from `bun run app` or the
     next release. Never paste a capture or a log line holding a ticket. Measured by the owner on 2026-11-11, Windows
-    x64, `bun run app` on `next` 4fa724f: items 1 to 9 and 12 pass. Not measured yet: items 10 (v0.12.0 installed,
-    then the release after it) and 11 (needs a Windows account whose name holds a space or an accent).
+    x64, `bun run app` on `next` 4fa724f: items 1 to 9 and 12 pass; on 2026-11-12, item 10's close (v0.12.0 to
+    v0.13.0). Not measured yet: item 10's Restart (v0.13.0 installed, then the release after it) and 11 (needs a
+    Windows account whose name holds a space or an accent).
     1. Close every client, start D3B: the bar says "Relay ready · 0 in game", its tooltip names client 3.7.13.17;
     2. start a client from the launcher, log in, choose a server and a character, enter the game: it plays as before,
        and the bar says 1 in game; walk to another map and open the inventory;
@@ -62,15 +64,14 @@ _Updated 2026-11-11._
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go; `.github/game-data.json` names it, so the next release packs it.
   v0.11.0 shipped without data, named before. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
-  and the relay, with installers for the six targets and its `latest.json` on `updater-next`.
+  and the relay, with installers for the six targets and its `latest.json` on `updater-next`; **v0.13.0**, on
+  2026-11-11, adds the game connection split into frames.
 - **Done in code, step 2's relay**: the redirect, the connection phase and its one rewrite, the game connection, the
   replay of the owner's 225 captures (171 connection phases, 161 handed over, 54 game connections, no failure), the
   status-bar indicator and the restore before an update.
-- **Next**: the owner removes Repository admin from the "Protected branches" ruleset's bypass list once CI is back;
-  the owner measures the relay's items 10 and 11 with the next release. The protocol's code, started on the owner's
-  go so that a release carries it, is a stack of seven PRs against `next`: (1) the game connection split into frames
-  both ways, with the tap (done in code); (2) `relay/capture/` and
-  `D3B_RECORD`; (3) the connection's build from path 1.3.5, carried by the handover; (4) the extractor's protocol
+- **Next**: the owner measures the relay's item 10's Restart with the next release, and item 11 when an account is at
+  hand. The protocol's code is a stack of seven PRs against `next`: (1) the game connection split into frames both
+  ways, with the tap (done in code, in v0.13.0); (2) `relay/capture/` and `D3B_RECORD`; (3) the connection's build from path 1.3.5, carried by the handover; (4) the extractor's protocol
   schema from the metadata; (5) the `protocol` domain: prost, our `.proto` files, the envelope, the pins of 3.7.13.17,
   the four outcomes; (6) the pins' audit and the capture replay; (7) the protocol task per connection, the gate, the
   status and its tooltip. Its in-game checklist comes with PR 7.
