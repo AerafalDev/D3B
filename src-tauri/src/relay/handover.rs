@@ -10,7 +10,7 @@ use super::wire::{self, Value};
 /// 3.7.13.17). A ticket is taken once, within [`Handover::LIFETIME`].
 #[derive(Debug, Default)]
 pub(crate) struct Handover {
-    waiting: HashMap<Ticket, Waiting>,
+    waiting: HashMap<Ticket, (Waiting, Instant)>,
 }
 
 /// The ticket of a game connection: it identifies the account, so its `Debug` never shows it.
@@ -25,10 +25,13 @@ pub(crate) struct GameServer {
     pub(crate) port: u16,
 }
 
-#[derive(Debug)]
-struct Waiting {
-    server: GameServer,
-    until: Instant,
+/// What waits for a game connection: where it goes, and the client's build its connection phase named (path 1.3.5),
+/// which the game connection never carries (verified, 54 game connections of 3.7.13.17,
+/// `artifacts/studies/protocol.md`, section 6).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Waiting {
+    pub(crate) server: GameServer,
+    pub(crate) build: Option<String>,
 }
 
 impl Handover {
@@ -40,28 +43,22 @@ impl Handover {
     /// frame can cost.
     const DEPTH: usize = 8;
 
-    /// Keeps `server` for the game connection presenting `ticket`, from `now`.
-    pub(crate) fn put(&mut self, ticket: Ticket, server: GameServer, now: Instant) {
-        self.waiting.retain(|_, waiting| waiting.until > now);
-        self.waiting.insert(
-            ticket,
-            Waiting {
-                server,
-                until: now + Self::LIFETIME,
-            },
-        );
+    /// Keeps `waiting` for the game connection presenting `ticket`, from `now`.
+    pub(crate) fn put(&mut self, ticket: Ticket, waiting: Waiting, now: Instant) {
+        self.waiting.retain(|_, (_, until)| *until > now);
+        self.waiting.insert(ticket, (waiting, now + Self::LIFETIME));
     }
 
-    /// The game server waiting for a ticket found in `frame`, the client's first frame of a game connection, removed
-    /// so it is taken once. The ticket is found among the frame's length-delimited values by the wire format alone,
+    /// What waits for a ticket found in `frame`, the client's first frame of a game connection, removed so it is taken
+    /// once. The ticket is found among the frame's length-delimited values by the wire format alone,
     /// so that no game mapping is needed (inferred, `main:docs/client-game.md`, BR1).
-    pub(crate) fn take_from(&mut self, frame: &[u8], now: Instant) -> Option<GameServer> {
-        self.waiting.retain(|_, waiting| waiting.until > now);
+    pub(crate) fn take_from(&mut self, frame: &[u8], now: Instant) -> Option<Waiting> {
+        self.waiting.retain(|_, (_, until)| *until > now);
         if self.waiting.is_empty() {
             return None;
         }
         let ticket = self.find(frame, Self::DEPTH)?;
-        self.waiting.remove(&ticket).map(|waiting| waiting.server)
+        self.waiting.remove(&ticket).map(|(waiting, _)| waiting)
     }
 
     /// How many game connections are waiting.
@@ -142,10 +139,13 @@ mod tests {
         message
     }
 
-    fn server() -> GameServer {
-        GameServer {
-            host: "game.example.com".into(),
-            port: 5555,
+    fn server() -> Waiting {
+        Waiting {
+            server: GameServer {
+                host: "game.example.com".into(),
+                port: 5555,
+            },
+            build: Some("3.7.13.17".into()),
         }
     }
 
@@ -263,9 +263,12 @@ mod tests {
     fn several_tickets_wait_apart() {
         let mut handover = Handover::default();
         let now = Instant::now();
-        let other = GameServer {
-            host: "other.example.com".into(),
-            port: 443,
+        let other = Waiting {
+            server: GameServer {
+                host: "other.example.com".into(),
+                port: 443,
+            },
+            build: None,
         };
         handover.put(ticket(TICKET), server(), now);
         handover.put(ticket(OTHER), other.clone(), now);

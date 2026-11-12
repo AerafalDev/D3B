@@ -12,7 +12,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 
 use super::capture::{Capture, Record, read};
 use super::connection_phase::{self, Handed};
-use super::handover::{GameServer, Handover, Ticket};
+use super::handover::{GameServer, Handover, Ticket, Waiting};
 use super::wire::{self, Field, Value};
 use super::{ADDRESS, GAME_PORT, frame, game_connection};
 
@@ -87,8 +87,9 @@ fn others(message: &[u8]) -> Vec<Field<'_>> {
 }
 
 /// Whether `got` is `sent`, the selection's answer, with the relay's address and game port in place of Ankama's,
-/// every other field kept; and the handover holds Ankama's host and first port under its ticket.
-fn rewritten_well(sent: &[u8], got: &[u8], handover: &Mutex<Handover>) -> bool {
+/// every other field kept; and the handover holds Ankama's host and first port under its ticket, with `build`, the
+/// build the capture recorded.
+fn rewritten_well(sent: &[u8], got: &[u8], handover: &Mutex<Handover>, build: &str) -> bool {
     let (sent, got) = (body(sent), body(got));
     let (Some(sent_success), Some(got_success)) = (at(sent, &[2, 4, 1]), at(got, &[2, 4, 1])) else {
         return false;
@@ -123,9 +124,12 @@ fn rewritten_well(sent: &[u8], got: &[u8], handover: &Mutex<Handover>) -> bool {
         && bytes(got_success, 3).map(ports) == Some(vec![u64::from(GAME_PORT)])
         && fields(got_success).len() == 3
         && waiting
-            == first.map(|port| GameServer {
-                host: String::from_utf8_lossy(host).into_owned(),
-                port,
+            == first.map(|port| Waiting {
+                server: GameServer {
+                    host: String::from_utf8_lossy(host).into_owned(),
+                    port,
+                },
+                build: Some(build.to_owned()),
             })
 }
 
@@ -203,7 +207,9 @@ async fn connection_phase(name: &str, capture: &Capture) -> Result<Handed, Strin
     // The captures are of builds whose answer the relay reads (3.7.12.12 and 3.7.13.17): a client that chose a server
     // must be handed over, and one that did not must see every byte as sent.
     match (chose_a_server(&from_client), handed, changed.as_slice()) {
-        (true, Handed::Over, [index]) if rewritten_well(sent_frames[*index], got_frames[*index], &handover) => {
+        (true, Handed::Over, [index])
+            if rewritten_well(sent_frames[*index], got_frames[*index], &handover, &capture.build) =>
+        {
             Ok(handed)
         }
         (false, Handed::NotAsked, []) => Ok(handed),
@@ -234,9 +240,12 @@ async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<usize, St
     let mut handover = Handover::default();
     handover.put(
         ticket,
-        GameServer {
-            host: "game.example.com".into(),
-            port: 5555,
+        Waiting {
+            server: GameServer {
+                host: "game.example.com".into(),
+                port: 5555,
+            },
+            build: Some(capture.build.clone()),
         },
         Instant::now(),
     );

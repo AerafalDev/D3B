@@ -76,7 +76,9 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   understood only when read whole, encoding back to its own bytes, with the expected shape: a ticket of 32
   characters, a DNS host name, ports from 1 to 65535. Then `host` and `ports` are replaced with `127.0.13.59` and
   `5556`. Otherwise the frame passes untouched, the game connection goes straight to Ankama, and the indicator says the
-  handover was not understood. The real host, ports and ticket are kept in memory for 60 s, taken once.
+  handover was not understood. The real host, ports and ticket are kept in memory for 60 s, taken once, with the
+  client's build its identification named (path 1.3.5, digits and dots, at most 32 bytes; none when not read), which
+  the game connection never carries ([protocol.md](protocol.md#on-the-wire)).
 - **The game connection**: the client speaks first, a frame holding the ticket (the `AuthenticationRequest`). The
   relay reads that frame, finds a waiting ticket among its length-delimited values by the wire format alone, connects
   to that ticket's real host on the first real port (the client takes the first port listed), relays the frame first,
@@ -114,12 +116,13 @@ where the client keeps its `version` file is unknown. The first testers there re
 
 ## Tests
 
-Unit tests per file with their failure cases, synthetic frames only. Time comes in as a parameter (the 2 s poll, the
-5 s and 60 s limits) and the connections are generic over Tokio's streams, so tests run in memory on paused time.
-The owner's C# captures (`.d3bcap` formats 1 and 2) are replayed through the relay by `src-tauri/src/relay/tests.rs`
-(inside the crate, since the relay is not public) when `D3B_CAPTURES` names their folder (ignored in CI): bytes out
-equal bytes in, but the one rewritten frame per connection phase. The C# version recorded each side's bytes as read,
-before its own rewrite, so a capture holds the answer as Ankama sent it. A game capture's ticket, at path 4.2.2.1 of its
-first frame, is seeded into the handover. On 2026-11-11, the owner's 225 captures: 171 connection phases, 161 handed
-over, 54 game connections relayed byte for byte, their 3,048,392 frames split as each side sent them. D3B records
-its own captures with `D3B_RECORD` ([protocol.md](protocol.md#captures)).
+Unit tests per file with their failure cases, synthetic frames only. Time comes in as a parameter (the 2 s poll, the 5 s
+and 60 s limits) and the connections are generic over Tokio's streams, so tests run in memory on paused time. The
+owner's C# captures (`.d3bcap` formats 1 and 2) are replayed through the relay by `src-tauri/src/relay/tests.rs` (inside
+the crate, since the relay is not public) when `D3B_CAPTURES` names their folder (ignored in CI): bytes out equal bytes
+in, but the one rewritten frame per connection phase. The C# version recorded each side's bytes as read, before its own
+rewrite, so a capture holds the answer as Ankama sent it. A game capture's ticket, at path 4.2.2.1 of its first frame,
+is seeded into the handover. A connection phase handed over must hand over the build its capture recorded. On
+2026-11-11, the owner's 225 captures: 171 connection phases, 161 handed over, each with its capture's build, 54 game
+connections relayed byte for byte, their 3,048,392 frames split as each side sent them. D3B records its own captures
+with `D3B_RECORD` ([protocol.md](protocol.md#captures)).

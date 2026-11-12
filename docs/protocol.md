@@ -93,13 +93,12 @@ Each is `inferred` unless said `verified`.
 `D3B_RECORD=<folder>` records each game connection to `<folder>/<build>-<Unix milliseconds>-<n>.d3bcap`, in the C#
 version's format 2, which the replay reads (`relay::capture`): each read of each side as it came, the client's first
 ones as one record up to its first frame. Nothing is written for a game server that cannot be reached. The build is the
-installed client's until the connection's own is read (PR 3). Game connections only: the connection phase holds the
-launcher's login token. Each read is handed to a blocking writer without waiting, at most 1,024 waiting; one more
-cuts the capture, and so does a write that fails: nothing more is recorded, the file ends at its last whole record
-and its name ends in `-cut`. A folder that cannot be made, or a name already taken, gives no capture, and the game
-goes on. `D3B_RECORD` is taken only as an absolute folder. No interface: a capture holds the
-account's ticket and is never shared. It is the one exception to the relay's secrets rule
-([relay.md](relay.md#secrets)).
+connection's own, from its connection phase, or `unknown` when none was read. Game connections only: the connection
+phase holds the launcher's login token. Each read is handed to a blocking writer without waiting, at most 1,024 waiting;
+one more cuts the capture, and so does a write that fails: nothing more is recorded, the file ends at its last whole
+record and its name ends in `-cut`. A folder that cannot be made, or a name already taken, gives no capture, and the
+game goes on. `D3B_RECORD` is taken only as an absolute folder. No interface: a capture holds the account's ticket and
+is never shared. It is the one exception to the relay's secrets rule ([relay.md](relay.md#secrets)).
 
 ## In the app
 

@@ -5,7 +5,7 @@
 
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
@@ -14,7 +14,7 @@ use tokio::task::JoinSet;
 use tokio::time::Instant;
 
 use super::ankama_config::is_host_name;
-use super::handover::{GameServer, Handover, Ticket};
+use super::handover::{GameServer, Handover, Ticket, Waiting};
 use super::wire::{self, Field, Value};
 use super::{ADDRESS, GAME_PORT, frame};
 
@@ -23,6 +23,9 @@ use super::{ADDRESS, GAME_PORT, frame};
 const HOLD: Duration = Duration::from_secs(5);
 /// The most of one server frame that is held; the answers are 455 and 83 bytes (inferred, 3.7.12.12).
 const HOLD_LIMIT: usize = 64 * 1024;
+
+/// The longest build read from an identification; the client's is 9 bytes (verified, 3.7.13.17).
+const BUILD_LIMIT: usize = 32;
 
 /// What a connection phase did, for the relay's status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -95,7 +98,8 @@ fn is_loopback(address: &SocketAddr) -> bool {
     address.ip().to_canonical().is_loopback()
 }
 
-/// Relays one connection phase both ways until both sides are done, or a length that is not a frame's closes it.
+/// Relays one connection phase both ways until both sides are done, or a length that is not a frame's closes it. The
+/// build the client's identification names goes to the handover with the ticket.
 pub(crate) async fn relay<C, S>(client: C, server: S, handover: &Mutex<Handover>) -> Handed
 where
     C: AsyncRead + AsyncWrite + Unpin,
@@ -104,13 +108,14 @@ where
     let (mut client_read, mut client_write) = tokio::io::split(client);
     let (mut server_read, mut server_write) = tokio::io::split(server);
     let asked = AtomicBool::new(false);
+    let build = OnceLock::new();
     let upstream = async {
-        let closing = watch_requests(&mut client_read, &mut server_write, &asked).await;
+        let closing = watch_requests(&mut client_read, &mut server_write, &asked, &build).await;
         let _ = server_write.shutdown().await;
         closing
     };
     let downstream = async {
-        let ended = pass_answers(&mut server_read, &mut client_write, &asked, handover).await;
+        let ended = pass_answers(&mut server_read, &mut client_write, &asked, &build, handover).await;
         let _ = client_write.shutdown().await;
         ended
     };
@@ -134,13 +139,14 @@ where
     handed
 }
 
-/// Copies the client's bytes to the server as they come, noting when a frame asks for a server. Frames are only read,
-/// never changed; past one too large to hold, the rest is only copied. `true` when a length is not a frame's, which
-/// closes the connection.
+/// Copies the client's bytes to the server as they come, noting the first build an identification names and when a
+/// frame asks for a server. Frames are only read, never changed; past one too large to hold, the rest is only copied.
+/// `true` when a length is not a frame's, which closes the connection.
 async fn watch_requests(
     from: &mut (impl AsyncRead + Unpin),
     to: &mut (impl AsyncWrite + Unpin),
     asked: &AtomicBool,
+    build: &OnceLock<String>,
 ) -> bool {
     let mut buffer = Vec::new();
     let mut framed = true;
@@ -161,7 +167,13 @@ async fn watch_requests(
         loop {
             match frame::header(&buffer) {
                 Ok(Some((header, body))) if buffer.len() >= header + body => {
-                    if is_selection_request(&buffer[header..header + body]) {
+                    let frame = &buffer[header..header + body];
+                    if build.get().is_none()
+                        && let Some(version) = client_version(frame)
+                    {
+                        let _ = build.set(version);
+                    }
+                    if is_selection_request(frame) {
                         asked.store(true, Ordering::Relaxed);
                     }
                     buffer.drain(..header + body);
@@ -183,13 +195,14 @@ async fn watch_requests(
 }
 
 /// Copies the server's bytes to the client a whole frame at a time, so that the selection's answer, once the client
-/// asked for a server, is rewritten when understood. A frame not whole within [`HOLD`] of its first byte, or over
-/// [`HOLD_LIMIT`], passes as it came, and the rest is only copied. Also `true` when a length is not a frame's, which
-/// closes the connection.
+/// asked for a server, is rewritten when understood, its ticket handed over with the client's `build`. A frame not
+/// whole within [`HOLD`] of its first byte, or over [`HOLD_LIMIT`], passes as it came, and the rest is only copied.
+/// Also `true` when a length is not a frame's, which closes the connection.
 async fn pass_answers(
     from: &mut (impl AsyncRead + Unpin),
     to: &mut (impl AsyncWrite + Unpin),
     asked: &AtomicBool,
+    build: &OnceLock<String>,
     handover: &Mutex<Handover>,
 ) -> (Handed, bool) {
     let mut buffer: Vec<u8> = Vec::new();
@@ -217,7 +230,10 @@ async fn pass_answers(
                 Ok(Some((header, body))) if buffer.len() >= header + body => {
                     let total = header + body;
                     let rewritten = (handed == Handed::NotAsked && asked.load(Ordering::Relaxed))
-                        .then(|| rewrite_selection(&buffer[header..total], handover, Instant::now().into_std()))
+                        .then(|| {
+                            let now = Instant::now().into_std();
+                            rewrite_selection(&buffer[header..total], handover, build.get().cloned(), now)
+                        })
                         .flatten();
                     if rewritten.is_some() {
                         // Handed over even if the client is gone: the ticket waits in the handover.
@@ -270,12 +286,30 @@ fn is_selection_request(body: &[u8]) -> bool {
     })
 }
 
+/// The client's build its identification names: `request = 1 { identification = 3 { client_version = 5 } }` (path
+/// 1.3.5, verified: equal to the build each of the owner's 171 connection phases of 3.7.12.12 and 3.7.13.17 recorded,
+/// `artifacts/studies/protocol.md`, section 6). `None` unless read whole and made of digits and dots, at most
+/// [`BUILD_LIMIT`] bytes, as the `version` file writes it: it names capture files and picks the protocol's pins.
+fn client_version(body: &[u8]) -> Option<String> {
+    let request = whole(only(body, 1)?)?;
+    let identification = whole(bytes_of(&request, 3)?)?;
+    let version = std::str::from_utf8(bytes_of(&identification, 5)?).ok()?;
+    let digits = |part: &str| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit());
+    (version.len() <= BUILD_LIMIT && version.split('.').all(digits)).then(|| version.to_owned())
+}
+
 /// The selection's answer rewritten to send the game connection to the relay, as a whole frame; its ticket and real
-/// game server are put in the handover. `None` when `body` is not that answer, read whole and of the expected shape:
-/// `response = 2 { id = 1, server_selection = 4 { success = 1 { ticket = 1, host = 2, ports = 3 } } }`, a ticket of
-/// 32 letters and digits, a host name, packed ports from 1 to 65535 (path 2.4.1, `artifacts/studies/relay.md`,
-/// addendum; the shape checks are the owner's choice for builds not measured, 2026-11-11).
-fn rewrite_selection(body: &[u8], handover: &Mutex<Handover>, now: std::time::Instant) -> Option<Vec<u8>> {
+/// game server are put in the handover with the client's `build`. `None` when `body` is not that answer, read whole and
+/// of the expected shape: `response = 2 { id = 1, server_selection = 4 { success = 1 { ticket = 1, host = 2, ports = 3
+/// } } }`, a ticket of 32 letters and digits, a host name, packed ports from 1 to 65535 (path 2.4.1,
+/// `artifacts/studies/relay.md`, addendum; the shape checks are the owner's choice for builds not measured,
+/// 2026-11-11).
+fn rewrite_selection(
+    body: &[u8],
+    handover: &Mutex<Handover>,
+    build: Option<String>,
+    now: std::time::Instant,
+) -> Option<Vec<u8>> {
     let response = whole(only(body, 2)?)?;
     let selection = bytes_of(&response, 4)?;
     let success = whole(only(selection, 1)?)?;
@@ -297,7 +331,7 @@ fn rewrite_selection(body: &[u8], handover: &Mutex<Handover>, now: std::time::In
         return None;
     };
     let host = std::str::from_utf8(host).ok().filter(|host| is_host_name(host))?;
-    let waiting = Ticket::new(ticket)?;
+    let ticket_waiting = Ticket::new(ticket)?;
     let port = *packed_ports(ports)?.first()?;
 
     let relay_host = ADDRESS.to_string();
@@ -331,10 +365,11 @@ fn rewrite_selection(body: &[u8], handover: &Mutex<Handover>, now: std::time::In
         host: host.to_owned(),
         port,
     };
-    handover
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .put(waiting, server, now);
+    handover.lock().unwrap_or_else(std::sync::PoisonError::into_inner).put(
+        ticket_waiting,
+        Waiting { server, build },
+        now,
+    );
     let mut frame = Vec::with_capacity(new_body.len() + 2);
     frame::encode(&new_body, &mut frame);
     Some(frame)
@@ -462,10 +497,15 @@ mod tests {
         message(&[bytes(1, &request)])
     }
 
-    fn identification() -> Vec<u8> {
-        let identification = message(&[bytes(1, b"device"), bytes(3, b"3.7.13.17")]);
+    /// The client's identification, its version at path 1.3.5 as on 3.7.13.17.
+    fn identification_of(version: &[u8]) -> Vec<u8> {
+        let identification = message(&[bytes(1, b"device"), bytes(3, b"fr"), bytes(5, version)]);
         let request = message(&[bytes(1, b"1"), bytes(3, &identification)]);
         message(&[bytes(1, &request)])
+    }
+
+    fn identification() -> Vec<u8> {
+        identification_of(b"3.7.13.17")
     }
 
     /// The parts of a rewritten answer: its ticket, host and ports.
@@ -506,8 +546,13 @@ mod tests {
     fn rewrites_the_answer_to_the_relays_game_port() {
         let handover = Mutex::new(Handover::default());
 
-        let rewritten = rewrite_selection(&answer(), &handover, std::time::Instant::now())
-            .unwrap_or_else(|| panic!("not rewritten"));
+        let rewritten = rewrite_selection(
+            &answer(),
+            &handover,
+            Some("3.7.13.17".into()),
+            std::time::Instant::now(),
+        )
+        .unwrap_or_else(|| panic!("not rewritten"));
 
         assert_eq!(
             read_answer(&rewritten),
@@ -520,9 +565,12 @@ mod tests {
             .take_from(&first_frame, std::time::Instant::now());
         assert_eq!(
             waiting,
-            Some(GameServer {
-                host: "game.example.com".into(),
-                port: 5555
+            Some(Waiting {
+                server: GameServer {
+                    host: "game.example.com".into(),
+                    port: 5555
+                },
+                build: Some("3.7.13.17".into())
             })
         );
     }
@@ -558,7 +606,7 @@ mod tests {
             let handover = Mutex::new(Handover::default());
 
             assert_eq!(
-                rewrite_selection(&body, &handover, std::time::Instant::now()),
+                rewrite_selection(&body, &handover, None, std::time::Instant::now()),
                 None,
                 "{body:?}"
             );
@@ -608,7 +656,7 @@ mod tests {
             let handover = Mutex::new(Handover::default());
 
             assert_eq!(
-                rewrite_selection(&body, &handover, std::time::Instant::now()),
+                rewrite_selection(&body, &handover, None, std::time::Instant::now()),
                 None,
                 "{body:?}"
             );
@@ -619,7 +667,53 @@ mod tests {
         }
         // The same answer written minimally is rewritten: only the padding stops it.
         let handover = Mutex::new(Handover::default());
-        assert!(rewrite_selection(&message(&[bytes(2, &response)]), &handover, std::time::Instant::now()).is_some());
+        assert!(
+            rewrite_selection(
+                &message(&[bytes(2, &response)]),
+                &handover,
+                None,
+                std::time::Instant::now()
+            )
+            .is_some()
+        );
+    }
+
+    #[test]
+    fn reads_the_clients_build_from_its_identification() {
+        assert_eq!(client_version(&identification()).as_deref(), Some("3.7.13.17"));
+        assert_eq!(client_version(&identification_of(b"4")).as_deref(), Some("4"));
+    }
+
+    #[test]
+    fn reads_no_build_but_digits_and_dots_at_its_path() {
+        let longest = "11".to_owned() + &".1".repeat(15);
+        let long = longest.clone() + "1";
+        let request = message(&[bytes(1, b"1"), bytes(4, &message(&[bytes(5, b"3.7.13.17")]))]);
+        let mut padded_request = message(&[bytes(1, b"1")]);
+        padded_request.extend_from_slice(&padded(3, &message(&[bytes(5, b"3.7.13.17")])));
+        let mut padded_identification = message(&[bytes(1, b"device")]);
+        padded_identification.extend_from_slice(&padded(5, b"3.7.13.17"));
+        let twice = message(&[bytes(5, b"3.7.13.17"), bytes(5, b"3.7.13.18")]);
+        for body in [
+            identification_of(b""),
+            identification_of(b"../3.7.13.17"),
+            identification_of(b"3.7.13.17 "),
+            identification_of(b"3..13.17"),
+            identification_of(b".3.7"),
+            identification_of(b"3.7."),
+            identification_of(long.as_bytes()),
+            identification_of(&[0xff]),
+            message(&[bytes(1, &request)]),
+            message(&[bytes(1, &padded_request)]),
+            message(&[bytes(1, &message(&[bytes(1, b"1"), bytes(3, &padded_identification)]))]),
+            message(&[bytes(1, &message(&[bytes(1, b"1"), bytes(3, &twice)]))]),
+            selection_request(),
+            answer(),
+            Vec::new(),
+        ] {
+            assert_eq!(client_version(&body), None, "{body:?}");
+        }
+        assert_eq!(client_version(&identification_of(longest.as_bytes())), Some(longest));
     }
 
     #[test]
@@ -684,6 +778,54 @@ mod tests {
 
         assert_eq!(read_answer(&received).1, "127.0.13.59");
         assert_eq!(relay.await.ok(), Some((Handed::Over, 1)));
+    }
+
+    /// The build handed over with the ticket, once a client chose a server in one read after identifying itself with
+    /// `identifications`.
+    async fn build_handed_over(identifications: &[Vec<u8>]) -> Option<Option<String>> {
+        let (mut client, client_side) = tokio::io::duplex(1 << 16);
+        let (mut server, server_side) = tokio::io::duplex(1 << 16);
+        let handover = Mutex::new(Handover::default());
+        let talk = async move {
+            let mut requests: Vec<u8> = identifications.iter().flat_map(|body| framed(body)).collect();
+            requests.extend_from_slice(&framed(&selection_request()));
+            send(&mut client, &requests).await;
+            read_exactly(&mut server, requests.len()).await;
+            send(&mut server, &framed(&answer())).await;
+            server.shutdown().await.unwrap_or_else(|error| panic!("{error}"));
+            let _ = client.read_to_end(&mut Vec::new()).await;
+        };
+        let (handed, ()) = tokio::join!(relay(client_side, server_side, &handover), talk);
+        assert_eq!(handed, Handed::Over);
+        let first_frame = message(&[bytes(1, TICKET)]);
+        handover
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take_from(&first_frame, std::time::Instant::now())
+            .map(|waiting| waiting.build)
+    }
+
+    #[tokio::test]
+    async fn hands_the_clients_build_over_with_its_ticket() {
+        assert_eq!(
+            build_handed_over(&[identification()]).await,
+            Some(Some("3.7.13.17".into()))
+        );
+    }
+
+    #[tokio::test]
+    async fn hands_over_no_build_when_the_client_named_none() {
+        assert_eq!(build_handed_over(&[]).await, Some(None));
+    }
+
+    #[tokio::test]
+    async fn hands_over_the_first_build_named() {
+        let identifications = [identification_of(b"3.7.13.17"), identification_of(b"3.7.14.1")];
+
+        assert_eq!(
+            build_handed_over(&identifications).await,
+            Some(Some("3.7.13.17".into()))
+        );
     }
 
     #[tokio::test]
@@ -815,7 +957,7 @@ mod tests {
         drop(client);
 
         let mut expected =
-            rewrite_selection(&answer(), &Mutex::default(), std::time::Instant::now()).unwrap_or_default();
+            rewrite_selection(&answer(), &Mutex::default(), None, std::time::Instant::now()).unwrap_or_default();
         expected.extend_from_slice(b"\x03abc");
         assert_eq!(received, expected);
         assert_eq!(relay.await.ok().map(|(handed, _)| handed), Some(Handed::Over));

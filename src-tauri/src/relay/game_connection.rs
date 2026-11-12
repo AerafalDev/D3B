@@ -14,7 +14,7 @@ use tokio::time::Instant;
 use super::capture::{Recorder, Recording};
 use super::connection_phase::connect;
 use super::frame::{self, Frames};
-use super::handover::{GameServer, Handover};
+use super::handover::{GameServer, Handover, Waiting};
 
 /// How long the client's first frame may take to come whole; it speaks first, at once (inferred, 3.7.12.12).
 const FIRST_FRAME: Duration = Duration::from_secs(5);
@@ -72,10 +72,11 @@ pub(crate) async fn serve(
                 move || report(Game::Opened)
             };
             let connect = |server: GameServer| async move { connect(&server.host, server.port).await.ok() };
-            let record = |server: &GameServer| {
+            let record = |waiting: &Waiting| {
+                let build = waiting.build.as_deref();
                 recording
                     .as_deref()
-                    .map(|recording| recording.start(server, std::time::SystemTime::now(), number))
+                    .map(|recording| recording.start(&waiting.server, build, std::time::SystemTime::now(), number))
             };
             // The protocol will read the frames here (docs/protocol.md); until then they are only split.
             let relayed = relay(client, &handover, connect, opened, record, &|_, _| {}).await;
@@ -85,16 +86,16 @@ pub(crate) async fn serve(
     }
 }
 
-/// Relays one game connection: reads the client's first frame, takes its ticket's game server from `handover`,
-/// reaches it through `connect`, says so through `opened`, relays the bytes read so far, then both ways until both
-/// sides are done, giving `tap` the body of every frame each side sent, the first one included, and the recorder
-/// `record` makes for that game server, if any, every read. `false` when it closed before reaching a game server.
+/// Relays one game connection: reads the client's first frame, takes its ticket's game server from `handover`, reaches
+/// it through `connect`, says so through `opened`, relays the bytes read so far, then both ways until both sides are
+/// done, giving `tap` the body of every frame each side sent, the first one included, and the recorder `record` makes
+/// for what waited for the ticket, if any, every read. `false` when it closed before reaching a game server.
 pub(crate) async fn relay<C, S, F>(
     mut client: C,
     handover: &Mutex<Handover>,
     connect: impl FnOnce(GameServer) -> F,
     opened: impl FnOnce(),
-    record: impl FnOnce(&GameServer) -> Option<Recorder>,
+    record: impl FnOnce(&Waiting) -> Option<Recorder>,
     tap: &(impl Fn(Side, &[u8]) + Sync),
 ) -> bool
 where
@@ -108,19 +109,18 @@ where
     let Some((header, body)) = frame::header(&read).ok().flatten() else {
         return false;
     };
-    let server = handover
+    let waiting = handover
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .take_from(&read[header..header + body], Instant::now().into_std());
-    let Some(server) = server else {
+    let Some(waiting) = waiting else {
         return false;
     };
-    let target = server.clone();
-    let Some(mut server) = connect(server).await else {
+    let Some(mut server) = connect(waiting.server.clone()).await else {
         return false;
     };
     opened();
-    let recorder = record(&target);
+    let recorder = record(&waiting);
     let note = |side, bytes: &[u8]| {
         if let Some(recorder) = &recorder {
             recorder.record(side, bytes);
@@ -230,9 +230,12 @@ mod tests {
         let ticket = Ticket::new(TICKET).unwrap_or_else(|| panic!("not a ticket"));
         handover.put(
             ticket,
-            GameServer {
-                host: "game.example.com".into(),
-                port: 5555,
+            Waiting {
+                server: GameServer {
+                    host: "game.example.com".into(),
+                    port: 5555,
+                },
+                build: Some("3.7.13.17".into()),
             },
             Instant::now().into_std(),
         );
@@ -519,10 +522,7 @@ mod tests {
     async fn records_every_read_of_both_sides_the_first_included() {
         let folder = std::env::temp_dir().join(format!("d3b-game-capture-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
-        let recording = Recording {
-            folder: folder.clone(),
-            build: "3.7.13.17".into(),
-        };
+        let recording = Recording { folder: folder.clone() };
         let handover = handover_waiting();
         let (mut client, client_side) = tokio::io::duplex(1 << 16);
         let (mut server, server_side) = tokio::io::duplex(1 << 16);
@@ -536,7 +536,10 @@ mod tests {
                 &handover,
                 |_| async move { Some(server_side) },
                 || {},
-                |game: &GameServer| Some(recording.start(game, std::time::SystemTime::UNIX_EPOCH, 1)),
+                |waiting: &Waiting| {
+                    let build = waiting.build.as_deref();
+                    Some(recording.start(&waiting.server, build, std::time::SystemTime::UNIX_EPOCH, 1))
+                },
                 &|_, _| {},
             )
             .await
