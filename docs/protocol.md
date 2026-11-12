@@ -149,10 +149,11 @@ lost, its counts; one line when it is not read. No new command.
 The owner's choices of 2026-11-12, on the mockup: a character's **Protocol** tab ([game.md](game.md#in-the-app)) lists
 its connection's frames live, newest last, and shows the one clicked.
 
-- **Kept**: each connection's protocol task keeps its last 3,000 frames and 16 MiB at most, whichever comes first,
-  from its start, freed at its close (`protocol::session::frames`): each with its number, time, side, name, readable
-  name, outcome and size. A secret's frame keeps its name and size only, never its bytes. A frame the tap dropped is
-  not there; the count of dropped frames is.
+- **Kept**: each connection's last 3,000 frames and 16 MiB at most, whichever comes first, from its start, freed at
+  its close: the protocol hands each frame of a connection with pins to the connection's observer, which the IPC keeps
+  in `ipc::inspector` (`protocol::Frames`), each with its number, time, side, name, readable name, outcome and size. A
+  secret's frame keeps its name and size only, never its bytes. A frame the tap dropped is not there; the relay's
+  status counts them.
 - **Streamed only while watched**: `inspector_watch(Some(connection))` answers with the kept frames' summaries and
   starts `InspectorFrames`, at most five batches a second (at the protocol's ticks) of at most 1,000 summaries each, with the count of those
   skipped beyond (the peaks measured on one connection: 737 frames in a second; 93 KB in another, one frame). One

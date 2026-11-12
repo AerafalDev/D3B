@@ -110,11 +110,23 @@ pub(crate) fn detail(pins: Option<&Pins>, kept: &Kept) -> Vec<String> {
         pins?;
         Message::decode(readable, content.value)?.ok()
     });
-    if let Some(message) = decoded {
-        return format!("{message:#?}").lines().map(str::to_owned).collect();
-    }
     let value = content.map_or(kept.body.as_slice(), |content| content.value);
+    if let Some(message) = decoded {
+        // Under the message decoded, the top-level fields our `.proto` does not read, which prost dropped.
+        let encoded = message.encode();
+        let declared: Vec<u32> = wire::fields(&encoded).flatten().map(|field| field.number).collect();
+        let mut lines: Vec<String> = format!("{message:#?}").lines().map(str::to_owned).collect();
+        lines.extend(fields(value, |number| !declared.contains(&number)));
+        return lines;
+    }
+    fields(value, |_| true)
+}
+
+/// The top-level fields of `value` that `wanted` keeps, by number: a varint by its value, anything length-delimited
+/// by its length only.
+fn fields(value: &[u8], wanted: impl Fn(u32) -> bool) -> Vec<String> {
     wire::fields(value)
+        .filter(|field| field.as_ref().map_or(true, |field| wanted(field.number)))
         .map(|field| match field {
             Ok(field) => match field.value {
                 Value::Varint(value) => format!("{}: varint {value}", field.number),
@@ -220,6 +232,28 @@ mod tests {
         let lines = detail(None, frames.get(number).unwrap_or_else(|| panic!("not kept")));
 
         assert_eq!(lines, ["1: varint 4", "2: 10 bytes"]);
+    }
+
+    #[test]
+    fn details_a_pinned_frame_and_the_fields_our_proto_does_not_read() {
+        let pins = Pins::embedded("3.7.13.17").and_then(Result::ok);
+        let varint = |number, value| Field {
+            number,
+            value: Value::Varint(value),
+        };
+        // `InventoryWeightEvent` declares fields 1 and 2; 3 is not ours.
+        let body = event("iqq", &message(&[varint(1, 812), varint(2, 2_350), varint(3, 7)]));
+        let mut frames = Frames::default();
+        let number = frames.push(&frame(&body, Some("iqq"), Some("InventoryWeightEvent"), false));
+
+        let lines = detail(pins.as_ref(), frames.get(number).unwrap_or_else(|| panic!("not kept")));
+
+        assert!(lines.iter().any(|line| line.contains("weight: 812")), "{lines:?}");
+        assert_eq!(lines.last().map(String::as_str), Some("3: varint 7"));
+        assert!(
+            !lines.iter().any(|line| line.starts_with("1: ")),
+            "a field we read, listed again: {lines:?}"
+        );
     }
 
     #[test]

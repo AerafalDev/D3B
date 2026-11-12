@@ -306,8 +306,8 @@ async fn a_build_without_pins_tells_its_observer_no_message() {
     assert_eq!(told(&observed), [Told::Tick(200), Told::Closed]);
 }
 
-/// A frame's name, readable name, secret mark and size.
-type Seen = (Option<String>, Option<&'static str>, bool, usize);
+/// A frame's name, readable name, secret mark, outcome and size.
+type Seen = (Option<String>, Option<&'static str>, bool, Outcome, usize);
 
 /// An observer that keeps what it saw of each frame.
 #[derive(Default)]
@@ -322,6 +322,7 @@ impl Observer for Framed {
             frame.name.map(str::to_owned),
             frame.readable,
             frame.secret,
+            frame.outcome,
             frame.body.len(),
         ));
     }
@@ -344,9 +345,31 @@ async fn tells_its_observer_each_frame_with_its_name_and_whether_it_is_a_secret(
     assert_eq!(
         seen,
         [
-            (Some("jow".into()), Some("MapCurrentEvent"), false, current.len()),
-            (Some("koh".into()), None, true, secret.len()),
-            (None, None, false, 15),
+            (
+                Some("jow".into()),
+                Some("MapCurrentEvent"),
+                false,
+                Outcome::Understood,
+                current.len()
+            ),
+            (Some("koh".into()), None, true, Outcome::Unknown, secret.len()),
+            (None, None, false, Outcome::Unknown, 15),
         ]
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_connection_without_pins_tells_its_observer_no_frame() {
+    let framed = Framed::default();
+    let kept = Arc::clone(&framed.0);
+    let tap = open_with(Some("3.7.14.1".into()), 16, |_| {}, Box::new(framed));
+
+    tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 1)]))));
+    after(0).await;
+
+    assert!(
+        kept.lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .is_empty()
     );
 }
