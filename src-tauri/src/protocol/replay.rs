@@ -4,14 +4,20 @@
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
-use super::message::READABLE;
+use super::message::{Message, READABLE};
 use super::outcome::Outcome;
 use super::pins::Pins;
 use super::{decoder, envelope};
 use crate::relay::Side;
 use crate::relay::capture::{Record, read};
 use crate::relay::frame::Frames;
+
+/// The folder `D3B_CAPTURES` names, which the replays read.
+pub(crate) fn folder() -> PathBuf {
+    PathBuf::from(std::env::var_os("D3B_CAPTURES").unwrap_or_else(|| panic!("set D3B_CAPTURES")))
+}
 
 fn captures(folder: &Path) -> Vec<PathBuf> {
     let mut found = Vec::new();
@@ -27,27 +33,58 @@ fn captures(folder: &Path) -> Vec<PathBuf> {
     found
 }
 
-/// The frames of a capture's records, each with the side that sent it, in the order they came whole. A capture cut
-/// mid-frame ends at its last whole one; A side whose bytes stop being frames fails the replay, with the capture's `name`.
-fn frames(name: &str, records: &[Record]) -> Vec<(Side, Vec<u8>)> {
+/// The frames of a capture's records, each with the side that sent it and when the read completing it came, in the
+/// order they came whole. A capture cut mid-frame ends at its last whole one; a side whose bytes stop being frames fails
+/// the replay, with the capture's `name`.
+fn frames(name: &str, records: &[Record], micros: &[u64]) -> Vec<(Side, Duration, Vec<u8>)> {
     let (mut client, mut server) = (Frames::default(), Frames::default());
     let mut frames = Vec::new();
-    for record in records {
+    for (record, &micros) in records.iter().zip(micros) {
         let (side, reader, bytes) = match record {
             Record::FromClient(bytes) => (Side::Client, &mut client, bytes),
             Record::FromServer(bytes) => (Side::Server, &mut server, bytes),
             Record::Other => continue,
         };
-        let pushed = reader.push(bytes, |body| frames.push((side, body.to_vec())));
+        let at = Duration::from_micros(micros);
+        let pushed = reader.push(bytes, |body| frames.push((side, at, body.to_vec())));
         pushed.unwrap_or_else(|error| panic!("{name}: the {side:?} side is no longer in frames: {error}"));
     }
     frames
 }
 
+/// The game connections of a build with pins in `folder`, each a list of its frames, read with its build's pins: the
+/// time each came and the message decoded, if one was.
+pub(crate) fn decoded(folder: &Path, mut connection: impl FnMut(&[(Duration, Option<Message>)])) {
+    for path in captures(folder) {
+        let name = path.strip_prefix(folder).unwrap_or(&path).display().to_string();
+        let bytes = std::fs::read(&path).unwrap_or_else(|error| panic!("{name}: {error}"));
+        let capture = read(&bytes).unwrap_or_else(|error| panic!("{name}: {error}"));
+        let Some(pins) = Pins::embedded(&capture.build) else {
+            continue;
+        };
+        let pins = pins.unwrap_or_else(|error| panic!("{error}"));
+        let frames = frames(&name, &capture.records, &capture.micros);
+        if !is_a_game_connection(&frames) {
+            continue;
+        }
+        let messages: Vec<_> = frames
+            .iter()
+            .map(|(side, at, body)| (*at, decoder::read(&pins, *side, body).1))
+            .collect();
+        connection(&messages);
+    }
+}
+
+/// A game connection opens with a request in the game's envelope; a connection phase's frames are not one.
+fn is_a_game_connection(frames: &[(Side, Duration, Vec<u8>)]) -> bool {
+    let first = frames.iter().find(|(side, ..)| *side == Side::Client);
+    first.is_some_and(|(side, _, body)| envelope::open(*side, body).is_some())
+}
+
 #[test]
 #[ignore = "needs the owner's captures: set D3B_CAPTURES to their folder"]
 fn the_owners_game_captures_read_through_the_protocol() {
-    let folder = PathBuf::from(std::env::var_os("D3B_CAPTURES").unwrap_or_else(|| panic!("set D3B_CAPTURES")));
+    let folder = folder();
     let mut outcomes: BTreeMap<String, usize> = BTreeMap::new();
     let mut by_name: BTreeMap<(&str, String), usize> = BTreeMap::new();
     let (mut games, mut unmapped) = (0, 0);
@@ -55,10 +92,8 @@ fn the_owners_game_captures_read_through_the_protocol() {
         let name = path.strip_prefix(&folder).unwrap_or(&path).display().to_string();
         let bytes = std::fs::read(&path).unwrap_or_else(|error| panic!("{name}: {error}"));
         let capture = read(&bytes).unwrap_or_else(|error| panic!("{name}: {error}"));
-        let frames = frames(&name, &capture.records);
-        // A game connection opens with a request in the game's envelope; a connection phase's frames are not one.
-        let first = frames.iter().find(|(side, _)| *side == Side::Client);
-        if first.is_none_or(|(side, body)| envelope::open(*side, body).is_none()) {
+        let frames = frames(&name, &capture.records, &capture.micros);
+        if !is_a_game_connection(&frames) {
             continue;
         }
         games += 1;
@@ -67,7 +102,7 @@ fn the_owners_game_captures_read_through_the_protocol() {
             continue;
         };
         let pins = pins.unwrap_or_else(|error| panic!("{error}"));
-        for (side, body) in &frames {
+        for (side, _, body) in &frames {
             let (outcome, _) = decoder::read(&pins, *side, body);
             *outcomes.entry(format!("{outcome:?}")).or_default() += 1;
             let readable = envelope::open(*side, body).and_then(|content| pins.readable(content.name));

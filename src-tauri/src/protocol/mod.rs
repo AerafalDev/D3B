@@ -24,7 +24,7 @@ pub(crate) use session::{ProtocolState, Session, open};
 mod audit;
 
 #[cfg(test)]
-mod replay;
+pub(crate) mod replay;
 
 /// The messages of our `.proto` files, as `prost-build` writes them.
 // `allow`, not `expect`: which lints the generated code trips changes with prost's version, and an expectation left

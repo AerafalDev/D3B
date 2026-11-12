@@ -30,6 +30,8 @@ mod reader {
     pub(crate) struct Capture {
         pub(crate) build: String,
         pub(crate) records: Vec<Record>,
+        /// When each record came, in microseconds since the capture's start.
+        pub(crate) micros: Vec<u64>,
     }
 
     #[derive(Debug, PartialEq, Eq)]
@@ -70,9 +72,9 @@ mod reader {
             texts.push(String::from_utf8_lossy(&rest[used..end]).into_owned());
             rest = &rest[end..];
         }
-        let mut records = Vec::new();
+        let (mut records, mut micros) = (Vec::new(), Vec::new());
         while let Some((&kind, tail)) = rest.split_first() {
-            let Some((_, used)) = wire::read_varint(tail) else {
+            let Some((at, used)) = wire::read_varint(tail) else {
                 break;
             };
             let mut tail = &tail[used..];
@@ -93,11 +95,13 @@ mod reader {
                 other => return Err(format!("a record of kind {other}")),
             };
             records.push(record);
+            micros.push(at);
             rest = tail;
         }
         Ok(Capture {
             build: texts.swap_remove(0),
             records,
+            micros,
         })
     }
 
@@ -139,6 +143,8 @@ mod reader {
                     Record::FromServer(vec![7; 128]),
                 ]
             );
+            // Each record's time, the first number after its kind.
+            assert_eq!(read.micros, [0, 7, 9, 128]);
         }
 
         #[test]
