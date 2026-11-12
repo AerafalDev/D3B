@@ -90,11 +90,14 @@ Each is `inferred` unless said `verified`.
 
 ## Captures
 
-`D3B_RECORD=<folder>` records each game connection to `<folder>`, in the C# version's `.d3bcap` format 2, which the
-replay already reads, its file named with the build. Game connections only: the connection phase holds the launcher's
-login token. Written off the copy path; a writer that falls behind stops that capture and logs it, its file ending at
-the last whole record. No interface: a capture holds the account's ticket and is never shared. It is the one
-exception to the relay's secrets rule ([relay.md](relay.md#secrets)).
+`D3B_RECORD=<folder>` records each game connection to `<folder>/<build>-<Unix milliseconds>-<n>.d3bcap`, in the C#
+version's format 2, which the replay reads (`relay::capture`): each read of each side, as it came. The build is the
+installed client's until the connection's own is read (PR 3). Game connections only: the connection phase holds the
+launcher's login token. Each read is handed to a blocking writer without waiting, at most 1,024 waiting; one more
+cuts the capture: nothing more is recorded, the file ends at its last whole record and its name ends in `-cut`. A
+folder or file that cannot be written gives no capture, and the game goes on. No interface: a capture holds the
+account's ticket and is never shared. It is the one exception to the relay's secrets rule
+([relay.md](relay.md#secrets)).
 
 ## In the app
 

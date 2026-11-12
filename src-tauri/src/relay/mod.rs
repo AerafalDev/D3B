@@ -5,7 +5,6 @@
 //! whose game host and ports become the relay's. Nothing is sent to the game of the relay's own.
 
 mod ankama_config;
-#[cfg(test)]
 mod capture;
 mod connection_phase;
 mod error;
@@ -29,6 +28,7 @@ use tokio::task::JoinHandle;
 use tokio::time::MissedTickBehavior;
 
 use ankama_config::ConnectionHost;
+use capture::Recording;
 use connection_phase::Handed;
 use game_connection::Game;
 use handover::Handover;
@@ -152,7 +152,8 @@ impl Relay {
     /// Listens on the relay's ports, redirects the client installed in `client` (its state in `state`), and keeps it
     /// redirected until [`Relay::stop`]. A port that cannot be taken stops it before anything is redirected; a stop
     /// while it starts leaves nothing redirected.
-    pub async fn start(&self, client: PathBuf, state: PathBuf) {
+    /// With `record`, each game connection is recorded in that folder (`D3B_RECORD`, `docs/protocol.md`).
+    pub async fn start(&self, client: PathBuf, state: PathBuf, record: Option<PathBuf>) {
         // Windows only, until a tester measures the others (the owner, 2026-11-11).
         if !cfg!(target_os = "windows") {
             self.update(|status| status.state = State::Unsupported);
@@ -160,7 +161,7 @@ impl Relay {
         }
         let redirect = Redirect::new(&client, state);
         let build = redirect.client_build();
-        self.update(|status| status.client_build = build);
+        self.update(|status| status.client_build.clone_from(&build));
         let mut listeners = Vec::new();
         for port in [5555, 443, GAME_PORT] {
             match TcpListener::bind((ADDRESS, port)).await {
@@ -197,7 +198,13 @@ impl Relay {
         if let Some(listener) = game {
             let relay = self.clone();
             let report = move |game| relay.update(|status| status.apply(Change::Game(game)));
-            tasks.push(tokio::spawn(game_connection::serve(listener, handover, report)));
+            let recording = record.map(|folder| Recording {
+                folder,
+                build: build.clone().unwrap_or_else(|| "unknown".into()),
+            });
+            tasks.push(tokio::spawn(game_connection::serve(
+                listener, handover, recording, report,
+            )));
         }
         let relay = self.clone();
         tasks.push(tokio::spawn(async move { relay.keep_redirected(redirect, host).await }));

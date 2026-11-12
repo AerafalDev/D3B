@@ -11,6 +11,7 @@ use tokio::net::TcpListener;
 use tokio::task::JoinSet;
 use tokio::time::Instant;
 
+use super::capture::{Recorder, Recording};
 use super::connection_phase::connect;
 use super::frame::{self, Frames};
 use super::handover::{GameServer, Handover};
@@ -43,12 +44,16 @@ pub(crate) enum Game {
 }
 
 /// Accepts game connections on `listener` until the task is aborted; its connections end with it.
+/// With `recording`, each game connection is also recorded there (`D3B_RECORD`, `docs/protocol.md`).
 pub(crate) async fn serve(
     listener: TcpListener,
     handover: Arc<Mutex<Handover>>,
+    recording: Option<Recording>,
     report: impl Fn(Game) + Clone + Send + Sync + 'static,
 ) {
+    let recording = recording.map(Arc::new);
     let mut connections = JoinSet::new();
+    let mut accepted: u64 = 0;
     loop {
         let Ok((client, _)) = listener.accept().await else {
             // Out of sockets, say: wait rather than spin.
@@ -58,14 +63,22 @@ pub(crate) async fn serve(
         let _ = client.set_nodelay(true);
         let handover = Arc::clone(&handover);
         let report = report.clone();
+        accepted += 1;
+        let number = accepted;
+        let recording = recording.clone();
         connections.spawn(async move {
             let opened = {
                 let report = report.clone();
                 move || report(Game::Opened)
             };
             let connect = |server: GameServer| async move { connect(&server.host, server.port).await.ok() };
+            let record = |server: &GameServer| {
+                recording
+                    .as_deref()
+                    .map(|recording| recording.start(server, std::time::SystemTime::now(), number))
+            };
             // The protocol will read the frames here (docs/protocol.md); until then they are only split.
-            let relayed = relay(client, &handover, connect, opened, &|_, _| {}).await;
+            let relayed = relay(client, &handover, connect, opened, record, &|_, _| {}).await;
             report(if relayed { Game::Closed } else { Game::Refused });
         });
         while connections.try_join_next().is_some() {}
@@ -74,13 +87,14 @@ pub(crate) async fn serve(
 
 /// Relays one game connection: reads the client's first frame, takes its ticket's game server from `handover`,
 /// reaches it through `connect`, says so through `opened`, relays the bytes read so far, then both ways until both
-/// sides are done, giving `tap` the body of every frame each side sent, the first one included. `false` when it
-/// closed before reaching a game server.
+/// sides are done, giving `tap` the body of every frame each side sent, the first one included, and the recorder
+/// `record` makes for that game server, if any, every read. `false` when it closed before reaching a game server.
 pub(crate) async fn relay<C, S, F>(
     mut client: C,
     handover: &Mutex<Handover>,
     connect: impl FnOnce(GameServer) -> F,
     opened: impl FnOnce(),
+    record: impl FnOnce(&GameServer) -> Option<Recorder>,
     tap: &(impl Fn(Side, &[u8]) + Sync),
 ) -> bool
 where
@@ -101,35 +115,57 @@ where
     let Some(server) = server else {
         return false;
     };
+    let recorder = record(&server);
     let Some(mut server) = connect(server).await else {
+        if let Some(recorder) = recorder {
+            recorder.finish().await;
+        }
         return false;
     };
     opened();
-    if server.write_all(&read).await.is_err() {
-        return true;
+    let note = |side, bytes: &[u8]| {
+        if let Some(recorder) = &recorder {
+            recorder.record(side, bytes);
+        }
+    };
+    note(Side::Client, &read);
+    if server.write_all(&read).await.is_ok() {
+        let mut from_client = Some(Frames::default());
+        tapped(&mut from_client, &read, &|body| tap(Side::Client, body));
+        let (client_read, client_write) = tokio::io::split(client);
+        let (server_read, server_write) = tokio::io::split(server);
+        // Both ways at once, the first error ending both, as `copy_bidirectional` did.
+        let _ = tokio::try_join!(
+            pump(
+                client_read,
+                server_write,
+                from_client,
+                |bytes| note(Side::Client, bytes),
+                |body| tap(Side::Client, body)
+            ),
+            pump(
+                server_read,
+                client_write,
+                Some(Frames::default()),
+                |bytes| note(Side::Server, bytes),
+                |body| tap(Side::Server, body)
+            ),
+        );
     }
-    let mut from_client = Some(Frames::default());
-    tapped(&mut from_client, &read, &|body| tap(Side::Client, body));
-    let (client_read, client_write) = tokio::io::split(client);
-    let (server_read, server_write) = tokio::io::split(server);
-    // Both ways at once, the first error ending both, as `copy_bidirectional` did.
-    let _ = tokio::try_join!(
-        pump(client_read, server_write, from_client, |body| tap(Side::Client, body)),
-        pump(server_read, client_write, Some(Frames::default()), |body| tap(
-            Side::Server,
-            body
-        )),
-    );
+    if let Some(recorder) = recorder {
+        recorder.finish().await;
+    }
     true
 }
 
-/// Copies `from` to `to` read by read, each read written before anything else, then split into frames for `tap`;
-/// once `from` ends, shuts `to` down and returns, the other way going on. A stream that is no longer in frames stops
-/// the frames, never the copy.
+/// Copies `from` to `to` read by read, each read written before anything else, then given to `record` and split into
+/// frames for `tap`; once `from` ends, shuts `to` down and returns, the other way going on. A stream that is no longer
+/// in frames stops the frames, never the copy.
 async fn pump(
     mut from: impl AsyncRead + Unpin,
     mut to: impl AsyncWrite + Unpin,
     mut frames: Option<Frames>,
+    record: impl Fn(&[u8]),
     tap: impl Fn(&[u8]),
 ) -> std::io::Result<()> {
     let mut buffer = vec![0; READ];
@@ -140,6 +176,7 @@ async fn pump(
         }
         to.write_all(&buffer[..count]).await?;
         to.flush().await?;
+        record(&buffer[..count]);
         tapped(&mut frames, &buffer[..count], &tap);
     }
 }
@@ -295,6 +332,7 @@ mod tests {
                     Some(server_side)
                 },
                 || opened += 1,
+                |_| None,
                 &tap,
             )
             .await;
@@ -466,10 +504,79 @@ mod tests {
         from.write_all(&frame).await.unwrap_or_else(|error| panic!("{error}"));
 
         // A tap that fails on the first frame: the bytes must already be on their way.
-        let pumped = tokio::spawn(pump(from_side, to_side, Some(Frames::default()), |_| panic!("tapped"))).await;
+        let pumped = tokio::spawn(pump(
+            from_side,
+            to_side,
+            Some(Frames::default()),
+            |_| {},
+            |_| panic!("tapped"),
+        ))
+        .await;
 
         assert!(pumped.is_err(), "the tap was not reached");
         assert_eq!(received(&mut to, frame.len()).await, frame);
+    }
+
+    #[tokio::test]
+    async fn records_every_read_of_both_sides_the_first_included() {
+        let folder = std::env::temp_dir().join(format!("d3b-game-capture-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&folder);
+        let recording = Recording {
+            folder: folder.clone(),
+            build: "3.7.13.17".into(),
+        };
+        let handover = handover_waiting();
+        let (mut client, client_side) = tokio::io::duplex(1 << 16);
+        let (mut server, server_side) = tokio::io::duplex(1 << 16);
+        let first = first(TICKET);
+        let from_server = frames_of(&[b"accepted"]);
+        let from_client = frames_of(&[b"list"]);
+
+        let relay = tokio::spawn(async move {
+            relay(
+                client_side,
+                &handover,
+                |_| async move { Some(server_side) },
+                || {},
+                |game: &GameServer| Some(recording.start(game, std::time::SystemTime::UNIX_EPOCH, 1)),
+                &|_, _| {},
+            )
+            .await
+        });
+        client.write_all(&first).await.unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, first.len()).await;
+        server
+            .write_all(&from_server)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        received(&mut client, from_server.len()).await;
+        client
+            .write_all(&from_client)
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, from_client.len()).await;
+        drop(client);
+        drop(server);
+        let relayed = relay.await.ok();
+
+        let path = folder.join("3.7.13.17-0-1.d3bcap");
+        let capture = super::super::capture::read(&std::fs::read(&path).unwrap_or_default());
+        let _ = std::fs::remove_dir_all(&folder);
+        assert_eq!(relayed, Some(true));
+        let records = capture.unwrap_or_else(|error| panic!("{error}")).records;
+        let side = |client: bool| -> Vec<u8> {
+            records
+                .iter()
+                .filter_map(|record| match (record, client) {
+                    (super::super::capture::Record::FromClient(bytes), true)
+                    | (super::super::capture::Record::FromServer(bytes), false) => Some(bytes.clone()),
+                    _ => None,
+                })
+                .flatten()
+                .collect()
+        };
+        assert_eq!(side(true), [first, from_client].concat());
+        assert_eq!(side(false), from_server);
     }
 
     #[tokio::test(start_paused = true)]
