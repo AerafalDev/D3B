@@ -97,7 +97,8 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   `relay_restore` command before it installs. `relay_status` and the event `RelayChanged` carry its state (starting,
   ready, failed with its reason, unsupported, stopped), the client's build, the game connections open and the answers
   not understood.
-- The status bar's indicator (`src/relay/`) shows the state and the game connections; its tooltip the reason, the
+- The status bar's indicator (`src/relay/`, removed on 2026-11-12 with the old UI until the new shell has a status
+  bar) showed the state and the game connections; its tooltip the reason, the
   client's build, what the protocol reads of each game connection ([protocol.md](protocol.md#in-the-app)), that
   quitting ends the game connections, and to start the client after D3B.
 - A restore Windows refuses (a process holding `version`) is tried five times over about 3 s.

@@ -106,5 +106,10 @@ _Updated 2026-11-12._
   its walks from its known cell, 67,713 of 71,882 stated updates on a known element); (4) in two PRs: the session's observer,
   then the view through the IPC, `CharacterChanged` (done in code); (5) the characters list and the view (done in code); (6) the map and `map_cells` (done in code); (7) the inspector's frames
   kept and streamed (done in code); (8) the inspector's tab, and the in-game checklist.
+- **The app's UI, rebuilt** (the owner, 2026-11-12): the interface on `next` (the characters list and view, the map's
+  diamonds, the relay's indicator, the update bar, the status bar) is removed; the stores, the updater, i18n and the
+  IPC stay. The app shows an empty window until the new shell lands: VS Code's layout, a little more modern, dark,
+  with JetBrains' icons, then the features one at a time, each decided with the owner. The step-2 checklist items
+  that look at the UI wait for it. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

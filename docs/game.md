@@ -85,7 +85,8 @@ tick, sends its view when it changed.
 
 ## In the app
 
-The owner's choices of 2026-11-12, on the mockup:
+The owner removed this interface on 2026-11-12 to rebuild the app's UI in VS Code's layout; each piece below
+comes back in the new shell only once the owner decides it again. What it was, the owner's choices of 2026-11-12:
 
 - **The characters** on the left, one entry per game connection, from its open to its close: before a selection it
   shows the connection's number and its protocol's state; a connection whose protocol is off (a build without pins,
