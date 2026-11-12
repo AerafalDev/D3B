@@ -93,12 +93,13 @@
   },
   "map": {
     "label": "The map as diamonds: cells, resources, actors and the character",
-    "unavailable": "This map is not in the game data.",
-    "legend": "Dark: walkable · grey: obstacle · black: blocks sight · blue: exit · Y you · P player · M monsters · N NPC · R resource",
+    "unavailable": "The map cannot be drawn: {{error}}",
+    "legend": "Dark: walkable · grey: obstacle · brown: blocks sight · blue: exit · Y you · P player · M monsters · N NPC · ? other · R resource",
     "letterMe": "Y",
     "letterPlayer": "P",
     "letterMonsters": "M",
     "letterNpc": "N",
-    "letterResource": "R"
+    "letterResource": "R",
+    "letterOther": "?"
   }
 }

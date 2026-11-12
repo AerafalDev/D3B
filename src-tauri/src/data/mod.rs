@@ -22,7 +22,7 @@ mod world;
 mod world_maps;
 
 pub use game_data::GameData;
-pub use manifest::DataError;
+pub use manifest::{DataError, Manifest};
 pub use maps::{MapData, read_map};
 pub use world::{MapPosition, World};
 

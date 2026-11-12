@@ -30,12 +30,8 @@ impl MapCells {
     fn new(map: MapData) -> Self {
         Self {
             flags: map.flags,
-            exits: map
-                .map_change
-                .into_iter()
-                .filter(|&(_, directions)| directions != 0)
-                .map(|(cell, _)| cell)
-                .collect(),
+            // `mapChange` is written only where a cell leads somewhere (`docs/data.md`).
+            exits: map.map_change.into_keys().collect(),
             elements: map
                 .elements
                 .into_iter()
@@ -53,10 +49,7 @@ impl MapCells {
 #[tauri::command]
 #[specta::specta]
 pub async fn map_cells(map_id: u32, data: tauri::State<'_, LoadedData>) -> Result<MapCells, String> {
-    let (Ok(game), Some(folder)) = (&data.0, &data.1) else {
-        return Err("no game data".into());
-    };
-    let (manifest, folder) = (game.manifest.clone(), folder.clone());
+    let (manifest, folder) = source(&data)?;
     let read = tauri::async_runtime::spawn_blocking(move || crate::data::read_map(&folder, &manifest, map_id));
     match read.await.map_err(|error| error.to_string())? {
         Ok(Some(map)) => Ok(MapCells::new(map)),
@@ -65,9 +58,26 @@ pub async fn map_cells(map_id: u32, data: tauri::State<'_, LoadedData>) -> Resul
     }
 }
 
+/// What the maps are read from: the data's manifest and folder, or why there is none.
+fn source(data: &LoadedData) -> Result<(crate::data::Manifest, std::path::PathBuf), String> {
+    match (&data.0, &data.1) {
+        (Ok(game), Some(folder)) => Ok((game.manifest.clone(), folder.clone())),
+        (Err(error), _) => Err(error.clone()),
+        (Ok(_), None) => Err("the game data's folder is unknown".into()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_no_map_without_game_data() {
+        assert_eq!(
+            source(&LoadedData(Err("no data".into()), None)).err().as_deref(),
+            Some("no data")
+        );
+    }
 
     // The extractor's own tests write this file byte for byte (tools/extractor/tests/Maps/MapTablesTests.cs).
     const MAPS: &str = include_str!("../../../tools/extractor/tests/fixtures/maps/7.json");
@@ -76,13 +86,11 @@ mod tests {
     fn draws_a_maps_cells_its_exits_and_its_elements() {
         let maps: Vec<MapData> = serde_json::from_str(MAPS).unwrap_or_else(|error| panic!("{error}"));
         let map = maps.into_iter().next().unwrap_or_else(|| panic!("no map"));
-        let changes = map.map_change.len();
 
         let cells = MapCells::new(map);
 
         assert_eq!(cells.flags.len(), 560);
         assert!(cells.exits.contains(&0));
-        assert!(cells.exits.len() <= changes);
         assert_eq!(cells.elements[0], ElementAt { id: 465_453, cell: 300 });
     }
 }

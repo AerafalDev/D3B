@@ -160,6 +160,27 @@ mod tests {
     }
 
     #[test]
+    fn reads_a_map_from_its_file_or_says_it_has_none() {
+        let folder = std::env::temp_dir().join(format!("d3b-data-test-map-{}", std::process::id()));
+        std::fs::create_dir_all(folder.join("maps")).unwrap_or_else(|error| panic!("{error}"));
+        std::fs::write(folder.join("maps/7.json"), MAPS).unwrap_or_else(|error| panic!("{error}"));
+        let manifest = Manifest::parse(
+            r#"{"format":1,"build":"0","extractor":"0","tables":[{"name":"maps/7","path":"maps/7.json","sha256":"00"}]}"#,
+        )
+        .unwrap_or_else(|error| panic!("{error}"));
+
+        let found = read_map(&folder, &manifest, 191_106_007);
+        let absent = read_map(&folder, &manifest, 107);
+        // Its file is not in the manifest.
+        let no_file = read_map(&folder, &manifest, 191_106_008);
+        std::fs::remove_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+
+        assert_eq!(found.ok().flatten().map(|map| map.id), Some(191_106_007));
+        assert!(matches!(absent, Ok(None)));
+        assert!(no_file.is_err());
+    }
+
+    #[test]
     fn names_the_file_of_a_map_by_the_last_two_digits_of_its_id() {
         assert_eq!(shard_of(191_106_048), "maps/48");
         assert_eq!(shard_of(7), "maps/7");

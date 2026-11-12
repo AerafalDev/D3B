@@ -19,16 +19,17 @@ export function cellCentre(cell: number): { x: number; y: number } {
 }
 
 const COLOUR = {
-  walkable: "#2b2f3a",
-  obstacle: "#4a4f5c",
-  blind: "#121318",
-  exit: "#1d3b5c",
+  walkable: "#3a4252",
+  obstacle: "#6b7280",
+  blind: "#7c5c3c",
+  exit: "#2f5f94",
   me: "#7cb4ff",
   player: "#c4c4cc",
   monsters: "#e08a3c",
   npc: "#9b7be0",
   resource: "#3f8f5a",
-  harvested: "#2b4a35",
+  harvested: "#8fb59a",
+  other: "#9ca3af",
 } as const;
 
 function diamond(context: CanvasRenderingContext2D, cell: number, fill: string) {
@@ -95,7 +96,9 @@ function draw(
         ? [COLOUR.player, letters["player"]]
         : actor.kind.kind === "monsterGroup"
           ? [COLOUR.monsters, letters["monsters"]]
-          : [COLOUR.npc, letters["npc"]];
+          : actor.kind.kind === "npc"
+            ? [COLOUR.npc, letters["npc"]]
+            : [COLOUR.other, letters["other"]];
     marker(context, actor.cell, fill, letter ?? "?");
   }
   if (view.cell != null) {
@@ -132,6 +135,10 @@ export function MapGrid({ view }: { view: CharacterView }) {
   const shown = cells !== null && cells.mapId === mapId && "cells" in cells ? cells.cells : null;
   useEffect(() => {
     const context = canvas.current?.getContext("2d");
+    if (context && !shown) {
+      // Another map's cells are being read: the last map is not left drawn under the new one's actors.
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    }
     if (context && shown) {
       draw(context, shown, view, {
         me: t("map.letterMe"),
@@ -139,6 +146,7 @@ export function MapGrid({ view }: { view: CharacterView }) {
         monsters: t("map.letterMonsters"),
         npc: t("map.letterNpc"),
         resource: t("map.letterResource"),
+        other: t("map.letterOther"),
       });
     }
   }, [shown, view, t]);
@@ -149,7 +157,7 @@ export function MapGrid({ view }: { view: CharacterView }) {
   return (
     <section className="flex flex-col gap-2 rounded-lg border p-3 text-sm">
       {cells !== null && cells.mapId === mapId && "error" in cells ? (
-        <p className="text-muted-foreground">{t("map.unavailable")}</p>
+        <p className="text-muted-foreground">{t("map.unavailable", { error: cells.error })}</p>
       ) : (
         <canvas
           ref={canvas}

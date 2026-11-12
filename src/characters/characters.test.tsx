@@ -169,7 +169,7 @@ describe("the characters", () => {
     expect(screen.getByText("Monster 489 + 1")).toBeDefined();
     expect(screen.getByText("lvl 34–52")).toBeDefined();
     expect(screen.getByText("harvested")).toBeDefined();
-    expect(await screen.findByText("This map is not in the game data.")).toBeDefined();
+    expect(await screen.findByText(/The map cannot be drawn: .*no map 88213271/)).toBeDefined();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Protocol" }));
     expect(await screen.findByText("The protocol inspector comes with a later version.")).toBeDefined();
   });
