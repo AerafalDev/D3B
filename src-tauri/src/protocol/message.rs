@@ -13,6 +13,9 @@ macro_rules! messages {
             $($name(game::$name),)*
         }
 
+        /// The readable names of [`Message`]'s variants: those a build's pins may pin.
+        pub(crate) const READABLE: &[&str] = &[$(stringify!($name)),*];
+
         impl Message {
             /// The message of `readable` decoded from `bytes`; `None` when no message bears that name, an error when
             /// the bytes are not that message.

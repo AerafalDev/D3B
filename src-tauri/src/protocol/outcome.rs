@@ -12,13 +12,6 @@ pub(crate) enum Outcome {
     /// Decoded, the same but for fields our `.proto` lacks, present in the frame only.
     Read,
     /// A name without a pin, a secret message (counted here, never decoded), or an envelope not as measured.
-    #[cfg_attr(
-        test,
-        expect(
-            dead_code,
-            reason = "the decoder of a build's frames gives it, in the stack's next PR"
-        )
-    )]
     Unknown,
     /// A pinned name whose bytes do not decode, or a declared field that re-encodes otherwise.
     NotTrusted,
