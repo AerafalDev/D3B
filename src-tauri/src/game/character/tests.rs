@@ -113,7 +113,21 @@ fn a_second_selection_starts_over_but_for_what_came_since_the_first() {
 
     character.apply(&stats(900, 0, 2), now, 0);
     character.apply(&chosen(43, "Mirabeau", 12), now, 0);
-    assert_eq!(life(&character.view(now, 0)), Some((900, 900, false)));
+    let view = character.view(now, 0);
+    assert_eq!(life(&view), Some((900, 900, false)));
+    assert_eq!(view.characteristics.map(|read| read.max_life), Some(900));
+}
+
+#[test]
+fn what_a_selection_keeps_keeps_its_freshness() {
+    let now = Instant::now();
+    let mut character = Character::default();
+    character.apply(&stats(480, 0, 100), now, 2);
+    character.apply(&chosen(ME, "Lyra", 87), now, 2);
+
+    let stale = character.view(now, 2).stale;
+    assert!(!stale.life && !stale.kamas);
+    assert!(stale.map && stale.pods);
 }
 
 #[test]
@@ -287,9 +301,100 @@ fn a_part_is_stale_while_frames_were_dropped_since_its_refresh() {
     character.apply(&Message::MapCurrentEvent(game::MapCurrentEvent { map_id: 1 }), now, 0);
 
     assert_eq!(character.view(now, 0).stale, Stale::default());
+    assert_eq!(
+        character.view(now, 3).stale,
+        Stale {
+            map: true,
+            life: true,
+            pods: true,
+            kamas: true
+        }
+    );
+}
 
-    character.apply(&Message::MapCurrentEvent(game::MapCurrentEvent { map_id: 2 }), now, 3);
-    let stale = character.view(now, 3).stale;
-    assert!(!stale.map);
-    assert!(stale.life && stale.kamas && stale.pods);
+#[test]
+fn each_part_is_fresh_again_once_its_own_message_comes() {
+    let now = Instant::now();
+    let fresh = |message: Message| {
+        let mut character = Character::default();
+        character.apply(&message, now, 3);
+        character.view(now, 3).stale
+    };
+    let only = |map: bool, life: bool, pods: bool, kamas: bool| Stale {
+        map: !map,
+        life: !life,
+        pods: !pods,
+        kamas: !kamas,
+    };
+
+    assert_eq!(fresh(stats(480, 0, 1)), only(false, true, false, true));
+    assert_eq!(
+        fresh(Message::LifeRegenStartEvent(game::LifeRegenStartEvent { interval: 5 })),
+        only(false, true, false, false)
+    );
+    assert_eq!(
+        fresh(Message::LifeRegenEndEvent(game::LifeRegenEndEvent {
+            max_life: 480,
+            life: 470,
+            regenerated: None,
+        })),
+        only(false, true, false, false)
+    );
+    assert_eq!(
+        fresh(Message::InventoryWeightEvent(game::InventoryWeightEvent {
+            weight: 1,
+            max_weight: 2
+        })),
+        only(false, false, true, false)
+    );
+    assert_eq!(
+        fresh(Message::KamasUpdateEvent(game::KamasUpdateEvent { kamas: 1 })),
+        only(false, false, false, true)
+    );
+    assert_eq!(fresh(map_information(1, &[])), only(true, false, false, false));
+    assert_eq!(
+        fresh(Message::MapCurrentEvent(game::MapCurrentEvent { map_id: 1 })),
+        only(true, false, false, false)
+    );
+}
+
+#[test]
+fn walks_in_a_fight_are_not_followed() {
+    let now = Instant::now();
+    let walk = Message::MapMovementEvent(game::MapMovementEvent {
+        cells: vec![100, 114],
+        actor_id: ME,
+    });
+
+    let character = fed(&[chosen(ME, "Lyra", 87), context(true), walk], now);
+
+    assert_eq!(character.view(now, 0).cell, None);
+}
+
+#[test]
+fn a_cell_off_the_map_is_not_taken() {
+    let now = Instant::now();
+    let walk = |cells| Message::MapMovementEvent(game::MapMovementEvent { cells, actor_id: ME });
+    let mut character = fed(&[chosen(ME, "Lyra", 87), map_information(1, &[(ME, 600)])], now);
+    assert_eq!(character.view(now, 0).cell, None);
+
+    character.apply(&walk(vec![300, 559]), now, 0);
+    assert_eq!(character.view(now, 0).cell, Some(559));
+    for off in [560, -1] {
+        character.apply(&walk(vec![559, off]), now, 0);
+        assert_eq!(character.view(now, 0).cell, Some(559), "{off}");
+    }
+}
+
+#[test]
+fn a_context_is_roleplay_a_fight_or_unknown() {
+    let now = Instant::now();
+    let unknown = Message::ContextCreationEvent(game::ContextCreationEvent { context: 7 });
+
+    assert_eq!(
+        fed(&[context(false)], now).view(now, 0).context,
+        Some(Context::Roleplay)
+    );
+    assert_eq!(fed(&[context(true)], now).view(now, 0).context, Some(Context::Fight));
+    assert_eq!(fed(&[context(true), unknown], now).view(now, 0).context, None);
 }

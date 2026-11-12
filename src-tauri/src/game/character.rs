@@ -18,7 +18,7 @@ pub(crate) struct Who {
     pub breed: i32,
 }
 
-/// Roleplay, or a fight (verified: a fight's own map comes with it, 634 of 634).
+/// Roleplay, or a fight: `ContextCreationEvent`'s 0 or 1 (verified, 683 and 634 frames).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Context {
     Roleplay,
@@ -90,6 +90,7 @@ impl Character {
     pub(crate) fn apply(&mut self, message: &Message, at: Instant, dropped: u64) {
         match message {
             Message::CharacterSelectionEvent(selection) => self.select(selection),
+            // Its field 1 is the new level (verified, 36 of 36 level-ups).
             Message::CharacterLevelUpEvent(level) => {
                 if let Some(who) = &mut self.who {
                     who.level = level.level;
@@ -120,19 +121,21 @@ impl Character {
                 });
                 self.refreshed.pods = dropped;
             }
+            // The new total (verified: the next characteristics' kamas equal it, 480 of 480).
             Message::KamasUpdateEvent(kamas) => {
                 self.kamas = Some(kamas.kamas);
                 self.refreshed.kamas = dropped;
             }
-            Message::ContextCreationEvent(created) => {
-                if created.context == GameContext::Fight as i32 {
+            Message::ContextCreationEvent(created) => match GameContext::try_from(created.context) {
+                Ok(GameContext::Fight) => {
                     self.context = Some(Context::Fight);
                     self.cell = None;
                     self.life.stop(at);
-                } else {
-                    self.context = Some(Context::Roleplay);
                 }
-            }
+                Ok(GameContext::Roleplay) => self.context = Some(Context::Roleplay),
+                // A context this build's enum lacks: neither is claimed.
+                Err(_) => self.context = None,
+            },
             Message::MapCurrentEvent(current) => {
                 if self.map_id != Some(current.map_id) {
                     self.cell = None;
@@ -143,18 +146,23 @@ impl Character {
             Message::MapInformationEvent(information) => {
                 // Its own map id wins: a `MapCurrentEvent` before it may have been dropped.
                 self.map_id = Some(information.map_id);
+                // Its actor bears the selection's id (verified, 66,171 of 66,171).
                 self.cell = self.who.as_ref().and_then(|who| {
                     information
                         .actors
                         .iter()
                         .find(|actor| actor.id == who.id)
                         .and_then(|actor| actor.disposition.as_ref()?.cell_id)
+                        .and_then(on_the_map)
                 });
                 self.refreshed.map = dropped;
             }
+            // A walk lists every cell it crosses, from where the walker stood (verified, 93,822 of the character's 94,602
+            // walks): it stops on the last. In a fight, pushes and teleports are not read yet, so walks are not either.
             Message::MapMovementEvent(movement) => {
-                if self.who.as_ref().is_some_and(|who| who.id == movement.actor_id)
-                    && let Some(&last) = movement.cells.last()
+                if self.context != Some(Context::Fight)
+                    && self.who.as_ref().is_some_and(|who| who.id == movement.actor_id)
+                    && let Some(last) = movement.cells.last().copied().and_then(on_the_map)
                 {
                     self.cell = Some(last);
                 }
@@ -170,12 +178,16 @@ impl Character {
         };
         let character = success.character.clone().unwrap_or_default();
         let basics = character.basics.unwrap_or_default();
-        let kept = self
-            .characteristics_since_selection
-            .then_some((self.characteristics, self.life, self.kamas));
+        let kept = self.characteristics_since_selection.then_some((
+            self.characteristics,
+            self.life,
+            self.kamas,
+            self.refreshed,
+        ));
         *self = Self::default();
-        if let Some((characteristics, life, kamas)) = kept {
+        if let Some((characteristics, life, kamas, refreshed)) = kept {
             (self.characteristics, self.life, self.kamas) = (characteristics, life, kamas);
+            (self.refreshed.life, self.refreshed.kamas) = (refreshed.life, refreshed.kamas);
         }
         self.who = Some(Who {
             id: character.id,
@@ -210,6 +222,11 @@ impl Character {
             },
         }
     }
+}
+
+/// `cell` when it is one of a map's 560 cells (3.7.13.17, `docs/data.md`): a frame may hold any number.
+fn on_the_map(cell: i32) -> Option<i32> {
+    (0..560).contains(&cell).then_some(cell)
 }
 
 #[cfg(test)]
