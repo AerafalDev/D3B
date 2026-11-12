@@ -15,6 +15,7 @@ use super::capture::{Recorder, Recording};
 use super::connection_phase::connect;
 use super::frame::{self, Frames};
 use super::handover::{GameServer, Handover, Waiting};
+use crate::protocol::{self, Session};
 
 /// How long the client's first frame may take to come whole; it speaks first, at once (inferred, 3.7.12.12).
 const FIRST_FRAME: Duration = Duration::from_secs(5);
@@ -32,10 +33,12 @@ pub(crate) enum Side {
 }
 
 /// What happened to a game connection, for the relay's status.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Game {
     /// Relayed to its game server: one more game connection.
     Opened,
+    /// What the protocol read of the `number`th game connection, at most once a second; `None` once it ended.
+    Protocol(u64, Option<Session>),
     /// A relayed game connection ended.
     Closed,
     /// Closed before reaching a game server: no whole first frame in time, no waiting ticket in it, or the game
@@ -69,7 +72,13 @@ pub(crate) async fn serve(
         connections.spawn(async move {
             let opened = {
                 let report = report.clone();
-                move || report(Game::Opened)
+                move |waiting: &Waiting| {
+                    report(Game::Opened);
+                    let protocol = protocol::open(waiting.build.clone(), move |session| {
+                        report(Game::Protocol(number, session));
+                    });
+                    move |side, body: Option<&[u8]>| protocol.give(side, body)
+                }
             };
             let connect = |server: GameServer| async move { connect(&server.host, server.port).await.ok() };
             let record = |waiting: &Waiting| {
@@ -78,30 +87,30 @@ pub(crate) async fn serve(
                     .as_deref()
                     .map(|recording| recording.start(&waiting.server, build, std::time::SystemTime::now(), number))
             };
-            // The protocol will read the frames here (docs/protocol.md); until then they are only split.
-            let relayed = relay(client, &handover, connect, opened, record, &|_, _| {}).await;
+            let relayed = relay(client, &handover, connect, opened, record).await;
             report(if relayed { Game::Closed } else { Game::Refused });
         });
         while connections.try_join_next().is_some() {}
     }
 }
 
-/// Relays one game connection: reads the client's first frame, takes its ticket's game server from `handover`, reaches
-/// it through `connect`, says so through `opened`, relays the bytes read so far, then both ways until both sides are
-/// done, giving `tap` the body of every frame each side sent, the first one included, and the recorder `record` makes
-/// for what waited for the ticket, if any, every read. `false` when it closed before reaching a game server.
-pub(crate) async fn relay<C, S, F>(
+/// Relays one game connection: reads the client's first frame, takes what waits for its ticket from `handover`,
+/// reaches its game server through `connect`, says so through `opened`, which gives the tap, relays the bytes read so
+/// far, then both ways until both sides are done, giving the tap the body of every frame each side sent, the first one
+/// included, or `None` once a side is no longer in frames, and the recorder `record` makes for what waited for the
+/// ticket, if any, every read. `false` when it closed before reaching a game server.
+pub(crate) async fn relay<C, S, F, T>(
     mut client: C,
     handover: &Mutex<Handover>,
     connect: impl FnOnce(GameServer) -> F,
-    opened: impl FnOnce(),
+    opened: impl FnOnce(&Waiting) -> T,
     record: impl FnOnce(&Waiting) -> Option<Recorder>,
-    tap: &(impl Fn(Side, &[u8]) + Sync),
 ) -> bool
 where
     C: AsyncRead + AsyncWrite + Unpin,
     S: AsyncRead + AsyncWrite + Unpin,
     F: Future<Output = Option<S>>,
+    T: Fn(Side, Option<&[u8]>) + Sync,
 {
     let Some(read) = first_frame(&mut client).await else {
         return false;
@@ -119,7 +128,7 @@ where
     let Some(mut server) = connect(waiting.server.clone()).await else {
         return false;
     };
-    opened();
+    let tap = opened(&waiting);
     let recorder = record(&waiting);
     let note = |side, bytes: &[u8]| {
         if let Some(recorder) = &recorder {
@@ -158,13 +167,13 @@ where
 
 /// Copies `from` to `to` read by read, each read written before anything else, then given to `record` and split into
 /// frames for `tap`; once `from` ends, shuts `to` down and returns, the other way going on. A stream that is no longer
-/// in frames stops the frames, never the copy.
+/// in frames stops the frames, never the copy, and `tap` hears `None` once.
 async fn pump(
     mut from: impl AsyncRead + Unpin,
     mut to: impl AsyncWrite + Unpin,
     mut frames: Option<Frames>,
     record: impl Fn(&[u8]),
-    tap: impl Fn(&[u8]),
+    tap: impl Fn(Option<&[u8]>),
 ) -> std::io::Result<()> {
     let mut buffer = vec![0; READ];
     loop {
@@ -179,12 +188,14 @@ async fn pump(
     }
 }
 
-/// Gives `tap` the frames `bytes` completes; drops the reader at its first error, so that it gives nothing more.
-fn tapped(frames: &mut Option<Frames>, bytes: &[u8], tap: &impl Fn(&[u8])) {
+/// Gives `tap` the frames `bytes` completes; at the reader's first error, `None`, and drops the reader, so that it gives
+/// nothing more.
+fn tapped(frames: &mut Option<Frames>, bytes: &[u8], tap: &impl Fn(Option<&[u8]>)) {
     if let Some(reader) = frames
-        && reader.push(bytes, tap).is_err()
+        && reader.push(bytes, |body| tap(Some(body))).is_err()
     {
         *frames = None;
+        tap(None);
     }
 }
 
@@ -305,8 +316,8 @@ mod tests {
         game_reaching(handover, true, Arc::default())
     }
 
-    /// The frames the relay tapped, in order.
-    type Tapped = Arc<Mutex<Vec<(Side, Vec<u8>)>>>;
+    /// The frames the relay tapped, in order, `None` where a side stopped being in frames.
+    type Tapped = Arc<Mutex<Vec<(Side, Option<Vec<u8>>)>>>;
 
     /// As [`game`], with a game server that can be reached or not and the frames tapped kept in `tapped`; the relay's
     /// result comes with how many times it said the connection opened.
@@ -314,11 +325,11 @@ mod tests {
         let (client, client_side) = tokio::io::duplex(1 << 16);
         let (connected, server) = tokio::sync::oneshot::channel();
         let relay = tokio::spawn(async move {
-            let tap = move |side, body: &[u8]| {
+            let tap = move |side, body: Option<&[u8]>| {
                 tapped
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .push((side, body.to_vec()));
+                    .push((side, body.map(<[u8]>::to_vec)));
             };
             let mut opened = 0;
             let relayed = relay(
@@ -332,9 +343,11 @@ mod tests {
                     let _ = connected.send((game, server));
                     Some(server_side)
                 },
-                || opened += 1,
+                |_: &Waiting| {
+                    opened += 1;
+                    tap
+                },
                 |_| None,
-                &tap,
             )
             .await;
             (relayed, opened)
@@ -411,8 +424,17 @@ mod tests {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .iter()
             .filter(|(from, _)| *from == side)
-            .map(|(_, body)| body.clone())
+            .filter_map(|(_, body)| body.clone())
             .collect()
+    }
+
+    /// How many times the tap heard that `side` stopped being in frames.
+    fn lost_from(tapped: &Tapped, side: Side) -> usize {
+        let tapped = tapped.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        tapped
+            .iter()
+            .filter(|(from, body)| *from == side && body.is_none())
+            .count()
     }
 
     #[tokio::test(start_paused = true)]
@@ -495,6 +517,10 @@ mod tests {
         assert_eq!(still, frames_of(&[b"still"]));
         assert_eq!(tapped_from(&tapped, Side::Server), vec![b"accepted".to_vec()]);
         assert_eq!(tapped_from(&tapped, Side::Client).len(), 2);
+        assert_eq!(
+            (lost_from(&tapped, Side::Server), lost_from(&tapped, Side::Client)),
+            (1, 0)
+        );
     }
 
     #[tokio::test]
@@ -510,7 +536,7 @@ mod tests {
             to_side,
             Some(Frames::default()),
             |_| {},
-            |_| panic!("tapped"),
+            |_: Option<&[u8]>| panic!("tapped"),
         ))
         .await;
 
@@ -535,12 +561,11 @@ mod tests {
                 client_side,
                 &handover,
                 |_| async move { Some(server_side) },
-                || {},
+                |_: &Waiting| |_, _: Option<&[u8]>| {},
                 |waiting: &Waiting| {
                     let build = waiting.build.as_deref();
                     Some(recording.start(&waiting.server, build, std::time::SystemTime::UNIX_EPOCH, 1))
                 },
-                &|_, _| {},
             )
             .await
         });

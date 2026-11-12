@@ -28,6 +28,7 @@ use tokio::net::TcpListener;
 use tokio::task::JoinHandle;
 use tokio::time::MissedTickBehavior;
 
+use crate::protocol::Session;
 use ankama_config::ConnectionHost;
 use capture::Recording;
 use connection_phase::Handed;
@@ -54,6 +55,16 @@ pub struct Status {
     /// The connection phases whose selection answer was not understood since start, so whose game went straight to
     /// Ankama.
     pub not_understood: u32,
+    /// What the protocol read of each game connection, in the order they opened (`docs/protocol.md`, "In the app").
+    pub connections: Vec<GameConnection>,
+}
+
+/// A game connection as the protocol reads it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GameConnection {
+    /// Its rank among the game connections the relay accepted since start.
+    pub number: u64,
+    pub session: Session,
 }
 
 /// Where the relay stands.
@@ -70,7 +81,7 @@ pub enum State {
 }
 
 /// What changes the status while the relay runs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Change {
     Phase(Handed),
     Game(Game),
@@ -83,6 +94,7 @@ impl Status {
             client_build: None,
             game_connections: 0,
             not_understood: 0,
+            connections: Vec::new(),
         }
     }
 
@@ -92,6 +104,19 @@ impl Status {
             Change::Phase(Handed::Over | Handed::NotAsked) | Change::Game(Game::Refused) => {}
             Change::Game(Game::Opened) => self.game_connections += 1,
             Change::Game(Game::Closed) => self.game_connections = self.game_connections.saturating_sub(1),
+            Change::Game(Game::Protocol(number, None)) => {
+                self.connections.retain(|connection| connection.number != number);
+            }
+            Change::Game(Game::Protocol(number, Some(session))) => {
+                match self
+                    .connections
+                    .iter_mut()
+                    .find(|connection| connection.number == number)
+                {
+                    Some(connection) => connection.session = session,
+                    None => self.connections.push(GameConnection { number, session }),
+                }
+            }
         }
     }
 }
@@ -344,6 +369,30 @@ mod status_tests {
         status.apply(Change::Game(Game::Closed));
 
         assert_eq!(status.game_connections, 0);
+    }
+
+    #[test]
+    fn keeps_each_connections_protocol_until_it_ends() {
+        let mut status = Status::new();
+        let session = |map_id| Session {
+            build: Some("3.7.13.17".into()),
+            state: crate::protocol::ProtocolState::On,
+            counts: crate::protocol::Counts::default(),
+            map_id,
+        };
+
+        status.apply(Change::Game(Game::Protocol(1, Some(session(None)))));
+        status.apply(Change::Game(Game::Protocol(2, Some(session(None)))));
+        status.apply(Change::Game(Game::Protocol(1, Some(session(Some(7))))));
+        status.apply(Change::Game(Game::Protocol(2, None)));
+
+        assert_eq!(
+            status.connections,
+            [GameConnection {
+                number: 1,
+                session: session(Some(7))
+            }]
+        );
     }
 
     #[test]

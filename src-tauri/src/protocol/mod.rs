@@ -2,50 +2,21 @@
 //! files in `src-tauri/protocol/` are compiled by `build.rs` into [`game`]; `message::Message` holds the messages the
 //! live view reads, by their readable names, which a build's pins pair with its obfuscated ones.
 
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the protocol task of each game connection reads frames with them, in the stack's next PRs"
-    )
-)]
 mod message;
 
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the protocol task of each game connection reads frames with them, in the stack's next PRs"
-    )
-)]
 mod envelope;
 
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the protocol task of each game connection reads frames with them, in the stack's next PRs"
-    )
-)]
 mod outcome;
 
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the protocol task of each game connection reads them, in the stack's next PRs"
-    )
-)]
 mod pins;
 
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the protocol task of each game connection reads frames with it, in the stack's next PRs"
-    )
-)]
 mod decoder;
+
+mod session;
+
+#[cfg(test)]
+pub(crate) use session::{Counts, ProtocolState};
+pub(crate) use session::{Session, open};
 
 #[cfg(test)]
 mod audit;

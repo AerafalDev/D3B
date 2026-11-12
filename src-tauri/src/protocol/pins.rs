@@ -122,16 +122,19 @@ impl Pins {
     }
 
     /// The builds the app embeds pins for.
+    #[cfg(test)]
     pub(crate) fn builds() -> impl Iterator<Item = &'static str> {
         EMBEDDED.iter().map(|(build, _)| *build)
     }
 
     /// The SHA-256 of the build's schema the pins were made against, as the extractor gives it.
+    #[cfg(test)]
     pub(crate) fn schema_sha256(&self) -> &str {
         &self.schema_sha256
     }
 
     /// Each pinned pair: our readable name, and the build's name.
+    #[cfg(test)]
     pub(crate) fn pinned(&self) -> impl Iterator<Item = (&'static str, &str)> {
         self.readable.iter().map(|(name, readable)| (*readable, name.as_str()))
     }

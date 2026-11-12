@@ -253,7 +253,9 @@ async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<usize, St
     let (client, client_side) = tokio::io::duplex(1 << 20);
     let (server, server_side) = tokio::io::duplex(1 << 20);
     let tapped = Mutex::new(Tapped::default());
-    let tap = |side, body: &[u8]| {
+    let tap = |side, body: Option<&[u8]>| {
+        // Every byte is in frames (the replay fails below otherwise): `None` never comes.
+        let body = body.unwrap_or_default();
         let mut tapped = tapped.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         tapped.frames += 1;
         let into = match side {
@@ -266,9 +268,8 @@ async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<usize, St
         client_side,
         &handover,
         |_| async move { Some(server_side) },
-        || {},
+        |_: &Waiting| tap,
         |_| None,
-        &tap,
     );
     let (relayed, (at_client, at_server)) = tokio::join!(relay, play(&capture.records, client, server));
     let from_server = joined(&capture.records, false);
