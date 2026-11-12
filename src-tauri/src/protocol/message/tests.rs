@@ -199,14 +199,28 @@ fn reads_what_each_actor_is() {
 }
 
 #[test]
-fn reads_a_level_gained_and_the_kamas() {
+fn reads_a_level_gained() {
     assert_eq!(
         decoded("CharacterLevelUpEvent", &message(&[varint(1, 88), varint(2, 1)])),
         Message::CharacterLevelUpEvent(game::CharacterLevelUpEvent { level: 88 })
     );
+    // Field 2, which our `.proto` does not declare, is dropped.
+    assert_eq!(
+        decoded("CharacterLevelUpEvent", &message(&[varint(2, 88)])),
+        Message::CharacterLevelUpEvent(game::CharacterLevelUpEvent { level: 0 })
+    );
+}
+
+#[test]
+fn reads_the_kamas() {
     assert_eq!(
         decoded("KamasUpdateEvent", &message(&[varint(2, 145_320)])),
         Message::KamasUpdateEvent(game::KamasUpdateEvent { kamas: 145_320 })
+    );
+    // Field 1, a map of the schema, is not declared: kamas written there are not read as such.
+    assert_eq!(
+        decoded("KamasUpdateEvent", &message(&[bytes(1, &[])])),
+        Message::KamasUpdateEvent(game::KamasUpdateEvent { kamas: 0 })
     );
 }
 
@@ -223,7 +237,12 @@ fn reads_the_kamas_and_the_experience_with_the_characteristics() {
 
     let stats = event.stats.unwrap_or_default();
     assert_eq!(
-        (stats.kamas, stats.level_experience, stats.experience, stats.next_level_experience),
+        (
+            stats.kamas,
+            stats.level_experience,
+            stats.experience,
+            stats.next_level_experience
+        ),
         (145_320, 800, 1_000, 1_200)
     );
 }
@@ -231,8 +250,24 @@ fn reads_the_kamas_and_the_experience_with_the_characteristics() {
 #[test]
 fn reads_a_characteristic_of_each_kind() {
     let value = message(&[varint(1, 5), varint(2, 55)]);
-    let usable = message(&[varint(4, 6), varint(6, -1), varint(7, 3)]);
-    let detailed = message(&[varint(5, 40), varint(7, 1_000)]);
+    let usable = message(&[
+        varint(1, 11),
+        varint(2, 12),
+        varint(3, 13),
+        varint(4, 6),
+        varint(5, 15),
+        varint(6, -1),
+        varint(7, 3),
+    ]);
+    let detailed = message(&[
+        varint(1, 21),
+        varint(2, 22),
+        varint(3, 23),
+        varint(4, 24),
+        varint(5, 40),
+        varint(6, 2),
+        varint(7, 1_000),
+    ]);
     let characteristics = [
         message(&[varint(2, 0), bytes(3, &value)]),
         message(&[bytes(1, &usable), varint(2, 1)]),
@@ -256,22 +291,32 @@ fn reads_a_characteristic_of_each_kind() {
     assert_eq!(
         kinds,
         [
-            (0, Some(Kind::Value(game::CharacteristicValue { number_1: 5, total: 55 }))),
+            (
+                0,
+                Some(Kind::Value(game::CharacteristicValue { number_1: 5, total: 55 }))
+            ),
             (
                 1,
                 Some(Kind::Usable(game::UsableCharacteristic {
+                    number_1: 11,
+                    number_2: 12,
+                    number_3: 13,
                     number_4: 6,
+                    number_5: 15,
                     number_6: -1,
                     spent: 3,
-                    ..Default::default()
                 }))
             ),
             (
                 2,
+                // Field 6, an enum of the schema, is not a number: it is dropped.
                 Some(Kind::Detailed(game::DetailedCharacteristic {
+                    number_1: 21,
+                    number_2: 22,
+                    number_3: 23,
+                    number_4: 24,
                     number_5: 40,
                     number_7: 1_000,
-                    ..Default::default()
                 }))
             ),
         ]

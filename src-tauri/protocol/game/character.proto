@@ -70,8 +70,9 @@ message CharacterStats {
   int64 experience = 11;
 }
 
-// One characteristic: its id and its value, of one of three kinds, the sum of its numbers (verified on the life:
-// `artifacts/studies/live-view.md`). Partial.
+// One characteristic: its id and its value, of one of three kinds. A detailed one's value is the sum of its numbers
+// (verified on the life, `artifacts/studies/live-view.md`); a usable one's, of numbers 1 to 6 (inferred, the C#
+// version). Partial.
 message Characteristic {
   int32 id = 2;
   oneof kind {
