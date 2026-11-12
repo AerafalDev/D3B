@@ -141,4 +141,13 @@ several frames per read, an 88,581-byte frame over 11 reads; a sixth length byte
 (bytes out equal bytes in with the channel full), the build at 1.3.5, the envelope, the pins' checks (a name pinned
 twice, a readable name the `.proto` lacks, a secret message pinned), each message, the capture writer read back. The
 capture replay (`D3B_CAPTURES`) checks every frame is passed on, none mapped is "not trusted", and the live view's
-messages are understood, printing counts by readable name only.
+messages are decoded (understood or read), printing counts by readable name only.
+
+The pins' audit (`protocol::audit`, ignored unless run with `--ignored`; it reads `artifacts/protocol/<build>.json`, or
+the folder `D3B_SCHEMAS` names) starts from each pinned pair and follows the messages their fields hold: every field
+our `.proto` declares must be in the build's message with its number, kind (an `int32` may read an enum), list,
+presence and oneof, each of our messages paired with one of the build's, the digest the pins'. `build.rs` describes
+our messages for it in `OUT_DIR/protocol-shapes.txt`. On 2026-11-12, 3.7.13.17's 15 pins hold. The protocol's replay
+(`protocol::replay`, `D3B_CAPTURES`) read the owner's 54 game connections of 3.7.13.17: of 3,048,392 frames, 282,806
+understood, 256,933 read, 2,508,653 unknown (messages not pinned) and none not trusted; each of the 15 messages was
+decoded, as many times as the study counted them.
