@@ -55,6 +55,19 @@ _Updated 2026-11-12._
         Ankama's URL; on another one, choose Restart: the new D3B says ready and a client plays;
     11. if a Windows account with a space or an accent in its name is at hand: steps 1 and 2 there;
     12. after a disconnection in game (Wi-Fi off and on), the client reconnects through D3B.
+  - **step 2, the protocol** ([protocol.md](protocol.md)), on Windows x64 with client 3.7.13.17, from `bun run app` on
+    `next` or the next release. Never paste a capture.
+    1. With 3.7.13.17's data in `data/` (the extractor's item 4), start D3B, then a client; enter the game: the relay's
+       tooltip shows "Connexion 1 — 3.7.13.17, protocole actif, carte X,Y", X,Y the coordinates the game shows for the
+       character's map, and below it the counts, "non fiables 0" and "perdus 0";
+    2. walk to the next map: within about a second the tooltip names the new coordinates;
+    3. play five minutes (walk, open the inventory, harvest, a fight if one is at hand): "compris" and "lus" grow,
+       "non fiables" and "perdus" stay at 0;
+    4. play a second account at once: two connections, each with its own map;
+    5. close one client's window: its connection leaves the tooltip, the other stays;
+    6. with `D3B_RECORD` set to an absolute folder, play a minute: the capture is named `3.7.13.17-<ms>-<n>.d3bcap`;
+    7. after the next client patch, before its pins: the tooltip says "protocole éteint (build sans pins)" and the game
+       plays as before.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>.tar.gz` that `data:fetch` reads; the app reads it all at start
@@ -75,7 +88,7 @@ _Updated 2026-11-12._
   build from path 1.3.5, carried by the handover (done in code); (4) the extractor's protocol schema from the metadata
   (done in code); (5) the `protocol` domain: prost, our `.proto` files, the envelope, the four outcomes, the pins of
   3.7.13.17 (done in code); (6) the pins' audit and the capture replay (done in code: 3.7.13.17's pins hold, no frame
-  not trusted); (7) the protocol task per connection and the gate (done in code), the status and its tooltip. Its
-  in-game checklist comes with PR 7.
+  not trusted); (7) the protocol task per connection, the gate, the status and its tooltip (done in code). Its in-game
+  checklist is under "Not measured".
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

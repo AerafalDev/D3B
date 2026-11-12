@@ -29,6 +29,16 @@
     "startAfter": "Start Dofus after D3B: a client started before it plays without the relay.",
     "quitEnds": "Quitting D3B ends these game connections.",
     "notUnderstood_one": "{{count}} connection went straight to Ankama: its server choice was not understood.",
-    "notUnderstood_other": "{{count}} connections went straight to Ankama: their server choice was not understood."
+    "notUnderstood_other": "{{count}} connections went straight to Ankama: their server choice was not understood.",
+    "connection": "Connection {{number}} — {{protocol}}",
+    "connectionBuild": "Connection {{number}} — {{build}}, {{protocol}}",
+    "connectionMap": "Connection {{number}} — {{build}}, {{protocol}}, map {{x}},{{y}}",
+    "protocol": {
+      "on": "protocol on",
+      "unmapped": "protocol off (build without pins)",
+      "unknownBuild": "protocol off (unknown build)",
+      "lost": "protocol lost (unreadable frames)"
+    },
+    "counts": "understood {{understood}} · read {{read}} · unknown {{unknown}} · not trusted {{notTrusted}} · dropped {{dropped}}"
   }
 }

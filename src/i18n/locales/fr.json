@@ -29,6 +29,16 @@
     "startAfter": "Lance Dofus après D3B : un client lancé avant joue sans le relais.",
     "quitEnds": "Quitter D3B coupe ces connexions de jeu.",
     "notUnderstood_one": "{{count}} connexion est allée directement chez Ankama : son choix de serveur n’a pas été compris.",
-    "notUnderstood_other": "{{count}} connexions sont allées directement chez Ankama : leur choix de serveur n’a pas été compris."
+    "notUnderstood_other": "{{count}} connexions sont allées directement chez Ankama : leur choix de serveur n’a pas été compris.",
+    "connection": "Connexion {{number}} — {{protocol}}",
+    "connectionBuild": "Connexion {{number}} — {{build}}, {{protocol}}",
+    "connectionMap": "Connexion {{number}} — {{build}}, {{protocol}}, carte {{x}},{{y}}",
+    "protocol": {
+      "on": "protocole actif",
+      "unmapped": "protocole éteint (build sans pins)",
+      "unknownBuild": "protocole éteint (build inconnue)",
+      "lost": "protocole perdu (trames illisibles)"
+    },
+    "counts": "compris {{understood}} · lus {{read}} · inconnus {{unknown}} · non fiables {{notTrusted}} · perdus {{dropped}}"
   }
 }

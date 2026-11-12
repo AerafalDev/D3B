@@ -23,6 +23,7 @@ mod world_maps;
 
 pub use game_data::GameData;
 pub use manifest::DataError;
+pub use world::MapPosition;
 
 /// The format of the folder this version of the code reads. The extractor writes the same number in the manifest
 /// (`DataFolder.Format`); a different one is refused rather than half read.
