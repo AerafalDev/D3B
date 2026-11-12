@@ -89,7 +89,8 @@ The owner's choices of 2026-11-12, on the mockup:
 
 - **The characters** on the left, one entry per game connection, from its open to its close: before a selection it
   shows the connection's number and its protocol's state; a connection whose protocol is off (a build without pins,
-  no build, lost) stays listed with the reason, its view and its frames empty. Then name, level, map, roleplay or
+  no build) stays listed with the reason, its view and its frames empty; one whose protocol is lost keeps its view
+  as it was, marked lost. Then name, level, map, roleplay or
   fight, a life bar. The one chosen fills the workspace with two tabs, **View** and **Protocol**.
 - **The view**: who and where (coordinates, sub-area, area, cell, roleplay or fight), life (estimated while it
   regenerates), pods, experience, kamas, energy, action and movement points, staleness; what is around grouped by

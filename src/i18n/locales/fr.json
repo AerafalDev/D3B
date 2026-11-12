@@ -4,7 +4,11 @@
   },
   "characters": {
     "title": "Personnages",
-    "empty": "Lancez Dofus depuis le launcher d'Ankama : chaque personnage qu'il joue s'affiche ici."
+    "empty": "Lancez Dofus depuis le launcher d'Ankama : chaque personnage qu'il joue s'affiche ici.",
+    "connection": "Connexion {{number}}",
+    "level": "niv. {{level}}",
+    "noMap": "pas encore de carte",
+    "fight": "En combat"
   },
   "workspace": {
     "empty": "Choisissez un personnage pour le suivre."
@@ -40,5 +44,51 @@
       "lost": "protocole perdu (trames illisibles)"
     },
     "counts": "compris {{understood}} · lus {{read}} · inconnus {{unknown}} · non fiables {{notTrusted}} · perdus {{dropped}}"
+  },
+  "view": {
+    "tab": "Vue",
+    "protocolTab": "Protocole",
+    "protocolSoon": "L'inspecteur du protocole arrive dans une prochaine version.",
+    "waiting": "En attente de l'entrée en jeu du personnage…",
+    "breed": "Classe {{breed}}",
+    "map": "Carte {{x}},{{y}}",
+    "cell": "cellule {{cell}}",
+    "roleplay": "Exploration",
+    "lost": "Protocole perdu : la vue reste telle qu'elle était",
+    "life": "Vie",
+    "estimated": "(estimée, régénère)",
+    "pods": "Pods",
+    "experience": "Expérience",
+    "kamas": "Kamas",
+    "energy": "Énergie",
+    "actionPoints": "PA",
+    "movementPoints": "PM",
+    "stale_one": "Peut être dépassé : {{dropped}} trame perdue",
+    "stale_other": "Peut être dépassé : {{dropped}} trames perdues"
+  },
+  "around": {
+    "title": "Autour",
+    "inFight": "En combat : les positions en combat seront lues dans une étape suivante.",
+    "players_one": "{{count}} joueur",
+    "players_other": "{{count}} joueurs",
+    "groups_one": "{{count}} groupe de monstres",
+    "groups_other": "{{count}} groupes de monstres",
+    "group": "Monstre {{id}} + {{others}}",
+    "emptyGroup": "Un groupe",
+    "levels": "niv. {{low}}–{{high}}",
+    "npcs_one": "{{count}} PNJ",
+    "npcs_other": "{{count}} PNJ",
+    "npc": "PNJ {{id}}",
+    "others_one": "{{count}} autre acteur",
+    "others_other": "{{count}} autres acteurs",
+    "resources_one": "{{count}} ressource",
+    "resources_other": "{{count}} ressources",
+    "element": "Élément {{id}}",
+    "available": "disponible",
+    "harvesting": "en récolte",
+    "harvested": "récoltée",
+    "state": "état {{state}}",
+    "alone": "Monstre {{id}}",
+    "level": "niv. {{level}}"
   }
 }

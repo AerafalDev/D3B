@@ -4,7 +4,11 @@
   },
   "characters": {
     "title": "Characters",
-    "empty": "Start Dofus from Ankama's launcher: each character it plays shows here."
+    "empty": "Start Dofus from Ankama's launcher: each character it plays shows here.",
+    "connection": "Connection {{number}}",
+    "level": "level {{level}}",
+    "noMap": "no map yet",
+    "fight": "In a fight"
   },
   "workspace": {
     "empty": "Choose a character to follow it."
@@ -40,5 +44,51 @@
       "lost": "protocol lost (unreadable frames)"
     },
     "counts": "understood {{understood}} · read {{read}} · unknown {{unknown}} · not trusted {{notTrusted}} · dropped {{dropped}}"
+  },
+  "view": {
+    "tab": "View",
+    "protocolTab": "Protocol",
+    "protocolSoon": "The protocol inspector comes with a later version.",
+    "waiting": "Waiting for the character to enter the game…",
+    "breed": "Class {{breed}}",
+    "map": "Map {{x}},{{y}}",
+    "cell": "cell {{cell}}",
+    "roleplay": "Exploring",
+    "lost": "Protocol lost: the view stays as it was",
+    "life": "Life",
+    "estimated": "(estimated, regenerating)",
+    "pods": "Pods",
+    "experience": "Experience",
+    "kamas": "Kamas",
+    "energy": "Energy",
+    "actionPoints": "AP",
+    "movementPoints": "MP",
+    "stale_one": "May be out of date: {{dropped}} frame dropped",
+    "stale_other": "May be out of date: {{dropped}} frames dropped"
+  },
+  "around": {
+    "title": "Around",
+    "inFight": "In a fight: positions in fights are read in a later step.",
+    "players_one": "{{count}} player",
+    "players_other": "{{count}} players",
+    "groups_one": "{{count}} monster group",
+    "groups_other": "{{count}} monster groups",
+    "group": "Monster {{id}} + {{others}}",
+    "emptyGroup": "A group",
+    "levels": "lvl {{low}}–{{high}}",
+    "npcs_one": "{{count}} NPC",
+    "npcs_other": "{{count}} NPCs",
+    "npc": "NPC {{id}}",
+    "others_one": "{{count}} other actor",
+    "others_other": "{{count}} other actors",
+    "resources_one": "{{count}} resource",
+    "resources_other": "{{count}} resources",
+    "element": "Element {{id}}",
+    "available": "available",
+    "harvesting": "being harvested",
+    "harvested": "harvested",
+    "state": "state {{state}}",
+    "alone": "Monster {{id}}",
+    "level": "lvl {{level}}"
   }
 }

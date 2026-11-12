@@ -1,6 +1,7 @@
-import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { CharacterList } from "@/characters/character-list.tsx";
+import { CharacterView } from "@/characters/character-view.tsx";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { UpdateBanner } from "@/updates/update-banner.tsx";
 import { useAutoUpdate } from "@/updates/use-auto-update.ts";
@@ -19,14 +20,11 @@ export function App() {
           <div className="text-muted-foreground border-b px-3 py-2 text-xs font-medium tracking-wide uppercase">
             {t("characters.title")}
           </div>
-          <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 p-4 text-center text-sm">
-            <Users className="size-6" />
-            <p>{t("characters.empty")}</p>
-          </div>
+          <CharacterList />
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel defaultSize="80%" className="text-muted-foreground flex items-center justify-center text-sm">
-          {t("workspace.empty")}
+        <ResizablePanel defaultSize="80%" className="flex flex-col">
+          <CharacterView />
         </ResizablePanel>
       </ResizablePanelGroup>
       <StatusBar />
