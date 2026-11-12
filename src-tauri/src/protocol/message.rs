@@ -53,6 +53,8 @@ messages! {
     LifeRegenStartEvent,
     LifeRegenEndEvent,
     InventoryWeightEvent,
+    CharacterLevelUpEvent,
+    KamasUpdateEvent,
 }
 
 #[cfg(test)]

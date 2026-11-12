@@ -44,10 +44,56 @@ message MapMovementEvent {
   int64 actor_id = 4;
 }
 
-// An actor on a map. Partial: what it is (`information`, field 3) is read by a later feature.
+// An actor on a map.
 message Actor {
   int64 id = 1;
   ActorDisposition disposition = 2;
+  ActorInformation information = 3;
+}
+
+// What an actor is. Partial: its look (2) is read by a later feature; field 3 and the fighter (4) never come on a
+// roleplay map (verified, 309,948 actors). In a oneof of the schema with field 4.
+message ActorInformation {
+  RoleplayActor roleplay = 1;
+}
+
+// An actor in roleplay, of one kind (verified, `artifacts/studies/live-view.md`). Partial: members 1 and 2 never came,
+// and 6 and 7 (likely a tax collector and a prism, inferred) are not read; the live view shows them as "other".
+message RoleplayActor {
+  oneof kind {
+    NamedActor named = 3;
+    NpcActor npc = 4;
+    MonsterGroupActor monster_group = 5;
+  }
+}
+
+// A player's character. Partial.
+message NamedActor {
+  string name = 5;
+}
+
+// Partial.
+message NpcActor {
+  int32 npc_id = 7;
+}
+
+// Partial.
+message MonsterGroupActor {
+  MonsterGroup monsters = 6;
+}
+
+// A group: its main monster and the others (0 to 7). Partial: the alternatives (1, 2) are not read.
+message MonsterGroup {
+  repeated Monster others = 3;
+  Monster main = 4;
+}
+
+// A monster of a group, at the grade of the client's monster table whose level is `level` (verified, 721,776 of
+// 721,776). Partial.
+message Monster {
+  int32 grade = 2;
+  int32 level = 4;
+  int32 monster_id = 5;
 }
 
 // Where an actor stands. Partial.
