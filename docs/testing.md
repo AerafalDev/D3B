@@ -18,12 +18,13 @@ Every round checks the app itself; a round may add the feature it ships, from th
 
 1. **Install**: the installer (or the AppImage, `.deb`, `.rpm`) installs without error, without administrator rights
    on Windows.
-2. **Start**: the window opens, dark, in the system's language (French or English), with the characters panel on the
-   left.
-3. **Status bar**: it shows `D3B <version>` and the game data (`No game data` until data ships).
+2. **Start**: the window opens, dark, in the system's language (French or English).
+3. **Status bar**: it shows `D3B <version>` and the game data (`No game data` until data ships). Skipped while the
+   new shell has no status bar (the old one was removed on 2026-11-12 with the old UI).
 4. **Close**: the close button quits the app.
 5. **One instance**: launching D3B again while it runs brings the running window back.
 6. **Update** (from the second release on): with the previous version installed, the new one is downloaded at start,
-   the bar offers to restart, and Restart starts the new version.
+   the bar offers to restart, and Restart starts the new version. While the new shell has no such bar (the old one was
+   removed on 2026-11-12 with the old UI), closing D3B installs the new version and the next start is that version.
 
 The warnings of unsigned installers are expected (README, *The installers are not signed yet*).

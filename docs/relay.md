@@ -18,7 +18,7 @@ flowchart LR
     client -->|"127.0.13.59:5556, first frame"| game["game connection"]
     handover --> game
     game <--> server["Ankama's game server"]
-    redirect & phase & game -->|RelayStatus| ipc["ipc: relay_status, RelayChanged"] --> bar["status bar indicator"]
+    redirect & phase & game -->|RelayStatus| ipc["ipc: relay_status, RelayChanged"] --> bar["status bar indicator (to return in the new shell)"]
 ```
 
 The facts below come from the study `artifacts/studies/relay.md`: the C# version's measured docs
@@ -51,16 +51,16 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
 - **The client folder**: `DOFUS_CLIENT`, else `Ankama/Dofus-dofus3` in the user's local data folder, taken through
   `app.path()`, as the extractor does ([data.md](data.md)).
 - **What it cannot do**: a client started before D3B loaded Ankama's configuration and goes straight to Ankama for its
-  whole life; the indicator's tooltip says to start the client after D3B. A client started while D3B is gone but the
+  whole life; the interface tells the player to start the client after D3B (the indicator did until 2026-11-12). A client started while D3B is gone but the
   line is still redirected (a crash) cannot connect until D3B starts again or the launcher repairs. Quitting or
   updating D3B drops every relayed client's game connection, and its reconnection fails while D3B is gone (D88,
-  D91): the indicator's tooltip says so while connections are live.
+  D91): the interface says so while connections are live (the indicator did until 2026-11-12).
 
 ## The connections
 
 - **Listeners**: `127.0.13.59` (not `127.0.0.1`, so no other local program's port is taken), ports 5555 and 443 for
   the connection phase (the launcher's `connectionPort` picks one) and 5556 for the game. The ports are fixed; when one
-  cannot be taken, D3B does not redirect and the indicator names the port.
+  cannot be taken, D3B does not redirect and the relay's status names the port.
 - **Framing**: every byte, both ways, is in frames of a protobuf varint length (at most 5 bytes) then that many bytes.
   A frame over 16 MiB, or a sixth length byte, closes the connection; the relay reads frames in the connection phase
   and the game connection's first frame, then copies the game's bytes untouched while it splits each way into frames
@@ -75,7 +75,7 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   `ticket = 1`, `host = 2`, `ports = 3` packed). It is read with a small protobuf wire walker, by field path, and is
   understood only when read whole, encoding back to its own bytes, with the expected shape: a ticket of 32
   characters, a DNS host name, ports from 1 to 65535. Then `host` and `ports` are replaced with `127.0.13.59` and
-  `5556`. Otherwise the frame passes untouched, the game connection goes straight to Ankama, and the indicator says the
+  `5556`. Otherwise the frame passes untouched, the game connection goes straight to Ankama, and the relay's status says the
   handover was not understood. The real host, ports and ticket are kept in memory for 60 s, taken once, with the
   client's build its identification named (path 1.3.5, digits and dots, at most 32 bytes; none when not read), which
   the game connection never carries ([protocol.md](protocol.md#on-the-wire)).
@@ -111,8 +111,8 @@ A ticket's `Debug` prints `<redacted>`; tests on captures print only file names,
 
 ## Platforms
 
-Windows x64 only for now (the owner, 2026-11-11). On macOS and Linux the indicator says the relay is not measured on
-this platform and nothing is redirected: `127.0.13.59` may not exist on macOS, port 443 needs a privilege on Linux, and
+Windows x64 only for now (the owner, 2026-11-11). On macOS and Linux nothing is redirected and the relay's status says
+it is not measured on this platform (the indicator that showed it was removed on 2026-11-12 with the old UI): `127.0.13.59` may not exist on macOS, port 443 needs a privilege on Linux, and
 where the client keeps its `version` file is unknown. The first testers there report the study's facts
 ([testing.md](testing.md)).
 

@@ -13,7 +13,7 @@ flowchart LR
     obs -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
     ring -->|"the one watched, at most 5 batches/s"| ev2["ipc: InspectorFrames"]
     maps["data: a map's cells, read on demand"] --> cmd["ipc: map_cells"]
-    ev1 --> view["src/characters: the list, the view, the map"]
+    ev1 --> view["src/characters: the store (its views return in the new shell)"]
     cmd --> view
     ev2 --> insp["src/inspector: the frames, a frame's detail"]
 ```
