@@ -12,8 +12,8 @@ paths:
 - **shadcn** (`radix-nova` style, Lucide icons, Tailwind 4 with the theme's CSS variables). Add a component with
   `bunx --bun shadcn@latest add <name>`; it lands in `src/components/ui/`, which we do not edit by hand beyond the
   smallest fix the typecheck needs. React Flow UI's components are in `src/components/flow/`.
-- **Styling**: Tailwind classes through `cn()`; no inline style objects, no CSS-in-JS. Dark theme first; both themes
-  must stay readable.
+- **Styling**: Tailwind classes through `cn()`; no inline style objects, no CSS-in-JS. Dark only (the owner,
+  2026-11-12): `index.html` sets the `dark` class and nothing switches it; colours are defined for it alone.
 - **State**: `zustand` stores per domain (with `zundo` where undo exists), read through selectors; server state from
   the back end arrives by typed events into a store. No React state for what changes per frame: use a ref and
   `requestAnimationFrame`.
