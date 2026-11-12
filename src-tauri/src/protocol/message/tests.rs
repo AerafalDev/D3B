@@ -3,6 +3,7 @@
 
 use super::*;
 use crate::protocol::game::characteristic::Kind;
+use crate::protocol::game::roleplay_actor::Kind as Roleplay;
 use crate::relay::wire::{self, Field, Value};
 
 fn message(fields: &[Field<'_>]) -> Vec<u8> {
@@ -147,13 +148,130 @@ fn reads_the_character_chosen() {
 }
 
 #[test]
+fn reads_what_each_actor_is() {
+    let named = message(&[bytes(5, b"Lyra")]);
+    let npc = message(&[varint(7, 2876)]);
+    let monster = |id: i64, level: i64| message(&[varint(2, 3), varint(4, level), varint(5, id)]);
+    let (main, other) = (monster(489, 52), monster(101, 34));
+    let group = message(&[bytes(3, &other), bytes(4, &main)]);
+    let monsters = message(&[bytes(6, &group)]);
+    let actor = |member: u32, kind: &[u8]| {
+        let roleplay = message(&[bytes(member, kind)]);
+        let information = message(&[bytes(1, &roleplay)]);
+        message(&[varint(1, -20), bytes(3, &information)])
+    };
+    // Member 6, which our `.proto` does not declare, as a tax collector would be.
+    let body = message(&[
+        bytes(1, &actor(3, &named)),
+        bytes(1, &actor(4, &npc)),
+        bytes(1, &actor(5, &monsters)),
+        bytes(1, &actor(6, &[])),
+    ]);
+
+    let Message::MapActorShownEvent(shown) = decoded("MapActorShownEvent", &body) else {
+        panic!("not the actors shown");
+    };
+
+    let kinds: Vec<_> = shown
+        .actors
+        .into_iter()
+        .map(|actor| actor.information.and_then(|information| information.roleplay?.kind))
+        .collect();
+    let monster = |monster_id, level| game::Monster {
+        grade: 3,
+        level,
+        monster_id,
+    };
+    assert_eq!(
+        kinds,
+        [
+            Some(Roleplay::Named(game::NamedActor { name: "Lyra".into() })),
+            Some(Roleplay::Npc(game::NpcActor { npc_id: 2876 })),
+            Some(Roleplay::MonsterGroup(game::MonsterGroupActor {
+                monsters: Some(game::MonsterGroup {
+                    others: vec![monster(101, 34)],
+                    main: Some(monster(489, 52)),
+                })
+            })),
+            None,
+        ]
+    );
+}
+
+#[test]
+fn reads_a_level_gained() {
+    assert_eq!(
+        decoded("CharacterLevelUpEvent", &message(&[varint(1, 88), varint(2, 1)])),
+        Message::CharacterLevelUpEvent(game::CharacterLevelUpEvent { level: 88 })
+    );
+    // Field 2, which our `.proto` does not declare, is dropped.
+    assert_eq!(
+        decoded("CharacterLevelUpEvent", &message(&[varint(2, 88)])),
+        Message::CharacterLevelUpEvent(game::CharacterLevelUpEvent { level: 0 })
+    );
+}
+
+#[test]
+fn reads_the_kamas() {
+    assert_eq!(
+        decoded("KamasUpdateEvent", &message(&[varint(2, 145_320)])),
+        Message::KamasUpdateEvent(game::KamasUpdateEvent { kamas: 145_320 })
+    );
+    // Field 1, a map of the schema, is not declared: kamas written there are not read as such.
+    assert_eq!(
+        decoded("KamasUpdateEvent", &message(&[bytes(1, &[])])),
+        Message::KamasUpdateEvent(game::KamasUpdateEvent { kamas: 0 })
+    );
+}
+
+#[test]
+fn reads_the_kamas_and_the_experience_with_the_characteristics() {
+    let body = message(&[bytes(
+        1,
+        &message(&[varint(2, 1_200), varint(6, 145_320), varint(8, 800), varint(11, 1_000)]),
+    )]);
+
+    let Message::CharacterStatsEvent(event) = decoded("CharacterStatsEvent", &body) else {
+        panic!("not the characteristics");
+    };
+
+    let stats = event.stats.unwrap_or_default();
+    assert_eq!(
+        (
+            stats.kamas,
+            stats.level_experience,
+            stats.experience,
+            stats.next_level_experience
+        ),
+        (145_320, 800, 1_000, 1_200)
+    );
+}
+
+#[test]
 fn reads_a_characteristic_of_each_kind() {
-    let value = message(&[varint(2, 55)]);
-    let usable = message(&[varint(7, 3)]);
+    let value = message(&[varint(1, 5), varint(2, 55)]);
+    let usable = message(&[
+        varint(1, 11),
+        varint(2, 12),
+        varint(3, 13),
+        varint(4, 6),
+        varint(5, 15),
+        varint(6, -1),
+        varint(7, 3),
+    ]);
+    let detailed = message(&[
+        varint(1, 21),
+        varint(2, 22),
+        varint(3, 23),
+        varint(4, 24),
+        varint(5, 40),
+        varint(6, 2),
+        varint(7, 1_000),
+    ]);
     let characteristics = [
         message(&[varint(2, 0), bytes(3, &value)]),
         message(&[bytes(1, &usable), varint(2, 1)]),
-        message(&[varint(2, 2), bytes(5, &[])]),
+        message(&[varint(2, 2), bytes(5, &detailed)]),
     ];
     let stats: Vec<Field<'_>> = characteristics.iter().map(|one| bytes(1, one)).collect();
     let stats = message(&stats);
@@ -173,9 +291,34 @@ fn reads_a_characteristic_of_each_kind() {
     assert_eq!(
         kinds,
         [
-            (0, Some(Kind::Value(game::CharacteristicValue { total: 55 }))),
-            (1, Some(Kind::Usable(game::UsableCharacteristic { spent: 3 }))),
-            (2, Some(Kind::Detailed(game::DetailedCharacteristic {}))),
+            (
+                0,
+                Some(Kind::Value(game::CharacteristicValue { number_1: 5, total: 55 }))
+            ),
+            (
+                1,
+                Some(Kind::Usable(game::UsableCharacteristic {
+                    number_1: 11,
+                    number_2: 12,
+                    number_3: 13,
+                    number_4: 6,
+                    number_5: 15,
+                    number_6: -1,
+                    spent: 3,
+                }))
+            ),
+            (
+                2,
+                // Field 6, an enum of the schema, is not a number: it is dropped.
+                Some(Kind::Detailed(game::DetailedCharacteristic {
+                    number_1: 21,
+                    number_2: 22,
+                    number_3: 23,
+                    number_4: 24,
+                    number_5: 40,
+                    number_7: 1_000,
+                }))
+            ),
         ]
     );
 }
@@ -201,6 +344,8 @@ fn the_declared_fields_encode_back_to_their_own_bytes() {
     let stated = message(&[varint(3, 465_210), varint(5, 3)]);
     let interactive = message(&[varint(4, 82), varint(6, 465_210)]);
     let actor = message(&[varint(1, 1_234_567)]);
+    let npc = message(&[bytes(1, &message(&[bytes(4, &message(&[varint(7, 2876)]))]))]);
+    let npc_actor = message(&[varint(1, -20), bytes(3, &npc)]);
     // Each body holds only fields our `.proto` declares: one read with another number or kind would not come back.
     for (readable, body) in [
         ("ContextCreationEvent", message(&[varint(1, 1)])),
@@ -216,6 +361,9 @@ fn the_declared_fields_encode_back_to_their_own_bytes() {
             message(&[varint(1, 5_000), varint(3, 4_200), varint(4, 0)]),
         ),
         ("InventoryWeightEvent", message(&[varint(1, 1_200), varint(2, 3_000)])),
+        ("CharacterLevelUpEvent", message(&[varint(1, 88)])),
+        ("KamasUpdateEvent", message(&[varint(2, 145_320)])),
+        ("MapActorShownEvent", message(&[bytes(1, &npc_actor)])),
     ] {
         assert_eq!(decoded(readable, &body).encode(), body, "{readable}");
     }

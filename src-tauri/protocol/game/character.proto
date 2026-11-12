@@ -60,12 +60,19 @@ message CharacterStatsEvent {
   CharacterStats stats = 1;
 }
 
-// Partial.
+// Partial. The experience's three fields come in the order level_experience < experience < next_level_experience
+// (verified on 2,988 frames); what each means is inferred from that order.
 message CharacterStats {
   repeated Characteristic characteristics = 1;
+  int64 next_level_experience = 2;
+  int64 kamas = 6;
+  int64 level_experience = 8;
+  int64 experience = 11;
 }
 
-// One characteristic: its id and its value, of one of three kinds. Partial.
+// One characteristic: its id and its value, of one of three kinds. A detailed one's value is the sum of its numbers
+// (verified on the life, `artifacts/studies/live-view.md`); a usable one's, of numbers 1 to 6 (inferred, the C#
+// version). Partial.
 message Characteristic {
   int32 id = 2;
   oneof kind {
@@ -75,18 +82,36 @@ message Characteristic {
   }
 }
 
-// Partial: its other fields' meanings are not measured.
+// Action and movement points: the base in number 4 (verified), the other numbers' meanings not measured.
 message UsableCharacteristic {
+  int32 number_1 = 1;
+  int32 number_2 = 2;
+  int32 number_3 = 3;
+  int32 number_4 = 4;
+  int32 number_5 = 5;
+  int32 number_6 = 6;
   int32 spent = 7;
 }
 
-// Partial.
 message CharacteristicValue {
+  int32 number_1 = 1;
   int64 total = 2;
 }
 
-// Partial: its fields' meanings are not measured.
-message DetailedCharacteristic {}
+// Numbers from several sources, whose meanings are not measured. Partial: field 6, an enum, is not a number.
+message DetailedCharacteristic {
+  int32 number_1 = 1;
+  int32 number_2 = 2;
+  int32 number_3 = 3;
+  int32 number_4 = 4;
+  int32 number_5 = 5;
+  int32 number_7 = 7;
+}
+
+// The character gains a level (verified, 36 of 36 level-ups). Partial.
+message CharacterLevelUpEvent {
+  int32 level = 1;
+}
 
 // The character starts regaining life, every `interval` tenths of a second (inferred, the C# version). Partial.
 message LifeRegenStartEvent {
@@ -98,6 +123,12 @@ message LifeRegenEndEvent {
   int32 max_life = 1;
   int32 life = 3;
   optional int32 regenerated = 4;
+}
+
+// The kamas the character carries now (verified: the next characteristics' kamas equal it, 480 of 480). Partial: field
+// 1, a map never set, is not declared.
+message KamasUpdateEvent {
+  int64 kamas = 2;
 }
 
 // What the character carries against what it can.

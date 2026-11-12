@@ -17,7 +17,8 @@ pub(crate) enum Outcome {
     NotTrusted,
 }
 
-/// How many levels of nested messages are compared; the live view's deepest is 5 levels down.
+/// How many levels of nested messages are compared; the live view's deepest is 7 levels down, a monster of a group in
+/// a map's information.
 const DEPTH: usize = 16;
 
 /// How many fields one comparison may read, at every level, both sides together: the largest frame measured, 88,581

@@ -2,12 +2,14 @@
   "build": "3.7.13.17",
   "schemaSha256": "d74dfab609f87963fdd6230f5936c547da06c6deff9873cdfd75915d0e9b4980",
   "messages": {
+    "CharacterLevelUpEvent": "kqp",
     "CharacterSelectionEvent": "ksb",
     "CharacterStatsEvent": "krg",
     "ContextCreationEvent": "kjp",
     "ContextDestroyEvent": "kjy",
     "InteractiveElementUpdatedEvent": "itx",
     "InventoryWeightEvent": "iqq",
+    "KamasUpdateEvent": "ith",
     "LifeRegenEndEvent": "kqo",
     "LifeRegenStartEvent": "kqw",
     "MapActorRemovedEvent": "kjz",
@@ -23,6 +25,7 @@
     "koc",
     "kod",
     "kof",
+    "koh",
     "kso"
   ]
 }

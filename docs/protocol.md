@@ -71,12 +71,11 @@ Each is `inferred` unless said `verified`.
   before any decoding, and a name both pinned and secret fails the pins' check. `protocol::pins` checks a file as it
   reads it: its build, a lowercase SHA-256, readable names among `protocol::message`'s, names of 1 to 8 lowercase
   letters, none pinned twice. 3.7.13.17's pin the live view's 15 messages, the pairs the C# version measured by play
-  (inferred, `main:src/D3B.Protocol/Pins/3.7.13.17.json`), and 5 secrets: the ticket's request (verified, the 54 game
-  connections' first frames) and the 4 the study found holding session secrets (inferred). The live view's first PR
-  adds 2 pins, `CharacterLevelUpEvent` and `KamasUpdateEvent` ([game.md](game.md)), and a sixth secret, `koh`: each
-  of its 231 frames holds a distinct string of 74 to 78 hexadecimal characters (verified), a session secret by its
-  shape and timing (inferred). `protocol::decoder` reads
-  one frame with them: its envelope, a secret left undecoded, a pinned name decoded, then its outcome.
+  (inferred, `main:src/D3B.Protocol/Pins/3.7.13.17.json`), 2 more the live view's study paired (verified),
+  `CharacterLevelUpEvent` and `KamasUpdateEvent` ([game.md](game.md)), and 6 secrets: the ticket's request (verified,
+  the 54 game connections' first frames), the 4 the study found holding session secrets (inferred), and `koh`: each of
+  its 231 frames holds a distinct string of 74 to 78 hexadecimal characters (verified), a session secret by its shape
+  and timing (inferred). `protocol::decoder` reads one frame with them: its envelope, a secret left undecoded, a pinned name decoded, then its outcome.
 - **The gate**: a connection whose build has pins is decoded; one without (**unmapped**), or with no build read
   (**unknown build**), has the protocol off and the reason in its status. Nothing else changes for it.
 - **Four outcomes** per frame (`.claude/rules/game-data.md`: a mapped message that does not re-encode to the same
@@ -91,7 +90,7 @@ Each is `inferred` unless said `verified`.
 
   `protocol::envelope` opens a frame by the wire format alone, with no allocation: exactly the fields above, an id of 0
   left out, an empty message's `Any` without its value, a name of 1 to 8 lowercase letters (3.7.13.17's are 3).
-  `protocol::outcome` compares down to 16 levels of nested messages (the live view's deepest is 5) and 131,072 fields in
+  `protocol::outcome` compares down to 16 levels of nested messages (the live view's deepest is 7, a monster of a group in the map's information) and 131,072 fields in
   all (4 MiB; the largest frame measured holds under 45,000); a repeated field keeps its count and order, and a field
   prost wrote that the frame lacks is not trusted. With no schema at hand, "read" also covers a field our `.proto`
   declares without the presence the build gives it, sent at 0, and a oneof sent twice: the audit test checks that our
@@ -179,10 +178,11 @@ The pins' audit (`protocol::audit`, ignored unless run with `--ignored`; it read
 the folder `D3B_SCHEMAS` names) starts from each pinned pair and follows the messages their fields hold: every field
 our `.proto` declares must be in the build's message with its number, kind (an `int32` may read an enum), list,
 presence and oneof, each of our messages paired with one of the build's, the digest the pins'. `build.rs` describes
-our messages for it in `OUT_DIR/protocol-shapes.txt`. On 2026-11-12, 3.7.13.17's 15 pins hold. The protocol's replay
-(`protocol::replay`, `D3B_CAPTURES`) read the owner's 54 game connections of 3.7.13.17: of 3,048,392 frames, 282,806
-understood, 256,933 read, 2,508,653 unknown (messages not pinned) and none not trusted; each of the 15 messages was
-decoded, as many times as the study counted them.
+our messages for it in `OUT_DIR/protocol-shapes.txt`. On 2026-11-12, 3.7.13.17's 17 pins hold. The protocol's replay
+(`protocol::replay`, `D3B_CAPTURES`) read the owner's 54 game connections of 3.7.13.17: of 3,048,392 frames, 284,214
+understood, 256,933 read, 2,507,245 unknown (messages not pinned) and none not trusted; each of the 17 messages was
+decoded, as many times as the study counted them in these 54 (it read 2 more, of
+`Desktop\d3b-captures`, which hold the other 2 `KamasUpdateEvent` of its 1,374).
 
 The inspector's, each with its failure case: the frames kept bounded by count and by bytes (an 88 KB frame evicts the
 oldest), a secret's frame kept without its bytes, nothing kept for a connection whose protocol is off; a batch capped

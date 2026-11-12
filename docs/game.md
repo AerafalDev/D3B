@@ -75,7 +75,10 @@ never the reverse (ADR 0002).
   profession's level-up sends the same map's information again (964 of 964).
 - **Names**, the owner's choice (2026-11-12): players by their name, as the game shows them; monsters, NPCs and
   resources by their ids and levels. Their names come in a later feature that adds the client's monsters, NPCs,
-  interactives and skills tables to the game data (format 2, with the next client build).
+  interactives and skills tables to the game data (format 2, with the next client build). Later, the owner wants
+  monsters, NPCs and characters drawn from their looks (`Actor.information` field 2, not read yet), with a renderer
+  such as `PyDofus/d3-ts-renderer` (2026-11-12): it has no licence today, so it can be neither used nor copied until
+  its author gives one; that feature studies it then.
 
 ## In the app
 

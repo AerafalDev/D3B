@@ -203,8 +203,11 @@ mod tests {
         assert_eq!(pins.readable("jow"), Some("MapCurrentEvent"));
         let mut secrets: Vec<&str> = pins.secrets.iter().map(String::as_str).collect();
         secrets.sort_unstable();
-        // The ticket's request (verified) and the four the study found holding session secrets (inferred).
-        assert_eq!(secrets, ["knc", "koc", "kod", "kof", "kso"]);
+        // The ticket's request (verified), the four the study found holding session secrets, and `koh`, whose frames
+        // each hold a distinct hexadecimal string (inferred, `artifacts/studies/live-view.md`).
+        assert_eq!(secrets, ["knc", "koc", "kod", "kof", "koh", "kso"]);
+        assert_eq!(pins.readable("kqp"), Some("CharacterLevelUpEvent"));
+        assert_eq!(pins.readable("ith"), Some("KamasUpdateEvent"));
         assert_eq!(pins.schema_sha256, DIGEST);
     }
 

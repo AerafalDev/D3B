@@ -99,7 +99,8 @@ _Updated 2026-11-12._
   owner's choices of 2026-11-12: ids for monsters, NPCs and resources (their names come later), the map as diamonds,
   the characters on the left with a View and a Protocol tab, text of unread frames never shown, 3,000 frames kept per
   connection. A stack of eight PRs against `next`: (1) the protocol: the `.proto` files extended (actors, the
-  characteristics' values), the level gained and the kamas pinned, `koh` a secret; (2) `game`: who, where, life and its
+  characteristics' values), the level gained and the kamas pinned, `koh` a secret (done in code: the 17 pins hold, no
+  frame not trusted); (2) `game`: who, where, life and its
   regeneration, pods, kamas, level, context, staleness; (3) `game`: what is around, and the game's capture replay; (4)
   the view through the IPC, `CharacterChanged` and `map_cells`; (5) the characters list and the view; (6) the map; (7)
   the inspector's frames kept and streamed; (8) the inspector's tab, and the in-game checklist.
