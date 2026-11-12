@@ -90,5 +90,16 @@
     "state": "state {{state}}",
     "alone": "Monster {{id}}",
     "level": "lvl {{level}}"
+  },
+  "map": {
+    "label": "The map as diamonds: cells, resources, actors and the character",
+    "unavailable": "The map cannot be drawn: {{error}}",
+    "legend": "Dark: walkable · grey: obstacle · brown: blocks sight · blue: exit · Y you · P player · M monsters · N NPC · ? other · R resource",
+    "letterMe": "Y",
+    "letterPlayer": "P",
+    "letterMonsters": "M",
+    "letterNpc": "N",
+    "letterResource": "R",
+    "letterOther": "?"
   }
 }

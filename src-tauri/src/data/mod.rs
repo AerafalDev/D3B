@@ -13,7 +13,7 @@ mod map_flag;
     not(test),
     expect(
         dead_code,
-        reason = "the map view of step 2 reads the maps it shows, one file at a time"
+        reason = "the live view reads a map whole; the cells' bits are read by the paths of step 4"
     )
 )]
 mod maps;
@@ -22,7 +22,8 @@ mod world;
 mod world_maps;
 
 pub use game_data::GameData;
-pub use manifest::DataError;
+pub use manifest::{DataError, Manifest};
+pub use maps::{MapData, read_map};
 pub use world::{MapPosition, World};
 
 /// The format of the folder this version of the code reads. The extractor writes the same number in the manifest

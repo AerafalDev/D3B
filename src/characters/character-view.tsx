@@ -7,6 +7,7 @@ import { useRelay } from "@/relay/relay-store.ts";
 import { AroundList } from "./around-list.tsx";
 import { useCharacters } from "./character-store.ts";
 import { GaugeBar } from "./gauge-bar.tsx";
+import { MapGrid } from "./map-grid.tsx";
 
 /** A name in the interface's language. */
 function named(names: Names | null | undefined, language: string): string | null {
@@ -138,6 +139,7 @@ export function CharacterView() {
                 )}
               </div>
             </section>
+            <MapGrid view={view} />
             <AroundList view={view} />
           </div>
         )}

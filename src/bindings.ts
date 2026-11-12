@@ -15,6 +15,11 @@ export const commands = {
 	 *  could not, when the `version` file stayed redirected. Off the main thread, since a refused write is tried again.
 	 */
 	relayRestore: () => __TAURI_INVOKE<null>("relay_restore"),
+	/**
+	 *  The cells of the map `map_id` from the packed game data, read off the main thread; why not, when there is no data
+	 *  or no such map.
+	 */
+	mapCells: (mapId: number) => __TAURI_INVOKE<MapCells>("map_cells", { mapId }),
 };
 
 /** Events */
@@ -137,6 +142,12 @@ export type CharacterView_Serialize = {
 	stale: StaleParts,
 };
 
+/**  An interactive element of the map and its cell. */
+export type ElementAt = {
+	id: number,
+	cell: number,
+};
+
 /**
  *  A game connection as the relay's tooltip shows it (`docs/protocol.md`, "In the app"): its counts saturate at
  *  `u32::MAX`, more frames than a connection carries in years.
@@ -208,6 +219,16 @@ export type InteractiveSeen = {
 export type MapAt = {
 	x: number,
 	y: number,
+};
+
+/**  What the live view draws of a map: its 560 cells and its interactive elements. */
+export type MapCells = {
+	/**  Each cell's flags, as `docs/data.md` packs them: bit 0 walkable, bit 1 line of sight. */
+	flags: number[],
+	/**  The cells that lead to another map. */
+	exits: number[],
+	/**  The interactive elements, each with its cell, or −1 for one drawn without a cell. */
+	elements: ElementAt[],
 };
 
 /**  A monster of a group, its main one first. */
