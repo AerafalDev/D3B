@@ -1,6 +1,6 @@
 //! A character followed live (`docs/game.md`, "In the app"): the observer of its connection's decoded messages, which
-//! sends its view whenever it changed, at the protocol's ticks: at most five times a second, twice while the life
-//! regenerates, and `None` once the connection ended.
+//! sends its view whenever it changed, at the protocol's ticks: at most five times a second, once per point while the
+//! life regenerates, and `None` once the connection ended.
 
 use std::time::Instant;
 

@@ -24,16 +24,20 @@ export const events = {
 };
 
 /* Types */
+/**  Another actor on the map, and the cell it was last seen on. */
 export type ActorSeen = ActorSeen_Serialize | ActorSeen_Deserialize;
 
+/**  What an actor is: a player by name, an NPC or monsters by their ids in the client's tables, or another kind. */
 export type ActorSeenKind = { kind: "player"; name: string } | { kind: "npc"; npcId: number } | { kind: "monsterGroup"; monsters: MonsterSeen[] } | { kind: "other" };
 
+/**  Another actor on the map, and the cell it was last seen on. */
 export type ActorSeen_Deserialize = {
 	id: number | null,
 	kind: ActorSeenKind,
 	cell?: number | null,
 };
 
+/**  Another actor on the map, and the cell it was last seen on. */
 export type ActorSeen_Serialize = {
 	id: number | null,
 	kind: ActorSeenKind,
@@ -192,6 +196,7 @@ export type Gauge = {
 	max: number | null,
 };
 
+/**  An element the character may use, such as a resource, by its id and its kind's. */
 export type InteractiveSeen = {
 	elementId: number,
 	kindId: number,
@@ -290,14 +295,17 @@ export type StaleParts = {
 	kamas: boolean,
 };
 
+/**  An element with a state: 0 available, 2 being harvested, 1 harvested. */
 export type StatedSeen = StatedSeen_Serialize | StatedSeen_Deserialize;
 
+/**  An element with a state: 0 available, 2 being harvested, 1 harvested. */
 export type StatedSeen_Deserialize = {
 	elementId: number,
 	cell?: number | null,
 	state: number,
 };
 
+/**  An element with a state: 0 available, 2 being harvested, 1 harvested. */
 export type StatedSeen_Serialize = {
 	elementId: number,
 	cell: number | null,

@@ -24,9 +24,8 @@ pub(crate) fn follow(
         Box::new(Live::new(move |view: Option<View>| {
             let data = handle.try_state::<LoadedData>();
             let data = data.as_deref().and_then(|data| data.0.as_ref().ok());
-            let world = data
-                .filter(|data| build.as_deref() == Some(data.manifest.build.as_str()))
-                .map(|data| &data.world);
+            let data = data.map(|data| (data.manifest.build.as_str(), &data.world));
+            let world = world_for(data, build.as_deref());
             let view = view.map(|view| CharacterView::new(&view, world));
             let _ = CharacterChanged { connection, view }.emit(&handle);
         }))
@@ -90,6 +89,7 @@ pub struct CharacterView {
     pub stale: StaleParts,
 }
 
+/// Another actor on the map, and the cell it was last seen on.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Type)]
 pub struct ActorSeen {
     pub id: f64,
@@ -97,6 +97,7 @@ pub struct ActorSeen {
     pub cell: Option<i32>,
 }
 
+/// What an actor is: a player by name, an NPC or monsters by their ids in the client's tables, or another kind.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ActorSeenKind {
@@ -121,6 +122,7 @@ pub struct MonsterSeen {
     pub level: i32,
 }
 
+/// An element the character may use, such as a resource, by its id and its kind's.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct InteractiveSeen {
@@ -130,6 +132,7 @@ pub struct InteractiveSeen {
     pub usable: bool,
 }
 
+/// An element with a state: 0 available, 2 being harvested, 1 harvested.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct StatedSeen {
@@ -179,9 +182,10 @@ impl CharacterView {
             action_points: characteristics.map(|read| number(read.action_points)),
             movement_points: characteristics.map(|read| number(read.movement_points)),
             energy: characteristics.map(|read| gauge(read.energy, read.max_energy)),
-            experience: characteristics.map(|read| Gauge {
-                value: number(read.experience - read.level_experience),
-                max: number(read.next_level_experience - read.level_experience),
+            experience: characteristics.and_then(|read| {
+                // Numbers from the wire: saturated, and no gauge when the next floor is not above this one.
+                let max = read.next_level_experience.saturating_sub(read.level_experience);
+                (max > 0).then(|| gauge(read.experience.saturating_sub(read.level_experience), max))
             }),
             actors: view.around.actors.iter().map(actor).collect(),
             interactives: view
@@ -232,6 +236,13 @@ fn actor(seen: &Seen) -> ActorSeen {
         },
         cell: seen.cell,
     }
+}
+
+/// The world of the game data, given with its build, when that build is `build`, the connection's: another build may
+/// number its maps otherwise.
+fn world_for<'a>(data: Option<(&str, &'a World)>, build: Option<&str>) -> Option<&'a World> {
+    data.filter(|(data_build, _)| build == Some(*data_build))
+        .map(|(_, world)| world)
 }
 
 /// `map_id` placed and named from `world`, which the caller gives only when its build is the connection's.
@@ -372,6 +383,89 @@ mod tests {
         assert_eq!(
             monsters.iter().map(|monster| monster.id).collect::<Vec<_>>(),
             [489, 101]
+        );
+    }
+
+    #[test]
+    fn the_data_names_a_connection_of_its_own_build_only() {
+        let world = world();
+        let data = Some(("3.7.13.17", &world));
+
+        assert!(world_for(data, Some("3.7.13.17")).is_some());
+        assert!(world_for(data, Some("3.7.14.1")).is_none());
+        assert!(world_for(data, None).is_none());
+        assert!(world_for(None, Some("3.7.13.17")).is_none());
+    }
+
+    #[test]
+    fn a_map_or_its_tables_the_data_lacks_are_not_named() {
+        let mut world = world();
+        world.areas.clear();
+        let shown = |map_id| {
+            let view = View {
+                map_id: Some(map_id),
+                ..View::default()
+            };
+            CharacterView::new(&view, Some(&world))
+                .place
+                .unwrap_or_else(|| panic!("no place"))
+        };
+
+        let absent = shown(5);
+        assert_eq!((absent.at, absent.sub_area), (None, None));
+        let without_area = shown(88_213_271);
+        assert!(without_area.sub_area.is_some());
+        assert_eq!(without_area.area, None);
+    }
+
+    #[test]
+    fn experience_from_the_wire_saturates_and_a_floor_not_below_the_next_shows_none() {
+        let shown = |level_experience, experience, next_level_experience| {
+            let view = View {
+                characteristics: Some(Characteristics {
+                    level_experience,
+                    experience,
+                    next_level_experience,
+                    ..Characteristics::default()
+                }),
+                ..View::default()
+            };
+            CharacterView::new(&view, None).experience
+        };
+
+        assert_eq!(shown(1_000, 1_000, 1_000), None);
+        assert_eq!(shown(1_200, 1_000, 800), None);
+        let huge = shown(i64::MIN, i64::MAX, 0);
+        assert_eq!(huge.map(|gauge| gauge.value), Some(number(i64::MAX)));
+    }
+
+    #[test]
+    fn a_group_without_its_main_monster_shows_the_others() {
+        let mut view = View::default();
+        view.around.actors.push(Seen {
+            id: -20,
+            kind: ActorKind::MonsterGroup {
+                main: None,
+                others: vec![Monster {
+                    id: 101,
+                    grade: 1,
+                    level: 34,
+                }],
+            },
+            cell: None,
+        });
+
+        let shown = CharacterView::new(&view, None);
+
+        assert_eq!(
+            shown.actors[0].kind,
+            ActorSeenKind::MonsterGroup {
+                monsters: vec![MonsterSeen {
+                    id: 101,
+                    grade: 1,
+                    level: 34
+                }]
+            }
         );
     }
 }
