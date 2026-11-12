@@ -107,9 +107,10 @@ Unit tests per message on synthetic decoded messages, with an injected clock: th
 ended by `LifeRegenEndEvent` and by a fight, characteristics during it, an interval of 0; a map information that
 replaces whole, the same map again, against a differing `MapCurrentEvent`; an unknown actor removed or moved; an unknown
 actor kind as "other"; a second selection, with characteristics before it; staleness. The game's capture replay
-(`D3B_CAPTURES`) checks, by counts only: the life estimated at each `LifeRegenEndEvent` within one point of its own, the
-character's actor in every map information, each of the character's walks starting on its known cell in at least 99% of
-them, and at least 90% of the stated elements' updates naming an element on the list. On 2026-11-12, over the owner's 54
-connections: all 634 lives within a point, the character on all 66,166 maps, 90,632 of 91,224 walks from its cell, and
-67,713 of 71,882 updates on a known element. Vitest: the store per connection, an entry before its selection and one
-whose protocol is off, the estimated mark, the map's geometry (cells 0, 13, 14 and 559).
+(`D3B_CAPTURES`) checks, by counts only: the life counted as each fight starts within one point of the fight's
+`LifeRegenEndEvent`, the character's cell known after every map information, each of the character's walks starting on
+its known cell in at least 99% of them, and at least 90% of the stated elements' updates out of fights naming an element
+on the list. On 2026-11-12, over the owner's 54 connections: all 634 lives within a point, the character on all 66,166
+maps, 90,632 of 91,224 walks from its cell, and 67,713 of 71,882 updates on a known element. Vitest: the store per
+connection, an entry before its selection and one whose protocol is off, the estimated mark, the map's geometry (cells
+0, 13, 14 and 559).

@@ -98,12 +98,13 @@ _Updated 2026-11-12._
 - **Next, the live view and the inspector** ([game.md](game.md), [protocol.md](protocol.md#the-inspector)), the
   owner's choices of 2026-11-12: ids for monsters, NPCs and resources (their names come later), the map as diamonds,
   the characters on the left with a View and a Protocol tab, text of unread frames never shown, 3,000 frames kept per
-  connection. A stack of eight PRs against `next`: (1) the protocol: the `.proto` files extended (actors, the
+  connection. A stack of PRs against `next`: (1) the protocol: the `.proto` files extended (actors, the
   characteristics' values), the level gained and the kamas pinned, `koh` a secret (done in code: the 17 pins hold, no
-  frame not trusted); (2) `game`, in two PRs: the characteristics
-  and life with its regeneration (done in code), then who, where, pods, kamas, level, context, staleness (done in code); (3) `game`: what is around, then the game's capture replay (done in code: lives within a point at all
-  634 fights, the character on all 66,166 maps, 99.35% of its walks from its known cell); (4)
-  the view through the IPC, `CharacterChanged` and `map_cells`; (5) the characters list and the view; (6) the map; (7)
-  the inspector's frames kept and streamed; (8) the inspector's tab, and the in-game checklist.
+  frame not trusted); (2) `game`, in two PRs: the characteristics and life with its regeneration, then who, where,
+  pods, kamas, level, context, staleness (done in code); (3) `game`, in two PRs: what is around, then the game's
+  capture replay (done in code: lives within a point at all 634 fights, the character on all 66,166 maps, 99.35% of
+  its walks from its known cell, 67,713 of 71,882 stated updates on a known element); (4) the view through the IPC,
+  `CharacterChanged`; (5) the characters list and the view; (6) the map and `map_cells`; (7) the inspector's frames
+  kept and streamed; (8) the inspector's tab, and the in-game checklist.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

@@ -7,6 +7,7 @@ use std::time::Instant;
 
 use super::character::{Character, Context};
 use crate::protocol::Message;
+use crate::protocol::game::context_creation_event::GameContext;
 use crate::protocol::replay::{decoded, folder};
 
 /// What the replay counted, over every connection.
@@ -42,8 +43,11 @@ fn the_owners_game_captures_read_through_the_games_state() {
             let view = character.view(now, 0);
             let me = view.who.as_ref().map(|who| who.id);
             match message {
-                Message::ContextCreationEvent(created) if created.context == 1 => {
-                    at_the_fight = view.life.map(|life| life.life);
+                Message::ContextCreationEvent(created) => {
+                    // A roleplay context ends a fight that had no `LifeRegenEndEvent`: nothing is compared then.
+                    at_the_fight = (GameContext::try_from(created.context) == Ok(GameContext::Fight))
+                        .then(|| view.life.map(|life| life.life))
+                        .flatten();
                 }
                 Message::StatedElementUpdatedEvent(update) if view.context != Some(Context::Fight) => {
                     let id = update.element.as_ref().map(|element| element.element_id);
@@ -76,7 +80,7 @@ fn the_owners_game_captures_read_through_the_games_state() {
     });
     eprintln!("{counts:?}");
     assert!(
-        counts.regenerations > 0 && counts.maps > 0 && counts.walks > 0,
+        counts.regenerations > 0 && counts.maps > 0 && counts.walks > 0 && counts.updates > 0,
         "nothing read: {counts:?}"
     );
     assert_eq!(counts.missed_lives, 0, "lives counted more than a point off");
