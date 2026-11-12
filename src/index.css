@@ -153,6 +153,48 @@
   }
 }
 
+/* The editor's tab strip: the tabs, drawn by `EditorTab`, rise from it with rounded tops; dockview's own ground and
+   lines stay out. */
+.d3b-dockview {
+  --dv-activegroup-visiblepanel-tab-background-color: transparent;
+  --dv-activegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-inactivegroup-visiblepanel-tab-background-color: transparent;
+  --dv-inactivegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-tab-divider-color: transparent;
+}
+.d3b-dockview .dv-tabs-and-actions-container {
+  padding: 5px 4px 0;
+}
+.d3b-dockview .dv-tab {
+  padding: 0 1px 0 0;
+}
+
+/* A character's gauges: a thin rounded bar in its tone. */
+.d3b-gauge {
+  appearance: none;
+}
+.d3b-gauge::-webkit-meter-bar {
+  height: 4px;
+  border: 0;
+  border-radius: 2px;
+  background: #2a2a2a;
+}
+.d3b-gauge::-webkit-meter-optimum-value {
+  border-radius: 2px;
+}
+.d3b-gauge-life::-webkit-meter-optimum-value {
+  background: #3fb950;
+}
+.d3b-gauge-pods::-webkit-meter-optimum-value {
+  background: #0078d4;
+}
+.d3b-gauge-experience::-webkit-meter-optimum-value {
+  background: #a371f7;
+}
+.d3b-gauge-energy::-webkit-meter-optimum-value {
+  background: #d29922;
+}
+
 /* VS Code's command palette dims nothing behind it. */
 [data-slot="dialog-overlay"]:has(+ .d3b-palette) {
   background: transparent;
@@ -162,7 +204,8 @@
 /* Dockview's dark theme, set to Dark Modern's editor tabs: 35 px, the active one with a blue top line. */
 .d3b-dockview {
   --dv-group-view-background-color: var(--editor);
-  --dv-tabs-and-actions-container-background-color: var(--bar);
+  /* The strip on the frame's ground, so the active tab, on the editor's, stands out from it. */
+  --dv-tabs-and-actions-container-background-color: var(--frame);
   --dv-activegroup-visiblepanel-tab-background-color: var(--editor);
   --dv-activegroup-hiddenpanel-tab-background-color: var(--bar);
   --dv-inactivegroup-visiblepanel-tab-background-color: var(--editor);

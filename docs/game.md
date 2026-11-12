@@ -13,7 +13,7 @@ flowchart LR
     obs -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
     ring -->|"the one watched, at most 5 batches/s"| ev2["ipc: InspectorFrames"]
     maps["data: a map's cells, read on demand"] --> cmd["ipc: map_cells"]
-    ev1 --> view["src/characters: the store, the Characters view (the tab and the map come next)"]
+    ev1 --> view["src/characters: the store, the Characters view, a character's tab (the map comes next)"]
     cmd --> view
     ev2 --> insp["src/inspector: the frames, a frame's detail"]
 ```
@@ -91,7 +91,7 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
   to its close, its avatar (its initials until the character renderer), name, level, place or state, and a dot:
   green exploring, amber fighting, grey waiting or unread, red lost. Before a selection a row shows its connection's
   number. Empty, the view says to start Dofus from Ankama's launcher.
-- **A character's tab**, layout "A", comes next: opened from its row, named after the character once known. On the left its
+- **A character's tab**, layout "A": opened from its row, named after the character once known. On the left its
   state: who (level, class, exploring or fighting), where (area, sub-area, coordinates, cell), life (marked while it
   regenerates), pods, experience, energy, action and movement points, kamas, what is around (players, monster
   groups, NPCs, resources), and a line when frames were dropped; on the right the character's map, which comes
@@ -128,4 +128,5 @@ on the list. On 2026-11-12, over the owner's 54 connections: all 634 lives withi
 maps, 90,632 of 91,224 walks from its cell, and 67,713 of 71,882 updates on a known element. Vitest: the store per
 connection; a connection's state (lost, off, waiting, fighting, exploring); a place's name and the avatar's initials;
 the Characters view (its empty line, a row by name, level and place or by connection, an unread protocol, the row
-chosen).
+chosen, its tab opened); a character's tab (who and where, its gauges, what is around, its title, waiting, a protocol
+off, a closed connection).

@@ -42,7 +42,8 @@
       "maximize": "Maximize",
       "restore": "Restore",
       "close": "Close"
-    }
+    },
+    "closeTab": "Close {{title}}"
   },
   "characters": {
     "title": "Characters",
@@ -55,6 +56,34 @@
       "fighting": "In a fight",
       "off": "Protocol not read",
       "lost": "Protocol lost"
+    }
+  },
+  "character": {
+    "state": "State",
+    "levelAndBreed": "Level {{level}} · class {{breed}}",
+    "noPlace": "No map yet",
+    "place": "{{where}} · {{x}}, {{y}} · cell {{cell}}",
+    "life": "Life",
+    "regenerating": "regenerating",
+    "pods": "Pods",
+    "experience": "Experience",
+    "energy": "Energy",
+    "points": "AP · MP",
+    "pointsValue": "{{ap}} · {{mp}}",
+    "kamas": "Kamas",
+    "around": "Around",
+    "players": "Players",
+    "monsterGroups": "Monster groups",
+    "npcs": "NPCs",
+    "resources": "Resources",
+    "stale": "Some values may be out of date: frames were dropped.",
+    "map": "The character's map",
+    "mapSoon": "The character's map comes with the next version.",
+    "waiting": "Waiting for the character to enter the game…",
+    "closed": "This connection has closed.",
+    "off": {
+      "unmapped": "This connection's build has no pins: its protocol is not read.",
+      "unknownBuild": "This connection named no build: its protocol is not read."
     }
   }
 }
