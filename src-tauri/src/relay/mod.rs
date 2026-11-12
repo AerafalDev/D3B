@@ -5,6 +5,8 @@
 //! whose game host and ports become the relay's. Nothing is sent to the game of the relay's own.
 
 mod ankama_config;
+#[cfg(test)]
+mod capture;
 mod connection_phase;
 mod error;
 mod frame;
