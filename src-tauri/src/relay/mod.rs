@@ -28,7 +28,7 @@ use tokio::net::TcpListener;
 use tokio::task::JoinHandle;
 use tokio::time::MissedTickBehavior;
 
-use crate::protocol::Session;
+use crate::protocol::{Observer, Session};
 use ankama_config::ConnectionHost;
 use capture::Recording;
 use connection_phase::Handed;
@@ -132,6 +132,8 @@ struct Inner {
     status: Mutex<Status>,
     /// Told each change of the status, under its lock: it must not ask the relay for anything.
     notify: Box<dyn Fn(Status) + Send + Sync>,
+    /// Makes the observer of the `number`th game connection's decoded messages.
+    observe: Arc<dyn Fn(u64) -> Box<dyn Observer> + Send + Sync>,
     /// Set once by [`Relay::stop`]: nothing is redirected after it.
     stopped: AtomicBool,
     /// The redirect applied, to restore; its lock orders every write of `version`.
@@ -157,12 +159,17 @@ impl Relay {
     /// How long a refused write of `version` waits before it is tried again, at most four times.
     const RESTORE_RETRY: Duration = Duration::from_millis(250);
 
-    /// A relay not started yet, telling `notify` each change of its status.
-    pub fn new(notify: impl Fn(Status) + Send + Sync + 'static) -> Self {
+    /// A relay not started yet, telling `notify` each change of its status, and handing each game connection's
+    /// decoded messages to the observer `observe` makes for it.
+    pub(crate) fn new(
+        notify: impl Fn(Status) + Send + Sync + 'static,
+        observe: impl Fn(u64) -> Box<dyn Observer> + Send + Sync + 'static,
+    ) -> Self {
         Self {
             inner: Arc::new(Inner {
                 status: Mutex::new(Status::new()),
                 notify: Box::new(notify),
+                observe: Arc::new(observe),
                 stopped: AtomicBool::new(false),
                 redirect: Mutex::new(None),
                 tasks: Mutex::new(Vec::new()),
@@ -225,8 +232,9 @@ impl Relay {
             let relay = self.clone();
             let report = move |game| relay.update(|status| status.apply(Change::Game(game)));
             let recording = record.map(|folder| Recording { folder });
+            let observe = Arc::clone(&self.inner.observe);
             tasks.push(tokio::spawn(game_connection::serve(
-                listener, handover, recording, report,
+                listener, handover, recording, report, observe,
             )));
         }
         let relay = self.clone();
@@ -350,6 +358,10 @@ fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
 mod status_tests {
     use super::*;
 
+    fn unobserved(_: u64) -> Box<dyn Observer> {
+        Box::new(crate::protocol::Unobserved)
+    }
+
     #[test]
     fn counts_the_game_connections_open() {
         let mut status = Status::new();
@@ -421,7 +433,7 @@ ConfigUrl=https://config.example.com/config.json
         redirect
             .apply(&original, Some(config))
             .unwrap_or_else(|error| panic!("{error}"));
-        let relay = Relay::new(|_| {});
+        let relay = Relay::new(|_| {}, unobserved);
         *lock(&relay.inner.redirect) = Some(redirect);
 
         let first = relay.stop_with(Duration::ZERO);
@@ -439,7 +451,7 @@ ConfigUrl=https://config.example.com/config.json
         let seen = Arc::new(Mutex::new(Vec::new()));
         let relay = {
             let seen = Arc::clone(&seen);
-            Relay::new(move |status| lock(&seen).push(status.state))
+            Relay::new(move |status| lock(&seen).push(status.state), unobserved)
         };
 
         assert!(relay.stop().is_ok());

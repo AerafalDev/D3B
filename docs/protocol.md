@@ -49,7 +49,10 @@ Each is `inferred` unless said `verified`.
   **lost**; the copy goes on. `protocol::session` is that task: the relay's `game_connection::serve` opens it once a
   ticket is taken, with the build the handover carried; its gate reads a build with pins and leaves any other unread; it
   counts each frame's outcome, keeps the map of the last `MapCurrentEvent`, and tells the relay's status at once, then
-  at most once a second while something changed, and once more when the connection ends, which removes it. Half-close
+  at most once a second while something changed, and once more when the connection ends, which removes it. Each
+  message it decodes goes to the connection's observer, which the relay's owner makes for it, with the dropped count
+  then; the observer is also told the time every 200 ms and the connection's end, so that `protocol` never depends on
+  `game` ([game.md](game.md)). Half-close
   and errors behave as with `copy_bidirectional` today.
 - A dropped frame can leave the state stale (a dropped current map keeps the last one shown until the next): the
   status shows the count, and the live view says so ([game.md](game.md#the-state-of-a-character)).

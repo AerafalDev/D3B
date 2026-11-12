@@ -1,6 +1,7 @@
 //! The protocol of one game connection (`docs/protocol.md`, "The tap" and "In the app"): the gate on its build, and a
 //! task that reads the frames the relay's tap hands it through a bounded channel, never waited for, and reports what
-//! it read at most once a second.
+//! it read at most once a second. Each message decoded goes to the connection's [`Observer`], which the protocol knows
+//! nothing more of (`docs/game.md`).
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -19,8 +20,29 @@ use crate::relay::Side;
 /// How many frames may wait for the protocol before one more is dropped and counted (`docs/protocol.md`, "The tap").
 const WAITING: usize = 1024;
 
-/// How often, at most, a connection's protocol tells what changed.
-const REPORT_EVERY: Duration = Duration::from_secs(1);
+/// How often the observer is told the time, so that what it shows can follow a clock (a life regenerating).
+const TICK: Duration = Duration::from_millis(200);
+
+/// How many ticks, at most, between two reports of what changed: once a second.
+const REPORT_EVERY: u32 = 5;
+
+/// What one connection's decoded messages feed: told each as it is read, the time at every [`TICK`] while the
+/// connection lasts, and its end.
+pub(crate) trait Observer: Send + 'static {
+    /// `message`, read at `at` while the connection had dropped `dropped` frames.
+    fn message(&mut self, message: &Message, at: std::time::Instant, dropped: u64);
+    fn tick(&mut self, now: std::time::Instant, dropped: u64);
+    fn closed(&mut self);
+}
+
+/// An observer that keeps nothing: what a connection feeds until the game follows it.
+pub(crate) struct Unobserved;
+
+impl Observer for Unobserved {
+    fn message(&mut self, _: &Message, _: std::time::Instant, _: u64) {}
+    fn tick(&mut self, _: std::time::Instant, _: u64) {}
+    fn closed(&mut self) {}
+}
 
 /// Whether a connection's frames are read.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -108,11 +130,20 @@ fn gate(build: Option<&str>) -> (ProtocolState, Option<Pins>) {
 
 /// Opens the protocol of a game connection of `build`, on the current Tokio runtime: its tap, and a task telling
 /// `report` the session at once, then at most once a second while it changes, and `None` once the tap is dropped.
-pub(crate) fn open(build: Option<String>, report: impl Fn(Option<Session>) + Send + 'static) -> Tap {
-    open_with(build, WAITING, report)
+pub(crate) fn open(
+    build: Option<String>,
+    report: impl Fn(Option<Session>) + Send + 'static,
+    observer: Box<dyn Observer>,
+) -> Tap {
+    open_with(build, WAITING, report, observer)
 }
 
-fn open_with(build: Option<String>, waiting: usize, report: impl Fn(Option<Session>) + Send + 'static) -> Tap {
+fn open_with(
+    build: Option<String>,
+    waiting: usize,
+    report: impl Fn(Option<Session>) + Send + 'static,
+    observer: Box<dyn Observer>,
+) -> Tap {
     let (state, pins) = gate(build.as_deref());
     let (frames, received) = mpsc::channel(waiting);
     let shared = Arc::new(Shared::default());
@@ -122,7 +153,7 @@ fn open_with(build: Option<String>, waiting: usize, report: impl Fn(Option<Sessi
         counts: Counts::default(),
         map_id: None,
     };
-    let task = tokio::spawn(run(session, pins, received, Arc::clone(&shared), report));
+    let task = tokio::spawn(run(session, pins, received, Arc::clone(&shared), report, observer));
     Tap {
         frames,
         reading: state == ProtocolState::On,
@@ -137,23 +168,32 @@ async fn run(
     mut frames: mpsc::Receiver<(Side, Vec<u8>)>,
     shared: Arc<Shared>,
     report: impl Fn(Option<Session>),
+    mut observer: Box<dyn Observer>,
 ) {
     report(Some(session.clone()));
-    let mut tick = tokio::time::interval(REPORT_EVERY);
+    let mut tick = tokio::time::interval(TICK);
     tick.set_missed_tick_behavior(MissedTickBehavior::Delay);
     tick.tick().await;
-    let mut changed = false;
+    let (mut changed, mut ticks) = (false, 0_u32);
     loop {
         tokio::select! {
             frame = frames.recv() => {
                 let Some((side, body)) = frame else { break };
                 if let Some(pins) = &pins {
-                    read(&mut session, pins, side, &body);
+                    let dropped = shared.dropped.load(Ordering::Relaxed);
+                    if let Some(message) = read(&mut session, pins, side, &body) {
+                        observer.message(&message, tokio::time::Instant::now().into_std(), dropped);
+                    }
                     changed = true;
                 }
             }
-            _ = tick.tick() => {
+            now = tick.tick() => {
                 let dropped = shared.dropped.load(Ordering::Relaxed);
+                observer.tick(now.into_std(), dropped);
+                ticks = (ticks + 1) % REPORT_EVERY;
+                if ticks != 0 {
+                    continue;
+                }
                 let lost = shared.lost.load(Ordering::Relaxed) && session.state == ProtocolState::On;
                 if lost {
                     session.state = ProtocolState::Lost;
@@ -166,11 +206,12 @@ async fn run(
             }
         }
     }
+    observer.closed();
     report(None);
 }
 
-/// Reads one frame into `session`: its outcome counted, and the current map kept.
-fn read(session: &mut Session, pins: &Pins, side: Side, body: &[u8]) {
+/// Reads one frame into `session`: its outcome counted, and the current map kept; the message, when one was decoded.
+fn read(session: &mut Session, pins: &Pins, side: Side, body: &[u8]) -> Option<Message> {
     let (outcome, message) = decoder::read(pins, side, body);
     let counts = &mut session.counts;
     match outcome {
@@ -179,9 +220,10 @@ fn read(session: &mut Session, pins: &Pins, side: Side, body: &[u8]) {
         Outcome::Unknown => counts.unknown += 1,
         Outcome::NotTrusted => counts.not_trusted += 1,
     }
-    if let Some(Message::MapCurrentEvent(current)) = message {
+    if let Some(Message::MapCurrentEvent(current)) = &message {
         session.map_id = Some(current.map_id);
     }
+    message
 }
 
 #[cfg(test)]

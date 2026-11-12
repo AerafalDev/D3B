@@ -33,7 +33,49 @@ fn event(name: &str, value: &[u8]) -> Vec<u8> {
 /// What a session reported, in order.
 type Reports = Arc<Mutex<Vec<Option<Session>>>>;
 
+/// What an observer was told: a message by its readable name and the dropped count, a tick, or the end.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Told {
+    Message(&'static str, u64),
+    Tick,
+    Closed,
+}
+
+#[derive(Default)]
+struct Recorder(Arc<Mutex<Vec<Told>>>);
+
+impl Observer for Recorder {
+    fn message(&mut self, message: &Message, _: std::time::Instant, dropped: u64) {
+        let name = match message {
+            Message::MapCurrentEvent(_) => "MapCurrentEvent",
+            _ => "another",
+        };
+        self.0
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(Told::Message(name, dropped));
+    }
+
+    fn tick(&mut self, _: std::time::Instant, _: u64) {
+        self.0
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(Told::Tick);
+    }
+
+    fn closed(&mut self) {
+        self.0
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(Told::Closed);
+    }
+}
+
 fn opened(build: Option<&str>, waiting: usize) -> (Tap, Reports) {
+    observed(build, waiting).0
+}
+
+fn observed(build: Option<&str>, waiting: usize) -> ((Tap, Reports), Arc<Mutex<Vec<Told>>>) {
     let reports = Reports::default();
     let told = Arc::clone(&reports);
     let report = move |session| {
@@ -41,7 +83,14 @@ fn opened(build: Option<&str>, waiting: usize) -> (Tap, Reports) {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .push(session);
     };
-    (open_with(build.map(str::to_owned), waiting, report), reports)
+    let recorder = Recorder::default();
+    let observed = Arc::clone(&recorder.0);
+    let tap = open_with(build.map(str::to_owned), waiting, report, Box::new(recorder));
+    ((tap, reports), observed)
+}
+
+fn told(observed: &Arc<Mutex<Vec<Told>>>) -> Vec<Told> {
+    std::mem::take(&mut *observed.lock().unwrap_or_else(std::sync::PoisonError::into_inner))
 }
 
 fn taken(reports: &Reports) -> Vec<Option<Session>> {
@@ -189,4 +238,45 @@ async fn a_build_without_pins_reads_nothing() {
         );
         assert_eq!(reports[1], None);
     }
+}
+
+#[tokio::test(start_paused = true)]
+async fn tells_its_observer_each_message_decoded_the_time_and_the_end() {
+    let ((tap, _), observed) = observed(Some("3.7.13.17"), 1);
+
+    // The second frame cannot wait: it is dropped, and the messages read after it are told with that count.
+    tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 1)]))));
+    tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 2)]))));
+    after(0).await;
+    // A message not pinned is not told.
+    tap.give(Side::Server, Some(&event("jqk", &[])));
+    after(0).await;
+    tap.give(
+        Side::Server,
+        Some(&event("iqq", &message(&[varint(1, 1), varint(2, 2)]))),
+    );
+    after(0).await;
+    assert_eq!(
+        told(&observed),
+        [Told::Message("MapCurrentEvent", 1), Told::Message("another", 1)]
+    );
+
+    after(1_000).await;
+    assert_eq!(told(&observed), vec![Told::Tick; 5], "a tick every 200 ms");
+
+    drop(tap);
+    after(0).await;
+    assert_eq!(told(&observed), [Told::Closed]);
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_build_without_pins_tells_its_observer_no_message() {
+    let ((tap, _), observed) = observed(Some("3.7.14.1"), 16);
+
+    tap.give(Side::Server, Some(&event("jow", &message(&[varint(1, 1)]))));
+    after(200).await;
+    drop(tap);
+    after(0).await;
+
+    assert_eq!(told(&observed), [Told::Tick, Told::Closed]);
 }
