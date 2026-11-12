@@ -43,5 +43,18 @@
       "restore": "Restaurer",
       "close": "Fermer"
     }
+  },
+  "characters": {
+    "title": "Personnages",
+    "empty": "Lancez Dofus depuis le launcher d'Ankama : chaque personnage qu'il joue apparaît ici.",
+    "connection": "Connexion {{number}}",
+    "level": "niv. {{level}}",
+    "state": {
+      "waiting": "Entrée en jeu…",
+      "exploring": "Exploration",
+      "fighting": "En combat",
+      "off": "Protocole non lu",
+      "lost": "Protocole perdu"
+    }
   }
 }
