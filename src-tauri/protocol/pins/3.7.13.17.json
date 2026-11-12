@@ -18,5 +18,11 @@
     "MapMovementEvent": "jnz",
     "StatedElementUpdatedEvent": "itw"
   },
-  "secrets": ["knc", "koc", "kod", "kof", "kso"]
+  "secrets": [
+    "knc",
+    "koc",
+    "kod",
+    "kof",
+    "kso"
+  ]
 }
