@@ -30,8 +30,8 @@ VS Code's, part for part (`src/shell/`):
 The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout with its parts as discreet islands.
 
 - **Islands**: each part (side bars, editor area, panel) is a card with 6 px corners and a faint 1 px edge (`#232323`),
-  3 px from the next on the window's frame (`#111111`), the title, activity and status bars lying on the frame. The
-  gaps turn blue under the pointer, as VS Code's sashes.
+  5 px from the next on the window's frame (`#111111`; 3 px at first, the owner asked for a little more room), the
+  title, activity and status bars lying on the frame. The gaps turn blue under the pointer, as VS Code's sashes.
 - **Colours**: VS Code's Dark Modern, the parts `#181818`, the editor `#1f1f1f`, text `#d6d6d6` and `#a8a8a8`; the
   blue accent `#0078d4` kept rare. Dark only: nothing switches to a light theme.
 - **Shapes, for the features to come**: the activity bar's active entry is a rounded pill, not VS Code's blue line; a
