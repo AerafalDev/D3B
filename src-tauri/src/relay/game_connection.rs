@@ -86,10 +86,10 @@ pub(crate) async fn serve(
     }
 }
 
-/// Relays one game connection: reads the client's first frame, takes its ticket's game server from `handover`,
-/// reaches it through `connect`, says so through `opened`, relays the bytes read so far, then both ways until both
-/// sides are done, giving `tap` the body of every frame each side sent, the first one included, and the recorder
-/// `record` makes for what waited for the ticket, if any, every read. `false` when it closed before reaching a game server.
+/// Relays one game connection: reads the client's first frame, takes its ticket's game server from `handover`, reaches
+/// it through `connect`, says so through `opened`, relays the bytes read so far, then both ways until both sides are
+/// done, giving `tap` the body of every frame each side sent, the first one included, and the recorder `record` makes
+/// for what waited for the ticket, if any, every read. `false` when it closed before reaching a game server.
 pub(crate) async fn relay<C, S, F>(
     mut client: C,
     handover: &Mutex<Handover>,

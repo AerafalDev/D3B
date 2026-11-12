@@ -195,9 +195,9 @@ async fn watch_requests(
 }
 
 /// Copies the server's bytes to the client a whole frame at a time, so that the selection's answer, once the client
-/// asked for a server, is rewritten when understood, its ticket handed over with the client's `build`. A frame not whole within [`HOLD`] of its first byte, or over
-/// [`HOLD_LIMIT`], passes as it came, and the rest is only copied. Also `true` when a length is not a frame's, which
-/// closes the connection.
+/// asked for a server, is rewritten when understood, its ticket handed over with the client's `build`. A frame not
+/// whole within [`HOLD`] of its first byte, or over [`HOLD_LIMIT`], passes as it came, and the rest is only copied.
+/// Also `true` when a length is not a frame's, which closes the connection.
 async fn pass_answers(
     from: &mut (impl AsyncRead + Unpin),
     to: &mut (impl AsyncWrite + Unpin),
@@ -299,10 +299,11 @@ fn client_version(body: &[u8]) -> Option<String> {
 }
 
 /// The selection's answer rewritten to send the game connection to the relay, as a whole frame; its ticket and real
-/// game server are put in the handover with the client's `build`. `None` when `body` is not that answer, read whole and of the expected shape:
-/// `response = 2 { id = 1, server_selection = 4 { success = 1 { ticket = 1, host = 2, ports = 3 } } }`, a ticket of
-/// 32 letters and digits, a host name, packed ports from 1 to 65535 (path 2.4.1, `artifacts/studies/relay.md`,
-/// addendum; the shape checks are the owner's choice for builds not measured, 2026-11-11).
+/// game server are put in the handover with the client's `build`. `None` when `body` is not that answer, read whole and
+/// of the expected shape: `response = 2 { id = 1, server_selection = 4 { success = 1 { ticket = 1, host = 2, ports = 3
+/// } } }`, a ticket of 32 letters and digits, a host name, packed ports from 1 to 65535 (path 2.4.1,
+/// `artifacts/studies/relay.md`, addendum; the shape checks are the owner's choice for builds not measured,
+/// 2026-11-11).
 fn rewrite_selection(
     body: &[u8],
     handover: &Mutex<Handover>,
@@ -690,6 +691,9 @@ mod tests {
         let request = message(&[bytes(1, b"1"), bytes(4, &message(&[bytes(5, b"3.7.13.17")]))]);
         let mut padded_request = message(&[bytes(1, b"1")]);
         padded_request.extend_from_slice(&padded(3, &message(&[bytes(5, b"3.7.13.17")])));
+        let mut padded_identification = message(&[bytes(1, b"device")]);
+        padded_identification.extend_from_slice(&padded(5, b"3.7.13.17"));
+        let twice = message(&[bytes(5, b"3.7.13.17"), bytes(5, b"3.7.13.18")]);
         for body in [
             identification_of(b""),
             identification_of(b"../3.7.13.17"),
@@ -701,6 +705,8 @@ mod tests {
             identification_of(&[0xff]),
             message(&[bytes(1, &request)]),
             message(&[bytes(1, &padded_request)]),
+            message(&[bytes(1, &message(&[bytes(1, b"1"), bytes(3, &padded_identification)]))]),
+            message(&[bytes(1, &message(&[bytes(1, b"1"), bytes(3, &twice)]))]),
             selection_request(),
             answer(),
             Vec::new(),
@@ -774,18 +780,14 @@ mod tests {
         assert_eq!(relay.await.ok(), Some((Handed::Over, 1)));
     }
 
-    /// The build handed over with the ticket, once a client chose a server in one read after its identification, when
-    /// `identified`.
-    async fn build_handed_over(identified: bool) -> Option<Option<String>> {
+    /// The build handed over with the ticket, once a client chose a server in one read after identifying itself with
+    /// `identifications`.
+    async fn build_handed_over(identifications: &[Vec<u8>]) -> Option<Option<String>> {
         let (mut client, client_side) = tokio::io::duplex(1 << 16);
         let (mut server, server_side) = tokio::io::duplex(1 << 16);
         let handover = Mutex::new(Handover::default());
         let talk = async move {
-            let mut requests = if identified {
-                framed(&identification())
-            } else {
-                Vec::new()
-            };
+            let mut requests: Vec<u8> = identifications.iter().flat_map(|body| framed(body)).collect();
             requests.extend_from_slice(&framed(&selection_request()));
             send(&mut client, &requests).await;
             read_exactly(&mut server, requests.len()).await;
@@ -805,12 +807,25 @@ mod tests {
 
     #[tokio::test]
     async fn hands_the_clients_build_over_with_its_ticket() {
-        assert_eq!(build_handed_over(true).await, Some(Some("3.7.13.17".into())));
+        assert_eq!(
+            build_handed_over(&[identification()]).await,
+            Some(Some("3.7.13.17".into()))
+        );
     }
 
     #[tokio::test]
     async fn hands_over_no_build_when_the_client_named_none() {
-        assert_eq!(build_handed_over(false).await, Some(None));
+        assert_eq!(build_handed_over(&[]).await, Some(None));
+    }
+
+    #[tokio::test]
+    async fn hands_over_the_first_build_named() {
+        let identifications = [identification_of(b"3.7.13.17"), identification_of(b"3.7.14.1")];
+
+        assert_eq!(
+            build_handed_over(&identifications).await,
+            Some(Some("3.7.13.17".into()))
+        );
     }
 
     #[tokio::test]
