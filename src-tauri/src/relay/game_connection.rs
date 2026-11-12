@@ -115,14 +115,12 @@ where
     let Some(server) = server else {
         return false;
     };
-    let recorder = record(&server);
+    let target = server.clone();
     let Some(mut server) = connect(server).await else {
-        if let Some(recorder) = recorder {
-            recorder.finish().await;
-        }
         return false;
     };
     opened();
+    let recorder = record(&target);
     let note = |side, bytes: &[u8]| {
         if let Some(recorder) = &recorder {
             recorder.record(side, bytes);

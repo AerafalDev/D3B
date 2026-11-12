@@ -97,7 +97,10 @@ pub fn start(app: &tauri::App) {
     });
     let state = paths.app_local_data_dir().ok().map(|folder| folder.join("redirect"));
     // Captures of the game connections, for the maintainer only: they hold the account's ticket (docs/protocol.md).
-    let record = std::env::var_os("D3B_RECORD").map(PathBuf::from);
+    // An empty or relative folder would put them wherever the app was started from: only an absolute one is taken.
+    let record = std::env::var_os("D3B_RECORD")
+        .map(PathBuf::from)
+        .filter(|folder| folder.is_absolute());
     tauri::async_runtime::spawn(async move {
         match (client, state) {
             (Some(client), Some(state)) => relay.start(client, state, record).await,

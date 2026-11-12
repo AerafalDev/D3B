@@ -133,7 +133,9 @@ fn write(
             cut.store(true, Ordering::Relaxed);
         }
     }
-    let _ = file.flush();
+    if file.flush().is_err() {
+        cut.store(true, Ordering::Relaxed);
+    }
     drop(file);
     if cut.load(Ordering::Relaxed) {
         let _ = std::fs::rename(&path, folder.join(format!("{name}-cut.d3bcap")));
@@ -206,6 +208,48 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn writes_the_header_of_format_2() {
+        let folder = folder("header");
+        let started = UNIX_EPOCH + Duration::from_millis(258);
+
+        recording(folder.clone()).start(&server(), started, 1).finish().await;
+
+        let bytes = std::fs::read(folder.join("3.7.13.17-258-1.d3bcap")).unwrap_or_default();
+        let _ = std::fs::remove_dir_all(&folder);
+        let mut expected = b"D3B-CAPT".to_vec();
+        expected.extend_from_slice(&2_i32.to_le_bytes());
+        expected.extend_from_slice(&258_i64.to_le_bytes());
+        for text in [
+            "3.7.13.17",
+            "127.0.13.59:5556",
+            "game.example.com",
+            "game.example.com:5555",
+        ] {
+            expected.push(u8::try_from(text.len()).unwrap_or_default());
+            expected.extend_from_slice(text.as_bytes());
+        }
+        assert_eq!(bytes, expected);
+    }
+
+    #[tokio::test]
+    async fn never_writes_over_an_earlier_capture() {
+        let folder = folder("taken");
+        std::fs::create_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+        let path = folder.join("3.7.13.17-0-1.d3bcap");
+        std::fs::write(&path, b"earlier").unwrap_or_else(|error| panic!("{error}"));
+
+        let recorder = recording(folder.clone()).start(&server(), UNIX_EPOCH, 1);
+        let cut = Arc::clone(&recorder.cut);
+        recorder.record(Side::Client, b"later");
+        recorder.finish().await;
+
+        let kept = std::fs::read(&path).unwrap_or_default();
+        let _ = std::fs::remove_dir_all(&folder);
+        assert_eq!(kept, b"earlier");
+        assert!(cut.load(Ordering::Relaxed), "the reads kept being taken");
+    }
+
+    #[tokio::test]
     async fn a_read_that_cannot_wait_cuts_the_capture() {
         // A disk that takes nothing: the writer's end is held here, never read.
         let (reads, mut received) = mpsc::channel(1);
@@ -252,10 +296,12 @@ mod tests {
         std::fs::write(&folder, b"in the way").unwrap_or_else(|error| panic!("{error}"));
 
         let recorder = recording(folder.join("inside")).start(&server(), UNIX_EPOCH, 1);
+        let cut = Arc::clone(&recorder.cut);
         recorder.record(Side::Server, b"lost");
         recorder.finish().await;
 
         assert!(folder.is_file(), "the file in the way was touched");
+        assert!(cut.load(Ordering::Relaxed), "the reads kept being taken");
         let _ = std::fs::remove_file(&folder);
     }
 }
