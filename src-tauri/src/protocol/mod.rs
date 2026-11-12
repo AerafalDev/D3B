@@ -11,6 +11,24 @@
 )]
 mod message;
 
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the decoder of a build's frames reads them, in the stack's next PRs"
+    )
+)]
+mod envelope;
+
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the decoder of a build's frames reads them, in the stack's next PRs"
+    )
+)]
+mod outcome;
+
 /// The messages of our `.proto` files, as `prost-build` writes them.
 // `allow`, not `expect`: which lints the generated code trips changes with prost's version, and an expectation left
 // unfulfilled would fail the build.
