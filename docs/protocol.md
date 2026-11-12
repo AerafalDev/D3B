@@ -55,12 +55,12 @@ Each is `inferred` unless said `verified`.
 
 ## Decoding
 
-- **Our readable `.proto` files** in `src-tauri/protocol/game/` (`character.proto`, `maps.proto`, package
-  `d3b.game`), written by us with the field numbers checked against the captures, compiled with `prost` by
-  `prost-build` and `protox` in `build.rs` (no `protoc` to install) into `protocol::game`; `protocol::message::Message` holds
-  the live view's messages by their readable names. Names are the C# version's (inferred); a message declares only
-  the fields D3B reads (partial, so its frames are "read"), an enum it does not need is read as its number, and no map
-  is declared (prost's maps would not keep the client's order).
+- **Our readable `.proto` files** in `src-tauri/protocol/game/` (`character.proto`, `maps.proto`, package `d3b.game`),
+  written by us with the field numbers checked by hand against 3.7.13.17's schema (the audit test next), compiled with
+  `prost` by `prost-build` and `protox` in `build.rs` (no `protoc` to install) into `protocol::game`;
+  `protocol::message::Message` holds the live view's messages by their readable names. Names are the C# version's
+  (inferred); a message declares only the fields D3B reads (partial, so its frames are "read"), an enum it does not need
+  is read as its number, and no map is declared (prost's maps would not keep the client's order).
 - **Pins**, `src-tauri/protocol/pins/<build>.json`: `{build, schemaSha256, messages: {Readable: "abc"}, secrets:
   ["abc"]}`, one entry per message a feature reads, embedded in the app. `secrets` names the build's messages that
   carry a session secret (the ticket's request, and those the study found holding secrets): their frames are dropped

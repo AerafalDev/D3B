@@ -1,7 +1,8 @@
 // The character played, its context, characteristics, life and weight: the live view's messages (docs/protocol.md,
-// "Decoding"). Readable names are the C# version's (inferred, `main:src/D3B.Protocol/Game/`); field numbers and kinds
-// are checked against 3.7.13.17's schema by the pins' audit. A message marked partial declares only the fields D3B
-// reads.
+// "Decoding"). Readable names and meanings are the C# version's (inferred, `main:src/D3B.Protocol/Game/` and
+// `main:docs/client-game.md`); field numbers and kinds were checked by hand against 3.7.13.17's schema (the
+// extractor's, 2026-11-12), which the pins' audit test checks next. A message marked partial declares only the fields
+// D3B reads.
 syntax = "proto3";
 
 package d3b.game;
@@ -51,7 +52,7 @@ message ContextCreationEvent {
   }
 }
 
-// The character leaves its context, before the next one is created.
+// The character leaves its context; the next one is created after it (inferred, the C# version).
 message ContextDestroyEvent {}
 
 // The character's characteristics. Partial.
@@ -87,7 +88,7 @@ message CharacteristicValue {
 // Partial: its fields' meanings are not measured.
 message DetailedCharacteristic {}
 
-// The character starts regaining life, every `interval` tenths of a second. Partial.
+// The character starts regaining life, every `interval` tenths of a second (inferred, the C# version). Partial.
 message LifeRegenStartEvent {
   int32 interval = 1;
 }

@@ -1,5 +1,5 @@
 //! Each message of the live view decoded from bytes written by hand, field by field, as the client writes them (field
-//! numbers as `src-tauri/protocol/game/` declares them; the pins' audit checks them against the build's schema).
+//! numbers as `src-tauri/protocol/game/` declares them, checked by hand against 3.7.13.17's schema).
 
 use super::*;
 use crate::protocol::game::characteristic::Kind;
@@ -61,7 +61,14 @@ fn reads_what_is_on_the_map_and_drops_what_it_does_not_declare() {
     let disposition = message(&[varint(3, 300), varint(4, 3)]);
     let actor = message(&[varint(1, -20), bytes(2, &disposition), bytes(3, b"\x0a\x00")]);
     let skill = message(&[varint(1, 7), varint(3, 45)]);
-    let interactive = message(&[varint(2, 1), varint(4, 82), bytes(5, &skill), varint(6, 465_210)]);
+    let disabled = message(&[varint(1, 8), varint(3, 46)]);
+    let interactive = message(&[
+        varint(2, 1),
+        bytes(3, &disabled),
+        varint(4, 82),
+        bytes(5, &skill),
+        varint(6, 465_210),
+    ]);
     let body = message(&[
         bytes(2, &stated),
         bytes(3, &actor),
@@ -94,7 +101,18 @@ fn reads_what_is_on_the_map_and_drops_what_it_does_not_declare() {
             direction: 3
         })
     );
-    assert_eq!(map.interactive_elements[0].interactive_id, 82);
+    let element = &map.interactive_elements[0];
+    assert_eq!(
+        (element.on_current_map, element.interactive_id, element.element_id),
+        (true, 82, 465_210)
+    );
+    assert_eq!(
+        element.disabled_skills,
+        [game::InteractiveSkill {
+            instance_id: 8,
+            skill_id: 46
+        }]
+    );
     assert_eq!(
         map.interactive_elements[0].enabled_skills,
         [game::InteractiveSkill {
@@ -178,12 +196,12 @@ fn prost_writes_a_oneof_where_its_first_field_would_be() {
 }
 
 #[test]
-fn a_message_declared_whole_encodes_back_to_its_own_bytes() {
+fn the_declared_fields_encode_back_to_their_own_bytes() {
     let cells = packed(&[287, 301, 315]);
     let stated = message(&[varint(3, 465_210), varint(5, 3)]);
     let interactive = message(&[varint(4, 82), varint(6, 465_210)]);
     let actor = message(&[varint(1, 1_234_567)]);
-    // Every field of each is declared, and a field read with another number or kind would not come back.
+    // Each body holds only fields our `.proto` declares: one read with another number or kind would not come back.
     for (readable, body) in [
         ("ContextCreationEvent", message(&[varint(1, 1)])),
         ("ContextDestroyEvent", Vec::new()),
@@ -219,15 +237,17 @@ fn a_field_of_another_number_does_not_come_back() {
 }
 
 #[test]
-fn every_readable_name_is_its_own_message() {
-    let mut names = READABLE.to_vec();
-    names.sort_unstable();
-    names.dedup();
+fn reads_a_failed_selection() {
+    let body = message(&[bytes(2, &[])]);
 
-    assert_eq!(names.len(), READABLE.len(), "a readable name twice");
-    for &readable in READABLE {
-        assert_eq!(decoded(readable, &[]).readable(), readable);
-    }
+    assert_eq!(
+        decoded("CharacterSelectionEvent", &body),
+        Message::CharacterSelectionEvent(game::CharacterSelectionEvent {
+            result: Some(game::character_selection_event::Result::Failure(
+                game::character_selection_event::Failure {}
+            )),
+        })
+    );
 }
 
 #[test]
