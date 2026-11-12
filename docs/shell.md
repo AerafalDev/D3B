@@ -8,9 +8,13 @@ shown to him before the next (the owner, 2026-11-12). The step-2 interface it re
 VS Code's, part for part (`src/shell/`):
 
 - **Title bar** (35 px): the app's icon and menus, the command centre, the layout toggles, and on Windows the window's
-  buttons, drawn by the app since the window has no frame there (`src-tauri/tauri.windows.conf.json`); its empty parts drag the
-  window and double-clicked maximise it. On macOS and Linux the system keeps its frame and buttons. The menus hold only
-  what works: File, Exit; View, the palette and the three parts.
+  buttons, drawn by the app since the window has no frame there (`src-tauri/tauri.windows.conf.json`, which repeats the
+  main window's entry since Tauri replaces the array whole; a test keeps the two equal). The window keeps its shadow,
+  which rounds its corners on Windows 11, and the window-state plugin restores everything but its frame, which former
+  versions saved. Everything in the bar but its controls drags the window, and double-clicked maximises it. On macOS
+  and Linux the system keeps its frame and buttons; on macOS its menu bar holds the menus, so none is drawn. The menus
+  hold only what works: File, Exit; View, the palette and the three parts. Measured by the owner on Windows 11
+  (2026-11-12): our frame only, rounded corners, drag, double-click, the window's buttons.
 - **Activity bar** (48 px, left): empty; each entry comes with its feature.
 - **Primary side bar** (300 px, left), **panel** (260 px, under the editor area), **secondary side bar** (300 px,
   right): each resizable, and hidden by its header's button or VS Code's keys (Ctrl+B, Ctrl+J, Ctrl+Alt+B); the
@@ -22,8 +26,8 @@ VS Code's, part for part (`src/shell/`):
 - **Editor area**: tabs and splits by `dockview-react`. With no editor open it shows the app's mark in relief and the
   main shortcuts, these only when it is at least 480 px wide.
 - **Status bar** (22 px): the app's name after a small blue dot; its items come with their features.
-- **Command palette** (Ctrl+Shift+P, or the command centre): every command with its shortcut, filtered as one types,
-  under the title bar, dimming nothing behind it.
+- **Command palette** (Ctrl+Shift+P, or the command centre): every command with its shortcut, itself included,
+  filtered as one types, under the title bar, dimming nothing behind it.
 - **Shortcuts** are written as the platform and the language do (`Ctrl+Maj+P` in French, `⌘⇧P` on macOS).
 
 ## Look
@@ -54,8 +58,9 @@ are followed again by the first feature that shows them.
 ## Tests
 
 Vitest and Testing Library: the shortcuts (each part, a field focused, the palette, the key taken from the webview),
-the shortcuts' labels per platform and language, a part's hide button, the title bar (the window's buttons on Windows
-only, restore once maximised, the toggles pressed while their part shows, the command centre), the palette (its
-commands, filtering, running one), and a part's collapse and slide against a fake panel (starting hidden, following the layout, the 200 ms
-slide, two quick toggles, a drag below the minimum). The layout itself is checked in the browser preview, not in
-happy-dom, which has no layout.
+their labels per platform and language, a part's hide button, the title bar (the window's buttons on Windows only,
+restore once maximised, no menus on macOS, each toggle pressed while its part shows, the command centre, File > Exit
+through the close request, View's checked parts), the Windows window's config against the main one, the palette (its
+commands, filtering, running one), and a part's collapse and slide against a fake panel (starting hidden, first
+opening at its default size, hide and show, the 200 ms slide, two quick toggles, a drag below the minimum). The layout
+itself is checked in the browser preview, not in happy-dom, which has no layout.
