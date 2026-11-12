@@ -3,6 +3,7 @@
 
 mod data;
 mod ipc;
+mod protocol;
 mod relay;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

@@ -1,0 +1,89 @@
+// The current map, what is on it, and what changes there: the live view's messages (docs/protocol.md, "Decoding").
+// Readable names and meanings are the C# version's (inferred, `main:src/D3B.Protocol/Game/` and
+// `main:docs/client-game.md`); field numbers and kinds were checked by hand against 3.7.13.17's schema (the
+// extractor's, 2026-11-12), which the pins' audit test checks next. A message marked partial declares only the fields
+// D3B reads: the others are dropped on decoding, which makes its frames "read" rather than "understood".
+syntax = "proto3";
+
+package d3b.game;
+
+// The map the character is on: sent on entering the game and on each map change (inferred, the C# version; 65,839
+// frames in the owner's 54 game connections).
+message MapCurrentEvent {
+  int64 map_id = 1;
+}
+
+// The client asks for the map's information after each `MapCurrentEvent` (inferred, the C# version; 65,836 frames).
+message MapInformationRequest {
+  int64 map_id = 1;
+}
+
+// What is on the map. Partial.
+message MapInformationEvent {
+  repeated StatedElement stated_elements = 2;
+  repeated Actor actors = 3;
+  repeated InteractiveElement interactive_elements = 7;
+  int64 map_id = 10;
+  int32 sub_area_id = 12;
+}
+
+// Actors that came onto the map.
+message MapActorShownEvent {
+  repeated Actor actors = 1;
+}
+
+// An actor that left the map.
+message MapActorRemovedEvent {
+  int64 actor_id = 1;
+}
+
+// An actor walking: its path, its last value where it stops (inferred, the C# version; whether a value packs a direction
+// with its cell, as Dofus 2's did, is not measured). Partial.
+message MapMovementEvent {
+  repeated int32 cells = 1;
+  int64 actor_id = 4;
+}
+
+// An actor on a map. Partial: what it is (`information`, field 3) is read by a later feature.
+message Actor {
+  int64 id = 1;
+  ActorDisposition disposition = 2;
+}
+
+// Where an actor stands. Partial.
+message ActorDisposition {
+  optional int32 cell_id = 3;
+  // An enum of 8 values in the schema, read as its number.
+  int32 direction = 4;
+}
+
+// An element the character can use, such as a resource. Partial.
+message InteractiveElement {
+  bool on_current_map = 2;
+  repeated InteractiveSkill disabled_skills = 3;
+  int32 interactive_id = 4;
+  repeated InteractiveSkill enabled_skills = 5;
+  int32 element_id = 6;
+}
+
+// A skill of an interactive element. Partial.
+message InteractiveSkill {
+  int32 instance_id = 1;
+  int32 skill_id = 3;
+}
+
+// An element with a state, such as a resource grown or harvested. Partial.
+message StatedElement {
+  bool on_current_map = 2;
+  int32 element_id = 3;
+  int32 cell_id = 4;
+  int32 state = 5;
+}
+
+message InteractiveElementUpdatedEvent {
+  InteractiveElement element = 1;
+}
+
+message StatedElementUpdatedEvent {
+  StatedElement element = 1;
+}

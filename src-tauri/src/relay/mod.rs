@@ -13,7 +13,7 @@ mod game_connection;
 mod handover;
 mod redirect;
 mod version_file;
-mod wire;
+pub(crate) mod wire;
 
 pub use error::RelayError;
 

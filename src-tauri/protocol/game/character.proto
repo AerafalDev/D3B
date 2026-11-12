@@ -1,0 +1,107 @@
+// The character played, its context, characteristics, life and weight: the live view's messages (docs/protocol.md,
+// "Decoding"). Readable names and meanings are the C# version's (inferred, `main:src/D3B.Protocol/Game/` and
+// `main:docs/client-game.md`); field numbers and kinds were checked by hand against 3.7.13.17's schema (the
+// extractor's, 2026-11-12), which the pins' audit test checks next. A message marked partial declares only the fields
+// D3B reads.
+syntax = "proto3";
+
+package d3b.game;
+
+// The answer to the character chosen.
+message CharacterSelectionEvent {
+  oneof result {
+    Success success = 1;
+    Failure failure = 2;
+  }
+
+  // Partial.
+  message Success {
+    Character character = 1;
+  }
+
+  message Failure {}
+}
+
+// A character of the account. Partial.
+message Character {
+  int64 id = 3;
+  // In a oneof of the schema with field 2, which D3B does not read.
+  CharacterBasics basics = 4;
+}
+
+// Partial.
+message CharacterBasics {
+  optional int32 level = 3;
+  string name = 6;
+  // In a oneof of the schema with fields 1 and 2, which D3B does not read.
+  CharacterLook look = 5;
+}
+
+// Partial.
+message CharacterLook {
+  int32 breed_id = 3;
+}
+
+// The character enters roleplay or a fight.
+message ContextCreationEvent {
+  GameContext context = 1;
+
+  enum GameContext {
+    GAME_CONTEXT_ROLEPLAY = 0;
+    GAME_CONTEXT_FIGHT = 1;
+  }
+}
+
+// The character leaves its context; the next one is created after it (inferred, the C# version).
+message ContextDestroyEvent {}
+
+// The character's characteristics. Partial.
+message CharacterStatsEvent {
+  CharacterStats stats = 1;
+}
+
+// Partial.
+message CharacterStats {
+  repeated Characteristic characteristics = 1;
+}
+
+// One characteristic: its id and its value, of one of three kinds. Partial.
+message Characteristic {
+  int32 id = 2;
+  oneof kind {
+    UsableCharacteristic usable = 1;
+    CharacteristicValue value = 3;
+    DetailedCharacteristic detailed = 5;
+  }
+}
+
+// Partial: its other fields' meanings are not measured.
+message UsableCharacteristic {
+  int32 spent = 7;
+}
+
+// Partial.
+message CharacteristicValue {
+  int64 total = 2;
+}
+
+// Partial: its fields' meanings are not measured.
+message DetailedCharacteristic {}
+
+// The character starts regaining life, every `interval` tenths of a second (inferred, the C# version). Partial.
+message LifeRegenStartEvent {
+  int32 interval = 1;
+}
+
+// The character stops regaining life. Partial.
+message LifeRegenEndEvent {
+  int32 max_life = 1;
+  int32 life = 3;
+  optional int32 regenerated = 4;
+}
+
+// What the character carries against what it can.
+message InventoryWeightEvent {
+  int32 weight = 1;
+  int32 max_weight = 2;
+}
