@@ -2,9 +2,10 @@ import { useTranslation } from "react-i18next";
 
 import type { GameConnectionStatus } from "@/bindings.ts";
 import { cn } from "@/lib/utils.ts";
+import { Avatar } from "./avatar.tsx";
 import { characterState } from "./character-state.ts";
 import type { CharacterView } from "./character-store.ts";
-import { initials, placeName } from "./names.ts";
+import { placeName } from "./names.ts";
 
 interface CharacterRowProps {
   connection: GameConnectionStatus;
@@ -23,7 +24,7 @@ const DOT = {
 } as const;
 
 /**
- * A character in the list: its avatar (its initials), its name and level, where it
+ * A character in the list: its avatar (its breed's head, else its initials), its name and level, where it
  * is or what it is doing, and its state's dot. Before its name is known, its connection's number stands in.
  */
 export function CharacterRow({ connection, view, selected, onOpen }: CharacterRowProps) {
@@ -42,12 +43,7 @@ export function CharacterRow({ connection, view, selected, onOpen }: CharacterRo
         selected && "bg-[#2a2c30] hover:bg-[#2a2c30]",
       )}
     >
-      <span
-        aria-hidden="true"
-        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#34373d] text-[11px] font-medium"
-      >
-        {initials(name)}
-      </span>
+      <Avatar name={name} head={view?.head ?? null} size="row" />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate">
           <span className={cn(selected && "text-white")}>{name}</span>
