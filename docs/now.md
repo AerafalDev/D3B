@@ -94,10 +94,8 @@ _Updated 2026-11-13._
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>.tar.gz` that `data:fetch` reads; the app reads it all at start
-  but the maps, which it reads one file at a time.
-- **Debt**, from the review of step 1: the reader of the tiles is tested on the installed client only (skipped in
-  CI); hand-built trees (`TypeTree.Build`) would test its failures in CI too, as they now do for the map reader's, in
-  both layouts (`tests/Maps/TestMap.cs`), and the world graph reader's (`tests/Graph/TestGraph.cs`).
+  but the maps, which it reads one file at a time. The readers of maps, of the world graph and of the tiles have their
+  checks tested in CI on objects built by hand (`TestMap`, `TestGraph`, `TestTiles`), the debt of step 1's review.
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go; `.github/game-data.json` names it, so the next release packs it.
   v0.11.0 shipped without data, named before. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data

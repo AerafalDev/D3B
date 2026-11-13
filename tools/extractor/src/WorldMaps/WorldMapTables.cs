@@ -41,12 +41,7 @@ internal static partial class WorldMapTables
 
         var zooms = records.ToDictionary(record => record.Int32("id"), ZoomsOf);
         var tiles = ReadTiles(bundle, addresses, zooms, folder);
-        var worlds = records.Select(record => WorldOf(record, texts, zooms[record.Int32("id")], tiles)).OrderBy(world => world.Id).ToList();
-
-        if (tiles.Count != worlds.Sum(world => world.Zooms.Sum(zoom => Columns(zoom.Width) * Columns(zoom.Height))))
-        {
-            throw new InvalidDataException($"The bundle holds {tiles.Count:N0} tiles, which the worlds' zooms do not cut.");
-        }
+        var worlds = Worlds(records, texts, zooms, tiles);
 
         folder.Write("worlds.json", Write(worlds));
 
@@ -98,7 +93,86 @@ internal static partial class WorldMapTables
         return (pixels + WorldMap.TileSize - 1) / WorldMap.TileSize;
     }
 
-    private static int[] ZoomsOf(Fields record)
+    /// <summary>The worlds of the table in order of id, each sized by its tiles and checked against its record.</summary>
+    /// <param name="records">The table's records.</param>
+    /// <param name="texts">The texts the records name.</param>
+    /// <param name="zooms">Each world's zooms by its id, as <see cref="ZoomsOf"/> reads them.</param>
+    /// <param name="tiles">Each tile's size and the length of its JPEG, by its world, zoom and index.</param>
+    /// <exception cref="InvalidDataException">A world's tiles do not cut its size, or a tile is left that no zoom cuts.</exception>
+    public static List<WorldMap> Worlds(IEnumerable<Fields> records, TextFiles texts, IReadOnlyDictionary<int, int[]> zooms, IReadOnlyDictionary<(int World, int Zoom, int Index), (int Width, int Height, int Bytes)> tiles)
+    {
+        var worlds = records.Select(record => WorldOf(record, texts, zooms[record.Int32("id")], tiles)).OrderBy(world => world.Id).ToList();
+
+        if (tiles.Count != worlds.Sum(world => world.Zooms.Sum(zoom => Columns(zoom.Width) * Columns(zoom.Height))))
+        {
+            throw new InvalidDataException($"The bundle holds {tiles.Count:N0} tiles, which the worlds' zooms do not cut.");
+        }
+
+        return worlds;
+    }
+
+    /// <summary>Places each tile of the bundle's container by the address the catalog gives its key, checked against the table.</summary>
+    /// <param name="container">The bundle's asset bundle object, whose container gives each key a texture and a sprite.</param>
+    /// <param name="textures">The bundle's textures, by identifier.</param>
+    /// <param name="sprites">The bundle's sprites, by identifier.</param>
+    /// <param name="addresses">The catalog's address of each key.</param>
+    /// <param name="zooms">Each world's zooms, by its id.</param>
+    /// <returns>Each tile's texture, by its world, zoom and index.</returns>
+    /// <exception cref="InvalidDataException">A key is not one texture and one sprite of its name, or its address is not a tile of the table.</exception>
+    public static SortedDictionary<(int World, int Zoom, int Index), Fields> Locate(Fields container, IReadOnlyDictionary<long, Fields> textures, IReadOnlyDictionary<long, Fields> sprites, IReadOnlyDictionary<string, string> addresses, IReadOnlyDictionary<int, int[]> zooms)
+    {
+        var located = new SortedDictionary<(int World, int Zoom, int Index), Fields>();
+
+        foreach (var (key, texture, sprite) in Pairs(container, textures, sprites))
+        {
+            if (!addresses.TryGetValue(key, out var address) || Address().Match(address) is not { Success: true } match)
+            {
+                throw new InvalidDataException($"The catalog gives key {key} no address of the shape worldmaps/<world>/<zoom>/<tile>.jpg.");
+            }
+
+            var world = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+            var zoom = (int)Math.Round(double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture) * 100, MidpointRounding.AwayFromZero);
+            var index = int.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
+            var name = index.ToString(CultureInfo.InvariantCulture);
+
+            if (!zooms.TryGetValue(world, out var known) || !known.Contains(zoom))
+            {
+                throw new InvalidDataException($"{address} names a world or a zoom the table of world maps does not list.");
+            }
+
+            if (textures[texture].String("m_Name") != name || sprites[sprite].String("m_Name") != name || sprites[sprite].Nested("m_RD").Nested("texture").Int64("m_PathID") != texture)
+            {
+                throw new InvalidDataException($"{address}: its texture or its sprite is not named {name}, or the sprite draws another texture.");
+            }
+
+            if (!located.TryAdd((world, zoom, index), textures[texture]))
+            {
+                throw new InvalidDataException($"{address} is the address of two tiles.");
+            }
+        }
+
+        return located;
+    }
+
+    /// <summary>The size of a tile's texels: one level of BC7, a block of 16 bytes per four by four texels.</summary>
+    /// <exception cref="InvalidDataException">The texture is of another format, of more than one level or image, not within a tile, or its stream holds another size.</exception>
+    public static int TexelBytes((int World, int Zoom, int Index) tile, Fields texture)
+    {
+        var (width, height) = (texture.Int32("m_Width"), texture.Int32("m_Height"));
+        var size = (long)((width + 3) / 4) * ((height + 3) / 4) * 16;
+
+        if (texture.Int32("m_TextureFormat") != Bc7Format || texture.Int32("m_MipCount") != 1 || texture.Int32("m_ImageCount") != 1
+            || width is < 1 or > WorldMap.TileSize || height is < 1 or > WorldMap.TileSize || texture.Nested("m_StreamData").UInt32("size") != size)
+        {
+            throw new InvalidDataException($"Tile {tile.Index} of world {tile.World} at {tile.Zoom} % is {width}x{height}, format {texture.Int32("m_TextureFormat")}: not one level of BC7 in a tile.");
+        }
+
+        return (int)size;
+    }
+
+    /// <summary>A world's zooms as whole percentages, the largest first.</summary>
+    /// <exception cref="InvalidDataException">The record lists none, one twice, or one that is not a whole percentage from 1 to 100.</exception>
+    public static int[] ZoomsOf(Fields record)
     {
         var zooms = new SortedSet<int>(Comparer<int>.Create(static (a, b) => b.CompareTo(a)));
 
@@ -115,7 +189,7 @@ internal static partial class WorldMapTables
         return zooms.Count > 0 ? [.. zooms] : throw new InvalidDataException($"World map {record.Int32("id")} lists no zoom.");
     }
 
-    private static WorldMap WorldOf(Fields record, TextFiles texts, int[] zooms, Dictionary<(int World, int Zoom, int Index), (int Width, int Height, int Bytes)> tiles)
+    private static WorldMap WorldOf(Fields record, TextFiles texts, int[] zooms, IReadOnlyDictionary<(int World, int Zoom, int Index), (int Width, int Height, int Bytes)> tiles)
     {
         var id = record.Int32("id");
         var (tableWidth, tableHeight) = (record.Int32("totalWidth"), record.Int32("totalHeight"));
@@ -177,36 +251,7 @@ internal static partial class WorldMapTables
             throw new InvalidDataException($"{bundle.Path} holds {containers.Count} asset bundle objects, where the extractor reads one container.");
         }
 
-        var container = containers[0];
-        var located = new SortedDictionary<(int World, int Zoom, int Index), Fields>();
-
-        foreach (var (key, texture, sprite) in Pairs(container, textures, sprites))
-        {
-            if (!addresses.TryGetValue(key, out var address) || Address().Match(address) is not { Success: true } match)
-            {
-                throw new InvalidDataException($"The catalog gives key {key} no address of the shape worldmaps/<world>/<zoom>/<tile>.jpg.");
-            }
-
-            var world = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
-            var zoom = (int)Math.Round(double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture) * 100, MidpointRounding.AwayFromZero);
-            var index = int.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
-            var name = index.ToString(CultureInfo.InvariantCulture);
-
-            if (!zooms.TryGetValue(world, out var known) || !known.Contains(zoom))
-            {
-                throw new InvalidDataException($"{address} names a world or a zoom the table of world maps does not list.");
-            }
-
-            if (textures[texture].String("m_Name") != name || sprites[sprite].String("m_Name") != name || sprites[sprite].Nested("m_RD").Nested("texture").Int64("m_PathID") != texture)
-            {
-                throw new InvalidDataException($"{address}: its texture or its sprite is not named {name}, or the sprite draws another texture.");
-            }
-
-            if (!located.TryAdd((world, zoom, index), textures[texture]))
-            {
-                throw new InvalidDataException($"{address} is the address of two tiles.");
-            }
-        }
+        var located = Locate(containers[0], textures, sprites, addresses, zooms);
 
         var done = new Dictionary<(int World, int Zoom, int Index), (int Width, int Height, int Bytes)>();
 
@@ -248,7 +293,7 @@ internal static partial class WorldMapTables
         return done;
     }
 
-    private static IEnumerable<(string Key, long Texture, long Sprite)> Pairs(Fields container, Dictionary<long, Fields> textures, Dictionary<long, Fields> sprites)
+    private static IEnumerable<(string Key, long Texture, long Sprite)> Pairs(Fields container, IReadOnlyDictionary<long, Fields> textures, IReadOnlyDictionary<long, Fields> sprites)
     {
         var pairs = new Dictionary<string, (long Texture, long Sprite)>(StringComparer.Ordinal);
 
@@ -280,17 +325,10 @@ internal static partial class WorldMapTables
 
     private static byte[] Texels(Bundle bundle, (int World, int Zoom, int Index) tile, Fields texture)
     {
-        var (width, height) = (texture.Int32("m_Width"), texture.Int32("m_Height"));
+        var size = TexelBytes(tile, texture);
         var stream = texture.Nested("m_StreamData");
-        var size = (long)((width + 3) / 4) * ((height + 3) / 4) * 16;
 
-        if (texture.Int32("m_TextureFormat") != Bc7Format || texture.Int32("m_MipCount") != 1 || texture.Int32("m_ImageCount") != 1
-            || width is < 1 or > WorldMap.TileSize || height is < 1 or > WorldMap.TileSize || stream.UInt32("size") != size)
-        {
-            throw new InvalidDataException($"Tile {tile.Index} of world {tile.World} at {tile.Zoom} % is {width}x{height}, format {texture.Int32("m_TextureFormat")}: not one level of BC7 in a tile.");
-        }
-
-        return bundle.ReadStream(stream.String("path"), checked((long)stream.UInt64("offset")), checked((int)size));
+        return bundle.ReadStream(stream.String("path"), checked((long)stream.UInt64("offset")), size);
     }
 
     private static Dictionary<long, Fields> ById(Bundle bundle, AssetClassID type)
