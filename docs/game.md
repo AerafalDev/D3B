@@ -78,17 +78,16 @@ tick, sends its view when it changed.
   profession's level-up sends the same map's information again (964 of 964).
 - **Names**, the owner's choice (2026-11-12): players by their name, as the game shows them; monsters, NPCs and
   resources by their ids and levels. Their names come in a later feature that adds the client's monsters, NPCs,
-  interactives and skills tables to the game data (format 2, with the next client build). Later, the owner wants
-  monsters, NPCs and characters drawn from their looks (`Actor.information` field 2, not read yet), with a renderer
-  such as `PyDofus/d3-ts-renderer` (2026-11-12): it has no licence today, so it can be neither used nor copied until
-  its author gives one; that feature studies it then.
+  interactives and skills tables to the game data (format 2, with the next client build). Drawing the actors from
+  their looks (`Actor.information` field 2, not read) was studied, then dropped by the owner on 2026-11-13: the
+  client's sprites (about 6.4 GB of skeletons and skins) would take too much room.
 
 ## In the app
 
 Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-12 from mock-ups:
 
 - **The Characters view** of the primary side bar (`src/characters/`): one row per game connection from its open
-  to its close, its avatar (its initials until the character renderer), name, level, place or state, and a dot:
+  to its close, its avatar (its initials), name, level, place or state, and a dot:
   green exploring, amber fighting, grey waiting or unread, red lost. Before a selection a row shows its connection's
   number. A row is marked while its character's tab is active. Empty, the view says to start Dofus from Ankama's
   launcher.
@@ -103,8 +102,8 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
   drawn, as discreet diamonds. What stands on it is a dot: the character blue and ringed, players purple, monster
   groups amber, NPCs teal, resources green (darker once harvested), others grey, under a legend. It fills its column
   at the largest scale that fits and follows its size. In a fight it says positions are not read yet; without a map
-  the data places, or a map the data lacks, it says so. The renderer will draw the actors themselves in place of the
-  dots (the owner, 2026-11-12).
+  the data places, or a map the data lacks, it says so. The dots stay: drawing the actors' sprites was dropped
+  (the owner, 2026-11-13).
 
 The step-2 interface removed on 2026-11-12, for reference, was:
 

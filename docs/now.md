@@ -112,9 +112,8 @@ _Updated 2026-11-12._
   discreet islands (Dark Modern, Inter, JetBrains' icons, parts that slide open and closed; #187), then its title bar
   with the command palette (#188); then the features one at a time, each decided with the owner: the Characters
   view (done in code, #189), a character's tab (layout "A", done in code, #190), the character's map in the tab
-  (the owner's style "B": discreet diamonds, actors as dots until the renderer draws them; done in code), then our own renderer of the
-  characters, monsters, NPCs and resources on the map (the owner, 2026-11-12: a feature of its own, designed first;
-  `PyDofus/d3-ts-renderer` has no licence, read for ideas only). The step-2 checklist items that look at the UI wait
-  for them. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
+  (the owner's style "B": discreet diamonds, actors as dots; done in code, #191). A renderer of the actors' sprites
+  was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The step-2
+  checklist items that look at the UI can now be measured in the new interface. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

@@ -23,7 +23,7 @@ const DOT = {
 } as const;
 
 /**
- * A character in the list: its avatar (its initials until the character renderer comes), its name and level, where it
+ * A character in the list: its avatar (its initials), its name and level, where it
  * is or what it is doing, and its state's dot. Before its name is known, its connection's number stands in.
  */
 export function CharacterRow({ connection, view, selected, onOpen }: CharacterRowProps) {

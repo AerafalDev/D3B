@@ -24,7 +24,7 @@ export function cellCentre(cell: number): { x: number; y: number } {
 /** The ground the owner's style "B" draws: only where one walks, and the exits. */
 export type Floor = "walkable" | "exit";
 
-/** What stands on a cell, drawn as a dot until the renderer draws it (`docs/game.md`, "In the app"). */
+/** What stands on a cell, drawn as a dot (`docs/game.md`, "In the app"). */
 export type MarkKind = "me" | "player" | "monsters" | "npc" | "resource" | "harvested" | "other";
 
 export interface Mark {
