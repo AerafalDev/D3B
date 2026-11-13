@@ -29,7 +29,10 @@ the relay's owner gives it when the connection opens, as it already hands its re
 and never the reverse (ADR 0002). That observer is `game::Live`: it keeps the connection's `Character` and, at each
 tick, sends its view when it changed.
 
-- **Who** (verified): `CharacterSelectionEvent` gives its id, name, level and breed. Characteristics read since the
+- **Who** (verified): `CharacterSelectionEvent` gives its id, name, level and breed, and its sex, which picks its
+  breed's head: field 4 of its look's appearance (`CharacterLook` field 1), absent for a male and 1 for a female
+  (`artifacts/studies/breeds.md`: the look's skins, the client's heads table and the heads drawn agree; present in all
+  137 looks of the owner's captures). A look without an appearance, or with a sex the enum lacks, leaves it unknown. Characteristics read since the
   last selection are kept, since the first `CharacterStatsEvent` comes before it; everything else is reset to the new
   character (a second selection on one connection was never seen: each of the 51 connections chose once).
 - **Level** (verified, 36 of 36): `CharacterLevelUpEvent` (`kqp`) field 1 is the new level.
