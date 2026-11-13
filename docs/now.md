@@ -98,9 +98,8 @@ _Updated 2026-11-13._
        `artifacts/data/client-3.7.13.17-format2.tar.gz`; then `tar -xzf artifacts/data/client-3.7.13.17-format2.tar.gz
        -C data` (after emptying `data/` but its README): a `data/` still in format 1 makes `bun run app` say there is
        no game data and fails the Rust test that reads `data/`;
-    2. on the owner's go, that archive joins the `client-3.7.13.17` release (`data` skill); then `bun run data:fetch
-       3.7.13.17` fills `data/` with format 2, and `bun run app`'s status bar says "Client 3.7.13.17". Until it is
-       published, `data:fetch` and a release find no data of format 2.
+    2. `bun run data:fetch 3.7.13.17` fills `data/` with format 2 (published on 2026-11-13, from `next` 2b0577c), and
+       `bun run app`'s status bar says "Client 3.7.13.17";
     3. with that data, start D3B, then a client, and open a character from the Characters view: its tab shows its
        breed's head, 40 px in a rounded square, in place of its initials, the head of its sex, and "Niveau <n> ·
        <breed> · <state>" with the breed's French name (in English after switching the language: "Level <n> ·
@@ -118,10 +117,10 @@ _Updated 2026-11-13._
   checks tested in CI on objects built by hand (`TestMap`, `TestGraph`, `TestTiles`), the debt of step 1's review; only
   the checks of a bundle itself (one container, unique identifiers, its stream files) need the installed client.
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
-  `client-3.7.13.17` release on the owner's go. v0.11.0 shipped without data, named before. Format 2 (the breeds) is
-  not published yet: `client-3.7.13.17-format2.tar.gz` waits for the owner's extraction and go, and until then
-  `.github/game-data.json`, which names format 2, makes a release's "Game data" step fail: publish it before the next
-  release. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
+  `client-3.7.13.17` release on the owner's go. v0.11.0 shipped without data, named before. Format 2 (the breeds):
+  `client-3.7.13.17-format2.tar.gz`, from `next` 2b0577c (SHA-256 `2e3ac196…`, 84,146,484 bytes), added to the same
+  release on the owner's go on 2026-11-13; `.github/game-data.json` names it, so the next release packs it, and
+  `bun run data:fetch 3.7.13.17` fetches it. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
   and the relay, with installers for the six targets and its `latest.json` on `updater-next`; **v0.13.0**, on
   2026-11-11, adds the game connection split into frames.
 - **Done in code, step 2's relay**: the redirect, the connection phase and its one rewrite, the game connection, the
