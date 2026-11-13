@@ -9,6 +9,8 @@ on:
       - scripts/appimage-notices*.ts
       - src-tauri/tauri*.json
       - src-tauri/Cargo.lock
+      - package.json
+      - bun.lock
 
 permissions:
   contents: read
@@ -104,7 +106,7 @@ jobs:
             echo "## $(basename "$image")"
             echo
             echo "\`usr/lib/D3B/SYSTEM-LIBRARIES-NOTICES.txt\`: $(wc -c < "$notices") bytes," \
-              "$(grep -cE '^[^ #].* \(source [^)]+\)$' "$notices") packages, $(grep -c 'apt-get source' "$notices") source packages."
+              "$(grep -cE '^[^ #].* \(source [^)]+\)$' "$notices") packages, $(grep -c '^  apt-get source ' "$notices") source packages."
             echo
             echo '```'
             sed -n '1,8p' "$notices"

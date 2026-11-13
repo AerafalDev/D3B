@@ -12,6 +12,8 @@ export type DebPackage = {
   files: string[];
 };
 
+export type SystemNotices = { ok: true; text: string } | { ok: false; error: string };
+
 /** Files the AppImage's own tools write: no package owns them. */
 const GENERATED = new Set([
   "AppRun",
@@ -68,13 +70,30 @@ export function usrMergeAliases(path: string): string[] {
 export function ownerOf(dpkgOutput: string): string | undefined {
   for (const line of dpkgOutput.split("\n")) {
     const end = line.indexOf(": /");
-    if (end <= 0 || line.startsWith("diversion by ")) {
+    if (end <= 0 || /^(local )?diversion /.test(line)) {
       continue;
     }
     const first = line.slice(0, end).split(", ")[0] ?? "";
     return first.replace(/:.*$/, "");
   }
   return undefined;
+}
+
+/** A package's version and source, as `dpkg-query -W` gives them. */
+export type Version = { version: string; source: string; sourceVersion: string };
+
+/**
+ * Each package's version and source from `dpkg-query -W -f '${Package}\t${Version}\t${source:Package}\t
+ * ${source:Version}\n'`; a package installed for two architectures prints twice, the same.
+ */
+export function versionsOf(dpkgOutput: string): Map<string, Version> {
+  return new Map(
+    dpkgOutput
+      .split("\n")
+      .map((line) => line.split("\t"))
+      .filter((fields) => fields.length === 4)
+      .map(([name = "", version = "", source = "", sourceVersion = ""]) => [name, { version, source, sourceVersion }]),
+  );
 }
 
 /** The licences of `/usr/share/common-licenses` a copyright file refers to instead of quoting them, by name. */
@@ -107,7 +126,10 @@ export function systemNoticesText(input: {
   distribution: string;
   packages: DebPackage[];
   licenses: Map<string, string>;
-}): string {
+}): SystemNotices {
+  if (input.packages.length === 0) {
+    return { ok: false, error: "No system package gives the AppImage a file: the notices would list none" };
+  }
   const packages = [...input.packages].sort((a, b) => a.name.localeCompare(b.name));
   const label = (pkg: DebPackage) => `${pkg.name} ${pkg.version}`;
   const listing = packages.map(
@@ -132,7 +154,7 @@ export function systemNoticesText(input: {
       (pkg) =>
         `${pkg.source} ${pkg.sourceVersion}: ${launchpadUrl(pkg.source, pkg.sourceVersion)}\n  apt-get source ${pkg.source}=${pkg.sourceVersion}`,
     );
-  return [
+  const text = [
     "D3B, the AppImage's system libraries",
     "",
     `The AppImage for ${input.arch} packs the files below from the packages of ${input.distribution}: GTK, WebKitGTK`,
@@ -155,11 +177,13 @@ export function systemNoticesText(input: {
     "",
     "# Their sources",
     "",
-    "Ubuntu's archive keeps the source of every version it published. Each source package below is the exact version",
-    "the AppImage was built from: its page on Launchpad holds the files, and `apt-get source` fetches them on an",
-    "Ubuntu system with the archive's deb-src lines.",
+    "Each source package below is the exact version the AppImage was built from. Launchpad keeps every version Ubuntu",
+    "published: the page of each holds its files. While that version is still the archive's current one,",
+    "`apt-get source` also fetches it on an Ubuntu system with deb-src lines; once a newer one replaces it, the",
+    "Launchpad page still has it (Ubuntu's `pull-lp-source <source> <version>` fetches it from there).",
     "",
     sourceLines.join("\n"),
     "",
   ].join("\n");
+  return { ok: true, text };
 }

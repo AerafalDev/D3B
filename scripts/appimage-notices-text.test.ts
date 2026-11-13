@@ -9,6 +9,7 @@ import {
   referencedLicenses,
   systemNoticesText,
   usrMergeAliases,
+  versionsOf,
 } from "./appimage-notices-text.ts";
 
 describe("isOurs", () => {
@@ -81,6 +82,7 @@ describe("ownerOf", () => {
     expect(ownerOf("diversion by dash from: /bin/sh\nlibglib2.0-0:amd64, libglib2.0-0:i386: /usr/lib/a\n")).toBe(
       "libglib2.0-0",
     );
+    expect(ownerOf("local diversion from: /usr/lib/a\nlibz1:amd64: /usr/lib/a\n")).toBe("libz1");
   });
 
   it("finds none in an empty or unrelated answer", () => {
@@ -114,6 +116,21 @@ describe("licenseFiles", () => {
   });
 });
 
+describe("versionsOf", () => {
+  it("reads each package's version and source from dpkg-query -W, once per name", () => {
+    const output =
+      "libglib2.0-0\t2.72.4\tglib2.0\t2.72.4\nlibglib2.0-0\t2.72.4\tglib2.0\t2.72.4\nlibz1\t1:1.2\tzlib\t1:1.2\n";
+    expect([...versionsOf(output)]).toEqual([
+      ["libglib2.0-0", { version: "2.72.4", source: "glib2.0", sourceVersion: "2.72.4" }],
+      ["libz1", { version: "1:1.2", source: "zlib", sourceVersion: "1:1.2" }],
+    ]);
+  });
+
+  it("skips a line without its four fields", () => {
+    expect(versionsOf("dpkg-query: no packages found matching x\nlibz1\t1.2\n").size).toBe(0);
+  });
+});
+
 describe("launchpadUrl", () => {
   it("keeps the epoch, as Launchpad does", () => {
     expect(launchpadUrl("libcap2", "1:2.44-1ubuntu0.22.04.3")).toBe(
@@ -126,6 +143,14 @@ const KRB5 = { source: "krb5", sourceVersion: "1.19.2-2ubuntu0.10", copyright: "
 const PACKAGES: DebPackage[] = [
   { name: "libkrb5-3", version: "1.19.2-2ubuntu0.10", ...KRB5, files: ["usr/lib/libkrb5.so.3"] },
   { name: "libk5crypto3", version: "1.19.2-2ubuntu0.10", ...KRB5, files: ["usr/lib/libk5crypto.so.3"] },
+  {
+    name: "aaa-tools",
+    version: "1.0-1",
+    source: "zzz",
+    sourceVersion: "1.0-1",
+    copyright: "zzz's copyright\n",
+    files: ["usr/lib/libzzz.so.1"],
+  },
   {
     name: "libgtk-3-0",
     version: "3.24.33-1ubuntu2.2",
@@ -142,9 +167,17 @@ const INPUT = {
   licenses: new Map([["LGPL-2", "GNU LIBRARY GENERAL PUBLIC LICENSE\n"]]),
 };
 
+function notices(input: Parameters<typeof systemNoticesText>[0]): string {
+  const result = systemNoticesText(input);
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+  return result.text;
+}
+
 describe("systemNoticesText", () => {
   it("lists each package with its files, its copyright file, the licences cited and each source", () => {
-    const text = systemNoticesText(INPUT);
+    const text = notices(INPUT);
     expect(text).toContain("Ubuntu 22.04.5 LTS");
     expect(text).toContain("x86_64-linux-gnu");
     expect(text).toContain("libgtk-3-0 3.24.33-1ubuntu2.2 (source gtk+3.0 3.24.33-1ubuntu2.2)");
@@ -156,14 +189,22 @@ describe("systemNoticesText", () => {
   });
 
   it("gives a copyright file shared by several packages once, under all their names", () => {
-    const text = systemNoticesText(INPUT);
+    const text = notices(INPUT);
     expect(text.split("krb5's copyright").length - 1).toBe(1);
     expect(text).toContain("## libk5crypto3 1.19.2-2ubuntu0.10, libkrb5-3 1.19.2-2ubuntu0.10");
   });
 
   it("names each source package once, in order", () => {
-    const text = systemNoticesText(INPUT);
+    const text = notices(INPUT);
     expect(text.split("apt-get source krb5=").length - 1).toBe(1);
     expect(text.indexOf("apt-get source gtk+3.0=")).toBeLessThan(text.indexOf("apt-get source krb5="));
+    expect(text.indexOf("apt-get source krb5=")).toBeLessThan(text.indexOf("apt-get source zzz="));
+  });
+
+  it("fails when no package gives a file, as when every file is taken for the app's own", () => {
+    expect(systemNoticesText({ ...INPUT, packages: [] })).toEqual({
+      ok: false,
+      error: "No system package gives the AppImage a file: the notices would list none",
+    });
   });
 });

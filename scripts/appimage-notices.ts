@@ -24,6 +24,7 @@ import {
   referencedLicenses,
   systemNoticesText,
   usrMergeAliases,
+  versionsOf,
 } from "./appimage-notices-text.ts";
 
 const OUT = "src-tauri/gen/SYSTEM-LIBRARIES-NOTICES.txt";
@@ -125,13 +126,7 @@ const query = run("dpkg-query", [
   "${Package}\\t${Version}\\t${source:Package}\\t${source:Version}\\n",
   ...byPackage.keys(),
 ]);
-const meta = new Map(
-  query.stdout
-    .split("\n")
-    .map((line) => line.split("\t"))
-    .filter((fields) => fields.length === 4)
-    .map(([name = "", version = "", source = "", sourceVersion = ""]) => [name, { version, source, sourceVersion }]),
-);
+const meta = versionsOf(query.stdout);
 
 const packages: DebPackage[] = [];
 const licenses = new Map<string, string>();
@@ -167,6 +162,10 @@ if (errors.length > 0) {
 
 const release = readFileSync("/etc/os-release", "utf8");
 const distribution = /^PRETTY_NAME="?([^"\n]*)"?$/m.exec(release)?.[1] ?? "the build machine";
-writeFileSync(OUT, systemNoticesText({ arch: multiarch, distribution, packages, licenses }));
+const notices = systemNoticesText({ arch: multiarch, distribution, packages, licenses });
+if (!notices.ok) {
+  fail(notices.error, 1);
+}
+writeFileSync(OUT, notices.text);
 const count = packages.reduce((sum, pkg) => sum + pkg.files.length, 0);
 console.log(`${OUT}: ${count} files from ${packages.length} packages, ${licenses.size} licence texts, for ${target}`);

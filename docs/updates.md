@@ -57,7 +57,7 @@ targets on every PR, so a new licence is met there, and accepting it is the owne
 `cargo install cargo-about@0.9.3 --locked --features cli`. A plain `tauri build` without the release configuration
 carries no notices.
 
-The AppImage also packs system libraries: GTK, WebKitGTK and what they need, about 360 files from 128 packages of
+The AppImage also packs system libraries: GTK, WebKitGTK and what they need, about 250 files from 130 packages of
 Ubuntu 22.04 (the release's runner), mostly LGPL, a few GPL (jbigkit) or permissive. linuxdeploy and its GTK plugin
 choose them, and the list follows the runner's image (the ARM64 one even packs another app's GSettings schema), so it
 is read from a real build, never kept by hand. The AppImage alone carries `SYSTEM-LIBRARIES-NOTICES.txt` beside
@@ -71,17 +71,19 @@ system's libraries and carry no such file (the owner's choices, 2026-11-13: a fi
   texts of `/usr/share/common-licenses` they cite, which the AppImage would otherwise lack; and each source package.
   tauri-action then builds the AppImage it ships on the same machine, so with the same libraries, and this file in
   it. A file no package owns, other than the app's own, linuxdeploy's AppRun and hooks and the GTK plugin's caches,
-  fails the notices, as does a missing copyright file or licence text. linuxdeploy also copies most packages'
+  fails the notices, as does a missing copyright file or licence text, or no package at all. linuxdeploy also copies most packages'
   copyright files into the AppImage's `usr/share/doc/`, but misses those under `/lib`, the GIO modules and the data,
   and never the licence texts: the notices do not rely on them.
 - **Sources** (LGPL and GPL ask for them): the file names each source package at its exact version, with its page on
-  Launchpad (`https://launchpad.net/ubuntu/+source/<source>/<version>`, the epoch kept) and `apt-get source
-  <source>=<version>`; Ubuntu's archive keeps every version it published (the owner's choice, 2026-11-13, over
+  Launchpad (`https://launchpad.net/ubuntu/+source/<source>/<version>`, the epoch kept), which keeps every version
+  Ubuntu published, and `apt-get source <source>=<version>`, which fetches it only while it is the archive's current
+  one, `pull-lp-source` fetching older ones from Launchpad (the owner's choice, 2026-11-13, over
   attaching the sources to each release, which a strict reading of GPL-2 §3 and LGPL-2.1 §6 would prefer, about
   300 MB a release).
 - **Checked on PRs**: `.github/workflows/appimage.yml` builds the x64 AppImage in the same two passes on the pull
-  requests that touch the release workflow, the notices' scripts, Tauri's configurations or `Cargo.lock` (the
-  owner's choice, 2026-11-13), and checks the AppImage holds the file it wrote and that `THIRD-PARTY-NOTICES.txt`
+  requests that touch the release workflow, the notices' scripts, Tauri's configurations, `Cargo.lock`, or
+  `package.json` and `bun.lock`, which pin Tauri's CLI and so linuxdeploy and its GTK plugin (the owner's choices,
+  2026-11-13), and checks the AppImage holds the file it wrote and that `THIRD-PARTY-NOTICES.txt`
   names it. A Linux build of the release configuration outside these workflows needs the file to exist: run
   `scripts/appimage-notices.ts` first.
 
