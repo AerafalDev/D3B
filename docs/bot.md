@@ -77,7 +77,7 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   **Details** on the right. Nodes are sober sentence boxes: an icon coloured by family, the values in the sentence,
   typed pins (a triangle carries the flow, a circle a value, coloured by type), a visible Failed output. A wire dropped
   on the ground, Space or a right-click opens the picker: sentences with their description, what often comes there
-  first. "If" is a node with True and False; a function opens in place, its inputs and outputs as nodes. An event's
+  first; an action the bot does not do yet is marked with the step that brings it (the owner, 2026-11-13). "If" is a node with True and False; a function opens in place, its inputs and outputs as nodes. An event's
   Details hold its priority, its re-arming and its four modes, each drawn as a small timeline. **Summary** reads the
   blueprint as sentences. From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.
 - **World** view: my zones, my routes, then the game's sub-areas, searchable. The **World tab** shows the world map
@@ -107,7 +107,18 @@ event's `event` its priority and mode. Where nodes sit is under `layout`, by gra
 file, so a moved node changes only those lines. Ids are lowercase letters, digits, `_` and `-`. A file of a newer
 schema, not JSON, or not of its shape (a field missing, unknown or given twice, a node doing two things) is refused; one that reads but does not hold (an id
 twice, a wire to no node, a default its type or bounds refuse, a node on a variable or function the blueprint lacks)
-opens with its **problems** and cannot run; a node kind this version does not know is one of them (the catalogue's).
+opens with its **problems** and cannot run; a node kind this version does not know is one of them.
+
+The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 24 kinds by family: the events on start,
+life below, pods above, a fight starts (forced: the default fight, then resume), died and an action fails (forced:
+blocked with the reason); the actions go to a zone and sit until (step 4), harvest until, go to the bank and deposit
+all but (step 5), hunt until (step 6), and notify; If, Wait and Finish; the queries life %, pods %, level, at least
+and add; a function's entry, done return and failed return. Flow pins are `run` in, `then` out, an action's `done`
+and `failed` with its `reason`; a get has `value`, a set and a call their variable's or function's. Rust holds ids
+only: sentences, descriptions and icons are the interface's. A wire carries one type, but a percentage feeds a number.
+The catalogue adds its problems: a kind unknown or out of place (an event in a function), a priority on a node that
+takes none, a value on no input or not of its type, a wire to no pin, the wrong way or of another type, a flow
+output wired twice, an input fed twice or by nothing, an event held once (on start, a forced one) held again.
 
 ## Measure
 

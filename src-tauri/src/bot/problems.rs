@@ -1,10 +1,11 @@
 //! A blueprint's problems: what makes it unable to run, each where the editor can show it (`docs/bot.md`, "In the
 //! app": the toolbar lists them). A blueprint with problems still opens, so that nothing of it is lost; it cannot run.
-//! These are the problems of the blueprint itself; the catalogue adds those of its nodes' kinds, pins and types.
+//! Those of its nodes against the catalogue and their pins are `wiring`'s.
 
 use std::collections::HashSet;
 
-use super::blueprint::{Blueprint, Does, Graph, Id};
+use super::blueprint::{Blueprint, Does, End, Graph, Id};
+use super::catalogue::RESERVED;
 use super::variable::Variable;
 
 /// What keeps a blueprint from running.
@@ -18,7 +19,8 @@ pub(crate) enum Problem {
     GraphTwice { graph: Id },
     /// Two nodes of a graph with the same id.
     NodeTwice { graph: Id, node: Id },
-    /// Two inputs, or two outputs, of a function with the same id.
+    /// Two inputs, or two outputs, of a function with the same id, or one with the id of a pin its entry, returns and
+    /// calls have (`run`, `then`, `done`, `failed`, `reason`).
     ParameterTwice { graph: Id, parameter: Id },
     /// A variable's default that its type does not hold.
     DefaultNotOfType { variable: Id },
@@ -34,9 +36,34 @@ pub(crate) enum Problem {
     WireToNoNode { graph: Id, node: Id },
     /// The same wire twice.
     WireTwice { graph: Id, from: Id, to: Id },
+    /// A node of a kind this version does not know: made by a newer D3B, or removed. It is kept as it is.
+    UnknownKind { graph: Id, node: Id, kind: Id },
+    /// An event in a function, or a function's entry or return in an event graph.
+    OutOfPlace { graph: Id, node: Id },
+    /// A priority and a mode on a node that takes none.
+    EventSettingsOnNoEvent { graph: Id, node: Id },
+    /// A value typed on a pin that is no value input of the node.
+    NoSuchInput { graph: Id, node: Id, pin: Id },
+    /// A value typed that its pin's type does not hold.
+    ValueNotOfType { graph: Id, node: Id, pin: Id },
+    /// A wire from or to a pin its node does not have.
+    WireToNoPin { graph: Id, node: Id, pin: Id },
+    /// A wire from an input or to an output.
+    WireTheWrongWay { graph: Id, node: Id, pin: Id },
+    /// A wire between the flow and a value, or between values of two types.
+    WireOfAnotherType { graph: Id, from: End, to: End },
+    /// A flow output wired twice: the flow goes one way.
+    OutputWiredTwice { graph: Id, node: Id, pin: Id },
+    /// A value input fed by two wires, or by a wire and a value typed.
+    InputFedTwice { graph: Id, node: Id, pin: Id },
+    /// A value input that no wire feeds, with no value typed and no default.
+    InputWithoutValue { graph: Id, node: Id, pin: Id },
+    /// An event a blueprint holds once at most (on start, a forced one) held again.
+    EventTwice { graph: Id, node: Id },
 }
 
-/// Every problem of `blueprint`, in the order of its file.
+/// Every problem of `blueprint`: its own in the order of its file, then each graph's nodes and wires, then the events
+/// held twice.
 pub(crate) fn problems(blueprint: &Blueprint) -> Vec<Problem> {
     let mut found = Vec::new();
     well_formed(&blueprint.id, &mut found);
@@ -61,7 +88,9 @@ pub(crate) fn problems(blueprint: &Blueprint) -> Vec<Problem> {
     }
     for graph in &blueprint.graphs {
         of_graph(blueprint, graph, &mut found);
+        super::wiring::of_graph(blueprint, graph, &mut found);
     }
+    super::wiring::once_twice(blueprint, &mut found);
     found
 }
 
@@ -95,7 +124,7 @@ fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Problem>) {
             let mut parameters = HashSet::new();
             for parameter in side {
                 well_formed(&parameter.id, found);
-                if !parameters.insert(&parameter.id) {
+                if !parameters.insert(&parameter.id) || RESERVED.contains(&parameter.id.0.as_str()) {
                     found.push(Problem::ParameterTwice {
                         graph: at(),
                         parameter: parameter.id.clone(),
@@ -231,6 +260,15 @@ mod tests {
         signature.outputs.extend(signature.inputs.pop());
         blueprint.graphs[1].function = Some(signature);
         assert_eq!(problems(&blueprint), []);
+        // Nor the id of a pin the function's entry, returns and calls have.
+        let mut signature = bank(&mut blueprint);
+        signature.outputs[0].id = id("reason");
+        blueprint.graphs[1].function = Some(signature);
+        let reserved = Problem::ParameterTwice {
+            graph: id("empty_at_bank"),
+            parameter: id("reason"),
+        };
+        assert_eq!(problems(&blueprint), [reserved]);
     }
 
     #[test]
