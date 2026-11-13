@@ -72,6 +72,15 @@ pub enum CharacterSex {
     Female,
 }
 
+impl From<Sex> for CharacterSex {
+    fn from(sex: Sex) -> Self {
+        match sex {
+            Sex::Male => Self::Male,
+            Sex::Female => Self::Female,
+        }
+    }
+}
+
 /// A value and the most it can be.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Type)]
 pub struct Gauge {
@@ -190,10 +199,7 @@ impl CharacterView {
             name: view.who.as_ref().map(|who| who.name.clone()),
             level: view.who.as_ref().map(|who| who.level),
             breed: view.who.as_ref().map(|who| who.breed),
-            sex: view.who.as_ref().and_then(|who| who.sex).map(|sex| match sex {
-                Sex::Male => CharacterSex::Male,
-                Sex::Female => CharacterSex::Female,
-            }),
+            sex: view.who.as_ref().and_then(|who| who.sex).map(CharacterSex::from),
             fighting: view.context.map(|context| context == Context::Fight),
             place: view.map_id.map(|map_id| place(map_id, world)),
             cell: view.cell,
@@ -394,6 +400,7 @@ mod tests {
             (Some("Lyra"), Some(87), Some(true))
         );
         assert_eq!(shown.sex, Some(CharacterSex::Female));
+        assert_eq!(CharacterSex::from(Sex::Male), CharacterSex::Male);
         assert_eq!(
             shown.experience,
             Some(Gauge {
