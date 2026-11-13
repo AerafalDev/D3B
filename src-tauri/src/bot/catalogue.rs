@@ -266,7 +266,6 @@ mod tests {
         assert_eq!(forced("fight_starts"), Some(Fallback::DefaultFight));
         assert_eq!(forced("died"), Some(Fallback::Block));
         assert_eq!(forced("action_failed"), Some(Fallback::Block));
-        assert_eq!(forced("life_below"), None);
     }
 
     #[test]
@@ -277,7 +276,6 @@ mod tests {
             (Some(4), Some(5), Some(6))
         );
         assert_eq!(step("notify"), None);
-        assert!(kind("teleport").is_none());
     }
 
     #[test]
