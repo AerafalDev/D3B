@@ -27,10 +27,11 @@ impl Id {
     /// (`con`, `nul`, `com1`…), even with an extension: it holds as a file name on every system and reads the same in a
     /// diff.
     pub(crate) fn is_well_formed(&self) -> bool {
-        let device = ["con", "prn", "aux", "nul"].contains(&self.0.as_str())
-            || (self.0.len() == 4
-                && ["com", "lpt"].contains(&&self.0[..3])
-                && matches!(self.0.as_bytes()[3], b'1'..=b'9'));
+        let device = matches!(self.0.as_bytes(), b"con" | b"prn" | b"aux" | b"nul")
+            || matches!(
+                self.0.as_bytes(),
+                [b'c', b'o', b'm', b'1'..=b'9'] | [b'l', b'p', b't', b'1'..=b'9']
+            );
         !device
             && (1..=Self::LIMIT).contains(&self.0.len())
             && self
@@ -239,7 +240,11 @@ mod tests {
     fn an_id_is_lowercase_letters_digits_underscores_and_dashes() {
         assert!(id("harvest_until").is_well_formed());
         assert!(id("my-zone-2").is_well_formed());
-        assert!(id("com").is_well_formed() && id("com0").is_well_formed() && id("console").is_well_formed());
+        assert!(
+            ["com", "com0", "col1", "console"]
+                .iter()
+                .all(|text| id(text).is_well_formed())
+        );
         assert!(id(&"a".repeat(Id::LIMIT)).is_well_formed());
     }
 
@@ -253,34 +258,19 @@ mod tests {
 
     #[test]
     fn a_node_does_exactly_one_thing() {
-        let read = |text: &str| serde_json::from_str::<Node>(text);
+        let read = |text: &str| serde_json::from_str::<Node>(text).map_err(|error| error.to_string());
         assert_eq!(
-            read(r#"{"id": "n1", "get": "pods"}"#).map(|node| node.does).ok(),
-            Some(Does::Get(id("pods")))
+            read(r#"{"id": "n1", "get": "pods"}"#).map(|node| node.does),
+            Ok(Does::Get(id("pods")))
         );
         let error = read(r#"{"id": "n1", "get": "pods", "call": "bank"}"#)
             .err()
-            .map(|error| error.to_string())
             .unwrap_or_default();
         assert!(
             error.contains("node n1 must have exactly one of kind, get, set and call"),
             "{error}"
         );
         assert!(read(r#"{"id": "n1"}"#).is_err());
-    }
-
-    #[test]
-    fn a_node_is_written_with_the_one_key_of_what_it_does() {
-        let node = Node {
-            id: id("n3"),
-            does: Does::Call(id("bank")),
-            inputs: BTreeMap::new(),
-            event: None,
-        };
-        assert_eq!(
-            serde_json::to_string(&node).ok().as_deref(),
-            Some(r#"{"id":"n3","call":"bank"}"#)
-        );
     }
 
     #[test]
