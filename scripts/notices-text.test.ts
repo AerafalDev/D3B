@@ -95,6 +95,11 @@ describe("noticesText", () => {
     expect(notices.match(/## dockview-react/g)).toHaveLength(1);
   });
 
+  it("tells a Linux package where the AppImage's system libraries are", () => {
+    expect(text({ ...INPUT, target: "x86_64-unknown-linux-gnu" })).toContain("SYSTEM-LIBRARIES-NOTICES.txt");
+    expect(notices).not.toContain("SYSTEM-LIBRARIES-NOTICES.txt");
+  });
+
   it("fails on a bare package whose text is not supplied", () => {
     expect(noticesText({ ...INPUT, supplied: new Map() })).toEqual({
       ok: false,

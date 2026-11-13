@@ -8,6 +8,13 @@
     "resources": {
       "../data/": "data/",
       "gen/THIRD-PARTY-NOTICES.txt": "THIRD-PARTY-NOTICES.txt"
+    },
+    "linux": {
+      "appimage": {
+        "files": {
+          "/usr/lib/D3B/SYSTEM-LIBRARIES-NOTICES.txt": "gen/SYSTEM-LIBRARIES-NOTICES.txt"
+        }
+      }
     }
   }
 }

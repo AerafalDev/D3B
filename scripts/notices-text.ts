@@ -109,11 +109,21 @@ export function noticesText(input: {
   }
   const bundled = new Set(sections.map((section) => section.pkg.name));
   const styles = input.cssPackages.filter((pkg) => !bundled.has(pkg.name));
+  // The deb and the rpm share this file with the AppImage, the one of the three that packs system libraries.
+  const linux = input.target.includes("-linux-")
+    ? [
+        "The AppImage also packs system libraries (GTK, WebKitGTK and theirs, from Ubuntu's packages): their licences",
+        "and where their sources are, are in SYSTEM-LIBRARIES-NOTICES.txt beside this file. The deb and the rpm use",
+        "the system's own.",
+        "",
+      ]
+    : [];
   const text = [
     "D3B, third-party notices",
     "",
     "D3B bundles the software below. Each piece keeps its own licence, given in full under its name.",
     "",
+    ...linux,
     "# The interface's code (npm packages)",
     "",
     code.join("\n\n"),
