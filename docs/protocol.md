@@ -147,8 +147,17 @@ inspector, below. No new command.
 
 ## The inspector
 
-The owner's choices of 2026-11-12, on the mockup: a character's **Protocol** tab ([game.md](game.md#in-the-app)) lists
-its connection's frames live, newest last, and shows the one clicked.
+The owner's choices of 2026-11-12, on the mockup, then of 2026-11-13 in the new shell ([shell.md](shell.md)), from
+mock-ups: the panel's **Protocol** view (the panel under the editor area, Ctrl+J; its name "Protocol" in both languages)
+lists the frames of the character whose tab is active, live, newest last, and shows the one clicked in a column on its
+right. Its header holds, on one line, the connection's counts (understood, read, unknown, not trusted, dropped, from
+`RelayStatus.connections`), then the side, the name filter and the pause.
+
+- **Which connection**: the one whose character's tab is active, while the panel shows; none otherwise, so nothing is
+  streamed to a hidden panel. Without such a tab the view says to open a character; for a connection whose protocol
+  is not read, or closed, it says it keeps nothing and shows no counts (the character's tab says why: nothing is said
+  twice). A protocol lost keeps its frames and counts. Only the count of frames not trusted is in colour, when above 0,
+  as are those frames' outcome in the list.
 
 - **Kept**: each connection's last 3,000 frames and 16 MiB at most, whichever comes first, from its start, freed at
   its close: the protocol hands each frame of a connection with pins to the connection's observer, which the IPC keeps
@@ -167,8 +176,12 @@ its connection's frames live, newest last, and shows the one clicked.
   opened, since the walker cannot tell a text from a nested message. **Text is never shown**: an unpinned message may
   hold the chat, the account's nickname or names, and no list of them is kept per build. No bytes, no export, no
   copy. A connection whose protocol is off keeps no frame: a build without pins has no list of its secrets.
-- **The list** shows the visible rows only (fixed row height, by hand), filters by side and by name, and pauses: the
-  list stops, a counter shows what arrived meanwhile.
+- **The list** (`src/inspector/`) keeps the last 3,000 frames, as the back end does, and shows the visible rows only
+  (22 px each, by hand): number, time since the connection opened, side (↑ client, ↓ server), the readable name (or
+  the build's name, dimmer, for a message not pinned), outcome and size. A connection numbers its frames one after
+  another, so where the numbers jump a row says how many frames were not listed. Scrolled to its end, the list follows
+  the frames; scrolled up, the row at its top stays in place as the oldest frames go. It filters by side and by name,
+  and pauses: the list stops, a counter shows what arrived meanwhile.
 
 ## Tests
 
@@ -193,4 +206,9 @@ The inspector's, each with its failure case: the frames kept bounded by count an
 oldest), a secret's frame kept without its bytes, nothing kept for a connection whose protocol is off; a batch capped
 at 1,000 with its count skipped, nothing streamed but the connection watched, the stream stopped by `None`, another
 connection watched, or the connection closed; a frame evicted answered as gone; an unpinned frame's string shown as
-its length only, and in Vitest a fixture's text never reaching the page.
+its length only, and in Vitest a fixture's text never reaching the page. Vitest: the store (none watched at start, the frames
+kept then those streamed, a batch streamed before the frames kept answer, a watch overtaken, the last 3,000 only, the
+same connection watched again), a frame's time past an hour, the list (a row's columns, a frame not pinned by its
+build's name, the frames not listed, the newest of 3,000 drawn and not the oldest), and the panel (the frames under
+their counts, frames not trusted alone in colour, no character's tab, the panel hidden, a protocol not read, a closed
+connection, a protocol lost).

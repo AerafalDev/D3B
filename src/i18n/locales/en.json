@@ -118,5 +118,40 @@
       "harvested": "Harvested",
       "other": "Others"
     }
+  },
+  "inspector": {
+    "title": "Protocol",
+    "none": "Open a character to follow its protocol.",
+    "off": "No frames kept: this connection's protocol is not read.",
+    "closed": "No frames kept.",
+    "frames": "Frames",
+    "counts": {
+      "understood": "understood",
+      "read": "read",
+      "unknown": "unknown",
+      "notTrusted": "not trusted",
+      "dropped": "dropped"
+    },
+    "columns": {
+      "number": "No.",
+      "time": "Time",
+      "message": "Message",
+      "outcome": "Outcome",
+      "size": "Size"
+    },
+    "side": {
+      "client": "Client",
+      "server": "Server"
+    },
+    "outcome": {
+      "understood": "understood",
+      "read": "read",
+      "unknown": "unknown",
+      "notTrusted": "not trusted",
+      "secret": "secret"
+    },
+    "size": "{{size}} B",
+    "notListed_one": "{{count}} frame not listed",
+    "notListed_other": "{{count}} frames not listed"
   }
 }

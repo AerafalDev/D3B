@@ -9,9 +9,20 @@ import { useCharacters } from "./character-store.ts";
 // The same empty list each time, so the selector gives a stable snapshot before the relay speaks.
 const NONE: readonly GameConnectionStatus[] = [];
 
+const EDITOR = "character:";
+
 /** A connection's character's editor, one per connection. */
 function editorId(connection: number): string {
-  return `character:${connection}`;
+  return `${EDITOR}${connection}`;
+}
+
+/** The connection whose character an editor shows, or `null` for another editor or none. */
+export function characterOf(editor: string | null): number | null {
+  if (editor === null || !editor.startsWith(EDITOR)) {
+    return null;
+  }
+  const connection = Number(editor.slice(EDITOR.length));
+  return Number.isInteger(connection) ? connection : null;
 }
 
 /** Chooses a connection's character and opens it in its editor tab, or brings that tab forward. */

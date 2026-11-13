@@ -10,14 +10,16 @@ interface PartFrameProps {
   part: Part;
   /** The view it shows, named in its header; without one, it says its views come with the features. */
   title?: string;
+  /** What its view adds to the header after its name, such as the inspector's counts. */
+  header?: ReactNode;
   children?: ReactNode;
 }
 
 /**
- * A side bar's or the panel's frame: its 35 px header with its view's name and the button that hides it, then its
- * view; before any view, a line saying the views come with the features.
+ * A side bar's or the panel's frame: its 35 px header with its view's name, what the view adds there, and the button
+ * that hides it, then its view; before any view, a line saying the views come with the features.
  */
-export function PartFrame({ part, title, children }: PartFrameProps) {
+export function PartFrame({ part, title, header, children }: PartFrameProps) {
   const { t } = useTranslation();
   const toggle = useLayout((store) => store.toggle);
   const shortcut = useShortcut();
@@ -27,7 +29,7 @@ export function PartFrame({ part, title, children }: PartFrameProps) {
     <section aria-label={name} className="flex min-h-0 flex-1 flex-col">
       <div className="flex h-[35px] shrink-0 items-center gap-2 pr-2 pl-3">
         {title !== undefined && <h2 className="text-text-muted truncate text-xs">{title}</h2>}
-        <span className="flex-1" />
+        <div className="flex min-w-0 flex-1 items-center">{header}</div>
         <IconButton label={t(`shell.hide.${part}`)} shortcut={shortcut(part)} onClick={() => toggle(part)}>
           <Icon name="close" />
         </IconButton>

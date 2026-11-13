@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
+import { Inspector } from "@/inspector/inspector.tsx";
+import { InspectorCounts } from "@/inspector/inspector-counts.tsx";
 import { cn } from "@/lib/utils.ts";
 import { CommandPalette } from "./command-palette.tsx";
 import { useLayout } from "./layout-store.ts";
@@ -49,7 +51,9 @@ export function Shell() {
               </ResizablePanel>
               <ResizableHandle className={cn(SASH, !visible.panel && "hidden")} />
               <ResizablePart part="panel" defaultSize={260} minSize={100}>
-                <PartFrame part="panel" />
+                <PartFrame part="panel" title={t("inspector.title")} header={<InspectorCounts />}>
+                  <Inspector />
+                </PartFrame>
               </ResizablePart>
             </ResizablePanelGroup>
           </ResizablePanel>

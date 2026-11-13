@@ -118,5 +118,40 @@
       "harvested": "Récoltées",
       "other": "Autres"
     }
+  },
+  "inspector": {
+    "title": "Protocol",
+    "none": "Ouvrez un personnage pour suivre son protocole.",
+    "off": "Aucune trame gardée : le protocole de cette connexion n'est pas lu.",
+    "closed": "Aucune trame gardée.",
+    "frames": "Trames",
+    "counts": {
+      "understood": "compris",
+      "read": "lus",
+      "unknown": "inconnus",
+      "notTrusted": "non fiables",
+      "dropped": "perdus"
+    },
+    "columns": {
+      "number": "N°",
+      "time": "Temps",
+      "message": "Message",
+      "outcome": "Issue",
+      "size": "Taille"
+    },
+    "side": {
+      "client": "Client",
+      "server": "Serveur"
+    },
+    "outcome": {
+      "understood": "compris",
+      "read": "lu",
+      "unknown": "inconnu",
+      "notTrusted": "non fiable",
+      "secret": "secret"
+    },
+    "size": "{{size}} o",
+    "notListed_one": "{{count}} trame non listée",
+    "notListed_other": "{{count}} trames non listées"
   }
 }

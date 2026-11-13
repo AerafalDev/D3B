@@ -97,6 +97,8 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
   groups, NPCs, and resources: every interactive element whose state is known, harvested or not), and a line when
   frames were dropped; on the right the character's map. A connection whose protocol is off says why; a lost one
   keeps its view, marked lost.
+- **The protocol** of the character whose tab is active, in the panel's Protocol view under it
+  ([protocol.md](protocol.md#the-inspector)), the owner's choice of 2026-11-13 over a tab inside the character's tab.
 - **The character's map**, the owner's style "B" (2026-11-12): its 560 cells (14 columns over 40 staggered rows)
   from the game data's cells, read by `map_cells` when the map changes; only the walkable ground and the exits are
   drawn, as discreet diamonds. What stands on it is a dot: the character blue and ringed, players purple, monster
