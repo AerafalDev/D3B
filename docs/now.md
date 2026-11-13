@@ -37,7 +37,8 @@ _Updated 2026-11-13._
     x64, `bun run app` on `next` 4fa724f: items 1 to 9 and 12 pass; on 2026-11-12, item 10's close (v0.12.0 to
     v0.13.0). Not measured yet: item 10's Restart (v0.13.0 installed, then the release after it) and 11 (needs a
     Windows account whose name holds a space or an accent).
-    1. Close every client, start D3B: the bar says "Relay ready · 0 in game", its tooltip names client 3.7.13.17;
+    1. Close every client, start D3B: the bar says "Relais prêt · 0 en jeu", then on the right "Client 3.7.13.17";
+       its hover says to start Dofus after D3B, and names the client only if its build is not the data's;
     2. start a client from the launcher, log in, choose a server and a character, enter the game: it plays as before,
        and the bar says 1 in game; walk to another map and open the inventory;
     3. set the launcher's connection port to 443 and do step 2 again: it plays;
@@ -48,9 +49,9 @@ _Updated 2026-11-13._
        client started now plays without D3B;
     7. kill D3B from the Task Manager, start a client: it cannot connect (expected); start D3B: the bar says ready
        and a new client plays;
-    8. start a client, then D3B: the client plays, the bar says 0 in game, the tooltip says to start it after;
+    8. start a client, then D3B: the client plays, the bar says 0 in game, the relay's hover says to start it after;
     9. take port 5555 first (`[Net.Sockets.TcpListener]::new([ipaddress]'127.0.13.59',5555).Start()` in a
-       PowerShell kept open), then start D3B: the bar says "Relay off", the tooltip names port 5555, `version` is
+       PowerShell kept open), then start D3B: the bar says "Relais arrêté" in red, its hover names port 5555, `version` is
        untouched;
     10. with an update downloaded (from the next release on), close D3B: once it installed, `version` names
         Ankama's URL; on another one, choose Restart: the new D3B says ready and a client plays;
@@ -60,17 +61,19 @@ _Updated 2026-11-13._
     `next` or the next release. Never paste a capture. Measured by the owner on 2026-11-12, Windows x64, `bun run app`
     on `next` b200248: items 1 to 6 pass; its two captures replayed through the relay byte for byte and through the
     protocol with no frame not trusted. Not measured yet: item 7, at the next client patch.
-    1. With 3.7.13.17's data in `data/` (the extractor's item 4), start D3B, then a client; enter the game: the relay's
-       tooltip shows "Connexion 1 — 3.7.13.17, protocole actif, carte X,Y", X,Y the coordinates the game shows for the
-       character's map, and below it the counts, "non fiables 0" and "perdus 0";
-    2. walk to the next map: within about a second the tooltip names the new coordinates;
+    Since the new shell (the owner, 2026-11-13), the relay's hover no longer lists the connections: items 1, 2, 4, 5
+    and 7 read the Characters view and a character's tab; the counts of items 1 and 3 read the inspector, once it lands.
+    1. With 3.7.13.17's data in `data/` (the extractor's item 4), start D3B, then a client; enter the game: the
+       character's tab names the coordinates the game shows for its map, and the inspector "non fiables 0" and
+       "perdus 0";
+    2. walk to the next map: within about a second the tab names the new coordinates;
     3. play five minutes (walk, open the inventory, harvest, a fight if one is at hand): "compris" and "lus" grow,
        "non fiables" and "perdus" stay at 0;
     4. play a second account at once: two connections, each with its own map;
-    5. close one client's window: its connection leaves the tooltip, the other stays;
+    5. close one client's window: its character leaves the Characters view, the other stays;
     6. with `D3B_RECORD` set to an absolute folder, play a minute: the capture is named `3.7.13.17-<ms>-<n>.d3bcap`;
-    7. after the next client patch, before its pins: the tooltip says "protocole éteint (build sans pins)" and the game
-       plays as before.
+    7. after the next client patch, before its pins: the Characters view says "Protocole non lu", the character's tab
+       that its build has no pins, and the game plays as before.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>.tar.gz` that `data:fetch` reads; the app reads it all at start
@@ -113,9 +116,10 @@ _Updated 2026-11-13._
   with the command palette (#188); then the features one at a time, each decided with the owner: the Characters
   view (done in code, #189), a character's tab (layout "A", done in code, #190), the character's map in the tab
   (the owner's style "B": discreet diamonds, actors as dots; done in code, #191). The status bar, the owner's layout "A" (2026-11-13): the
-  app's version and the game data's build (done in code), then the relay and the update offer. A renderer of the actors' sprites
+  app's version and the game data's build (done in code, #193), the relay's item and its hover (done in code), then the
+  update offer. A renderer of the actors' sprites
   was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The step-2
-  checklist items that read the relay's indicator, its tooltip or the inspector wait for those features in the new
-  shell. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
+  checklist items that read the relay's item and its hover are measurable again; those that read the inspector wait
+  for it. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

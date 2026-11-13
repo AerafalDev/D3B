@@ -15,7 +15,7 @@ flowchart LR
     ch --> pt["protocol: envelope, Any, pins of the build"]
     pins["src-tauri/protocol/: our .proto files, pins/BUILD.json"] --> pt
     pt -->|"counts and the map, at most 1/s"| st["RelayStatus, per connection"]
-    st --> ipc["ipc: RelayChanged"] --> bar["status bar tooltip"]
+    st --> ipc["ipc: RelayChanged"] --> bar["Characters view, character's tab, inspector"]
     ext["extractor: schema from the metadata, artifacts/protocol/BUILD.json"] -.->|"audit test, maintainer"| pins
 ```
 
@@ -140,9 +140,10 @@ is never shared. It is the one exception to the relay's secrets rule ([relay.md]
 `RelayStatus.connections` holds one entry per game connection: its build, its protocol state (on, unmapped, unknown
 build, lost), updated at most once a second, the counts of the four outcomes and of dropped frames (saturating at
 `u32::MAX`), and its current map's coordinates from the game data when the data's build is the connection's: only
-these prove a name was paired with the right message. The relay's tooltip (`src/relay/`, removed on 2026-11-12 with the old UI, to return in the new shell) showed each connection on two
-lines, the owner's choice (2026-11-12): who it is (its number, build, protocol and map), then, when it is read or
-lost, its counts; one line when it is not read. No new command.
+these prove a name was paired with the right message. The old relay tooltip showed each connection (removed on
+2026-11-12 with the old UI); in the new shell the relay's hover no longer does (the owner, 2026-11-13): a connection's
+protocol state shows in the Characters view and its character's tab, its map in the tab, and its counts in the
+inspector, below. No new command.
 
 ## The inspector
 

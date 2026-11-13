@@ -50,6 +50,19 @@
     "client": "Client {{build}}",
     "noData": "No game data"
   },
+  "relay": {
+    "starting": "Relay starting…",
+    "ready": "Relay ready · {{count}} in game",
+    "failed": "Relay off",
+    "unsupported": "Relay not measured on this system",
+    "stopped": "Relay stopped",
+    "client": "Client {{build}}",
+    "clientOther": "Client {{build}}, game data of {{data}}",
+    "notUnderstood_one": "{{count}} connection went straight to Ankama: its server choice was not understood.",
+    "notUnderstood_other": "{{count}} connections went straight to Ankama: their server choice was not understood.",
+    "quitEnds": "Quitting D3B ends these game connections.",
+    "startAfter": "Start Dofus after D3B: a client started before it plays without the relay."
+  },
   "characters": {
     "title": "Characters",
     "empty": "Start Dofus from Ankama's launcher: each character it plays shows here.",
