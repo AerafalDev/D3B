@@ -17,7 +17,7 @@ import {
   marks,
 } from "./map-marks.ts";
 
-// The owner's style "B" (2026-11-12): discreet diamonds for the ground, a dot per actor until the renderer draws them.
+// The owner's style "B" (2026-11-12): discreet diamonds for the ground, a dot per actor.
 const FLOOR: Record<Floor, string> = { walkable: "#272727", exit: "#1f3247" };
 const DOT: Record<MarkKind, string> = {
   me: "#0078d4",
