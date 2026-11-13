@@ -9,12 +9,13 @@ public sealed class WorldGraphReaderTests
     private const long Astrub = 54164787;
     private const long North = 54164788;
 
+    // Listed out of order, so that both keys of each sort are needed; the edge from 12 takes every bound a transition may.
     private static readonly TestGraph _graph = Of(
-        [(11, North, 1), (10, Astrub, 1), (12, North, 2)],
+        [(12, North, 2), (11, North, 1), (10, Astrub, 1), (13, Astrub, 3)],
         [
-            (12, 10, [Scroll(Astrub, 2, 540)]),
-            (10, 11, [Scroll(North, 6, 6), Use(North, 300, 184, 465453, "PZ=1")]),
+            (12, 10, [Scroll(Astrub, 0, 0), Scroll(Astrub, 7, 559), Use(Astrub, 0, 0, int.MaxValue, "PZ=10"), Use(Astrub, 1, 5, 0, "")]),
             (10, 12, [MapAction(North, 30)]),
+            (10, 11, [Scroll(North, 6, 6), Use(North, 300, 184, 465453, "PZ=1")]),
         ]);
 
     [Fact]
@@ -22,7 +23,7 @@ public sealed class WorldGraphReaderTests
     {
         var graph = WorldGraphReader.Read(_graph.Build());
 
-        Assert.Equal([(10UL, Astrub, 1), (11UL, North, 1), (12UL, North, 2)], graph.Vertices);
+        Assert.Equal([(10UL, Astrub, 1), (13UL, Astrub, 3), (11UL, North, 1), (12UL, North, 2)], graph.Vertices);
         Assert.Equal([(10UL, 11UL), (10UL, 12UL), (12UL, 10UL)], graph.Edges.Select(edge => (edge.From, edge.To)));
 
         var (scroll, use) = (graph.Edges[0].Transitions[0], graph.Edges[0].Transitions[1]);
@@ -31,6 +32,11 @@ public sealed class WorldGraphReaderTests
         Assert.Equal(("scroll", 6, 6, (int?)null, North, (int?)null, (string?)null), (scroll.Type, scroll.Direction, scroll.CellId, scroll.SkillId, scroll.MapId, scroll.ElementId, scroll.Criterion));
         Assert.Equal(("interactive", 255, 300, (int?)184, North, (int?)465453, "PZ=1"), (use.Type, use.Direction, use.CellId, use.SkillId, use.MapId, use.ElementId, use.Criterion));
         Assert.Equal("mapAction", graph.Edges[1].Transitions[0].Type);
+
+        var bounds = graph.Edges[2].Transitions;
+
+        Assert.Equal([(0, 0), (7, 559), (255, 0), (255, 1)], bounds.Select(transition => (transition.Direction, transition.CellId)));
+        Assert.Equal(((int?)0, (int?)int.MaxValue, "PZ=10", (int?)0), (bounds[2].SkillId, bounds[2].ElementId, bounds[2].Criterion, bounds[3].ElementId));
     }
 
     [Fact]
@@ -75,11 +81,13 @@ public sealed class WorldGraphReaderTests
     public void AnEdgeKeyedUnderOtherVerticesIsRefused()
     {
         Refused(_graph with { Sources = [(10, [11], [(12, 11, [Scroll(North, 6, 6)])])] }, "from 10 to 11 names 12 to 11");
+        Refused(_graph with { Sources = [(10, [11], [(10, 12, [Scroll(North, 6, 6)])])] }, "from 10 to 11 names 10 to 12");
     }
 
     [Fact]
-    public void AnEdgeToAVertexTheGraphLacksOrWithoutTransitionIsRefused()
+    public void AnEdgeOfAVertexTheGraphLacksOrWithoutTransitionIsRefused()
     {
+        Refused(_graph with { Sources = [(99, [11], [(99, 11, [Scroll(North, 6, 6)])])] }, "names a vertex it lacks, or has no transition");
         Refused(_graph with { Sources = [(10, [99], [(10, 99, [Scroll(North, 6, 6)])])] }, "names a vertex it lacks, or has no transition");
         Refused(_graph with { Sources = [(10, [11], [(10, 11, [])])] }, "names a vertex it lacks, or has no transition");
     }
