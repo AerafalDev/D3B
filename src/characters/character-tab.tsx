@@ -67,7 +67,7 @@ export function CharacterTab({ api, params }: IDockviewPanelProps<CharacterParam
     <div className="grid h-full min-h-0 grid-cols-[260px_1fr] gap-4 overflow-hidden p-4">
       <section aria-label={t("character.state")} className="flex min-h-0 flex-col gap-4 overflow-y-auto pr-1">
         <header className="flex items-center gap-3">
-          <Avatar name={name} head={view.head} />
+          <Avatar name={name} head={view.head} size="tab" />
           <div className="min-w-0">
             <h2 className="truncate text-[15px] font-medium text-white">{name}</h2>
             <p className="text-text-muted text-xs">

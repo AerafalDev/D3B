@@ -14,6 +14,12 @@ vi.mock("@/shell/parts/editor-store.ts", () => ({
   useEditors: (select: (store: { active: string | null }) => unknown) => select({ active: opened.active }),
 }));
 
+// The asset protocol's URL of a file, as Tauri makes it; happy-dom has no Tauri.
+vi.mock("@tauri-apps/api/core", async (original) => ({
+  ...(await original<typeof import("@tauri-apps/api/core")>()),
+  convertFileSrc: (path: string) => `asset://${path}`,
+}));
+
 const { CharactersView, characterOf } = await import("./characters-view.tsx");
 
 function connection(number: number, protocol: GameConnectionStatus["protocol"] = "on"): GameConnectionStatus {
@@ -74,6 +80,16 @@ describe("the characters view", () => {
     render(<CharactersView />);
     const rows = screen.getAllByRole("button").map((row) => row.textContent);
     expect(rows).toEqual(["LyLyra lvl 874, -18 · Forest", "CoConnection 2Entering the game…"]);
+  });
+
+  it("shows a character's breed head in place of its initials", () => {
+    relay([connection(1), connection(2)]);
+    useCharacters.setState({ views: { 1: { ...lyra, head: "data/heads/9-1.png" } } });
+    const { container } = render(<CharactersView />);
+    const images = [...container.querySelectorAll("img")].map((image) => image.getAttribute("src"));
+    expect(images).toEqual(["asset://data/heads/9-1.png"]);
+    const rows = screen.getAllByRole("button").map((row) => row.textContent);
+    expect(rows).toEqual(["Lyra lvl 874, -18 · Forest", "CoConnection 2Entering the game…"]);
   });
 
   it("says when a connection's protocol is not read", () => {

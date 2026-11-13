@@ -93,7 +93,7 @@ _Updated 2026-11-13._
     against `next`: (1) the data's format 2, `breeds.json` and the 38 heads, named in a second asset of the build's
     release (done in code); (2) the character's sex, read from its look (done in code: the pins' audit holds, and the owner's 54 game connections
     replay with no frame not trusted); (3) the tab's breed name and head (done in code); (4) the
-    Characters list's head. On Windows x64:
+    Characters list's head (done in code). On Windows x64:
     1. `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
        `artifacts/data/client-3.7.13.17-format2.tar.gz`; then `tar -xzf artifacts/data/client-3.7.13.17-format2.tar.gz
        -C data` (after emptying `data/` but its README): a `data/` still in format 1 makes `bun run app` say there is
@@ -105,7 +105,8 @@ _Updated 2026-11-13._
        breed's head, 40 px in a rounded square, in place of its initials, the head of its sex, and "Niveau <n> ·
        <breed> · <state>" with the breed's French name (in English after switching the language: "Level <n> ·
        <breed>", Crâ becoming Cra); a character of each sex if one is at hand;
-    4. at the next client patch, before its data: the tab shows the initials and "Niveau <n>" alone.
+    4. the Characters view shows the same head, 28 px, in place of the initials, on each character's row;
+    5. at the next client patch, before its data: the tab shows the initials and "Niveau <n>" alone.
   - **the live view's life** (the owner's report of 2026-11-13, fixed): after a fight, stand still out of combat: the
     character's tab says "Vie — en régénération" while the bar fills, and no longer once it is full, before any sit
     or fight.
