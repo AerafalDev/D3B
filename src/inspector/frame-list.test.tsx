@@ -138,4 +138,11 @@ describe("the frame list", () => {
 
     expect(rows().at(-1)).toMatch(/^3010/);
   });
+
+  it("keeps its rows' hidden texts inside its own box, so the page never scrolls", () => {
+    render(<FrameList frames={range(1, 200)} />);
+
+    // The side's text, hidden but for screen readers, is placed absolutely: only a box placed itself contains it.
+    expect(screen.getByRole("list").parentElement?.className).toContain("relative");
+  });
 });

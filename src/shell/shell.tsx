@@ -33,7 +33,7 @@ export function Shell() {
   const ActiveView = active?.component;
 
   return (
-    <div className="bg-frame text-text flex h-svh flex-col overflow-hidden">
+    <div className="bg-frame text-text relative flex h-svh flex-col overflow-hidden">
       <TitleBar />
       <div className="flex min-h-0 flex-1 pr-[5px]">
         <ActivityBar />

@@ -208,16 +208,16 @@ decoded, as many times as the study counted them in these 54 (it read 2 more, of
 `Desktop\d3b-captures`, which hold the other 2 `KamasUpdateEvent` of its 1,374).
 
 The inspector's, each with its failure case: the frames kept bounded by count and by bytes (an 88 KB frame evicts the
-oldest), a secret's frame kept without its bytes, nothing kept for a connection whose protocol is off; a batch capped
-at 1,000 with its count skipped, nothing streamed but the connection watched, the stream stopped by `None`, another
-connection watched, or the connection closed; a frame evicted answered as gone; an unpinned frame's string shown as
-its length only, and in Vitest a fixture's text never reaching the page. Vitest: the store (kept then streamed frames in
-any order, a watch overtaken, the last 3,000, the back end told when none is watched), a frame's time, the list (its
-columns, the frames not listed, the newest drawn, its top row kept while scrolled up, following again at its end), and
-the panel (counts, only frames not trusted in colour, no frames of another connection, no tab, panel hidden, protocol
-not read, closed, lost, a detail without the frame's name and its unread fields dimmer, a secret, a frame gone, the
-side and name filters, the pause). The store: a detail answered late for a frame chosen before dropped, the choice
-forgotten for another connection, frames held while paused and listed once resumed, no more held than kept while all are counted, the frames kept that answer after the pause held, a secret
-remembered when chosen. Rust: a
-decoded message's fields without its name, nested ones indented, none for a message without fields; a 64-bit value
-written out.
+oldest), a secret's frame kept without its bytes, nothing kept for a connection whose protocol is off; a batch capped at
+1,000 with its count skipped, nothing streamed but the connection watched, the stream stopped by `None`, another
+connection watched, or the connection closed; a frame evicted answered as gone; an unpinned frame's string shown as its
+length only, and in Vitest a fixture's text never reaching the page. Vitest: the store (kept then streamed frames in any
+order, a watch overtaken, the last 3,000, the back end told when none is watched), a frame's time, the list (its
+columns, the frames not listed, the newest drawn, its top row kept while scrolled up, following again at its end, its
+box placed so its rows' hidden texts stay inside it), and the panel (counts, only frames not trusted in colour, no
+frames of another connection, no tab, panel hidden, protocol not read, closed, lost, a detail without the frame's name
+and its unread fields dimmer, a secret, a frame gone, the side and name filters, the pause). The store: a detail
+answered late for a frame chosen before dropped, the choice forgotten for another connection, frames held while paused
+and listed once resumed, no more held than kept while all are counted, the frames kept that answer after the pause held,
+a secret remembered when chosen. Rust: a decoded message's fields without its name, nested ones indented, none for a
+message without fields; a 64-bit value written out.
