@@ -165,6 +165,7 @@ const INPUT = {
   distribution: "Ubuntu 22.04.5 LTS",
   packages: PACKAGES,
   licenses: new Map([["LGPL-2", "GNU LIBRARY GENERAL PUBLIC LICENSE\n"]]),
+  runtime: "# The AppImage's runtime and AppRun\n\ntype2-runtime fedfad5 (MIT)\n",
 };
 
 function notices(input: Parameters<typeof systemNoticesText>[0]): string {
@@ -186,6 +187,12 @@ describe("systemNoticesText", () => {
     expect(text).toContain("## LGPL-2\n\nGNU LIBRARY GENERAL PUBLIC LICENSE");
     expect(text).toContain("apt-get source gtk+3.0=3.24.33-1ubuntu2.2");
     expect(text).toContain("https://launchpad.net/ubuntu/+source/gtk+3.0/3.24.33-1ubuntu2.2");
+  });
+
+  it("ends on the section of the runtime and AppRun, after the packages' sources", () => {
+    const text = notices(INPUT);
+    expect(text.indexOf("# The AppImage's runtime and AppRun")).toBeGreaterThan(text.indexOf("apt-get source zzz="));
+    expect(text.endsWith("type2-runtime fedfad5 (MIT)\n")).toBe(true);
   });
 
   it("gives a copyright file shared by several packages once, under all their names", () => {

@@ -166,9 +166,9 @@ _Updated 2026-11-13._
   crate's licences as `THIRD-PARTY-NOTICES.txt` (the owner, 2026-11-13; done in code,
   [updates.md](updates.md#third-party-notices)), so the font's licence no longer holds the next release back; the AppImage also carries the
   licences and sources of the 130 Ubuntu packages it packs (GTK, WebKitGTK and theirs) as
-  `SYSTEM-LIBRARIES-NOTICES.txt`, read from a first build (the owner, 2026-11-13; done in code). Not listed yet: the AppImage's own runtime
-  (type2-runtime, with libfuse linked in, LGPL-2.1) and AppRun, which appimagetool and linuxdeploy add; a PR of its
-  own adds them, and the next release waits for it (the owner, 2026-11-13). A renderer of the actors' sprites
+  `SYSTEM-LIBRARIES-NOTICES.txt`, read from a first build (the owner, 2026-11-13; done in code). Its own runtime
+  (type2-runtime, with libfuse linked in, LGPL-2.1), the libraries that runtime links, and AppRun close that file,
+  read from the same build (the owner, 2026-11-13; done in code), so nothing holds the next release back. A renderer of the actors' sprites
   was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The relay's
   items 1, 2, 4, 7, 8 and 9 were measured again in it by the owner on 2026-11-13; the protocol's items that read the
   inspector, on the same day. Step 3's model is in [docs/bot.md](bot.md) (below).
