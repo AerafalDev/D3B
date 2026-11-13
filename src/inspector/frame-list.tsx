@@ -131,7 +131,7 @@ export function FrameList({ frames, shows = ALL, selected = null, onSelect = () 
         <span className="truncate">{t("inspector.columns.outcome")}</span>
         <span className="text-right">{t("inspector.columns.size")}</span>
       </div>
-      <div ref={box} onScroll={scrolled} className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={box} onScroll={scrolled} className="relative min-h-0 flex-1 overflow-y-auto">
         <div ref={before} />
         <ol aria-label={t("inspector.frames")}>
           {items.slice(first, last).map((item) =>

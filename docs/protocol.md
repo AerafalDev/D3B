@@ -213,7 +213,8 @@ at 1,000 with its count skipped, nothing streamed but the connection watched, th
 connection watched, or the connection closed; a frame evicted answered as gone; an unpinned frame's string shown as
 its length only, and in Vitest a fixture's text never reaching the page. Vitest: the store (kept then streamed frames in
 any order, a watch overtaken, the last 3,000, the back end told when none is watched), a frame's time, the list (its
-columns, the frames not listed, the newest drawn, its top row kept while scrolled up, following again at its end), and
+columns, the frames not listed, the newest drawn, its top row kept while scrolled up, following again at its end, its rows' hidden texts kept inside its box so
+the window never scrolls), and
 the panel (counts, only frames not trusted in colour, no frames of another connection, no tab, panel hidden, protocol
 not read, closed, lost, a detail without the frame's name and its unread fields dimmer, a secret, a frame gone, the
 side and name filters, the pause). The store: a detail answered late for a frame chosen before dropped, the choice
