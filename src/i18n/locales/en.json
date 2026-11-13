@@ -171,5 +171,129 @@
       "bytes_other": "{{number}}: {{count}} bytes",
       "unreadable": "…"
     }
+  },
+  "node": {
+    "kinds": {
+      "on_start": {
+        "sentence": "On start",
+        "description": "The main flow: it starts when the character is started."
+      },
+      "life_below": {
+        "sentence": "Life below {{threshold}}",
+        "description": "When life falls below the threshold; re-arms above its re-arm value."
+      },
+      "pods_above": {
+        "sentence": "Pods above {{threshold}}",
+        "description": "When pods rise above the threshold; re-arms below its re-arm value."
+      },
+      "fight_starts": {
+        "sentence": "A fight starts",
+        "description": "The server starts a fight. By default, the fight AI fights it, then the flow resumes."
+      },
+      "died": {
+        "sentence": "The character died",
+        "description": "A fight is lost. By default, the character stops, blocked."
+      },
+      "action_failed": {
+        "sentence": "An action fails",
+        "description": "An action ends Failed and its Failed output leads nowhere. By default, the character stops, blocked with the reason."
+      },
+      "go_to_zone": {
+        "sentence": "Go to {{zone}}",
+        "description": "Goes to the zone's nearest map."
+      },
+      "sit_until": {
+        "sentence": "Sit until life is {{life}}",
+        "description": "Sits until life is back at the threshold."
+      },
+      "harvest_until": {
+        "sentence": "Harvest {{what}} in {{zone}} until pods are {{pods}}",
+        "description": "Harvests the zone's resources, the nearest first, until pods reach the threshold."
+      },
+      "go_to_bank": {
+        "sentence": "Go to {{bank}}",
+        "description": "Goes to the bank."
+      },
+      "deposit_all_but": {
+        "sentence": "Deposit all but {{keep}}",
+        "description": "Opens the bank and deposits everything but what is kept."
+      },
+      "hunt_until": {
+        "sentence": "Hunt in {{zone}} until pods are {{pods}}",
+        "description": "Fights the zone's monsters until pods reach the threshold."
+      },
+      "notify": {
+        "sentence": "Notify: {{text}}",
+        "description": "An alert on the desktop and in the app, then what follows."
+      },
+      "if": {
+        "sentence": "If {{condition}}",
+        "description": "Chooses what follows by the condition."
+      },
+      "wait": {
+        "sentence": "Wait {{minutes}} minutes",
+        "description": "Waits, then what follows."
+      },
+      "finish": {
+        "sentence": "Finish",
+        "description": "Stops the blueprint: the character is \"Finished\"."
+      },
+      "life_percent": {
+        "sentence": "Life %",
+        "description": "Life, as a percentage of its maximum."
+      },
+      "pods_percent": {
+        "sentence": "Pods %",
+        "description": "Pods, as a percentage of their maximum."
+      },
+      "level": {
+        "sentence": "Level",
+        "description": "The character's level."
+      },
+      "at_least": {
+        "sentence": "{{a}} ≥ {{b}}",
+        "description": "True when the first value reaches the second."
+      },
+      "add": {
+        "sentence": "{{a}} + {{b}}",
+        "description": "The sum of both values."
+      },
+      "entry": {
+        "sentence": "Inputs",
+        "description": "What the function receives."
+      },
+      "return_done": {
+        "sentence": "Return: Done",
+        "description": "The function ends, giving back its outputs."
+      },
+      "return_failed": {
+        "sentence": "Return: Failed, {{reason}}",
+        "description": "The function ends Failed, with the reason."
+      }
+    },
+    "pins": {
+      "run": "",
+      "then": "",
+      "done": "Done",
+      "failed": "Failed",
+      "reason": "Reason",
+      "value": "Value",
+      "threshold": "Threshold",
+      "rearm": "Re-arm",
+      "zone": "Zone",
+      "life": "Life",
+      "what": "Resources",
+      "pods": "Pods",
+      "count": "Harvests",
+      "bank": "Bank",
+      "keep": "Keep",
+      "text": "Text",
+      "condition": "Condition",
+      "true": "True",
+      "false": "False",
+      "minutes": "Minutes",
+      "a": "A",
+      "b": "B"
+    }
   }
 }

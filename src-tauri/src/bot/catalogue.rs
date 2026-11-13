@@ -288,4 +288,47 @@ mod tests {
         assert!(!Carries::Exec.feeds(value(Bool)) && !value(Bool).feeds(Carries::Exec));
         assert!(!value(Number).feeds(value(Text)));
     }
+
+    #[test]
+    fn every_kind_reads_as_a_sentence_in_each_language_whose_holes_are_its_inputs() {
+        let locales = [
+            include_str!("../../../src/i18n/locales/en.json"),
+            include_str!("../../../src/i18n/locales/fr.json"),
+        ];
+        for text in locales {
+            let locale: serde_json::Value = serde_json::from_str(text).unwrap_or_else(|error| panic!("{error}"));
+            let (kinds, pins) = (&locale["node"]["kinds"], &locale["node"]["pins"]);
+            let listed = kinds
+                .as_object()
+                .map(|kinds| kinds.keys().cloned().collect::<HashSet<_>>());
+            assert_eq!(
+                listed,
+                Some(KINDS.iter().map(|kind| kind.id.to_owned()).collect()),
+                "no kind more or less"
+            );
+            for kind in KINDS {
+                let read = |key: &str| kinds[kind.id][key].as_str().filter(|text| !text.is_empty());
+                let (Some(sentence), Some(_)) = (read("sentence"), read("description")) else {
+                    panic!("{}", kind.id)
+                };
+                for hole in sentence
+                    .split("{{")
+                    .skip(1)
+                    .filter_map(|rest| rest.split_once("}}"))
+                    .map(|(hole, _)| hole)
+                {
+                    let value = |pin: &&Pin| matches!(pin.carries, Carries::Value(_));
+                    let input = kind
+                        .pins
+                        .iter()
+                        .filter(value)
+                        .any(|pin| pin.id == hole && pin.side == Side::In);
+                    assert!(input, "{}: {hole}", kind.id);
+                }
+                for pin in kind.pins {
+                    assert!(pins[pin.id].is_string(), "{}: {}", kind.id, pin.id);
+                }
+            }
+        }
+    }
 }
