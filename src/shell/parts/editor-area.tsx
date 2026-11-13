@@ -17,6 +17,7 @@ const EDITORS = { character: CharacterTab };
  */
 export function EditorArea() {
   const setApi = useEditors((store) => store.setApi);
+  const setActive = useEditors((store) => store.setActive);
   return (
     <div className="border-line h-full overflow-hidden rounded-[6px] border">
       <DockviewReact
@@ -25,7 +26,11 @@ export function EditorArea() {
         components={EDITORS}
         defaultTabComponent={EditorTab}
         watermarkComponent={EditorWatermark}
-        onReady={(event) => setApi(event.api)}
+        onReady={(event) => {
+          setApi(event.api);
+          // Lives as long as dockview, which disposes its listeners with itself.
+          event.api.onDidActivePanelChange((change) => setActive(change.panel?.id ?? null));
+        }}
       />
     </div>
   );

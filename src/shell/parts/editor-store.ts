@@ -6,12 +6,17 @@ import type { IconName } from "@/icons/icons.ts";
 interface EditorStore {
   /** Dockview's API once the editor area is mounted; `null` before. */
   api: DockviewApi | null;
+  /** The id of the editor whose tab is active, as dockview says it; `null` with none open. */
+  active: string | null;
   setApi: (api: DockviewApi | null) => void;
+  setActive: (active: string | null) => void;
 }
 
 export const useEditors = create<EditorStore>((set) => ({
   api: null,
+  active: null,
   setApi: (api) => set({ api }),
+  setActive: (active) => set({ active }),
 }));
 
 /** What an editor tab carries: its icon in the tab, and the editor's own parameters. */

@@ -90,11 +90,12 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
 - **The Characters view** of the primary side bar (`src/characters/`): one row per game connection from its open
   to its close, its avatar (its initials until the character renderer), name, level, place or state, and a dot:
   green exploring, amber fighting, grey waiting or unread, red lost. Before a selection a row shows its connection's
-  number. Empty, the view says to start Dofus from Ankama's launcher.
+  number. A row is marked while its character's tab is active. Empty, the view says to start Dofus from Ankama's
+  launcher.
 - **A character's tab**, layout "A": opened from its row, named after the character once known. On the left its
   state: who (level, class, exploring or fighting), where (area, sub-area, coordinates, cell), life (marked while it
   regenerates), pods, experience, energy, action and movement points, kamas, what is around (players, monster
-  groups, NPCs, resources), and a line when frames were dropped; on the right the character's map, which comes
+  groups, NPCs, and resources: every interactive element whose state is known, harvested or not), and a line when frames were dropped; on the right the character's map, which comes
   next. A connection whose protocol is off says why; a lost one keeps its view, marked lost.
 
 The step-2 interface removed on 2026-11-12, for reference, was:

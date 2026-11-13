@@ -32,6 +32,7 @@ export function Gauge({ label, gauge, tone, note }: GaugeProps) {
       </div>
       <meter
         aria-label={label}
+        aria-valuetext={known ? undefined : "—"}
         min={0}
         max={known ? (gauge.max ?? 1) : 1}
         value={known ? (gauge.value ?? 0) : 0}
