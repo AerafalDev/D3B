@@ -78,12 +78,22 @@
     "resources": "Ressources",
     "stale": "Certaines valeurs peuvent être périmées : des trames ont été perdues.",
     "map": "La carte du personnage",
-    "mapSoon": "La carte du personnage arrive avec la prochaine version.",
     "waiting": "En attente de l'entrée en jeu du personnage…",
     "closed": "Cette connexion est fermée.",
     "off": {
       "unmapped": "Le build de cette connexion n'a pas de correspondances : son protocole n'est pas lu.",
       "unknownBuild": "Cette connexion n'a nommé aucun build : son protocole n'est pas lu."
+    },
+    "mapFighting": "En combat : les positions en combat sont lues à une étape suivante.",
+    "mapUnavailable": "La carte ne peut pas être dessinée : {{error}}",
+    "legend": {
+      "me": "Vous",
+      "player": "Joueurs",
+      "monsters": "Monstres",
+      "npc": "PNJ",
+      "resource": "Ressources",
+      "harvested": "Récoltées",
+      "other": "Autres"
     }
   }
 }

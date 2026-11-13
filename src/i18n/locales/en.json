@@ -78,12 +78,22 @@
     "resources": "Resources",
     "stale": "Some values may be out of date: frames were dropped.",
     "map": "The character's map",
-    "mapSoon": "The character's map comes with the next version.",
     "waiting": "Waiting for the character to enter the game…",
     "closed": "This connection has closed.",
     "off": {
       "unmapped": "This connection's build has no pins: its protocol is not read.",
       "unknownBuild": "This connection named no build: its protocol is not read."
+    },
+    "mapFighting": "In a fight: positions in fights are read in a later step.",
+    "mapUnavailable": "The map cannot be drawn: {{error}}",
+    "legend": {
+      "me": "You",
+      "player": "Players",
+      "monsters": "Monsters",
+      "npc": "NPCs",
+      "resource": "Resources",
+      "harvested": "Harvested",
+      "other": "Others"
     }
   }
 }
