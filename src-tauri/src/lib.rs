@@ -1,6 +1,11 @@
 //! D3B's back end. Each folder is one domain (`data`, then `relay`, `protocol`, `game`, `bot`, `storage` as they come),
 //! and `ipc` is the only one the webview talks to.
 
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "the Library and the editor read blueprints from step 3's PR 4")
+)]
+mod bot;
 mod data;
 mod game;
 mod ipc;
