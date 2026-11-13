@@ -17,7 +17,7 @@ flowchart LR
   (`plugins.updater`). It refuses any update not signed by the project's private key.
 - **Front end**: `src/updates/`. `updater.ts` is the store (idle, checking, downloading, ready, installing, failed),
   `use-auto-update.ts` checks once at start and handles the close. `update-item.tsx` is the status bar's offer, on
-  its right after the game data (the owner's choice "3a" from mock-ups, 2026-11-13): JetBrains' orange update icon
+  its right after the game data (the owner's choice "3a" from mock-ups, 2026-11-13): the orange update icon
   and "Restart to update to 0.14.0"; chosen, it installs and restarts at once, then says "Installing 0.14.0…" and
   cannot be chosen again. Its hover adds only what the label does not say: the release's notes (six lines at most;
   the channel's are empty today), and that restarting ends the game connections while some are open. A failed install

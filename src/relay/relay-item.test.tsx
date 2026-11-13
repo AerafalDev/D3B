@@ -5,7 +5,6 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { RelayStatus } from "@/bindings.ts";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { initI18n } from "@/i18n/i18n.ts";
-import { icons } from "@/icons/icons.ts";
 import { RelayItem } from "./relay-item.tsx";
 import { useRelay } from "./relay-store.ts";
 
@@ -27,7 +26,7 @@ function renderItem() {
 }
 
 function shownIcons(container: HTMLElement) {
-  return [...container.querySelectorAll("img")].map((image) => image.getAttribute("src"));
+  return [...container.querySelectorAll("[data-icon]")].map((icon) => icon.getAttribute("data-icon"));
 }
 
 describe("the relay's item", () => {
@@ -48,21 +47,21 @@ describe("the relay's item", () => {
     const { container } = renderItem();
     const label = screen.getByText("Relay ready · 1 in game");
     expect(label.closest(".text-error")).toBeNull();
-    expect(shownIcons(container)).toEqual([icons.arrowLeftRight]);
+    expect(shownIcons(container)).toEqual(["arrowLeftRight"]);
   });
 
-  it("shows a relay off in red, with JetBrains' error", () => {
+  it("shows a relay off in red, with the error icon", () => {
     useRelay.setState({ status: { ...ready, state: "failed", reason: "port 5555 is taken", gameConnections: 0 } });
     const { container } = renderItem();
     expect(screen.getByText("Relay off").closest(".text-error")).not.toBeNull();
-    expect(shownIcons(container)).toEqual([icons.error]);
+    expect(shownIcons(container)).toEqual(["error"]);
   });
 
   it("keeps a relay not measured on this system grey, with its arrows", () => {
     useRelay.setState({ status: { ...ready, state: "unsupported", clientBuild: null, gameConnections: 0 } });
     const { container } = renderItem();
     expect(screen.getByText("Relay not measured on this system").closest(".text-error")).toBeNull();
-    expect(shownIcons(container)).toEqual([icons.arrowLeftRight]);
+    expect(shownIcons(container)).toEqual(["arrowLeftRight"]);
   });
 
   it("opens its hover from the keyboard", async () => {

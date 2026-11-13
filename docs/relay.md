@@ -98,8 +98,8 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   ready, failed with its reason, unsupported, stopped), the client's build, the game connections open and the answers
   not understood.
 - The status bar's relay item (`src/relay/relay-item.tsx`, the owner's choices from mock-ups, 2026-11-13), on the
-  left after the app's version ([shell.md](shell.md)): JetBrains' arrows both ways and the state, "Relay ready · 2 in
-  game" once ready; red, with JetBrains' error, once off. Its hover says only what the bar does not: why it is off,
+  left after the app's version ([shell.md](shell.md)): arrows both ways and the state, "Relay ready · 2 in
+  game" once ready; red, with an error icon, once off. Its hover says only what the bar does not: why it is off,
   the client's build only when the game data is of another one (or there is none), the answers not understood; then
   that quitting ends the game connections, while there are some, and to start the client after D3B, once ready. What
   the protocol reads of each connection is not there (the owner, 2026-11-13): the Characters view and a character's

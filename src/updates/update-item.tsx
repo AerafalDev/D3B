@@ -10,8 +10,8 @@ import { useUpdater } from "./updater.ts";
 const NOTES_SHOWN = 6;
 
 /**
- * The offer to restart into a downloaded update, on the status bar's right (the owner's "3a", 2026-11-13): JetBrains'
- * orange update icon and a bright label; chosen, it installs and restarts at once. Its hover adds only what the label
+ * The offer to restart into a downloaded update, on the status bar's right (the owner's "3a", 2026-11-13): the orange
+ * update icon and a bright label; chosen, it installs and restarts at once. Its hover adds only what the label
  * does not say: the release's notes, and that restarting ends the game connections while some are open.
  */
 export function UpdateItem() {
@@ -23,7 +23,7 @@ export function UpdateItem() {
   if (state.status === "installing") {
     return (
       <StatusItem
-        lead={<Icon name="ideUpdate" className="size-3.5" />}
+        lead={<Icon name="update" className="size-3.5" />}
         label={t("updates.installing", { version: state.version })}
         onClick={() => void restart()}
         disabled
@@ -45,7 +45,7 @@ export function UpdateItem() {
   );
   return (
     <StatusItem
-      lead={<Icon name="ideUpdate" className="size-3.5" />}
+      lead={<Icon name="update" className="size-3.5" />}
       label={t("updates.restart", { version: state.version })}
       hover={hover}
       onClick={() => void restart()}

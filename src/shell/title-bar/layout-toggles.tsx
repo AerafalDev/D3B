@@ -20,7 +20,7 @@ export function LayoutToggles() {
         pressed={visible.primarySideBar}
         onClick={() => toggle("primarySideBar")}
       >
-        <Icon name="moveToLeft" />
+        <Icon name="panelLeft" />
       </IconButton>
       <IconButton
         label={t("shell.commands.panel")}
@@ -28,8 +28,7 @@ export function LayoutToggles() {
         pressed={visible.panel}
         onClick={() => toggle("panel")}
       >
-        {/* JetBrains has no bottom-panel icon: the left one turned a quarter puts its strip at the bottom. */}
-        <Icon name="moveToLeft" className="-rotate-90" />
+        <Icon name="panelBottom" />
       </IconButton>
       <IconButton
         label={t("shell.commands.secondarySideBar")}
@@ -37,7 +36,7 @@ export function LayoutToggles() {
         pressed={visible.secondarySideBar}
         onClick={() => toggle("secondarySideBar")}
       >
-        <Icon name="moveToRight" />
+        <Icon name="panelRight" />
       </IconButton>
     </div>
   );

@@ -10,8 +10,6 @@ const IGNORED = [
   /^src\/bindings\.ts$/,
   /^src\/components\/(ui|flow)\//,
   /^src-tauri\/icons\//,
-  // JetBrains' icons and their licence, copied unchanged (src/icons/README.md).
-  /^src\/icons\/(expui\/|LICENSE\.txt$|NOTICE\.txt$)/,
   /^CHANGELOG\.md$/,
   /^\.claude\/skills\/[^/]+\/(rules|references)\//,
 ];
