@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { FrameSummary_Serialize, InspectorFrames_Serialize } from "@/bindings.ts";
+import type { FrameAnswer, FrameSummary_Serialize, InspectorFrames_Serialize } from "@/bindings.ts";
 
 type Listener = (event: { payload: InspectorFrames_Serialize }) => void;
 
@@ -8,6 +8,8 @@ const backEnd = vi.hoisted(() => ({
   listener: null as Listener | null,
   watched: [] as (number | null)[],
   answers: [] as ((frames: FrameSummary_Serialize[]) => void)[],
+  asked: [] as [number, number][],
+  details: [] as ((answer: FrameAnswer) => void)[],
   unlisten: vi.fn(),
 }));
 
@@ -18,6 +20,11 @@ vi.mock("@/bindings.ts", () => ({
       new Promise<FrameSummary_Serialize[]>((resolve) => {
         backEnd.watched.push(connection);
         backEnd.answers.push(resolve);
+      }),
+    inspectorFrame: (connection: number, number: number) =>
+      new Promise<FrameAnswer>((resolve) => {
+        backEnd.asked.push([connection, number]);
+        backEnd.details.push(resolve);
       }),
   },
   events: {
@@ -54,8 +61,10 @@ function numbers(): number[] {
 
 describe("useInspector", () => {
   beforeEach(() => {
-    useInspector.setState({ connection: null, frames: [] });
+    useInspector.setState({ connection: null, frames: [], selected: null, detail: null, paused: false, held: [] });
     backEnd.listener = null;
+    backEnd.asked = [];
+    backEnd.details = [];
     backEnd.watched = [];
     backEnd.answers = [];
   });
@@ -136,5 +145,58 @@ describe("useInspector", () => {
     expect(numbers()).toHaveLength(KEPT);
     expect(numbers()[0]).toBe(6);
     expect(numbers().at(-1)).toBe(KEPT + 5);
+  });
+
+  it("asks the detail of the frame chosen, and drops that of a frame chosen before", async () => {
+    useInspector.setState({ connection: 3, frames: frames(1, 2) });
+
+    useInspector.getState().select(1);
+    const late = backEnd.details.at(-1);
+    useInspector.getState().select(2);
+    backEnd.details.at(-1)?.({ kind: "gone" });
+    late?.({ kind: "detail", lines: [] });
+
+    await vi.waitFor(() => expect(useInspector.getState().detail).toEqual({ kind: "gone" }));
+    expect(backEnd.asked).toEqual([
+      [3, 1],
+      [3, 2],
+    ]);
+    expect(useInspector.getState().selected).toBe(2);
+  });
+
+  it("forgets the frame chosen once another connection is watched", () => {
+    useInspector.setState({ connection: 3, frames: frames(1, 2), selected: 2, detail: { kind: "gone" } });
+
+    useInspector.getState().watch(5);
+
+    expect(useInspector.getState()).toMatchObject({ selected: null, detail: null });
+  });
+
+  it("holds the frames streamed while paused, counts them, and lists them once resumed", async () => {
+    useInspector.getState().follow();
+    await vi.waitFor(() => expect(backEnd.listener).not.toBeNull());
+    useInspector.getState().watch(3);
+    backEnd.answers.at(-1)?.(frames(1, 2));
+    await vi.waitFor(() => expect(numbers()).toEqual([1, 2]));
+
+    useInspector.getState().pause(true);
+    backEnd.listener?.({ payload: { connection: 3, frames: frames(3, 5), skipped: 0 } });
+    expect(numbers()).toEqual([1, 2]);
+    expect(useInspector.getState().held).toHaveLength(3);
+
+    useInspector.getState().pause(false);
+    expect(numbers()).toEqual([1, 2, 3, 4, 5]);
+    expect(useInspector.getState().held).toEqual([]);
+  });
+
+  it("holds no more frames than it keeps while paused", async () => {
+    useInspector.getState().follow();
+    await vi.waitFor(() => expect(backEnd.listener).not.toBeNull());
+    useInspector.getState().watch(3);
+    useInspector.getState().pause(true);
+
+    backEnd.listener?.({ payload: { connection: 3, frames: frames(1, KEPT + 10), skipped: 0 } });
+
+    expect(useInspector.getState().held).toHaveLength(KEPT);
   });
 });

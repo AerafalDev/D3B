@@ -151,6 +151,24 @@
     },
     "size": "{{size}} B",
     "notListed_one": "{{count}} frame not listed",
-    "notListed_other": "{{count}} frames not listed"
+    "notListed_other": "{{count}} frames not listed",
+    "all": "All",
+    "sides": "Side",
+    "filter": "Filter by name",
+    "pause": "Pause",
+    "held_one": "{{count}} arrived since the pause",
+    "held_other": "{{count}} arrived since the pause",
+    "noMatch": "No frame matches.",
+    "detail": "Detail",
+    "secret": "A secret frame: neither its content nor its bytes are kept.",
+    "gone": "This frame is no longer kept: only the last 3,000 are.",
+    "line": {
+      "varint": "{{number}}: varint {{value}}",
+      "fixed64": "{{number}}: fixed64 {{value}}",
+      "fixed32": "{{number}}: fixed32 {{value}}",
+      "bytes_one": "{{number}}: {{count}} byte",
+      "bytes_other": "{{number}}: {{count}} bytes",
+      "unreadable": "…"
+    }
   }
 }

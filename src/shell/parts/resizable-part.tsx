@@ -101,7 +101,7 @@ export function ResizablePart({ part, defaultSize, minSize, children }: Resizabl
       <div
         inert={!visible}
         className={cn(
-          "bg-bar border-line flex flex-1 flex-col rounded-[6px] border",
+          "bg-bar border-line flex min-w-0 flex-1 flex-col rounded-[6px] border",
           part === "panel" ? "min-h-[100px]" : "min-w-[170px]",
         )}
       >

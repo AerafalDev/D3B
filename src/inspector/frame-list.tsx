@@ -16,21 +16,26 @@ const FALLBACK = 40;
 type Item = { kind: "frame"; frame: FrameSummary } | { kind: "gap"; count: number; before: number };
 
 /**
- * The frames with a row wherever their numbers jump: a connection numbers its frames one after another, so a jump is
- * frames the list never had (more in a batch than the back end sends, or forgotten before they were listed).
+ * The frames `shows` keeps, with a row wherever the numbers of all of them jump: a connection numbers its frames one
+ * after another, so a jump is frames the list never had (more in a batch than the back end sends, or forgotten before
+ * they were listed), whatever the filter.
  */
-function listed(frames: readonly FrameSummary[]): Item[] {
+function listed(frames: readonly FrameSummary[], shows: (frame: FrameSummary) => boolean): Item[] {
   const items: Item[] = [];
   let previous: number | null = null;
   for (const frame of frames) {
     if (previous !== null && frame.number > previous + 1) {
       items.push({ kind: "gap", count: frame.number - previous - 1, before: frame.number });
     }
-    items.push({ kind: "frame", frame });
+    if (shows(frame)) {
+      items.push({ kind: "frame", frame });
+    }
     previous = frame.number;
   }
   return items;
 }
+
+const ALL = () => true;
 
 /** The number an item stands at: its frame's, or for frames not listed, that of the frame after them. */
 function numberOf(item: Item): number {
@@ -39,6 +44,10 @@ function numberOf(item: Item): number {
 
 interface FrameListProps {
   frames: readonly FrameSummary[];
+  /** The frames the filters keep; all when there is none. */
+  shows?: (frame: FrameSummary) => boolean;
+  selected?: number | null;
+  onSelect?: (number: number) => void;
 }
 
 /**
@@ -46,7 +55,7 @@ interface FrameListProps {
  * end, the list follows the frames as they come; scrolled up, it keeps the row at its top in place, though the oldest
  * frames go as new ones come.
  */
-export function FrameList({ frames }: FrameListProps) {
+export function FrameList({ frames, shows = ALL, selected = null, onSelect = () => {} }: FrameListProps) {
   const { t } = useTranslation();
   const box = useRef<HTMLDivElement>(null);
   const before = useRef<HTMLDivElement>(null);
@@ -59,7 +68,7 @@ export function FrameList({ frames }: FrameListProps) {
   // Scrolled up, the row at the top of the view and how far it is scrolled past, kept there as the list changes.
   const anchor = useRef({ number: 0, offset: 0 });
 
-  const items = useMemo(() => listed(frames), [frames]);
+  const items = useMemo(() => listed(frames, shows), [frames, shows]);
   const shown = height > 0 ? Math.ceil(height / ROW) : FALLBACK;
   const first = following
     ? Math.max(0, items.length - shown - OVERSCAN)
@@ -118,8 +127,8 @@ export function FrameList({ frames }: FrameListProps) {
         <span className="text-right">{t("inspector.columns.number")}</span>
         <span className="pl-2">{t("inspector.columns.time")}</span>
         <span />
-        <span>{t("inspector.columns.message")}</span>
-        <span>{t("inspector.columns.outcome")}</span>
+        <span className="truncate">{t("inspector.columns.message")}</span>
+        <span className="truncate">{t("inspector.columns.outcome")}</span>
         <span className="text-right">{t("inspector.columns.size")}</span>
       </div>
       <div ref={box} onScroll={scrolled} className="min-h-0 flex-1 overflow-y-auto">
@@ -128,7 +137,7 @@ export function FrameList({ frames }: FrameListProps) {
           {items.slice(first, last).map((item) =>
             item.kind === "frame" ? (
               <li key={item.frame.number}>
-                <FrameRow frame={item.frame} />
+                <FrameRow frame={item.frame} selected={item.frame.number === selected} onSelect={onSelect} />
               </li>
             ) : (
               <li
@@ -141,6 +150,9 @@ export function FrameList({ frames }: FrameListProps) {
           )}
         </ol>
         <div ref={after} />
+        {shows !== ALL && frames.length > 0 && !items.some((item) => item.kind === "frame") && (
+          <p className="text-text-muted py-6 text-center text-xs">{t("inspector.noMatch")}</p>
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import ideUpdate from "./expui/general/ideUpdate_dark.svg";
 import search from "./expui/general/search_dark.svg";
 import user from "./expui/general/user_dark.svg";
 import library from "./expui/nodes/library_dark.svg";
+import pause from "./expui/run/pause_dark.svg";
 import error from "./expui/status/error_dark.svg";
 import warning from "./expui/status/warning_dark.svg";
 import windowClose from "./expui/windows/close_dark.svg";
@@ -26,6 +27,7 @@ export const icons = {
   library,
   moveToLeft,
   moveToRight,
+  pause,
   search,
   user,
   users,

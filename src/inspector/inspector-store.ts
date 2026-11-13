@@ -1,10 +1,13 @@
 import { create } from "zustand";
 
-import { commands, events, type FrameSummary_Serialize } from "@/bindings.ts";
+import { commands, events, type FrameAnswer, type FrameSummary_Serialize } from "@/bindings.ts";
 import { isTauri } from "@/lib/tauri.ts";
 
 /** A frame as the inspector lists it (`docs/protocol.md`, "The inspector"). */
 export type FrameSummary = FrameSummary_Serialize;
+
+/** Which side's frames the list shows. */
+export type SideShown = "all" | "client" | "server";
 
 /**
  * How many frames the list keeps, the newest: as many as the back end keeps per connection at most (it keeps fewer when
@@ -17,11 +20,28 @@ interface InspectorStore {
   connection: number | null;
   /** Its frames, oldest first, at most [`KEPT`]. */
   frames: FrameSummary[];
+  /** The number of the frame chosen, whose detail shows. */
+  selected: number | null;
+  /** The chosen frame's detail, or why it has none; `null` until the back end answers. */
+  detail: FrameAnswer | null;
+  /** Whether the list is paused: the frames streamed meanwhile are held, not listed. */
+  paused: boolean;
+  /** The frames streamed while paused, at most [`KEPT`]. */
+  held: FrameSummary[];
+  /** The side shown, and the text a frame's name must hold to be shown; kept from one connection to the next. */
+  side: SideShown;
+  name: string;
   /**
    * Watches `connection`, or none: the back end answers with the frames it keeps, then streams the next. Watching the
    * connection watched already changes nothing.
    */
   watch: (connection: number | null) => void;
+  /** Chooses a frame of the connection watched and asks its detail. */
+  select: (number: number) => void;
+  /** Pauses the list, or resumes it with the frames held meanwhile. */
+  pause: (paused: boolean) => void;
+  setSide: (side: SideShown) => void;
+  setName: (name: string) => void;
   /** Follows the frames streamed, after watching none; returns what stops following. */
   follow: () => () => void;
 }
@@ -45,12 +65,18 @@ function merged(frames: FrameSummary[], incoming: FrameSummary[]): FrameSummary[
   return all.length > KEPT ? all.slice(all.length - KEPT) : all;
 }
 
-// Each watch's turn: the answer of a watch overtaken by another is dropped.
+// Each watch's turn: the answer of a watch overtaken by another is dropped. The same for each frame chosen.
 let turn = 0;
+let choice = 0;
+
+// What a watch starts from: nothing listed, chosen or held.
+const FRESH = { frames: [], selected: null, detail: null, paused: false, held: [] };
 
 export const useInspector = create<InspectorStore>((set, get) => ({
   connection: null,
-  frames: [],
+  ...FRESH,
+  side: "all",
+  name: "",
 
   watch: (connection) => {
     if (connection === get().connection) {
@@ -58,7 +84,8 @@ export const useInspector = create<InspectorStore>((set, get) => ({
     }
     turn += 1;
     const mine = turn;
-    set({ connection, frames: [] });
+    choice += 1;
+    set({ connection, ...FRESH });
     if (!isTauri()) {
       return;
     }
@@ -69,6 +96,27 @@ export const useInspector = create<InspectorStore>((set, get) => ({
     });
   },
 
+  select: (number) => {
+    const connection = get().connection;
+    choice += 1;
+    const mine = choice;
+    set({ selected: number, detail: null });
+    if (connection === null || !isTauri()) {
+      return;
+    }
+    void commands.inspectorFrame(connection, number).then((detail) => {
+      if (mine === choice) {
+        set({ detail });
+      }
+    });
+  },
+
+  pause: (paused) =>
+    set((store) => (paused ? { paused } : { paused, frames: merged(store.frames, store.held), held: [] })),
+
+  setSide: (side) => set({ side }),
+  setName: (name) => set({ name }),
+
   follow: () => {
     if (!isTauri()) {
       return () => {};
@@ -77,12 +125,15 @@ export const useInspector = create<InspectorStore>((set, get) => ({
     const unlisten = events.inspectorFrames.listen((event) => {
       const { connection, frames } = event.payload;
       if (live && connection === get().connection) {
-        set({ frames: merged(get().frames, frames) });
+        set((store) =>
+          store.paused ? { held: merged(store.held, frames) } : { frames: merged(store.frames, frames) },
+        );
       }
     });
     // The back end may still stream to a page reloaded: it is told to stop, whatever this store believes.
     turn += 1;
-    set({ connection: null, frames: [] });
+    choice += 1;
+    set({ connection: null, ...FRESH });
     void commands.inspectorWatch(null);
     return () => {
       live = false;
