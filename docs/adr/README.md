@@ -17,4 +17,6 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0010](0010-flags-by-the-names-of-the-clients-enums.md) | Flags are written by the names the client's enums give them, read with Cpp2IL | accepted |
 | [0011](0011-the-relay-redirects-configurl-and-rewrites-one-frame.md) | The relay redirects the client's `ConfigUrl` for the app's life and rewrites one frame by field path | accepted |
 | [0012](0012-pins-per-build-over-our-own-proto-files.md) | The protocol decodes with prost over our own `.proto` files, paired with each build by committed pins | accepted |
+| [0013](0013-the-bot-runs-unreal-like-blueprints-set-per-character.md) | The bot runs Unreal-like blueprints, set per character | accepted |
+| [0014](0014-the-players-files-are-json-in-documents-d3b.md) | The player's files are one JSON per object in Documents/D3B | accepted |
 | [0013](0013-a-new-data-format-is-a-second-asset-named-by-its-format.md) | A new data format is a second asset of the build's release, named by its format | accepted |

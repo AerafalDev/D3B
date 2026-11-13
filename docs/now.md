@@ -7,6 +7,12 @@ _Updated 2026-11-13._
   is designed with the owner on 2026-11-11 ([docs/protocol.md](protocol.md), ADR 0012); its third, the live view of
   each character and the protocol inspector, on 2026-11-12 ([docs/game.md](game.md)). Steps 0 and 1 are done but
   for their measures below, which the owner takes alongside: the owner started step 2 before them, on 2026-11-11.
+- **Step 3 designed ahead**: what is left of step 2 waits on outside events (the next release for the in-app Restart,
+  the next client patch for the protocol's item 7, an account with an accent for the relay's item 11, testers on macOS
+  and Linux), so the owner granted on 2026-11-13 an exception to "the next feature does not start": step 3, the bot's
+  model, was designed, from mock-ups then a prototype in the real shell (local branch `prototype/step3-model`, never
+  merged), and written in [docs/bot.md](bot.md) (ADRs 0013 and 0014). Its code waits until step 2 is measured or the
+  owner says otherwise.
 - **Done**: the rewrite starts on branch `next`, which will replace the C# version on `main`. The Tauri 2 + React 19
   shell, the typed IPC, the packed data's manifest, i18n FR/EN, the Claude setup (`CLAUDE.md`, `.claude/`), CI on
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
@@ -162,6 +168,17 @@ _Updated 2026-11-13._
   read from a Linux build. A renderer of the actors' sprites
   was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The relay's
   items 1, 2, 4, 7, 8 and 9 were measured again in it by the owner on 2026-11-13; the protocol's items that read the
-  inspector, on the same day. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
+  inspector, on the same day. Step 3's model is in [docs/bot.md](bot.md) (below).
+- **Next, step 3** ([bot.md](bot.md)), not started: a stack of PRs against `next`, each measured as it lands where it
+  shows something. Before it, two studies: a character's key across servers (and which message names the server), and
+  what the server sends on a death. (1) `bot`: the blueprint, its JSON, the catalogue of nodes, the validation; (2)
+  `storage`: `Documents/D3B`, atomic writes, D3B's blueprints in the app, Duplicate, a character's file; (3) the
+  Library and the blueprint editor read-only (My Blueprint, the graph on React Flow, Details, Summary); (4) a
+  character's tab: its blueprint and its settings; (5) editing: links checked by type, the picker, undo, autosave;
+  (6) variables and functions; (7) events: priority, re-arming, modes, the defaults; (8) comfort: comments, reroutes,
+  Align, copy and paste, search, the keyboard; (9) the `.d3b` file and a given blueprint's update; (10) the World view
+  and tab from the tiles, sub-areas as zones, a Zone chosen on the map; (11) my zones painted; (12) routes; (13) the
+  runtime: the flow, outcomes, variables, blocked, finished; (14) events at run time: priorities, modes, thresholds,
+  settings at safe points; (15) History, "now" in the tab, debugging a character. Play acts from step 4.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.
