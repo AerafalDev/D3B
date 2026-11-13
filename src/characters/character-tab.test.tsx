@@ -38,6 +38,7 @@ const lyra: CharacterView = {
   name: "Lyra",
   level: 87,
   breed: 10,
+  sex: "female",
   fighting: false,
   place: {
     mapId: 1,

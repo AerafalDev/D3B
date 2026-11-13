@@ -127,7 +127,9 @@ fn reads_what_is_on_the_map_and_drops_what_it_does_not_declare() {
 
 #[test]
 fn reads_the_character_chosen() {
-    let look = message(&[varint(3, 9)]);
+    // Fields 1 to 3 are a oneof our `.proto` lacks: the client sends one of them before the sex.
+    let appearance = message(&[bytes(1, b""), varint(4, 1)]);
+    let look = message(&[bytes(1, &appearance), varint(3, 9)]);
     let basics = message(&[varint(3, 200), bytes(5, &look), bytes(6, b"Lyra")]);
     let character = message(&[varint(3, 1_234_567), bytes(4, &basics)]);
     let success = message(&[bytes(1, &character)]);
@@ -144,7 +146,14 @@ fn reads_the_character_chosen() {
     let basics = character.basics.unwrap_or_default();
     assert_eq!(character.id, 1_234_567);
     assert_eq!((basics.level, basics.name.as_str()), (Some(200), "Lyra"));
-    assert_eq!(basics.look.map(|look| look.breed_id), Some(9));
+    let look = basics.look.unwrap_or_default();
+    assert_eq!(look.breed_id, 9);
+    assert_eq!(
+        look.appearance.map(|appearance| appearance.sex()),
+        Some(game::character_appearance::Sex::Female)
+    );
+    // The appearance's field 1 is not encoded back: the frame is "read", not "understood".
+    assert!(decoded("CharacterSelectionEvent", &body).encode().len() < body.len());
 }
 
 #[test]

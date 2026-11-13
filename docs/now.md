@@ -91,7 +91,8 @@ _Updated 2026-11-13._
   - **the breed in a character's tab** (the owner, 2026-11-13: its name in the player's language and its head, 40 px in
     a rounded square in place of the initials, chosen from mock-ups; then the same in the Characters list), a stack
     against `next`: (1) the data's format 2, `breeds.json` and the 38 heads, named in a second asset of the build's
-    release (done in code); (2) the character's sex, read from its look; (3) the tab's breed name and head; (4) the
+    release (done in code); (2) the character's sex, read from its look (done in code: the pins' audit holds, and the owner's 54 game connections
+    replay with no frame not trusted); (3) the tab's breed name and head; (4) the
     Characters list's head. On Windows x64:
     1. `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
        `artifacts/data/client-3.7.13.17-format2.tar.gz`; then `tar -xzf artifacts/data/client-3.7.13.17-format2.tar.gz

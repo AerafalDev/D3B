@@ -7,7 +7,8 @@ use super::around::{Around, on_the_map};
 use super::life::{Characteristics, Life, LifeNow};
 use crate::protocol::Message;
 use crate::protocol::game::{
-    CharacterSelectionEvent, character_selection_event::Result as Selection, context_creation_event::GameContext,
+    CharacterLook, CharacterSelectionEvent, character_appearance::Sex as WireSex,
+    character_selection_event::Result as Selection, context_creation_event::GameContext,
 };
 
 /// The character chosen (verified: its actor on each map bears its id, 66,171 of 66,171).
@@ -17,6 +18,25 @@ pub(crate) struct Who {
     pub name: String,
     pub level: i32,
     pub breed: i32,
+    /// `None` when its look holds no appearance, or a sex the protocol's enum lacks.
+    pub sex: Option<Sex>,
+}
+
+/// The character's sex, which picks its breed's head: its look's appearance's field 4, absent for a male and 1 for a
+/// female (verified, the owner's captures of 3.7.13.17, `artifacts/studies/breeds.md`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Sex {
+    Male,
+    Female,
+}
+
+/// The sex `look` holds, if it holds one D3B knows.
+fn sex_of(look: Option<&CharacterLook>) -> Option<Sex> {
+    let appearance = look?.appearance.as_ref()?;
+    match WireSex::try_from(appearance.sex).ok()? {
+        WireSex::Male => Some(Sex::Male),
+        WireSex::Female => Some(Sex::Female),
+    }
 }
 
 /// Roleplay, or a fight: `ContextCreationEvent`'s 0 or 1 (verified, 683 and 634 frames).
@@ -217,7 +237,8 @@ impl Character {
             id: character.id,
             name: basics.name,
             level: basics.level.unwrap_or_default(),
-            breed: basics.look.map(|look| look.breed_id).unwrap_or_default(),
+            breed: basics.look.as_ref().map(|look| look.breed_id).unwrap_or_default(),
+            sex: sex_of(basics.look.as_ref()),
         });
     }
 

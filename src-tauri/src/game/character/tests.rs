@@ -2,13 +2,18 @@ use std::time::{Duration, Instant};
 
 use super::*;
 use crate::protocol::game::{
-    self, Actor, ActorDisposition, Character as Chosen, CharacterBasics, CharacterLook, CharacterStats, Characteristic,
-    DetailedCharacteristic, character_selection_event::Success, characteristic::Kind,
+    self, Actor, ActorDisposition, Character as Chosen, CharacterAppearance, CharacterBasics, CharacterLook,
+    CharacterStats, Characteristic, DetailedCharacteristic, character_selection_event::Success, characteristic::Kind,
 };
 
 const ME: i64 = 1_234_567;
 
 fn chosen(id: i64, name: &str, level: i32) -> Message {
+    chosen_looking(id, name, level, Some(CharacterAppearance { sex: 1 }))
+}
+
+/// A character chosen whose look holds `appearance`.
+fn chosen_looking(id: i64, name: &str, level: i32, appearance: Option<CharacterAppearance>) -> Message {
     Message::CharacterSelectionEvent(game::CharacterSelectionEvent {
         result: Some(Selection::Success(Success {
             character: Some(Chosen {
@@ -16,7 +21,10 @@ fn chosen(id: i64, name: &str, level: i32) -> Message {
                 basics: Some(CharacterBasics {
                     level: Some(level),
                     name: name.into(),
-                    look: Some(CharacterLook { breed_id: 10 }),
+                    look: Some(CharacterLook {
+                        appearance,
+                        breed_id: 10,
+                    }),
                 }),
             }),
         })),
@@ -123,8 +131,24 @@ fn knows_who_after_its_selection_and_keeps_the_characteristics_sent_before() {
         .as_ref()
         .map(|who| (who.id, who.name.as_str(), who.level, who.breed));
     assert_eq!(who, Some((ME, "Lyra", 87, 10)));
+    assert_eq!(view.who.as_ref().and_then(|who| who.sex), Some(Sex::Female));
     assert_eq!(life(&view), Some((450, 480, false)));
     assert_eq!(view.kamas, Some(145_320));
+}
+
+#[test]
+fn a_look_without_its_sex_is_a_male_and_without_its_appearance_unknown() {
+    let now = Instant::now();
+    let sex = |appearance| {
+        fed(&[chosen_looking(ME, "Lyra", 87, appearance)], now)
+            .view(now, 0)
+            .who
+            .and_then(|who| who.sex)
+    };
+    // Proto3 leaves a 0 out: a male's appearance has no field 4.
+    assert_eq!(sex(Some(CharacterAppearance::default())), Some(Sex::Male));
+    assert_eq!(sex(None), None);
+    assert_eq!(sex(Some(CharacterAppearance { sex: 2 })), None);
 }
 
 #[test]

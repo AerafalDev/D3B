@@ -39,7 +39,22 @@ message CharacterBasics {
 
 // Partial.
 message CharacterLook {
+  // In a oneof of the schema with fields 4 and 7, which D3B does not read; present in all 137 looks of the owner's
+  // captures, male or female (verified, 3.7.13.17, `artifacts/studies/breeds.md`).
+  CharacterAppearance appearance = 1;
   int32 breed_id = 3;
+}
+
+// Partial: its fields 1 to 3, a oneof of the schema, are not read.
+message CharacterAppearance {
+  // Verified three ways on the owner's captures of 3.7.13.17 (`artifacts/studies/breeds.md`): the look's skins, the
+  // client's heads table, and the heads drawn for each sex.
+  Sex sex = 4;
+
+  enum Sex {
+    SEX_MALE = 0;
+    SEX_FEMALE = 1;
+  }
 }
 
 // The character enters roleplay or a fight.
