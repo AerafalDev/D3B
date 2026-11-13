@@ -291,9 +291,7 @@ mod tests {
             })
         );
         assert!(
-            !lines
-                .iter()
-                .any(|line| matches!(line, Line::Field { number: 1, .. })),
+            !lines.iter().any(|line| matches!(line, Line::Field { number: 1, .. })),
             "a field we read, listed again: {lines:?}"
         );
     }

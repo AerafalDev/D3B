@@ -426,7 +426,14 @@ fn lists_a_messages_fields_without_its_name_nested_ones_indented() {
 
     assert_eq!(
         fields_of(text),
-        ["actor: Some(", "    Actor {", "        id: 7", "    }", ")", "cell: 150"]
+        [
+            "actor: Some(",
+            "    Actor {",
+            "        id: 7",
+            "    }",
+            ")",
+            "cell: 150"
+        ]
     );
 }
 

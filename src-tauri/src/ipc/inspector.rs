@@ -48,12 +48,26 @@ pub enum FrameOutcome {
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum DetailLine {
     /// A line of the message decoded: a field by its name, nested ones indented.
-    Decoded { text: String },
-    Varint { number: u32, value: String },
-    Fixed64 { number: u32, value: String },
-    Fixed32 { number: u32, value: u32 },
+    Decoded {
+        text: String,
+    },
+    Varint {
+        number: u32,
+        value: String,
+    },
+    Fixed64 {
+        number: u32,
+        value: String,
+    },
+    Fixed32 {
+        number: u32,
+        value: u32,
+    },
     /// Anything length-delimited, by its length alone: a text is never shown.
-    Bytes { number: u32, length: u32 },
+    Bytes {
+        number: u32,
+        length: u32,
+    },
     /// What the wire walker could not read further.
     Unreadable,
 }
@@ -86,7 +100,9 @@ impl From<Line> for DetailLine {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum FrameAnswer {
-    Detail { lines: Vec<DetailLine> },
+    Detail {
+        lines: Vec<DetailLine>,
+    },
     /// Its connection closed, and its frames with it.
     Closed,
     /// It is no longer among the frames kept.
