@@ -206,12 +206,8 @@ The inspector's, each with its failure case: the frames kept bounded by count an
 oldest), a secret's frame kept without its bytes, nothing kept for a connection whose protocol is off; a batch capped
 at 1,000 with its count skipped, nothing streamed but the connection watched, the stream stopped by `None`, another
 connection watched, or the connection closed; a frame evicted answered as gone; an unpinned frame's string shown as
-its length only, and in Vitest a fixture's text never reaching the page. Vitest: the store (none watched at start, the frames
-kept then those streamed, a batch streamed before the frames kept answer, a watch overtaken, the last 3,000 only, the
-same connection watched again, the back end told when none is watched), a frame's time past an hour, the list (a
-row's columns, a frame not pinned by its build's name, a frame not trusted alone in colour, the frames not listed, the
-newest of 3,000 drawn and not the oldest, following the newest at its end, its top row kept in place and drawn as the
-oldest go, following again once back at its end), and the panel (the frames under their counts, the count of frames
-not trusted grey at 0 and in colour above, no frames of another connection while this tab's are on the way, the tab
-watched again after the store's reset, no character's tab, the panel hidden, a protocol not read, a closed connection,
-a protocol lost).
+its length only, and in Vitest a fixture's text never reaching the page. Vitest: the store (kept then streamed frames in
+any order, a watch overtaken, the last 3,000, the back end told when none is watched), a frame's time, the list (its
+columns, the frames not listed, the newest drawn, its top row kept while scrolled up, following again at its end), and
+the panel (counts, only frames not trusted in colour, no frames of another connection, no tab, panel hidden, protocol
+not read, closed, lost).
