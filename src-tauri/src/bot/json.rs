@@ -61,7 +61,7 @@ pub(crate) mod tests {
        {"id": "n1", "kind": "on_start"},
        {"id": "n2", "get": "zone"},
        {"id": "n3", "kind": "harvest_until", "inputs": {"what": "all"}},
-       {"id": "n4", "call": "empty_at_bank"},
+       {"id": "n4", "call": "empty_at_bank", "inputs": {"bank": "nearest"}},
        {"id": "n5", "kind": "life_below", "inputs": {"threshold": 40, "rearm": 60},
         "event": {"priority": 2, "mode": "interrupt_then_resume"}}
      ],
