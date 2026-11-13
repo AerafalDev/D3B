@@ -183,10 +183,10 @@ right. Its header holds, on one line, the connection's counts (understood, read,
   the build's name, dimmer, for a message not pinned), outcome and size. A connection numbers its frames one after
   another, so where the numbers jump a row says how many frames were not listed. Scrolled to its end, the list follows
   the frames; scrolled up, the row at its top stays in place as the oldest frames go. A row clicked is chosen, a
-  rounded grey row, and its detail shows. It filters by side (all, ↑ client, ↓ server) and by a text the readable
-  name or the build's holds, whatever its case, both kept from one character to the next; "No frame matches." when
+  rounded grey row, and its detail shows. It filters by side (all, ↑ client, ↓ server) and by a text its name as
+  listed holds (the readable one, else the build's), whatever its case, both kept from one character to the next; "No frame matches." when
   none does. The pause, pressed, stops the list and holds what streams meanwhile (3,000 at most), saying how many
-  arrived; released, they are listed. A connection watched anew starts unpaused, nothing chosen.
+  arrived, all of them; released, those held are listed. A connection watched anew starts unpaused, nothing chosen.
 
 ## Tests
 
@@ -217,6 +217,7 @@ columns, the frames not listed, the newest drawn, its top row kept while scrolle
 the panel (counts, only frames not trusted in colour, no frames of another connection, no tab, panel hidden, protocol
 not read, closed, lost, a detail without the frame's name and its unread fields dimmer, a secret, a frame gone, the
 side and name filters, the pause). The store: a detail answered late for a frame chosen before dropped, the choice
-forgotten for another connection, frames held while paused and listed once resumed, no more held than kept. Rust: a
+forgotten for another connection, frames held while paused and listed once resumed, no more held than kept while all are counted, the frames kept that answer after the pause held, a secret
+remembered when chosen. Rust: a
 decoded message's fields without its name, nested ones indented, none for a message without fields; a 64-bit value
 written out.
