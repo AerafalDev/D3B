@@ -86,6 +86,9 @@ _Updated 2026-11-13._
        names holding it; choose "↑ Client": only the client's; press the pause: the list stops and says how many
        arrived, press it again: they are listed; switch to a second character's tab: its own frames and counts;
     9. click a "secret" row: the detail says its content is never kept.
+  - **the live view's life** (the owner's report of 2026-11-13, fixed): after a fight, stand still out of combat: the
+    character's tab says "Vie — en régénération" while the bar fills, and no longer once it is full, before any sit
+    or fight.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>.tar.gz` that `data:fetch` reads; the app reads it all at start
@@ -120,7 +123,7 @@ _Updated 2026-11-13._
   capture replay (done in code: lives within a point at all 634 fights, the character on all 66,166 maps, 99.35% of
   its walks from its known cell, 67,713 of 71,882 stated updates on a known element); (4) in two PRs: the session's observer,
   then the view through the IPC, `CharacterChanged` (done in code); (5) the characters list and the view (done in code); (6) the map and `map_cells` (done in code); (7) the inspector's frames
-  kept and streamed (done in code); (8) the inspector, in the panel's Protocol view rather than a tab (the owner, 2026-11-13, from mock-ups), in two PRs: its frames listed under the connection's counts (done in code, #197), then a frame's detail, the filters and the pause (done in code); its in-game checklist is the protocol's items 1, 3, 7, 8 and 9 under "Not measured".
+  kept and streamed (done in code); (8) the inspector, in the panel's Protocol view rather than a tab (the owner, 2026-11-13, from mock-ups), in two PRs: its frames listed under the connection's counts (done in code, #197), then a frame's detail, the filters and the pause (done in code); its in-game checklist, the protocol's items 1, 3, 8 and 9, measured by the owner on 2026-11-13; item 7 waits for the next client patch.
 - **The app's UI, rebuilt** (the owner, 2026-11-12): the interface on `next` (the characters list and view, the map's
   diamonds, the relay's indicator, the update bar, the status bar) is removed; the stores, the updater, i18n and the
   IPC stay. The new shell ([docs/shell.md](shell.md)) lands in PRs: dark only (#186), its parts in VS Code's layout as
@@ -132,6 +135,6 @@ _Updated 2026-11-13._
   update offer (done in code, #195). A renderer of the actors' sprites
   was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The relay's
   items 1, 2, 4, 7, 8 and 9 were measured again in it by the owner on 2026-11-13; the protocol's items that read the
-  inspector wait for it. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
+  inspector, on the same day. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

@@ -111,7 +111,7 @@ export type CharacterView_Deserialize = {
 	place?: Place_Deserialize | null,
 	cell?: number | null,
 	life?: Gauge | null,
-	/**  Whether the life is the client's count of a regeneration. */
+	/**  Whether the life is the client's count of a regeneration still below the max. */
 	lifeEstimated: boolean,
 	pods?: Gauge | null,
 	kamas?: number | null,
@@ -135,7 +135,7 @@ export type CharacterView_Serialize = {
 	place: Place_Serialize | null,
 	cell: number | null,
 	life: Gauge | null,
-	/**  Whether the life is the client's count of a regeneration. */
+	/**  Whether the life is the client's count of a regeneration still below the max. */
 	lifeEstimated: boolean,
 	pods: Gauge | null,
 	kamas: number | null,

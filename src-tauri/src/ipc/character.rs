@@ -82,7 +82,7 @@ pub struct CharacterView {
     pub place: Option<Place>,
     pub cell: Option<i32>,
     pub life: Option<Gauge>,
-    /// Whether the life is the client's count of a regeneration.
+    /// Whether the life is the client's count of a regeneration still below the max.
     pub life_estimated: bool,
     pub pods: Option<Gauge>,
     pub kamas: Option<f64>,

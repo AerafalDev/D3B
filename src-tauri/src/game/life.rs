@@ -77,7 +77,8 @@ fn value(kind: &Kind) -> i64 {
     numbers.iter().copied().map(i64::from).fold(0, i64::saturating_add)
 }
 
-/// The life now, and whether it is the client's count of a regeneration rather than a value the server sent.
+/// The life now, and whether it is the client's count of a regeneration still below the max rather than a value the
+/// server sent (a count at the max is the life itself).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct LifeNow {
     pub life: i64,
