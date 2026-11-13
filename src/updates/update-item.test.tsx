@@ -78,11 +78,34 @@ describe("the update's item", () => {
     expect(screen.queryByRole("tooltip")).toBeNull();
   });
 
-  it("says it installs, and cannot be chosen again meanwhile", () => {
+  it("says it installs, and cannot be chosen again meanwhile, still focusable so that it reads", () => {
     useUpdater.setState({ state: { status: "installing", version: "0.14.0" } });
     renderItem();
     const item = screen.getByRole("button", { name: "Installing 0.14.0…" });
+    expect(item.getAttribute("aria-disabled")).toBe("true");
+    expect(item.hasAttribute("disabled")).toBe(false);
     fireEvent.click(item);
     expect(restart).not.toHaveBeenCalled();
+  });
+
+  it("keeps the keyboard's focus once chosen, as its label turns to the install", () => {
+    useUpdater.setState({ state: { status: "ready", version: "0.14.0", notes: undefined } });
+    withConnections(1);
+    restart.mockImplementationOnce(async () => {
+      useUpdater.setState({ state: { status: "installing", version: "0.14.0" } });
+    });
+    renderItem();
+    const item = screen.getByRole("button", { name: "Restart to update to 0.14.0" });
+    item.focus();
+    fireEvent.click(item);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Installing 0.14.0…" }));
+  });
+
+  it("shows a line the notes repeat once", async () => {
+    useUpdater.setState({ state: { status: "ready", version: "0.14.0", notes: "Fixes\nFixes\nMore" } });
+    renderItem();
+    fireEvent.focus(screen.getByRole("button", { name: "Restart to update to 0.14.0" }));
+    await screen.findAllByText("More");
+    expect(screen.getAllByText("Fixes")).toHaveLength(screen.getAllByText("More").length);
   });
 });

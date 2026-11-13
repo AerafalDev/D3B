@@ -34,11 +34,12 @@ export function UpdateItem() {
   if (state.status !== "ready") {
     return null;
   }
-  const notes = (state.notes ?? "")
+  // A release's notes come from outside: a line they repeat is shown once, as the hover keys its lines by their text.
+  const lines = (state.notes ?? "")
     .split("\n")
     .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .slice(0, NOTES_SHOWN);
+    .filter((line) => line.length > 0);
+  const notes = [...new Set(lines)].slice(0, NOTES_SHOWN);
   const hover: StatusHover = [notes, connections > 0 ? [t("updates.endsGame")] : []].filter(
     (section) => section.length > 0,
   );

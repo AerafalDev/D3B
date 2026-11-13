@@ -46,11 +46,14 @@ export function StatusItem({ lead, label, hover, onClick, disabled, className }:
         {content}
       </button>
     );
-  if (hover === undefined || hover.length === 0) {
-    return button ?? <span className={cn(ITEM, className)}>{content}</span>;
+  const hovered = hover !== undefined && hover.length > 0;
+  if (!hovered && button === undefined) {
+    return <span className={cn(ITEM, className)}>{content}</span>;
   }
+  // A button keeps the same tree whether it has a hover or not, so that a change of state (an update starting to
+  // install, a game connection opening) never remounts it and drops the keyboard's focus.
   return (
-    <Tooltip>
+    <Tooltip open={hovered ? undefined : false}>
       <TooltipTrigger asChild>
         {button ?? (
           <span
@@ -67,7 +70,7 @@ export function StatusItem({ lead, label, hover, onClick, disabled, className }:
         sideOffset={4}
         className="text-text max-w-sm flex-col items-stretch gap-0 border border-[#454545] bg-[#202020] px-2.5 py-2 text-xs leading-relaxed shadow-md [&>span:last-child]:hidden"
       >
-        {hover.map((lines, index) => (
+        {hover?.map((lines, index) => (
           // A section's lines are its identity.
           <div
             key={lines.join("\n")}
