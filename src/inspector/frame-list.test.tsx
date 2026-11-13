@@ -23,10 +23,7 @@ function range(from: number, to: number): FrameSummary[] {
   return Array.from({ length: to - from + 1 }, (_, index) => frame(from + index));
 }
 
-/**
- * The list's scrolling box with a layout happy-dom does not compute: ten rows in view, as many rows in all as
- * `count()` says, and a scroll position the list or the test sets.
- */
+/** The list's box, laid out as happy-dom cannot: ten rows in view, `count()` rows in all, a settable scroll. */
 function scrolling(count: () => number) {
   const box = screen.getByRole("list").parentElement;
   if (box === null) {
