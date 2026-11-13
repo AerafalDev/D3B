@@ -14,42 +14,63 @@ interface StatusItemProps {
   lead?: ReactNode;
   label: string;
   hover?: StatusHover;
+  /** Makes it a button, as VS Code's commands in the bar. */
+  onClick?: () => void;
+  /** A button that cannot be chosen now, still focusable so that it reads. */
+  disabled?: boolean;
   className?: string;
 }
 
 const ITEM = "flex h-[22px] items-center gap-[5px] rounded-[4px] px-1.5";
+const FOCUSABLE = "hover:bg-hover focus-visible:outline-focus focus-visible:outline-1";
 
 /**
  * A status bar item, as VS Code's: an icon and a short label on the frame. With a hover it takes the focus and a
- * rounded grey hover, so that its details open from the keyboard too.
+ * rounded grey hover, so that its details open from the keyboard too; with an action it is a button.
  */
-export function StatusItem({ lead, label, hover, className }: StatusItemProps) {
+export function StatusItem({ lead, label, hover, onClick, disabled, className }: StatusItemProps) {
   const content = (
     <>
       {lead}
       <span className="truncate">{label}</span>
     </>
   );
-  if (hover === undefined || hover.length === 0) {
+  const button =
+    onClick === undefined ? undefined : (
+      <button
+        type="button"
+        aria-disabled={disabled}
+        onClick={disabled ? undefined : onClick}
+        className={cn(ITEM, FOCUSABLE, "aria-disabled:hover:bg-transparent", className)}
+      >
+        {content}
+      </button>
+    );
+  const hovered = hover !== undefined && hover.length > 0;
+  if (!hovered && button === undefined) {
     return <span className={cn(ITEM, className)}>{content}</span>;
   }
+  // A button keeps the same tree whether it has a hover or not, so that a change of state (an update starting to
+  // install, a game connection opening) never remounts it and drops the keyboard's focus.
   return (
-    <Tooltip>
+    <Tooltip open={hovered ? undefined : false}>
       <TooltipTrigger asChild>
-        <span
-          // biome-ignore lint/a11y/noNoninteractiveTabindex: a hover's trigger must take the focus
-          tabIndex={0}
-          className={cn(ITEM, "hover:bg-hover focus-visible:outline-focus focus-visible:outline-1", className)}
-        >
-          {content}
-        </span>
+        {button ?? (
+          <span
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: a hover's trigger must take the focus
+            tabIndex={0}
+            className={cn(ITEM, FOCUSABLE, className)}
+          >
+            {content}
+          </span>
+        )}
       </TooltipTrigger>
       <TooltipContent
         side="top"
         sideOffset={4}
         className="text-text max-w-sm flex-col items-stretch gap-0 border border-[#454545] bg-[#202020] px-2.5 py-2 text-xs leading-relaxed shadow-md [&>span:last-child]:hidden"
       >
-        {hover.map((lines, index) => (
+        {hover?.map((lines, index) => (
           // A section's lines are its identity.
           <div
             key={lines.join("\n")}

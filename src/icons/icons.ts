@@ -3,6 +3,7 @@ import moveToRight from "./expui/actions/moveToRight_dark.svg";
 import users from "./expui/codeWithMe/cwmUsers@20x20_dark.svg";
 import arrowLeftRight from "./expui/diff/arrowLeftRight_dark.svg";
 import close from "./expui/general/close_dark.svg";
+import ideUpdate from "./expui/general/ideUpdate_dark.svg";
 import search from "./expui/general/search_dark.svg";
 import user from "./expui/general/user_dark.svg";
 import library from "./expui/nodes/library_dark.svg";
@@ -21,6 +22,7 @@ export const icons = {
   arrowLeftRight,
   close,
   error,
+  ideUpdate,
   library,
   moveToLeft,
   moveToRight,

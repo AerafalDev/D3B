@@ -25,7 +25,7 @@ Every round checks the app itself; a round may add the feature it ships, from th
 4. **Close**: the close button quits the app.
 5. **One instance**: launching D3B again while it runs brings the running window back.
 6. **Update** (from the second release on): with the previous version installed, the new one is downloaded at start,
-   the bar offers to restart, and Restart starts the new version. While the new shell has no such bar (the old one was
-   removed on 2026-11-12 with the old UI), closing D3B installs the new version and the next start is that version.
+   the status bar's right offers to restart into it, and choosing it starts the new version; on another update,
+   closing D3B installs the new version and the next start is that version.
 
 The warnings of unsigned installers are expected (README, *The installers are not signed yet*).

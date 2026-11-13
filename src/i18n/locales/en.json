@@ -63,6 +63,11 @@
     "quitEnds": "Quitting D3B ends the game connections it relays now.",
     "startAfter": "Start Dofus after D3B: a client started before it plays without the relay."
   },
+  "updates": {
+    "restart": "Restart to update to {{version}}",
+    "installing": "Installing {{version}}…",
+    "endsGame": "Restarting ends the game connections D3B relays now."
+  },
   "characters": {
     "title": "Characters",
     "empty": "Start Dofus from Ankama's launcher: each character it plays shows here.",

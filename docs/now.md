@@ -54,7 +54,9 @@ _Updated 2026-11-13._
        PowerShell kept open), then start D3B: the bar says "Relais arrêté" in red, its hover names port 5555, `version` is
        untouched;
     10. with an update downloaded (from the next release on), close D3B: once it installed, `version` names
-        Ankama's URL; on another one, choose Restart: the new D3B says ready and a client plays;
+        Ankama's URL; on another one, with a client in game, hover "Redémarrer pour passer à <version>" on the status
+        bar's right: its hover says restarting cuts the game connections (none without a client in game); choose it:
+        it says "Installation de <version>…", then the new D3B says ready and a client plays;
     11. if a Windows account with a space or an accent in its name is at hand: steps 1 and 2 there;
     12. after a disconnection in game (Wi-Fi off and on), the client reconnects through D3B.
   - **step 2, the protocol** ([protocol.md](protocol.md)), on Windows x64 with client 3.7.13.17, from `bun run app` on
@@ -116,8 +118,8 @@ _Updated 2026-11-13._
   with the command palette (#188); then the features one at a time, each decided with the owner: the Characters
   view (done in code, #189), a character's tab (layout "A", done in code, #190), the character's map in the tab
   (the owner's style "B": discreet diamonds, actors as dots; done in code, #191). The status bar, the owner's layout "A" (2026-11-13): the
-  app's version and the game data's build (done in code, #193), the relay's item and its hover (done in code), then the
-  update offer. A renderer of the actors' sprites
+  app's version and the game data's build (done in code, #193), the relay's item and its hover (done in code, #194), the
+  update offer (done in code). A renderer of the actors' sprites
   was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The step-2
   checklist items that read the relay's item and its hover are measurable again; those that read the inspector wait
   for it. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.

@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { initI18n } from "@/i18n/i18n.ts";
 import { icons } from "@/icons/icons.ts";
 import { useRelay } from "@/relay/relay-store.ts";
+import { useUpdater } from "@/updates/updater.ts";
 import { useAppInfo } from "./app-info.ts";
 import { StatusBar } from "./status-bar.tsx";
 
@@ -28,6 +29,7 @@ describe("the status bar", () => {
   beforeEach(() => {
     useAppInfo.setState({ info: null });
     useRelay.setState({ status: null });
+    useUpdater.setState({ state: { status: "idle" } });
   });
   afterEach(cleanup);
 
@@ -82,5 +84,13 @@ describe("the status bar", () => {
     const [left, right] = [...screen.getByRole("contentinfo").children];
     expect(left?.textContent).toBe("D3B 0.13.0Relay ready · 0 in game");
     expect(right?.textContent).toBe("Client 3.7.13.17");
+  });
+
+  it("puts the offer to restart into an update on the right, after the data", () => {
+    useAppInfo.setState({ info });
+    useUpdater.setState({ state: { status: "ready", version: "0.14.0", notes: undefined } });
+    renderBar();
+    const right = screen.getByRole("contentinfo").children[1];
+    expect(right?.textContent).toBe("Client 3.7.13.17Restart to update to 0.14.0");
   });
 });
