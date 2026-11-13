@@ -64,8 +64,8 @@ _Updated 2026-11-13._
   - **step 2, the protocol** ([protocol.md](protocol.md)), on Windows x64 with client 3.7.13.17, from `bun run app` on
     `next` or the next release. Never paste a capture. Measured by the owner on 2026-11-12, Windows x64, `bun run app`
     on `next` b200248: items 1 to 6 pass; its two captures replayed through the relay byte for byte and through the
-    protocol with no frame not trusted. Not measured yet: item 7, at the next client patch; items 1 and 3's counts in
-    the inspector, and its items 8 and 9.
+    protocol with no frame not trusted; on 2026-11-13, `bun run app` on `next` d978253, items 1 and 3's counts in the
+    inspector and its items 8 and 9 pass. Not measured yet: item 7, at the next client patch.
     Since the new shell (the owner, 2026-11-13), the relay's hover no longer lists the connections: items 1, 2, 4, 5
     and 7 read the Characters view and a character's tab; the counts of items 1 and 3 read the inspector: the panel's
     "Protocol" view under the character's tab (Ctrl+J shows the panel), its counts on its header's line.

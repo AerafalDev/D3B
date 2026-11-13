@@ -42,7 +42,9 @@ tick, sends its view when it changed.
 - **Life** (verified on all 634 `LifeRegenEndEvent`): from `CharacterStatsEvent`, a characteristic's value being the
   sum of its numbers, max life is characteristic 0 plus 11 (vitality), and life is max life plus 97 (life lost, never
   above 0). `LifeRegenStartEvent` starts a regeneration of one point per `interval` tenths of a second (always 5),
-  life then being min(max, life at the start + elapsed / interval, rounded down), marked estimated; characteristics
+  life then being min(max, life at the start + elapsed / interval, rounded down), marked estimated until it reaches
+  the max (the server ends the regeneration only later, a fight or a sit: a full bar no longer says it regenerates,
+  the owner, 2026-11-13); characteristics
   read meanwhile replace the life at the start but keep its time; `LifeRegenEndEvent` sets life and max and ends it;
   an interval of 0 regenerates nothing. The estimate is computed in Rust at each tick: while it grows, the view
   changes, and is sent, at most twice a second.
