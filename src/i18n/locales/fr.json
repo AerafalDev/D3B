@@ -171,5 +171,129 @@
       "bytes_other": "{{number}} : {{count}} octets",
       "unreadable": "…"
     }
+  },
+  "node": {
+    "kinds": {
+      "on_start": {
+        "sentence": "Au lancement",
+        "description": "Le flux principal : il part quand le personnage est lancé."
+      },
+      "life_below": {
+        "sentence": "Vie sous {{threshold}}",
+        "description": "Quand la vie passe sous le seuil ; se réarme au-dessus de sa valeur de réarmement."
+      },
+      "pods_above": {
+        "sentence": "Pods au-dessus de {{threshold}}",
+        "description": "Quand les pods dépassent le seuil ; se réarme sous sa valeur de réarmement."
+      },
+      "fight_starts": {
+        "sentence": "Un combat commence",
+        "description": "Le serveur lance un combat. Sans cet événement, l'IA de combat le mène, puis le flux reprend."
+      },
+      "died": {
+        "sentence": "Le personnage est mort",
+        "description": "Un combat est perdu. Sans cet événement, le personnage s'arrête, bloqué."
+      },
+      "action_failed": {
+        "sentence": "Une action échoue",
+        "description": "Une action finit en échec et sa sortie Échec n'est reliée à rien. Sans cet événement, le personnage s'arrête, bloqué avec la raison."
+      },
+      "go_to_zone": {
+        "sentence": "Aller dans {{zone}}",
+        "description": "Va dans la zone."
+      },
+      "sit_until": {
+        "sentence": "S'asseoir jusqu'à {{life}} de vie",
+        "description": "S'assoit jusqu'à ce que la vie remonte au seuil."
+      },
+      "harvest_until": {
+        "sentence": "Récolter {{what}} dans {{zone}} jusqu'à {{pods}} de pods",
+        "description": "Récolte dans la zone les ressources choisies, jusqu'à ce que les pods atteignent le seuil."
+      },
+      "go_to_bank": {
+        "sentence": "Aller à {{bank}}",
+        "description": "Va jusqu'à la banque."
+      },
+      "deposit_all_but": {
+        "sentence": "Déposer à la banque, garder {{keep}}",
+        "description": "Ouvre la banque et y dépose tout, sauf ce qu'on garde."
+      },
+      "hunt_until": {
+        "sentence": "Chasser dans {{zone}} jusqu'à {{pods}} de pods",
+        "description": "Combat les monstres de la zone jusqu'à ce que les pods atteignent le seuil."
+      },
+      "notify": {
+        "sentence": "Prévenir : {{text}}",
+        "description": "Une alerte dans l'app, puis la suite."
+      },
+      "if": {
+        "sentence": "Si {{condition}}",
+        "description": "Choisit la suite selon la condition."
+      },
+      "wait": {
+        "sentence": "Attendre {{minutes}} min",
+        "description": "Attend, puis la suite."
+      },
+      "finish": {
+        "sentence": "Terminer",
+        "description": "Arrête le blueprint : le personnage est « Fini »."
+      },
+      "life_percent": {
+        "sentence": "Vie %",
+        "description": "La vie, en pourcentage du maximum."
+      },
+      "pods_percent": {
+        "sentence": "Pods %",
+        "description": "Les pods, en pourcentage du maximum."
+      },
+      "level": {
+        "sentence": "Niveau",
+        "description": "Le niveau du personnage."
+      },
+      "at_least": {
+        "sentence": "{{a}} ≥ {{b}}",
+        "description": "Vrai quand la première valeur atteint la seconde."
+      },
+      "add": {
+        "sentence": "{{a}} + {{b}}",
+        "description": "La somme des deux valeurs."
+      },
+      "entry": {
+        "sentence": "Entrées",
+        "description": "Ce que reçoit la fonction."
+      },
+      "return_done": {
+        "sentence": "Retour : réussi",
+        "description": "La fonction finit, en rendant ses sorties."
+      },
+      "return_failed": {
+        "sentence": "Retour : échec",
+        "description": "La fonction finit en échec, avec la raison."
+      }
+    },
+    "pins": {
+      "run": "",
+      "then": "",
+      "done": "Réussi",
+      "failed": "Échec",
+      "reason": "Raison",
+      "value": "Valeur",
+      "threshold": "Seuil",
+      "rearm": "Réarmement",
+      "zone": "Zone",
+      "life": "Vie",
+      "what": "Ressources",
+      "pods": "Pods",
+      "count": "Récoltes",
+      "bank": "Banque",
+      "keep": "Garder",
+      "text": "Texte",
+      "condition": "Condition",
+      "true": "Vrai",
+      "false": "Faux",
+      "minutes": "Minutes",
+      "a": "A",
+      "b": "B"
+    }
   }
 }
