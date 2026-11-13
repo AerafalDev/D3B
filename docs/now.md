@@ -106,7 +106,8 @@ _Updated 2026-11-13._
        <breed> · <state>" with the breed's French name (in English after switching the language: "Level <n> ·
        <breed>", Crâ becoming Cra); a character of each sex if one is at hand;
     4. the Characters view shows the same head, 28 px, in place of the initials, on each character's row;
-    5. at the next client patch, before its data: the tab shows the initials and "Niveau <n>" alone.
+    5. at the next client patch, before its data: the tab and the character's row show the initials, and the tab
+       "Niveau <n>" alone.
   - **the live view's life** (the owner's report of 2026-11-13, fixed): after a fight, stand still out of combat: the
     character's tab says "Vie — en régénération" while the bar fills, and no longer once it is full, before any sit
     or fight.

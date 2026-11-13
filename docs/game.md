@@ -92,7 +92,8 @@ tick, sends its view when it changed.
 Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-12 from mock-ups:
 
 - **The Characters view** of the primary side bar (`src/characters/`): one row per game connection from its open
-  to its close, its avatar (its breed's head for its sex, 28 px in a rounded square, else its initials), name, level, place or state, and a dot:
+  to its close, its avatar (its breed's head for its sex, 28 px in a rounded square, else its initials), name, level,
+  place or state, and a dot:
   green exploring, amber fighting, grey waiting or unread, red lost. Before a selection a row shows its connection's
   number. A row is marked while its character's tab is active. Empty, the view says to start Dofus from Ankama's
   launcher.
@@ -144,7 +145,8 @@ actor kind as "other"; a second selection, with characteristics before it; stale
 its known cell in at least 99% of them, and at least 90% of the stated elements' updates out of fights naming an element
 on the list. On 2026-11-12, over the owner's 54 connections: all 634 lives within a point, the character on all 66,166
 maps, 90,632 of 91,224 walks from its cell, and 67,713 of 71,882 updates on a known element. Vitest: the store per
-connection; a connection's state (lost, off, waiting, fighting, exploring); a place's name and the avatar's initials; a row's head in place of its initials;
+connection; a connection's state (lost, off, waiting, fighting, exploring); a place's name and the avatar's initials;
+a row's head in place of its initials;
 the Characters view (its empty line, a row by name, level and place or by connection, an unread protocol, the row
 chosen, its tab opened); a character's tab (who and where, its breed named in the interface's language or its level alone, its breed's head or
 its initials without one or when it fails to load, its gauges, what is around, its title, waiting, a protocol off, a
