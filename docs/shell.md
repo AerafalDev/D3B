@@ -52,7 +52,7 @@ The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout w
   5 px from the next on the window's frame (`#111111`; 3 px at first, the owner asked for a little more room), the
   title, activity and status bars lying on the frame. The gaps turn blue under the pointer, as VS Code's sashes.
 - **Colours**: VS Code's Dark Modern, the parts `#181818`, the editor `#1f1f1f`, text `#d6d6d6` and `#a8a8a8`; the
-  blue accent `#0078d4` kept rare. Dark only: nothing switches to a light theme.
+  blue accent `#0078d4` kept rare; a problem's text VS Code's error red `#f48771` (`--error`). Dark only: nothing switches to a light theme.
 - **Shapes**: the activity bar's active entry is a rounded pill, not VS Code's blue line; a list's selection is a
   rounded grey row; tabs as above.
 - **Inter** at 13 px (`@fontsource-variable/inter`, OFL-1.1, the owner's go).

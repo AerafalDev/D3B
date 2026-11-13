@@ -47,7 +47,7 @@ describe("the relay's hover", () => {
   it("warns that quitting ends the game connections while some are open", () => {
     expect(relayHover({ ...ready, gameConnections: 1 }, "3.7.13.17", t)).toEqual([
       [
-        "Quitting D3B ends these game connections.",
+        "Quitting D3B ends the game connections it relays now.",
         "Start Dofus after D3B: a client started before it plays without the relay.",
       ],
     ]);
@@ -66,6 +66,18 @@ describe("the relay's hover", () => {
   it("gives the reason it is off, and no advice", () => {
     const failed: RelayStatus = { ...ready, state: "failed", reason: "port 5555 of 127.0.13.59 is taken" };
     expect(relayHover(failed, "3.7.13.17", t)).toEqual([["port 5555 of 127.0.13.59 is taken"]]);
+  });
+
+  it("gives no advice to start Dofus after D3B while the relay is not ready", () => {
+    expect(relayHover({ ...ready, state: "starting" }, "3.7.13.17", t)).toEqual([]);
+  });
+
+  it("warns that quitting ends the game connections even once off, with no count on the bar", () => {
+    const failed: RelayStatus = { ...ready, state: "failed", reason: "redirect lost", gameConnections: 1 };
+    expect(relayHover(failed, "3.7.13.17", t)).toEqual([
+      ["redirect lost"],
+      ["Quitting D3B ends the game connections it relays now."],
+    ]);
   });
 
   it("counts the connections that went straight to Ankama", () => {

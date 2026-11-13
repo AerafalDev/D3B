@@ -58,6 +58,13 @@ describe("the relay's item", () => {
     expect(shownIcons(container)).toEqual([icons.error]);
   });
 
+  it("keeps a relay not measured on this system grey, with its arrows", () => {
+    useRelay.setState({ status: { ...ready, state: "unsupported", clientBuild: null, gameConnections: 0 } });
+    const { container } = renderItem();
+    expect(screen.getByText("Relay not measured on this system").closest(".text-error")).toBeNull();
+    expect(shownIcons(container)).toEqual([icons.arrowLeftRight]);
+  });
+
   it("opens its hover from the keyboard", async () => {
     useRelay.setState({ status: ready });
     renderItem();
@@ -66,6 +73,8 @@ describe("the relay's item", () => {
       throw new Error("the item takes no focus");
     }
     fireEvent.focus(item);
-    expect((await screen.findAllByText("Quitting D3B ends these game connections.")).length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByText("Quitting D3B ends the game connections it relays now.")).length,
+    ).toBeGreaterThan(0);
   });
 });

@@ -20,7 +20,8 @@ Every round checks the app itself; a round may add the feature it ships, from th
    on Windows.
 2. **Start**: the window opens, dark, in the system's language (French or English).
 3. **Status bar**: it shows `D3B <version>` on the left and the game data on the right (`Client <build>`, or
-   `No game data` and why in its hover).
+   `No game data` and why in its hover); after the version, the relay: "Relay not measured on this system", grey,
+   on macOS and Linux.
 4. **Close**: the close button quits the app.
 5. **One instance**: launching D3B again while it runs brings the running window back.
 6. **Update** (from the second release on): with the previous version installed, the new one is downloaded at start,
