@@ -70,6 +70,13 @@ describe("the title bar", () => {
     expect(window.close).toHaveBeenCalledOnce();
   });
 
+  it("draws Windows' own glyph on each of the window's buttons", () => {
+    renderBar();
+    const glyph = (name: string) =>
+      screen.getByRole("button", { name }).querySelector("[data-icon]")?.getAttribute("data-icon");
+    expect([glyph("Minimize"), glyph("Maximize"), glyph("Close")]).toEqual(["minimize", "maximize", "close"]);
+  });
+
   it("offers to restore the window once it is maximised, with Windows' restore glyph", async () => {
     renderBar();
     expect(
