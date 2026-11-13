@@ -50,6 +50,19 @@
     "client": "Client {{build}}",
     "noData": "Aucune donnée de jeu"
   },
+  "relay": {
+    "starting": "Relais en démarrage…",
+    "ready": "Relais prêt · {{count}} en jeu",
+    "failed": "Relais arrêté",
+    "unsupported": "Relais non mesuré sur ce système",
+    "stopped": "Relais fermé",
+    "client": "Client {{build}}",
+    "clientOther": "Client {{build}}, données de jeu de {{data}}",
+    "notUnderstood_one": "{{count}} connexion est allée directement chez Ankama : son choix de serveur n'a pas été compris.",
+    "notUnderstood_other": "{{count}} connexions sont allées directement chez Ankama : leur choix de serveur n'a pas été compris.",
+    "quitEnds": "Quitter D3B coupe les connexions de jeu qu'il relaie.",
+    "startAfter": "Lancez Dofus après D3B : un client lancé avant joue sans le relais."
+  },
   "characters": {
     "title": "Personnages",
     "empty": "Lancez Dofus depuis le launcher d'Ankama : chaque personnage qu'il joue apparaît ici.",

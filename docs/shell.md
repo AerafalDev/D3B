@@ -34,7 +34,8 @@ VS Code's, part for part (`src/shell/`):
   the strip lies on the frame's ground so the active tab stands out, the others' text dimmer.
 - **Status bar** (22 px, `src/shell/status-bar/`), the owner's layout "A" from mock-ups (2026-11-13), as VS Code's:
   the app's state on the left, its context on the right. Left, the app's name and version after its one accent, a
-  small blue dot (the name alone until the back end answers, and in the browser preview). Right, the game data:
+  small blue dot (the name alone until the back end answers, and in the browser preview), then the relay
+  ([relay.md](relay.md#in-the-app)). Right, the game data:
   JetBrains' library icon and "Client 3.7.13.17", or its yellow warning and "No game data". An item is an icon and a
   short label, grey; colour only marks a problem. An item with details takes the focus and opens a hover as VS Code's
   rich ones: sections of lines set apart by a rule, the first brighter, the others grey. A hover never repeats what
@@ -51,7 +52,7 @@ The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout w
   5 px from the next on the window's frame (`#111111`; 3 px at first, the owner asked for a little more room), the
   title, activity and status bars lying on the frame. The gaps turn blue under the pointer, as VS Code's sashes.
 - **Colours**: VS Code's Dark Modern, the parts `#181818`, the editor `#1f1f1f`, text `#d6d6d6` and `#a8a8a8`; the
-  blue accent `#0078d4` kept rare. Dark only: nothing switches to a light theme.
+  blue accent `#0078d4` kept rare; a problem's text VS Code's error red `#f48771` (`--error`). Dark only: nothing switches to a light theme.
 - **Shapes**: the activity bar's active entry is a rounded pill, not VS Code's blue line; a list's selection is a
   rounded grey row; tabs as above.
 - **Inter** at 13 px (`@fontsource-variable/inter`, OFL-1.1, the owner's go).
@@ -75,7 +76,8 @@ restore once maximised, no menus on macOS, each toggle pressed while its part sh
 through the close request, View's checked parts), the Windows window's config against the main one, the palette (its
 commands, filtering, running one), the activity bar (its pressed entry, hiding and showing the side bar), an
 editor's tab (its title followed, its close), the status bar (the name alone before the back end answers, the
-version and the data's build without a hover, no data and its reason in the hover) and the app's info (asked once, not in the browser
+version and the data's build without a hover, no data and its reason in the hover, the relay after the version), the
+relay's item (nothing before its status, grey arrows, red once off, its hover from the keyboard) and its hover's lines and the app's info (asked once, not in the browser
 preview, asked again after a failure), and a part's collapse and slide against a fake panel (starting hidden,
 first opening at its default size, hide and show, the 200 ms slide, two quick toggles, a drag below the minimum). The
 layout itself is checked in the browser preview, not in happy-dom, which has no layout.

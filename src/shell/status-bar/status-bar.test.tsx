@@ -6,6 +6,7 @@ import type { AppInfo_Serialize } from "@/bindings.ts";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { initI18n } from "@/i18n/i18n.ts";
 import { icons } from "@/icons/icons.ts";
+import { useRelay } from "@/relay/relay-store.ts";
 import { useAppInfo } from "./app-info.ts";
 import { StatusBar } from "./status-bar.tsx";
 
@@ -24,7 +25,10 @@ describe("the status bar", () => {
     initI18n();
     await i18next.changeLanguage("en");
   });
-  beforeEach(() => useAppInfo.setState({ info: null }));
+  beforeEach(() => {
+    useAppInfo.setState({ info: null });
+    useRelay.setState({ status: null });
+  });
   afterEach(cleanup);
 
   it("names the app alone until the back end tells its version, as in the browser preview", () => {
@@ -60,5 +64,23 @@ describe("the status bar", () => {
     useAppInfo.setState({ info });
     renderBar();
     expect(screen.getByText("Client 3.7.13.17").closest("[tabindex]")).toBeNull();
+  });
+
+  it("puts the relay on the left after the app's version, the data on the right", () => {
+    useAppInfo.setState({ info });
+    useRelay.setState({
+      status: {
+        state: "ready",
+        reason: null,
+        clientBuild: "3.7.13.17",
+        gameConnections: 0,
+        notUnderstood: 0,
+        connections: [],
+      },
+    });
+    renderBar();
+    const [left, right] = [...screen.getByRole("contentinfo").children];
+    expect(left?.textContent).toBe("D3B 0.13.0Relay ready · 0 in game");
+    expect(right?.textContent).toBe("Client 3.7.13.17");
   });
 });

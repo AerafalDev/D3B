@@ -18,7 +18,7 @@ flowchart LR
     client -->|"127.0.13.59:5556, first frame"| game["game connection"]
     handover --> game
     game <--> server["Ankama's game server"]
-    redirect & phase & game -->|RelayStatus| ipc["ipc: relay_status, RelayChanged"] --> bar["status bar indicator (to return in the new shell)"]
+    redirect & phase & game -->|RelayStatus| ipc["ipc: relay_status, RelayChanged"] --> bar["status bar: the relay's item and its hover"]
 ```
 
 The facts below come from the study `artifacts/studies/relay.md`: the C# version's measured docs
@@ -51,11 +51,10 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
 - **The client folder**: `DOFUS_CLIENT`, else `Ankama/Dofus-dofus3` in the user's local data folder, taken through
   `app.path()`, as the extractor does ([data.md](data.md)).
 - **What it cannot do**: a client started before D3B loaded Ankama's configuration and goes straight to Ankama for its
-  whole life; the interface tells the player to start the client after D3B (the indicator did until 2026-11-12). A
+  whole life; the relay's hover in the status bar tells the player to start the client after D3B. A
   client started while D3B is gone but the line is still redirected (a crash) cannot connect until D3B starts again
   or the launcher repairs. Quitting or updating D3B drops every relayed client's game connection, and its
-  reconnection fails while D3B is gone (D88, D91): the interface says so while connections are live (the indicator
-  did until 2026-11-12).
+  reconnection fails while D3B is gone (D88, D91): the relay's hover says so while connections are live.
 
 ## The connections
 
@@ -98,10 +97,13 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   `relay_restore` command before it installs. `relay_status` and the event `RelayChanged` carry its state (starting,
   ready, failed with its reason, unsupported, stopped), the client's build, the game connections open and the answers
   not understood.
-- The status bar's indicator (`src/relay/`, removed on 2026-11-12 with the old UI until the new shell has a status
-  bar) showed the state and the game connections; its tooltip the reason, the
-  client's build, what the protocol reads of each game connection ([protocol.md](protocol.md#in-the-app)), that
-  quitting ends the game connections, and to start the client after D3B.
+- The status bar's relay item (`src/relay/relay-item.tsx`, the owner's choices from mock-ups, 2026-11-13), on the
+  left after the app's version ([shell.md](shell.md)): JetBrains' arrows both ways and the state, "Relay ready · 2 in
+  game" once ready; red, with JetBrains' error, once off. Its hover says only what the bar does not: why it is off,
+  the client's build only when the game data is of another one (or there is none), the answers not understood; then
+  that quitting ends the game connections, while there are some, and to start the client after D3B, once ready. What
+  the protocol reads of each connection is not there (the owner, 2026-11-13): the Characters view and a character's
+  tab show its state and map, the inspector its counts ([protocol.md](protocol.md#in-the-app)).
 - A restore Windows refuses (a process holding `version`) is tried five times over about 3 s.
 
 ## Secrets
@@ -113,7 +115,7 @@ A ticket's `Debug` prints `<redacted>`; tests on captures print only file names,
 ## Platforms
 
 Windows x64 only for now (the owner, 2026-11-11). On macOS and Linux nothing is redirected and the relay's status says
-it is not measured on this platform (the indicator that showed it was removed on 2026-11-12 with the old UI): `127.0.13.59` may not exist on
+it is not measured on this platform (the status bar's relay item says so): `127.0.13.59` may not exist on
 macOS, port 443 needs a privilege on Linux, and
 where the client keeps its `version` file is unknown. The first testers there report the study's facts
 ([testing.md](testing.md)).
