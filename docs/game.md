@@ -97,7 +97,8 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
   number. A row is marked while its character's tab is active. Empty, the view says to start Dofus from Ankama's
   launcher.
 - **A character's tab**, layout "A": opened from its row, named after the character once known. On the left its
-  state: who (level, class, exploring or fighting), where (area, sub-area, coordinates, cell), life (marked while it
+  state: who (its breed's head for its sex, 40 px in a rounded square, else its initials; its level, its breed's name
+  in the interface's language, exploring or fighting; the owner's choice from mock-ups, 2026-11-13), where (area, sub-area, coordinates, cell), life (marked while it
   regenerates, until it is full), pods, experience, energy, action and movement points, kamas, what is around (players, monster
   groups, NPCs, and resources: every interactive element whose state is known, harvested or not), and a line when
   frames were dropped; on the right the character's map. A connection whose protocol is off says why; a lost one
@@ -128,7 +129,9 @@ The step-2 interface removed on 2026-11-12, for reference, was:
 
 `CharacterChanged` carries a connection's whole view when it changed, at most five times a second, and `null` once it
 closes; `map_cells` reads a map's cells from the game data. Both name the map only when the data's build is the
-connection's.
+connection's, and so the event names the breed (`breedName`, French and English) and gives its head's file for the
+character's sex (`head`, a path in the data's folder, which the webview loads through the asset protocol, its scope
+`$RESOURCE/data/**`).
 
 ## Tests
 
@@ -143,6 +146,7 @@ on the list. On 2026-11-12, over the owner's 54 connections: all 634 lives withi
 maps, 90,632 of 91,224 walks from its cell, and 67,713 of 71,882 updates on a known element. Vitest: the store per
 connection; a connection's state (lost, off, waiting, fighting, exploring); a place's name and the avatar's initials;
 the Characters view (its empty line, a row by name, level and place or by connection, an unread protocol, the row
-chosen, its tab opened); a character's tab (who and where, its gauges, what is around, its title, waiting, a protocol
-off, a closed connection); the map's geometry (cells 0, 13, 14 and 559), the ground drawn, what stands on it in
+chosen, its tab opened); a character's tab (who and where, its breed named in the interface's language or its level alone, its breed's head or
+its initials without one or when it fails to load, its gauges, what is around, its title, waiting, a protocol off, a
+closed connection); the map's geometry (cells 0, 13, 14 and 559), the ground drawn, what stands on it in
 drawing order, and its notices (a fight, no map, a map the data lacks).

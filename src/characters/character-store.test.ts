@@ -26,6 +26,8 @@ const view: View = {
   name: "Lyra",
   level: 87,
   breed: 10,
+  breedName: null,
+  head: null,
   sex: "female",
   fighting: false,
   place: null,

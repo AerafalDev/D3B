@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { IDockviewPanelProps } from "dockview-react";
 import i18next from "i18next";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,6 +10,12 @@ import { type CharacterView, useCharacters } from "./character-store.ts";
 import { CharacterTab } from "./character-tab.tsx";
 
 const setTitle = vi.fn();
+
+// The asset protocol's URL of a file, as Tauri makes it; happy-dom has no Tauri.
+vi.mock("@tauri-apps/api/core", async (original) => ({
+  ...(await original<typeof import("@tauri-apps/api/core")>()),
+  convertFileSrc: (path: string) => `asset://${path}`,
+}));
 
 function protocol(on: GameConnectionStatus["protocol"]) {
   const connection = { number: 1, build: "3.7.13.17", protocol: on, understood: 0, read: 0, unknown: 0, notTrusted: 0 };
@@ -37,7 +43,9 @@ function renderTab() {
 const lyra: CharacterView = {
   name: "Lyra",
   level: 87,
-  breed: 10,
+  breed: 9,
+  breedName: { fr: "Crâ", en: "Cra" },
+  head: "data/heads/9-1.png",
   sex: "female",
   fighting: false,
   place: {
@@ -80,8 +88,50 @@ describe("a character's tab", () => {
     useCharacters.setState({ views: { 1: lyra } });
     renderTab();
     expect(screen.getByRole("heading", { name: "Lyra" })).toBeTruthy();
-    expect(screen.getByText("Level 87 · class 10 · Exploring")).toBeTruthy();
+    expect(screen.getByText("Level 87 · Cra · Exploring")).toBeTruthy();
     expect(screen.getByText("Amakna › Forest · 4, -18 · cell 288")).toBeTruthy();
+  });
+
+  it("names its breed in the interface's language", async () => {
+    useCharacters.setState({ views: { 1: lyra } });
+    await act(() => i18next.changeLanguage("fr"));
+    try {
+      renderTab();
+      expect(screen.getByText("Niveau 87 · Crâ · Exploration")).toBeTruthy();
+    } finally {
+      await act(() => i18next.changeLanguage("en"));
+    }
+  });
+
+  it("gives only the level while the data does not name the breed", () => {
+    useCharacters.setState({ views: { 1: { ...lyra, breedName: null } } });
+    renderTab();
+    expect(screen.getByText("Level 87 · Exploring")).toBeTruthy();
+  });
+
+  it("shows its breed's head in place of its initials", () => {
+    useCharacters.setState({ views: { 1: lyra } });
+    const { container } = renderTab();
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("asset://data/heads/9-1.png");
+    expect(screen.queryByText("Ly")).toBeNull();
+  });
+
+  it("shows its initials without a head, or when the head cannot be loaded", () => {
+    useCharacters.setState({ views: { 1: { ...lyra, head: null } } });
+    const { container, unmount } = renderTab();
+    expect(container.querySelector("img")).toBeNull();
+    expect(screen.getByText("Ly")).toBeTruthy();
+    unmount();
+
+    useCharacters.setState({ views: { 1: lyra } });
+    const again = renderTab();
+    const image = again.container.querySelector("img");
+    expect(image).not.toBeNull();
+    if (image !== null) {
+      fireEvent.error(image);
+    }
+    expect(again.container.querySelector("img")).toBeNull();
+    expect(screen.getByText("Ly")).toBeTruthy();
   });
 
   it("shows its gauges, a life still regenerating marked so", () => {

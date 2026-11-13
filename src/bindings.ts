@@ -110,6 +110,13 @@ export type CharacterView_Deserialize = {
 	name?: string | null,
 	level?: number | null,
 	breed?: number | null,
+	/**  The breed's name, from the game data. */
+	breedName?: Names | null,
+	/**
+	 *  The file of the breed's head for the character's sex, in the game data's folder, which the webview loads
+	 *  through the asset protocol.
+	 */
+	head?: string | null,
 	/**  `None` until the character is chosen, or when its look holds no sex D3B knows. */
 	sex?: CharacterSex | null,
 	fighting?: boolean | null,
@@ -136,6 +143,13 @@ export type CharacterView_Serialize = {
 	name: string | null,
 	level: number | null,
 	breed: number | null,
+	/**  The breed's name, from the game data. */
+	breedName: Names | null,
+	/**
+	 *  The file of the breed's head for the character's sex, in the game data's folder, which the webview loads
+	 *  through the asset protocol.
+	 */
+	head: string | null,
 	/**  `None` until the character is chosen, or when its look holds no sex D3B knows. */
 	sex: CharacterSex | null,
 	fighting: boolean | null,
