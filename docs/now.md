@@ -23,7 +23,8 @@ _Updated 2026-11-13._
 - **Not measured**, by the owner:
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
-    items 1, 2 (every count as below, in 27.8 s) and 4 pass. Not measured yet: items 3 and 5.
+    items 1, 2 (every count as below, in 27.8 s) and 4 pass; on 2026-11-13, `bun run app` on `next` 3454d38, item 5
+    passes (the new status bar's "Aucune donnée de jeu" and the format in its hover). Not measured yet: item 3.
     1. `dotnet run --project tools/extractor/src -- --help` lists `--client` and `--output`;
     2. `dotnet run --project tools/extractor/src` prints build 3.7.13.17 and 15,470 map positions, 569 sub-areas, 70
        areas, 63 zaaps, 40 worlds, 161 zooms, 1,250 tiles, 17,623 maps, 46,490 elements, 11,331 vertices, 30,917
@@ -35,8 +36,9 @@ _Updated 2026-11-13._
   - **step 2, the relay** ([relay.md](relay.md)), on Windows x64 with client 3.7.13.17, from `bun run app` or the
     next release. Never paste a capture or a log line holding a ticket. Measured by the owner on 2026-11-11, Windows
     x64, `bun run app` on `next` 4fa724f: items 1 to 9 and 12 pass; on 2026-11-12, item 10's close (v0.12.0 to
-    v0.13.0). Not measured yet: item 10's Restart (v0.13.0 installed, then the release after it) and 11 (needs a
-    Windows account whose name holds a space or an accent).
+    v0.13.0); on 2026-11-13, `bun run app` on `next` 3454d38, items 1, 2, 4, 7, 8 and 9 pass again in the new
+    shell's status bar (the relay's item, its red once off, its hover). Not measured yet: item 10's Restart (v0.13.0
+    installed, then the release after it) and 11 (needs a Windows account whose name holds a space or an accent).
     1. Close every client, start D3B: the bar says "Relais prêt · 0 en jeu", then on the right "Client 3.7.13.17";
        its hover says to start Dofus after D3B, and names the client only if its build is not the data's;
     2. start a client from the launcher, log in, choose a server and a character, enter the game: it plays as before,
@@ -119,9 +121,9 @@ _Updated 2026-11-13._
   view (done in code, #189), a character's tab (layout "A", done in code, #190), the character's map in the tab
   (the owner's style "B": discreet diamonds, actors as dots; done in code, #191). The status bar, the owner's layout "A" (2026-11-13): the
   app's version and the game data's build (done in code, #193), the relay's item and its hover (done in code, #194), the
-  update offer (done in code). A renderer of the actors' sprites
-  was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The step-2
-  checklist items that read the relay's item and its hover are measurable again; those that read the inspector wait
-  for it. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
+  update offer (done in code, #195). A renderer of the actors' sprites
+  was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The relay's
+  items 1, 2, 4, 7, 8 and 9 were measured again in it by the owner on 2026-11-13; the protocol's items that read the
+  inspector wait for it. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.
