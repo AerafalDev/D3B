@@ -1,0 +1,21 @@
+# The licences cargo-about may pick for the crates in the app's binary, in order of preference when a crate offers
+# a choice (scripts/notices.ts): the eight in use on 2026-11-13, the owner's list. A crate under any other licence
+# fails the notices, so accepting a new one is the owner's call.
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "ISC",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "Zlib",
+    "Unicode-3.0",
+    "MPL-2.0",
+]
+
+# Build scripts and tests do not ship in the binary.
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+
+# D3B itself (publish = false) is not third-party.
+[private]
+ignore = true

@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use super::breeds::{self, Breed};
 use super::graph::WorldGraph;
 use super::manifest::{DataError, Manifest};
 use super::world::World;
@@ -16,6 +17,8 @@ pub struct GameData {
     pub worlds: Vec<WorldMap>,
     /// The ways between maps.
     pub graph: WorldGraph,
+    /// The breeds, in order of id, whose heads the webview loads from the folder.
+    pub breeds: Vec<Breed>,
 }
 
 impl GameData {
@@ -25,11 +28,13 @@ impl GameData {
         let world = World::load(folder, &manifest)?;
         let worlds = manifest.read(folder, "worlds")?;
         let graph = WorldGraph::load(folder, &manifest)?;
+        let breeds = breeds::load(folder, &manifest)?;
         Ok(Self {
             manifest,
             world,
             worlds,
             graph,
+            breeds,
         })
     }
 }
@@ -62,8 +67,17 @@ mod tests {
             .unwrap_or_else(|error| panic!("{error}"));
             tables.push(format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#));
         }
+        std::fs::copy(fixtures.join("../breeds/breeds.json"), folder.join("breeds.json"))
+            .unwrap_or_else(|error| panic!("{error}"));
+        tables.push(r#"{"name":"breeds","path":"breeds.json","sha256":"00"}"#.to_owned());
+        for head in ["8-0", "8-1", "9-0", "9-1"] {
+            tables.push(format!(
+                r#"{{"name":"heads/{head}","path":"heads/{head}.png","sha256":"00"}}"#
+            ));
+        }
         let manifest = format!(
-            r#"{{"format":1,"build":"3.7.13.17","extractor":"0","tables":[{}]}}"#,
+            r#"{{"format":{},"build":"3.7.13.17","extractor":"0","tables":[{}]}}"#,
+            super::super::FORMAT,
             tables.join(",")
         );
         std::fs::write(folder.join(Manifest::FILE), manifest).unwrap_or_else(|error| panic!("{error}"));
@@ -73,6 +87,7 @@ mod tests {
         assert_eq!(data.manifest.build, "3.7.13.17");
         assert_eq!(data.world.zaaps.len(), 1);
         assert_eq!(data.graph.edges.len(), 1);
+        assert_eq!(data.breeds.len(), 2);
     }
 
     #[test]
@@ -89,5 +104,6 @@ mod tests {
         assert_ne!(data.world.sub_areas.len(), 0);
         assert_ne!(data.worlds.len(), 0);
         assert_ne!(data.graph.edges.len(), 0);
+        assert_ne!(data.breeds.len(), 0);
     }
 }

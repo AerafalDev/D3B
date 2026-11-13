@@ -1,6 +1,6 @@
 # 0008. The data folder holds the world first, in five languages, and ships as a `.tar.gz`
 
-- Status: accepted
+- Status: superseded by 0013
 - Date: 2026-11-11
 - Decided by: the owner
 - Supersedes 0003

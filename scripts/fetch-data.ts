@@ -1,7 +1,8 @@
-// Puts the game data of one client build in data/, from its `client-<build>` release (docs/data.md).
+// Puts the game data of one client build in data/, from its `client-<build>` release (docs/data.md), in the format
+// `.github/game-data.json` names, which is the app's (a Rust test keeps them equal).
 // Usage: bun scripts/fetch-data.ts <build>. Needs the GitHub CLI, signed in or with GH_TOKEN set.
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 const build = process.argv[2];
@@ -10,8 +11,15 @@ if (build === undefined || !/^\d+(\.\d+){1,3}$/.test(build)) {
   process.exit(2);
 }
 
+const format: unknown = JSON.parse(readFileSync(".github/game-data.json", "utf8")).format;
+if (typeof format !== "number" || !Number.isInteger(format)) {
+  console.error(".github/game-data.json names no data format");
+  process.exit(2);
+}
+
 const target = "data";
-const archive = join(target, `client-${build}.tar.gz`);
+const asset = `client-${build}-format${format}.tar.gz`;
+const archive = join(target, asset);
 for (const entry of readdirSync(target)) {
   if (entry !== "README.md") {
     rmSync(join(target, entry), { recursive: true, force: true });
@@ -27,12 +35,12 @@ function run(command: string, args: string[]): void {
   }
 }
 
-run("gh", ["release", "download", `client-${build}`, "--pattern", `client-${build}.tar.gz`, "--dir", target]);
+run("gh", ["release", "download", `client-${build}`, "--pattern", asset, "--dir", target]);
 run("tar", ["-xzf", archive, "-C", target]);
 rmSync(archive);
 
 if (!existsSync(join(target, "manifest.json"))) {
-  console.error(`client-${build}.tar.gz has no manifest.json at its root`);
+  console.error(`${asset} has no manifest.json at its root`);
   process.exit(1);
 }
-console.log(`data/ holds the data of client ${build}`);
+console.log(`data/ holds the data of client ${build}, format ${format}`);

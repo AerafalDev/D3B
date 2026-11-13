@@ -1,0 +1,114 @@
+import { describe, expect, it } from "vitest";
+import { barePackages, type CargoAbout, importedPackages, mitText, noticesText } from "./notices-text.ts";
+
+const VITE = `# Licenses
+
+The app bundles dependencies which contain the following licenses:
+
+## lucide-react - 1.72.0 (ISC)
+
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+## react-remove-scroll-bar - 2.3.8 (MIT)
+
+## dockview-react - 8.9.0 (MIT)
+
+MIT License
+`;
+
+const ABOUT: CargoAbout = {
+  licenses: [
+    {
+      id: "MIT",
+      text: "MIT License\n\nCopyright (c) serde\n",
+      used_by: [{ crate: { name: "serde", version: "1.0.0" } }, { crate: { name: "tauri", version: "2.0.0" } }],
+    },
+    {
+      id: "MPL-2.0",
+      text: "Mozilla Public License 2.0\n",
+      used_by: [{ crate: { name: "cssparser", version: "0.29.6" } }],
+    },
+  ],
+};
+
+const INTER = { name: "@fontsource-variable/inter", version: "5.3.0", license: "OFL-1.1", text: "SIL OFL 1.1\n" };
+const DOCKVIEW = { name: "dockview-react", version: "8.9.0", license: "MIT", text: "MIT License\n" };
+const SUPPLIED = new Map([["react-remove-scroll-bar", mitText("Anton Korzunov")]]);
+const INPUT = { viteLicenses: VITE, supplied: SUPPLIED, cssPackages: [INTER, DOCKVIEW], about: ABOUT, target: "x" };
+
+function text(input: Parameters<typeof noticesText>[0]): string {
+  const notices = noticesText(input);
+  if (!notices.ok) {
+    throw new Error(notices.error);
+  }
+  return notices.text;
+}
+
+describe("importedPackages", () => {
+  it("names each package the stylesheet imports, scoped or with a subpath, once", () => {
+    const css = [
+      '@import "tailwindcss";',
+      '@import "@fontsource-variable/inter";',
+      '@import "dockview-react/dist/styles/dockview.css";',
+      '@import "shadcn/tailwind.css";',
+      '@import "tailwindcss";',
+    ].join("\n");
+    expect(importedPackages(css)).toEqual(["tailwindcss", "@fontsource-variable/inter", "dockview-react", "shadcn"]);
+  });
+
+  it("leaves out the stylesheet's own files", () => {
+    expect(importedPackages('@import "./theme.css";\n@import "../base.css";')).toEqual([]);
+  });
+});
+
+describe("barePackages", () => {
+  it("names the packages Vite lists without a licence text", () => {
+    expect(barePackages(VITE)).toEqual([{ name: "react-remove-scroll-bar", version: "2.3.8", license: "MIT" }]);
+  });
+});
+
+describe("noticesText", () => {
+  const notices = text(INPUT);
+
+  it("carries the font, Lucide's notice and every crate under its licence", () => {
+    expect(notices).toContain("## @fontsource-variable/inter - 5.3.0 (OFL-1.1)\n\nSIL OFL 1.1");
+    expect(notices).toContain("Copyright (c) 2026 Lucide Icons and Contributors");
+    expect(notices).toContain("## MIT, used by: serde 1.0.0, tauri 2.0.0\n\nMIT License\n\nCopyright (c) serde");
+    expect(notices).toContain("# The app's binary (Rust crates, x)");
+  });
+
+  it("puts the supplied text under a package Vite lists bare", () => {
+    expect(notices).toContain(
+      "## react-remove-scroll-bar - 2.3.8 (MIT)\n\nMIT License\n\nCopyright (c) Anton Korzunov",
+    );
+  });
+
+  it("says where the source of an MPL-2.0 crate is", () => {
+    expect(notices).toContain("The source of each: https://crates.io/crates/cssparser/0.29.6");
+    expect(notices).not.toContain("https://crates.io/crates/serde/");
+  });
+
+  it("drops Vite's own title and lists a package Vite already has once", () => {
+    expect(notices).not.toContain("# Licenses");
+    expect(notices.match(/## dockview-react/g)).toHaveLength(1);
+  });
+
+  it("fails on a bare package whose text is not supplied", () => {
+    expect(noticesText({ ...INPUT, supplied: new Map() })).toEqual({
+      ok: false,
+      error: "react-remove-scroll-bar ships no licence text and none was supplied",
+    });
+  });
+
+  it("fails when Vite listed nothing, as when build.license is off", () => {
+    const notices = noticesText({ ...INPUT, viteLicenses: "" });
+    expect(notices.ok ? "" : notices.error).toMatch(/build\.license/);
+  });
+
+  it("fails when cargo-about found no crate", () => {
+    const notices = noticesText({ ...INPUT, about: { licenses: [] } });
+    expect(notices.ok ? "" : notices.error).toMatch(/cargo-about/);
+  });
+});

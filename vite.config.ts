@@ -29,9 +29,11 @@ export default defineConfig({
     target: process.env["TAURI_ENV_PLATFORM"] === "windows" ? "chrome120" : "safari16",
     minify: !process.env["TAURI_ENV_DEBUG"],
     sourcemap: Boolean(process.env["TAURI_ENV_DEBUG"]),
+    // dist/.vite/license.md: the bundled packages' licences, which scripts/notices.ts puts in the app's packages.
+    license: true,
   },
   test: {
     environment: "happy-dom",
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
   },
 });

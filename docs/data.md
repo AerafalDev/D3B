@@ -1,22 +1,23 @@
 # Game data
 
 The app ships the game data of one client build, as JSON, inside the installer: for now the world (maps, world graph,
-positions, sub-areas, areas, zaaps, the world map and its tiles); items, monsters and spells come with the step that
-reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
-release workflow. Nothing of it is ever committed (ADR [0008](adr/0008-world-data-first-in-five-languages-as-a-tar-gz.md)).
+positions, sub-areas, areas, zaaps, the world map and its tiles) and the breeds with their heads; items, monsters and
+spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
+release workflow. Nothing of it is ever committed (ADR [0008](adr/0008-world-data-first-in-five-languages-as-a-tar-gz.md), its archive's name
+superseded by [0013](adr/0013-a-new-data-format-is-a-second-asset-named-by-its-format.md)).
 
 ```mermaid
 flowchart LR
     client["Installed Dofus 3 client"] --> extractor["tools/extractor (.NET)"]
-    extractor --> folder["artifacts/data/&lt;build&gt;/: manifest.json + tables + tiles"]
-    folder -->|"owner's go, data skill"| asset["Release asset client-&lt;build&gt;.tar.gz"]
+    extractor --> folder["artifacts/data/&lt;build&gt;/: manifest.json + tables + tiles + heads"]
+    folder -->|"owner's go, data skill"| asset["Release asset client-&lt;build&gt;-format&lt;n&gt;.tar.gz"]
     asset -->|"release.yml, .github/game-data.json"| bundle["data/ bundled as a Tauri resource"]
     bundle --> app["src-tauri/src/data reads it at start"]
 ```
 
 ## The folder
 
-- `manifest.json`: `format` (equal to `data::FORMAT`, currently 1), `build` (such as `3.7.13.17`), `extractor` (its
+- `manifest.json`: `format` (equal to `data::FORMAT`, currently 2), `build` (such as `3.7.13.17`), `extractor` (its
   version) and `tables`, one entry per file, tiles included, in order of `path` (relative, forward slashes), with its
   `name` (the path without its extension, such as `maps/37`, unique) and its `sha256`. Unknown fields are refused.
 - One JSON file per table, an array of records sorted by id, one record per line; names in camelCase.
@@ -28,6 +29,9 @@ flowchart LR
 - **Tiles** are JPEG files, `tiles/<world>/<zoom as a percentage>/<n>.jpg`, numbered from 1 row by row from the top
   left. The client holds them as BC7 textures (3.7.13.17, `main:docs/client.md`, "The world's maps"); the extractor
   decodes them and encodes them at JPEG quality 75, the owner's choice on the C# version.
+- **Heads** are PNG files, `heads/<breed>-<sex>.png`, 64 pixels a side with their transparency, 0 the male and 1 the
+  female, two for each breed of `breeds.json`: the client's `Head_<breed><sex>` of `Content/Picto/UI/class_assets_2x.bundle`,
+  BC7, drawn whole (3.7.13.17, `artifacts/studies/breeds.md`). The app refuses a folder where a breed lacks one.
 - **Flags** are the list of the names of the bits a record sets, in camelCase, as the client's enums name them, read
   from its code with Cpp2IL (ADR [0010](adr/0010-flags-by-the-names-of-the-clients-enums.md)).
 - The shape of each table is written down here when its reader lands (`src-tauri/src/data/`, `deny_unknown_fields`).
@@ -43,6 +47,8 @@ flowchart LR
 | `world-graph-edges.json` | `from`, `to` (uids), `transitions` (`type`: `scroll`, `scrollAction`, `mapAction` or `interactive`; `direction`, `cellId`, `skillId`, `mapId`, `elementId`, `criterion`) | 30,917 edges, 31,337 transitions |
 | `areas.json` | `id`, `name` (a text, or `null`), `superAreaId`, `worldmapId`, `hasWorldMap` | `AreaData`, 70 records |
 | `zaaps.json` | `id`, `mapId`, `subAreaId`, `activated` | `WaypointData`, 63 records |
+| `breeds.json` | `id`, `name` (the text its `shortNameId` names, a string holding the text's number: its only name) | `BreedData`, 19 records, 1 to 18 and 20 |
+| `heads/<breed>-<sex>.png` | one head, PNG | 38 BC7 textures, 239 KB as PNG |
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
 `nonWalkableDuringRP`, `farmCell`, `visible`, `havenbagCell`, `roleplayMonstersMovementBlocked`, `red`, `blue`: fields
@@ -73,17 +79,19 @@ It writes the folder beside its target (`<target>.d3b-staging`), then swaps it i
 holds a `manifest.json`. A file's path and its name are unique ignoring case.
 
 Each run extracts everything again, in about 25 s on 3.7.13.17, tiles included. It also writes the folder's archive,
-`artifacts/data/client-<build>.tar.gz` whatever `--output` names: the folder's files at its root in order of their
+`artifacts/data/client-<build>-format<n>.tar.gz` whatever `--output` names: the folder's files at its root in order of their
 paths, with a fixed date, so that two runs of one extractor on one OS give the same bytes (gzip's header names the
-OS). It is the file the `data` skill publishes and `data:fetch` unpacks. The format stays 1 until the first
-`client-<build>` is published: until then a shape may change without a bump. The C# version's tools on `main`
+OS). It is the file the `data` skill publishes and `data:fetch` unpacks. Format 1's asset, published for 3.7.13.17, was
+named `client-<build>.tar.gz`; format 2 added the breeds and their heads (the owner, 2026-11-13): since a published
+asset is never replaced, a build's data in a new format is a second asset of the build's release, named by its format. The C# version's tools on `main`
 (`scripts/extract/`, `scripts/unity/`) and its measures (`docs/client.md`) are the sources it was rewritten from.
 
 ## Where it lives
 
-- **From source**: `bun run data:fetch <build>` downloads the release asset into `data/`, which Git ignores but for
+- **From source**: `bun run data:fetch <build>` downloads the release asset of the format `.github/game-data.json`
+  names (a Rust test keeps it equal to `data::FORMAT`) into `data/`, which Git ignores but for
   its README. Without it the app starts and says it has no game data.
-- **In a release**: `release.yml` reads the build from `.github/game-data.json`, downloads the asset into `data/`, and
+- **In a release**: `release.yml` reads the build from `.github/game-data.json`, downloads the asset of its format into `data/`, and
   `tauri build` bundles it (`bundle.resources`). The app reads it from `resource_dir()/data`.
 - **The client's build** is its `Dofus_Data/StreamingAssets/version` file: three `Key=Value` lines ending in CRLF,
   `Version` (digits and dots, such as `3.7.13.17`), `BuildDate` (ISO 8601 with its offset, such as

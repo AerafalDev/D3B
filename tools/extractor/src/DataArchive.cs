@@ -1,9 +1,10 @@
 using System.Formats.Tar;
+using System.Globalization;
 using System.IO.Compression;
 
 namespace D3B.Extractor;
 
-/// <summary>The data folder's release asset, <c>client-&lt;build&gt;.tar.gz</c>, which every <c>tar</c> reads (ADR 0008).</summary>
+/// <summary>The data folder's release asset, <c>client-&lt;build&gt;-format&lt;format&gt;.tar.gz</c>, which every <c>tar</c> reads (ADR 0008).</summary>
 /// <remarks>
 /// Its entries are the folder's files at its root, in order of their paths, with a fixed date and no owner, so that two
 /// extractions of one build by one extractor give the same bytes.
@@ -13,9 +14,13 @@ internal static class DataArchive
     private static readonly DateTimeOffset _date = DateTimeOffset.UnixEpoch;
 
     /// <summary>The asset's file name for a build.</summary>
+    /// <remarks>
+    /// It names the format, since a published asset is never replaced: a build's data in a new format is a second asset
+    /// of the build's release (the owner, 2026-11-13). Format 1's asset was <c>client-&lt;build&gt;.tar.gz</c>.
+    /// </remarks>
     public static string NameOf(string build)
     {
-        return $"client-{build}.tar.gz";
+        return string.Create(CultureInfo.InvariantCulture, $"client-{build}-format{DataFolder.Format}.tar.gz");
     }
 
     /// <summary>Writes the archive of the data folder <paramref name="folder"/> to <paramref name="path"/>, replacing it.</summary>
