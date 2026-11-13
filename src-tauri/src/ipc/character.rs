@@ -314,7 +314,11 @@ fn breed(who: Option<&Who>, named: Option<Named<'_>>) -> (Option<Names>, Option<
             Sex::Male => 0,
             Sex::Female => 1,
         };
-        folder.join(head_file(who.breed, sex)).to_string_lossy().into_owned()
+        // Joined part by part: the file's path has forward slashes, the folder the platform's separator.
+        let path = head_file(who.breed, sex)
+            .split('/')
+            .fold(folder.to_path_buf(), |path, part| path.join(part));
+        path.to_string_lossy().into_owned()
     });
     let name = Names {
         fr: name.fr.clone(),
@@ -504,8 +508,9 @@ mod tests {
         }
     }
 
+    /// The head's path as the platform writes it: `data\heads\9-1.png` on Windows.
     fn head(folder: &Path, file: &str) -> String {
-        folder.join(file).to_string_lossy().into_owned()
+        folder.join("heads").join(file).to_string_lossy().into_owned()
     }
 
     #[test]
@@ -520,9 +525,9 @@ mod tests {
         let female = CharacterView::new(&chosen(9, Some(Sex::Female)), Some(named));
         let name = female.breed_name.map(|name| (name.fr, name.en));
         assert_eq!(name, Some(("Crâ".into(), "Cra".into())));
-        assert_eq!(female.head, Some(head(folder, "heads/9-1.png")));
+        assert_eq!(female.head, Some(head(folder, "9-1.png")));
         let male = CharacterView::new(&chosen(9, Some(Sex::Male)), Some(named));
-        assert_eq!(male.head, Some(head(folder, "heads/9-0.png")));
+        assert_eq!(male.head, Some(head(folder, "9-0.png")));
     }
 
     #[test]
