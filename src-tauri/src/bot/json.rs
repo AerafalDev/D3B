@@ -42,126 +42,30 @@ pub(crate) mod tests {
 
     /// A blueprint written by hand, shaped as D3B's automatic harvest will be: every kind of node, wire and variable.
     pub(crate) const HARVEST: &str = r#"{
-  "schema": 1,
-  "id": "automatic-harvest",
-  "name": "Automatic harvest",
+  "schema": 1, "id": "automatic-harvest", "name": "Automatic harvest", "version": 1,
   "description": "Harvests what grows in a zone and empties its pods at the bank.",
-  "version": 1,
   "variables": [
-    {
-      "id": "zone",
-      "name": "Zone",
-      "type": "zone",
-      "per_character": true,
-      "help": "Where to harvest."
-    },
-    {
-      "id": "pods",
-      "name": "Empty pods at",
-      "type": "percentage",
-      "default": 90,
-      "bounds": [
-        10,
-        100
-      ],
-      "per_character": true
-    },
-    {
-      "id": "harvests",
-      "name": "Harvests",
-      "type": "number",
-      "default": 0,
-      "memory": true
-    }
+    {"id": "zone", "name": "Zone", "type": "zone", "per_character": true, "help": "Where to harvest."},
+    {"id": "pods", "name": "Empty pods at", "type": "percentage", "default": 90, "bounds": [10, 100],
+     "per_character": true},
+    {"id": "harvests", "name": "Harvests", "type": "number", "default": 0, "memory": true}
   ],
   "graphs": [
-    {
-      "id": "events",
-      "name": "Event graph",
-      "nodes": [
-        {
-          "id": "n1",
-          "kind": "on_start"
-        },
-        {
-          "id": "n2",
-          "get": "zone"
-        },
-        {
-          "id": "n3",
-          "kind": "harvest_until",
-          "inputs": {
-            "what": "all"
-          }
-        },
-        {
-          "id": "n4",
-          "call": "empty_at_bank"
-        },
-        {
-          "id": "n5",
-          "kind": "life_below",
-          "inputs": {
-            "rearm": 60,
-            "threshold": 40
-          },
-          "event": {
-            "priority": 2,
-            "mode": "interrupt_then_resume"
-          }
-        }
-      ],
-      "wires": [
-        {
-          "from": [
-            "n1",
-            "then"
-          ],
-          "to": [
-            "n3",
-            "run"
-          ]
-        },
-        {
-          "from": [
-            "n2",
-            "value"
-          ],
-          "to": [
-            "n3",
-            "zone"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "empty_at_bank",
-      "name": "Empty at the bank",
-      "function": {
-        "inputs": [
-          {
-            "id": "bank",
-            "name": "Bank",
-            "type": "bank"
-          }
-        ]
-      }
-    }
+    {"id": "events", "name": "Event graph",
+     "nodes": [
+       {"id": "n1", "kind": "on_start"},
+       {"id": "n2", "get": "zone"},
+       {"id": "n3", "kind": "harvest_until", "inputs": {"what": "all"}},
+       {"id": "n4", "call": "empty_at_bank"},
+       {"id": "n5", "kind": "life_below", "inputs": {"threshold": 40, "rearm": 60},
+        "event": {"priority": 2, "mode": "interrupt_then_resume"}}
+     ],
+     "wires": [{"from": ["n1", "then"], "to": ["n3", "run"]}, {"from": ["n2", "value"], "to": ["n3", "zone"]}]},
+    {"id": "empty_at_bank", "name": "Empty at the bank",
+     "function": {"inputs": [{"id": "bank", "name": "Bank", "type": "bank"}]}}
   ],
-  "layout": {
-    "events": {
-      "n1": [
-        0,
-        0
-      ],
-      "n3": [
-        220,
-        0
-      ]
-    }
-  }
-}
-"#;
+  "layout": {"events": {"n3": [220, 0], "n1": [0, 0]}}
+}"#;
 
     #[test]
     fn a_blueprint_reads_every_part_of_its_file() {
@@ -179,8 +83,29 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn a_blueprint_is_written_back_as_it_was_read() {
-        assert_eq!(write(&read(HARVEST).unwrap_or_else(|error| panic!("{error}"))), HARVEST);
+    fn a_blueprint_is_written_the_same_way_every_time() {
+        let blueprint = read(HARVEST).unwrap_or_else(|error| panic!("{error}"));
+        let written = write(&blueprint);
+        assert_eq!(read(&written).ok().as_ref(), Some(&blueprint));
+        assert_eq!(
+            write(&read(&written).unwrap_or_else(|error| panic!("{error}"))),
+            written
+        );
+        // Indented, the maps in the order of their keys, a new line at the end.
+        assert!(
+            written.starts_with(
+                "{
+  \"schema\": 1,
+  \"id\": \"automatic-harvest\","
+            ),
+            "{written}"
+        );
+        assert!(written.find("\"rearm\"") < written.find("\"threshold\""), "{written}");
+        assert!(written.find("\"n1\": [") < written.find("\"n3\": ["), "{written}");
+        assert!(written.ends_with(
+            "}
+"
+        ));
     }
 
     #[test]
@@ -206,7 +131,7 @@ pub(crate) mod tests {
     fn a_file_without_its_schema_is_not_a_blueprint() {
         for text in [
             HARVEST.replacen("\"schema\": 1", "\"schema\": 0", 1),
-            HARVEST.replacen("\"schema\": 1,", "", 1),
+            HARVEST.replacen("\"schema\": 1, ", "", 1),
         ] {
             let error = read(&text).err().map(|error| error.to_string()).unwrap_or_default();
             assert!(error.contains("its schema must be 1"), "{error}");
