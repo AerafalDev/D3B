@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { useRelay } from "@/relay/relay-store.ts";
 import type { EditorParams } from "@/shell/parts/editor-store.ts";
+import { CharacterMap } from "./character-map.tsx";
 import { characterState } from "./character-state.ts";
 import { type CharacterView, useCharacters } from "./character-store.ts";
 import { Gauge } from "./gauge.tsx";
@@ -111,12 +112,7 @@ export function CharacterTab({ api, params }: IDockviewPanelProps<CharacterParam
         </section>
         {stale && <p className="text-text-faint text-xs">{t("character.stale")}</p>}
       </section>
-      <section
-        aria-label={t("character.map")}
-        className="border-line text-text-faint flex items-center justify-center rounded-[6px] border bg-[#191919] text-xs"
-      >
-        {t("character.mapSoon")}
-      </section>
+      <CharacterMap view={view} />
     </div>
   );
 }
