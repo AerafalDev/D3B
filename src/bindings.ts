@@ -99,6 +99,9 @@ export type CharacterChanged_Serialize = {
 	view: CharacterView_Serialize | null,
 };
 
+/**  The character's sex, which picks its breed's head. */
+export type CharacterSex = "male" | "female";
+
 /**  A character's view (`game::View`), its numbers as JavaScript reads them. */
 export type CharacterView = CharacterView_Serialize | CharacterView_Deserialize;
 
@@ -107,6 +110,8 @@ export type CharacterView_Deserialize = {
 	name?: string | null,
 	level?: number | null,
 	breed?: number | null,
+	/**  `None` until the character is chosen, or when its look holds no sex D3B knows. */
+	sex?: CharacterSex | null,
 	fighting?: boolean | null,
 	place?: Place_Deserialize | null,
 	cell?: number | null,
@@ -131,6 +136,8 @@ export type CharacterView_Serialize = {
 	name: string | null,
 	level: number | null,
 	breed: number | null,
+	/**  `None` until the character is chosen, or when its look holds no sex D3B knows. */
+	sex: CharacterSex | null,
 	fighting: boolean | null,
 	place: Place_Serialize | null,
 	cell: number | null,

@@ -12,7 +12,7 @@ use super::LoadedData;
 use super::inspector::{self, Inspected, Inspector};
 use super::relay::MapAt;
 use crate::data::World;
-use crate::game::{ActorKind, Context, Live, Monster, Seen, View};
+use crate::game::{ActorKind, Context, Live, Monster, Seen, Sex, View};
 use crate::protocol::Observer;
 
 /// Makes, for each game connection, the character the app follows: each change of its view goes to the webview as
@@ -64,6 +64,14 @@ pub struct Place {
     pub area: Option<Names>,
 }
 
+/// The character's sex, which picks its breed's head.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum CharacterSex {
+    Male,
+    Female,
+}
+
 /// A value and the most it can be.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Type)]
 pub struct Gauge {
@@ -78,6 +86,8 @@ pub struct CharacterView {
     pub name: Option<String>,
     pub level: Option<i32>,
     pub breed: Option<i32>,
+    /// `None` until the character is chosen, or when its look holds no sex D3B knows.
+    pub sex: Option<CharacterSex>,
     pub fighting: Option<bool>,
     pub place: Option<Place>,
     pub cell: Option<i32>,
@@ -180,6 +190,10 @@ impl CharacterView {
             name: view.who.as_ref().map(|who| who.name.clone()),
             level: view.who.as_ref().map(|who| who.level),
             breed: view.who.as_ref().map(|who| who.breed),
+            sex: view.who.as_ref().and_then(|who| who.sex).map(|sex| match sex {
+                Sex::Male => CharacterSex::Male,
+                Sex::Female => CharacterSex::Female,
+            }),
             fighting: view.context.map(|context| context == Context::Fight),
             place: view.map_id.map(|map_id| place(map_id, world)),
             cell: view.cell,
@@ -353,6 +367,7 @@ mod tests {
                 name: "Lyra".into(),
                 level: 87,
                 breed: 10,
+                sex: Some(Sex::Female),
             }),
             context: Some(Context::Fight),
             characteristics: Some(Characteristics {
@@ -378,6 +393,7 @@ mod tests {
             (shown.name.as_deref(), shown.level, shown.fighting),
             (Some("Lyra"), Some(87), Some(true))
         );
+        assert_eq!(shown.sex, Some(CharacterSex::Female));
         assert_eq!(
             shown.experience,
             Some(Gauge {
