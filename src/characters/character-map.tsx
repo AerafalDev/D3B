@@ -81,6 +81,8 @@ type Loaded = { mapId: number; cells: MapCells } | { mapId: number; error: strin
 export function CharacterMap({ view }: { view: CharacterView }) {
   const { t } = useTranslation();
   const canvas = useRef<HTMLCanvasElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const mapId = view.place?.at == null ? null : view.place.mapId;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
 
@@ -101,25 +103,6 @@ export function CharacterMap({ view }: { view: CharacterView }) {
   const shown = loaded !== null && loaded.mapId === mapId ? loaded : null;
   const cells = shown !== null && "cells" in shown ? shown.cells : null;
 
-  useEffect(() => {
-    const element = canvas.current;
-    const context = element?.getContext("2d");
-    if (element == null || context == null) {
-      return;
-    }
-    // Drawn at the screen's pixel density, so the diamonds stay sharp.
-    const ratio = window.devicePixelRatio || 1;
-    element.width = MAP_WIDTH * ratio;
-    element.height = MAP_HEIGHT * ratio;
-    context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    if (cells === null) {
-      // Another map's cells are being read: the last one is not left under the new one's actors.
-      context.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
-    } else {
-      draw(context, cells, view);
-    }
-  }, [cells, view]);
-
   let notice: string | null = null;
   if (view.fighting === true) {
     notice = t("character.mapFighting");
@@ -128,20 +111,55 @@ export function CharacterMap({ view }: { view: CharacterView }) {
   } else if (shown !== null && "error" in shown) {
     notice = t("character.mapUnavailable", { error: shown.error });
   }
+  const drawn = notice === null;
+
+  // The map fills its column: its box's size is followed, and the map drawn again to fit whenever it changes.
+  useEffect(() => {
+    const element = box.current;
+    if (!drawn || element === null || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry !== undefined) {
+        setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+      }
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [drawn]);
+
+  useEffect(() => {
+    const element = canvas.current;
+    const context = element?.getContext("2d");
+    if (element == null || context == null || size === null) {
+      return;
+    }
+    // At the screen's pixel density so the diamonds stay sharp, at the largest scale that fits, centred.
+    const ratio = window.devicePixelRatio || 1;
+    element.width = Math.round(size.width * ratio);
+    element.height = Math.round(size.height * ratio);
+    const scale = Math.min(size.width / MAP_WIDTH, size.height / MAP_HEIGHT);
+    const left = (size.width - MAP_WIDTH * scale) / 2;
+    const top = (size.height - MAP_HEIGHT * scale) / 2;
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, element.width, element.height);
+    context.setTransform(ratio * scale, 0, 0, ratio * scale, left * ratio, top * ratio);
+    // While another map's cells are read the canvas stays clear: the last map is not left under the new one's actors.
+    if (cells !== null) {
+      draw(context, cells, view);
+    }
+  }, [cells, view, size]);
 
   return (
     <section
       aria-label={t("character.map")}
-      className="border-line flex min-h-0 flex-col items-center justify-center gap-3 rounded-[6px] border bg-[#191919] p-3"
+      className="border-line flex min-h-0 flex-col justify-center gap-3 rounded-[6px] border bg-[#191919] p-3"
     >
-      {notice === null ? (
+      {drawn ? (
         <>
-          <canvas
-            ref={canvas}
-            role="img"
-            aria-label={t("character.map")}
-            className="aspect-[580/410] max-h-full max-w-full"
-          />
+          <div ref={box} className="relative min-h-0 w-full flex-1">
+            <canvas ref={canvas} role="img" aria-label={t("character.map")} className="absolute inset-0 size-full" />
+          </div>
           <p className="text-text-muted flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
             {(Object.keys(LEGEND) as (keyof typeof LEGEND)[]).map((kind) => (
               <span key={kind} className="flex items-center gap-1.5">
