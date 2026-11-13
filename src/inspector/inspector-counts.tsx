@@ -2,17 +2,17 @@ import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils.ts";
 import { useRelay } from "@/relay/relay-store.ts";
-import { useInspector } from "./inspector-store.ts";
+import { useActiveConnection } from "./use-watched-connection.ts";
 
 const COUNTS = ["understood", "read", "unknown", "notTrusted", "dropped"] as const;
 
 /**
- * The counts of the connection watched, in the panel's header: its frames understood, read, unknown and not trusted,
+ * The counts of the active connection, in the panel's header: its frames understood, read, unknown and not trusted,
  * and those dropped, since it opened. A protocol not read has none to show. Frames not trusted are a problem, in colour.
  */
 export function InspectorCounts() {
   const { t, i18n } = useTranslation();
-  const watched = useInspector((store) => store.connection);
+  const watched = useActiveConnection();
   const status = useRelay((store) => store.status?.connections.find((one) => one.number === watched));
 
   if (status === undefined || (status.protocol !== "on" && status.protocol !== "lost")) {

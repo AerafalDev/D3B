@@ -1,4 +1,4 @@
-import { type UIEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type UIEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils.ts";
@@ -19,7 +19,7 @@ type Item = { kind: "frame"; frame: FrameSummary } | { kind: "gap"; count: numbe
  * The frames with a row wherever their numbers jump: a connection numbers its frames one after another, so a jump is
  * frames the list never had (more in a batch than the back end sends, or forgotten before they were listed).
  */
-function listed(frames: FrameSummary[]): Item[] {
+function listed(frames: readonly FrameSummary[]): Item[] {
   const items: Item[] = [];
   let previous: number | null = null;
   for (const frame of frames) {
@@ -38,7 +38,7 @@ function numberOf(item: Item): number {
 }
 
 interface FrameListProps {
-  frames: FrameSummary[];
+  frames: readonly FrameSummary[];
 }
 
 /**
@@ -51,17 +51,25 @@ export function FrameList({ frames }: FrameListProps) {
   const box = useRef<HTMLDivElement>(null);
   const before = useRef<HTMLDivElement>(null);
   const after = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState({ top: 0, height: 0 });
+  // What decides the rows drawn: the row at the top of the view and the view's height. Only their change renders, not
+  // each pixel scrolled.
+  const [start, setStart] = useState(0);
+  const [height, setHeight] = useState(0);
   const [following, setFollowing] = useState(true);
   // Scrolled up, the row at the top of the view and how far it is scrolled past, kept there as the list changes.
   const anchor = useRef({ number: 0, offset: 0 });
 
   const items = useMemo(() => listed(frames), [frames]);
-  const shown = view.height > 0 ? Math.ceil(view.height / ROW) : FALLBACK;
+  const shown = height > 0 ? Math.ceil(height / ROW) : FALLBACK;
   const first = following
     ? Math.max(0, items.length - shown - OVERSCAN)
-    : Math.min(items.length, Math.max(0, Math.floor(view.top / ROW) - OVERSCAN));
+    : Math.min(items.length, Math.max(0, start - OVERSCAN));
   const last = Math.min(items.length, first + shown + 2 * OVERSCAN);
+
+  const measure = useCallback((element: HTMLDivElement) => {
+    setStart(Math.floor(element.scrollTop / ROW));
+    setHeight(element.clientHeight);
+  }, []);
 
   // The rows not drawn keep their room, so the scrollbar is the whole list's; set on the elements, not by React.
   useLayoutEffect(() => {
@@ -74,33 +82,33 @@ export function FrameList({ frames }: FrameListProps) {
     }
   }, [first, last, items.length, following]);
 
+  // Measured here too, so the rows drawn follow the scroll before the browser paints: no blank band shows.
   useLayoutEffect(() => {
-    if (following || box.current === null) {
+    const element = box.current;
+    if (following || element === null) {
       return;
     }
     const found = items.findIndex((item) => numberOf(item) >= anchor.current.number);
-    const top = (found < 0 ? items.length : found) * ROW + anchor.current.offset;
-    if (box.current.scrollTop !== top) {
-      box.current.scrollTop = top;
-    }
-  }, [items, following]);
+    element.scrollTop = (found < 0 ? items.length : found) * ROW + anchor.current.offset;
+    measure(element);
+  }, [items, following, measure]);
 
   useEffect(() => {
     const element = box.current;
     if (element === null || typeof ResizeObserver === "undefined") {
       return;
     }
-    const observer = new ResizeObserver(() => setView({ top: element.scrollTop, height: element.clientHeight }));
+    const observer = new ResizeObserver(() => measure(element));
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [measure]);
 
   const scrolled = (event: UIEvent<HTMLDivElement>) => {
     const element = event.currentTarget;
     const top = element.scrollTop;
     const item = items[Math.floor(top / ROW)];
     anchor.current = { number: item === undefined ? 0 : numberOf(item), offset: top % ROW };
-    setView({ top, height: element.clientHeight });
+    measure(element);
     setFollowing(top + element.clientHeight >= element.scrollHeight - ROW / 2);
   };
 

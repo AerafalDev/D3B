@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import i18next from "i18next";
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GameConnectionStatus } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
@@ -77,12 +77,40 @@ describe("the inspector", () => {
     expect(count("dropped")?.textContent).toBe("dropped 0");
   });
 
+  it("leaves the count of frames not trusted grey at 0", () => {
+    renderPanel();
+
+    expect(count("not trusted")?.className).not.toContain("text-error");
+  });
+
   it("marks the frames not trusted, and them alone, as a problem", () => {
     relay([connection({ notTrusted: 2 })]);
     renderPanel();
 
     expect(count("not trusted")?.className).toContain("text-error");
     expect(count("unknown")?.className).not.toContain("text-error");
+  });
+
+  it("shows no frames of another connection while this tab's are on the way", () => {
+    useEditors.setState({ active: "character:2" });
+    relay([connection(), connection({ number: 2 })]);
+    // The watch asked for, held: the store still lists connection 1's frames when the panel draws tab 2.
+    const watch = vi.fn();
+    const real = useInspector.getState().watch;
+    useInspector.setState({ connection: 1, frames: [frame], watch });
+    renderPanel();
+
+    expect(screen.getByRole("list", { name: "Frames" }).textContent).toBe("");
+    expect(watch).toHaveBeenCalledWith(2);
+    useInspector.setState({ watch: real });
+  });
+
+  it("watches the active tab again once the store was reset under it", () => {
+    renderPanel();
+
+    act(() => useInspector.setState({ connection: null, frames: [] }));
+
+    expect(useInspector.getState().connection).toBe(1);
   });
 
   it("asks for a character while no character's tab is active, and watches none", () => {
@@ -101,11 +129,11 @@ describe("the inspector", () => {
     expect(useInspector.getState().connection).toBeNull();
   });
 
-  it("keeps nothing for a connection whose protocol is not read, and shows no counts", () => {
+  it("keeps nothing for a connection whose protocol is not read, without saying why again, nor counts", () => {
     relay([connection({ protocol: "unmapped", understood: 0, read: 0, unknown: 0 })]);
     renderPanel();
 
-    expect(screen.getByText("No frames kept: this connection's protocol is not read.")).toBeDefined();
+    expect(screen.getByText("No frames kept.")).toBeDefined();
     expect(count("understood")).toBeNull();
   });
 

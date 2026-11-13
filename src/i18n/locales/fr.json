@@ -122,8 +122,7 @@
   "inspector": {
     "title": "Protocol",
     "none": "Ouvrez un personnage pour suivre son protocole.",
-    "off": "Aucune trame gardée : le protocole de cette connexion n'est pas lu.",
-    "closed": "Aucune trame gardée.",
+    "nothing": "Aucune trame gardée.",
     "frames": "Trames",
     "counts": {
       "understood": "compris",

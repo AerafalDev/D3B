@@ -115,12 +115,13 @@ describe("useInspector", () => {
     expect(backEnd.watched).toEqual([]);
   });
 
-  it("forgets the frames once it watches none", async () => {
+  it("forgets the frames once it watches none, and tells the back end", () => {
     useInspector.setState({ connection: 3, frames: frames(1, 2) });
 
     useInspector.getState().watch(null);
 
     expect(useInspector.getState()).toMatchObject({ connection: null, frames: [] });
+    expect(backEnd.watched).toEqual([null]);
   });
 
   it("keeps the last frames only, as many as the back end keeps", async () => {

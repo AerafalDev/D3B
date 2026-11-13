@@ -122,8 +122,7 @@
   "inspector": {
     "title": "Protocol",
     "none": "Open a character to follow its protocol.",
-    "off": "No frames kept: this connection's protocol is not read.",
-    "closed": "No frames kept.",
+    "nothing": "No frames kept.",
     "frames": "Frames",
     "counts": {
       "understood": "understood",

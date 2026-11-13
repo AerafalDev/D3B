@@ -6,7 +6,10 @@ import { isTauri } from "@/lib/tauri.ts";
 /** A frame as the inspector lists it (`docs/protocol.md`, "The inspector"). */
 export type FrameSummary = FrameSummary_Serialize;
 
-/** How many frames the list keeps, the newest: as many as the back end keeps per connection, so each has a detail. */
+/**
+ * How many frames the list keeps, the newest: as many as the back end keeps per connection at most (it keeps fewer when
+ * they pass 16 MiB, and then the oldest listed have no detail any more).
+ */
 export const KEPT = 3000;
 
 interface InspectorStore {
