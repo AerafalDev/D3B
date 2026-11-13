@@ -14,7 +14,7 @@ vi.mock("@/shell/parts/editor-store.ts", () => ({
   useEditors: (select: (store: { active: string | null }) => unknown) => select({ active: opened.active }),
 }));
 
-const { CharactersView } = await import("./characters-view.tsx");
+const { CharactersView, characterOf } = await import("./characters-view.tsx");
 
 function connection(number: number, protocol: GameConnectionStatus["protocol"] = "on"): GameConnectionStatus {
   return {
@@ -99,5 +99,12 @@ describe("the characters view", () => {
     expect(opened.editors).toEqual([
       { id: "character:1", component: "character", title: "Lyra", params: { icon: "user", connection: 1 } },
     ]);
+  });
+
+  it("tells the connection a character's editor shows, and none for another editor", () => {
+    expect(characterOf("character:12")).toBe(12);
+    expect(characterOf("character:x")).toBeNull();
+    expect(characterOf("map:12")).toBeNull();
+    expect(characterOf(null)).toBeNull();
   });
 });

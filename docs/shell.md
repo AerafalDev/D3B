@@ -24,8 +24,9 @@ VS Code's, part for part (`src/shell/`):
   below its minimum it hides, and reopens at its last size before a command hid it, else at its minimum. Shown or
   hidden by a command, it slides open or closed in 200 ms (none when the system asks for less motion); a drag follows
   the pointer. Parts keep their pixel size when the window is resized; the editor area takes the rest. As in VS Code,
-  the secondary side bar starts hidden. The primary side bar's header names its view; a part without a view says its
-  views come with the features.
+  the secondary side bar starts hidden. The primary side bar's header names its view, and the view may add to it after
+  its name; a part without a view says its views come with the features. The panel's view is the protocol inspector,
+  "Protocol" ([protocol.md](protocol.md#the-inspector)): its counts and tools share the header's one line.
 - **Editor area**: tabs and splits by `dockview-react`. An editor opens by `openEditor` (one tab per id; opening it
   again brings its tab forward). With no editor open it shows the app's mark in relief and the main shortcuts, these
   only when it is at least 480 px wide.
@@ -66,7 +67,7 @@ The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout w
 ## Next
 
 Features one at a time, the owner choosing which and how each looks: the characters list, a character's details, the
-world map, the blueprint editor, the history, the protocol inspector. The stores (`src/characters/`, `src/relay/`)
+world map, the blueprint editor, the history. The stores (`src/characters/`, `src/relay/`)
 are followed again by the first feature that shows them.
 
 ## Tests
