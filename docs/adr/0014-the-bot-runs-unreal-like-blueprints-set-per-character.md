@@ -1,4 +1,4 @@
-# 0013. The bot runs Unreal-like blueprints, set per character
+# 0014. The bot runs Unreal-like blueprints, set per character
 
 - Status: accepted
 - Date: 2026-11-13
