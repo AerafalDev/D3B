@@ -14,35 +14,53 @@ interface StatusItemProps {
   lead?: ReactNode;
   label: string;
   hover?: StatusHover;
+  /** Makes it a button, as VS Code's commands in the bar. */
+  onClick?: () => void;
+  /** A button that cannot be chosen now, still focusable so that it reads. */
+  disabled?: boolean;
   className?: string;
 }
 
 const ITEM = "flex h-[22px] items-center gap-[5px] rounded-[4px] px-1.5";
+const FOCUSABLE = "hover:bg-hover focus-visible:outline-focus focus-visible:outline-1";
 
 /**
  * A status bar item, as VS Code's: an icon and a short label on the frame. With a hover it takes the focus and a
- * rounded grey hover, so that its details open from the keyboard too.
+ * rounded grey hover, so that its details open from the keyboard too; with an action it is a button.
  */
-export function StatusItem({ lead, label, hover, className }: StatusItemProps) {
+export function StatusItem({ lead, label, hover, onClick, disabled, className }: StatusItemProps) {
   const content = (
     <>
       {lead}
       <span className="truncate">{label}</span>
     </>
   );
+  const button =
+    onClick === undefined ? undefined : (
+      <button
+        type="button"
+        aria-disabled={disabled}
+        onClick={disabled ? undefined : onClick}
+        className={cn(ITEM, FOCUSABLE, "aria-disabled:hover:bg-transparent", className)}
+      >
+        {content}
+      </button>
+    );
   if (hover === undefined || hover.length === 0) {
-    return <span className={cn(ITEM, className)}>{content}</span>;
+    return button ?? <span className={cn(ITEM, className)}>{content}</span>;
   }
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          // biome-ignore lint/a11y/noNoninteractiveTabindex: a hover's trigger must take the focus
-          tabIndex={0}
-          className={cn(ITEM, "hover:bg-hover focus-visible:outline-focus focus-visible:outline-1", className)}
-        >
-          {content}
-        </span>
+        {button ?? (
+          <span
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: a hover's trigger must take the focus
+            tabIndex={0}
+            className={cn(ITEM, FOCUSABLE, className)}
+          >
+            {content}
+          </span>
+        )}
       </TooltipTrigger>
       <TooltipContent
         side="top"

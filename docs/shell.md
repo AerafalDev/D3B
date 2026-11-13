@@ -36,7 +36,8 @@ VS Code's, part for part (`src/shell/`):
   the app's state on the left, its context on the right. Left, the app's name and version after its one accent, a
   small blue dot (the name alone until the back end answers, and in the browser preview), then the relay
   ([relay.md](relay.md#in-the-app)). Right, the game data:
-  JetBrains' library icon and "Client 3.7.13.17", or its yellow warning and "No game data". An item is an icon and a
+  JetBrains' library icon and "Client 3.7.13.17", or its yellow warning and "No game data"; then, once an update is
+  downloaded, the offer to restart into it ([updates.md](updates.md#pieces)), the bar's one button. An item is an icon and a
   short label, grey; colour only marks a problem. An item with details takes the focus and opens a hover as VS Code's
   rich ones: sections of lines set apart by a rule, the first brighter, the others grey. A hover never repeats what
   the bar already says (the owner, 2026-11-13), not even as a title: the data's build has none; no data has its reason.
@@ -77,7 +78,9 @@ through the close request, View's checked parts), the Windows window's config ag
 commands, filtering, running one), the activity bar (its pressed entry, hiding and showing the side bar), an
 editor's tab (its title followed, its close), the status bar (the name alone before the back end answers, the
 version and the data's build without a hover, no data and its reason in the hover, the relay after the version), the
-relay's item (nothing before its status, grey arrows, red once off, its hover from the keyboard) and its hover's lines and the app's info (asked once, not in the browser
+relay's item (nothing before its status, grey arrows, red once off, its hover from the keyboard) and its hover's lines, the
+update's offer (nothing until downloaded, the restart once chosen, its notes and the warning in its hover, none when
+it has nothing to add, no second choice while installing) and the app's info (asked once, not in the browser
 preview, asked again after a failure), and a part's collapse and slide against a fake panel (starting hidden,
 first opening at its default size, hide and show, the 200 ms slide, two quick toggles, a drag below the minimum). The
 layout itself is checked in the browser preview, not in happy-dom, which has no layout.

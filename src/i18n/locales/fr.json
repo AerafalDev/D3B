@@ -63,6 +63,11 @@
     "quitEnds": "Quitter D3B coupe les connexions de jeu qu'il relaie.",
     "startAfter": "Lancez Dofus après D3B : un client lancé avant joue sans le relais."
   },
+  "updates": {
+    "restart": "Redémarrer pour passer à {{version}}",
+    "installing": "Installation de {{version}}…",
+    "endsGame": "Redémarrer coupe les connexions de jeu en cours."
+  },
   "characters": {
     "title": "Personnages",
     "empty": "Lancez Dofus depuis le launcher d'Ankama : chaque personnage qu'il joue apparaît ici.",
