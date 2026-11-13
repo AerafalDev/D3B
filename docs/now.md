@@ -94,7 +94,9 @@ _Updated 2026-11-13._
     release (done in code); (2) the character's sex, read from its look; (3) the tab's breed name and head; (4) the
     Characters list's head. On Windows x64:
     1. `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
-       `artifacts/data/client-3.7.13.17-format2.tar.gz`;
+       `artifacts/data/client-3.7.13.17-format2.tar.gz`; then `tar -xzf artifacts/data/client-3.7.13.17-format2.tar.gz
+       -C data` (after emptying `data/` but its README): a `data/` still in format 1 makes `bun run app` say there is
+       no game data and fails the Rust test that reads `data/`;
     2. on the owner's go, that archive joins the `client-3.7.13.17` release (`data` skill); then `bun run data:fetch
        3.7.13.17` fills `data/` with format 2, and `bun run app`'s status bar says "Client 3.7.13.17". Until it is
        published, `data:fetch` and a release find no data of format 2.
@@ -103,15 +105,16 @@ _Updated 2026-11-13._
     or fight.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
-  checked against one another, with the `client-<build>.tar.gz` that `data:fetch` reads; the app reads it all at start
+  checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
   but the maps, which it reads one file at a time.
 - **Debt**, from the review of step 1: the readers of the world graph and of the tiles are tested on the installed
   client only (skipped in CI); hand-built trees (`TypeTree.Build`) would test their failures in CI too, as they now do
   for the map reader's, in both layouts (`tests/Maps/TestMap.cs`).
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
-  `client-3.7.13.17` release on the owner's go; `.github/game-data.json` names it, so the next release packs it.
-  v0.11.0 shipped without data, named before. Format 2 (the breeds) is not published yet: `client-3.7.13.17-format2.tar.gz`
-  waits for the owner's extraction and go. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
+  `client-3.7.13.17` release on the owner's go. v0.11.0 shipped without data, named before. Format 2 (the breeds) is
+  not published yet: `client-3.7.13.17-format2.tar.gz` waits for the owner's extraction and go, and until then
+  `.github/game-data.json`, which names format 2, makes a release's "Game data" step fail: publish it before the next
+  release. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
   and the relay, with installers for the six targets and its `latest.json` on `updater-next`; **v0.13.0**, on
   2026-11-11, adds the game connection split into frames.
 - **Done in code, step 2's relay**: the redirect, the connection phase and its one rewrite, the game connection, the

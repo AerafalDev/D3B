@@ -3,7 +3,8 @@
 The app ships the game data of one client build, as JSON, inside the installer: for now the world (maps, world graph,
 positions, sub-areas, areas, zaaps, the world map and its tiles) and the breeds with their heads; items, monsters and
 spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
-release workflow. Nothing of it is ever committed (ADR [0008](adr/0008-world-data-first-in-five-languages-as-a-tar-gz.md)).
+release workflow. Nothing of it is ever committed (ADR [0008](adr/0008-world-data-first-in-five-languages-as-a-tar-gz.md), its archive's name
+superseded by [0013](adr/0013-a-new-data-format-is-a-second-asset-named-by-its-format.md)).
 
 ```mermaid
 flowchart LR
@@ -46,7 +47,7 @@ flowchart LR
 | `world-graph-edges.json` | `from`, `to` (uids), `transitions` (`type`: `scroll`, `scrollAction`, `mapAction` or `interactive`; `direction`, `cellId`, `skillId`, `mapId`, `elementId`, `criterion`) | 30,917 edges, 31,337 transitions |
 | `areas.json` | `id`, `name` (a text, or `null`), `superAreaId`, `worldmapId`, `hasWorldMap` | `AreaData`, 70 records |
 | `zaaps.json` | `id`, `mapId`, `subAreaId`, `activated` | `WaypointData`, 63 records |
-| `breeds.json` | `id`, `name` (its `shortNameId`, a string holding a text's number, its only name) | `BreedData`, 19 records, 1 to 18 and 20 |
+| `breeds.json` | `id`, `name` (the text its `shortNameId` names, a string holding the text's number: its only name) | `BreedData`, 19 records, 1 to 18 and 20 |
 | `heads/<breed>-<sex>.png` | one head, PNG | 38 BC7 textures, 239 KB as PNG |
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,

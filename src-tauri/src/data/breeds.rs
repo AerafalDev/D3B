@@ -6,8 +6,9 @@ use super::DataError;
 use super::manifest::Manifest;
 use super::text::Text;
 
-/// A breed, the character's class, such as the Iop (`BreedData`, 3.7.13.17, `artifacts/studies/breeds.md`). The
-/// client draws its head for each sex, which the folder holds as `heads/<id>-<sex>.png`.
+/// A breed, the character's class, such as the Iop (`BreedData`, verified on 3.7.13.17's data,
+/// `artifacts/studies/breeds.md`). The client draws its head for each sex, which the folder holds as
+/// `heads/<id>-<sex>.png`.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Breed {
@@ -15,7 +16,8 @@ pub struct Breed {
     pub name: Text,
 }
 
-/// The sexes a head is drawn for, as the client's look holds them: 0 the male, 1 the female.
+/// The sexes a head is drawn for, 0 the male and 1 the female, as the heads' names and the character's look hold them
+/// (verified on 3.7.13.17's data and the owner's captures, `artifacts/studies/breeds.md`).
 const SEXES: [u8; 2] = [0, 1];
 
 /// The name, in the manifest, of a breed's head for a sex (0 the male, 1 the female).

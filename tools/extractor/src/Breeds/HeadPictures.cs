@@ -41,12 +41,7 @@ internal static partial class HeadPictures
             var texture = Fields.Read(ref reader, 0, asset.Tree.Name);
             var name = texture.String("m_Name");
 
-            if (Name().Match(name) is not { Success: true } match)
-            {
-                throw new InvalidDataException($"{path} holds the texture {name}, which is no breed's head.");
-            }
-
-            var head = (int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture));
+            var head = HeadOf(name) ?? throw new InvalidDataException($"{path} holds the texture {name}, which is no breed's head.");
 
             if (!heads.TryAdd(head, Png(Texels(bundle, name, texture), Size, Size)))
             {
@@ -55,6 +50,18 @@ internal static partial class HeadPictures
         }
 
         return heads;
+    }
+
+    /// <summary>Reads a head's texture name, <c>Head_&lt;breed&gt;&lt;sex&gt;</c>, the sex being its last digit.</summary>
+    /// <returns>Its breed and sex, or <see langword="null"/> for a name of another shape.</returns>
+    public static (int Breed, int Sex)? HeadOf(string name)
+    {
+        if (Name().Match(name) is not { Success: true } match)
+        {
+            return null;
+        }
+
+        return (int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture));
     }
 
     /// <summary>Decodes a BC7 texture and encodes it as a PNG, upright, its transparency kept.</summary>

@@ -66,6 +66,26 @@ public sealed class BreedTablesTests
         Assert.Equal("The client draws a head of sex 0 for breed 19, which its table does not hold.", failure.Message);
     }
 
+    [Theory]
+    [InlineData("Head_10", 1, 0)]
+    [InlineData("Head_100", 10, 0)]
+    [InlineData("Head_201", 20, 1)]
+    public void AHeadsNameGivesItsBreedThenItsSex(string name, int breed, int sex)
+    {
+        Assert.Equal((breed, sex), HeadPictures.HeadOf(name));
+    }
+
+    [Theory]
+    [InlineData("Head_19")]
+    [InlineData("Head_01")]
+    [InlineData("Head_1")]
+    [InlineData("Head_80.png")]
+    [InlineData("symbol_8")]
+    public void ANameOfAnotherShapeIsNoHead(string name)
+    {
+        Assert.Null(HeadPictures.HeadOf(name));
+    }
+
     [Fact]
     public void AHeadIsDrawnUprightWithItsTransparency()
     {
