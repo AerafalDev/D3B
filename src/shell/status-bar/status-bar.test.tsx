@@ -52,6 +52,8 @@ describe("the status bar", () => {
     }
     fireEvent.focus(item);
     expect((await screen.findAllByText("data format 2 is not supported")).length).toBeGreaterThan(0);
+    // The hover says only what the bar does not (the owner, 2026-11-13): no title repeating the label.
+    expect(screen.getAllByText("No game data")).toHaveLength(1);
   });
 
   it("opens no hover over the data's build, which would only repeat it (the owner, 2026-11-13)", () => {

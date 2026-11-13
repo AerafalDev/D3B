@@ -27,7 +27,7 @@ export function DataItem({ info }: DataItemProps) {
     <StatusItem
       lead={<Icon name="warning" className="size-3.5" />}
       label={t("status.noData")}
-      hover={{ title: t("status.noData"), sections: info.dataError ? [[info.dataError]] : [] }}
+      hover={info.dataError ? [[info.dataError]] : undefined}
     />
   );
 }
