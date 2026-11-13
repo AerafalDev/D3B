@@ -1,6 +1,6 @@
 # Now
 
-_Updated 2026-11-13._
+_Updated 2026-11-14._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
   designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,

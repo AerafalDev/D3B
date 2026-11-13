@@ -279,6 +279,7 @@ mod tests {
         assert_eq!(step("notify"), None);
         // Waiting for life is no game action: life comes back alone (the owner, 2026-11-14).
         assert_eq!((step("wait_for_life"), kind("sit_until")), (None, None));
+        assert_eq!(kind("wait_for_life").map(|kind| kind.family), Some(Family::Flow));
     }
 
     #[test]
