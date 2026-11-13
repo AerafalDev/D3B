@@ -1,9 +1,11 @@
 //! The player's folder (ADR 0015): one JSON file per object, a folder per kind, each file named by its object's id.
-//! A file that does not read (not JSON, not of its shape, a newer schema, a name that is not its id) is kept untouched
-//! and reported with why, and never written over: what a newer D3B or the player's own hand wrote is never lost.
+//! A file that does not read (not text, not JSON, not of its shape, a newer schema, a name that is not its id) is kept
+//! untouched and reported with why, and never written over: what a newer D3B or the player's own hand wrote is never
+//! lost.
 
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 use super::atomic;
 use crate::bot::{self, Blueprint, Id, ReadError};
@@ -16,6 +18,8 @@ const BLUEPRINTS: &str = "blueprints";
 #[derive(Debug, Clone)]
 pub(crate) struct Store {
     root: PathBuf,
+    /// Held while a file is written, so that two saves never share a temporary file; shared by the store's clones.
+    writing: Arc<Mutex<()>>,
 }
 
 /// A file D3B leaves as it is, and why.
@@ -26,13 +30,20 @@ pub(crate) struct Kept {
 }
 
 /// Why a file is kept as it is.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub(crate) enum Why {
-    /// It cannot be read: the system's reason.
+    /// The system could not read it, or list its folder: its reason, which may pass (a sync client holding it).
+    #[error("it could not be read: {0}")]
     Unreadable(io::Error),
+    /// Its bytes are no UTF-8 text.
+    #[error("it is not text")]
+    NotText,
     /// It reads, but not as a blueprint of this version.
+    #[error("{0}")]
     NotRead(ReadError),
-    /// It holds the object of another id than its name: a copy made by hand, which Duplicate makes instead.
+    /// It holds another id than its name says: a copy made by hand, which Duplicate makes instead (the owner,
+    /// 2026-11-14), or a name in another case, which a system that ignores case would take for this one.
+    #[error("its name is not its id, {}", id.0)]
     NameIsNotId { id: Id },
 }
 
@@ -48,38 +59,52 @@ pub(crate) struct Blueprints {
 pub(crate) enum StorageError {
     #[error("{} could not be written: {source}", path.display())]
     Write { path: PathBuf, source: io::Error },
-    #[error("{} is kept as it is, not written over: {reason}", path.display())]
-    Kept { path: PathBuf, reason: String },
+    /// Its file could not be read now, so it is not written over; a later save may pass.
+    #[error("{} could not be read, so it is not written over: {source}", path.display())]
+    Unreadable { path: PathBuf, source: io::Error },
+    #[error("{} is kept as it is, not written over: {why}", path.display())]
+    Kept { path: PathBuf, why: Why },
     #[error("{} is no id a file can be named by", id.0)]
     MalformedId { id: Id },
 }
 
 impl Store {
     pub(crate) fn new(root: PathBuf) -> Self {
-        Self { root }
-    }
-
-    fn blueprint_path(&self, id: &Id) -> PathBuf {
-        self.root.join(BLUEPRINTS).join(format!("{}.json", id.0))
+        Self {
+            root,
+            writing: Arc::default(),
+        }
     }
 
     /// Every blueprint of the player's folder, in the order of their file names; none when it has no folder yet.
     pub(crate) fn blueprints(&self) -> Blueprints {
         let mut blueprints = Blueprints::default();
         let folder = self.root.join(BLUEPRINTS);
-        let mut paths: Vec<PathBuf> = match std::fs::read_dir(&folder) {
-            Ok(entries) => entries.flatten().map(|entry| entry.path()).collect(),
-            Err(error) if error.kind() == io::ErrorKind::NotFound => return blueprints,
-            Err(error) => {
-                blueprints.kept.push(Kept {
-                    path: folder,
-                    why: Why::Unreadable(error),
-                });
-                return blueprints;
+        let mut paths = Vec::new();
+        match std::fs::read_dir(&folder) {
+            Ok(entries) => {
+                for entry in entries {
+                    match entry {
+                        Ok(entry) => paths.push(entry.path()),
+                        Err(error) => blueprints.kept.push(Kept {
+                            path: folder.clone(),
+                            why: Why::Unreadable(error),
+                        }),
+                    }
+                }
             }
-        };
-        // Only `.json` files: a temporary file a crash left, or anything else the player put there, is not ours.
-        paths.retain(|path| path.extension().is_some_and(|extension| extension == "json"));
+            Err(error) if error.kind() == io::ErrorKind::NotFound => return blueprints,
+            Err(error) => blueprints.kept.push(Kept {
+                path: folder,
+                why: Why::Unreadable(error),
+            }),
+        }
+        // Only JSON files, in any case: a temporary file a crash left, or anything else the player put there, is not
+        // ours.
+        paths.retain(|path| {
+            path.extension()
+                .is_some_and(|extension| extension.eq_ignore_ascii_case("json"))
+        });
         paths.sort();
         for path in paths {
             match read_blueprint(&path) {
@@ -90,26 +115,39 @@ impl Store {
         blueprints
     }
 
-    /// Writes `blueprint` to its file, whole, unless a file there does not read as this blueprint.
+    /// Writes `blueprint` to its file, whole, unless a file there, or one whose name differs from it only by case,
+    /// does not read as this blueprint.
     pub(crate) fn save_blueprint(&self, blueprint: &Blueprint) -> Result<(), StorageError> {
-        if !blueprint.id.is_well_formed() {
-            return Err(StorageError::MalformedId {
-                id: blueprint.id.clone(),
-            });
+        let id = &blueprint.id;
+        if !id.is_well_formed() {
+            return Err(StorageError::MalformedId { id: id.clone() });
         }
-        let path = self.blueprint_path(&blueprint.id);
-        match read_blueprint(&path) {
-            Ok(_) => {}
-            Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {}
-            Err(why) => {
+        // A save waits for the one at work; a save that panicked left nothing to protect.
+        let _writing = self.writing.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let folder = self.root.join(BLUEPRINTS);
+        let name = format!("{}.json", id.0);
+        for entry in std::fs::read_dir(&folder).into_iter().flatten().flatten() {
+            let other = entry.file_name();
+            if other
+                .to_str()
+                .is_some_and(|other| other != name && other.eq_ignore_ascii_case(&name))
+            {
+                let why = Why::NameIsNotId { id: id.clone() };
                 return Err(StorageError::Kept {
-                    path,
-                    reason: reason(&why),
+                    path: entry.path(),
+                    why,
                 });
             }
         }
+        let path = folder.join(name);
+        match read_blueprint(&path) {
+            Ok(_) => {}
+            Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(Why::Unreadable(source)) => return Err(StorageError::Unreadable { path, source }),
+            Err(why) => return Err(StorageError::Kept { path, why }),
+        }
         let write = |path: &Path| {
-            std::fs::create_dir_all(self.root.join(BLUEPRINTS))?;
+            std::fs::create_dir_all(&folder)?;
             atomic::write(path, bot::write(blueprint).as_bytes())
         };
         write(&path).map_err(|source| StorageError::Write { path, source })
@@ -117,21 +155,14 @@ impl Store {
 }
 
 fn read_blueprint(path: &Path) -> Result<Blueprint, Why> {
-    let text = std::fs::read_to_string(path).map_err(Why::Unreadable)?;
+    let bytes = std::fs::read(path).map_err(Why::Unreadable)?;
+    let text = String::from_utf8(bytes).map_err(|_| Why::NotText)?;
     let blueprint = bot::read(&text).map_err(Why::NotRead)?;
-    let name = path.file_stem().and_then(|name| name.to_str());
-    if name == Some(blueprint.id.0.as_str()) {
+    let name = path.file_name().and_then(|name| name.to_str());
+    if name == Some(format!("{}.json", blueprint.id.0).as_str()) {
         Ok(blueprint)
     } else {
         Err(Why::NameIsNotId { id: blueprint.id })
-    }
-}
-
-fn reason(why: &Why) -> String {
-    match why {
-        Why::Unreadable(error) => error.to_string(),
-        Why::NotRead(error) => error.to_string(),
-        Why::NameIsNotId { id } => format!("it holds blueprint {}", id.0),
     }
 }
 
@@ -251,5 +282,53 @@ mod tests {
         let saved = Store::new(folder.path().to_path_buf()).save_blueprint(&blueprint);
         assert!(matches!(saved, Err(StorageError::MalformedId { .. })));
         assert!(!folder.path().join("escape.json").exists());
+    }
+
+    #[test]
+    fn a_file_that_is_not_text_is_kept_and_never_written_over() {
+        let folder = Folder::new("store-bytes");
+        let path = put(&folder, "automatic-harvest.json", "");
+        std::fs::write(&path, [0xFF, 0xFE]).unwrap_or_else(|error| panic!("{error}"));
+        let store = Store::new(folder.path().to_path_buf());
+        assert!(matches!(
+            store.blueprints().kept.as_slice(),
+            [Kept { why: Why::NotText, .. }]
+        ));
+        let saved = store.save_blueprint(&harvest());
+        assert!(
+            matches!(saved, Err(StorageError::Kept { why: Why::NotText, .. })),
+            "{saved:?}"
+        );
+        assert_eq!(std::fs::read(&path).ok(), Some(vec![0xFF, 0xFE]));
+    }
+
+    #[test]
+    fn a_file_named_for_the_id_in_another_case_is_kept_and_never_written_over() {
+        // On a system that ignores case, `Automatic-Harvest.json` is the file `automatic-harvest.json` opens.
+        let folder = Folder::new("store-case");
+        let path = put(&folder, "Automatic-Harvest.json", HARVEST);
+        put(
+            &folder,
+            "other.JSON",
+            &HARVEST.replacen("automatic-harvest", "other", 1),
+        );
+        let store = Store::new(folder.path().to_path_buf());
+        let kept = store.blueprints().kept;
+        assert!(
+            kept.iter().all(|kept| matches!(kept.why, Why::NameIsNotId { .. })) && kept.len() == 2,
+            "{kept:?}"
+        );
+        let saved = store.save_blueprint(&harvest());
+        assert!(
+            matches!(
+                saved,
+                Err(StorageError::Kept {
+                    why: Why::NameIsNotId { .. },
+                    ..
+                })
+            ),
+            "{saved:?}"
+        );
+        assert_eq!(std::fs::read_to_string(&path).ok().as_deref(), Some(HARVEST));
     }
 }

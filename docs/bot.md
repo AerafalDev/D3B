@@ -97,8 +97,8 @@ owner, 2026-11-13).
 One JSON file per object in **Documents/D3B**, a schema version each, written atomically; History kept 7 days; a
 `.d3b` file to share a blueprint with its zones and routes (ADR 0015). `storage` reads `blueprints/<id>.json` and
 writes it whole (a `.d3b-tmp` file beside it, then a rename); a file that does not read, of a newer schema, or whose
-name is not its id (a copy made by hand: the owner, 2026-11-14) is kept untouched, reported with why, and never
-written over. A character's file needs a key stable across
+name is not its id, in any case (a copy made by hand: the owner, 2026-11-14), is kept untouched, reported with why,
+and never written over. The temporary file is flushed to the disk before the rename, one save at a time. A character's file needs a key stable across
 servers: its study comes first.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
@@ -129,6 +129,8 @@ On Windows x64 by the owner, on what step 3 shows; running a blueprint is measur
 
 1. The Library lists D3B's blueprints; one opens locked, its graph and its Summary readable.
 2. Duplicate makes one in "Mine", editable; a node added, linked and saved is still there after a restart.
+   The files are in `Documents/D3B/blueprints`, also in a Documents folder OneDrive syncs; on macOS, after its
+   access prompt.
 3. A character in game gets a blueprint in its tab; a setting changed is marked, its reset clears the mark; a second
    character keeps its own value; both are still there after a restart.
 4. The World's map is sharp at every zoom; a sub-area is chosen as a Zone from the list and on the map; a zone painted
