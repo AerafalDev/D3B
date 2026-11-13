@@ -57,3 +57,10 @@ describe("marks", () => {
     expect(marks(cells, lost as CharacterView)).toEqual([]);
   });
 });
+
+describe("an element's place and state", () => {
+  it("takes its update's cell before the map's, and counts any state but 0 as harvested", () => {
+    const elements = { ...view, cell: null, actors: [], stated: [{ elementId: 465_210, cell: 0, state: 1 }] };
+    expect(marks(cells, elements as CharacterView)).toEqual([{ cell: 0, kind: "harvested" }]);
+  });
+});

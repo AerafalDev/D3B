@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { commands, type MapCells } from "@/bindings.ts";
@@ -69,7 +69,35 @@ const LEGEND = {
   monsters: "bg-[#d29922]",
   npc: "bg-[#39c5bb]",
   resource: "bg-[#3fb950]",
+  harvested: "bg-[#2d5a36]",
+  other: "bg-[#8a8a8a]",
 } as const;
+
+/**
+ * Paints the map into `element` sized `size` (CSS pixels): at the screen's pixel density so the diamonds stay sharp, at
+ * the largest scale that fits, centred. Without cells (another map's being read) it leaves the canvas clear, so the
+ * last map is not left under the new one's actors.
+ */
+function paint(
+  element: HTMLCanvasElement,
+  context: CanvasRenderingContext2D,
+  size: { width: number; height: number },
+  cells: MapCells | null,
+  view: CharacterView,
+) {
+  const ratio = window.devicePixelRatio || 1;
+  // Setting the size clears the canvas and resets its transform.
+  element.width = Math.round(size.width * ratio);
+  element.height = Math.round(size.height * ratio);
+  if (cells === null) {
+    return;
+  }
+  const scale = Math.min(size.width / MAP_WIDTH, size.height / MAP_HEIGHT);
+  const left = (size.width - MAP_WIDTH * scale) / 2;
+  const top = (size.height - MAP_HEIGHT * scale) / 2;
+  context.setTransform(ratio * scale, 0, 0, ratio * scale, left * ratio, top * ratio);
+  draw(context, cells, view);
+}
 
 type Loaded = { mapId: number; cells: MapCells } | { mapId: number; error: string };
 
@@ -82,7 +110,6 @@ export function CharacterMap({ view }: { view: CharacterView }) {
   const { t } = useTranslation();
   const canvas = useRef<HTMLCanvasElement>(null);
   const box = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const mapId = view.place?.at == null ? null : view.place.mapId;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
 
@@ -113,7 +140,25 @@ export function CharacterMap({ view }: { view: CharacterView }) {
   }
   const drawn = notice === null;
 
-  // The map fills its column: its box's size is followed, and the map drawn again to fit whenever it changes.
+  // What the next paint draws, kept in refs: a resize repaints every frame without a React render.
+  const latest = useRef({ cells, view });
+  const size = useRef<{ width: number; height: number } | null>(null);
+  const frame = useRef(0);
+
+  const repaint = useCallback(() => {
+    cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(() => {
+      const element = canvas.current;
+      const context = element?.getContext("2d");
+      if (element == null || context == null || size.current === null) {
+        return;
+      }
+      paint(element, context, size.current, latest.current.cells, latest.current.view);
+    });
+  }, []);
+
+  // The map fills its column: its box's size is followed, and the map repainted to fit whenever it changes, as when
+  // the window moves to a screen of another pixel density.
   useEffect(() => {
     const element = box.current;
     if (!drawn || element === null || typeof ResizeObserver === "undefined") {
@@ -121,34 +166,26 @@ export function CharacterMap({ view }: { view: CharacterView }) {
     }
     const observer = new ResizeObserver(([entry]) => {
       if (entry !== undefined) {
-        setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+        size.current = { width: entry.contentRect.width, height: entry.contentRect.height };
+        repaint();
       }
     });
     observer.observe(element);
-    return () => observer.disconnect();
-  }, [drawn]);
+    const density = window.matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+    density.addEventListener("change", repaint);
+    return () => {
+      observer.disconnect();
+      density.removeEventListener("change", repaint);
+      cancelAnimationFrame(frame.current);
+    };
+  }, [drawn, repaint]);
 
   useEffect(() => {
-    const element = canvas.current;
-    const context = element?.getContext("2d");
-    if (element == null || context == null || size === null) {
-      return;
+    latest.current = { cells, view };
+    if (drawn) {
+      repaint();
     }
-    // At the screen's pixel density so the diamonds stay sharp, at the largest scale that fits, centred.
-    const ratio = window.devicePixelRatio || 1;
-    element.width = Math.round(size.width * ratio);
-    element.height = Math.round(size.height * ratio);
-    const scale = Math.min(size.width / MAP_WIDTH, size.height / MAP_HEIGHT);
-    const left = (size.width - MAP_WIDTH * scale) / 2;
-    const top = (size.height - MAP_HEIGHT * scale) / 2;
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.clearRect(0, 0, element.width, element.height);
-    context.setTransform(ratio * scale, 0, 0, ratio * scale, left * ratio, top * ratio);
-    // While another map's cells are read the canvas stays clear: the last map is not left under the new one's actors.
-    if (cells !== null) {
-      draw(context, cells, view);
-    }
-  }, [cells, view, size]);
+  }, [drawn, cells, view, repaint]);
 
   return (
     <section

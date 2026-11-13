@@ -91,7 +91,9 @@
       "player": "Joueurs",
       "monsters": "Monstres",
       "npc": "PNJ",
-      "resource": "Ressources"
+      "resource": "Ressources",
+      "harvested": "Récoltées",
+      "other": "Autres"
     }
   }
 }

@@ -91,7 +91,9 @@
       "player": "Players",
       "monsters": "Monsters",
       "npc": "NPCs",
-      "resource": "Resources"
+      "resource": "Resources",
+      "harvested": "Harvested",
+      "other": "Others"
     }
   }
 }
