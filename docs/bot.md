@@ -105,7 +105,7 @@ as in Unreal, and `help`); its `graphs`, an event graph or, with a `function` si
 or `call` of the blueprint's own variable or function; its `inputs` hold the values typed on pins no wire feeds, and an
 event's `event` its priority and mode. Where nodes sit is under `layout`, by graph then node, at the end of the same
 file, so a moved node changes only those lines. Ids are lowercase letters, digits, `_` and `-`. A file of a newer
-schema, not JSON, or with a field this version does not know is refused; one that reads but does not hold (an id
+schema, not JSON, or not of its shape (a field missing, unknown or given twice, a node doing two things) is refused; one that reads but does not hold (an id
 twice, a wire to no node, a default its type or bounds refuse, a node on a variable or function the blueprint lacks)
 opens with its **problems** and cannot run; a node kind this version does not know is one of them (the catalogue's).
 

@@ -278,9 +278,16 @@ mod tests {
                 "{default}"
             );
         }
-        let mut blueprint = harvest();
-        blueprint.variables[1].default = json!(10);
-        assert_eq!(problems(&blueprint), [], "the bounds are included");
+        for (default, bounds) in [(10, [10, 100]), (100, [10, 100]), (50, [50, 50]), (0, [0, 100])] {
+            let mut blueprint = harvest();
+            blueprint.variables[1].default = json!(default);
+            blueprint.variables[1].bounds = Some(bounds);
+            assert_eq!(
+                problems(&blueprint),
+                [],
+                "the bounds are included: {default} in {bounds:?}"
+            );
+        }
     }
 
     #[test]

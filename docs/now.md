@@ -180,8 +180,11 @@ _Updated 2026-11-13._
   items 1, 2, 4, 7, 8 and 9 were measured again in it by the owner on 2026-11-13; the protocol's items that read the
   inspector, on the same day. Step 3's model is in [docs/bot.md](bot.md) (below).
 - **Next, step 3** ([bot.md](bot.md)), started on 2026-11-13 (the owner's exception above): a stack of PRs against
-  `next`, one behaviour each, measured as they show something. First two studies: a character's key across servers
-  (and which message names the server), and what the server sends on a death. Then (1) `bot`: the blueprint, its JSON
+  `next`, one behaviour each, measured as they show something. First two studies, done on 2026-11-13 from the owner's
+  captures (`artifacts/studies/character-key.md`, `death.md`): a character's id carries its server in its low 16
+  bits (verified on two servers), so a character's file is `<server>-<id>.json`, no new pin; a death is the fight
+  end's result for the character lost, which needs one new pin (`GameFightEnd`'s results), life back at half and
+  energy down by ten times the level (verified on 21 lost fights). Then (1) `bot`: the blueprint, its JSON
   and its validation (done in code: its file's shape in [bot.md](bot.md#storage), the layout under its own key, a
   variable both set per character and memory allowed, as Unreal, the owner's choices of 2026-11-13); (2) the catalogue of
   nodes; (3) `storage`: `Documents/D3B`, atomic writes, a newer schema refused; (4) D3B's blueprints in the app, and

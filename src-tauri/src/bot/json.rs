@@ -13,12 +13,17 @@ pub(crate) enum ReadError {
     NotABlueprint(#[from] serde_json::Error),
 }
 
-/// The blueprint `text` holds.
+/// The blueprint `text` holds. The schema is read first, then the whole text again into the blueprint, so that a key
+/// given twice is refused and an error says its line and column.
 pub(crate) fn read(text: &str) -> Result<Blueprint, ReadError> {
-    let value: serde_json::Value = serde_json::from_str(text)?;
-    match value.get("schema").and_then(serde_json::Value::as_u64) {
+    #[derive(serde::Deserialize)]
+    struct Head {
+        schema: Option<serde_json::Value>,
+    }
+    let head: Head = serde_json::from_str(text)?;
+    match head.schema.as_ref().and_then(serde_json::Value::as_u64) {
         Some(found) if found > u64::from(SCHEMA) => Err(ReadError::Newer { found }),
-        Some(found) if found == u64::from(SCHEMA) => Ok(serde_json::from_value(value)?),
+        Some(found) if found == u64::from(SCHEMA) => Ok(serde_json::from_str(text)?),
         _ => Err(ReadError::NotABlueprint(serde::de::Error::custom(format!(
             "its schema must be {SCHEMA}"
         )))),
@@ -116,9 +121,26 @@ pub(crate) mod tests {
             at[0] += 40;
         }
         let after = write(&blueprint);
-        let logic = |text: &str| text.split("\"layout\"").next().map(str::to_owned);
+        let logic = |text: &str| {
+            text.split(
+                "
+  \"layout\"",
+            )
+            .next()
+            .map(str::to_owned)
+        };
         assert_eq!(logic(&before), logic(&after));
         assert_ne!(before, after);
+        assert!(
+            before.ends_with(
+                "]
+    }
+  }
+}
+"
+            ),
+            "the layout is the last key: {before}"
+        );
     }
 
     #[test]
@@ -143,6 +165,19 @@ pub(crate) mod tests {
         let unknown = HARVEST.replacen("\"version\": 1,", "\"version\": 1,\n  \"colour\": \"red\",", 1);
         let error = read(&unknown).err().map(|error| error.to_string()).unwrap_or_default();
         assert!(error.contains("unknown field `colour`"), "{error}");
+    }
+
+    #[test]
+    fn a_key_given_twice_or_unknown_anywhere_is_refused() {
+        let twice = HARVEST.replacen("\"version\": 1,", "\"version\": 1, \"graphs\": [],", 1);
+        let nested = HARVEST.replacen("\"get\": \"zone\"", "\"get\": \"zone\", \"position\": [0, 0]", 1);
+        for (text, error) in [
+            (twice, "duplicate field `graphs`"),
+            (nested, "unknown field `position`"),
+        ] {
+            let found = read(&text).err().map(|error| error.to_string()).unwrap_or_default();
+            assert!(found.contains(error) && found.contains("line"), "{found}");
+        }
     }
 
     #[test]

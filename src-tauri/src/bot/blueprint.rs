@@ -23,10 +23,16 @@ impl Id {
     /// The longest id: enough for a slug of a name, short enough for a file name on every system.
     pub(crate) const LIMIT: usize = 64;
 
-    /// Lowercase ASCII letters, digits, `_` and `-`, 1 to [`Id::LIMIT`] long: it holds as a file name on every system
-    /// and reads the same in a diff.
+    /// Lowercase ASCII letters, digits, `_` and `-`, 1 to [`Id::LIMIT`] long, and no name Windows keeps for a device
+    /// (`con`, `nul`, `com1`…), even with an extension: it holds as a file name on every system and reads the same in a
+    /// diff.
     pub(crate) fn is_well_formed(&self) -> bool {
-        (1..=Self::LIMIT).contains(&self.0.len())
+        let device = ["con", "prn", "aux", "nul"].contains(&self.0.as_str())
+            || (self.0.len() == 4
+                && ["com", "lpt"].contains(&&self.0[..3])
+                && matches!(self.0.as_bytes()[3], b'1'..=b'9'));
+        !device
+            && (1..=Self::LIMIT).contains(&self.0.len())
             && self
                 .0
                 .bytes()
@@ -233,6 +239,7 @@ mod tests {
     fn an_id_is_lowercase_letters_digits_underscores_and_dashes() {
         assert!(id("harvest_until").is_well_formed());
         assert!(id("my-zone-2").is_well_formed());
+        assert!(id("com").is_well_formed() && id("com0").is_well_formed() && id("console").is_well_formed());
         assert!(id(&"a".repeat(Id::LIMIT)).is_well_formed());
     }
 
