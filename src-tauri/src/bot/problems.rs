@@ -263,7 +263,10 @@ mod tests {
         let mut signature = bank(&mut blueprint);
         signature.outputs[0].id = id("reason");
         blueprint.graphs[1].function = Some(signature);
-        let reserved = Problem::ParameterTwice { graph: id("empty_at_bank"), parameter: id("reason") };
+        let reserved = Problem::ParameterTwice {
+            graph: id("empty_at_bank"),
+            parameter: id("reason"),
+        };
         assert_eq!(problems(&blueprint), [reserved]);
     }
 
