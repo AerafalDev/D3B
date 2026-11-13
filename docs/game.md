@@ -13,7 +13,7 @@ flowchart LR
     obs -->|"when it changed, at most 5/s"| ev1["ipc: CharacterChanged"]
     ring -->|"the one watched, at most 5 batches/s"| ev2["ipc: InspectorFrames"]
     maps["data: a map's cells, read on demand"] --> cmd["ipc: map_cells"]
-    ev1 --> view["src/characters: the store, the Characters view, a character's tab (the map comes next)"]
+    ev1 --> view["src/characters: the store, the Characters view, a character's tab and its map"]
     cmd --> view
     ev2 --> insp["src/inspector: the frames, a frame's detail"]
 ```
@@ -95,8 +95,16 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
 - **A character's tab**, layout "A": opened from its row, named after the character once known. On the left its
   state: who (level, class, exploring or fighting), where (area, sub-area, coordinates, cell), life (marked while it
   regenerates), pods, experience, energy, action and movement points, kamas, what is around (players, monster
-  groups, NPCs, and resources: every interactive element whose state is known, harvested or not), and a line when frames were dropped; on the right the character's map, which comes
-  next. A connection whose protocol is off says why; a lost one keeps its view, marked lost.
+  groups, NPCs, and resources: every interactive element whose state is known, harvested or not), and a line when
+  frames were dropped; on the right the character's map. A connection whose protocol is off says why; a lost one
+  keeps its view, marked lost.
+- **The character's map**, the owner's style "B" (2026-11-12): its 560 cells (14 columns over 40 staggered rows)
+  from the game data's cells, read by `map_cells` when the map changes; only the walkable ground and the exits are
+  drawn, as discreet diamonds. What stands on it is a dot: the character blue and ringed, players purple, monster
+  groups amber, NPCs teal, resources green (darker once harvested), others grey, under a legend. It fills its column
+  at the largest scale that fits and follows its size. In a fight it says positions are not read yet; without a map
+  the data places, or a map the data lacks, it says so. The renderer will draw the actors themselves in place of the
+  dots (the owner, 2026-11-12).
 
 The step-2 interface removed on 2026-11-12, for reference, was:
 
@@ -130,4 +138,5 @@ maps, 90,632 of 91,224 walks from its cell, and 67,713 of 71,882 updates on a kn
 connection; a connection's state (lost, off, waiting, fighting, exploring); a place's name and the avatar's initials;
 the Characters view (its empty line, a row by name, level and place or by connection, an unread protocol, the row
 chosen, its tab opened); a character's tab (who and where, its gauges, what is around, its title, waiting, a protocol
-off, a closed connection).
+off, a closed connection); the map's geometry (cells 0, 13, 14 and 559), the ground drawn, what stands on it in
+drawing order, and its notices (a fight, no map, a map the data lacks).
