@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::Event;
 
-use crate::protocol::{Frame, Frames, Kept, Message, Observer, Outcome, Pins, detail};
+use crate::protocol::{FieldValue, Frame, Frames, Kept, Line, Message, Observer, Outcome, Pins, detail};
 use crate::relay::Side;
 
 /// How many summaries one batch carries at most: the newest, the others counted as skipped.
@@ -42,11 +42,55 @@ pub enum FrameOutcome {
     Secret,
 }
 
-/// A frame's detail: its summary and its lines (`protocol::detail`).
+/// A line of a frame's detail (`protocol::detail`). A 64-bit value is written out, as JavaScript's numbers would round
+/// it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
-pub struct FrameDetail {
-    pub summary: FrameSummary,
-    pub lines: Vec<String>,
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum DetailLine {
+    /// A line of the message decoded: a field by its name, nested ones indented.
+    Decoded { text: String },
+    Varint { number: u32, value: String },
+    Fixed64 { number: u32, value: String },
+    Fixed32 { number: u32, value: u32 },
+    /// Anything length-delimited, by its length alone: a text is never shown.
+    Bytes { number: u32, length: u32 },
+    /// What the wire walker could not read further.
+    Unreadable,
+}
+
+impl From<Line> for DetailLine {
+    fn from(line: Line) -> Self {
+        match line {
+            Line::Decoded(text) => Self::Decoded { text },
+            Line::Field { number, value } => match value {
+                FieldValue::Varint(value) => Self::Varint {
+                    number,
+                    value: value.to_string(),
+                },
+                FieldValue::Fixed64(value) => Self::Fixed64 {
+                    number,
+                    value: value.to_string(),
+                },
+                FieldValue::Fixed32(value) => Self::Fixed32 { number, value },
+                FieldValue::Bytes(length) => Self::Bytes {
+                    number,
+                    length: saturated(length),
+                },
+            },
+            Line::Unreadable => Self::Unreadable,
+        }
+    }
+}
+
+/// What `inspector_frame` answers: a frame's lines (none for a secret), or why it has none.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum FrameAnswer {
+    Detail { lines: Vec<DetailLine> },
+    /// Its connection closed, and its frames with it.
+    Closed,
+    /// It is no longer among the frames kept.
+    Gone,
 }
 
 /// New frames of the connection watched; `skipped` more came than one batch carries.
@@ -162,21 +206,23 @@ impl Inspector {
     }
 
     /// The detail of the `number`th frame of `connection`, or why there is none.
-    pub(crate) fn detail(&self, connection: u32, number: u32) -> Result<FrameDetail, String> {
-        let (kept, build, opened) = self.with(|connections, _| {
-            let connection = connections.get(&connection).ok_or("this connection is closed")?;
-            let kept = connection
-                .frames
-                .get(u64::from(number))
-                .ok_or("this frame is no longer kept")?;
-            Ok::<_, &str>((kept.clone(), connection.build.clone(), connection.opened))
-        })?;
+    pub(crate) fn detail(&self, connection: u32, number: u32) -> FrameAnswer {
+        let found = self.with(|connections, _| {
+            let Some(connection) = connections.get(&connection) else {
+                return Err(FrameAnswer::Closed);
+            };
+            let kept = connection.frames.get(u64::from(number)).ok_or(FrameAnswer::Gone)?;
+            Ok((kept.clone(), connection.build.clone()))
+        });
+        let (kept, build) = match found {
+            Ok(found) => found,
+            Err(answer) => return answer,
+        };
         // Decoded out of the lock: the session tasks push frames meanwhile.
         let pins = build.as_deref().and_then(Pins::embedded).and_then(Result::ok);
-        Ok(FrameDetail {
-            summary: summary(&kept, opened),
-            lines: detail(pins.as_ref(), &kept),
-        })
+        FrameAnswer::Detail {
+            lines: detail(pins.as_ref(), &kept).into_iter().map(DetailLine::from).collect(),
+        }
     }
 }
 
@@ -248,11 +294,7 @@ pub fn inspector_watch(connection: Option<u32>, inspector: tauri::State<'_, Arc<
 #[tauri::command]
 #[specta::specta]
 #[expect(clippy::needless_pass_by_value, reason = "Tauri hands commands their state by value")]
-pub fn inspector_frame(
-    connection: u32,
-    number: u32,
-    inspector: tauri::State<'_, Arc<Inspector>>,
-) -> Result<FrameDetail, String> {
+pub fn inspector_frame(connection: u32, number: u32, inspector: tauri::State<'_, Arc<Inspector>>) -> FrameAnswer {
     inspector.detail(connection, number)
 }
 
@@ -330,25 +372,38 @@ mod tests {
 
         inspector.close(1);
 
-        assert_eq!(
-            inspector.detail(1, 1).err().as_deref(),
-            Some("this connection is closed")
-        );
+        assert_eq!(inspector.detail(1, 1), FrameAnswer::Closed);
         assert_eq!(inspector.fresh(1), None);
     }
 
     #[test]
-    fn details_a_frame_kept_marks_a_secret_and_says_when_one_is_gone() {
+    fn details_a_secret_by_no_line_and_says_when_a_frame_is_gone() {
         let inspector = Inspector::default();
         inspector.open(1, Some("3.7.13.17".into()), Instant::now());
         inspector.push(1, &frame(b"secret bytes", true));
 
-        let detail = inspector.detail(1, 1).unwrap_or_else(|error| panic!("{error}"));
-        assert_eq!((detail.summary.outcome, detail.lines.len()), (FrameOutcome::Secret, 0));
-        assert_eq!(detail.summary.size, 12);
+        assert_eq!(inspector.detail(1, 1), FrameAnswer::Detail { lines: Vec::new() });
+        let listed = inspector.watch(Some(1));
         assert_eq!(
-            inspector.detail(1, 2).err().as_deref(),
-            Some("this frame is no longer kept")
+            listed.iter().map(|one| (one.outcome, one.size)).collect::<Vec<_>>(),
+            [(FrameOutcome::Secret, 12)]
+        );
+        assert_eq!(inspector.detail(1, 2), FrameAnswer::Gone);
+    }
+
+    #[test]
+    fn writes_out_a_64_bit_value_javascript_would_round() {
+        let line = DetailLine::from(Line::Field {
+            number: 2,
+            value: FieldValue::Varint(u64::MAX),
+        });
+
+        assert_eq!(
+            line,
+            DetailLine::Varint {
+                number: 2,
+                value: "18446744073709551615".into()
+            }
         );
     }
 }

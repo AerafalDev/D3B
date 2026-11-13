@@ -419,3 +419,19 @@ fn bytes_that_are_not_the_message_do_not_decode() {
         );
     }
 }
+
+#[test]
+fn lists_a_messages_fields_without_its_name_nested_ones_indented() {
+    let text = "MapActorShownEvent {\n    actor: Some(\n        Actor {\n            id: 7,\n        },\n    ),\n    cell: 150,\n}";
+
+    assert_eq!(
+        fields_of(text),
+        ["actor: Some(", "    Actor {", "        id: 7", "    }", ")", "cell: 150"]
+    );
+}
+
+#[test]
+fn a_message_without_fields_lists_none() {
+    assert_eq!(fields_of("LifeRegenEndEvent"), Vec::<String>::new());
+    assert_eq!(fields_of("LifeRegenEndEvent {\n}"), Vec::<String>::new());
+}

@@ -20,7 +20,7 @@ mod session;
 
 mod frames;
 
-pub(crate) use frames::{Frame, Frames, Kept, detail};
+pub(crate) use frames::{FieldValue, Frame, Frames, Kept, Line, detail};
 pub(crate) use pins::Pins;
 
 #[cfg(test)]
