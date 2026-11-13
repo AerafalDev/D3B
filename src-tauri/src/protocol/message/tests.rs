@@ -147,7 +147,10 @@ fn reads_the_character_chosen() {
     assert_eq!((basics.level, basics.name.as_str()), (Some(200), "Lyra"));
     let look = basics.look.unwrap_or_default();
     assert_eq!(look.breed_id, 9);
-    assert_eq!(look.appearance.map(|appearance| appearance.sex()), Some(game::character_appearance::Sex::Female));
+    assert_eq!(
+        look.appearance.map(|appearance| appearance.sex()),
+        Some(game::character_appearance::Sex::Female)
+    );
 }
 
 #[test]

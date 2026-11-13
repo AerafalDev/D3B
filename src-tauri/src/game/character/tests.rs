@@ -2,8 +2,8 @@ use std::time::{Duration, Instant};
 
 use super::*;
 use crate::protocol::game::{
-    self, Actor, ActorDisposition, Character as Chosen, CharacterAppearance, CharacterBasics, CharacterLook, CharacterStats,
-    Characteristic, DetailedCharacteristic, character_selection_event::Success, characteristic::Kind,
+    self, Actor, ActorDisposition, Character as Chosen, CharacterAppearance, CharacterBasics, CharacterLook,
+    CharacterStats, Characteristic, DetailedCharacteristic, character_selection_event::Success, characteristic::Kind,
 };
 
 const ME: i64 = 1_234_567;
@@ -21,7 +21,10 @@ fn chosen_looking(id: i64, name: &str, level: i32, appearance: Option<CharacterA
                 basics: Some(CharacterBasics {
                     level: Some(level),
                     name: name.into(),
-                    look: Some(CharacterLook { appearance, breed_id: 10 }),
+                    look: Some(CharacterLook {
+                        appearance,
+                        breed_id: 10,
+                    }),
                 }),
             }),
         })),
