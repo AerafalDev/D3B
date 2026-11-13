@@ -277,6 +277,8 @@ mod tests {
             (Some(4), Some(5), Some(6))
         );
         assert_eq!(step("notify"), None);
+        // Waiting for life is no game action: life comes back alone (the owner, 2026-11-14).
+        assert_eq!((step("wait_for_life"), kind("sit_until")), (None, None));
     }
 
     #[test]
