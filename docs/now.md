@@ -46,8 +46,10 @@ _Updated 2026-11-13._
     next release. Never paste a capture or a log line holding a ticket. Measured by the owner on 2026-11-11, Windows
     x64, `bun run app` on `next` 4fa724f: items 1 to 9 and 12 pass; on 2026-11-12, item 10's close (v0.12.0 to
     v0.13.0); on 2026-11-13, `bun run app` on `next` 3454d38, items 1, 2, 4, 7, 8 and 9 pass again in the new
-    shell's status bar (the relay's item, its red once off, its hover). Not measured yet: item 10's Restart (v0.13.0
-    installed, then the release after it) and 11 (needs a Windows account whose name holds a space or an accent).
+    shell's status bar (the relay's item, its red once off, its hover); on 2026-11-13, v0.13.0 installed, item 10's
+    Restart from its update bar into v0.14.0 (the new D3B ready, "Client 3.7.13.17", a client plays). Not measured
+    yet: item 10's status-bar offer (its hover and "Installation de <version>…", from v0.14.0 to the release after it)
+    and 11 (needs a Windows account whose name holds a space or an accent).
     1. Close every client, start D3B: the bar says "Relais prêt · 0 en jeu", then on the right "Client 3.7.13.17";
        its hover says to start Dofus after D3B, and names the client only if its build is not the data's;
     2. start a client from the launcher, log in, choose a server and a character, enter the game: it plays as before,
@@ -100,7 +102,9 @@ _Updated 2026-11-13._
     against `next`: (1) the data's format 2, `breeds.json` and the 38 heads, named in a second asset of the build's
     release (done in code); (2) the character's sex, read from its look (done in code: the pins' audit holds, and the owner's 54 game connections
     replay with no frame not trusted); (3) the tab's breed name and head (done in code); (4) the
-    Characters list's head (done in code). On Windows x64:
+    Characters list's head (done in code). Measured by the owner on 2026-11-13, v0.14.0 installed: items 3 and 4
+    pass. Not measured yet: items 1 and 2 (the owner's own extraction and `data:fetch`), 5 at the next client patch.
+    On Windows x64:
     1. `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
        `artifacts/data/client-3.7.13.17-format2.tar.gz`; then `tar -xzf artifacts/data/client-3.7.13.17-format2.tar.gz
        -C data` (after emptying `data/` but its README): a `data/` still in format 1 makes `bun run app` say there is
@@ -116,7 +120,7 @@ _Updated 2026-11-13._
        "Niveau <n>" alone.
   - **the live view's life** (the owner's report of 2026-11-13, fixed): after a fight, stand still out of combat: the
     character's tab says "Vie — en régénération" while the bar fills, and no longer once it is full, before any sit
-    or fight.
+    or fight. Measured by the owner on 2026-11-13, v0.14.0 installed: passes.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -129,13 +133,15 @@ _Updated 2026-11-13._
   release on the owner's go on 2026-11-13; `.github/game-data.json` names it, so the next release packs it, and
   `bun run data:fetch 3.7.13.17` fetches it. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
   and the relay, with installers for the six targets and its `latest.json` on `updater-next`; **v0.13.0**, on
-  2026-11-11, adds the game connection split into frames.
+  2026-11-11, adds the game connection split into frames; **v0.14.0**, on the owner's go on 2026-11-13, packs the
+  data's format 2 and the new shell (status bar, inspector, Lucide icons, the breed's head), its six targets carrying
+  `THIRD-PARTY-NOTICES.txt` (#205, #213, #214) and its `latest.json` on `updater-next`.
 - **Done in code, step 2's relay**: the redirect, the connection phase and its one rewrite, the game connection, the
   replay of the owner's 225 captures (171 connection phases, 161 handed over, 54 game connections, no failure), the
   status-bar indicator and the restore before an update.
-- **Next**: the owner measures the relay's item 10's Restart with the next release, and item 11 when an account is at
-  hand; the protocol's item 7 at the next client patch, with its pins (and, before it, `GameAssembly.dll`,
-  `global-metadata.dat` and `version` copied into `artifacts/` for Q17). Step 2's next feature is designed below. The
+- **Next**: the owner measures the relay's item 10's status-bar offer with the release after v0.14.0, and item 11 when
+  an account is at hand; the protocol's item 7 at the next client patch, with its pins (`GameAssembly.dll`,
+  `global-metadata.dat` and `version` of 3.7.13.17 copied into `artifacts/` for Q17 on 2026-11-13). Step 2's next feature is designed below. The
   protocol's code was a stack of seven PRs against `next`, all merged (#155 to #171): (1) the game connection split into
   frames both ways, with the tap (done in code, in v0.13.0); (2) `relay/capture/` and `D3B_RECORD` (done in code); (3)
   the connection's build from path 1.3.5, carried by the handover (done in code); (4) the extractor's protocol schema
