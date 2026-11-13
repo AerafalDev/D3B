@@ -188,19 +188,19 @@
       },
       "fight_starts": {
         "sentence": "A fight starts",
-        "description": "The server starts a fight. By default, the fight AI fights it, then the flow resumes."
+        "description": "The server starts a fight. Without this event, the fight AI fights it, then the flow resumes."
       },
       "died": {
         "sentence": "The character died",
-        "description": "A fight is lost. By default, the character stops, blocked."
+        "description": "A fight is lost. Without this event, the character stops, blocked."
       },
       "action_failed": {
         "sentence": "An action fails",
-        "description": "An action ends Failed and its Failed output leads nowhere. By default, the character stops, blocked with the reason."
+        "description": "An action ends Failed and its Failed output leads nowhere. Without this event, the character stops, blocked with the reason."
       },
       "go_to_zone": {
         "sentence": "Go to {{zone}}",
-        "description": "Goes to the zone's nearest map."
+        "description": "Goes into the zone."
       },
       "sit_until": {
         "sentence": "Sit until life is {{life}}",
@@ -208,14 +208,14 @@
       },
       "harvest_until": {
         "sentence": "Harvest {{what}} in {{zone}} until pods are {{pods}}",
-        "description": "Harvests the zone's resources, the nearest first, until pods reach the threshold."
+        "description": "Harvests the chosen resources in the zone until pods reach the threshold."
       },
       "go_to_bank": {
         "sentence": "Go to {{bank}}",
         "description": "Goes to the bank."
       },
       "deposit_all_but": {
-        "sentence": "Deposit all but {{keep}}",
+        "sentence": "Deposit at the bank, keep {{keep}}",
         "description": "Opens the bank and deposits everything but what is kept."
       },
       "hunt_until": {
@@ -224,14 +224,14 @@
       },
       "notify": {
         "sentence": "Notify: {{text}}",
-        "description": "An alert on the desktop and in the app, then what follows."
+        "description": "An alert in the app, then what follows."
       },
       "if": {
         "sentence": "If {{condition}}",
         "description": "Chooses what follows by the condition."
       },
       "wait": {
-        "sentence": "Wait {{minutes}} minutes",
+        "sentence": "Wait {{minutes}} min",
         "description": "Waits, then what follows."
       },
       "finish": {
@@ -263,11 +263,11 @@
         "description": "What the function receives."
       },
       "return_done": {
-        "sentence": "Return: Done",
+        "sentence": "Return: done",
         "description": "The function ends, giving back its outputs."
       },
       "return_failed": {
-        "sentence": "Return: Failed, {{reason}}",
+        "sentence": "Return: failed",
         "description": "The function ends Failed, with the reason."
       }
     },

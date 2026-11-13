@@ -1,8 +1,8 @@
 //! The catalogue of nodes (`docs/bot.md`, "In the app"): every kind of node a blueprint may hold, its family, its pins
-//! and, for an event, how it runs. Rust holds ids only: a kind's sentence, description and pins' labels are the
-//! interface's translations under `node.<kind>`, its icon the interface's (the owner, 2026-11-13). The bot's actions
-//! are listed before the step that makes them run, marked with it, so that D3B's blueprints ship whole (the owner,
-//! 2026-11-13).
+//! and, for an event, how it runs. Rust holds ids only (the owner, 2026-11-13): the interface's translations hold a
+//! kind's sentence and description under `node.kinds.<kind>`, its pins' labels under `node.pins.<pin>`, by pin id
+//! across every kind, and the interface its icon. The bot's actions are listed before the step that makes them run,
+//! marked with it, so that D3B's blueprints ship whole (the owner, 2026-11-13).
 
 use super::variable::ValueType;
 
@@ -295,9 +295,10 @@ mod tests {
             include_str!("../../../src/i18n/locales/en.json"),
             include_str!("../../../src/i18n/locales/fr.json"),
         ];
+        let mut holes_by_language = Vec::new();
         for text in locales {
             let locale: serde_json::Value = serde_json::from_str(text).unwrap_or_else(|error| panic!("{error}"));
-            let (kinds, pins) = (&locale["node"]["kinds"], &locale["node"]["pins"]);
+            let (kinds, labels) = (&locale["node"]["kinds"], &locale["node"]["pins"]);
             let listed = kinds
                 .as_object()
                 .map(|kinds| kinds.keys().cloned().collect::<HashSet<_>>());
@@ -306,29 +307,40 @@ mod tests {
                 Some(KINDS.iter().map(|kind| kind.id.to_owned()).collect()),
                 "no kind more or less"
             );
+            let mut holes = Vec::new();
             for kind in KINDS {
                 let read = |key: &str| kinds[kind.id][key].as_str().filter(|text| !text.is_empty());
                 let (Some(sentence), Some(_)) = (read("sentence"), read("description")) else {
                     panic!("{}", kind.id)
                 };
-                for hole in sentence
-                    .split("{{")
-                    .skip(1)
-                    .filter_map(|rest| rest.split_once("}}"))
-                    .map(|(hole, _)| hole)
-                {
-                    let value = |pin: &&Pin| matches!(pin.carries, Carries::Value(_));
+                for rest in sentence.split("{{").skip(1) {
+                    let hole = rest
+                        .split_once("}}")
+                        .map_or_else(|| panic!("{}: unclosed", kind.id), |(hole, _)| hole);
                     let input = kind
                         .pins
                         .iter()
-                        .filter(value)
-                        .any(|pin| pin.id == hole && pin.side == Side::In);
+                        .any(|pin| pin.id == hole && pin.side == Side::In && matches!(pin.carries, Carries::Value(_)));
                     assert!(input, "{}: {hole}", kind.id);
-                }
-                for pin in kind.pins {
-                    assert!(pins[pin.id].is_string(), "{}: {}", kind.id, pin.id);
+                    holes.push((kind.id, hole.to_owned()));
                 }
             }
+            // A label for every pin, empty only for the flow's own: no more, no less.
+            let pins: HashSet<&str> = KINDS.iter().flat_map(|kind| kind.pins).map(|pin| pin.id).collect();
+            let labelled = labels
+                .as_object()
+                .map(|labels| labels.keys().map(String::as_str).collect::<HashSet<_>>());
+            assert_eq!(labelled, Some(pins.clone()));
+            for pin in pins {
+                let empty = labels[pin].as_str().map(str::is_empty);
+                assert_eq!(empty, Some(pin == "run" || pin == "then"), "{pin}");
+            }
+            holes.sort();
+            holes_by_language.push(holes);
         }
+        assert_eq!(
+            holes_by_language[0], holes_by_language[1],
+            "the same holes in English and French"
+        );
     }
 }

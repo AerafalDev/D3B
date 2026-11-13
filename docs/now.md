@@ -188,7 +188,7 @@ _Updated 2026-11-13._
   and its validation (done in code: its file's shape in [bot.md](bot.md#storage), the layout under its own key, a
   variable both set per character and memory allowed, as Unreal, the owner's choices of 2026-11-13); (2) the catalogue of
   nodes, in two PRs: its 24 kinds and the problems of their pins and wires (done in code), then their sentences,
-  descriptions and pins' labels in French and English, `node.<kind>` (done in code); (3) `storage`: `Documents/D3B`, atomic writes, a newer schema refused; (4) D3B's blueprints in the app, and
+  descriptions and pins' labels in French and English, `node.kinds` and `node.pins` (done in code); (3) `storage`: `Documents/D3B`, atomic writes, a newer schema refused; (4) D3B's blueprints in the app, and
   Duplicate; (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint
   editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data

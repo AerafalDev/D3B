@@ -188,19 +188,19 @@
       },
       "fight_starts": {
         "sentence": "Un combat commence",
-        "description": "Le serveur lance un combat. Par défaut, l'IA de combat le mène, puis le flux reprend."
+        "description": "Le serveur lance un combat. Sans cet événement, l'IA de combat le mène, puis le flux reprend."
       },
       "died": {
         "sentence": "Le personnage est mort",
-        "description": "Un combat est perdu. Par défaut, le personnage s'arrête, bloqué."
+        "description": "Un combat est perdu. Sans cet événement, le personnage s'arrête, bloqué."
       },
       "action_failed": {
         "sentence": "Une action échoue",
-        "description": "Une action finit en échec et sa sortie Échec n'est reliée à rien. Par défaut, le personnage s'arrête, bloqué avec la raison."
+        "description": "Une action finit en échec et sa sortie Échec n'est reliée à rien. Sans cet événement, le personnage s'arrête, bloqué avec la raison."
       },
       "go_to_zone": {
         "sentence": "Aller dans {{zone}}",
-        "description": "Va jusqu'à la carte la plus proche de la zone."
+        "description": "Va dans la zone."
       },
       "sit_until": {
         "sentence": "S'asseoir jusqu'à {{life}} de vie",
@@ -208,14 +208,14 @@
       },
       "harvest_until": {
         "sentence": "Récolter {{what}} dans {{zone}} jusqu'à {{pods}} de pods",
-        "description": "Récolte les ressources de la zone, la plus proche d'abord, jusqu'à ce que les pods atteignent le seuil."
+        "description": "Récolte dans la zone les ressources choisies, jusqu'à ce que les pods atteignent le seuil."
       },
       "go_to_bank": {
         "sentence": "Aller à {{bank}}",
         "description": "Va jusqu'à la banque."
       },
       "deposit_all_but": {
-        "sentence": "Déposer tout sauf {{keep}}",
+        "sentence": "Déposer à la banque, garder {{keep}}",
         "description": "Ouvre la banque et y dépose tout, sauf ce qu'on garde."
       },
       "hunt_until": {
@@ -224,14 +224,14 @@
       },
       "notify": {
         "sentence": "Prévenir : {{text}}",
-        "description": "Une alerte sur le bureau et dans l'app, puis la suite."
+        "description": "Une alerte dans l'app, puis la suite."
       },
       "if": {
         "sentence": "Si {{condition}}",
         "description": "Choisit la suite selon la condition."
       },
       "wait": {
-        "sentence": "Attendre {{minutes}} minutes",
+        "sentence": "Attendre {{minutes}} min",
         "description": "Attend, puis la suite."
       },
       "finish": {
@@ -263,18 +263,18 @@
         "description": "Ce que reçoit la fonction."
       },
       "return_done": {
-        "sentence": "Sortie : Fini",
+        "sentence": "Retour : réussi",
         "description": "La fonction finit, en rendant ses sorties."
       },
       "return_failed": {
-        "sentence": "Sortie : Échec, {{reason}}",
+        "sentence": "Retour : échec",
         "description": "La fonction finit en échec, avec la raison."
       }
     },
     "pins": {
       "run": "",
       "then": "",
-      "done": "Fini",
+      "done": "Réussi",
       "failed": "Échec",
       "reason": "Raison",
       "value": "Valeur",
