@@ -81,8 +81,10 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   Details hold its priority, its re-arming and its four modes, each drawn as a small timeline. **Summary** reads the
   blueprint as sentences. From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.
 - **World** view: my zones, my routes, then the game's sub-areas, searchable. The **World tab** shows the world map
-  from the data's tiles, at the level the zoom needs, with its tools (select, brush, eraser, whole sub-area, route) and
-  Details on the right. A Zone setting is chosen in a searchable list or by its target, which opens the map.
+  from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
+  2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
+  picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,
+  eraser, whole sub-area, route; Details on the right. A Zone setting is chosen in a searchable list or by its target, which opens the map.
 - The panel's **History** (step 4) follows the active character's tab. The **Protocol** view will show only with an
   "Advanced tools" setting, off by default (a change to `docs/shell.md`; step 2's checklist items that read the
   inspector then begin by turning it on).

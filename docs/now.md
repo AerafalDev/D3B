@@ -175,7 +175,9 @@ _Updated 2026-11-13._
   what the server sends on a death. Then (1) `bot`: the blueprint, its JSON and its validation; (2) the catalogue of
   nodes; (3) `storage`: `Documents/D3B`, atomic writes, a newer schema refused; (4) D3B's blueprints in the app, and
   Duplicate; (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint
-  editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles;
+  editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
+  (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
+  format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
   (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
   (12) links checked by type, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
