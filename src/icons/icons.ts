@@ -3,6 +3,7 @@ import moveToRight from "./expui/actions/moveToRight_dark.svg";
 import users from "./expui/codeWithMe/cwmUsers@20x20_dark.svg";
 import close from "./expui/general/close_dark.svg";
 import search from "./expui/general/search_dark.svg";
+import user from "./expui/general/user_dark.svg";
 import windowClose from "./expui/windows/close_dark.svg";
 import windowMaximize from "./expui/windows/maximize_dark.svg";
 import windowMinimize from "./expui/windows/minimize_dark.svg";
@@ -17,6 +18,7 @@ export const icons = {
   moveToLeft,
   moveToRight,
   search,
+  user,
   users,
   windowClose,
   windowMaximize,

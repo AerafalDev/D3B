@@ -26,8 +26,12 @@ VS Code's, part for part (`src/shell/`):
   the pointer. Parts keep their pixel size when the window is resized; the editor area takes the rest. As in VS Code,
   the secondary side bar starts hidden. The primary side bar's header names its view; a part without a view says its
   views come with the features.
-- **Editor area**: tabs and splits by `dockview-react`. With no editor open it shows the app's mark in relief and the
-  main shortcuts, these only when it is at least 480 px wide. The first editor, a character's tab, comes next.
+- **Editor area**: tabs and splits by `dockview-react`. An editor opens by `openEditor` (one tab per id; opening it
+  again brings its tab forward). With no editor open it shows the app's mark in relief and the main shortcuts, these
+  only when it is at least 480 px wide.
+- **Tabs** (`EditorTab`, the owner's choice from mock-ups, 2026-11-12): an icon, the title, a close button; the active
+  tab rises from the strip with rounded top corners on the editor's ground and merges into it, without a blue line;
+  the strip lies on the frame's ground so the active tab stands out, the others' text dimmer.
 - **Status bar** (22 px): the app's name after a small blue dot; its items come with their features.
 - **Command palette** (Ctrl+Shift+P, or the command centre): every command with its shortcut, itself included,
   filtered as one types, under the title bar, dimming nothing behind it.
@@ -43,8 +47,7 @@ The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout w
 - **Colours**: VS Code's Dark Modern, the parts `#181818`, the editor `#1f1f1f`, text `#d6d6d6` and `#a8a8a8`; the
   blue accent `#0078d4` kept rare. Dark only: nothing switches to a light theme.
 - **Shapes**: the activity bar's active entry is a rounded pill, not VS Code's blue line; a list's selection is a
-  rounded grey row; a tab rises from its strip with rounded top corners and merges into the editor (the owner's
-  choice, coming with the first editor).
+  rounded grey row; tabs as above.
 - **Inter** at 13 px (`@fontsource-variable/inter`, OFL-1.1, the owner's go).
 - **JetBrains' icons**: IntelliJ Platform's new UI icons, dark variants copied unchanged into `src/icons/expui/`
   (Apache 2.0 and the project's NOTICE, in `src/icons/`); `src/icons/icons.ts` names those in use. They are not
@@ -64,6 +67,7 @@ Vitest and Testing Library: the shortcuts (each part, a field focused, the palet
 their labels per platform and language, a part's hide button, the title bar (the window's buttons on Windows only,
 restore once maximised, no menus on macOS, each toggle pressed while its part shows, the command centre, File > Exit
 through the close request, View's checked parts), the Windows window's config against the main one, the palette (its
-commands, filtering, running one), the activity bar (its pressed entry, hiding and showing the side bar), and a part's collapse and slide against a fake panel (starting hidden, first
-opening at its default size, hide and show, the 200 ms slide, two quick toggles, a drag below the minimum). The layout
-itself is checked in the browser preview, not in happy-dom, which has no layout.
+commands, filtering, running one), the activity bar (its pressed entry, hiding and showing the side bar), an
+editor's tab (its title followed, its close), and a part's collapse and slide against a fake panel (starting hidden,
+first opening at its default size, hide and show, the 200 ms slide, two quick toggles, a drag below the minimum). The
+layout itself is checked in the browser preview, not in happy-dom, which has no layout.

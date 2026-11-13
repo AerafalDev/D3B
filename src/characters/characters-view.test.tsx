@@ -1,13 +1,20 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import i18next from "i18next";
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GameConnectionStatus, RelayStatus } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { type CharacterView, useCharacters } from "./character-store.ts";
 
-import { CharactersView } from "./characters-view.tsx";
+// The editor area, faked: the editors opened, and the id of the one whose tab is active.
+const opened = vi.hoisted(() => ({ editors: [] as unknown[], active: null as string | null }));
+vi.mock("@/shell/parts/editor-store.ts", () => ({
+  openEditor: (editor: unknown) => opened.editors.push(editor),
+  useEditors: (select: (store: { active: string | null }) => unknown) => select({ active: opened.active }),
+}));
+
+const { CharactersView } = await import("./characters-view.tsx");
 
 function connection(number: number, protocol: GameConnectionStatus["protocol"] = "on"): GameConnectionStatus {
   return {
@@ -49,6 +56,8 @@ describe("the characters view", () => {
     await i18next.changeLanguage("en");
   });
   beforeEach(() => {
+    opened.editors = [];
+    opened.active = null;
     useCharacters.setState({ views: {}, selected: null });
     useRelay.setState({ status: null });
   });
@@ -73,14 +82,22 @@ describe("the characters view", () => {
     expect(screen.getByRole("button").textContent).toContain("Protocol not read");
   });
 
-  it("chooses the character clicked, and marks it alone chosen", () => {
+  it("marks the row whose character's tab is active, and it alone", () => {
     relay([connection(1), connection(2)]);
-    useCharacters.setState({ views: { 1: lyra } });
+    opened.active = "character:2";
     render(<CharactersView />);
     const [first, second] = screen.getAllByRole("button");
-    fireEvent.click(second ?? document.body);
-    expect(useCharacters.getState().selected).toBe(2);
     expect(second?.getAttribute("aria-current")).toBe("true");
     expect(first?.hasAttribute("aria-current")).toBe(false);
+  });
+
+  it("opens the character chosen in its tab, named after it", () => {
+    relay([connection(1)]);
+    useCharacters.setState({ views: { 1: lyra } });
+    render(<CharactersView />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(opened.editors).toEqual([
+      { id: "character:1", component: "character", title: "Lyra", params: { icon: "user", connection: 1 } },
+    ]);
   });
 });

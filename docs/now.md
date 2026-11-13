@@ -111,8 +111,10 @@ _Updated 2026-11-12._
   IPC stay. The new shell ([docs/shell.md](shell.md)) lands in PRs: dark only (#186), its parts in VS Code's layout as
   discreet islands (Dark Modern, Inter, JetBrains' icons, parts that slide open and closed; #187), then its title bar
   with the command palette (#188); then the features one at a time, each decided with the owner: the Characters
-  view (done in code), a character's tab (layout "A"), then the character's map in the tab, then our own character
-  renderer (the owner, 2026-11-12: a feature of its own, designed first; `PyDofus/d3-ts-renderer` has no licence, read
-  for ideas only). The step-2 checklist items that look at the UI wait for them. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
+  view (done in code, #189), a character's tab (layout "A", done in code), then the character's map in the tab (the
+  owner's style "B": discreet diamonds, actors as dots until the renderer draws them), then our own renderer of the
+  characters, monsters, NPCs and resources on the map (the owner, 2026-11-12: a feature of its own, designed first;
+  `PyDofus/d3-ts-renderer` has no licence, read for ideas only). The step-2 checklist items that look at the UI wait
+  for them. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.
