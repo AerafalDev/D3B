@@ -10,7 +10,7 @@ interface DataItemProps {
 
 /**
  * The game data the app packs: the client build it comes from, with no hover, which would only repeat it (the owner,
- * 2026-11-13); or that there is none, with the reason in its hover and JetBrains' yellow warning, one of the bar's
+ * 2026-11-13); or that there is none, with the reason in its hover and a yellow warning, one of the bar's
  * colours kept for a problem.
  */
 export function DataItem({ info }: DataItemProps) {

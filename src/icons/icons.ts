@@ -1,41 +1,43 @@
-import moveToLeft from "./expui/actions/moveToLeft_dark.svg";
-import moveToRight from "./expui/actions/moveToRight_dark.svg";
-import users from "./expui/codeWithMe/cwmUsers@20x20_dark.svg";
-import arrowLeftRight from "./expui/diff/arrowLeftRight_dark.svg";
-import close from "./expui/general/close_dark.svg";
-import ideUpdate from "./expui/general/ideUpdate_dark.svg";
-import search from "./expui/general/search_dark.svg";
-import user from "./expui/general/user_dark.svg";
-import library from "./expui/nodes/library_dark.svg";
-import pause from "./expui/run/pause_dark.svg";
-import error from "./expui/status/error_dark.svg";
-import warning from "./expui/status/warning_dark.svg";
-import windowClose from "./expui/windows/close_dark.svg";
-import windowMaximize from "./expui/windows/maximize_dark.svg";
-import windowMinimize from "./expui/windows/minimize_dark.svg";
-import windowRestore from "./expui/windows/restore_dark.svg";
+import {
+  ArrowLeftRight,
+  CircleAlert,
+  CircleArrowDown,
+  Library,
+  type LucideIcon,
+  PanelBottom,
+  PanelLeft,
+  PanelRight,
+  Pause,
+  Search,
+  TriangleAlert,
+  User,
+  X,
+} from "lucide-react";
+
+/** An icon of the app and, for the few that mark a problem or an offer, its one colour. */
+interface AppIcon {
+  icon: LucideIcon;
+  tone?: string;
+}
 
 /**
- * The JetBrains icons the app uses, by name: IntelliJ Platform's new UI icons in their dark variant, copied as they
- * are (README.md says from where). Each is 16 px but `users`, 20 px for the activity bar.
+ * The Lucide icons the app uses, by name (the owner, 2026-11-13: Lucide for every icon). Grey as the text around them
+ * but for the colours the owner chose from mock-ups: a warning yellow, an error red, an update orange. The window's buttons
+ * draw Windows' own glyphs instead (`src/shell/title-bar/window-glyph.tsx`).
  */
 export const icons = {
-  arrowLeftRight,
-  close,
-  error,
-  ideUpdate,
-  library,
-  moveToLeft,
-  moveToRight,
-  pause,
-  search,
-  user,
-  users,
-  warning,
-  windowClose,
-  windowMaximize,
-  windowMinimize,
-  windowRestore,
-} as const;
+  arrowLeftRight: { icon: ArrowLeftRight },
+  close: { icon: X },
+  error: { icon: CircleAlert, tone: "text-[#db5c5c]" },
+  library: { icon: Library },
+  panelBottom: { icon: PanelBottom },
+  panelLeft: { icon: PanelLeft },
+  panelRight: { icon: PanelRight },
+  pause: { icon: Pause },
+  search: { icon: Search },
+  update: { icon: CircleArrowDown, tone: "text-[#c77d55]" },
+  user: { icon: User },
+  warning: { icon: TriangleAlert, tone: "text-[#f2c55c]" },
+} as const satisfies Record<string, AppIcon>;
 
 export type IconName = keyof typeof icons;

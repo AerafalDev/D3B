@@ -16,7 +16,7 @@ VS Code's, part for part (`src/shell/`):
   hold only what works: File, Exit; View, the palette and the three parts. Measured by the owner on Windows 11
   (2026-11-12): our frame only, rounded corners, drag, double-click, the window's buttons.
 - **Activity bar** (48 px, left): one entry per view of the primary side bar (`src/shell/side-views.ts`), a 20 px
-  JetBrains icon; the view showing is a rounded pill, and choosing it again hides the side bar, as in VS Code. Today:
+  Lucide icon (Characters: a person, the owner's pick of 2026-11-13); the view showing is a rounded pill, and choosing it again hides the side bar, as in VS Code. Today:
   Characters.
 - **Primary side bar** (300 px, left), **panel** (260 px, under the editor area), **secondary side bar** (300 px,
   right): each resizable, and hidden by its header's button or VS Code's keys (Ctrl+B, Ctrl+J, Ctrl+Alt+B); the
@@ -37,7 +37,7 @@ VS Code's, part for part (`src/shell/`):
   the app's state on the left, its context on the right. Left, the app's name and version after its one accent, a
   small blue dot (the name alone until the back end answers, and in the browser preview), then the relay
   ([relay.md](relay.md#in-the-app)). Right, the game data:
-  JetBrains' library icon and "Client 3.7.13.17", or its yellow warning and "No game data"; then, once an update is
+  a library icon and "Client 3.7.13.17", or its yellow warning and "No game data"; then, once an update is
   downloaded, the offer to restart into it ([updates.md](updates.md#pieces)), the bar's one button. An item is an icon and a
   short label, grey; colour only marks a problem. An item with details takes the focus and opens a hover as VS Code's
   rich ones: sections of lines set apart by a rule, the first brighter, the others grey. A hover never repeats what
@@ -58,9 +58,12 @@ The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout w
 - **Shapes**: the activity bar's active entry is a rounded pill, not VS Code's blue line; a list's selection is a
   rounded grey row; tabs as above.
 - **Inter** at 13 px (`@fontsource-variable/inter`, OFL-1.1, the owner's go).
-- **JetBrains' icons**: IntelliJ Platform's new UI icons, dark variants copied unchanged into `src/icons/expui/`
-  (Apache 2.0 and the project's NOTICE, in `src/icons/`); `src/icons/icons.ts` names those in use. They are not
-  counted by `pr:size`. The app's packages must carry these notices and the font's licence before the next release.
+- **Lucide's icons** for every icon (the owner, 2026-11-13, replacing the JetBrains icons chosen on 2026-11-12):
+  `lucide-react`, ISC, already the shadcn components'; `src/icons/icons.ts` names those in use. Drawn grey (`#ced0d6`)
+  with a 1.5 px stroke; colour only for a warning (yellow), an error (red) and the update offer (orange). The app's
+  packages must carry the font's licence and Lucide's (bundled into the app's code without its notice)
+  before the next release. The one exception: the window's buttons on
+  Windows draw Windows 11's own glyphs, 10 px with a 1 px line (the owner, 2026-11-13).
 - No part ever shows a native scrollbar while it resizes; a scrollbar, where content scrolls, is VS Code's: 10 px, no
   arrows, a translucent thumb.
 

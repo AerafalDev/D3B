@@ -4,7 +4,6 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { initI18n } from "@/i18n/i18n.ts";
-import { icons } from "@/icons/icons.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { UpdateItem } from "./update-item.tsx";
 import { useUpdater } from "./updater.ts";
@@ -43,10 +42,12 @@ describe("the update's item", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("offers to restart into the downloaded version, with JetBrains' update icon, and restarts once chosen", () => {
+  it("offers to restart into the downloaded version, with the update icon, and restarts once chosen", () => {
     useUpdater.setState({ state: { status: "ready", version: "0.14.0", notes: undefined } });
     const { container } = renderItem();
-    expect([...container.querySelectorAll("img")].map((image) => image.getAttribute("src"))).toEqual([icons.ideUpdate]);
+    expect([...container.querySelectorAll("[data-icon]")].map((icon) => icon.getAttribute("data-icon"))).toEqual([
+      "update",
+    ]);
     fireEvent.click(screen.getByRole("button", { name: "Restart to update to 0.14.0" }));
     expect(restart).toHaveBeenCalledTimes(1);
   });

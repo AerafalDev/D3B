@@ -70,11 +70,22 @@ describe("the title bar", () => {
     expect(window.close).toHaveBeenCalledOnce();
   });
 
-  it("offers to restore the window once it is maximised", async () => {
+  it("draws Windows' own glyph on each of the window's buttons", () => {
     renderBar();
+    const glyph = (name: string) =>
+      screen.getByRole("button", { name }).querySelector("[data-icon]")?.getAttribute("data-icon");
+    expect([glyph("Minimize"), glyph("Maximize"), glyph("Close")]).toEqual(["minimize", "maximize", "close"]);
+  });
+
+  it("offers to restore the window once it is maximised, with Windows' restore glyph", async () => {
+    renderBar();
+    expect(
+      screen.getByRole("button", { name: "Maximize" }).querySelector("[data-icon]")?.getAttribute("data-icon"),
+    ).toBe("maximize");
     window.maximized = true;
     await act(async () => window.resized?.());
-    expect(await screen.findByRole("button", { name: "Restore" })).toBeTruthy();
+    const restore = await screen.findByRole("button", { name: "Restore" });
+    expect(restore.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("restore");
   });
 
   it.each(["linux", "mac"] as const)("leaves the window's buttons to the system on %s", (system) => {

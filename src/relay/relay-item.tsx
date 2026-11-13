@@ -11,8 +11,8 @@ interface RelayItemProps {
 }
 
 /**
- * The relay in the status bar (the owner, 2026-11-13): JetBrains' arrows both ways and its state, grey; red with
- * JetBrains' error once off. Nothing before the back end tells its status, and in the browser preview.
+ * The relay in the status bar (the owner, 2026-11-13): arrows both ways and its state, grey; red with an
+ * error icon once off. Nothing before the back end tells its status, and in the browser preview.
  */
 export function RelayItem({ dataBuild }: RelayItemProps) {
   const { t } = useTranslation();

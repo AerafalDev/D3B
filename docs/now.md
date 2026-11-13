@@ -127,7 +127,7 @@ _Updated 2026-11-13._
 - **The app's UI, rebuilt** (the owner, 2026-11-12): the interface on `next` (the characters list and view, the map's
   diamonds, the relay's indicator, the update bar, the status bar) is removed; the stores, the updater, i18n and the
   IPC stay. The new shell ([docs/shell.md](shell.md)) lands in PRs: dark only (#186), its parts in VS Code's layout as
-  discreet islands (Dark Modern, Inter, JetBrains' icons, parts that slide open and closed; #187), then its title bar
+  discreet islands (Dark Modern, Inter, JetBrains' icons since replaced by Lucide's (the owner, 2026-11-13), parts that slide open and closed; #187), then its title bar
   with the command palette (#188); then the features one at a time, each decided with the owner: the Characters
   view (done in code, #189), a character's tab (layout "A", done in code, #190), the character's map in the tab
   (the owner's style "B": discreet diamonds, actors as dots; done in code, #191). The status bar, the owner's layout "A" (2026-11-13): the

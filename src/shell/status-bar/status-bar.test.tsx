@@ -5,7 +5,6 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { AppInfo_Serialize } from "@/bindings.ts";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { initI18n } from "@/i18n/i18n.ts";
-import { icons } from "@/icons/icons.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { useUpdater } from "@/updates/updater.ts";
 import { useAppInfo } from "./app-info.ts";
@@ -50,8 +49,8 @@ describe("the status bar", () => {
   it("says there is no game data, and why in its hover", async () => {
     useAppInfo.setState({ info: { ...info, gameBuild: null, dataError: "data format 2 is not supported" } });
     const { container } = renderBar();
-    const shown = [...container.querySelectorAll("img")].map((image) => image.getAttribute("src"));
-    expect(shown).toEqual([icons.warning]);
+    const shown = [...container.querySelectorAll("[data-icon]")].map((icon) => icon.getAttribute("data-icon"));
+    expect(shown).toEqual(["warning"]);
     const item = screen.getByText("No game data").closest("[tabindex]");
     if (item === null) {
       throw new Error("the item takes no focus");

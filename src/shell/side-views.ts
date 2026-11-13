@@ -16,5 +16,5 @@ export interface SideView {
 
 /** The side bar's views, in the activity bar's order; each feature with a view adds its own. */
 export const SIDE_VIEWS: readonly SideView[] = [
-  { id: "characters", icon: "users", title: "characters.title", component: CharactersView },
+  { id: "characters", icon: "user", title: "characters.title", component: CharactersView },
 ];
