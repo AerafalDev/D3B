@@ -138,6 +138,14 @@ jobs:
           projectPath: .
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config src-tauri/tauri.release.conf.json
           updaterJsonPreferNsis: true
+      - name: The shipped AppImage starts with the runtime its notices name
+        if: runner.os == 'Linux'
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          image="$(realpath src-tauri/target/"$TARGET"/release/bundle/appimage/*.AppImage)"
+          runtime="$("$image" --appimage-version 2>&1 | grep -o 'type2-runtime/commit/[0-9a-f]*')"
+          grep -qF "type2-runtime ${runtime##*/} (MIT): " src-tauri/gen/SYSTEM-LIBRARIES-NOTICES.txt
 
   channel:
     name: Update channel

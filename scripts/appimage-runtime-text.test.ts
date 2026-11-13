@@ -68,6 +68,22 @@ describe("runtimeBuild", () => {
       error:
         "type2-runtime fedfad5: no the Alpine image of scripts/docker/Dockerfile, no libfuse's tarball and its sha256 in scripts/common/install-dependencies.sh",
     });
+    const squashless = FILES.dependencies.replace("vasi/squashfuse/archive/0.5.2.tar.gz", "elsewhere");
+    expect(runtimeBuild("fedfad5", { ...FILES, makefile: "CC = clang\n", dependencies: squashless })).toEqual({
+      ok: false,
+      error:
+        "type2-runtime fedfad5: no the LIBS of src/runtime/Makefile, no squashfuse's tarball and its sha256 in scripts/common/install-dependencies.sh",
+    });
+  });
+
+  it("finds a library linked on a continued line, by LIBS += or in LDFLAGS", () => {
+    const makefile = "LIBS = -lsquashfuse \\\n  -lzstd\nLIBS += -llzma\nLDFLAGS = -static -llz4\n";
+    expect(value(runtimeBuild("fedfad5", { ...FILES, makefile })).libraries).toEqual([
+      "squashfuse",
+      "zstd",
+      "lzma",
+      "lz4",
+    ]);
   });
 });
 

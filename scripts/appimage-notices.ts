@@ -211,18 +211,21 @@ async function ownPieces(): Promise<Result<{ pieces: OwnPiece[]; texts: Map<stri
   const hooks = join(root, "apprun-hooks");
   // The CLI's package.json is npm's; its version is a string there.
   const cli = JSON.parse(readFileSync("node_modules/@tauri-apps/cli/package.json", "utf8")) as { version: string };
-  const appRun = linuxdeploy.ok
-    ? appRunPieces({
-        arch,
-        wrappedSha256: createHash("sha256")
-          .update(readFileSync(join(root, "AppRun.wrapped")))
-          .digest("hex"),
-        appRun: readFileSync(join(root, "AppRun"), "utf8"),
-        hooks: existsSync(hooks) ? readdirSync(hooks) : [],
-        linuxdeploy: linuxdeploy.value,
-        tauriCli: cli.version,
-      })
-    : linuxdeploy;
+  const lost = ["AppRun", "AppRun.wrapped"].filter((name) => !existsSync(join(root, name)));
+  const appRun: Result<OwnPiece[]> = !linuxdeploy.ok
+    ? linuxdeploy
+    : lost.length > 0
+      ? { ok: false, error: `The AppImage has no ${lost.join(", ")}: Tauri or linuxdeploy changed how they write it` }
+      : appRunPieces({
+          arch,
+          wrappedSha256: createHash("sha256")
+            .update(readFileSync(join(root, "AppRun.wrapped")))
+            .digest("hex"),
+          appRun: readFileSync(join(root, "AppRun"), "utf8"),
+          hooks: existsSync(hooks) ? readdirSync(hooks) : [],
+          linuxdeploy: linuxdeploy.value,
+          tauriCli: cli.version,
+        });
   if (!runtime.ok || !appRun.ok) {
     return { ok: false, error: [runtime, appRun].flatMap((r) => (r.ok ? [] : [r.error])).join("\n") };
   }

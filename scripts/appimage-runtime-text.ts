@@ -57,7 +57,8 @@ export function runtimeBuild(
   commit: string,
   files: { makefile: string; dependencies: string; dockerfile: string },
 ): Result<RuntimeBuild> {
-  const libs = /^LIBS\s*=(.*)$/m.exec(files.makefile)?.[1];
+  // Every -l of the Makefile, wherever it is, so that a continued line, `LIBS +=` or LDFLAGS cannot hide a library.
+  const libs = /^LIBS\s*[:+?]?=/m.test(files.makefile) ? files.makefile : undefined;
   const alpine = /^FROM alpine:(\S+)\s*$/m.exec(files.dockerfile)?.[1];
   const fuse = /libfuse\/releases\/download\/fuse-([\d.]+)\/fuse-\1\.tar\.xz/.exec(files.dependencies)?.[1];
   const squash = /vasi\/squashfuse\/archive\/([\w.]+)\.tar\.gz/.exec(files.dependencies)?.[1];
@@ -81,7 +82,7 @@ export function runtimeBuild(
     ].filter((what) => what !== false);
     return { ok: false, error: `type2-runtime ${commit}: no ${missing.join(", no ")}` };
   }
-  const libraries = [...libs.matchAll(/-l(\S+)/g)].map(([, name = ""]) => name);
+  const libraries = [...new Set([...libs.matchAll(/(?:^|\s)-l([\w+.-]+)/gm)].map(([, name = ""]) => name))];
   const patches = [...new Set([...files.dependencies.matchAll(/patches\/libfuse\/([\w.-]+)/g)].map(([, p = ""]) => p))];
   return {
     ok: true,

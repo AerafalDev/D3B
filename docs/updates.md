@@ -94,7 +94,8 @@ system's libraries and carry no such file (the owner's choices, 2026-11-13: a fi
   and the GTK plugin's hook. Each piece's licence text is fetched from its project at that version, and LGPL-2.1's
   from `/usr/share/common-licenses`, among the others. The sources name type2-runtime's tree at the commit, whose
   scripts rebuild the runtime, and libfuse's and squashfuse's tarballs. A library the table does not know, a changed
-  AppRun, another hook, or a text that does not fetch fails the notices.
+  AppRun, another hook, or a text that does not fetch fails the notices. appimagetool downloads the runtime again for
+  the shipped build, so `release.yml` then checks that AppImage starts with the runtime its notices name.
 - **Checked on PRs**: `.github/workflows/appimage.yml` builds the x64 and ARM64 AppImages in the same two passes on
   the pull requests that touch the release workflow, the notices' scripts, Tauri's configurations, `Cargo.lock`, or
   `package.json` and `bun.lock`, which pin Tauri's CLI and so linuxdeploy and its GTK plugin (the owner's choices,
