@@ -1,4 +1,5 @@
 using D3B.Extractor.Maps;
+using static D3B.Extractor.Tests.Unity.Trees;
 
 namespace D3B.Extractor.Tests.Maps;
 
@@ -27,6 +28,7 @@ public sealed class MapReaderTests
                 (2, "Dofus.GroupedElement", [465454, 7507]),
                 (3, "Dofus.Decor", [9000, 5]),
                 (4, "Dofus.GroupedElement", [465455, 7508]),
+                (5, "Dofus.InteractiveElement", [465456, 400, 7509]),
             ],
         };
 
@@ -40,7 +42,21 @@ public sealed class MapReaderTests
         Assert.Equal(new SortedDictionary<int, int> { [12] = -20 }, read.Numbers["floor"]);
 
         // An element takes its own cell, else its group's, else none; a reference of no interactive id is no element.
-        Assert.Equal([(465453, 300, 7506), (465454, 301, 7507), (465455, -1, 7508)], read.Elements);
+        Assert.Equal([(465453, 300, 7506), (465454, 301, 7507), (465455, -1, 7508), (465456, 400, 7509)], read.Elements);
+    }
+
+    [Fact]
+    public void AReaderReadsEachMapAfresh()
+    {
+        // The extraction reads every map of a file with one reader: nothing of a map may carry over to the next.
+        var reader = TestMap.Reader();
+
+        reader.Read(new TestMap { Groups = [(301, [2])], References = [(1, "Dofus.InteractiveElement", [465453, 300, 7506]), (2, "Dofus.GroupedElement", [465454, 7507])] }.Build());
+        reader.Read(new TestMap { Nested = true, Name = "map_1", Boxes = [(5, 9, 10)] }.Build());
+
+        var read = reader.Read(new TestMap { References = [(2, "Dofus.GroupedElement", [465454, 7507])] }.Build());
+
+        Assert.Equal([(465454, -1, 7507)], read.Elements);
     }
 
     [Fact]
@@ -83,6 +99,23 @@ public sealed class MapReaderTests
         Assert.True(MapReader.IsMap(new TestMap().Build().Tree));
         Assert.True(MapReader.IsMap(new TestMap { Nested = true }.Build().Tree));
         Assert.False(MapReader.IsMap(TestMap.ReferenceTypes["Dofus.InteractiveElement"]));
+    }
+
+    [Theory]
+    [InlineData("cellsData", "middlegroundMapElements")]
+    [InlineData("id", "middlegroundMapElements", "references")]
+    [InlineData("id", "cellsData", "references")]
+    [InlineData("id", "cellsData", "middlegroundMapElements")]
+    public void AClientMapDataWithoutOneOfItsPartsIsNoMap(params string[] fields)
+    {
+        Assert.False(MapReader.IsMap(Of([.. fields.Select(field => Node(1, "int", field, 4))])));
+    }
+
+    [Fact]
+    public void AMapMetadataWithoutCellsOrRegistryIsNoMap()
+    {
+        Assert.False(MapReader.IsMap(Of([Node(1, "MapData", "mapData"), Node(2, "int", "cellsData", 4)])));
+        Assert.False(MapReader.IsMap(Of([Node(1, "MapData", "mapData"), Node(2, "int", "boundingBoxes", 4), Node(1, "int", "references", 4)])));
     }
 
     [Fact]
