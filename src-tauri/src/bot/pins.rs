@@ -3,7 +3,7 @@
 
 use serde_json::Value;
 
-use super::blueprint::{Blueprint, Does, Graph, Node};
+use super::blueprint::{Blueprint, Does, Graph, Node, Parameter};
 use super::catalogue::{self, Carries, DONE, FAILED, Pin, REASON, RUN, Side, THEN};
 
 /// A pin of a node of a blueprint.
@@ -52,11 +52,7 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
                 _ => None,
             };
             if let Some((parameters, side)) = parameters {
-                pins.extend(
-                    parameters
-                        .iter()
-                        .map(|it| value(&it.id.0, side, Carries::Value(it.value_type))),
-                );
+                pins.extend(usable(parameters).map(|it| value(&it.id.0, side, Carries::Value(it.value_type))));
             }
         }
         Does::Get(variable) | Does::Set(variable) => {
@@ -71,12 +67,20 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
             let graph = blueprint.graphs.iter().find(|known| &known.id == function)?;
             let signature = graph.function.as_ref()?;
             pins = [RUN, DONE, FAILED, REASON].iter().map(NodePin::from).collect();
-            let typed = |it: &super::blueprint::Parameter| Carries::Value(it.value_type);
-            pins.extend(signature.inputs.iter().map(|it| value(&it.id.0, Side::In, typed(it))));
-            pins.extend(signature.outputs.iter().map(|it| value(&it.id.0, Side::Out, typed(it))));
+            let typed = |it: &Parameter| Carries::Value(it.value_type);
+            pins.extend(usable(&signature.inputs).map(|it| value(&it.id.0, Side::In, typed(it))));
+            pins.extend(usable(&signature.outputs).map(|it| value(&it.id.0, Side::Out, typed(it))));
         }
     }
     Some(pins)
+}
+
+/// A function's parameters that become pins: the first of an id, none with a reserved one, each already a problem.
+fn usable(parameters: &[Parameter]) -> impl Iterator<Item = &Parameter> {
+    let mut ids = std::collections::HashSet::new();
+    parameters
+        .iter()
+        .filter(move |it| !catalogue::RESERVED.contains(&it.id.0.as_str()) && ids.insert(&it.id))
 }
 
 #[cfg(test)]
@@ -135,15 +139,48 @@ mod tests {
     }
 
     #[test]
-    fn a_functions_entry_and_done_return_take_its_signature() {
+    fn a_function_gives_its_entry_and_calls_its_inputs_and_its_done_return_and_calls_its_outputs() {
         let mut blueprint = read(HARVEST).unwrap_or_else(|error| panic!("{error}"));
-        let entry: Node = serde_json::from_str(r#"{"id": "e", "kind": "entry"}"#).unwrap_or_else(|e| panic!("{e}"));
-        blueprint.graphs[1].nodes.push(entry);
-        let graph = &blueprint.graphs[1];
-        let entry = pins(&blueprint, graph, &graph.nodes[0]).unwrap_or_default();
-        assert!(
-            entry.iter().any(|pin| pin.id == "bank" && pin.side == Side::Out),
-            "{entry:?}"
+        let signature = blueprint.graphs[1]
+            .function
+            .as_mut()
+            .unwrap_or_else(|| panic!("a function"));
+        let deposited = Parameter {
+            id: Id("deposited".into()),
+            name: String::new(),
+            value_type: ValueType::Number,
+        };
+        // A reserved id and an id given twice are problems of their own, never pins.
+        let reserved = Parameter {
+            id: Id("run".into()),
+            ..deposited.clone()
+        };
+        signature.outputs.extend([deposited.clone(), deposited, reserved]);
+        for kind in ["entry", "return_done"] {
+            let node = serde_json::from_str(&format!(r#"{{"id": "{kind}", "kind": "{kind}"}}"#));
+            blueprint.graphs[1]
+                .nodes
+                .push(node.unwrap_or_else(|error| panic!("{error}")));
+        }
+        let (events, function) = (&blueprint.graphs[0], &blueprint.graphs[1]);
+        let sides = |graph, node| {
+            let pins = pins(&blueprint, graph, node).unwrap_or_default();
+            let named = |id: &str| {
+                pins.iter()
+                    .filter(|pin| pin.id == id)
+                    .map(|pin| pin.side)
+                    .collect::<Vec<_>>()
+            };
+            (named("bank"), named("deposited"), named("run"))
+        };
+        assert_eq!(sides(function, &function.nodes[0]), (vec![Side::Out], vec![], vec![]));
+        assert_eq!(
+            sides(function, &function.nodes[1]),
+            (vec![], vec![Side::In], vec![Side::In])
+        );
+        assert_eq!(
+            sides(events, &events.nodes[3]),
+            (vec![Side::In], vec![Side::Out], vec![Side::In])
         );
     }
 

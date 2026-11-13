@@ -62,7 +62,8 @@ pub(crate) enum Problem {
     EventTwice { graph: Id, node: Id },
 }
 
-/// Every problem of `blueprint`, in the order of its file.
+/// Every problem of `blueprint`: its own in the order of its file, then each graph's nodes and wires, then the events
+/// held twice.
 pub(crate) fn problems(blueprint: &Blueprint) -> Vec<Problem> {
     let mut found = Vec::new();
     well_formed(&blueprint.id, &mut found);
