@@ -7,12 +7,19 @@ _Updated 2026-11-13._
   is designed with the owner on 2026-11-11 ([docs/protocol.md](protocol.md), ADR 0012); its third, the live view of
   each character and the protocol inspector, on 2026-11-12 ([docs/game.md](game.md)). Steps 0 and 1 are done but
   for their measures below, which the owner takes alongside: the owner started step 2 before them, on 2026-11-11.
+- **Step 3 designed ahead**: what is left of step 2 waits on outside events (the next release for the in-app Restart,
+  the next client patch for the protocol's item 7, a Windows account whose name holds a space or an accent for the
+  relay's item 11, testers on macOS and Linux) or on the owner's measures taken alongside (the breed, the life's fix),
+  so the owner granted on 2026-11-13 an exception to "the next feature does not start": step 3, the bot's
+  model, was designed, from mock-ups then a prototype in the real shell (local branch `prototype/step3-model`, never
+  merged), and written in [docs/bot.md](bot.md) (ADRs 0014 and 0015). Its code waits until step 2 is measured or the
+  owner says otherwise.
 - **Done**: the rewrite starts on branch `next`, which will replace the C# version on `main`. The Tauri 2 + React 19
   shell, the typed IPC, the packed data's manifest, i18n FR/EN, the Claude setup (`CLAUDE.md`, `.claude/`), CI on
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
   signed updates through the `updater-next` channel ([docs/updates.md](updates.md)). **v0.10.0**, the first
   pre-release, is published with installers for the six targets and no game data yet. Decisions:
-  [docs/adr/](adr/README.md) 0001 to 0012.
+  [docs/adr/](adr/README.md) 0001 to 0015.
 - **Measured** by the owner, 2026-11-11, Windows x64: v0.10.0 installs per user, starts dark and in French, its status
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
   back. Then the first update: the installed version downloaded v0.12.0 at start, the bar offered to restart, and
@@ -162,6 +169,21 @@ _Updated 2026-11-13._
   read from a Linux build. A renderer of the actors' sprites
   was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The relay's
   items 1, 2, 4, 7, 8 and 9 were measured again in it by the owner on 2026-11-13; the protocol's items that read the
-  inspector, on the same day. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
+  inspector, on the same day. Step 3's model is in [docs/bot.md](bot.md) (below).
+- **Next, step 3** ([bot.md](bot.md)), not started: a stack of PRs against `next`, one behaviour each, measured as
+  they show something. First two studies: a character's key across servers (and which message names the server), and
+  what the server sends on a death. Then (1) `bot`: the blueprint, its JSON and its validation; (2) the catalogue of
+  nodes; (3) `storage`: `Documents/D3B`, atomic writes, a newer schema refused; (4) D3B's blueprints in the app, and
+  Duplicate; (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint
+  editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
+  (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
+  format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
+  (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
+  (12) links checked by type, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
+  place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
+  search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's
+  update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
+  captures; (26) events at run time: priorities, modes, thresholds, settings at safe points. Step 4 then brings Play,
+  what a character does now, its History and the debugger, with the first actions.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.
