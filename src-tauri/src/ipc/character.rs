@@ -295,7 +295,7 @@ pub(crate) struct Named<'a> {
 
 /// What the game data names, given with its build, when that build is `build`, the connection's: another build may
 /// number its maps and breeds otherwise.
-fn for_build<'a, T>(data: Option<(&'a str, T)>, build: Option<&str>) -> Option<T> {
+fn for_build<T>(data: Option<(&str, T)>, build: Option<&str>) -> Option<T> {
     data.filter(|(data_build, _)| build == Some(*data_build))
         .map(|(_, named)| named)
 }
@@ -362,7 +362,7 @@ fn place(map_id: i64, world: Option<&World>) -> Place {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::game::{Characteristics, Who};
+    use crate::game::Characteristics;
 
     fn json<T: serde::de::DeserializeOwned>(text: &str) -> T {
         serde_json::from_str(text).unwrap_or_else(|error| panic!("{error}"))
@@ -504,8 +504,8 @@ mod tests {
         }
     }
 
-    fn head(folder: &Path, file: &str) -> Option<String> {
-        Some(folder.join(file).to_string_lossy().into_owned())
+    fn head(folder: &Path, file: &str) -> String {
+        folder.join(file).to_string_lossy().into_owned()
     }
 
     #[test]
@@ -520,9 +520,9 @@ mod tests {
         let female = CharacterView::new(&chosen(9, Some(Sex::Female)), Some(named));
         let name = female.breed_name.map(|name| (name.fr, name.en));
         assert_eq!(name, Some(("Crâ".into(), "Cra".into())));
-        assert_eq!(female.head, head(folder, "heads/9-1.png"));
+        assert_eq!(female.head, Some(head(folder, "heads/9-1.png")));
         let male = CharacterView::new(&chosen(9, Some(Sex::Male)), Some(named));
-        assert_eq!(male.head, head(folder, "heads/9-0.png"));
+        assert_eq!(male.head, Some(head(folder, "heads/9-0.png")));
     }
 
     #[test]
