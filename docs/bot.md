@@ -111,8 +111,9 @@ opens with its **problems** and cannot run; a node kind this version does not kn
 
 The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 24 kinds by family: the events on start,
 life below, pods above, a fight starts (forced: the default fight, then resume), died and an action fails (forced:
-blocked with the reason); the actions go to a zone and sit until (step 4), harvest until, go to the bank and deposit
-all but (step 5), hunt until (step 6), and notify; If, Wait and Finish; the queries life %, pods %, level, at least
+blocked with the reason); the actions go to a zone (step 4), harvest until, go to the bank and deposit
+all but (step 5), hunt until (step 6), and notify; If, Wait, Wait for life (sitting no longer gives life back
+faster: the owner, 2026-11-14) and Finish; the queries life %, pods %, level, at least
 and add; a function's entry, done return and failed return. Flow pins are `run` in, `then` out, an action's `done`
 and `failed` with its `reason`; a get has `value`, a set and a call their variable's or function's. Rust holds ids
 only: sentences, descriptions and icons are the interface's. A wire carries one type, but a percentage feeds a number.

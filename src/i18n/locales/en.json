@@ -202,10 +202,6 @@
         "sentence": "Go to {{zone}}",
         "description": "Goes into the zone."
       },
-      "sit_until": {
-        "sentence": "Sit until life is {{life}}",
-        "description": "Sits until life is back at the threshold."
-      },
       "harvest_until": {
         "sentence": "Harvest {{what}} in {{zone}} until pods are {{pods}}",
         "description": "Harvests the chosen resources in the zone until pods reach the threshold."
@@ -233,6 +229,10 @@
       "wait": {
         "sentence": "Wait {{minutes}} min",
         "description": "Waits, then what follows."
+      },
+      "wait_for_life": {
+        "sentence": "Wait for life at {{life}}",
+        "description": "Stays where it is, out of a fight, until life, which comes back alone, reaches the threshold."
       },
       "finish": {
         "sentence": "Finish",
