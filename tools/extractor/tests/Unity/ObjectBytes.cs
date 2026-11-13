@@ -17,6 +17,11 @@ internal sealed class ObjectBytes
         _bytes.AddRange(BitConverter.GetBytes(value));
     }
 
+    public void Single(float value)
+    {
+        _bytes.AddRange(BitConverter.GetBytes(value));
+    }
+
     public void Byte(byte value)
     {
         _bytes.Add(value);
