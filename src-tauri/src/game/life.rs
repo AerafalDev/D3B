@@ -77,7 +77,8 @@ fn value(kind: &Kind) -> i64 {
     numbers.iter().copied().map(i64::from).fold(0, i64::saturating_add)
 }
 
-/// The life now, and whether it is the client's count of a regeneration rather than a value the server sent.
+/// The life now, and whether it is the client's count of a regeneration still below the max rather than a value the
+/// server sent (a count at the max is the life itself).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct LifeNow {
     pub life: i64,
@@ -136,16 +137,19 @@ impl Life {
     }
 
     /// The life at `now`: the life sent plus the points regenerated since the start, rounded down, never above the max.
+    /// A count that reached the max is no estimate: the server may end the regeneration much later (a fight, a sit),
+    /// and a full life must not keep saying it regenerates (the owner, 2026-11-13).
     pub(crate) fn at(&self, now: Instant) -> Option<LifeNow> {
         let (life, max_life) = self.sent?;
         let points = self.regeneration.map_or(0, |regeneration| {
             let elapsed = now.saturating_duration_since(regeneration.since);
             i64::try_from(elapsed.as_millis() / regeneration.every.as_millis()).unwrap_or(i64::MAX)
         });
+        let life = life.saturating_add(points).min(max_life);
         Some(LifeNow {
-            life: life.saturating_add(points).min(max_life),
+            life,
             max_life,
-            estimated: self.regeneration.is_some(),
+            estimated: self.regeneration.is_some() && life < max_life,
         })
     }
 }

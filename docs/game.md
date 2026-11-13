@@ -42,7 +42,9 @@ tick, sends its view when it changed.
 - **Life** (verified on all 634 `LifeRegenEndEvent`): from `CharacterStatsEvent`, a characteristic's value being the
   sum of its numbers, max life is characteristic 0 plus 11 (vitality), and life is max life plus 97 (life lost, never
   above 0). `LifeRegenStartEvent` starts a regeneration of one point per `interval` tenths of a second (always 5),
-  life then being min(max, life at the start + elapsed / interval, rounded down), marked estimated; characteristics
+  life then being min(max, life at the start + elapsed / interval, rounded down), marked estimated until it reaches
+  the max (the server ends the regeneration only later, a fight or a sit: a full bar no longer says it regenerates,
+  the owner, 2026-11-13); characteristics
   read meanwhile replace the life at the start but keep its time; `LifeRegenEndEvent` sets life and max and ends it;
   an interval of 0 regenerates nothing. The estimate is computed in Rust at each tick: while it grows, the view
   changes, and is sent, at most twice a second.
@@ -93,7 +95,7 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
   launcher.
 - **A character's tab**, layout "A": opened from its row, named after the character once known. On the left its
   state: who (level, class, exploring or fighting), where (area, sub-area, coordinates, cell), life (marked while it
-  regenerates), pods, experience, energy, action and movement points, kamas, what is around (players, monster
+  regenerates, until it is full), pods, experience, energy, action and movement points, kamas, what is around (players, monster
   groups, NPCs, and resources: every interactive element whose state is known, harvested or not), and a line when
   frames were dropped; on the right the character's map. A connection whose protocol is off says why; a lost one
   keeps its view, marked lost.
@@ -128,7 +130,7 @@ connection's.
 ## Tests
 
 Unit tests per message on synthetic decoded messages, with an injected clock: the regeneration rounded down and capped,
-ended by `LifeRegenEndEvent` and by a fight, characteristics during it, an interval of 0; a map information that
+no longer marked once full, ended by `LifeRegenEndEvent` and by a fight, characteristics during it, an interval of 0; a map information that
 replaces whole, the same map again, against a differing `MapCurrentEvent`; an unknown actor removed or moved; an unknown
 actor kind as "other"; a second selection, with characteristics before it; staleness. The game's capture replay
 (`D3B_CAPTURES`) checks, by counts only: the life counted as each fight starts within one point of the fight's

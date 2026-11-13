@@ -141,7 +141,21 @@ fn regenerates_a_point_each_interval_rounded_down_up_to_the_max() {
     assert_eq!(at(&life, start), (400, 480, true));
     assert_eq!(at(&life, start + Duration::from_millis(499)), (400, 480, true));
     assert_eq!(at(&life, start + Duration::from_millis(1_250)), (402, 480, true));
-    assert_eq!(at(&life, start + Duration::from_secs(3_600)), (480, 480, true));
+    assert_eq!(at(&life, start + Duration::from_millis(39_999)), (479, 480, true));
+    assert_eq!(at(&life, start + Duration::from_secs(3_600)), (480, 480, false));
+}
+
+#[test]
+fn a_full_life_is_not_regenerating_while_the_server_has_not_ended_the_regeneration() {
+    // The server ends a regeneration only later (a fight, a sit), so a full life must not keep saying it regenerates
+    // (the owner, 2026-11-13): at its max the count is the life itself.
+    let start = Instant::now();
+    let mut life = Life::default();
+    life.sent(478, 480);
+    life.start(5, start);
+
+    assert_eq!(at(&life, start + Duration::from_millis(500)), (479, 480, true));
+    assert_eq!(at(&life, start + Duration::from_secs(1)), (480, 480, false));
 }
 
 #[test]
@@ -214,5 +228,5 @@ fn a_life_sent_above_its_max_shows_the_max_either_way() {
     assert_eq!(at(&life, start), (480, 480, false));
 
     life.start(5, start);
-    assert_eq!(at(&life, start), (480, 480, true));
+    assert_eq!(at(&life, start), (480, 480, false));
 }
