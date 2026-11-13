@@ -7,6 +7,7 @@ on:
       - .github/workflows/release.yml
       - scripts/notices*.ts
       - scripts/appimage-notices*.ts
+      - scripts/appimage-runtime*.ts
       - src-tauri/tauri*.json
       - src-tauri/Cargo.lock
       - package.json
@@ -19,14 +20,23 @@ concurrency:
   group: appimage-${{ github.head_ref }}
   cancel-in-progress: true
 
-env:
-  TARGET: x86_64-unknown-linux-gnu
-
 jobs:
   appimage:
-    name: AppImage notices
-    runs-on: ubuntu-22.04
+    name: AppImage notices (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: x64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - name: ARM64
+            runner: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
+    env:
+      TARGET: ${{ matrix.target }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -75,7 +85,7 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: src-tauri
-          key: appimage
+          key: appimage-${{ matrix.target }}
       - run: bun install --frozen-lockfile
       - name: Cached cargo-about
         id: cargo-about
@@ -102,6 +112,9 @@ jobs:
           packed=squashfs-root/usr/lib/D3B
           cmp "$packed/SYSTEM-LIBRARIES-NOTICES.txt" "$notices"
           grep -q "SYSTEM-LIBRARIES-NOTICES.txt beside this file" "$packed/THIRD-PARTY-NOTICES.txt"
+          grep -q "^# The AppImage's runtime and AppRun$" "$notices"
+          runtime="$("$image" --appimage-version 2>&1 | grep -o 'type2-runtime/commit/[0-9a-f]*')"
+          grep -qF "type2-runtime ${runtime##*/} (MIT): " "$notices"
           {
             echo "## $(basename "$image")"
             echo
@@ -110,5 +123,9 @@ jobs:
             echo
             echo '```'
             sed -n '1,8p' "$notices"
+            echo '```'
+            echo
+            echo '```'
+            sed -n "/^# The AppImage's runtime and AppRun$/,/^## /p" "$notices" | sed '$d'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

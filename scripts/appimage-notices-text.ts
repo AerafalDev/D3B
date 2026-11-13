@@ -26,8 +26,8 @@ const GENERATED = new Set([
 
 /**
  * Whether a file of the AppImage is not a system package's: the app's own (its binary, resources, desktop entry and
- * icons), linuxdeploy's AppRun and hooks, the caches the GTK plugin generates, and the copyright files linuxdeploy
- * copies, which the notices carry anyway.
+ * icons), AppRun, AppRun.wrapped and the hooks (their own section, scripts/appimage-runtime-text.ts), the caches the
+ * GTK plugin generates, and the copyright files linuxdeploy copies, which the notices carry anyway.
  */
 export function isOurs(path: string, product: string): boolean {
   const binary = product.toLowerCase();
@@ -119,13 +119,15 @@ export function launchpadUrl(source: string, version: string): string {
 
 /**
  * The whole file: the packages and the files each gives, each copyright file once (packages built from one source
- * often share it), the texts of the common licences they cite, and where each source package is.
+ * often share it), the texts of the common licences they cite, where each source package is, then the section on the
+ * AppImage's runtime and AppRun (scripts/appimage-runtime-text.ts).
  */
 export function systemNoticesText(input: {
   arch: string;
   distribution: string;
   packages: DebPackage[];
   licenses: Map<string, string>;
+  runtime: string;
 }): SystemNotices {
   if (input.packages.length === 0) {
     return { ok: false, error: "No system package gives the AppImage a file: the notices would list none" };
@@ -160,7 +162,8 @@ export function systemNoticesText(input: {
     `The AppImage for ${input.arch} packs the files below from the packages of ${input.distribution}: GTK, WebKitGTK`,
     "and the libraries, modules and data they need, as linuxdeploy and its GTK plugin chose them. Each package keeps",
     "its own licence: its copyright file follows in full, then the licence texts those files refer to, then where",
-    "the source of each package is. The licences of the app itself and of what it bundles are in",
+    "the source of each package is. The last section is on what no package gives: the AppImage's runtime, the",
+    "libraries it links, and AppRun. The licences of the app itself and of what it bundles are in",
     "THIRD-PARTY-NOTICES.txt, beside this file.",
     "",
     "# The packages and their files",
@@ -183,6 +186,8 @@ export function systemNoticesText(input: {
     "Launchpad page still has it (Ubuntu's `pull-lp-source <source> <version>` fetches it from there).",
     "",
     sourceLines.join("\n"),
+    "",
+    input.runtime.trim(),
     "",
   ].join("\n");
   return { ok: true, text };

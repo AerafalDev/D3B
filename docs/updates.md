@@ -80,11 +80,28 @@ system's libraries and carry no such file (the owner's choices, 2026-11-13: a fi
   one, `pull-lp-source` fetching older ones from Launchpad (the owner's choice, 2026-11-13, over
   attaching the sources to each release, which a strict reading of GPL-2 §3 and LGPL-2.1 §6 would prefer, about
   300 MB a release).
-- **Checked on PRs**: `.github/workflows/appimage.yml` builds the x64 AppImage in the same two passes on the pull
-  requests that touch the release workflow, the notices' scripts, Tauri's configurations, `Cargo.lock`, or
+- **The runtime and AppRun**, which no package gives, close the file in a section of their own
+  (`scripts/appimage-runtime-text.ts`; the owner's choices, 2026-11-13: read from the build, the licence texts fetched
+  at the versions used, the GTK hook included). linuxdeploy-plugin-appimage's appimagetool (both "continuous")
+  downloads type2-runtime's continuous build at every build and prepends it; the first pass asks the AppImage which
+  (`--appimage-version` prints its commit), fetches type2-runtime's `Makefile`, `install-dependencies.sh` and
+  `Dockerfile` at that commit, and reads from them the libraries the runtime links statically: libfuse (LGPL-2.1,
+  with the tarball's sha256 and type2-runtime's patches), squashfuse, and zstd, zlib, mimalloc and musl from Alpine's
+  packages, whose versions the runtime does not record: their texts are upstream's at the tags Alpine 3.21 had when
+  fedfad5 was built (2026-10-19). Then `AppRun.wrapped`, AppImageKit's AppRun (MIT) that Tauri copies from tauri-apps'
+  `apprun-old` and linuxdeploy renames, matched by its sha256 per architecture; `AppRun`, the script linuxdeploy
+  writes in its place (its commit read from the name Tauri caches it under, `~/.cache/tauri/linuxdeploy-<commit>-<arch>.AppImage`);
+  and the GTK plugin's hook. Each piece's licence text is fetched from its project at that version, and LGPL-2.1's
+  from `/usr/share/common-licenses`, among the others. The sources name type2-runtime's tree at the commit, whose
+  scripts rebuild the runtime, and libfuse's and squashfuse's tarballs. A library the table does not know, a changed
+  AppRun, another hook, or a text that does not fetch fails the notices. appimagetool downloads the runtime again for
+  the shipped build, so `release.yml` then checks that AppImage starts with the runtime its notices name.
+- **Checked on PRs**: `.github/workflows/appimage.yml` builds the x64 and ARM64 AppImages in the same two passes on
+  the pull requests that touch the release workflow, the notices' scripts, Tauri's configurations, `Cargo.lock`, or
   `package.json` and `bun.lock`, which pin Tauri's CLI and so linuxdeploy and its GTK plugin (the owner's choices,
-  2026-11-13), and checks the AppImage holds the file it wrote and that `THIRD-PARTY-NOTICES.txt`
-  names it. A Linux build of the release configuration outside these workflows needs the file to exist: run
+  2026-11-13; ARM64 since the runtime's section, as AppRun differs per architecture), and checks the AppImage holds
+  the file it wrote, that `THIRD-PARTY-NOTICES.txt` names it, and that the runtime's section names the runtime the
+  AppImage starts with. A Linux build of the release configuration outside these workflows needs the file to exist: run
   `scripts/appimage-notices.ts` first.
 
 ## The channel
