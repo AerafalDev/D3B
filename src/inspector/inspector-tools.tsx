@@ -13,11 +13,11 @@ const ARROWS = { all: "", client: "↑ ", server: "↓ " } as const;
  * pressed while the list stands still, with how many frames arrived meanwhile.
  */
 export function InspectorTools() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const side = useInspector((store) => store.side);
   const name = useInspector((store) => store.name);
   const paused = useInspector((store) => store.paused);
-  const held = useInspector((store) => store.held.length);
+  const arrived = useInspector((store) => store.arrived);
   const { setSide, setName, pause } = useInspector.getState();
 
   return (
@@ -53,7 +53,11 @@ export function InspectorTools() {
           className="text-text placeholder:text-text-faint min-w-0 flex-1 bg-transparent outline-none"
         />
       </label>
-      {paused && <span className="text-text-muted whitespace-nowrap">{t("inspector.held", { count: held })}</span>}
+      {paused && (
+        <span className="text-text-muted whitespace-nowrap">
+          {t("inspector.held", { count: arrived, formatted: new Intl.NumberFormat(i18n.language).format(arrived) })}
+        </span>
+      )}
       <IconButton label={t("inspector.pause")} pressed={paused} onClick={() => pause(!paused)}>
         <Icon name="pause" />
       </IconButton>

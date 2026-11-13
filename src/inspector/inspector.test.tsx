@@ -82,8 +82,18 @@ describe("the inspector", () => {
   beforeEach(() => {
     useLayout.setState({ visible: { primarySideBar: true, panel: true, secondarySideBar: false } });
     useEditors.setState({ active: "character:1" });
-    useInspector.setState({ connection: 1, frames: [frame], selected: null, detail: null, side: "all", name: "" });
-    useInspector.getState().pause(false);
+    useInspector.setState({
+      connection: 1,
+      frames: [frame],
+      selected: null,
+      secret: false,
+      detail: null,
+      side: "all",
+      name: "",
+      paused: false,
+      held: [],
+      arrived: 0,
+    });
     relay([connection()]);
   });
   afterEach(cleanup);
@@ -190,12 +200,8 @@ describe("the inspector", () => {
     expect(screen.getByRole("button", { current: true }).textContent).toContain("MapCurrentEvent");
   });
 
-  it("says a secret frame's content is never kept", () => {
-    useInspector.setState({
-      frames: [{ ...frame, outcome: "secret", name: "koh", readable: null }],
-      selected: 7,
-      detail: { kind: "detail", lines: [] },
-    });
+  it("says a secret frame's content is never kept, even once the frame left the list", () => {
+    useInspector.setState({ frames: [], selected: 7, secret: true, detail: { kind: "detail", lines: [] } });
     renderPanel();
 
     expect(detail()).toBe("A secret frame: neither its content nor its bytes are kept.");
@@ -205,10 +211,17 @@ describe("the inspector", () => {
     useInspector.setState({ selected: 7, detail: { kind: "gone" } });
     renderPanel();
 
-    expect(detail()).toBe("This frame is no longer kept: only the last 3,000 are.");
+    expect(detail()).toBe("This frame is no longer kept: only the most recent are.");
   });
 
-  it("shows one side's frames, and those whose readable or build name holds the filter", () => {
+  it("says when the connection of the frame chosen closed", () => {
+    useInspector.setState({ selected: 7, detail: { kind: "closed" } });
+    renderPanel();
+
+    expect(detail()).toBe("No frames kept.");
+  });
+
+  it("shows one side's frames, and those whose name as listed holds the filter", () => {
     useInspector.setState({ frames: [frame, unpinned] });
     renderPanel();
 
@@ -221,6 +234,11 @@ describe("the inspector", () => {
     expect(listed()).toContain("MapCurrentEvent");
     expect(listed()).not.toContain("lok");
 
+    // A pinned frame is listed by its readable name: its build's, unseen, does not match.
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "jow" } });
+    expect(screen.getByText("No frame matches.")).toBeDefined();
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "LO" } });
+    expect(listed()).toContain("lok");
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Fight" } });
     expect(screen.getByText("No frame matches.")).toBeDefined();
   });
@@ -229,10 +247,10 @@ describe("the inspector", () => {
     renderPanel();
 
     fireEvent.click(screen.getByRole("button", { name: "Pause" }));
-    act(() => useInspector.setState({ held: [unpinned] }));
+    act(() => useInspector.setState({ held: [unpinned], arrived: 7000 }));
 
     expect(screen.getByRole("button", { name: "Pause" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByText("1 arrived since the pause")).toBeDefined();
+    expect(screen.getByText("7,000 arrived since the pause")).toBeDefined();
     expect(listed()).not.toContain("lok");
   });
 });

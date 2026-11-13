@@ -28,9 +28,7 @@ export function FrameDetail() {
   const { t } = useTranslation();
   const selected = useInspector((store) => store.selected);
   const detail = useInspector((store) => store.detail);
-  const secret = useInspector(
-    (store) => store.frames.find((frame) => frame.number === store.selected)?.outcome === "secret",
-  );
+  const secret = useInspector((store) => store.secret);
 
   let content = null;
   if (selected === null || detail === null) {

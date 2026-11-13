@@ -24,7 +24,7 @@ export function Inspector() {
   const select = useInspector((store) => store.select);
   const side = useInspector((store) => store.side);
   const name = useInspector((store) => store.name);
-  // A frame shows when its side is shown and its readable name, or the build's, holds the filter's text.
+  // A frame shows when its side is shown and its name as listed (the readable one, else the build's) holds the text.
   const shows = useMemo(() => {
     const text = name.trim().toLowerCase();
     if (side === "all" && text === "") {
@@ -32,7 +32,7 @@ export function Inspector() {
     }
     return (frame: FrameSummary) =>
       (side === "all" || frame.fromClient === (side === "client")) &&
-      [frame.readable, frame.name].some((one) => one?.toLowerCase().includes(text) ?? false);
+      (frame.readable ?? frame.name ?? "").toLowerCase().includes(text);
   }, [side, name]);
   const protocol = useRelay((store) => store.status?.connections.find((one) => one.number === connection)?.protocol);
 

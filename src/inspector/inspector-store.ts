@@ -22,12 +22,16 @@ interface InspectorStore {
   frames: FrameSummary[];
   /** The number of the frame chosen, whose detail shows. */
   selected: number | null;
+  /** Whether the frame chosen is a secret, as listed when chosen: it may leave the list before its detail is read. */
+  secret: boolean;
   /** The chosen frame's detail, or why it has none; `null` until the back end answers. */
   detail: FrameAnswer | null;
   /** Whether the list is paused: the frames streamed meanwhile are held, not listed. */
   paused: boolean;
   /** The frames streamed while paused, at most [`KEPT`]. */
   held: FrameSummary[];
+  /** How many frames arrived while paused, those beyond what is held and the back end's skipped ones included. */
+  arrived: number;
   /** The side shown, and the text a frame's name must hold to be shown; kept from one connection to the next. */
   side: SideShown;
   name: string;
@@ -70,7 +74,7 @@ let turn = 0;
 let choice = 0;
 
 // What a watch starts from: nothing listed, chosen or held.
-const FRESH = { frames: [], selected: null, detail: null, paused: false, held: [] };
+const FRESH = { frames: [], selected: null, secret: false, detail: null, paused: false, held: [], arrived: 0 };
 
 export const useInspector = create<InspectorStore>((set, get) => ({
   connection: null,
@@ -91,7 +95,8 @@ export const useInspector = create<InspectorStore>((set, get) => ({
     }
     void commands.inspectorWatch(connection).then((kept) => {
       if (mine === turn && connection !== null) {
-        set({ frames: merged(get().frames, kept) });
+        // Paused since the watch began, the list stands still: the frames kept wait with those held.
+        set((store) => (store.paused ? { held: merged(store.held, kept) } : { frames: merged(store.frames, kept) }));
       }
     });
   },
@@ -100,7 +105,8 @@ export const useInspector = create<InspectorStore>((set, get) => ({
     const connection = get().connection;
     choice += 1;
     const mine = choice;
-    set({ selected: number, detail: null });
+    const secret = get().frames.some((frame) => frame.number === number && frame.outcome === "secret");
+    set({ selected: number, secret, detail: null });
     if (connection === null || !isTauri()) {
       return;
     }
@@ -112,7 +118,9 @@ export const useInspector = create<InspectorStore>((set, get) => ({
   },
 
   pause: (paused) =>
-    set((store) => (paused ? { paused } : { paused, frames: merged(store.frames, store.held), held: [] })),
+    set((store) =>
+      paused ? { paused, arrived: 0 } : { paused, frames: merged(store.frames, store.held), held: [], arrived: 0 },
+    ),
 
   setSide: (side) => set({ side }),
   setName: (name) => set({ name }),
@@ -123,10 +131,12 @@ export const useInspector = create<InspectorStore>((set, get) => ({
     }
     let live = true;
     const unlisten = events.inspectorFrames.listen((event) => {
-      const { connection, frames } = event.payload;
+      const { connection, frames, skipped } = event.payload;
       if (live && connection === get().connection) {
         set((store) =>
-          store.paused ? { held: merged(store.held, frames) } : { frames: merged(store.frames, frames) },
+          store.paused
+            ? { held: merged(store.held, frames), arrived: store.arrived + frames.length + skipped }
+            : { frames: merged(store.frames, frames) },
         );
       }
     });

@@ -61,7 +61,16 @@ function numbers(): number[] {
 
 describe("useInspector", () => {
   beforeEach(() => {
-    useInspector.setState({ connection: null, frames: [], selected: null, detail: null, paused: false, held: [] });
+    useInspector.setState({
+      connection: null,
+      frames: [],
+      selected: null,
+      secret: false,
+      detail: null,
+      paused: false,
+      held: [],
+      arrived: 0,
+    });
     backEnd.listener = null;
     backEnd.asked = [];
     backEnd.details = [];
@@ -164,12 +173,23 @@ describe("useInspector", () => {
     expect(useInspector.getState().selected).toBe(2);
   });
 
-  it("forgets the frame chosen once another connection is watched", () => {
-    useInspector.setState({ connection: 3, frames: frames(1, 2), selected: 2, detail: { kind: "gone" } });
+  it("forgets the frame chosen once another connection is watched, and drops its detail answered late", async () => {
+    useInspector.setState({ connection: 3, frames: frames(1, 2) });
+    useInspector.getState().select(2);
 
     useInspector.getState().watch(5);
+    backEnd.details.at(-1)?.({ kind: "gone" });
+    await Promise.resolve();
 
     expect(useInspector.getState()).toMatchObject({ selected: null, detail: null });
+  });
+
+  it("remembers that the frame chosen is a secret", () => {
+    useInspector.setState({ connection: 3, frames: [{ ...frame(1), outcome: "secret" }] });
+
+    useInspector.getState().select(1);
+
+    expect(useInspector.getState().secret).toBe(true);
   });
 
   it("holds the frames streamed while paused, counts them, and lists them once resumed", async () => {
@@ -180,9 +200,10 @@ describe("useInspector", () => {
     await vi.waitFor(() => expect(numbers()).toEqual([1, 2]));
 
     useInspector.getState().pause(true);
-    backEnd.listener?.({ payload: { connection: 3, frames: frames(3, 5), skipped: 0 } });
+    backEnd.listener?.({ payload: { connection: 3, frames: frames(3, 5), skipped: 4 } });
     expect(numbers()).toEqual([1, 2]);
     expect(useInspector.getState().held).toHaveLength(3);
+    expect(useInspector.getState().arrived).toBe(7);
 
     useInspector.getState().pause(false);
     expect(numbers()).toEqual([1, 2, 3, 4, 5]);
@@ -198,5 +219,17 @@ describe("useInspector", () => {
     backEnd.listener?.({ payload: { connection: 3, frames: frames(1, KEPT + 10), skipped: 0 } });
 
     expect(useInspector.getState().held).toHaveLength(KEPT);
+    expect(useInspector.getState().arrived).toBe(KEPT + 10);
+  });
+
+  it("holds the frames kept that answer after the pause", async () => {
+    useInspector.getState().watch(3);
+    useInspector.getState().pause(true);
+
+    backEnd.answers.at(-1)?.(frames(1, 2));
+    await Promise.resolve();
+
+    expect(numbers()).toEqual([]);
+    expect(useInspector.getState().held).toHaveLength(2);
   });
 });
