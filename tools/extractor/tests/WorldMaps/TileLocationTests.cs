@@ -35,7 +35,9 @@ public sealed class TileLocationTests
     public void AKeyWithoutATextureAndASpriteOrATextureWithoutKeyIsRefused()
     {
         Refused("not one of each", container: [("a", 0, 10), ("a", 0, 20), ("b", 0, 21)]);
+        Refused("not one of each", container: [("a", 0, 10), ("a", 0, 20), ("b", 0, 11)]);
         Refused("not one of each", textures: new(Textures()) { [12] = Texture("3", 1024, 1024) });
+        Refused("not one of each", sprites: new(Sprites()) { [22] = Sprite("3", 10) });
     }
 
     [Theory]
@@ -43,6 +45,8 @@ public sealed class TileLocationTests
     [InlineData("worldmaps/1/0.5/2.png")]
     [InlineData("maps/1/0.5/2.jpg")]
     [InlineData("worldmaps/1/0.5/b.jpg")]
+    [InlineData("x/worldmaps/1/0.5/2.jpg")]
+    [InlineData("worldmaps/1/0.5/2.jpg.bak")]
     public void AKeyWithoutTheAddressOfATileIsRefused(string? address)
     {
         Dictionary<string, string> addresses = new() { ["a"] = "worldmaps/1/0.5/1.jpg" };
@@ -104,9 +108,9 @@ public sealed class TileLocationTests
     public void ATextureThatIsNotOneLevelOfBc7WithinATileIsRefused(int width, int height, int format, int mips, int images, int extra)
     {
         var texture = Texture("1", width, height, format, mips, images, Blocks(width, height) + extra);
-        var error = Assert.Throws<InvalidDataException>(() => WorldMapTables.TexelBytes((1, 100, 1), texture));
+        var error = Assert.Throws<InvalidDataException>(() => WorldMapTables.TexelBytes((2, 100, 1), texture));
 
-        Assert.Contains("Tile 1 of world 1 at 100 %", error.Message, StringComparison.Ordinal);
+        Assert.Contains("Tile 1 of world 2 at 100 %", error.Message, StringComparison.Ordinal);
         Assert.Contains("not one level of BC7 in a tile", error.Message, StringComparison.Ordinal);
     }
 

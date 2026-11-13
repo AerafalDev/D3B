@@ -83,6 +83,9 @@ public sealed class WorldSizeTests
         tiles[(1, 100, 4)] = (976, 80, 100);
         Refused([WorldRecord(1, 2000, 1100, 1)], tiles, "Tile 4 of world 1 at 100 % is missing or not 976x76");
 
+        tiles[(1, 100, 4)] = (900, 76, 100);
+        Refused([WorldRecord(1, 2000, 1100, 1)], tiles, "Tile 4 of world 1 at 100 % is missing or not 976x76");
+
         tiles = Cut(1, 100, 2000, 1100).ToDictionary();
         tiles[(1, 100, 2)] = (976, 1000, 100);
         Refused([WorldRecord(1, 2000, 1100, 1)], tiles, "Tile 2 of world 1 at 100 % is missing or not 976x1024");
