@@ -135,7 +135,11 @@ _Updated 2026-11-13._
   view (done in code, #189), a character's tab (layout "A", done in code, #190), the character's map in the tab
   (the owner's style "B": discreet diamonds, actors as dots; done in code, #191). The status bar, the owner's layout "A" (2026-11-13): the
   app's version and the game data's build (done in code, #193), the relay's item and its hover (done in code, #194), the
-  update offer (done in code, #195). A renderer of the actors' sprites
+  update offer (done in code, #195). The packages carry the font's, Lucide's and every bundled package's and
+  crate's licences as `THIRD-PARTY-NOTICES.txt` (the owner, 2026-11-13; done in code,
+  [updates.md](updates.md#third-party-notices)), so the font's licence no longer holds the next release back. One
+  piece still does: the system libraries the AppImage packs (GTK, WebKitGTK), whose licences a PR of its own adds,
+  read from a Linux build. A renderer of the actors' sprites
   was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The relay's
   items 1, 2, 4, 7, 8 and 9 were measured again in it by the owner on 2026-11-13; the protocol's items that read the
   inspector, on the same day. The bot's model decided for step 3 (blueprints, zones, routes, settings) holds.
