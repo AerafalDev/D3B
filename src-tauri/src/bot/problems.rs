@@ -174,6 +174,13 @@ mod tests {
         read(HARVEST).unwrap_or_else(|error| panic!("{error}"))
     }
 
+    fn found_in(blueprint: &Blueprint, expected: impl IntoIterator<Item = Problem>) {
+        let found = problems(blueprint);
+        for problem in expected {
+            assert!(found.contains(&problem), "{problem:?} not in {found:?}");
+        }
+    }
+
     #[test]
     fn a_whole_blueprint_has_no_problem() {
         assert_eq!(problems(&harvest()), []);
@@ -186,13 +193,8 @@ mod tests {
         blueprint.variables[0].id = id("Zone");
         blueprint.graphs[1].id = id("bank!");
         blueprint.graphs[0].nodes[0].id = id("N1");
-        let found = problems(&blueprint);
-        for bad in ["Automatic harvest", "Zone", "bank!", "N1"] {
-            assert!(
-                found.contains(&Problem::MalformedId { id: id(bad) }),
-                "{bad}: {found:?}"
-            );
-        }
+        let bad = ["Automatic harvest", "Zone", "bank!", "N1"];
+        found_in(&blueprint, bad.map(|bad| Problem::MalformedId { id: id(bad) }));
     }
 
     #[test]
@@ -201,21 +203,14 @@ mod tests {
         blueprint.variables[1].id = id("zone");
         blueprint.graphs[1].id = id("events");
         blueprint.graphs[0].nodes[1].id = id("n1");
-        let found = problems(&blueprint);
-        assert!(
-            found.contains(&Problem::VariableTwice { variable: id("zone") }),
-            "{found:?}"
-        );
-        assert!(
-            found.contains(&Problem::GraphTwice { graph: id("events") }),
-            "{found:?}"
-        );
-        assert!(
-            found.contains(&Problem::NodeTwice {
-                graph: id("events"),
-                node: id("n1")
-            }),
-            "{found:?}"
+        let node = Problem::NodeTwice {
+            graph: id("events"),
+            node: id("n1"),
+        };
+        let graph = Problem::GraphTwice { graph: id("events") };
+        found_in(
+            &blueprint,
+            [Problem::VariableTwice { variable: id("zone") }, graph, node],
         );
     }
 
