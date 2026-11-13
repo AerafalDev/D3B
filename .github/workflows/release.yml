@@ -123,6 +123,11 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.release-please.outputs.tag }}
         run: echo "id=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .id)" >> "$GITHUB_OUTPUT"
+      - name: The AppImage's system libraries, read from a first build
+        if: runner.os == 'Linux'
+        env:
+          TARGET: ${{ matrix.target }}
+        run: bun scripts/appimage-notices.ts "$TARGET"
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
