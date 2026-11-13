@@ -217,23 +217,19 @@ mod tests {
     #[test]
     fn a_function_parameter_given_twice_is_a_problem() {
         let mut blueprint = harvest();
-        let signature = blueprint.graphs[1]
-            .function
-            .as_mut()
-            .unwrap_or_else(|| panic!("a function"));
+        let bank = |blueprint: &mut Blueprint| blueprint.graphs[1].function.take().unwrap_or_else(|| panic!("a bank"));
+        let mut signature = bank(&mut blueprint);
         signature.inputs.push(signature.inputs[0].clone());
+        blueprint.graphs[1].function = Some(signature);
         let twice = Problem::ParameterTwice {
             graph: id("empty_at_bank"),
             parameter: id("bank"),
         };
         assert_eq!(problems(&blueprint), [twice]);
         // An output may share an input's id: they are read on either side of the call.
-        let signature = blueprint.graphs[1]
-            .function
-            .as_mut()
-            .unwrap_or_else(|| panic!("a function"));
-        let input = signature.inputs.pop().unwrap_or_else(|| panic!("an input"));
-        signature.outputs.push(input);
+        let mut signature = bank(&mut blueprint);
+        signature.outputs.extend(signature.inputs.pop());
+        blueprint.graphs[1].function = Some(signature);
         assert_eq!(problems(&blueprint), []);
     }
 
@@ -241,10 +237,8 @@ mod tests {
     fn a_default_its_type_does_not_hold_is_a_problem() {
         let mut blueprint = harvest();
         blueprint.variables[1].default = json!("ninety");
-        assert_eq!(
-            problems(&blueprint),
-            [Problem::DefaultNotOfType { variable: id("pods") }]
-        );
+        let problem = Problem::DefaultNotOfType { variable: id("pods") };
+        assert_eq!(problems(&blueprint), [problem]);
     }
 
     #[test]
@@ -252,36 +246,27 @@ mod tests {
         for (variable, bounds) in [(0, [0, 10]), (1, [50, 40]), (1, [-1, 100]), (1, [10, 101])] {
             let mut blueprint = harvest();
             blueprint.variables[variable].bounds = Some(bounds);
-            let id = blueprint.variables[variable].id.clone();
-            assert_eq!(
-                problems(&blueprint),
-                [Problem::WrongBounds { variable: id }],
-                "{bounds:?}"
-            );
+            let problem = Problem::WrongBounds {
+                variable: blueprint.variables[variable].id.clone(),
+            };
+            assert_eq!(problems(&blueprint), [problem], "{bounds:?}");
         }
     }
 
     #[test]
-    fn a_default_out_of_its_bounds_is_a_problem_at_either_end() {
-        for (default, bounds) in [(9, [10, 100]), (100, [10, 99])] {
+    fn a_default_out_of_its_bounds_is_a_problem_at_either_end_and_the_bounds_are_included() {
+        let out = || vec![Problem::DefaultOutOfBounds { variable: id("pods") }];
+        let cases = [
+            (9, [10, 100], out()),
+            (100, [10, 99], out()),
+            (10, [10, 100], vec![]),
+            (100, [10, 100], vec![]),
+        ];
+        for (default, bounds, expected) in cases.into_iter().chain([(50, [50, 50], vec![]), (0, [0, 100], vec![])]) {
             let mut blueprint = harvest();
             blueprint.variables[1].default = json!(default);
             blueprint.variables[1].bounds = Some(bounds);
-            assert_eq!(
-                problems(&blueprint),
-                [Problem::DefaultOutOfBounds { variable: id("pods") }],
-                "{default}"
-            );
-        }
-        for (default, bounds) in [(10, [10, 100]), (100, [10, 100]), (50, [50, 50]), (0, [0, 100])] {
-            let mut blueprint = harvest();
-            blueprint.variables[1].default = json!(default);
-            blueprint.variables[1].bounds = Some(bounds);
-            assert_eq!(
-                problems(&blueprint),
-                [],
-                "the bounds are included: {default} in {bounds:?}"
-            );
+            assert_eq!(problems(&blueprint), expected, "{default} in {bounds:?}");
         }
     }
 
@@ -319,12 +304,11 @@ mod tests {
             to: End(id(to), id("run")),
         };
         blueprint.graphs[0].wires.extend([wire("n9", "n3"), wire("n1", "n8")]);
-        let found = problems(&blueprint);
         let at = |node: &str| Problem::WireToNoNode {
             graph: id("events"),
             node: id(node),
         };
-        assert_eq!(found, [at("n9"), at("n8")]);
+        assert_eq!(problems(&blueprint), [at("n9"), at("n8")]);
     }
 
     #[test]
@@ -332,13 +316,11 @@ mod tests {
         let mut blueprint = harvest();
         let first = blueprint.graphs[0].wires[0].clone();
         blueprint.graphs[0].wires.push(first);
-        assert_eq!(
-            problems(&blueprint),
-            [Problem::WireTwice {
-                graph: id("events"),
-                from: id("n1"),
-                to: id("n3")
-            }]
-        );
+        let problem = Problem::WireTwice {
+            graph: id("events"),
+            from: id("n1"),
+            to: id("n3"),
+        };
+        assert_eq!(problems(&blueprint), [problem]);
     }
 }
