@@ -1,10 +1,11 @@
 //! The game data packed in the app.
 //!
 //! The .NET extractor (`tools/extractor`) writes one folder per client build: a `manifest.json` that lists every file
-//! with its SHA-256, the JSON tables (the large ones in shards) and the world map's tiles. A `client-<build>` release
+//! with its SHA-256, the JSON tables (the large ones in shards), the world map's tiles and the breeds' heads. A `client-<build>` release
 //! asset carries that folder; the release workflow puts it in `data/`, which Tauri bundles as a resource. Nothing
 //! extracted from the client is ever committed (`docs/data.md`).
 
+mod breeds;
 mod game_data;
 mod graph;
 mod manifest;
@@ -27,5 +28,16 @@ pub use maps::{MapData, read_map};
 pub use world::{MapPosition, World};
 
 /// The format of the folder this version of the code reads. The extractor writes the same number in the manifest
-/// (`DataFolder.Format`); a different one is refused rather than half read.
-pub const FORMAT: u32 = 1;
+/// (`DataFolder.Format`); a different one is refused rather than half read. Format 2 adds the breeds and their heads.
+pub const FORMAT: u32 = 2;
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn the_release_fetches_the_data_of_this_format() {
+        // The release workflow and `data:fetch` download the asset of the format `.github/game-data.json` names.
+        let text = include_str!("../../../.github/game-data.json");
+        let config: serde_json::Value = serde_json::from_str(text).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(config["format"].as_u64(), Some(u64::from(super::FORMAT)));
+    }
+}

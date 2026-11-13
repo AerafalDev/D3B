@@ -144,7 +144,7 @@ mod tests {
         )
         .unwrap_or_else(|error| panic!("{error}"));
         let manifest = Manifest::parse(
-            r#"{"format":1,"build":"0","extractor":"0","tables":[{"name":"maps/7","path":"maps/7.json","sha256":"00"}]}"#,
+            r#"{"format":2,"build":"0","extractor":"0","tables":[{"name":"maps/7","path":"maps/7.json","sha256":"00"}]}"#,
         )
         .unwrap_or_else(|error| panic!("{error}"));
         let read = read_shard(&folder, &manifest, 7);
@@ -165,7 +165,7 @@ mod tests {
         std::fs::create_dir_all(folder.join("maps")).unwrap_or_else(|error| panic!("{error}"));
         std::fs::write(folder.join("maps/7.json"), MAPS).unwrap_or_else(|error| panic!("{error}"));
         let manifest = Manifest::parse(
-            r#"{"format":1,"build":"0","extractor":"0","tables":[{"name":"maps/7","path":"maps/7.json","sha256":"00"}]}"#,
+            r#"{"format":2,"build":"0","extractor":"0","tables":[{"name":"maps/7","path":"maps/7.json","sha256":"00"}]}"#,
         )
         .unwrap_or_else(|error| panic!("{error}"));
 

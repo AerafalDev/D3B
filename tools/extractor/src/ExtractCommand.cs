@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics;
 using System.Reflection;
+using D3B.Extractor.Breeds;
 using D3B.Extractor.Code;
 using D3B.Extractor.Graph;
 using D3B.Extractor.Maps;
@@ -110,6 +111,7 @@ internal static class ExtractCommand
         var (positions, zaaps) = WorldTables.Extract(client, texts, code, folder, output);
 
         WorldMapTables.Extract(client, texts, folder, output);
+        BreedTables.Extract(client, texts, folder, output);
 
         var maps = MapTables.Extract(client, folder, output);
 
