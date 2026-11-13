@@ -2,19 +2,18 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Icon } from "@/icons/icon.tsx";
-import type { IconName } from "@/icons/icons.ts";
 import { isTauri } from "@/lib/tauri.ts";
 import { cn } from "@/lib/utils.ts";
+import { WindowGlyph, type WindowGlyphName } from "./window-glyph.tsx";
 
 interface ControlProps {
   label: string;
-  icon: IconName;
+  glyph: WindowGlyphName;
   onClick: () => void;
   danger?: boolean;
 }
 
-function Control({ label, icon, onClick, danger }: ControlProps) {
+function Control({ label, glyph, onClick, danger }: ControlProps) {
   return (
     <button
       type="button"
@@ -26,7 +25,7 @@ function Control({ label, icon, onClick, danger }: ControlProps) {
         danger ? "hover:bg-[#e81123] focus-visible:bg-[#e81123]" : "hover:bg-hover focus-visible:bg-hover",
       )}
     >
-      <Icon name={icon} />
+      <WindowGlyph name={glyph} />
     </button>
   );
 }
@@ -67,13 +66,13 @@ export function WindowControls() {
 
   return (
     <div className="flex h-full">
-      <Control label={t("shell.window.minimize")} icon="windowMinimize" onClick={() => act("minimize")} />
+      <Control label={t("shell.window.minimize")} glyph="minimize" onClick={() => act("minimize")} />
       <Control
         label={maximized ? t("shell.window.restore") : t("shell.window.maximize")}
-        icon={maximized ? "windowRestore" : "windowMaximize"}
+        glyph={maximized ? "restore" : "maximize"}
         onClick={() => act("toggleMaximize")}
       />
-      <Control label={t("shell.window.close")} icon="windowClose" onClick={() => act("close")} danger />
+      <Control label={t("shell.window.close")} glyph="close" onClick={() => act("close")} danger />
     </div>
   );
 }

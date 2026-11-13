@@ -61,7 +61,8 @@ The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout w
 - **Lucide's icons** for every icon (the owner, 2026-11-13, replacing the JetBrains icons chosen on 2026-11-12):
   `lucide-react`, ISC, already the shadcn components'; `src/icons/icons.ts` names those in use. Drawn grey (`#ced0d6`)
   with a 1.5 px stroke; colour only for a warning (yellow), an error (red) and the update offer (orange). The app's
-  packages must carry the font's licence before the next release.
+  packages must carry the font's licence before the next release. The one exception: the window's buttons on
+  Windows draw Windows 11's own glyphs, 10 px with a 1 px line (the owner, 2026-11-13).
 - No part ever shows a native scrollbar while it resizes; a scrollbar, where content scrolls, is VS Code's: 10 px, no
   arrows, a translucent thumb.
 
