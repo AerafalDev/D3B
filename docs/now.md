@@ -88,6 +88,16 @@ _Updated 2026-11-13._
        names holding it; choose "↑ Client": only the client's; press the pause: the list stops and says how many
        arrived, press it again: they are listed; switch to a second character's tab: its own frames and counts;
     9. click a "secret" row: the detail says its content is never kept.
+  - **the breed in a character's tab** (the owner, 2026-11-13: its name in the player's language and its head, 40 px in
+    a rounded square in place of the initials, chosen from mock-ups; then the same in the Characters list), a stack
+    against `next`: (1) the data's format 2, `breeds.json` and the 38 heads, named in a second asset of the build's
+    release (done in code); (2) the character's sex, read from its look; (3) the tab's breed name and head; (4) the
+    Characters list's head. On Windows x64:
+    1. `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
+       `artifacts/data/client-3.7.13.17-format2.tar.gz`;
+    2. on the owner's go, that archive joins the `client-3.7.13.17` release (`data` skill); then `bun run data:fetch
+       3.7.13.17` fills `data/` with format 2, and `bun run app`'s status bar says "Client 3.7.13.17". Until it is
+       published, `data:fetch` and a release find no data of format 2.
   - **the live view's life** (the owner's report of 2026-11-13, fixed): after a fight, stand still out of combat: the
     character's tab says "Vie — en régénération" while the bar fills, and no longer once it is full, before any sit
     or fight.
@@ -100,7 +110,8 @@ _Updated 2026-11-13._
   for the map reader's, in both layouts (`tests/Maps/TestMap.cs`).
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go; `.github/game-data.json` names it, so the next release packs it.
-  v0.11.0 shipped without data, named before. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
+  v0.11.0 shipped without data, named before. Format 2 (the breeds) is not published yet: `client-3.7.13.17-format2.tar.gz`
+  waits for the owner's extraction and go. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
   and the relay, with installers for the six targets and its `latest.json` on `updater-next`; **v0.13.0**, on
   2026-11-11, adds the game connection split into frames.
 - **Done in code, step 2's relay**: the redirect, the connection phase and its one rewrite, the game connection, the
