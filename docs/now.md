@@ -12,8 +12,9 @@ _Updated 2026-11-13._
   relay's item 11, testers on macOS and Linux) or on the owner's measures taken alongside (the breed, the life's fix),
   so the owner granted on 2026-11-13 an exception to "the next feature does not start": step 3, the bot's
   model, was designed, from mock-ups then a prototype in the real shell (local branch `prototype/step3-model`, never
-  merged), and written in [docs/bot.md](bot.md) (ADRs 0014 and 0015). Its code waits until step 2 is measured or the
-  owner says otherwise.
+  merged), and written in [docs/bot.md](bot.md) (ADRs 0014 and 0015). On 2026-11-13 the owner granted a second
+  exception: step 2 is measured on Windows but for items that wait on those outside events, so step 3's code starts
+  now, its stack below.
 - **Done**: the rewrite starts on branch `next`, which will replace the C# version on `main`. The Tauri 2 + React 19
   shell, the typed IPC, the packed data's manifest, i18n FR/EN, the Claude setup (`CLAUDE.md`, `.claude/`), CI on
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
@@ -178,9 +179,14 @@ _Updated 2026-11-13._
   was studied, then dropped by the owner on 2026-11-13: the client's sprites would take too much room. The relay's
   items 1, 2, 4, 7, 8 and 9 were measured again in it by the owner on 2026-11-13; the protocol's items that read the
   inspector, on the same day. Step 3's model is in [docs/bot.md](bot.md) (below).
-- **Next, step 3** ([bot.md](bot.md)), not started: a stack of PRs against `next`, one behaviour each, measured as
-  they show something. First two studies: a character's key across servers (and which message names the server), and
-  what the server sends on a death. Then (1) `bot`: the blueprint, its JSON and its validation; (2) the catalogue of
+- **Next, step 3** ([bot.md](bot.md)), started on 2026-11-13 (the owner's exception above): a stack of PRs against
+  `next`, one behaviour each, measured as they show something. First two studies, done on 2026-11-13 from the owner's
+  captures (`artifacts/studies/character-key.md`, `death.md`): a character's id carries its server in its low 16
+  bits (verified on two servers), so a character's file is `<server>-<id>.json`, no new pin; a death is the fight
+  end's result for the character lost, which needs one new pin (`GameFightEnd`'s results), life back at half and
+  energy down by ten times the level (verified on 21 lost fights). Then (1) `bot`: the blueprint, its JSON
+  and its validation (done in code: its file's shape in [bot.md](bot.md#storage), the layout under its own key, a
+  variable both set per character and memory allowed, as Unreal, the owner's choices of 2026-11-13); (2) the catalogue of
   nodes; (3) `storage`: `Documents/D3B`, atomic writes, a newer schema refused; (4) D3B's blueprints in the app, and
   Duplicate; (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint
   editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints

@@ -98,6 +98,17 @@ One JSON file per object in **Documents/D3B**, a schema version each, written at
 `.d3b` file to share a blueprint with its zones and routes (ADR 0015). A character's file needs a key stable across
 servers: its study comes first.
 
+A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
+`version` and `based_on`; its `variables` (`type`, `default`, `bounds`, `per_character`, `memory`, both allowed at once
+as in Unreal, and `help`); its `graphs`, an event graph or, with a `function` signature, a function, each a list of
+`nodes` and of `wires` from `[node, pin]` to `[node, pin]`. A node does one thing: a catalogue `kind`, or `get`, `set`
+or `call` of the blueprint's own variable or function; its `inputs` hold the values typed on pins no wire feeds, and an
+event's `event` its priority and mode. Where nodes sit is under `layout`, by graph then node, at the end of the same
+file, so a moved node changes only those lines. Ids are lowercase letters, digits, `_` and `-`. A file of a newer
+schema, not JSON, or not of its shape (a field missing, unknown or given twice, a node doing two things) is refused; one that reads but does not hold (an id
+twice, a wire to no node, a default its type or bounds refuse, a node on a variable or function the blueprint lacks)
+opens with its **problems** and cannot run; a node kind this version does not know is one of them (the catalogue's).
+
 ## Measure
 
 On Windows x64 by the owner, on what step 3 shows; running a blueprint is measured with step 4's first actions:
