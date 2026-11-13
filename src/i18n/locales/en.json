@@ -45,6 +45,11 @@
     },
     "closeTab": "Close {{title}}"
   },
+  "status": {
+    "version": "D3B {{version}}",
+    "client": "Client {{build}}",
+    "noData": "No game data"
+  },
   "characters": {
     "title": "Characters",
     "empty": "Start Dofus from Ankama's launcher: each character it plays shows here.",

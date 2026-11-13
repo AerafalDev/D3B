@@ -51,8 +51,7 @@ has, a transition through an element its map lacks, a position or a zaap on a ma
 interactive elements are in its record; the app reads a map's file when it needs the map, not at start.
 
 The app reads the whole folder once at start (`data::GameData`) and refuses it whole when a table cannot be read: the
-status bar then said it has no data, and its tooltip why (the status bar was removed on 2026-11-12 with the old UI; it returns in the new
-shell).
+status bar then says it has no data, and its hover why ([shell.md](shell.md)).
 
 ## The extractor
 

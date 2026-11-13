@@ -4,6 +4,8 @@ import users from "./expui/codeWithMe/cwmUsers@20x20_dark.svg";
 import close from "./expui/general/close_dark.svg";
 import search from "./expui/general/search_dark.svg";
 import user from "./expui/general/user_dark.svg";
+import library from "./expui/nodes/library_dark.svg";
+import warning from "./expui/status/warning_dark.svg";
 import windowClose from "./expui/windows/close_dark.svg";
 import windowMaximize from "./expui/windows/maximize_dark.svg";
 import windowMinimize from "./expui/windows/minimize_dark.svg";
@@ -15,11 +17,13 @@ import windowRestore from "./expui/windows/restore_dark.svg";
  */
 export const icons = {
   close,
+  library,
   moveToLeft,
   moveToRight,
   search,
   user,
   users,
+  warning,
   windowClose,
   windowMaximize,
   windowMinimize,

@@ -32,7 +32,13 @@ VS Code's, part for part (`src/shell/`):
 - **Tabs** (`EditorTab`, the owner's choice from mock-ups, 2026-11-12): an icon, the title, a close button; the active
   tab rises from the strip with rounded top corners on the editor's ground and merges into it, without a blue line;
   the strip lies on the frame's ground so the active tab stands out, the others' text dimmer.
-- **Status bar** (22 px): the app's name after a small blue dot; its items come with their features.
+- **Status bar** (22 px, `src/shell/status-bar/`), the owner's layout "A" from mock-ups (2026-11-13), as VS Code's:
+  the app's state on the left, its context on the right. Left, the app's name and version after its one accent, a
+  small blue dot (the name alone until the back end answers, and in the browser preview). Right, the game data:
+  JetBrains' library icon and "Client 3.7.13.17", or its yellow warning and "No game data". An item is an icon and a
+  short label, grey; colour only marks a problem. An item with details takes the focus and opens a hover as VS Code's
+  rich ones: sections of lines set apart by a rule, the first brighter, the others grey. A hover never repeats what
+  the bar already says (the owner, 2026-11-13), not even as a title: the data's build has none; no data has its reason.
 - **Command palette** (Ctrl+Shift+P, or the command centre): every command with its shortcut, itself included,
   filtered as one types, under the title bar, dimming nothing behind it.
 - **Shortcuts** are written as the platform and the language do (`Ctrl+Maj+P` in French, `⌘⇧P` on macOS).
@@ -68,6 +74,8 @@ their labels per platform and language, a part's hide button, the title bar (the
 restore once maximised, no menus on macOS, each toggle pressed while its part shows, the command centre, File > Exit
 through the close request, View's checked parts), the Windows window's config against the main one, the palette (its
 commands, filtering, running one), the activity bar (its pressed entry, hiding and showing the side bar), an
-editor's tab (its title followed, its close), and a part's collapse and slide against a fake panel (starting hidden,
+editor's tab (its title followed, its close), the status bar (the name alone before the back end answers, the
+version and the data's build without a hover, no data and its reason in the hover) and the app's info (asked once, not in the browser
+preview, asked again after a failure), and a part's collapse and slide against a fake panel (starting hidden,
 first opening at its default size, hide and show, the 200 ms slide, two quick toggles, a drag below the minimum). The
 layout itself is checked in the browser preview, not in happy-dom, which has no layout.

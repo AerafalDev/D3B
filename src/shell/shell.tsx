@@ -8,8 +8,8 @@ import { ActivityBar } from "./parts/activity-bar.tsx";
 import { EditorArea } from "./parts/editor-area.tsx";
 import { PartFrame } from "./parts/part-frame.tsx";
 import { ResizablePart } from "./parts/resizable-part.tsx";
-import { StatusBar } from "./parts/status-bar.tsx";
 import { SIDE_VIEWS } from "./side-views.ts";
+import { StatusBar } from "./status-bar/status-bar.tsx";
 import { TitleBar } from "./title-bar/title-bar.tsx";
 import { useShellShortcuts } from "./use-shell-shortcuts.ts";
 
