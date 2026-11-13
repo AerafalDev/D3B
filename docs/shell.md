@@ -60,10 +60,12 @@ The owner's "2 / 3 sober" (2026-11-12), chosen from mock-ups: VS Code's layout w
 - **Inter** at 13 px (`@fontsource-variable/inter`, OFL-1.1, the owner's go).
 - **Lucide's icons** for every icon (the owner, 2026-11-13, replacing the JetBrains icons chosen on 2026-11-12):
   `lucide-react`, ISC, already the shadcn components'; `src/icons/icons.ts` names those in use. Drawn grey (`#ced0d6`)
-  with a 1.5 px stroke; colour only for a warning (yellow), an error (red) and the update offer (orange). The app's
-  packages must carry the font's licence and Lucide's (bundled into the app's code without its notice)
-  before the next release. The one exception: the window's buttons on
-  Windows draw Windows 11's own glyphs, 10 px with a 1 px line (the owner, 2026-11-13).
+  with a 1.5 px stroke; colour only for a warning (yellow), an error (red) and the update offer (orange). The one
+  exception: the window's buttons on Windows draw Windows 11's own glyphs, 10 px with a 1 px line (the owner,
+  2026-11-13).
+- **Licences**: the font's, Lucide's and those of every other package and crate the app bundles ship in its packages
+  as `THIRD-PARTY-NOTICES.txt`, beside the app (the owner, 2026-11-13; [updates.md](updates.md#third-party-notices)).
+  The interface does not show it yet.
 - No part ever shows a native scrollbar while it resizes; a scrollbar, where content scrolls, is VS Code's: 10 px, no
   arrows, a translucent thumb.
 

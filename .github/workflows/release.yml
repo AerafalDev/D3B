@@ -95,6 +95,8 @@ jobs:
           workspaces: src-tauri
           key: ${{ matrix.target }}
       - run: bun install --frozen-lockfile
+      - name: cargo-about, for the third-party notices (scripts/notices.ts)
+        run: cargo install cargo-about@0.9.3 --locked --features cli
       - name: Game data
         shell: bash
         env:
