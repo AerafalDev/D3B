@@ -98,10 +98,30 @@ impl Frames {
     }
 }
 
-/// The lines that detail `kept`: its message decoded with `pins` when it is pinned, with the fields by their names;
-/// else the fields of its message at their top level, by number, a varint by its value and anything length-delimited
-/// by its length alone, never opened, since a text cannot be told from a nested message there. A secret has none.
-pub(crate) fn detail(pins: Option<&Pins>, kept: &Kept) -> Vec<String> {
+/// A line of a frame's detail.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum Line {
+    /// A line of the message decoded: a field by its name, nested ones indented.
+    Decoded(String),
+    /// A top-level field by its number: one our `.proto` does not read, or any of a message read without it.
+    Field { number: u32, value: FieldValue },
+    /// What the wire walker could not read further.
+    Unreadable,
+}
+
+/// A field's value as the wire walker reads it: anything length-delimited by its length alone, since a text cannot be
+/// told from a nested message there.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum FieldValue {
+    Varint(u64),
+    Fixed64(u64),
+    Fixed32(u32),
+    Bytes(usize),
+}
+
+/// The lines that detail `kept`: its message decoded with `pins` when it is pinned, its fields by their names; else
+/// the fields of its message at their top level, by number. A secret has none.
+pub(crate) fn detail(pins: Option<&Pins>, kept: &Kept) -> Vec<Line> {
     if kept.secret {
         return Vec::new();
     }
@@ -115,26 +135,28 @@ pub(crate) fn detail(pins: Option<&Pins>, kept: &Kept) -> Vec<String> {
         // Under the message decoded, the top-level fields our `.proto` does not read, which prost dropped.
         let encoded = message.encode();
         let declared: Vec<u32> = wire::fields(&encoded).flatten().map(|field| field.number).collect();
-        let mut lines: Vec<String> = format!("{message:#?}").lines().map(str::to_owned).collect();
+        let mut lines: Vec<Line> = message.fields().into_iter().map(Line::Decoded).collect();
         lines.extend(fields(value, |number| !declared.contains(&number)));
         return lines;
     }
     fields(value, |_| true)
 }
 
-/// The top-level fields of `value` that `wanted` keeps, by number: a varint by its value, anything length-delimited
-/// by its length only.
-fn fields(value: &[u8], wanted: impl Fn(u32) -> bool) -> Vec<String> {
+/// The top-level fields of `value` that `wanted` keeps, by number.
+fn fields(value: &[u8], wanted: impl Fn(u32) -> bool) -> Vec<Line> {
     wire::fields(value)
         .filter(|field| field.as_ref().map_or(true, |field| wanted(field.number)))
         .map(|field| match field {
-            Ok(field) => match field.value {
-                Value::Varint(value) => format!("{}: varint {value}", field.number),
-                Value::Fixed64(value) => format!("{}: fixed64 {value}", field.number),
-                Value::Fixed32(value) => format!("{}: fixed32 {value}", field.number),
-                Value::Bytes(bytes) => format!("{}: {} bytes", field.number, bytes.len()),
+            Ok(field) => Line::Field {
+                number: field.number,
+                value: match field.value {
+                    Value::Varint(value) => FieldValue::Varint(value),
+                    Value::Fixed64(value) => FieldValue::Fixed64(value),
+                    Value::Fixed32(value) => FieldValue::Fixed32(value),
+                    Value::Bytes(bytes) => FieldValue::Bytes(bytes.len()),
+                },
             },
-            Err(_) => "…".to_owned(),
+            Err(_) => Line::Unreadable,
         })
         .collect()
 }
@@ -210,7 +232,7 @@ mod tests {
             (kept.name.as_deref(), kept.size, kept.body.len()),
             (Some("koh"), body.len(), 0)
         );
-        assert_eq!(detail(None, kept), Vec::<String>::new());
+        assert_eq!(detail(None, kept), Vec::<Line>::new());
     }
 
     #[test]
@@ -231,7 +253,19 @@ mod tests {
 
         let lines = detail(None, frames.get(number).unwrap_or_else(|| panic!("not kept")));
 
-        assert_eq!(lines, ["1: varint 4", "2: 10 bytes"]);
+        assert_eq!(
+            lines,
+            [
+                Line::Field {
+                    number: 1,
+                    value: FieldValue::Varint(4)
+                },
+                Line::Field {
+                    number: 2,
+                    value: FieldValue::Bytes(10)
+                },
+            ]
+        );
     }
 
     #[test]
@@ -248,10 +282,16 @@ mod tests {
 
         let lines = detail(pins.as_ref(), frames.get(number).unwrap_or_else(|| panic!("not kept")));
 
-        assert!(lines.iter().any(|line| line.contains("weight: 812")), "{lines:?}");
-        assert_eq!(lines.last().map(String::as_str), Some("3: varint 7"));
+        assert!(lines.contains(&Line::Decoded("weight: 812".into())), "{lines:?}");
+        assert_eq!(
+            lines.last(),
+            Some(&Line::Field {
+                number: 3,
+                value: FieldValue::Varint(7)
+            })
+        );
         assert!(
-            !lines.iter().any(|line| line.starts_with("1: ")),
+            !lines.iter().any(|line| matches!(line, Line::Field { number: 1, .. })),
             "a field we read, listed again: {lines:?}"
         );
     }
@@ -271,6 +311,7 @@ mod tests {
 
         let lines = detail(pins.as_ref(), frames.get(number).unwrap_or_else(|| panic!("not kept")));
 
-        assert!(lines.iter().any(|line| line.contains("map_id: 153092354")), "{lines:?}");
+        // Its fields alone: the list names the message already.
+        assert_eq!(lines, [Line::Decoded("map_id: 153092354".into())]);
     }
 }

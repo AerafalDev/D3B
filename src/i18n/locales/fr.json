@@ -151,6 +151,24 @@
     },
     "size": "{{size}} o",
     "notListed_one": "{{count}} trame non listée",
-    "notListed_other": "{{count}} trames non listées"
+    "notListed_other": "{{count}} trames non listées",
+    "all": "Tout",
+    "sides": "Sens",
+    "filter": "Filtrer par nom",
+    "pause": "Pause",
+    "held_one": "{{formatted}} arrivée depuis la pause",
+    "held_other": "{{formatted}} arrivées depuis la pause",
+    "noMatch": "Aucune trame ne correspond.",
+    "detail": "Détail",
+    "secret": "Une trame secrète : ni son contenu ni ses octets ne sont gardés.",
+    "gone": "Cette trame n'est plus gardée : seules les plus récentes le sont.",
+    "line": {
+      "varint": "{{number}} : varint {{value}}",
+      "fixed64": "{{number}} : fixed64 {{value}}",
+      "fixed32": "{{number}} : fixed32 {{value}}",
+      "bytes_one": "{{number}} : {{count}} octet",
+      "bytes_other": "{{number}} : {{count}} octets",
+      "unreadable": "…"
+    }
   }
 }

@@ -26,6 +26,15 @@ macro_rules! messages {
                 }
             }
 
+            /// Its fields by their names, a line each, nested ones indented under their field, without its own
+            /// name: the inspector's list names the message already.
+            pub(crate) fn fields(&self) -> Vec<String> {
+                let text = match self {
+                    $(Self::$name(message) => format!("{message:#?}"),)*
+                };
+                fields_of(&text)
+            }
+
             /// The message encoded as prost writes it: the fields our `.proto` declares, in number order, a oneof at
             /// the place of its lowest number whichever member is set.
             pub(crate) fn encode(&self) -> Vec<u8> {
@@ -35,6 +44,23 @@ macro_rules! messages {
             }
         }
     };
+}
+
+/// The lines inside a message's pretty `Debug` text: its first line (its name and a brace) and its last (the brace)
+/// left out, one level of indentation taken off, and the commas that end fields dropped. A message without fields is
+/// its name alone, and has none.
+fn fields_of(text: &str) -> Vec<String> {
+    let lines: Vec<&str> = text.lines().collect();
+    if lines.len() < 3 {
+        return Vec::new();
+    }
+    lines[1..lines.len() - 1]
+        .iter()
+        .map(|line| {
+            let line = line.strip_prefix("    ").unwrap_or(line);
+            line.strip_suffix(',').unwrap_or(line).to_owned()
+        })
+        .collect()
 }
 
 messages! {

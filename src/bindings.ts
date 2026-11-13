@@ -26,7 +26,7 @@ export const commands = {
 	 */
 	inspectorWatch: (connection: number | null) => __TAURI_INVOKE<FrameSummary_Serialize[]>("inspector_watch", { connection }),
 	/**  The detail of the `number`th frame of `connection`, or why there is none. */
-	inspectorFrame: (connection: number, number: number) => __TAURI_INVOKE<FrameDetail_Serialize>("inspector_frame", { connection, number }),
+	inspectorFrame: (connection: number, number: number) => __TAURI_INVOKE<FrameAnswer>("inspector_frame", { connection, number }),
 };
 
 /** Events */
@@ -150,26 +150,30 @@ export type CharacterView_Serialize = {
 	stale: StaleParts,
 };
 
+/**
+ *  A line of a frame's detail (`protocol::detail`). A 64-bit value is written out, as JavaScript's numbers would round
+ *  it.
+ */
+export type DetailLine = 
+/**  A line of the message decoded: a field by its name, nested ones indented. */
+{ kind: "decoded"; text: string } | { kind: "varint"; number: number; value: string } | { kind: "fixed64"; number: number; value: string } | { kind: "fixed32"; number: number; value: number } | 
+/**  Anything length-delimited, by its length alone: a text is never shown. */
+{ kind: "bytes"; number: number; length: number } | 
+/**  What the wire walker could not read further. */
+{ kind: "unreadable" };
+
 /**  An interactive element of the map and its cell. */
 export type ElementAt = {
 	id: number,
 	cell: number,
 };
 
-/**  A frame's detail: its summary and its lines (`protocol::detail`). */
-export type FrameDetail = FrameDetail_Serialize | FrameDetail_Deserialize;
-
-/**  A frame's detail: its summary and its lines (`protocol::detail`). */
-export type FrameDetail_Deserialize = {
-	summary: FrameSummary_Deserialize,
-	lines: string[],
-};
-
-/**  A frame's detail: its summary and its lines (`protocol::detail`). */
-export type FrameDetail_Serialize = {
-	summary: FrameSummary_Serialize,
-	lines: string[],
-};
+/**  What `inspector_frame` answers: a frame's lines (none for a secret), or why it has none. */
+export type FrameAnswer = { kind: "detail"; lines: DetailLine[] } | 
+/**  Its connection closed, and its frames with it. */
+{ kind: "closed" } | 
+/**  It is no longer among the frames kept. */
+{ kind: "gone" };
 
 /**  A frame's outcome (`docs/protocol.md`, "Decoding"), or a secret, which is never decoded. */
 export type FrameOutcome = "understood" | "read" | "unknown" | "notTrusted" | "secret";

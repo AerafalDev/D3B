@@ -1,14 +1,15 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import i18next from "i18next";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GameConnectionStatus } from "@/bindings.ts";
+import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { initI18n } from "@/i18n/i18n.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { useLayout } from "@/shell/layout-store.ts";
 import { useEditors } from "@/shell/parts/editor-store.ts";
 import { Inspector } from "./inspector.tsx";
-import { InspectorCounts } from "./inspector-counts.tsx";
+import { InspectorHeader } from "./inspector-header.tsx";
 import { type FrameSummary, useInspector } from "./inspector-store.ts";
 
 function connection(change: Partial<GameConnectionStatus> = {}): GameConnectionStatus {
@@ -49,12 +50,29 @@ function count(label: string) {
 
 function renderPanel() {
   return render(
-    <>
-      <InspectorCounts />
+    <TooltipProvider>
+      <InspectorHeader />
       <Inspector />
-    </>,
+    </TooltipProvider>,
   );
 }
+
+function detail(): string {
+  return screen.getByRole("region", { name: "Detail" }).textContent ?? "";
+}
+
+function listed(): string {
+  return screen.getByRole("list", { name: "Frames" }).textContent ?? "";
+}
+
+const unpinned: FrameSummary = {
+  ...frame,
+  number: 8,
+  fromClient: true,
+  name: "lok",
+  readable: null,
+  outcome: "unknown",
+};
 
 describe("the inspector", () => {
   beforeAll(async () => {
@@ -64,7 +82,18 @@ describe("the inspector", () => {
   beforeEach(() => {
     useLayout.setState({ visible: { primarySideBar: true, panel: true, secondarySideBar: false } });
     useEditors.setState({ active: "character:1" });
-    useInspector.setState({ connection: 1, frames: [frame] });
+    useInspector.setState({
+      connection: 1,
+      frames: [frame],
+      selected: null,
+      secret: false,
+      detail: null,
+      side: "all",
+      name: "",
+      paused: false,
+      held: [],
+      arrived: 0,
+    });
     relay([connection()]);
   });
   afterEach(cleanup);
@@ -151,5 +180,77 @@ describe("the inspector", () => {
 
     expect(screen.getByRole("list", { name: "Frames" })).toBeDefined();
     expect(count("understood")).not.toBeNull();
+  });
+
+  it("details the frame chosen by its fields, without its name again, then the fields we do not read, dimmer", () => {
+    useInspector.setState({
+      selected: 7,
+      detail: {
+        kind: "detail",
+        lines: [
+          { kind: "decoded", text: "map_id: 153092354" },
+          { kind: "bytes", number: 2, length: 10 },
+        ],
+      },
+    });
+    renderPanel();
+
+    expect(detail()).toBe("map_id: 1530923542: 10 bytes");
+    expect(screen.getByText("2: 10 bytes").className).toContain("text-text-faint");
+    expect(screen.getByRole("button", { current: true }).textContent).toContain("MapCurrentEvent");
+  });
+
+  it("says a secret frame's content is never kept, even once the frame left the list", () => {
+    useInspector.setState({ frames: [], selected: 7, secret: true, detail: { kind: "detail", lines: [] } });
+    renderPanel();
+
+    expect(detail()).toBe("A secret frame: neither its content nor its bytes are kept.");
+  });
+
+  it("says when the frame chosen is no longer kept", () => {
+    useInspector.setState({ selected: 7, detail: { kind: "gone" } });
+    renderPanel();
+
+    expect(detail()).toBe("This frame is no longer kept: only the most recent are.");
+  });
+
+  it("says when the connection of the frame chosen closed", () => {
+    useInspector.setState({ selected: 7, detail: { kind: "closed" } });
+    renderPanel();
+
+    expect(detail()).toBe("No frames kept.");
+  });
+
+  it("shows one side's frames, and those whose name as listed holds the filter", () => {
+    useInspector.setState({ frames: [frame, unpinned] });
+    renderPanel();
+
+    fireEvent.click(screen.getByRole("button", { name: "↑ Client" }));
+    expect(listed()).not.toContain("MapCurrentEvent");
+    expect(listed()).toContain("lok");
+
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Filter by name" }), { target: { value: "mapcur" } });
+    expect(listed()).toContain("MapCurrentEvent");
+    expect(listed()).not.toContain("lok");
+
+    // A pinned frame is listed by its readable name: its build's, unseen, does not match.
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "jow" } });
+    expect(screen.getByText("No frame matches.")).toBeDefined();
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "LO" } });
+    expect(listed()).toContain("lok");
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Fight" } });
+    expect(screen.getByText("No frame matches.")).toBeDefined();
+  });
+
+  it("stands still while paused, and says how many frames arrived meanwhile", () => {
+    renderPanel();
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    act(() => useInspector.setState({ held: [unpinned], arrived: 7000 }));
+
+    expect(screen.getByRole("button", { name: "Pause" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("7,000 arrived since the pause")).toBeDefined();
+    expect(listed()).not.toContain("lok");
   });
 });
