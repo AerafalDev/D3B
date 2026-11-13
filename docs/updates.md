@@ -37,20 +37,29 @@ flowchart LR
 Every package carries `THIRD-PARTY-NOTICES.txt`, the licences of what the app bundles, as a resource beside the app
 (the owner's choice, 2026-11-13, over an About entry or the installer's licence page): next to `data/`, in the app's
 resource folder, so in the install folder on Windows (NSIS and MSI), `D3B.app/Contents/Resources/` on macOS, and the
-resource folder of the deb, the rpm and the AppImage. `tauri.release.conf.json` adds it to `bundle.resources` and runs `scripts/notices.ts` after the front end's
-build, for the target Tauri builds (`TAURI_ENV_TARGET_TRIPLE`). It joins three lists, each from the tool that bundles:
+resource folder of the deb, the rpm and the AppImage. `tauri.release.conf.json` adds it to `bundle.resources` and
+runs `scripts/notices.ts` after the front end's build, for the target Tauri builds (`TAURI_ENV_TARGET_TRIPLE`). It
+joins three lists, each from the tool that bundles:
 
-- the interface's code: Vite's `build.license` (`dist/.vite/license.md`), Lucide's among them;
+- the interface's code: Vite's `build.license` (`dist/.vite/license.md`), Lucide's among them. A package Vite finds
+  no licence file in (today `react-remove-scroll-bar`) gets MIT's text with its `package.json` author; under any other
+  licence, it fails;
 - the interface's styles and font: the packages `src/index.css` imports that Vite has not listed (Inter's OFL-1.1,
   Tailwind's, shadcn's, tw-animate-css'), with the licence file of each;
-- the binary's crates for that target: `cargo about generate` (cargo-about 0.9.3, built with `--features cli`), under
-  the licences `src-tauri/about.toml` accepts, in its order of preference when a crate offers a choice.
+- the crates the binary links for that target, build and dev dependencies left out: `cargo about generate`
+  (cargo-about 0.9.3, built with `--features cli`), under the eight licences `src-tauri/about.toml` accepts (MIT,
+  Apache-2.0, ISC, BSD-2-Clause, BSD-3-Clause, Zlib, Unicode-3.0, MPL-2.0: those in use, the owner's list of
+  2026-11-13), in that order of preference when a crate offers a choice. MPL-2.0's section links each crate's source
+  on crates.io, as that licence asks.
 
-A crate under a licence not accepted fails the notices; CI writes them for the six targets on every PR, so a new
-licence is met there, and accepting it is the owner's call. Locally: `cargo install cargo-about@0.9.3 --locked
---features cli`, `bun run build`, then `bun scripts/notices.ts <target>`. A plain `tauri build` without the release
-configuration carries no notices. The AppImage also packs system libraries (GTK, WebKitGTK and theirs), whose
-licences the notices do not list yet.
+A crate under another licence fails the notices; `bun run check` writes them for the host, and CI for the six
+targets on every PR, so a new licence is met there, and accepting it is the owner's call. Locally that needs
+`cargo install cargo-about@0.9.3 --locked --features cli`. A plain `tauri build` without the release configuration
+carries no notices.
+
+The AppImage also packs system libraries (GTK, WebKitGTK and theirs, mostly LGPL), whose licences the notices do not
+list yet; the deb and the rpm do not pack them. A PR of its own adds them, read from a Linux build, before the next
+release (the owner, 2026-11-13).
 
 ## The channel
 
