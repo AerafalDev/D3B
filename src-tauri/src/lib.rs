@@ -11,6 +11,14 @@ mod game;
 mod ipc;
 mod protocol;
 mod relay;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the Library reads and saves the player's blueprints from step 3's PR 4"
+    )
+)]
+mod storage;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

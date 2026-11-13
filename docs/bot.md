@@ -95,7 +95,10 @@ owner, 2026-11-13).
 ## Storage
 
 One JSON file per object in **Documents/D3B**, a schema version each, written atomically; History kept 7 days; a
-`.d3b` file to share a blueprint with its zones and routes (ADR 0015). A character's file needs a key stable across
+`.d3b` file to share a blueprint with its zones and routes (ADR 0015). `storage` reads `blueprints/<id>.json` and
+writes it whole (a `.d3b-tmp` file beside it, then a rename); a file that does not read, of a newer schema, or whose
+name is not its id (a copy made by hand: the owner, 2026-11-14) is kept untouched, reported with why, and never
+written over. A character's file needs a key stable across
 servers: its study comes first.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
