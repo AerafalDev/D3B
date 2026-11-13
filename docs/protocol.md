@@ -158,7 +158,6 @@ right. Its header holds, on one line, the connection's counts (understood, read,
   is not read, or closed, it says it keeps nothing and shows no counts (the character's tab says why: nothing is said
   twice). A protocol lost keeps its frames and counts. Only the count of frames not trusted is in colour, when above 0,
   as are those frames' outcome in the list.
-
 - **Kept**: each connection's last 3,000 frames and 16 MiB at most, whichever comes first, from its start, freed at
   its close: the protocol hands each frame of a connection with pins to the connection's observer, which the IPC keeps
   in `ipc::inspector` (`protocol::Frames`), each with its number, time, side, name, readable name, outcome and size. A
@@ -168,20 +167,26 @@ right. Its header holds, on one line, the connection's counts (understood, read,
   starts `InspectorFrames`, at most five batches a second (at the protocol's ticks) of at most 1,000 summaries each, with the count of those
   skipped beyond (the peaks measured on one connection: 737 frames in a second; 93 KB in another, one frame). One
   connection is watched at a time, the one whose tab is shown: `inspector_watch(None)`, a connection closed, or the
-  front end starting (after a reload too) stops it. `inspector_frame(connection, number)` answers one frame's detail,
-  or that it is gone.
-- **A frame's detail**: a pinned message decoded, its fields by their names (players' names as the game shows them);
-  under it, the fields our `.proto` does not read, by number. Any other frame, by the wire walker (`relay::wire`)
+  front end starting (after a reload too) stops it. `inspector_frame(connection, number)` answers a `FrameAnswer`: the
+  frame's lines (`DetailLine`, a 64-bit value written out since JavaScript's numbers would round it), or that its
+  connection closed, or that it is no longer kept.
+- **A frame's detail**, in the column on the list's right: a pinned message decoded, its fields by their names (players'
+  names as the game shows them), nested ones indented, without its own name, which its row shows; under it, dimmer,
+  the fields our `.proto` does not read, by number. Any other frame, by the wire walker (`relay::wire`)
   alone, at its top level: field numbers, wire types, varints, and a length for anything length-delimited, never
   opened, since the walker cannot tell a text from a nested message. **Text is never shown**: an unpinned message may
   hold the chat, the account's nickname or names, and no list of them is kept per build. No bytes, no export, no
-  copy. A connection whose protocol is off keeps no frame: a build without pins has no list of its secrets.
+  copy. A secret's detail says its content is never kept; a frame forgotten since it was listed, that it is no longer
+  kept. A connection whose protocol is off keeps no frame: a build without pins has no list of its secrets.
 - **The list** (`src/inspector/`) keeps the last 3,000 frames, as the back end does, and shows the visible rows only
   (22 px each, by hand): number, time since the connection opened, side (↑ client, ↓ server), the readable name (or
   the build's name, dimmer, for a message not pinned), outcome and size. A connection numbers its frames one after
   another, so where the numbers jump a row says how many frames were not listed. Scrolled to its end, the list follows
-  the frames; scrolled up, the row at its top stays in place as the oldest frames go. It filters by side and by name,
-  and pauses: the list stops, a counter shows what arrived meanwhile.
+  the frames; scrolled up, the row at its top stays in place as the oldest frames go. A row clicked is chosen, a
+  rounded grey row, and its detail shows. It filters by side (all, ↑ client, ↓ server) and by a text the readable
+  name or the build's holds, whatever its case, both kept from one character to the next; "No frame matches." when
+  none does. The pause, pressed, stops the list and holds what streams meanwhile (3,000 at most), saying how many
+  arrived; released, they are listed. A connection watched anew starts unpaused, nothing chosen.
 
 ## Tests
 
@@ -210,4 +215,8 @@ its length only, and in Vitest a fixture's text never reaching the page. Vitest:
 any order, a watch overtaken, the last 3,000, the back end told when none is watched), a frame's time, the list (its
 columns, the frames not listed, the newest drawn, its top row kept while scrolled up, following again at its end), and
 the panel (counts, only frames not trusted in colour, no frames of another connection, no tab, panel hidden, protocol
-not read, closed, lost).
+not read, closed, lost, a detail without the frame's name and its unread fields dimmer, a secret, a frame gone, the
+side and name filters, the pause). The store: a detail answered late for a frame chosen before dropped, the choice
+forgotten for another connection, frames held while paused and listed once resumed, no more held than kept. Rust: a
+decoded message's fields without its name, nested ones indented, none for a message without fields; a 64-bit value
+written out.
