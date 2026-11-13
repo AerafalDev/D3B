@@ -5,6 +5,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { AppInfo_Serialize } from "@/bindings.ts";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { initI18n } from "@/i18n/i18n.ts";
+import { icons } from "@/icons/icons.ts";
 import { useAppInfo } from "./app-info.ts";
 import { StatusBar } from "./status-bar.tsx";
 
@@ -42,17 +43,20 @@ describe("the status bar", () => {
 
   it("says there is no game data, and why in its hover", async () => {
     useAppInfo.setState({ info: { ...info, gameBuild: null, dataError: "data format 2 is not supported" } });
-    renderBar();
+    const { container } = renderBar();
+    const shown = [...container.querySelectorAll("img")].map((image) => image.getAttribute("src"));
+    expect(shown).toEqual([icons.warning]);
     const item = screen.getByText("No game data").closest("[tabindex]");
-    expect(item).not.toBeNull();
-    fireEvent.focus(item as Element);
+    if (item === null) {
+      throw new Error("the item takes no focus");
+    }
+    fireEvent.focus(item);
     expect((await screen.findAllByText("data format 2 is not supported")).length).toBeGreaterThan(0);
   });
 
-  it("names the data's client in the data's hover", async () => {
+  it("opens no hover over the data's build, which would only repeat it (the owner, 2026-11-13)", () => {
     useAppInfo.setState({ info });
     renderBar();
-    fireEvent.focus(screen.getByText("Client 3.7.13.17").closest("[tabindex]") as Element);
-    expect((await screen.findAllByText("Game data")).length).toBeGreaterThan(0);
+    expect(screen.getByText("Client 3.7.13.17").closest("[tabindex]")).toBeNull();
   });
 });

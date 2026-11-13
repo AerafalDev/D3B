@@ -9,18 +9,17 @@ interface DataItemProps {
 }
 
 /**
- * The game data the app packs: the client build it comes from, or that there is none, with the reason in its hover
- * and JetBrains' yellow warning, one of the bar's two colours kept for a problem (the owner, 2026-11-13).
+ * The game data the app packs: the client build it comes from, with no hover, which would only repeat it (the owner,
+ * 2026-11-13); or that there is none, with the reason in its hover and JetBrains' yellow warning, one of the bar's
+ * colours kept for a problem.
  */
 export function DataItem({ info }: DataItemProps) {
   const { t } = useTranslation();
   if (info.gameBuild) {
-    const client = t("status.client", { build: info.gameBuild });
     return (
       <StatusItem
         lead={<Icon name="library" className="size-3.5" />}
-        label={client}
-        hover={{ title: t("status.data"), sections: [[client]] }}
+        label={t("status.client", { build: info.gameBuild })}
       />
     );
   }

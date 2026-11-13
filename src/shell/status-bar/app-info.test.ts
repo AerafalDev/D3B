@@ -29,6 +29,12 @@ describe("the app's info", () => {
     expect(backEnd.appInfo).toHaveBeenCalledTimes(1);
   });
 
+  it("asks once when two callers ask at the same time, as StrictMode's doubled effect does", async () => {
+    backEnd.appInfo.mockResolvedValue(info);
+    await Promise.all([useAppInfo.getState().load(), useAppInfo.getState().load()]);
+    expect(backEnd.appInfo).toHaveBeenCalledTimes(1);
+  });
+
   it("asks nothing in the browser preview", async () => {
     backEnd.tauri = false;
     await useAppInfo.getState().load();

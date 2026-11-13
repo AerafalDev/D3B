@@ -47,7 +47,6 @@
   },
   "status": {
     "version": "D3B {{version}}",
-    "data": "Game data",
     "client": "Client {{build}}",
     "noData": "No game data"
   },
