@@ -97,7 +97,8 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
   number. A row is marked while its character's tab is active. Empty, the view says to start Dofus from Ankama's
   launcher.
 - **A character's tab**, layout "A": opened from its row, named after the character once known. On the left its
-  state: who (level, class, exploring or fighting), where (area, sub-area, coordinates, cell), life (marked while it
+  state: who (its breed's head for its sex, 40 px in a rounded square, else its initials; its level, its breed's name
+  in the interface's language, exploring or fighting; the owner's choice from mock-ups, 2026-11-13), where (area, sub-area, coordinates, cell), life (marked while it
   regenerates, until it is full), pods, experience, energy, action and movement points, kamas, what is around (players, monster
   groups, NPCs, and resources: every interactive element whose state is known, harvested or not), and a line when
   frames were dropped; on the right the character's map. A connection whose protocol is off says why; a lost one

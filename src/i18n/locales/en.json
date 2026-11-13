@@ -83,7 +83,8 @@
   },
   "character": {
     "state": "State",
-    "levelAndBreed": "Level {{level}} · class {{breed}}",
+    "level": "Level {{level}}",
+    "levelAndBreed": "Level {{level}} · {{breed}}",
     "noPlace": "No map yet",
     "place": "{{where}} · {{x}}, {{y}} · cell {{cell}}",
     "life": "Life",

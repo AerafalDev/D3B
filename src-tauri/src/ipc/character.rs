@@ -1,18 +1,19 @@
 //! Each character as the app shows it (`docs/game.md`, "In the app"): the event that carries a connection's view
-//! whenever it changed, its map named from the game data when the data's build is the connection's.
+//! whenever it changed, its map and its breed named from the game data when the data's build is the connection's.
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::Manager;
 use tauri_specta::Event;
 
+use std::path::Path;
 use std::sync::Arc;
 
 use super::LoadedData;
 use super::inspector::{self, Inspected, Inspector};
 use super::relay::MapAt;
-use crate::data::World;
-use crate::game::{ActorKind, Context, Live, Monster, Seen, Sex, View};
+use crate::data::{Breed, World, head_file};
+use crate::game::{ActorKind, Context, Live, Monster, Seen, Sex, View, Who};
 use crate::protocol::Observer;
 
 /// Makes, for each game connection, the character the app follows: each change of its view goes to the webview as
@@ -27,13 +28,20 @@ pub(crate) fn follow(
         let send = Box::new(move |frames: &_| inspector::emit(&streamed, frames));
         let handle = handle.clone();
         let build = build.map(str::to_owned);
-        let named = build.clone();
+        let its_build = build.clone();
         let live = Box::new(Live::new(move |view: Option<View>| {
-            let data = handle.try_state::<LoadedData>();
-            let data = data.as_deref().and_then(|data| data.0.as_ref().ok());
-            let data = data.map(|data| (data.manifest.build.as_str(), &data.world));
-            let world = world_for(data, named.as_deref());
-            let view = view.map(|view| CharacterView::new(&view, world));
+            let loaded = handle.try_state::<LoadedData>();
+            let data = loaded.as_deref().and_then(|loaded| {
+                let data = loaded.0.as_ref().ok()?;
+                let named = Named {
+                    world: &data.world,
+                    breeds: &data.breeds,
+                    folder: loaded.1.as_deref(),
+                };
+                Some((data.manifest.build.as_str(), named))
+            });
+            let named = for_build(data, its_build.as_deref());
+            let view = view.map(|view| CharacterView::new(&view, named));
             let _ = CharacterChanged { connection, view }.emit(&handle);
         }));
         Box::new(Inspected::new(live, connection, build, Arc::clone(&inspector), send))
@@ -95,6 +103,11 @@ pub struct CharacterView {
     pub name: Option<String>,
     pub level: Option<i32>,
     pub breed: Option<i32>,
+    /// The breed's name, from the game data.
+    pub breed_name: Option<Names>,
+    /// The file of the breed's head for the character's sex, in the game data's folder, which the webview loads
+    /// through the asset protocol.
+    pub head: Option<String>,
     /// `None` until the character is chosen, or when its look holds no sex D3B knows.
     pub sex: Option<CharacterSex>,
     pub fighting: Option<bool>,
@@ -188,8 +201,10 @@ fn number(value: i64) -> f64 {
 }
 
 impl CharacterView {
-    /// `view` as the app shows it, its map placed and named from `world`, given only when its build is the connection's.
-    pub(crate) fn new(view: &View, world: Option<&World>) -> Self {
+    /// `view` as the app shows it, its map and its breed named from `named`, given only when its build is the
+    /// connection's.
+    pub(crate) fn new(view: &View, named: Option<Named<'_>>) -> Self {
+        let (breed_name, head) = breed(view.who.as_ref(), named);
         let (life, characteristics) = (view.life, view.characteristics);
         let gauge = |value, max| Gauge {
             value: number(value),
@@ -199,9 +214,11 @@ impl CharacterView {
             name: view.who.as_ref().map(|who| who.name.clone()),
             level: view.who.as_ref().map(|who| who.level),
             breed: view.who.as_ref().map(|who| who.breed),
+            breed_name,
+            head,
             sex: view.who.as_ref().and_then(|who| who.sex).map(CharacterSex::from),
             fighting: view.context.map(|context| context == Context::Fight),
-            place: view.map_id.map(|map_id| place(map_id, world)),
+            place: view.map_id.map(|map_id| place(map_id, named.map(|named| named.world))),
             cell: view.cell,
             life: life.map(|life| gauge(life.life, life.max_life)),
             life_estimated: life.is_some_and(|life| life.estimated),
@@ -266,11 +283,44 @@ fn actor(seen: &Seen) -> ActorSeen {
     }
 }
 
-/// The world of the game data, given with its build, when that build is `build`, the connection's: another build may
-/// number its maps otherwise.
-fn world_for<'a>(data: Option<(&str, &'a World)>, build: Option<&str>) -> Option<&'a World> {
+/// What the game data names a view with.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Named<'a> {
+    pub world: &'a World,
+    /// The breeds, in order of id.
+    pub breeds: &'a [Breed],
+    /// The data's folder, which holds the heads; `None` when unknown.
+    pub folder: Option<&'a Path>,
+}
+
+/// What the game data names, given with its build, when that build is `build`, the connection's: another build may
+/// number its maps and breeds otherwise.
+fn for_build<'a, T>(data: Option<(&'a str, T)>, build: Option<&str>) -> Option<T> {
     data.filter(|(data_build, _)| build == Some(*data_build))
-        .map(|(_, world)| world)
+        .map(|(_, named)| named)
+}
+
+/// The name of `who`'s breed and the file of its head for its sex, from `named`.
+fn breed(who: Option<&Who>, named: Option<Named<'_>>) -> (Option<Names>, Option<String>) {
+    let (Some(who), Some(named)) = (who, named) else {
+        return (None, None);
+    };
+    let Ok(index) = named.breeds.binary_search_by_key(&who.breed, |breed| breed.id) else {
+        return (None, None);
+    };
+    let name = &named.breeds[index].name;
+    let head = who.sex.zip(named.folder).map(|(sex, folder)| {
+        let sex = match sex {
+            Sex::Male => 0,
+            Sex::Female => 1,
+        };
+        folder.join(head_file(who.breed, sex)).to_string_lossy().into_owned()
+    });
+    let name = Names {
+        fr: name.fr.clone(),
+        en: name.en.clone(),
+    };
+    (Some(name), head)
 }
 
 /// `map_id` placed and named from `world`, which the caller gives only when its build is the connection's.
@@ -337,6 +387,15 @@ mod tests {
         }
     }
 
+    /// The world alone, without breeds or a folder.
+    fn named(world: &World) -> Named<'_> {
+        Named {
+            world,
+            breeds: &[],
+            folder: None,
+        }
+    }
+
     #[test]
     fn places_and_names_the_map_from_the_data_it_is_given() {
         let view = View {
@@ -344,7 +403,7 @@ mod tests {
             ..View::default()
         };
 
-        let place = CharacterView::new(&view, Some(&world())).place;
+        let place = CharacterView::new(&view, Some(named(&world()))).place;
         let place = place.unwrap_or_else(|| panic!("no place"));
         assert_eq!(place.at, Some(MapAt { x: 4, y: -18 }));
         assert_eq!(place.sub_area.map(|name| name.en), Some("Forest".into()));
@@ -360,7 +419,7 @@ mod tests {
             map_id: Some(-1),
             ..View::default()
         };
-        let lacking = CharacterView::new(&lacking, Some(&world())).place;
+        let lacking = CharacterView::new(&lacking, Some(named(&world()))).place;
         assert_eq!(lacking.and_then(|place| place.sub_area), None);
     }
 
@@ -422,10 +481,68 @@ mod tests {
         let world = world();
         let data = Some(("3.7.13.17", &world));
 
-        assert!(world_for(data, Some("3.7.13.17")).is_some());
-        assert!(world_for(data, Some("3.7.14.1")).is_none());
-        assert!(world_for(data, None).is_none());
-        assert!(world_for(None, Some("3.7.13.17")).is_none());
+        assert!(for_build(data, Some("3.7.13.17")).is_some());
+        assert!(for_build(data, Some("3.7.14.1")).is_none());
+        assert!(for_build(data, None).is_none());
+        assert!(for_build(None::<(&str, &World)>, Some("3.7.13.17")).is_none());
+    }
+
+    fn breeds() -> Vec<Breed> {
+        json(r#"[{"id": 9, "name": {"fr": "Crâ", "en": "Cra", "de": "Crâ", "es": "Ocra", "pt": "Cra"}}]"#)
+    }
+
+    fn chosen(breed: i32, sex: Option<Sex>) -> View {
+        View {
+            who: Some(Who {
+                id: 1,
+                name: "Lyra".into(),
+                level: 87,
+                breed,
+                sex,
+            }),
+            ..View::default()
+        }
+    }
+
+    fn head(folder: &Path, file: &str) -> Option<String> {
+        Some(folder.join(file).to_string_lossy().into_owned())
+    }
+
+    #[test]
+    fn names_the_breed_and_finds_its_head_for_the_sex() {
+        let (world, breeds, folder) = (world(), breeds(), Path::new("data"));
+        let named = Named {
+            world: &world,
+            breeds: &breeds,
+            folder: Some(folder),
+        };
+
+        let female = CharacterView::new(&chosen(9, Some(Sex::Female)), Some(named));
+        let name = female.breed_name.map(|name| (name.fr, name.en));
+        assert_eq!(name, Some(("Crâ".into(), "Cra".into())));
+        assert_eq!(female.head, head(folder, "heads/9-1.png"));
+        let male = CharacterView::new(&chosen(9, Some(Sex::Male)), Some(named));
+        assert_eq!(male.head, head(folder, "heads/9-0.png"));
+    }
+
+    #[test]
+    fn has_no_head_without_the_sex_the_folder_or_the_breed() {
+        let (world, breeds, folder) = (world(), breeds(), Path::new("data"));
+        let named = |folder| Named {
+            world: &world,
+            breeds: &breeds,
+            folder,
+        };
+
+        let unknown_sex = CharacterView::new(&chosen(9, None), Some(named(Some(folder))));
+        assert!(unknown_sex.breed_name.is_some());
+        assert_eq!(unknown_sex.head, None);
+        let no_folder = CharacterView::new(&chosen(9, Some(Sex::Male)), Some(named(None)));
+        assert_eq!(no_folder.head, None);
+        let unknown_breed = CharacterView::new(&chosen(19, Some(Sex::Male)), Some(named(Some(folder))));
+        assert_eq!((unknown_breed.breed_name, unknown_breed.head), (None, None));
+        let no_data = CharacterView::new(&chosen(9, Some(Sex::Male)), None);
+        assert_eq!((no_data.breed, no_data.breed_name, no_data.head), (Some(9), None, None));
     }
 
     #[test]
@@ -437,7 +554,7 @@ mod tests {
                 map_id: Some(map_id),
                 ..View::default()
             };
-            CharacterView::new(&view, Some(&world))
+            CharacterView::new(&view, Some(named(&world)))
                 .place
                 .unwrap_or_else(|| panic!("no place"))
         };
