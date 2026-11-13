@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import type { IDockviewPanelProps } from "dockview-react";
 import i18next from "i18next";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -102,10 +102,16 @@ describe("a character's tab", () => {
   it("takes the character's name for its tab once known", () => {
     renderTab();
     expect(setTitle).not.toHaveBeenCalled();
-    cleanup();
-    useCharacters.setState({ views: { 1: lyra } });
-    renderTab();
+    act(() => useCharacters.setState({ views: { 1: lyra } }));
     expect(setTitle).toHaveBeenCalledWith("Lyra");
+  });
+
+  it("says a gauge it does not know, on screen and to screen readers", () => {
+    useCharacters.setState({ views: { 1: { ...lyra, pods: null } } });
+    renderTab();
+    const pods = screen.getByRole("meter", { name: "Pods" });
+    expect(pods.getAttribute("aria-valuetext")).toBe("—");
+    expect(pods.parentElement?.textContent).toContain("—");
   });
 
   it("waits for the character to enter the game", () => {

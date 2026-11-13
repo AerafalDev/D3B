@@ -155,13 +155,6 @@
 
 /* The editor's tab strip: the tabs, drawn by `EditorTab`, rise from it with rounded tops; dockview's own ground and
    lines stay out. */
-.d3b-dockview {
-  --dv-activegroup-visiblepanel-tab-background-color: transparent;
-  --dv-activegroup-hiddenpanel-tab-background-color: transparent;
-  --dv-inactivegroup-visiblepanel-tab-background-color: transparent;
-  --dv-inactivegroup-hiddenpanel-tab-background-color: transparent;
-  --dv-tab-divider-color: transparent;
-}
 .d3b-dockview .dv-tabs-and-actions-container {
   padding: 5px 4px 0;
 }
@@ -201,16 +194,17 @@
   backdrop-filter: none;
 }
 
-/* Dockview's dark theme, set to Dark Modern's editor tabs: 35 px, the active one with a blue top line. */
+/* Dockview's dark theme, set to Dark Modern's editor area: a 35 px tab strip on the frame's ground. */
 .d3b-dockview {
   --dv-group-view-background-color: var(--editor);
   /* The strip on the frame's ground, so the active tab, on the editor's, stands out from it. */
   --dv-tabs-and-actions-container-background-color: var(--frame);
-  --dv-activegroup-visiblepanel-tab-background-color: var(--editor);
-  --dv-activegroup-hiddenpanel-tab-background-color: var(--bar);
-  --dv-inactivegroup-visiblepanel-tab-background-color: var(--editor);
-  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--bar);
-  --dv-tab-divider-color: var(--line);
+  /* Each tab's ground is `EditorTab`'s own, so dockview's stays transparent and draws no divider. */
+  --dv-activegroup-visiblepanel-tab-background-color: transparent;
+  --dv-activegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-inactivegroup-visiblepanel-tab-background-color: transparent;
+  --dv-inactivegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-tab-divider-color: transparent;
   --dv-activegroup-visiblepanel-tab-color: #ffffff;
   --dv-activegroup-hiddenpanel-tab-color: var(--text-muted);
   --dv-inactivegroup-visiblepanel-tab-color: var(--text-muted);

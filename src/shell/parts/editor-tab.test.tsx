@@ -48,4 +48,12 @@ describe("an editor's tab", () => {
     fireEvent.click(screen.getByRole("button", { name: "Close Lyra" }));
     expect(api.close).toHaveBeenCalledOnce();
   });
+
+  it("keeps a press on its close button from reaching dockview, which would activate or drag the tab", () => {
+    const api = fakeApi("Lyra");
+    renderTab(api);
+    const close = screen.getByRole("button", { name: "Close Lyra" });
+    expect(fireEvent.pointerDown(close)).toBe(false);
+    expect(fireEvent.mouseDown(close)).toBe(false);
+  });
 });
