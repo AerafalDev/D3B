@@ -12,7 +12,7 @@ export const commands = {
 	blueprints: () => __TAURI_INVOKE<BlueprintList_Serialize>("blueprints"),
 	/**  Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id. */
 	duplicateBlueprint: (id: string, texts: CopyTexts) => __TAURI_INVOKE<string>("duplicate_blueprint", { id, texts }),
-	/**  The graphs of the blueprint `id`, or why not: no such blueprint. */
+	/**  The graphs of the blueprint `id`, or why not. */
 	blueprintGraphs: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("blueprint_graphs", { id }),
 	/**  The characters played, the most recently seen first, and their files kept. */
 	playedCharacters: () => __TAURI_INVOKE<PlayedList_Serialize>("played_characters"),
@@ -421,6 +421,13 @@ export type GraphView_Serialize = {
 	wires: WireView[],
 };
 
+/**  Why a blueprint's graphs are not given. */
+export type GraphsError = 
+/**  No blueprint has this id: its file is gone, or no longer reads. */
+{ kind: "noSuchBlueprint" } | 
+/**  A bug of this version, said as it came: D3B's own blueprints do not read, or the read panicked. */
+{ kind: "bug"; reason: string };
+
 /**  New frames of the connection watched; `skipped` more came than one batch carries. */
 export type InspectorFrames = InspectorFrames_Serialize | InspectorFrames_Deserialize;
 
@@ -501,6 +508,9 @@ export type NodeDoes =
 /**  One of the catalogue's kinds, by id; its sentence is the interface's `node.kinds.<kind>`. */
 { does: "kind"; kind: string } | { does: "get"; variable: string } | { does: "set"; variable: string } | { does: "call"; function: string };
 
+/**  A node's family, which colours its icon; a get or a set is a `variable`, a call a `call`. */
+export type NodeFamily = "event" | "action" | "flow" | "query" | "function" | "variable" | "call";
+
 /**  A node of a graph. */
 export type NodeView = NodeView_Serialize | NodeView_Deserialize;
 
@@ -511,7 +521,7 @@ export type NodeView_Deserialize = {
 	 *  `event`, `action`, `flow`, `query`, `function`, `variable` (a get or a set) or `call`; `null` for a kind this
 	 *  version does not know, kept as it is.
 	 */
-	family?: string | null,
+	family?: NodeFamily | null,
 	/**  The roadmap step from which the bot does it in the game; the editor marks it until then (the owner, 2026-11-14). */
 	fromStep?: number | null,
 	/**  Its pins, from the catalogue or from its variable or function; none when what it does is unknown. */
@@ -529,7 +539,7 @@ export type NodeView_Serialize = {
 	 *  `event`, `action`, `flow`, `query`, `function`, `variable` (a get or a set) or `call`; `null` for a kind this
 	 *  version does not know, kept as it is.
 	 */
-	family: string | null,
+	family: NodeFamily | null,
 	/**  The roadmap step from which the bot does it in the game; the editor marks it until then (the owner, 2026-11-14). */
 	fromStep: number | null,
 	/**  Its pins, from the catalogue or from its variable or function; none when what it does is unknown. */
@@ -540,16 +550,20 @@ export type NodeView_Serialize = {
 	position: [number, number] | null,
 } & NodeDoes;
 
+/**  What a pin carries: the flow, or a value of a type. */
+export type PinCarries = "exec" | "bool" | "number" | "percentage" | "text" | "zone" | "route" | "bank" | "items" | "job";
+
+/**  Which way a pin goes. */
+export type PinSide = "in" | "out";
+
 /**  A pin of a node. */
 export type PinView = PinView_Serialize | PinView_Deserialize;
 
 /**  A pin of a node. */
 export type PinView_Deserialize = {
 	id: string,
-	/**  `in` or `out`. */
-	side: string,
-	/**  `exec` for the flow, else the value's type: `zone`, `percentage`… */
-	carries: string,
+	side: PinSide,
+	carries: PinCarries,
 	/**  The value an input no wire feeds holds by default, as JSON. */
 	default?: string | null,
 };
@@ -557,10 +571,8 @@ export type PinView_Deserialize = {
 /**  A pin of a node. */
 export type PinView_Serialize = {
 	id: string,
-	/**  `in` or `out`. */
-	side: string,
-	/**  `exec` for the flow, else the value's type: `zone`, `percentage`… */
-	carries: string,
+	side: PinSide,
+	carries: PinCarries,
 	/**  The value an input no wire feeds holds by default, as JSON. */
 	default: string | null,
 };
