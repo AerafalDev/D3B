@@ -75,8 +75,10 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
 - **Library** view: "Given by D3B", then "Mine"; a row opens the blueprint's editor. A row is its name alone, its
   description or what a copy is based on in its hover, an amber mark with how many problems it has; a right-click
   offers Duplicate; last, folded, "Ignored": the player's files kept as they are, blueprints' and characters', each
-  with why in its hover (the owner, 2026-11-14, mock-up 9). Until the editor, a blueprint's tab is a preview: its
-  name, whose it is, its description, its settings per character with their defaults, and Duplicate.
+  with why in its hover (the owner, 2026-11-14, mock-up 9). A blueprint's tab is its editor, read-only until step 3's
+  PR 13: on top its name, whose it is, its problems, its description and Duplicate; under them My Blueprint (the event
+  graph, the functions, the variables with an eye on those set per character, a variable's help and default in its
+  hover) and the graph chosen in it.
 - The **blueprint editor** is Unreal's Blueprint Editor in a tab. Its toolbar holds Graph or Summary, the graph's path,
   the problems, the character to debug, and Duplicate on a given blueprint, which opens locked. **My Blueprint** on the
   left lists the graphs, functions and variables, an eye on those set per character; the graph is in the centre,

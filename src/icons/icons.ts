@@ -12,6 +12,7 @@ import {
   PanelRight,
   Pause,
   Search,
+  SquareFunction,
   TriangleAlert,
   User,
   Workflow,
@@ -32,6 +33,7 @@ interface AppIcon {
 export const icons = {
   arrowLeftRight: { icon: ArrowLeftRight },
   blueprint: { icon: Workflow },
+  blueprintFunction: { icon: SquareFunction },
   close: { icon: X },
   copy: { icon: Copy },
   error: { icon: CircleAlert, tone: "text-[#db5c5c]" },
