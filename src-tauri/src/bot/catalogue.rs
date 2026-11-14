@@ -173,7 +173,7 @@ const BLOCKS: EventRole = EventRole {
 };
 
 use Family::{Action, Flow, Function, Query};
-use ValueType::{Bank, Bool, Items, Number, Percentage, Text, Zone};
+use ValueType::{Bank, Bool, Items, Job, Number, Percentage, Text, Zone};
 
 /// Every kind, the owner's v1 list of 2026-11-13: what D3B's blueprints and the six scenarios need, the rest later.
 #[rustfmt::skip] // One kind per line reads as a table.
@@ -197,6 +197,9 @@ pub(crate) const KINDS: &[Kind] = &[
     of("finish", Flow, &[RUN], None),
     of("life_percent", Query, &[output("value", Percentage)], None),
     of("pods_percent", Query, &[output("value", Percentage)], None),
+    // The items a profession harvests, from the data's skills (3.7.13.17, `artifacts/studies/items.md`, verified):
+    // `job-harvest` reads its setting through it (the owner, 2026-11-14).
+    of("job_resources", Query, &[input("job", Job, None), output("value", Items)], None),
     of("level", Query, &[output("value", Number)], None),
     of("at_least", Query, &[input("a", Number, None), input("b", Number, None), output("value", Bool)], None),
     of("add", Query, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),

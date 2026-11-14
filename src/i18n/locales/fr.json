@@ -246,6 +246,10 @@
         "sentence": "Pods %",
         "description": "Les pods, en pourcentage du maximum."
       },
+      "job_resources": {
+        "sentence": "Ressources de {{job}}",
+        "description": "Les ressources que ce métier récolte, lues dans les données du jeu."
+      },
       "level": {
         "sentence": "Niveau",
         "description": "Le niveau du personnage."
@@ -293,7 +297,80 @@
       "false": "Faux",
       "minutes": "Minutes",
       "a": "A",
-      "b": "B"
+      "b": "B",
+      "job": "Métier"
+    }
+  },
+  "given": {
+    "automatic-harvest": {
+      "name": "Récolte automatique",
+      "description": "Récolte ce qui pousse dans une zone, vide ses pods à la banque, et recommence.",
+      "variables": {
+        "zone": {
+          "name": "Zone",
+          "help": "Où récolter."
+        },
+        "pods": {
+          "name": "Banque à",
+          "help": "La part des pods à laquelle le personnage va à la banque."
+        },
+        "bank": {
+          "name": "Banque",
+          "help": "Où déposer."
+        },
+        "keep": {
+          "name": "Garder",
+          "help": "Ce qui reste dans le sac à la banque."
+        }
+      }
+    },
+    "job-harvest": {
+      "name": "Récolte d'un métier",
+      "description": "Récolte les ressources d'un métier dans une zone, vide ses pods à la banque, et recommence.",
+      "variables": {
+        "job": {
+          "name": "Métier",
+          "help": "Ce qu'il récolte."
+        },
+        "zone": {
+          "name": "Zone",
+          "help": "Où récolter."
+        },
+        "pods": {
+          "name": "Banque à",
+          "help": "La part des pods à laquelle le personnage va à la banque."
+        },
+        "bank": {
+          "name": "Banque",
+          "help": "Où déposer."
+        },
+        "keep": {
+          "name": "Garder",
+          "help": "Ce qui reste dans le sac à la banque."
+        }
+      }
+    },
+    "hunt": {
+      "name": "Chasse",
+      "description": "Combat les monstres d'une zone, vide ses pods à la banque, et recommence.",
+      "variables": {
+        "zone": {
+          "name": "Zone",
+          "help": "Où chasser."
+        },
+        "pods": {
+          "name": "Banque à",
+          "help": "La part des pods à laquelle le personnage va à la banque."
+        },
+        "bank": {
+          "name": "Banque",
+          "help": "Où déposer."
+        },
+        "keep": {
+          "name": "Garder",
+          "help": "Ce qui reste dans le sac à la banque."
+        }
+      }
     }
   }
 }

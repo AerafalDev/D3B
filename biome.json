@@ -14,7 +14,8 @@
       "!src-tauri/gen",
       "!src/bindings.ts",
       "!data",
-      "!tools/extractor/tests/fixtures"
+      "!tools/extractor/tests/fixtures",
+      "!src-tauri/blueprints"
     ]
   },
   "formatter": {
