@@ -522,6 +522,29 @@
       "items": "Items",
       "job": "Profession"
     },
-    "faulty": "Has a problem."
+    "faulty": "Has a problem.",
+    "summary": {
+      "priority": "priority {{priority}}",
+      "byDefault": "by default",
+      "default": {
+        "fight_starts": "Fight with the default AI, then resume.",
+        "died": "The run stops, the character blocked.",
+        "action_failed": "The character is blocked, with the reason."
+      },
+      "function": "Function {{name}}",
+      "nothing": "Does nothing.",
+      "branch": {
+        "failed": "If it fails:",
+        "true": "If so:",
+        "false": "Otherwise:"
+      },
+      "back": "Back to {{step}}.",
+      "on": "Go on to {{step}}."
+    },
+    "view": {
+      "label": "Blueprint view",
+      "graph": "Graph",
+      "summary": "Summary"
+    }
   }
 }

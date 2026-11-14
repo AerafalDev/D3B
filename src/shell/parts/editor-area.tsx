@@ -3,6 +3,7 @@ import { DockviewReact } from "dockview-react";
 import { CharacterTab } from "@/characters/character-tab.tsx";
 import { PlayedTab } from "@/characters/played/played-tab.tsx";
 import { BlueprintTab } from "@/library/blueprint-tab.tsx";
+import { EditorActions } from "./editor-actions.tsx";
 import { useEditors } from "./editor-store.ts";
 import { EditorTab } from "./editor-tab.tsx";
 import { EditorWatermark } from "./editor-watermark.tsx";
@@ -27,6 +28,7 @@ export function EditorArea() {
         theme={THEME}
         components={EDITORS}
         defaultTabComponent={EditorTab}
+        rightHeaderActionsComponent={EditorActions}
         watermarkComponent={EditorWatermark}
         onReady={(event) => {
           setApi(event.api);
