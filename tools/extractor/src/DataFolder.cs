@@ -13,7 +13,7 @@ namespace D3B.Extractor;
 internal sealed class DataFolder : IDisposable
 {
     /// <summary>The format of the folders this extractor writes; <c>data::FORMAT</c> in the app must be the same.</summary>
-    public const int Format = 2;
+    public const int Format = 3;
 
     /// <summary>The manifest's file name, as <c>Manifest::FILE</c> names it in the app.</summary>
     public const string ManifestFile = "manifest.json";

@@ -8,6 +8,14 @@
 mod breeds;
 mod game_data;
 mod graph;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "D3B's blueprints per harvesting profession and the items' picker read them from step 3's PR 4"
+    )
+)]
+mod items;
 mod manifest;
 mod map_flag;
 #[cfg_attr(
@@ -29,8 +37,9 @@ pub use maps::{MapData, read_map};
 pub use world::{MapPosition, World};
 
 /// The format of the folder this version of the code reads. The extractor writes the same number in the manifest
-/// (`DataFolder.Format`); a different one is refused rather than half read. Format 2 adds the breeds and their heads.
-pub const FORMAT: u32 = 2;
+/// (`DataFolder.Format`); a different one is refused rather than half read. Format 2 adds the breeds and their heads,
+/// format 3 the items, their types, the jobs and their skills.
+pub const FORMAT: u32 = 3;
 
 #[cfg(test)]
 mod tests {

@@ -16,4 +16,18 @@ internal static class Installed
             throw;
         }
     }
+
+    /// <summary>The installed client if it is of <paramref name="build"/>, for the tests that measure that build's counts.</summary>
+    public static ClientInstall Client(string build)
+    {
+        var client = Client();
+        var installed = ClientBuild.Read(client).Version;
+
+        if (installed != build)
+        {
+            Assert.Skip($"The installed client is {installed}, not {build}.");
+        }
+
+        return client;
+    }
 }

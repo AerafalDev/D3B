@@ -22,7 +22,7 @@ public sealed class DataArchiveTests
         DataArchive.Write(target, first);
         DataArchive.Write(target, second);
 
-        Assert.Equal("client-3.7.13.17-format2.tar.gz", Path.GetFileName(first));
+        Assert.Equal("client-3.7.13.17-format3.tar.gz", Path.GetFileName(first));
         Assert.Equal(File.ReadAllBytes(first), File.ReadAllBytes(second));
         Assert.Equal(["areas.json", "manifest.json", "maps/7.json"], Entries(first).Select(entry => entry.Name));
         Assert.All(Entries(first), entry => Assert.Equal(DateTimeOffset.UnixEpoch, entry.ModificationTime));

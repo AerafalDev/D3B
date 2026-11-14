@@ -82,8 +82,8 @@ tick, sends its view when it changed.
 - **Every map information replaces what is around whole**, with or without a `MapCurrentEvent` before it: a
   profession's level-up sends the same map's information again (964 of 964).
 - **Names**, the owner's choice (2026-11-12): players by their name, as the game shows them; monsters, NPCs and
-  resources by their ids and levels. Their names come in a later feature that adds the client's monsters, NPCs,
-  interactives and skills tables to the game data (format 2, with the next client build). Drawing the actors from
+  resources by their ids and levels. Their names come in a later feature that adds the client's monsters, NPCs and
+  interactives tables to the game data (a later format; the skills came with format 3). Drawing the actors from
   their looks (`Actor.information` field 2, not read) was studied, then dropped by the owner on 2026-11-13: the
   client's sprites (about 6.4 GB of skeletons and skins) would take too much room.
 

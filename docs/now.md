@@ -131,8 +131,8 @@ _Updated 2026-11-14._
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go. v0.11.0 shipped without data, named before. Format 2 (the breeds):
   `client-3.7.13.17-format2.tar.gz`, from `next` 2b0577c (SHA-256 `2e3ac196…`, 84,146,484 bytes), added to the same
-  release on the owner's go on 2026-11-13; `.github/game-data.json` names it, so the next release packs it, and
-  `bun run data:fetch 3.7.13.17` fetches it. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
+  release on the owner's go on 2026-11-13; `.github/game-data.json` named it until format 3 (step 3's (3b)), which
+  a release needs published first. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
   and the relay, with installers for the six targets and its `latest.json` on `updater-next`; **v0.13.0**, on
   2026-11-11, adds the game connection split into frames; **v0.14.0**, on the owner's go on 2026-11-13, packs the
   data's format 2 and the new shell (status bar, inspector, Lucide icons, the breed's head), its six targets carrying
@@ -193,7 +193,11 @@ _Updated 2026-11-14._
   `storage`: `Documents/D3B`, atomic writes, a newer schema refused (done in code: the blueprints' folder, a file whose
   name is not its id kept and reported, the owner's choice of 2026-11-14); (3b) the extractor: the items, the
   harvesting professions and their resources, a new data format, so that D3B's blueprints name each profession's
-  resources (the owner, 2026-11-14; its study first); (4) D3B's blueprints in the app, and
+  resources (the owner, 2026-11-14, from its study): format 3's `items.json`, `item-types.json`, `jobs.json` and
+  `skills.json`, an item of a missing type and a skill gathering a missing item left out and counted (done in code:
+  the installed 3.7.13.17 gives 21,621 items, 236 types, 23 jobs, 372 skills, one left out of each), then the items'
+  and jobs' icons, still format 3; then the owner's extraction and publishing of `client-3.7.13.17-format3.tar.gz`:
+  until then `.github/game-data.json` names format 3, so `data:fetch` and a release find no data; (4) D3B's blueprints in the app, and
   Duplicate; (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint
   editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data

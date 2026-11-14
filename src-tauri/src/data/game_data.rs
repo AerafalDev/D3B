@@ -2,6 +2,7 @@ use std::path::Path;
 
 use super::breeds::{self, Breed};
 use super::graph::WorldGraph;
+use super::items::ItemTables;
 use super::manifest::{DataError, Manifest};
 use super::world::World;
 use super::world_maps::WorldMap;
@@ -19,6 +20,8 @@ pub struct GameData {
     pub graph: WorldGraph,
     /// The breeds, in order of id, whose heads the webview loads from the folder.
     pub breeds: Vec<Breed>,
+    /// The items, their types, the jobs and their skills.
+    pub items: ItemTables,
 }
 
 impl GameData {
@@ -29,12 +32,14 @@ impl GameData {
         let worlds = manifest.read(folder, "worlds")?;
         let graph = WorldGraph::load(folder, &manifest)?;
         let breeds = breeds::load(folder, &manifest)?;
+        let items = ItemTables::load(folder, &manifest)?;
         Ok(Self {
             manifest,
             world,
             worlds,
             graph,
             breeds,
+            items,
         })
     }
 }
@@ -70,6 +75,14 @@ mod tests {
         std::fs::copy(fixtures.join("../breeds/breeds.json"), folder.join("breeds.json"))
             .unwrap_or_else(|error| panic!("{error}"));
         tables.push(r#"{"name":"breeds","path":"breeds.json","sha256":"00"}"#.to_owned());
+        for name in ["items", "item-types", "jobs", "skills"] {
+            std::fs::copy(
+                fixtures.join(format!("../items/{name}.json")),
+                folder.join(format!("{name}.json")),
+            )
+            .unwrap_or_else(|error| panic!("{error}"));
+            tables.push(format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#));
+        }
         for head in ["8-0", "8-1", "9-0", "9-1"] {
             tables.push(format!(
                 r#"{{"name":"heads/{head}","path":"heads/{head}.png","sha256":"00"}}"#
@@ -88,6 +101,7 @@ mod tests {
         assert_eq!(data.world.zaaps.len(), 1);
         assert_eq!(data.graph.edges.len(), 1);
         assert_eq!(data.breeds.len(), 2);
+        assert_eq!(data.items.skills.len(), 2);
     }
 
     #[test]
@@ -105,5 +119,7 @@ mod tests {
         assert_ne!(data.worlds.len(), 0);
         assert_ne!(data.graph.edges.len(), 0);
         assert_ne!(data.breeds.len(), 0);
+        assert_ne!(data.items.items.len(), 0);
+        assert_ne!(data.items.skills.len(), 0);
     }
 }
