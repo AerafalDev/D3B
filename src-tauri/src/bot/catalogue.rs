@@ -185,7 +185,6 @@ pub(crate) const KINDS: &[Kind] = &[
     event("died", &[THEN], BLOCKS),
     event("action_failed", &[THEN, REASON], BLOCKS),
     of("go_to_zone", Action, &[RUN, DONE, FAILED, REASON, input("zone", Zone, None)], Some(4)),
-    of("sit_until", Action, &[RUN, DONE, FAILED, REASON, input("life", Percentage, Some("90"))], Some(4)),
     of("harvest_until", Action, &[RUN, DONE, FAILED, REASON, input("zone", Zone, None), input("what", Items, Some("\"all\"")), input("pods", Percentage, Some("90")), output("count", Number)], Some(5)),
     of("go_to_bank", Action, &[RUN, DONE, FAILED, REASON, input("bank", Bank, Some("\"nearest\""))], Some(5)),
     of("deposit_all_but", Action, &[RUN, DONE, FAILED, REASON, input("keep", Items, Some("\"none\""))], Some(5)),
@@ -193,6 +192,8 @@ pub(crate) const KINDS: &[Kind] = &[
     of("notify", Action, &[RUN, DONE, input("text", Text, None)], None),
     of("if", Flow, &[RUN, input("condition", Bool, None), exec("true", Side::Out), exec("false", Side::Out)], None),
     of("wait", Flow, &[RUN, THEN, input("minutes", Number, Some("1"))], None),
+    // Sitting no longer gives life back faster: life comes back alone, out of a fight (the owner, 2026-11-14).
+    of("wait_for_life", Flow, &[RUN, THEN, input("life", Percentage, Some("90"))], None),
     of("finish", Flow, &[RUN], None),
     of("life_percent", Query, &[output("value", Percentage)], None),
     of("pods_percent", Query, &[output("value", Percentage)], None),
@@ -276,6 +277,9 @@ mod tests {
             (Some(4), Some(5), Some(6))
         );
         assert_eq!(step("notify"), None);
+        // Waiting for life is no game action: life comes back alone (the owner, 2026-11-14).
+        assert_eq!((step("wait_for_life"), kind("sit_until")), (None, None));
+        assert_eq!(kind("wait_for_life").map(|kind| kind.family), Some(Family::Flow));
     }
 
     #[test]

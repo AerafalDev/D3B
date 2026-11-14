@@ -202,10 +202,6 @@
         "sentence": "Aller dans {{zone}}",
         "description": "Va dans la zone."
       },
-      "sit_until": {
-        "sentence": "S'asseoir jusqu'à {{life}} de vie",
-        "description": "S'assoit jusqu'à ce que la vie remonte au seuil."
-      },
       "harvest_until": {
         "sentence": "Récolter {{what}} dans {{zone}} jusqu'à {{pods}} de pods",
         "description": "Récolte dans la zone les ressources choisies, jusqu'à ce que les pods atteignent le seuil."
@@ -233,6 +229,10 @@
       "wait": {
         "sentence": "Attendre {{minutes}} min",
         "description": "Attend, puis la suite."
+      },
+      "wait_for_life": {
+        "sentence": "Attendre {{life}} de vie",
+        "description": "Reste sur place, hors combat, jusqu'à ce que la vie, qui revient seule, atteigne le seuil."
       },
       "finish": {
         "sentence": "Terminer",
