@@ -6,7 +6,7 @@ import type { GameConnectionStatus, RelayStatus } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { type CharacterView, useCharacters } from "./character-store.ts";
-import { type PlayedCharacter, usePlayed } from "./played-store.ts";
+import { type PlayedCharacter, usePlayed } from "./played/played-store.ts";
 
 // The editor area, faked: the editors opened, and the id of the one whose tab is active.
 const opened = vi.hoisted(() => ({ editors: [] as unknown[], active: null as string | null }));

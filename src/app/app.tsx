@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import { useCharacters } from "@/characters/character-store.ts";
-import { usePlayed } from "@/characters/played-store.ts";
+import { usePlayed } from "@/characters/played/played-store.ts";
 import { useInspector } from "@/inspector/inspector-store.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { Shell } from "@/shell/shell.tsx";

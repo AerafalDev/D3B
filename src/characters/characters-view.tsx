@@ -5,8 +5,8 @@ import { useRelay } from "@/relay/relay-store.ts";
 import { openEditor, useEditors } from "@/shell/parts/editor-store.ts";
 import { CharacterRow } from "./character-row.tsx";
 import { useCharacters } from "./character-store.ts";
-import { PlayedRow } from "./played-row.tsx";
-import { usePlayed } from "./played-store.ts";
+import { PlayedRow } from "./played/played-row.tsx";
+import { usePlayed } from "./played/played-store.ts";
 
 // The same empty list each time, so the selector gives a stable snapshot before the relay speaks.
 const NONE: readonly GameConnectionStatus[] = [];

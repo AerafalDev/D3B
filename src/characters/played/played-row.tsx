@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu.tsx";
 import { cn } from "@/lib/utils.ts";
-import { Avatar } from "./avatar.tsx";
+import { Avatar } from "../avatar.tsx";
 import { type PlayedCharacter, seenAgo } from "./played-store.ts";
 
 interface PlayedRowProps {

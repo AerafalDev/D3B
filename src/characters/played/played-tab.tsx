@@ -2,8 +2,8 @@ import type { IDockviewPanelProps } from "dockview-react";
 import { useTranslation } from "react-i18next";
 
 import type { EditorParams } from "@/shell/parts/editor-store.ts";
-import { Avatar } from "./avatar.tsx";
-import { named } from "./names.ts";
+import { Avatar } from "../avatar.tsx";
+import { named } from "../names.ts";
 import { usePlayed } from "./played-store.ts";
 
 interface PlayedParams extends EditorParams {

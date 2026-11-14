@@ -1,7 +1,7 @@
 import { DockviewReact } from "dockview-react";
 
 import { CharacterTab } from "@/characters/character-tab.tsx";
-import { PlayedTab } from "@/characters/played-tab.tsx";
+import { PlayedTab } from "@/characters/played/played-tab.tsx";
 import { useEditors } from "./editor-store.ts";
 import { EditorTab } from "./editor-tab.tsx";
 import { EditorWatermark } from "./editor-watermark.tsx";
