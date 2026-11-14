@@ -1,14 +1,14 @@
 //! The blueprints, as the Library lists them (`docs/bot.md`, "In the app"): D3B's, then mine from `Documents/D3B`, and
 //! the files there that do not read; and Duplicate, which saves a copy among mine.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::Manager;
 
-use crate::bot::{self, Blueprint, Id};
-use crate::storage::{StorageError, Store};
+use crate::bot::{self, Blueprint, Id, ReadError};
+use crate::storage::{StorageError, Store, Why};
 
 /// The player's folder: `Documents/D3B`, or the app's data folder on a system without a documents folder (ADR 0015).
 pub fn open_store(app: &tauri::AppHandle) -> PlayersFiles {
@@ -51,7 +51,53 @@ pub struct BasedOnView {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
 pub struct KeptFile {
     pub path: String,
-    pub why: String,
+    pub why: KeptWhy,
+}
+
+/// Why a file is kept, for the interface to say in the player's language.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum KeptWhy {
+    /// The system could not read it: its own words.
+    Unreadable {
+        reason: String,
+    },
+    NotText,
+    /// Written by a newer D3B, of this schema.
+    Newer {
+        found: u32,
+    },
+    /// Not of a blueprint's shape: what serde says, with its line and column.
+    NotABlueprint {
+        detail: String,
+    },
+    /// It holds another id than its name says.
+    NameIsNotId {
+        id: String,
+    },
+    /// It holds the id of one of D3B's blueprints.
+    GivenId {
+        id: String,
+    },
+}
+
+impl From<&Why> for KeptWhy {
+    fn from(why: &Why) -> Self {
+        match why {
+            Why::Unreadable(error) => Self::Unreadable {
+                reason: error.to_string(),
+            },
+            Why::NotText => Self::NotText,
+            Why::NotRead(ReadError::Newer { found }) => Self::Newer {
+                found: u32::try_from(*found).unwrap_or(u32::MAX),
+            },
+            Why::NotRead(ReadError::NotABlueprint(error)) => Self::NotABlueprint {
+                detail: error.to_string(),
+            },
+            Why::NameIsNotId { id } => Self::NameIsNotId { id: id.0.clone() },
+            Why::GivenId { id } => Self::GivenId { id: id.0.clone() },
+        }
+    }
 }
 
 /// The Library's content.
@@ -84,7 +130,7 @@ pub enum DuplicateError {
     NoSuchBlueprint,
     /// The system names no folder for the player's files.
     NoFolder,
-    /// The copy could not be saved: the reason.
+    /// The system could not read the folder or write the copy: its own words.
     NotSaved { reason: String },
 }
 
@@ -103,14 +149,11 @@ fn summary(blueprint: &Blueprint, given: bool) -> BlueprintSummary {
     }
 }
 
-fn given() -> Vec<Blueprint> {
-    // The given blueprints' tests hold them readable: none is ever missing.
-    bot::given().unwrap_or_default()
-}
-
-/// D3B's blueprints, then mine in the order of their files, and the files kept.
-fn list(store: Option<&Store>) -> BlueprintList {
-    let mut blueprints: Vec<_> = given().iter().map(|blueprint| summary(blueprint, true)).collect();
+/// D3B's blueprints, then mine in the order of their files, and the files kept; an error only for a bug of this
+/// version, D3B's own not reading.
+fn list(store: Option<&Store>) -> Result<BlueprintList, String> {
+    let given = bot::given().map_err(|error| format!("D3B's blueprints do not read: {error}"))?;
+    let mut blueprints: Vec<_> = given.iter().map(|blueprint| summary(blueprint, true)).collect();
     let mut kept = Vec::new();
     if let Some(store) = store {
         let mine = store.blueprints();
@@ -120,25 +163,15 @@ fn list(store: Option<&Store>) -> BlueprintList {
             .iter()
             .map(|file| KeptFile {
                 path: file.path.display().to_string(),
-                why: file.why.to_string(),
+                why: (&file.why).into(),
             })
             .collect();
     }
-    BlueprintList { blueprints, kept }
+    Ok(BlueprintList { blueprints, kept })
 }
 
-/// Saves a copy of the blueprint `id` among mine, with `texts`; gives back the copy's id.
 fn duplicate(store: Option<&Store>, id: &str, texts: CopyTexts) -> Result<String, DuplicateError> {
     let store = store.ok_or(DuplicateError::NoFolder)?;
-    let (given, mine) = (given(), store.blueprints().read);
-    let source = given
-        .iter()
-        .map(|it| (it, true))
-        .chain(mine.iter().map(|it| (it, false)))
-        .find(|(it, _)| it.id.0 == id);
-    let (source, is_given) = source.ok_or(DuplicateError::NoSuchBlueprint)?;
-    let taken: HashSet<Id> = given.iter().chain(&mine).map(|it| it.id.clone()).collect();
-    let copy_id = bot::id_for(&texts.name, &taken);
     let variables = texts
         .variables
         .into_iter()
@@ -149,23 +182,22 @@ fn duplicate(store: Option<&Store>, id: &str, texts: CopyTexts) -> Result<String
         description: texts.description,
         variables,
     };
-    let copy = bot::copy(source, is_given, copy_id.clone(), texts);
-    store
-        .save_blueprint(&copy)
-        .map_err(|error: StorageError| DuplicateError::NotSaved {
+    match store.duplicate(id, texts) {
+        Ok(id) => Ok(id.0),
+        Err(StorageError::NoSuchBlueprint { .. }) => Err(DuplicateError::NoSuchBlueprint),
+        Err(error) => Err(DuplicateError::NotSaved {
             reason: error.to_string(),
-        })?;
-    Ok(copy_id.0)
+        }),
+    }
 }
 
 /// The Library's blueprints and the files kept.
 #[tauri::command]
 #[specta::specta]
-pub async fn blueprints(files: tauri::State<'_, PlayersFiles>) -> Result<BlueprintList, ()> {
+pub async fn blueprints(files: tauri::State<'_, PlayersFiles>) -> Result<BlueprintList, String> {
     let store = files.0.clone();
-    Ok(tauri::async_runtime::spawn_blocking(move || list(store.as_ref()))
-        .await
-        .unwrap_or_else(|_| list(None)))
+    let listed = tauri::async_runtime::spawn_blocking(move || list(store.as_ref())).await;
+    listed.map_err(|error| error.to_string())?
 }
 
 /// Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id.
@@ -204,7 +236,7 @@ mod tests {
 
     #[test]
     fn the_library_lists_d3bs_blueprints_first_without_problems() {
-        let list = list(None);
+        let list = list(None).unwrap_or_else(|error| panic!("{error}"));
         let ids: Vec<_> = list
             .blueprints
             .iter()
@@ -233,17 +265,18 @@ mod tests {
             Ok("recolte-automatique-copie-2".to_owned()),
             "an id taken gets a number"
         );
-        let list = list(Some(&store));
+        let list = list(Some(&store)).unwrap_or_else(|error| panic!("{error}"));
         let mine: Vec<_> = list.blueprints.iter().filter(|it| !it.given).collect();
         assert_eq!(mine.len(), 2);
+        let first = mine
+            .iter()
+            .find(|it| it.id == "recolte-automatique-copie")
+            .unwrap_or_else(|| panic!("{mine:?}"));
         assert_eq!(
-            (mine[0].name.as_str(), mine[0].problems),
-            ("Récolte automatique (copie)", 0)
+            (first.name.as_str(), first.description.as_str(), first.problems),
+            ("Récolte automatique (copie)", "À moi.", 0)
         );
-        let based = mine[0]
-            .based_on
-            .as_ref()
-            .map(|based| (based.id.as_str(), based.version));
+        let based = first.based_on.as_ref().map(|based| (based.id.as_str(), based.version));
         assert_eq!(based, Some(("automatic-harvest", 1)));
         assert!(folder.path().join("blueprints/recolte-automatique-copie.json").exists());
     }
@@ -264,10 +297,11 @@ mod tests {
         let folder = Folder::new("ipc-kept");
         std::fs::create_dir_all(folder.path().join("blueprints")).unwrap_or_else(|error| panic!("{error}"));
         std::fs::write(folder.path().join("blueprints/broken.json"), "{").unwrap_or_else(|error| panic!("{error}"));
-        let list = list(Some(&Store::new(folder.path().to_path_buf())));
+        let list = list(Some(&Store::new(folder.path().to_path_buf()))).unwrap_or_else(|error| panic!("{error}"));
         assert_eq!(list.kept.len(), 1);
+        assert!(list.kept[0].path.ends_with("broken.json"), "{:?}", list.kept);
         assert!(
-            list.kept[0].path.ends_with("broken.json") && list.kept[0].why.contains("not a blueprint"),
+            matches!(&list.kept[0].why, KeptWhy::NotABlueprint { detail } if detail.contains("line 1")),
             "{:?}",
             list.kept
         );

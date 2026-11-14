@@ -26,7 +26,9 @@ what it does; a D3B update) need these and nothing else: no profile, activity, p
 
 - **Blueprint**: an event graph, functions and variables. D3B's own ship with the app, **locked**: automatic harvest,
   profession harvest (one blueprint, its profession set per character: the owner, 2026-11-14) and hunt; **Duplicate** makes one of mine, fully editable, noting "based on
-  X vN". A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
+  X vN": named "<name> (copie)" in the player's language, its texts taken from the interface since a given
+  blueprint's are translations, its id made from its name (accents dropped, a number when taken by a blueprint or by
+  any file of the folder, in any case); a copy of mine keeps what mine was based on (the owner, 2026-11-14). A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
   and says its original has a newer version.
 - **Character**: runs one blueprint, chosen in its tab. Its **settings** are the blueprint's variables marked "set per
   character" (Unreal's Instance Editable): the blueprint holds the default, the character its own value, marked when
@@ -98,7 +100,9 @@ One JSON file per object in **Documents/D3B**, a schema version each, written at
 `.d3b` file to share a blueprint with its zones and routes (ADR 0015). `storage` reads `blueprints/<id>.json` and
 writes it whole (a `.d3b-tmp` file beside it, then a rename); a file that does not read, of a newer schema, or whose
 name is not its id, in any case (a copy made by hand: the owner, 2026-11-14), is kept untouched, reported with why,
-and never written over. The temporary file is flushed to the disk before the rename, one save at a time. A character's file needs a key stable across
+and never written over, as is one of mine holding the id of one of D3B's. The temporary file is flushed to the disk
+before the rename, one save at a time. The folder is the system's documents folder's `D3B`, else the app's data
+folder; the IPC lists D3B's blueprints, then mine, and the files kept with a typed reason the interface words. A character's file needs a key stable across
 servers: its study comes first.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,

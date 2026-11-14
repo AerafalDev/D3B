@@ -254,7 +254,7 @@ export type DuplicateError =
 { kind: "noSuchBlueprint" } | 
 /**  The system names no folder for the player's files. */
 { kind: "noFolder" } | 
-/**  The copy could not be saved: the reason. */
+/**  The system could not read the folder or write the copy: its own words. */
 { kind: "notSaved"; reason: string };
 
 /**  An interactive element of the map and its cell. */
@@ -391,8 +391,21 @@ export type InteractiveSeen = {
 /**  A file of the player's folder kept as it is, and why. */
 export type KeptFile = {
 	path: string,
-	why: string,
+	why: KeptWhy,
 };
+
+/**  Why a file is kept, for the interface to say in the player's language. */
+export type KeptWhy = 
+/**  The system could not read it: its own words. */
+{ kind: "unreadable"; reason: string } | { kind: "notText" } | 
+/**  Written by a newer D3B, of this schema. */
+{ kind: "newer"; found: number } | 
+/**  Not of a blueprint's shape: what serde says, with its line and column. */
+{ kind: "notABlueprint"; detail: string } | 
+/**  It holds another id than its name says. */
+{ kind: "nameIsNotId"; id: string } | 
+/**  It holds the id of one of D3B's blueprints. */
+{ kind: "givenId"; id: string };
 
 /**  A map's coordinates in the world, as the game shows them. */
 export type MapAt = {

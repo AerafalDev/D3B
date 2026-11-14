@@ -100,7 +100,7 @@ mod tests {
         let texts = Texts {
             name: "Récolte automatique (copie)".to_owned(),
             description: "Récolte ce qui pousse.".to_owned(),
-            variables: BTreeMap::from([(id("zone"), ("Zone".to_owned(), "Où récolter.".to_owned()))]),
+            variables: BTreeMap::from([(id("zone"), ("Lieu".to_owned(), "Où récolter.".to_owned()))]),
         };
         let copy = copy(&source, true, id("recolte-automatique-copie"), texts);
         assert_eq!(
@@ -118,6 +118,8 @@ mod tests {
             copy.variables[1].name, source.variables[1].name,
             "a variable left out keeps the source's"
         );
+        let description = (copy.description.as_str(), copy.variables[0].name.as_str());
+        assert_eq!(description, ("Récolte ce qui pousse.", "Lieu"));
         assert_eq!(copy.graphs, source.graphs);
     }
 
