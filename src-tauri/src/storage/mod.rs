@@ -5,6 +5,8 @@
 mod atomic;
 mod store;
 
+pub(crate) use store::{StorageError, Store, Why};
+
 #[cfg(test)]
 pub(crate) mod tests {
     use std::path::{Path, PathBuf};

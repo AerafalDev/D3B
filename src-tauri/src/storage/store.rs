@@ -3,6 +3,7 @@
 //! untouched and reported with why, and never written over: what a newer D3B or the player's own hand wrote is never
 //! lost.
 
+use std::collections::HashSet;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -45,6 +46,9 @@ pub(crate) enum Why {
     /// 2026-11-14), or a name in another case, which a system that ignores case would take for this one.
     #[error("its name is not its id, {}", id.0)]
     NameIsNotId { id: Id },
+    /// It holds the id of one of D3B's blueprints, which a blueprint of mine never takes.
+    #[error("it holds {}, the id of one of D3B's blueprints", id.0)]
+    GivenId { id: Id },
 }
 
 /// The blueprints of the player's folder, and the files kept as they are.
@@ -66,6 +70,10 @@ pub(crate) enum StorageError {
     Kept { path: PathBuf, why: Why },
     #[error("{} is no id a file can be named by", id.0)]
     MalformedId { id: Id },
+    #[error("{} is the id of one of D3B's blueprints", id.0)]
+    GivenId { id: Id },
+    #[error("no blueprint {}", id.0)]
+    NoSuchBlueprint { id: Id },
 }
 
 impl Store {
@@ -108,6 +116,12 @@ impl Store {
         paths.sort();
         for path in paths {
             match read_blueprint(&path) {
+                Ok(blueprint) if given_ids().contains(&blueprint.id) => {
+                    blueprints.kept.push(Kept {
+                        path,
+                        why: Why::GivenId { id: blueprint.id },
+                    });
+                }
                 Ok(blueprint) => blueprints.read.push(blueprint),
                 Err(why) => blueprints.kept.push(Kept { path, why }),
             }
@@ -117,13 +131,62 @@ impl Store {
 
     /// Writes `blueprint` to its file, whole, unless a file there, or one whose name differs from it only by case,
     /// does not read as this blueprint.
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "the editor saves as the player edits, step 3's PR 13")
+    )]
     pub(crate) fn save_blueprint(&self, blueprint: &Blueprint) -> Result<(), StorageError> {
+        let _writing = self.lock();
+        self.save_while_locked(blueprint)
+    }
+
+    /// Duplicate: a copy of the blueprint `id`, D3B's or mine, saved among mine with `texts`, under an id made from its
+    /// name that no blueprint and no file of the folder holds, in any case; the copy's id. The id is chosen and the
+    /// file written under one lock, so two copies at once never share a file.
+    pub(crate) fn duplicate(&self, id: &str, texts: bot::Texts) -> Result<Id, StorageError> {
+        let _writing = self.lock();
+        let given = bot::given().unwrap_or_default();
+        let mine = self.blueprints();
+        let folder = self.root.join(BLUEPRINTS);
+        if let Some(Kept {
+            why: Why::Unreadable(error),
+            ..
+        }) = mine.kept.iter().find(|kept| kept.path == folder)
+        {
+            let source = io::Error::new(error.kind(), error.to_string());
+            return Err(StorageError::Unreadable { path: folder, source });
+        }
+        let sources = given
+            .iter()
+            .map(|it| (it, true))
+            .chain(mine.read.iter().map(|it| (it, false)));
+        let found = sources.clone().find(|(it, _)| it.id.0 == id);
+        let (source, is_given) = found.ok_or_else(|| StorageError::NoSuchBlueprint { id: Id(id.to_owned()) })?;
+        let mut taken: HashSet<Id> = sources.map(|(it, _)| it.id.clone()).collect();
+        for entry in std::fs::read_dir(&folder).into_iter().flatten().flatten() {
+            let path = entry.path();
+            if let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) {
+                taken.insert(Id(stem.to_lowercase()));
+            }
+        }
+        let copy = bot::copy(source, is_given, bot::id_for(&texts.name, &taken), texts);
+        self.save_while_locked(&copy)?;
+        Ok(copy.id)
+    }
+
+    /// One write at a time; a write that panicked left nothing to protect.
+    fn lock(&self) -> std::sync::MutexGuard<'_, ()> {
+        self.writing.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    fn save_while_locked(&self, blueprint: &Blueprint) -> Result<(), StorageError> {
         let id = &blueprint.id;
         if !id.is_well_formed() {
             return Err(StorageError::MalformedId { id: id.clone() });
         }
-        // A save waits for the one at work; a save that panicked left nothing to protect.
-        let _writing = self.writing.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        if given_ids().contains(id) {
+            return Err(StorageError::GivenId { id: id.clone() });
+        }
         let folder = self.root.join(BLUEPRINTS);
         let name = format!("{}.json", id.0);
         for entry in std::fs::read_dir(&folder).into_iter().flatten().flatten() {
@@ -154,6 +217,15 @@ impl Store {
     }
 }
 
+/// The ids of D3B's blueprints; their tests hold them readable.
+fn given_ids() -> HashSet<Id> {
+    bot::given()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|blueprint| blueprint.id)
+        .collect()
+}
+
 fn read_blueprint(path: &Path) -> Result<Blueprint, Why> {
     let bytes = std::fs::read(path).map_err(Why::Unreadable)?;
     let text = String::from_utf8(bytes).map_err(|_| Why::NotText)?;
@@ -169,11 +241,16 @@ fn read_blueprint(path: &Path) -> Result<Blueprint, Why> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bot::HARVEST;
+    use crate::bot::HARVEST as FIXTURE;
     use crate::storage::tests::Folder;
 
+    /// The hand-written fixture as a blueprint of mine: its id is one of D3B's, which mine never take.
+    fn text() -> String {
+        FIXTURE.replacen("automatic-harvest", "my-harvest", 1)
+    }
+
     fn harvest() -> Blueprint {
-        bot::read(HARVEST).unwrap_or_else(|error| panic!("{error}"))
+        bot::read(&text()).unwrap_or_else(|error| panic!("{error}"))
     }
 
     fn put(folder: &Folder, name: &str, text: &str) -> PathBuf {
@@ -197,7 +274,7 @@ mod tests {
         store
             .save_blueprint(&harvest())
             .unwrap_or_else(|error| panic!("{error}"));
-        let text = std::fs::read_to_string(folder.path().join("blueprints/automatic-harvest.json"));
+        let text = std::fs::read_to_string(folder.path().join("blueprints/my-harvest.json"));
         assert_eq!(text.ok(), Some(bot::write(&harvest())));
         let blueprints = store.blueprints();
         assert_eq!((blueprints.read, blueprints.kept.len()), (vec![harvest()], 0));
@@ -228,11 +305,11 @@ mod tests {
         let newer = put(
             &folder,
             "newer.json",
-            &HARVEST.replacen("\"schema\": 1", "\"schema\": 2", 1),
+            &text().replacen("\"schema\": 1", "\"schema\": 2", 1),
         );
         let broken = put(&folder, "broken.json", "{\"schema\": 1,");
-        let copied = put(&folder, "copy.json", HARVEST);
-        put(&folder, "automatic-harvest.json.d3b-tmp", "half");
+        let copied = put(&folder, "copy.json", &text());
+        put(&folder, "my-harvest.json.d3b-tmp", "half");
         put(&folder, "notes.txt", "mine");
         let blueprints = store.blueprints();
         assert_eq!(blueprints.read, [harvest()]);
@@ -241,7 +318,7 @@ mod tests {
             matches!(kept[0], (path, Why::NotRead(ReadError::NotABlueprint(_))) if *path == broken),
             "{kept:?}"
         );
-        assert!(matches!(kept[1], (path, Why::NameIsNotId { id }) if *path == copied && id.0 == "automatic-harvest"));
+        assert!(matches!(kept[1], (path, Why::NameIsNotId { id }) if *path == copied && id.0 == "my-harvest"));
         assert!(
             matches!(kept[2], (path, Why::NotRead(ReadError::Newer { found: 2 })) if *path == newer),
             "{kept:?}"
@@ -253,8 +330,8 @@ mod tests {
     fn a_file_that_does_not_read_is_never_written_over() {
         let folder = Folder::new("store-never");
         let store = Store::new(folder.path().to_path_buf());
-        let newer = HARVEST.replacen("\"schema\": 1", "\"schema\": 2", 1);
-        let path = put(&folder, "automatic-harvest.json", &newer);
+        let newer = text().replacen("\"schema\": 1", "\"schema\": 2", 1);
+        let path = put(&folder, "my-harvest.json", &newer);
         let error = store
             .save_blueprint(&harvest())
             .err()
@@ -267,7 +344,7 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&path).ok(), Some(newer));
         let mut other = harvest();
         other.id = Id("other".to_owned());
-        put(&folder, "other.json", HARVEST);
+        put(&folder, "other.json", &text());
         assert!(
             matches!(store.save_blueprint(&other), Err(StorageError::Kept { .. })),
             "a name that is not its id"
@@ -287,7 +364,7 @@ mod tests {
     #[test]
     fn a_file_that_is_not_text_is_kept_and_never_written_over() {
         let folder = Folder::new("store-bytes");
-        let path = put(&folder, "automatic-harvest.json", "");
+        let path = put(&folder, "my-harvest.json", "");
         std::fs::write(&path, [0xFF, 0xFE]).unwrap_or_else(|error| panic!("{error}"));
         let store = Store::new(folder.path().to_path_buf());
         assert!(matches!(
@@ -304,14 +381,10 @@ mod tests {
 
     #[test]
     fn a_file_named_for_the_id_in_another_case_is_kept_and_never_written_over() {
-        // On a system that ignores case, `Automatic-Harvest.json` is the file `automatic-harvest.json` opens.
+        // On a system that ignores case, `My-Harvest.json` is the file `my-harvest.json` opens.
         let folder = Folder::new("store-case");
-        let path = put(&folder, "Automatic-Harvest.json", HARVEST);
-        put(
-            &folder,
-            "other.JSON",
-            &HARVEST.replacen("automatic-harvest", "other", 1),
-        );
+        let path = put(&folder, "My-Harvest.json", &text());
+        put(&folder, "other.JSON", &text().replacen("my-harvest", "other", 1));
         let store = Store::new(folder.path().to_path_buf());
         let kept = store.blueprints().kept;
         assert!(
@@ -329,6 +402,73 @@ mod tests {
             ),
             "{saved:?}"
         );
-        assert_eq!(std::fs::read_to_string(&path).ok().as_deref(), Some(HARVEST));
+        assert_eq!(std::fs::read_to_string(&path).ok().as_deref(), Some(text().as_str()));
+    }
+
+    fn copy_texts(name: &str) -> bot::Texts {
+        bot::Texts {
+            name: name.to_owned(),
+            ..bot::Texts::default()
+        }
+    }
+
+    #[test]
+    fn duplicate_takes_a_free_id_past_a_file_kept_in_the_way_and_its_other_case() {
+        let folder = Folder::new("store-duplicate");
+        let store = Store::new(folder.path().to_path_buf());
+        // A newer D3B's file, and one in another case, under the names the copy's name gives.
+        let newer = text().replacen("\"schema\": 1", "\"schema\": 2", 1);
+        put(&folder, "chasse-copie.json", &newer);
+        put(&folder, "Chasse-Copie-2.JSON", "{");
+        let copied = store.duplicate("hunt", copy_texts("Chasse (copie)"));
+        assert_eq!(copied.ok(), Some(Id("chasse-copie-3".to_owned())));
+        assert_eq!(
+            std::fs::read_to_string(folder.path().join("blueprints/chasse-copie.json")).ok(),
+            Some(newer)
+        );
+        let again = store.duplicate("chasse-copie-3", copy_texts("Ma chasse"));
+        assert_eq!(again.ok(), Some(Id("ma-chasse".to_owned())), "a copy of mine too");
+        let based: Vec<_> = store
+            .blueprints()
+            .read
+            .into_iter()
+            .map(|it| it.based_on.map(|based| based.id.0))
+            .collect();
+        assert_eq!(based, [Some("hunt".to_owned()), Some("hunt".to_owned())]);
+    }
+
+    #[test]
+    fn duplicate_refuses_a_blueprint_there_is_not() {
+        let folder = Folder::new("store-duplicate-none");
+        let store = Store::new(folder.path().to_path_buf());
+        assert!(matches!(
+            store.duplicate("teleport", copy_texts("x")),
+            Err(StorageError::NoSuchBlueprint { .. })
+        ));
+    }
+
+    #[test]
+    fn a_file_of_mine_with_the_id_of_one_of_d3bs_is_kept_and_never_saved() {
+        let folder = Folder::new("store-given-id");
+        let store = Store::new(folder.path().to_path_buf());
+        put(&folder, "automatic-harvest.json", FIXTURE);
+        assert!(matches!(
+            store.blueprints().kept.as_slice(),
+            [Kept {
+                why: Why::GivenId { .. },
+                ..
+            }]
+        ));
+        let given = bot::read(FIXTURE).unwrap_or_else(|error| panic!("{error}"));
+        assert!(matches!(
+            store.save_blueprint(&given),
+            Err(StorageError::GivenId { .. })
+        ));
+        assert_eq!(
+            std::fs::read_to_string(folder.path().join("blueprints/automatic-harvest.json"))
+                .ok()
+                .as_deref(),
+            Some(FIXTURE)
+        );
     }
 }
