@@ -6,7 +6,8 @@ import { openEditor, useEditors } from "@/shell/parts/editor-store.ts";
 import { CharacterRow } from "./character-row.tsx";
 import { useCharacters } from "./character-store.ts";
 import { PlayedRow } from "./played/played-row.tsx";
-import { usePlayed } from "./played/played-store.ts";
+import { useOffline, usePlayed } from "./played/played-store.ts";
+import { useNow } from "./played/played-time.ts";
 
 // The same empty list each time, so the selector gives a stable snapshot before the relay speaks.
 const NONE: readonly GameConnectionStatus[] = [];
@@ -51,11 +52,9 @@ export function CharactersView() {
   const connections = useRelay((store) => store.status?.connections ?? NONE);
   const views = useCharacters((store) => store.views);
   const active = useEditors((store) => store.active);
-  const played = usePlayed((store) => store.played);
   const forget = usePlayed((store) => store.forget);
-  const online = new Set(Object.values(views).map((view) => view.key));
-  const offline = played.filter((character) => !online.has(character.key));
-  const now = Date.now();
+  const offline = useOffline();
+  const now = useNow();
 
   if (connections.length === 0 && offline.length === 0) {
     return (
@@ -73,7 +72,10 @@ export function CharactersView() {
             <CharacterRow
               connection={connection}
               view={view}
-              selected={active === editorId(connection.number)}
+              // Its tab, or its offline tab become its live one.
+              selected={
+                active === editorId(connection.number) || (view?.key != null && active === `${PLAYED}${view.key}`)
+              }
               onOpen={() =>
                 openCharacter(
                   connection.number,
@@ -96,7 +98,7 @@ export function CharactersView() {
             selected={active === `${PLAYED}${character.key}`}
             now={now}
             onOpen={() => openPlayed(character.key, character.name)}
-            onForget={() => void forget(character.key)}
+            onForget={() => void forget(character)}
           />
         </li>
       ))}

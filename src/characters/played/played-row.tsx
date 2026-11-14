@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Avatar } from "../avatar.tsx";
-import { type PlayedCharacter, seenAgo } from "./played-store.ts";
+import type { PlayedCharacter } from "./played-store.ts";
+import { seenAgo } from "./played-time.ts";
 
 interface PlayedRowProps {
   character: PlayedCharacter;
@@ -20,7 +21,7 @@ interface PlayedRowProps {
  */
 export function PlayedRow({ character, selected, now, onOpen, onForget }: PlayedRowProps) {
   const { t, i18n } = useTranslation();
-  const seen = seenAgo(character.lastSeen ?? now, now, i18n.language);
+  const seen = character.lastSeen === null ? null : seenAgo(character.lastSeen, now, i18n.language);
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>

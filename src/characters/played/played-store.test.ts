@@ -1,29 +1,54 @@
-import { describe, expect, it } from "vitest";
+import i18next from "i18next";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { seenAgo as raw } from "./played-store.ts";
+import { initI18n } from "@/i18n/i18n.ts";
 
-// Intl puts no-break spaces between a number and its unit; the test reads them as spaces.
-function seenAgo(then: number, now: number, language: string): string | null {
-  return raw(then, now, language)?.replace(/[  ]/g, " ") ?? null;
-}
+// The back end and the notifications, faked: what Forget asks, and what it says.
+const backEnd = vi.hoisted(() => ({ forget: vi.fn(), toasts: [] as string[] }));
+vi.mock("@/bindings.ts", () => ({
+  commands: { forgetCharacter: backEnd.forget },
+  events: {},
+}));
+vi.mock("sonner", () => ({ toast: { error: (text: string) => backEnd.toasts.push(text) } }));
 
-const NOW = Date.UTC(2026, 10, 14, 12, 0, 0);
-const HOUR = 3_600_000;
+const { usePlayed } = await import("./played-store.ts");
 
-describe("seenAgo", () => {
-  it("says how long ago, short, in the player's language", () => {
-    expect(seenAgo(NOW - 2 * HOUR, NOW, "fr")).toBe("il y a 2 h");
-    expect(seenAgo(NOW - 2 * HOUR, NOW, "en")).toBe("2 hr. ago");
-    expect(seenAgo(NOW - 5 * 60_000, NOW, "fr")).toBe("il y a 5 min");
+const kalyx = {
+  key: "294-2",
+  name: "Kalyx",
+  level: 54,
+  breedName: null,
+  head: null,
+  sex: null,
+  lastSeen: 0,
+  place: null,
+};
+
+describe("Forget", () => {
+  beforeAll(async () => {
+    initI18n();
+    await i18next.changeLanguage("en");
+  });
+  beforeEach(() => {
+    backEnd.forget.mockReset();
+    backEnd.toasts.length = 0;
   });
 
-  it("says yesterday, then days", () => {
-    expect(seenAgo(NOW - 24 * HOUR, NOW, "fr")).toBe("hier");
-    expect(seenAgo(NOW - 12 * 24 * HOUR, NOW, "fr")).toBe("il y a 12 j");
+  it("asks the back end to forget the character's file, and says nothing when it did", async () => {
+    backEnd.forget.mockResolvedValue(null);
+    await usePlayed.getState().forget(kalyx);
+    expect(backEnd.forget).toHaveBeenCalledWith("294-2");
+    expect(backEnd.toasts).toEqual([]);
   });
 
-  it("leaves under a minute to the list's own words", () => {
-    expect(seenAgo(NOW - 30_000, NOW, "fr")).toBeNull();
-    expect(seenAgo(NOW, NOW, "en")).toBeNull();
+  it("says why in a notification when the file could not be forgotten", async () => {
+    backEnd.forget.mockRejectedValueOnce({ kind: "noSuchCharacter" });
+    await usePlayed.getState().forget(kalyx);
+    backEnd.forget.mockRejectedValueOnce({ kind: "notForgotten", reason: "the trash is full" });
+    await usePlayed.getState().forget(kalyx);
+    expect(backEnd.toasts).toEqual([
+      "Kalyx was not forgotten: its file is gone.",
+      "Kalyx was not forgotten: the trash is full",
+    ]);
   });
 });

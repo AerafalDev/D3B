@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import i18next from "i18next";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -69,8 +69,14 @@ describe("the characters view", () => {
     useCharacters.setState({ views: {}, selected: null });
     useRelay.setState({ status: null });
     usePlayed.setState({ played: [] });
+    // A fixed clock: how long ago each character was seen is read against it.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(Date.UTC(2026, 10, 14, 12, 0));
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it("says how to start while no character plays", () => {
     render(<CharactersView />);
@@ -159,5 +165,17 @@ describe("the characters view", () => {
       { id: "played:294-2", component: "played", title: "Kalyx", params: { icon: "user", key: "294-2" } },
     ]);
     expect(screen.getByRole("button").textContent).toContain("Seen just now");
+  });
+
+  it("keeps saying how long ago as the minutes pass", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.UTC(2026, 10, 14, 12, 0));
+    usePlayed.setState({ played: [played("294-2", "Kalyx", 0)] });
+    render(<CharactersView />);
+    expect(screen.getByRole("button").textContent).toContain("Seen just now");
+    act(() => {
+      vi.advanceTimersByTime(5 * 60_000);
+    });
+    expect(screen.getByRole("button").textContent?.replace(/[  ]/g, " ")).toContain("Seen 5 min. ago");
   });
 });

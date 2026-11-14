@@ -84,7 +84,12 @@
     "seen": "Vu {{when}}",
     "seenNow": "Vu à l'instant",
     "open": "Ouvrir",
-    "forget": "Oublier {{name}}"
+    "forget": "Oublier {{name}}",
+    "forgetFailed": {
+      "gone": "{{name}} n'a pas été oublié : son fichier n'est plus là.",
+      "noFolder": "{{name}} n'a pas été oublié : le système ne donne pas de dossier pour vos fichiers.",
+      "refused": "{{name}} n'a pas été oublié : {{reason}}"
+    }
   },
   "character": {
     "state": "État",
@@ -125,8 +130,12 @@
       "other": "Autres"
     },
     "forgotten": "Ce personnage a été oublié.",
-    "lastSeen": "Vu pour la dernière fois le {{when}}.",
-    "lastSeenAt": "Vu pour la dernière fois le {{when}}, à {{where}} ({{x}}, {{y}})."
+    "lastSeen": "Vu pour la dernière fois {{when}}.",
+    "lastSeenAt": "Vu pour la dernière fois {{when}}, à {{where}} ({{x}}, {{y}}).",
+    "today": "aujourd'hui à {{time}}",
+    "yesterday": "hier à {{time}}",
+    "onDate": "le {{date}} à {{time}}",
+    "lastSeenIn": "Vu pour la dernière fois {{when}}, à {{where}}."
   },
   "inspector": {
     "title": "Protocol",
