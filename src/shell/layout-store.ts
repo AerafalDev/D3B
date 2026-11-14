@@ -4,7 +4,7 @@ import { create } from "zustand";
 export type Part = "primarySideBar" | "panel" | "secondarySideBar";
 
 /** The views the activity bar opens in the primary side bar, one per feature that has one. */
-export type ViewId = "characters";
+export type ViewId = "characters" | "library";
 
 interface LayoutStore {
   /** Which parts are shown. As in VS Code, the secondary side bar starts hidden (the owner, 2026-11-12). */

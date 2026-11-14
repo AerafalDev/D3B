@@ -130,6 +130,8 @@ export type BlueprintSummary_Deserialize = {
 	basedOn?: BasedOnView | null,
 	/**  How many problems keep it from running. */
 	problems: number,
+	/**  Its variables, those set per character first shown as its settings. */
+	variables: VariableView_Deserialize[],
 };
 
 /**  A blueprint as the Library lists it. */
@@ -145,6 +147,8 @@ export type BlueprintSummary_Serialize = {
 	basedOn: BasedOnView | null,
 	/**  How many problems keep it from running. */
 	problems: number,
+	/**  Its variables, those set per character first shown as its settings. */
+	variables: VariableView_Serialize[],
 };
 
 /**  A connection's character changed; `view` is `None` once the connection closed. */
@@ -601,6 +605,37 @@ export type StatedSeen_Serialize = {
 /**  A variable's name and help line. */
 export type VariableTexts = {
 	name: string,
+	help: string,
+};
+
+/**  A variable of a blueprint, as the Library's preview shows it. */
+export type VariableView = VariableView_Serialize | VariableView_Deserialize;
+
+/**  A variable of a blueprint, as the Library's preview shows it. */
+export type VariableView_Deserialize = {
+	id: string,
+	/**  The file's name; a given blueprint's is read in the translations, `given.<id>.variables.<variable>.name`. */
+	name: string,
+	/**  Its type, as the file writes it: `zone`, `percentage`, `bank`… */
+	valueType: string,
+	/**  Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none. */
+	default?: string | null,
+	perCharacter: boolean,
+	memory: boolean,
+	help: string,
+};
+
+/**  A variable of a blueprint, as the Library's preview shows it. */
+export type VariableView_Serialize = {
+	id: string,
+	/**  The file's name; a given blueprint's is read in the translations, `given.<id>.variables.<variable>.name`. */
+	name: string,
+	/**  Its type, as the file writes it: `zone`, `percentage`, `bank`… */
+	valueType: string,
+	/**  Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none. */
+	default: string | null,
+	perCharacter: boolean,
+	memory: boolean,
 	help: string,
 };
 

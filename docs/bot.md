@@ -72,7 +72,11 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
 - A **character's tab**: its blueprint (a list, and an arrow that opens it) and its settings above its observed state
   and map (`docs/game.md`). From step 4: one line saying what it does now (its step, on what, since when), a tick on
   the Pods gauge at the current step's target, and Play, Pause and Stop as the tab's editor actions.
-- **Library** view: "Given by D3B", then "Mine"; a row opens the blueprint's editor.
+- **Library** view: "Given by D3B", then "Mine"; a row opens the blueprint's editor. A row is its name alone, its
+  description or what a copy is based on in its hover, an amber mark with how many problems it has; a right-click
+  offers Duplicate; last, folded, "Ignored": the player's files kept as they are, blueprints' and characters', each
+  with why in its hover (the owner, 2026-11-14, mock-up 9). Until the editor, a blueprint's tab is a preview: its
+  name, whose it is, its description, its settings per character with their defaults, and Duplicate.
 - The **blueprint editor** is Unreal's Blueprint Editor in a tab. Its toolbar holds Graph or Summary, the graph's path,
   the problems, the character to debug, and Duplicate on a given blueprint, which opens locked. **My Blueprint** on the
   left lists the graphs, functions and variables, an eye on those set per character; the graph is in the centre,

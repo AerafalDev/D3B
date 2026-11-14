@@ -51,6 +51,24 @@ pub struct BlueprintSummary {
     pub based_on: Option<BasedOnView>,
     /// How many problems keep it from running.
     pub problems: u32,
+    /// Its variables, those set per character first shown as its settings.
+    pub variables: Vec<VariableView>,
+}
+
+/// A variable of a blueprint, as the Library's preview shows it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct VariableView {
+    pub id: String,
+    /// The file's name; a given blueprint's is read in the translations, `given.<id>.variables.<variable>.name`.
+    pub name: String,
+    /// Its type, as the file writes it: `zone`, `percentage`, `bank`…
+    pub value_type: String,
+    /// Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none.
+    pub default: Option<String>,
+    pub per_character: bool,
+    pub memory: bool,
+    pub help: String,
 }
 
 /// What a copy is based on.
@@ -165,6 +183,22 @@ fn summary(blueprint: &Blueprint, given: bool) -> BlueprintSummary {
             version: based.version.get(),
         }),
         problems: u32::try_from(bot::problems(blueprint).len()).unwrap_or(u32::MAX),
+        variables: blueprint
+            .variables
+            .iter()
+            .map(|variable| VariableView {
+                id: variable.id.0.clone(),
+                name: variable.name.clone(),
+                value_type: serde_json::to_value(variable.value_type)
+                    .ok()
+                    .and_then(|value| value.as_str().map(str::to_owned))
+                    .unwrap_or_default(),
+                default: (!variable.default.is_null()).then(|| variable.default.to_string()),
+                per_character: variable.per_character,
+                memory: variable.memory,
+                help: variable.help.clone(),
+            })
+            .collect(),
     }
 }
 
@@ -270,6 +304,29 @@ mod tests {
             ]
         );
         assert_eq!(list.kept, []);
+        let settings: Vec<_> = list.blueprints[0]
+            .variables
+            .iter()
+            .map(|it| {
+                (
+                    it.id.as_str(),
+                    it.value_type.as_str(),
+                    it.default.as_deref(),
+                    it.per_character,
+                )
+            })
+            .collect();
+        assert_eq!(
+            settings[0],
+            ("zone", "zone", None, true),
+            "no default: each character chooses"
+        );
+        assert_eq!(settings[1], ("pods", "percentage", Some("90"), true));
+        assert_eq!(
+            settings[2],
+            ("bank", "bank", Some("\"nearest\""), true),
+            "the default as JSON"
+        );
     }
 
     #[test]

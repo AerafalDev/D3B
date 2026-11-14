@@ -389,5 +389,48 @@
         }
       }
     }
+  },
+  "library": {
+    "title": "Library",
+    "given": "Given by D3B",
+    "mine": "Mine",
+    "kept": "Ignored",
+    "duplicate": "Duplicate",
+    "copyName": "{{name}} (copy)",
+    "basedOn": "Based on {{name}} v{{version}}",
+    "problems_one": "{{count}} problem",
+    "problems_other": "{{count}} problems",
+    "givenLine": "Given by D3B · v{{version}} · locked",
+    "mineLine": "Mine",
+    "mineBasedOn": "Mine · based on {{name}} v{{version}}",
+    "settings": "Settings per character",
+    "soon": "The graph and the Summary come here.",
+    "gone": "This blueprint is gone.",
+    "unread": "The Library could not be read: {{reason}}",
+    "duplicateFailed": {
+      "gone": "{{name}} was not duplicated: it is gone.",
+      "noFolder": "{{name}} was not duplicated: the system names no folder for your files.",
+      "notSaved": "{{name}} was not duplicated: {{reason}}"
+    },
+    "keptWhy": {
+      "unreadable": "Unreadable: {{reason}}",
+      "notText": "It is not text.",
+      "newer": "Written by a newer D3B (schema {{found}}).",
+      "notOfItsShape": "Not of its shape: {{detail}}",
+      "nameIsNotId": "Its name is not its id ({{id}}).",
+      "givenId": "It holds the id of one of D3B's blueprints ({{id}})."
+    },
+    "value": {
+      "none": "to choose",
+      "yes": "Yes",
+      "no": "No",
+      "nearestBank": "The nearest",
+      "bankOn": "The one on map {{map}}",
+      "allItems": "Everything",
+      "noItem": "Nothing",
+      "items_one": "{{count}} item",
+      "items_other": "{{count}} items",
+      "zone": "A chosen zone"
+    }
   }
 }

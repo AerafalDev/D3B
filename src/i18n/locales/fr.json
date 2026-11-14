@@ -389,5 +389,48 @@
         }
       }
     }
+  },
+  "library": {
+    "title": "Bibliothèque",
+    "given": "Donnés par D3B",
+    "mine": "Les miens",
+    "kept": "Ignorés",
+    "duplicate": "Dupliquer",
+    "copyName": "{{name}} (copie)",
+    "basedOn": "Basé sur {{name}} v{{version}}",
+    "problems_one": "{{count}} problème",
+    "problems_other": "{{count}} problèmes",
+    "givenLine": "Donné par D3B · v{{version}} · verrouillé",
+    "mineLine": "À moi",
+    "mineBasedOn": "À moi · basé sur {{name}} v{{version}}",
+    "settings": "Réglages par personnage",
+    "soon": "Le graphe et le Résumé arrivent ici.",
+    "gone": "Ce blueprint n'est plus là.",
+    "unread": "La Bibliothèque n'a pas pu être lue : {{reason}}",
+    "duplicateFailed": {
+      "gone": "{{name}} n'a pas été dupliqué : il n'est plus là.",
+      "noFolder": "{{name}} n'a pas été dupliqué : le système ne donne pas de dossier pour vos fichiers.",
+      "notSaved": "{{name}} n'a pas été dupliqué : {{reason}}"
+    },
+    "keptWhy": {
+      "unreadable": "Illisible : {{reason}}",
+      "notText": "Ce n'est pas du texte.",
+      "newer": "Écrit par un D3B plus récent (schéma {{found}}).",
+      "notOfItsShape": "Mal formé : {{detail}}",
+      "nameIsNotId": "Son nom n'est pas son identifiant ({{id}}).",
+      "givenId": "Il porte l'identifiant d'un blueprint de D3B ({{id}})."
+    },
+    "value": {
+      "none": "à choisir",
+      "yes": "Oui",
+      "no": "Non",
+      "nearestBank": "La plus proche",
+      "bankOn": "Celle de la carte {{map}}",
+      "allItems": "Tout",
+      "noItem": "Rien",
+      "items_one": "{{count}} objet",
+      "items_other": "{{count}} objets",
+      "zone": "Une zone choisie"
+    }
   }
 }
