@@ -8,7 +8,7 @@ import type { GraphNode, SentencePart } from "./node-sentence.ts";
 import { pinLabel } from "./pin-label.ts";
 
 /** What a node of the graph carries for React Flow: the IPC's node and its sentence, filled. */
-export type BoxData = { node: GraphNode; sentence: SentencePart[] };
+export type BoxData = { node: GraphNode; sentence: SentencePart[]; faulty?: boolean };
 
 /** A node as React Flow holds it. */
 export type BoxNode = Node<BoxData, "box">;
@@ -37,7 +37,14 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
   const ins = node.pins.filter((pin) => pin.side === "in" && pin.carries !== "exec");
   const outs = node.pins.filter((pin) => pin.side === "out" && pin !== head);
   return (
-    <div className={cn("blueprint-node", selected && "is-selected", node.family === null && "is-unknown")}>
+    <div
+      className={cn(
+        "blueprint-node",
+        selected && "is-selected",
+        node.family === null && "is-unknown",
+        data.faulty && "is-faulty",
+      )}
+    >
       <div className="blueprint-node-head">
         {flowIn !== undefined && (
           <Handle type="target" position={Position.Left} id="run" className={pinClass(flowIn)} />
@@ -64,6 +71,7 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
             ),
           )}
         </span>
+        {data.faulty && <span className="sr-only">{t("blueprint.faulty")}</span>}
         {node.fromStep !== null && (
           <span className="blueprint-step">{t("blueprint.fromStep", { step: node.fromStep })}</span>
         )}

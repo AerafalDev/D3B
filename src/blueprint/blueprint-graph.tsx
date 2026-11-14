@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 
 import type { GraphView_Serialize } from "@/bindings.ts";
 import { BlueprintNode } from "./blueprint-node.tsx";
-import { graphElements } from "./graph-elements.ts";
+import { chosenNode, graphElements } from "./graph-elements.ts";
 import { VariablePill } from "./variable-pill.tsx";
 
 const TYPES = { box: BlueprintNode, pill: VariablePill };
@@ -16,6 +16,12 @@ interface BlueprintGraphProps {
   graph: GraphView_Serialize;
   /** The blueprint's variables' and functions' names by id, as the player reads them. */
   names: ReadonlyMap<string, string>;
+  /** The nodes that have a problem, marked. */
+  faulty?: readonly string[];
+  /** The node Details shows, drawn chosen. */
+  chosen?: string | null;
+  /** A node chosen, or `null` when the pane is. */
+  onChoose?: (node: string | null) => void;
 }
 
 /**
@@ -31,10 +37,15 @@ export function BlueprintGraph(props: BlueprintGraphProps) {
   );
 }
 
-function Graph({ graph, names }: BlueprintGraphProps) {
+function Graph({ graph, names, faulty, chosen = null, onChoose }: BlueprintGraphProps) {
   const { t, i18n } = useTranslation();
+  // The faulty nodes by their ids, so the same problems keep the same drawing.
+  const faultyKey = (faulty ?? []).join("|");
   // biome-ignore lint/correctness/useExhaustiveDependencies: the language changes every sentence, read through i18next
-  const { nodes, edges } = useMemo(() => graphElements(graph, names), [graph, names, i18n.language]);
+  const { nodes, edges } = useMemo(
+    () => graphElements(graph, names, new Set(faultyKey === "" ? [] : faultyKey.split("|")), chosen),
+    [graph, names, faultyKey, chosen, i18n.language],
+  );
   // React Flow's own words, in the player's language.
   const ariaLabelConfig = {
     "controls.ariaLabel": t("blueprint.controls"),
@@ -55,6 +66,14 @@ function Graph({ graph, names }: BlueprintGraphProps) {
       nodesConnectable={false}
       edgesFocusable={false}
       ariaLabelConfig={ariaLabelConfig}
+      // A click or Enter on a focused node: the nodes are the tab's, so their selection is read from the changes.
+      onNodesChange={(changes) => {
+        const node = chosenNode(changes);
+        if (node !== null) {
+          onChoose?.(node);
+        }
+      }}
+      onPaneClick={() => onChoose?.(null)}
       fitView
       fitViewOptions={{ padding: 0.15 }}
       minZoom={0.3}

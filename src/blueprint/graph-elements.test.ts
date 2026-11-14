@@ -2,7 +2,7 @@ import i18next from "i18next";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { initI18n } from "@/i18n/i18n.ts";
-import { graphElements, UNPLACED_STEP, UNPLACED_X } from "./graph-elements.ts";
+import { chosenNode, graphElements, UNPLACED_STEP, UNPLACED_X } from "./graph-elements.ts";
 import type { GraphNode } from "./node-sentence.ts";
 
 const pin = (id: string, side: "in" | "out", carries: string) =>
@@ -61,7 +61,7 @@ describe("a graph's elements", () => {
   it("draws a get as a pill with its variable's name and type, the others as boxes", () => {
     const { nodes } = graphElements(graph, new Map([["zone", "Zone"]]));
     expect(nodes.map((one) => one.type)).toEqual(["box", "pill", "box"]);
-    expect(nodes[1]?.data).toEqual({ name: "Zone", valueType: "zone" });
+    expect(nodes[1]?.data).toEqual({ name: "Zone", valueType: "zone", faulty: false });
   });
 
   it("joins each wire's ends by their pins, classed by what its source carries", () => {
@@ -72,5 +72,25 @@ describe("a graph's elements", () => {
       ["start", "then", "go", "run", "blueprint-type-exec"],
       ["zone", "value", "go", "zone", "blueprint-type-zone"],
     ]);
+  });
+
+  it("marks the nodes a problem names, and draws the one chosen chosen", () => {
+    const { nodes } = graphElements(graph, new Map(), new Set(["go", "zone"]), "start");
+    expect(nodes.map((one) => [one.id, one.data.faulty, one.selected])).toEqual([
+      ["go", true, false],
+      ["zone", true, false],
+      ["start", false, true],
+    ]);
+  });
+
+  it("reads the node chosen from React Flow's changes, by a click or Enter, and none from others", () => {
+    expect(
+      chosenNode([
+        { type: "select", id: "go", selected: false },
+        { type: "select", id: "start", selected: true },
+      ]),
+    ).toBe("start");
+    expect(chosenNode([{ type: "select", id: "go", selected: false }])).toBeNull();
+    expect(chosenNode([{ type: "remove", id: "go" }])).toBeNull();
   });
 });
