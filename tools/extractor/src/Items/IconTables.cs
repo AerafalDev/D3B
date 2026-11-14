@@ -17,8 +17,8 @@ internal static class IconTables
     /// <exception cref="InvalidDataException">A bundle holds a texture the extractor does not read, or a job's icon is missing.</exception>
     public static void Extract(ClientInstall client, IReadOnlyList<Item> items, IReadOnlyList<Job> jobs, DataFolder folder, TextWriter output)
     {
-        var (itemIcons, missing) = OfItems(items, IconPictures.Read(client, "Content", "Picto", "Items", "item_assets_1x.bundle"));
-        var jobIcons = OfJobs(jobs, IconPictures.Read(client, "Content", "Picto", "UI", "job_assets_1x.bundle"));
+        var (itemIcons, missing) = OfItems(items, ReadItemIcons(client));
+        var jobIcons = OfJobs(jobs, ReadJobIcons(client));
 
         foreach (var (icon, png) in itemIcons)
         {
@@ -33,6 +33,20 @@ internal static class IconTables
         var bytes = itemIcons.Values.Concat(jobIcons.Values).Sum(png => (long)png.Length);
 
         output.WriteLine($"Icons: {itemIcons.Count:N0} items, {jobIcons.Count:N0} jobs at {IconPictures.Size} px, {bytes:N0} bytes; {missing:N0} items name an icon the client lacks");
+    }
+
+    /// <summary>Reads every item icon of the client: BC7 or RGBA32, from 32 to 64 px.</summary>
+    /// <exception cref="InvalidDataException">A texture is of another shape or format, or not named by a number, or named twice.</exception>
+    public static SortedDictionary<int, byte[]> ReadItemIcons(ClientInstall client)
+    {
+        return IconPictures.Read(client, IconPictures.Largest, [IconPictures.Bc7Format, IconPictures.Rgba32Format], "Content", "Picto", "Items", "item_assets_1x.bundle");
+    }
+
+    /// <summary>Reads every job icon of the client: BC7 at 32 px, kept as it is.</summary>
+    /// <exception cref="InvalidDataException">A texture is of another shape or format, or not named by a number, or named twice.</exception>
+    public static SortedDictionary<int, byte[]> ReadJobIcons(ClientInstall client)
+    {
+        return IconPictures.Read(client, IconPictures.Size, [IconPictures.Bc7Format], "Content", "Picto", "UI", "job_assets_1x.bundle");
     }
 
     /// <summary>Keeps the icons the items name, and counts the items naming one the client lacks.</summary>

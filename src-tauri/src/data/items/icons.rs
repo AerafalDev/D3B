@@ -80,12 +80,12 @@ mod tests {
     use super::super::tests::fixtures;
     use super::*;
 
-    /// A manifest listing `files`, paths of the data folder each named by its path without `.png`.
+    /// A manifest listing `files`, paths of the data folder each named by its path without its extension.
     fn manifest(files: &[&str]) -> Manifest {
         let tables: Vec<String> = files
             .iter()
             .map(|file| {
-                let name = file.trim_end_matches(".png");
+                let name = file.rsplit_once('.').map_or(*file, |(name, _)| name);
                 format!(r#"{{"name":"{name}","path":"{file}","sha256":"00"}}"#)
             })
             .collect();
@@ -131,6 +131,7 @@ mod tests {
     #[test]
     fn refuses_a_job_whose_icon_the_folder_lacks() {
         let jobs = fixtures().jobs;
+        // The lumberjack's icon is listed under its name, but at a path of another extension.
         assert!(matches!(
             check(&jobs, &manifest(&["icons/items/1.png", "icons/jobs/1.jpg"])),
             Err(DataError::MissingTable(name)) if name == "icons/jobs/1"

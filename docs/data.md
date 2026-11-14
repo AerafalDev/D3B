@@ -35,11 +35,13 @@ flowchart LR
 - **Icons** are PNG files of 32 pixels a side with their transparency, `icons/items/<iconId>.png` and
   `icons/jobs/<iconId>.png`, one for each icon an item of `items.json` or a job of `jobs.json` names (every item's,
   the owner's choice of 2026-11-14): the textures of `Content/Picto/Items/item_assets_1x.bundle` and
-  `Content/Picto/UI/job_assets_1x.bundle`, named by the icon's number, drawn whole. The items' are 64 px, BC7, halved
-  with linear filtering of their premultiplied texels, but for three, scaled likewise: 82,523 and 121,179 at 60 px,
-  25,257 RGBA32 at 62 px; the jobs' are 32 px, BC7, kept as they are (3.7.13.17,
-  `artifacts/studies/items.md`). The extraction fails on a texture of another format, not square or under 32 px, not named by a number,
-  or named twice, and on a job whose icon is missing; four items name an icon the client lacks: they keep their
+  `Content/Picto/UI/job_assets_1x.bundle`, named by the icon's number, drawn whole. The items' are 64 px, BC7, but
+  for three, 82,523 and 121,179 at 60 px and 25,257 RGBA32 at 62 px; the jobs' are 32 px, BC7 (3.7.13.17,
+  `artifacts/studies/items.md`). Each icon texel is the mean of the texels it covers weighted by their alpha, computed
+  by the extractor rather than Skia so that every CPU gives the same bytes: a 64 px icon's 2x2 squares, a 32 px one's
+  texels as they are. The extraction fails on a texture that is not one square level, an item's not BC7 or RGBA32 of
+  32 to 64 px, a job's not BC7 of 32 px (a larger one would be scaled by more than half, which is not measured), not
+  named by a number, or named twice, and on a job whose icon is missing; four items name an icon the client lacks: they keep their
   `iconId`, are counted, and have none in the app. The app refuses a folder where a job's icon is missing (`-1` is
   none, Base's).
 - **Flags** are the list of the names of the bits a record sets, in camelCase, as the client's enums name them, read
@@ -63,7 +65,7 @@ flowchart LR
 | `item-types.json` | `id`, `name`, `categoryId` | `ItemTypeData`, 236 records |
 | `jobs.json` | `id`, `name`, `iconId` (-1 for none) | `JobData`, 23 records |
 | `skills.json` | `id`, `name`, `parentJobId`, `gatheredItemId` (its `gatheredRessourceItem`, `null` for -1 and 0), `levelMin`, `range`, `clientDisplay` | `SkillData`, 373 records, 372 written |
-| `icons/items/<iconId>.png` | one item's icon, PNG, 32 px | 12,295 textures, 11,768 written, 19.5 MB as PNG; 4 items name an icon the client lacks |
+| `icons/items/<iconId>.png` | one item's icon, PNG, 32 px | 12,295 textures, 11,768 written, 19.7 MB as PNG; 4 items name an icon the client lacks |
 | `icons/jobs/<iconId>.png` | one job's icon, PNG, 32 px | 21 BC7 textures, 54 KB as PNG; jobs 75 and 78 share icon 42 |
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
@@ -101,7 +103,7 @@ dotnet run --project tools/extractor/src -- --output <dir>   # another data fold
 It writes the folder beside its target (`<target>.d3b-staging`), then swaps it in, and replaces only a folder that
 holds a `manifest.json`. A file's path and its name are unique ignoring case.
 
-Each run extracts everything again, in about 38 s on 3.7.13.17, tiles and icons included (its archive, 105 MB). It also writes the folder's archive,
+Each run extracts everything again, in about 30 s on 3.7.13.17, tiles and icons included (its archive, 105 MB, the same bytes on each run). It also writes the folder's archive,
 `artifacts/data/client-<build>-format<n>.tar.gz` whatever `--output` names: the folder's files at its root in order of their
 paths, with a fixed date, so that two runs of one extractor on one OS give the same bytes (gzip's header names the
 OS). It is the file the `data` skill publishes and `data:fetch` unpacks. Format 1's asset, published for 3.7.13.17, was

@@ -1,3 +1,4 @@
+using AssetsTools.NET.Extra;
 using D3B.Extractor.Items;
 using D3B.Extractor.Tests.Breeds;
 using D3B.Extractor.Texts;
@@ -59,12 +60,23 @@ public sealed class IconTablesTests
     [Fact]
     public void ATexelHalfTransparentKeepsItsColour()
     {
-        // Columns of opaque red and of transparent black: averaged unpremultiplied, the icon would turn dark red.
-        var texels = Rgba(64, (x, _) => x % 2 == 0 ? (255, 0, 0, 255) : (0, 0, 0, 0));
+        // Columns of opaque red and of transparent green: averaged without their alpha, the icon would turn olive.
+        var texels = Rgba(64, (x, _) => x % 2 == 0 ? (255, 0, 0, 255) : (0, 255, 0, 0));
         using var bitmap = SKBitmap.Decode(IconPictures.Png(texels, Rgba32, 64));
         var pixel = bitmap.GetPixel(10, 10);
 
-        Assert.True(pixel.Red > 250 && pixel.Alpha is > 120 and < 136, $"A half transparent pixel is {pixel}, not red at half alpha.");
+        Assert.True(pixel.Red > 250 && pixel.Green < 5 && pixel.Alpha is 127 or 128, $"A half transparent pixel is {pixel}, not red at half alpha.");
+    }
+
+    [Fact]
+    public void AnIconOf60PxWeighsEachTexelByThePartItCovers()
+    {
+        // The first icon column covers 1.875 texels: all of the blue first, 0.875 of the red second.
+        var texels = Rgba(60, (x, _) => x == 0 ? (0, 0, 255, 255) : (255, 0, 0, 255));
+        using var bitmap = SKBitmap.Decode(IconPictures.Png(texels, Rgba32, 60));
+
+        Assert.Equal(new SKColor(119, 0, 136, 255), bitmap.GetPixel(0, 0));
+        Assert.Equal(new SKColor(255, 0, 0, 255), bitmap.GetPixel(1, 0));
     }
 
     [Fact]
@@ -94,11 +106,55 @@ public sealed class IconTablesTests
     [InlineData(Bc7, 16, 256)]
     [InlineData(Bc7, 64, 4095)]
     [InlineData(Rgba32, 32, 4095)]
+    [InlineData(Bc7, 128, 16_384)]
     public void ATextureOfAnotherFormatSizeOrLengthFails(int format, int side, int length)
     {
         var failure = Assert.Throws<InvalidDataException>(() => IconPictures.Png(new byte[length], format, side));
 
-        Assert.Equal($"An icon of {side} px in format {format} holds {length} bytes: not BC7 or RGBA32 of at least 32 px.", failure.Message);
+        Assert.Equal($"An icon of {side} px in format {format} holds {length} bytes: not BC7 or RGBA32 of 32 to 64 px.", failure.Message);
+    }
+
+    [Theory]
+    [InlineData(Rgba32, 62, 62, 64)]
+    [InlineData(Bc7, 32, 32, 32)]
+    public void ASquareLevelOfAKnownFormatAndSidePasses(int format, int width, int height, int largest)
+    {
+        IconPictures.CheckShape("1", format, width, height, 1, 1, largest, [Bc7, Rgba32]);
+    }
+
+    [Theory]
+    [InlineData(Bc7, 64, 60, 1, 1, 64)]
+    [InlineData(Bc7, 64, 64, 2, 1, 64)]
+    [InlineData(Bc7, 64, 64, 1, 6, 64)]
+    [InlineData(Bc7, 28, 28, 1, 1, 64)]
+    [InlineData(Bc7, 128, 128, 1, 1, 64)]
+    [InlineData(Bc7, 64, 64, 1, 1, 32)]
+    [InlineData(Rgba32, 32, 32, 1, 1, 32)]
+    public void ATextureOfAnotherShapeOrFormatFails(int format, int width, int height, int levels, int images, int largest)
+    {
+        var failure = Assert.Throws<InvalidDataException>(() => IconPictures.CheckShape("1", format, width, height, levels, images, largest, largest == 32 ? [Bc7] : [Bc7, Rgba32]));
+
+        Assert.StartsWith($"The icon 1 is {width}x{height} in format {format}, {levels} levels, {images} images: not one square level of 32 to {largest} px", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ATextureNamedByNoNumberFails()
+    {
+        var failure = Assert.Throws<InvalidDataException>(() => IconPictures.Add([], "items.bundle", "icon_7", [1]));
+
+        Assert.Equal("items.bundle holds the texture icon_7, which is no icon's number.", failure.Message);
+    }
+
+    [Fact]
+    public void TwoTexturesOfOneNameFail()
+    {
+        var icons = new SortedDictionary<int, byte[]>();
+
+        IconPictures.Add(icons, "items.bundle", "7", [1]);
+        var failure = Assert.Throws<InvalidDataException>(() => IconPictures.Add(icons, "items.bundle", "7", [2]));
+
+        Assert.Equal("items.bundle holds two textures named 7.", failure.Message);
+        Assert.Equal([1], icons[7]);
     }
 
     [Fact]
@@ -135,12 +191,27 @@ public sealed class IconTablesTests
         var texts = TextFiles.Open(client);
         var types = ItemTables.ReadTypes(DataTable.ReadById(client, "itemtypes"), texts);
         var (items, _) = ItemTables.Kept(ItemTables.ReadItems(DataTable.ReadById(client, "items"), texts), types);
-        var textures = IconPictures.Read(client, "Content", "Picto", "Items", "item_assets_1x.bundle");
+        var textures = IconTables.ReadItemIcons(client);
         var (icons, missing) = IconTables.OfItems(items, textures);
-        var jobs = IconTables.OfJobs(JobTables.ReadJobs(DataTable.ReadById(client, "jobs"), texts), IconPictures.Read(client, "Content", "Picto", "UI", "job_assets_1x.bundle"));
+        var jobs = IconTables.OfJobs(JobTables.ReadJobs(DataTable.ReadById(client, "jobs"), texts), IconTables.ReadJobIcons(client));
 
-        // 3.7.13.17, `artifacts/studies/items.md`: four items name icons the bundle lacks, jobs 75 and 78 share one.
+        // 3.7.13.17, artifacts/studies/items.md: four items name icons the bundle lacks, jobs 75 and 78 share one.
         Assert.Equal((12_295, 11_768, 4, 21), (textures.Count, icons.Count, missing, jobs.Count));
+
+        // The three item icons docs/data.md names apart from the 64 px BC7 ones.
+        using var bundle = Bundle.Open(Path.Combine(client.StreamingAssets, "Content", "Picto", "Items", "item_assets_1x.bundle"));
+        var others = bundle.Objects(AssetClassID.Texture2D)
+            .Select(asset =>
+            {
+                var reader = new ObjectReader(asset.Data, asset.Tree);
+                var texture = Fields.Read(ref reader, 0, asset.Tree.Name);
+
+                return (Name: texture.String("m_Name"), Format: texture.Int32("m_TextureFormat"), Side: texture.Int32("m_Width"));
+            })
+            .Where(texture => (texture.Format, texture.Side) != (Bc7, 64))
+            .OrderBy(texture => texture.Name, StringComparer.Ordinal);
+
+        Assert.Equal([("121179", Bc7, 60), ("25257", Rgba32, 62), ("82523", Bc7, 60)], others);
         Assert.All(icons.Values.Concat(jobs.Values), png =>
         {
             using var bitmap = SKBitmap.Decode(png);
