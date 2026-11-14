@@ -5,13 +5,13 @@ namespace D3B.Extractor.Items;
 
 /// <summary>The jobs of the data folder and their skills: <c>jobs.json</c> and <c>skills.json</c>.</summary>
 /// <remarks>
-/// A job harvests when a skill of it gathers an item; which ones are professions is derived in Rust (3.7.13.17, the
-/// study of the items of 2026-11-14: jobs 2, 24, 26, 28 and 36, whose resources the sub-areas list).
+/// A job harvests when a skill of it gathers an item; which ones are professions will be derived in Rust by step 3's
+/// PR 4 (3.7.13.17, <c>artifacts/studies/items.md</c>: jobs 2, 24, 26, 28 and 36, whose resources the sub-areas list).
 /// </remarks>
 internal static class JobTables
 {
     /// <summary>Reads the jobs and their skills from the client and writes them into the folder, with the skills gathering one of <paramref name="items"/> or none.</summary>
-    /// <exception cref="InvalidDataException">A job names text 0, or a skill is of a job the client lacks or gathers a negative item other than -1.</exception>
+    /// <exception cref="InvalidDataException">A job or a skill names text 0, an id is held twice, or a skill is of a job the client lacks or gathers a negative item other than -1.</exception>
     public static void Extract(ClientInstall client, TextFiles texts, IReadOnlyList<Item> items, DataFolder folder, TextWriter output)
     {
         var jobs = ReadJobs(DataTable.ReadById(client, "jobs"), texts);
@@ -39,7 +39,7 @@ internal static class JobTables
         ];
     }
 
-    /// <exception cref="InvalidDataException">A skill gathers a negative item other than -1.</exception>
+    /// <exception cref="InvalidDataException">A skill names text 0, or gathers a negative item other than -1.</exception>
     public static IReadOnlyList<Skill> ReadSkills(IEnumerable<Fields> records, TextFiles texts)
     {
         return
@@ -52,7 +52,7 @@ internal static class JobTables
                     return new Skill
                     {
                         Id = id,
-                        Name = texts.Name(record.Int32("nameId")),
+                        Name = ItemTables.Named("Skill", id, texts.Name(record.Int32("nameId"))),
                         ParentJobId = record.Int32("parentJobId"),
                         GatheredItemId = GatheredOf(id, record.Int32("gatheredRessourceItem")),
                         LevelMin = record.Int32("levelMin"),
@@ -78,10 +78,12 @@ internal static class JobTables
 
     /// <summary>Leaves out the skills gathering an item the items lack, and counts them.</summary>
     /// <remarks>Skill 260 gathers item 3,656, which 3.7.13.17 lacks: left out by the owner's choice of 2026-11-14.</remarks>
-    /// <exception cref="InvalidDataException">A skill is of a job the client lacks.</exception>
+    /// <exception cref="InvalidDataException">A job or a skill id is held twice, or a skill is of a job the client lacks.</exception>
     public static (IReadOnlyList<Skill> Skills, int Skipped) Kept(IReadOnlyList<Skill> skills, IReadOnlyList<Job> jobs, IReadOnlyList<Item> items)
     {
-        var known = jobs.Select(job => job.Id).ToHashSet();
+        var known = ItemTables.Unique("jobs", jobs, job => job.Id);
+
+        ItemTables.Unique("skills", skills, skill => skill.Id);
 
         if (skills.FirstOrDefault(skill => !known.Contains(skill.ParentJobId)) is { } orphan)
         {

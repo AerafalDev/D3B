@@ -52,7 +52,7 @@ flowchart LR
 | `items.json` | `id`, `name`, `typeId`, `level`, `iconId` | `ItemData` and `WeaponData`, 21,622 records, 21,621 written |
 | `item-types.json` | `id`, `name`, `categoryId` | `ItemTypeData`, 236 records |
 | `jobs.json` | `id`, `name`, `iconId` (-1 for none) | `JobData`, 23 records |
-| `skills.json` | `id`, `name` (or `null`), `parentJobId`, `gatheredItemId` (its `gatheredRessourceItem`, `null` for -1 and 0), `levelMin`, `range`, `clientDisplay` | `SkillData`, 373 records, 372 written |
+| `skills.json` | `id`, `name`, `parentJobId`, `gatheredItemId` (its `gatheredRessourceItem`, `null` for -1 and 0), `levelMin`, `range`, `clientDisplay` | `SkillData`, 373 records, 372 written |
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
 `nonWalkableDuringRP`, `farmCell`, `visible`, `havenbagCell`, `roleplayMonstersMovementBlocked`, `red`, `blue`: fields
@@ -63,9 +63,9 @@ interactive elements are in its record; the app reads a map's file when it needs
 Two references the client breaks are left out and counted, the owner's choice of 2026-11-14, rather than failing the
 extraction: an item of a type the client lacks (item 34,569, type 264, on 3.7.13.17) and a skill gathering an item
 `items.json` lacks (skill 260, item 3,656); the extractor prints how many it left out of each, and every other check
-fails as before. The app refuses a folder where an id is held twice in one of these four tables, an item's type is
+fails as before, a duplicate id in these four tables included. The app refuses a folder where an id is held twice in one of these four tables, an item's type is
 missing, or a skill's job or gathered item is. Which jobs are harvesting professions (2, 24, 26, 28 and 36 on
-3.7.13.17, whose skills gather what the sub-areas' `harvestables` list) is derived in Rust.
+3.7.13.17, whose skills gather what the sub-areas' `harvestables` list) will be derived in Rust by step 3's PR 4.
 
 The app reads the whole folder once at start (`data::GameData`) and refuses it whole when a table cannot be read: the
 status bar then says it has no data, and its hover why ([shell.md](shell.md)).

@@ -45,6 +45,15 @@ public sealed class ItemTablesTests
     }
 
     [Fact]
+    public void AnItemOrATypeIdHeldTwiceFails()
+    {
+        var items = Assert.Throws<InvalidDataException>(() => ItemTables.Kept([_woodItem, _woodItem], [_woodType]));
+        var types = Assert.Throws<InvalidDataException>(() => ItemTables.Kept([_woodItem], [_woodType, _woodType]));
+
+        Assert.Equal(("The items hold 303 twice.", "The item types hold 38 twice."), (items.Message, types.Message));
+    }
+
+    [Fact]
     public void ARecordNamedTextZeroFails()
     {
         Assert.Same(_wood, ItemTables.Named("Item", 303, _wood));

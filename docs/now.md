@@ -106,12 +106,15 @@ _Updated 2026-11-14._
     Characters list's head (done in code). Measured by the owner on 2026-11-13, v0.14.0 installed: items 3 and 4
     pass. Not measured yet: items 1 and 2 (the owner's own extraction and `data:fetch`), 5 at the next client patch.
     On Windows x64:
-    1. `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
+    1. on `next` at 25c5c4c or before (format 2; since the items' PR the extractor writes format 3),
+       `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
        `artifacts/data/client-3.7.13.17-format2.tar.gz`; then `tar -xzf artifacts/data/client-3.7.13.17-format2.tar.gz
        -C data` (after emptying `data/` but its README): a `data/` still in format 1 makes `bun run app` say there is
-       no game data and fails the Rust test that reads `data/`;
-    2. `bun run data:fetch 3.7.13.17` fills `data/` with format 2 (published on 2026-11-13, from `next` 2b0577c), and
-       `bun run app`'s status bar says "Client 3.7.13.17";
+       no game data and fails the Rust test that reads `data/`. On a later `next`, the same with format 3's archive,
+       `client-3.7.13.17-format3.tar.gz`, whose run also prints the breeds' line;
+    2. on the same commit, `bun run data:fetch 3.7.13.17` fills `data/` with format 2 (published on 2026-11-13, from
+       `next` 2b0577c), and `bun run app`'s status bar says "Client 3.7.13.17"; on a later `next`, once format 3 is
+       published, the same with format 3;
     3. with that data, start D3B, then a client, and open a character from the Characters view: its tab shows its
        breed's head, 40 px in a rounded square, in place of its initials, the head of its sex, and "Niveau <n> ·
        <breed> · <state>" with the breed's French name (in English after switching the language: "Level <n> ·
@@ -195,7 +198,7 @@ _Updated 2026-11-14._
   harvesting professions and their resources, a new data format, so that D3B's blueprints name each profession's
   resources (the owner, 2026-11-14, from its study): format 3's `items.json`, `item-types.json`, `jobs.json` and
   `skills.json`, an item of a missing type and a skill gathering a missing item left out and counted (done in code:
-  the installed 3.7.13.17 gives 21,621 items, 236 types, 23 jobs, 372 skills, one left out of each), then the items'
+  the installed 3.7.13.17 gives 21,621 items, 236 types, 23 jobs, 372 skills, one item and one skill left out), then the items'
   and jobs' icons, still format 3; then the owner's extraction and publishing of `client-3.7.13.17-format3.tar.gz`:
   until then `.github/game-data.json` names format 3, so `data:fetch` and a release find no data; (4) D3B's blueprints in the app, and
   Duplicate; (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint

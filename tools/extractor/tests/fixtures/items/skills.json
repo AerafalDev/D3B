@@ -1,4 +1,4 @@
 [
 {"id":6,"name":{"fr":"Couper","en":"Cut","de":"Fällen","es":"Talar","pt":"Cortar"},"parentJobId":2,"gatheredItemId":303,"levelMin":1,"range":1,"clientDisplay":true},
-{"id":299,"name":null,"parentJobId":1,"gatheredItemId":null,"levelMin":1,"range":10,"clientDisplay":false}
+{"id":299,"name":{"fr":"Ramasser","en":"Gather","de":"Sammeln","es":"Recoger","pt":"Recolher"},"parentJobId":1,"gatheredItemId":null,"levelMin":1,"range":10,"clientDisplay":false}
 ]

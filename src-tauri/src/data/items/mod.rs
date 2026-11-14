@@ -1,7 +1,7 @@
 //! The items, their types, the jobs and their skills: what a character carries, and what each job's skills gather.
 //!
 //! The client's `ItemData` and `WeaponData`, `ItemTypeData`, `JobData` and `SkillData` (verified on 3.7.13.17's data,
-//! the study of the items of 2026-11-14). The extractor leaves out an item of a type the client lacks and a skill
+//! `artifacts/studies/items.md`). The extractor leaves out an item of a type the client lacks and a skill
 //! gathering an item the client lacks (the owner, 2026-11-14), so the app refuses a folder that names either.
 
 mod jobs;
@@ -24,7 +24,8 @@ pub struct Item {
     pub name: Text,
     pub type_id: i32,
     pub level: u8,
-    /// Its icon's number, 0 for most items the client never shows (3,128 of type 203 on 3.7.13.17).
+    /// Its icon's number; 0 on 3,130 items, 3,128 of them of type 203, the invisible items (verified on 3.7.13.17,
+    /// `artifacts/studies/items.md`).
     pub icon_id: i32,
 }
 
@@ -34,7 +35,8 @@ pub struct Item {
 pub struct ItemType {
     pub id: i32,
     pub name: Text,
-    /// The inventory's tab its items are shown in, 0 to 5 on 3.7.13.17 (inferred from its types' names only).
+    /// The inventory's tab its items are shown in, 0 to 5 on 3.7.13.17 (inferred from its types' names only,
+    /// `artifacts/studies/items.md`).
     pub category_id: i32,
 }
 
@@ -132,16 +134,56 @@ mod tests {
     }
 
     #[test]
-    fn refuses_an_id_held_twice() {
-        let mut tables = fixtures();
-        tables.items[1].id = 289;
-        assert!(matches!(
-            tables.checked(),
-            Err(DataError::Duplicate {
-                table: "items",
-                id: 289
-            })
-        ));
+    fn refuses_an_id_held_twice_in_any_of_the_four_tables() {
+        type Change = fn(&mut ItemTables);
+        let twice: [(&str, i32, Change); 4] = [
+            ("items", 289, |tables| tables.items[1].id = 289),
+            ("item-types", 34, |tables| tables.types[1].id = 34),
+            ("jobs", 1, |tables| tables.jobs[1].id = 1),
+            ("skills", 6, |tables| tables.skills[1].id = 6),
+        ];
+        for (table, id, change) in twice {
+            let mut tables = fixtures();
+            change(&mut tables);
+            assert!(
+                matches!(tables.checked(), Err(DataError::Duplicate { table: found, id: held }) if found == table && held == id),
+                "{table}"
+            );
+        }
+    }
+
+    #[test]
+    fn loads_a_folder_only_when_its_references_hold() {
+        let folder = std::env::temp_dir().join(format!("d3b-data-test-items-{}", std::process::id()));
+        std::fs::create_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+        let files = [
+            ("items", ITEMS),
+            ("item-types", TYPES),
+            ("jobs", JOBS),
+            ("skills", SKILLS),
+        ];
+        let tables: Vec<String> = files
+            .iter()
+            .map(|(name, _)| format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#))
+            .collect();
+        let manifest = format!(
+            r#"{{"format":{},"build":"0","extractor":"0","tables":[{}]}}"#,
+            super::super::FORMAT,
+            tables.join(",")
+        );
+        let manifest = Manifest::parse(&manifest).unwrap_or_else(|error| panic!("{error}"));
+        let write = |items: &str| {
+            for (name, text) in files {
+                let text = if name == "items" { items } else { text };
+                std::fs::write(folder.join(format!("{name}.json")), text).unwrap_or_else(|error| panic!("{error}"));
+            }
+            ItemTables::load(&folder, &manifest)
+        };
+        let whole = write(ITEMS);
+        let broken = write(&ITEMS.replace(r#""typeId":34"#, r#""typeId":264"#));
+        std::fs::remove_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(whole.map(|tables| tables.items.len()).ok(), Some(2));
+        assert!(matches!(broken, Err(DataError::Reference { target: 264, .. })));
     }
 
     #[test]

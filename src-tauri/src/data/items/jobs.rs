@@ -6,13 +6,13 @@ use super::super::DataError;
 use super::super::text::Text;
 
 /// A job, such as the lumberjack. Those whose skills gather what a sub-area's `harvestables` lists are the harvesting
-/// professions: 2, 24, 26, 28 and 36 on 3.7.13.17 (verified, the study of the items of 2026-11-14).
+/// professions: 2, 24, 26, 28 and 36 on 3.7.13.17 (verified, `artifacts/studies/items.md`).
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Job {
     pub id: i32,
     pub name: Text,
-    /// Its icon's number, -1 for none (job 1, Base).
+    /// Its icon's number, -1 for none: job 1, Base (verified on 3.7.13.17, `artifacts/studies/items.md`).
     pub icon_id: i32,
 }
 
@@ -21,17 +21,18 @@ pub struct Job {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Skill {
     pub id: i32,
-    /// Its name, or `None` for a skill the client names text 0 (none on 3.7.13.17).
-    pub name: Option<Text>,
+    pub name: Text,
     pub parent_job_id: i32,
     /// The item it gathers, the client's `gatheredRessourceItem`, or `None` when it gathers nothing (-1 or 0 there).
     pub gathered_item_id: Option<i32>,
-    /// The job's level it needs; a resource's item has the same level (verified on 3.7.13.17).
+    /// The job's level it needs; a resource's item has the same level (verified on 3.7.13.17,
+    /// `artifacts/studies/items.md`).
     pub level_min: i32,
-    /// The distance it is used from, in cells: 1, or 10 for fishing (measured by the server on 3.7.12.12).
+    /// The distance it is used from, in cells: 1, or 10 for fishing (the C# version measured the server allowing 10 on
+    /// 3.7.12.12; inferred for 3.7.13.17, `artifacts/studies/items.md`).
     pub range: i32,
-    /// Whether the client shows it: five level-1 harvest skills repeat another with `false`, such as 299 beside 6;
-    /// which one the server offers is not in the data.
+    /// Whether the client shows it: five level-1 harvest skills repeat another with `false`, such as 299 beside 6
+    /// (verified on 3.7.13.17, `artifacts/studies/items.md`); which one the server offers is not in the data.
     pub client_display: bool,
 }
 
@@ -67,10 +68,8 @@ mod tests {
         );
         assert_eq!(tables.skills[0].gathered_item_id, Some(303));
         assert!(tables.skills[0].client_display);
-        assert_eq!(
-            (tables.skills[1].name.as_ref(), tables.skills[1].gathered_item_id),
-            (None, None)
-        );
+        assert_eq!(tables.skills[1].name.en, "Gather");
+        assert_eq!(tables.skills[1].gathered_item_id, None);
         assert_eq!(tables.skills[1].range, 10);
     }
 

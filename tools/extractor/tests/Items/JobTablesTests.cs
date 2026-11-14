@@ -20,8 +20,8 @@ public sealed class JobTablesTests
         ClientDisplay = true,
     };
 
-    private static readonly Skill _nameless = new() { Id = 299, Name = null, ParentJobId = 1, GatheredItemId = null, LevelMin = 1, Range = 10, ClientDisplay = false };
-    private static readonly Item _wood = new() { Id = 303, Name = _cut.Name!, TypeId = 38, Level = 1, IconId = 0 };
+    private static readonly Skill _gather = new() { Id = 299, Name = new Text { Fr = "Ramasser", En = "Gather", De = "Sammeln", Es = "Recoger", Pt = "Recolher" }, ParentJobId = 1, GatheredItemId = null, LevelMin = 1, Range = 10, ClientDisplay = false };
+    private static readonly Item _wood = new() { Id = 303, Name = _cut.Name, TypeId = 38, Level = 1, IconId = 0 };
 
     [Fact]
     public void JobsAreWrittenAsTheAppReadsThem()
@@ -33,7 +33,7 @@ public sealed class JobTablesTests
     [Fact]
     public void SkillsAreWrittenAsTheAppReadsThem()
     {
-        Assert.Equal(Fixture("skills.json"), JobTables.WriteSkills([_cut, _nameless]));
+        Assert.Equal(Fixture("skills.json"), JobTables.WriteSkills([_cut, _gather]));
     }
 
     [Theory]
@@ -56,7 +56,7 @@ public sealed class JobTablesTests
     [Fact]
     public void SkillsGatheringAnItemOrNoneAreKept()
     {
-        var (skills, skipped) = JobTables.Kept([_cut, _nameless], [_base, _lumberjack], [_wood]);
+        var (skills, skipped) = JobTables.Kept([_cut, _gather], [_base, _lumberjack], [_wood]);
 
         Assert.Equal([6, 299], skills.Select(skill => skill.Id));
         Assert.Equal(0, skipped);
@@ -65,16 +65,25 @@ public sealed class JobTablesTests
     [Fact]
     public void ASkillGatheringAnItemTheItemsLackIsLeftOutAndCounted()
     {
-        var (skills, skipped) = JobTables.Kept([_cut, _nameless], [_base, _lumberjack], []);
+        var (skills, skipped) = JobTables.Kept([_cut, _gather], [_base, _lumberjack], []);
 
         Assert.Equal([299], skills.Select(skill => skill.Id));
         Assert.Equal(1, skipped);
     }
 
     [Fact]
+    public void AJobOrASkillIdHeldTwiceFails()
+    {
+        var jobs = Assert.Throws<InvalidDataException>(() => JobTables.Kept([_cut], [_lumberjack, _lumberjack], [_wood]));
+        var skills = Assert.Throws<InvalidDataException>(() => JobTables.Kept([_cut, _cut], [_lumberjack], [_wood]));
+
+        Assert.Equal(("The jobs hold 2 twice.", "The skills hold 6 twice."), (jobs.Message, skills.Message));
+    }
+
+    [Fact]
     public void ASkillOfAJobTheClientLacksFails()
     {
-        var failure = Assert.Throws<InvalidDataException>(() => JobTables.Kept([_cut, _nameless], [_base], [_wood]));
+        var failure = Assert.Throws<InvalidDataException>(() => JobTables.Kept([_cut, _gather], [_base], [_wood]));
 
         Assert.Equal("Skill 6 is of job 2, which the client lacks.", failure.Message);
     }

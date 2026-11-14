@@ -6,13 +6,13 @@ namespace D3B.Extractor.Items;
 /// <summary>The items of the data folder and their types: <c>items.json</c> and <c>item-types.json</c>.</summary>
 /// <remarks>
 /// The client's <c>items</c> table holds <c>ItemData</c> and <c>WeaponData</c> records, read alike for the fields
-/// written here; <c>itemtypes</c> holds <c>ItemTypeData</c> (3.7.13.17, the study of the items of 2026-11-14).
+/// written here; <c>itemtypes</c> holds <c>ItemTypeData</c> (3.7.13.17, <c>artifacts/studies/items.md</c>).
 /// </remarks>
 internal static class ItemTables
 {
     /// <summary>Reads the items and their types from the client and writes them into the folder.</summary>
     /// <returns>The items written, which the skills gather.</returns>
-    /// <exception cref="InvalidDataException">An item or a type names text 0.</exception>
+    /// <exception cref="InvalidDataException">An item or a type names text 0, or an id is held twice.</exception>
     public static IReadOnlyList<Item> Extract(ClientInstall client, TextFiles texts, DataFolder folder, TextWriter output)
     {
         var types = ReadTypes(DataTable.ReadById(client, "itemtypes"), texts);
@@ -67,15 +67,35 @@ internal static class ItemTables
 
     /// <summary>Leaves out the items of a type the client lacks, and counts them.</summary>
     /// <remarks>Item 34,569 names type 264, which 3.7.13.17 lacks: a test item, left out by the owner's choice of 2026-11-14.</remarks>
+    /// <exception cref="InvalidDataException">An item or a type id is held twice, which the app refuses.</exception>
     public static (IReadOnlyList<Item> Items, int Skipped) Kept(IReadOnlyList<Item> items, IReadOnlyList<ItemType> types)
     {
-        var known = types.Select(type => type.Id).ToHashSet();
+        var known = Unique("item types", types, type => type.Id);
+
+        Unique("items", items, item => item.Id);
         IReadOnlyList<Item> kept = [.. items.Where(item => known.Contains(item.TypeId))];
 
         return (kept, items.Count - kept.Count);
     }
 
-    /// <summary>Gets a record's name, which every item, type and job has.</summary>
+    /// <summary>Gets the ids of a table's records.</summary>
+    /// <exception cref="InvalidDataException">An id is held twice.</exception>
+    public static HashSet<int> Unique<T>(string table, IEnumerable<T> records, Func<T, int> id)
+    {
+        var ids = new HashSet<int>();
+
+        foreach (var record in records)
+        {
+            if (!ids.Add(id(record)))
+            {
+                throw new InvalidDataException($"The {table} hold {id(record)} twice.");
+            }
+        }
+
+        return ids;
+    }
+
+    /// <summary>Gets a record's name, which every item, type, job and skill has.</summary>
     /// <exception cref="InvalidDataException">The record names text 0.</exception>
     public static Text Named(string record, int id, Text? name)
     {

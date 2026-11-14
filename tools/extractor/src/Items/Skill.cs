@@ -7,8 +7,7 @@ internal sealed class Skill
 {
     public required int Id { get; init; }
 
-    /// <summary>Gets its name, or <see langword="null"/> for a skill named text 0 (none on 3.7.13.17).</summary>
-    public required Text? Name { get; init; }
+    public required Text Name { get; init; }
 
     public required int ParentJobId { get; init; }
 
@@ -17,9 +16,9 @@ internal sealed class Skill
 
     public required int LevelMin { get; init; }
 
-    /// <summary>Gets the distance it is used from, in cells: 1, or 10 for fishing (3.7.12.12).</summary>
+    /// <summary>Gets the distance it is used from, in cells: 1, or 10 for fishing (measured on 3.7.12.12, inferred for 3.7.13.17, <c>artifacts/studies/items.md</c>).</summary>
     public required int Range { get; init; }
 
-    /// <summary>Gets whether the client shows it: five level-1 harvest skills repeat another with false, such as 299 beside 6.</summary>
+    /// <summary>Gets whether the client shows it: five level-1 harvest skills repeat another with false, such as 299 beside 6 (3.7.13.17, <c>artifacts/studies/items.md</c>).</summary>
     public required bool ClientDisplay { get; init; }
 }
