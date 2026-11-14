@@ -403,8 +403,6 @@
     "givenLine": "Given by D3B · v{{version}} · locked",
     "mineLine": "Mine",
     "mineBasedOn": "Mine · based on {{name}} v{{version}}",
-    "settings": "Settings per character",
-    "soon": "The graph and the Summary come here.",
     "gone": "This blueprint is gone.",
     "unread": "The Library could not be read: {{reason}}",
     "duplicateFailed": {
@@ -442,6 +440,15 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "fitView": "Fit view",
-    "minimap": "Overview"
+    "minimap": "Overview",
+    "myBlueprint": "My Blueprint",
+    "graphs": "Graphs",
+    "functions": "Functions",
+    "variables": "Variables",
+    "eventGraph": "Event Graph",
+    "perCharacter": "Set per character",
+    "default": "Default: {{value}}",
+    "loading": "Reading the blueprint…",
+    "bug": "The blueprint could not be read: {{reason}}"
   }
 }
