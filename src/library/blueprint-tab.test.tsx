@@ -31,6 +31,7 @@ const variable = (id: string, valueType: string, json: string | null, perCharact
   default: json,
   perCharacter,
   memory: false,
+  bounds: null,
   help: "",
 });
 
@@ -63,8 +64,8 @@ function tab(id: string) {
 const GRAPHS = {
   id: "automatic-harvest",
   graphs: [
-    { id: "events", name: "Event graph", function: false, nodes: [], wires: [] },
-    { id: "empty_at_bank", name: "Vider à la banque", function: true, nodes: [], wires: [] },
+    { id: "events", name: "Event graph", function: false, inputs: [], outputs: [], nodes: [], wires: [] },
+    { id: "empty_at_bank", name: "Vider à la banque", function: true, inputs: [], outputs: [], nodes: [], wires: [] },
   ],
 };
 

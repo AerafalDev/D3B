@@ -13,6 +13,7 @@ const variable = (id: string, valueType: string, json: string | null, perCharact
   default: json,
   perCharacter,
   memory: false,
+  bounds: null,
   help: "",
 });
 
@@ -28,8 +29,8 @@ const harvest: BlueprintSummary = {
 };
 
 const graphs = [
-  { id: "events", name: "Event graph", function: false, nodes: [], wires: [] },
-  { id: "empty_at_bank", name: "Vider à la banque", function: true, nodes: [], wires: [] },
+  { id: "events", name: "Event graph", function: false, inputs: [], outputs: [], nodes: [], wires: [] },
+  { id: "empty_at_bank", name: "Vider à la banque", function: true, inputs: [], outputs: [], nodes: [], wires: [] },
 ];
 
 describe("My Blueprint", () => {
@@ -70,7 +71,10 @@ describe("My Blueprint", () => {
   });
 
   it("names several event graphs by their names, to tell them apart", () => {
-    const two = [...graphs, { id: "second", name: "Combats", function: false, nodes: [], wires: [] }];
+    const two = [
+      ...graphs,
+      { id: "second", name: "Combats", function: false, inputs: [], outputs: [], nodes: [], wires: [] },
+    ];
     render(<MyBlueprint blueprint={harvest} graphs={two} shown="events" onShow={() => {}} />);
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
       "Event graph",

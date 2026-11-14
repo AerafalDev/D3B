@@ -31,7 +31,16 @@ const harvest = {
   basedOn: null,
   problems: 0,
   variables: [
-    { id: "zone", name: "Zone", valueType: "zone", default: null, perCharacter: true, memory: false, help: "Where." },
+    {
+      id: "zone",
+      name: "Zone",
+      valueType: "zone",
+      default: null,
+      perCharacter: true,
+      memory: false,
+      bounds: null,
+      help: "Where.",
+    },
   ],
 };
 

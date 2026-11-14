@@ -101,19 +101,21 @@ export type BasedOnView = {
 	version: number,
 };
 
-/**  A blueprint's graphs. */
+/**  A blueprint's graphs, and its problems, each where the editor marks it. */
 export type BlueprintGraphs = BlueprintGraphs_Serialize | BlueprintGraphs_Deserialize;
 
-/**  A blueprint's graphs. */
+/**  A blueprint's graphs, and its problems, each where the editor marks it. */
 export type BlueprintGraphs_Deserialize = {
 	id: string,
 	graphs: GraphView_Deserialize[],
+	problems: ProblemView_Deserialize[],
 };
 
-/**  A blueprint's graphs. */
+/**  A blueprint's graphs, and its problems, each where the editor marks it. */
 export type BlueprintGraphs_Serialize = {
 	id: string,
 	graphs: GraphView_Serialize[],
+	problems: ProblemView_Serialize[],
 };
 
 /**  The Library's content. */
@@ -293,6 +295,15 @@ export type ElementAt = {
 	cell: number,
 };
 
+/**  What an event does to the flow at work (`bot::Mode`). */
+export type EventMode = "interruptThenResume" | "waitForAction" | "restart" | "parallel";
+
+/**  An event's priority (1 before 2) and its mode against the flow at work. */
+export type EventView = {
+	priority: number,
+	mode: EventMode,
+};
+
 /**  Why a character was not forgotten. */
 export type ForgetError = { kind: "noSuchCharacter" } | { kind: "noFolder" } | 
 /**  The system could not move its file to the trash: its own words. */
@@ -407,6 +418,9 @@ export type GraphView_Deserialize = {
 	name: string,
 	/**  Whether it is a function rather than an event graph. */
 	function: boolean,
+	/**  A function's inputs and outputs; none for an event graph. */
+	inputs: ParameterView[],
+	outputs: ParameterView[],
 	nodes: NodeView_Deserialize[],
 	wires: WireView[],
 };
@@ -417,6 +431,9 @@ export type GraphView_Serialize = {
 	name: string,
 	/**  Whether it is a function rather than an event graph. */
 	function: boolean,
+	/**  A function's inputs and outputs; none for an event graph. */
+	inputs: ParameterView[],
+	outputs: ParameterView[],
 	nodes: NodeView_Serialize[],
 	wires: WireView[],
 };
@@ -530,6 +547,8 @@ export type NodeView_Deserialize = {
 	inputs: { [key in string]: string },
 	/**  Where it sits, `[x, y]`; `None` when the file does not say, and the editor places it. */
 	position?: [number, number] | null,
+	/**  An event's priority and mode, as the file sets them. */
+	event?: EventView | null,
 } & NodeDoes;
 
 /**  A node of a graph. */
@@ -548,7 +567,16 @@ export type NodeView_Serialize = {
 	inputs: { [key in string]: string },
 	/**  Where it sits, `[x, y]`; `None` when the file does not say, and the editor places it. */
 	position: [number, number] | null,
+	/**  An event's priority and mode, as the file sets them. */
+	event: EventView | null,
 } & NodeDoes;
+
+/**  One of a function's inputs or outputs. */
+export type ParameterView = {
+	id: string,
+	name: string,
+	valueType: PinCarries,
+};
 
 /**  What a pin carries: the flow, or a value of a type. */
 export type PinCarries = "exec" | "bool" | "number" | "percentage" | "text" | "zone" | "route" | "bank" | "items" | "job";
@@ -653,6 +681,42 @@ export type PlayedList_Serialize = {
 	kept: KeptFile[],
 };
 
+/**  The kinds of `bot::Problem`, by name. */
+export type ProblemKind = "malformedId" | "variableTwice" | "graphTwice" | "nodeTwice" | "parameterTwice" | "defaultNotOfType" | "wrongBounds" | "defaultOutOfBounds" | "noSuchVariable" | "noSuchFunction" | "wireToNoNode" | "wireTwice" | "unknownKind" | "outOfPlace" | "eventSettingsOnNoEvent" | "noSuchInput" | "valueNotOfType" | "wireToNoPin" | "wireTheWrongWay" | "wireOfAnotherType" | "outputWiredTwice" | "inputFedTwice" | "inputWithoutValue" | "eventTwice";
+
+/**
+ *  A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node
+ *  and pin, and the id it names as `subject`: the variable, function, kind, parameter or malformed id; for a wire to no
+ *  node, that node; for a wire twice or of another type, the node it goes to, its source being `node` (and `pin`).
+ */
+export type ProblemView = ProblemView_Serialize | ProblemView_Deserialize;
+
+/**
+ *  A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node
+ *  and pin, and the id it names as `subject`: the variable, function, kind, parameter or malformed id; for a wire to no
+ *  node, that node; for a wire twice or of another type, the node it goes to, its source being `node` (and `pin`).
+ */
+export type ProblemView_Deserialize = {
+	kind: ProblemKind,
+	graph?: string | null,
+	node?: string | null,
+	pin?: string | null,
+	subject?: string | null,
+};
+
+/**
+ *  A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node
+ *  and pin, and the id it names as `subject`: the variable, function, kind, parameter or malformed id; for a wire to no
+ *  node, that node; for a wire twice or of another type, the node it goes to, its source being `node` (and `pin`).
+ */
+export type ProblemView_Serialize = {
+	kind: ProblemKind,
+	graph: string | null,
+	node: string | null,
+	pin: string | null,
+	subject: string | null,
+};
+
 /**  The relay's status changed. */
 export type RelayChanged = RelayChanged_Serialize | RelayChanged_Deserialize;
 
@@ -741,6 +805,8 @@ export type VariableView_Deserialize = {
 	valueType: string,
 	/**  Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none. */
 	default?: string | null,
+	/**  The smallest and largest value of a number or a percentage. */
+	bounds?: [number, number] | null,
 	perCharacter: boolean,
 	memory: boolean,
 	help: string,
@@ -755,6 +821,8 @@ export type VariableView_Serialize = {
 	valueType: string,
 	/**  Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none. */
 	default: string | null,
+	/**  The smallest and largest value of a number or a percentage. */
+	bounds: [number, number] | null,
 	perCharacter: boolean,
 	memory: boolean,
 	help: string,
