@@ -2,8 +2,10 @@
 //!
 //! The client's `ItemData` and `WeaponData`, `ItemTypeData`, `JobData` and `SkillData` (verified on 3.7.13.17's data,
 //! `artifacts/studies/items.md`). The extractor leaves out an item of a type the client lacks and a skill
-//! gathering an item the client lacks (the owner, 2026-11-14), so the app refuses a folder that names either.
+//! gathering an item the client lacks (the owner, 2026-11-14), so the app refuses a folder that names either. Each
+//! item and job has its icon, but four items of 3.7.13.17 whose icon the client lacks.
 
+mod icons;
 mod jobs;
 
 use std::collections::HashSet;
@@ -14,6 +16,7 @@ use serde::Deserialize;
 use super::DataError;
 use super::manifest::Manifest;
 use super::text::Text;
+use icons::Icons;
 pub use jobs::{Job, Skill};
 
 /// An item, anything a character can carry.
@@ -40,26 +43,32 @@ pub struct ItemType {
     pub category_id: i32,
 }
 
-/// The items, their types, the jobs and their skills of a data folder, each in order of id.
+/// The items, their types, the jobs and their skills of a data folder, each in order of id, and which items' icons it
+/// holds.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemTables {
     pub items: Vec<Item>,
     pub types: Vec<ItemType>,
     pub jobs: Vec<Job>,
     pub skills: Vec<Skill>,
+    /// The icons of `icons/items/` the folder holds, whose files [`ItemTables::item_icon`] gives.
+    pub item_icons: HashSet<i32>,
 }
 
 impl ItemTables {
     /// Reads the four tables that `manifest` lists in `folder`, refusing them when an id is held twice, an item's
-    /// type is missing, or a skill's job or gathered item is.
+    /// type is missing, a skill's job or gathered item is, or a job's icon is.
     pub fn load(folder: &Path, manifest: &Manifest) -> Result<Self, DataError> {
-        Self {
+        let tables = Self {
             items: manifest.read(folder, "items")?,
             types: manifest.read(folder, "item-types")?,
             jobs: manifest.read(folder, "jobs")?,
             skills: manifest.read(folder, "skills")?,
+            item_icons: icons::listed(manifest, Icons::Items),
         }
-        .checked()
+        .checked()?;
+        icons::check(&tables.jobs, manifest)?;
+        Ok(tables)
     }
 
     fn checked(self) -> Result<Self, DataError> {
@@ -111,6 +120,7 @@ mod tests {
             types: read(TYPES),
             jobs: read(JOBS),
             skills: read(SKILLS),
+            item_icons: HashSet::new(),
         }
     }
 
@@ -162,10 +172,12 @@ mod tests {
             ("jobs", JOBS),
             ("skills", SKILLS),
         ];
-        let tables: Vec<String> = files
+        let mut tables: Vec<String> = files
             .iter()
             .map(|(name, _)| format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#))
             .collect();
+        // The lumberjack's icon; Base has none.
+        tables.push(r#"{"name":"icons/jobs/1","path":"icons/jobs/1.png","sha256":"00"}"#.to_owned());
         let manifest = format!(
             r#"{{"format":{},"build":"0","extractor":"0","tables":[{}]}}"#,
             super::super::FORMAT,

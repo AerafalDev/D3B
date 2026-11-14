@@ -2,14 +2,14 @@
 
 The app ships the game data of one client build, as JSON, inside the installer: for now the world (maps, world graph,
 positions, sub-areas, areas, zaaps, the world map and its tiles), the breeds with their heads, and the items, their
-types, the jobs and their skills; monsters and spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
+types, the jobs and their skills, with the items' and jobs' icons; monsters and spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
 release workflow. Nothing of it is ever committed (ADR [0008](adr/0008-world-data-first-in-five-languages-as-a-tar-gz.md), its archive's name
 superseded by [0013](adr/0013-a-new-data-format-is-a-second-asset-named-by-its-format.md)).
 
 ```mermaid
 flowchart LR
     client["Installed Dofus 3 client"] --> extractor["tools/extractor (.NET)"]
-    extractor --> folder["artifacts/data/&lt;build&gt;/: manifest.json + tables + tiles + heads"]
+    extractor --> folder["artifacts/data/&lt;build&gt;/: manifest.json + tables + tiles + heads + icons"]
     folder -->|"owner's go, data skill"| asset["Release asset client-&lt;build&gt;-format&lt;n&gt;.tar.gz"]
     asset -->|"release.yml, .github/game-data.json"| bundle["data/ bundled as a Tauri resource"]
     bundle --> app["src-tauri/src/data reads it at start"]
@@ -32,6 +32,18 @@ flowchart LR
 - **Heads** are PNG files, `heads/<breed>-<sex>.png`, 64 pixels a side with their transparency, 0 the male and 1 the
   female, two for each breed of `breeds.json`: the client's `Head_<breed><sex>` of `Content/Picto/UI/class_assets_2x.bundle`,
   BC7, drawn whole (3.7.13.17, `artifacts/studies/breeds.md`). The app refuses a folder where a breed lacks one.
+- **Icons** are PNG files of 32 pixels a side with their transparency, `icons/items/<iconId>.png` and
+  `icons/jobs/<iconId>.png`, one for each icon an item of `items.json` or a job of `jobs.json` names (every item's,
+  the owner's choice of 2026-11-14): the textures of `Content/Picto/Items/item_assets_1x.bundle` and
+  `Content/Picto/UI/job_assets_1x.bundle`, named by the icon's number, drawn whole. The items' are 64 px, BC7, but
+  for three, 82,523 and 121,179 at 60 px and 25,257 RGBA32 at 62 px; the jobs' are 32 px, BC7 (3.7.13.17,
+  `artifacts/studies/items.md`). Each icon texel is the mean of the texels it covers weighted by their alpha, computed
+  by the extractor rather than Skia so that every CPU gives the same bytes: a 64 px icon's 2x2 squares, a 32 px one's
+  texels as they are. The extraction fails on a texture that is not one square level, an item's not BC7 or RGBA32 of
+  32 to 64 px, a job's not BC7 of 32 px (a larger one would be scaled by more than half, which is not measured), not
+  named by a number, or named twice, and on a job whose icon is missing; four items name an icon the client lacks: they keep their
+  `iconId`, are counted, and have none in the app. The app refuses a folder where a job's icon is missing (`-1` is
+  none, Base's).
 - **Flags** are the list of the names of the bits a record sets, in camelCase, as the client's enums name them, read
   from its code with Cpp2IL (ADR [0010](adr/0010-flags-by-the-names-of-the-clients-enums.md)).
 - The shape of each table is written down here when its reader lands (`src-tauri/src/data/`, `deny_unknown_fields`).
@@ -53,6 +65,8 @@ flowchart LR
 | `item-types.json` | `id`, `name`, `categoryId` | `ItemTypeData`, 236 records |
 | `jobs.json` | `id`, `name`, `iconId` (-1 for none) | `JobData`, 23 records |
 | `skills.json` | `id`, `name`, `parentJobId`, `gatheredItemId` (its `gatheredRessourceItem`, `null` for -1 and 0), `levelMin`, `range`, `clientDisplay` | `SkillData`, 373 records, 372 written |
+| `icons/items/<iconId>.png` | one item's icon, PNG, 32 px | 12,295 textures, 11,768 written, 19.7 MB as PNG; 4 items name an icon the client lacks |
+| `icons/jobs/<iconId>.png` | one job's icon, PNG, 32 px | 21 BC7 textures, 54 KB as PNG; jobs 75 and 78 share icon 42 |
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
 `nonWalkableDuringRP`, `farmCell`, `visible`, `havenbagCell`, `roleplayMonstersMovementBlocked`, `red`, `blue`: fields
@@ -89,14 +103,14 @@ dotnet run --project tools/extractor/src -- --output <dir>   # another data fold
 It writes the folder beside its target (`<target>.d3b-staging`), then swaps it in, and replaces only a folder that
 holds a `manifest.json`. A file's path and its name are unique ignoring case.
 
-Each run extracts everything again, in about 25 s on 3.7.13.17, tiles included. It also writes the folder's archive,
+Each run extracts everything again, in about 30 s on 3.7.13.17, tiles and icons included (its archive, 105 MB, the same bytes on each run). It also writes the folder's archive,
 `artifacts/data/client-<build>-format<n>.tar.gz` whatever `--output` names: the folder's files at its root in order of their
 paths, with a fixed date, so that two runs of one extractor on one OS give the same bytes (gzip's header names the
 OS). It is the file the `data` skill publishes and `data:fetch` unpacks. Format 1's asset, published for 3.7.13.17, was
 named `client-<build>.tar.gz`; format 2 added the breeds and their heads (the owner, 2026-11-13): since a published
 asset is never replaced, a build's data in a new format is a second asset of the build's release, named by its format.
-Format 3 adds the items, their types, the jobs and their skills (the owner, 2026-11-14), and the items' and jobs'
-icons in a next PR, before it is published. The C# version's tools on `main`
+Format 3 adds the items, their types, the jobs and their skills, and the items' and jobs' icons (the owner,
+2026-11-14). The C# version's tools on `main`
 (`scripts/extract/`, `scripts/unity/`) and its measures (`docs/client.md`) are the sources it was rewritten from.
 
 ## Where it lives

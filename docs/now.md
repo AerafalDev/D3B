@@ -199,7 +199,8 @@ _Updated 2026-11-14._
   resources (the owner, 2026-11-14, from its study): format 3's `items.json`, `item-types.json`, `jobs.json` and
   `skills.json`, an item of a missing type and a skill gathering a missing item left out and counted (done in code:
   the installed 3.7.13.17 gives 21,621 items, 236 types, 23 jobs, 372 skills, one item and one skill left out), then the items'
-  and jobs' icons, still format 3; then the owner's extraction and publishing of `client-3.7.13.17-format3.tar.gz`:
+  and jobs' icons at 32 px, still format 3 (done in code: 11,768 items' and 21 jobs' icons, 19.7 MB, four items naming
+  an icon the client lacks counted, an archive of 105 MB in 30 s, the same bytes on two runs); then the owner's extraction and publishing of `client-3.7.13.17-format3.tar.gz`:
   until then `.github/game-data.json` names format 3, so `data:fetch` and a release find no data; (4) D3B's blueprints in the app, and
   Duplicate, in two PRs: automatic harvest, profession harvest (its profession a setting, through a new "resources of"
   node and a profession value: the owner, 2026-11-14) and hunt, each without problems, their texts in the

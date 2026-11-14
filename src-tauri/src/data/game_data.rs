@@ -83,9 +83,9 @@ mod tests {
             .unwrap_or_else(|error| panic!("{error}"));
             tables.push(format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#));
         }
-        for head in ["8-0", "8-1", "9-0", "9-1"] {
+        for picture in ["heads/8-0", "heads/8-1", "heads/9-0", "heads/9-1", "icons/jobs/1"] {
             tables.push(format!(
-                r#"{{"name":"heads/{head}","path":"heads/{head}.png","sha256":"00"}}"#
+                r#"{{"name":"{picture}","path":"{picture}.png","sha256":"00"}}"#
             ));
         }
         let manifest = format!(
@@ -121,5 +121,6 @@ mod tests {
         assert_ne!(data.breeds.len(), 0);
         assert_ne!(data.items.items.len(), 0);
         assert_ne!(data.items.skills.len(), 0);
+        assert_ne!(data.items.item_icons.len(), 0);
     }
 }
