@@ -6,6 +6,7 @@ mod character;
 mod commands;
 mod inspector;
 mod map;
+mod played;
 mod relay;
 
 pub use blueprints::open_store;
@@ -22,6 +23,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             commands::app_info,
             blueprints::blueprints,
             blueprints::duplicate_blueprint,
+            played::played_characters,
+            played::forget_character,
             relay::relay_status,
             relay::relay_restore,
             map::map_cells,
@@ -31,7 +34,8 @@ pub fn builder() -> Builder<tauri::Wry> {
         .events(collect_events![
             relay::RelayChanged,
             character::CharacterChanged,
-            inspector::InspectorFrames
+            inspector::InspectorFrames,
+            played::PlayedChanged
         ])
 }
 

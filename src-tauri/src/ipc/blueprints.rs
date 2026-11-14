@@ -23,6 +23,13 @@ pub fn open_store(app: &tauri::AppHandle) -> PlayersFiles {
 /// The player's files, or none when the system names no folder for them.
 pub struct PlayersFiles(Option<Store>);
 
+impl PlayersFiles {
+    /// The player's folder, when the system names one.
+    pub(crate) fn store(&self) -> Option<&Store> {
+        self.0.as_ref()
+    }
+}
+
 /// A blueprint as the Library lists it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -88,7 +95,7 @@ impl From<&Why> for KeptWhy {
                 reason: error.to_string(),
             },
             Why::NotText => Self::NotText,
-            Why::NotRead(ReadError::Newer { found }) => Self::Newer {
+            Why::NotRead(ReadError::Newer { found }) | Why::NewerCharacter { found } => Self::Newer {
                 found: u32::try_from(*found).unwrap_or(u32::MAX),
             },
             Why::NotRead(ReadError::NotABlueprint(error)) => Self::NotABlueprint {
@@ -96,6 +103,9 @@ impl From<&Why> for KeptWhy {
             },
             Why::NameIsNotId { id } => Self::NameIsNotId { id: id.0.clone() },
             Why::GivenId { id } => Self::GivenId { id: id.0.clone() },
+            // Characters' files are listed with the characters, never in the Library.
+            Why::NotACharacter(detail) => Self::NotABlueprint { detail: detail.clone() },
+            Why::KeyIsNotId { id } => Self::NameIsNotId { id: id.to_string() },
         }
     }
 }

@@ -49,6 +49,15 @@ pub(crate) enum Why {
     /// It holds the id of one of D3B's blueprints, which a blueprint of mine never takes.
     #[error("it holds {}, the id of one of D3B's blueprints", id.0)]
     GivenId { id: Id },
+    /// A character's file a newer D3B wrote.
+    #[error("written by a newer D3B: schema {found}")]
+    NewerCharacter { found: u64 },
+    /// It reads, but not as a character of this version.
+    #[error("not a character: {0}")]
+    NotACharacter(String),
+    /// A character's file named for another character than the one it holds.
+    #[error("its name is not its character's key, {id}")]
+    KeyIsNotId { id: i64 },
 }
 
 /// The blueprints of the player's folder, and the files kept as they are.
@@ -74,6 +83,8 @@ pub(crate) enum StorageError {
     GivenId { id: Id },
     #[error("no blueprint {}", id.0)]
     NoSuchBlueprint { id: Id },
+    #[error("no character {key}")]
+    NoSuchCharacter { key: String },
 }
 
 impl Store {
@@ -174,8 +185,13 @@ impl Store {
         Ok(copy.id)
     }
 
+    /// The player's folder.
+    pub(super) fn root(&self) -> &Path {
+        &self.root
+    }
+
     /// One write at a time; a write that panicked left nothing to protect.
-    fn lock(&self) -> std::sync::MutexGuard<'_, ()> {
+    pub(super) fn lock(&self) -> std::sync::MutexGuard<'_, ()> {
         self.writing.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
