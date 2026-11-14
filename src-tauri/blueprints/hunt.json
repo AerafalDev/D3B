@@ -22,8 +22,8 @@
        {"id": "pods", "get": "pods"},
        {"id": "bank", "get": "bank"},
        {"id": "keep", "get": "keep"},
-       {"id": "life", "kind": "life_below", "event": {"priority": 1}},
-       {"id": "wait", "kind": "wait_for_life"}
+       {"id": "life", "kind": "life_below", "inputs": {"rearm": 60, "threshold": 40}, "event": {"priority": 1}},
+       {"id": "wait", "kind": "wait_for_life", "inputs": {"life": 90}}
      ],
      "wires": [
        {"from": ["start", "then"], "to": ["go", "run"]},

@@ -197,8 +197,8 @@ pub(crate) const KINDS: &[Kind] = &[
     of("finish", Flow, &[RUN], None),
     of("life_percent", Query, &[output("value", Percentage)], None),
     of("pods_percent", Query, &[output("value", Percentage)], None),
-    // The items a profession harvests, from the data's skills (`artifacts/studies/items.md`): "Récolte d'un métier"
-    // reads its setting through it (the owner, 2026-11-14).
+    // The items a profession harvests, from the data's skills (3.7.13.17, `artifacts/studies/items.md`, verified):
+    // `job-harvest` reads its setting through it (the owner, 2026-11-14).
     of("job_resources", Query, &[input("job", Job, None), output("value", Items)], None),
     of("level", Query, &[output("value", Number)], None),
     of("at_least", Query, &[input("a", Number, None), input("b", Number, None), output("value", Bool)], None),
