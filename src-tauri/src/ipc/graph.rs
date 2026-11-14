@@ -21,7 +21,8 @@ pub struct BlueprintGraphs {
 }
 
 /// A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node
-/// and pin, and the variable, function, kind or other id it names.
+/// and pin, and the id it names as `subject`: the variable, function, kind, parameter or malformed id; for a wire to no
+/// node, that node; for a wire twice or of another type, the node it goes to, its source being `node` (and `pin`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
 pub struct ProblemView {
     pub kind: ProblemKind,
@@ -138,6 +139,17 @@ pub enum EventMode {
     WaitForAction,
     Restart,
     Parallel,
+}
+
+impl From<Mode> for EventMode {
+    fn from(mode: Mode) -> Self {
+        match mode {
+            Mode::InterruptThenResume => Self::InterruptThenResume,
+            Mode::WaitForAction => Self::WaitForAction,
+            Mode::Restart => Self::Restart,
+            Mode::Parallel => Self::Parallel,
+        }
+    }
 }
 
 /// One of a function's inputs or outputs.
@@ -361,12 +373,7 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
                 position: layout.and_then(|nodes| nodes.get(&node.id)).copied(),
                 event: node.event.map(|event| EventView {
                     priority: event.priority.get(),
-                    mode: match event.mode {
-                        Mode::InterruptThenResume => EventMode::InterruptThenResume,
-                        Mode::WaitForAction => EventMode::WaitForAction,
-                        Mode::Restart => EventMode::Restart,
-                        Mode::Parallel => EventMode::Parallel,
-                    },
+                    mode: event.mode.into(),
                 }),
             }
         });
@@ -626,5 +633,197 @@ mod tests {
         assert_eq!((twice.graph.as_deref(), twice.subject.as_deref()), (None, Some("pods")));
         let value = serde_json::to_value(&twice).unwrap_or_default();
         assert_eq!(value["kind"], "variableTwice");
+    }
+
+    #[test]
+    #[expect(clippy::too_many_lines, reason = "one line per variant of `bot::Problem`, a table")]
+    fn every_problem_goes_to_its_kind_and_its_place() {
+        use ProblemKind as K;
+        let id = |text: &str| bot::Id(text.to_owned());
+        let (g, n, p, x) = (|| id("g"), || id("n"), || id("p"), || id("x"));
+        let some = |text: &str| Some(text.to_owned());
+        let cases = [
+            (
+                Problem::MalformedId { id: x() },
+                (K::MalformedId, None, None, None, some("x")),
+            ),
+            (
+                Problem::VariableTwice { variable: x() },
+                (K::VariableTwice, None, None, None, some("x")),
+            ),
+            (
+                Problem::GraphTwice { graph: g() },
+                (K::GraphTwice, some("g"), None, None, None),
+            ),
+            (
+                Problem::NodeTwice { graph: g(), node: n() },
+                (K::NodeTwice, some("g"), some("n"), None, None),
+            ),
+            (
+                Problem::ParameterTwice {
+                    graph: g(),
+                    parameter: x(),
+                },
+                (K::ParameterTwice, some("g"), None, None, some("x")),
+            ),
+            (
+                Problem::DefaultNotOfType { variable: x() },
+                (K::DefaultNotOfType, None, None, None, some("x")),
+            ),
+            (
+                Problem::WrongBounds { variable: x() },
+                (K::WrongBounds, None, None, None, some("x")),
+            ),
+            (
+                Problem::DefaultOutOfBounds { variable: x() },
+                (K::DefaultOutOfBounds, None, None, None, some("x")),
+            ),
+            (
+                Problem::NoSuchVariable {
+                    graph: g(),
+                    node: n(),
+                    variable: x(),
+                },
+                (K::NoSuchVariable, some("g"), some("n"), None, some("x")),
+            ),
+            (
+                Problem::NoSuchFunction {
+                    graph: g(),
+                    node: n(),
+                    function: x(),
+                },
+                (K::NoSuchFunction, some("g"), some("n"), None, some("x")),
+            ),
+            (
+                Problem::WireToNoNode { graph: g(), node: x() },
+                (K::WireToNoNode, some("g"), None, None, some("x")),
+            ),
+            (
+                Problem::WireTwice {
+                    graph: g(),
+                    from: n(),
+                    to: x(),
+                },
+                (K::WireTwice, some("g"), some("n"), None, some("x")),
+            ),
+            (
+                Problem::UnknownKind {
+                    graph: g(),
+                    node: n(),
+                    kind: x(),
+                },
+                (K::UnknownKind, some("g"), some("n"), None, some("x")),
+            ),
+            (
+                Problem::OutOfPlace { graph: g(), node: n() },
+                (K::OutOfPlace, some("g"), some("n"), None, None),
+            ),
+            (
+                Problem::EventSettingsOnNoEvent { graph: g(), node: n() },
+                (K::EventSettingsOnNoEvent, some("g"), some("n"), None, None),
+            ),
+            (
+                Problem::NoSuchInput {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::NoSuchInput, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::ValueNotOfType {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::ValueNotOfType, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::WireToNoPin {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::WireToNoPin, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::WireTheWrongWay {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::WireTheWrongWay, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::WireOfAnotherType {
+                    graph: g(),
+                    from: bot::End(n(), p()),
+                    to: bot::End(x(), id("q")),
+                },
+                (K::WireOfAnotherType, some("g"), some("n"), some("p"), some("x")),
+            ),
+            (
+                Problem::OutputWiredTwice {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::OutputWiredTwice, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::InputFedTwice {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::InputFedTwice, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::InputWithoutValue {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::InputWithoutValue, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::EventTwice { graph: g(), node: n() },
+                (K::EventTwice, some("g"), some("n"), None, None),
+            ),
+        ];
+        let mut kinds = std::collections::HashSet::new();
+        for (problem, expected) in cases {
+            let view = ProblemView::from(&problem);
+            assert_eq!(
+                (view.kind, view.graph, view.node, view.pin, view.subject),
+                expected,
+                "{problem:?}"
+            );
+            assert!(
+                kinds.insert(serde_json::to_string(&view.kind).unwrap_or_default()),
+                "{problem:?}: a kind's name twice"
+            );
+        }
+        assert_eq!(kinds.len(), 24);
+    }
+
+    #[test]
+    fn every_mode_goes_to_its_own() {
+        let modes = [
+            Mode::InterruptThenResume,
+            Mode::WaitForAction,
+            Mode::Restart,
+            Mode::Parallel,
+        ]
+        .map(EventMode::from);
+        assert_eq!(
+            modes,
+            [
+                EventMode::InterruptThenResume,
+                EventMode::WaitForAction,
+                EventMode::Restart,
+                EventMode::Parallel
+            ]
+        );
     }
 }

@@ -329,6 +329,10 @@ mod tests {
         );
         assert_eq!(settings[1], ("pods", "percentage", Some("90"), true));
         assert_eq!(list.blueprints[0].variables[1].bounds, Some([10, 100]));
+        // Bounds beyond a 32-bit number read as its ends.
+        let mut wide = bot::given().unwrap_or_default().remove(0);
+        wide.variables[1].bounds = Some([-5_000_000_000, 5_000_000_000]);
+        assert_eq!(summary(&wide, true).variables[1].bounds, Some([i32::MIN, i32::MAX]));
         assert_eq!(
             settings[2],
             ("bank", "bank", Some("\"nearest\""), true),
