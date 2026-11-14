@@ -1,0 +1,186 @@
+/* A blueprint's graph, the node look the owner approved on the prototype (2026-11-13), on React Flow. */
+.blueprint-flow.react-flow {
+  background: var(--editor);
+  --xy-background-pattern-color: #2c2c2c;
+}
+.blueprint-flow .react-flow__node {
+  cursor: default;
+}
+.blueprint-node {
+  min-width: 160px;
+  background: #262626;
+  border: 1px solid #383838;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+  font-size: 12px;
+  color: var(--text);
+}
+.blueprint-node.is-selected {
+  border-color: var(--focus);
+  box-shadow:
+    0 0 0 1px var(--focus),
+    0 2px 8px rgb(0 0 0 / 30%);
+}
+.blueprint-node.is-unknown {
+  border-style: dashed;
+  border-color: #d29922;
+}
+.blueprint-node-head {
+  position: relative;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px 6px 12px;
+  line-height: 1.5;
+}
+.blueprint-node-head > .react-flow__handle {
+  top: 15px;
+}
+.blueprint-node-title {
+  color: #fff;
+  white-space: nowrap;
+}
+.blueprint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 2px;
+  font-weight: 500;
+  color: #fff;
+  background: #34373d;
+  border-radius: 3px;
+  padding: 0 5px;
+}
+.blueprint-chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--type, #cfcfcf);
+}
+.blueprint-chip .blueprint-chip-dot,
+.blueprint-pill .blueprint-chip-dot {
+  display: inline-block;
+}
+.blueprint-step {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.blueprint-node-body {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 2px 12px 6px;
+  border-top: 1px solid #303030;
+}
+.blueprint-row {
+  position: relative;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.blueprint-row.is-failed {
+  color: #9a6a62;
+}
+.blueprint-row .react-flow__handle-left {
+  left: -13px;
+}
+.blueprint-row .react-flow__handle-right {
+  right: -13px;
+  left: auto;
+}
+.blueprint-pin.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: var(--type, #cfcfcf);
+}
+.blueprint-exec.react-flow__handle {
+  border-radius: 0;
+  clip-path: polygon(15% 0, 100% 50%, 15% 100%);
+}
+.blueprint-value.react-flow__handle {
+  border-radius: 50%;
+  width: 9px;
+  height: 9px;
+}
+.blueprint-pill {
+  position: relative;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px 0 9px;
+  border: 1px solid var(--type, #a8a8a8);
+  border-radius: 12px;
+  background: #262626;
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+}
+.blueprint-pill.is-selected {
+  box-shadow: 0 0 0 1px var(--focus);
+}
+.blueprint-pill .react-flow__handle-right {
+  right: -5px;
+}
+.blueprint-flow .react-flow__minimap {
+  background: #181818;
+  border: 1px solid #2b2b2b;
+  border-radius: 6px;
+}
+.blueprint-flow .react-flow__controls {
+  box-shadow: none;
+}
+.blueprint-flow .react-flow__controls-button {
+  background: #262626;
+  border-color: #333;
+  color: var(--text);
+  fill: var(--text);
+}
+
+/* Each type's colour (the owner's: the prototype's of 2026-11-13, Profession, Route and Text on 2026-11-14), as
+   `--type`: pins, dots, a pill's border and wires take it. */
+.blueprint-type-exec {
+  --type: #d6d6d6;
+}
+.blueprint-type-zone {
+  --type: #39c5bb;
+}
+.blueprint-type-route {
+  --type: #7fd6cf;
+}
+.blueprint-type-percentage,
+.blueprint-type-number {
+  --type: #8fb8ff;
+}
+.blueprint-type-bank {
+  --type: #d7ba7d;
+}
+.blueprint-type-items {
+  --type: #ce9178;
+}
+.blueprint-type-bool {
+  --type: #f48771;
+}
+.blueprint-type-job {
+  --type: #c586c0;
+}
+.blueprint-type-text {
+  --type: #cfcfcf;
+}
+.blueprint-flow .react-flow__edge[class*="blueprint-type-"] path {
+  stroke: var(--type);
+  stroke-width: 1.4;
+}
+.blueprint-flow .react-flow__edge.blueprint-type-exec path {
+  stroke-width: 1.8;
+}
