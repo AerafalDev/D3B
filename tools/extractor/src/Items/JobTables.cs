@@ -11,8 +11,9 @@ namespace D3B.Extractor.Items;
 internal static class JobTables
 {
     /// <summary>Reads the jobs and their skills from the client and writes them into the folder, with the skills gathering one of <paramref name="items"/> or none.</summary>
+    /// <returns>The jobs written, whose icons the folder holds.</returns>
     /// <exception cref="InvalidDataException">A job or a skill names text 0, an id is held twice, or a skill is of a job the client lacks or gathers a negative item other than -1.</exception>
-    public static void Extract(ClientInstall client, TextFiles texts, IReadOnlyList<Item> items, DataFolder folder, TextWriter output)
+    public static IReadOnlyList<Job> Extract(ClientInstall client, TextFiles texts, IReadOnlyList<Item> items, DataFolder folder, TextWriter output)
     {
         var jobs = ReadJobs(DataTable.ReadById(client, "jobs"), texts);
         var (skills, skipped) = Kept(ReadSkills(DataTable.ReadById(client, "skills"), texts), jobs, items);
@@ -21,6 +22,8 @@ internal static class JobTables
         folder.Write("skills.json", WriteSkills(skills));
 
         output.WriteLine($"Jobs: {jobs.Count:N0} jobs, {skills.Count:N0} skills; left out {skipped:N0} gathering an item items.json lacks");
+
+        return jobs;
     }
 
     /// <exception cref="InvalidDataException">A job names text 0.</exception>
