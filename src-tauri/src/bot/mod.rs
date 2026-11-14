@@ -13,10 +13,12 @@ mod problems;
 mod variable;
 mod wiring;
 
-pub(crate) use blueprint::{Blueprint, Id};
+pub(crate) use blueprint::{Blueprint, Does, Id, Node};
+pub(crate) use catalogue::{Carries, Family, Side, kind};
 pub(crate) use copy::{Texts, copy, id_for};
 pub(crate) use given::given;
 #[cfg(test)]
 pub(crate) use json::tests::HARVEST;
 pub(crate) use json::{ReadError, read, write};
+pub(crate) use pins::pins;
 pub(crate) use problems::problems;

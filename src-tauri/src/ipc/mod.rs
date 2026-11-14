@@ -4,6 +4,7 @@
 mod blueprints;
 mod character;
 mod commands;
+mod graph;
 mod inspector;
 mod map;
 mod played;
@@ -24,6 +25,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             commands::app_info,
             blueprints::blueprints,
             blueprints::duplicate_blueprint,
+            graph::blueprint_graphs,
             played::played_characters,
             played::forget_character,
             relay::relay_status,

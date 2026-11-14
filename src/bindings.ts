@@ -12,6 +12,8 @@ export const commands = {
 	blueprints: () => __TAURI_INVOKE<BlueprintList_Serialize>("blueprints"),
 	/**  Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id. */
 	duplicateBlueprint: (id: string, texts: CopyTexts) => __TAURI_INVOKE<string>("duplicate_blueprint", { id, texts }),
+	/**  The graphs of the blueprint `id`, or why not: no such blueprint. */
+	blueprintGraphs: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("blueprint_graphs", { id }),
 	/**  The characters played, the most recently seen first, and their files kept. */
 	playedCharacters: () => __TAURI_INVOKE<PlayedList_Serialize>("played_characters"),
 	/**  Forget: the file of the character `key` goes to the system's trash. */
@@ -97,6 +99,21 @@ export type AppInfo_Serialize = {
 export type BasedOnView = {
 	id: string,
 	version: number,
+};
+
+/**  A blueprint's graphs. */
+export type BlueprintGraphs = BlueprintGraphs_Serialize | BlueprintGraphs_Deserialize;
+
+/**  A blueprint's graphs. */
+export type BlueprintGraphs_Deserialize = {
+	id: string,
+	graphs: GraphView_Deserialize[],
+};
+
+/**  A blueprint's graphs. */
+export type BlueprintGraphs_Serialize = {
+	id: string,
+	graphs: GraphView_Serialize[],
 };
 
 /**  The Library's content. */
@@ -381,6 +398,29 @@ export type Gauge = {
 	max: number | null,
 };
 
+/**  An event graph, or a function when it has a signature. */
+export type GraphView = GraphView_Serialize | GraphView_Deserialize;
+
+/**  An event graph, or a function when it has a signature. */
+export type GraphView_Deserialize = {
+	id: string,
+	name: string,
+	/**  Whether it is a function rather than an event graph. */
+	function: boolean,
+	nodes: NodeView_Deserialize[],
+	wires: WireView[],
+};
+
+/**  An event graph, or a function when it has a signature. */
+export type GraphView_Serialize = {
+	id: string,
+	name: string,
+	/**  Whether it is a function rather than an event graph. */
+	function: boolean,
+	nodes: NodeView_Serialize[],
+	wires: WireView[],
+};
+
 /**  New frames of the connection watched; `skipped` more came than one batch carries. */
 export type InspectorFrames = InspectorFrames_Serialize | InspectorFrames_Deserialize;
 
@@ -454,6 +494,75 @@ export type MonsterSeen = {
 export type Names = {
 	fr: string,
 	en: string,
+};
+
+/**  What a node does. */
+export type NodeDoes = 
+/**  One of the catalogue's kinds, by id; its sentence is the interface's `node.kinds.<kind>`. */
+{ does: "kind"; kind: string } | { does: "get"; variable: string } | { does: "set"; variable: string } | { does: "call"; function: string };
+
+/**  A node of a graph. */
+export type NodeView = NodeView_Serialize | NodeView_Deserialize;
+
+/**  A node of a graph. */
+export type NodeView_Deserialize = {
+	id: string,
+	/**
+	 *  `event`, `action`, `flow`, `query`, `function`, `variable` (a get or a set) or `call`; `null` for a kind this
+	 *  version does not know, kept as it is.
+	 */
+	family?: string | null,
+	/**  The roadmap step from which the bot does it in the game; the editor marks it until then (the owner, 2026-11-14). */
+	fromStep?: number | null,
+	/**  Its pins, from the catalogue or from its variable or function; none when what it does is unknown. */
+	pins: PinView_Deserialize[],
+	/**  The values typed on its inputs, as JSON, by pin. */
+	inputs: { [key in string]: string },
+	/**  Where it sits, `[x, y]`; `None` when the file does not say, and the editor places it. */
+	position?: [number, number] | null,
+} & NodeDoes;
+
+/**  A node of a graph. */
+export type NodeView_Serialize = {
+	id: string,
+	/**
+	 *  `event`, `action`, `flow`, `query`, `function`, `variable` (a get or a set) or `call`; `null` for a kind this
+	 *  version does not know, kept as it is.
+	 */
+	family: string | null,
+	/**  The roadmap step from which the bot does it in the game; the editor marks it until then (the owner, 2026-11-14). */
+	fromStep: number | null,
+	/**  Its pins, from the catalogue or from its variable or function; none when what it does is unknown. */
+	pins: PinView_Serialize[],
+	/**  The values typed on its inputs, as JSON, by pin. */
+	inputs: { [key in string]: string },
+	/**  Where it sits, `[x, y]`; `None` when the file does not say, and the editor places it. */
+	position: [number, number] | null,
+} & NodeDoes;
+
+/**  A pin of a node. */
+export type PinView = PinView_Serialize | PinView_Deserialize;
+
+/**  A pin of a node. */
+export type PinView_Deserialize = {
+	id: string,
+	/**  `in` or `out`. */
+	side: string,
+	/**  `exec` for the flow, else the value's type: `zone`, `percentage`… */
+	carries: string,
+	/**  The value an input no wire feeds holds by default, as JSON. */
+	default?: string | null,
+};
+
+/**  A pin of a node. */
+export type PinView_Serialize = {
+	id: string,
+	/**  `in` or `out`. */
+	side: string,
+	/**  `exec` for the flow, else the value's type: `zone`, `percentage`… */
+	carries: string,
+	/**  The value an input no wire feeds holds by default, as JSON. */
+	default: string | null,
 };
 
 /**  Where the character stands, named when the data is of its connection's build. */
@@ -637,6 +746,12 @@ export type VariableView_Serialize = {
 	perCharacter: boolean,
 	memory: boolean,
 	help: string,
+};
+
+/**  A wire from a node's output to another's input: `[node, pin]` each. */
+export type WireView = {
+	from: [string, string],
+	to: [string, string],
 };
 
 /* Tauri Specta runtime */

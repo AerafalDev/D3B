@@ -233,7 +233,9 @@ _Updated 2026-11-14._
   Forget by right-click, the file to the system's trash through the `trash` crate; an offline character's tab says
   when and where it was last seen, without a map or gauges): its file `characters/<server>-<id>.json`, remembered as
   it is seen and when its connection closes, the IPC's list and Forget (done in code), then the view and the tab (done in code); (6) the Library (the owner's mock-up 9 of 2026-11-14; done in code); (7) the blueprint
-  editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
+  editor read-only: My Blueprint and the graph, in two PRs: a blueprint's graphs through the IPC, each node with its
+  family, its step, its pins and its place (done in code), then the editor (an "étape N" tag on what does not run
+  yet; the types' colours, Profession, Route and Text added: the owner, 2026-11-14); (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
   (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
