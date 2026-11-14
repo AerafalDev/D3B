@@ -116,7 +116,9 @@ internal static class ExtractCommand
 
         var items = ItemTables.Extract(client, texts, folder, output);
 
-        JobTables.Extract(client, texts, items, folder, output);
+        var jobs = JobTables.Extract(client, texts, items, folder, output);
+
+        IconTables.Extract(client, items, jobs, folder, output);
 
         var maps = MapTables.Extract(client, folder, output);
 

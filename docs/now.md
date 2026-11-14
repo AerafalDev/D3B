@@ -199,7 +199,8 @@ _Updated 2026-11-14._
   resources (the owner, 2026-11-14, from its study): format 3's `items.json`, `item-types.json`, `jobs.json` and
   `skills.json`, an item of a missing type and a skill gathering a missing item left out and counted (done in code:
   the installed 3.7.13.17 gives 21,621 items, 236 types, 23 jobs, 372 skills, one item and one skill left out), then the items'
-  and jobs' icons, still format 3; then the owner's extraction and publishing of `client-3.7.13.17-format3.tar.gz`:
+  and jobs' icons at 32 px, still format 3 (done in code: 11,768 items' and 21 jobs' icons, 19.5 MB, four items naming
+  an icon the client lacks counted, an archive of 105 MB in 38 s); then the owner's extraction and publishing of `client-3.7.13.17-format3.tar.gz`:
   until then `.github/game-data.json` names format 3, so `data:fetch` and a release find no data; (4) D3B's blueprints in the app, and
   Duplicate; (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint
   editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints

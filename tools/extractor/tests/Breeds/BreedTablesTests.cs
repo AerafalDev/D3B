@@ -119,7 +119,7 @@ public sealed class BreedTablesTests
     }
 
     // A mode 6 block whose two endpoints are the colour, to within its last bit, and whose indices are all 0: every texel is that colour.
-    private static byte[] Bc7Block(int red, int green, int blue, int alpha)
+    internal static byte[] Bc7Block(int red, int green, int blue, int alpha)
     {
         // Mode 6: bit 6 set; then R0 R1 G0 G1 B0 B1 A0 A1 at 7 bits each, two p-bits left at 0, then 63 bits of indices at 0.
         var bits = new System.Numerics.BigInteger(1 << 6);
