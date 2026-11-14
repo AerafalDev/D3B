@@ -85,7 +85,9 @@ export function CharactersView() {
         );
       })}
       {connections.length > 0 && offline.length > 0 && (
-        <li role="separator" aria-hidden="true" className="bg-line mx-2.5 my-1.5 h-px" />
+        <li aria-hidden="true">
+          <hr className="border-line mx-2.5 my-1.5" />
+        </li>
       )}
       {offline.map((character) => (
         <li key={character.key}>
