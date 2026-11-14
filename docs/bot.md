@@ -85,7 +85,9 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   on the ground, Space or a right-click opens the picker: sentences with their description, what often comes there
   first; an action the bot does not do yet is marked with the step that brings it (the owner, 2026-11-13). "If" is a node with True and False; a function opens in place, its inputs and outputs as nodes. An event's
   Details hold its priority, its re-arming and its four modes, each drawn as a small timeline. **Summary** reads the
-  blueprint as sentences. From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.
+  blueprint as sentences. The IPC's `blueprint_graphs` gives the editor each graph's nodes (what each does, its family,
+  the step from which it runs, its pins, the values typed and its place) and wires, typed; a blueprint's variables come
+  with the Library's list; each node's problems come with its Details (PR 8). From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.
 - **World** view: my zones, my routes, then the game's sub-areas, searchable. The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
