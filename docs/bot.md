@@ -83,9 +83,15 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   its problems, and for an event its priority and its four modes drawn as timelines, the one it has marked; a variable
   chosen in My Blueprint its type, default, bounds, whether each character sets it and its help, how long it lasts and
   the nodes that use it; nothing chosen, the blueprint's problems, each in the player's words. A node with a problem is
-  marked in the graph.
-- The **blueprint editor** is Unreal's Blueprint Editor in a tab. Its toolbar holds Graph or Summary, the graph's path,
-  the problems, the character to debug, and Duplicate on a given blueprint, which opens locked. **My Blueprint** on the
+  marked in the graph. "Graph | Summary", the tab's editor action in the tab strip (the owner, 2026-11-14), shows the
+  **Summary** in the graph's place: a section per event, "On start" first and the others by priority, with their mode;
+  its steps numbered as the flow runs them, an action's Failed and an If's True and False numbered under their step
+  ("2.1"), a node met again said "Back to 2" (or "Go on to 4" forward), a step's "étape N" tag; the events the game
+  forces, when the blueprint leaves them, with their default (a fight by the default AI from step 6, then resume; a
+  death stops the run; an unlinked Failed blocks with the reason); then each function from its entry. A step chosen
+  shows its node in Details.
+- The **blueprint editor** is Unreal's Blueprint Editor in a tab. Graph or Summary are its editor actions; its toolbar holds
+  the graph's path, the problems, the character to debug, and Duplicate on a given blueprint, which opens locked. **My Blueprint** on the
   left lists the graphs, functions and variables, an eye on those set per character; the graph is in the centre,
   **Details** on the right. Nodes are sober sentence boxes: an icon coloured by family, the values in the sentence,
   typed pins (a triangle carries the flow, a circle a value, coloured by type), a visible Failed output. A wire dropped

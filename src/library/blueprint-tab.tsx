@@ -6,8 +6,10 @@ import type { ProblemView } from "@/bindings.ts";
 import { BlueprintDetails, type Selection } from "@/blueprint/details/blueprint-details.tsx";
 import { useGraphs } from "@/blueprint/graph-store.ts";
 import { MyBlueprint } from "@/blueprint/my-blueprint.tsx";
+import { Summary } from "@/blueprint/summary/summary.tsx";
 import { Icon } from "@/icons/icon.tsx";
 import type { EditorParams } from "@/shell/parts/editor-store.ts";
+import { useBlueprintView } from "./blueprint-view.ts";
 import { givenText } from "./given-text.ts";
 import { useLibrary } from "./library-store.ts";
 import { blueprintName, openBlueprint } from "./open-blueprint.ts";
@@ -26,7 +28,8 @@ interface BlueprintParams extends EditorParams {
 /**
  * A blueprint's tab, its editor read-only (`docs/bot.md`, "In the app"): on top its name, whose it is, its problems,
  * its description and Duplicate; under them Unreal's "My Blueprint" on the left, the graph it shows, loaded on demand,
- * and Details on the right (the owner, 2026-11-14). The Summary comes with step 3's PR 8c, editing with PR 13.
+ * or its Summary, as the tab strip's toggle says, and Details on the right (the owner, 2026-11-14). Editing comes with
+ * step 3's PR 13.
  */
 export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParams>) {
   const { t } = useTranslation();
@@ -39,6 +42,7 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const load = useGraphs((store) => store.load);
   const [shown, setShown] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
+  const view = useBlueprintView((store) => store.view[api.id] ?? "graph");
 
   useEffect(() => {
     void load(params.id);
@@ -138,7 +142,21 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               chosen={selection?.kind === "variable" ? selection.id : null}
               onChoose={(variable) => setSelection({ kind: "variable", id: variable })}
             />
-            {shownGraph === undefined ? (
+            {view === "summary" ? (
+              <Summary
+                graphs={graphs}
+                names={names}
+                chosen={
+                  selection?.kind === "node" && shownGraph !== undefined
+                    ? { graph: shownGraph.id, node: selection.id }
+                    : null
+                }
+                onChoose={(graph, node) => {
+                  setShown(graph);
+                  setSelection({ kind: "node", id: node });
+                }}
+              />
+            ) : shownGraph === undefined ? (
               <div />
             ) : (
               <Suspense fallback={<p className="text-text-muted p-6 text-xs">{t("blueprint.loading")}</p>}>

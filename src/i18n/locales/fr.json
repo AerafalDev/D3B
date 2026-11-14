@@ -522,6 +522,29 @@
       "items": "Objets",
       "job": "Métier"
     },
-    "faulty": "A un problème."
+    "faulty": "A un problème.",
+    "summary": {
+      "priority": "priorité {{priority}}",
+      "byDefault": "par défaut",
+      "default": {
+        "fight_starts": "Combattre avec l'IA par défaut, puis reprendre.",
+        "died": "Le lancement s'arrête, le personnage bloqué.",
+        "action_failed": "Le personnage est bloqué, avec la raison."
+      },
+      "function": "Fonction {{name}}",
+      "nothing": "Ne fait rien.",
+      "branch": {
+        "failed": "Si ça échoue :",
+        "true": "Si oui :",
+        "false": "Sinon :"
+      },
+      "back": "Revenir à {{step}}.",
+      "on": "Aller à {{step}}."
+    },
+    "view": {
+      "label": "Vue du blueprint",
+      "graph": "Graphe",
+      "summary": "Résumé"
+    }
   }
 }
