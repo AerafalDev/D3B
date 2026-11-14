@@ -6,6 +6,7 @@ import type { GameConnectionStatus, RelayStatus } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { type CharacterView, useCharacters } from "./character-store.ts";
+import { type PlayedCharacter, usePlayed } from "./played-store.ts";
 
 // The editor area, faked: the editors opened, and the id of the one whose tab is active.
 const opened = vi.hoisted(() => ({ editors: [] as unknown[], active: null as string | null }));
@@ -50,6 +51,7 @@ function relay(connections: GameConnectionStatus[]) {
 
 // Only what a row shows is set: the rest of the view plays no part in the list.
 const lyra = {
+  key: "294-1",
   name: "Lyra",
   level: 87,
   fighting: false,
@@ -66,6 +68,7 @@ describe("the characters view", () => {
     opened.active = null;
     useCharacters.setState({ views: {}, selected: null });
     useRelay.setState({ status: null });
+    usePlayed.setState({ played: [] });
   });
   afterEach(cleanup);
 
@@ -122,5 +125,39 @@ describe("the characters view", () => {
     expect(characterOf("character:x")).toBeNull();
     expect(characterOf("map:12")).toBeNull();
     expect(characterOf(null)).toBeNull();
+  });
+
+  function played(key: string, name: string, hoursAgo: number): PlayedCharacter {
+    const lastSeen = Date.now() - hoursAgo * 3_600_000;
+    return { key, name, level: 54, breedName: null, head: null, sex: null, lastSeen, place: null };
+  }
+
+  it("lists the characters played whose client is closed under the connected ones, greyed", () => {
+    relay([connection(1)]);
+    useCharacters.setState({ views: { 1: lyra } });
+    usePlayed.setState({
+      played: [played("294-1", "Lyra", 0), played("294-2", "Kalyx", 2), played("294-3", "Orrin", 48)],
+    });
+    render(<CharactersView />);
+    const rows = screen.getAllByRole("button").map((row) => row.textContent?.replace(/[  ]/g, " "));
+    // Lyra plays: she is listed once, connected.
+    expect(rows).toEqual([
+      "LyLyra lvl 874, -18 · Forest",
+      "KaKalyx lvl 54Seen 2 hr. ago",
+      "OrOrrin lvl 54Seen 2 days ago",
+    ]);
+    expect(screen.getAllByRole("separator", { hidden: true })).toHaveLength(1);
+  });
+
+  it("lists the characters played without a client open, and opens one in its own tab", () => {
+    usePlayed.setState({ played: [played("294-2", "Kalyx", 0)] });
+    render(<CharactersView />);
+    expect(screen.queryByText(/Start Dofus/)).toBeNull();
+    expect(screen.queryByRole("separator", { hidden: true })).toBeNull();
+    fireEvent.click(screen.getByRole("button"));
+    expect(opened.editors).toEqual([
+      { id: "played:294-2", component: "played", title: "Kalyx", params: { icon: "user", key: "294-2" } },
+    ]);
+    expect(screen.getByRole("button").textContent).toContain("Seen just now");
   });
 });

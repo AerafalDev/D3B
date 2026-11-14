@@ -79,7 +79,12 @@
       "fighting": "En combat",
       "off": "Protocole non lu",
       "lost": "Protocole perdu"
-    }
+    },
+    "offline": "Hors ligne",
+    "seen": "Vu {{when}}",
+    "seenNow": "Vu à l'instant",
+    "open": "Ouvrir",
+    "forget": "Oublier {{name}}"
   },
   "character": {
     "state": "État",
@@ -118,7 +123,10 @@
       "resource": "Ressources",
       "harvested": "Récoltées",
       "other": "Autres"
-    }
+    },
+    "forgotten": "Ce personnage a été oublié.",
+    "lastSeen": "Vu pour la dernière fois le {{when}}.",
+    "lastSeenAt": "Vu pour la dernière fois le {{when}}, à {{where}} ({{x}}, {{y}})."
   },
   "inspector": {
     "title": "Protocol",

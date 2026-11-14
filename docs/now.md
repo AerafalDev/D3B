@@ -209,7 +209,7 @@ _Updated 2026-11-14._
   2026-11-14 from mock-up 8: the offline ones under the connected ones, the most recently seen first, "Seen 2 h ago";
   Forget by right-click, the file to the system's trash through the `trash` crate; an offline character's tab says
   when and where it was last seen, without a map or gauges): its file `characters/<server>-<id>.json`, remembered as
-  it is seen and when its connection closes, the IPC's list and Forget (done in code), then the view and the tab; (6) the Library; (7) the blueprint
+  it is seen and when its connection closes, the IPC's list and Forget (done in code), then the view and the tab (done in code); (6) the Library; (7) the blueprint
   editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
