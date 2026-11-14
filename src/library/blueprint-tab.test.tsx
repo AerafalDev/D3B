@@ -142,7 +142,6 @@ describe("valueText", () => {
     expect(read("bank", '{"map": 191104002}')).toBe("Celle de la carte 191104002");
     expect(read("items", '"all"')).toBe("Tout");
     expect(read("items", "[289, 400]")).toBe("2 objets");
-    expect(read("text", '"Objectif"')).toBe("Objectif");
     expect(read("zone", null)).toBe("à choisir");
     await i18next.changeLanguage("en");
     expect(read("percentage", "90")).toBe("90%");

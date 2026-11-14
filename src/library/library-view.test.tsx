@@ -73,16 +73,14 @@ describe("the Library view", () => {
     ]);
   });
 
-  it("folds the files kept, each saying why in its hover", () => {
+  it("folds the files kept, each saying why in its hover, and shows none when every file reads", () => {
     render(<LibraryView />);
     const header = screen.getByRole("button", { name: /Ignorés/ });
     expect(header.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(header);
     const file = screen.getByText("vieille.json");
     expect(file.closest("[title]")?.getAttribute("title")).toBe("Écrit par un D3B plus récent (schéma 2).");
-  });
-
-  it("shows no Ignored group when every file reads", () => {
+    cleanup();
     useLibrary.setState({ kept: [] });
     render(<LibraryView />);
     expect(screen.queryByRole("button", { name: /Ignorés/ })).toBeNull();
