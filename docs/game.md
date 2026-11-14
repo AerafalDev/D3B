@@ -95,8 +95,14 @@ Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-
   to its close, its avatar (its breed's head for its sex, 28 px in a rounded square, else its initials), name, level,
   place or state, and a dot:
   green exploring, amber fighting, grey waiting or unread, red lost. Before a selection a row shows its connection's
-  number. A row is marked while its character's tab is active. Empty, the view says to start Dofus from Ankama's
-  launcher.
+  number. A row is marked while its character's tab is active. Under a line, the characters played whose client is
+  closed (`docs/bot.md`, "Storage"), greyed, the most recently seen first, saying how long ago ("Seen 2 hr. ago",
+  read again each minute); a right-click offers Open and Forget, Forget also in the command palette, a failure said
+  in a notification (the owner's choices of 2026-11-14 from mock-up 8). Empty of both, the view says to start Dofus
+  from Ankama's launcher.
+- **An offline character's tab** (mock-up 8, variant D): its header, "Offline", and when and where it was last seen
+  ("today at 11:40, in Astrub (5, -18)"), without a map or gauges; once the character plays again it becomes its live
+  tab.
 - **A character's tab**, layout "A": opened from its row, named after the character once known. On the left its
   state: who (its breed's head for its sex, 40 px in a rounded square, else its initials; its level, its breed's name
   in the interface's language, exploring or fighting; the owner's choice from mock-ups, 2026-11-13), where (area, sub-area, coordinates, cell), life (marked while it

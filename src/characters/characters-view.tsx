@@ -5,6 +5,9 @@ import { useRelay } from "@/relay/relay-store.ts";
 import { openEditor, useEditors } from "@/shell/parts/editor-store.ts";
 import { CharacterRow } from "./character-row.tsx";
 import { useCharacters } from "./character-store.ts";
+import { PlayedRow } from "./played/played-row.tsx";
+import { useOffline, usePlayed } from "./played/played-store.ts";
+import { useNow } from "./played/played-time.ts";
 
 // The same empty list each time, so the selector gives a stable snapshot before the relay speaks.
 const NONE: readonly GameConnectionStatus[] = [];
@@ -25,6 +28,13 @@ export function characterOf(editor: string | null): number | null {
   return Number.isInteger(connection) ? connection : null;
 }
 
+const PLAYED = "played:";
+
+/** Opens a character played whose client is closed in its tab, or brings that tab forward. */
+export function openPlayed(key: string, title: string): void {
+  openEditor({ id: `${PLAYED}${key}`, component: "played", title, params: { icon: "user", key } });
+}
+
 /** Chooses a connection's character and opens it in its editor tab, or brings that tab forward. */
 export function openCharacter(connection: number, title: string): void {
   useCharacters.getState().select(connection);
@@ -33,16 +43,20 @@ export function openCharacter(connection: number, title: string): void {
 
 /**
  * The Characters view of the primary side bar: one row per game connection, from its open to its close
- * (`docs/game.md`, "In the app"); a row opens its character in its tab, and is marked while that tab is active.
- * Empty, it says how to start.
+ * (`docs/game.md`, "In the app"), then, under a line, the characters played whose client is closed, greyed, the
+ * most recently seen first (the owner's mock-up 8, variant A). A row opens its character in its tab, and is marked
+ * while that tab is active. Empty, it says how to start.
  */
 export function CharactersView() {
   const { t } = useTranslation();
   const connections = useRelay((store) => store.status?.connections ?? NONE);
   const views = useCharacters((store) => store.views);
   const active = useEditors((store) => store.active);
+  const forget = usePlayed((store) => store.forget);
+  const offline = useOffline();
+  const now = useNow();
 
-  if (connections.length === 0) {
+  if (connections.length === 0 && offline.length === 0) {
     return (
       <p className="text-text-muted flex flex-1 items-center justify-center px-6 pb-[35px] text-center text-xs">
         {t("characters.empty")}
@@ -58,7 +72,10 @@ export function CharactersView() {
             <CharacterRow
               connection={connection}
               view={view}
-              selected={active === editorId(connection.number)}
+              // Its tab, or its offline tab become its live one.
+              selected={
+                active === editorId(connection.number) || (view?.key != null && active === `${PLAYED}${view.key}`)
+              }
               onOpen={() =>
                 openCharacter(
                   connection.number,
@@ -69,6 +86,22 @@ export function CharactersView() {
           </li>
         );
       })}
+      {connections.length > 0 && offline.length > 0 && (
+        <li aria-hidden="true">
+          <hr className="border-line mx-2.5 my-1.5" />
+        </li>
+      )}
+      {offline.map((character) => (
+        <li key={character.key}>
+          <PlayedRow
+            character={character}
+            selected={active === `${PLAYED}${character.key}`}
+            now={now}
+            onOpen={() => openPlayed(character.key, character.name)}
+            onForget={() => void forget(character)}
+          />
+        </li>
+      ))}
     </ul>
   );
 }

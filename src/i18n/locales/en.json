@@ -79,6 +79,16 @@
       "fighting": "In a fight",
       "off": "Protocol not read",
       "lost": "Protocol lost"
+    },
+    "offline": "Offline",
+    "seen": "Seen {{when}}",
+    "seenNow": "Seen just now",
+    "open": "Open",
+    "forget": "Forget {{name}}",
+    "forgetFailed": {
+      "gone": "{{name}} was not forgotten: its file is gone.",
+      "noFolder": "{{name}} was not forgotten: the system names no folder for your files.",
+      "refused": "{{name}} was not forgotten: {{reason}}"
     }
   },
   "character": {
@@ -118,7 +128,14 @@
       "resource": "Resources",
       "harvested": "Harvested",
       "other": "Others"
-    }
+    },
+    "forgotten": "This character was forgotten.",
+    "lastSeen": "Last seen {{when}}.",
+    "lastSeenAt": "Last seen {{when}}, in {{where}} ({{x}}, {{y}}).",
+    "today": "today at {{time}}",
+    "yesterday": "yesterday at {{time}}",
+    "onDate": "on {{date}} at {{time}}",
+    "lastSeenIn": "Last seen {{when}}, in {{where}}."
   },
   "inspector": {
     "title": "Protocol",

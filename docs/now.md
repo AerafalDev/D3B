@@ -125,6 +125,19 @@ _Updated 2026-11-14._
   - **the live view's life** (the owner's report of 2026-11-13, fixed): after a fight, stand still out of combat: the
     character's tab says "Vie — en régénération" while the bar fills, and no longer once it is full, before any sit
     or fight. Measured by the owner on 2026-11-13, v0.14.0 installed: passes.
+- **step 3, the characters played** (PRs #226 and its view), on Windows x64 from `bun run app` on `next` or the next
+  release; on macOS and Linux, Forget's trash by testers:
+    1. play a character, close its client: its row stays under a line, greyed, "Vu à l'instant", then "Vu il y a 1 min"
+       a minute later; its file is in `Documents/D3B/characters/<server>-<id>.json`;
+    2. restart D3B: the row is still there; click it: its tab says "Hors ligne" and "Vu pour la dernière fois aujourd'hui
+       à <heure>, à <sous-zone> (x, y)", without a map or gauges;
+    3. with that tab open, start the character's client again: its row goes back above the line, and the tab becomes
+       its live tab (map, gauges);
+    4. play a character, change map, wait two minutes, quit D3B while playing: its tab, once D3B is back, says the
+       time and place of within a minute before quitting;
+    5. right-click an offline row, Forget: the row goes, the file is in the system's Recycle Bin and can be restored;
+       Ctrl+Shift+P, "Oublier <nom>" does the same;
+    6. make a character's file unreadable by hand (a stray letter): the row is gone and D3B's log names the file kept.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -209,7 +222,7 @@ _Updated 2026-11-14._
   2026-11-14 from mock-up 8: the offline ones under the connected ones, the most recently seen first, "Seen 2 h ago";
   Forget by right-click, the file to the system's trash through the `trash` crate; an offline character's tab says
   when and where it was last seen, without a map or gauges): its file `characters/<server>-<id>.json`, remembered as
-  it is seen and when its connection closes, the IPC's list and Forget (done in code), then the view and the tab; (6) the Library; (7) the blueprint
+  it is seen and when its connection closes, the IPC's list and Forget (done in code), then the view and the tab (done in code); (6) the Library; (7) the blueprint
   editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
