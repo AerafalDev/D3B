@@ -24,14 +24,14 @@ flowchart LR
 The six scenarios the owner chose (first launch; two characters, two zones; a goal; my own behaviour; understanding
 what it does; a D3B update) need these and nothing else: no profile, activity, place or goal field.
 
-- **Blueprint**: an event graph, functions and variables. D3B's own (automatic harvest, one per harvesting
-  profession, hunting) ship with the app, **locked**; **Duplicate** makes one of mine, fully editable, noting "based on
+- **Blueprint**: an event graph, functions and variables. D3B's own ship with the app, **locked**: automatic harvest,
+  profession harvest (one blueprint, its profession set per character: the owner, 2026-11-14) and hunt; **Duplicate** makes one of mine, fully editable, noting "based on
   X vN". A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
   and says its original has a newer version.
 - **Character**: runs one blueprint, chosen in its tab. Its **settings** are the blueprint's variables marked "set per
   character" (Unreal's Instance Editable): the blueprint holds the default, the character its own value, marked when
   it differs and reset in one click. Two characters, two zones, one blueprint.
-- **Variable**: a type (zone, route, percentage, number, items, bank, yes or no…), a default, bounds, a help line, set
+- **Variable**: a type (zone, route, percentage, number, items, bank, profession, yes or no…), a default, bounds, a help line, set
   per character or not, and a duration: one run, or **memory**, kept per character across sessions. A goal is a
   variable tested in the graph ("stop at 5,000 harvests").
 - **Zone**: maps the bot goes through its own way. The game's **sub-areas are ready-made zones** (`sub-areas.json`
@@ -112,12 +112,12 @@ schema, not JSON, or not of its shape (a field missing, unknown or given twice, 
 twice, a wire to no node, a default its type or bounds refuse, a node on a variable or function the blueprint lacks)
 opens with its **problems** and cannot run; a node kind this version does not know is one of them.
 
-The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 24 kinds by family: the events on start,
+The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 25 kinds by family: the events on start,
 life below, pods above, a fight starts (forced: the default fight, then resume), died and an action fails (forced:
 blocked with the reason); the actions go to a zone (step 4), harvest until, go to the bank and deposit
 all but (step 5), hunt until (step 6), and notify; If, Wait, Wait for life (sitting no longer gives life back
-faster: the owner, 2026-11-14) and Finish; the queries life %, pods %, level, at least
-and add; a function's entry, done return and failed return. Flow pins are `run` in, `then` out, an action's `done`
+faster: the owner, 2026-11-14) and Finish; the queries life %, pods %, level, at least,
+add and the resources of a profession; a function's entry, done return and failed return. Flow pins are `run` in, `then` out, an action's `done`
 and `failed` with its `reason`; a get has `value`, a set and a call their variable's or function's. Rust holds ids
 only: sentences, descriptions and icons are the interface's. A wire carries one type, but a percentage feeds a number.
 The catalogue adds its problems: a kind unknown or out of place (an event in a function), a priority on a node that

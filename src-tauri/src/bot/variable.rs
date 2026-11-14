@@ -59,6 +59,8 @@ pub(crate) enum ValueType {
     Bank,
     /// Every item, `"all"`, none, `"none"`, or these, by the game's item ids: `[289, 400]`.
     Items,
+    /// A profession, by the game's job id: `28`.
+    Job,
 }
 
 impl ValueType {
@@ -80,6 +82,7 @@ impl ValueType {
             (Self::Bank, Value::Object(object)) => object.len() == 1 && object.get("map").is_some_and(Value::is_u64),
             (Self::Items, Value::String(word)) => word == "all" || word == "none",
             (Self::Items, Value::Array(ids)) => ids.iter().all(Value::is_u64),
+            (Self::Job, Value::Number(id)) => id.is_u64(),
             _ => false,
         }
     }
@@ -112,6 +115,7 @@ mod tests {
             (ValueType::Items, json!("all")),
             (ValueType::Items, json!("none")),
             (ValueType::Items, json!([289, 400])),
+            (ValueType::Job, json!(28)),
         ];
         for (value_type, value) in holding {
             assert!(value_type.holds(&value), "{value_type:?} {value}");
@@ -140,6 +144,8 @@ mod tests {
             (ValueType::Bank, json!({"map": "bonta"})),
             (ValueType::Items, json!("some")),
             (ValueType::Items, json!([289, "wheat"])),
+            (ValueType::Job, json!(-1)),
+            (ValueType::Job, json!("farmer")),
         ];
         for (value_type, value) in refused {
             assert!(!value_type.holds(&value), "{value_type:?} {value}");

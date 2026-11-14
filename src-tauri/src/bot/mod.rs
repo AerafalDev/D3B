@@ -5,6 +5,7 @@
 
 mod blueprint;
 mod catalogue;
+mod given;
 mod json;
 mod pins;
 mod problems;
