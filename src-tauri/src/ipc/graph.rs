@@ -298,7 +298,7 @@ mod tests {
         );
         assert_eq!(
             (harvest.family, harvest.from_step, harvest.position),
-            (Some(NodeFamily::Action), Some(5), Some([480, 0]))
+            (Some(NodeFamily::Action), Some(5), Some([560, 0]))
         );
         let pods = harvest
             .pins

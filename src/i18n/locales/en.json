@@ -433,5 +433,15 @@
       "items_other": "{{count}} items",
       "zone": "A chosen zone"
     }
+  },
+  "blueprint": {
+    "set": "Set {{name}}",
+    "unknownKind": "A node this version does not know: {{kind}}",
+    "fromStep": "step {{step}}",
+    "controls": "Graph controls",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fitView": "Fit view",
+    "minimap": "Overview"
   }
 }

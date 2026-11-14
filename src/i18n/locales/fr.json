@@ -433,5 +433,15 @@
       "items_other": "{{count}} objets",
       "zone": "Une zone choisie"
     }
+  },
+  "blueprint": {
+    "set": "Écrire {{name}}",
+    "unknownKind": "Nœud inconnu de cette version : {{kind}}",
+    "fromStep": "étape {{step}}",
+    "controls": "Commandes du graphe",
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "fitView": "Tout afficher",
+    "minimap": "Vue d'ensemble"
   }
 }
