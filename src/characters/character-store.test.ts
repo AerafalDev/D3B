@@ -23,6 +23,7 @@ const { useCharacters } = await import("./character-store.ts");
 type View = NonNullable<CharacterChanged_Serialize["view"]>;
 
 const view: View = {
+  key: "294-1",
   name: "Lyra",
   level: 87,
   breed: 10,

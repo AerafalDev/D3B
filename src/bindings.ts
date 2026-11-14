@@ -12,6 +12,10 @@ export const commands = {
 	blueprints: () => __TAURI_INVOKE<BlueprintList_Serialize>("blueprints"),
 	/**  Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id. */
 	duplicateBlueprint: (id: string, texts: CopyTexts) => __TAURI_INVOKE<string>("duplicate_blueprint", { id, texts }),
+	/**  The characters played, the most recently seen first, and their files kept. */
+	playedCharacters: () => __TAURI_INVOKE<PlayedList_Serialize>("played_characters"),
+	/**  Forget: the file of the character `key` goes to the system's trash. */
+	forgetCharacter: (key: string) => __TAURI_INVOKE<null>("forget_character", { key }),
 	/**  The relay's status now. */
 	relayStatus: () => __TAURI_INVOKE<RelayStatus_Serialize>("relay_status"),
 	/**
@@ -37,6 +41,7 @@ export const commands = {
 export const events = {
 	characterChanged: makeEvent<CharacterChanged_Serialize, CharacterChanged_Deserialize>("character-changed"),
 	inspectorFrames: makeEvent<InspectorFrames_Serialize, InspectorFrames_Deserialize>("inspector-frames"),
+	playedChanged: makeEvent<PlayedChanged, PlayedChanged>("played-changed"),
 	relayChanged: makeEvent<RelayChanged_Serialize, RelayChanged_Deserialize>("relay-changed"),
 };
 
@@ -165,6 +170,8 @@ export type CharacterView = CharacterView_Serialize | CharacterView_Deserialize;
 
 /**  A character's view (`game::View`), its numbers as JavaScript reads them. */
 export type CharacterView_Deserialize = {
+	/**  Its file's name among the characters played, `<server>-<id>`, once it is known. */
+	key?: string | null,
 	name?: string | null,
 	level?: number | null,
 	breed?: number | null,
@@ -198,6 +205,8 @@ export type CharacterView_Deserialize = {
 
 /**  A character's view (`game::View`), its numbers as JavaScript reads them. */
 export type CharacterView_Serialize = {
+	/**  Its file's name among the characters played, `<server>-<id>`, once it is known. */
+	key: string | null,
 	name: string | null,
 	level: number | null,
 	breed: number | null,
@@ -262,6 +271,11 @@ export type ElementAt = {
 	id: number,
 	cell: number,
 };
+
+/**  Why a character was not forgotten. */
+export type ForgetError = { kind: "noSuchCharacter" } | { kind: "noFolder" } | 
+/**  The system could not move its file to the trash: its own words. */
+{ kind: "notForgotten"; reason: string };
 
 /**  What `inspector_frame` answers: a frame's lines (none for a secret), or why it has none. */
 export type FrameAnswer = { kind: "detail"; lines: DetailLine[] } | 
@@ -405,7 +419,9 @@ export type KeptWhy =
 /**  It holds another id than its name says. */
 { kind: "nameIsNotId"; id: string } | 
 /**  It holds the id of one of D3B's blueprints. */
-{ kind: "givenId"; id: string };
+{ kind: "givenId"; id: string } | 
+/**  Not of a character's shape: what serde says. */
+{ kind: "notACharacter"; detail: string };
 
 /**  A map's coordinates in the world, as the game shows them. */
 export type MapAt = {
@@ -453,6 +469,63 @@ export type Place_Serialize = {
 	at: MapAt | null,
 	subArea: Names | null,
 	area: Names | null,
+};
+
+/**  The characters played changed: one was remembered or forgotten. */
+export type PlayedChanged = null;
+
+/**  A character played, as the Characters view lists it. */
+export type PlayedCharacter = PlayedCharacter_Serialize | PlayedCharacter_Deserialize;
+
+/**  A character played, as the Characters view lists it. */
+export type PlayedCharacter_Deserialize = {
+	/**  Its file's name: `<server>-<id>`, also its connection's view's `key`. */
+	key: string,
+	name: string,
+	level: number,
+	breedName?: Names | null,
+	head?: string | null,
+	sex?: CharacterSex | null,
+	/**  When it was last seen in game, in milliseconds since 1970. */
+	lastSeen: number | null,
+	place?: Place_Deserialize | null,
+};
+
+/**  A character played, as the Characters view lists it. */
+export type PlayedCharacter_Serialize = {
+	/**  Its file's name: `<server>-<id>`, also its connection's view's `key`. */
+	key: string,
+	name: string,
+	level: number,
+	breedName: Names | null,
+	head: string | null,
+	sex: CharacterSex | null,
+	/**  When it was last seen in game, in milliseconds since 1970. */
+	lastSeen: number | null,
+	place: Place_Serialize | null,
+};
+
+/**  The characters played and the files kept as they are. */
+export type PlayedList = PlayedList_Serialize | PlayedList_Deserialize;
+
+/**  The characters played and the files kept as they are. */
+export type PlayedList_Deserialize = {
+	characters: PlayedCharacter_Deserialize[],
+	/**
+	 *  The characters' files that do not read, kept untouched (ADR 0015); the view reports them with the Library's
+	 *  own, decided with the owner.
+	 */
+	kept: KeptFile[],
+};
+
+/**  The characters played and the files kept as they are. */
+export type PlayedList_Serialize = {
+	characters: PlayedCharacter_Serialize[],
+	/**
+	 *  The characters' files that do not read, kept untouched (ADR 0015); the view reports them with the Library's
+	 *  own, decided with the owner.
+	 */
+	kept: KeptFile[],
 };
 
 /**  The relay's status changed. */

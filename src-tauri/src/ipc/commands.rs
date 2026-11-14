@@ -26,6 +26,16 @@ pub struct LoadedData(
 );
 
 impl LoadedData {
+    /// What the data names (the world, the breeds and their heads' folder), when there is data.
+    pub(crate) fn named(&self) -> Option<super::character::Named<'_>> {
+        let data = self.0.as_ref().ok()?;
+        Some(super::character::Named {
+            world: &data.world,
+            breeds: &data.breeds,
+            folder: self.1.as_deref(),
+        })
+    }
+
     /// Reads the data folder Tauri bundles as a resource.
     pub fn load(app: &tauri::AppHandle) -> Self {
         let folder = app.path().resource_dir().map(|resources| resources.join("data"));

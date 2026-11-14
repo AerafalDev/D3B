@@ -44,6 +44,7 @@ pub fn run() {
             use tauri::Manager;
             app.manage(ipc::LoadedData::load(app.handle()));
             app.manage(ipc::open_store(app.handle()));
+            app.manage(ipc::start_played_writer(app.handle()));
             ipc.mount_events(app);
             ipc::start_relay(app);
             Ok(())

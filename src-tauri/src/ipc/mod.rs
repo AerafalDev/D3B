@@ -6,10 +6,12 @@ mod character;
 mod commands;
 mod inspector;
 mod map;
+mod played;
 mod relay;
 
 pub use blueprints::open_store;
 pub use commands::LoadedData;
+pub use played::start_writer as start_played_writer;
 pub use relay::{start as start_relay, stop as stop_relay};
 
 use tauri_specta::{Builder, collect_commands, collect_events};
@@ -22,6 +24,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             commands::app_info,
             blueprints::blueprints,
             blueprints::duplicate_blueprint,
+            played::played_characters,
+            played::forget_character,
             relay::relay_status,
             relay::relay_restore,
             map::map_cells,
@@ -31,7 +35,8 @@ pub fn builder() -> Builder<tauri::Wry> {
         .events(collect_events![
             relay::RelayChanged,
             character::CharacterChanged,
-            inspector::InspectorFrames
+            inspector::InspectorFrames,
+            played::PlayedChanged
         ])
 }
 

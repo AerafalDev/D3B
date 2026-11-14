@@ -41,6 +41,7 @@ function renderTab() {
 }
 
 const lyra: CharacterView = {
+  key: "294-1",
   name: "Lyra",
   level: 87,
   breed: 9,

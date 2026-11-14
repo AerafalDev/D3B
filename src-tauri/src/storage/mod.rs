@@ -3,8 +3,10 @@
 //! The blueprints come first; zones, routes, characters and history join them as their PRs come.
 
 mod atomic;
+mod character;
 mod store;
 
+pub(crate) use character::{Played, SCHEMA as CHARACTER_SCHEMA, key_of};
 pub(crate) use store::{StorageError, Store, Why};
 
 #[cfg(test)]

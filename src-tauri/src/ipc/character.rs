@@ -29,23 +29,29 @@ pub(crate) fn follow(
         let handle = handle.clone();
         let build = build.map(str::to_owned);
         let its_build = build.clone();
+        let mut remembering = super::played::Remembering::default();
         let live = Box::new(Live::new(move |view: Option<View>| {
+            for character in remembering.seen(view.as_ref(), now()) {
+                super::played::remember(&handle, character);
+            }
             let loaded = handle.try_state::<LoadedData>();
-            let data = loaded.as_deref().and_then(|loaded| {
-                let data = loaded.0.as_ref().ok()?;
-                let named = Named {
-                    world: &data.world,
-                    breeds: &data.breeds,
-                    folder: loaded.1.as_deref(),
-                };
-                Some((data.manifest.build.as_str(), named))
-            });
+            let data = loaded
+                .as_deref()
+                .and_then(|loaded| Some((loaded.0.as_ref().ok()?.manifest.build.as_str(), loaded.named()?)));
             let named = for_build(data, its_build.as_deref());
             let view = view.map(|view| CharacterView::new(&view, named));
             let _ = CharacterChanged { connection, view }.emit(&handle);
         }));
         Box::new(Inspected::new(live, connection, build, Arc::clone(&inspector), send))
     }
+}
+
+/// Now, in milliseconds since 1970: when a character was last seen. A clock before 1970 reads as 0.
+fn now() -> u64 {
+    let since = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default();
+    u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
 }
 
 /// A connection's character changed; `view` is `None` once the connection closed.
@@ -100,6 +106,8 @@ pub struct Gauge {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct CharacterView {
+    /// Its file's name among the characters played, `<server>-<id>`, once it is known.
+    pub key: Option<String>,
     pub name: Option<String>,
     pub level: Option<i32>,
     pub breed: Option<i32>,
@@ -211,6 +219,7 @@ impl CharacterView {
             max: number(max),
         };
         Self {
+            key: view.who.as_ref().map(|who| crate::storage::key_of(who.id)),
             name: view.who.as_ref().map(|who| who.name.clone()),
             level: view.who.as_ref().map(|who| who.level),
             breed: view.who.as_ref().map(|who| who.breed),
@@ -301,7 +310,7 @@ fn for_build<T>(data: Option<(&str, T)>, build: Option<&str>) -> Option<T> {
 }
 
 /// The name of `who`'s breed and the file of its head for its sex, from `named`.
-fn breed(who: Option<&Who>, named: Option<Named<'_>>) -> (Option<Names>, Option<String>) {
+pub(super) fn breed(who: Option<&Who>, named: Option<Named<'_>>) -> (Option<Names>, Option<String>) {
     let (Some(who), Some(named)) = (who, named) else {
         return (None, None);
     };
@@ -328,7 +337,7 @@ fn breed(who: Option<&Who>, named: Option<Named<'_>>) -> (Option<Names>, Option<
 }
 
 /// `map_id` placed and named from `world`, which the caller gives only when its build is the connection's.
-fn place(map_id: i64, world: Option<&World>) -> Place {
+pub(super) fn place(map_id: i64, world: Option<&World>) -> Place {
     let position = world.and_then(|world| {
         let id = u32::try_from(map_id).ok()?;
         let index = world.positions.binary_search_by_key(&id, |position| position.id).ok()?;
@@ -528,6 +537,14 @@ mod tests {
         assert_eq!(female.head, Some(head(folder, "9-1.png")));
         let male = CharacterView::new(&chosen(9, Some(Sex::Male)), Some(named));
         assert_eq!(male.head, Some(head(folder, "9-0.png")));
+    }
+
+    #[test]
+    fn a_characters_view_carries_its_key_among_the_characters_played_once_known() {
+        let chosen = chosen(9, None);
+        let id = chosen.who.as_ref().map_or(0, |who| who.id);
+        assert_eq!(CharacterView::new(&chosen, None).key, Some(crate::storage::key_of(id)));
+        assert_eq!(CharacterView::new(&View::default(), None).key, None);
     }
 
     #[test]
