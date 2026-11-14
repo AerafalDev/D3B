@@ -9,7 +9,7 @@ use specta::Type;
 use tauri::Manager;
 
 use super::blueprints::PlayersFiles;
-use crate::bot::{self, Blueprint, Carries, Does, Family, Side};
+use crate::bot::{self, Blueprint, Carries, Does, Family, Side, ValueType};
 use crate::storage::Store;
 
 /// A blueprint's graphs.
@@ -58,7 +58,7 @@ pub struct NodeView {
     pub does: NodeDoes,
     /// `event`, `action`, `flow`, `query`, `function`, `variable` (a get or a set) or `call`; `null` for a kind this
     /// version does not know, kept as it is.
-    pub family: Option<String>,
+    pub family: Option<NodeFamily>,
     /// The roadmap step from which the bot does it in the game; the editor marks it until then (the owner, 2026-11-14).
     pub from_step: Option<u8>,
     /// Its pins, from the catalogue or from its variable or function; none when what it does is unknown.
@@ -73,12 +73,76 @@ pub struct NodeView {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
 pub struct PinView {
     pub id: String,
-    /// `in` or `out`.
-    pub side: String,
-    /// `exec` for the flow, else the value's type: `zone`, `percentage`…
-    pub carries: String,
+    pub side: PinSide,
+    pub carries: PinCarries,
     /// The value an input no wire feeds holds by default, as JSON.
     pub default: Option<String>,
+}
+
+/// A node's family, which colours its icon; a get or a set is a `variable`, a call a `call`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum NodeFamily {
+    Event,
+    Action,
+    Flow,
+    Query,
+    Function,
+    Variable,
+    Call,
+}
+
+/// Which way a pin goes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum PinSide {
+    In,
+    Out,
+}
+
+/// What a pin carries: the flow, or a value of a type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum PinCarries {
+    Exec,
+    Bool,
+    Number,
+    Percentage,
+    Text,
+    Zone,
+    Route,
+    Bank,
+    Items,
+    Job,
+}
+
+impl From<Carries> for PinCarries {
+    fn from(carries: Carries) -> Self {
+        match carries {
+            Carries::Exec => Self::Exec,
+            Carries::Value(value_type) => match value_type {
+                ValueType::Bool => Self::Bool,
+                ValueType::Number => Self::Number,
+                ValueType::Percentage => Self::Percentage,
+                ValueType::Text => Self::Text,
+                ValueType::Zone => Self::Zone,
+                ValueType::Route => Self::Route,
+                ValueType::Bank => Self::Bank,
+                ValueType::Items => Self::Items,
+                ValueType::Job => Self::Job,
+            },
+        }
+    }
+}
+
+/// Why a blueprint's graphs are not given.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum GraphsError {
+    /// No blueprint has this id: its file is gone, or no longer reads.
+    NoSuchBlueprint,
+    /// A bug of this version, said as it came: D3B's own blueprints do not read, or the read panicked.
+    Bug { reason: String },
 }
 
 /// A wire from a node's output to another's input: `[node, pin]` each.
@@ -88,34 +152,24 @@ pub struct WireView {
     pub to: [String; 2],
 }
 
-fn value_type(carries: Carries) -> String {
-    match carries {
-        Carries::Exec => "exec".to_owned(),
-        Carries::Value(value_type) => serde_json::to_value(value_type)
-            .ok()
-            .and_then(|value| value.as_str().map(str::to_owned))
-            .unwrap_or_default(),
-    }
-}
-
-fn family(node: &bot::Node) -> (Option<String>, Option<u8>) {
+fn family(node: &bot::Node) -> (Option<NodeFamily>, Option<u8>) {
     match &node.does {
         Does::Kind(kind) => match bot::kind(&kind.0) {
             Some(kind) => {
                 let family = match kind.family {
-                    Family::Event => "event",
-                    Family::Action => "action",
-                    Family::Flow => "flow",
-                    Family::Query => "query",
-                    Family::Function => "function",
+                    Family::Event => NodeFamily::Event,
+                    Family::Action => NodeFamily::Action,
+                    Family::Flow => NodeFamily::Flow,
+                    Family::Query => NodeFamily::Query,
+                    Family::Function => NodeFamily::Function,
                 };
-                (Some(family.to_owned()), kind.from_step)
+                (Some(family), kind.from_step)
             }
             None => (None, None),
         },
-        Does::Get(_) | Does::Set(_) => (Some("variable".to_owned()), None),
+        Does::Get(_) | Does::Set(_) => (Some(NodeFamily::Variable), None),
         // A call of a function the blueprint lacks is a problem of its own; it is drawn as a call still.
-        Does::Call(_) => (Some("call".to_owned()), None),
+        Does::Call(_) => (Some(NodeFamily::Call), None),
     }
 }
 
@@ -146,8 +200,12 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
                     .into_iter()
                     .map(|pin| PinView {
                         id: pin.id,
-                        side: if pin.side == Side::In { "in" } else { "out" }.to_owned(),
-                        carries: value_type(pin.carries),
+                        side: if pin.side == Side::In {
+                            PinSide::In
+                        } else {
+                            PinSide::Out
+                        },
+                        carries: pin.carries.into(),
                         default: pin.default.map(|value| value.to_string()),
                     })
                     .collect(),
@@ -180,24 +238,30 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
     }
 }
 
-/// The blueprint `id`, D3B's or mine.
-fn find(store: Option<&Store>, id: &str) -> Option<Blueprint> {
-    let given = bot::given().unwrap_or_default();
+/// The blueprint `id`, D3B's or mine; an error only for a bug, D3B's own not reading.
+fn find(store: Option<&Store>, id: &str) -> Result<Option<Blueprint>, GraphsError> {
+    let given = bot::given().map_err(|error| GraphsError::Bug {
+        reason: error.to_string(),
+    })?;
     let mine = store.map(|store| store.blueprints().read).unwrap_or_default();
-    given.into_iter().chain(mine).find(|blueprint| blueprint.id.0 == id)
+    Ok(given.into_iter().chain(mine).find(|blueprint| blueprint.id.0 == id))
 }
 
-/// The graphs of the blueprint `id`, or why not: no such blueprint.
+/// The graphs of the blueprint `id`, or why not.
 #[tauri::command]
 #[specta::specta]
-pub async fn blueprint_graphs(app: tauri::AppHandle, id: String) -> Result<BlueprintGraphs, String> {
+pub async fn blueprint_graphs(app: tauri::AppHandle, id: String) -> Result<BlueprintGraphs, GraphsError> {
     let read = tauri::async_runtime::spawn_blocking(move || {
         let files = app.state::<PlayersFiles>();
-        find(files.store(), &id)
+        find(files.store(), &id)?
             .map(|blueprint| graphs(&blueprint))
-            .ok_or_else(|| format!("no blueprint {id}"))
+            .ok_or(GraphsError::NoSuchBlueprint)
     });
-    read.await.map_err(|error| error.to_string())?
+    read.await.unwrap_or_else(|error| {
+        Err(GraphsError::Bug {
+            reason: error.to_string(),
+        })
+    })
 }
 
 #[cfg(test)]
@@ -233,8 +297,8 @@ mod tests {
             }
         );
         assert_eq!(
-            (harvest.family.as_deref(), harvest.from_step, harvest.position),
-            (Some("action"), Some(5), Some([480, 0]))
+            (harvest.family, harvest.from_step, harvest.position),
+            (Some(NodeFamily::Action), Some(5), Some([480, 0]))
         );
         let pods = harvest
             .pins
@@ -242,21 +306,21 @@ mod tests {
             .find(|pin| pin.id == "pods")
             .unwrap_or_else(|| panic!("no pods"));
         assert_eq!(
-            (pods.side.as_str(), pods.carries.as_str(), pods.default.as_deref()),
-            ("in", "percentage", Some("90"))
+            (pods.side, pods.carries, pods.default.as_deref()),
+            (PinSide::In, PinCarries::Percentage, Some("90"))
         );
         assert_eq!(harvest.inputs.get("what").map(String::as_str), Some("\"all\""));
         let zone = node("zone");
         assert_eq!(
-            (zone.family.as_deref(), &zone.does),
+            (zone.family, &zone.does),
             (
-                Some("variable"),
+                Some(NodeFamily::Variable),
                 &NodeDoes::Get {
                     variable: "zone".into()
                 }
             )
         );
-        assert_eq!(zone.pins[0].carries, "zone");
+        assert_eq!(zone.pins[0].carries, PinCarries::Zone);
         assert!(events.wires.contains(&WireView {
             from: ["deposit".into(), "done".into()],
             to: ["go".into(), "run".into()]
@@ -270,10 +334,7 @@ mod tests {
         blueprint.layout.clear();
         let drawn = graphs(&blueprint);
         let unknown = &drawn.graphs[0].nodes[0];
-        assert_eq!(
-            (unknown.family.as_deref(), unknown.pins.len(), unknown.position),
-            (None, 0, None)
-        );
+        assert_eq!((unknown.family, unknown.pins.len(), unknown.position), (None, 0, None));
     }
 
     #[test]
@@ -288,12 +349,60 @@ mod tests {
             },
         );
         let copy = copy.unwrap_or_else(|error| panic!("{error}"));
-        assert!(find(Some(&store), "automatic-harvest").is_some());
+        let found = |store: Option<&Store>, id: &str| find(store, id).unwrap_or_else(|error| panic!("{error:?}"));
+        assert!(found(Some(&store), "automatic-harvest").is_some());
         assert_eq!(
-            find(Some(&store), &copy.0).map(|it| it.name),
+            found(Some(&store), &copy.0).map(|it| it.name),
             Some("Ma chasse".to_owned())
         );
-        assert!(find(Some(&store), "teleport").is_none());
-        assert!(find(None, &copy.0).is_none());
+        assert!(found(Some(&store), "teleport").is_none());
+        assert!(found(None, &copy.0).is_none());
+    }
+
+    #[test]
+    fn a_function_graph_is_drawn_as_one_with_its_entrys_pins_and_its_own_layout() {
+        let mut blueprint = bot::read(bot::HARVEST).unwrap_or_else(|error| panic!("{error}"));
+        let entry =
+            serde_json::from_str(r#"{"id": "entry", "kind": "entry"}"#).unwrap_or_else(|error| panic!("{error}"));
+        blueprint.graphs[1].nodes.push(entry);
+        blueprint.layout.insert(
+            bot::Id("empty_at_bank".into()),
+            [(bot::Id("entry".into()), [7, 8])].into(),
+        );
+        let drawn = graphs(&blueprint);
+        let (events, function) = (&drawn.graphs[0], &drawn.graphs[1]);
+        assert!(!events.function && function.function);
+        let entry = &function.nodes[0];
+        assert_eq!(
+            (entry.family, entry.position),
+            (Some(NodeFamily::Function), Some([7, 8]))
+        );
+        let bank = entry
+            .pins
+            .iter()
+            .find(|pin| pin.id == "bank")
+            .map(|pin| (pin.side, pin.carries));
+        assert_eq!(bank, Some((PinSide::Out, PinCarries::Bank)));
+        assert_eq!(
+            events
+                .nodes
+                .iter()
+                .find(|node| node.id == "n1")
+                .and_then(|node| node.position),
+            Some([0, 0])
+        );
+    }
+
+    #[test]
+    fn a_node_is_sent_with_what_it_does_beside_its_fields_in_camel_case() {
+        let drawn = graphs(&harvest());
+        let node = serde_json::to_value(&drawn.graphs[0].nodes[2]).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(node["does"], "kind");
+        assert_eq!(node["kind"], "harvest_until");
+        assert_eq!(
+            (node["family"].clone(), node["fromStep"].clone()),
+            ("action".into(), 5.into())
+        );
+        assert_eq!(node["pins"][0]["side"], "in");
     }
 }

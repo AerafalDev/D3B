@@ -22,3 +22,4 @@ pub(crate) use json::tests::HARVEST;
 pub(crate) use json::{ReadError, read, write};
 pub(crate) use pins::pins;
 pub(crate) use problems::problems;
+pub(crate) use variable::ValueType;
