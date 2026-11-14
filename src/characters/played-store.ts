@@ -21,7 +21,7 @@ export const usePlayed = create<PlayedStore>((set) => ({
   played: [],
 
   refresh: async () => {
-    set({ played: await commands.playedCharacters() });
+    set({ played: (await commands.playedCharacters()).characters });
   },
 
   forget: async (key) => {
@@ -34,9 +34,9 @@ export const usePlayed = create<PlayedStore>((set) => ({
     }
     let live = true;
     const refresh = () => {
-      void commands.playedCharacters().then((played) => {
+      void commands.playedCharacters().then((list) => {
         if (live) {
-          set({ played });
+          set({ played: list.characters });
         }
       });
     };
