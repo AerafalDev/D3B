@@ -10,7 +10,11 @@ import { FAMILY_COLOUR, nodeIcon } from "../graph-look.ts";
 import { type GraphNode, graphSentences, type SentencePart } from "../node-sentence.ts";
 import { type SummaryFlow, summaryFlow } from "./summary-flow.ts";
 
-/** The events the game forces, said with their default when the blueprint does not handle them (`docs/bot.md`). */
+/**
+ * The events the game forces, said with their default when the blueprint does not handle them (`docs/bot.md`): the
+ * catalogue's forced events (`bot::catalogue`, `EventRole`), which the IPC does not carry, and the step that brings the
+ * default fight. A forced event added there is added here.
+ */
 const FORCED = [
   { kind: "fight_starts", fromStep: 6 },
   { kind: "died", fromStep: null },
@@ -39,13 +43,13 @@ export function Summary({ graphs, names, chosen, onChoose }: SummaryProps) {
   const held = new Set(
     events.flatMap((graph) => graph.nodes.flatMap((node) => (node.does === "kind" ? [node.kind] : []))),
   );
-  const sections = events.flatMap((graph) => {
-    const sentences = graphSentences(graph, names);
-    return graph.nodes
-      .filter((node) => node.family === "event")
-      .sort((a, b) => rank(a) - rank(b))
-      .map((node) => ({ graph, node, sentences }));
-  });
+  // Every event graph's events, ordered once, so "On start" comes first whichever graph holds it.
+  const sections = events
+    .flatMap((graph) => {
+      const sentences = graphSentences(graph, names);
+      return graph.nodes.filter((node) => node.family === "event").map((node) => ({ graph, node, sentences }));
+    })
+    .sort((a, b) => rank(a.node) - rank(b.node));
   return (
     <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-7 py-5 text-[13px]">
       {sections.map(({ graph, node, sentences }) => (
@@ -182,9 +186,15 @@ function Flow({ flow, sentences, chosen, onChoose }: FlowProps) {
               step.node.id === chosen && "bg-[#2a2c30]",
             )}
           >
-            <span className="text-text-muted w-8 shrink-0 tabular-nums">{step.label}.</span>
+            {/* The spaces between the parts are said to screen readers, the gaps being only drawn. */}
+            <span className="text-text-muted w-8 shrink-0 tabular-nums">{step.label}.</span>{" "}
             <Sentence parts={sentences.get(step.node.id) ?? []} />
-            {step.node.fromStep !== null && <StepTag step={step.node.fromStep} />}
+            {step.node.fromStep !== null && (
+              <>
+                {" "}
+                <StepTag step={step.node.fromStep} />
+              </>
+            )}
           </button>
           {step.branches.map((branch) => (
             <div key={branch.pin} className="flex flex-col gap-1 pl-10">

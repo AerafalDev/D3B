@@ -88,6 +88,47 @@ describe("the Summary's flow", () => {
     ]);
   });
 
+  it("counts an If's False on from its True, and numbers a branch's branch under it", () => {
+    const choice = { id: "if", pins: [exec("run", "in"), exec("true", "out"), exec("false", "out")] };
+    const both = graph(
+      [start, choice, action("harvest"), action("bank"), action("notify"), action("retry")],
+      [
+        ["start", "then", "if"],
+        ["if", "true", "harvest"],
+        ["harvest", "done", "bank"],
+        ["bank", "failed", "retry"],
+        ["if", "false", "notify"],
+        ["notify", "done", "harvest"],
+      ],
+    );
+    expect(lines(summaryFlow(both, "start", "then"))).toEqual([
+      "1 if",
+      "1:true",
+      "1.1 harvest",
+      "1.2 bank",
+      "1.2:failed",
+      "1.2.1 retry",
+      "1:false",
+      "1.3 notify",
+      "back 1.1",
+    ]);
+  });
+
+  it("says a Failed linked back to its own step as back to it", () => {
+    const retry = graph(
+      [start, action("bank")],
+      [
+        ["start", "then", "bank"],
+        ["bank", "failed", "bank"],
+      ],
+    );
+    expect(lines(summaryFlow(retry, "start", "then"))).toEqual(["1 bank", "1:failed", "back 1"]);
+  });
+
+  it("ends a chain at a wire to no node", () => {
+    expect(lines(summaryFlow(graph([start], [["start", "then", "gone"]]), "start", "then"))).toEqual([]);
+  });
+
   it("has no step when the output is linked to nothing", () => {
     expect(lines(summaryFlow(graph([start], []), "start", "then"))).toEqual([]);
   });

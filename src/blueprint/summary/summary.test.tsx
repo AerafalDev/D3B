@@ -90,18 +90,36 @@ describe("the blueprint's Summary", () => {
     expect(read()).toEqual([
       [
         "Au lancement",
-        "1.Aller dans à choisirétape 4",
-        "2.Vider à la banque",
+        "1. Aller dans à choisir étape 4",
+        "2. Vider à la banque",
         "Si ça échoue :",
-        "2.1.Attendre 5 min",
+        "2.1. Attendre 5 min",
         "Revenir à 1.",
       ],
       ["Vie sous 40 % · priorité 2 · Interrompre, puis reprendre", "Ne fait rien."],
       ["Un combat commence · par défaut", "Combattre avec l'IA par défaut, puis reprendre.étape 6"],
       ["Le personnage est mort · par défaut", "Le lancement s'arrête, le personnage bloqué."],
       ["Une action échoue · par défaut", "Le personnage est bloqué, avec la raison."],
-      ["Fonction Vider à la banque", "1.Terminer"],
+      ["Fonction Vider à la banque", "1. Terminer"],
     ]);
+  });
+
+  it("orders the events of every event graph together, On start first", () => {
+    const [life, begin] = events.nodes;
+    const pods = node("pods", "pods_above", {
+      family: "event",
+      pins: [pin("then", "out"), pin("threshold", "in", "percentage", "80")],
+      event: { priority: 1, mode: "waitForAction" },
+    });
+    const split = [
+      { ...events, id: "a", nodes: [life], wires: [] },
+      { ...events, id: "b", nodes: [begin, pods], wires: [] },
+    ];
+    render(
+      <Summary graphs={split as unknown as GraphView_Serialize[]} names={names} chosen={null} onChoose={() => {}} />,
+    );
+    const headings = [...document.querySelectorAll("h4")].map((heading) => heading.textContent?.split(" · ")[0]);
+    expect(headings.slice(0, 3)).toEqual(["Au lancement", "Pods au-dessus de 80 %", "Vie sous 40 %"]);
   });
 
   it("leaves out the default of a forced event the blueprint handles", () => {
@@ -130,8 +148,29 @@ describe("the blueprint's Summary", () => {
   });
 
   it("marks the step of the node Details shows, in its graph alone", () => {
-    render(<Summary graphs={graphs} names={names} chosen={{ graph: "bank", node: "finish" }} onChoose={() => {}} />);
+    // A node of the same id in each graph: only the chosen graph's is marked.
+    const shared = [
+      events,
+      {
+        ...bank,
+        nodes: [...bank.nodes, node("go", "notify")],
+        wires: [
+          { from: ["entry", "then"], to: ["go", "run"] },
+          { from: ["go", "done"], to: ["finish", "run"] },
+        ],
+      },
+    ];
+    render(
+      <Summary
+        graphs={shared as unknown as GraphView_Serialize[]}
+        names={names}
+        chosen={{ graph: "events", node: "go" }}
+        onChoose={() => {}}
+      />,
+    );
     const marked = screen.getAllByRole("button").filter((step) => step.getAttribute("aria-current") === "true");
-    expect(marked.map((step) => step.textContent)).toEqual(["1.Terminer"]);
+    expect(marked.map((step) => step.textContent)).toEqual(["1. Aller dans à choisir étape 4"]);
+    // The function's own step 1 is the other "go".
+    expect(screen.getByRole("button", { name: /^1\. Prévenir/ }).getAttribute("aria-current")).toBe("false");
   });
 });

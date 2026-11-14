@@ -45,7 +45,7 @@ function order(a: string, b: string): number {
 
 /**
  * The flow `graph` runs from `node`'s output `pin`, as numbered steps (`docs/bot.md`, "In the app"): each node once,
- * its Failed and an If's outputs as branches numbered under it, and a node met again said as a jump to its number, a
+ * its Failed and an If's outputs as branches numbered under it, counting on across an If's two, and a node met again said as a jump to its number, a
  * loop's "back to 2". The steps go on first, so a branch that joins them later jumps to them.
  */
 export function summaryFlow(graph: GraphView_Serialize, node: string, pin: string): SummaryFlow {
@@ -56,8 +56,9 @@ export function summaryFlow(graph: GraphView_Serialize, node: string, pin: strin
   };
   const numbered = new Map<string, string>();
 
-  // A chain of steps from `first`, numbered under `prefix`; its branches are read once every chain above them is.
-  const chain = (first: GraphNode | undefined, prefix: string, from: string): SummaryFlow => {
+  // A chain of steps from `first`, numbered under `prefix` from `start`; its branches are read once every chain above
+  // them is.
+  const chain = (first: GraphNode | undefined, prefix: string, from: string, start = 1): SummaryFlow => {
     const steps: SummaryStep[] = [];
     let current = first;
     let at = from;
@@ -66,7 +67,7 @@ export function summaryFlow(graph: GraphView_Serialize, node: string, pin: strin
       if (known !== undefined) {
         return { steps, jump: { to: known, back: order(known, at) <= 0 } };
       }
-      const label = `${prefix}${steps.length + 1}`;
+      const label = `${prefix}${start + steps.length}`;
       numbered.set(current.id, label);
       steps.push({ label, node: current, branches: [] });
       at = label;
@@ -77,10 +78,14 @@ export function summaryFlow(graph: GraphView_Serialize, node: string, pin: strin
   };
   const branch = (flow: SummaryFlow) => {
     for (const step of flow.steps) {
+      // An If's two outputs count on from one another, True's 2.1 and 2.2 then False's 2.3, so a jump names one step.
+      let start = 1;
       for (const out of BRANCHES) {
         const target = next(step.node.id, out);
         if (target !== undefined) {
-          step.branches.push({ pin: out, flow: chain(target, `${step.label}.`, step.label) });
+          const opened = chain(target, `${step.label}.`, step.label, start);
+          start += opened.steps.length;
+          step.branches.push({ pin: out, flow: opened });
         }
       }
       for (const opened of step.branches) {
