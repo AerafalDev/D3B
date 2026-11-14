@@ -2,6 +2,7 @@ import i18next from "i18next";
 
 import type { GraphView_Serialize, NodeView_Serialize } from "@/bindings.ts";
 import { valueText } from "@/library/value-text.ts";
+import { pinLabel } from "./pin-label.ts";
 
 /** A part of a node's sentence: words, or a value in its chip, with its type for its dot. */
 export type SentencePart = { text: string } | { chip: string; valueType: string };
@@ -80,7 +81,7 @@ export function graphSentences(
     const wired = new Map<string, string>();
     for (const wire of graph.wires.filter((one) => one.to[0] === node.id)) {
       const source = byId.get(wire.from[0]);
-      const label = String(i18next.t(`node.pins.${wire.from[1]}` as never));
+      const label = pinLabel(wire.from[1]);
       if (source?.does === "get") {
         wired.set(wire.to[1], names.get(source.variable) ?? source.variable);
       } else if (source?.family === "query" && !reading.has(source.id)) {

@@ -403,6 +403,8 @@
     "givenLine": "Donné par D3B · v{{version}} · verrouillé",
     "mineLine": "À moi",
     "mineBasedOn": "À moi · basé sur {{name}} v{{version}}",
+    "settings": "Réglages par personnage",
+    "soon": "Le graphe et le Résumé arrivent ici.",
     "gone": "Ce blueprint n'est plus là.",
     "unread": "La Bibliothèque n'a pas pu être lue : {{reason}}",
     "duplicateFailed": {
@@ -430,22 +432,16 @@
       "items_one": "{{count}} objet",
       "items_other": "{{count}} objets",
       "zone": "Une zone choisie"
-    },
-    "settings": "Réglages par personnage",
-    "soon": "Le graphe et le Résumé arrivent ici."
+    }
   },
   "blueprint": {
-    "myBlueprint": "Mon blueprint",
-    "graphs": "Graphes",
-    "functions": "Fonctions",
-    "variables": "Variables",
-    "eventGraph": "Graphe d'événements",
-    "perCharacter": "Réglée par personnage",
-    "default": "Par défaut : {{value}}",
-    "loading": "Lecture du blueprint…",
-    "bug": "Le blueprint n'a pas pu être lu : {{reason}}",
     "set": "Écrire {{name}}",
     "unknownKind": "Nœud inconnu de cette version : {{kind}}",
-    "fromStep": "étape {{step}}"
+    "fromStep": "étape {{step}}",
+    "controls": "Commandes du graphe",
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "fitView": "Tout afficher",
+    "minimap": "Vue d'ensemble"
   }
 }

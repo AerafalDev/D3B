@@ -177,10 +177,17 @@
 .blueprint-type-text {
   --type: #cfcfcf;
 }
-.blueprint-flow .react-flow__edge[class*="blueprint-type-"] path {
+.blueprint-flow .react-flow__edge[class*="blueprint-type-"] .react-flow__edge-path {
   stroke: var(--type);
   stroke-width: 1.4;
 }
-.blueprint-flow .react-flow__edge.blueprint-type-exec path {
+.blueprint-flow .react-flow__edge.blueprint-type-exec .react-flow__edge-path {
   stroke-width: 1.8;
+}
+
+/* The node the keyboard is on: React Flow draws a ring for its own kinds of node only. */
+.blueprint-flow .react-flow__node:focus-visible .blueprint-node,
+.blueprint-flow .react-flow__node:focus-visible .blueprint-pill {
+  outline: 1px solid var(--focus);
+  outline-offset: 2px;
 }

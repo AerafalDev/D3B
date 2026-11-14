@@ -91,4 +91,40 @@ describe("a node's sentence", () => {
       "Récolter [Ressources de Métier] dans [à choisir] jusqu'à [90 %] de pods",
     );
   });
+
+  it("says a source pin no translation names by its id, and a loop of queries by the pin's label", () => {
+    const add = (id: string) =>
+      ({
+        ...harvest,
+        id,
+        kind: "add",
+        family: "query",
+        fromStep: null,
+        pins: [pin("a", "number"), pin("b", "number")],
+        inputs: {},
+      }) as GraphNode;
+    const entry = {
+      ...harvest,
+      id: "entry",
+      kind: "entry",
+      family: "function",
+      fromStep: null,
+      pins: [],
+      inputs: {},
+    } as GraphNode;
+    const graph = {
+      id: "f",
+      name: "f",
+      function: true,
+      nodes: [harvest, entry, add("one"), add("two")],
+      wires: [
+        { from: ["entry", "where"], to: ["harvest", "zone"] },
+        { from: ["one", "value"], to: ["two", "a"] },
+        { from: ["two", "value"], to: ["one", "a"] },
+      ],
+    } as never;
+    const sentences = graphSentences(graph, new Map());
+    expect(plain(sentences.get("harvest") ?? [])).toContain("dans [where]");
+    expect(plain(sentences.get("one") ?? [])).toBe("[Valeur + à choisir] + [à choisir]");
+  });
 });

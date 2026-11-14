@@ -5,18 +5,13 @@ import type { PinView_Serialize } from "@/bindings.ts";
 import { cn } from "@/lib/utils.ts";
 import { FAMILY_COLOUR, nodeIcon } from "./graph-look.ts";
 import type { GraphNode, SentencePart } from "./node-sentence.ts";
+import { pinLabel } from "./pin-label.ts";
 
 /** What a node of the graph carries for React Flow: the IPC's node and its sentence, filled. */
 export type BoxData = { node: GraphNode; sentence: SentencePart[] };
 
 /** A node as React Flow holds it. */
 export type BoxNode = Node<BoxData, "box">;
-
-/** A pin's label, `node.pins.<pin>`, or a function's parameter's id. */
-function usePinLabel(): (pin: string) => string {
-  const { t, i18n } = useTranslation();
-  return (pin) => (i18n.exists(`node.pins.${pin}`) ? String(t(`node.pins.${pin}` as never)) : pin);
-}
 
 function pinClass(pin: PinView_Serialize): string {
   return cn(
@@ -34,7 +29,6 @@ function pinClass(pin: PinView_Serialize): string {
  */
 export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
   const { t } = useTranslation();
-  const label = usePinLabel();
   const { node, sentence } = data;
   const Icon = nodeIcon(node.family, node.does === "kind" ? node.kind : null);
   const flowIn = node.pins.find((pin) => pin.side === "in" && pin.carries === "exec");
@@ -83,42 +77,20 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
             {ins.map((pin) => (
               <div key={pin.id} className="blueprint-row">
                 <Handle type="target" position={Position.Left} id={pin.id} className={pinClass(pin)} />
-                {label(pin.id)}
+                {pinLabel(pin.id)}
               </div>
             ))}
           </div>
           <div className="flex flex-col items-end">
             {outs.map((pin) => (
               <div key={pin.id} className={cn("blueprint-row", pin.id === "failed" && "is-failed")}>
-                {label(pin.id)}
+                {pinLabel(pin.id)}
                 <Handle type="source" position={Position.Right} id={pin.id} className={pinClass(pin)} />
               </div>
             ))}
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/** What a variable's pill carries: its name and type. */
-export type PillData = { name: string; valueType: string };
-
-/** A variable read in the graph, as Unreal's "Get": a pill of its type's colour. */
-export function VariablePill({ data, selected }: NodeProps<Node<PillData, "pill">>) {
-  return (
-    <div
-      className={cn("blueprint-pill", `blueprint-type-${data.valueType}`, selected && "is-selected")}
-      title={data.name}
-    >
-      <span className={cn("blueprint-chip-dot", `blueprint-type-${data.valueType}`)} />
-      {data.name}
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="value"
-        className={cn("blueprint-pin blueprint-value", `blueprint-type-${data.valueType}`)}
-      />
     </div>
   );
 }
