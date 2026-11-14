@@ -1,9 +1,6 @@
 import i18next from "i18next";
 
-/**
- * A variable's value as the player reads it, from its type and its JSON (`bot::variable`'s shapes): "90 %", "La plus
- * proche", "Rien", "à choisir" when there is none. A value of a shape the type does not hold reads as its JSON.
- */
+/** A value as the player reads it, by its type (`bot::variable`'s shapes); a shape its type does not hold, as JSON. */
 export function valueText(valueType: string, json: string | null, language: string): string {
   if (json === null) {
     return i18next.t("library.value.none");

@@ -54,7 +54,6 @@ describe("Duplicate", () => {
       kept: [],
     });
     expect(await useLibrary.getState().duplicate(harvest)).toBe("recolte-automatique-copie");
-    // Read again, so the copy's tab finds it.
     expect(useLibrary.getState().blueprints.map((one) => one.id)).toContain("recolte-automatique-copie");
     expect(backEnd.duplicate).toHaveBeenCalledWith("automatic-harvest", {
       name: "Récolte automatique (copie)",

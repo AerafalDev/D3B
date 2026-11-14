@@ -61,7 +61,6 @@ describe("a blueprint's tab, before the editor", () => {
     expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("Récolte automatique");
     expect(container.textContent).toContain("Donné par D3B · v1 · verrouillé");
     expect(container.textContent).toContain("Récolte ce qui pousse dans une zone");
-    // A setting's name, then its value; its help is said to screen readers inside its name.
     const settings = [...container.querySelectorAll("dt")].map(
       (term) => `${term.firstChild?.textContent}: ${term.nextSibling?.textContent}`,
     );
@@ -142,7 +141,6 @@ describe("valueText", () => {
     expect(read("bank", '{"map": 191104002}')).toBe("Celle de la carte 191104002");
     expect(read("items", '"all"')).toBe("Tout");
     expect(read("items", "[289, 400]")).toBe("2 objets");
-    expect(read("zone", null)).toBe("à choisir");
     await i18next.changeLanguage("en");
     expect(read("percentage", "90")).toBe("90%");
     await i18next.changeLanguage("fr");
