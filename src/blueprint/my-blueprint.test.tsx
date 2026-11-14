@@ -42,7 +42,7 @@ describe("My Blueprint", () => {
 
   it("lists the event graph, the functions and the variables, marking the graph shown", () => {
     render(<MyBlueprint blueprint={harvest} graphs={graphs} shown="events" onShow={() => {}} />);
-    const [events, bank] = screen.getAllByRole("button");
+    const [events, bank] = screen.getAllByRole("button").slice(0, 2);
     expect([events?.textContent, bank?.textContent]).toEqual(["Graphe d'événements", "Vider à la banque"]);
     expect(events?.getAttribute("aria-current")).toBe("true");
     expect(bank?.hasAttribute("aria-current")).toBe(false);
@@ -76,10 +76,9 @@ describe("My Blueprint", () => {
       { id: "second", name: "Combats", function: false, inputs: [], outputs: [], nodes: [], wires: [] },
     ];
     render(<MyBlueprint blueprint={harvest} graphs={two} shown="events" onShow={() => {}} />);
-    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "Event graph",
-      "Combats",
-      "Vider à la banque",
-    ]);
+    const [graphList, functionList] = screen.getAllByRole("list");
+    const names = (list: HTMLElement | undefined) =>
+      [...(list?.querySelectorAll("button") ?? [])].map((button) => button.textContent);
+    expect([...names(graphList), ...names(functionList)]).toEqual(["Event graph", "Combats", "Vider à la banque"]);
   });
 });

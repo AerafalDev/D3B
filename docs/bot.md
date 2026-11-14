@@ -78,7 +78,12 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   with why in its hover (the owner, 2026-11-14, mock-up 9). A blueprint's tab is its editor, read-only until step 3's
   PR 13: on top its name, whose it is, its problems, its description and Duplicate; under them My Blueprint (the event
   graph, the functions, the variables with an eye on those set per character, a variable's help and default in its
-  hover) and the graph chosen in it.
+  hover) and the graph chosen in it, and Details on the right (the owner, 2026-11-14): a node chosen says its sentence,
+  its description, the step from which the bot does it, its inputs' values (or "wired"), what an unlinked Failed does,
+  its problems, and for an event its priority and its four modes drawn as timelines, the one it has marked; a variable
+  chosen in My Blueprint its type, default, bounds, whether each character sets it and its help, how long it lasts and
+  the nodes that use it; nothing chosen, the blueprint's problems, each in the player's words. A node with a problem is
+  marked in the graph.
 - The **blueprint editor** is Unreal's Blueprint Editor in a tab. Its toolbar holds Graph or Summary, the graph's path,
   the problems, the character to debug, and Duplicate on a given blueprint, which opens locked. **My Blueprint** on the
   left lists the graphs, functions and variables, an eye on those set per character; the graph is in the centre,

@@ -1,11 +1,11 @@
 import { useTranslation } from "react-i18next";
 
 import type { GraphView_Serialize, ProblemView } from "@/bindings.ts";
+import { cn } from "@/lib/utils.ts";
 import { givenText } from "@/library/given-text.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
 import { valueText } from "@/library/value-text.ts";
-import { cn } from "@/lib/utils.ts";
-import type { GraphNode } from "../node-sentence.ts";
+import { type GraphNode, graphSentences } from "../node-sentence.ts";
 import { pinLabel } from "../pin-label.ts";
 import { DetailRow } from "./detail-row.tsx";
 import { EventDetails } from "./event-details.tsx";
@@ -33,10 +33,20 @@ export function BlueprintDetails({ blueprint, graph, problems, selection, names 
     selection?.kind === "variable" ? blueprint.variables.find((one) => one.id === selection.id) : undefined;
 
   return (
-    <aside aria-label={t("blueprint.details.title")} className="border-line flex min-h-0 flex-col gap-3 overflow-y-auto border-l px-3 py-3 text-xs">
-      <h3 className="text-text-muted text-[11px] font-semibold uppercase tracking-[.04em]">{t("blueprint.details.title")}</h3>
+    <aside
+      aria-label={t("blueprint.details.title")}
+      className="border-line flex min-h-0 flex-col gap-3 overflow-y-auto border-l px-3 py-3 text-xs"
+    >
+      <h3 className="text-text-muted text-[11px] font-semibold tracking-[.04em] uppercase">
+        {t("blueprint.details.title")}
+      </h3>
       {node !== undefined && graph !== undefined ? (
-        <NodeDetails node={node} graph={graph} problems={problems.filter((one) => one.node === node.id && one.graph === graph.id)} names={names} />
+        <NodeDetails
+          node={node}
+          graph={graph}
+          problems={problems.filter((one) => one.node === node.id && one.graph === graph.id)}
+          names={names}
+        />
       ) : variable !== undefined ? (
         <VariableDetails blueprint={blueprint} variable={variable} graph={graph} />
       ) : (
@@ -77,21 +87,29 @@ interface NodeDetailsProps {
 function NodeDetails({ node, graph, problems, names }: NodeDetailsProps) {
   const { t, i18n } = useTranslation();
   const kind = node.does === "kind" ? node.kind : null;
-  const description = kind === null ? null : i18n.exists(`node.kinds.${kind}.description`) ? String(t(`node.kinds.${kind}.description` as never)) : null;
-  const title =
-    node.does === "kind" ? (i18n.exists(`node.kinds.${node.kind}.sentence`) ? String(t(`node.kinds.${node.kind}.sentence` as never, { interpolation: { skipOnVariables: true } } as never)).replace(/\{\{|\}\}/g, "") : node.kind)
-      : node.does === "call" ? (names.get(node.function) ?? node.function)
-        : (names.get(node.variable) ?? node.variable);
+  const description =
+    kind === null
+      ? null
+      : i18n.exists(`node.kinds.${kind}.description`)
+        ? String(t(`node.kinds.${kind}.description` as never))
+        : null;
+  // Its sentence as the graph says it, words and values in one line.
+  const title = (graphSentences(graph, names).get(node.id) ?? [])
+    .map((part) => ("text" in part ? part.text : part.chip))
+    .join("");
   const wired = new Set(graph.wires.filter((wire) => wire.to[0] === node.id).map((wire) => wire.to[1]));
   const inputs = node.pins.filter((pin) => pin.side === "in" && pin.carries !== "exec");
-  const failedFree = node.pins.some((pin) => pin.id === "failed") && !graph.wires.some((wire) => wire.from[0] === node.id && wire.from[1] === "failed");
-  const rearm = kind === "life_below" || kind === "pods_above" ? valueText("percentage", node.inputs["rearm"] ?? node.pins.find((pin) => pin.id === "rearm")?.default ?? null, i18n.language) : null;
+  const failedFree =
+    node.pins.some((pin) => pin.id === "failed") &&
+    !graph.wires.some((wire) => wire.from[0] === node.id && wire.from[1] === "failed");
 
   return (
     <>
       <div className="text-sm text-white">{title}</div>
       {description !== null && <p className="text-text-muted">{description}</p>}
-      {node.fromStep !== null && <p className="text-text-faint">{t("blueprint.details.fromStep", { step: node.fromStep })}</p>}
+      {node.fromStep !== null && (
+        <p className="text-text-faint">{t("blueprint.details.fromStep", { step: node.fromStep })}</p>
+      )}
       {inputs.length > 0 && (
         <DetailRow label={t("blueprint.details.inputs")}>
           <dl className="grid grid-cols-[1fr_auto] gap-y-1">
@@ -99,15 +117,19 @@ function NodeDetails({ node, graph, problems, names }: NodeDetailsProps) {
               <div key={pin.id} className="contents">
                 <dt className="text-text-muted">{pinLabel(pin.id)}</dt>
                 <dd className={cn(wired.has(pin.id) && "text-text-faint")}>
-                  {wired.has(pin.id) ? t("blueprint.details.wired") : valueText(pin.carries, node.inputs[pin.id] ?? pin.default ?? null, i18n.language)}
+                  {wired.has(pin.id)
+                    ? t("blueprint.details.wired")
+                    : valueText(pin.carries, node.inputs[pin.id] ?? pin.default ?? null, i18n.language)}
                 </dd>
               </div>
             ))}
           </dl>
         </DetailRow>
       )}
-      {failedFree && <DetailRow label={t("blueprint.details.ifFailed")}>{t("blueprint.details.failedBlocks")}</DetailRow>}
-      {node.family === "event" && <EventDetails event={node.event} rearm={rearm} />}
+      {failedFree && (
+        <DetailRow label={t("blueprint.details.ifFailed")}>{t("blueprint.details.failedBlocks")}</DetailRow>
+      )}
+      {node.family === "event" && <EventDetails event={node.event} />}
       <Problems problems={problems} names={names} />
     </>
   );
@@ -121,8 +143,11 @@ interface VariableDetailsProps {
 
 function VariableDetails({ blueprint, variable, graph }: VariableDetailsProps) {
   const { t, i18n } = useTranslation();
-  const read = (path: string, fallback: string) => (blueprint.given ? givenText(blueprint.id, path, fallback) : fallback);
-  const usedBy = (graph?.nodes ?? []).filter((node) => (node.does === "get" || node.does === "set") && node.variable === variable.id).length;
+  const read = (path: string, fallback: string) =>
+    blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
+  const usedBy = (graph?.nodes ?? []).filter(
+    (node) => (node.does === "get" || node.does === "set") && node.variable === variable.id,
+  ).length;
   return (
     <>
       <div className="flex items-center gap-2 text-sm text-white">
@@ -130,15 +155,25 @@ function VariableDetails({ blueprint, variable, graph }: VariableDetailsProps) {
         {read(`variables.${variable.id}.name`, variable.name)}
       </div>
       <DetailRow label={t("blueprint.details.type")}>{t(`blueprint.type.${variable.valueType}` as never)}</DetailRow>
-      <DetailRow label={t("blueprint.details.default")}>{valueText(variable.valueType, variable.default, i18n.language)}</DetailRow>
+      <DetailRow label={t("blueprint.details.default")}>
+        {valueText(variable.valueType, variable.default, i18n.language)}
+      </DetailRow>
       {variable.bounds !== null && (
-        <DetailRow label={t("blueprint.details.bounds")}>{t("blueprint.details.boundsValue", { min: variable.bounds[0], max: variable.bounds[1] })}</DetailRow>
+        <DetailRow label={t("blueprint.details.bounds")}>
+          {t("blueprint.details.boundsValue", { min: variable.bounds[0], max: variable.bounds[1] })}
+        </DetailRow>
       )}
       <DetailRow label={t("blueprint.details.perCharacter")}>
         {t(variable.perCharacter ? "blueprint.details.perCharacterYes" : "blueprint.details.perCharacterNo")}
       </DetailRow>
-      {variable.perCharacter && <DetailRow label={t("blueprint.details.help")}>{read(`variables.${variable.id}.help`, variable.help)}</DetailRow>}
-      <DetailRow label={t("blueprint.details.duration")}>{t(variable.memory ? "blueprint.details.memory" : "blueprint.details.oneRun")}</DetailRow>
+      {variable.perCharacter && (
+        <DetailRow label={t("blueprint.details.help")}>
+          {read(`variables.${variable.id}.help`, variable.help)}
+        </DetailRow>
+      )}
+      <DetailRow label={t("blueprint.details.duration")}>
+        {t(variable.memory ? "blueprint.details.memory" : "blueprint.details.oneRun")}
+      </DetailRow>
       <DetailRow label={t("blueprint.details.usedBy")}>{t("blueprint.details.nodes", { count: usedBy })}</DetailRow>
     </>
   );

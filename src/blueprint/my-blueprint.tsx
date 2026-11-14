@@ -14,6 +14,9 @@ interface MyBlueprintProps {
   /** The graph the canvas shows. */
   shown: string;
   onShow: (graph: string) => void;
+  /** The variable Details shows, if one. */
+  chosen?: string | null;
+  onChoose?: (variable: string) => void;
 }
 
 /**
@@ -21,7 +24,7 @@ interface MyBlueprintProps {
  * variables, an eye on those set per character, each with its type's colour; a variable's help and default in its
  * hover and said to screen readers. A graph or a function shows on the canvas when chosen.
  */
-export function MyBlueprint({ blueprint, graphs, shown, onShow }: MyBlueprintProps) {
+export function MyBlueprint({ blueprint, graphs, shown, onShow, chosen = null, onChoose }: MyBlueprintProps) {
   const { t, i18n } = useTranslation();
   const read = (path: string, fallback: string) =>
     blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
@@ -59,15 +62,22 @@ export function MyBlueprint({ blueprint, graphs, shown, onShow }: MyBlueprintPro
           const value = valueText(variable.valueType, variable.default, i18n.language);
           const hover = [help, t("blueprint.default", { value })].filter(Boolean).join("\n");
           return (
-            <li key={variable.id} title={hover} className="mx-1 flex items-center gap-2 px-2 py-1">
-              <span aria-hidden="true" className={cn("blueprint-chip-dot", `blueprint-type-${variable.valueType}`)} />
-              <span className="min-w-0 flex-1 truncate">{name}</span>
-              {variable.perCharacter && (
-                <Eye aria-hidden="true" size={14} strokeWidth={1.5} className="text-text-muted shrink-0" />
-              )}
-              <span className="sr-only">
-                {[variable.perCharacter ? t("blueprint.perCharacter") : null, hover].filter(Boolean).join(". ")}
-              </span>
+            <li key={variable.id} title={hover}>
+              <button
+                type="button"
+                aria-current={variable.id === chosen ? "true" : undefined}
+                onClick={() => onChoose?.(variable.id)}
+                className="hover:bg-hover focus-visible:outline-focus mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-[5px] px-2 py-1 text-left focus-visible:outline-1 aria-[current=true]:bg-[#2a2c30] aria-[current=true]:text-white"
+              >
+                <span aria-hidden="true" className={cn("blueprint-chip-dot", `blueprint-type-${variable.valueType}`)} />
+                <span className="min-w-0 flex-1 truncate">{name}</span>
+                {variable.perCharacter && (
+                  <Eye aria-hidden="true" size={14} strokeWidth={1.5} className="text-text-muted shrink-0" />
+                )}
+                <span className="sr-only">
+                  {[variable.perCharacter ? t("blueprint.perCharacter") : null, hover].filter(Boolean).join(". ")}
+                </span>
+              </button>
             </li>
           );
         })}

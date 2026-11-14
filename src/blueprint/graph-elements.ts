@@ -17,6 +17,7 @@ export const UNPLACED_STEP = 200;
 export function graphElements(
   graph: GraphView_Serialize,
   names: ReadonlyMap<string, string>,
+  faulty: ReadonlySet<string> = new Set(),
 ): { nodes: (BoxNode | PillNode)[]; edges: Edge[] } {
   let unplaced = 0;
   const byId = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -33,7 +34,8 @@ export function graphElements(
         data: { name: names.get(node.variable) ?? node.variable, valueType },
       };
     }
-    return { id: node.id, type: "box", position, data: { node, sentence: sentences.get(node.id) ?? [] } };
+    const data = { node, sentence: sentences.get(node.id) ?? [], faulty: faulty.has(node.id) };
+    return { id: node.id, type: "box", position, data };
   });
   const edges: Edge[] = graph.wires.map(({ from, to }) => {
     const carries = byId.get(from[0])?.pins.find((pin) => pin.id === from[1] && pin.side === "out")?.carries ?? "exec";

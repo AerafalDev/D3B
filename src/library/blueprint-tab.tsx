@@ -2,6 +2,8 @@ import type { IDockviewPanelProps } from "dockview-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import type { ProblemView } from "@/bindings.ts";
+import { BlueprintDetails, type Selection } from "@/blueprint/details/blueprint-details.tsx";
 import { useGraphs } from "@/blueprint/graph-store.ts";
 import { MyBlueprint } from "@/blueprint/my-blueprint.tsx";
 import { Icon } from "@/icons/icon.tsx";
@@ -14,6 +16,8 @@ import { blueprintName, openBlueprint } from "./open-blueprint.ts";
 const BlueprintGraph = lazy(() =>
   import("@/blueprint/blueprint-graph.tsx").then((module) => ({ default: module.BlueprintGraph })),
 );
+
+const NO_PROBLEMS: readonly ProblemView[] = [];
 
 interface BlueprintParams extends EditorParams {
   id: string;
@@ -34,6 +38,7 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const read_ = useGraphs((store) => store.read[params.id]);
   const load = useGraphs((store) => store.load);
   const [shown, setShown] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection>(null);
 
   useEffect(() => {
     void load(params.id);
@@ -61,6 +66,11 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
       .filter((graph) => graph.function)
       .map((graph) => [graph.id, read(`graphs.${graph.id}`, graph.name)] as const),
   ]);
+  // The nodes of the graph shown that a problem names, marked in the graph.
+  const problems = read_?.state === "read" ? read_.graphs.problems : NO_PROBLEMS;
+  const faulty = problems
+    .filter((problem) => problem.graph === shownGraph?.id)
+    .flatMap((problem) => (problem.node == null ? [] : [problem.node]));
   const whose = blueprint.given
     ? t("library.givenLine", { version: blueprint.version })
     : blueprint.basedOn === null
@@ -106,11 +116,11 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
           {read("description", blueprint.description)}
         </p>
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr]">
+      <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr_280px]">
         {read_ === undefined || read_.state === "loading" ? (
-          <p className="text-text-muted col-span-2 p-6 text-xs">{t("blueprint.loading")}</p>
+          <p className="text-text-muted col-span-3 p-6 text-xs">{t("blueprint.loading")}</p>
         ) : read_.state === "failed" ? (
-          <p className="text-text-muted col-span-2 p-6 text-xs">
+          <p className="text-text-muted col-span-3 p-6 text-xs">
             {read_.error.kind === "noSuchBlueprint"
               ? t("library.gone")
               : t("blueprint.bug", { reason: read_.error.reason })}
@@ -121,13 +131,30 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               blueprint={blueprint}
               graphs={read_.graphs.graphs}
               shown={shownGraph?.id ?? ""}
-              onShow={setShown}
+              onShow={(graph) => {
+                setShown(graph);
+                setSelection(null);
+              }}
+              chosen={selection?.kind === "variable" ? selection.id : null}
+              onChoose={(variable) => setSelection({ kind: "variable", id: variable })}
             />
             {shownGraph !== undefined && (
               <Suspense fallback={<p className="text-text-muted p-6 text-xs">{t("blueprint.loading")}</p>}>
-                <BlueprintGraph graph={shownGraph} names={names} />
+                <BlueprintGraph
+                  graph={shownGraph}
+                  names={names}
+                  faulty={faulty}
+                  onChoose={(node) => setSelection(node === null ? null : { kind: "node", id: node })}
+                />
               </Suspense>
             )}
+            <BlueprintDetails
+              blueprint={blueprint}
+              graph={shownGraph}
+              problems={read_.graphs.problems}
+              selection={selection}
+              names={names}
+            />
           </>
         )}
       </div>

@@ -34,15 +34,13 @@ function Timeline({ mode }: { mode: EventMode }) {
 interface EventDetailsProps {
   /** Its settings, or `null` for the main flow, which takes none. */
   event: EventView | null;
-  /** Its threshold and re-arm, when it has them, as the player reads them. */
-  rearm: string | null;
 }
 
 /**
- * An event's Details (the owner's screen 6, variant A): its priority, its re-arming, and its four modes each drawn as
- * a small timeline, the one it has marked. Read-only until step 3's PR 16.
+ * An event's Details (the owner's screen 6, variant A): its priority and its four modes each drawn as a small timeline,
+ * the one it has marked; its threshold and re-arming are among its inputs, said once. Read-only until step 3's PR 16.
  */
-export function EventDetails({ event, rearm }: EventDetailsProps) {
+export function EventDetails({ event }: EventDetailsProps) {
   const { t } = useTranslation();
   if (event === null) {
     return <DetailRow label={t("blueprint.details.event")}>{t("blueprint.details.mainFlow")}</DetailRow>;
@@ -54,7 +52,6 @@ export function EventDetails({ event, rearm }: EventDetailsProps) {
           {event.priority} <span className="text-text-faint">· {t("blueprint.details.priorityHint")}</span>
         </span>
       </DetailRow>
-      {rearm !== null && <DetailRow label={t("blueprint.details.rearm")}>{rearm}</DetailRow>}
       <DetailRow label={t("blueprint.details.when")}>
         <ul className="flex flex-col gap-1">
           {MODES.map((mode) => (
