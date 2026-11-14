@@ -58,6 +58,14 @@ pub enum DataError {
         #[source]
         source: serde_json::Error,
     },
+    #[error("{table} holds {id} twice")]
+    Duplicate { table: &'static str, id: i32 },
+    #[error("{record} names {field} {target}, which the data does not hold")]
+    Reference {
+        record: String,
+        field: &'static str,
+        target: i32,
+    },
 }
 
 impl Manifest {
@@ -116,7 +124,7 @@ mod tests {
     use super::*;
 
     const VALID: &str = r#"{
-        "format": 2,
+        "format": 3,
         "build": "3.7.13.17",
         "extractor": "0.1.0",
         "tables": [{ "name": "items", "path": "items.json", "sha256": "00" }]
@@ -140,10 +148,10 @@ mod tests {
 
     #[test]
     fn refuses_another_format() {
-        let text = VALID.replace("\"format\": 2", "\"format\": 1");
+        let text = VALID.replace("\"format\": 3", "\"format\": 2");
         assert!(matches!(
             Manifest::parse(&text),
-            Err(DataError::Format { found: 1, expected: 2 })
+            Err(DataError::Format { found: 2, expected: 3 })
         ));
     }
 

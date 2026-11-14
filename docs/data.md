@@ -1,8 +1,8 @@
 # Game data
 
 The app ships the game data of one client build, as JSON, inside the installer: for now the world (maps, world graph,
-positions, sub-areas, areas, zaaps, the world map and its tiles) and the breeds with their heads; items, monsters and
-spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
+positions, sub-areas, areas, zaaps, the world map and its tiles), the breeds with their heads, and the items, their
+types, the jobs and their skills; monsters and spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
 release workflow. Nothing of it is ever committed (ADR [0008](adr/0008-world-data-first-in-five-languages-as-a-tar-gz.md), its archive's name
 superseded by [0013](adr/0013-a-new-data-format-is-a-second-asset-named-by-its-format.md)).
 
@@ -17,7 +17,7 @@ flowchart LR
 
 ## The folder
 
-- `manifest.json`: `format` (equal to `data::FORMAT`, currently 2), `build` (such as `3.7.13.17`), `extractor` (its
+- `manifest.json`: `format` (equal to `data::FORMAT`, currently 3), `build` (such as `3.7.13.17`), `extractor` (its
   version) and `tables`, one entry per file, tiles included, in order of `path` (relative, forward slashes), with its
   `name` (the path without its extension, such as `maps/37`, unique) and its `sha256`. Unknown fields are refused.
 - One JSON file per table, an array of records sorted by id, one record per line; names in camelCase.
@@ -49,12 +49,23 @@ flowchart LR
 | `zaaps.json` | `id`, `mapId`, `subAreaId`, `activated` | `WaypointData`, 63 records |
 | `breeds.json` | `id`, `name` (the text its `shortNameId` names, a string holding the text's number: its only name) | `BreedData`, 19 records, 1 to 18 and 20 |
 | `heads/<breed>-<sex>.png` | one head, PNG | 38 BC7 textures, 239 KB as PNG |
+| `items.json` | `id`, `name`, `typeId`, `level`, `iconId` | `ItemData` and `WeaponData`, 21,622 records, 21,621 written |
+| `item-types.json` | `id`, `name`, `categoryId` | `ItemTypeData`, 236 records |
+| `jobs.json` | `id`, `name`, `iconId` (-1 for none) | `JobData`, 23 records |
+| `skills.json` | `id`, `name`, `parentJobId`, `gatheredItemId` (its `gatheredRessourceItem`, `null` for -1 and 0), `levelMin`, `range`, `clientDisplay` | `SkillData`, 373 records, 372 written |
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
 `nonWalkableDuringRP`, `farmCell`, `visible`, `havenbagCell`, `roleplayMonstersMovementBlocked`, `red`, `blue`: fields
 of the cell, not an enum of the client, so the order is ours (`data::maps::cell`). The extraction fails when the graph contradicts the maps: a vertex's zone that no walkable cell
 has, a transition through an element its map lacks, a position or a zaap on a map the client does not hold. A map's
 interactive elements are in its record; the app reads a map's file when it needs the map, not at start.
+
+Two references the client breaks are left out and counted, the owner's choice of 2026-11-14, rather than failing the
+extraction: an item of a type the client lacks (item 34,569, type 264, on 3.7.13.17) and a skill gathering an item
+`items.json` lacks (skill 260, item 3,656); the extractor prints how many it left out of each, and every other check
+fails as before, a duplicate id in these four tables included. The app refuses a folder where an id is held twice in one of these four tables, an item's type is
+missing, or a skill's job or gathered item is. Which jobs are harvesting professions (2, 24, 26, 28 and 36 on
+3.7.13.17, whose skills gather what the sub-areas' `harvestables` list) will be derived in Rust by step 3's PR 4.
 
 The app reads the whole folder once at start (`data::GameData`) and refuses it whole when a table cannot be read: the
 status bar then says it has no data, and its hover why ([shell.md](shell.md)).
@@ -64,7 +75,7 @@ status bar then says it has no data, and its hover why ([shell.md](shell.md)).
 `tools/extractor`, a .NET 10 console app and its test project, being built as a stack of PRs (`docs/now.md`). The
 owner chose its libraries: AssetsTools.NET for the client's bundles, Cpp2IL for the names of its enums and its protocol's schema, AssetRipper.TextureDecoder for the tiles' BC7,
 SkiaSharp to encode them (with its Linux native assets for CI), System.CommandLine for its options, xUnit v3 for its
-tests. CI and `bun run check` build it and run its tests, which need no client. It reads the client's facts as they are and fails when the client contradicts what it relies on; what the
+tests. CI and `bun run check` build it and run its tests, which need no client. It reads the client's facts as they are and fails when the client contradicts what it relies on (but for the two broken references above, left out and counted); what the
 bot derives from them (harvestables, bankers) is computed in Rust by the step that needs it.
 
 ```sh
@@ -83,7 +94,9 @@ Each run extracts everything again, in about 25 s on 3.7.13.17, tiles included. 
 paths, with a fixed date, so that two runs of one extractor on one OS give the same bytes (gzip's header names the
 OS). It is the file the `data` skill publishes and `data:fetch` unpacks. Format 1's asset, published for 3.7.13.17, was
 named `client-<build>.tar.gz`; format 2 added the breeds and their heads (the owner, 2026-11-13): since a published
-asset is never replaced, a build's data in a new format is a second asset of the build's release, named by its format. The C# version's tools on `main`
+asset is never replaced, a build's data in a new format is a second asset of the build's release, named by its format.
+Format 3 adds the items, their types, the jobs and their skills (the owner, 2026-11-14), and the items' and jobs'
+icons in a next PR, before it is published. The C# version's tools on `main`
 (`scripts/extract/`, `scripts/unity/`) and its measures (`docs/client.md`) are the sources it was rewritten from.
 
 ## Where it lives

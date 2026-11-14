@@ -4,6 +4,7 @@ using System.Reflection;
 using D3B.Extractor.Breeds;
 using D3B.Extractor.Code;
 using D3B.Extractor.Graph;
+using D3B.Extractor.Items;
 using D3B.Extractor.Maps;
 using D3B.Extractor.Protocol;
 using D3B.Extractor.Texts;
@@ -112,6 +113,10 @@ internal static class ExtractCommand
 
         WorldMapTables.Extract(client, texts, folder, output);
         BreedTables.Extract(client, texts, folder, output);
+
+        var items = ItemTables.Extract(client, texts, folder, output);
+
+        JobTables.Extract(client, texts, items, folder, output);
 
         var maps = MapTables.Extract(client, folder, output);
 
