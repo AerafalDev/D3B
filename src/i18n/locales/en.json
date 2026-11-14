@@ -521,6 +521,7 @@
       "bank": "Bank",
       "items": "Items",
       "job": "Profession"
-    }
+    },
+    "faulty": "Has a problem."
   }
 }

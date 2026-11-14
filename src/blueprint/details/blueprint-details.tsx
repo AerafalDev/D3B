@@ -16,6 +16,9 @@ export type Selection = { kind: "node"; id: string } | { kind: "variable"; id: s
 
 interface BlueprintDetailsProps {
   blueprint: BlueprintSummary;
+  /** All the blueprint's graphs, for the nodes that use a variable. */
+  graphs: readonly GraphView_Serialize[];
+  /** The graph shown, whose node may be chosen. */
   graph: GraphView_Serialize | undefined;
   problems: readonly ProblemView[];
   selection: Selection;
@@ -26,7 +29,7 @@ interface BlueprintDetailsProps {
  * The editor's Details, Unreal's, in a column on the tab's right (the owner, 2026-11-14): the node or the variable
  * chosen, else the blueprint's problems. Read-only until step 3's PR 13.
  */
-export function BlueprintDetails({ blueprint, graph, problems, selection, names }: BlueprintDetailsProps) {
+export function BlueprintDetails({ blueprint, graphs, graph, problems, selection, names }: BlueprintDetailsProps) {
   const { t } = useTranslation();
   const node = selection?.kind === "node" ? graph?.nodes.find((one) => one.id === selection.id) : undefined;
   const variable =
@@ -48,18 +51,25 @@ export function BlueprintDetails({ blueprint, graph, problems, selection, names 
           names={names}
         />
       ) : variable !== undefined ? (
-        <VariableDetails blueprint={blueprint} variable={variable} graph={graph} />
+        <VariableDetails blueprint={blueprint} variable={variable} graphs={graphs} />
       ) : (
         <>
           <p className="text-text-muted">{t("blueprint.details.nothing")}</p>
-          <Problems problems={problems} names={names} />
+          <Problems problems={problems} names={names} graphs={graphs} />
         </>
       )}
     </aside>
   );
 }
 
-function Problems({ problems, names }: { problems: readonly ProblemView[]; names: ReadonlyMap<string, string> }) {
+interface ProblemsProps {
+  problems: readonly ProblemView[];
+  names: ReadonlyMap<string, string>;
+  /** When given, a node's problem is said after its node's sentence, so the player finds it. */
+  graphs?: readonly GraphView_Serialize[];
+}
+
+function Problems({ problems, names, graphs }: ProblemsProps) {
   const { t } = useTranslation();
   if (problems.length === 0) {
     return null;
@@ -70,11 +80,25 @@ function Problems({ problems, names }: { problems: readonly ProblemView[]; names
         {problems.map((problem, index) => (
           // A problem has no id of its own; the list is never reordered.
           // biome-ignore lint/suspicious/noArrayIndexKey: the problems' order is the file's
-          <li key={index}>{problemText(problem, names)}</li>
+          <li key={index}>
+            {[graphs === undefined ? null : nodeTitle(graphs, problem, names), problemText(problem, names)]
+              .filter(Boolean)
+              .join(" : ")}
+          </li>
         ))}
       </ul>
     </DetailRow>
   );
+}
+
+/** The sentence of the node a problem is on, among `graphs`, or `null`. */
+function nodeTitle(graphs: readonly GraphView_Serialize[], problem: ProblemView, names: ReadonlyMap<string, string>) {
+  const graph = graphs.find((one) => one.id === problem.graph);
+  if (graph === undefined || problem.node == null) {
+    return null;
+  }
+  const parts = graphSentences(graph, names).get(problem.node);
+  return parts === undefined ? null : parts.map((part) => ("text" in part ? part.text : part.chip)).join("");
 }
 
 interface NodeDetailsProps {
@@ -138,16 +162,16 @@ function NodeDetails({ node, graph, problems, names }: NodeDetailsProps) {
 interface VariableDetailsProps {
   blueprint: BlueprintSummary;
   variable: BlueprintSummary["variables"][number];
-  graph: GraphView_Serialize | undefined;
+  graphs: readonly GraphView_Serialize[];
 }
 
-function VariableDetails({ blueprint, variable, graph }: VariableDetailsProps) {
+function VariableDetails({ blueprint, variable, graphs }: VariableDetailsProps) {
   const { t, i18n } = useTranslation();
   const read = (path: string, fallback: string) =>
     blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
-  const usedBy = (graph?.nodes ?? []).filter(
-    (node) => (node.does === "get" || node.does === "set") && node.variable === variable.id,
-  ).length;
+  const usedBy = graphs
+    .flatMap((one) => one.nodes)
+    .filter((node) => (node.does === "get" || node.does === "set") && node.variable === variable.id).length;
   return (
     <>
       <div className="flex items-center gap-2 text-sm text-white">
@@ -166,7 +190,7 @@ function VariableDetails({ blueprint, variable, graph }: VariableDetailsProps) {
       <DetailRow label={t("blueprint.details.perCharacter")}>
         {t(variable.perCharacter ? "blueprint.details.perCharacterYes" : "blueprint.details.perCharacterNo")}
       </DetailRow>
-      {variable.perCharacter && (
+      {variable.perCharacter && variable.help !== "" && (
         <DetailRow label={t("blueprint.details.help")}>
           {read(`variables.${variable.id}.help`, variable.help)}
         </DetailRow>

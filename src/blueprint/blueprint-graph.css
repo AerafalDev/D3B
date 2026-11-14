@@ -191,3 +191,9 @@
   outline: 1px solid var(--focus);
   outline-offset: 2px;
 }
+
+/* A node or a pill that has a problem: an amber border, solid where an unknown kind's is dashed. */
+.blueprint-node.is-faulty,
+.blueprint-pill.is-faulty {
+  border-color: #d29922;
+}

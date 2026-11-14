@@ -25,8 +25,8 @@ interface BlueprintParams extends EditorParams {
 
 /**
  * A blueprint's tab, its editor read-only (`docs/bot.md`, "In the app"): on top its name, whose it is, its problems,
- * its description and Duplicate; under them Unreal's "My Blueprint" on the left and the graph it shows, loaded on
- * demand. Details and the Summary come with step 3's PR 8, editing with PR 13.
+ * its description and Duplicate; under them Unreal's "My Blueprint" on the left, the graph it shows, loaded on demand,
+ * and Details on the right (the owner, 2026-11-14). The Summary comes with step 3's PR 8c, editing with PR 13.
  */
 export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParams>) {
   const { t } = useTranslation();
@@ -138,18 +138,22 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               chosen={selection?.kind === "variable" ? selection.id : null}
               onChoose={(variable) => setSelection({ kind: "variable", id: variable })}
             />
-            {shownGraph !== undefined && (
+            {shownGraph === undefined ? (
+              <div />
+            ) : (
               <Suspense fallback={<p className="text-text-muted p-6 text-xs">{t("blueprint.loading")}</p>}>
                 <BlueprintGraph
                   graph={shownGraph}
                   names={names}
                   faulty={faulty}
+                  chosen={selection?.kind === "node" ? selection.id : null}
                   onChoose={(node) => setSelection(node === null ? null : { kind: "node", id: node })}
                 />
               </Suspense>
             )}
             <BlueprintDetails
               blueprint={blueprint}
+              graphs={graphs}
               graph={shownGraph}
               problems={read_.graphs.problems}
               selection={selection}

@@ -97,9 +97,18 @@ const problem: ProblemView = {
 };
 const names = new Map([["zone", "Zone"]]);
 
+let graphs: GraphView_Serialize[] = [graph];
+
 function details(selection: Selection, problems: ProblemView[] = []) {
   return render(
-    <BlueprintDetails blueprint={blueprint} graph={graph} problems={problems} selection={selection} names={names} />,
+    <BlueprintDetails
+      blueprint={blueprint}
+      graphs={graphs}
+      graph={graph}
+      problems={problems}
+      selection={selection}
+      names={names}
+    />,
   );
 }
 
@@ -113,7 +122,10 @@ describe("the editor's Details", () => {
   it("asks to choose something, and lists the blueprint's problems", () => {
     const { container } = details(null, [problem]);
     expect(container.textContent).toContain("Choisis un nœud ou une variable.");
-    expect(screen.getByRole("listitem").textContent).toBe("L'entrée zone n'a pas de valeur.");
+    // The node first, so the player finds it; the pin by its label.
+    expect(screen.getByRole("listitem").textContent).toBe(
+      "Récolter à choisir dans Zone jusqu'à 90 % de pods : L'entrée Zone n'a pas de valeur.",
+    );
   });
 
   it("says a node's sentence, its description, its step, its inputs and what an unlinked Failed does", () => {
@@ -127,7 +139,7 @@ describe("the editor's Details", () => {
     );
     expect(inputs.map((line) => line.replace(/[  ]/g, " "))).toEqual(["Zone: relié", "Pods: 90 %"]);
     expect(text).toContain("Non reliée, la sortie Échec bloque le personnage, avec la raison.");
-    expect(text).toContain("L'entrée zone n'a pas de valeur.");
+    expect(text).toContain("L'entrée Zone n'a pas de valeur.");
   });
 
   it("says an event's priority, its re-arming and the mode it has, among the four", () => {
@@ -157,7 +169,38 @@ describe("the editor's Details", () => {
     ]) {
       expect(text).toContain(said);
     }
+    // The nodes of every graph count, a function's among them.
+    graphs = [graph, { ...graph, id: "bank", function: true, nodes: graph.nodes.filter((one) => one.id === "zone") }];
     const zone = details({ kind: "variable", id: "zone" }).container.textContent ?? "";
-    expect(zone).toContain("1 nœud");
+    expect(zone).toContain("2 nœuds");
+    graphs = [graph];
+  });
+
+  it("names a problem's subject by its name, else by its id", async () => {
+    const { problemText } = await import("./problem-text.ts");
+    const missing = { kind: "noSuchVariable", graph: "events", node: "n", pin: null, subject: "zone" } as const;
+    expect(problemText(missing, names)).toBe("Ce nœud lit ou écrit Zone, que ce blueprint n'a pas.");
+    expect(problemText({ ...missing, subject: "bank" }, names)).toBe(
+      "Ce nœud lit ou écrit bank, que ce blueprint n'a pas.",
+    );
+  });
+
+  it("says the main flow takes no priority", () => {
+    const start = {
+      ...graph,
+      nodes: [{ ...graph.nodes[2], id: "start", kind: "on_start", pins: [], event: null }],
+    } as never;
+    const { container } = render(
+      <BlueprintDetails
+        blueprint={blueprint}
+        graphs={[start]}
+        graph={start}
+        problems={[]}
+        selection={{ kind: "node", id: "start" }}
+        names={names}
+      />,
+    );
+    expect(container.textContent).toContain("Le flux principal");
+    expect(screen.queryByRole("listitem")).toBeNull();
   });
 });

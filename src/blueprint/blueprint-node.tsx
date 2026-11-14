@@ -38,7 +38,12 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
   const outs = node.pins.filter((pin) => pin.side === "out" && pin !== head);
   return (
     <div
-      className={cn("blueprint-node", selected && "is-selected", (node.family === null || data.faulty) && "is-unknown")}
+      className={cn(
+        "blueprint-node",
+        selected && "is-selected",
+        node.family === null && "is-unknown",
+        data.faulty && "is-faulty",
+      )}
     >
       <div className="blueprint-node-head">
         {flowIn !== undefined && (
@@ -66,6 +71,7 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
             ),
           )}
         </span>
+        {data.faulty && <span className="sr-only">{t("blueprint.faulty")}</span>}
         {node.fromStep !== null && (
           <span className="blueprint-step">{t("blueprint.fromStep", { step: node.fromStep })}</span>
         )}

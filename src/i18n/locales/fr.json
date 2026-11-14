@@ -521,6 +521,7 @@
       "bank": "Banque",
       "items": "Objets",
       "job": "Métier"
-    }
+    },
+    "faulty": "A un problème."
   }
 }

@@ -3,7 +3,7 @@ import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
 import { cn } from "@/lib/utils.ts";
 
 /** What a variable's pill carries: its name and type. */
-export type PillData = { name: string; valueType: string };
+export type PillData = { name: string; valueType: string; faulty?: boolean };
 
 /** A pill as React Flow holds it. */
 export type PillNode = Node<PillData, "pill">;
@@ -11,7 +11,14 @@ export type PillNode = Node<PillData, "pill">;
 /** A variable read in the graph, as Unreal's "Get": a pill bordered with its type's colour. */
 export function VariablePill({ data, selected }: NodeProps<PillNode>) {
   return (
-    <div className={cn("blueprint-pill", `blueprint-type-${data.valueType}`, selected && "is-selected")}>
+    <div
+      className={cn(
+        "blueprint-pill",
+        `blueprint-type-${data.valueType}`,
+        selected && "is-selected",
+        data.faulty && "is-faulty",
+      )}
+    >
       <span className={cn("blueprint-chip-dot", `blueprint-type-${data.valueType}`)} />
       {data.name}
       <Handle
