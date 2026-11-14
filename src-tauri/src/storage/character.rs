@@ -117,11 +117,13 @@ impl Store {
         key: &str,
         discard: impl FnOnce(&std::path::Path) -> io::Result<()>,
     ) -> Result<(), StorageError> {
-        let _writing = self.lock();
         let path = self.characters().join(format!("{key}.json"));
-        let named = self.played().read.iter().any(|character| character.key() == key);
-        if !named {
-            return Err(StorageError::NoSuchCharacter { key: key.to_owned() });
+        {
+            // The key is checked under the lock; the trash, which may take its time, is not waited on there.
+            let _writing = self.lock();
+            if !self.played().read.iter().any(|character| character.key() == key) {
+                return Err(StorageError::NoSuchCharacter { key: key.to_owned() });
+            }
         }
         discard(&path).map_err(|source| StorageError::Write { path, source })
     }

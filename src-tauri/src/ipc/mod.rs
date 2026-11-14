@@ -11,6 +11,7 @@ mod relay;
 
 pub use blueprints::open_store;
 pub use commands::LoadedData;
+pub use played::start_writer as start_played_writer;
 pub use relay::{start as start_relay, stop as stop_relay};
 
 use tauri_specta::{Builder, collect_commands, collect_events};

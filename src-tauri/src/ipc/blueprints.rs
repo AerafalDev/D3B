@@ -24,6 +24,12 @@ pub fn open_store(app: &tauri::AppHandle) -> PlayersFiles {
 pub struct PlayersFiles(Option<Store>);
 
 impl PlayersFiles {
+    /// The player's files in `store`, for the tests.
+    #[cfg(test)]
+    pub(crate) fn new(store: Option<Store>) -> Self {
+        Self(store)
+    }
+
     /// The player's folder, when the system names one.
     pub(crate) fn store(&self) -> Option<&Store> {
         self.0.as_ref()
@@ -86,6 +92,10 @@ pub enum KeptWhy {
     GivenId {
         id: String,
     },
+    /// Not of a character's shape: what serde says.
+    NotACharacter {
+        detail: String,
+    },
 }
 
 impl From<&Why> for KeptWhy {
@@ -103,8 +113,7 @@ impl From<&Why> for KeptWhy {
             },
             Why::NameIsNotId { id } => Self::NameIsNotId { id: id.0.clone() },
             Why::GivenId { id } => Self::GivenId { id: id.0.clone() },
-            // Characters' files are listed with the characters, never in the Library.
-            Why::NotACharacter(detail) => Self::NotABlueprint { detail: detail.clone() },
+            Why::NotACharacter(detail) => Self::NotACharacter { detail: detail.clone() },
             Why::KeyIsNotId { id } => Self::NameIsNotId { id: id.to_string() },
         }
     }

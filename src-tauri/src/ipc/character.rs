@@ -31,8 +31,8 @@ pub(crate) fn follow(
         let its_build = build.clone();
         let mut remembering = super::played::Remembering::default();
         let live = Box::new(Live::new(move |view: Option<View>| {
-            if let Some(character) = remembering.seen(view.as_ref(), now()) {
-                super::played::remember(&handle, &character);
+            for character in remembering.seen(view.as_ref(), now()) {
+                super::played::remember(&handle, character);
             }
             let loaded = handle.try_state::<LoadedData>();
             let data = loaded
@@ -537,6 +537,14 @@ mod tests {
         assert_eq!(female.head, Some(head(folder, "9-1.png")));
         let male = CharacterView::new(&chosen(9, Some(Sex::Male)), Some(named));
         assert_eq!(male.head, Some(head(folder, "9-0.png")));
+    }
+
+    #[test]
+    fn a_characters_view_carries_its_key_among_the_characters_played_once_known() {
+        let chosen = chosen(9, None);
+        let id = chosen.who.as_ref().map_or(0, |who| who.id);
+        assert_eq!(CharacterView::new(&chosen, None).key, Some(crate::storage::key_of(id)));
+        assert_eq!(CharacterView::new(&View::default(), None).key, None);
     }
 
     #[test]

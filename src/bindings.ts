@@ -12,8 +12,8 @@ export const commands = {
 	blueprints: () => __TAURI_INVOKE<BlueprintList_Serialize>("blueprints"),
 	/**  Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id. */
 	duplicateBlueprint: (id: string, texts: CopyTexts) => __TAURI_INVOKE<string>("duplicate_blueprint", { id, texts }),
-	/**  The characters played, the most recently seen first. */
-	playedCharacters: () => __TAURI_INVOKE<PlayedCharacter_Serialize[]>("played_characters"),
+	/**  The characters played, the most recently seen first, and their files kept. */
+	playedCharacters: () => __TAURI_INVOKE<PlayedList_Serialize>("played_characters"),
 	/**  Forget: the file of the character `key` goes to the system's trash. */
 	forgetCharacter: (key: string) => __TAURI_INVOKE<null>("forget_character", { key }),
 	/**  The relay's status now. */
@@ -419,7 +419,9 @@ export type KeptWhy =
 /**  It holds another id than its name says. */
 { kind: "nameIsNotId"; id: string } | 
 /**  It holds the id of one of D3B's blueprints. */
-{ kind: "givenId"; id: string };
+{ kind: "givenId"; id: string } | 
+/**  Not of a character's shape: what serde says. */
+{ kind: "notACharacter"; detail: string };
 
 /**  A map's coordinates in the world, as the game shows them. */
 export type MapAt = {
@@ -501,6 +503,29 @@ export type PlayedCharacter_Serialize = {
 	/**  When it was last seen in game, in milliseconds since 1970. */
 	lastSeen: number | null,
 	place: Place_Serialize | null,
+};
+
+/**  The characters played and the files kept as they are. */
+export type PlayedList = PlayedList_Serialize | PlayedList_Deserialize;
+
+/**  The characters played and the files kept as they are. */
+export type PlayedList_Deserialize = {
+	characters: PlayedCharacter_Deserialize[],
+	/**
+	 *  The characters' files that do not read, kept untouched (ADR 0015); the view reports them with the Library's
+	 *  own, decided with the owner.
+	 */
+	kept: KeptFile[],
+};
+
+/**  The characters played and the files kept as they are. */
+export type PlayedList_Serialize = {
+	characters: PlayedCharacter_Serialize[],
+	/**
+	 *  The characters' files that do not read, kept untouched (ADR 0015); the view reports them with the Library's
+	 *  own, decided with the owner.
+	 */
+	kept: KeptFile[],
 };
 
 /**  The relay's status changed. */
